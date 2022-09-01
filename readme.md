@@ -25,8 +25,8 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://github.com/devinDJdj/mrrubato">
-    <img src="mrrubatologosmall.jpg" alt="Logo" width="112" height="220">
+  <a href="https://studio.youtube.com/channel/UC4dK3RpqBq2JpIkRmQn6HOA">
+    <img src="mrrubatolarge.jpg" alt="Logo" width="260" height="460">
   </a>
 
   <h3 align="center">Mr Rubato</h3>
@@ -78,7 +78,6 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-[![Product Name Screen Shot][product-screenshot]](https://studio.youtube.com/channel/UC4dK3RpqBq2JpIkRmQn6HOA)
 
 This is my personal journey into the world of music.  
 The intention is to show you the journey, not just the destination.  
@@ -208,4 +207,4 @@ Use this space to list resources you find helpful and would like to give credit 
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
 [linkedin-url]: https://linkedin.com/in/devinjacobsondj
-[product-screenshot]: images/screenshot.png
+[product-screenshot]: images/mrrubatolarge.jpg
