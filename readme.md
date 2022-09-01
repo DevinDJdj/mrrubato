@@ -97,7 +97,6 @@ P.S. Sorry for my brain's slow speed, hopefully I am getting better every day :)
 
 This section should list any major frameworks/libraries used to bootstrap your project. Leave any add-ons/plugins for the acknowledgements section. Here are a few examples.
 
-* [![Python][Python]][Python-url]
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -111,9 +110,14 @@ To get a local copy up and running follow these simple example steps.
 
 ### Prerequisites
 
-Install python 3.10.
-Install CSound
-Download Repository
+* Python
+  ```sh
+  Install python 3.10.
+  ```
+* CSound
+  ```sh
+  Install CSound.
+  ```
 
 ### Installation
 
@@ -129,7 +133,10 @@ Download Repository
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-Use this space to show useful examples of how a project can be used. Additional screenshots, code examples and demos work well in this space. You may also link to more resources.
+* initial test
+  ```sh
+  python ./basepattern.py
+  ```
 
 _For more examples, please refer to the [Documentation](https://csound.com/docs/ctcsound/ctcsound-API.html)_
 
@@ -177,8 +184,6 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 
 <!-- CONTACT -->
 ## Contact
-
-Your Name - [@your_twitter](https://twitter.com/your_username) - email@example.com
 
 Project Link: [https://github.com/devinDJdj/mrrubato](https://github.com/devinDJdj/mrrubato)
 
