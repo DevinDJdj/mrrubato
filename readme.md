@@ -25,7 +25,7 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://studio.youtube.com/channel/UC4dK3RpqBq2JpIkRmQn6HOA">
+  <a href="https://www.youtube.com/channel/UC4dK3RpqBq2JpIkRmQn6HOA/">
     <img src="mrrubatolarge.PNG" alt="Logo" width="260" height="460">
   </a>
 
