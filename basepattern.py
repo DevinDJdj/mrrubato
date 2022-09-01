@@ -340,6 +340,13 @@ c.start()             # When compiling from strings, this call is necessary befo
 #devinjacobsondj/mrrubato project to store this code.  Point to this from youtube and vice versa.  
 #financial world is morally bankrupt, and the moral world is financially bankrupt
 #maybe eventually make it accessible/document.  
+#https://docs.github.com/en/get-started/importing-your-projects-to-github/importing-source-code-to-github/adding-locally-hosted-code-to-github
+#git init -b main
+#git init && git branch -m main
+#git add .
+#git commit -m "First commit"
+#git remote add origin  https://github.com/DevinDJdj/mrrubato.git
+#git push --set-upstream origin main
 
 
 
