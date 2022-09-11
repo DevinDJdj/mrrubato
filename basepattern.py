@@ -15,23 +15,35 @@
 # string that has its replacement values replaced.  The replace values are 
 # calculated using the i value, and the result is an ascending note line. 
 #
-# In the final example, we are going to generate a list of lists.  The top-level
-# list represents our score as a whole, and each sub-list within it represents
-# the data for a single note.  The main list is then processed in two ways: first,
-# it processes each sub-list and joins the values together into a single note string;
-# second, it joins each individual note string into a single, large score string,
-# separated by newlines.  The end result is a sequence of 13 notes with random
-# pitches.
-#
-# The final example represents a common pattern of development.  For systems that
-# employ some event-based model of music, it is common to use some kind of data
-# structure to represent events.  This may use some kind of common data structure
-# like a list, or it may be represented by using a class and instances of that
-# class. 
-#
-# Note, the three examples here are indicated with comments.  To listen to the examples,
-# look for the lines that have c.ReadScore(sco) (lines 80-82), uncomment the one
-# you want to hear, and comment out the others. 
+
+
+#how to save to midi?  not sure.  
+#c.setMIDIOutput(midioutputdevicename/number)
+#c.setMIDIFileOutput(testing.midi)
+#https://csound.com/download
+#https://git-scm.com/
+#have to use CSCORE input for that I guess.  
+#https://flossmanual.csound.com/midi/midi-output
+#ok we have midi out, we have to adjust it to what it should be, it is the last 3 parameters.  
+#have to calculate the key, and velocity
+#0-127 range.  
+#here is the frequency lookup https://www.inspiredacoustics.com/en/MIDI_note_numbers_and_center_frequencies
+#so lets generate midi file at the same time.  
+#then we can use the midi patterns and make some music.  
+#check two patterns, make two tracks with midi, make sure it works.  
+#can use the same instrument, but we distinguish tracks how exactly?  
+#FrequencyToMidi, AmplitudeToMidi conversion functions
+#devinjacobsondj/mrrubato project to store this code.  Point to this from youtube and vice versa.  
+#financial world is morally bankrupt, and the moral world is financially bankrupt
+#maybe eventually make it accessible/document.  
+#https://docs.github.com/en/get-started/importing-your-projects-to-github/importing-source-code-to-github/adding-locally-hosted-code-to-github
+#git init -b main
+#git init && git branch -m main
+#git add .
+#git commit -m "First commit"
+#git remote add origin  https://github.com/DevinDJdj/mrrubato.git
+#git push --set-upstream origin main
+
 
 import ctcsound
 import sys
@@ -168,6 +180,8 @@ currentfrequency = 20 #Hz
 currentinstrument = 4
 currenttime = 0
 currentscale = 12
+
+retarray = []
 #allow speed vectors and amplitude vectors which will increase/decrease speed/amplitude
 #over a certain time frame
 
@@ -189,6 +203,10 @@ def setCurrentSpeed(speed, multiplier=False):
 
 def getCurrentStartTime():
     return starttime
+    
+def setCurrentStartTime(st):
+    global currentstarttime
+    currentstarttime = st
     
 def getCurrentAmplitude():
     return currentamplitude
@@ -245,6 +263,127 @@ def AmplitudeToMidi(a):
     #return 100
     return round(a/100)  
 
+#=(1 chromatic, 2 major, 3, minor)
+#need much more than this, but this is a start.  
+
+def addscale(numofnotes, rythmspeed, scaletype, direction, speedvector, amplitudevector, startpos=0, relative=True, track=1):
+    r = []
+    m = []
+    
+    tmp = startpos+numofnotes*direction
+    while (tmp < 0):
+        tmp += 7
+        startpos +=7
+        
+    if (direction < 0):
+        rng = reversed(range(tmp, startpos))
+    else:
+        rng = range(startpos, tmp)
+    r.append(rythmspeed)
+    m.append(direction*0)
+    for n in rng:
+        r.append(rythmspeed)
+        if (scaletype==1):
+            m.append(direction*1)
+        elif (scaletype==2):
+            if (n%7==6 or (n%7)==2):
+                m.append(direction*1)
+            else:
+                m.append(direction*2)
+        elif (scaletype==3):
+            if (n%7==4 or (n%7)==1):
+                m.append(direction*1)
+            else:
+                m.append(direction*2)
+        
+    return addPattern(r, m, speedvector, amplitudevector, relative, track)
+
+
+#addarpeggio(#notestobeplayed, endnote, scaletype=(1 chromatic, 2 major, 3 minor), speedvector, amplitudevector, relative=True, track=1)
+#how many notes to be played and the end note relative to starting note.  
+#just randomly generate.  
+#=(1 chromatic, 2 major, 3, minor)
+def addarpeggio(numofrepetitions, rythm, scaletype, direction, speedvector, amplitudevector, startpos=0, relative=True, track=1):
+    r = []
+    m = []
+    for bars in range(startpos, numofrepetitions+startpos):
+        total = 0
+        n = 3
+        direction = -direction
+        if (direction > 0):
+            rng = range(0, len(rythm))
+        else:
+            rng = reversed(range(0, len(rythm)))
+            
+        r.append(rythm[0])
+        m.append(direction*0)
+        for i in rng:
+            if (scaletype==1):
+                total += direction*n
+            elif (scaletype==2):
+                if (i%3==0):
+                    n = 4
+                if (i%3==1):
+                    n = 3
+                if (i%3==2):
+                    n = 5
+            elif (scaletype==3):
+                if (i%3==0):
+                    n = 3
+                if (i%3==1):
+                    n = 4
+                if (i%3==2):
+                    n = 5
+
+            r.append(rythm[i])
+            m.append(direction*n)                
+        
+    return addPattern(r, m, speedvector, amplitudevector, relative, track)
+
+#addfullness(
+#include multiple notes in the scale whatever we are in.  Right now no way to know so just add 5th and octave.  
+
+
+#function to crescendo for instance.  
+#we want a multi-array which holds all values until the end?  
+
+#what mathematical functions do we want to do?  
+#add avg note between all notes for instance.  
+#add rythm to all notes.  
+
+#have a base pattern, and then add some random stuff.  
+#have symetry and asymetry patterns.  
+#need to have an object to know what notes go with what Patterns.  
+
+
+
+
+def adjustSpeed(speedvector):
+    #adjust the speed here.  
+    global currentspeed, currentamplitude, currentfrequency, currentinstrument, currenttime, currentscale, retarray, currentstarttime
+    beats = currenttime - currentsttarttime
+    lens = len(speedvector)
+    for row in retarray:
+        if (row[1] < currenttime and row[1] > currentstarttime):
+        #adjust here the currenttime and duration row[2]
+            ret = ""
+    return ret
+    
+def adjustAmplitude(amplitudevector):
+    #adjust the speed here.  
+    global currentspeed, currentamplitude, currentfrequency, currentinstrument, currenttime, currentscale, retarray, currentstarttime
+    beats = currenttime - currentstarttime
+    lena = len(amplitudevector)
+    for row in retarray:
+        if (row[1] < currenttime and row[1] > currentstarttime):
+        #adjust here the amplitude row[3]
+            #getampmultiplier
+            multiplier = (row[1]-currentstarttime)/(currenttime-currentstarttime)
+            multiplier *= lena
+            row[3] = row[3]*amplitudevector[int(multiplier)]
+            ret = ""
+    return ret
+
 def addPattern(rythm, melody, speedvector, amplitudevector, relative=True, track=1):
     #speedvector will be an array based on the currentspeed, once that time is reached
     #amplitudevector is the amplitude adjustment over the period of time it takes for this sequence
@@ -253,42 +392,38 @@ def addPattern(rythm, melody, speedvector, amplitudevector, relative=True, track
     #rythm and melody must be equal length
     #after the full length is calculated, the speedvector and amplitudevector will be 
     #adjusted to the notes which they need to be at.  
-    global currentspeed, currentamplitude, currentfrequency, currentinstrument, currenttime, currentscale
+    global currentspeed, currentamplitude, currentfrequency, currentinstrument, currenttime, currentscale, retarray
     ret = ""
     #i4  12  2.2    10500  440   0     .040    10      0
-    beats = len(rythm)
-    lena = beats/len(amplitudevector)
-    lens = len(speedvector)
-    newspeed = []
-    newamplitude = []
     
-    for r in rythm:
-        #not exactly what we want but for now will do. 
-        newspeed.append(speedvector[int(lens/beats)])
-        newamplitude.append(amplitudevector[int(lena/beats)])
     i = 0
     while i < len(rythm):
-        dur = (currentspeed/newspeed[i])*rythm[i]
-        amp = newamplitude[i]*currentamplitude
+        dur = rythm[i]
+        amp = currentamplitude
         if (relative):
             fre = adjustFrequency(melody[i])
         else:
             fre = currentfrequency*2**(melody[i]/currentscale)
         #calculate the midi note to output.  
         
-        ret += "i{0}  {1}  {2}  {3}  {4:.2f}    0   {5:.2f}    10  0    {6}   {7}  {8}\r\n".format(currentinstrument, currenttime, dur, amp, fre, dur/10, track, FrequencyToMidi(fre), AmplitudeToMidi(amp)) 
+        retarray.append([currentinstrument, currenttime, dur, amp, fre, dur/10, track])
+#        ret += "i{0}  {1}  {2}  {3}  {4:.2f}    0   {5:.2f}    10  0    {6}   {7}  {8}\r\n".format(currentinstrument, currenttime, dur, amp, fre, dur/10, track, FrequencyToMidi(fre), AmplitudeToMidi(amp)) 
         i += 1    
         currenttime += dur
     #adjust current to final value of the vector
-    currentspeed = currentspeed/newspeed[len(rythm)-1]
-    currentamplitude = currentamplitude*newamplitude[len(rythm)-1]
     #not sure if we want to adjust the currentfrequency here or not.  Preference
     if (relative==False):
         adjustFrequency(melody[len(rythm)-1])
         
     return ret
 
-    
+
+def printResult():
+    ret = ""
+    for row in retarray:
+        ret += "i{0}  {1}  {2}  {3}  {4:.2f}    0   {5:.2f}    10  0    {6}   {7}  {8}\r\n".format(row[0], row[1], row[2], row[3], row[4], row[5], row[6], FrequencyToMidi(row[4]), AmplitudeToMidi(row[3])) 
+    return ret
+
 setScale(12)
 setStart(4, 0, 1, 10000, 440)
 r = [0.25,0.25,0.25,0.25,0.25,0.25,0.25,0.25]
@@ -301,12 +436,43 @@ sco4 += addPattern(r,m,s,a, True, 1)
 currenttime = 0
 r = [0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5]
 m = [1,-1,-1,1,-1,-1,1,1]
-s = [1,1.1,1]
+s = [1,1,1]
 a = [1,1.1,1]
 sco4 += addPattern(r,m,s,a, True, 2)
+
+
+currenttime=5
+setCurrentStartTime(5)
+#up5down5
+sco4 += addscale(3, 0.5, 1, 1, s, a)
+sco4 += addscale(3, 0.5, 1, -1, s, a, 3)
+#up6down6
+currenttime=5
+for i in range(0, 4):
+    currenttime=10
+    setCurrentStartTime(10)
+    sco4 += addscale(7, 0.5, 2, 1, s, a)
+    sco4 += addscale(7, 0.5, 2, -1, s, a, 7)
+    r = [1, 1]
+    m = [4, 3]
+    sco4 += addPattern(r, m, s, a, True, 3)
+    
+#up6down6
+#currenttime=5
+#sco4 += addscale(9, 0.5, 3, 1, s, a)
+#sco4 += addscale(9, 0.5, 3, -1, s, a, 9)
+
+#sco4 += addarpeggio(2, [0.5,0.5,0.5,0.5,0.5,0.5], 1, -1, s, a)
+#sco4 += addarpeggio(2, [0.5,0.5,0.5,0.5,0.5,0.5], 2, -1, s, a)
+#sco4 += addarpeggio(2, [0.5,0.5,0.5,0.5,0.5,0.5], 3, -1, s, a)
+
+adjustAmplitude(a)
+sco4 += printResult()
+
 mixer = mixer.replace("DUR", "{}".format(currenttime))
 sco4 += mixer
 print(sco4)
+
 
 
 #c.readScore(sco)      # Read in Score from pre-written String
@@ -320,37 +486,6 @@ c.start()             # When compiling from strings, this call is necessary befo
 
 # The following is our main performance loop. We will perform one block of sound at a time 
 # and continue to do so while it returns 0, which signifies to keep processing.  
-
-#how to save to midi?  not sure.  
-#c.setMIDIOutput(midioutputdevicename/number)
-#c.setMIDIFileOutput(testing.midi)
-#https://csound.com/download
-#https://git-scm.com/
-#have to use CSCORE input for that I guess.  
-#https://flossmanual.csound.com/midi/midi-output
-#ok we have midi out, we have to adjust it to what it should be, it is the last 3 parameters.  
-#have to calculate the key, and velocity
-#0-127 range.  
-#here is the frequency lookup https://www.inspiredacoustics.com/en/MIDI_note_numbers_and_center_frequencies
-#so lets generate midi file at the same time.  
-#then we can use the midi patterns and make some music.  
-#check two patterns, make two tracks with midi, make sure it works.  
-#can use the same instrument, but we distinguish tracks how exactly?  
-#FrequencyToMidi, AmplitudeToMidi conversion functions
-#devinjacobsondj/mrrubato project to store this code.  Point to this from youtube and vice versa.  
-#financial world is morally bankrupt, and the moral world is financially bankrupt
-#maybe eventually make it accessible/document.  
-#https://docs.github.com/en/get-started/importing-your-projects-to-github/importing-source-code-to-github/adding-locally-hosted-code-to-github
-#git init -b main
-#git init && git branch -m main
-#git add .
-#git commit -m "First commit"
-#git remote add origin  https://github.com/DevinDJdj/mrrubato.git
-#git push --set-upstream origin main
-
-
-
-
 
 while (c.performKsmps() == 0):
   pass
