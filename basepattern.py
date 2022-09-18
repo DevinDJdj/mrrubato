@@ -201,12 +201,27 @@ def setCurrentSpeed(speed, multiplier=False):
     else:
         currentspeed = speed
 
-def getCurrentStartTime():
-    return starttime
+def getCurrentTime():
+    global currenttime
+    return currenttime
     
-def setCurrentStartTime(st):
+def setCurrentTime(t, relative=False):
+    global currenttime
+    if (relative):
+        currenttime += t
+    else:
+        currenttime = t
+
+def getCurrentStartTime():
     global currentstarttime
-    currentstarttime = st
+    return currentstarttime
+    
+def setCurrentStartTime(st, relative=False):
+    global currentstarttime
+    if (relative):
+        currentstarttime += st
+    else:
+        currentstarttime = st
     
 def getCurrentAmplitude():
     return currentamplitude
@@ -432,6 +447,7 @@ s = [1,1.1,1]
 a = [1,1.1,1]
 
 #see if this works.  
+test = '''
 sco4 += addPattern(r,m,s,a, True, 1)
 currenttime = 0
 r = [0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5]
@@ -439,8 +455,9 @@ m = [1,-1,-1,1,-1,-1,1,1]
 s = [1,1,1]
 a = [1,1.1,1]
 sco4 += addPattern(r,m,s,a, True, 2)
+'''
 
-
+test = '''
 currenttime=5
 setCurrentStartTime(5)
 #up5down5
@@ -456,7 +473,75 @@ for i in range(0, 4):
     r = [1, 1]
     m = [4, 3]
     sco4 += addPattern(r, m, s, a, True, 3)
+'''
+
+s = [1,1,1]
+a = [1,1,1]
+setScale(12)
+myamp = 5000
+basefre = 55
+basemultiplier = 2
+fifthmultiplier = 1.5
+setStart(4, 0, 1, myamp, basefre)
+totaldur = 64
+mydur = 64
+myampmult = 0.9
+while (mydur > 1):
+    setCurrentStartTime(0)
+    setCurrentTime(0)
+    r = [mydur]
+    m = [0]
+    while (getCurrentTime() < totaldur-mydur):
+        if (randint(0,4) < 2):
+            addPattern(r, m, s, a, True, 1)
+        setCurrentTime(mydur, True)
+    mydur /= 2
+    setCurrentFrequency(basemultiplier, True)
+    setCurrentAmplitude(myampmult, True)
+    setCurrentStartTime(mydur, True)
+
+
+fifthfre = basefre * 1.5
+setStart(4, 0, 1, myamp, fifthfre)
+setCurrentStartTime(0)
+mydur = 32
+while (mydur > 0.03215):
+    setCurrentStartTime(0)
+    setCurrentTime(0)
+    r = [mydur]
+    m = [0]
+    while (getCurrentTime() < totaldur-mydur):
+        setCurrentTime(mydur, True)
+        if (randint(0,4) < 2):
+            addPattern(r, m, s, a, True, 2)
     
+    mydur /= 2
+    setCurrentAmplitude(myampmult, True)
+    setCurrentFrequency(fifthmultiplier, True)
+
+
+#fractal pattern:
+# 
+# use Entire song period as the initial period.  
+# divide in half and add a second tone perhaps.  
+# within each half, generate a pattern the same way.  
+# randomly give first or second half the tone.  
+# the tone frequency relationship is undetermined, but must also have an interesting mathematical relationship.  
+# i.e. 
+#C1 0, 60
+#C2 30, 30
+#C3 45, 15
+#..
+#within this perhaps take circle of fifths naturally going up.  
+#G1 0, 30
+#G2 30, 30
+#D2 0, 15
+#D3 15, 15
+#A3 0, 7.5
+#A4 7.5, 7.5
+
+#not sure this should be the final pattern, but I think we should generate this.  
+
 #up6down6
 #currenttime=5
 #sco4 += addscale(9, 0.5, 3, 1, s, a)
