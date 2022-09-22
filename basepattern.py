@@ -48,6 +48,7 @@
 import ctcsound
 import sys
 import math
+import numpy
 from random import randint
 
 def printf(format, *args):
@@ -374,13 +375,39 @@ def addarpeggio(numofrepetitions, rythm, scaletype, direction, speedvector, ampl
 
 
 def adjustSpeed(speedvector):
+    #try this.  See if it works.  Havent tested.  
     #adjust the speed here.  
     global currentspeed, currentamplitude, currentfrequency, currentinstrument, currenttime, currentscale, retarray, currentstarttime
     beats = currenttime - currentsttarttime
     lens = len(speedvector)
-    for row in retarray:
+    spsumtotal = sum(speedvector)
+    spsum = 0
+    spv = 0
+    for idx, sp in enumerate(speedvector):
+        speedvector[idx] = sp*(currentbeats/spsumtotal)
+    
+    spsumtotal = currentbeats
+    for rowi, row in enumerate(retarray):
+        
         if (row[1] < currenttime and row[1] > currentstarttime):
+             c = 0
+             spsum = 0
+             while (row[1] < speedvector[c]):
+                 c += 1
+                 spsum += speedvector[c]
+        
+        
         #adjust here the currenttime and duration row[2]
+        #duration adjustment will be speedvector[c]/(spsumtotal/lens)
+        adj = speedvector[c]/(spsumtotal/lens)
+        retarray[rowi][2] *= adj
+        if (c > 0):
+            #starttime adjustment will be (spsum/c)/(spsumtotal/lens)
+            adj = (spsum/c)/(spsumtotal/lens)
+            retarray[rowi][1] *= adj
+        #make a time map of what goes where?  
+        #this should be an easy mathematical transformation.  
+        #just adjust to equal to 1, but where do we adjust
             ret = ""
     return ret
     
@@ -389,6 +416,7 @@ def adjustAmplitude(amplitudevector):
     global currentspeed, currentamplitude, currentfrequency, currentinstrument, currenttime, currentscale, retarray, currentstarttime
     beats = currenttime - currentstarttime
     lena = len(amplitudevector)
+    ret = ""
     for row in retarray:
         if (row[1] < currenttime and row[1] > currentstarttime):
         #adjust here the amplitude row[3]
@@ -475,51 +503,6 @@ for i in range(0, 4):
     sco4 += addPattern(r, m, s, a, True, 3)
 '''
 
-s = [1,1,1]
-a = [1,1,1]
-setScale(12)
-myamp = 5000
-basefre = 55
-basemultiplier = 2
-fifthmultiplier = 1.5
-setStart(4, 0, 1, myamp, basefre)
-totaldur = 64
-mydur = 64
-myampmult = 0.9
-while (mydur > 1):
-    setCurrentStartTime(0)
-    setCurrentTime(0)
-    r = [mydur]
-    m = [0]
-    while (getCurrentTime() < totaldur-mydur):
-        if (randint(0,4) < 2):
-            addPattern(r, m, s, a, True, 1)
-        setCurrentTime(mydur, True)
-    mydur /= 2
-    setCurrentFrequency(basemultiplier, True)
-    setCurrentAmplitude(myampmult, True)
-    setCurrentStartTime(mydur, True)
-
-
-fifthfre = basefre * 1.5
-setStart(4, 0, 1, myamp, fifthfre)
-setCurrentStartTime(0)
-mydur = 32
-while (mydur > 0.03215):
-    setCurrentStartTime(0)
-    setCurrentTime(0)
-    r = [mydur]
-    m = [0]
-    while (getCurrentTime() < totaldur-mydur):
-        setCurrentTime(mydur, True)
-        if (randint(0,4) < 2):
-            addPattern(r, m, s, a, True, 2)
-    
-    mydur /= 2
-    setCurrentAmplitude(myampmult, True)
-    setCurrentFrequency(fifthmultiplier, True)
-
-
 #fractal pattern:
 # 
 # use Entire song period as the initial period.  
@@ -541,6 +524,181 @@ while (mydur > 0.03215):
 #A4 7.5, 7.5
 
 #not sure this should be the final pattern, but I think we should generate this.  
+
+fractal = '''
+s = [1,1,1]
+a = [1,1,1]
+setScale(12)
+myamp = 12000
+basefre = 55
+basemultiplier = 1.5 #2
+fifthmultiplier = 1.33333 #1.5
+setStart(4, 0, 1, myamp, basefre)
+totaldur = 64
+mydur = 64
+myampmult = 0.95
+while (mydur > 0.5):
+    setCurrentStartTime(0)
+    setCurrentTime(0)
+    r = [mydur]
+    m = [0]
+    rand = randint(1,4)
+    while (getCurrentTime() < totaldur-mydur):
+        rand = randint(1,4)
+        if (rand < 3):
+            addPattern(r, m, s, a, True, 1)
+        setCurrentTime(mydur, True)
+    mydur /= rand
+    setCurrentFrequency(basemultiplier, True)
+    setCurrentAmplitude(myampmult, True)
+    setCurrentStartTime(mydur, True)
+
+
+fifthfre = basefre * 2 * fifthmultiplier 
+setStart(4, 0, 1, myamp, fifthfre)
+setCurrentStartTime(0)
+mydur = 32
+while (mydur > 0.03125):
+    setCurrentStartTime(0)
+    setCurrentTime(0)
+    r = [mydur]
+    m = [0]
+    rand = randint(1,4)
+    while (getCurrentTime() < totaldur-mydur):
+        setCurrentTime(mydur, True)
+        rand = randint(1,4)
+        if (rand < 3):
+            addPattern(r, m, s, a, True, 2)
+    
+    mydur /= rand
+    setCurrentAmplitude(myampmult, True)
+    setCurrentFrequency(fifthmultiplier, True)
+'''
+
+
+
+#circular pattern
+circular = '''
+how can we create a circular pattern?  
+many individual scales which represent individual circles perhaps.  
+maybe an individual circle represents a frequency for the start of the scale.  
+So maybe all the scales are the same size.  and frequency is the speed.  
+So the higher the frequency the larger the circle.  
+What circles do we chose?  
+
+Lets use several rotating circles on a sphere.  
+what do the different circles on the sphere represent?  
+What is a frequency that is rotated?  It adjusts the frequency.  
+If we do that, we need to use the csound library to make an instrument.  
+not the midi sequence.  
+maybe different size freqencies travelling down the same path of rythm using the base rythm as some multiple of the freqency.  
+Kind of like this concept.  
+i.e. 55Hz represents 55*PI*2
+and the rhythm pattern represents [1,2,1,2,1,2]
+then we would have a rythm pattern for 55Hz being 55*PI*2*1 = currenttime
+and next note starts 55*PI*2*2
+The frequency becomes correlated with the duration.  
+Kind of like we did with the fractal.  
+But lets see how many different rythms we can combine.  We need a PRIMORIAL maybe to be the base pattern.  
+So lets try 210 to start as our PRIMORIAL
+So lets use just 55*2, 55*3, 55*5, 55*7.  
+Or we can just combine all of these patterns into the one circle.  divide the same circle into 2, 3, 5, 7
+Roll those down time, and when the spokes touch, we create sound, but what sound?  
+What is the relationship between the spokes and frequency?  
+Roll the circles inside of each other.  
+When they meet, they make a sound of the frequencies related.  
+i.e. 2 is rolling inside of 3, and 5, and 7.  
+3 is rolling inside of 5 and 7
+5 is rolling inside of 7.  
+When they meet at a multiple there is additional sound.  
+This essentially becomes a pattern of the factors of numbers.  
+This is not really circular, but lets go with it.  
+all numbers represent the points in time.  
+For now lets just use unique factors.  Exponent just increases the amplitude of that note.  
+
+Now use a circle with radius 2 and run it down the number line.  
+Then a circle with radius 3 and do the same.  
+And only make a sound when it comes into contact with a whole number.  
+Also make the sound of the circle radius perhaps?  or combine it with the number itself.  
+The radius number should be the loudest and the actual number (chorrd) a different volume.  
+And then make the sound of what that number represents.  
+So what sound does a number represent?  
+Using primes is ok I think.  
+Multiple circles going down the number line.  
+If they overlap we have a sound which correlates to the relationship between whichever two are overlapping.  
+What is that frequency?  
+If they are close to a number, we create a sound based on that frequency.  
+
+
+'''
+
+
+s = [1,1,1]
+a = [1,1,1]
+setScale(12)
+baseamp = 12000
+basefre = 440
+setStart(4, 0, 1, baseamp, basefre)
+totaldur = 420
+mydur = 0.125
+
+pr = [2,3,5,7]
+primorial = numpy.prod(pr)
+i = 0
+
+#pattern 1 use amplitude to distinguish pattern.  
+for p in pr:
+    basefre = 55*(p)/2
+    setCurrentStartTime(0)
+    setCurrentTime(0)
+    circ = math.pi*2*p
+    i = 0
+    while (i < totaldur):
+        i += 1
+        ct = getCurrentTime()
+        for q in pr:
+            setCurrentTime(ct)
+            mynum = (circ/q)*i
+            rem = abs(mynum - round(mynum))
+            amp = (0.5-rem)*(0.5-rem)*baseamp*4
+            
+            r = [mydur]
+            m = [0]
+            if (rem < 0.06125):
+                setCurrentAmplitude(amp)
+                setCurrentFrequency(basefre*(q-1))
+                addPattern(r, m, s, a, True, p)
+            else:
+                setCurrentAmplitude(0)
+                addPattern(r, m, s, a, True, p)
+                
+    #set a separate pattern for each 
+
+#pattern 2 use rhythm to distinguish pattern.  
+pattern2 = '''
+for p in pr:
+    basefre = 440*p/2
+    setCurrentStartTime(0)
+    setCurrentTime(0)
+    circ = math.pi*2*p
+    i = 0
+    while (i < totaldur):
+        i += 1
+        for q in pr:
+            mynum = (circ/q)*i
+            rem = abs(mynum - round(mynum))
+            amp = (0.5-rem)*(0.5-rem)*baseamp*4
+            
+            setCurrentTime(mynum)
+            r = [mydur]
+            m = [0]
+            setCurrentAmplitude(amp)
+            setCurrentFrequency(basefre*p/2)
+            addPattern(r, m, s, a, True, p)
+'''
+setCurrentTime(totaldur*mydur)
+            
+
 
 #up6down6
 #currenttime=5
@@ -565,7 +723,7 @@ print(sco4)
 #c.readScore(sco3)     # Read in Score from loop-generated String
 c.readScore(sco4)
 
-c.setMIDIFileOutput("testing.midi")
+c.setMIDIFileOutput("./output/testing.midi")
 
 c.start()             # When compiling from strings, this call is necessary before doing any performing
 
