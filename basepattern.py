@@ -49,6 +49,7 @@ import ctcsound
 import sys
 import math
 import numpy
+from functools import reduce
 from random import randint
 
 def printf(format, *args):
@@ -315,6 +316,58 @@ def addscale(numofnotes, rythmspeed, scaletype, direction, speedvector, amplitud
     return addPattern(r, m, speedvector, amplitudevector, relative, track)
 
 
+def isprime(n):
+    for i in range(2, int(n/2)+1):
+        if (n % i) == 0:
+            return False
+
+    return True
+        
+        
+def getFactors(n):
+    ret = []
+    
+    for i in range(1, int(n/2) + 1):
+        if n % i == 0 and isprime(i):
+            ret.append(i)
+    if (ret is None):
+        ret = [n]
+    return ret
+
+def getpascal(prime):
+    ret = []
+    current = 1
+    num = prime
+    denom = 1
+    for i in range(0, prime+1):
+        ret.append(current)
+        current *= num/denom
+        num -=1
+        denom +=1
+    
+    print(ret)
+    return ret        
+        
+def getArp(prime):
+    if (prime == 2):
+        if (getCurrentFrequency() <1760):
+            return [0, 12]
+        else:
+            return [0,-12]
+    if (prime == 3):
+        return [-7, 7, -7]
+    if (prime == 5):
+        return [-4, -4, -4, 4, 4]
+    if (prime == 7):
+        return [-3, -3, -3, -3, 3, 3, 3]
+    if (prime == 11):
+        return [-2, -2, -2, -2, -2, -2, 2, 2, 2, 2, 2]
+    if (prime == 13):
+        return [-1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1]
+    if (prime == 17):
+        return [-1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1, 1, 1]
+    else:
+        return [0]
 #addarpeggio(#notestobeplayed, endnote, scaletype=(1 chromatic, 2 major, 3 minor), speedvector, amplitudevector, relative=True, track=1)
 #how many notes to be played and the end note relative to starting note.  
 #just randomly generate.  
@@ -417,13 +470,13 @@ def adjustAmplitude(amplitudevector):
     beats = currenttime - currentstarttime
     lena = len(amplitudevector)
     ret = ""
-    for row in retarray:
+    for idx, row in enumerate(retarray):
         if (row[1] < currenttime and row[1] > currentstarttime):
         #adjust here the amplitude row[3]
             #getampmultiplier
             multiplier = (row[1]-currentstarttime)/(currenttime-currentstarttime)
             multiplier *= lena
-            row[3] = row[3]*amplitudevector[int(multiplier)]
+            retarray[idx][3] = row[3]*amplitudevector[int(multiplier)]
             ret = ""
     return ret
 
@@ -632,7 +685,7 @@ If they are close to a number, we create a sound based on that frequency.
 
 '''
 
-
+circular = '''
 s = [1,1,1]
 a = [1,1,1]
 setScale(12)
@@ -674,7 +727,10 @@ for p in pr:
                 
     #set a separate pattern for each 
 
+setCurrentTime(totaldur*mydur)
+'''
 #pattern 2 use rhythm to distinguish pattern.  
+
 pattern2 = '''
 for p in pr:
     basefre = 440*p/2
@@ -695,9 +751,137 @@ for p in pr:
             setCurrentAmplitude(amp)
             setCurrentFrequency(basefre*p/2)
             addPattern(r, m, s, a, True, p)
-'''
 setCurrentTime(totaldur*mydur)
+'''
+
             
+
+#pattern3
+pascal = '''
+
+'''
+s = [1,1,1]
+a = [1,1,1]
+setScale(12)
+baseamp = 8000
+basefre = 440
+setStart(4, 0, 1, baseamp, basefre)
+numrows = 17
+totaldur = (numrows+1)
+mydur = 1
+
+i = 0
+
+for i in range(numrows):
+    if (i%2 == 0):
+        basefre *= (i/(i-1))
+    elif (i>1):
+        basefre *= (i-1)/i
+    row = getpascal(i)
+    for r in row:
+        factors = getFactors(r)
+        t = getCurrentTime()
+        setCurrentStartTime(t)
+        for fc, f in enumerate(factors):
+            setCurrentTime(t)
+#            setCurrentFrequency(calculation here)
+            r = numpy.empty(f)
+            r.fill(mydur/f)
+            print(f)
+            m = getArp(f)
+            
+            addPattern(r, m, s, a, True, fc)
+            adjustAmplitude(a)    
+            
+    #set a separate pattern for each 
+
+
+
+#lets try to do a rhythm pattern with pascal triangle.  
+#the pattern will reflect the numbers in the triangle, and each number will represent a beat.  
+#play the odd patterns on 2* the odd.  
+#so overlap the 1st row onto the second.  
+#then 4th row is just 4th row.  
+#6th row then is a combination of 3rd and 6th row.  
+#do we keep adding or some other way?  
+#could add up to 4 or 5 rhythms I suspect and still be distinguishable.  
+#go up to 16.  
+#1, 2, 4, 8, 16
+#3, 6, 9, 12, 15
+#5, 10, 15
+#7, 14
+#11
+#13
+#pull the internal pattern, from that previous line.  
+#What rhythm patterns to combine?  
+#factor each number in the individual pascal row, and use the factors as the beat pattern for that 1 beat.  
+#is just going up the triangle sequentially best?  
+#do we also use the internal factors to create extra beat patterns like below?  
+#do we make more familiar beat blocks of 4, 8, 12, 16 or not by combining (INTERNAL PATTERN)
+#maybe this is not necessary, except for perfect squares maybe add this.  
+#1,1
+#2 (1,1)
+#3,1
+#4 (2, 2)
+#5, 3
+#6 (3, 3), 2 (1,1)
+#7, 1
+#8 (4, 4)
+#9 (3, 3, 3), 3
+#10 (5, 5), 2 (1, 1)
+#11, 1
+#12 (6, 6)
+#13, 3
+#14 (7, 7), 2
+#15 (5, 5, 5), 1
+#16 (8, 8)
+
+
+#I think just use the pattern for the factors.  i.e. 1, 5, 10 (2, 5), 20 (2, 2, 5), 10 (2, 5), 5, 1
+#not sure exactly how to do this, but divide evenly into the number of factors that we have.  
+#do the pattern starting with separate notes.  
+#if we have the same number twice or 3 times, we start at different octaves.  
+#i.e. 20 will have 3 notes, 2 with pattern 2, and 1 with pattern 5.  
+#if we have multiple factors we can use different tracks/instruments.  
+#for now the track will equal the factor#, like if there are 3 factors, we have track 1, 2, 3 for those three factors.  
+#start at same octave and go up/down if there are multiple.  
+#then just for now sequentially use the factors as the rhythm.  Leave one beat space at the end to understand the pattern.  
+#lets try also with one note per factor.  I think this will be better.  
+
+#but what notes?  
+#lets try an arpeggiation of some kind with the rhythm.  
+#lets make it random arpeggiation of some kind (skip or not skip next step in arpeggiation is random).  
+#up or down is random based on what frequency we are at.  
+#what is the key though?  
+#where do we start?  
+#track will equal to the rhythm pattern.  
+#lets just do a simple chord progression.  
+#Use the middle of the pascal triangle to find the key, then work out from there.  
+#1, 2, 3, 6, 10, 20, 35
+#*2, *2/3, *6/3, *6/10, *20/10, *20/35, *70/35, etc.  
+#I think this should be fine for initial starting range.  
+#what is our frequency range?  lets say 220 to 220*16.  
+#same way we go up or down based on the factor.  What do we do when we go out of range, just correct direction?  For now this is fine.  
+#2 pattern is Base, Base*2 or Base/2
+#3 pattern is Base, Base*3/2 *2/3
+#5 pattern lets do Base, Base*5/4 *5/4, *4/5 *4/5?  
+#7 pattern as well, Base, Base*7/6 *7/6 *7/6, *6/7 * 6/7 * 6/7.  
+
+
+
+#how do we adjust amplitude?  each number has an amplitude adjustment.  
+#row increases in amplitude and decreases back after the middle.  
+#runs all decrease amplitude going up, and increase coming back down.  
+#simple amplitude pattern.  
+#I think this is everything for now.  
+
+
+
+
+#1
+#1 1
+#1 2 1
+#1 3 3 1
 
 
 #up6down6
