@@ -347,6 +347,40 @@ def getpascal(prime):
     
     print(ret)
     return ret        
+
+def getFibonacci(num):
+    ret = []
+    current = 1
+    ret.append(current)
+    c1 = 1
+    ret.append(c1)
+    for i in range (1, num+1):
+        ret.append(current+c1)
+        temp = c1
+        c1 = current+c1
+        current = temp
+        
+    print(ret)
+    return ret
+
+def getDurationArray(row, i, mydur = 1, ret=[], offset=0, current = 1):
+    start = row[i]
+    if (i > 1 and current < 4):
+        second = row[i-1]
+        first = row[i-2]
+        getDurationArray(row, i-1, mydur/2, ret, offset+first, current+1)    
+        
+        getDurationArray(row, i-2, mydur/2, ret, offset+0, current+1)
+        
+        
+    else:
+        for j in range(offset, offset+start):
+            print(j)
+            print(mydur/start)
+            ret[j] = mydur/start
+            
+    return ret
+
         
 def getArp(prime):
     if (prime == 2):
@@ -357,7 +391,7 @@ def getArp(prime):
     if (prime == 3):
         return [-7, 7, -7]
     if (prime == 5):
-        return [-4, -4, -4, 4, 4]
+        return [-5, -3, -4, 4, 3]
     if (prime == 7):
         return [-3, -3, -3, -3, 3, 3, 3]
     if (prime == 11):
@@ -367,7 +401,13 @@ def getArp(prime):
     if (prime == 17):
         return [-1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1, 1, 1]
     else:
-        return [0]
+        ret = []
+        for i in range(0, prime):
+            if (i < prime/2):
+                ret.append(-1)
+            else:
+                ret.append(1)
+        return ret
 #addarpeggio(#notestobeplayed, endnote, scaletype=(1 chromatic, 2 major, 3 minor), speedvector, amplitudevector, relative=True, track=1)
 #how many notes to be played and the end note relative to starting note.  
 #just randomly generate.  
@@ -480,7 +520,7 @@ def adjustAmplitude(amplitudevector):
             ret = ""
     return ret
 
-def addPattern(rythm, melody, speedvector, amplitudevector, relative=True, track=1):
+def addPattern(rythm, melody, speedvector, amplitudevector, relative=True, track=1, durmodulation=1):
     #speedvector will be an array based on the currentspeed, once that time is reached
     #amplitudevector is the amplitude adjustment over the period of time it takes for this sequence
     #rythm is simply how many beats at the currentspeed we take
@@ -502,7 +542,7 @@ def addPattern(rythm, melody, speedvector, amplitudevector, relative=True, track
             fre = currentfrequency*2**(melody[i]/currentscale)
         #calculate the midi note to output.  
         
-        retarray.append([currentinstrument, currenttime, dur, amp, fre, dur/10, track])
+        retarray.append([currentinstrument, currenttime, dur/durmodulation, amp, fre, dur/10, track])
 #        ret += "i{0}  {1}  {2}  {3}  {4:.2f}    0   {5:.2f}    10  0    {6}   {7}  {8}\r\n".format(currentinstrument, currenttime, dur, amp, fre, dur/10, track, FrequencyToMidi(fre), AmplitudeToMidi(amp)) 
         i += 1    
         currenttime += dur
@@ -520,7 +560,7 @@ def printResult():
         ret += "i{0}  {1}  {2}  {3}  {4:.2f}    0   {5:.2f}    10  0    {6}   {7}  {8}\r\n".format(row[0], row[1], row[2], row[3], row[4], row[5], row[6], FrequencyToMidi(row[4]), AmplitudeToMidi(row[3])) 
     return ret
 
-setScale(12)
+setScale(24)
 setStart(4, 0, 1, 10000, 440)
 r = [0.25,0.25,0.25,0.25,0.25,0.25,0.25,0.25]
 m = [1,-1,-1,1,-1,-1,1,1]
@@ -759,16 +799,15 @@ setCurrentTime(totaldur*mydur)
 #pattern3
 pascal = '''
 
-'''
 s = [1,1,1]
-a = [1,1,1]
+a = [0.75,1.25,0.75]
 setScale(12)
 baseamp = 8000
 basefre = 440
 setStart(4, 0, 1, baseamp, basefre)
 numrows = 17
 totaldur = (numrows+1)
-mydur = 1
+mydur = 2
 
 i = 0
 
@@ -778,7 +817,11 @@ for i in range(numrows):
     elif (i>1):
         basefre *= (i-1)/i
     row = getpascal(i)
+    a = []
     for r in row:
+        a.append(numpy.log(r)/math.sqrt(numrows))
+    for r in row:
+        
         factors = getFactors(r)
         t = getCurrentTime()
         setCurrentStartTime(t)
@@ -787,14 +830,13 @@ for i in range(numrows):
 #            setCurrentFrequency(calculation here)
             r = numpy.empty(f)
             r.fill(mydur/f)
-            print(f)
             m = getArp(f)
             
-            addPattern(r, m, s, a, True, fc)
+            addPattern(r, m, s, a, True, fc, 2)
             adjustAmplitude(a)    
             
     #set a separate pattern for each 
-
+'''
 
 
 #lets try to do a rhythm pattern with pascal triangle.  
@@ -882,6 +924,79 @@ for i in range(numrows):
 #1 1
 #1 2 1
 #1 3 3 1
+
+
+
+
+#fibonacci
+#use the rhythm pattern here.  
+#P = Previous
+#1, 1, [1, 1], [[1,1],[1]], [[ [1,1], [1]], [1,1]], [[[ [1,1], [1]], [1,1]], [[1,1],[1]]], etc..  
+#what frequency or chord pattern?  
+#lets use chorrd progression here somehow.  
+#how can we relate KEY to Fibonacci?  Use the fibonacci numbers themselves and/or factors?  to determine the chorrd relationships.  
+#i.e. 1 = BASE*1, 2 = BASE*2, 3 = BASE*3, 5 = BASE*3, BASE*2, 8 = BASE*5, BASE*3, 13 = BASE*8, BASE*5, etc.  
+
+#then bring it down the same way we bring down the speed.  
+#so after 4, we reduce speed, and during that we bring down BASE one octave.  
+#1, 1, (1,1), (2,1), BASE and SPEED /=2, (3,2), (5,3), (8, 5), (13,8), BASE and SPEED /=4, (21, 13), (34, 21), (55, 34), (89, 55), BASE and SPEED /=8, ....
+#is this octave change appropriate?  
+#same note or arpeggiation?  
+#use one chord for the first half and the second for the second.  Yeah I think I like that.  
+#how far do we go.  
+#slow down the series after 4 or 8 by half and repeat and make it obvious we are slowing down
+#use different instrument for that.  
+#1, 1, [P, P-1], [P, P-1], etc.  
+
+#fibonacci = '''
+
+s = [1,1,1]
+a = [0.75,1.25,0.75]
+setScale(12)
+baseamp = 8000
+basefre = 440
+setStart(4, 0, 1, baseamp, basefre)
+numrows = 12
+mydur = 2
+
+i = 0
+row = getFibonacci(numrows)
+
+
+mydur = 8.0
+
+for i in range(numrows):
+        
+    a = []
+    
+    a.append(1)
+        
+#    while (row[i] > mydur*2):
+#        mydur *=2
+    t = getCurrentTime()
+    setCurrentStartTime(t)
+    ret = numpy.empty(row[i])
+    dur = getDurationArray(row, i, mydur, ret, 0, 1)
+    print(dur)
+    r = dur
+    setCurrentTime(t)
+    while (basefre*row[i] > 2000):
+        basefre /= 2
+    while (basefre*row[i] < 50):
+        basefre *= 2
+    #this should be in the getDurationArray.  We should adjust frequency and amplitude.  
+    #start of the fibonacci pattern is louder.  And start of any sequence louder.  
+    #also melody should start again at any sequence.  And just choose some easy notes.  
+    
+    setCurrentFrequency(basefre*row[i])
+    m = getArp(row[i])
+          
+    addPattern(r, m, s, a, True, 1, 2)
+#    adjustAmplitude(a)    
+            
+    #set a separate pattern for each 
+
+#'''
 
 
 #up6down6
