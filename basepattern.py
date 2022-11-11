@@ -272,6 +272,7 @@ def showNotes(melody, relative=True): #absolute or relative
     return currentfrequency
 
 def FrequencyToMidi(f):
+    print(f)
     n = 12*(math.log(f/220)/math.log(2)) + 57
     #return 70
     return round(n)
@@ -363,24 +364,68 @@ def getFibonacci(num):
     print(ret)
     return ret
 
+def addDurationArray(row, i, mydur, ret=[], offset=0, current=1, basefre=440):
+    a = []
+    
+    a.append(1)
+    t = getCurrentTime()
+    setCurrentStartTime(t)
+    ret = numpy.empty(row[i])
+    dur = getDurationArray(row, i, mydur, ret, 0, 1)
+    print(dur)
+    r = dur
+    setCurrentTime(t)
+    retm = numpy.empty(row[i])
+    
+    setCurrentFrequency(basefre*row[i])
+
+    m = getFrequencyArray(row, i, basefre, retm, 0, 1)
+    
+    print(m)
+    
+    addPattern(r, m, s, a, False, i, 2)
+
+
 def getDurationArray(row, i, mydur = 1, ret=[], offset=0, current = 1):
     start = row[i]
     if (i > 1 and current < 4):
         second = row[i-1]
         first = row[i-2]
         getDurationArray(row, i-1, mydur/2, ret, offset+first, current+1)    
-        
         getDurationArray(row, i-2, mydur/2, ret, offset+0, current+1)
+        addDurationArray(row, i-2, mydur/2, [], 0, 1)
         
         
     else:
         for j in range(offset, offset+start):
-            print(j)
-            print(mydur/start)
+          #  print(j)
+          #  print(mydur/start)
             ret[j] = mydur/start
             
     return ret
 
+
+def getFrequencyArray(row, i, myfre = 1, ret=[], offset=0, current=1):
+    start = row[i]
+    if (i > 1 and current < 4):
+        second = row[i-1]
+        first = row[i-2]
+        getFrequencyArray(row, i-1, myfre*row[i-1], ret, offset+first, current+1)    
+        
+        getFrequencyArray(row, i-2, myfre*row[i-2], ret, offset+0, current+1)
+        
+        
+    else:
+        for j in range(offset, offset+start):
+            while (myfre > 2000):
+                myfre /= 2
+            while (myfre*row[i] < 100):
+                myfre *= 2
+            #print(j)
+            #print(myfre)
+            ret[j] = myfre
+            
+    return ret
         
 def getArp(prime):
     if (prime == 2):
@@ -539,10 +584,15 @@ def addPattern(rythm, melody, speedvector, amplitudevector, relative=True, track
         if (relative):
             fre = adjustFrequency(melody[i])
         else:
-            fre = currentfrequency*2**(melody[i]/currentscale)
+            fre = melody[i]
+            #fre = currentfrequency*2**(melody[i]/currentscale)
         #calculate the midi note to output.  
         
-        retarray.append([currentinstrument, currenttime, dur/durmodulation, amp, fre, dur/10, track])
+        dura = dur/10
+        #this must be > 0
+        if dura < 0.01:
+            dura = 0.01
+        retarray.append([currentinstrument, currenttime, dur/durmodulation, amp, fre, dura, track])
 #        ret += "i{0}  {1}  {2}  {3}  {4:.2f}    0   {5:.2f}    10  0    {6}   {7}  {8}\r\n".format(currentinstrument, currenttime, dur, amp, fre, dur/10, track, FrequencyToMidi(fre), AmplitudeToMidi(amp)) 
         i += 1    
         currenttime += dur
@@ -966,7 +1016,9 @@ row = getFibonacci(numrows)
 mydur = 8.0
 
 for i in range(numrows):
-        
+
+    addDurationArray(row, i, mydur, [], 0, 1, basefre)
+    originalfibonacci='''        
     a = []
     
     a.append(1)
@@ -980,18 +1032,47 @@ for i in range(numrows):
     print(dur)
     r = dur
     setCurrentTime(t)
-    while (basefre*row[i] > 2000):
-        basefre /= 2
-    while (basefre*row[i] < 50):
-        basefre *= 2
     #this should be in the getDurationArray.  We should adjust frequency and amplitude.  
     #start of the fibonacci pattern is louder.  And start of any sequence louder.  
     #also melody should start again at any sequence.  And just choose some easy notes.  
+    #so we need the note also defined.  BASE, BASE*2, BASE*3, but need it to be additive.  
+    #when we are playing the 3, we have 2, then 1, we use the BASE*3 along with whatever the notes were in the previous.  
+    #same with 5, we build upon the notes, for 3 we have (1, 1), 1 and we can use BASE*1, BASE*2 and BASE*3
+    #2 would be BASE*1*BASE*2
+    #or make all frequencies the factor of N, so for instance we can use (1, 1) as BASE*2*BASE*1*(BASE*1.5), and then BASE*1*BASE*3
+    #same for 5, we have 3 and 2, and so we have the same notes BASE*2*1*1.5*1.666, then BASE*1*2*2.5
+    #so the frequencies we expierience are building.  
+    #8 would be BASE*2*1*1.5*1.666*1.6
+    #or just use the note which completes the series during that time period.  
+    #how many notes do we want to include?  
+    #1*2/1*3/2*5/3*8/5*13/8*21/13
+    #perhaps make it additive throughout.  
+    #for instance on 5 we use 
+
+    #j = i
+    #while (j > 0)
+    #setCurrentTime(t)
+    #setCurrentStartTime(t)
+    #setCurrentFrequency(basefre*row[j])
+    retm = numpy.empty(row[i])
     
     setCurrentFrequency(basefre*row[i])
-    m = getArp(row[i])
+
+    m = getFrequencyArray(row, i, basefre, retm, 0, 1)
+    #ok now get multiple notes per...
+    #if it has a number then we should add the frequency.  
+    #so for each iteration through the recursive function, we need to add frequency.  
+    
+    print(m)
+    #m = getArp(row[i])
+    
           
-    addPattern(r, m, s, a, True, 1, 2)
+#    addPattern(r, m, s, a, True, 1, 2)
+    addPattern(r, m, s, a, False, 1, 2)
+'''
+    #so we would need multiple patterns here
+    #but just using a different frequency and only part of the duration array.  
+    
 #    adjustAmplitude(a)    
             
     #set a separate pattern for each 
