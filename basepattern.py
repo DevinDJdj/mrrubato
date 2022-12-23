@@ -392,7 +392,7 @@ def getDurationArray(row, i, mydur = 1, ret=[], offset=0, current = 1):
         second = row[i-1]
         first = row[i-2]
         getDurationArray(row, i-1, mydur/2, ret, offset+first, current+1)    
-        getDurationArray(row, i-2, mydur/2, ret, offset+0, current+1)
+        getDurationArray(row, i-2, mydur/2, ret, offset+0, current+2)
         addDurationArray(row, i-2, mydur/2, [], 0, 1)
         
         
@@ -412,18 +412,20 @@ def getFrequencyArray(row, i, myfre = 1, ret=[], offset=0, current=1):
         first = row[i-2]
         getFrequencyArray(row, i-1, myfre*row[i-1], ret, offset+first, current+1)    
         
-        getFrequencyArray(row, i-2, myfre*row[i-2], ret, offset+0, current+1)
+        getFrequencyArray(row, i-2, myfre*row[i-2], ret, offset+0, current+2)
         
         
     else:
         for j in range(offset, offset+start):
-            while (myfre > 2000):
-                myfre /= 2
-            while (myfre*row[i] < 100):
+            
+            f = myfre*(row[current])/(row[current-1])
+            while (f > 2000):
+                f /= 2
+            while (f < 100):
                 myfre *= 2
             #print(j)
             #print(myfre)
-            ret[j] = myfre
+            ret[j] = f
             
     return ret
         
@@ -1006,19 +1008,26 @@ setScale(12)
 baseamp = 8000
 basefre = 440
 setStart(4, 0, 1, baseamp, basefre)
-numrows = 12
+numrows = 10
 mydur = 2
 
 i = 0
 row = getFibonacci(numrows)
 
 
-mydur = 8.0
+mydur = 4.0
 
 for i in range(numrows):
 
     addDurationArray(row, i, mydur, [], 0, 1, basefre)
+
+for i in reversed(range(numrows)):
+
+    addDurationArray(row, i, mydur, [], 0, 1, basefre)
+
     originalfibonacci='''        
+
+
     a = []
     
     a.append(1)
@@ -1078,6 +1087,92 @@ for i in range(numrows):
     #set a separate pattern for each 
 
 #'''
+
+
+#NUMBER LINE 
+numberline = '''
+Each number represents the wavelength of the sound starting with 1.  
+Wavelength of 1 will be middling (880Hz?), as this will be near the most played notes.  
+Each multiple of 2 will switch to below or above the 880Hz.  
+Every other number will have the pitch adjusted in some way.  
+Each number only plays the sound of the Factors.  
+With more factors, the amplitude is decreased for each note.  
+Less factors, the amplitude is increased, and the length of note is increased, or repeated around the average number of factors.  
+Rhythm is included based on the average number of factors for any number at that point.  
+What rhythm we can make somewhat random, or based on the lowest prime numbers which were included in that set of notes.  
+Have the set include the lowest prime number LATEST ENTRIES.  
+Within that set you will have a lowest prime number and that is your next number of LATEST ENTRIES
+Within that set, we generate rhythm based on all the prime factors which exist.  
+Rhythm is just a tuplet of the lowest prime number for now.  
+This should be expanded in some interesting fashion, but no good ideas yet.  
+Which notes are included, use the lowest prime number as the base Hz, so for instance 880/5 = 176
+Then all numbers above that lowest prime are calculated from this, and of course use 2 to decrease the frequency to an audible range.  
+Not sure if we should use rhythm to represent the number of notes etc.  
+We could use all of the frequencies of the prime numbers or the most used prime numbers as kind of a background beat.  
+Tempo is slowed based on the number of factors as that increases.  
+
+Dont worry about 2 switching, just divide by the highest multiple of 2, i.e. /8 or /16 etc.  
+If we do this, perhaps we dont need the logic stated above.  
+This is also easier to calculate.  
+But higher numbers will get some large octave jumps.  
+If it is inaudible, just leave it for now.  
+All other factors divided by the 2^n.  
+Amplitude increased for how many factors.  
+i.e. 7, 8, 9 only use 3 items because 3 is the lowest factor.  
+ = 3,3,7, so 3/8 Amplitude*2*amplitudefactor?  and 7/8
+This will switch the octaves based on the notes anyway.  
+8, 9, 10 = 3, 3, 5 so again 3/8 Amplitude*2*amplitudefactor and 5/8
+9,10,11 = 3,3,11 and this is 3/2 Amplitude*2*amplitudefactor and 5/2 and 11/2
+10,11,12 this will always be 3 numbers.  Just the factors and rhythm change.  
+= 3,5,11  /4 
+How could we increase the number of elements?  
+Or do we want to?  
+Many numbers will be inaudible.  Maybe start a bit lower.  440Hz?  
+
+Frequency is fine, but I think rhythm needs to be something else than just the tuplets.  
+Or do something the same like inlcude all fo the factor numbers, like include 3, 5, 11 again underneath.  
+So 5 would be 5/4 and 3/4
+3 would be 3/2
+11 is 3/2, 5/2, 11/2
+only do up to 3.  
+SO all rhythms and notes of these will be included.  
+Also do we continue the recursion?  I think so.  Basically we adjust the tempo for however many recursions occurred, or however many unique factors there are.  
+This ends up just being octaves, but it will not always be the case.  
+
+Dont take the lowest prime, take the lowest prime of the current number.  
+So all primes will include all numbers up to that point which becomes all primes up to that point / largest 2^n.  
+Go up to 210 perhaps.  
+Maybe rhythm only used from the lowest prime number of elements.  
+But harmony used from all?  No that's too busy.  Maybe just do the 3 elements.  And maybe recurse.  
+This will work better musically.  Mathematically not so nice.  
+What can we do other than tuplets for rhythm?  
+Emphasize more the closer it is to the actual number we are on, or if it is a factor of the number we are on.  
+Amplitude calculation here.  
+If it is a factor of the number do the tuplet of the opposite from the largest prime.  i.e. 12 = 3/4, 6/4, 9/4, 12/4
+10 = 5/2, 10/2
+28 = 7/4, 14/4, 21/4, 28/4
+56 = 7/8, 14/8, etc.  
+All these overtones of the highest prime number.  
+Or only pick some of these overtones based on the other primes which we have.  
+Play these notes over and over in a tuplet of the prime?  
+And then pick these notes of any other factors which exist.  
+i.e. 60 = 5/4, 10/4, 15/4, 20/4, etc.  
+and then pick each third.  15/4, 30/4 etc.  
+
+
+
+Maybe this will make for more interesting harmony.  
+Do the opposite for others which are not the number going down.  Maybe this will bring out some distinction.  
+
+Primes are just one single note with all primes up to that point?  Or some of the primes up to that point 1/ln(p) perhaps.  
+Every prime has this chance of being selected.  Primes will only have a chord.  
+
+
+Further Details to be determined.  
+
+'''
+
+
 
 
 #up6down6
