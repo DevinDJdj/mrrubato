@@ -19,6 +19,8 @@
 #pip install mido
 #pip install rtmidi
 #pip install py-midi
+#pip install python-rtmidi
+#install vc++ redistributable.  
 
 #from midi file get start times and stop times.  
 #for now just use the next note after the start video/stop video (21/22)
@@ -51,20 +53,20 @@ from mido.ports import MultiPort
 
 from midi import *
  
-midiIn = MidiIn()
+#midiIn = MidiIn()
  
-def printNote(eventType, channel, data1, data2):
-   print ("pitch =", data1, "volume =", data2)
+#def printNote(eventType, channel, data1, data2):
+#   print ("pitch =", data1, "volume =", data2)
  
-midiIn.onNoteOn(printNote)
+#midiIn.onNoteOn(printNote)
  
 # since we have established our own way to process incoming messages,
 # stop printing out info about every message
-midiIn.hideMessages()
+#midiIn.hideMessages()
     
-#if __name__ == '__main__':
+if __name__ == '__main__':
 #    mido.set_backend('mido.backends.portmidi')    
-#    with mido.open_input() as inport:
-#        for msg in inport:
-#            print(msg)
+    with mido.open_input() as inport:
+        for msg in inport:
+            print(msg)
     
