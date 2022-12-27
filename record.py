@@ -35,6 +35,7 @@
 #import httplib
 import httplib2
 import os
+import glob
 import random
 import sys
 import time
@@ -45,14 +46,11 @@ import numpy as np
 import string
 
 import mido
-import midi
-from midi import MidiConnector
+from mido import Message, MidiFile, MidiTrack
 
 from mido.ports import MultiPort
 
 
-from midi import *
- 
 #midiIn = MidiIn()
  
 #def printNote(eventType, channel, data1, data2):
@@ -65,8 +63,23 @@ from midi import *
 #midiIn.hideMessages()
     
 if __name__ == '__main__':
-#    mido.set_backend('mido.backends.portmidi')    
-    with mido.open_input() as inport:
+#    mido.set_backend('mido.backends.portmidi')   
+    mid = MidiFile()
+    track = MidiTrack()
+    mid.tracks.append(track)
+    inputs = mido.get_input_names()
+    print(mido.get_input_names()) 
+    with mido.open_input(inputs[1]) as inport:
         for msg in inport:
-            print(msg)
+            if msg:
+                print(msg)
+                track.append(msg)
+                if hasattr(msg, 'note') and msg.note == 22:
+                    break
+    list_of_files = glob.glob('C:/Users/devin/Videos/*.mkv') # * means all if need specific format then *.csv
+    latest_file = max(list_of_files, key=os.path.getctime)
+    print(latest_file)
+    fn = latest_file.split('.')
+    mid.save(fn[0] + '.mid')
+    
     
