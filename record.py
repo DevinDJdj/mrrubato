@@ -69,4 +69,3 @@ if __name__ == '__main__':
     with mido.open_input() as inport:
         for msg in inport:
             print(msg)
-    
