@@ -52,6 +52,12 @@ from mido import Message, MidiFile, MidiTrack
 
 from mido.ports import MultiPort
 
+import sys
+sys.path.insert(0, 'c:/devinpiano/')
+ 
+ 
+import cred
+
 
 
 
@@ -223,23 +229,33 @@ def resumable_upload(insert_request):
 
 
 def uploadmidi(file, title):
-    from pydrive.drive import GoogleDrive
-    from pydrive.auth import GoogleAuth
-    # Below code does the authentication
-    # part of the code
-    gauth = GoogleAuth()
-    gauth.LoadCredentialsFile(CLIENT_SECRETS_FILE)
-    # Creates local webserver and auto
-    # handles authentication.
-#    gauth.LocalWebserverAuth()       
-    drive = GoogleDrive(gauth)
-       
-    f = drive.CreateFile({'title': title})
-    f.SetContentFile(os.path.join(file, x))
-    f.Upload()
-    #cleanup
-    f = None
+    from firebase_admin import credentials, initialize_app, storage
+    # Init firebase with your credentials
+    cred = credentials.Certificate("../misterrubato-test.json")
+    initialize_app(cred, {'storageBucket': 'misterrubato-test.appspot.com'})
 
+    # Put your local file path 
+    Title = title + '.mid'
+    fileName = file + '.mid'
+    bucket = storage.bucket()
+    blob = bucket.blob('midi/' + Title)
+    blob.upload_from_filename(fileName)
+
+    # Opt : if you want to make public access from the URL
+    blob.make_public()
+
+    print("your file url", blob.public_url)
+    
+    
+    
+def calculatedelay(pausestart, pauseend):
+    delay = 0
+    print(pausestart)
+    print(pauseend)
+    for idx in range(len(pauseend)):
+        delay += pauseend[idx] - pausestart[idx]
+    return delay
+    
 if __name__ == '__main__':
     argparser.add_argument("--file", required=False, help="Video file to upload")
     argparser.add_argument("--title", help="Video title", default="New Upload")
@@ -257,17 +273,71 @@ if __name__ == '__main__':
 
 #    mido.set_backend('mido.backends.portmidi')   
     mid = MidiFile()
+#    mid.ticks_per_beat = 1000000
+#    mid.tempo = 60
     track = MidiTrack()
+#    track.append(MetaMessage('set_tempo', tempo=100000, time=0))
     mid.tracks.append(track)
+    test = """
+    track.append(Message('program_change', program=12, time=0))
+    track.append(Message('note_on', note=64, velocity=64, time=32))
+    track.append(Message('note_off', note=64, velocity=127, time=32))
+    track.append(Message('note_on', note=65, velocity=64, time=32))
+    track.append(Message('note_off', note=65, velocity=127, time=32))
+    track.append(Message('note_on', note=66, velocity=64, time=32))
+    track.append(Message('note_off', note=66, velocity=127, time=32))
+    track.append(Message('note_on', note=67, velocity=64, time=32))
+    track.append(Message('note_off', note=67, velocity=127, time=32))
+    track.append(Message('note_on', note=68, velocity=64, time=32))
+    track.append(Message('note_off', note=68, velocity=127, time=32))
+    track.append(Message('note_on', note=69, velocity=64, time=32))
+    track.append(Message('note_off', note=69, velocity=127, time=32))
+"""    
     inputs = mido.get_input_names()
-    print(mido.get_input_names()) 
+    print(mido.get_input_names())
+    delay = 0
+    timeoffset = 0
+    starttime = 0
+    pausestart = []
+    pauseend = []
+    lastnote = 0
+    faketime = 0
+    test = """
+    """
+    lasttick = 0
     with mido.open_input(inputs[1]) as inport:
         for msg in inport:
             if msg:
+                if hasattr(msg, 'time'):
+#                    msg.time = time.time()-starttime-delay
+#                    msg.time = faketime
+#                    faketime = faketime +1
+                    msg.time = time.time() - starttime - delay - lasttick
+                    msg.time = int(round(msg.time*1000))
+                    
+                    lasttick = time.time() - starttime - delay
+                if hasattr(msg, 'note'):
+                    if msg.note == 21:
+                        starttime = time.time()
+                        msg.time = 0
+                    if msg.note == 22:
+                        endtime = time.time()
+                        break
+                    if msg.note == 107 and msg.note !=lastnote:
+                        pausestart.append(time.time())
+                        print(msg.time)
+                    if msg.note == 108 and msg.note !=lastnote:
+                        pauseend.append(time.time())
+                        delay = calculatedelay(pausestart, pauseend)
+                        lasttick = time.time() - starttime - delay
+                        msg.time = time.time() - starttime - delay - lasttick
+                        msg.time = int(round(msg.time*1000))
+                        print("delay " + str(delay))
+                    lastnote = msg.note
+                    
                 print(msg)
                 track.append(msg)
-                if hasattr(msg, 'note') and msg.note == 22:
-                    break
+                
     list_of_files = glob.glob('C:/Users/devin/Videos/*.mkv') # * means all if need specific format then *.csv
     latest_file = max(list_of_files, key=os.path.getctime)
     print(latest_file)
@@ -279,8 +349,12 @@ if __name__ == '__main__':
     #edit the description to match the times which we detected the pauses etc.  
     #for now just upload the video and the midi file.  
     
-    youtube = get_authenticated_service(args)
-    initialize_upload(youtube, args)
     
-    pathnames = fn[0].split('/')
-    uploadmidi(fn[0] + '.mid', pathnames[len(pathnames)-1])
+    pathnames = fn[0].split('\\')
+    print(pathnames)
+    uploadmidi(fn[0], pathnames[len(pathnames)-1])
+    
+    
+
+#    youtube = get_authenticated_service(args)
+#    initialize_upload(youtube, args)
