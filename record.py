@@ -33,7 +33,7 @@
 #1st (), 1st end ()
 #2nd (), 2nd end ()
 
-
+import math
 #import httplib
 import httplib2
 import os
@@ -305,6 +305,9 @@ if __name__ == '__main__':
     test = """
     """
     lasttick = 0
+    #mido doc is crap.  But this seems ok for now.  
+    #the video and midi appear to match up pretty well.  But not perfect I think.  
+    #at least enough to get the start times now.  
     with mido.open_input(inputs[1]) as inport:
         for msg in inport:
             if msg:
@@ -317,6 +320,27 @@ if __name__ == '__main__':
                     
                     lasttick = time.time() - starttime - delay
                 if hasattr(msg, 'note'):
+                    if lastnote == 21 and msg.note !=lastnote:
+                        #1st
+                        mytime = time.time() - starttime - delay
+                        mins = math.floor(mytime/60)
+                        secs = math.floor(mytime - mins*60)
+                        filler = ""
+                        if secs < 10:
+                            filler = "0"
+                        args.description += "\nTRIAL#1"
+                        args.description += " (" + str(mins) + ":" + filler + str(secs) + ")"
+                    if lastnote==108 and msg.note !=lastnote:
+                        #2nd etc.  
+                        iterations = len(pauseend) + 1
+                        mytime = time.time() - starttime - delay
+                        mins = math.floor(mytime/60)
+                        secs = math.floor(mytime - mins*60)
+                        filler = ""
+                        if secs < 10:
+                            filler = "0"
+                        args.description += "\nTRIAL#" + str(iterations)
+                        args.description += " (" + str(mins) + ":" + filler + str(secs) + ")"
                     if msg.note == 21:
                         starttime = time.time()
                         msg.time = 0
@@ -355,6 +379,6 @@ if __name__ == '__main__':
     uploadmidi(fn[0], pathnames[len(pathnames)-1])
     
     
-
+    print(args.description)
 #    youtube = get_authenticated_service(args)
 #    initialize_upload(youtube, args)
