@@ -1,0 +1,59 @@
+Preface:
+I was trying to analyze the first 6 months of what I had done.  
+And started reflecting on why intelligible words or written words are necessary to attempt to explain this act.  
+Realizing that my snippets of words alone hardly make sense to me, I could not expect others to make sense of them.  
+However I do wish to explain what has led me to spend a large part of my time doing this "ACT".  
+
+I made a quick decision for now to include this "BOOK" in the source code which I share at https://github.com/DevinDJdj/mrrubato
+Prior to this project, I had made somewhat large source code projects before on my own.  
+But these projects took a back seat in light of my largest projects K and M.  
+And these projects have all fallen "out of support" due to changes in the computer world, changes in my interests, and long lapses in active development.  
+
+
+Never have I truly attempted to share my work with the world until now.  
+I had just worked on what interested me, and if the world was interested, so be it.  
+To a large part this is still the case.  
+
+I do apologize ahead of time.  As I have never written a "BOOK", I am sure this will not be polished.  
+Also human language has never been a strong point for me, so I hope the "BOOK" is useful for those who spend the time to read it.  
+Here follows my attempt.  
+
+
+Initial code which started this book I will leave in analyze2.py which was just getting started at the time.  
+
+#need written words to explain actually what I am doing.  
+#category "BOOK" or "PLAY" or something for not in-time thoughts, but more refined words.  
+#each subdivision can be "CHAPTER" or "ACT"
+#how can I write a book in real time?  
+#how can I construct this so that I am not repeating myself?  
+#BOOK will be written in parts, representing each thought period, and included in github.  
+#it will explain the past period, while playing music tied to the next period and explaining current thought on next period.  
+#for now get rid of the categories, this is cumbersome to do.  
+#just have WORDS, BOOK, COMPOSITION, MEMORY, HANASHI, HON
+#other labels like SIGHTREAD, or BESTOFDAY just put into description.  
+#lets translate the book to Japanese as well, kind of annoying, but it will improve my Japanese, hence my Japanese singing so probably worth it.  
+
+#represent communication types etc with different intervals and different pitch variations.  
+#must have pitch change be the differentiator, not true pitch.  
+#the same musical representation can be mapped to a computer representation as well.  
+#this can serve as a shared language probably with some thought.  
+
+
+
+I am human and will inevitably make mistakes as I create this "WORK"
+As this "BOOK" is part of my source code, it will be in-progress.  
+Please be human if you come across something that should not be here and let me know via a comment on a video for now.  
+I will not be editing this much as I hate time sucks.  
+Once I have reviewed the content, and deem it organized enough for the human language to convey what I intend to convey, I will read parts of it aloud
+and I will mark any videos made while reading this text as "BOOK", so essentially it will be an audio book delivered through Youtube.  
+
+I do not intend or have any expectation to get fortune or fame through this "WORK", however I believe the "WORK" will be interesting.  
+If by some off-chance it does become popular, for now I am thinking any donations or Youtube proceeds will be 
+distributed to my offspring so they can make something interesting without needing to constantly work for "THE MAN"
+
+Freedom of how to spend my Time is something I always wished I had more of in my youth, but now my time is somewhat limited.  
+Money can buy time if you use it wisely.  
+
+
+CHAPTER1:
+The Start

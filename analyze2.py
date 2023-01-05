@@ -8,6 +8,24 @@
 
 #notesplayed
 
+#need written words to explain actually what I am doing.  
+#category "BOOK" or "PLAY" or something for not in-time thoughts, but more refined words.  
+#each subdivision can be "CHAPTER" or "ACT"
+#how can I write a book in real time?  
+#how can I construct this so that I am not repeating myself?  
+#BOOK will be written in parts, representing each thought period, and included in github.  
+#it will explain the past period, while playing music tied to the next period and explaining current thought on next period.  
+#for now get rid of the categories, this is cumbersome to do.  
+#just have WORDS, BOOK, COMPOSITION, MEMORY, HANASHI, HON
+#other labels like SIGHTREAD, or BESTOFDAY just put into description.  
+#lets translate the book to Japanese as well, kind of annoying, but it will improve my Japanese singing so probably worth it.  
+
+#represent communication types etc with different intervals and different pitch variations.  
+#must have pitch change be the differentiator, not true pitch.  
+#the same musical representation can be mapped to a computer representation as well.  
+#this can serve as a shared language probably with some thought.  
+
+#
 
 import sys
  
@@ -96,6 +114,8 @@ plt.rcParams['figure.figsize'] = [12, 4]
 
 for t in list_no_case:
     tempdf = df.loc[(df['Title'] == t)].sort_values(by=['PublishedDate','iteration'])
+    #sum of the time here.  
+    
 #    plt.xlabel('PublishedDate')
 #    plt.ylabel('duration')
 #    plt.title(t)
@@ -122,3 +142,11 @@ for t in list_no_case:
 #fig, ax = plt.subplots()
 #s.plot.bar()
 #fig.savefig('my_plot.png')
+
+
+#want to also just have simple stats about number of times played etc.  
+#amount of time playing a particular song.  
+#that is about all we are going to get from this.  
+#analyzing the times is not going to work with such inaccurate data this year#2.  
+#this should work next year.  
+
