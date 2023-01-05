@@ -245,6 +245,7 @@ def uploadmidi(file, title):
     blob.make_public()
 
     print("your file url", blob.public_url)
+    return blob.public_url
     
     
     
@@ -311,14 +312,6 @@ if __name__ == '__main__':
     with mido.open_input(inputs[1]) as inport:
         for msg in inport:
             if msg:
-                if hasattr(msg, 'time'):
-#                    msg.time = time.time()-starttime-delay
-#                    msg.time = faketime
-#                    faketime = faketime +1
-                    msg.time = time.time() - starttime - delay - lasttick
-                    msg.time = int(round(msg.time*1000))
-                    
-                    lasttick = time.time() - starttime - delay
                 if hasattr(msg, 'note'):
                     if lastnote == 21 and msg.note !=lastnote:
                         #1st
@@ -329,6 +322,17 @@ if __name__ == '__main__':
                         if secs < 10:
                             filler = "0"
                         args.description += "\nTRIAL#1"
+                        args.description += " (" + str(mins) + ":" + filler + str(secs) + ")"
+                    if lastnote==107 and msg.note !=lastnote:
+                        #adding END messages.  For now they are only using the pause button as indicator.  
+                        iterations = len(pausestart) + 1
+                        mytime = time.time() - starttime - delay - (time.time() - starttime - delay - lasttick)
+                        mins = math.floor(mytime/60)
+                        secs = math.floor(mytime - mins*60)
+                        filler = ""
+                        if secs < 10:
+                            filler = "0"
+                        args.description += "\nEND#" + str(iterations)
                         args.description += " (" + str(mins) + ":" + filler + str(secs) + ")"
                     if lastnote==108 and msg.note !=lastnote:
                         #2nd etc.  
@@ -359,6 +363,15 @@ if __name__ == '__main__':
                         print("delay " + str(delay))
                     lastnote = msg.note
                     
+                if hasattr(msg, 'time'):
+#                    msg.time = time.time()-starttime-delay
+#                    msg.time = faketime
+#                    faketime = faketime +1
+                    msg.time = time.time() - starttime - delay - lasttick
+                    msg.time = int(round(msg.time*1000))
+                    
+                    lasttick = time.time() - starttime - delay
+
                 print(msg)
                 track.append(msg)
                 
@@ -376,9 +389,11 @@ if __name__ == '__main__':
     
     pathnames = fn[0].split('\\')
     print(pathnames)
-    uploadmidi(fn[0], pathnames[len(pathnames)-1])
+    midifile = uploadmidi(fn[0], pathnames[len(pathnames)-1])
     
-    
+    args.description += '\r\n\r\nMIDI:' + midifile
+    args.description += '\r\n\r\nKEYWORDS:' + args.keywords #add here like sightread or book, etc.  
+
     print(args.description)
-#    youtube = get_authenticated_service(args)
-#    initialize_upload(youtube, args)
+    youtube = get_authenticated_service(args)
+    initialize_upload(youtube, args)
