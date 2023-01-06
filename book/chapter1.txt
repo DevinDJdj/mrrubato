@@ -113,11 +113,13 @@ During this time I continued somewhat with music, but it started to fade in the 
 
 At 20-21 or so, I started creating a mesh networking project which was a mix between facebook and Napster (never published).  
 
-In my spare time, this sort of thing continued for a few years.  
+Somewhere around this time I also created a Blackjack probability analysis tool.  
+
+In my spare time, this sort of thing continued.  
 
 At 24-25, I created a browser plugin project which helped me learn Japanese (never published)
 
-At 28-29, I started my largest large project which helped me understand data about the Planet (published, never used much, never advertised).  
+At 28-29, I started my largest project which helped me understand data about the Planet (published, never used much, never advertised).  
 This project no longer functions because of changes to the technology it was built on, but could probably be re-started.  
 
 After I had children most of this extra-cirricular activity stopped for a period of time.  
@@ -125,7 +127,7 @@ And I worked for "THE MAN" and for "THE KIDS"
 
 Now "THE KIDS" pretty much take care of themselves.  
 
-And now my interests have now wandered to music.  
+And now my interests have now wandered back to music.  
 I still work for "THE MAN", but I kind of am "THE MAN" now.  
 
 At 43, I became interested in sharing music with my children.  
@@ -143,6 +145,7 @@ They are still muddled thoughts, however somewhat clearer.
 
 In my mind, no single piece or genre of music is definitively better than others that are similar.  
 In the same way, no performance is definitively better than another.  
+Why do I say this?  Because we have not defined any agreed-upon measurement process for determining beauty or truth in music.  
 Of course, I want to find the beauty in each piece because I want to experience joy and beauty and truth.  
 I do believe there is truth to be found in music, but I dont believe anyone understands that truth very well.  
 I believe the act of making music is closer to that truth than the act of listening to it.  
@@ -155,13 +158,14 @@ Participation in music creation comes primarily from two classes, composers and 
 There is some overlap, and generally to call yourself a musician you need to participate in both to some extent.  
 The reason I play music alone is simply due to efficiency.  It is time-consuming to find others who may want to participate.  
 Eventually I suspect I will start playing with others.  Perhaps 1-2 years in the future.  But I do not work on a timeline.  
+Also I dont see this being a focus of mine even after several years.  
 
 
 
 POLICY:
 I do not listen to other performers perform the music which I play.  
-In some cases I have heard the pieces before, but I will never attempt to copy a piece from another performer.  
-When I listen to another performer, I am just interested in their style and their tendencies, and I decide if I like that style or tendencies.  
+In some cases I have heard the pieces before, but I will NEVER attempt to copy all the stylistic and intricate details from another performer.  
+When I listen to another performer, I am just interested somewhat in their style and their tendencies, and I decide if I like that style or those tendencies.  
 I may attempt to adapt those tendencies.  But I do not listen to other performers often.  
 This is simply because I dont want to unconciously copy them.  And my mind sometimes will do that if I remember a performance.  
 
@@ -170,7 +174,7 @@ I create within whatever music I am playing if I feel inclined.
 
 POLICY:
 I do not adhere strictly to tempo rules, hence the name Mr. Rubato.  
-This allows me to play at my pace whatever that is for a particular piece.  
+This allows me to play at my pace whatever that is for a particular piece, or segment of a piece.  
 I will make some exceptions to this when I am playing with someone and they prefer a particular style or tempo, I may adapt their style or tempo.  
 
 POLICY: 
@@ -183,5 +187,7 @@ I play whatever music I feel inclined to play.
 I will make exceptions sometimes if people in my physical vicinity request certain songs.  
 I have not decided if I will take requests other than this yet.  
 
+POLICY:
+Any music I write for now will be done using algorithms only.  
 
 
