@@ -61,3 +61,35 @@ So I started sharing from a very early stage.  I am glad I did, because it has n
 Note to self:
 No need to mark WORDS in the description.  
 We can just use the other markings to extract the audio from the segments which are not between START/END, and try to use a speech to text engine at some point to get the words.  
+
+Todo:
+Chapter names dont need to be chapter...
+Just put the date we start the page.  
+Used to do this at work until I got bored in about 2017.  
+
+-Put the title into the video on upload.  
+-Do we want an original computer generated MIDI and compare to this?
+We would adjust the speed to whatever the speed of the playing is, and then compare what is the variation of the notes compared with 
+algorithmically generated notes.  
+Unfortunately I dont know if it will be easy to get the original, I suspect it will be fine for the classical pieces.  
+But some popular music this may not be available on musescore or similar.  
+
+-First just get a tool so we can make comments easier.  
+I hate typing (mm:ss), etc.  
+The time is not accurate because I need to switch tabs and also it is an annoyance.  
+Basic functionality will just be to embed the youtube video along with the MIDI mentioned in the description now.  
+For now just do the chat functionality.  
+Text box fills in a larger text field on enter and takes the video's current time (minus some delay).  
+Track how long from first letter until completion (+ extra delay of some sort).  
+Fill this into the existing description in the right place, with carriage return.  
+
+
+-later make it easy to select the video that I want to comment on.  For now dont use the API to update, just copy paste until we are sure everything is working.  
+-Need marking in the video description to indicate it was edited already.  Then we skip all videos which have this marking.  
+-Need to see if we can get all videos without a playlist.  
+My usage of playlists leaves something to be desired.  
+
+-Also for now just do up to 6 sessions per day due to the youtube API limitation.  This should be enough anyway for most days.  
+
+
+
