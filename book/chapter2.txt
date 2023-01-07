@@ -91,5 +91,8 @@ My usage of playlists leaves something to be desired.
 
 -Also for now just do up to 6 sessions per day due to the youtube API limitation.  This should be enough anyway for most days.  
 
+-For now dont worry about TTS engine, but eventually probably want to embed that so I dont have to use my hands.  
+Now do the easy text based functionality.  
 
+For now just do the basic functionality to insert youtube link and play it in a page via javascript.  
 
