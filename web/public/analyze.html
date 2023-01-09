@@ -30,8 +30,13 @@
   </div>
   <br>
 <div id="player"></div>
+    <div class="words" contenteditable>
+		 <input type="text" id="p" name="p">
+    </div>
 
   
+<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 
   <script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js'></script>
   <script>
@@ -73,6 +78,36 @@ se();
 
 
 
+        var speech = true;
+        window.SpeechRecognition = window.SpeechRecognition
+                        || window.webkitSpeechRecognition;
+  
+        const recognition = new SpeechRecognition();
+        recognition.interimResults = true;
+        const words = document.querySelector('.words');
+        words.appendChild(p);
+  
+        recognition.addEventListener('result', e => {
+            const transcript = Array.from(e.results)
+                .map(result => result[0])
+                .map(result => result.transcript)
+                .join('')
+  
+			document.getElementById("p").setAttribute('value', transcript);
+            console.log(transcript);
+        });
+          
+        if (speech == true) {
+            recognition.start();
+            recognition.addEventListener('end', recognition.start);
+        }
+	   $("#p").on('keyup', function (event) {
+		  if (event.keyCode === 13) {
+		     console.log(document.getElementById("p").value + ' (' + (end-start)/1000 + ')')
+			 document.getElementById("p").value = ""
+		  }
+	   });
+		
   </script>
   
     <script>
