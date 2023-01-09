@@ -34,6 +34,8 @@
 		 <input type="text" id="p" name="p">
     </div>
 
+    <div id="final"></div>
+	
   
 <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
@@ -77,13 +79,31 @@ se = function() {
 se();
 
 
+var player;
+var delay = 10;
+
+function str_pad_left(string,pad,length) {
+    return (new Array(length+1).join(pad)+string).slice(-length);
+}
+
+
+function helpme(){
+    if (!player.getCurrentTime)
+	    return "00:00";
+    var mins = Math.floor(player.getCurrentTime()/60);
+	var secs = Math.floor(player.getCurrentTime() - mins*60);
+    var finalTime = str_pad_left(mins,'0',2)+':'+str_pad_left(secs,'0',2);
+	
+	return finalTime;
+
+}
 
         var speech = true;
         window.SpeechRecognition = window.SpeechRecognition
                         || window.webkitSpeechRecognition;
   
         const recognition = new SpeechRecognition();
-        recognition.interimResults = true;
+        recognition.interimResults = false;
         const words = document.querySelector('.words');
         words.appendChild(p);
   
@@ -94,7 +114,10 @@ se();
                 .join('')
   
 			document.getElementById("p").setAttribute('value', transcript);
-            console.log(transcript);
+            console.log(transcript + ' (' + (end-start)/1000 + ')');
+			document.getElementById("final").innerHTML += transcript + ' (' + helpme() + ')<br>';
+			helpme()
+			
         });
           
         if (speech == true) {
@@ -120,12 +143,11 @@ se();
 
       // 3. This function creates an <iframe> (and YouTube player)
       //    after the API code downloads.
-      var player;
       function onYouTubeIframeAPIReady() {
         player = new YT.Player('player', {
           height: '390',
           width: '640',
-          videoId: 'M7lc1UVf-VE',
+          videoId: 'T7aCHEAGCsU',
           playerVars: {
             'playsinline': 1
           },
@@ -147,7 +169,7 @@ se();
       var done = false;
       function onPlayerStateChange(event) {
         if (event.data == YT.PlayerState.PLAYING && !done) {
-          setTimeout(stopVideo, 6000);
+//          setTimeout(stopVideo, 6000);
           done = true;
         }
       }
