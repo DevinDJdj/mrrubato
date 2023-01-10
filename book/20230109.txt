@@ -1,0 +1,77 @@
+So there are many things in my mind which I cant possibly translate to language quickly.  
+But the highlights are as follows:
+
+I need to continue to get better data for the algorithms which I want to work on in a few years, 
+however I think it will probably be a better use of my time to actually attempt to do what I mentioned in some video 
+in the past few days.  
+"I could try to tease out the mathematical patterns of existing well-known music."
+I am certain the "machine-like" midi is easily available, and it will help me try to formulate an API which may be usable in the future.  
+I suspect that machine-aided music will be preferable to listen to as pure art rather than what is generated with only humans within the next generation or two.  
+A lot of what we do now is machine-aided.  The common sound synthesizers for keyboards nowadays are one aspect.  
+Voice modulation is quite common.  Voice doctoring in a variety of forms is quite common.  There are many ways which machines are helping.  
+However the actual generation of music I believe is still done using standard notation and/or mixing software, which is essentially sound files which are easy to manipulate and repeat.  
+Algorithmic generation of music is still quite uncommon I think, but I will have to look a little.  
+I may not be able to find some of the best things, because it is not always the most popular things which are the most interesting.  
+
+
+The act of making music will continue to be beautiful as far as I can see.  
+As mentioned we have already started the rudimentary processes necessary to create machine-aided music, but I believe most popular music is still generated mostly manually.  
+Of course I am not privvy to all processes which all artists use, but I now have a little bit of knowledge and can postulate somewhat.  
+I believe it is important that we keep the heart of music human.  
+Language just is not sufficient to say what I want to say here.  
+
+
+I suspect nobody will read this for quite some time still, so secondly there are some things I would like to mention about mind-altering substances.  
+All pharmaceuticals have some danger associated with them, and some can be addictive.  
+There are surely strong opinions about what is acceptable and what is not.  
+I suspect in general avoiding them is probably the best decision.  
+However, for older adults who are established in society there can be some benefits in certain cases.  
+I will not go into too much detail at the moment, as this is a touchy subject.  
+I will just say that I have used a few prescribed drugs as well as unprescribed to attempt to aid my insomnia which I have struggled with for the past year or two.  
+Mary Jane is a common friend to many musicians I think, some know her better than others.  
+I started to enjoy her a bit too much recently.  
+This alters the brain in a way that makes you feel a form of contentment for some time.  
+Contentment does aid sleep, but I was unable to find something that was both safe and feasible in the long term.  
+So for now I have decided to work on my own clock instead of attempting to alter my mind in order to allow myself to be on someone else's clock.  
+Yes this is an allusion.  
+I feel very lucky to be in a position to allow for this.  
+
+My estimation is that the toll these mind-altering substances (whatever they are) take on the body is too high compared to the short term reward it brings, 
+and continuing to search for a good balance is probably fraught with more danger than it is worth.  
+Inevitably if it is not managed well, I suspect this "false" joy fades, as well as the life that contains that joy.  
+It is very difficult to know how far is too far even if you monitor your body's health quite closely.  
+I have found doctors are mostly useless in this country (USA).  
+There are surely many doctors with good hearts (pun intended), however the insurance system that has been built around the health care
+MEGA-MEGA-industry in the USA makes receiving quality care quite useless much of the time even when you have good insurance.  
+
+****
+Anyone healthy, especially children and young adults should avoid this completely, as some drugs (prescribed and otherwise) will hinder brain development.  
+Children and young adults generally do not have the knowledge or the perspective necessary to make well-informed decisions regarding this.  
+Your brain is what allows you to affect the world.  A higher functioning brain has the potential to have a larger affect on its surroundings.  
+****
+
+A side-effect of my battle with insomnia though brought me back to music (back to life?) in a way that I suspect would not have occurred without this.  
+
+
+
+日本語も書き始めたいですが、めんどくさいです。日本人にとって、これはかなり敏感なトピックですが、社会として完全なしにするのは正しいかは判断出来ない。
+もちろんこれは一人の意見だけですが、脳に変化起こす薬により人の成長に繋がるパターンもある。
+ものにより命の危険は消して少なくないですが、老化している心の生き返を起こすこともあり得る。
+生命って何と言う哲学の話になっちゃうので、絶対論はおかしいと思います。
+私はその生き返の効果を一部受けた気がします。それが何かと言うと、周りの人とのコミュニケーションを増加したに当たり、視線が広くなった。
+それによって周りに影響を与えてることが増え、もし私の命が多少年数減ったとしても影響を受けた命が美しくなる又は伸びることもある。
+
+社会として、全体で見たら悪影響に繋がる気はしますが、的確に使用すれば効果あり得る。
+調整は難しいと思いますが、現にアメリカで法的（社会的）起きている実験です。
+日本はその的確を探さないでおしまいですかね。
+
+
+
+Back to the original topic of music, I think for the next period of time I would like to concentrate a bit more on the tooling and the algorithmic generation of music.  
+I only made a very fundamental set of functions and would like to investigate some of the existing frameworks available as well as start to adjust the small amount of code that I have developed for this purpose.  
+
+Perhaps I will use odd years to be more productive on this aspect and use even years to attempt to improve my performance slightly more.  
+I will still play piano some in the odd years, but focus primarily on the programming portion of what I am attempting.  
+Trying to balance the two aspects of music, odd years could be composition years primarily while even years could be more performative.  
+But of course I dont work on a timeline.  
+
