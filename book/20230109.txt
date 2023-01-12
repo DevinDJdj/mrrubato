@@ -75,3 +75,17 @@ I will still play piano some in the odd years, but focus primarily on the progra
 Trying to balance the two aspects of music, odd years could be composition years primarily while even years could be more performative.  
 But of course I dont work on a timeline.  
 
+
+Currently in use, but dont really find intuitive:
+https://en.wikipedia.org/wiki/Csound
+
+To investigate further:
+From here:https://en.wikipedia.org/wiki/List_of_music_software#Music_mathematics_software
+https://en.wikipedia.org/wiki/SuperCollider
+https://en.wikipedia.org/wiki/Pure_Data
+
+
+https://en.wikipedia.org/wiki/Wolfram_Language
+This is interesting in and of itself.  However not sure if I can use it easily.  
+I like the mathematical nature of this, but cant really interpret how to use it like a programming language easily from just reading the wiki page.  
+
