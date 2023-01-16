@@ -29,10 +29,18 @@
 		background-color: rgba(0, 0, 0, 0.75);">
   </div>
   <br>
-<div id="player"></div>
+  <table>
+  <tr>
+  <td>
+<div id="player" valign="top"></div>
+
     <div class="words" contenteditable>
 		 <input type="text" id="p" name="p">
     </div>
+
+</td><td>
+    <textarea id="notes" rows="50" cols="80"></textarea>
+</td>
 
     <div id="final"></div>
 	
@@ -89,6 +97,7 @@ se();
 
 var player;
 var delay = 10;
+var notesarray = [];
 
 //setup https://www.youtube.com/watch?v=3jZ5vnv-LZc
 //then restrict the key if needed to your site and youtube data API.  
@@ -98,14 +107,65 @@ function str_pad_left(string,pad,length) {
 }
 
 
+function updateNotes(){
+    var allnotes = "";
+	for (i=0; i<notesarray.length; i++){
+	    allnotes += notesarray[i] + "\n";
+	}
+    $('#notes').val(allnotes);
+	
+}
+
+function createNotes(allnotes){
+    const lines = allnotes.split("\n");
+	for (i = 0; i< lines.length; i++){
+	    notesarray[i] = lines[i];
+	}
+	console.log(notesarray);
+    updateNotes();
+}
+
+function getTime(comment){
+	const regExp = /\(([^)]+)\)/g;
+    const matches = [...comment.matchAll(regExp)].flat();
+    console.log(matches);
+	if (matches.length > 0){
+	    return getSecsFromTime(matches[1]);
+	}
+	else{
+	    return 0;
+	}
+}
+
+function addComment(comment, commenttime){
+    //find where to splice and then reset the notes
+	//notesarray.splice(i, 0, comment);
+	i = 0;
+	while (i< notesarray.length && getTime(notesarray[i]) < getSecsFromTime(commenttime)){
+        i++;
+	}
+	if (i==0) i=1;
+	notesarray.splice(i-1, 0, comment + " (" + commenttime + ")");
+	updateNotes();
+	
+}
+
 function getVideoJson(videoid){
  $.getJSON('https://www.googleapis.com/youtube/v3/videos?id=' + videoid + '&key=' + webkey + '&part=snippet&callback=?',function(data){
     if (typeof(data.items[0]) != "undefined") {
         console.log('video exists ' + data.items[0].snippet.title);
+		createNotes(data.items[0].snippet.description);
        } else {
         console.log('video not exists');
      }   
     });
+}
+
+function getSecsFromTime(time){
+	minsec = time.split(":");
+	console.log(+parseInt(minsec[0])*60 + +parseInt(minsec[1]));
+	return +parseInt(minsec[0])*60 + +parseInt(minsec[1]);
+	
 }
 
 function helpme(){
@@ -136,7 +196,8 @@ function helpme(){
   
 			document.getElementById("p").setAttribute('value', transcript);
             console.log(transcript + ' (' + (end-start)/1000 + ')');
-			document.getElementById("final").innerHTML += transcript + ' (' + helpme() + ')<br>';
+			addComment(transcript, helpme());
+
 			helpme()
 			
         });

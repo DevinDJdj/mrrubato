@@ -82,3 +82,10 @@ We should probably be able to do whatever we want with this simple MIDI library.
 Just write some functions around it to generate the midi file and playback.  
 With the pitch adjustment, we should probably be able to be mathematically correct with pitch as well as any rhythms.  
 
+
+Starting to unlist older videos.  Not sure the timeframe to leave public.  
+Not sure what to do about stuff I havent even reviewed.  
+I guess we can just leave it and make public at some point.  
+
+Perhaps 6 months?  
+
