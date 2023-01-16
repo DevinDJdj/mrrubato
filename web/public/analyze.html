@@ -144,8 +144,8 @@ function addComment(comment, commenttime){
 	while (i< notesarray.length && getTime(notesarray[i]) < getSecsFromTime(commenttime)){
         i++;
 	}
-	if (i==0) i=1;
-	notesarray.splice(i-1, 0, comment + " (" + commenttime + ")");
+//	if (i==0) i=1;
+	notesarray.splice(i, 0, comment + " (" + commenttime + ")");
 	updateNotes();
 	
 }
