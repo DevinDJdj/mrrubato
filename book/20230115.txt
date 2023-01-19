@@ -1,0 +1,21 @@
+--Analyze.html 
+mostly done at least for my initial purposes.  
+Kind of tired of listening to my playing though, so I havent done any for several days.  
+I have been adjusting the physical Piano desk to allow me to code more easily at the piano.  
+With this page now I should be able to take notes though without needing to type which is a big time saver within the process.  
+Next I would like to add the midi analysis to this.  
+Also should automatically run statistics on previous iterations of the same song.  Do a Search for the same songs and retrieve the midi from 
+those notes.  
+For now just do some basic statistical analysis regarding speed and notes per second etc.  
+And then analyze the words which are used.  
+We should limit our usage to well known phrases like "like this" etc.  
+Dont want to automatically update the description for now even though that is more convenient since this site and code is all completely open.  
+Should probably take a backup of all the descriptions from time to time just in case there is someone who is wicked and attempts to ruin the data that is there somehow.  
+It is always possible in the attempt to make everything open, I have allowed the website to be compromised by some bad actor.  
+
+--Play.py
+Initial sample coding done here.  
+Next steps should be to add the pitch wheel functionality so that I can make precise mathematical calculations when generating the midi.  
+Not sure if I want to keep using the CSound functionality or just move everything to midi.  
+Need adjustment of pitch wheel and adjustment of instrument functions before I can do much.  
+

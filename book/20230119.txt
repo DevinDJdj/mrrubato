@@ -1,0 +1,24 @@
+--index.html
+Need an index.html page which shows the analyze.html link for the previous several recorded.  
+
+--analyze.html
+need to add a javascript midi library which loads the midi from the recording and shows some statistics comparing with previous iterations.  
+Options:
+https://jazz-soft.net/demo/ReadMidiFile.html
+http://minitorn.tlu.ee/~jaagup/kool/java/kursused/14/gm/MIDI.js-master/demo-MIDIPlayer.html
+https://galactic.ink/piano/
+
+For now just take this and adjust it to fit the page for me.  
+Not sure I want this in the analyze page, just make a new page
+
+--midi.html perhaps.  
+Dont really like this name.  
+Just use the videoID and pull the midi link from this.  
+
+
+
+--analyze.html 
+should have the midi loaded and just some analytics on that midi.  
+For now do the midi.html first until we are more familiar with the functionality.  
+
+
