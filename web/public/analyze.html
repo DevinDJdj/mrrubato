@@ -39,10 +39,10 @@
     </div>
 
 </td><td>
-    <textarea id="notes" rows="50" cols="80"></textarea>
+    <textarea id="notes" rows="40" cols="80"></textarea>
 </td>
-
-    <div id="final"></div>
+</table>
+    <div id="previous"></div>
 	
   
 <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
@@ -53,10 +53,13 @@
   //firebase deploy to deploy this.  
   //usage:
 //  https://www.misterrubato.com/analyze.html?video=s5zoEwEUPu0
+//can we add this link to the top of all descriptions on record?  
   
 // https://stackoverflow.com/questions/901115/how-can-i-get-query-string-values-in-javascript
 var urlParams;
 var video = 'T7aCHEAGCsU';
+var channelId = 'UC4dK3RpqBq2JpIkRmQn6HOA'; //@misterrubato doesnt work in URL, probably need to escape the @, but who cares.  
+var title = '';
 (function () {
     var match,
         pl     = /\+/g,  // Regex for replacing addition symbol with a space
@@ -122,13 +125,14 @@ function createNotes(allnotes){
 	    notesarray[i] = lines[i];
 	}
 	console.log(notesarray);
+	//set title
     updateNotes();
 }
 
 function getTime(comment){
 	const regExp = /\(([^)]+)\)/g;
     const matches = [...comment.matchAll(regExp)].flat();
-    console.log(matches);
+//    console.log(matches);
 	if (matches.length > 0){
 	    return getSecsFromTime(matches[1]);
 	}
@@ -150,11 +154,36 @@ function addComment(comment, commenttime){
 	
 }
 
+function searchPrevious(){
+	//use title
+ $.getJSON('https://www.googleapis.com/youtube/v3/search?maxResults=15&channelId=' + channelId + '&order=date&q=' + title + '&key=' + webkey + '&part=snippet',function(data){
+      if (typeof(data.items[0]) != "undefined") {
+	      for (i=0; i<data.items.length; i++){
+            console.log('found  ' + data.items[i].snippet);
+			var mydiv = document.getElementById("previous");
+			var aTag = document.createElement('a');
+			aTag.setAttribute('href',"https://misterrubato.com/analyze.html?video=" + data.items[i].id.videoId);
+			aTag.innerText = "PREV#" + i;
+			mydiv.appendChild(aTag);
+			var br = document.createElement("br");
+			mydiv.appendChild(br);
+		  }
+       } 
+	   else {
+        console.log('video not exists');
+       }   
+    });
+	
+}
+
 function getVideoJson(videoid){
  $.getJSON('https://www.googleapis.com/youtube/v3/videos?id=' + videoid + '&key=' + webkey + '&part=snippet&callback=?',function(data){
     if (typeof(data.items[0]) != "undefined") {
         console.log('video exists ' + data.items[0].snippet.title);
 		createNotes(data.items[0].snippet.description);
+		//get previous iterations of this.  
+		title = notesarray[0];
+		searchPrevious();
        } else {
         console.log('video not exists');
      }   
@@ -171,8 +200,10 @@ function getSecsFromTime(time){
 function helpme(){
     if (!player.getCurrentTime)
 	    return "00:00";
-    var mins = Math.floor(player.getCurrentTime()/60);
-	var secs = Math.floor(player.getCurrentTime() - mins*60);
+    var temptime = player.getCurrentTime();
+	temptime -= delay;
+    var mins = Math.floor(temptime/60);
+	var secs = Math.floor(temptime - mins*60);
     var finalTime = str_pad_left(mins,'0',2)+':'+str_pad_left(secs,'0',2);
 	
 	return finalTime;
