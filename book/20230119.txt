@@ -1,5 +1,5 @@
---index.html
-Need an index.html page which shows the analyze.html link for the previous several recorded.  
+--recent.html
+Need an recent.html page which shows the analyze.html link for the previous several recorded.  
 
 --analyze.html
 need to add a javascript midi library which loads the midi from the recording and shows some statistics comparing with previous iterations.  

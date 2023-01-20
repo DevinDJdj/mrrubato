@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Recent recordings</title>
+
+</head>
+
+<body translate="no" >
+  <br>
+    <div id="recent"></div>
+	
+  
+<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js'></script>
+  <script>
+  //firebase deploy to deploy this.  
+  //usage:
+//  https://www.misterrubato.com/analyze.html?video=s5zoEwEUPu0
+//can we add this link to the top of all descriptions on record?  
+  
+// https://stackoverflow.com/questions/901115/how-can-i-get-query-string-values-in-javascript
+var urlParams;
+var channelId = 'UC4dK3RpqBq2JpIkRmQn6HOA'; //@misterrubato doesnt work in URL, probably need to escape the @, but who cares.  
+var title = '';
+
+//setup https://www.youtube.com/watch?v=3jZ5vnv-LZc
+//then restrict the key if needed to your site and youtube data API.  
+webkey = 'AIzaSyCUinmE8NN5BoGqHkNlVveLCOuebxEHCyY';
+
+
+function searchRecent(){
+	//use title
+ $.getJSON('https://www.googleapis.com/youtube/v3/search?maxResults=30&channelId=' + channelId + '&order=date&key=' + webkey + '&part=snippet',function(data){
+      if (typeof(data.items[0]) != "undefined") {
+	      for (i=0; i<data.items.length; i++){
+            console.log('found  ' + data.items[i].snippet);
+			var mydiv = document.getElementById("recent");
+			var aTag = document.createElement('a');
+			aTag.setAttribute('href',"https://misterrubato.com/analyze.html?video=" + data.items[i].id.videoId);
+			const t = data.items[i].snippet.description;
+			console.log(t);
+			aTag.innerText = t;
+			mydiv.appendChild(aTag);
+			var br = document.createElement("br");
+			mydiv.appendChild(br);
+		  }
+       } 
+	   else {
+        console.log('no videos returned');
+       }   
+    });
+	
+}
+
+searchRecent();
+
+  </script>
+  
+	
+</body>
+</html>
