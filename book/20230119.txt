@@ -22,3 +22,14 @@ should have the midi loaded and just some analytics on that midi.
 For now do the midi.html first until we are more familiar with the functionality.  
 
 
+--midi2.html
+galactic.ink/piano/
+ actually better, but they have minified the code.  
+OK, unminified, and this is much better quality.  
+Lets just adjust this to load from our midi.  
+Put the midi play link into the recent.  
+Maybe make something like midilyze for now so we dont have anything too complex.  
+
+--midilyze.html
+
+
