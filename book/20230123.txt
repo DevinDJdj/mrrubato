@@ -1,0 +1,57 @@
+Midi Database here:
+https://github.com/bytedance/GiantMIDI-Piano
+
+This is a start.  
+We can utilize this.  
+Also this is nice for future if needed to transcribe.  
+
+Just use this, we already started.  
+https://github.com/mudcube/MIDI.js
+
+http://www.kuhmann.com/Yamaha.htm
+
+pseudo-code:
+From Midi file, ingest and have a note structure:
+Absolute time, Note, Note strength, duration
+
+At each note, infer chord structure from surrounding notes.  
+Infer melody structure from that note.  
+For now just use immediately surrounding notes.  
+Put this into each note object.  
+Absolute time, Note, Note strength, duration, (chord structure), (melody structure), (rhythmic structure)
+
+chord structure 
+-> major, minor, etc.  
+melodic strucutre 
+-> prior X notes, post X notes.  For now similar to the structure we have made +1, -2, +5, etc.  
+for now just utilize closest notes distance-wise, and perhaps exclude something which appears to be in a chord structure and doesnt fit in melodic strucutre.  
+Rhythmic structure -> not sure how to do this yet.  
+
+After this is done, try to see what melodic structures match up and what dont, and then decide best fits.  
+
+Then adjust amplification based on chord structure and melodic structure importance.  
+
+After we have melodic structures and chord structures, try to determine chord pattern peaks and valleys (or "restarts")
+
+
+--side note--
+Adjust rhythm accordingly around those peaks.  But do so mathematically.  
+
+Lets do this in a python script first.  Then perhaps adapt to JS or just generate data for JS.  
+
+Single midi analysis -> input is filename or youtube ID to get the MIDI from.  
+Then do the above logic.  
+Generate a structure to represent i.e. the melodic pattern only or the chord pattern only.  
+Exporting to midi, export the original in one track and then the melody in another and chord pattern in another.  
+
+
+Second program:
+Try to match one MIDI iteration with another iteration and come up with a combined result.  
+Or highlight those things that are deemed different.  
+In the end perhaps we should just combine many iterations, this would probably be a better end result.  
+But for now start with two.  
+
+Third program: 
+generate the note structures on staff.  
+
+

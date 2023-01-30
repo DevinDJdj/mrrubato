@@ -1,0 +1,13 @@
+Looking at the openai/jukebox code a bit.  
+For now just trying to get it to work.  
+SO annoying.  
+https://github.com/openai/jukebox
+Well, I need an NVIDIA card for this, really annoying.  
+Why would they do that, I guess this is just for testing anyway probably.  
+
+
+Eventually should show some of this work being done on the computer, even the setup portions, but for now it is too annoying to do.  
+Not sure if I will feel like doing this in the future.  
+
+Not sure if listening at 2x speed is a good idea, but going to test it for a while.  
+Especially since I want to save time for developing.  
