@@ -1,0 +1,91 @@
+Currently in use, but dont really find intuitive:
+https://en.wikipedia.org/wiki/Csound
+
+To investigate further:
+From here:https://en.wikipedia.org/wiki/List_of_music_software#Music_mathematics_software
+https://en.wikipedia.org/wiki/SuperCollider
+https://en.wikipedia.org/wiki/Pure_Data
+
+
+**MEMORY**
+https://en.wikipedia.org/wiki/Wolfram_Language
+This is interesting in and of itself.  However not sure if I can use it easily.  
+I like the mathematical nature of this, but cant really interpret how to use it like a programming language easily from just reading the wiki page.  
+In-depth investigation needed.  Perhaps download this and some samples:  
+Wolfram Workbench
+
+Separate machine needed for testing these things.  
+
+
+
+So how do we find "truth" in music?  
+I believe there is some aspect of this which we can see from the songs which remain throughout the years.  
+It is all a probability game if you want to search for "truth" in popular music.  
+Songs which have been popular for centuries or many decades have a higher likelihood of being somewhat closer to that truth 
+than songs which have only been around for a few years.  
+However, I suspect if we can tease out the mathematical components which tend toward "truth", we wouldnt have to wait so long to understand.  
+Where is time best spent in this area?  
+
+Todo: 
+-Let's go ahead and analyze the well known classical composers' creations.  
+This is already a filtered list which should be at least somewhat closer to "truth".  
+
+I dont want to stop playing piano but these ideas start to become more interesting than what I could do in a similar amount of time playing.  
+Also after playing for people which gathered at my home over the past few months, I realize that I dont really like performing for others.  
+In the past, this was the only way to share what you had created/invented with others, but now we have recordings.  
+And there is really no need to perform for others unless some are also performing with/for you.  
+
+The one thing that is still necessary though is the real-time feedback loop that occurs.  
+This is inherent to the music being generated.  So whatever is generating the music, there must be some logic which takes into account the need for an immediate feedback loop.  
+**To start this logic may not be necessary, but eventually I think it is.  
+Improvisation and creation require some amount of randomness, and the response to this randomness could also be a way to immitate the immediate feedback loop which occurs in humans.  
+
+Perhaps in January each year I will remove or make private all videos from that previous year.  
+In a wierd way this would keep the performance aspect alive.  
+But I am tending toward thinking that the time spent performing this is not worth it at the moment.  
+My time is better spent doing something else.  
+
+Todo:
+-I need to create play.py which will play any midi onto an external device.  
+-need to have something either in play.py or a separate file which will be the generative engine and adjust the ingested midi to our liking.  
+However do we want to make the playback dependent on an external device?  For now just use a standard piano sound in any playback with csound or other which I choose.  
+But also allow for the playback to occur on an external device eventually.  
+-Need to check that I am getting all midi events in record.py.  
+
+
+
+Since the consumer of music is people, we need to understand the inner workings of the different perceptions which can occur.  
+What one person likes another does not.  I can see that quite clearly just with what I have done up to this point.  
+But in today's world with music as well as other things, loudness is often misinterpreted for quality.  
+I suspect this is because the subtler aspects of softer music often go unnoticed to less sensitive ears.  
+
+
+Mathematical Precision
+Randomness (and reactions to this randomness)
+--Performing with others can contribute a lot here.  I suspect this is also what adjusts our own voices.  
+
+What is the number of simultaneous notes and rhythms which are easily distinguishable?  
+This changes based on the frequencies used.  
+Lower frequencies have less possibility for refinement due to the nature of frequency.  
+This is something I think most composers do naturally, but I am not sure how many understand or are concsious of the reason they do this.  
+
+
+For now just using the basic functionality of the mido library to playback.  
+Not sure if we will do anything to combine the generation and playback.  
+
+We can adjust pitches if necessary here.  
+https://mido.readthedocs.io/en/latest/message_types.html
+pitchwheel	channel pitch
+
+Not sure if this will be sufficient, but I suspect so.  
+We should probably be able to do whatever we want with this simple MIDI library.  
+Just write some functions around it to generate the midi file and playback.  
+With the pitch adjustment, we should probably be able to be mathematically correct with pitch as well as any rhythms.  
+
+
+Starting to unlist older videos.  Not sure the timeframe to leave public.  
+Not sure what to do about stuff I havent even reviewed.  
+I guess we can just leave it and make public at some point.  
+
+Perhaps 6 months?  
+

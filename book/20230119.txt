@@ -1,0 +1,62 @@
+--recent.html
+Need an recent.html page which shows the analyze.html link for the previous several recorded.  
+
+--analyze.html
+need to add a javascript midi library which loads the midi from the recording and shows some statistics comparing with previous iterations.  
+Options:
+https://jazz-soft.net/demo/ReadMidiFile.html
+http://minitorn.tlu.ee/~jaagup/kool/java/kursused/14/gm/MIDI.js-master/demo-MIDIPlayer.html
+https://galactic.ink/piano/
+
+For now just take this and adjust it to fit the page for me.  
+Not sure I want this in the analyze page, just make a new page
+
+--midi.html perhaps.  
+Dont really like this name.  
+Just use the videoID and pull the midi link from this.  
+
+
+
+--analyze.html 
+should have the midi loaded and just some analytics on that midi.  
+For now do the midi.html first until we are more familiar with the functionality.  
+
+
+*20230121
+--midi2.html
+galactic.ink/piano/
+ actually better, but they have minified the code.  
+OK, unminified, and this is much better quality.  
+Lets just adjust this to load from our midi.  
+Put the midi play link into the recent.  
+Maybe make something like midilyze for now so we dont have anything too complex.  
+
+--midilyze.html
+Load previous X midi files from the same song and use the midi tools to analyze them or look at them side-by-side.  
+
+
+*note*
+sometimes the firebase takes a while to upload.  
+Wait 5 mins if something is not there.  
+
+Give props somehow in midi2.html 
+
+--midi2.html
+Next step, load a midi file which I have generated from videoID.  
+Line 3674 - MidiFile
+3867 pushing the notes just to an array.  
+Dont really care about the internals of midi at the moment.  
+Maybe easier to look in the browser debugger at i.e. Replayer 3884 for example to see what exactly we have here.  
+The coding here is not the easiest to read.  
+Especially all the simplified function names.  
+Doesnt really look obfuscated, but it may have been run through a simple obfuscator which only obfuscated some of the function names.  
+So deconstructing this is going to be annoying, but it works well, so lets use this.  
+
+Tried to match them up.  The midi has some lag, so this may be hard to match up actually with the audio.  
+We would have to fast-forward the midi every 10 seconds or so slightly, or pause the video.  
+When listening, just have the animation perhaps and try to match up every so often.  
+
+
+
+
+

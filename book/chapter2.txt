@@ -1,0 +1,98 @@
+LOL, just started reading the Chopin biography, and still in the prologue, but I had to laugh at a few of the things.  
+I am not comparing myself to Chopin, just trying to understand why I like his music.  
+But I have decided to learn a bit more about the people who made the music.  
+Because I do believe understanding a person's life and thoughts are of vital importance to try to understand the work.  
+
+
+
+1. Tuberculosis is no laughing matter.  
+I guess I shouldnt complain about my minor struggle with insomnia.  
+
+
+2. Chopin didnt like Liszt, as I suspected.  I only made this assumption based on the part of one of Chopin's pieces which has "a Liszt" in it.  
+I have seen other markings like this, but this particular part was just an abrasive few minutes inside of a nice melodic piece.  
+And it just seems out of place.  I think he was teasing him.  
+I am curious now about the other dedications and who the people were.  
+The music definitely has meaning of sorts, but how to interpret that meaning is something I look forward to contemplating.  
+I will try not to let the fact that I am reading about him hinder my interpretation, but the words of the books I read may seep into my subconcious mind.  
+
+
+
+3. Chopin liked playing in front of "friends", and not necessarily for the public.  Luckily now we can make the performances available with the technology we have.  
+I still havent decided how to approach what to do (record or not, publish or not) when I play while other people are around.  
+Since I record video and often the surrounding sounds along with the piano, it is a conundrum.  
+Playing occurs in my home, but I want to respect peoples' privacy.  
+Having a discussion about whether I can publish the music I play with each individual in the vicinity is an annoyance and a time suck I could do without.  
+Perhaps I will mark these and publish them at a much later date when nobody really cares anymore.  
+At the moment people are unsure exactly what to feel when they find out what I am doing.  
+I recall mentioning to someone that I upload everything to youtube, and she was interested in how many followers I have.  
+I said 30 and she laughed.  The social media aspect of today's world has warped our understanding of what is important in the world.  
+I dont really participate, although I have tried to a bit more recently.  
+The primary purpose of the "WORK" is not to have people follow me.  However I do want to make the "WORK" public.  
+
+
+4. Chopin would often during the course of creation end up back where he started after much toil.  
+This makes me think of how easy it is to record and analyze all of the creations now with the help of computers.  
+I intend to utilize technology as much as I find convenient to provide the best process during creation as well as analysis.  
+If I am able to contribute anything substantial to the musical world from the "WORK", my integration of technology into the creative process is probably what it will be.  
+But I may become fairly good at piano in the meantime.  I am very interested in the learning curve and intend to analyze it when I have enough good data.  
+
+5. Chopin was influenced by Beethoven, Mozart and Bach.  
+This reminded me that I havent recorded much/anything from Mozart/Bach yet, but I do like both.  
+
+6. Chopin's preference for "p (piano)" is something I think I share.  I often write "like that light touch" or something similar when reviewing my playing.  
+I recall recently when my wife's friend, who is a very good pianist, came over and played something.  
+I had to turn down the volume on her (sorry).  
+
+
+
+Thinking about the technology aspect of things, I am trying to organize how exactly I should utilize keywords with each upload.  
+In order to analyze the data afterwards, I think I need markings for 
+MOOD and perhaps some other things.  
+
+
+I decided this time for this musical "WORK", I would start sharing from a very early stage.  
+For what is palatable to most people, it is probably too early.  
+However as mentioned in chapter1, I have done extremely large (and quite interesting) projects by myself, and never published them.  
+But I couldnt forgive myself if I did that with something as sharing and communicative as music.  
+So I started sharing from a very early stage.  I am glad I did, because it has now become part of the process to share this source code, and the words.  
+
+
+Note to self:
+No need to mark WORDS in the description.  
+We can just use the other markings to extract the audio from the segments which are not between START/END, and try to use a speech to text engine at some point to get the words.  
+
+Todo:
+Chapter names dont need to be chapter...
+Just put the date we start the page.  
+Used to do this at work until I got bored in about 2017.  
+
+-Put the title into the video on upload.  
+-Do we want an original computer generated MIDI and compare to this?
+We would adjust the speed to whatever the speed of the playing is, and then compare what is the variation of the notes compared with 
+algorithmically generated notes.  
+Unfortunately I dont know if it will be easy to get the original, I suspect it will be fine for the classical pieces.  
+But some popular music this may not be available on musescore or similar.  
+
+-First just get a tool so we can make comments easier.  
+I hate typing (mm:ss), etc.  
+The time is not accurate because I need to switch tabs and also it is an annoyance.  
+Basic functionality will just be to embed the youtube video along with the MIDI mentioned in the description now.  
+For now just do the chat functionality.  
+Text box fills in a larger text field on enter and takes the video's current time (minus some delay).  
+Track how long from first letter until completion (+ extra delay of some sort).  
+Fill this into the existing description in the right place, with carriage return.  
+
+
+-later make it easy to select the video that I want to comment on.  For now dont use the API to update, just copy paste until we are sure everything is working.  
+-Need marking in the video description to indicate it was edited already.  Then we skip all videos which have this marking.  
+-Need to see if we can get all videos without a playlist.  
+My usage of playlists leaves something to be desired.  
+
+-Also for now just do up to 6 sessions per day due to the youtube API limitation.  This should be enough anyway for most days.  
+
+-For now dont worry about TTS engine, but eventually probably want to embed that so I dont have to use my hands.  
+Now do the easy text based functionality.  
+
+For now just do the basic functionality to insert youtube link and play it in a page via javascript.  
+

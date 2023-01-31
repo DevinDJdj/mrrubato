@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Analyze me</title>
+
+</head>
+
+<body translate="no" >
+  <div id="clock" 
+       style=	"display: inline-block;
+		font-family: monospace;
+		font-size: 30px;
+		text-align: right;
+		color: lightgray; 
+		border-radius: 10px; 
+		padding: 10px; 
+		background-color: rgba(0, 0, 0, 0.75);">
+  </div>
+  <div id="secondselapsed" 
+       style=	"display: inline-block;
+		font-family: monospace;
+		font-size: 30px;
+		text-align: right;
+		color: lightgray; 
+		border-radius: 10px; 
+		padding: 10px; 
+		background-color: rgba(0, 0, 0, 0.75);">
+  </div>
+  <br>
+  <table>
+  <tr>
+  <td>
+<div id="player" valign="top"></div>
+
+    <div class="words" contenteditable>
+		 <input type="text" id="p" name="p">
+    </div>
+
+</td><td>
+    <textarea id="notes" rows="40" cols="80"></textarea>
+</td>
+</table>
+    <div id="previous"></div>
+	
+  
+<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js'></script>
+  <script>
+  //firebase deploy to deploy this.  
+  //usage:
+//  https://www.misterrubato.com/analyze.html?video=s5zoEwEUPu0
+//can we add this link to the top of all descriptions on record?  
+  
+// https://stackoverflow.com/questions/901115/how-can-i-get-query-string-values-in-javascript
+var urlParams;
+var video = 'T7aCHEAGCsU';
+var channelId = 'UC4dK3RpqBq2JpIkRmQn6HOA'; //@misterrubato doesnt work in URL, probably need to escape the @, but who cares.  
+var title = '';
+(function () {
+    var match,
+        pl     = /\+/g,  // Regex for replacing addition symbol with a space
+        search = /([^&=]+)=?([^&]*)/g,
+        decode = function (s) { return decodeURIComponent(s.replace(pl, " ")); },
+        query  = window.location.search.substring(1);
+    urlParams = {};
+    while (match = search.exec(query))
+       urlParams[decode(match[1])] = decode(match[2]);
+})();
+var output = document.getElementById("clock");
+if (urlParams["style"]) output.setAttribute("style", urlParams["style"]);
+if (urlParams["bodyStyle"]) document.body.setAttribute("style", urlParams["bodyStyle"]);
+if (urlParams["video"]){ 
+  video = urlParams["video"];
+  console.log(video);
+}
+
+var c;
+setInterval(
+c = function() {
+	output.innerText = moment().format(urlParams["format"] || 'DD/MM/YYYY HH:mm:ss');
+//    output.innerText = moment().format(urlParams["format"] || '');
+}, 1000);
+c();
+
+var secondselapsed = document.getElementById("secondselapsed");
+start = moment()
+var se;
+setInterval(
+se = function() {
+    end = moment()
+	secondselapsed.innerText = (end - start)/1000;
+//    output.innerText = moment().format(urlParams["format"] || '');
+}, 1000);
+se();
+
+
+var player;
+var delay = 10;
+var notesarray = [];
+
+//setup https://www.youtube.com/watch?v=3jZ5vnv-LZc
+//then restrict the key if needed to your site and youtube data API.  
+webkey = 'AIzaSyCUinmE8NN5BoGqHkNlVveLCOuebxEHCyY';
+function str_pad_left(string,pad,length) {
+    return (new Array(length+1).join(pad)+string).slice(-length);
+}
+
+
+function updateNotes(){
+    var allnotes = "";
+	for (i=0; i<notesarray.length; i++){
+	    allnotes += notesarray[i] + "\n";
+	}
+    $('#notes').val(allnotes);
+	
+}
+
+function createNotes(allnotes){
+    const lines = allnotes.split("\n");
+	for (i = 0; i< lines.length; i++){
+	    notesarray[i] = lines[i];
+	}
+	console.log(notesarray);
+	//set title
+    updateNotes();
+}
+
+function getTime(comment){
+	const regExp = /\(([^)]+)\)/g;
+    const matches = [...comment.matchAll(regExp)].flat();
+//    console.log(matches);
+	if (matches.length > 0){
+	    return getSecsFromTime(matches[1]);
+	}
+	else{
+	    return 0;
+	}
+}
+
+function addComment(comment, commenttime){
+    //find where to splice and then reset the notes
+	//notesarray.splice(i, 0, comment);
+	i = 0;
+	while (i< notesarray.length && getTime(notesarray[i]) < getSecsFromTime(commenttime)){
+        i++;
+	}
+//	if (i==0) i=1;
+	notesarray.splice(i, 0, comment + " (" + commenttime + ")");
+	updateNotes();
+	
+}
+
+function searchPrevious(){
+	//use title
+ $.getJSON('https://www.googleapis.com/youtube/v3/search?maxResults=15&channelId=' + channelId + '&order=date&q=' + title + '&key=' + webkey + '&part=snippet',function(data){
+      if (typeof(data.items[0]) != "undefined") {
+	      for (i=0; i<data.items.length; i++){
+            console.log('found  ' + data.items[i].snippet);
+			var mydiv = document.getElementById("previous");
+			var aTag = document.createElement('a');
+			aTag.setAttribute('href',"https://misterrubato.com/analyze.html?video=" + data.items[i].id.videoId);
+			aTag.innerText = "PREV#" + i;
+			mydiv.appendChild(aTag);
+			var br = document.createElement("br");
+			mydiv.appendChild(br);
+		  }
+       } 
+	   else {
+        console.log('video not exists');
+       }   
+    });
+	
+}
+
+function getVideoJson(videoid){
+ $.getJSON('https://www.googleapis.com/youtube/v3/videos?id=' + videoid + '&key=' + webkey + '&part=snippet&callback=?',function(data){
+    if (typeof(data.items[0]) != "undefined") {
+        console.log('video exists ' + data.items[0].snippet.title);
+		createNotes(data.items[0].snippet.description);
+		//get previous iterations of this.  
+		title = notesarray[0];
+		searchPrevious();
+       } else {
+        console.log('video not exists');
+     }   
+    });
+}
+
+function getSecsFromTime(time){
+	minsec = time.split(":");
+	if (minsec == time)
+	    return 0;
+	console.log(+parseInt(minsec[0])*60 + +parseInt(minsec[1]));
+	return +parseInt(minsec[0])*60 + +parseInt(minsec[1]);
+	
+}
+
+function helpme(){
+    if (!player.getCurrentTime)
+	    return "00:00";
+    var temptime = player.getCurrentTime();
+	temptime -= delay;
+    var mins = Math.floor(temptime/60);
+	var secs = Math.floor(temptime - mins*60);
+    var finalTime = str_pad_left(mins,'0',2)+':'+str_pad_left(secs,'0',2);
+	
+	return finalTime;
+
+}
+
+        var speech = true;
+        window.SpeechRecognition = window.SpeechRecognition
+                        || window.webkitSpeechRecognition;
+  
+        const recognition = new SpeechRecognition();
+        recognition.interimResults = false;
+        const words = document.querySelector('.words');
+        words.appendChild(p);
+  
+        recognition.addEventListener('result', e => {
+            const transcript = Array.from(e.results)
+                .map(result => result[0])
+                .map(result => result.transcript)
+                .join('')
+  
+			document.getElementById("p").setAttribute('value', transcript);
+            console.log(transcript + ' (' + (end-start)/1000 + ')');
+			addComment(transcript, helpme());
+
+			helpme()
+			
+        });
+          
+        if (speech == true) {
+            recognition.start();
+            recognition.addEventListener('end', recognition.start);
+        }
+	   $("#p").on('keyup', function (event) {
+		  if (event.keyCode === 13) {
+		     console.log(document.getElementById("p").value + ' (' + (end-start)/1000 + ')')
+			 document.getElementById("p").value = ""
+		  }
+	   });
+	   
+	   json = getVideoJson(video);
+	   console.log(json);
+		
+
+
+  </script>
+  
+    <script>
+      // 2. This code loads the IFrame Player API code asynchronously.
+      var tag = document.createElement('script');
+
+      tag.src = "https://www.youtube.com/iframe_api";
+      var firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+      // 3. This function creates an <iframe> (and YouTube player)
+      //    after the API code downloads.
+      function onYouTubeIframeAPIReady() {
+        player = new YT.Player('player', {
+          height: '390',
+          width: '640',
+          videoId: video,
+          playerVars: {
+            'playsinline': 1
+          },
+          events: {
+            'onReady': onPlayerReady,
+            'onStateChange': onPlayerStateChange
+          }
+        });
+      }
+
+      // 4. The API will call this function when the video player is ready.
+      function onPlayerReady(event) {
+        event.target.playVideo();
+      }
+
+      // 5. The API calls this function when the player's state changes.
+      //    The function indicates that when playing a video (state=1),
+      //    the player should play for six seconds and then stop.
+      var done = false;
+      function onPlayerStateChange(event) {
+        if (event.data == YT.PlayerState.PLAYING && !done) {
+//          setTimeout(stopVideo, 6000);
+          done = true;
+        }
+      }
+      function stopVideo() {
+        player.stopVideo();
+      }
+    </script>
+	
+</body>
+</html>
