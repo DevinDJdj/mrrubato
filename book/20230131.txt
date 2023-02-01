@@ -1,0 +1,28 @@
+Too many things to do.  
+Need to organize my thoughts a bit for the next days/weeks.  
+
+organize the code, made folder [analyze].  
+Leave existing first stab at this in the base folder.  
+
+**analyze/analyze.py -> change to analyze a single piece.  Retrieve all prior iterations, and do some deeper time analysis on this.   
+Only use the TRIAL#1 -> END#1 from accurate recordings.  
+Start with time analysis, then move on to midi analysis as well.  
+How many times played, what is the pace I am playing the song, what is the rate of speed improvement, what is the rate of relearning necessary after X days/weeks.  
+For now just use speed of the played piece.  
+But eventually utilize other aspects.  
+Not much data yet, but enough to code something.  
+
+
+**analyze/midilyze.py -> single piece as well.  
+How many notes played, statistics on intervals between notes.  
+Analyze over time.  
+How many oops etc per song/minute.  Make a heatmap of "oops" "messy" or any other comment.  
+Add this to a graphic which can be displayed.  For now just use relative time to determine.  
+And overlap all on the same graphic.  Just generate a graphic for the "web/midilyze/Title.png"
+Not sure this data will be useful, but should start this.  Not sure if this belongs here or in midilyze perhaps is better.  
+
+**record.py -> are we getting the pedal actions, this is important.  
+
+**analyze/stats.py -> naming?  For now create stats regarding how much is played by day, dayofweek, timeofday
+Pull from midi filename and calculate from there.  
+
