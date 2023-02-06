@@ -64,3 +64,6 @@ Dont want to have to deal with this, but also dont want someone to mistakenly or
 For now just restricting by IP in case I accidentally make the API key available.  
 Also on website just use querying tools, and no update for now.  
 
+OK, anyway we have added the OAUTH crap to timestep.py.  
+This is good for now.  
+
