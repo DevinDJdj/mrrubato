@@ -58,12 +58,28 @@ Need to write something to get the data generated from Youtube in some form of b
 -Get data on what finger is used to play each note, this may be difficult at this point.  
 
 **words/words.py
-want to extract all words between TRIAL#xx, or perhaps just see if we can get the speaking during the piece as well.  
+want to extract all words between TRIAL#x and END#x, or perhaps just see if we can get the speaking during the piece as well.  
+This doesnt really happen often enough to worry about.  
 Just run a speech-to-text on the videos and store under words/ directory datestamped.  
-From here we can pull things to put into book..
+From here we can pull things to put into book as part of the process.  
+If we have some lyrics in there that is fine.  Just timestamp the words, so that we can sort it out if necessary.  
 
+See if we can use this library.  
+Distraction maybe, but lets compile this and look a bit at the code.  
+Just randomly found for JP and ENG Speech to text.  
+Originally from University of Kyoto.  
+https://julius.osdn.jp/juliusbook/en/desc_install.html
 
+https://github.com/julius-speech/dictation-kit
+https://github.com/julius-speech/julius
 
+Yeah, distraction I think.  
+Let's just use the python libraries for now.  
 
+**transcribe.py
+See if we can get this to work and modify to utilize probably during record.py.  
+We can use it in here and before uploading get the transcript.  We need timestamps though.  
+And then just save that in a separate file the same way we do the midi file.  
+Then when we do analyze, we can pull the text we want from this file.  
 
 
