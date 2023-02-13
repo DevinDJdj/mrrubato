@@ -18,5 +18,5 @@ class Word:
 
     def to_string(self):
         ''' Returns a string describing this instance '''
-        return "{:20} from {:.2f} sec to {:.2f} sec, confidence is {:.2f}%".format(
+        return "{:20}, {:.2f}, {:.2f}, {:.2f}%".format(
             self.word, self.start, self.end, self.conf*100)

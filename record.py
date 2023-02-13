@@ -70,6 +70,9 @@ from oauth2client.file import Storage
 from oauth2client.tools import argparser, run_flow
 
 
+#from transcribe import transcribe_me
+
+
 # Explicitly tell the underlying HTTP transport library not to retry, since
 # we are handling retry logic ourselves.
 httplib2.RETRIES = 1
@@ -228,6 +231,25 @@ def resumable_upload(insert_request):
       time.sleep(sleep_seconds)
 
 
+def uploadtranscript(file, title):
+    from firebase_admin import credentials, initialize_app, storage
+    # Init firebase with your credentials
+    cred = credentials.Certificate("../misterrubato-test.json")
+    initialize_app(cred, {'storageBucket': 'misterrubato-test.appspot.com'})
+
+    # Put your local file path 
+    Title = title + '.txt'
+    fileName = file + '.txt'
+    bucket = storage.bucket()
+    blob = bucket.blob('words/' + Title)
+    blob.upload_from_filename(fileName)
+
+    # Opt : if you want to make public access from the URL
+    blob.make_public()
+
+    print("your transcript file url", blob.public_url)
+    return blob.public_url
+
 def uploadmidi(file, title):
     from firebase_admin import credentials, initialize_app, storage
     # Init firebase with your credentials
@@ -244,7 +266,7 @@ def uploadmidi(file, title):
     # Opt : if you want to make public access from the URL
     blob.make_public()
 
-    print("your file url", blob.public_url)
+    print("your midi file url", blob.public_url)
     return blob.public_url
     
     
@@ -399,9 +421,16 @@ if __name__ == '__main__':
     print(pathnames)
     midifile = uploadmidi(fn[0], pathnames[len(pathnames)-1])
     
+    
+    
     args.description += '\r\n\r\nMIDI:' + midifile
     args.description += '\r\n\r\nKEYWORDS:' + args.keywords #add here like sightread or book, etc.  
 
+    print(args.description)
+    
+#    transcribe_me(latest_file)
+#    transcribe_file = uploadtranscript(fn[0], pathnames[len(pathnames)-1])
+#    args.description += '\r\n\r\nTRANSCRIPT:' transcribe_file
     print(args.description)
     youtube = get_authenticated_service(args)
     initialize_upload(youtube, args)
