@@ -154,19 +154,24 @@ function addComment(comment, commenttime){
 	
 }
 
-function searchPrevious(){
+function searchPrevious(videoid){
 	//use title
  $.getJSON('https://www.googleapis.com/youtube/v3/search?maxResults=15&channelId=' + channelId + '&order=date&q=' + title + '&key=' + webkey + '&part=snippet',function(data){
       if (typeof(data.items[0]) != "undefined") {
 	      for (i=0; i<data.items.length; i++){
-            console.log('found  ' + data.items[i].snippet);
-			var mydiv = document.getElementById("previous");
-			var aTag = document.createElement('a');
-			aTag.setAttribute('href',"https://misterrubato.com/analyze.html?video=" + data.items[i].id.videoId);
-			aTag.innerText = "PREV#" + i;
-			mydiv.appendChild(aTag);
-			var br = document.createElement("br");
-			mydiv.appendChild(br);
+		    if (data.items[i].id.kind == "youtube#video"){
+				console.log('found  ' + data.items[i].snippet);
+				var mydiv = document.getElementById("previous");
+				var aTag = document.createElement('a');
+				aTag.setAttribute('href',"https://misterrubato.com/analyze.html?video=" + data.items[i].id.videoId);
+				aTag.innerText = "PREV#" + i;
+				if (videoid == data.items[i].id.videoId){
+				    aTag.innerText += " <- THIS VIDEO";
+				}
+				mydiv.appendChild(aTag);
+				var br = document.createElement("br");
+				mydiv.appendChild(br);
+			}
 		  }
        } 
 	   else {
@@ -183,7 +188,7 @@ function getVideoJson(videoid){
 		createNotes(data.items[0].snippet.description);
 		//get previous iterations of this.  
 		title = notesarray[0];
-		searchPrevious();
+		searchPrevious(videoid);
        } else {
         console.log('video not exists');
      }   
