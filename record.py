@@ -268,9 +268,10 @@ if __name__ == '__main__':
     argparser.add_argument("--keywords", help="Video keywords, comma separated",
       default="music,learning,experiment")
     argparser.add_argument("--privacyStatus", choices=VALID_PRIVACY_STATUSES,
-      default=VALID_PRIVACY_STATUSES[1], help="Video privacy status.")
+      default=VALID_PRIVACY_STATUSES[2], help="Video privacy status.")
     args = argparser.parse_args()
-
+    if (args.title == "New Upload"):
+        args.title = args.description
 
 #    mido.set_backend('mido.backends.portmidi')   
     mid = MidiFile()
@@ -296,6 +297,11 @@ if __name__ == '__main__':
 """    
     inputs = mido.get_input_names()
     print(mido.get_input_names())
+    
+    #when we start the recording, lets get data from the previous iterations so that we have some comparison
+    #spit out previous statistics on iterations here in this record.py for reference.  
+    #separate function, or separate file?  Use Youtube Query to get data/time analysis and analyze midi as well.  
+    #printPrevStats(title)    
     delay = 0
     timeoffset = 0
     starttime = 0
@@ -325,7 +331,7 @@ if __name__ == '__main__':
                         args.description += " (" + str(mins) + ":" + filler + str(secs) + ")"
                     if lastnote==107 and msg.note !=lastnote:
                         #adding END messages.  For now they are only using the pause button as indicator.  
-                        iterations = len(pausestart) + 1
+                        iterations = len(pausestart)
                         mytime = time.time() - starttime - delay - (time.time() - starttime - delay - lasttick)
                         mins = math.floor(mytime/60)
                         secs = math.floor(mytime - mins*60)
@@ -369,10 +375,12 @@ if __name__ == '__main__':
 #                    faketime = faketime +1
                     msg.time = time.time() - starttime - delay - lasttick
                     msg.time = int(round(msg.time*1000))
+                    if msg.time < 0:
+                        msg.time = 0
                     
                     lasttick = time.time() - starttime - delay
 
-                print(msg)
+                #print(msg) #dont need all this info.  
                 track.append(msg)
                 
     list_of_files = glob.glob('C:/Users/devin/Videos/*.mkv') # * means all if need specific format then *.csv
