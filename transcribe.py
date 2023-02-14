@@ -34,6 +34,10 @@ def transcribe_me(filename):
 
     sound = AudioSegment.from_mp3(temp_file)
     sound.export(audio_filename, format="wav")
+    audio = AudioSegment.from_file(audio_filename, format="wav", frame_rate=44100)
+    audio = audio.set_channels(1)
+    audio = audio.set_frame_rate(16000)
+    audio.export(audio_filename, format="wav")    
 
 
     model_path = "../models/vosk-model-en-us-0.22"
