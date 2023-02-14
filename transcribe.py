@@ -5,6 +5,7 @@
 #choco install ffmpeg
 #pip install moviepy
 #pip install pydub
+#pip install speechrecognition
 #https://alphacephei.com/vosk/models
 import wave
 import json
@@ -16,8 +17,19 @@ from os import path
 import subprocess
 import glob
 import os
+import speech_recognition as sr
+import math
 
 
+
+def get_timestamp(s):
+    mins = math.floor(s/60)
+    secs = math.floor(s - mins*60)
+    filler = ""
+    if secs < 10:
+        filler = "0"
+    return str(mins) + ":" + filler + str(secs)
+    
 def transcribe_me(filename):
     fn = filename.split('.')
 
@@ -38,8 +50,32 @@ def transcribe_me(filename):
     audio = audio.set_channels(1)
     audio = audio.set_frame_rate(16000)
     audio.export(audio_filename, format="wav")    
-
-
+    
+    #this is much more accurate but has no timestamps.  
+    r = sr.Recognizer()
+    test = sr.AudioFile(audio_filename)
+    audio_length = audio.duration_seconds
+    print(audio_length)
+    segment_length = 10
+    number_of_iterations = int(audio_length/segment_length)
+    audior = []
+    text = []
+    times = []
+    for i in range(number_of_iterations):
+        with test as source:
+            audior.append(r.record(source, offset=i*segment_length, duration=segment_length))
+    for i in range(number_of_iterations):
+        print(audior[i])
+        try:
+            text.append(r.recognize_google(audior[i], show_all=False)) 
+            times.append(get_timestamp(i*segment_length))
+            #print(text) 
+        except Exception as e:
+            print(e)
+    for i in range(len(text)):
+        print(times[i])
+        print(text[i]) 
+    vosk = """
     model_path = "../models/vosk-model-en-us-0.22"
 
     model = Model(model_path)
@@ -81,7 +117,7 @@ def transcribe_me(filename):
         f.write(word.to_string())
         
     f.close()
-    
+    """    
 
 list_of_files = glob.glob('C:/Users/devin/Videos/*.mkv') # * means all if need specific format then *.csv
 latest_file = max(list_of_files, key=os.path.getctime)
