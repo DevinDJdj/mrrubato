@@ -22,6 +22,7 @@ import math
 
 
 
+
 def get_timestamp(s):
     mins = math.floor(s/60)
     secs = math.floor(s - mins*60)
@@ -56,7 +57,7 @@ def transcribe_me(filename):
     test = sr.AudioFile(audio_filename)
     audio_length = audio.duration_seconds
     print(audio_length)
-    segment_length = 10
+    segment_length = 20
     number_of_iterations = int(audio_length/segment_length)
     audior = []
     text = []
@@ -72,9 +73,14 @@ def transcribe_me(filename):
             #print(text) 
         except Exception as e:
             print(e)
+            
+    f = open(txt_filename, "w")
     for i in range(len(text)):
         print(times[i])
         print(text[i]) 
+        f.write(times[i] + '\n')
+        f.write(text[i] + '\n')
+    f.close()
     vosk = """
     model_path = "../models/vosk-model-en-us-0.22"
 
@@ -118,9 +124,9 @@ def transcribe_me(filename):
         
     f.close()
     """    
-
-list_of_files = glob.glob('C:/Users/devin/Videos/*.mkv') # * means all if need specific format then *.csv
-latest_file = max(list_of_files, key=os.path.getctime)
-print(latest_file)
-#transcribe_me(latest_file)
-transcribe_me(r"C:\Users\devin\Videos\2023-02-11 11-23-44.mkv")
+if __name__ == '__main__':
+    list_of_files = glob.glob('C:/Users/devin/Videos/*.mkv') # * means all if need specific format then *.csv
+    latest_file = max(list_of_files, key=os.path.getctime)
+    print(latest_file)
+    #transcribe_me(latest_file)
+    transcribe_me(r"C:\Users\devin\Videos\2023-02-11 11-23-44.mkv")

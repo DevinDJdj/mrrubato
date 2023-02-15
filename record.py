@@ -70,7 +70,7 @@ from oauth2client.file import Storage
 from oauth2client.tools import argparser, run_flow
 
 
-#from transcribe import transcribe_me
+from transcribe import transcribe_me, get_timestamp
 
 
 # Explicitly tell the underlying HTTP transport library not to retry, since
@@ -235,7 +235,7 @@ def uploadtranscript(file, title):
     from firebase_admin import credentials, initialize_app, storage
     # Init firebase with your credentials
     cred = credentials.Certificate("../misterrubato-test.json")
-    initialize_app(cred, {'storageBucket': 'misterrubato-test.appspot.com'})
+    initialize_app(cred, {'storageBucket': 'misterrubato-test.appspot.com'}, name="second")
 
     # Put your local file path 
     Title = title + '.txt'
@@ -428,9 +428,9 @@ if __name__ == '__main__':
 
     print(args.description)
     
-#    transcribe_me(latest_file)
-#    transcribe_file = uploadtranscript(fn[0], pathnames[len(pathnames)-1])
-#    args.description += '\r\n\r\nTRANSCRIPT:' transcribe_file
+    transcribe_me(latest_file)
+    transcribe_file = uploadtranscript(fn[0], pathnames[len(pathnames)-1])
+    args.description += '\r\n\r\nTRANSCRIPT:' + transcribe_file
     print(args.description)
     youtube = get_authenticated_service(args)
     initialize_upload(youtube, args)
