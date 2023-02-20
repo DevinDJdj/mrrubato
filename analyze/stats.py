@@ -90,10 +90,14 @@ print(pd.DataFrame([stats]))
 
 
 data = get_playlists_data()
+print(data)
 df = pd.DataFrame(data)
 p_ids = set(df.explode('items')["items"].apply(pd.Series)["id"].to_list())
+p_titles = set(df.explode('items')["items"].apply(pd.Series)["snippet"].apply(pd.Series)["title"].to_list())
+p_ids.clear()
+p_ids.add("PLurfgbaepqV0WcMBa6_CdLpa88qAqc89Q") #addl playlist data, just put everything in here.  
 print(p_ids)
-
+print(p_titles)
 
 limit = 50
 
@@ -108,6 +112,7 @@ for plid in p_ids:
 #plid = next(iter(p_ids))
     print(plid)
     data = get_playlist_items(plid)
+    
     dfvideos = pd.DataFrame(data)
     print(dfvideos.shape)
 #    print(dfvideos.loc[0])

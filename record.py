@@ -193,7 +193,7 @@ def initialize_upload(youtube, options):
     media_body=MediaFileUpload(options.file, chunksize=-1, resumable=True)
   )
 
-  resumable_upload(insert_request)
+  return resumable_upload(insert_request)
 
 # This method implements an exponential backoff strategy to resume a
 # failed upload.
@@ -208,6 +208,8 @@ def resumable_upload(insert_request):
       if response is not None:
         if 'id' in response:
           print ("Video id '%s' was successfully uploaded." % response['id'])
+          videoid = response['id']
+          return response['id']
         else:
           exit("The upload failed with an unexpected response: %s" % response)
     except HttpError as e:
@@ -229,8 +231,8 @@ def resumable_upload(insert_request):
       sleep_seconds = random.random() * max_sleep
       print ("Sleeping %f seconds and then retrying..." % sleep_seconds)
       time.sleep(sleep_seconds)
-
-
+  return None
+  
 def uploadtranscript(file, title):
     from firebase_admin import credentials, initialize_app, storage
     # Init firebase with your credentials
@@ -278,6 +280,23 @@ def calculatedelay(pausestart, pauseend):
     for idx in range(len(pauseend)):
         delay += pauseend[idx] - pausestart[idx]
     return delay
+    
+    
+def add_video_to_playlist(videoID,playlistID, args):
+    youtube = get_authenticated_service(args) #write it yourself
+    add_video_request=youtube.playlistItems().insert(
+        part="snippet",
+        body={
+                'snippet': {
+                  'playlistId': playlistID, 
+                  'resourceId': {
+                          'kind': 'youtube#video',
+                      'videoId': videoID
+                    }
+                #'position': 0
+                }
+        }
+    ).execute()
     
 if __name__ == '__main__':
     argparser.add_argument("--file", required=False, help="Video file to upload")
@@ -433,4 +452,6 @@ if __name__ == '__main__':
     args.description += '\r\n\r\nTRANSCRIPT:' + transcribe_file
     print(args.description)
     youtube = get_authenticated_service(args)
-    initialize_upload(youtube, args)
+    videoid = initialize_upload(youtube, args)
+    
+    add_video_to_playlist(videoid, "PLurfgbaepqV0WcMBa6_CdLpa88qAqc89Q", args)
