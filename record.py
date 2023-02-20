@@ -454,4 +454,4 @@ if __name__ == '__main__':
     youtube = get_authenticated_service(args)
     videoid = initialize_upload(youtube, args)
     
-    add_video_to_playlist(videoid, "PLurfgbaepqV0WcMBa6_CdLpa88qAqc89Q", args)
+    add_video_to_playlist(videoid, MY_PLAYLIST, args)

@@ -95,7 +95,8 @@ df = pd.DataFrame(data)
 p_ids = set(df.explode('items')["items"].apply(pd.Series)["id"].to_list())
 p_titles = set(df.explode('items')["items"].apply(pd.Series)["snippet"].apply(pd.Series)["title"].to_list())
 p_ids.clear()
-p_ids.add("PLurfgbaepqV0WcMBa6_CdLpa88qAqc89Q") #addl playlist data, just put everything in here.  
+p_ids.add(MY_PLAYLIST) #addl playlist data, just put everything in here when recording, then we have one location to view.  
+#limit is 5000, so maybe have to adjust in a few years to include others.  
 print(p_ids)
 print(p_titles)
 
