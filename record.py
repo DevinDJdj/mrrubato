@@ -106,6 +106,7 @@ CLIENT_SECRETS_FILE = "./../client_secrets.json"
 # This OAuth 2.0 access scope allows an application to upload files to the
 # authenticated user's YouTube channel, but doesn't allow other types of access.
 YOUTUBE_UPLOAD_SCOPE = "https://www.googleapis.com/auth/youtube.upload"
+YOUTUBE_SCOPE = "https://www.googleapis.com/auth/youtube"
 YOUTUBE_API_SERVICE_NAME = "youtube"
 YOUTUBE_API_VERSION = "v3"
 
@@ -144,14 +145,16 @@ VALID_PRIVACY_STATUSES = ("public", "private", "unlisted")
     
 
 
-def get_authenticated_service(args):
+def get_authenticated_service(args, myscope=YOUTUBE_SCOPE):
   flow = flow_from_clientsecrets(CLIENT_SECRETS_FILE,
-    scope=YOUTUBE_UPLOAD_SCOPE,
+    scope=myscope,
     message=MISSING_CLIENT_SECRETS_MESSAGE)
+  
 
   storage = Storage("%s-oauth2.json" % sys.argv[0])
   credentials = storage.get()
-
+  #this local storage of creds was causing problems.  Finally this works now to add to the playlist.  
+#  credentials = None
   if credentials is None or credentials.invalid:
     credentials = run_flow(flow, storage, args)
 
@@ -283,22 +286,39 @@ def calculatedelay(pausestart, pauseend):
     
     
 def add_video_to_playlist(videoID,playlistID, args):
-    youtube = get_authenticated_service(args) #write it yourself
-    add_video_request=youtube.playlistItems().insert(
-        part="snippet",
-        body={
-                'snippet': {
-                  'playlistId': playlistID, 
-                  'resourceId': {
-                          'kind': 'youtube#video',
-                      'videoId': videoID
-                    }
-                #'position': 0
-                }
+    youtube = get_authenticated_service(args, YOUTUBE_SCOPE) #write it yourself
+    body=dict(
+      snippet=dict(
+        playlistId=playlistID,
+        resourceId=dict(
+          kind="youtube#video",
+          videoId=videoID
+        ),
+      ),
+    )
+#    add_video_request=youtube.playlistItems().insert(
+#        part="snippet",
+#        body=body
+#    ).execute()
+
+    request = youtube.playlistItems().insert(
+    part="snippet",
+    body={
+      "snippet": {
+        "playlistId": cred.MY_PLAYLIST,
+        "position": 0,
+        "resourceId": {
+          "kind": "youtube#video",
+          "videoId": "7Aadr9Fmftk"
         }
-    ).execute()
+      }
+    }
+    )
+    response = request.execute()
+    
     
 if __name__ == '__main__':
+
     argparser.add_argument("--file", required=False, help="Video file to upload")
     argparser.add_argument("--title", help="Video title", default="New Upload")
     argparser.add_argument("--description", help="Video description",
@@ -313,6 +333,8 @@ if __name__ == '__main__':
     args = argparser.parse_args()
     if (args.title == "New Upload"):
         args.title = args.description
+    print(cred.MY_PLAYLIST)
+    add_video_to_playlist('7Aadr9Fmftk', cred.MY_PLAYLIST, args)
 
 #    mido.set_backend('mido.backends.portmidi')   
     mid = MidiFile()
@@ -454,4 +476,4 @@ if __name__ == '__main__':
     youtube = get_authenticated_service(args)
     videoid = initialize_upload(youtube, args)
     
-    add_video_to_playlist(videoid, MY_PLAYLIST, args)
+    add_video_to_playlist(videoid, cred.MY_PLAYLIST, args)
