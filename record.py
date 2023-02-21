@@ -471,7 +471,7 @@ if __name__ == '__main__':
     
     transcribe_me(latest_file)
     transcribe_file = uploadtranscript(fn[0], pathnames[len(pathnames)-1])
-    args.description += '\r\n\r\nTRANSCRIPT:' + transcribe_file
+    args.description += '\r\n\r\nTRANSCRIPT:' + transcribe_file + '\r\n'
     print(args.description)
     youtube = get_authenticated_service(args)
     videoid = initialize_upload(youtube, args)

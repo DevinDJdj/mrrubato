@@ -36,3 +36,23 @@ Then the producer can analyze those comments.
 People are capable enough to mute themselves I would suspect and then you dont get too much background noise.  
 Anyway the garbage could be filtered in some way.  
 
+
+**record.py
+add --rerun option for when there is a failure.  
+put all description into a temp file.  
+--rerun just takes the latest video and the latest temp file and uploads.  
+then adds to the table. 
+--skipupload for when we have run out of API tokens.  
+firebase simple table (videoID, description)
+from this we can generate whatever table wanted for stats etc.  
+This can all be post processing batch jobs, part of timestep.py perhaps. 
+other tables can include every instance etc of the song.  
+
+**transcribe.py --DONE
+adjust the format to the same as we have
+....... (0:10)
+
+**web/analyze.html
+display the transcription in case we want to add some of it to the video description.  
+get videos from new playlist.  
+
