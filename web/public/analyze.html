@@ -40,7 +40,10 @@
 
 </td><td>
     <textarea id="notes" rows="40" cols="80"></textarea>
+</td><td>
+    <textarea id="transcript" rows="40" cols="80"></textarea>
 </td>
+</tr>
 </table>
     <div id="previous"></div>
 	
@@ -181,6 +184,23 @@ function searchPrevious(videoid){
 	
 }
 
+function getTranscript(desc){
+ var tempDiv = $('#transcript');
+ //find in notes array the TRANSCRIPT:
+ //gsutil cors set cors.json gs://misterrubato-test.appspot.com
+ let tposition = desc.indexOf("TRANSCRIPT:");
+ if (tposition > -1){
+    eposition = desc.indexOf('\n', tposition);
+	if (eposition > -1){
+    	url = desc.substring(tposition+11, eposition);
+	}
+	else {
+		url = desc.substring(tposition+11);
+	}
+	tempDiv.load(url);
+ }
+}
+
 function getVideoJson(videoid){
  $.getJSON('https://www.googleapis.com/youtube/v3/videos?id=' + videoid + '&key=' + webkey + '&part=snippet&callback=?',function(data){
     if (typeof(data.items[0]) != "undefined") {
@@ -189,6 +209,7 @@ function getVideoJson(videoid){
 		//get previous iterations of this.  
 		title = notesarray[0];
 		searchPrevious(videoid);
+		getTranscript(data.items[0].snippet.description);
        } else {
         console.log('video not exists');
      }   

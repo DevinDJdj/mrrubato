@@ -78,8 +78,8 @@ def transcribe_me(filename):
     for i in range(len(text)):
         print(times[i])
         print(text[i]) 
-        f.write(times[i] + '\n')
-        f.write(text[i] + '\n')
+#        f.write(times[i] + '\n')
+        f.write(text[i] + ' (' + times[i] + ')\n')
     f.close()
     vosk = """
     model_path = "../models/vosk-model-en-us-0.22"
