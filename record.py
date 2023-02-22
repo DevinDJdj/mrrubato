@@ -316,9 +316,16 @@ def add_video_to_playlist(videoID,playlistID, args):
     )
     response = request.execute()
     
-    
+def get_latest_file():
+    list_of_files = glob.glob('C:/Users/devin/Videos/*.mkv') # * means all if need specific format then *.csv
+    latest_file = max(list_of_files, key=os.path.getctime)
+    print(latest_file)
+    return latest_file
+
 if __name__ == '__main__':
 
+    argparser.add_argument("--rerun", help="Rerun upload",
+      default="false") #--rerun true perhaps add other options but right now this is all that really fails.  
     argparser.add_argument("--file", required=False, help="Video file to upload")
     argparser.add_argument("--title", help="Video title", default="New Upload")
     argparser.add_argument("--description", help="Video description",
@@ -329,13 +336,24 @@ if __name__ == '__main__':
     argparser.add_argument("--keywords", help="Video keywords, comma separated",
       default="music,learning,experiment")
     argparser.add_argument("--privacyStatus", choices=VALID_PRIVACY_STATUSES,
-      default=VALID_PRIVACY_STATUSES[2], help="Video privacy status.")
+      default=VALID_PRIVACY_STATUSES[2], help="Video privacy status.") #default unlisted
     args = argparser.parse_args()
     if (args.title == "New Upload"):
         args.title = args.description
+        
     print(cred.MY_PLAYLIST)
 #    add_video_to_playlist('7Aadr9Fmftk', cred.MY_PLAYLIST, args)
 
+    if (args.rerun == "true"):
+        args.file = get_latest_file()
+        tempfile = open('desc.txt', 'r')
+        args.description = tempfile.read()
+        tempfile.close()
+        youtube = get_authenticated_service(args)
+        videoid = initialize_upload(youtube, args)    
+        add_video_to_playlist(videoid, cred.MY_PLAYLIST, args)
+        exit
+        
 #    mido.set_backend('mido.backends.portmidi')   
     mid = MidiFile()
 #    mid.ticks_per_beat = 1000000
@@ -445,10 +463,8 @@ if __name__ == '__main__':
 
                 #print(msg) #dont need all this info.  
                 track.append(msg)
-                
-    list_of_files = glob.glob('C:/Users/devin/Videos/*.mkv') # * means all if need specific format then *.csv
-    latest_file = max(list_of_files, key=os.path.getctime)
-    print(latest_file)
+    
+    latest_file = get_latest_file()    
     args.file = latest_file
     fn = latest_file.split('.')
     mid.save(fn[0] + '.mid')
@@ -473,6 +489,10 @@ if __name__ == '__main__':
     transcribe_file = uploadtranscript(fn[0], pathnames[len(pathnames)-1])
     args.description += '\r\n\r\nTRANSCRIPT:' + transcribe_file + '\r\n'
     print(args.description)
+    tempfile = open('desc.txt', 'w')
+    tempfile.write(args.description)
+    tempfile.close()
+    
     youtube = get_authenticated_service(args)
     videoid = initialize_upload(youtube, args)
     
