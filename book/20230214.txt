@@ -53,6 +53,10 @@ adjust the format to the same as we have
 ....... (0:10)
 
 **web/analyze.html
-display the transcription in case we want to add some of it to the video description.  
-get videos from new playlist.  
+display the transcription in case we want to add some of it to the video description.  --DONE
+-get videos from new playlist.  
 
+
+**play.py
+Make something to play back on the midi port and send the midi to the midi controller.  
+This way we can have something comparable when we combine and adjust speed for the recordings.  
