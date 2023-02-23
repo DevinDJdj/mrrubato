@@ -309,7 +309,7 @@ def add_video_to_playlist(videoID,playlistID, args):
         "position": 0,
         "resourceId": {
           "kind": "youtube#video",
-          "videoId": "7Aadr9Fmftk"
+          "videoId": videoID
         }
       }
     }
