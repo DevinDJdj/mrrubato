@@ -52,6 +52,11 @@ from mido import Message, MidiFile, MidiTrack
 
 from mido.ports import MultiPort
 
+#pip install pynput
+#key input for hotkeys to trigger recording etc.  
+from pynput.keyboard import Key, Controller
+
+
 import sys
 sys.path.insert(0, 'c:/devinpiano/')
  
@@ -396,8 +401,12 @@ if __name__ == '__main__':
     #mido doc is crap.  But this seems ok for now.  
     #the video and midi appear to match up pretty well.  But not perfect I think.  
     #at least enough to get the start times now.  
+    #need some comment here, what is input[1].  Having hardware issues, lol.  
+    keyboard = Controller()    
     with mido.open_input(inputs[1]) as inport:
+        print("hello")
         for msg in inport:
+#            print(msg)
             if msg:
                 if hasattr(msg, 'note'):
                     if lastnote == 21 and msg.note !=lastnote:
@@ -434,12 +443,30 @@ if __name__ == '__main__':
                         args.description += " (" + str(mins) + ":" + filler + str(secs) + ")"
                     if msg.note == 21:
                         starttime = time.time()
+
+                        with keyboard.pressed(Key.ctrl):
+                            keyboard.press('s')
+                            time.sleep(0.25)
+                            keyboard.release('s')
+                        print("Start Recording" + str(time.time()))
                         msg.time = 0
                     if msg.note == 22:
                         endtime = time.time()
+
+                        with keyboard.pressed(Key.ctrl):
+                            keyboard.press('t')
+                            time.sleep(0.25)
+                            keyboard.release('t')
+                        print("Stop Recording" + str(time.time()))
                         break
                     if msg.note == 107 and msg.note !=lastnote:
                         pausestart.append(time.time())
+
+                        with keyboard.pressed(Key.ctrl):
+                            keyboard.press('p')
+                            time.sleep(0.25)
+                            keyboard.release('p')
+                        print("Pause Recording" + str(time.time()))
                         print(msg.time)
                     if msg.note == 108 and msg.note !=lastnote:
                         pauseend.append(time.time())
@@ -447,6 +474,13 @@ if __name__ == '__main__':
                         lasttick = time.time() - starttime - delay
                         msg.time = time.time() - starttime - delay - lasttick
                         msg.time = int(round(msg.time*1000))
+
+                        with keyboard.pressed(Key.ctrl):
+                            keyboard.press('u')
+                            time.sleep(0.25)
+                            keyboard.release('u')
+                        print("Unpause Recording" + str(time.time()))
+
                         print("delay " + str(delay))
                     lastnote = msg.note
                     
@@ -484,8 +518,9 @@ if __name__ == '__main__':
     args.description += '\r\n\r\nKEYWORDS:' + args.keywords #add here like sightread or book, etc.  
 
     print(args.description)
-    
+    print(latest_file)
     transcribe_me(latest_file)
+
     transcribe_file = uploadtranscript(fn[0], pathnames[len(pathnames)-1])
     args.description += '\r\n\r\nTRANSCRIPT:' + transcribe_file + '\r\n'
     print(args.description)
