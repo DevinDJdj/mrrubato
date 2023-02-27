@@ -60,3 +60,8 @@ display the transcription in case we want to add some of it to the video descrip
 **play.py
 Make something to play back on the midi port and send the midi to the midi controller.  
 This way we can have something comparable when we combine and adjust speed for the recordings.  
+Should be able to accept local as well as remote files.  
+Just download from the saved description.  
+When will we utilize this?  
+
+
