@@ -50,3 +50,8 @@ Should work for most songs.
 -reload the list of comments each time based on what is in the textbox, not just the original.  
 Load from textbox to generate the list and add any new comments.  Scroll to any comment.  
 
+
+**RANT
+Doctors should be much more available in general.  The information they provide is not that interesting most of the time anyway.  
+The time availability issue causes care to be of limited use.  
+

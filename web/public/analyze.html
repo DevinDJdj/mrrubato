@@ -122,7 +122,8 @@ function updateNotes(){
 	
 }
 
-function createNotes(allnotes){
+function createNotesArray(){
+	allnotes = $('#notes').val();
     const lines = allnotes.split("\n");
 	for (i = 0; i< lines.length; i++){
 	    notesarray[i] = lines[i];
@@ -147,6 +148,7 @@ function getTime(comment){
 function addComment(comment, commenttime){
     //find where to splice and then reset the notes
 	//notesarray.splice(i, 0, comment);
+	createNotesArray();
 	i = 0;
 	while (i< notesarray.length && getTime(notesarray[i]) < getSecsFromTime(commenttime)){
         i++;
@@ -205,7 +207,8 @@ function getVideoJson(videoid){
  $.getJSON('https://www.googleapis.com/youtube/v3/videos?id=' + videoid + '&key=' + webkey + '&part=snippet&callback=?',function(data){
     if (typeof(data.items[0]) != "undefined") {
         console.log('video exists ' + data.items[0].snippet.title);
-		createNotes(data.items[0].snippet.description);
+		$('#notes').val(data.items[0].snippet.description);
+	    createNotesArray();
 		//get previous iterations of this.  
 		title = notesarray[0];
 		searchPrevious(videoid);
