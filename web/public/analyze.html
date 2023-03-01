@@ -124,6 +124,7 @@ function updateNotes(){
 
 function createNotesArray(){
 	allnotes = $('#notes').val();
+	notesarray = [];
     const lines = allnotes.split("\n");
 	for (i = 0; i< lines.length; i++){
 	    notesarray[i] = lines[i];
