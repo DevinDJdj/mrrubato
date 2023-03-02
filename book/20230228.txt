@@ -7,3 +7,39 @@ It is such a fascinating topic.  I am working to improve my communication skills
 I am interested in how my mind will recall things that I think about while playing certain songs.  
 There are definitely things which I start to associate with certain songs, but not sure that will come through as I often dont talk, 
 and what I talk about before/during the song is still quite random.  It is possible this will change over time though.  
+
+
+
+*list.html
+->**analyze.html
+
+List will display an overview broken down by song.  A Histograph and an improvement graph of some sort.  
+Then selecting a member of the list will give more details.  
+Should have standard filter for search etc.  
+Statistics will include stats on words spoken, improvement stats, play frequency graph.  
+
+**stats.html
+Overall stats will include aggregate information about these same stats.  
+
+
+Need to move anything by Me to (Composition)
+also any notes on the software itself should probably be in a separate category?  
+Not sure if we leave this for musical composition or just combine.  
+
+
+I think this will still be completely misunderstood if I unexpectedly pass.  
+
+*Right now there is still just mostly a lot of noise and very little order.  *
+*I will work toward bringing order to the noise eventually.  *
+
+
+Well, anyway.  
+Not that I am entirely certain yet what part of this project I will continue, I am sure it will be captivating at least for me.  
+Some key factors:
+--Understanding learning on a more fundamental level, at the very least my learning, but likely can be useful for many other people.  
+--Understand music on a more fundamental level, at least my understanding/preference in music.  
+--Perhaps create some interesting software in the process.  
+--Perhaps create some interesting algorithmic music in the process.  
+
+I am not sure how to stay unbiased, but I think the algorithmic music preferences may bring some insight.  
+These would be extracted from analysis on the music data and notes associated with that data.  
