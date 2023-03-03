@@ -17,7 +17,9 @@ import cred
 import pandas as pd
 import requests
 import json
-
+import matplotlib.pyplot as plt
+from datetime import datetime
+from datetime import timedelta
 #print(cred.APIKEY)
 
 
@@ -84,7 +86,37 @@ def get_playlist_items(plid, limit: int=50):
     
     
 
+def getDurationsFromDesc(desc):
+    starttimes = []
+    endtimes = []
+    for i in range(1,9):
+        ts = desc.find("TRIAL#{} (".format(i))
+        te = desc.find(")", ts)
+        if (ts > -1):
+            starttimes.append(desc[ts+9:te])
+
+    for i in range(1,9):
+        ts = desc.find("END#{} (".format(i))
+        te = desc.find(")", ts)
+        if (ts > -1):
+            endtimes.append(desc[ts+7:te])
+
+    if (len(starttimes) != len(endtimes)):
+        print("invalid data {videoid}")
+        return None
+    else:
+        return starttimes, endtimes
     
+
+def getSecsFromTime(time):
+	minsec = time.split(":")
+	if (minsec == time):
+	    return 0;
+	return int(minsec[0])*60 + int(minsec[1])
+	
+
+
+
 stats = get_channel_stat()
 print(pd.DataFrame([stats]))
 
@@ -95,7 +127,7 @@ df = pd.DataFrame(data)
 p_ids = set(df.explode('items')["items"].apply(pd.Series)["id"].to_list())
 p_titles = set(df.explode('items')["items"].apply(pd.Series)["snippet"].apply(pd.Series)["title"].to_list())
 p_ids.clear()
-p_ids.add(MY_PLAYLIST) #addl playlist data, just put everything in here when recording, then we have one location to view.  
+p_ids.add(cred.MY_PLAYLIST) #addl playlist data, just put everything in here when recording, then we have one location to view.  
 #limit is 5000, so maybe have to adjust in a few years to include others.  
 print(p_ids)
 print(p_titles)
@@ -103,9 +135,10 @@ print(p_titles)
 limit = 50
 
 vidx = 0
-df = pd.DataFrame(data, columns=['GroupName', 'Title', 'URL', 'PublishedDate', 'starttime', 'endtime', 'iteration'])
+df = pd.DataFrame(columns=['GroupName', 'Title', 'URL', 'PublishedDate', 'starttime', 'endtime', 'iteration', 'status', 'duration'])
 
 
+totalidx = 0
 itemcount = 0
 songdurations = {}
 groupdurations = {}
@@ -133,7 +166,7 @@ for plid in p_ids:
             for item in dfvideos.loc[idxdfv]['items']:
         #    for item in data['items']:
                 videoid = item['snippet']['resourceId']['videoId']
-                url = f'https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails\
+                url = f'https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,status\
                     &id={videoid}&key={api_key}'
                 json_url = requests.get(url)
                 datav = json.loads(json_url.text)
@@ -149,6 +182,7 @@ for plid in p_ids:
                     GroupName = ""
                     publishedDate = datav['items'][0]['snippet']['publishedAt']
                     title = datav['items'][0]['snippet']['title']
+                    privacyStatus = datav['items'][0]['status']['privacyStatus']
                     gs = title.find("(")
                     ge = title.find(")")
                     url = "https://www.youtube.com/watch?v=" + videoid
@@ -192,9 +226,25 @@ for plid in p_ids:
                                 groupdurations[GroupName] += myduration
                             else:
                                 groupdurations[GroupName] = myduration
+                                
+                        #get detailed instance stats, how much extra time, how much playing?  
                     except:
                         print(title)
                         print(totalduration)
+                    starttimes, endtimes = getDurationsFromDesc(desc)
+#                    print(starttimes)
+#                    print(endtimes)
+                    for idx,t in enumerate(starttimes):
+                        totalidx +=1
+                        dur = getSecsFromTime(endtimes[idx]) - getSecsFromTime(starttimes[idx])
+                        #need to add duration and adjust slightly published time.  Otherwise we dont get all the iterations.  
+#                        publishedDateO = datetime.strptime(publishedDate, '%Y-%m-%dT/%H:%M:%SZ')
+#                        publishedDateO = publishedDateO + timedelta(minutes=5*idx)
+#                        publishedDate = publishedDateO.strftime('%Y-%m-%dT/%H:%M:%SZ')
+                        mydata = {"GroupName": GroupName, "Title": title, "URL": url, "PublishedDate": publishedDate, "starttime": starttimes[idx], "endtime": endtimes[idx], "iteration": totalidx, "status": privacyStatus, "duration": dur}
+#                        print(mydata)
+                        df.loc[vidx] = mydata#[GroupName, title, url, publishedDate, starttime, endtime, idx]
+                        vidx = vidx + 1
                     #make a map of MONTH, DAYOFWEEK, TIMEOFDAY, SONGMAP
                     #with new videos, take the time outside of TRIAL#x -> END#x and count as words.  
                     
@@ -205,3 +255,14 @@ for plid in p_ids:
     #link, title, GroupName, Published date, Iteration#, PlayedInSeconds, #notesplayed-calculated
 print(songdurations)
 print(groupdurations)
+
+print(df)
+#ok, we have the df, now what to do with it?  
+#for now just using recent formatted data.  
+pd.set_option("display.max.columns", None)
+df.head()
+
+df.PublishedDate = pd.to_datetime(df['PublishedDate'], format='%Y-%m-%d %H:%M:%S.%f')
+df.set_index(['PublishedDate'],inplace=True)
+df.groupby('Title')['duration'].plot(legend=True)
+plt.show()

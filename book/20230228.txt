@@ -17,6 +17,8 @@ List will display an overview broken down by song.  A Histograph and an improvem
 Then selecting a member of the list will give more details.  
 Should have standard filter for search etc.  
 Statistics will include stats on words spoken, improvement stats, play frequency graph.  
+Lets do this with python scripts and then utilize the generated data?  
+Then we can analyze in multiple ways.  
 
 **stats.html
 Overall stats will include aggregate information about these same stats.  
@@ -42,4 +44,7 @@ Some key factors:
 --Perhaps create some interesting algorithmic music in the process.  
 
 I am not sure how to stay unbiased, but I think the algorithmic music preferences may bring some insight.  
+I am worried my notes for this may not be meticulous enough yet.  
+Also right now I am still in the stage of mistakes vs less mistakes, not so much preferences yet.  
+Hopefully eventually I will get to more preference and less mistakes.  
 These would be extracted from analysis on the music data and notes associated with that data.  

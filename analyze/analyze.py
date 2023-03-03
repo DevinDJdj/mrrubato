@@ -113,7 +113,7 @@ if __name__ == '__main__':
 #        print(item["id"])
         if (item["id"]["kind"] == "youtube#video"):
             videoid = item["id"]["videoId"]
-            url = f'https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails\
+            url = f'https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,status\
                 &id={videoid}&key={api_key}'
             json_url = requests.get(url)
             datav = json.loads(json_url.text)
@@ -122,6 +122,7 @@ if __name__ == '__main__':
                 GroupName = ""
                 publishedDate = datav['items'][0]['snippet']['publishedAt']
                 title = datav['items'][0]['snippet']['title']
+                privacystatus = datav['items'][0]['status']['privacyStatus']
                 gs = title.find("(")
                 ge = title.find(")")
                 url = "https://www.youtube.com/watch?v=" + videoid
