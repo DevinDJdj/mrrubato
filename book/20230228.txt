@@ -27,6 +27,7 @@ Overall stats will include aggregate information about these same stats.
 Need to move anything by Me to (Composition)
 also any notes on the software itself should probably be in a separate category?  
 Not sure if we leave this for musical composition or just combine.  
+Perhaps figure out a way to automate this somehow?  
 
 
 I think this will still be completely misunderstood if I unexpectedly pass.  
@@ -48,3 +49,16 @@ I am worried my notes for this may not be meticulous enough yet.
 Also right now I am still in the stage of mistakes vs less mistakes, not so much preferences yet.  
 Hopefully eventually I will get to more preference and less mistakes.  
 These would be extracted from analysis on the music data and notes associated with that data.  
+
+
+**web/analyze.html
+do we want to make sure this would work with other channel content?  
+Then someone could use the functionality without actually using the source.  
+Right now I think it is just loading the transcribed words and the previous videos which may not work.  
+Dont worry about this now.  Too many other things to do.  
+
+
+Feeling lazy at the moment, but I kind of want to accomplish something.  
+Play piano?  
+
+
