@@ -62,3 +62,16 @@ Feeling lazy at the moment, but I kind of want to accomplish something.
 Play piano?  
 
 
+Where do I want to put energy?  analyze.html or analyze.py
+Lets generate the plots for now with analyze.py
+For each iteration, generate a png which represents the midi data.  
+Then we can use this and we can always regenerate.  
+We lose some things by not doing in real-time, but we will use some libraries in the future though
+and much easier to do more in python for any learning or visualization and data manipulation we may want to do.  
+So better to just have it here I think.  
+
+**analyze.py (param = videoID)
+Generate png for each iteration.  
+PixelInterval = 0.1s  
+Generate top-bottom and left-right for now.  
+

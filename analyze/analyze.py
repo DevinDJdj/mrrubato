@@ -19,6 +19,8 @@ import requests
 import json
 from oauth2client.tools import argparser, run_flow
 
+from mido import MidiFile
+
 #print(cred.APIKEY)
 
 
@@ -91,7 +93,21 @@ def get_playlist_items(plid, limit: int=50):
         if nextPageToken is None: break
     return res
     
-    
+def outputMidi(mid):
+    for i, track in enumerate(mid.tracks):
+        print('Track {}: {}'.format(i, track.name))
+        for msg in track:
+            print(msg)
+        
+def printMidi(midilink):
+    r = requests.get(midilink)
+    print(len(r.content))
+    with open("test.mid", "wb") as f:
+        f.write(r.content)
+    mid = MidiFile("test.mid")
+    outputMidi(mid)
+    #from here lets generate a graphic.  
+    #read with mido?  
 
 if __name__ == '__main__':
     argparser.add_argument("--title", help="Video title", default="What a Wonderful World")
@@ -108,7 +124,6 @@ if __name__ == '__main__':
     iterations = []    
     totalidx = 0
     for item in reversed(data["items"]):
-    
 #    for item in data['items']:
 #        print(item["id"])
         if (item["id"]["kind"] == "youtube#video"):
@@ -146,13 +161,21 @@ if __name__ == '__main__':
                     if (ts > -1):
                         endtimes.append(desc[ts+7:te])
 
+                midis = desc.find("MIDI:")
+                if (midis > 0):
+                    midie = desc.find("\n", midis)
+                    midilink = desc[midis+5:midie]
+                    printMidi(midilink)
+                
                 if (len(starttimes) != len(endtimes)):
                     print("invalid data {videoid}")
                 else:
+                    print(starttimes)
                     for idx,t in enumerate(starttimes):
                         totalidx +=1
                         mydata = {"URL": url, "PublishedDate": publishedDate, "starttime": starttimes[idx], "endtime": endtimes[idx], "iteration": totalidx}
-                        print(mydata)
+#                        print(mydata)
                         iterations.append(mydata)
             
     print(iterations)
+    
