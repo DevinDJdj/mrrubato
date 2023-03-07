@@ -445,27 +445,27 @@ if __name__ == '__main__':
                         starttime = time.time()
 
                         with keyboard.pressed(Key.ctrl):
-                            keyboard.press('s')
+                            keyboard.press('1')
                             time.sleep(0.25)
-                            keyboard.release('s')
+                            keyboard.release('1')
                         print("Start Recording" + str(time.time()))
                         msg.time = 0
                     if msg.note == 22:
                         endtime = time.time()
 
                         with keyboard.pressed(Key.ctrl):
-                            keyboard.press('t')
+                            keyboard.press('2')
                             time.sleep(0.25)
-                            keyboard.release('t')
+                            keyboard.release('2')
                         print("Stop Recording" + str(time.time()))
                         break
                     if msg.note == 107 and msg.note !=lastnote:
                         pausestart.append(time.time())
 
                         with keyboard.pressed(Key.ctrl):
-                            keyboard.press('p')
+                            keyboard.press('9')
                             time.sleep(0.25)
-                            keyboard.release('p')
+                            keyboard.release('9')
                         print("Pause Recording" + str(time.time()))
                         print(msg.time)
                     if msg.note == 108 and msg.note !=lastnote:
@@ -476,9 +476,9 @@ if __name__ == '__main__':
                         msg.time = int(round(msg.time*1000))
 
                         with keyboard.pressed(Key.ctrl):
-                            keyboard.press('u')
+                            keyboard.press('0')
                             time.sleep(0.25)
-                            keyboard.release('u')
+                            keyboard.release('0')
                         print("Unpause Recording" + str(time.time()))
 
                         print("delay " + str(delay))
