@@ -27,6 +27,7 @@ Overall stats will include aggregate information about these same stats.
 Need to move anything by Me to (Composition)
 also any notes on the software itself should probably be in a separate category?  
 Not sure if we leave this for musical composition or just combine.  
+Perhaps figure out a way to automate this somehow?  
 
 
 I think this will still be completely misunderstood if I unexpectedly pass.  
@@ -51,10 +52,36 @@ These would be extracted from analysis on the music data and notes associated wi
 
 
 
+
 **Music generation**
 Should use multiple scales and find patterns within those scales that fit well.  
 That is a lot of music itself, just generating patterns within scales.  
 This is a really good idea of how to mathematically fit things together.  
 To start just use the 12-note octave along with the 24-note octave.  
 This would be similar enough to something we are familiar with perhaps.  
+
+**web/analyze.html
+do we want to make sure this would work with other channel content?  
+Then someone could use the functionality without actually using the source.  
+Right now I think it is just loading the transcribed words and the previous videos which may not work.  
+Dont worry about this now.  Too many other things to do.  
+
+
+Feeling lazy at the moment, but I kind of want to accomplish something.  
+Play piano?  
+
+
+Where do I want to put energy?  analyze.html or analyze.py
+Lets generate the plots for now with analyze.py
+For each iteration, generate a png which represents the midi data.  
+Then we can use this and we can always regenerate.  
+We lose some things by not doing in real-time, but we will use some libraries in the future though
+and much easier to do more in python for any learning or visualization and data manipulation we may want to do.  
+So better to just have it here I think.  
+
+**analyze.py (param = videoID)
+Generate png for each iteration.  
+PixelInterval = 0.1s  
+Generate top-bottom and left-right for now.  
+
 
