@@ -357,7 +357,7 @@ if __name__ == '__main__':
         youtube = get_authenticated_service(args)
         videoid = initialize_upload(youtube, args)    
         add_video_to_playlist(videoid, cred.MY_PLAYLIST, args)
-        exit
+        sys.exit
         
 #    mido.set_backend('mido.backends.portmidi')   
     mid = MidiFile()

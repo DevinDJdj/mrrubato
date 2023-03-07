@@ -48,3 +48,13 @@ I am worried my notes for this may not be meticulous enough yet.
 Also right now I am still in the stage of mistakes vs less mistakes, not so much preferences yet.  
 Hopefully eventually I will get to more preference and less mistakes.  
 These would be extracted from analysis on the music data and notes associated with that data.  
+
+
+
+**Music generation**
+Should use multiple scales and find patterns within those scales that fit well.  
+That is a lot of music itself, just generating patterns within scales.  
+This is a really good idea of how to mathematically fit things together.  
+To start just use the 12-note octave along with the 24-note octave.  
+This would be similar enough to something we are familiar with perhaps.  
+
