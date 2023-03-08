@@ -12,7 +12,7 @@ import sys
 # adding Folder_2/subfolder to the system path
 sys.path.insert(0, 'c:/devinpiano/')
  
- 
+import os
 import cred
 import pandas as pd
 import requests
@@ -20,7 +20,12 @@ import json
 from oauth2client.tools import argparser, run_flow
 
 from mido import MidiFile
+from mido import Message
+import math
 
+#generate image from midi
+import cv2
+import numpy as np
 #print(cred.APIKEY)
 
 
@@ -92,20 +97,106 @@ def get_playlist_items(plid, limit: int=50):
         
         if nextPageToken is None: break
     return res
+
     
 def outputMidi(mid):
     for i, track in enumerate(mid.tracks):
         print('Track {}: {}'.format(i, track.name))
         for msg in track:
             print(msg)
-        
+
+
+def isOn(note, on):
+    if (note == 21):
+        on = 1
+    if (note == 22):
+        on = 0
+    if (note == 107):
+        on = 0
+    if (note == 108):
+        on = 1
+    return on
+
+def getTrackTime(track):
+    #skip between pauses and only start with the start signal.  
+    currentTime = 0
+    on = 0
+    for msg in track:        
+        if (on > 0):
+            currentTime += msg.time
+        if (msg.type == 'note_on'):
+            on = isOn(msg.note, on)
+
+    return currentTime
+
+def getColor(timepassed, initialvelocity, pedal):
+    #maybe look up the actual function here, just a placeholder function of time vs
+    #also we really probably want to show this even when velocity is 0
+    if (pedal > 0):
+        estimate = (initialvelocity/math.log(timepassed+1))
+        return int(estimate)
+    else:
+        return 0
+    
+def fillImage(midi_image, notes, currentTime, prevTime, pedal):
+    #between prevTime and currentTime fill the image    
+    a = prevTime
+    while (a < currentTime):
+        for n in notes:
+            if n.time < a and n.velocity > 0:
+                c = getColor(a - n.time, n.velocity, pedal)
+                #note is on
+                if (c > 0):
+                    midi_image[n.note*2:n.note*2+1,int(a/100)] = (0,c,n.velocity)      # (B, G, R)
+        a += 100
+    
+def midiToImage(mid):
+    
+    for i, track in enumerate(mid.tracks):
+        print('Track {}: {}'.format(i, track.name))
+        totalTime = getTrackTime(track)
+        currentTime = 0
+        prevTime = currentTime
+        notes = [Message('note_on', channel=0, note=60, velocity=0, time=0)] * 109
+        pedal = 0
+        height = 88*2
+        width = int(totalTime/100)
+        midi_image = np.ones((height,width,3), np.uint8)
+        midi_image = 255*midi_image
+        on = 0
+        for msg in track:
+            if (on > 0):
+                currentTime += msg.time
+            if (msg.type=='note_on'):
+                if (on > 0):  
+                    msg.time = currentTime
+                    notes[msg.note] = msg
+                    fillImage(midi_image, notes, currentTime, prevTime, pedal)
+                    prevTime = currentTime
+                on = isOn(msg.note, on)
+            if (msg.type=='control_change'):
+                #https://www.midi.org/specifications-old/item/table-3-control-change-messages-data-bytes-2
+                if (msg.control == 64):  #assuming this is pedal, yep 
+                    pedal = msg.value
+                
+            print(msg)
+        print(totalTime)
+    return midi_image
+    
 def printMidi(midilink):
     r = requests.get(midilink)
     print(len(r.content))
     with open("test.mid", "wb") as f:
         f.write(r.content)
     mid = MidiFile("test.mid")
-    outputMidi(mid)
+    #outputMidi(mid)
+    img = midiToImage(mid)
+
+    height = 200
+    width = 200    
+    
+    path = './output/'
+    cv2.imwrite(os.path.join(path , 'test.jpg'), img)
     #from here lets generate a graphic.  
     #read with mido?  
 

@@ -102,8 +102,7 @@ def getDurationsFromDesc(desc):
             endtimes.append(desc[ts+7:te])
 
     if (len(starttimes) != len(endtimes)):
-        print("invalid data {videoid}")
-        return None
+        return None, None
     else:
         return starttimes, endtimes
     
@@ -234,19 +233,22 @@ for plid in p_ids:
                     starttimes, endtimes = getDurationsFromDesc(desc)
 #                    print(starttimes)
 #                    print(endtimes)
-                    for idx,t in enumerate(starttimes):
-                        totalidx +=1
-                        dur = getSecsFromTime(endtimes[idx]) - getSecsFromTime(starttimes[idx])
-                        #need to add duration and adjust slightly published time.  Otherwise we dont get all the iterations.  
-#                        publishedDateO = datetime.strptime(publishedDate, '%Y-%m-%dT/%H:%M:%SZ')
-#                        publishedDateO = publishedDateO + timedelta(minutes=5*idx)
-#                        publishedDate = publishedDateO.strftime('%Y-%m-%dT/%H:%M:%SZ')
-                        mydata = {"GroupName": GroupName, "Title": title, "URL": url, "PublishedDate": publishedDate, "starttime": starttimes[idx], "endtime": endtimes[idx], "iteration": totalidx, "status": privacyStatus, "duration": dur}
-#                        print(mydata)
-                        df.loc[vidx] = mydata#[GroupName, title, url, publishedDate, starttime, endtime, idx]
-                        vidx = vidx + 1
-                    #make a map of MONTH, DAYOFWEEK, TIMEOFDAY, SONGMAP
-                    #with new videos, take the time outside of TRIAL#x -> END#x and count as words.  
+                    if starttimes is None:
+                        print("invalid data " + videoid)
+                    else:
+                        for idx,t in enumerate(starttimes):
+                            totalidx +=1
+                            dur = getSecsFromTime(endtimes[idx]) - getSecsFromTime(starttimes[idx])
+                            #need to add duration and adjust slightly published time.  Otherwise we dont get all the iterations.  
+    #                        publishedDateO = datetime.strptime(publishedDate, '%Y-%m-%dT/%H:%M:%SZ')
+    #                        publishedDateO = publishedDateO + timedelta(minutes=5*idx)
+    #                        publishedDate = publishedDateO.strftime('%Y-%m-%dT/%H:%M:%SZ')
+                            mydata = {"GroupName": GroupName, "Title": title, "URL": url, "PublishedDate": publishedDate, "starttime": starttimes[idx], "endtime": endtimes[idx], "iteration": totalidx, "status": privacyStatus, "duration": dur}
+    #                        print(mydata)
+                            df.loc[vidx] = mydata#[GroupName, title, url, publishedDate, starttime, endtime, idx]
+                            vidx = vidx + 1
+                        #make a map of MONTH, DAYOFWEEK, TIMEOFDAY, SONGMAP
+                        #with new videos, take the time outside of TRIAL#x -> END#x and count as words.  
                     
      #   print(df)
     print(songdurations)
