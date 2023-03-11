@@ -1,0 +1,35 @@
+やりたいこと多すぎ。
+
+Create the structure around analyzing the midi data.  
+Just have a link to the prev note within each note structure, and you can go back through the list.  
+This allows us from any note to attempt to predict the next note.  
+Really in the simplest fashion this is what we want to do, predict the next midi value.  
+And we can extrapolate from there, even if the next midi value is predicted, we can go beyond that to extend.  
+
+We really need to get the sheet music in digital format.  
+Lets just generate the midi file from the sheet music in mechanical format.  
+That way we have an original midi file without any musical postulation.  
+Perhaps this is sufficient and we dont actually need any actual written sheet music.  
+How do we do this though without inhibiting what we play.  
+I dont want to restrict playing to only things that have digital sheet music.  
+
+Started very simple class to allow for iteration across messages.  
+
+Interesting to listen to some of the people actually making AI say they dont quite really know how it is working.  
+Neural networks have been around for a long time, I remember originally playing with them and Genetic algorithms long ago.  
+The concepts were interesting, but really the only reason they are able to be applied now is just due to the vast amount of data which is available.  
+This is more a key in what is being done I think than what has actually changed in the concept at least of neural networks.  
+However with depth of network, you get additional complexity for sure.  
+I have to review the mathematical algorithms utilized here for sure when I start coding this.  
+But if we can understand a bit more about our learning process along with the machine learning process, this will likely enhance communication.  
+But this is also a very touchy topic.  
+Right now we have only minimal "invasion" into personal mind, but proper usage of this can probably enhance things significantly.  
+One of those things will likely be enhanced learning.  
+How do we contain misuse of this is a different question.  I am more interested in what is possible at the moment.  
+Without knowing what is possible it is hard to limit it.  
+For now I think the first thing I will do is try to create something to predict next notes or next words based on the training set.  
+This personal data along with the breadth of data which is being accumulated across the internet will be extremely powerful.  
+-How do we use this
+-How do we use this morally
+
+#git rm --cached analyze/output/test.jpg
