@@ -11,7 +11,7 @@ import sys
  
 # adding Folder_2/subfolder to the system path
 sys.path.insert(0, 'c:/devinpiano/')
- 
+from mymidi import MyTrack, MyMsg
 import os
 import cred
 import pandas as pd
@@ -133,7 +133,9 @@ def getColor(timepassed, initialvelocity, pedal):
     #maybe look up the actual function here, just a placeholder function of time vs
     #also we really probably want to show this even when velocity is 0
     if (pedal > 0):
-        estimate = (initialvelocity/math.log(timepassed+1))
+        estimate = (initialvelocity**2/math.log(timepassed+1))
+        if (estimate > initialvelocity):
+            estimate = initialvelocity
         return int(estimate)
     else:
         return 0
@@ -147,7 +149,7 @@ def fillImage(midi_image, notes, currentTime, prevTime, pedal):
                 c = getColor(a - n.time, n.velocity, pedal)
                 #note is on
                 if (c > 0):
-                    midi_image[n.note*2:n.note*2+1,int(a/100)] = (0,c,n.velocity)      # (B, G, R)
+                    midi_image[n.note*2:n.note*2+1,int(a/100)] = (0,n.velocity+c,n.velocity*2-c)      # (B, G, R)
         a += 100
     
 def midiToImage(mid):
@@ -182,6 +184,28 @@ def midiToImage(mid):
             print(msg)
         print(totalTime)
     return midi_image
+
+#continue here.  Need to further this.      
+def enhanceMidi(mid):
+    prevMsg = None
+    pedal = 0
+    
+    for i, track in enumerate(mid.tracks):
+        totalTime = getTrackTime(track)
+        t = MyTrack(track, totalTime)
+        on = 0
+        for msg in track:
+            if (msg.type=='note_on'):
+                if (on > 0):  
+                    m = MyMsg(msg, prevMsg, pedal)
+                    prevMsg = m
+                    t.notes.append(m)
+                on = isOn(msg.note, on)
+            if (msg.type=='control_change'):
+                #https://www.midi.org/specifications-old/item/table-3-control-change-messages-data-bytes-2
+                if (msg.control == 64):  #assuming this is pedal, yep 
+                    pedal = msg.value
+                
     
 def printMidi(midilink):
     r = requests.get(midilink)
@@ -190,6 +214,7 @@ def printMidi(midilink):
         f.write(r.content)
     mid = MidiFile("test.mid")
     #outputMidi(mid)
+    enhanceMidi(mid)
     img = midiToImage(mid)
 
     height = 200
