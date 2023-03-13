@@ -33,3 +33,15 @@ This personal data along with the breadth of data which is being accumulated acr
 -How do we use this morally
 
 #git rm --cached analyze/output/test.jpg
+
+
+Lets look for examples of what we want to do.  
+See if we can use this, music generation.  
+https://openai.com/research/musenet
+https://github.com/openai/jukebox/
+
+https://github.com/salu133445/musegan
+
+use this data perhaps either way
+https://salu133445.github.io/lakh-pianoroll-dataset/
+
