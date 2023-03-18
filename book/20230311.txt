@@ -41,3 +41,14 @@ This seems to be the best at the moment.
 Then use browser to view x.x.x.x:6868/index
 So we can add a flag to record.py and then open this page and then use a hotkey to enable the display capture.  
 Then we only need to start the app on tablet and then start musescore to view the music.  
+
+Lets look for examples of what we want to do.  
+See if we can use this, music generation.  
+https://openai.com/research/musenet
+https://github.com/openai/jukebox/
+
+https://github.com/salu133445/musegan
+
+use this data perhaps either way
+https://salu133445.github.io/lakh-pianoroll-dataset/
+
