@@ -35,6 +35,13 @@ This personal data along with the breadth of data which is being accumulated acr
 #git rm --cached analyze/output/test.jpg
 
 
+OK, so screencasting, decided to try to figure out how to more efficiently cast the Tablet which I am using for music to the Screen recording.  
+This seems to be the best at the moment.  
+"Screen Cast"
+Then use browser to view x.x.x.x:6868/index
+So we can add a flag to record.py and then open this page and then use a hotkey to enable the display capture.  
+Then we only need to start the app on tablet and then start musescore to view the music.  
+
 Lets look for examples of what we want to do.  
 See if we can use this, music generation.  
 https://openai.com/research/musenet
