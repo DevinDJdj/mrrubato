@@ -45,3 +45,9 @@ https://github.com/salu133445/musegan
 use this data perhaps either way
 https://salu133445.github.io/lakh-pianoroll-dataset/
 
+
+Note sequence and Rhythm sequence.  
+For now separate them.  
+What is the percentage of note sequence.  
+Lets make different combinations of notes.  
+This is a combinatorics problem to a certain extent.  
