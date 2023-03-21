@@ -11,7 +11,8 @@ import sys
  
 # adding Folder_2/subfolder to the system path
 sys.path.insert(0, 'c:/devinpiano/')
-from mymidi import MyTrack, MyMsg
+import mymidi
+
 import os
 import cred
 import pandas as pd
@@ -117,6 +118,30 @@ def isOn(note, on):
         on = 1
     return on
 
+
+#we need to adjust to several images one per instance.  
+#if prevMsg = 21 or 108 then this is start time.  
+#if nextMsg = 22 or 107 then this is end time of the track.  
+def getTrackTimes(mytrack):
+    #skip between pauses and only start with the start signal.  
+    currentTime = 0
+    on = 0
+    starttimes = []
+    endtimes = []
+    for mymsg in mytrack.notes:        
+        if (on > 0):
+            currentTime += mymsg.msg.time
+        if (mymsg.msg.type == 'note_on'):
+            if mymsg.prevmsg is not None and (mymsg.prevmsg.note == 21 or mymsg.prevmsg.note == 108):
+                starttimes.append(currentTime)
+            if mymsg.nextmsg is not None and (mymsg.nextmsg.note == 22 or mymsg.nextmsg.note == 107):
+                endtimes.append(currentTime)
+        if (mymsg.msg.type == 'note_on'):
+            on = isOn(mymsg.msg.note, on)
+                
+
+    return starttimes, endtimes
+
 def getTrackTime(track):
     #skip between pauses and only start with the start signal.  
     currentTime = 0
@@ -152,52 +177,69 @@ def fillImage(midi_image, notes, currentTime, prevTime, pedal):
                     midi_image[n.note*2:n.note*2+1,int(a/100)] = (0,n.velocity+c,n.velocity*2-c)      # (B, G, R)
         a += 100
     
-def midiToImage(mid):
+def midiToImage(t):
     
-    for i, track in enumerate(mid.tracks):
-        print('Track {}: {}'.format(i, track.name))
-        totalTime = getTrackTime(track)
-        currentTime = 0
-        prevTime = currentTime
-        notes = [Message('note_on', channel=0, note=60, velocity=0, time=0)] * 109
-        pedal = 0
-        height = 88*2
-        width = int(totalTime/100)
-        midi_image = np.ones((height,width,3), np.uint8)
-        midi_image = 255*midi_image
-        on = 0
-        for msg in track:
-            if (on > 0):
-                currentTime += msg.time
-            if (msg.type=='note_on'):
-                if (on > 0):  
-                    msg.time = currentTime
-                    notes[msg.note] = msg
-                    fillImage(midi_image, notes, currentTime, prevTime, pedal)
-                    prevTime = currentTime
-                on = isOn(msg.note, on)
-            if (msg.type=='control_change'):
-                #https://www.midi.org/specifications-old/item/table-3-control-change-messages-data-bytes-2
-                if (msg.control == 64):  #assuming this is pedal, yep 
-                    pedal = msg.value
-                
-            print(msg)
-        print(totalTime)
+    print('Track {}: {}'.format(i, t.track.name))
+    currentTime = 0
+    prevTime = currentTime
+    notes = [Message('note_on', channel=0, note=60, velocity=0, time=0)] * 109
+    pedal = 0
+    height = 88*2
+    starttimes, endtimes = getTrackTimes(t)
+    
+    width = int(t.length/100)
+    midi_image = np.ones((height,width,3), np.uint8)
+    midi_image = 255*midi_image
+    on = 0
+    for mymsg in t.notes:
+        if (on > 0):
+            currentTime += mymsg.msg.time
+        if (mymsg.msg.type=='note_on'):
+            if (on > 0):  
+                mymsg.msg.time = currentTime
+                notes[mymsg.note] = mymsg.msg
+                fillImage(midi_image, notes, currentTime, prevTime, mymsg.pedal)
+                prevTime = currentTime
+            on = isOn(mymsg.note, on)
+            
+        print(mymsg.msg)
+    print(t.length)
+    print(starttimes)
+    print(endtimes)
+    
     return midi_image
 
 #continue here.  Need to further this.      
+#from this I think we can generate N-grams of notes.  
+#for now not focused on rhythm.  #lets just give the notes weights based on their msg.velocity
+#not sure this strategy is good.  But we want to create N-grams and check the uniqueness vs. repitition at certain note intervals.  
+#create some plots based on Notes, organize by octaves
+#for now just do a simple note frequency and by velocity.  
+#then try to find time patterns within these note patterns.  
+#if there is significant repetition in any set of notes then we want to try to analyze this.  
+#what is the rhythm of these repititions, is there one set, or multiple sets.  
+#if the same note pattern is offset by X steps.  
+#just add each N-gram to the MyMsg in the form
+#this should be a function to iterate?  
+#for now this is easier, but I think I need
+#[MAXNGRAM][MAXNGRAM] array already built.  
+#use some of the structures we have used before, just the P*P*P for now to define the note sequence.  Right now order not so important.  
+#each P represents a key.  
+
 def enhanceMidi(mid):
     prevMsg = None
     pedal = 0
     
     for i, track in enumerate(mid.tracks):
         totalTime = getTrackTime(track)
-        t = MyTrack(track, totalTime)
+        t = mymidi.MyTrack(track, totalTime)
         on = 0
         for msg in track:
             if (msg.type=='note_on'):
                 if (on > 0):  
-                    m = MyMsg(msg, prevMsg, pedal)
+                    m = mymidi.MyMsg(msg, prevMsg, pedal)
+                    if (prevMsg is not None):
+                        prevMsg.nextmsg = m
                     prevMsg = m
                     t.notes.append(m)
                 on = isOn(msg.note, on)
@@ -205,7 +247,18 @@ def enhanceMidi(mid):
                 #https://www.midi.org/specifications-old/item/table-3-control-change-messages-data-bytes-2
                 if (msg.control == 64):  #assuming this is pedal, yep 
                     pedal = msg.value
-                
+    return t
+    
+def getNgrams(t):
+    for mymsg in t.notes:
+        i = 0
+        while (i < mymidi.MAXNGRAM and mymsg.prevmsg is not None):
+            tempmsg = mymsg.prevmsg
+            i = i+1
+            mymsg.ngrams[mymidi.MAXNGRAM-i] = tempmsg.note
+            
+
+                    
     
 def printMidi(midilink):
     r = requests.get(midilink)
@@ -214,8 +267,9 @@ def printMidi(midilink):
         f.write(r.content)
     mid = MidiFile("test.mid")
     #outputMidi(mid)
-    enhanceMidi(mid)
-    img = midiToImage(mid)
+    t = enhanceMidi(mid)
+    getNgrams(t)
+    img = midiToImage(t)
 
     height = 200
     width = 200    

@@ -58,3 +58,6 @@ For now separate them.
 What is the percentage of note sequence.  
 Lets make different combinations of notes.  
 This is a combinatorics problem to a certain extent.  
+
+continue analyze.py
+adjust so that we have one image for each trial instead of one big long image.  
