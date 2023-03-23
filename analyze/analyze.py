@@ -167,7 +167,7 @@ def getColor(timepassed, initialvelocity, pedal):
     else:
         return 0
     
-def fillImage(midi_image, notes, currentTime, prevTime, pedal):
+def fillImage(midi_image, notes, currentTime, prevTime, pedal, iteration, starttime):
     #between prevTime and currentTime fill the image    
     a = prevTime
     while (a < currentTime):
@@ -176,35 +176,56 @@ def fillImage(midi_image, notes, currentTime, prevTime, pedal):
                 c = getColor(a - n.time, n.velocity, pedal)
                 #note is on
                 if (c > 0):
-                    midi_image[n.note*2:n.note*2+1,int(a/100)] = (0,n.velocity+c,n.velocity*2-c)      # (B, G, R)
+                    midi_image[iteration*88*2+n.note*2:iteration*88*2+n.note*2+1,int((a-starttime)/100)] = (0,n.velocity+c,n.velocity*2-c)      # (B, G, R)
         a += 100
+
+def getIteration(currentTime, starttimes, endtimes):
+    i = 0
+    for i, st in enumerate(starttimes):
+        if (starttimes[i] <= currentTime and currentTime <= endtimes[i]):
+            return i
+    print("getIterationError" + str(currentTime))
+    print(starttimes)
+    print(endtimes)
+    return -1
     
-def midiToImage(t):
+def midiToImage(t, midilink):
     
-    print('Track {}: {}'.format(i, t.track.name))
-    currentTime = 0
-    prevTime = currentTime
+    print('Track: {}'.format(t.track.name))
     notes = [Message('note_on', channel=0, note=60, velocity=0, time=0)] * 109
     pedal = 0
     height = 88*2
+    width = 1
     starttimes, endtimes = getTrackTimes(t)
     
-    width = int(t.length/100)
-    midi_image = np.ones((height,width,3), np.uint8)
-    midi_image = 255*midi_image
-    on = 0
-    for mymsg in t.notes:
-        if (on > 0):
-            currentTime += mymsg.msg.time
-        if (mymsg.msg.type=='note_on'):
-            if (on > 0):  
-                mymsg.msg.time = currentTime
-                notes[mymsg.note] = mymsg.msg
-                fillImage(midi_image, notes, currentTime, prevTime, mymsg.pedal)
-                prevTime = currentTime
-            on = isOn(mymsg.note, on)
-            
-        print(mymsg.msg)
+    if len(starttimes) != len(endtimes):
+        print("Incorrect data, please fix" + midilink)
+    else:
+        for i, st in enumerate(starttimes):
+            w = int((endtimes[i]-starttimes[i])/100)
+            if w > width:
+                width = w +1
+        height = i*88*2
+        midi_image = np.ones((height,width,3), np.uint8)
+        midi_image = 255*midi_image
+        currentTime = 0
+        prevTime = currentTime
+        i = 0
+        on = 0
+        for mymsg in t.notes:
+            if (on > 0):
+                currentTime += mymsg.msg.time
+                #not very efficient, but good enough for now.  
+                i = getIteration(currentTime, starttimes, endtimes)
+            if (mymsg.msg.type=='note_on'):
+                if (on > 0 and i > 0):  
+                    mymsg.msg.time = currentTime
+                    notes[mymsg.note] = mymsg.msg
+                    fillImage(midi_image, notes, currentTime, prevTime, mymsg.pedal, i, starttimes[i])
+                    prevTime = currentTime
+                on = isOn(mymsg.note, on)
+                
+            print(mymsg.msg)
     print(t.length)
     print(starttimes)
     print(endtimes)
@@ -231,6 +252,7 @@ def midiToImage(t):
 def enhanceMidi(mid):
     prevMsg = None
     pedal = 0
+    
     
     for i, track in enumerate(mid.tracks):
         totalTime = getTrackTime(track)
@@ -271,7 +293,7 @@ def printMidi(midilink):
     #outputMidi(mid)
     t = enhanceMidi(mid)
     getNgrams(t)
-    img = midiToImage(t)
+    img = midiToImage(t, midilink)
 
     height = 200
     width = 200    
