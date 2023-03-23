@@ -24,6 +24,8 @@ import mido
 from time import sleep
 from random import randint
 from mido import Message, MidiFile, MidiTrack
+import os
+import glob
 
 def note(note,velocity = 64, time = 2):
     velocity_modification = randint(-20,20)
@@ -33,19 +35,13 @@ def note_off(note,velocity = 64, time=2):
     return mido.Message('note_off',note=note,velocity = velocity, time=time)
 
 
+def get_latest_file():
+    list_of_files = glob.glob('C:/Users/devin/Videos/*.mid') # * means all if need specific format then *.csv
+    latest_file = max(list_of_files, key=os.path.getctime)
+    print(latest_file)
+    return latest_file
 
-outputs = mido.get_output_names()
-print(mido.get_output_names())
 
-outport = mido.open_output(outputs[0])
-
-
-mid = MidiFile('testing.midi')
-for i, track in enumerate(mid.tracks):
-    print('Track {}: {}'.format(i, track.name))
-    for msg in mid.play():
-        outport.send(msg)
-    
 
 def pause():
     sleep(randint(0,100) * .0005)
@@ -73,6 +69,23 @@ def minorChord(root ,duration):
     outport.send(note_off(root+4))
     outport.send(note_off(root+7))
     
+
+if __name__ == '__main__':
+    outputs = mido.get_output_names()
+    print(mido.get_output_names())
+
+    #Portable Grand-1 2
+    outport = mido.open_output(outputs[2])
+
+
+    mid = MidiFile(get_latest_file())
+    for i, track in enumerate(mid.tracks):
+        print('Track {}: {}'.format(i, track.name))
+        for msg in mid.play():
+            outport.send(msg)
+    
+
+    test = """
 C = 60 
 G = 55 
 A = 57 
@@ -87,4 +100,4 @@ while True:
     majorChord(F,1)
     majorChord(G,1)
     majorChord(C,2)
-    
+    """
