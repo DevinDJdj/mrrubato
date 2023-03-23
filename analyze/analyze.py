@@ -176,7 +176,7 @@ def fillImage(midi_image, notes, currentTime, prevTime, pedal, iteration, startt
                 c = getColor(a - n.time, n.velocity, pedal)
                 #note is on
                 if (c > 0):
-                    midi_image[iteration*88*2+n.note*2:iteration*88*2+n.note*2+1,int((a-starttime)/100)] = (0,n.velocity+c,n.velocity*2-c)      # (B, G, R)
+                    midi_image[iteration*88*2+(108-n.note)*2:iteration*88*2+(108-n.note)*2+1,int((a-starttime)/100)] = (0,n.velocity+c,n.velocity*2-c)      # (B, G, R)
         a += 100
 
 def getIteration(currentTime, starttimes, endtimes):
@@ -218,7 +218,7 @@ def midiToImage(t, midilink):
                 #not very efficient, but good enough for now.  
                 i = getIteration(currentTime, starttimes, endtimes)
             if (mymsg.msg.type=='note_on'):
-                if (on > 0 and i > 0):  
+                if (on > 0 and i > -1):  
                     mymsg.msg.time = currentTime
                     notes[mymsg.note] = mymsg.msg
                     fillImage(midi_image, notes, currentTime, prevTime, mymsg.pedal, i, starttimes[i])
