@@ -61,3 +61,7 @@ This is a combinatorics problem to a certain extent.
 
 continue analyze.py
 adjust so that we have one image for each trial instead of one big long image.  
+
+Start to use pytorch for basic things and try to get familiar with the library.  
+For the time being this will be the ML library.  
+Dont write too much so it wont be hard to generalize/replace if needed for now.  

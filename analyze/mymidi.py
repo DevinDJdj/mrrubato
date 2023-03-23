@@ -13,4 +13,6 @@ class MyMsg:
     self.prevmsg = prev
     self.pedal = pedal
     self.ngrams = [0]*MAXNGRAM
+    self.ngramstensor = None #ngrams pytorch
+    self.ngramsp = None #P*P methodology
     self.nextmsg = None

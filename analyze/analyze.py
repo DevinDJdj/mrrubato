@@ -29,7 +29,9 @@ import cv2
 import numpy as np
 #print(cred.APIKEY)
 
-
+#try to use pytorch a bit
+#pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117
+import torch
 
 
 channel_id = cred.CHANNELID
@@ -257,7 +259,7 @@ def getNgrams(t):
             i = i+1
             mymsg.ngrams[mymidi.MAXNGRAM-i] = tempmsg.note
             
-
+        mymsg.ngramstensor = torch.tensor(mymsg.ngrams)
                     
     
 def printMidi(midilink):
