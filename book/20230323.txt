@@ -24,3 +24,19 @@ AI技術を通して、何となく利用出来る形になれる道は見え始
 伝えたいことが伝わらない気がするが、将来の子供のために頑張ろうか。
 先周りして、今お詫びします。
 
+
+record.py 
+Automatically calculate whether we should put this into certain playlist
+based on the number of words in the transcript.  
+
+
+
+How can we expand the capability to communicate using this type of monologue.  
+First lets try some sentiment analysis around certain topics.  
+Can we ingest all the data and create accurate sentiment regarding any particular topic?  
+i.e. make any random inquiry against the dataset and get a sentiment along with a confidence interval.  
+Then we have settings to review all external inquiries with a sentiment confidence less than xx%
+Then we can respond or not depending on time and desire to fix the system/data.  
+How much data is needed?  
+How accurate is the sentiment based on the data?  
+
