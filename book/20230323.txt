@@ -40,3 +40,23 @@ Then we can respond or not depending on time and desire to fix the system/data.
 How much data is needed?  
 How accurate is the sentiment based on the data?  
 
+
+play.py 
+need to create main function and be able to use this with other functions.  
+
+
+How do I share the watch history in some meaningful way?  
+Or do I want to?  
+
+Brushing up on Machine learning info:
+https://github.com/karpathy/nanoGPT
+-perhaps a basis for simple start.  
+
+
+3Blue1Brown - nice channel.  
+
+https://www.youtube.com/watch?v=h7apO7q16V0
+https://www.youtube.com/watch?v=KuXjwB4LzSA
+https://www.youtube.com/watch?v=Ilg3gGewQ5U
+https://www.youtube.com/watch?v=aircAruvnKk
+
