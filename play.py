@@ -26,6 +26,8 @@ from random import randint
 from mido import Message, MidiFile, MidiTrack
 import os
 import glob
+from oauth2client.tools import argparser, run_flow
+
 
 def note(note,velocity = 64, time = 2):
     velocity_modification = randint(-20,20)
@@ -71,6 +73,10 @@ def minorChord(root ,duration):
     
 
 if __name__ == '__main__':
+    argparser.add_argument("--speed", help="Speed multiplier upload",
+      default="1.0") #--rerun true perhaps add other options but right now this is all that really fails.  
+    args = argparser.parse_args()
+
     outputs = mido.get_output_names()
     print(mido.get_output_names())
 
@@ -79,10 +85,19 @@ if __name__ == '__main__':
 
 
     mid = MidiFile(get_latest_file())
+    
+    for i, track in enumerate(mid.tracks):
+        print('Track {}: {}'.format(i, track.name))
+        for msg in track:
+            if hasattr(msg, 'note'):
+                msg.time = msg.time
+                msg.time = float(msg.time) * float(args.speed)
+            
     for i, track in enumerate(mid.tracks):
         print('Track {}: {}'.format(i, track.name))
         for msg in mid.play():
             outport.send(msg)
+            print(msg)
     
 
     test = """
