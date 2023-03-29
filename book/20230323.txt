@@ -28,7 +28,7 @@ AI技術を通して、何となく利用出来る形になれる道は見え始
 record.py 
 Automatically calculate whether we should put this into certain playlist
 based on the number of words in the transcript.  
-
+DONE - cant do this and leave unlisted.  
 
 
 How can we expand the capability to communicate using this type of monologue.  
@@ -43,6 +43,7 @@ How accurate is the sentiment based on the data?
 
 play.py 
 need to create main function and be able to use this with other functions.  
+DONE
 
 
 How do I share the watch history in some meaningful way?  
@@ -59,4 +60,38 @@ https://www.youtube.com/watch?v=h7apO7q16V0
 https://www.youtube.com/watch?v=KuXjwB4LzSA
 https://www.youtube.com/watch?v=Ilg3gGewQ5U
 https://www.youtube.com/watch?v=aircAruvnKk
+
+
+
+Regarding speed.  
+You are so much more familiar with something you create.  
+This would be faster.  
+But finger speed is still probably the biggest problem for piano.  
+The problem comes when combining singing and live piano.  
+Maybe try recording then singing with recorded piano at 1.5x speed or 2x speed.  
+Not sure I like this idea, but see if it helps at least with singing.  
+Lets focus more on the AI and analysis.  Then creation.  
+The quality of play and singing not so important right now.  
+As long as it is improving somewhat.  
+
+
+Lets just forget the speed aspect right now.  
+We can always speed it up digitally.  
+I think recording at half speed is ok for the most part.  
+that is about where I am in most songs.  
+
+We could also fix excessive pauses/page turns etc programatically.  
+Kind of cheating, but I dont know how long it will take to get faster.  
+
+rewrite timestep.py
+No real point to make unlisted if it is still visible from playlist
+We want the playlists to be only a short segment of time.  
+Create unlisted_xxx for each section?  
+Then move to these playlists.  
+This is a better solution I think.  
+Annoying but cant think of anything better at the moment. 
+Then we still preserve the history.  
+Make some like 
+ZZZ_OK, etc.  
+
 
