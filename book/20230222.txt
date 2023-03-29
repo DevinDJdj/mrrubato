@@ -1,0 +1,57 @@
+Speed while playing is essentially how fast we can communicate this language.  
+There is something philosophically defining about speed.  
+But I dont think you can read and play with significant speed with the current music language.  This is perhaps why people train themselves to memorize pieces.  
+Although I dont know the limit for this.  If I looked for it, it would probably depress me how some people can accomplish this.  
+But you need many people to be able to accomplish it.  For then and only then does it become a language.  
+People must be able to express themselves as well as understand those who speak.  
+
+Thinking about speed, I noticed a bit while playing Fur Elise.  I cant really read the notes at the speed I play.  You can kind of see markers which indicate 
+that the pattern is changing slightly etc in the music at speed.  But I dont think I will reach the speed that I would like to be at while reading the notes.  
+I doubt I can reach the speed I would like even without reading the notes, but for me the speed while reading is probably more important at this stage.  
+Right now I think the improvement from first trial to 10th trial of a piece brings more speed improvement than for example 40th to 50th.  
+What exactly is the speed improvement graph look like?  
+The data is probably still not accurate enough, as sometimes I re-repeat things I shouldnt, or skip repeats, but it may be good enough to glean some information from.  
+
+Regarding music though, once there is an agreed upon and mature language, then reading the notes becomes less important as you will be able to make meaningful phrases from memory.  
+That is kind of what classical music is, some agreed upon patterns.  
+
+*Future mind*
+In modern times there is not any need necessarily to agree upon the language which we use.  
+We are able to speak to many people even if there is only a language created by a small subset of people.  
+But it would need to be interesting enough for people to look into, otherwise it would die out.  
+I am not that interesting, but I also dont understand or relate to what most people think is interesting.  
+Generally I dont come to the same conclusions.  
+
+Anyway speed in language is important.  
+Although I hate fighting with time.  
+It doesnt have to be me that finalizes anything.  
+If I can contribute anything to the creation of an agreed upon musical linguistic structure, that would be cool.  
+
+**analyze.html (**testmidi.html)
+-Add the midi here.  
+finally have testmidi.html working.  
+Listened to Claire de Lune on this to make sure it was ok.  
+I think the midi I am recording is fairly accurate.  
+I like this JZZ library, nice documentation, nice code seems.  
+The sample for reading midi file was outdated, but got over that hurdle now.  
+
+-Add time graph of volume and any events from the comments.  
+-Compare trials based on relative time, make them the equidistant.  
+-Leave space for about 5 trials, each showing the volume and comment graphs.  
+-Maybe just use 176 pixels vertically 2 for each key.  
+Then we can show multiple at the same time to compare.  Too complex?  
+Maybe just use the code someone else did and try to match up with the piano keys.  
+Not sure which is easier.  
+To start just do the time graphs.  
+1 second 2 pixels to start.  
+1 key 2 pixels.  
+Should work for most songs.  
+-Vertical or horizontal?  Expand and show the actual midi notes over time as each trial is being played.  
+-reload the list of comments each time based on what is in the textbox, not just the original.  
+Load from textbox to generate the list and add any new comments.  Scroll to any comment.  
+
+
+**RANT
+Doctors should be much more available in general.  The information they provide is not that interesting most of the time anyway.  
+The time availability issue causes care to be of limited use.  
+

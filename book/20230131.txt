@@ -1,0 +1,69 @@
+Too many things to do.  
+Need to organize my thoughts a bit for the next days/weeks.  
+
+organize the code, made folder [analyze].  
+Leave existing first stab at this in the base folder.  
+
+**analyze/analyze.py -> change to analyze a single piece.  Retrieve all prior iterations, and do some deeper time analysis on this.   
+Only use the TRIAL#1 -> END#1 from accurate recordings.  
+Start with time analysis, then move on to midi analysis as well.  
+How many times played, what is the pace I am playing the song, what is the rate of speed improvement, what is the rate of relearning necessary after X days/weeks.  
+For now just use speed of the played piece.  
+But eventually utilize other aspects.  
+Not much data yet, but enough to code something.  
+Started this.  
+
+**analyze/midilyze.py -> single piece as well.  
+How many notes played, statistics on intervals between notes.  
+Analyze over time.  
+How many oops etc per song/minute.  Make a heatmap of "oops" "messy" or any other comment.  
+Add this to a graphic which can be displayed.  For now just use relative time to determine.  
+And overlap all on the same graphic.  Just generate a graphic for the "web/midilyze/Title.png"
+Not sure this data will be useful, but should start this.  Not sure if this belongs here or in midilyze perhaps is better.  
+We would want to attempt to show the sheet music as well when possible.  
+We could look at page flips or at eyes to determine the location in the music I guess.  
+We need better quality image of the sheet music if possible.  This would allow for better data here.  
+Or perhaps the notes played once we have better mechanism for this.  
+
+
+**record.py -> are we getting the pedal actions, this is important.  
+
+**analyze/stats.py -> naming?  For now create stats regarding how much is played by day, dayofweek, timeofday
+Pull from midi filename and calculate from there.  
+Just stick with the default DD/MM/YY I think which is on the videos.  We should be able to OCR this at least.  
+Take this from upload.py - first iteration of the upload process.  
+
+
+**timestep.py -> go through and adjust parameters for older videos.  
+And perhaps have this be the primary batch job which kicks off any analyze tasks as well.  
+See if it is possible to design things such that we only need to look at the newer iterations.  
+Then we dont need to go back in time to re-calculate.  
+Not sure how much of a priority I should make this, but seems like a logical thing to do.  
+
+
+
+楽器をマスターした人の引く姿を見るのが楽しいかな。楽器には私はそんなに興味がないので、私が見る時に「何時間を何歳からやったかな」と考える。
+スポーツと同じく何回も何回も繰り返すだけでより爽やか、より早く出来るのは当たり前です。
+そのプロセスにしか私は興味がないので結果を見る時にどんな上手くても全然響かない。
+なぜならスポーツを見る時に楽しめる場合はあります。
+楽器を引いている姿はあまり楽しくないが、聞く時にはもちろん好き又は好きじゃことは感じられます。
+が、目にする必要はないですね。
+スポーツは動きはより明らかだからかな。
+
+
+Need to show in analyze FUTURE as well as PREV.  
+That way if we go back and review, we can know where in the timeline it is.  
+
+Should have some notes which can let us know we have failed repeat.  
+"repeat fail" for instance so it is not used in song progress calculations.  
+Surely we can figure this out from the midi files.  
+Is it really necessary, dont want too many things to have to remember.  
+
+I hate security API stuff.  
+Dont want to have to deal with this, but also dont want someone to mistakenly or otherwise delete data.  
+For now just restricting by IP in case I accidentally make the API key available.  
+Also on website just use querying tools, and no update for now.  
+
+OK, anyway we have added the OAUTH crap to timestep.py.  
+This is good for now.  
+

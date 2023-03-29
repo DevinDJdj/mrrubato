@@ -40,7 +40,10 @@
 
 </td><td>
     <textarea id="notes" rows="40" cols="80"></textarea>
+</td><td>
+    <textarea id="transcript" rows="40" cols="80"></textarea>
 </td>
+</tr>
 </table>
     <div id="previous"></div>
 	
@@ -104,7 +107,7 @@ var notesarray = [];
 
 //setup https://www.youtube.com/watch?v=3jZ5vnv-LZc
 //then restrict the key if needed to your site and youtube data API.  
-webkey = 'AIzaSyCUinmE8NN5BoGqHkNlVveLCOuebxEHCyY';
+webkey = 'AIzaSyCBCSiFLWm-3oBKvnS-yaHtU5QcFfRtZ_E';
 function str_pad_left(string,pad,length) {
     return (new Array(length+1).join(pad)+string).slice(-length);
 }
@@ -119,7 +122,9 @@ function updateNotes(){
 	
 }
 
-function createNotes(allnotes){
+function createNotesArray(){
+	allnotes = $('#notes').val();
+	notesarray = [];
     const lines = allnotes.split("\n");
 	for (i = 0; i< lines.length; i++){
 	    notesarray[i] = lines[i];
@@ -144,6 +149,7 @@ function getTime(comment){
 function addComment(comment, commenttime){
     //find where to splice and then reset the notes
 	//notesarray.splice(i, 0, comment);
+	createNotesArray();
 	i = 0;
 	while (i< notesarray.length && getTime(notesarray[i]) < getSecsFromTime(commenttime)){
         i++;
@@ -154,19 +160,24 @@ function addComment(comment, commenttime){
 	
 }
 
-function searchPrevious(){
+function searchPrevious(videoid){
 	//use title
  $.getJSON('https://www.googleapis.com/youtube/v3/search?maxResults=15&channelId=' + channelId + '&order=date&q=' + title + '&key=' + webkey + '&part=snippet',function(data){
       if (typeof(data.items[0]) != "undefined") {
 	      for (i=0; i<data.items.length; i++){
-            console.log('found  ' + data.items[i].snippet);
-			var mydiv = document.getElementById("previous");
-			var aTag = document.createElement('a');
-			aTag.setAttribute('href',"https://misterrubato.com/analyze.html?video=" + data.items[i].id.videoId);
-			aTag.innerText = "PREV#" + i;
-			mydiv.appendChild(aTag);
-			var br = document.createElement("br");
-			mydiv.appendChild(br);
+		    if (data.items[i].id.kind == "youtube#video"){
+				console.log('found  ' + data.items[i].snippet);
+				var mydiv = document.getElementById("previous");
+				var aTag = document.createElement('a');
+				aTag.setAttribute('href',"https://misterrubato.com/analyze.html?video=" + data.items[i].id.videoId);
+				aTag.innerText = "PREV#" + i;
+				if (videoid == data.items[i].id.videoId){
+				    aTag.innerText += " <- THIS VIDEO";
+				}
+				mydiv.appendChild(aTag);
+				var br = document.createElement("br");
+				mydiv.appendChild(br);
+			}
 		  }
        } 
 	   else {
@@ -176,14 +187,33 @@ function searchPrevious(){
 	
 }
 
+function getTranscript(desc){
+ var tempDiv = $('#transcript');
+ //find in notes array the TRANSCRIPT:
+ //gsutil cors set cors.json gs://misterrubato-test.appspot.com
+ let tposition = desc.indexOf("TRANSCRIPT:");
+ if (tposition > -1){
+    eposition = desc.indexOf('\n', tposition);
+	if (eposition > -1){
+    	url = desc.substring(tposition+11, eposition);
+	}
+	else {
+		url = desc.substring(tposition+11);
+	}
+	tempDiv.load(url);
+ }
+}
+
 function getVideoJson(videoid){
  $.getJSON('https://www.googleapis.com/youtube/v3/videos?id=' + videoid + '&key=' + webkey + '&part=snippet&callback=?',function(data){
     if (typeof(data.items[0]) != "undefined") {
         console.log('video exists ' + data.items[0].snippet.title);
-		createNotes(data.items[0].snippet.description);
+		$('#notes').val(data.items[0].snippet.description);
+	    createNotesArray();
 		//get previous iterations of this.  
 		title = notesarray[0];
-		searchPrevious();
+		searchPrevious(videoid);
+		getTranscript(data.items[0].snippet.description);
        } else {
         console.log('video not exists');
      }   

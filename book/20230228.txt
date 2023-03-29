@@ -1,0 +1,87 @@
+
+I was very communicative today.  
+Philosophizing on how the human race may evolve from a variety of perspectives, but mostly due to the capabilities that computers bring.  
+This communication revolution enabled by the internet and computer technology is just getting started.  
+It is such a fascinating topic.  I am working to improve my communication skills, but not sure how long I should spend contemplating words.  
+
+I am interested in how my mind will recall things that I think about while playing certain songs.  
+There are definitely things which I start to associate with certain songs, but not sure that will come through as I often dont talk, 
+and what I talk about before/during the song is still quite random.  It is possible this will change over time though.  
+
+
+
+*list.html
+->**analyze.html
+
+List will display an overview broken down by song.  A Histograph and an improvement graph of some sort.  
+Then selecting a member of the list will give more details.  
+Should have standard filter for search etc.  
+Statistics will include stats on words spoken, improvement stats, play frequency graph.  
+Lets do this with python scripts and then utilize the generated data?  
+Then we can analyze in multiple ways.  
+
+**stats.html
+Overall stats will include aggregate information about these same stats.  
+
+
+Need to move anything by Me to (Composition)
+also any notes on the software itself should probably be in a separate category?  
+Not sure if we leave this for musical composition or just combine.  
+Perhaps figure out a way to automate this somehow?  
+
+
+I think this will still be completely misunderstood if I unexpectedly pass.  
+
+*Right now there is still just mostly a lot of noise and very little order.  *
+*I will work toward bringing order to the noise eventually.  *
+
+
+Well, anyway.  
+Not that I am entirely certain yet what part of this project I will continue, I am sure it will be captivating at least for me.  
+Some key factors:
+--Understanding learning on a more fundamental level, at the very least my learning, but likely can be useful for many other people.  
+--Understand music on a more fundamental level, at least my understanding/preference in music.  
+--Perhaps create some interesting software in the process.  
+--Perhaps create some interesting algorithmic music in the process.  
+
+I am not sure how to stay unbiased, but I think the algorithmic music preferences may bring some insight.  
+I am worried my notes for this may not be meticulous enough yet.  
+Also right now I am still in the stage of mistakes vs less mistakes, not so much preferences yet.  
+Hopefully eventually I will get to more preference and less mistakes.  
+These would be extracted from analysis on the music data and notes associated with that data.  
+
+
+
+
+**Music generation**
+Should use multiple scales and find patterns within those scales that fit well.  
+That is a lot of music itself, just generating patterns within scales.  
+This is a really good idea of how to mathematically fit things together.  
+To start just use the 12-note octave along with the 24-note octave.  
+This would be similar enough to something we are familiar with perhaps.  
+
+**web/analyze.html
+do we want to make sure this would work with other channel content?  
+Then someone could use the functionality without actually using the source.  
+Right now I think it is just loading the transcribed words and the previous videos which may not work.  
+Dont worry about this now.  Too many other things to do.  
+
+
+Feeling lazy at the moment, but I kind of want to accomplish something.  
+Play piano?  
+
+
+Where do I want to put energy?  analyze.html or analyze.py
+Lets generate the plots for now with analyze.py
+For each iteration, generate a png which represents the midi data.  
+Then we can use this and we can always regenerate.  
+We lose some things by not doing in real-time, but we will use some libraries in the future though
+and much easier to do more in python for any learning or visualization and data manipulation we may want to do.  
+So better to just have it here I think.  
+
+**analyze.py (param = videoID)
+Generate png for each iteration.  
+PixelInterval = 0.1s  
+Generate top-bottom and left-right for now.  
+
+

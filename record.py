@@ -52,6 +52,11 @@ from mido import Message, MidiFile, MidiTrack
 
 from mido.ports import MultiPort
 
+#pip install pynput
+#key input for hotkeys to trigger recording etc.  
+from pynput.keyboard import Key, Controller
+
+
 import sys
 sys.path.insert(0, 'c:/devinpiano/')
  
@@ -68,6 +73,9 @@ from apiclient.http import MediaFileUpload
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.file import Storage
 from oauth2client.tools import argparser, run_flow
+
+
+from transcribe import transcribe_me, get_timestamp
 
 
 # Explicitly tell the underlying HTTP transport library not to retry, since
@@ -103,6 +111,7 @@ CLIENT_SECRETS_FILE = "./../client_secrets.json"
 # This OAuth 2.0 access scope allows an application to upload files to the
 # authenticated user's YouTube channel, but doesn't allow other types of access.
 YOUTUBE_UPLOAD_SCOPE = "https://www.googleapis.com/auth/youtube.upload"
+YOUTUBE_SCOPE = "https://www.googleapis.com/auth/youtube"
 YOUTUBE_API_SERVICE_NAME = "youtube"
 YOUTUBE_API_VERSION = "v3"
 
@@ -141,14 +150,16 @@ VALID_PRIVACY_STATUSES = ("public", "private", "unlisted")
     
 
 
-def get_authenticated_service(args):
+def get_authenticated_service(args, myscope=YOUTUBE_SCOPE):
   flow = flow_from_clientsecrets(CLIENT_SECRETS_FILE,
-    scope=YOUTUBE_UPLOAD_SCOPE,
+    scope=myscope,
     message=MISSING_CLIENT_SECRETS_MESSAGE)
+  
 
   storage = Storage("%s-oauth2.json" % sys.argv[0])
   credentials = storage.get()
-
+  #this local storage of creds was causing problems.  Finally this works now to add to the playlist.  
+#  credentials = None
   if credentials is None or credentials.invalid:
     credentials = run_flow(flow, storage, args)
 
@@ -190,7 +201,7 @@ def initialize_upload(youtube, options):
     media_body=MediaFileUpload(options.file, chunksize=-1, resumable=True)
   )
 
-  resumable_upload(insert_request)
+  return resumable_upload(insert_request)
 
 # This method implements an exponential backoff strategy to resume a
 # failed upload.
@@ -205,6 +216,8 @@ def resumable_upload(insert_request):
       if response is not None:
         if 'id' in response:
           print ("Video id '%s' was successfully uploaded." % response['id'])
+          videoid = response['id']
+          return response['id']
         else:
           exit("The upload failed with an unexpected response: %s" % response)
     except HttpError as e:
@@ -226,7 +239,26 @@ def resumable_upload(insert_request):
       sleep_seconds = random.random() * max_sleep
       print ("Sleeping %f seconds and then retrying..." % sleep_seconds)
       time.sleep(sleep_seconds)
+  return None
+  
+def uploadtranscript(file, title):
+    from firebase_admin import credentials, initialize_app, storage
+    # Init firebase with your credentials
+    cred = credentials.Certificate("../misterrubato-test.json")
+    initialize_app(cred, {'storageBucket': 'misterrubato-test.appspot.com'}, name="second")
 
+    # Put your local file path 
+    Title = title + '.txt'
+    fileName = file + '.txt'
+    bucket = storage.bucket()
+    blob = bucket.blob('words/' + Title)
+    blob.upload_from_filename(fileName)
+
+    # Opt : if you want to make public access from the URL
+    blob.make_public()
+
+    print("your transcript file url", blob.public_url)
+    return blob.public_url
 
 def uploadmidi(file, title):
     from firebase_admin import credentials, initialize_app, storage
@@ -244,7 +276,7 @@ def uploadmidi(file, title):
     # Opt : if you want to make public access from the URL
     blob.make_public()
 
-    print("your file url", blob.public_url)
+    print("your midi file url", blob.public_url)
     return blob.public_url
     
     
@@ -257,7 +289,48 @@ def calculatedelay(pausestart, pauseend):
         delay += pauseend[idx] - pausestart[idx]
     return delay
     
+    
+def add_video_to_playlist(videoID,playlistID, args):
+    youtube = get_authenticated_service(args, YOUTUBE_SCOPE) #write it yourself
+    body=dict(
+      snippet=dict(
+        playlistId=playlistID,
+        resourceId=dict(
+          kind="youtube#video",
+          videoId=videoID
+        ),
+      ),
+    )
+#    add_video_request=youtube.playlistItems().insert(
+#        part="snippet",
+#        body=body
+#    ).execute()
+
+    request = youtube.playlistItems().insert(
+    part="snippet",
+    body={
+      "snippet": {
+        "playlistId": cred.MY_PLAYLIST,
+        "position": 0,
+        "resourceId": {
+          "kind": "youtube#video",
+          "videoId": videoID
+        }
+      }
+    }
+    )
+    response = request.execute()
+    
+def get_latest_file():
+    list_of_files = glob.glob('C:/Users/devin/Videos/*.mkv') # * means all if need specific format then *.csv
+    latest_file = max(list_of_files, key=os.path.getctime)
+    print(latest_file)
+    return latest_file
+
 if __name__ == '__main__':
+
+    argparser.add_argument("--rerun", help="Rerun upload",
+      default="false") #--rerun true perhaps add other options but right now this is all that really fails.  
     argparser.add_argument("--file", required=False, help="Video file to upload")
     argparser.add_argument("--title", help="Video title", default="New Upload")
     argparser.add_argument("--description", help="Video description",
@@ -268,10 +341,24 @@ if __name__ == '__main__':
     argparser.add_argument("--keywords", help="Video keywords, comma separated",
       default="music,learning,experiment")
     argparser.add_argument("--privacyStatus", choices=VALID_PRIVACY_STATUSES,
-      default=VALID_PRIVACY_STATUSES[1], help="Video privacy status.")
+      default=VALID_PRIVACY_STATUSES[2], help="Video privacy status.") #default unlisted
     args = argparser.parse_args()
+    if (args.title == "New Upload"):
+        args.title = args.description
+        
+    print(cred.MY_PLAYLIST)
+#    add_video_to_playlist('7Aadr9Fmftk', cred.MY_PLAYLIST, args)
 
-
+    if (args.rerun == "true"):
+        args.file = get_latest_file()
+        tempfile = open('desc.txt', 'r')
+        args.description = tempfile.read()
+        tempfile.close()
+        youtube = get_authenticated_service(args)
+        videoid = initialize_upload(youtube, args)    
+        add_video_to_playlist(videoid, cred.MY_PLAYLIST, args)
+        sys.exit
+        
 #    mido.set_backend('mido.backends.portmidi')   
     mid = MidiFile()
 #    mid.ticks_per_beat = 1000000
@@ -296,6 +383,11 @@ if __name__ == '__main__':
 """    
     inputs = mido.get_input_names()
     print(mido.get_input_names())
+    
+    #when we start the recording, lets get data from the previous iterations so that we have some comparison
+    #spit out previous statistics on iterations here in this record.py for reference.  
+    #separate function, or separate file?  Use Youtube Query to get data/time analysis and analyze midi as well.  
+    #printPrevStats(title)    
     delay = 0
     timeoffset = 0
     starttime = 0
@@ -309,8 +401,12 @@ if __name__ == '__main__':
     #mido doc is crap.  But this seems ok for now.  
     #the video and midi appear to match up pretty well.  But not perfect I think.  
     #at least enough to get the start times now.  
+    #need some comment here, what is input[1].  Having hardware issues, lol.  
+    keyboard = Controller()    
     with mido.open_input(inputs[1]) as inport:
+        print("hello")
         for msg in inport:
+#            print(msg)
             if msg:
                 if hasattr(msg, 'note'):
                     if lastnote == 21 and msg.note !=lastnote:
@@ -325,7 +421,7 @@ if __name__ == '__main__':
                         args.description += " (" + str(mins) + ":" + filler + str(secs) + ")"
                     if lastnote==107 and msg.note !=lastnote:
                         #adding END messages.  For now they are only using the pause button as indicator.  
-                        iterations = len(pausestart) + 1
+                        iterations = len(pausestart)
                         mytime = time.time() - starttime - delay - (time.time() - starttime - delay - lasttick)
                         mins = math.floor(mytime/60)
                         secs = math.floor(mytime - mins*60)
@@ -347,12 +443,30 @@ if __name__ == '__main__':
                         args.description += " (" + str(mins) + ":" + filler + str(secs) + ")"
                     if msg.note == 21:
                         starttime = time.time()
+
+                        with keyboard.pressed(Key.ctrl):
+                            keyboard.press('1')
+                            time.sleep(0.25)
+                            keyboard.release('1')
+                        print("Start Recording" + str(time.time()))
                         msg.time = 0
                     if msg.note == 22:
                         endtime = time.time()
+
+                        with keyboard.pressed(Key.ctrl):
+                            keyboard.press('2')
+                            time.sleep(0.25)
+                            keyboard.release('2')
+                        print("Stop Recording" + str(time.time()))
                         break
                     if msg.note == 107 and msg.note !=lastnote:
                         pausestart.append(time.time())
+
+                        with keyboard.pressed(Key.ctrl):
+                            keyboard.press('9')
+                            time.sleep(0.25)
+                            keyboard.release('9')
+                        print("Pause Recording" + str(time.time()))
                         print(msg.time)
                     if msg.note == 108 and msg.note !=lastnote:
                         pauseend.append(time.time())
@@ -360,6 +474,13 @@ if __name__ == '__main__':
                         lasttick = time.time() - starttime - delay
                         msg.time = time.time() - starttime - delay - lasttick
                         msg.time = int(round(msg.time*1000))
+
+                        with keyboard.pressed(Key.ctrl):
+                            keyboard.press('0')
+                            time.sleep(0.25)
+                            keyboard.release('0')
+                        print("Unpause Recording" + str(time.time()))
+
                         print("delay " + str(delay))
                     lastnote = msg.note
                     
@@ -369,15 +490,15 @@ if __name__ == '__main__':
 #                    faketime = faketime +1
                     msg.time = time.time() - starttime - delay - lasttick
                     msg.time = int(round(msg.time*1000))
+                    if msg.time < 0:
+                        msg.time = 0
                     
                     lasttick = time.time() - starttime - delay
 
-                print(msg)
+                #print(msg) #dont need all this info.  
                 track.append(msg)
-                
-    list_of_files = glob.glob('C:/Users/devin/Videos/*.mkv') # * means all if need specific format then *.csv
-    latest_file = max(list_of_files, key=os.path.getctime)
-    print(latest_file)
+    
+    latest_file = get_latest_file()    
     args.file = latest_file
     fn = latest_file.split('.')
     mid.save(fn[0] + '.mid')
@@ -391,9 +512,23 @@ if __name__ == '__main__':
     print(pathnames)
     midifile = uploadmidi(fn[0], pathnames[len(pathnames)-1])
     
+    
+    
     args.description += '\r\n\r\nMIDI:' + midifile
     args.description += '\r\n\r\nKEYWORDS:' + args.keywords #add here like sightread or book, etc.  
 
     print(args.description)
+    print(latest_file)
+    transcribe_me(latest_file)
+
+    transcribe_file = uploadtranscript(fn[0], pathnames[len(pathnames)-1])
+    args.description += '\r\n\r\nTRANSCRIPT:' + transcribe_file + '\r\n'
+    print(args.description)
+    tempfile = open('desc.txt', 'w')
+    tempfile.write(args.description)
+    tempfile.close()
+    
     youtube = get_authenticated_service(args)
-    initialize_upload(youtube, args)
+    videoid = initialize_upload(youtube, args)
+    
+    add_video_to_playlist(videoid, cred.MY_PLAYLIST, args)
