@@ -11,7 +11,6 @@ import sys
  
 # adding Folder_2/subfolder to the system path
 sys.path.insert(0, 'c:/devinpiano/')
-import mymidi
 
 import os
 import cred
@@ -31,7 +30,18 @@ import numpy as np
 
 #try to use pytorch a bit
 #pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117
+
 import torch
+import torch.nn.functional as F
+from torch import nn, optim
+from torch.autograd import Variable
+
+import matplotlib.pyplot as plt
+
+CONTEXT_SIZE = 2
+EMBEDDING_DIM = 10
+
+import mymidi
 
 
 channel_id = cred.CHANNELID
@@ -159,8 +169,8 @@ def getTrackTime(track):
 def getColor(timepassed, initialvelocity, pedal):
     #maybe look up the actual function here, just a placeholder function of time vs
     #also we really probably want to show this even when velocity is 0
-    if (pedal > 0):
-        estimate = (initialvelocity**2/math.log(timepassed+1))
+    if (pedal > 0 or timepassed == 0):
+        estimate = (initialvelocity**2/(math.log(timepassed+2)))
         if (estimate > initialvelocity):
             estimate = initialvelocity
         return int(estimate)
@@ -170,9 +180,9 @@ def getColor(timepassed, initialvelocity, pedal):
 def fillImage(midi_image, notes, currentTime, prevTime, pedal, iteration, starttime):
     #between prevTime and currentTime fill the image    
     a = prevTime
-    while (a < currentTime):
+    while (a <= currentTime):
         for n in notes:
-            if n.time < a and n.velocity > 0:
+            if n.time <= a and n.velocity > 0:
                 c = getColor(a - n.time, n.velocity, pedal)
                 #note is on
                 if (c > 0):
@@ -197,15 +207,15 @@ def midiToImage(t, midilink):
     height = 88*2
     width = 1
     starttimes, endtimes = getTrackTimes(t)
-    
-    if len(starttimes) != len(endtimes):
+    midi_image = None
+    if len(starttimes) != len(endtimes) or len(starttimes) < 1:
         print("Incorrect data, please fix" + midilink)
-    else:
+    else:    
         for i, st in enumerate(starttimes):
             w = int((endtimes[i]-starttimes[i])/100)
             if w > width:
                 width = w +1
-        height = i*88*2
+        height = (i+1)*88*2
         midi_image = np.ones((height,width,3), np.uint8)
         midi_image = 255*midi_image
         currentTime = 0
@@ -225,7 +235,7 @@ def midiToImage(t, midilink):
                     prevTime = currentTime
                 on = isOn(mymsg.note, on)
                 
-            print(mymsg.msg)
+#            print(mymsg.msg)
     print(t.length)
     print(starttimes)
     print(endtimes)
@@ -274,16 +284,107 @@ def enhanceMidi(mid):
     return t
     
 def getNgrams(t):
-    for mymsg in t.notes:
-        i = 0
-        while (i < mymidi.MAXNGRAM and mymsg.prevmsg is not None):
-            tempmsg = mymsg.prevmsg
-            i = i+1
-            mymsg.ngrams[mymidi.MAXNGRAM-i] = tempmsg.note
-            
-        mymsg.ngramstensor = torch.tensor(mymsg.ngrams)
-                    
-    
+    it = -1
+    on = 0
+    currentTime = 0
+    prevTime = currentTime
+    starttimes, endtimes = getTrackTimes(t)
+    if len(starttimes) != len(endtimes) or len(starttimes) < 1:
+        print("Incorrect data, please fix")
+        
+    else:    
+        notearray = np.zeros(len(t.notes), dtype=int)
+        #create array of [iterations (10)][notes (88)][prevnote (88)]
+        data = np.zeros((10, 88, 88), dtype=int)
+        #create an array of [iterations (10][notes (88)][
+        #only sum across [notes]
+        
+        #then create a plot of each 
+        #calculated volume of each note like we have for the piano roll.  
+        #then create histogram of this.  
+        counter = 0
+        for mymsg in t.notes:
+            if (on > 0):
+                currentTime += mymsg.msg.time
+                notearray[counter] = mymsg.msg.note
+                counter += 1
+                #not very efficient, but good enough for now.  
+                it = getIteration(currentTime, starttimes, endtimes)
+                i = 0
+                while (i < mymidi.MAXNGRAM and mymsg.prevmsg is not None):
+                    tempmsg = mymsg.prevmsg
+                    i = i+1
+                    mymsg.ngrams[mymidi.MAXNGRAM-i] = tempmsg.note
+                
+                mymsg.ngramstensor = torch.tensor(mymsg.ngrams)
+                #use this tensor for prediction
+                #for now fill the array to do some statistics.  
+                data[it][mymsg.prevmsg.msg.note-21][mymsg.msg.note-21] += 1
+                #for now return the random note based on probability distribution from this array
+            if (mymsg.msg.type=='note_on'):
+                if (on > 0 and it > -1):  
+                    prevTime = currentTime
+                on = isOn(mymsg.note, on)
+        return data
+        
+def testNgramModel():
+
+    # We will use Shakespeare Sonnet 2
+    test_sentence = """When forty winters shall besiege thy brow,
+    And dig deep trenches in thy beauty's field,
+    Thy youth's proud livery so gazed on now,
+    Will be a totter'd weed of small worth held:
+    Then being asked, where all thy beauty lies,
+    Where all the treasure of thy lusty days;
+    To say, within thine own deep sunken eyes,
+    Were an all-eating shame, and thriftless praise.
+    How much more praise deserv'd thy beauty's use,
+    If thou couldst answer 'This fair child of mine
+    Shall sum my count, and make my old excuse,'
+    Proving his beauty by succession thine!
+    This were to be new made when thou art old,
+    And see thy blood warm when thou feel'st it cold.""".split()
+
+    trigram = [((test_sentence[i], test_sentence[i + 1]), test_sentence[i + 2])
+               for i in range(len(test_sentence) - 2)]
+
+    vocb = set(test_sentence)
+    word_to_idx = {word: i for i, word in enumerate(vocb)}
+    idx_to_word = {word_to_idx[word]: word for word in word_to_idx}
+
+
+
+    ngrammodel = mymidi.NgramModel(len(word_to_idx), CONTEXT_SIZE, 100)
+    criterion = nn.NLLLoss()
+    optimizer = optim.SGD(ngrammodel.parameters(), lr=1e-3)
+
+    for epoch in range(20):
+        print('epoch: {}'.format(epoch + 1))
+        print('*' * 10)
+        running_loss = 0
+        for data in trigram:
+            word, label = data
+            word = Variable(torch.LongTensor([word_to_idx[i] for i in word]))
+            label = Variable(torch.LongTensor([word_to_idx[label]]))
+            # forward
+            out = ngrammodel(word)
+            loss = criterion(out, label)
+#            print(loss)
+            running_loss += loss.item()
+            # backward
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+#        print('Loss: {:.6f}'.format(running_loss / len(word_to_idx)))
+
+    word, label = trigram[5]
+    word = Variable(torch.LongTensor([word_to_idx[i] for i in word]))
+    out = ngrammodel(word)
+    _, predict_label = torch.max(out, 1)
+    print(predict_label[0])
+    predict_word = idx_to_word[predict_label[0].item()]
+    print('real word is {}, predict word is {}'.format(label, predict_word))
+
 def printMidi(midilink):
     r = requests.get(midilink)
     print(len(r.content))
@@ -292,14 +393,40 @@ def printMidi(midilink):
     mid = MidiFile("test.mid")
     #outputMidi(mid)
     t = enhanceMidi(mid)
-    getNgrams(t)
+    data = getNgrams(t)
     img = midiToImage(t, midilink)
 
     height = 200
     width = 200    
-    
+    midiname = os.path.basename(midilink)
+    midiname = os.path.splitext(midiname)[0]
     path = './output/'
-    cv2.imwrite(os.path.join(path , 'test.jpg'), img)
+    if (img is not None):
+        cv2.imwrite(os.path.join(path , midiname + '.jpg'), img)
+    
+    #what is the note distribution for each and the interval distribution look like?  
+    #show a distribution of previous->max
+    temp = data.sum(axis=0) #combine all iterations
+    
+    print(temp[36]) #probability of key after 36
+    
+    keystrokes = temp.sum(axis=0) #keystrokes for all keys
+    print(keystrokes) 
+    _ = plt.hist(keystrokes, bins='auto')
+    plt.title("Histogram with 'auto' bins")
+    plt.show()
+    keys = np.indices((len(keystrokes),))
+    print(keys[0])
+    values = list(keystrokes)
+    plt.bar(list(keys[0]), values)
+    plt.show()
+    
+    #ok enough for now.  
+    #save this type of info to images and then use it in analyze.html to review.  
+    #much more analytics needed here.  
+    
+    
+#    testNgramModel()
     #from here lets generate a graphic.  
     #read with mido?  
 
