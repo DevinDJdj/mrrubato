@@ -1,0 +1,17 @@
+Eventually we should be playing from the data we have.  
+record.html or whatever and use this info to actually show the music 
+and potentially based on the feedback, update the page?  
+Probably too slow.  
+But either way, the record.py should bring up record.html which will have 
+a variety of statistics on the song last iterations and the other things
+which are done via analyze.py
+We do need some ability to play back and build on top of existing layers though.  
+Select layers and then utilize that to play with as part of the record.py process?  
+This is significantly ahead.  
+First of all need to work on analyze.py to create some more interesting information.  
+
+maybe save the analytics as data.  
+This is easier than looking at the images.  
+
+Find the latest output for a certain song, and then run the analyze before we do the record?  
+
