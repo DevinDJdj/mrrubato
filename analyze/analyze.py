@@ -37,6 +37,7 @@ from torch import nn, optim
 from torch.autograd import Variable
 
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 
 CONTEXT_SIZE = 2
 EMBEDDING_DIM = 10
@@ -412,18 +413,42 @@ def printMidi(midilink):
     
     keystrokes = temp.sum(axis=0) #keystrokes for all keys
     print(keystrokes) 
+    plt.figure(0)
     _ = plt.hist(keystrokes, bins='auto')
     plt.title("Histogram with 'auto' bins")
-    plt.show()
+    plt.xlim([5,1500])
+    plt.savefig(os.path.join(path , 'ks_' + midiname + '.png'))
+    plt.figure(0).clear()
+#    plt.show()
     keys = np.indices((len(keystrokes),))
     print(keys[0])
     values = list(keystrokes)
+    plt.figure(1)
     plt.bar(list(keys[0]), values)
-    plt.show()
-    
+    plt.xlim([0, 90])
+#    plt.figure().set_figwidth(109)
+#    plt.show()
+    plt.savefig(os.path.join(path , 'ks2_' + midiname + '.png'))
+    plt.figure(1).clear()
     #ok enough for now.  
     #save this type of info to images and then use it in analyze.html to review.  
     #much more analytics needed here.  
+    
+    plt.figure(2)
+    row_sums = temp.sum(axis=1)
+    normalized_mat = temp / row_sums[:, np.newaxis]
+    # Change major ticks to show every 20.
+    ax = plt.figure(2).add_subplot(111)
+    
+    ax.xaxis.set_major_locator(ticker.MultipleLocator(12))
+    ax.yaxis.set_major_locator(ticker.MultipleLocator(12))
+    ax.grid(which='major', color='#CCCCCC', linestyle='--')
+    plt.imshow(normalized_mat,interpolation='none',cmap='binary')
+    plt.colorbar()  
+    plt.savefig(os.path.join(path, 'kk_' + midiname + '.png'))
+    plt.figure(2).clear()
+    #lets get the correlation matrix.  
+    #lets normalize this across row.  
     
     
 #    testNgramModel()
