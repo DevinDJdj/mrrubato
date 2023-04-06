@@ -39,6 +39,9 @@ from torch.autograd import Variable
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
+from firebase_admin import credentials, initialize_app, storage
+# Init firebase with your credentials
+
 CONTEXT_SIZE = 2
 EMBEDDING_DIM = 10
 
@@ -403,7 +406,9 @@ def printMidi(midilink):
     midiname = os.path.splitext(midiname)[0]
     path = './output/'
     if (img is not None):
-        cv2.imwrite(os.path.join(path , midiname + '.jpg'), img)
+        filename = midiname + '.jpg'
+        cv2.imwrite(os.path.join(path , filename), img)
+        uploadanalyze(filename, os.path.join(path, filename))
     
     #what is the note distribution for each and the interval distribution look like?  
     #show a distribution of previous->max
@@ -417,7 +422,9 @@ def printMidi(midilink):
     _ = plt.hist(keystrokes, bins='auto')
     plt.title("Histogram with 'auto' bins")
     plt.xlim([5,1500])
-    plt.savefig(os.path.join(path , 'ks_' + midiname + '.png'))
+    filename = 'ks_' + midiname + '.png'
+    plt.savefig(os.path.join(path , filename))
+    uploadanalyze(filename, os.path.join(path, filename))
     plt.figure(0).clear()
 #    plt.show()
     keys = np.indices((len(keystrokes),))
@@ -428,7 +435,9 @@ def printMidi(midilink):
     plt.xlim([0, 90])
 #    plt.figure().set_figwidth(109)
 #    plt.show()
-    plt.savefig(os.path.join(path , 'ks2_' + midiname + '.png'))
+    filename = 'ks2_' + midiname + '.png'
+    plt.savefig(os.path.join(path , filename))
+    uploadanalyze(filename, os.path.join(path, filename))
     plt.figure(1).clear()
     #ok enough for now.  
     #save this type of info to images and then use it in analyze.html to review.  
@@ -445,15 +454,30 @@ def printMidi(midilink):
     ax.grid(which='major', color='#CCCCCC', linestyle='--')
     plt.imshow(normalized_mat,interpolation='none',cmap='binary')
     plt.colorbar()  
-    plt.savefig(os.path.join(path, 'kk_' + midiname + '.png'))
+    filename = 'kk_' + midiname + '.png'
+    plt.savefig(os.path.join(path, filename))
+    uploadanalyze(filename, os.path.join(path, filename))
     plt.figure(2).clear()
     #lets get the correlation matrix.  
     #lets normalize this across row.  
     
-    
 #    testNgramModel()
     #from here lets generate a graphic.  
     #read with mido?  
+
+def uploadanalyze(file, fullpath):
+
+    # Put your local file path 
+    bucket = storage.bucket()
+    blob = bucket.blob('analyze/' + file)
+    blob.upload_from_filename(fullpath)
+
+    # Opt : if you want to make public access from the URL
+    blob.make_public()
+
+    print("your analyze file url", blob.public_url)
+    return blob.public_url
+
 
 if __name__ == '__main__':
     argparser.add_argument("--title", help="Video title", default="What a Wonderful World")
@@ -463,6 +487,8 @@ if __name__ == '__main__':
     stats = get_channel_stat()
     print(pd.DataFrame([stats]))
 
+    cred = credentials.Certificate("../../misterrubato-test.json")
+    initialize_app(cred, {'storageBucket': 'misterrubato-test.appspot.com'})
 
     data = search(title)
     print(data)

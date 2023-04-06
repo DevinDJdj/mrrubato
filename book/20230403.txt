@@ -15,3 +15,6 @@ This is easier than looking at the images.
 
 Find the latest output for a certain song, and then run the analyze before we do the record?  
 
+OK, so uploading the images to analyze/xxx.jpg
+Now display this in analyze.html if we have this.  
+
