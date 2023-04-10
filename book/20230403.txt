@@ -18,3 +18,10 @@ Find the latest output for a certain song, and then run the analyze before we do
 OK, so uploading the images to analyze/xxx.jpg
 Now display this in analyze.html if we have this.  
 
+Wow much harder than I thought that would be adding to analyze.html.  
+I had to use firebase storage functions because the URL by itself doesnt work.  
+Anyway, I now have something to look at, but probably want to adjust the piano roll to be vertical and show it in time with the video.  
+Or just leave as is and make a vertical version as well so we can play with that.  
+It is not actually that interesting of a problem.  As long as you have an image, you can just display it and scroll through it.  
+Unless we will analyze midi in the html page, dont even bother with those libraries.  
+The image is sufficient, and just scroll with video time.  
