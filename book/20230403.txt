@@ -26,6 +26,7 @@ It is not actually that interesting of a problem.  As long as you have an image,
 Unless we will analyze midi in the html page, dont even bother with those libraries.  
 The image is sufficient, and just scroll with video time.  
 
+
 Lets try to find the most prevalent rhythm patterns and the note patterns.  
 
 Lets try to improve the speech recognition quality.  
