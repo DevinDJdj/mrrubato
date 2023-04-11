@@ -4,10 +4,11 @@ import torch.nn.functional as F
 MAXNGRAM = 15
 
 class MyTrack:
-  def __init__(self, trk, length):
+  def __init__(self, trk, length, maxtime):
     self.notes = []
     self.length = length
     self.track = trk
+    self.maxtime = maxtime
 
 class MyMsg:
   def __init__(self, msg, prev, pedal):

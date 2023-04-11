@@ -264,13 +264,13 @@ def midiToImage(t, midilink):
 #each P represents a key.  
 
 def enhanceMidi(mid):
+    
     prevMsg = None
     pedal = 0
-    
-    
+    maxtime = 0
     for i, track in enumerate(mid.tracks):
         totalTime = getTrackTime(track)
-        t = mymidi.MyTrack(track, totalTime)
+        t = mymidi.MyTrack(track, totalTime, maxtime)
         on = 0
         for msg in track:
             if (msg.type=='note_on'):
@@ -278,6 +278,8 @@ def enhanceMidi(mid):
                     m = mymidi.MyMsg(msg, prevMsg, pedal)
                     if (prevMsg is not None):
                         prevMsg.nextmsg = m
+                        if (maxtime < msg.time):
+                            maxtime = msg.time
                     prevMsg = m
                     t.notes.append(m)
                 on = isOn(msg.note, on)
@@ -285,7 +287,15 @@ def enhanceMidi(mid):
                 #https://www.midi.org/specifications-old/item/table-3-control-change-messages-data-bytes-2
                 if (msg.control == 64):  #assuming this is pedal, yep 
                     pedal = msg.value
+    t.maxtime = maxtime                    
     return t
+
+def getNoteQuant(notetime, maxtime=1000, maxquant=63):
+    q = float(notetime)/float(maxtime)
+    q *= maxquant
+    if (q > maxquant):
+        q = maxquant
+    return int(q)
     
 def getNgrams(t):
     it = -1
@@ -300,6 +310,7 @@ def getNgrams(t):
         notearray = np.zeros(len(t.notes), dtype=int)
         #create array of [iterations (10)][notes (88)][prevnote (88)]
         data = np.zeros((10, 88, 88), dtype=int)
+        rythmdata = np.zeros((10, 64, 64), dtype=int)
         #create an array of [iterations (10][notes (88)][
         #only sum across [notes]
         
@@ -324,12 +335,17 @@ def getNgrams(t):
                 #use this tensor for prediction
                 #for now fill the array to do some statistics.  
                 data[it][mymsg.prevmsg.msg.note-21][mymsg.msg.note-21] += 1
+                
+                #cant use t.maxtime here because of some issue probably with pauses etc.  
+                #for now 2 seconds is max time
+                rythmdata[it][getNoteQuant(mymsg.prevmsg.msg.time)][getNoteQuant(mymsg.msg.time)] += 1
+                
                 #for now return the random note based on probability distribution from this array
             if (mymsg.msg.type=='note_on'):
                 if (on > 0 and it > -1):  
                     prevTime = currentTime
                 on = isOn(mymsg.note, on)
-        return data
+        return data, rythmdata
         
 def testNgramModel():
 
@@ -397,7 +413,7 @@ def printMidi(midilink):
     mid = MidiFile("test.mid")
     #outputMidi(mid)
     t = enhanceMidi(mid)
-    data = getNgrams(t)
+    data, rythmdata = getNgrams(t)
     img = midiToImage(t, midilink)
 
     height = 200
@@ -413,10 +429,14 @@ def printMidi(midilink):
     #what is the note distribution for each and the interval distribution look like?  
     #show a distribution of previous->max
     temp = data.sum(axis=0) #combine all iterations
+    temprythm = rythmdata.sum(axis=0)
     
     print(temp[36]) #probability of key after 36
     
     keystrokes = temp.sum(axis=0) #keystrokes for all keys
+    rythms = temprythm.sum(axis=0)
+
+    #keys
     print(keystrokes) 
     plt.figure(0)
     _ = plt.hist(keystrokes, bins='auto')
@@ -426,9 +446,21 @@ def printMidi(midilink):
     plt.savefig(os.path.join(path , filename))
     uploadanalyze(filename, os.path.join(path, filename))
     plt.figure(0).clear()
+    
+    #rythms
+    print(rythms) 
+    plt.figure(10)
+    _ = plt.hist(rythms, bins='auto')
+    plt.title("Rythm Histogram with 'auto' bins")
+    plt.xlim([5,1500])
+    filename = 'rs_' + midiname + '.png'
+    plt.savefig(os.path.join(path , filename))
+    uploadanalyze(filename, os.path.join(path, filename))
+    plt.figure(10).clear()
+
+    #keys
 #    plt.show()
     keys = np.indices((len(keystrokes),))
-    print(keys[0])
     values = list(keystrokes)
     plt.figure(1)
     plt.bar(list(keys[0]), values)
@@ -439,10 +471,25 @@ def printMidi(midilink):
     plt.savefig(os.path.join(path , filename))
     uploadanalyze(filename, os.path.join(path, filename))
     plt.figure(1).clear()
+
+    #rythms    
+    rythmsa = np.indices((len(rythms),))
+    values = list(rythms)
+    plt.figure(11)
+    plt.bar(list(rythmsa[0]), values)
+    plt.xlim([0, 90])
+#    plt.figure().set_figwidth(109)
+#    plt.show()
+    filename = 'rs2_' + midiname + '.png'
+    plt.savefig(os.path.join(path , filename))
+    uploadanalyze(filename, os.path.join(path, filename))
+    plt.figure(11).clear()
+    
     #ok enough for now.  
     #save this type of info to images and then use it in analyze.html to review.  
     #much more analytics needed here.  
-    
+
+    #note array    
     plt.figure(2)
     row_sums = temp.sum(axis=1)
     normalized_mat = temp / row_sums[:, np.newaxis]
@@ -460,6 +507,24 @@ def printMidi(midilink):
     plt.figure(2).clear()
     #lets get the correlation matrix.  
     #lets normalize this across row.  
+    
+    #rythm array
+    plt.figure(12)
+    row_sumsr = temprythm.sum(axis=1)
+    normalized_mat = temprythm / row_sumsr[:, np.newaxis]
+    # Change major ticks to show every 20.
+    ax = plt.figure(12).add_subplot(111)
+    
+    ax.xaxis.set_major_locator(ticker.MultipleLocator(8))
+    ax.yaxis.set_major_locator(ticker.MultipleLocator(8))
+    ax.grid(which='major', color='#CCCCCC', linestyle='--')
+    plt.imshow(normalized_mat,interpolation='none',cmap='binary')
+    plt.colorbar()  
+    filename = 'rr_' + midiname + '.png'
+    plt.savefig(os.path.join(path, filename))
+    uploadanalyze(filename, os.path.join(path, filename))
+    plt.figure(12).clear()
+
     
 #    testNgramModel()
     #from here lets generate a graphic.  
