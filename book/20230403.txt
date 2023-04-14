@@ -76,4 +76,19 @@ Get in the habit of using a webpage to think about the last time a piece was pla
 
 For now do analyze.py to launch a review, and have this launch analyze.html with the latest video to be reviewed.  
 
+First thing I think we have to create a DB for this.  
+The Youtube API is almost good enough for what we want to do, but not really.  
+On record.py, we will make an entry for the uploaded video.  
+videoid, categories/playlist, midi, transcript, title, author, keywords, status.  
+status = new, reviewed, archived (x months)
+Stop using the youtube playlists.  
+
+Then we have essentially the same info as on youtube, in case we need to re-upload everything.  
+Make a user for just reading for the web.  
+
+--youtubetortdb.py
+good enough for now.  
+We really need to run through the list and store all data by calling this job for each videoid.  
+Add the desired parameters on top of the youtube JSON structure.  
+
 
