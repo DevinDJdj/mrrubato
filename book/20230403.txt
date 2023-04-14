@@ -35,5 +35,45 @@ Maybe we can get lyrics too.
 Libraries to try:
 Pyaudio
 librosa
+librosa.feature.tempogram_ratio
+librosa.feature.fourier_tempogram
+librosa.interp_harmonics
+librosa.effects.time_stretch
+librosa.effects.pitch_shift
 SpeechRecognition
+
+
+Why does analyze have that pattern for the rythms.  
+What is the function, looks kind of like 1/x perhaps.  
+And why.  
+Also why does analyze.py not pull newly uploaded videos?  
+
+
+start to use the github assistant.  
+copilot
+and
+codex
+
+not sure I use git enough to be useful.  
+
+Use the OpenAI image generator to generate images from the text that is being spoken.  
+https://api.openai.com/v1/images/generations
+I think when this generates text and image from a website or a correlatable website that would be nice.  
+If we are going to use this, may as well use it for the transcription and see if it is better.  
+Then we can just update the transcripts.  
+https://api.openai.com/v1/audio/transcriptions
+I think there should be an audio driven browser.  
+That is what we really need.  
+To start something with the generated images based on the text may be interesting at least for music.  
+But I think we need to see if we can get the text from the audio while singing.  
+
+Use second display and get in habit of using analyze.html before playing something.  
+Even though there wont be much yet.  
+
+
+When record.py is launched, also launch analyze.html with the latest video or title.  
+Get in the habit of using a webpage to think about the last time a piece was played.  
+
+For now do analyze.py to launch a review, and have this launch analyze.html with the latest video to be reviewed.  
+
 

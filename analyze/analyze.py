@@ -546,6 +546,7 @@ def uploadanalyze(file, fullpath):
 
 if __name__ == '__main__':
     argparser.add_argument("--title", help="Video title", default="What a Wonderful World")
+    argparser.add_argument("--video", help="Video ID", default="4flRJWtfY9c")
     args = argparser.parse_args()
 
     title = args.title
@@ -555,6 +556,13 @@ if __name__ == '__main__':
     cred = credentials.Certificate("../../misterrubato-test.json")
     initialize_app(cred, {'storageBucket': 'misterrubato-test.appspot.com'})
 
+
+#    data = get_playlist_items(cred.MY_PLAYLIST)
+    
+#    dfvideos = pd.DataFrame(data)
+    #so getting unlisted videos is annoying, perhaps I should just create a DB and hold the ID and title for search purposes.  
+    #yeah I think having an ID for each video probably is best.  Do this in record.py
+    
     data = search(title)
     print(data)
 
