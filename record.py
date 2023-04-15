@@ -64,6 +64,8 @@ sys.path.insert(0, 'c:/devinpiano/')
 import cred
 
 
+channel_id = cred.CHANNELID
+api_key = cred.APIKEY
 
 
 
@@ -76,6 +78,14 @@ from oauth2client.tools import argparser, run_flow
 
 
 from transcribe import transcribe_me, get_timestamp
+
+import firebase_admin
+from firebase_admin import db
+from firebase_admin import firestore
+
+from firebase_admin import credentials
+import requests
+import json
 
 
 # Explicitly tell the underlying HTTP transport library not to retry, since
@@ -202,6 +212,35 @@ def initialize_upload(youtube, options):
   )
 
   return resumable_upload(insert_request)
+
+
+def addtodb(videoid):
+    cred = credentials.Certificate("../misterrubato-test.json")
+    databaseURL = "https://misterrubato-test-default-rtdb.firebaseio.com/"
+    firebase_admin.initialize_app(cred, {
+	'databaseURL':databaseURL
+	})
+
+    url = f'https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,status\
+        &id={videoid}&key={api_key}'
+    json_url = requests.get(url)
+    datav = json.loads(json_url.text)
+    if (len(datav['items']) > 0):
+        GroupName = ""
+        title = datav['items'][0]['snippet']['title']
+        gs = title.find("(")
+        ge = title.find(")")
+        url = "https://www.youtube.com/watch?v=" + videoid
+        
+        if (gs > 0):
+            GroupName = title[gs+1:ge]
+            title = title[0:gs]
+            datav['items'][0]['snippet']['group'] = GroupName
+
+        
+        #insert into DB
+        ref = db.reference(f'/misterrubato/{videoid}')
+        ref.set(datav['items'][0])
 
 # This method implements an exponential backoff strategy to resume a
 # failed upload.
@@ -356,9 +395,14 @@ if __name__ == '__main__':
         tempfile.close()
         youtube = get_authenticated_service(args)
         videoid = initialize_upload(youtube, args)    
+        addtodb(videoid)
         add_video_to_playlist(videoid, cred.MY_PLAYLIST, args)
-        sys.exit
-        
+        sys.exit(0)
+
+
+    #start up analyze.py with this title/description.  
+    os.system('python ./analyze/analyze.py --title "' + args.description + '"')
+    
 #    mido.set_backend('mido.backends.portmidi')   
     mid = MidiFile()
 #    mid.ticks_per_beat = 1000000
@@ -530,5 +574,12 @@ if __name__ == '__main__':
     
     youtube = get_authenticated_service(args)
     videoid = initialize_upload(youtube, args)
-    
+
+    addtodb(videoid)
+
     add_video_to_playlist(videoid, cred.MY_PLAYLIST, args)
+    
+    
+    #cant automate this, as it will become public.  
+#   if (len(transcribe_file) > 500):
+#       add_video_to_playlist(videoid, cred.WORD_PLAYLIST, args)

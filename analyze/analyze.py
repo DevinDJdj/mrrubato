@@ -39,8 +39,11 @@ from torch.autograd import Variable
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
-from firebase_admin import credentials, initialize_app, storage
+import firebase_admin
+from firebase_admin import credentials, initialize_app, storage, firestore, db
 # Init firebase with your credentials
+
+import webbrowser
 
 CONTEXT_SIZE = 2
 EMBEDDING_DIM = 10
@@ -98,11 +101,17 @@ def get_pl_items_per_page(plid, npt: str=None, limit: int=None) -> dict:
     
     
 def search(title, limit: int=50) -> dict:
-    channelId = "UC4dK3RpqBq2JpIkRmQn6HOA"
+    #no longer using youtube internal DB, use our DB.  
+    
+    ref = db.reference(f'/misterrubato')
+    snapshot = ref.order_by_child('snippet/title').equal_to(title).get()
+    return snapshot.items()
 
-    url = f"https://www.googleapis.com/youtube/v3/search?maxResults={limit}&channelId={channelId}&order=date&q={title}&key={api_key}&part=snippet"
-    r = requests.get(url)
-    return r.json()
+#    channelId = "UC4dK3RpqBq2JpIkRmQn6HOA"
+
+#    url = f"https://www.googleapis.com/youtube/v3/search?maxResults={limit}&channelId={channelId}&order=date&q={title}&key={api_key}&part=snippet"
+#    r = requests.get(url)
+#    return r.json()
 
 def get_playlist_items(plid, limit: int=50):
     res = []
@@ -554,7 +563,9 @@ if __name__ == '__main__':
     print(pd.DataFrame([stats]))
 
     cred = credentials.Certificate("../../misterrubato-test.json")
-    initialize_app(cred, {'storageBucket': 'misterrubato-test.appspot.com'})
+    databaseURL = "https://misterrubato-test-default-rtdb.firebaseio.com/"
+    initialize_app(cred, {'storageBucket': 'misterrubato-test.appspot.com', 
+                          'databaseURL': databaseURL})
 
 
 #    data = get_playlist_items(cred.MY_PLAYLIST)
@@ -563,16 +574,21 @@ if __name__ == '__main__':
     #so getting unlisted videos is annoying, perhaps I should just create a DB and hold the ID and title for search purposes.  
     #yeah I think having an ID for each video probably is best.  Do this in record.py
     
+
     data = search(title)
     print(data)
 
     iterations = []    
     totalidx = 0
-    for item in reversed(data["items"]):
+    latestvideo = None
+    latestvideoDate = None
+    for key, item in reversed(data):
+#    for item in reversed(data["items"]):
 #    for item in data['items']:
 #        print(item["id"])
-        if (item["id"]["kind"] == "youtube#video"):
-            videoid = item["id"]["videoId"]
+        print(item)
+        if (item["kind"] == "youtube#video"):
+            videoid = item["id"]
             url = f'https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,status\
                 &id={videoid}&key={api_key}'
             json_url = requests.get(url)
@@ -581,6 +597,9 @@ if __name__ == '__main__':
                 totalduration = datav['items'][0]['contentDetails']['duration']
                 GroupName = ""
                 publishedDate = datav['items'][0]['snippet']['publishedAt']
+                if (latestvideo is None or publishedDate > latestvideoDate):
+                    latestvideo = videoid
+                    latestvideoDate = publishedDate
                 title = datav['items'][0]['snippet']['title']
                 privacystatus = datav['items'][0]['status']['privacyStatus']
                 gs = title.find("(")
@@ -621,6 +640,9 @@ if __name__ == '__main__':
                         mydata = {"URL": url, "PublishedDate": publishedDate, "starttime": starttimes[idx], "endtime": endtimes[idx], "iteration": totalidx}
 #                        print(mydata)
                         iterations.append(mydata)
-            
+    
+    if (latestvideo is not None):
+        #open misterrubato.com/analyze.html?video=
+        webbrowser.open('https://www.misterrubato.com/analyze.html?video=' + latestvideo)
     print(iterations)
     
