@@ -561,8 +561,10 @@ if __name__ == '__main__':
     title = args.title
     stats = get_channel_stat()
     print(pd.DataFrame([stats]))
-
-    cred = credentials.Certificate("../../misterrubato-test.json")
+    cwd = os.getcwd()
+    print(cwd)
+    
+    cred = credentials.Certificate("c:\\devinpiano\\misterrubato-test.json")
     databaseURL = "https://misterrubato-test-default-rtdb.firebaseio.com/"
     initialize_app(cred, {'storageBucket': 'misterrubato-test.appspot.com', 
                           'databaseURL': databaseURL})
