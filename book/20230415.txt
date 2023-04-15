@@ -1,0 +1,8 @@
+OK, so we have started using internal DB.  
+Need to only do updates through this though now.  
+This will take some time, so until this is done with analyze.html, 
+we may have some out of sync data with this and the youtube comments.  
+Dont really care at the moment.  
+Now we have record.py->analyze.py
+Next
+analyze.py->analyze.html
