@@ -91,4 +91,13 @@ good enough for now.
 We really need to run through the list and store all data by calling this job for each videoid.  
 Add the desired parameters on top of the youtube JSON structure.  
 
+can also now have an index page easier.  
+Just pull the latest videos which havent been reviewed.  
+
+record.py -> analyze.py -> analyze.html on display without starting the latest video.  
+
+analyze.html will update the video descriptions as well and do all management there.  
+index.html->analyze.html->update.  
+yeah this was inevitable at some point I would have to manage a DB of some kind.  
+It is minimal, so hopefully it is not too annoying.  
 
