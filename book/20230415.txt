@@ -10,3 +10,51 @@ analyze.py->analyze.html
 shouldnt open analyze.html except for once.  
 Figure out how many we want to run analyze on.  
 Perhaps previous two years?  
+
+this is working now, but we have to open only once, seems we are opening several times.  
+
+Still to consider:
+de-sync from youtube DB.  
+analyze.html save from here to DB.  
+Only update youtube data with batch?  
+This is probably simplest solution.  
+But then we need to only allow owner of the channel to do the editing to that branch of the DB.  
+Can we make such a rule?  
+Maybe others can use the site as is, and then just use that channel based on user login.  
+Wont get multiple channels I wouldnt think, but maybe make it possible to allow for in the future.  
+
+
+
+
+Overall good progress this weekend I think.  
+Consolidating the process into a few steps was good.  
+
+--index.html
+Next make general index first.  
+Then make the update via analyze.html.  
+
+
+add this write rule.  
+Then get the userID when using the page.  
+right now analyze.html only thing which will write anything.  
+
+why are the rules deleted.  
+keep the rules here, these are what gets written.  
+--web/database.rules.json
+
+OK, not a great solution, but for now this is ok.  
+I sign in and can update.  
+Eventually allow for any update based on the UID
+Allow that user to have their own data.  
+Perhaps lets just add the user comments to the video underneath the video data.  
+And any user can edit their own comments.  
+Have a separate textbox for other user comments?  
+
+Then we can combine all comments.  
+Have one video entry which we can control, then any user can comment as they wish underneath the video entry.  
+And we can index that data and pull that data to display.  
+We should save the user name.  
+We can save the audio as well perhaps eventually.  
+For now lets just add it to the video or around where the video is playing.  
+Then we can choose to show the user or block the user from the UI.  
+
