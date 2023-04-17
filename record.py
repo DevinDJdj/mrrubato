@@ -215,9 +215,10 @@ def initialize_upload(youtube, options):
 
 
 def addtodb(videoid):
+    from firebase_admin import credentials, initialize_app, storage
     cred = credentials.Certificate("../misterrubato-test.json")
     databaseURL = "https://misterrubato-test-default-rtdb.firebaseio.com/"
-    firebase_admin.initialize_app(cred, {
+    initialize_app(cred, {
 	'databaseURL':databaseURL
 	})
 
@@ -239,7 +240,7 @@ def addtodb(videoid):
 
         
         #insert into DB
-        ref = db.reference(f'/misterrubato/{videoid}')
+        ref = db.reference(f'/misterrubato/' + videoid)
         ref.set(datav['items'][0])
 
 # This method implements an exponential backoff strategy to resume a
@@ -303,7 +304,7 @@ def uploadmidi(file, title):
     from firebase_admin import credentials, initialize_app, storage
     # Init firebase with your credentials
     cred = credentials.Certificate("../misterrubato-test.json")
-    initialize_app(cred, {'storageBucket': 'misterrubato-test.appspot.com'})
+    initialize_app(cred, {'storageBucket': 'misterrubato-test.appspot.com'}, name="first")
 
     # Put your local file path 
     Title = title + '.mid'
