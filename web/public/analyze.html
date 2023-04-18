@@ -67,7 +67,9 @@
 
 </td>
 <td>
-    <textarea id="notes" rows="40" cols="80"></textarea>
+    <textarea id="notes" rows="40" cols="40"></textarea>
+</td><td>
+    <textarea id="mycomments" rows="40" cols="40"></textarea>
 </td><td>
     <textarea id="transcript" rows="40" cols="80"></textarea>
 </td>
@@ -133,6 +135,7 @@ se();
 var player;
 var delay = 10;
 var notesarray = [];
+var commentsarray = [];
 var uid = null;
 //setup https://www.youtube.com/watch?v=3jZ5vnv-LZc
 //then restrict the key if needed to your site and youtube data API.  
@@ -197,6 +200,16 @@ webkey = 'AIzaSyCBCSiFLWm-3oBKvnS-yaHtU5QcFfRtZ_E';
 					// https://firebase.google.com/docs/reference/js/firebase.User
 					
 					uid = user.uid;
+					
+					firebase.database().ref('/misterrubato/' + video + '/comments/' + uid + '/comments').once('value')
+					  .then((snapshot) => {
+						if (snapshot.exists()) {
+							$('#mycomments').val(snapshot.val());
+						} else {
+						  console.log('No comments yet from you');
+						}
+					  });
+					
 					}
 				// IdP data available in result.additionalUserInfo.profile.
 				  // ...
@@ -214,18 +227,12 @@ webkey = 'AIzaSyCBCSiFLWm-3oBKvnS-yaHtU5QcFfRtZ_E';
 		
 		var vRef = firebase.database().ref('/misterrubato/' + video);
 		if (typeof(uid) != "undefined" && uid !==null){
-			firebase.database.ref('/' + uid + '/' + video).once('value')
-			  .then((snapshot) => {
-				if (snapshot.exists()) {
-					vRef = firebase.database.ref(uid + '/' + video);
-				} else {
-				  console.log('No data exists at path');
-				}
-			  });
 		}
 		vRef.on("value", function(snapshot) {
 			console.log(snapshot.val());
 			videojson = snapshot.val();
+			getVideoJson(video);
+			
 		});
 		  
         } catch (e) {
@@ -245,12 +252,15 @@ function updateVideo(){
 	//then under here store the videos.  
 	//does the video have to be associated with the channel, I guess not.  
 	if (uid !==null){
-	    var uRef = firebase.database().ref('/misterrubato/' + video);
-		videojson.snippet.description = $('#notes').val();
+	    var uRef = firebase.database().ref('/misterrubato/' + video + '/comments/' + uid);
+//		videojson.snippet.description = $('#notes').val();
 		videojson.snippet.description.context = null;
 //		videojson = JSON.parse( JSON.stringify(videojson ) );
 		console.log(uid);
-		uRef.set(videojson);
+		mycomments = $('#mycomments').val();
+		sentiment = "test"; //for now
+		obj = {"comments": mycomments, "sentiment": sentiment };
+		uRef.set(obj);
 	}
 }
 
@@ -259,12 +269,12 @@ function updateNotes(){
 	for (i=0; i<notesarray.length; i++){
 	    allnotes += notesarray[i] + "\n";
 	}
-    $('#notes').val(allnotes);
+    $('#mycomments').val(allnotes);
 	
 }
 
 function createNotesArray(){
-	allnotes = $('#notes').val();
+	allnotes = $('#mycomments').val();
 	notesarray = [];
     const lines = allnotes.split("\n");
 	for (i = 0; i< lines.length; i++){
@@ -303,6 +313,26 @@ function addComment(comment, commenttime){
 
 function searchPrevious(videoid){
 	//use title
+    ref = firebase.database().ref('/misterrubato');
+	console.log(title);
+    ref.orderByChild('snippet/title').equalTo(title).on("value", function(snapshot) {
+		snapshot.forEach((childSnapshot) => {
+			console.log(childSnapshot.key);
+			console.log('found  ' + childSnapshot.val().snippet);
+			var mydiv = document.getElementById("previous");
+			var aTag = document.createElement('a');
+			aTag.setAttribute('href',"https://misterrubato.com/analyze.html?video=" + childSnapshot.val().id);
+			aTag.innerText = "PREV#" + i;
+			if (videoid == childSnapshot.val().id){
+				aTag.innerText += " <- THIS VIDEO";
+			}
+			mydiv.appendChild(aTag);
+			var br = document.createElement("br");
+			mydiv.appendChild(br);
+		});
+	});
+
+/*	
  $.getJSON('https://www.googleapis.com/youtube/v3/search?maxResults=15&channelId=' + channelId + '&order=date&q=' + title + '&key=' + webkey + '&part=snippet',function(data){
       if (typeof(data.items[0]) != "undefined") {
 	      for (i=0; i<data.items.length; i++){
@@ -325,6 +355,7 @@ function searchPrevious(videoid){
         console.log('video not exists');
        }   
     });
+*/
 	
 }
 
@@ -418,7 +449,20 @@ function getTranscript(desc){
 
 function getVideoJson(videoid){
 	
-	
+    ref = firebase.database().ref('/misterrubato/' + videoid);
+	ref.on('value',(snap)=>{
+		item = snap.val();
+		console.log(snap.val());
+		$('#notes').val(snap.val().snippet.description);
+	    createNotesArray();
+		//get previous iterations of this.  
+		title = notesarray[0];
+		searchPrevious(videoid);
+		getTranscript(item.snippet.description);
+		getMidi(item.snippet.description);
+	});
+
+/*	
  $.getJSON('https://www.googleapis.com/youtube/v3/videos?id=' + videoid + '&key=' + webkey + '&part=snippet&callback=?',function(data){
     if (typeof(data.items[0]) != "undefined") {
 //	    videojson = data.items[0];
@@ -434,6 +478,7 @@ function getVideoJson(videoid){
         console.log('video not exists');
      }   
     });
+*/
 }
 
 function getSecsFromTime(time){
@@ -492,8 +537,6 @@ function helpme(){
 		  }
 	   });
 	   
-	   json = getVideoJson(video);
-	   console.log(json);
 		
 
 

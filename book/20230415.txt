@@ -81,3 +81,23 @@ Keep this rule regarding the workflow I think should make things simple.
 
 
 Right now dont want to focus on deployment and packaging, but have to keep this in mind while designing.  
+
+
+have a sentiment indicator which can be used easily, instead of talking.  
+Just use +/- for instance.  Each TRIAL resets this counter.  
+Get start/end array when initializing the data.  
+The generated data wont change now, so ...
+For each user hold commentsarray and sentiment
+Also have delay parameter which is editable.  
+
+
+Comments should be used for something more substantial.  
+Allow for update of the comments area, and make sure we can pull this data.  
+All comments should have a timestamp.  
+Figure out an interesting way to overlay this onto the video.  
+This functionality could be used for any video really.  
+
+OK, so now we have the comments saving in the way that is needed.  
+Next we need to query these comments and display them in some interesting way.  
+We should try to get the user icon perhaps or some avatar to display them around the video.  
+
