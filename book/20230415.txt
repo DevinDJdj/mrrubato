@@ -49,6 +49,10 @@ Allow that user to have their own data.
 Perhaps lets just add the user comments to the video underneath the video data.  
 And any user can edit their own comments.  
 Have a separate textbox for other user comments?  
+Then combine the timestamped data from user x, y, z.  
+Then each song is a conversation.  
+So when playing the song the next time, via analyze.html, this will show other comments.  
+
 
 Then we can combine all comments.  
 Have one video entry which we can control, then any user can comment as they wish underneath the video entry.  
@@ -58,3 +62,22 @@ We can save the audio as well perhaps eventually.
 For now lets just add it to the video or around where the video is playing.  
 Then we can choose to show the user or block the user from the UI.  
 
+
+Lets manage the timestep.py.  
+For now just run it each day is fine on a batch.  
+
+For now having the data in the DB is fine.  
+We should just compare all, sort by date desc with the DB
+and if there is a difference update it.  
+Same with the timestep, just sort by date asc, and whatever needs updating, update it.  
+We need to have a filter though, not sure privacyStatus is best.  
+Lets just use the DB for the timestep as well.  
+sort by creationDate, then we dont need to depend on the privacyStatus, and can just use other data we 
+make, like separate dates for tracking.  
+This should keep everything in sync essentially good enough.  
+The website will update the RTDB, and then timestep will update the Youtube DB.  
+Keep this rule regarding the workflow I think should make things simple.  
+
+
+
+Right now dont want to focus on deployment and packaging, but have to keep this in mind while designing.  
