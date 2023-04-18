@@ -84,6 +84,8 @@ from firebase_admin import db
 from firebase_admin import firestore
 
 from firebase_admin import credentials
+from firebase_admin import initialize_app, storage
+
 import requests
 import json
 
@@ -215,13 +217,7 @@ def initialize_upload(youtube, options):
 
 
 def addtodb(videoid):
-    from firebase_admin import credentials, initialize_app, storage
-    cred = credentials.Certificate("../misterrubato-test.json")
-    databaseURL = "https://misterrubato-test-default-rtdb.firebaseio.com/"
-    initialize_app(cred, {
-	'databaseURL':databaseURL
-	})
-
+ 
     url = f'https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,status\
         &id={videoid}&key={api_key}'
     json_url = requests.get(url)
@@ -282,11 +278,7 @@ def resumable_upload(insert_request):
   return None
   
 def uploadtranscript(file, title):
-    from firebase_admin import credentials, initialize_app, storage
-    # Init firebase with your credentials
-    cred = credentials.Certificate("../misterrubato-test.json")
-    initialize_app(cred, {'storageBucket': 'misterrubato-test.appspot.com'}, name="second")
-
+ 
     # Put your local file path 
     Title = title + '.txt'
     fileName = file + '.txt'
@@ -301,10 +293,7 @@ def uploadtranscript(file, title):
     return blob.public_url
 
 def uploadmidi(file, title):
-    from firebase_admin import credentials, initialize_app, storage
-    # Init firebase with your credentials
-    cred = credentials.Certificate("../misterrubato-test.json")
-    initialize_app(cred, {'storageBucket': 'misterrubato-test.appspot.com'}, name="first")
+
 
     # Put your local file path 
     Title = title + '.mid'
@@ -389,7 +378,11 @@ if __name__ == '__main__':
     print(cred.MY_PLAYLIST)
 #    add_video_to_playlist('7Aadr9Fmftk', cred.MY_PLAYLIST, args)
 
+    databaseURL = "https://misterrubato-test-default-rtdb.firebaseio.com/"
     if (args.rerun == "true"):
+        # Init firebase with your credentials
+        creda = credentials.Certificate("../misterrubato-test.json")
+        initialize_app(creda, {'storageBucket': 'misterrubato-test.appspot.com', 'databaseURL':databaseURL})    
         args.file = get_latest_file()
         tempfile = open('desc.txt', 'r')
         args.description = tempfile.read()
@@ -543,6 +536,11 @@ if __name__ == '__main__':
                 #print(msg) #dont need all this info.  
                 track.append(msg)
     
+    
+    
+    creda = credentials.Certificate("../misterrubato-test.json")
+    initialize_app(creda, {'storageBucket': 'misterrubato-test.appspot.com', 'databaseURL':databaseURL})    
+
     latest_file = get_latest_file()    
     args.file = latest_file
     fn = latest_file.split('.')

@@ -314,6 +314,7 @@ def getNgrams(t):
     starttimes, endtimes = getTrackTimes(t)
     if len(starttimes) != len(endtimes) or len(starttimes) < 1:
         print("Incorrect data, please fix")
+        return None
         
     else:    
         notearray = np.zeros(len(t.notes), dtype=int)
@@ -422,6 +423,8 @@ def printMidi(midilink):
     mid = MidiFile("test.mid")
     #outputMidi(mid)
     t = enhanceMidi(mid)
+    if (t is None):
+        return
     data, rythmdata = getNgrams(t)
     img = midiToImage(t, midilink)
 
