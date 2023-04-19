@@ -312,9 +312,11 @@ def getNgrams(t):
     currentTime = 0
     prevTime = currentTime
     starttimes, endtimes = getTrackTimes(t)
+    if (len(endtimes) > len(starttimes)):
+        del endtimes[len(starttimes):]
     if len(starttimes) != len(endtimes) or len(starttimes) < 1:
         print("Incorrect data, please fix")
-        return None
+        return None, None
         
     else:    
         notearray = np.zeros(len(t.notes), dtype=int)
@@ -418,6 +420,9 @@ def testNgramModel():
 def printMidi(midilink):
     r = requests.get(midilink)
     print(len(r.content))
+    if (len(r.content) < 500):
+        print(r.content)
+        return
     with open("test.mid", "wb") as f:
         f.write(r.content)
     mid = MidiFile("test.mid")
@@ -426,6 +431,8 @@ def printMidi(midilink):
     if (t is None):
         return
     data, rythmdata = getNgrams(t)
+    if (data is None):
+        return
     img = midiToImage(t, midilink)
 
     height = 200
