@@ -101,3 +101,10 @@ OK, so now we have the comments saving in the way that is needed.
 Next we need to query these comments and display them in some interesting way.  
 We should try to get the user icon perhaps or some avatar to display them around the video.  
 
+Just extend the music cam cable and use it as the second cam in the usb hub.  
+Doesnt matter if that is slow.  
+
+Can we filter the comments properly?  
+Is it a problem that the DB is world readable?  
+I dont think so.  Well, they could read the videos if they want even if they are private etc.  
+

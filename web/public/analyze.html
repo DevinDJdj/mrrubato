@@ -387,6 +387,8 @@ function addImage(url){
 }
 
 function getAnalyze(midiurl){
+    //in case we have \r\n
+    midiurl = midiurl.replace("\r", "");
     var storage = firebase.storage();
 
 //make this more general.  

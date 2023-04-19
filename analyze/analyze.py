@@ -418,6 +418,7 @@ def testNgramModel():
     print('real word is {}, predict word is {}'.format(label, predict_word))
 
 def printMidi(midilink):
+    midilink = midilink.replace("\r", "")
     r = requests.get(midilink)
     print(len(r.content))
     if (len(r.content) < 500):
