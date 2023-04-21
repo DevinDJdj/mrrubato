@@ -108,3 +108,10 @@ Can we filter the comments properly?
 Is it a problem that the DB is world readable?  
 I dont think so.  Well, they could read the videos if they want even if they are private etc.  
 
+
+Lets just use the OBS caption plugin instead of doing this manually with python.  
+I think the quality is probably better.  
+--record.py 
+Adjust to use the recorded transcript and upload that.  
+
+
