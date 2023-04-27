@@ -131,9 +131,11 @@ if __name__ == '__main__':
                 url = f'https://www.googleapis.com/youtube/v3/videos?part=status\
                     &id={videoid}&key={api_key}'
                 youtube = get_authenticated_service(args)
-                if (privacystatus=="public"):
+                #for now get rid of all the old data from the queries gradually everything up to when we use DB.  
+                #data quality is too poor to do much with anyway.  Also no midi before Jan/2023.  
+                if (privacystatus=="public" or privacystatus=="unlisted"):
                     mystatus = {}         
-                    mystatus['privacyStatus'] = "unlisted"
+                    mystatus['privacyStatus'] = "private"
                     videos_update_response = youtube.videos().update(
                         part='status',
                         body=dict(

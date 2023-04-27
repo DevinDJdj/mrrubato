@@ -106,12 +106,57 @@ Doesnt matter if that is slow.
 
 Can we filter the comments properly?  
 Is it a problem that the DB is world readable?  
-I dont think so.  Well, they could read the videos if they want even if they are private etc.  
+I dont think so.  Well, they could read the video descriptions if they want even if they are private etc.  
+This was always the intention though to make the data available.  
+There is a problem with the poor quality of the Speech-to-text which may end up having some unintended consequences.  
 
 
 Lets just use the OBS caption plugin instead of doing this manually with python.  
 I think the quality is probably better.  
 --record.py 
 Adjust to use the recorded transcript and upload that.  
+No, this is basically similar quality, so I dont think I need to use this.  
 
+--how do I create more readable sheet music from the existing musical language that we use today?  
+Need an open source sheet music generation tool first of all.  
+That is probably the first step.  
+We can generate from the midi or just take existing stuff.  
+From there, we need to measure if it is actually easier to read or not.  
+Play from original sheet music and then generated.  
+And analyze results.  
+
+Sheet music aggregators
+openscore.cc
+https://github.com/musescore/MuseScore
+https://github.com/LibreScore/webmscore
+https://imslp.org/
+
+
+Ah something maybe useful which I can use without too much trouble.  
+https://github.com/0xfe/vexflow
+https://vexflow.com/vexwarp/
+
+Or this:
+https://github.com/magenta/magenta
+https://magenta.tensorflow.org/demos/web/
+https://magenta.tensorflow.org/get-started
+https://hello-magenta.glitch.me/
+
+Yeah this is probably going to be the best thing to get started with.  
+Pretty awesome tool it looks like and exactly the languages I want, python/js.  
+
+Maybe see if we can generate something from the recorded midi.  
+Just generate the data struct from the midi file to start with.  
+Then play it in a page.  
+
+
+
+So 
+--generate sheet music from the midi or another musical format.  
+
+Go through some of the code and samples here and then see where we land in our thought process.  
+--use the generated midi which we have been recording with some of the stuff from magenta.  
+
+Past week has been quite bitter.  
+Lacking desire to play.  This may be problematic if it continues.  
 
