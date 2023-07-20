@@ -1,0 +1,20 @@
+Try to generate some images while playing and put them in the Open area where my face used to be.  
+Perhaps use some text to add subtitles while playing?  
+https://analyticsindiamag.com/how-to-generate-an-image-from-text-using-stable-diffusion-on-python/
+Use this in the postprocessing of record.py?  
+If we make this too large we need to be able to run parallel record.py.  
+
+
+Probably run into CUDA issues.  
+This looks like a decent start though to be able to control visuals to some extent.  
+
+
+Use the second monitor to display this as well as real-time text.  
+We should try to generate it real-time.  
+Leave the text on the screen from whatever is generated.  
+Be able to interact with touchscreen in some meaningful way.  
+This will be real-time generation.  
+
+Keep the context from the previous iteration of the song and when running analyze.py
+load previous context for current iteration.  
+

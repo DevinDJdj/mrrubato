@@ -160,3 +160,10 @@ Go through some of the code and samples here and then see where we land in our t
 Past week has been quite bitter.  
 Lacking desire to play.  This may be problematic if it continues.  
 
+
+Finish analyze.html 
+Forget to update on this page.  
+
+maybe just try to use this
+
+https://cloud.google.com/video-intelligence
