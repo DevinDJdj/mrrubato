@@ -321,8 +321,8 @@ def getNgrams(t):
     else:    
         notearray = np.zeros(len(t.notes), dtype=int)
         #create array of [iterations (10)][notes (88)][prevnote (88)]
-        data = np.zeros((10, 88, 88), dtype=int)
-        rythmdata = np.zeros((10, 64, 64), dtype=int)
+        data = np.zeros((20, 88, 88), dtype=int)
+        rythmdata = np.zeros((20, 64, 64), dtype=int)
         #create an array of [iterations (10][notes (88)][
         #only sum across [notes]
         
