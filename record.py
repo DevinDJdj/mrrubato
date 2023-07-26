@@ -11,6 +11,9 @@
 #python ./upload.py --file="./input/2022-12-12_13-46-58.mkv" --title="Test Upload" --description="Wow this should be easy" --keywords="music, piano" --category="10" --privacyStatus="private"
 #python ./upload.py --file="./output/testmidi/2022-12-22 20-43-48.mkv" --title="Test Upload" --description="Wow this should be easy" --keywords="music, piano" --category="10" --privacyStatus="private"
 
+#I use description not title.  
+#python ./record.py --description "Claire De Lune"
+
 
 #!/usr/bin/python
 #getting stuff for image processing.  
@@ -482,28 +485,37 @@ if __name__ == '__main__':
                     if msg.note == 21:
                         starttime = time.time()
 
-                        with keyboard.pressed(Key.ctrl):
-                            keyboard.press('1')
-                            time.sleep(0.25)
-                            keyboard.release('1')
+                        keyboard.press(Key.ctrl)
+                        keyboard.press(Key.shift)
+                        keyboard.press('1')
+                        time.sleep(0.25)
+                        keyboard.release('1')
+                        keyboard.release(Key.ctrl)
+                        keyboard.release(Key.shift)
                         print("Start Recording" + str(time.time()))
                         msg.time = 0
                     if msg.note == 22:
                         endtime = time.time()
 
-                        with keyboard.pressed(Key.ctrl):
-                            keyboard.press('2')
-                            time.sleep(0.25)
-                            keyboard.release('2')
+                        keyboard.press(Key.ctrl)
+                        keyboard.press(Key.shift)
+                        keyboard.press('2')
+                        time.sleep(0.25)
+                        keyboard.release('2')
+                        keyboard.release(Key.ctrl)
+                        keyboard.release(Key.shift)
                         print("Stop Recording" + str(time.time()))
                         break
                     if msg.note == 107 and msg.note !=lastnote:
                         pausestart.append(time.time())
 
-                        with keyboard.pressed(Key.ctrl):
-                            keyboard.press('9')
-                            time.sleep(0.25)
-                            keyboard.release('9')
+                        keyboard.press(Key.ctrl)
+                        keyboard.press(Key.shift)
+                        keyboard.press('8')
+                        time.sleep(0.25)
+                        keyboard.release('8')
+                        keyboard.release(Key.ctrl)
+                        keyboard.release(Key.shift)
                         print("Pause Recording" + str(time.time()))
                         print(msg.time)
                     if msg.note == 108 and msg.note !=lastnote:
@@ -513,10 +525,13 @@ if __name__ == '__main__':
                         msg.time = time.time() - starttime - delay - lasttick
                         msg.time = int(round(msg.time*1000))
 
-                        with keyboard.pressed(Key.ctrl):
-                            keyboard.press('0')
-                            time.sleep(0.25)
-                            keyboard.release('0')
+                        keyboard.press(Key.ctrl)
+                        keyboard.press(Key.shift)
+                        keyboard.press('9')
+                        time.sleep(0.25)
+                        keyboard.release('9')
+                        keyboard.release(Key.ctrl)
+                        keyboard.release(Key.shift)
                         print("Unpause Recording" + str(time.time()))
 
                         print("delay " + str(delay))
