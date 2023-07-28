@@ -18,3 +18,26 @@ This will be real-time generation.
 Keep the context from the previous iteration of the song and when running analyze.py
 load previous context for current iteration.  
 
+
+See if we can check/use this?  
+Generate image from sound clip.  Nod designed for music, but that shouldnt matter I think.  
+https://towardsdatascience.com/audio-deep-learning-made-simple-sound-classification-step-by-step-cebc936bbe5
+Just a sample for now.  
+
+https://github.com/CompVis/stable-diffusion/blob/main/scripts/txt2img.py
+
+can we use this, need a sample with this.  
+maybe use a combination.  
+If we have words, use this as a starting point perhaps.  
+
+**analyze.html
+Need to display the text with timestamps so I can skip forward.  
+
+
+So when we do analyze.py at startup of record.py, 
+we want to get the text for the past X iterations.  
+For now just do 1.  
+When we get the text, call
+generateimage.py randomly throughout the record.py session based on the previous iteration for now.  
+and add the image to OBS where we have a blank now.  
+
