@@ -59,7 +59,7 @@ from mido.ports import MultiPort
 #key input for hotkeys to trigger recording etc.  
 from pynput.keyboard import Key, Controller
 
-
+import subprocess
 import sys
 sys.path.insert(0, 'c:/devinpiano/')
  
@@ -398,8 +398,8 @@ if __name__ == '__main__':
 
 
     #start up analyze.py with this title/description.  
-    os.system('python ./analyze/analyze.py --title "' + args.description + '"')
-    
+#    os.system('python ./analyze/analyze.py --title "' + args.description + '"')
+    subprocess.call('python ./analyze/analyze.py --title "' + args.description + '"')
 #    mido.set_backend('mido.backends.portmidi')   
     mid = MidiFile()
 #    mid.ticks_per_beat = 1000000
@@ -460,6 +460,28 @@ if __name__ == '__main__':
                             filler = "0"
                         args.description += "\nTRIAL#1"
                         args.description += " (" + str(mins) + ":" + filler + str(secs) + ")"
+                        
+                    if lastnote==105:
+                        #adding two more controllers on piano.  
+                        keyboard.press(Key.ctrl)
+                        keyboard.press(Key.shift)
+                        keyboard.press('5')
+                        time.sleep(0.25)
+                        keyboard.release('5')
+                        keyboard.release(Key.ctrl)
+                        keyboard.release(Key.shift)
+                        print("Showing Screen" + str(time.time()))
+                    if lastnote==106:
+                        #adding two more controllers on piano to show screen and hide screen.   
+                        keyboard.press(Key.ctrl)
+                        keyboard.press(Key.shift)
+                        keyboard.press('6')
+                        time.sleep(0.25)
+                        keyboard.release('6')
+                        keyboard.release(Key.ctrl)
+                        keyboard.release(Key.shift)
+                        print("Hiding Screen" + str(time.time()))
+                        
                     if lastnote==107 and msg.note !=lastnote:
                         #adding END messages.  For now they are only using the pause button as indicator.  
                         iterations = len(pausestart)

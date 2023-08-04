@@ -418,7 +418,16 @@ def testNgramModel():
     print('real word is {}, predict word is {}'.format(label, predict_word))
 
 def printMidi(midilink):
+    path = './output/'
     midilink = midilink.replace("\r", "")
+    midiname = os.path.basename(midilink)
+    midiname = os.path.splitext(midiname)[0]
+    filename = midiname + '.jpg'
+    #dont redo this.  Live with the analysis of the time for now.  
+    if (os.path.exists(os.path.join(path , filename))):
+        print("Skipping " + midilink)
+        return
+    
     r = requests.get(midilink)
     print(len(r.content))
     if (len(r.content) < 500):
@@ -438,11 +447,8 @@ def printMidi(midilink):
 
     height = 200
     width = 200    
-    midiname = os.path.basename(midilink)
-    midiname = os.path.splitext(midiname)[0]
-    path = './output/'
+    
     if (img is not None):
-        filename = midiname + '.jpg'
         cv2.imwrite(os.path.join(path , filename), img)
         uploadanalyze(filename, os.path.join(path, filename))
     
@@ -656,6 +662,7 @@ if __name__ == '__main__':
     
     if (latestvideo is not None):
         #open misterrubato.com/analyze.html?video=
-        webbrowser.open('https://www.misterrubato.com/analyze.html?video=' + latestvideo)
+        #autoraise=False, sick of waiting for this analyze.py to finish.  
+        webbrowser.open('https://www.misterrubato.com/analyze.html?video=' + latestvideo, autoraise=False)
     print(iterations)
     
