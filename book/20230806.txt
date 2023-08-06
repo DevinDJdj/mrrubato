@@ -1,0 +1,17 @@
+Cant play due to tendonitis in the wrist.  
+Unfortunately I think playing not with the right form caused this.  
+Bit depressing that I cant play but I may be able to use the time to teach the kids.  
+Or perhaps I can use this time to reflect or do a bit more programming.  
+
+Really need to create something like 
+**history.py
+this should show info across iterations.  
+Focus on general progress across songs, compared to other songs etc.  
+What is the timing between iterations, and what is the best use of time overall.  
+
+Finally fixed the annoying problem that analyze.py was taking too much time synchronously.  
+
+Try to utilize some of the things I have been testing for video manipulation.  
+Also need to still generate some image from sound.  
+
+Too many things to do, not enough time and/or inspiration.  
