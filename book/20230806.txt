@@ -15,3 +15,66 @@ Try to utilize some of the things I have been testing for video manipulation.
 Also need to still generate some image from sound.  
 
 Too many things to do, not enough time and/or inspiration.  
+
+**analyze.py
+add some logic to detect at least the harmonic correlations between notes.  
+Change midi -> Hz and find correlations.  
+
+Can we visualize something which will actually represent the sound itself, like a wave.  
+multiple note frequencies.  
+Beat frequencies.  A - B
+If the beat frequency of two waves or tones is in the mid-frequency range (500 - 2000 Hz), then our ear perceives it as a third wave/tone
+
+Yeah for now just do a realtime sound visualization.  
+Then we will have a sequence of sounds visualized.  
+We also want context.  
+
+https://wesbos.com/javascript/15-final-round-of-exercise/85-audio-visualization
+
+This is interesting:
+http://touchpianist.com/
+No reason not to make the keyboard a keyboard.  
+Dont have weight though.  
+Can we get weight from keys?  
+
+Check out some more of this:
+https://github.com/willianjusten/awesome-audio-visualization
+
+https://tympanus.net/Development/MusicalInteractions/
+
+https://mfcc64.github.io/html5-showcqtbar/index.html?s=auto
+
+First of all just stick with piano for now.  
+Do all things we can do to improve that.  
+
+Need to detect fingers with midi.  
+
+Then detect patterns along with speed.  
+Which patterns are preferable for certain sets of notes.  
+Then we find the most useful fingering patterns for the person.  
+And compare to other fingering patterns.  
+start with this perhaps:
+https://techvidvan.com/tutorials/hand-gesture-recognition-tensorflow-opencv/
+
+Add the visualization like above instead of the keyboard when I am showing the screen.  
+Also what to display instead of facecam.  
+Display what is being created, but how to represent that?  
+Maybe just display the last image visualization I guess.  Stick with that idea for a while.  
+
+Need to use the program to remove empty audio space as well especially if we start sharing what is being done on the computer.  
+This way there is no post-processing necessary.  
+
+
+
+Also detect the mathematics in the note sets.  
+Have some Midi->notepattern like referred above for analyze.py
+And then visualize that note pattern in a way that is useful and has the mathematical structures correlated.  
+
+We should be able to do this while playing.  In record, we should be able to detect realtime the finger structures
+and add suggestions perhaps from past reference of recordings.  
+Wont get this real-time immediately, just focus on being able to do it properly.  
+Then see how close to real-time we can get.  
+We can perhaps just do it in analyze, and display those results.  
+Not necessarily while playing.  
+
+Create some music with some interesting beat frequencies, so that the beat frequencies are harmonic in a way along with the original notes.  
