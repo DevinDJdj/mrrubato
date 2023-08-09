@@ -78,3 +78,16 @@ We can perhaps just do it in analyze, and display those results.
 Not necessarily while playing.  
 
 Create some music with some interesting beat frequencies, so that the beat frequencies are harmonic in a way along with the original notes.  
+
+
+Maintenance tasks:
+**analyze.html
+"Update" should also update the public/private.  
+This way we dont have to do anything in youtube UI.  
+But this is just a flag in the DB and then from there update it in Youtube with 
+
+**timestep.py
+add something to essentially ensure the DB and the Youtube DB is in sync.  
+This is a common thing to do or will be more common. 
+Surely there is some tooling to do this, but it is not a hard task I think.  
+

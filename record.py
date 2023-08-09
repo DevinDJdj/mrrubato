@@ -443,13 +443,15 @@ if __name__ == '__main__':
     #the video and midi appear to match up pretty well.  But not perfect I think.  
     #at least enough to get the start times now.  
     #need some comment here, what is input[1].  Having hardware issues, lol.  
+    #some problems here when we use overlays like "Concert Guitar" or "Strings"
+    #sometimes the midi msg of 21 or pause etc occurs twice or inadvertently
     keyboard = Controller()    
     with mido.open_input(inputs[1]) as inport:
         print("hello")
         for msg in inport:
 #            print(msg)
             if msg:
-                if hasattr(msg, 'note'):
+                if hasattr(msg, 'note') and msg.channel == 0: #for now this is a workaround to only use channel 0 as control.  
                     if lastnote == 21 and msg.note !=lastnote:
                         #1st
                         mytime = time.time() - starttime - delay
@@ -482,7 +484,18 @@ if __name__ == '__main__':
                         keyboard.release(Key.shift)
                         print("Hiding Screen" + str(time.time()))
                         
-                    if lastnote==107 and msg.note !=lastnote:
+                    if msg.note == 107 and msg.note !=lastnote:
+                        pausestart.append(time.time())
+
+                        keyboard.press(Key.ctrl)
+                        keyboard.press(Key.shift)
+                        keyboard.press('8')
+                        time.sleep(0.25)
+                        keyboard.release('8')
+                        keyboard.release(Key.ctrl)
+                        keyboard.release(Key.shift)
+                        print("Pause Recording" + str(time.time()))
+                        print(msg.time)
                         #adding END messages.  For now they are only using the pause button as indicator.  
                         iterations = len(pausestart)
                         mytime = time.time() - starttime - delay - (time.time() - starttime - delay - lasttick)
@@ -493,6 +506,23 @@ if __name__ == '__main__':
                             filler = "0"
                         args.description += "\nEND#" + str(iterations)
                         args.description += " (" + str(mins) + ":" + filler + str(secs) + ")"
+                    if msg.note == 108 and msg.note !=lastnote:
+                        pauseend.append(time.time())
+                        delay = calculatedelay(pausestart, pauseend)
+                        lasttick = time.time() - starttime - delay
+                        msg.time = time.time() - starttime - delay - lasttick
+                        msg.time = int(round(msg.time*1000))
+
+                        keyboard.press(Key.ctrl)
+                        keyboard.press(Key.shift)
+                        keyboard.press('9')
+                        time.sleep(0.25)
+                        keyboard.release('9')
+                        keyboard.release(Key.ctrl)
+                        keyboard.release(Key.shift)
+                        print("Unpause Recording" + str(time.time()))
+
+                        print("delay " + str(delay))
                     if lastnote==108 and msg.note !=lastnote:
                         #2nd etc.  
                         iterations = len(pauseend) + 1
@@ -528,35 +558,6 @@ if __name__ == '__main__':
                         keyboard.release(Key.shift)
                         print("Stop Recording" + str(time.time()))
                         break
-                    if msg.note == 107 and msg.note !=lastnote:
-                        pausestart.append(time.time())
-
-                        keyboard.press(Key.ctrl)
-                        keyboard.press(Key.shift)
-                        keyboard.press('8')
-                        time.sleep(0.25)
-                        keyboard.release('8')
-                        keyboard.release(Key.ctrl)
-                        keyboard.release(Key.shift)
-                        print("Pause Recording" + str(time.time()))
-                        print(msg.time)
-                    if msg.note == 108 and msg.note !=lastnote:
-                        pauseend.append(time.time())
-                        delay = calculatedelay(pausestart, pauseend)
-                        lasttick = time.time() - starttime - delay
-                        msg.time = time.time() - starttime - delay - lasttick
-                        msg.time = int(round(msg.time*1000))
-
-                        keyboard.press(Key.ctrl)
-                        keyboard.press(Key.shift)
-                        keyboard.press('9')
-                        time.sleep(0.25)
-                        keyboard.release('9')
-                        keyboard.release(Key.ctrl)
-                        keyboard.release(Key.shift)
-                        print("Unpause Recording" + str(time.time()))
-
-                        print("delay " + str(delay))
                     lastnote = msg.note
                     
                 if hasattr(msg, 'time'):
