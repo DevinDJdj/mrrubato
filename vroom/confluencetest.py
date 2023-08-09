@@ -3,13 +3,13 @@ import json
 import requests
 import subprocess
 #search of all mp4 on staging wiki.  
-#https://wikistage.rocketsoftware.com/dosearchsite.action?cql=siteSearch%20~%20%22mp4%22%20AND%20type%20in%20(%22attachment%22)&includeArchivedSpaces=false
+#https://wikistage.me.com/dosearchsite.action?cql=siteSearch%20~%20%22mp4%22%20AND%20type%20in%20(%22attachment%22)&includeArchivedSpaces=false
 #see if we can get this search to work with the api.  
 # Get results from cql search result with all related fields
 #confluence.cql(cql, start=0, limit=None, expand=None, include_archived_spaces=None, excerpt=None)
 
 #this works so perhaps we can just use this 
-#curl -u djacobson:xxxxx https://wikistage.rocketsoftware.com//confluence/rest/api/content?limit=2
+#curl -u djacobson:xxxxx https://wikistage.me.com//confluence/rest/api/content?limit=2
 
 #ok we have a start.  Now lets see if we can generate something from a video.  
 #search for video content in the wiki.  
@@ -48,8 +48,8 @@ import subprocess
 
 mypass = input("Type password: ")
 confluence = Confluence(
-    url='https://wikistage.rocketsoftware.com',
-    username='djacobson',
+    url='https://wiki.me.com',
+    username='dj',
     password=mypass)
 
 #ok we can use this.  
@@ -63,7 +63,7 @@ print(status)
 
 
 #download all mp4
-#https://wikistage.rocketsoftware.com/download/attachments/128548922/IBM_AD_Demo_2017_05_03.mp4?version=1&modificationDate=1501547985077&api=v2&download=true
+#https://wiki.me.com/download/attachments/
 
 def downloadmp4(allmp4):
 #    allmp4 = "siteSearch+~+\"mp4\""
@@ -105,7 +105,7 @@ def downloadmp4(allmp4):
                     #and attach the text transcript.  Is this enough?  If we look at the time 
                     #cant delete at the moment, so probably lets leave this for now.  
                     #or limit search path.  
-                    #https://wikistage.rocketsoftware.com/pages/viewpageattachments.action?pageId=128548922
+                    #https://wikistage.me.com/pages/viewpageattachments.action?pageId=128548922
                     #sorry.  
                     fn = fname.split('.')
                     #skip this part for now.  

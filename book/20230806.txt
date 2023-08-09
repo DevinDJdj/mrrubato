@@ -91,3 +91,23 @@ add something to essentially ensure the DB and the Youtube DB is in sync.
 This is a common thing to do or will be more common. 
 Surely there is some tooling to do this, but it is not a hard task I think.  
 
+**stats.html
+Go ahead and make some interesting graphs about the history of each song.  
+Stats about group and song played
+Top groups played, top songs played over time.  
+By Time.  
+Make some stats about how many words spoken over time.  
+Use the 
+stats.py should populate this info into the DB.  
+Doesnt need to be real-time.  
+Then stats.html should display this along with other things.  
+But should be easy to execute.  
+When I run stats.py should just pull all that hasnt been done yet and generate the data for that.  
+And then bring up stats.html
+
+**analyze.py
+data to populate:
+#time without playing
+#time played
+#notes played
+#words recognized

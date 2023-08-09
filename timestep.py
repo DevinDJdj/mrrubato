@@ -136,6 +136,8 @@ if __name__ == '__main__':
                 if (privacystatus=="public" or privacystatus=="unlisted"):
                     mystatus = {}         
                     mystatus['privacyStatus'] = "private"
+                    #update the RTDB as well.  
+                    
                     videos_update_response = youtube.videos().update(
                         part='status',
                         body=dict(

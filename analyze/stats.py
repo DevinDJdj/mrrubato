@@ -259,6 +259,7 @@ print(songdurations)
 print(groupdurations)
 
 print(df)
+df.to_csv('stats.txt')
 #ok, we have the df, now what to do with it?  
 #for now just using recent formatted data.  
 pd.set_option("display.max.columns", None)
