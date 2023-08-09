@@ -430,6 +430,7 @@ def printMidi(midilink):
     
     r = requests.get(midilink)
     print(len(r.content))
+    midisize = len(r.content)
     if (len(r.content) < 500):
         print(r.content)
         return
@@ -447,7 +448,8 @@ def printMidi(midilink):
 
     height = 200
     width = 200    
-    
+
+#this is to only generate the midi data which has not been created yet.      
     if (img is not None):
         cv2.imwrite(os.path.join(path , filename), img)
         uploadanalyze(filename, os.path.join(path, filename))
@@ -552,10 +554,16 @@ def printMidi(midilink):
     plt.figure(12).clear()
 
     
+    return midisize #for now just return size of the midi.  
 #    testNgramModel()
     #from here lets generate a graphic.  
     #read with mido?  
 
+def printTranscript(transcriptlink):
+    r = requests.get(transcriptlink)
+    print(r.content)
+    return len(r.content.split()) #wordcount
+    
 def uploadanalyze(file, fullpath):
 
     # Put your local file path 
@@ -568,6 +576,38 @@ def uploadanalyze(file, fullpath):
 
     print("your analyze file url", blob.public_url)
     return blob.public_url
+
+
+def getSecsFromTime(time):
+	minsec = time.split(":")
+	if (minsec == time):
+	    return 0;
+	return int(minsec[0])*60 + int(minsec[1])
+
+def calctimes(starttimes, endtimes):
+    #calculate from timestamps
+    timewithoutplaying = 0
+    timewithplaying = 0
+    lasttime = 0
+    for s, e in zip(starttimes, endtimes):
+        timewithoutplaying += getSecsFromTime(s) - lasttime
+        lasttime = getSecsFromTime(e)
+        timewithplaying += lasttime - getSecsFromTime(s)
+    return timewithplaying, timewithoutplaying
+    
+def updatestatsdb(videoid, starttimes, endtimes, midisize, numwords):
+ 
+    timeplaying, timewithoutplaying = calctimes(starttimes, endtimes)
+    #insert into DB
+    ref = db.reference(f'/misterrubato/' + videoid + '/stats')
+    #if this exists, return
+    if ref.get() is not None:
+        return
+        
+    #really this can all be set at play record.py as well, but this is essentially the same as we run this during record.py
+    #need to test this works.  Seems to work ok.  
+    data = {'timeplaying':timeplaying,'timewithoutplaying':timewithoutplaying, 'midisize':midisize, 'wordsrecognized':numwords}
+    ref.set(data)
 
 
 if __name__ == '__main__':
@@ -613,6 +653,8 @@ if __name__ == '__main__':
             json_url = requests.get(url)
             datav = json.loads(json_url.text)
             if (len(datav['items']) > 0):
+                numwords = 0
+                midisize = 0
                 totalduration = datav['items'][0]['contentDetails']['duration']
                 GroupName = ""
                 publishedDate = datav['items'][0]['snippet']['publishedAt']
@@ -648,12 +690,19 @@ if __name__ == '__main__':
                 if (midis > 0):
                     midie = desc.find("\n", midis)
                     midilink = desc[midis+5:midie]
-                    printMidi(midilink)
+                    midisize = printMidi(midilink)
                 
+                transcripts = desc.find("TRANSCRIPT:")
+                if (transcripts > 0):
+                    transcripte = desc.find("\n", transcripts)
+                    transcriptlink = desc[transcripts+11:transcripte]
+                    numwords = printTranscript(transcriptlink)
+
                 if (len(starttimes) != len(endtimes)):
                     print("invalid data {videoid}")
                 else:
                     print(starttimes)
+                    updatestatsdb(videoid, starttimes, endtimes, midisize, numwords)
                     for idx,t in enumerate(starttimes):
                         totalidx +=1
                         mydata = {"URL": url, "PublishedDate": publishedDate, "starttime": starttimes[idx], "endtime": endtimes[idx], "iteration": totalidx}
