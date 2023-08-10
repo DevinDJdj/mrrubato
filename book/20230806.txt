@@ -100,3 +100,7 @@ data to populate:
 #time played
 #notes played
 #words recognized
+
+
+OK, so added this data.  
+Got stats.py to work with the DB instead of Youtube DB.  

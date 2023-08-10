@@ -21,6 +21,8 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 from datetime import timedelta
 #print(cred.APIKEY)
+import firebase_admin
+from firebase_admin import credentials, initialize_app, storage, firestore, db
 
 
 
@@ -47,8 +49,26 @@ def get_pl_data_per_page(npt: str=None, limit: int=None) -> dict:
     return r.json()
     
     
+def get_playlists_data2():
+    ref = db.reference(f'/misterrubato/')
+    #if this exists, return
+    #256MB limit, may eventually reach this, not sure.  Probably not.  
+    #~2KB per entry without comments.  So would need *500*64
+    #this is ~365*20*5 so 20 days of 5 songs each.  
+    #Maybe this doesnt work with comments.  
+    items = []
+    
+    if ref.get() is not None:
+        for vid in ref.get().items():
+            print(vid)
+            items.append(vid)
+    
+    #just add to an items object and continue.  
+    ret_value = {"items":items}
+    return ret_value
 
 def get_playlists_data(limit: int=50):
+    return get_playlists_data2()
     res = []
     nextPageToken = None
     while True:
@@ -116,9 +136,15 @@ def getSecsFromTime(time):
 
 
 
+crd = credentials.Certificate("c:\\devinpiano\\misterrubato-test.json")
+databaseURL = "https://misterrubato-test-default-rtdb.firebaseio.com/"
+initialize_app(crd, {'storageBucket': 'misterrubato-test.appspot.com', 
+                      'databaseURL': databaseURL})
+
 stats = get_channel_stat()
 print(pd.DataFrame([stats]))
 
+#change to use DB here.  
 
 data = get_playlists_data()
 print(data)
