@@ -180,6 +180,14 @@ base64 encode/decode.
 
 Just do the basic portion, then worry about getting meaningful musical words.  
 We do still want a non-sequenced n-gram as well, so we can still calculate this.  
+**
 sequenced n-gram, non-sequenced n-gram, iteration, song, starttime, endtime
+**
 for now lets just generate a CSV file with this info for 2 - 16 n-grams.  
 
+OK, so we have something with 
+**analyze.py
+printNgrams
+
+Not good, but its a start.  
+Now need to save to a file -> DB somewhere. 
