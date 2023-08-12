@@ -14,12 +14,26 @@ class MyMsg:
   def __init__(self, msg, prev, pedal):
     self.msg = msg
     self.note = msg.note
+    self.currentTime = 0
+    self.startmsg = None
     self.prevmsg = prev
     self.pedal = pedal
-    self.ngrams = [0]*MAXNGRAM
+    self.ngrams = [0]*MAXNGRAM #keep this integer so I can use standard ML functions, but not great right now.  
     self.ngramstensor = None #ngrams pytorch
     self.ngramsp = None #P*P methodology
     self.nextmsg = None
+    
+  def print(self, iteration, song, group, videoid, midilink):
+    i = 0
+    tempmsg = self.msg
+    ng = ''
+    while (i < MAXNGRAM):
+      ng = ng + str(self.ngrams[i]) + ' '
+      i = i+1
+    
+    #NGRAM, 
+    #use approximate calculated time here.  
+    print('{0},{1},{2},{3},{4},{5},{6},{7}'.format(ng, str(iteration), song, group, videoid, str(self.startmsg.currentTime), str(self.currentTime), midilink))
     
 class NgramModel(nn.Module):
     def __init__(self, vocb_size, context_size, n_dim):

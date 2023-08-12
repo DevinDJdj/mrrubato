@@ -115,3 +115,71 @@ data to populate:
 
 OK, so added this data.  
 Got stats.py to work with the DB instead of Youtube DB.  
+
+
+timestep.py
+need to update DB with status change info.  What date status was changed.  
+
+Same for 
+analyze.py if we update to public here, we should keep history of when this occurred.  
+
+
+OK, so we want relative pitch and relative timing.  
+How do we get this though.  
+Relative pitch should be fairly straightforward.  
+Timing is a little more difficult to analyze.  
+
+Relative pitch sequences, what are the most prevalent etc.  
+How to represent the n-gram?  
+Also where will we store this info.  
+I think we need a separate DB for this.  
+Or do we just calculate it every time from the midi?  
+We want to query across the DB so I guess we need something.  
+Is the RTDB enough though?  
+We will have 
+2-gram, 3-gram etc db.  
+This is simply the size of the midi file * however many n-grams we use.  
+So we are talking about 100KB/song * 10 perhaps.  
+1MB per set of iterations.  
+
+Well, lets just use something local for now, posgre I guess since that is the popular one of the day.  
+Lets make a relative n-gram and an absolute n-gram
+Then lets make a sequence n-gram which uses the sequence of the sorted relative n-gram
+for now we just use
+0 = 2
+1 = 3
+-1 = 5
+2 = 7
+-2 = 11
+3 = 13
+-3 = 17 
+4 = 19
+-4 = 23
+etc.  
+To create the n-gram
+i.e. 
++3, +1, -4, -2 
+= 2
+= 13*3*23*11
+Sequence n-gram = 4-bit * 16 = DWORD up to 16 positions
+Smallest -> largest for instance
+1, 3, 0, 2
+
+Recreate from n-grams
+get sorted Components of n-gram
+generate array from sequence n-gram
+hmm, maybe just use the bytes themselves and create a string.  
+Or just use the meaningful names.  
+A5C3 etc.  
+Convert to frequency now?  
+We just want relative sequence.  
+This is what is primarily perceived.  
+for now just use a byte and string of bytes.  
+note - prevnote
+base64 encode/decode.  
+
+Just do the basic portion, then worry about getting meaningful musical words.  
+We do still want a non-sequenced n-gram as well, so we can still calculate this.  
+sequenced n-gram, non-sequenced n-gram, iteration, song, starttime, endtime
+for now lets just generate a CSV file with this info for 2 - 16 n-grams.  
+

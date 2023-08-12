@@ -306,6 +306,34 @@ def getNoteQuant(notetime, maxtime=1000, maxquant=63):
         q = maxquant
     return int(q)
     
+def printNgrams(t, title, GroupName, videoid, midilink):
+    it = -1
+    on = 0
+    currentTime = 0
+    prevTime = currentTime
+    starttimes, endtimes = getTrackTimes(t)
+    if (len(endtimes) > len(starttimes)):
+        del endtimes[len(starttimes):]
+    if len(starttimes) != len(endtimes) or len(starttimes) < 1:
+        print("Incorrect data, please fix")
+        return None, None
+        
+    else:    
+        counter = 0
+        for mymsg in t.notes:
+            if (on > 0):
+                currentTime += mymsg.msg.time
+                counter += 1
+                #not very efficient, but good enough for now.  
+                it = getIteration(currentTime, starttimes, endtimes)
+                i = 0
+                mymsg.print(it, title, GroupName, videoid, midilink)
+                #for now return the random note based on probability distribution from this array
+            if (mymsg.msg.type=='note_on'):
+                if (on > 0 and it > -1):  
+                    prevTime = currentTime
+                on = isOn(mymsg.note, on)
+
 def getNgrams(t):
     it = -1
     on = 0
@@ -338,11 +366,13 @@ def getNgrams(t):
                 #not very efficient, but good enough for now.  
                 it = getIteration(currentTime, starttimes, endtimes)
                 i = 0
-                while (i < mymidi.MAXNGRAM and mymsg.prevmsg is not None):
-                    tempmsg = mymsg.prevmsg
+                tempmsg = mymsg
+                while (i < mymidi.MAXNGRAM and tempmsg.prevmsg is not None):
+                    tempmsg = tempmsg.prevmsg
                     i = i+1
                     mymsg.ngrams[mymidi.MAXNGRAM-i] = tempmsg.note
-                
+                mymsg.startmsg = tempmsg
+                mymsg.currentTime = currentTime
                 mymsg.ngramstensor = torch.tensor(mymsg.ngrams)
                 #use this tensor for prediction
                 #for now fill the array to do some statistics.  
@@ -417,7 +447,7 @@ def testNgramModel():
     predict_word = idx_to_word[predict_label[0].item()]
     print('real word is {}, predict word is {}'.format(label, predict_word))
 
-def printMidi(midilink):
+def printMidi(midilink, title, GroupName, videoid):
     path = './output/'
     midilink = midilink.replace("\r", "")
     midiname = os.path.basename(midilink)
@@ -444,6 +474,8 @@ def printMidi(midilink):
     data, rythmdata = getNgrams(t)
     if (data is None):
         return
+    else:
+        printNgrams(t, title, GroupName, videoid, midilink)
     img = midiToImage(t, midilink)
 
     height = 200
@@ -690,7 +722,7 @@ if __name__ == '__main__':
                 if (midis > 0):
                     midie = desc.find("\n", midis)
                     midilink = desc[midis+5:midie]
-                    midisize = printMidi(midilink)
+                    midisize = printMidi(midilink, title, GroupName, videoid)
                 
                 transcripts = desc.find("TRANSCRIPT:")
                 if (transcripts > 0):
