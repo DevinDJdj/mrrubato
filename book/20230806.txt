@@ -181,7 +181,7 @@ base64 encode/decode.
 Just do the basic portion, then worry about getting meaningful musical words.  
 We do still want a non-sequenced n-gram as well, so we can still calculate this.  
 **
-sequenced n-gram, non-sequenced n-gram, iteration, song, starttime, endtime
+start note (absolute), n-gram primorial, sequence n-gram, iteration, song, starttime, endtime
 **
 for now lets just generate a CSV file with this info for 2 - 16 n-grams.  
 
@@ -191,3 +191,21 @@ printNgrams
 
 Not good, but its a start.  
 Now need to save to a file -> DB somewhere. 
+
+Have to check if I broke something as only got one pianoroll with the analyze.py result.  
+
+Combination possibilities are:
+88 PICK 16 ~ 140 trillion
+But in reality very few used maybe.  
+PICK 10 = 4 billion
+
+Sequence possibilities:
+16! ~20 billion
+10! ~ 3 million
+Similarly not so many used.  
+
+Maybe start with 4-10 and see how we go.  
+
+OK, so lets start here.  
+Do we have any repeats even within the same song?  
+NGram or SeqNGram?  
