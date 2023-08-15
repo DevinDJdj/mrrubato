@@ -69,6 +69,7 @@ class MyMsg:
     return ret
     
   def print(self, iteration, song, group, videoid, midilink):
+    shortenedmidilink = midilink.split('/')[-1]
     i = 0
     tempmsg = self.msg
     ng = ''
@@ -76,9 +77,14 @@ class MyMsg:
     prevword = startword
     words = []
     i = i+1
+    totalmovement = 0
+    abstotalmovement = 0
     while (i < MAXNGRAM):
       ng = ng + str(self.ngrams[i]) + ' '
-      temp = abs(self.ngrams[i] - self.ngrams[i-1])
+      temp = self.ngrams[i] - self.ngrams[i-1]
+      totalmovement += temp
+      temp = abs(temp)
+      abstotalmovement += temp
       #0, 1, -1, 2, -2, etc map.  
       if (self.ngrams[i] - self.ngrams[i-1] > 0):
         temp = temp * 2 - 1
@@ -89,7 +95,7 @@ class MyMsg:
     
     #NGRAM, 
     #use approximate calculated time here.  
-    print('{0},{1},{2},{3},{4},{5},{6},{7},{8},{9}'.format(str(self.startmsg.note), str(self.getNGram(words)), str(self.getSeqNGram(words)), str(iteration), song, group, videoid, str(self.startmsg.currentTime), str(self.currentTime), midilink))
+    print('{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11}'.format(str(self.startmsg.note), str(totalmovement), str(abstotalmovement), str(self.getNGram(words)), str(self.getSeqNGram(words)), str(iteration), song, group, videoid, str(self.startmsg.currentTime), str(self.currentTime), shortenedmidilink))
     
 class NgramModel(nn.Module):
     def __init__(self, vocb_size, context_size, n_dim):

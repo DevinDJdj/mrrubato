@@ -209,3 +209,38 @@ Maybe start with 4-10 and see how we go.
 OK, so lets start here.  
 Do we have any repeats even within the same song?  
 NGram or SeqNGram?  
+
+Lets do multiple lengths.  
+This is kind of random at the moment.  
+There is no meaning behind the lengths.  
+
+Still need to generate the finger data.  
+Lets just include it in the midi, is there any midi message which can take this.  
+First of all can we include data to the note_on file?  
+I guess just copy the midi file with finger numbers in the velocity.  
+We should also take this into consideration the correlation between velocity and finger number.  
+Then we just match time and combin afterward.  
+This should be fine.  
+
+Need param for total movement.  
+ok that works. 
+mymidi.py -> MyMsg -> print
+
+What to analyze first here?  
+Surely there is correlation between totalmovement, abstotalmovement
+and endtime - starttime
+Need to have some sort of determination whether keys were hit at same time or not.  
+For now there is nothing so we dont know the rythmic complexity (or randomness in my case perhaps).  
+
+**analyze.py
+Ugh where do we store this?  
+essentially midi file size * 20?  
+First of all, get rid of most of the midi link.  
+Thats better.  
+So we have approx. 1MB per video.  
+Where do we store this?  
+Create another flat file and upload like record.py does for midi.  
+Upload this on analyze.py
+Then check if the entry exists in description.  
+If it does, then skip this logic.  
+If it doesnt, then produce save and add to description (Really shouldnt be manually edited now I think)
