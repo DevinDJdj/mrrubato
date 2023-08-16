@@ -21,7 +21,7 @@
 #maybe it is an exclusive stream?  
 #pip install mediapipe
 #pip install tensorflow
-
+#pip install protobuf==3.20.3
 
 import cv2
 import numpy as np
@@ -29,6 +29,20 @@ import mediapipe as mp
 import tensorflow as tf
 from tensorflow.keras.models import load_model
 
+
+
+def getFinger(hand, idx):
+    offset = 0
+    if (hand=="Left"):
+        offset = 5
+    if (idx%4==0 and idx > 0): #this is all the fingertips 4, 8, 12, 16, 20
+        if (offset == 0):
+            return int(5 - (idx/4) + 1)
+        else:
+            return int(offset + idx/4)
+    else:
+        return -1
+        
 # initialize mediapipe
 mpHands = mp.solutions.hands
 hands = mpHands.Hands(max_num_hands=2, min_detection_confidence=0.2)
@@ -38,26 +52,34 @@ mpDraw = mp.solutions.drawing_utils
 model = load_model('mp_hand_gesture')
 
 # Load class names
-f = open('./mp_hand_gesture/gesture.names', 'r')
-classNames = f.read().split('\n')
-f.close()
-print(classNames)
+#f = open('./mp_hand_gesture/gesture.names', 'r')
+#classNames = f.read().split('\n')
+#f.close()
+#print(classNames)
 
 
 # Initialize the webcam
 #cap = cv2.VideoCapture(0)
-cap = cv2.VideoCapture("C:\\Users\\devin\\Videos\\2023-08-03 15-38-56.mkv")
+#cap = cv2.VideoCapture("C:\\Users\\devin\\Videos\\2023-08-03 15-38-56.mkv")
+cap = cv2.VideoCapture("C:\\Users\\devin\\Videos\\Fatal Attraction.mp4")
 
-
+cnt = 0
+fps = cap.get(cv2.CAP_PROP_FPS)
 while True:
     # Read each frame from the webcam
     ret, frame = cap.read()
 
-    x, y, c = frame.shape
+    y, x, c = frame.shape
 
+    toignore = 540
     # Flip the frame vertically
 #    frame = cv2.flip(frame, 1)
-    keys = frame[780:x, 0:y]
+    keys = frame[toignore:y, 0:x]
+    y = y - toignore
+    currentTime = cnt / fps
+    #keys = frames[780:x, 0:y] #for some reason the mkv resolution and mp4 downloaded resolution different.  
+    #read midi and match the fingers with midi times.  
+    #first get time of the frame.  #and get the assumed key/finger combination
     framergb = cv2.cvtColor(keys, cv2.COLOR_BGR2RGB)
 
     # Get hand landmark prediction
@@ -69,14 +91,23 @@ while True:
 
     # post process the result
     if result.multi_hand_landmarks:
-        landmarks = []
-        for handslms in result.multi_hand_landmarks:
-            for lm in handslms.landmark:
-                # print(id, lm)
-                lmx = int(lm.x * x)
-                lmy = int(lm.y * y)
-
-                landmarks.append([lmx, lmy])
+        landmarks = np.zeros((10,2))
+        print(result.multi_handedness) #this doesnt seem to work very well.  
+#or maybe just need to swap right for left.  
+        for hidx, handslms in enumerate(result.multi_hand_landmarks):
+#            print(handslms)
+            lbl = result.multi_handedness[hidx].classification[0].label
+#            print(lbl) #ok so it is switched
+            for idx, lm in enumerate(handslms.landmark):
+#                print(lm)
+                    
+                myidx = getFinger(lbl, idx)
+                if (myidx > 0):
+                    print(myidx, lm)
+                    lmx = int(lm.x * x)
+                    lmy = int(lm.y * y)
+                    landmarks[myidx-1, 0] = lmx
+                    landmarks[myidx-1, 1] = lmy
 
             # Drawing landmarks on frames
             mpDraw.draw_landmarks(keys, handslms, mpHands.HAND_CONNECTIONS)
@@ -86,10 +117,17 @@ while True:
             # print(prediction)
 #            classID = np.argmax(prediction)
 #            className = classNames[classID]
-
+        print(currentTime)
+        print(landmarks)
+        #OK we have the fingertips in order and the current time of the frame.  
+        #now compare with midi and see what note pressed with what hand.  
+        #create a new midi file with that data, or some other easy to use format.  
+        #better if we can edit the existing midi file, but anyway.  
     # show the prediction on the frame
-    cv2.putText(keys, className, (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 
-                   1, (0,0,255), 2, cv2.LINE_AA)
+#    cv2.putText(keys, className, (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 
+#                   1, (0,0,255), 2, cv2.LINE_AA)
+
+    cnt = cnt + 1
 
     # Show the final output
 #    keys = frame[780:x, 0:y]

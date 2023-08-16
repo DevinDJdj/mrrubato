@@ -244,3 +244,18 @@ Upload this on analyze.py
 Then check if the entry exists in description.  
 If it does, then skip this logic.  
 If it doesnt, then produce save and add to description (Really shouldnt be manually edited now I think)
+
+
+Do we need datetime on comments?  
+This can be changed anytime so perhaps not.  
+But this would be what everyone is used to so maybe yes.  
+
+In any case text comments are prior
+Sound is realtime
+Image is after.  
+Is this a good policy?  
+
+**analyze.html 
+can we record sound and save?  
+Then we can work on playback mechanisms.  
+
