@@ -45,6 +45,9 @@ from firebase_admin import credentials, initialize_app, storage, firestore, db
 
 import webbrowser
 
+#from subprocess import Popen
+import subprocess
+
 CONTEXT_SIZE = 2
 EMBEDDING_DIM = 10
 
@@ -723,6 +726,16 @@ if __name__ == '__main__':
                     midie = desc.find("\n", midis)
                     midilink = desc[midis+5:midie]
                     midisize = printMidi(midilink, title, GroupName, videoid)
+                    fingers = desc.find("FINGERS:")
+                    if (fingers > 0):
+                        print("already has fingers")
+                    else:
+                        #just update DB for now.  Then timestep.py will update Youtube info
+                        cmd = ["python", "./analyze/fingertest.py", "--video", videoid, "--midi", midilink]
+#                        os.spawn("python", cmd, no_wait=True)
+                        proc = subprocess.Popen(cmd)
+                        print("fingertest started")
+
                 
                 transcripts = desc.find("TRANSCRIPT:")
                 if (transcripts > 0):

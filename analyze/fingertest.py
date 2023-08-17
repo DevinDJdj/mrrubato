@@ -16,6 +16,8 @@
 #not sure if it is worth it if the midi timing is precise enough.  
 #thumb detection is bad with low confidence.  
 #check after some more videos.  
+#--video videoid --midi midilink
+
 
 
 #maybe it is an exclusive stream?  
@@ -23,13 +25,25 @@
 #pip install tensorflow
 #pip install protobuf==3.20.3
 
+
+import sys
+ 
+# adding Folder_2/subfolder to the system path
+sys.path.insert(0, 'c:/devinpiano/music/analyze')
+
+
 import cv2
 import numpy as np
 import mediapipe as mp
 import tensorflow as tf
 from tensorflow.keras.models import load_model
 
+from oauth2client.tools import argparser, run_flow
+import firebase_admin
+from firebase_admin import credentials, initialize_app, storage, firestore, db
+# Init firebase with your credentials
 
+import os
 
 def getFinger(hand, idx):
     offset = 0
@@ -42,102 +56,154 @@ def getFinger(hand, idx):
             return int(offset + idx/4)
     else:
         return -1
-        
-# initialize mediapipe
-mpHands = mp.solutions.hands
-hands = mpHands.Hands(max_num_hands=2, min_detection_confidence=0.2)
-mpDraw = mp.solutions.drawing_utils
-
-# Load the gesture recognizer model
-model = load_model('mp_hand_gesture')
-
-# Load class names
-#f = open('./mp_hand_gesture/gesture.names', 'r')
-#classNames = f.read().split('\n')
-#f.close()
-#print(classNames)
 
 
-# Initialize the webcam
-#cap = cv2.VideoCapture(0)
-#cap = cv2.VideoCapture("C:\\Users\\devin\\Videos\\2023-08-03 15-38-56.mkv")
-cap = cv2.VideoCapture("C:\\Users\\devin\\Videos\\Fatal Attraction.mp4")
+def uploadanalyze(file, fullpath):
 
-cnt = 0
-fps = cap.get(cv2.CAP_PROP_FPS)
-while True:
-    # Read each frame from the webcam
-    ret, frame = cap.read()
+    # Put your local file path 
+    bucket = storage.bucket()
+    blob = bucket.blob('analyze/' + file)
+    blob.upload_from_filename(fullpath)
 
-    y, x, c = frame.shape
+    # Opt : if you want to make public access from the URL
+    blob.make_public()
 
-    toignore = 540
-    # Flip the frame vertically
-#    frame = cv2.flip(frame, 1)
-    keys = frame[toignore:y, 0:x]
-    y = y - toignore
-    currentTime = cnt / fps
-    #keys = frames[780:x, 0:y] #for some reason the mkv resolution and mp4 downloaded resolution different.  
-    #read midi and match the fingers with midi times.  
-    #first get time of the frame.  #and get the assumed key/finger combination
-    framergb = cv2.cvtColor(keys, cv2.COLOR_BGR2RGB)
+    print("your analyze file url", blob.public_url)
+    return blob.public_url
 
-    # Get hand landmark prediction
-    result = hands.process(framergb)
 
-    # print(result)
+
+
+if __name__ == '__main__':
+    argparser.add_argument("--midi", help="Midi Link", default="")
+    argparser.add_argument("--videoid", help="Video ID", default="")
+    argparser.add_argument("--localfile", help="Local filename", default="C:\\Users\\devin\\Videos\\Fatal Attraction.mp4")
+    args = argparser.parse_args()
+
+    videoid = args.videoid
+    midilink = args.midi
+    localfile = args.localfile
+    cwd = os.getcwd()
+    print(cwd)
     
-    className = ''
+    cred = credentials.Certificate("c:\\devinpiano\\misterrubato-test.json")
+    databaseURL = "https://misterrubato-test-default-rtdb.firebaseio.com/"
+    initialize_app(cred, {'storageBucket': 'misterrubato-test.appspot.com', 
+                          'databaseURL': databaseURL})
+        
+    # initialize mediapipe
+    mpHands = mp.solutions.hands
+    hands = mpHands.Hands(max_num_hands=2, min_detection_confidence=0.2)
+    mpDraw = mp.solutions.drawing_utils
 
-    # post process the result
-    if result.multi_hand_landmarks:
-        landmarks = np.zeros((10,2))
-        print(result.multi_handedness) #this doesnt seem to work very well.  
-#or maybe just need to swap right for left.  
-        for hidx, handslms in enumerate(result.multi_hand_landmarks):
-#            print(handslms)
-            lbl = result.multi_handedness[hidx].classification[0].label
-#            print(lbl) #ok so it is switched
-            for idx, lm in enumerate(handslms.landmark):
-#                print(lm)
-                    
-                myidx = getFinger(lbl, idx)
-                if (myidx > 0):
-                    print(myidx, lm)
-                    lmx = int(lm.x * x)
-                    lmy = int(lm.y * y)
-                    landmarks[myidx-1, 0] = lmx
-                    landmarks[myidx-1, 1] = lmy
+    # Load the gesture recognizer model
+    model = load_model('c:/devinpiano/music/analyze/mp_hand_gesture')
 
-            # Drawing landmarks on frames
-            mpDraw.draw_landmarks(keys, handslms, mpHands.HAND_CONNECTIONS)
+    # Load class names
+    #f = open('./mp_hand_gesture/gesture.names', 'r')
+    #classNames = f.read().split('\n')
+    #f.close()
+    #print(classNames)
 
-            # Predict gesture
-#            prediction = model.predict([landmarks])
-            # print(prediction)
-#            classID = np.argmax(prediction)
-#            className = classNames[classID]
-        print(currentTime)
-        print(landmarks)
-        #OK we have the fingertips in order and the current time of the frame.  
-        #now compare with midi and see what note pressed with what hand.  
-        #create a new midi file with that data, or some other easy to use format.  
-        #better if we can edit the existing midi file, but anyway.  
-    # show the prediction on the frame
-#    cv2.putText(keys, className, (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 
-#                   1, (0,0,255), 2, cv2.LINE_AA)
 
-    cnt = cnt + 1
+    # Initialize the webcam
+    #cap = cv2.VideoCapture(0)
+    #cap = cv2.VideoCapture("C:\\Users\\devin\\Videos\\2023-08-03 15-38-56.mkv")
+    cap = cv2.VideoCapture(localfile)
 
-    # Show the final output
-#    keys = frame[780:x, 0:y]
-    cv2.imshow("Output", keys) 
+    midilink = midilink.replace("\r", "")
+    midiname = os.path.basename(midilink)
+    midiname = os.path.splitext(midiname)[0]
+    
+    filename = midiname + '.fgt'
+    #dont redo this.  Live with the analysis of the time for now.  
+    if (os.path.exists(os.path.join(path , filename))):
+        print("Skipping " + midilink)
+#        return
 
-    if cv2.waitKey(1) == ord('q'):
-        break
+    #use the file from analyze.py
+    #should change local name
+    mid = MidiFile("test.mid")
+    #ok with this midi file
+    #after use 
+    #uploadanalyze(filename, os.path.join(path, filename))
+    
+    
+    cnt = 0
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    while True:
+        # Read each frame from the webcam
+        ret, frame = cap.read()
 
-# release the webcam and destroy all active windows
-cap.release()
+        y, x, c = frame.shape
 
-cv2.destroyAllWindows()
+        toignore = 540
+        # Flip the frame vertically
+    #    frame = cv2.flip(frame, 1)
+        keys = frame[toignore:y, 0:x]
+        y = y - toignore
+        currentTime = cnt / fps
+        #keys = frames[780:x, 0:y] #for some reason the mkv resolution and mp4 downloaded resolution different.  
+        #read midi and match the fingers with midi times.  
+        #first get time of the frame.  #and get the assumed key/finger combination
+        framergb = cv2.cvtColor(keys, cv2.COLOR_BGR2RGB)
+
+        # Get hand landmark prediction
+        result = hands.process(framergb)
+
+        # print(result)
+        
+        className = ''
+
+        # post process the result
+        if result.multi_hand_landmarks:
+            landmarks = np.zeros((10,2))
+            print(result.multi_handedness) #this doesnt seem to work very well.  
+    #or maybe just need to swap right for left.  
+            for hidx, handslms in enumerate(result.multi_hand_landmarks):
+    #            print(handslms)
+                lbl = result.multi_handedness[hidx].classification[0].label
+    #            print(lbl) #ok so it is switched
+                for idx, lm in enumerate(handslms.landmark):
+    #                print(lm)
+                        
+                    myidx = getFinger(lbl, idx)
+                    if (myidx > 0):
+                        print(myidx, lm)
+                        lmx = int(lm.x * x)
+                        lmy = int(lm.y * y)
+                        landmarks[myidx-1, 0] = lmx
+                        landmarks[myidx-1, 1] = lmy
+
+                # Drawing landmarks on frames
+                mpDraw.draw_landmarks(keys, handslms, mpHands.HAND_CONNECTIONS)
+
+                # Predict gesture
+    #            prediction = model.predict([landmarks])
+                # print(prediction)
+    #            classID = np.argmax(prediction)
+    #            className = classNames[classID]
+            print(currentTime)
+            print(landmarks)
+            #OK we have the fingertips in order and the current time of the frame.  
+            #now compare with midi and see what note pressed with what hand.  
+            #create a new midi file with that data, or some other easy to use format.  
+            #better if we can edit the existing midi file, but anyway.  
+        # show the prediction on the frame
+    #    cv2.putText(keys, className, (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 
+    #                   1, (0,0,255), 2, cv2.LINE_AA)
+
+        cnt = cnt + 1
+
+        # Show the final output
+    #    keys = frame[780:x, 0:y]
+        cv2.imshow("Output", keys) 
+
+        if cv2.waitKey(1) == ord('q'):
+            break
+
+    # release the webcam and destroy all active windows
+    cap.release()
+
+    cv2.destroyAllWindows()
 

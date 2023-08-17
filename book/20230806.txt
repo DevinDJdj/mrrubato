@@ -259,3 +259,22 @@ Is this a good policy?
 can we record sound and save?  
 Then we can work on playback mechanisms.  
 
+
+**record.py or analyze.py
+kick off the finger detection program after this.  
+Then we just keep all there, but dont have to wait so long for this process to finish.  
+Try to keep as close to real-time as possible.  But dont worry about this being real-time for now.  
+It is only significant when we use analyze.py anyway.  
+--OK, launch process ok.  
+not perfect, but good enough for now.  
+still need to do the logic.  
+
+
+
+**timestep.py
+Need to compare DB data with youtube data and flag/update.  
+Do this in timestep.py?  
+We are already getting the full DB here.  
+While doing this store the DB locally.  
+
+
