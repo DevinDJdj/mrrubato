@@ -467,9 +467,10 @@ def printMidi(midilink, title, GroupName, videoid):
     if (len(r.content) < 500):
         print(r.content)
         return
-    with open("test.mid", "wb") as f:
+    
+    with open(path + midiname + ".mid", "wb") as f:
         f.write(r.content)
-    mid = MidiFile("test.mid")
+    mid = MidiFile(path + midiname + ".mid")
     #outputMidi(mid)
     t = enhanceMidi(mid)
     if (t is None):

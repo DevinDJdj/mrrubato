@@ -25,7 +25,7 @@
 #pip install tensorflow
 #pip install protobuf==3.20.3
 
-
+import datetime
 import sys
  
 # adding Folder_2/subfolder to the system path
@@ -44,6 +44,11 @@ from firebase_admin import credentials, initialize_app, storage, firestore, db
 # Init firebase with your credentials
 
 import os
+
+
+from mido import MidiFile
+from mido import Message
+
 
 def getFinger(hand, idx):
     offset = 0
@@ -77,7 +82,7 @@ def uploadanalyze(file, fullpath):
 if __name__ == '__main__':
     argparser.add_argument("--midi", help="Midi Link", default="")
     argparser.add_argument("--videoid", help="Video ID", default="")
-    argparser.add_argument("--localfile", help="Local filename", default="C:\\Users\\devin\\Videos\\Fatal Attraction.mp4")
+    argparser.add_argument("--localfile", help="Local filename", default="None")
     args = argparser.parse_args()
 
     videoid = args.videoid
@@ -85,6 +90,9 @@ if __name__ == '__main__':
     localfile = args.localfile
     cwd = os.getcwd()
     print(cwd)
+    print("Start finger analysis!")
+    print(midilink)
+    print(datetime.datetime.now())
     
     cred = credentials.Certificate("c:\\devinpiano\\misterrubato-test.json")
     databaseURL = "https://misterrubato-test-default-rtdb.firebaseio.com/"
@@ -105,25 +113,43 @@ if __name__ == '__main__':
     #f.close()
     #print(classNames)
 
-
-    # Initialize the webcam
-    #cap = cv2.VideoCapture(0)
-    #cap = cv2.VideoCapture("C:\\Users\\devin\\Videos\\2023-08-03 15-38-56.mkv")
-    cap = cv2.VideoCapture(localfile)
-
     midilink = midilink.replace("\r", "")
     midiname = os.path.basename(midilink)
     midiname = os.path.splitext(midiname)[0]
-    
+#    midiname = midiname.replace('%20', ' ')
     filename = midiname + '.fgt'
+
+    #cap = cv2.VideoCapture(0)
+    #cap = cv2.VideoCapture("C:\\Users\\devin\\Videos\\2023-08-03 15-38-56.mkv")
+    inputpath = 'C:\\Users\\devin\\Videos\\'
+    sys.path.insert(0, 'C:\\Users\\devin\\Videos\\')
+    #mkv saved locally already
+    path = './output/'
+    cap = cv2.VideoCapture(inputpath + midiname + ".mkv")
+    if not cap.isOpened():
+       #mp4 is default download format.  So have to download before this.  
+       #in general output to this different folder just in case we overwrite something
+       #at some point accidentally.  
+       #record owns the local folder.  
+       #analyze has ./output/
+       cap = cv2.VideoCapture(inputpath + midiname + ".mp4")
+       if not cap.isOpened() and localfile !="None":
+           cap = cv2.VideoCapture(localfile)
+
+    if not cap.isOpened():
+        print("No video exists for " + midilink)
+        print("Exiting fingertest")
+        exit
+        
     #dont redo this.  Live with the analysis of the time for now.  
     if (os.path.exists(os.path.join(path , filename))):
-        print("Skipping " + midilink)
+        print("Skipping " + filename)
+        print("Already exists")
 #        return
 
     #use the file from analyze.py
     #should change local name
-    mid = MidiFile("test.mid")
+    mid = MidiFile(midiname + ".mid")
     #ok with this midi file
     #after use 
     #uploadanalyze(filename, os.path.join(path, filename))
