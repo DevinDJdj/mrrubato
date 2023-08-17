@@ -3,6 +3,7 @@ Adding this for face camera.
 I think that is better.  
 
 Should use color to represent age of comments.  
+Fade color with age.  
 Should keep dates with all comments.  
 Then have options regarding how to display when those comments were made.  
 This is really meant for commenting once, but could have very different applications

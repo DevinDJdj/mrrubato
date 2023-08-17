@@ -116,9 +116,10 @@ if __name__ == '__main__':
     midilink = midilink.replace("\r", "")
     midiname = os.path.basename(midilink)
     midiname = os.path.splitext(midiname)[0]
-#    midiname = midiname.replace('%20', ' ')
+    midiname = midiname.replace('%20', ' ')
     filename = midiname + '.fgt'
 
+    toignore = 540 #dependent on mkv or mp4
     #cap = cv2.VideoCapture(0)
     #cap = cv2.VideoCapture("C:\\Users\\devin\\Videos\\2023-08-03 15-38-56.mkv")
     inputpath = 'C:\\Users\\devin\\Videos\\'
@@ -135,7 +136,8 @@ if __name__ == '__main__':
        cap = cv2.VideoCapture(inputpath + midiname + ".mp4")
        if not cap.isOpened() and localfile !="None":
            cap = cv2.VideoCapture(localfile)
-
+    else:
+        toignore = 720
     if not cap.isOpened():
         print("No video exists for " + midilink)
         print("Exiting fingertest")
@@ -149,7 +151,8 @@ if __name__ == '__main__':
 
     #use the file from analyze.py
     #should change local name
-    mid = MidiFile(midiname + ".mid")
+#    midiname = midiname.replace('%20', ' ')
+    mid = MidiFile(inputpath + midiname + ".mid")
     #ok with this midi file
     #after use 
     #uploadanalyze(filename, os.path.join(path, filename))
@@ -157,13 +160,14 @@ if __name__ == '__main__':
     
     cnt = 0
     fps = cap.get(cv2.CAP_PROP_FPS)
+    landmarks = np.zeros((10,2)) #keep previous locations if no/low confidence?  
     while True:
         # Read each frame from the webcam
         ret, frame = cap.read()
-
+        if not ret:
+            break
         y, x, c = frame.shape
 
-        toignore = 540
         # Flip the frame vertically
     #    frame = cv2.flip(frame, 1)
         keys = frame[toignore:y, 0:x]
@@ -183,8 +187,7 @@ if __name__ == '__main__':
 
         # post process the result
         if result.multi_hand_landmarks:
-            landmarks = np.zeros((10,2))
-            print(result.multi_handedness) #this doesnt seem to work very well.  
+#            print(result.multi_handedness) #this doesnt seem to work very well.  
     #or maybe just need to swap right for left.  
             for hidx, handslms in enumerate(result.multi_hand_landmarks):
     #            print(handslms)
@@ -195,7 +198,7 @@ if __name__ == '__main__':
                         
                     myidx = getFinger(lbl, idx)
                     if (myidx > 0):
-                        print(myidx, lm)
+#                        print(myidx, lm)
                         lmx = int(lm.x * x)
                         lmy = int(lm.y * y)
                         landmarks[myidx-1, 0] = lmx
@@ -209,8 +212,7 @@ if __name__ == '__main__':
                 # print(prediction)
     #            classID = np.argmax(prediction)
     #            className = classNames[classID]
-            print(currentTime)
-            print(landmarks)
+    
             #OK we have the fingertips in order and the current time of the frame.  
             #now compare with midi and see what note pressed with what hand.  
             #create a new midi file with that data, or some other easy to use format.  
@@ -220,13 +222,16 @@ if __name__ == '__main__':
     #                   1, (0,0,255), 2, cv2.LINE_AA)
 
         cnt = cnt + 1
+        if (cnt%100==0):
+        
+            print(currentTime)
+            print(landmarks)
+            # Show the final output
+        #    keys = frame[780:x, 0:y]
+            cv2.imshow("Output", keys) 
 
-        # Show the final output
-    #    keys = frame[780:x, 0:y]
-        cv2.imshow("Output", keys) 
-
-        if cv2.waitKey(1) == ord('q'):
-            break
+            if cv2.waitKey(1) == ord('q'):
+                break
 
     # release the webcam and destroy all active windows
     cap.release()
