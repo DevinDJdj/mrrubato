@@ -215,6 +215,7 @@ def getIteration(currentTime, starttimes, endtimes):
     print(endtimes)
     return -1
     
+
 def midiToImage(t, midilink):
     
     print('Track: {}'.format(t.track.name))
@@ -284,6 +285,7 @@ def enhanceMidi(mid):
         totalTime = getTrackTime(track)
         t = mymidi.MyTrack(track, totalTime, maxtime)
         on = 0
+        othertime = 0
         for msg in track:
             if (msg.type=='note_on'):
                 if (on > 0):  
@@ -293,12 +295,17 @@ def enhanceMidi(mid):
                         if (maxtime < msg.time):
                             maxtime = msg.time
                     prevMsg = m
+                    m.msg.time += othertime
+                    othertime = 0
                     t.notes.append(m)
                 on = isOn(msg.note, on)
+            elif hasattr(msg, 'time'):
+                othertime += msg.time
             if (msg.type=='control_change'):
                 #https://www.midi.org/specifications-old/item/table-3-control-change-messages-data-bytes-2
                 if (msg.control == 64):  #assuming this is pedal, yep 
                     pedal = msg.value
+            print(msg)
     t.maxtime = maxtime                    
     return t
 
@@ -649,9 +656,12 @@ def updatestatsdb(videoid, starttimes, endtimes, midisize, numwords):
 if __name__ == '__main__':
     argparser.add_argument("--title", help="Video title", default="What a Wonderful World")
     argparser.add_argument("--video", help="Video ID", default="4flRJWtfY9c")
+    argparser.add_argument("--skipfinger", help="Skip finger test", default="false")
     args = argparser.parse_args()
 
+
     title = args.title
+
     stats = get_channel_stat()
     print(pd.DataFrame([stats]))
     cwd = os.getcwd()
@@ -732,10 +742,11 @@ if __name__ == '__main__':
                         print("already has fingers")
                     else:
                         #just update DB for now.  Then timestep.py will update Youtube info
-                        cmd = ["python", "./analyze/fingertest.py", "--video", videoid, "--midi", midilink]
-#                        os.spawn("python", cmd, no_wait=True)
-                        proc = subprocess.Popen(cmd)
-                        print("fingertest started")
+                        if (args.skipfinger !="true"):
+                            cmd = ["python", "./analyze/fingertest.py", "--video", videoid, "--midi", midilink]
+    #                        os.spawn("python", cmd, no_wait=True)
+                            proc = subprocess.Popen(cmd)
+                            print("fingertest started")
 
                 
                 transcripts = desc.find("TRANSCRIPT:")

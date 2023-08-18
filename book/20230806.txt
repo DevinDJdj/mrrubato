@@ -271,9 +271,14 @@ still need to do the logic.
 You must be kidding.  I have to get the video from somewhere else?  <<<<<<
 That is no good.  Need a way to get the frames from a video or another transfer mechanism.  <<<<<<
 --OK, so we need to run analyze.py -> fingertest.py immediately after record.py
+Finish doing the work though first, and then run analyze after record.py as well as before.  
+We want to bring up the URL before we play, and then actually run the finger analysis after.  
 Didnt really want to do this but seems the best solution overall.  
 Just make sure it is asynchronous
 I had contemplated this anyway.  
+More problems.  
+The Frames dont appear to be matching up very well.  
+Not sure why.  
 
 
 

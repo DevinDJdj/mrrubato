@@ -49,10 +49,12 @@ import os
 from mido import MidiFile
 from mido import Message
 
+import mymidi
+
 import analyze
 
 
-def getFinger(hand, idx):
+def getFingerNum(hand, idx):
     offset = 0
     if (hand=="Left"):
         offset = 5
@@ -64,6 +66,49 @@ def getFinger(hand, idx):
     else:
         return -1
 
+
+def getNoteCoord(msg, width):
+    temp = msg.note - 21
+    #roughly 1200/88 per note ~ 14 bits
+    ret = ((temp)/88)*(width-20) + 10 #+10 for the piano location in frame
+#    print(ret)
+    return ret
+    
+
+def showKeys(landmarks, width):
+    for idx in range(10):
+        temp = landmarks[idx,0]
+        key = ((temp-10)*88/(width-20)) + 21
+        print("Finger " + str(idx) + " on " + str(key))
+        
+def getClosestFinger(notex, landmarks):
+    closestidx = 0
+    closestl = 1000
+    closestl2 = 1000
+    closestidx2 = 0
+    for idx in range(10):
+        temp = abs(landmarks[idx,0]-notex)
+#        print(landmarks[idx,0])
+        if (temp < closestl):
+            closestl = temp
+            closestidx = idx+1
+        elif (temp < closestl2):
+            closestl2 = temp
+            closestidx2 = idx+1
+    if (closestl > 30 and closestidx not in [1,5,6,10]):
+        closestidx = -closestidx
+    elif (closestl > 40):
+        closestidx = -closestidx
+    #maybe need more logic than this, but for now leave as is.  
+    #i.e. if this is 1, 5, 6, 10, then forgive some.  
+    
+    return closestidx, closestl
+    
+def getFinger(msg, landmarks, width):
+    notex = getNoteCoord(msg, width)
+    fingeridx, fingerl = getClosestFinger(notex, landmarks)
+    print("Note" + str(msg.note) + " Played with " + str(fingeridx) + " Distance " + str(fingerl))
+    return fingeridx
 
 
 if __name__ == '__main__':
@@ -88,7 +133,7 @@ if __name__ == '__main__':
         
     # initialize mediapipe
     mpHands = mp.solutions.hands
-    hands = mpHands.Hands(max_num_hands=2, min_detection_confidence=0.2)
+    hands = mpHands.Hands(max_num_hands=2, min_detection_confidence=0.3)
     mpDraw = mp.solutions.drawing_utils
 
     # Load the gesture recognizer model
@@ -134,7 +179,7 @@ if __name__ == '__main__':
     if (os.path.exists(os.path.join(path , filename))):
         print("Skipping " + filename)
         print("Already exists")
-#        return
+        exit
 
     #use the file from analyze.py
     #should change local name
@@ -147,86 +192,114 @@ if __name__ == '__main__':
     mid = MidiFile(inputpath + midiname + ".mid")
     #ok with this midi file
     #after use 
-#    t = analyze.enhanceMidi(mid)
+    t = analyze.enhanceMidi(mid)
+    starttimes, endtimes = analyze.getTrackTimes(t)
+
 #    img = analyze.midiToImage(t, midilink)
 #    cv2.imshow("MIDI", img) 
     #uploadanalyze(filename, os.path.join(path, filename))
     
     
-    cnt = 0
+    cnt = 1.0
     fps = cap.get(cv2.CAP_PROP_FPS)
+    ret, frame = cap.read()
+    y, x, c = frame.shape
+
     landmarks = np.zeros((10,2)) #keep previous locations if no/low confidence?  
-    framecheck = 10 #check each 10th frame.  Too slow for testing.  
-    while True:
-        # Read each frame from the webcam
-        ret, frame = cap.read(cnt)
-#        if (cnt % 30 != 0):
-#            cnt = cnt + 1
-#            break
-        if not ret:
-            print("Bad Frame" + str(cnt))
-            cnt = cnt + 10
-            break
-        y, x, c = frame.shape
-
-        # Flip the frame vertically
-    #    frame = cv2.flip(frame, 1)
-        keys = frame[toignore:y, 0:x]
-        y = y - toignore
-        currentTime = cnt / fps
-        #keys = frames[780:x, 0:y] #for some reason the mkv resolution and mp4 downloaded resolution different.  
-        #read midi and match the fingers with midi times.  
-        #first get time of the frame.  #and get the assumed key/finger combination
-        framergb = cv2.cvtColor(keys, cv2.COLOR_BGR2RGB)
-
-        # Get hand landmark prediction
-        result = hands.process(framergb)
-
-        # print(result)
-        
-        className = ''
-
-        # post process the result
-        if result.multi_hand_landmarks:
-#            print(result.multi_handedness) #this doesnt seem to work very well.  
-    #or maybe just need to swap right for left.  
-            for hidx, handslms in enumerate(result.multi_hand_landmarks):
-    #            print(handslms)
-                lbl = result.multi_handedness[hidx].classification[0].label
-    #            print(lbl) #ok so it is switched
-                for idx, lm in enumerate(handslms.landmark):
-    #                print(lm)
-                        
-                    myidx = getFinger(lbl, idx)
-                    if (myidx > 0):
-#                        print(myidx, lm)
-                        lmx = int(lm.x * x)
-                        lmy = int(lm.y * y)
-                        landmarks[myidx-1, 0] = lmx
-                        landmarks[myidx-1, 1] = lmy
-
-                # Drawing landmarks on frames
-                mpDraw.draw_landmarks(keys, handslms, mpHands.HAND_CONNECTIONS)
-
-                # Predict gesture
-    #            prediction = model.predict([landmarks])
-                # print(prediction)
-    #            classID = np.argmax(prediction)
-    #            className = classNames[classID]
+    framecheck = 1 #check each 10th frame.  Too slow for testing.  
+    frameTime = 1.0/fps
+    midiTime = 0.0
+    prevTime = 0.0
+    i = 0
+    on = 0
+    f = open(path + filename, "w")
     
-            #OK we have the fingertips in order and the current time of the frame.  
-            #now compare with midi and see what note pressed with what hand.  
-            #create a new midi file with that data, or some other easy to use format.  
-            #better if we can edit the existing midi file, but anyway.  
-        # show the prediction on the frame
-    #    cv2.putText(keys, className, (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 
-    #                   1, (0,0,255), 2, cv2.LINE_AA)
-
-        cnt = cnt + framecheck
-        if (cnt%100==0):
+    fingerhit = 0
+    fingermiss = 0
+    for mymsg in t.notes:
+        # Read each frame from the webcam
+        #which do we move forward, next note or next frame?  
+        if (on > 0):
+            midiTime += mymsg.msg.time
+            #not very efficient, but good enough for now.  
+            i = analyze.getIteration(midiTime, starttimes, endtimes)
+        if (mymsg.msg.type=='note_on'):
+#            if (on > 0 and i > -1):  
+#                mymsg.msg.time = midiTime
+            on = analyze.isOn(mymsg.note, on)
         
-            print(currentTime)
-            print(landmarks)
+        
+        while midiTime/1000 > frameTime and on > 0 and i > -1:
+#            cap.set(cv2.CAP_PROP_POS_FRAMES, cnt)
+            ret, frame = cap.read()
+    #        if (cnt % 30 != 0):
+    #            cnt = cnt + 1
+    #            break
+            if not ret:
+                print("Bad Frame" + str(cnt))
+                cnt = cnt + framecheck
+                break
+
+            # Flip the frame vertically
+        #    frame = cv2.flip(frame, 1)
+            keys = frame[toignore:y, 0:x]
+            tempy = y - toignore
+            #keys = frames[780:x, 0:y] #for some reason the mkv resolution and mp4 downloaded resolution different.  
+            #read midi and match the fingers with midi times.  
+            #first get time of the frame.  #and get the assumed key/finger combination
+            framergb = cv2.cvtColor(keys, cv2.COLOR_BGR2RGB)
+
+            # Get hand landmark prediction
+            result = hands.process(framergb)
+
+            # print(result)
+            
+            className = ''
+
+            # post process the result
+            if result.multi_hand_landmarks:
+    #            print(result.multi_handedness) #this doesnt seem to work very well.  
+        #or maybe just need to swap right for left.  
+                for hidx, handslms in enumerate(result.multi_hand_landmarks):
+        #            print(handslms)
+                    lbl = result.multi_handedness[hidx].classification[0].label
+        #            print(lbl) #ok so it is switched
+                    for idx, lm in enumerate(handslms.landmark):
+        #                print(lm)
+                            
+                        myidx = getFingerNum(lbl, idx)
+                        if (myidx > 0):
+    #                        print(myidx, lm)
+                            lmx = int(lm.x * x)
+                            lmy = int(lm.y * tempy)
+                            landmarks[myidx-1, 0] = lmx
+                            landmarks[myidx-1, 1] = lmy
+
+                    # Drawing landmarks on frames
+                    mpDraw.draw_landmarks(keys, handslms, mpHands.HAND_CONNECTIONS)
+
+                    # Predict gesture
+        #            prediction = model.predict([landmarks])
+                    # print(prediction)
+        #            classID = np.argmax(prediction)
+        #            className = classNames[classID]
+        
+                #OK we have the fingertips in order and the current time of the frame.  
+                #now compare with midi and see what note pressed with what hand.  
+                #create a new midi file with that data, or some other easy to use format.  
+                #better if we can edit the existing midi file, but anyway.  
+            # show the prediction on the frame
+        #    cv2.putText(keys, className, (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 
+        #                   1, (0,0,255), 2, cv2.LINE_AA)
+
+            cnt = cnt + framecheck
+            frameTime = cnt/fps
+            
+#            if (cnt%100==0):
+        
+#            print(frameTime)
+#            showKeys(landmarks, x)
+#            print(landmarks)
             # Show the final output
         #    keys = frame[780:x, 0:y]
             cv2.imshow("Output", keys) 
@@ -234,7 +307,19 @@ if __name__ == '__main__':
             if cv2.waitKey(1) == ord('q'):
                 break
 
+
+        finger = getFinger(mymsg, landmarks, x)
+        if (finger > 0):
+            fingerhit += 1
+        else:
+            fingermiss += 1
+        print(str(midiTime) + ' ' + str(mymsg.note) + ' ' + str(finger))
+        f.write(str(midiTime) + ' ' + str(mymsg.note) + ' ' + str(finger) + '\n')
+        
     # release the webcam and destroy all active windows
+    f.close()
+    print("fingertest completed")
+    print("hit " + str(fingerhit) + " miss " + str(fingermiss))
     cap.release()
 
     cv2.destroyAllWindows()
