@@ -107,7 +107,7 @@ def getClosestFinger(notex, landmarks):
 def getFinger(msg, landmarks, width):
     notex = getNoteCoord(msg, width)
     fingeridx, fingerl = getClosestFinger(notex, landmarks)
-    print("Note" + str(msg.note) + " Played with " + str(fingeridx) + " Distance " + str(fingerl))
+  #  print("Note" + str(msg.note) + " Played with " + str(fingeridx) + " Distance " + str(fingerl))
     return fingeridx
 
 
@@ -313,13 +313,16 @@ if __name__ == '__main__':
             fingerhit += 1
         else:
             fingermiss += 1
-        print(str(midiTime) + ' ' + str(mymsg.note) + ' ' + str(finger))
+       # print(str(midiTime) + ' ' + str(mymsg.note) + ' ' + str(finger))
         f.write(str(midiTime) + ' ' + str(mymsg.note) + ' ' + str(finger) + '\n')
         
     # release the webcam and destroy all active windows
     f.close()
     print("fingertest completed")
     print("hit " + str(fingerhit) + " miss " + str(fingermiss))
+    
+    showKeys(landmarks, x)
+    
     cap.release()
 
     cv2.destroyAllWindows()

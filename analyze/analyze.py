@@ -305,7 +305,7 @@ def enhanceMidi(mid):
                 #https://www.midi.org/specifications-old/item/table-3-control-change-messages-data-bytes-2
                 if (msg.control == 64):  #assuming this is pedal, yep 
                     pedal = msg.value
-            print(msg)
+           # print(msg)
     t.maxtime = maxtime                    
     return t
 
