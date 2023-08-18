@@ -459,7 +459,7 @@ def printMidi(midilink, title, GroupName, videoid):
     #dont redo this.  Live with the analysis of the time for now.  
     if (os.path.exists(os.path.join(path , filename))):
         print("Skipping " + midilink)
-#        return
+        return
     
     r = requests.get(midilink)
     print(len(r.content))

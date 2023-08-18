@@ -49,6 +49,8 @@ import os
 from mido import MidiFile
 from mido import Message
 
+import analyze
+
 
 def getFinger(hand, idx):
     offset = 0
@@ -61,21 +63,6 @@ def getFinger(hand, idx):
             return int(offset + idx/4)
     else:
         return -1
-
-
-def uploadanalyze(file, fullpath):
-
-    # Put your local file path 
-    bucket = storage.bucket()
-    blob = bucket.blob('analyze/' + file)
-    blob.upload_from_filename(fullpath)
-
-    # Opt : if you want to make public access from the URL
-    blob.make_public()
-
-    print("your analyze file url", blob.public_url)
-    return blob.public_url
-
 
 
 
@@ -152,19 +139,33 @@ if __name__ == '__main__':
     #use the file from analyze.py
     #should change local name
 #    midiname = midiname.replace('%20', ' ')
+    if not (os.path.exists(inputpath + midiname + ".mid")):
+        print("No file available" + midiname)
+        exit
+        
+    print("Finger Analysis getting midi" + midiname)
     mid = MidiFile(inputpath + midiname + ".mid")
     #ok with this midi file
     #after use 
+#    t = analyze.enhanceMidi(mid)
+#    img = analyze.midiToImage(t, midilink)
+#    cv2.imshow("MIDI", img) 
     #uploadanalyze(filename, os.path.join(path, filename))
     
     
     cnt = 0
     fps = cap.get(cv2.CAP_PROP_FPS)
     landmarks = np.zeros((10,2)) #keep previous locations if no/low confidence?  
+    framecheck = 10 #check each 10th frame.  Too slow for testing.  
     while True:
         # Read each frame from the webcam
-        ret, frame = cap.read()
+        ret, frame = cap.read(cnt)
+#        if (cnt % 30 != 0):
+#            cnt = cnt + 1
+#            break
         if not ret:
+            print("Bad Frame" + str(cnt))
+            cnt = cnt + 10
             break
         y, x, c = frame.shape
 
@@ -221,7 +222,7 @@ if __name__ == '__main__':
     #    cv2.putText(keys, className, (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 
     #                   1, (0,0,255), 2, cv2.LINE_AA)
 
-        cnt = cnt + 1
+        cnt = cnt + framecheck
         if (cnt%100==0):
         
             print(currentTime)
