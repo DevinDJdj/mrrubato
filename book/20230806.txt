@@ -257,7 +257,7 @@ Is this a good policy?
 
 **analyze.html 
 can we record sound and save?  
-Then we can work on playback mechanisms.  
+Then we can work on playback mechanisms and timing.  
 
 
 **record.py or analyze.py
@@ -268,9 +268,12 @@ It is only significant when we use analyze.py anyway.
 --OK, launch process ok.  
 not perfect, but good enough for now.  
 still need to do the logic.  
-You must be kidding.  I have to get the video from somewhere else?  
-You mean I have to upload the video to the DB and then download it?  
-That is no good.  Need a way to get the frames from a video or another transfer mechanism.  
+You must be kidding.  I have to get the video from somewhere else?  <<<<<<
+That is no good.  Need a way to get the frames from a video or another transfer mechanism.  <<<<<<
+--OK, so we need to run analyze.py -> fingertest.py immediately after record.py
+Didnt really want to do this but seems the best solution overall.  
+Just make sure it is asynchronous
+I had contemplated this anyway.  
 
 
 
