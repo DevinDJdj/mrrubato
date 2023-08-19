@@ -173,20 +173,20 @@ if __name__ == '__main__':
     if not cap.isOpened():
         print("No video exists for " + midilink)
         print("Exiting fingertest")
-        exit
+        sys.exit(0)
         
     #dont redo this.  Live with the analysis of the time for now.  
     if (os.path.exists(os.path.join(path , filename))):
         print("Skipping " + filename)
         print("Already exists")
-        exit
+        sys.exit(0)
 
     #use the file from analyze.py
     #should change local name
 #    midiname = midiname.replace('%20', ' ')
     if not (os.path.exists(inputpath + midiname + ".mid")):
         print("No file available" + midiname)
-        exit
+        sys.exit(0)
         
     print("Finger Analysis getting midi" + midiname)
     mid = MidiFile(inputpath + midiname + ".mid")

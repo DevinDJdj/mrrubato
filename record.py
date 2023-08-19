@@ -399,7 +399,8 @@ if __name__ == '__main__':
 
     #start up analyze.py with this title/description.  
 #    os.system('python ./analyze/analyze.py --title "' + args.description + '"')
-    subprocess.call('python ./analyze/analyze.py --title "' + args.description + '"')
+#use title here as description contains all info
+    subprocess.call('python ./analyze/analyze.py --title "' + args.title + '"')
 #    mido.set_backend('mido.backends.portmidi')   
     mid = MidiFile()
 #    mid.ticks_per_beat = 1000000
@@ -450,9 +451,33 @@ if __name__ == '__main__':
         print("hello")
         for msg in inport:
 #            print(msg)
+            ignorelast = False
             if msg:
                 if hasattr(msg, 'note') and msg.channel == 0: #for now this is a workaround to only use channel 0 as control.  
-                    if lastnote == 21 and msg.note !=lastnote:
+                    if msg.note==105:
+                        #adding two more controllers on piano.  
+                        keyboard.press(Key.ctrl)
+                        keyboard.press(Key.shift)
+                        keyboard.press('5')
+                        time.sleep(0.25)
+                        keyboard.release('5')
+                        keyboard.release(Key.ctrl)
+                        keyboard.release(Key.shift)
+                        print("Showing Screen" + str(time.time()))
+                        ignorelast = True
+                    if msg.note==106:
+                        #adding two more controllers on piano to show screen and hide screen.   
+                        keyboard.press(Key.ctrl)
+                        keyboard.press(Key.shift)
+                        keyboard.press('6')
+                        time.sleep(0.25)
+                        keyboard.release('6')
+                        keyboard.release(Key.ctrl)
+                        keyboard.release(Key.shift)
+                        print("Hiding Screen" + str(time.time()))
+                        ignorelast = True
+
+                    if lastnote == 21 and msg.note !=lastnote and not ignorelast:
                         #1st
                         mytime = time.time() - starttime - delay
                         mins = math.floor(mytime/60)
@@ -463,28 +488,7 @@ if __name__ == '__main__':
                         args.description += "\nTRIAL#1"
                         args.description += " (" + str(mins) + ":" + filler + str(secs) + ")"
                         
-                    if lastnote==105:
-                        #adding two more controllers on piano.  
-                        keyboard.press(Key.ctrl)
-                        keyboard.press(Key.shift)
-                        keyboard.press('5')
-                        time.sleep(0.25)
-                        keyboard.release('5')
-                        keyboard.release(Key.ctrl)
-                        keyboard.release(Key.shift)
-                        print("Showing Screen" + str(time.time()))
-                    if lastnote==106:
-                        #adding two more controllers on piano to show screen and hide screen.   
-                        keyboard.press(Key.ctrl)
-                        keyboard.press(Key.shift)
-                        keyboard.press('6')
-                        time.sleep(0.25)
-                        keyboard.release('6')
-                        keyboard.release(Key.ctrl)
-                        keyboard.release(Key.shift)
-                        print("Hiding Screen" + str(time.time()))
-                        
-                    if msg.note == 107 and msg.note !=lastnote:
+                    if msg.note == 107 and msg.note !=lastnote and not ignorelast:
                         pausestart.append(time.time())
 
                         keyboard.press(Key.ctrl)
@@ -506,7 +510,7 @@ if __name__ == '__main__':
                             filler = "0"
                         args.description += "\nEND#" + str(iterations)
                         args.description += " (" + str(mins) + ":" + filler + str(secs) + ")"
-                    if msg.note == 108 and msg.note !=lastnote:
+                    if msg.note == 108 and msg.note !=lastnote and not ignorelast:
                         pauseend.append(time.time())
                         delay = calculatedelay(pausestart, pauseend)
                         lasttick = time.time() - starttime - delay
@@ -523,7 +527,7 @@ if __name__ == '__main__':
                         print("Unpause Recording" + str(time.time()))
 
                         print("delay " + str(delay))
-                    if lastnote==108 and msg.note !=lastnote:
+                    if lastnote==108 and msg.note !=lastnote and not ignorelast:
                         #2nd etc.  
                         iterations = len(pauseend) + 1
                         mytime = time.time() - starttime - delay
@@ -572,7 +576,8 @@ if __name__ == '__main__':
                     lasttick = time.time() - starttime - delay
 
                 #print(msg) #dont need all this info.  
-                track.append(msg)
+                if not ignorelast:
+                    track.append(msg)
     
     
     
@@ -615,6 +620,9 @@ if __name__ == '__main__':
     addtodb(videoid)
 
     add_video_to_playlist(videoid, cred.MY_PLAYLIST, args)
+    
+#call again to run the any post-analysis like finger locations.  
+    subprocess.call('python ./analyze/analyze.py --title "' + args.title + '"')
     
     
     #cant automate this, as it will become public.  
