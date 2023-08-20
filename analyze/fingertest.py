@@ -216,6 +216,7 @@ if __name__ == '__main__':
     
     fingerhit = 0
     fingermiss = 0
+    previteration = 0
     for mymsg in t.notes:
         # Read each frame from the webcam
         #which do we move forward, next note or next frame?  
@@ -223,6 +224,13 @@ if __name__ == '__main__':
             midiTime += mymsg.msg.time
             #not very efficient, but good enough for now.  
             i = analyze.getIteration(midiTime, starttimes, endtimes)
+            if (i != previteration):
+                previteration = i
+                print(str(i) + " fingertest completed ")
+                print("hit " + str(fingerhit) + " miss " + str(fingermiss))
+                fingerhit = 0
+                fingermiss = 0
+
         if (mymsg.msg.type=='note_on'):
 #            if (on > 0 and i > -1):  
 #                mymsg.msg.time = midiTime
