@@ -8,3 +8,10 @@ Should keep dates with all comments.
 Then have options regarding how to display when those comments were made.  
 This is really meant for commenting once, but could have very different applications
 as a communication tool.  
+
+
+**fingertest.py
+Break down hit or miss by Iteration.  
+If first iteration is far better, then we know we have a problem with timing.  
+Check if it is a timing issue, paint the midi notes on the images we display.  
+Then we will see if there is some problem or not.  
