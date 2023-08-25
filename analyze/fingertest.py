@@ -110,6 +110,9 @@ def getFinger(msg, landmarks, width):
   #  print("Note" + str(msg.note) + " Played with " + str(fingeridx) + " Distance " + str(fingerl))
     return fingeridx
 
+def printNote(msg, startnote, frameTime, startTimes, endTimes):
+    print(str(msg.note) + " " +  str(msg.msg.time) + " " +   str(startnote) + " ")
+    print(startTimes)
 
 if __name__ == '__main__':
     argparser.add_argument("--midi", help="Midi Link", default="")
@@ -217,6 +220,10 @@ if __name__ == '__main__':
     fingerhit = 0
     fingermiss = 0
     previteration = 0
+    
+    lag = 100
+    prevnote = 21
+    startnote = 0
     for mymsg in t.notes:
         # Read each frame from the webcam
         #which do we move forward, next note or next frame?  
@@ -234,10 +241,14 @@ if __name__ == '__main__':
         if (mymsg.msg.type=='note_on'):
 #            if (on > 0 and i > -1):  
 #                mymsg.msg.time = midiTime
+            #simple calculation here, could be a problem, but the first instance is off already, so not the only problem.  
             on = analyze.isOn(mymsg.note, on)
+            if (mymsg.note == 21):
+                startnote = mymsg.msg.time
+            
         
         
-        while midiTime/1000 > frameTime and on > 0 and i > -1:
+        while float(midiTime+lag)/1000 > frameTime and on > 0 and i > -1:
 #            cap.set(cv2.CAP_PROP_POS_FRAMES, cnt)
             ret, frame = cap.read()
     #        if (cnt % 30 != 0):
@@ -303,6 +314,7 @@ if __name__ == '__main__':
             cnt = cnt + framecheck
             frameTime = cnt/fps
             
+                
 #            if (cnt%100==0):
         
 #            print(frameTime)
@@ -310,12 +322,27 @@ if __name__ == '__main__':
 #            print(landmarks)
             # Show the final output
         #    keys = frame[780:x, 0:y]
+        # Add a red point to the center of the frame
+            tempx = getNoteCoord(mymsg, x)
+            cv2.circle(keys, (int(tempx), 100), 5, (0, 0, 255), -1)       
+            font = cv2.FONT_HERSHEY_SIMPLEX
+
+            fontScale = 1
+            color = (0, 0, 255)
+            thickness = 2
+
+            cv2.putText(keys, str(mymsg.note), (int(tempx)+10, 50), font, fontScale, color, thickness)
+            cv2.putText(keys, str(frameTime), (10, 50), font, fontScale, color, thickness)
             cv2.imshow("Output", keys) 
 
             if cv2.waitKey(1) == ord('q'):
                 break
 
 
+        if (prevnote in [21,22,105,106,107,108] or mymsg.note in [21,22,105,106,107,108] ):
+            printNote(mymsg, startnote, frameTime, starttimes, endtimes)
+        prevnote = mymsg.note
+        
         finger = getFinger(mymsg, landmarks, x)
         if (finger > 0):
             fingerhit += 1

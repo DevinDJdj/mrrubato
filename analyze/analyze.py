@@ -485,8 +485,8 @@ def printMidi(midilink, title, GroupName, videoid):
     data, rythmdata = getNgrams(t)
     if (data is None):
         return
-    else:
-        printNgrams(t, title, GroupName, videoid, midilink)
+        
+#    printNgrams(t, title, GroupName, videoid, midilink)
     img = midiToImage(t, midilink)
 
     height = 200

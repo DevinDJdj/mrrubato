@@ -454,6 +454,7 @@ if __name__ == '__main__':
             ignorelast = False
             if msg:
                 if hasattr(msg, 'note') and msg.channel == 0: #for now this is a workaround to only use channel 0 as control.  
+                    temptime = msg.time #time.time()
                     if msg.note==105:
                         #adding two more controllers on piano.  
                         keyboard.press(Key.ctrl)
@@ -479,7 +480,8 @@ if __name__ == '__main__':
 
                     if lastnote == 21 and msg.note !=lastnote and not ignorelast:
                         #1st
-                        mytime = time.time() - starttime - delay
+#                        mytime = time.time() - starttime - delay
+                        mytime = temptime - starttime - delay
                         mins = math.floor(mytime/60)
                         secs = math.floor(mytime - mins*60)
                         filler = ""
@@ -502,7 +504,7 @@ if __name__ == '__main__':
                         print(msg.time)
                         #adding END messages.  For now they are only using the pause button as indicator.  
                         iterations = len(pausestart)
-                        mytime = time.time() - starttime - delay - (time.time() - starttime - delay - lasttick)
+                        mytime = temptime - starttime - delay - (temptime - starttime - delay - lasttick)
                         mins = math.floor(mytime/60)
                         secs = math.floor(mytime - mins*60)
                         filler = ""
@@ -511,11 +513,11 @@ if __name__ == '__main__':
                         args.description += "\nEND#" + str(iterations)
                         args.description += " (" + str(mins) + ":" + filler + str(secs) + ")"
                     if msg.note == 108 and msg.note !=lastnote and not ignorelast:
-                        pauseend.append(time.time())
+                        pauseend.append(temptime)
                         delay = calculatedelay(pausestart, pauseend)
-                        lasttick = time.time() - starttime - delay
-                        msg.time = time.time() - starttime - delay - lasttick
-                        msg.time = int(round(msg.time*1000))
+                        lasttick = temptime - starttime - delay
+                        msg.time = temptime - starttime - delay - lasttick
+#                        msg.time = int(round(msg.time*1000))
 
                         keyboard.press(Key.ctrl)
                         keyboard.press(Key.shift)
@@ -524,13 +526,13 @@ if __name__ == '__main__':
                         keyboard.release('9')
                         keyboard.release(Key.ctrl)
                         keyboard.release(Key.shift)
-                        print("Unpause Recording" + str(time.time()))
+                        print("Unpause Recording" + str(temptime))
 
                         print("delay " + str(delay))
                     if lastnote==108 and msg.note !=lastnote and not ignorelast:
                         #2nd etc.  
                         iterations = len(pauseend) + 1
-                        mytime = time.time() - starttime - delay
+                        mytime = temptime - starttime - delay
                         mins = math.floor(mytime/60)
                         secs = math.floor(mytime - mins*60)
                         filler = ""
@@ -539,7 +541,6 @@ if __name__ == '__main__':
                         args.description += "\nTRIAL#" + str(iterations)
                         args.description += " (" + str(mins) + ":" + filler + str(secs) + ")"
                     if msg.note == 21:
-                        starttime = time.time()
 
                         keyboard.press(Key.ctrl)
                         keyboard.press(Key.shift)
@@ -548,10 +549,11 @@ if __name__ == '__main__':
                         keyboard.release('1')
                         keyboard.release(Key.ctrl)
                         keyboard.release(Key.shift)
-                        print("Start Recording" + str(time.time()))
+                        print("Start Recording" + str(temptime))
+                        starttime = temptime
                         msg.time = 0
                     if msg.note == 22:
-                        endtime = time.time()
+                        endtime = temptime
 
                         keyboard.press(Key.ctrl)
                         keyboard.press(Key.shift)
@@ -560,7 +562,7 @@ if __name__ == '__main__':
                         keyboard.release('2')
                         keyboard.release(Key.ctrl)
                         keyboard.release(Key.shift)
-                        print("Stop Recording" + str(time.time()))
+                        print("Stop Recording" + str(temptime))
                         break
                     lastnote = msg.note
                     
@@ -568,12 +570,12 @@ if __name__ == '__main__':
 #                    msg.time = time.time()-starttime-delay
 #                    msg.time = faketime
 #                    faketime = faketime +1
-                    msg.time = time.time() - starttime - delay - lasttick
+                    msg.time = temptime - starttime - delay - lasttick
                     msg.time = int(round(msg.time*1000))
                     if msg.time < 0:
                         msg.time = 0
                     
-                    lasttick = time.time() - starttime - delay
+                    lasttick = temptime - starttime - delay
 
                 #print(msg) #dont need all this info.  
                 if not ignorelast:
