@@ -33,6 +33,14 @@ from oauth2client.client import flow_from_clientsecrets
 from oauth2client.file import Storage
 from oauth2client.tools import argparser, run_flow
 
+import firebase_admin
+from firebase_admin import db
+from firebase_admin import firestore
+
+from firebase_admin import credentials
+from firebase_admin import initialize_app, storage
+
+
 CLIENT_SECRETS_FILE = "./../client_secrets.json"
 
 # This OAuth 2.0 access scope allows an application to upload files to the
@@ -97,6 +105,19 @@ def search(mydate, limit: int=50) -> dict:
     return r.json()
 
     
+def localBackup():
+    # Get the Firebase reference
+    ref = db.reference(f'/misterrubato/')
+
+    # Get the backup path
+    backup_path = "c:/devinpiano/backup/"
+
+    # Take the backup
+    with open(backup_path + 'misterrubato.json', 'w') as f:
+        json.dump(ref.get(), f)
+        
+
+    return
 
 if __name__ == '__main__':
     args = argparser.parse_args()
@@ -110,11 +131,27 @@ if __name__ == '__main__':
     #unlist anything older than this.  
 
     
+    databaseURL = "https://misterrubato-test-default-rtdb.firebaseio.com/"
+    # Init firebase with your credentials
+    creda = credentials.Certificate("../misterrubato-test.json")
+    initialize_app(creda, {'storageBucket': 'misterrubato-test.appspot.com', 'databaseURL':databaseURL})    
+
     data = search(dt.strftime('%Y-%m-%dT%H:%M:%SZ'))
     print(data)
 
     iterations = []    
     totalidx = 0
+    #take local backup of full DB.  
+    localBackup()
+    #ok this looks ok.  Now use the retrieved DB and update any info in the DB.  
+    #then get each video individually from the DB info.  
+    #no need to search.  
+    #just do the ones which are recent.  
+    #and update in Youtube as well as we go through.  
+    #retrieve, if they are different, update in youtube.  
+    
+    
+    
     for item in reversed(data["items"]):
     
 #    for item in data['items']:
