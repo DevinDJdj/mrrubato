@@ -289,3 +289,10 @@ We are already getting the full DB here.
 While doing this store the DB locally.  
 
 
+**analyze.html
+Essentially should have the option to auto-play.  
+This will autosave and autoplay the next in the list.  
+
+Just create the logic to follow the midi image in analyze.html
+This way we can see when we watch analyze.html and should figure out where the fingertest.py is going wrong.  
+
