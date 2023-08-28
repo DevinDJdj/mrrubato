@@ -111,7 +111,7 @@ def getFinger(msg, landmarks, width):
     return fingeridx
 
 def printNote(msg, startnote, frameTime, startTimes, endTimes):
-    print(str(msg.note) + " " +  str(msg.msg.time) + " " +   str(startnote) + " ")
+    print(str(msg.note) + " " +  str(msg.msg.time) + " " +   str(frameTime) + " ")
     print(startTimes)
 
 if __name__ == '__main__':

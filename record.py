@@ -451,10 +451,15 @@ if __name__ == '__main__':
         print("hello")
         for msg in inport:
 #            print(msg)
+#            print(msg.time)
             ignorelast = False
             if msg:
+                
+                if hasattr(msg, 'time'):
+                    temptime = time.time() #msg.time #time.time() #msg.time
                 if hasattr(msg, 'note') and msg.channel == 0: #for now this is a workaround to only use channel 0 as control.  
-                    temptime = msg.time #time.time()
+                    #oh yeah I dont think this has the time.  
+                    #tried to adjust midi settings on the device.  See if we can get the time transmitted.  
                     if msg.note==105:
                         #adding two more controllers on piano.  
                         keyboard.press(Key.ctrl)
@@ -566,7 +571,7 @@ if __name__ == '__main__':
                         break
                     lastnote = msg.note
                     
-                if hasattr(msg, 'time'):
+                if hasattr(msg, 'time') and not ignorelast:
 #                    msg.time = time.time()-starttime-delay
 #                    msg.time = faketime
 #                    faketime = faketime +1

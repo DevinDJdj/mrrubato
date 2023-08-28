@@ -157,15 +157,17 @@ def getTrackTimes(mytrack):
     starttimes = []
     endtimes = []
     for mymsg in mytrack.notes:        
-        if (on > 0):
-            currentTime += mymsg.msg.time
-        if (mymsg.msg.type == 'note_on'):
-            if mymsg.prevmsg is not None and (mymsg.prevmsg.note == 21 or mymsg.prevmsg.note == 108):
-                starttimes.append(currentTime)
-            if mymsg.nextmsg is not None and (mymsg.nextmsg.note == 22 or mymsg.nextmsg.note == 107):
-                endtimes.append(currentTime)
-        if (mymsg.msg.type == 'note_on'):
-            on = isOn(mymsg.msg.note, on)
+    #getting duplicates with multiple channels.  
+        if mymsg.msg.channel == 0:
+            if (on > 0):
+                currentTime += mymsg.msg.time
+            if (mymsg.msg.type == 'note_on'):
+                if mymsg.prevmsg is not None and (mymsg.prevmsg.note == 21 or mymsg.prevmsg.note == 108) and mymsg.msg.channel == 0:
+                    starttimes.append(currentTime)
+                if mymsg.nextmsg is not None and (mymsg.nextmsg.note == 22 or mymsg.nextmsg.note == 107) and mymsg.msg.channel == 0:
+                    endtimes.append(currentTime)
+            if (mymsg.msg.type == 'note_on'):
+                on = isOn(mymsg.msg.note, on)
                 
 
     return starttimes, endtimes
@@ -208,7 +210,7 @@ def fillImage(midi_image, notes, currentTime, prevTime, pedal, iteration, startt
 def getIteration(currentTime, starttimes, endtimes):
     i = 0
     for i, st in enumerate(starttimes):
-        if (starttimes[i] <= currentTime and currentTime <= endtimes[i]):
+        if (i < len(endtimes) and starttimes[i] <= currentTime and currentTime <= endtimes[i]):
             return i
     print("getIterationError" + str(currentTime))
     print(starttimes)
@@ -744,6 +746,7 @@ if __name__ == '__main__':
                         #just update DB for now.  Then timestep.py will update Youtube info
                         if (args.skipfinger !="true"):
                             cmd = ["python", "./analyze/fingertest.py", "--video", videoid, "--midi", midilink]
+                            print(cmd)
     #                        os.spawn("python", cmd, no_wait=True)
                             proc = subprocess.Popen(cmd)
                             print("fingertest started")
