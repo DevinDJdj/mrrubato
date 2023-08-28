@@ -696,78 +696,78 @@ if __name__ == '__main__':
         print(item)
         if (item["kind"] == "youtube#video"):
             videoid = item["id"]
-            url = f'https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,status\
-                &id={videoid}&key={api_key}'
-            json_url = requests.get(url)
-            datav = json.loads(json_url.text)
-            if (len(datav['items']) > 0):
-                numwords = 0
-                midisize = 0
-                totalduration = datav['items'][0]['contentDetails']['duration']
-                GroupName = ""
-                publishedDate = datav['items'][0]['snippet']['publishedAt']
-                if (latestvideo is None or publishedDate > latestvideoDate):
-                    latestvideo = videoid
-                    latestvideoDate = publishedDate
-                title = datav['items'][0]['snippet']['title']
-                privacystatus = datav['items'][0]['status']['privacyStatus']
-                gs = title.find("(")
-                ge = title.find(")")
-                url = "https://www.youtube.com/watch?v=" + videoid
-                
-                if (gs > 0):
-                    GroupName = title[gs+1:ge]
-                    title = title[0:gs]
+#            url = f'https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,status\
+#                &id={videoid}&key={api_key}'
+#            json_url = requests.get(url)
+#            datav = json.loads(json_url.text)
+#            if (len(datav['items']) > 0):
+            numwords = 0
+            midisize = 0
+            totalduration = item['contentDetails']['duration']
+            GroupName = ""
+            publishedDate = item['snippet']['publishedAt']
+            if (latestvideo is None or publishedDate > latestvideoDate):
+                latestvideo = videoid
+                latestvideoDate = publishedDate
+            title = item['snippet']['title']
+            privacystatus = item['status']['privacyStatus']
+            gs = title.find("(")
+            ge = title.find(")")
+            url = "https://www.youtube.com/watch?v=" + videoid
+            
+            if (gs > 0):
+                GroupName = title[gs+1:ge]
+                title = title[0:gs]
 
-                desc = datav['items'][0]['snippet']['description']
-                starttimes = []
-                endtimes = []
-                for i in range(1,9):
-                    ts = desc.find("TRIAL#{} (".format(i))
-                    te = desc.find(")", ts)
-                    if (ts > -1):
-                        starttimes.append(desc[ts+9:te])
+            desc = item['snippet']['description']
+            starttimes = []
+            endtimes = []
+            for i in range(1,9):
+                ts = desc.find("TRIAL#{} (".format(i))
+                te = desc.find(")", ts)
+                if (ts > -1):
+                    starttimes.append(desc[ts+9:te])
 
-                for i in range(1,9):
-                    ts = desc.find("END#{} (".format(i))
-                    te = desc.find(")", ts)
-                    if (ts > -1):
-                        endtimes.append(desc[ts+7:te])
+            for i in range(1,9):
+                ts = desc.find("END#{} (".format(i))
+                te = desc.find(")", ts)
+                if (ts > -1):
+                    endtimes.append(desc[ts+7:te])
 
-                midis = desc.find("MIDI:")
-                if (midis > 0):
-                    midie = desc.find("\n", midis)
-                    midilink = desc[midis+5:midie]
-                    midisize = printMidi(midilink, title, GroupName, videoid)
-                    fingers = desc.find("FINGERS:")
-                    if (fingers > 0):
-                        print("already has fingers")
-                    else:
-                        #just update DB for now.  Then timestep.py will update Youtube info
-                        if (args.skipfinger !="true"):
-                            cmd = ["python", "./analyze/fingertest.py", "--video", videoid, "--midi", midilink]
-                            print(cmd)
-    #                        os.spawn("python", cmd, no_wait=True)
-                            proc = subprocess.Popen(cmd)
-                            print("fingertest started")
-
-                
-                transcripts = desc.find("TRANSCRIPT:")
-                if (transcripts > 0):
-                    transcripte = desc.find("\n", transcripts)
-                    transcriptlink = desc[transcripts+11:transcripte]
-                    numwords = printTranscript(transcriptlink)
-
-                if (len(starttimes) != len(endtimes)):
-                    print("invalid data {videoid}")
+            midis = desc.find("MIDI:")
+            if (midis > 0):
+                midie = desc.find("\n", midis)
+                midilink = desc[midis+5:midie]
+                midisize = printMidi(midilink, title, GroupName, videoid)
+                fingers = desc.find("FINGERS:")
+                if (fingers > 0):
+                    print("already has fingers")
                 else:
-                    print(starttimes)
-                    updatestatsdb(videoid, starttimes, endtimes, midisize, numwords)
-                    for idx,t in enumerate(starttimes):
-                        totalidx +=1
-                        mydata = {"URL": url, "PublishedDate": publishedDate, "starttime": starttimes[idx], "endtime": endtimes[idx], "iteration": totalidx}
+                    #just update DB for now.  Then timestep.py will update Youtube info
+                    if (args.skipfinger !="true"):
+                        cmd = ["python", "./analyze/fingertest.py", "--video", videoid, "--midi", midilink]
+                        print(cmd)
+#                        os.spawn("python", cmd, no_wait=True)
+                        proc = subprocess.Popen(cmd)
+                        print("fingertest started")
+
+            
+            transcripts = desc.find("TRANSCRIPT:")
+            if (transcripts > 0):
+                transcripte = desc.find("\n", transcripts)
+                transcriptlink = desc[transcripts+11:transcripte]
+                numwords = printTranscript(transcriptlink)
+
+            if (len(starttimes) != len(endtimes)):
+                print("invalid data {videoid}")
+            else:
+                print(starttimes)
+                updatestatsdb(videoid, starttimes, endtimes, midisize, numwords)
+                for idx,t in enumerate(starttimes):
+                    totalidx +=1
+                    mydata = {"URL": url, "PublishedDate": publishedDate, "starttime": starttimes[idx], "endtime": endtimes[idx], "iteration": totalidx}
 #                        print(mydata)
-                        iterations.append(mydata)
+                    iterations.append(mydata)
     
     if (latestvideo is not None):
         #open misterrubato.com/analyze.html?video=

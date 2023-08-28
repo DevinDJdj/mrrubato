@@ -117,7 +117,9 @@ def localBackup():
         json.dump(ref.get(), f)
         
 
-    return
+    snapshot = ref.order_by_child('snippet/title').get()
+    return snapshot.items()
+#    return ref.items()
 
 if __name__ == '__main__':
     args = argparser.parse_args()
@@ -142,7 +144,7 @@ if __name__ == '__main__':
     iterations = []    
     totalidx = 0
     #take local backup of full DB.  
-    localBackup()
+    ref = localBackup()
     #ok this looks ok.  Now use the retrieved DB and update any info in the DB.  
     #then get each video individually from the DB info.  
     #no need to search.  
@@ -152,6 +154,43 @@ if __name__ == '__main__':
     
     
     
+    for key, item in ref:
+#    for item in reversed(data["items"]):
+#    for item in data['items']:
+#        print(item["id"])
+        if (item["kind"] == "youtube#video"):
+#            print(item)
+            videoid = item["id"]
+            privacystatus = item['status']['privacyStatus']
+            url = f'https://www.googleapis.com/youtube/v3/videos?part=status\
+                &id={videoid}&key={api_key}'
+            #for now get rid of all the old data from the queries gradually everything up to when we use DB.  
+            #data quality is too poor to do much with anyway.  Also no midi before Jan/2023.  
+            publishedDate = item['snippet']['publishedAt']
+            print(publishedDate)
+            pDate = datetime.strptime(publishedDate, '%Y-%m-%dT%H:%M:%SZ')
+            if ((privacystatus=="public" or privacystatus=="unlisted") and pDate.date() < mydate ):
+                print(videoid)
+                print("Making private")
+                youtube = get_authenticated_service(args)
+                    
+                    #update the RTDB as well.  
+                    item['status']['privacyStatus'] = "private"
+                    vref = db.reference(f'/misterrubato/' + videoid)
+                    vref.set(item)
+                    
+                    mystatus = {}         
+                    mystatus['privacyStatus'] = "private"
+                    
+                    videos_update_response = youtube.videos().update(
+                        part='status',
+                        body=dict(
+                          status=mystatus,
+                          id=videoid
+                        )).execute()            
+                    print(videos_update_response)
+
+    prior = """
     for item in reversed(data["items"]):
     
 #    for item in data['items']:
@@ -182,3 +221,4 @@ if __name__ == '__main__':
                           id=videoid
                         )).execute()            
                     print(videos_update_response)
+    """
