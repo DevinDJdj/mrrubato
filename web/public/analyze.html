@@ -136,6 +136,10 @@ var player;
 var delay = 10;
 var notesarray = [];
 var commentsarray = [];
+var starttimes = [];
+var endtimes = [];
+
+
 var uid = null;
 //setup https://www.youtube.com/watch?v=3jZ5vnv-LZc
 //then restrict the key if needed to your site and youtube data API.  
@@ -311,6 +315,31 @@ function addComment(comment, commenttime){
 	
 }
 
+function getIterations(desc){
+    st = [];
+	et = [];
+	for (i=1; i< 20; i++){
+	    fnd = "TRIAL#" + i;
+		ts = desc.indexOf(fnd);
+		te = desc.indexOf(")", ts);
+		if (ts > -1)
+			st.push(desc.substring(ts+(fnd.length)+2, te));
+	}
+	for (i=1; i<20; i++){
+	    fnd = "END#" + i;
+		ts = desc.indexOf(fnd);
+		te = desc.indexOf(")", ts);
+		if (ts > -1)
+			et.push(desc.substring(ts+(fnd.length)+2, te));
+	}
+    console.log(st);
+	console.log(et);
+	//arrays of all iterations
+	starttimes.push(st);
+	endtimes.push(et);
+	//from here generate some sort of graphic.  
+}
+
 function searchPrevious(videoid){
 	//use title
     ref = firebase.database().ref('/misterrubato');
@@ -329,6 +358,10 @@ function searchPrevious(videoid){
 			mydiv.appendChild(aTag);
 			var br = document.createElement("br");
 			mydiv.appendChild(br);
+			//get description, add some info to javascript object for iteration info.  
+			//words and non-word links.  Makes it easier to review.  
+			//create graph for all iterations in time.  
+			getIterations(childSnapshot.val().snippet.description);
 		});
 	});
 
@@ -458,7 +491,8 @@ function getVideoJson(videoid){
 		$('#notes').val(snap.val().snippet.description);
 	    createNotesArray();
 		//get previous iterations of this.  
-		title = notesarray[0];
+		title = snap.val().snippet.description.split('\n')[0];
+		console.log(title);
 		searchPrevious(videoid);
 		getTranscript(item.snippet.description);
 		getMidi(item.snippet.description);

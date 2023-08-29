@@ -296,3 +296,23 @@ This will autosave and autoplay the next in the list.
 Just create the logic to follow the midi image in analyze.html
 This way we can see when we watch analyze.html and should figure out where the fingertest.py is going wrong.  
 
+
+**analyze.html
+make some graphs following the iterations and length.  
+I guess we can do this for just the iterations in each one with analyze.py
+Then we just concatenate the images?  
+That would be better I think.  
+
+Create some graph visuals along with any comments.  
+Allow to start up the video at that particular time.  
+Graph1: Timeline: time taken for each iteration by date/time.  
+Pull all words from transcript, pull all comments from previous iterations for review.  
+analyze.html -> searchPrevious
+Add some 
+Graph2: Comparison: Relative time within iteration, Moving average of Notes per second.  
+Many iterations on same graph.  
+This will be the primary type of graph used I think.  What else can we investigate here across iterations?  
+Later: Calculate similarity across iterations with the ngrams.  
+
+**history.html
+show latest videos, and link to analyze.html
