@@ -110,8 +110,8 @@ def getFinger(msg, landmarks, width):
   #  print("Note" + str(msg.note) + " Played with " + str(fingeridx) + " Distance " + str(fingerl))
     return fingeridx
 
-def printNote(msg, startnote, frameTime, startTimes, endTimes):
-    print(str(msg.note) + " " +  str(msg.msg.time) + " " +   str(frameTime) + " ")
+def printNote(msg, startnote, midiTime, frameTime, startTimes, endTimes):
+    print(str(msg.note) + " " +  str(msg.msg.time) + " " +   str(midiTime) + " " + str(frameTime) + " ")
     print(startTimes)
 
 if __name__ == '__main__':
@@ -231,6 +231,8 @@ if __name__ == '__main__':
             midiTime += mymsg.msg.time
             #not very efficient, but good enough for now.  
             i = analyze.getIteration(midiTime, starttimes, endtimes)
+            if (i == -1):
+                printNote(mymsg, startnote, midiTime, frameTime, starttimes, endtimes)
             if (i != previteration):
                 previteration = i
                 print(str(i) + " fingertest completed ")
@@ -340,7 +342,7 @@ if __name__ == '__main__':
 
 
         if (prevnote in [21,22,105,106,107,108] or mymsg.note in [21,22,105,106,107,108] ):
-            printNote(mymsg, startnote, frameTime, starttimes, endtimes)
+            printNote(mymsg, startnote, midiTime, frameTime, starttimes, endtimes)
         prevnote = mymsg.note
         
         finger = getFinger(mymsg, landmarks, x)
