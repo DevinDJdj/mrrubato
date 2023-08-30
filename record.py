@@ -342,7 +342,7 @@ def add_video_to_playlist(videoID,playlistID, args):
     part="snippet",
     body={
       "snippet": {
-        "playlistId": cred.MY_PLAYLIST,
+        "playlistId": playlistID,
         "position": 0,
         "resourceId": {
           "kind": "youtube#video",

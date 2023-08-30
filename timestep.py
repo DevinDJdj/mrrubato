@@ -15,6 +15,8 @@ sys.path.insert(0, 'c:/devinpiano/')
  
  
 import cred
+#import record
+
 import pandas as pd
 import requests
 import json
@@ -38,13 +40,13 @@ from firebase_admin import db
 from firebase_admin import firestore
 
 from firebase_admin import credentials
-from firebase_admin import initialize_app, storage
-
+from firebase_admin import initialize_app, storage, auth
 
 CLIENT_SECRETS_FILE = "./../client_secrets.json"
 
 # This OAuth 2.0 access scope allows an application to upload files to the
 # authenticated user's YouTube channel, but doesn't allow other types of access.
+YOUTUBE_SCOPE = "https://www.googleapis.com/auth/youtube"
 YOUTUBE_UPLOAD_SCOPE = "https://www.googleapis.com/auth/youtube"
 YOUTUBE_API_SERVICE_NAME = "youtube"
 YOUTUBE_API_VERSION = "v3"
@@ -95,6 +97,38 @@ def get_channel_stat() -> dict:
     
 
     
+def add_video_to_playlist(videoID,playlistID, args):
+    youtube = get_authenticated_service(args) #write it yourself
+    body=dict(
+      snippet=dict(
+        playlistId=playlistID,
+        resourceId=dict(
+          kind="youtube#video",
+          videoId=videoID
+        ),
+      ),
+    )
+#    add_video_request=youtube.playlistItems().insert(
+#        part="snippet",
+#        body=body
+#    ).execute()
+
+#cant use position, but default is to add at the end anyway.  
+#but we need to list then by date.  
+    request = youtube.playlistItems().insert(
+    part="snippet",
+    body={
+      "snippet": {
+        "playlistId": playlistID,
+#        "position": 0,
+        "resourceId": {
+          "kind": "youtube#video",
+          "videoId": videoID
+        }
+      }
+    }
+    )
+    response = request.execute()
     
     
 def search(mydate, limit: int=50) -> dict:
@@ -117,10 +151,23 @@ def localBackup():
         json.dump(ref.get(), f)
         
 
-    snapshot = ref.order_by_child('snippet/title').get()
+    snapshot = ref.order_by_child('snippet/publishedAt').get()
     return snapshot.items()
 #    return ref.items()
 
+
+def getPlaylistFromGrade(grade):
+    if grade == "test":
+        return ""
+    if int(grade) > 8:
+        return cred.GREAT_PLAYLIST
+    elif int(grade) > 4:
+        return cred.GOOD_PLAYLIST
+    elif int(grade) == 0:
+        return ""
+    else:
+        return cred.OK_PLAYLIST
+        
 if __name__ == '__main__':
     args = argparser.parse_args()
 
@@ -153,7 +200,9 @@ if __name__ == '__main__':
     #retrieve, if they are different, update in youtube.  
     
     
+    adminuid = cred.ADMIN_USERID
     
+    #need to sort by date.  
     for key, item in ref:
 #    for item in reversed(data["items"]):
 #    for item in data['items']:
@@ -167,28 +216,77 @@ if __name__ == '__main__':
             #for now get rid of all the old data from the queries gradually everything up to when we use DB.  
             #data quality is too poor to do much with anyway.  Also no midi before Jan/2023.  
             publishedDate = item['snippet']['publishedAt']
-            print(publishedDate)
+            print(publishedDate + " " + videoid + " " + privacystatus + " " + item['snippet']['title'])
+            #what is the state of this and the title etc.  
+            
             pDate = datetime.strptime(publishedDate, '%Y-%m-%dT%H:%M:%SZ')
+            pl = ""
+            plwords = ""
+            #update to public if we have reviewed.  
+            #if we dont want to publish, rank as 0.  
+            if (privacystatus=="unlisted" and pDate.date() > mydate):
+                refpl = db.reference(f'/misterrubato/' + videoid + '/playlist')
+                #if this exists, return
+                if refpl.get() is None and "comments" in item:
+                    if adminuid in item["comments"]:
+                        grade = item["comments"][adminuid]["sentiment"]
+                        pl = getPlaylistFromGrade(grade)
+                        if pl !="":
+                            print("add " + videoid + " to " + pl)
+                            #add to playlist
+                            if  "stats" in item:
+                                if item["stats"]["wordsrecognized"] > 50:
+                                    plwords = cred.WORDS_PLAYLIST
+                                    print("add to words " + plwords)
+                                    #add to playlist.  
+#                                    add_video_to_playlist(videoid, plwords, args)
+                        
+                                
+                            #really this can all be set at play record.py as well, but this is essentially the same as we run this during record.py
+                            #need to test this works.  Seems to work ok.  
+                            if pl !="":
+                                item['status']['privacyStatus'] = "public"
+                                vref = db.reference(f'/misterrubato/' + videoid)
+                                vref.set(item)
+                                data = {'playlist':pl,'wordsplaylist':plwords}
+                                refpl.set(data)
+                                if plwords !="":
+                                    add_video_to_playlist(videoid, plwords, args)
+                                add_video_to_playlist(videoid, pl, args)
+                                mystatus = {}         
+                                mystatus['privacyStatus'] = "public"
+                                
+                                youtube = get_authenticated_service(args)
+                                videos_update_response = youtube.videos().update(
+                                    part='status',
+                                    body=dict(
+                                      status=mystatus,
+                                      id=videoid
+                                    )).execute()            
+                                print(videos_update_response)
+                            
+
+                
             if ((privacystatus=="public" or privacystatus=="unlisted") and pDate.date() < mydate ):
                 print(videoid)
                 print("Making private")
                 youtube = get_authenticated_service(args)
-                    
-                    #update the RTDB as well.  
-                    item['status']['privacyStatus'] = "private"
-                    vref = db.reference(f'/misterrubato/' + videoid)
-                    vref.set(item)
-                    
-                    mystatus = {}         
-                    mystatus['privacyStatus'] = "private"
-                    
-                    videos_update_response = youtube.videos().update(
-                        part='status',
-                        body=dict(
-                          status=mystatus,
-                          id=videoid
-                        )).execute()            
-                    print(videos_update_response)
+                
+                #update the RTDB as well.  
+                item['status']['privacyStatus'] = "private"
+                vref = db.reference(f'/misterrubato/' + videoid)
+                vref.set(item)
+                
+                mystatus = {}         
+                mystatus['privacyStatus'] = "private"
+                
+                videos_update_response = youtube.videos().update(
+                    part='status',
+                    body=dict(
+                      status=mystatus,
+                      id=videoid
+                    )).execute()            
+                print(videos_update_response)
 
     prior = """
     for item in reversed(data["items"]):

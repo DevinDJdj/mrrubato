@@ -61,6 +61,7 @@
 		 <input type="text" id="p" name="p">
     </div>
 	<div id="submit" valign="top">
+	    <input type="range" id="points" name="points" min="0" max="10" value="1" />
 		<button type="button" onclick="updateVideo()">Update</button>
 	</div>
  <div id="midi"></div>
@@ -255,6 +256,9 @@ function updateVideo(){
 	//getref to uid
 	//then under here store the videos.  
 	//does the video have to be associated with the channel, I guess not.  
+	
+	var grade = $('#points').val();
+	
 	if (uid !==null){
 	    var uRef = firebase.database().ref('/misterrubato/' + video + '/comments/' + uid);
 //		videojson.snippet.description = $('#notes').val();
@@ -262,10 +266,12 @@ function updateVideo(){
 //		videojson = JSON.parse( JSON.stringify(videojson ) );
 		console.log(uid);
 		mycomments = $('#mycomments').val();
-		sentiment = "test"; //for now
-		obj = {"comments": mycomments, "sentiment": sentiment };
+//		sentiment = "test"; //for now
+		obj = {"comments": mycomments, "sentiment": grade };
 		uRef.set(obj);
 	}
+	
+	
 }
 
 function updateNotes(){
@@ -345,25 +351,47 @@ function searchPrevious(videoid){
     ref = firebase.database().ref('/misterrubato');
 	console.log(title);
     ref.orderByChild('snippet/title').equalTo(title).on("value", function(snapshot) {
+		it = 1
+		vids = [];
 		snapshot.forEach((childSnapshot) => {
 			console.log(childSnapshot.key);
 			console.log('found  ' + childSnapshot.val().snippet);
-			var mydiv = document.getElementById("previous");
-			var aTag = document.createElement('a');
-			aTag.setAttribute('href',"https://misterrubato.com/analyze.html?video=" + childSnapshot.val().id);
-			aTag.innerText = "PREV#" + i;
-			if (videoid == childSnapshot.val().id){
-				aTag.innerText += " <- THIS VIDEO";
-			}
-			mydiv.appendChild(aTag);
-			var br = document.createElement("br");
-			mydiv.appendChild(br);
+			var obj = childSnapshot.val();
+			
+			vids.push(obj);
 			//get description, add some info to javascript object for iteration info.  
 			//words and non-word links.  Makes it easier to review.  
 			//create graph for all iterations in time.  
 			getIterations(childSnapshot.val().snippet.description);
+			it = it + 1;
 		});
+		console.log("why" + vids.length);
+				
+		vids.sort(function(a, b) {
+		   datea = new Date(a.snippet.publishedAt);
+		   dateb = new Date(b.snippet.publishedAt);
+		   
+		  return dateb - datea;
+		});		
+		var mydiv = document.getElementById("previous");
+		for (it=0; it< vids.length; it++){
+			var obj = vids[it];
+			var aTag = document.createElement('a');
+			aTag.setAttribute('href',"https://misterrubato.com/analyze.html?video=" + obj.id);
+			aTag.innerText = "PREV#" + it;
+			aTag.innerText += " " + obj.snippet.publishedAt;
+			//should really add a date driven graphic representation.  
+			if (videoid == obj.id){
+				aTag.innerText += " <- THIS VIDEO";
+			}
+			console.log(aTag);
+			mydiv.appendChild(aTag);
+			var br = document.createElement("br");
+			mydiv.appendChild(br);
+		}
 	});
+
+	//display the tags.  
 
 /*	
  $.getJSON('https://www.googleapis.com/youtube/v3/search?maxResults=15&channelId=' + channelId + '&order=date&q=' + title + '&key=' + webkey + '&part=snippet',function(data){
