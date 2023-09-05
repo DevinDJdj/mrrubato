@@ -147,7 +147,10 @@ def localBackup():
     backup_path = "c:/devinpiano/backup/"
 
     # Take the backup
-    with open(backup_path + 'misterrubato.json', 'w') as f:
+    today = date. today()
+    today = today. strftime("%Y%m%d")
+    
+    with open(backup_path + today + '.json', 'w') as f:
         json.dump(ref.get(), f)
         
 
@@ -239,7 +242,7 @@ if __name__ == '__main__':
                                     plwords = cred.WORDS_PLAYLIST
                                     print("add to words " + plwords)
                                     #add to playlist.  
-#                                    add_video_to_playlist(videoid, plwords, args)
+                                    add_video_to_playlist(videoid, plwords, args)
                         
                                 
                             #really this can all be set at play record.py as well, but this is essentially the same as we run this during record.py
