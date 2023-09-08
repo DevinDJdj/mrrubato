@@ -1,0 +1,59 @@
+See if we can use some rendering library to do something in real-time utilizing the music.  
+For now use python since it is what we are using, but we can essentially utilize the midi notes to create something perhaps.  
+
+https://docs.panda3d.org/1.10/python/introduction/tutorial/loading-the-grassy-scenery
+
+or 
+
+https://www.renpy.org/
+
+**visualize.py
+Make a transparent layer over either me or the screen or both.  
+Maybe start out with a transparent layer of the keys being pressed.  
+But would need to pass this real time.  
+something like this should be sufficient.  
+https://stackoverflow.com/questions/18006869/python-sharing-message-between-processes
+Dont really want the visualization process same as the recording process.  
+We could have visualize.py and accompany.py for instance.  
+Then pass the midi to each of these processes.  
+Start out with a visualization just from the midi, then we can change it to real-time midi messages.  
+Be able to do both anyway.  
+Not sure what will be preferable.  
+
+
+What is the visualization we want though?  
+This is the key question.  
+
+Or perhaps even add some notes based on prior iterations of the song.  
+This is a bit further down the road.  
+
+analyze
+
+
+Try to improve the model for mpHands.  
+One way is to create a image classification dataset.  
+We really only need the order of fingers and how many fingers are on the keys.  
+So we would have the standard 10 fingers side by side. 
+Then thumb under, etc.  Lot of work to do this ourselves.  
+
+
+We dont want class identification logic like this:
+https://towardsdatascience.com/input-pipeline-for-images-using-keras-and-tensorflow-c5e107b6d7b9
+
+We need to look at the image for fingers.  
+Try to just look for skin tone from bitmap.  
+For now just detect thumb and assume fingers are in the right order.  
+Detect thumb and fingers.  
+All this AI code and I have to do this myself??
+Because I cant find anything useful.  
+
+**fingertest.py
+For now fingertest.py should randomly collect data from highest note frequency (number of notes per second) for i.e. 10 sequential notes.  
+This way we get fast transitions.  
+Slower transitions should be easiest.  
+
+
+**analyze.html - Done
+Need to update the "rating" bar if there is an existing value when the page is loaded.  
+OK this mundane thing done.  
+
