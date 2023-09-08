@@ -76,13 +76,24 @@
 </td>
 </tr>
 </table>
+<table>
+<td>
     <div id="previous"></div>
+	</td>
+	<td>
+	<div id="timeline" style="height: 180px;"></div>
+	</td>
+	</table>
+	
 <div id="images"></div>	
   
 <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
   <script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js'></script>
 		<script src='https://apis.google.com/js/platform.js' async defer></script>
+
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+		
   <script>
   //firebase deploy to deploy this.  
   //usage:
@@ -139,7 +150,7 @@ var notesarray = [];
 var commentsarray = [];
 var starttimes = [];
 var endtimes = [];
-
+var durations = [];
 
 var uid = null;
 //setup https://www.youtube.com/watch?v=3jZ5vnv-LZc
@@ -236,6 +247,7 @@ webkey = 'AIzaSyCBCSiFLWm-3oBKvnS-yaHtU5QcFfRtZ_E';
 				// ...
 			  });
 
+		google.charts.load('current', {'packages':['corechart', 'timeline']});
 		
 		var vRef = firebase.database().ref('/misterrubato/' + video);
 		if (typeof(uid) != "undefined" && uid !==null){
@@ -329,7 +341,7 @@ function addComment(comment, commenttime){
 	
 }
 
-function getIterations(desc){
+function getIterations(desc, vidtime){
     st = [];
 	et = [];
 	for (i=1; i< 20; i++){
@@ -337,23 +349,60 @@ function getIterations(desc){
 		ts = desc.indexOf(fnd);
 		te = desc.indexOf(")", ts);
 		if (ts > -1)
-			st.push(desc.substring(ts+(fnd.length)+2, te));
+			st.push(getSecsFromTime(desc.substring(ts+(fnd.length)+2, te)));
 	}
 	for (i=1; i<20; i++){
 	    fnd = "END#" + i;
 		ts = desc.indexOf(fnd);
 		te = desc.indexOf(")", ts);
 		if (ts > -1)
-			et.push(desc.substring(ts+(fnd.length)+2, te));
+			et.push(getSecsFromTime(desc.substring(ts+(fnd.length)+2, te)));
 	}
     console.log(st);
 	console.log(et);
 	//arrays of all iterations
-	starttimes.push(st);
-	endtimes.push(et);
+	mydate = new Date(vidtime);
+	for (i=0; i< st.length; i++){
+	    if (et[i] !==null){
+			tempdate = mydate;
+			tempdate.setSeconds(tempdate.getSeconds()+st[i]);
+			starttimes.push(tempdate);
+			durations.push([tempdate, et[i]-st[i]]);
+			tempdate.setSeconds(tempdate.getSeconds()+(et[i]-st[i]));
+			endtimes.push(tempdate);
+		}
+	}
 	//from here generate some sort of graphic.  
 }
 
+function drawChart() {
+	var container = document.getElementById('timeline');
+	var chart = new google.visualization.LineChart(container);
+	var dataTable = new google.visualization.DataTable();
+	   
+       var options = {
+         title: 'Duration',
+         legend: 'none',
+         crosshair: { trigger: 'both', orientation: 'both' },
+         trendlines: {
+           0: {
+             type: 'polynomial',
+             degree: 3,
+             visibleInLegend: true,
+           }
+         }
+       };
+	   
+	dataTable.addColumn({ type: 'date', id: 'DatePlayed' });
+	dataTable.addColumn({ type: 'number', id: 'Duration' });
+//	dataTable.addColumn({ type: 'number', id: 'Iteration#' });
+
+    for (i=0; i< starttimes.length; i++){
+		dataTable.addRows(durations);
+    }
+	chart.draw(dataTable);
+}
+	  
 function searchPrevious(videoid){
 	//use title
     ref = firebase.database().ref('/misterrubato');
@@ -367,10 +416,6 @@ function searchPrevious(videoid){
 			var obj = childSnapshot.val();
 			
 			vids.push(obj);
-			//get description, add some info to javascript object for iteration info.  
-			//words and non-word links.  Makes it easier to review.  
-			//create graph for all iterations in time.  
-			getIterations(childSnapshot.val().snippet.description);
 			it = it + 1;
 		});
 		console.log("why" + vids.length);
@@ -396,7 +441,14 @@ function searchPrevious(videoid){
 			mydiv.appendChild(aTag);
 			var br = document.createElement("br");
 			mydiv.appendChild(br);
+			
+			//get description, add some info to javascript object for iteration info.  
+			//words and non-word links.  Makes it easier to review.  
+			//create graph for all iterations in time.  
+			getIterations(obj.snippet.description, obj.snippet.publishedAt);
 		}
+		console.log(starttimes);
+		drawChart();
 	});
 
 	//display the tags.  
