@@ -206,10 +206,17 @@ webkey = 'AIzaSyCBCSiFLWm-3oBKvnS-yaHtU5QcFfRtZ_E';
 					
 					uid = user.uid;
 					
-					firebase.database().ref('/misterrubato/' + video + '/comments/' + uid + '/comments').once('value')
+					firebase.database().ref('/misterrubato/' + video + '/comments/' + uid).once('value')
 					  .then((snapshot) => {
 						if (snapshot.exists()) {
-							$('#mycomments').val(snapshot.val());
+						    console.log(snapshot.val().comments);
+						    if (snapshot.val().comments !==null){
+								$('#mycomments').val(snapshot.val().comments);
+							}
+							
+							if (snapshot.val().sentiment !==null){
+    							$('#points').val(snapshot.val().sentiment);
+							}
 						} else {
 						  console.log('No comments yet from you');
 						}
@@ -266,6 +273,7 @@ function updateVideo(){
 //		videojson = JSON.parse( JSON.stringify(videojson ) );
 		console.log(uid);
 		mycomments = $('#mycomments').val();
+
 //		sentiment = "test"; //for now
 		obj = {"comments": mycomments, "sentiment": grade };
 		uRef.set(obj);
@@ -517,6 +525,7 @@ function getVideoJson(videoid){
 		item = snap.val();
 		console.log(snap.val());
 		$('#notes').val(snap.val().snippet.description);
+
 	    createNotesArray();
 		//get previous iterations of this.  
 		title = snap.val().snippet.description.split('\n')[0];
