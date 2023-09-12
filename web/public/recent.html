@@ -2,20 +2,45 @@
 <html>
 
 <head>
+
   <meta charset="UTF-8">
+
   <title>Recent recordings</title>
 
 </head>
 
+    <!-- update the version number as needed -->
+    <script defer src="/__/firebase/9.19.1/firebase-app-compat.js"></script>
+    <!-- include only the Firebase features as you need -->
+    <script defer src="/__/firebase/9.19.1/firebase-auth-compat.js"></script>
+    <script defer src="/__/firebase/9.19.1/firebase-database-compat.js"></script>
+    <script defer src="/__/firebase/9.19.1/firebase-firestore-compat.js"></script>
+    <script defer src="/__/firebase/9.19.1/firebase-functions-compat.js"></script>
+    <script defer src="/__/firebase/9.19.1/firebase-messaging-compat.js"></script>
+    <script defer src="/__/firebase/9.19.1/firebase-storage-compat.js"></script>
+    <script defer src="/__/firebase/9.19.1/firebase-analytics-compat.js"></script>
+    <script defer src="/__/firebase/9.19.1/firebase-remote-config-compat.js"></script>
+    <script defer src="/__/firebase/9.19.1/firebase-performance-compat.js"></script>
+    <!-- 
+      initialize the SDK after all desired features are loaded, set useEmulator to false
+      to avoid connecting the SDK to running emulators.
+    -->
+    <script defer src="/__/firebase/init.js?useEmulator=true"></script>
+
+
 <body translate="no" >
   <br>
     <div id="recent"></div>
-	
+	<div id="timeline"></div>
   
 <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 
   <script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js'></script>
+
+		<script src='https://apis.google.com/js/platform.js' async defer></script>
+
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
   <script>
   //firebase deploy to deploy this.  
   //usage:
@@ -31,32 +56,168 @@ var title = '';
 //then restrict the key if needed to your site and youtube data API.  
 webkey = 'AIzaSyCBCSiFLWm-3oBKvnS-yaHtU5QcFfRtZ_E';
 
+      document.addEventListener('DOMContentLoaded', function() {
+        const loadEl = document.querySelector('#load');
+        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
+        // // The Firebase SDK is initialized and available here!
+        //
+         firebase.auth().onAuthStateChanged(user => { 
+		   if (user) {
+			// User is signed in, see docs for a list of available properties
+			// https://firebase.google.com/docs/reference/js/firebase.User
+			
+			uid = user.uid;
+				// ...
+			  } else {
+				// User is signed out
+				// ...
+			  }
+			});
+        // firebase.database().ref('/path/to/ref').on('value', snapshot => { });
+        // firebase.firestore().doc('/foo/bar').get().then(() => { });
+        // firebase.functions().httpsCallable('yourFunction')().then(() => { });
+        // firebase.messaging().requestPermission().then(() => { });
+        // firebase.storage().ref('/path/to/ref').getDownloadURL().then(() => { });
+        // firebase.analytics(); // call to activate
+        // firebase.analytics().logEvent('tutorial_completed');
+        // firebase.performance(); // call to activate
+        //
+        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
 
-function searchRecent(){
-	//use title
- $.getJSON('https://www.googleapis.com/youtube/v3/search?maxResults=30&channelId=' + channelId + '&order=date&key=' + webkey + '&part=snippet',function(data){
-      if (typeof(data.items[0]) != "undefined") {
-	      for (i=0; i<data.items.length; i++){
-            console.log('found  ' + data.items[i].snippet);
-			var mydiv = document.getElementById("recent");
-			var aTag = document.createElement('a');
-			aTag.setAttribute('href',"https://misterrubato.com/analyze.html?video=" + data.items[i].id.videoId);
-			const t = data.items[i].snippet.description;
-			console.log(t);
-			aTag.innerText = t;
-			mydiv.appendChild(aTag);
-			var br = document.createElement("br");
-			mydiv.appendChild(br);
-		  }
-       } 
-	   else {
-        console.log('no videos returned');
-       }   
-    });
-	
+        try {
+          let app = firebase.app();
+          let features = [
+            'auth', 
+            'functions',
+            'storage', 
+			'database',
+          ].filter(feature => typeof app[feature] === 'function');
+          loadEl.textContent = `Firebase SDK loaded with ${features.join(', ')}`;
+		  
+		//use this as the base, and then we can write an update to whatever.  
+		//we can also use this, if the user is logged in, get that info instead.  
+			 var provider = new firebase.auth.GoogleAuthProvider();
+
+			firebase.auth()
+			  .signInWithPopup(provider)
+			  .then((result) => {
+				/** @type {firebase.auth.OAuthCredential} */
+				var credential = result.credential;
+
+				// This gives you a Google Access Token. You can use it to access the Google API.
+				var token = credential.accessToken;
+				// The signed-in user info.
+				var user = result.user;
+				//not sure why we need this, but the asynchronous check is not getting kicked off.  
+				   if (user) {
+					// User is signed in, see docs for a list of available properties
+					// https://firebase.google.com/docs/reference/js/firebase.User
+					
+						uid = user.uid;
+										
+					}
+				// IdP data available in result.additionalUserInfo.profile.
+				  // ...
+			  }).catch((error) => {
+				// Handle Errors here.
+				var errorCode = error.code;
+				var errorMessage = error.message;
+				// The email of the user's account used.
+				var email = error.email;
+				// The firebase.auth.AuthCredential type that was used.
+				var credential = error.credential;
+				// ...
+			  });
+
+		google.charts.load('current', {'packages':['corechart', 'timeline']});
+		
+		var vRef = firebase.database().ref('/misterrubato/');
+		if (typeof(uid) != "undefined" && uid !==null){
+		}
+		vRef.on("value", function(snapshot) {
+			console.log(snapshot.val());
+			videojson = snapshot.val();
+			getRecent(videojson);
+			drawChart();
+			
+		});
+		  
+        } catch (e) {
+          console.error(e);
+          loadEl.textContent = 'Error loading the Firebase SDK, check the console.';
+        }
+      });
+
+
+function getRecent(videojson){
+    vids = [];
+    for (i=0; i<videojson.items.length; i++){
+	    //sort by date and list in some way.  
+		//right now just like we do, most recent and least recent
+		var obj = videojson.items[i];
+		
+		vids.push(obj);
+	}
+
+	vids.sort(function(a, b) {
+	   datea = new Date(a.snippet.publishedAt);
+	   dateb = new Date(b.snippet.publishedAt);
+	   
+	  return dateb - datea;
+	});		
+	//now display the recent videos which are not published and which are published etc.  
+
+	var mydiv = document.getElementById("recent");
+	for (it=0; it< vids.length; it++){
+		var obj = vids[it];
+		var aTag = document.createElement('a');
+		aTag.setAttribute('href',"https://misterrubato.com/analyze.html?video=" + obj.id);
+		aTag.innerText = " " + it + obj.snippet.description;
+		aTag.innerText += " " + obj.snippet.publishedAt;
+		//should really add a date driven graphic representation.  
+		console.log(aTag);
+		mydiv.appendChild(aTag);
+		var br = document.createElement("br");
+		mydiv.appendChild(br);
+		
+	}
+    
 }
 
-searchRecent();
+
+function drawChart() {
+	var container = document.getElementById('timeline');
+	var chart = new google.visualization.LineChart(container);
+	var dataTable = new google.visualization.DataTable();
+	   
+       var options = {
+         title: 'Duration',
+         legend: 'none',
+         crosshair: { trigger: 'both', orientation: 'both' },
+         trendlines: {
+           0: {
+             type: 'polynomial',
+             degree: 3,
+             visibleInLegend: true,
+           }
+         }
+       };
+	   
+	dataTable.addColumn({ type: 'date', id: 'DatePlayed' });
+	dataTable.addColumn({ type: 'number', id: 'Duration' });
+	dataTable.addColumn({ type: 'string', id: 'Name' });
+	dataTable.addColumn({ type: 'number', id: 'Iterations' });
+	
+//	dataTable.addColumn({ type: 'number', id: 'Iteration#' });
+
+    viddata = [];	
+    for (i=0; i< vids.length; i++){
+	    obj = { 'datePlayed': vids[i].snippet.publishedAt, 'name': vids[i].snippet.title, 'iterations': getIterations(vids[i].snippet.description), 'duration': getDuration(vids[i].snippet.description) };
+		
+		dataTable.addRows(obj);
+    }
+	chart.draw(dataTable);
+}
 
   </script>
   

@@ -57,3 +57,23 @@ Slower transitions should be easiest.
 Need to update the "rating" bar if there is an existing value when the page is loaded.  
 OK this mundane thing done.  
 
+
+Fleeting idea, keys could contain instruction commands for the mouse pointer.  
+Mouse move, mouse click the commands we are used to.  
+Essentially we have a bed of 88 hotkeys which we have assigned a few to so far.  
+Even work in something like making inefficient screen control motions disonant by matching the keys well perhaps.  
+
+
+**record.py
+Cant ignore the screen off/on midi keys completely.  
+Something here not quite right still.  
+
+
+**stats.py
+Think I need a stats portion to the DB.  
+This way I can use in analyze, but do I really want to bulk things up for that purpose?  
+more stats
+published vs nonpublished
+ratings
+#words
+words/duration
