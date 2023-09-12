@@ -32,7 +32,9 @@
   <br>
     <div id="recent"></div>
 	<div id="timeline"></div>
-  
+  <br>
+      <p id="load">Firebase SDK Loading&hellip;</p>
+
 <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 
@@ -137,8 +139,8 @@ webkey = 'AIzaSyCBCSiFLWm-3oBKvnS-yaHtU5QcFfRtZ_E';
 		vRef.on("value", function(snapshot) {
 			console.log(snapshot.val());
 			videojson = snapshot.val();
-			getRecent(videojson);
-			drawChart();
+			vids = getRecent(videojson);
+			drawChart(vids);
 			
 		});
 		  
@@ -151,12 +153,11 @@ webkey = 'AIzaSyCBCSiFLWm-3oBKvnS-yaHtU5QcFfRtZ_E';
 
 function getRecent(videojson){
     vids = [];
-    for (i=0; i<videojson.items.length; i++){
+	for (const [key, value] of Object.entries(videojson)) {	
 	    //sort by date and list in some way.  
 		//right now just like we do, most recent and least recent
-		var obj = videojson.items[i];
 		
-		vids.push(obj);
+		vids.push(value);
 	}
 
 	vids.sort(function(a, b) {
@@ -181,18 +182,87 @@ function getRecent(videojson){
 		mydiv.appendChild(br);
 		
 	}
+	return vids;
+	
     
 }
 
 
-function drawChart() {
+//need JS to share some of this stuff.  
+function getSecsFromTime(time){
+	minsec = time.split(":");
+	if (minsec == time)
+	    return 0;
+//	console.log(+parseInt(minsec[0])*60 + +parseInt(minsec[1]));
+	return +parseInt(minsec[0])*60 + +parseInt(minsec[1]);
+	
+}
+
+function getIterations(desc, vidtime){
+    st = [];
+	et = [];
+	for (i=1; i< 20; i++){
+	    fnd = "TRIAL#" + i;
+		ts = desc.indexOf(fnd);
+		te = desc.indexOf(")", ts);
+		if (ts > -1)
+			st.push(getSecsFromTime(desc.substring(ts+(fnd.length)+2, te)));
+	}
+	for (i=1; i<20; i++){
+	    fnd = "END#" + i;
+		ts = desc.indexOf(fnd);
+		te = desc.indexOf(")", ts);
+		if (ts > -1)
+			et.push(getSecsFromTime(desc.substring(ts+(fnd.length)+2, te)));
+	}
+//    console.log(st);
+//	console.log(et);
+	//arrays of all iterations
+	return st.length;
+
+}
+
+function getDuration(desc, vidtime){
+    totaldur = 0;
+    st = [];
+	et = [];
+	for (i=1; i< 20; i++){
+	    fnd = "TRIAL#" + i;
+		ts = desc.indexOf(fnd);
+		te = desc.indexOf(")", ts);
+		if (ts > -1)
+			st.push(getSecsFromTime(desc.substring(ts+(fnd.length)+2, te)));
+	}
+	for (i=1; i<20; i++){
+	    fnd = "END#" + i;
+		ts = desc.indexOf(fnd);
+		te = desc.indexOf(")", ts);
+		if (ts > -1)
+			et.push(getSecsFromTime(desc.substring(ts+(fnd.length)+2, te)));
+	}
+
+	mydate = new Date(vidtime);
+	for (i=0; i< st.length; i++){
+	    if (et[i] !==null){
+			totaldur += et[i] - st[i];
+		}
+	}
+	//WORDS = 
+//	et[st.length-1] - totaldur
+    if (totaldur < 0)
+	    totaldur = 1;
+    return totaldur;
+}
+
+
+function drawChart(vids) {
 	var container = document.getElementById('timeline');
-	var chart = new google.visualization.LineChart(container);
+	var chart = new google.visualization.Timeline(container);
 	var dataTable = new google.visualization.DataTable();
 	   
        var options = {
          title: 'Duration',
-         legend: 'none',
+         legend: { position: 'labeled' },
          crosshair: { trigger: 'both', orientation: 'both' },
          trendlines: {
            0: {
@@ -203,19 +273,25 @@ function drawChart() {
          }
        };
 	   
-	dataTable.addColumn({ type: 'date', id: 'DatePlayed' });
-	dataTable.addColumn({ type: 'number', id: 'Duration' });
 	dataTable.addColumn({ type: 'string', id: 'Name' });
-	dataTable.addColumn({ type: 'number', id: 'Iterations' });
+	dataTable.addColumn({ type: 'date', id: 'DatePlayed' });
+	dataTable.addColumn({type: 'date', id: 'DateEnded' });
+//	dataTable.addColumn({ type: 'number', id: 'Iterations' });
+//	dataTable.addColumn({ type: 'number', id: 'Duration' });
 	
 //	dataTable.addColumn({ type: 'number', id: 'Iteration#' });
-
-    viddata = [];	
-    for (i=0; i< vids.length; i++){
-	    obj = { 'datePlayed': vids[i].snippet.publishedAt, 'name': vids[i].snippet.title, 'iterations': getIterations(vids[i].snippet.description), 'duration': getDuration(vids[i].snippet.description) };
-		
-		dataTable.addRows(obj);
+    myarray = [];
+    for (j=vids.length-1; j> -1; j--){
+		vid = vids[j];
+		mydate = new Date(vid.snippet.publishedAt);
+		tempdate = new Date(vid.snippet.publishedAt);
+		tempdate.setSeconds(tempdate.getSeconds()+getDuration(vid.snippet.description, vid.snippet.publishedAt));
+	    obj = [ vid.snippet.title, mydate, tempdate ];
+		//getIterations(vid.snippet.description, vid.snippet.publishedAt) ];
+		console.log(obj);
+		myarray.push(obj);
     }
+	dataTable.addRows(myarray);
 	chart.draw(dataTable);
 }
 

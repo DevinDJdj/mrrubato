@@ -77,3 +77,6 @@ published vs nonpublished
 ratings
 #words
 words/duration
+
+Need a .js file to share some of the javascript now getting to be enough helper functions what I am writing.  
+i.e. getSecsFromTime, etc.  getIterations, etc.  
