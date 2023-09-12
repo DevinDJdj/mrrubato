@@ -31,7 +31,7 @@
 <body translate="no" >
   <br>
     <div id="recent"></div>
-	<div id="timeline"></div>
+	<div id="timeline" style="height:500px;"></div>
   <br>
       <p id="load">Firebase SDK Loading&hellip;</p>
 
@@ -57,6 +57,11 @@ var title = '';
 //setup https://www.youtube.com/watch?v=3jZ5vnv-LZc
 //then restrict the key if needed to your site and youtube data API.  
 webkey = 'AIzaSyCBCSiFLWm-3oBKvnS-yaHtU5QcFfRtZ_E';
+
+
+	var dataTable;
+    var options;
+
 
       document.addEventListener('DOMContentLoaded', function() {
         const loadEl = document.querySelector('#load');
@@ -177,10 +182,11 @@ function getRecent(videojson){
 		aTag.innerText += " " + obj.snippet.publishedAt;
 		//should really add a date driven graphic representation.  
 		console.log(aTag);
-		mydiv.appendChild(aTag);
-		var br = document.createElement("br");
-		mydiv.appendChild(br);
-		
+		if (it < 3){
+			mydiv.appendChild(aTag);
+			var br = document.createElement("br");
+			mydiv.appendChild(br);
+		}		
 	}
 	return vids;
 	
@@ -255,15 +261,46 @@ function getDuration(desc, vidtime){
 }
 
 
+function readyHandler() {
+	var container = document.getElementById('timeline');
+    var labels = container.getElementsByTagName('text');
+    Array.prototype.forEach.call(labels, function(label) {
+//      if (label.getAttribute('fill') === options.timeline.rowLabelStyle.color) {
+        label.addEventListener('click', clickHandler);
+        label.setAttribute('style', 'cursor: pointer; text-decoration: underline;');
+//      }
+    });
+  }
+
+  function clickHandler(sender) {
+    var rowLabel = sender.target.textContent;
+    var dataRows = dataTable.getFilteredRows([{
+      column: 0,
+      value: rowLabel
+    }]);
+    if (dataRows.length > 0) {
+      var link = dataTable.getProperty(dataRows[0], 0, 'link');
+	  console.log(link);
+      window.open(link, '_blank');
+    }
+  }
+
+
 function drawChart(vids) {
 	var container = document.getElementById('timeline');
 	var chart = new google.visualization.Timeline(container);
-	var dataTable = new google.visualization.DataTable();
-	   
-       var options = {
+	dataTable = new google.visualization.DataTable();
+    options = {
+	     height: 500,
          title: 'Duration',
          legend: { position: 'labeled' },
+		 tooltip: {isHtml: true},
          crosshair: { trigger: 'both', orientation: 'both' },
+		 timeline: {
+			rowLabelStyle: {
+				color: '#3399cc'
+			}
+		 },
          trendlines: {
            0: {
              type: 'polynomial',
@@ -273,7 +310,9 @@ function drawChart(vids) {
          }
        };
 	   
+	   
 	dataTable.addColumn({ type: 'string', id: 'Name' });
+	dataTable.addColumn({type: 'string', role: 'tooltip', 'p': {'html': true}});
 	dataTable.addColumn({ type: 'date', id: 'DatePlayed' });
 	dataTable.addColumn({type: 'date', id: 'DateEnded' });
 //	dataTable.addColumn({ type: 'number', id: 'Iterations' });
@@ -286,13 +325,25 @@ function drawChart(vids) {
 		mydate = new Date(vid.snippet.publishedAt);
 		tempdate = new Date(vid.snippet.publishedAt);
 		tempdate.setSeconds(tempdate.getSeconds()+getDuration(vid.snippet.description, vid.snippet.publishedAt));
-	    obj = [ vid.snippet.title, mydate, tempdate ];
+		tag = { v: vid.snippet.title, p: { link: 'https://misterrubato.com/analyze.html?video=' + vid.id + '' }};
+		var aTag = document.createElement('a');
+		aTag.setAttribute('href',"https://misterrubato.com/analyze.html?video=" + vid.id);
+		aTag.innerText = " " + vid.snippet.description;
+		aTag.innerText += " " + vid.snippet.publishedAt;
+
+        console.log(tag);		
+	    obj = [ tag, vid.snippet.title, mydate, tempdate ];
 		//getIterations(vid.snippet.description, vid.snippet.publishedAt) ];
 		console.log(obj);
 		myarray.push(obj);
     }
 	dataTable.addRows(myarray);
-	chart.draw(dataTable);
+
+
+
+
+  google.visualization.events.addListener(chart, 'ready', readyHandler);
+  chart.draw(dataTable);
 }
 
   </script>
