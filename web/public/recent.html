@@ -30,8 +30,17 @@
 
 <body translate="no" >
   <br>
+  <table>
+    <tr><td>
     <div id="recent"></div>
+	</td></tr>
+    <tr><td width="100%" align="right">
 	<div id="timeline" style="height:500px;"></div>
+	</td></tr>
+    <tr><td width="100%" align="right">
+	<div id="durationchart" style="height:300px;"></div>
+	</td></tr>
+  </table>
   <br>
       <p id="load">Firebase SDK Loading&hellip;</p>
 
@@ -136,7 +145,7 @@ webkey = 'AIzaSyCBCSiFLWm-3oBKvnS-yaHtU5QcFfRtZ_E';
 				// ...
 			  });
 
-		google.charts.load('current', {'packages':['corechart', 'timeline']});
+		google.charts.load('current', {'packages':['corechart', 'timeline', 'bar']});
 		
 		var vRef = firebase.database().ref('/misterrubato/');
 		if (typeof(uid) != "undefined" && uid !==null){
@@ -146,6 +155,7 @@ webkey = 'AIzaSyCBCSiFLWm-3oBKvnS-yaHtU5QcFfRtZ_E';
 			videojson = snapshot.val();
 			vids = getRecent(videojson);
 			drawChart(vids);
+			drawDurationChart(vids);
 			
 		});
 		  
@@ -174,7 +184,8 @@ function getRecent(videojson){
 	//now display the recent videos which are not published and which are published etc.  
 
 	var mydiv = document.getElementById("recent");
-	for (it=0; it< vids.length; it++){
+	maxcnt = 3;
+	for (it=0; it< vids.length && it < maxcnt; it++){
 		var obj = vids[it];
 		var aTag = document.createElement('a');
 		aTag.setAttribute('href',"https://misterrubato.com/analyze.html?video=" + obj.id);
@@ -182,11 +193,9 @@ function getRecent(videojson){
 		aTag.innerText += " " + obj.snippet.publishedAt;
 		//should really add a date driven graphic representation.  
 		console.log(aTag);
-		if (it < 3){
-			mydiv.appendChild(aTag);
-			var br = document.createElement("br");
-			mydiv.appendChild(br);
-		}		
+		mydiv.appendChild(aTag);
+		var br = document.createElement("br");
+		mydiv.appendChild(br);
 	}
 	return vids;
 	
@@ -257,7 +266,7 @@ function getDuration(desc, vidtime){
 //	et[st.length-1] - totaldur
     if (totaldur < 0)
 	    totaldur = 1;
-    return totaldur;
+    return [totaldur, et[st.length-1] - totaldur];
 }
 
 
@@ -285,6 +294,59 @@ function readyHandler() {
     }
   }
 
+function drawDurationChart(vids){
+	dataTableDur = new google.visualization.DataTable();
+    options = {
+	     height: 500,
+		 isStacked: true,
+         title: 'Duration',
+         legend: { position: 'bottom' },
+		 tooltip: {isHtml: true},
+         crosshair: { trigger: 'both', orientation: 'both' },
+		 timeline: {
+			rowLabelStyle: {
+				color: '#3399cc'
+			}
+		 }
+       };
+
+	dataTableDur.addColumn({ type: 'date', id: 'DatePlayed' });
+//	dataTable.addColumn({ type: 'string', id: 'Name' });
+	dataTableDur.addColumn({type: 'number', id: 'Duration' });
+	dataTableDur.addColumn({type: 'number', id: 'Words Duration' });
+	dataTableDur.addColumn({type: 'number', id: 'Aggregated Duration' });
+
+    myarray = [];
+	//lets limit the number we display.  
+	totalcnt = 100;
+	prevDate = null;
+	aggDuration = 0;
+    for (j=0; j<vids.length && j< totalcnt; j++){
+//    for (j=vids.length-1; j> -1; j--){
+		vid = vids[j];
+		mydate = new Date(vid.snippet.publishedAt);
+		if (prevDate === null)
+		    prevDate = mydate;
+		if (mydate.getDate() != prevDate.getDate()){
+			aggDuration = 0;
+		}
+		duration = getDuration(vid.snippet.description, vid.snippet.publishedAt);
+		aggDuration += duration[0];
+		
+
+	    obj = [ mydate, duration[0], duration[1], aggDuration ];
+		//getIterations(vid.snippet.description, vid.snippet.publishedAt) ];
+		console.log(obj);
+		myarray.push(obj);
+		prevDate = mydate;
+    }
+	dataTableDur.addRows(myarray);
+
+	var container = document.getElementById('durationchart');
+	var chart = new google.visualization.SteppedAreaChart(container);
+	chart.draw(dataTableDur);
+
+}
 
 function drawChart(vids) {
 	var container = document.getElementById('timeline');
@@ -292,7 +354,7 @@ function drawChart(vids) {
 	dataTable = new google.visualization.DataTable();
     options = {
 	     height: 500,
-         title: 'Duration',
+         title: 'Timeline',
          legend: { position: 'labeled' },
 		 tooltip: {isHtml: true},
          crosshair: { trigger: 'both', orientation: 'both' },
@@ -320,11 +382,14 @@ function drawChart(vids) {
 	
 //	dataTable.addColumn({ type: 'number', id: 'Iteration#' });
     myarray = [];
-    for (j=vids.length-1; j> -1; j--){
+	//lets limit the number we display.  
+	totalcnt = 100;
+    for (j=0; j<vids.length && j< totalcnt; j++){
+//    for (j=vids.length-1; j> -1; j--){
 		vid = vids[j];
 		mydate = new Date(vid.snippet.publishedAt);
 		tempdate = new Date(vid.snippet.publishedAt);
-		tempdate.setSeconds(tempdate.getSeconds()+getDuration(vid.snippet.description, vid.snippet.publishedAt));
+		tempdate.setSeconds(tempdate.getSeconds()+getDuration(vid.snippet.description, vid.snippet.publishedAt)[0]);
 		tag = { v: vid.snippet.title, p: { link: 'https://misterrubato.com/analyze.html?video=' + vid.id + '' }};
 		var aTag = document.createElement('a');
 		aTag.setAttribute('href',"https://misterrubato.com/analyze.html?video=" + vid.id);
@@ -343,7 +408,9 @@ function drawChart(vids) {
 
 
   google.visualization.events.addListener(chart, 'ready', readyHandler);
-  chart.draw(dataTable);
+  chart.draw(dataTable, options);
+
+
 }
 
   </script>

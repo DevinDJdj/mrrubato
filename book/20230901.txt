@@ -80,3 +80,64 @@ words/duration
 
 Need a .js file to share some of the javascript now getting to be enough helper functions what I am writing.  
 i.e. getSecsFromTime, etc.  getIterations, etc.  
+
+**recent.html
+Need this timeline to be sortable by name.  
+Also why cant we select each item in the chart instead of just the header.  
+
+analyze.html
+need to adjust for bad data.  If we dont have iterations.  
+analyze.py doesnt need as much check logic.  
+
+
+Make a live meeting/chat for each Song Name
+Can we generate that.  
+Also this could be a review of what was discussed.  
+All past timelines discussion.  
+
+
+**sidebar
+faa file a notam
+Flag on the main tether and beacons on the other tethers.  
+Helicopter traffic.  
+RF FCC oversight.  
+Wifi payload - standard doesnt work well.  
+
+
+
+
+How can we make the piano speak.  
+I think it may work to memorize combinations of two notes which represent Kanji.  
+We should investigate how to organize this.  
+But once you associate a concept with a sound and/or image, this is progress.  
+So take the middle of the keyboard and have 50*49 Kanji represented by two note combinations.  
+Single notes can be letters.  
+This is very crude, but I think if we use Kanji, this may work in some way.  
+
+Also when displaying screen, have a map of notes -> commands.  
+Control the computer screen with the hotkeys (notes).  
+Maybe we can have both the bed of 50, and then 20 or so hotkeys at one end, probably the lower end, as we 
+dont really need to distinguish these as there is visual confirmation as well.  
+We should also display the Kanji once we play the note.  
+
+So several maps 
+ONE NOTE -> Letter
+TWO NOTE -> Kanji
+This mapping is key though. 
+Perhaps use kanji components to decide which two keys.  
+Have to associate key/distance in a meaningful way.  
+Most should be playable by one hand.  
+Perhaps 3 note?  
+One hand 15*14*13 maybe enough?  
+
+Anyway
+Other map is for the controls.  
+Move up/down, switch to typing, etc.  
+
+So essentially a MIDI file will be able to represent a presentation control series of events.  
+Doable?  yes.  
+Intriguing? yes.  
+Will people adapt to this?  probably not.  
+Have to find something that makes it significantly easier than mouse/keyboard or have some significant advantage.  
+
+
