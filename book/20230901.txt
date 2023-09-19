@@ -141,3 +141,24 @@ Will people adapt to this?  probably not.
 Have to find something that makes it significantly easier than mouse/keyboard or have some significant advantage.  
 
 
+**recent.html
+Should track repository commit activity as well.  
+
+
+**config.py
+ok, so we have a start here, look at timestep.py for example how to use.  
+Lets try to decrease config files necessary where it makes sense.  
+From now on just use this config file.  
+
+worth doing?
+https://realpython.com/generative-adversarial-networks/
+https://www.tensorflow.org/tutorials/generative/dcgan
+
+Maybe CGAN can be used, try to generate another trial based on the 
+previous video inputs and the previous iterations.  
+Will this actually work?  
+
+Lets just do with the midi data first.  
+
+So each iteration is train/test.  
+

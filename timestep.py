@@ -13,8 +13,8 @@ import httplib2
 # adding Folder_2/subfolder to the system path
 sys.path.insert(0, 'c:/devinpiano/')
  
- 
-import cred
+import config 
+#import cred
 #import record
 
 import pandas as pd
@@ -86,8 +86,8 @@ def get_authenticated_service(args):
     http=credentials.authorize(httplib2.Http()))
 
 
-channel_id = cred.CHANNELID
-api_key = cred.APIKEY
+channel_id = config.cfg['youtube']['CHANNELID']
+api_key = config.cfg['youtube']['APIKEY']
 def get_channel_stat() -> dict:
     url = f'https://www.googleapis.com/youtube/v3/channels?part=statistics&id={channel_id}&key={api_key}'
 
@@ -203,7 +203,7 @@ if __name__ == '__main__':
     #retrieve, if they are different, update in youtube.  
     
     
-    adminuid = cred.ADMIN_USERID
+    adminuid = config.cfg['youtube']['ADMIN_USERID']
     
     #need to sort by date.  
     for key, item in ref:
