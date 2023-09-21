@@ -39,10 +39,13 @@ class MyMsg:
     self.startmsg = None
     self.prevmsg = prev
     self.pedal = pedal
+    #this is previous ngram
     self.ngrams = [0]*MAXNGRAM #keep this integer so I can use standard ML functions, but not great right now.  
+    self.fngrams = [0]*MAXNGRAM
     self.ngramstensor = None #ngrams pytorch
     self.ngramsp = None #P*P methodology
     self.nextmsg = None
+    self.signs = 0
     
     
   def getSeqNGram(self, words):
@@ -59,14 +62,55 @@ class MyMsg:
     print(words)
     print(indexes)
     return ret
-    
-  def getNGram(self, words):
+
+#thought of this twice, deserves a new name
+  def getPGram(self, words):
+#  def getNGram(self, words):
     #get relative ngram from all entries
     #primorial representing all of the 
     ret = 1
     for w in words:
-      ret *= getprime(w)
+      ret *= w
     return ret
+
+  def getSigns(self, words):
+    bits = 0
+    for w in words:
+      tmp = 0
+      if w > 0:
+        tmp = 1
+      bits = bits << 1
+      bits |= tmp
+    return bits
+    
+  def getWords(self):
+    i = 0
+    words = []
+    i = i+1
+    while (i < MAXNGRAM):
+      temp = self.ngrams[i] - self.ngrams[i-1]
+      temp = abs(temp)
+      #0, 1, -1, 2, -2, etc map.  
+      #we need a negative property and positive property here.  
+      #otherwise there are several possibilities.  
+      #this reminds me of some nice mathematics like Bernouli
+      #for now, lets just leave as is, we have one of 
+      #several possibilties ngram
+      #3, 1, 2, 4, -3, -1, 2, 4
+      #4PICK2+4PICK4+4PICK0
+      #ugh, defining this relationship why anyway.  
+      #for now live with the multiple possibilities?  
+      #we need this with all the signs.  
+      #thats all.  
+      if (self.ngrams[i] - self.ngrams[i-1] > 0):
+        temp = temp * 2 - 1
+      else:
+        temp = -temp * 2
+      
+      p = getprime(temp)
+      words.append(p)
+      i = i+1
+    return words
     
   def print(self, iteration, song, group, videoid, midilink):
     shortenedmidilink = midilink.split('/')[-1]
@@ -90,12 +134,14 @@ class MyMsg:
         temp = temp * 2 - 1
       else:
         temp = -temp * 2
-      words.append(temp)
+      p = getprime(temp)
+      words.append(p)
+#      words.append(temp)
       i = i+1
     
     #NGRAM, 
     #use approximate calculated time here.  
-    print('{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11}'.format(str(self.startmsg.note), str(totalmovement), str(abstotalmovement), str(self.getNGram(words)), str(self.getSeqNGram(words)), str(iteration), song, group, videoid, str(self.startmsg.currentTime), str(self.currentTime), shortenedmidilink))
+    print('{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11}'.format(str(self.startmsg.note), str(totalmovement), str(abstotalmovement), str(self.getPGram(words)), str(self.getSeqNGram(words)), str(iteration), song, group, videoid, str(self.startmsg.currentTime), str(self.currentTime), shortenedmidilink))
     
 class NgramModel(nn.Module):
     def __init__(self, vocb_size, context_size, n_dim):

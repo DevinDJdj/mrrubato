@@ -1,0 +1,50 @@
+Need to do more programming.  
+
+Need UI to go through the notes for each item.  
+**xxxx
+take all these comments by file, and then we need to have some sort of way to indicate completion.  
+Match up the comment with completion or at least progress. 
+
+Lots of comments that just get forgotten. 
+automate the addition to latest book.txt
+When we complete something mark as - done in the original and also in the new book.txt
+Must be some github tool to do this easier.  
+
+
+**analyze.py
+First find matches across iterations. 
+What sequence of notes can we find that is the same.  
+Then we can expand this.  
+
+Map -> start note -> relative N-Gram -> iteration / time in piece.  
+
+Create this structure.  
+Then we can do something with it.  
+Add to this function
+->getNgrams()
+
+Can have relative and non-relative
+Map -> relative N-Gram -> iteration / time in piece
+
+make the calculation for single harmonic word.  
+Already have a place for this ngramsp
+
+we should really have mathematical relationship between 
+actual frequency and ngramsp.  
+But right now hard to figure out how to do this.  
+
+So for now mathematical relationship between ngramsp word and midi representation is ok.  
+
+**sidebar
+Word - This reminds me of old windows programming, and when things first were starting we represented function parameters as "words".  
+
+
+I think we need future relationship as well.  
+So not just prevmsg, but future msg as well.  
+Create this array.  
+
+
+Need to test this later.  
+printNgrams
+
+

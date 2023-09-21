@@ -163,13 +163,13 @@ def getPlaylistFromGrade(grade):
     if grade == "test":
         return ""
     if int(grade) > 8:
-        return cred.GREAT_PLAYLIST
+        return config.cfg['youtube']['GREAT_PLAYLIST']
     elif int(grade) > 4:
-        return cred.GOOD_PLAYLIST
+        return config.cfg['youtube']['GOOD_PLAYLIST']
     elif int(grade) == 0:
         return ""
     else:
-        return cred.OK_PLAYLIST
+        return config.cfg['youtube']['OK_PLAYLIST']
         
 if __name__ == '__main__':
     args = argparser.parse_args()
@@ -230,6 +230,7 @@ if __name__ == '__main__':
             if (privacystatus=="unlisted" and pDate.date() > mydate):
                 refpl = db.reference(f'/misterrubato/' + videoid + '/playlist')
                 #if this exists, return
+                #probably not hte best way to do this.  
                 if refpl.get() is None and "comments" in item:
                     if adminuid in item["comments"]:
                         grade = item["comments"][adminuid]["sentiment"]
@@ -258,6 +259,27 @@ if __name__ == '__main__':
                                 add_video_to_playlist(videoid, pl, args)
                                 mystatus = {}         
                                 mystatus['privacyStatus'] = "public"
+                                
+                                youtube = get_authenticated_service(args)
+                                videos_update_response = youtube.videos().update(
+                                    part='status',
+                                    body=dict(
+                                      status=mystatus,
+                                      id=videoid
+                                    )).execute()            
+                                print(videos_update_response)
+                            
+                            else:
+                                item['status']['privacyStatus'] = "private"
+                                vref = db.reference(f'/misterrubato/' + videoid)
+                                vref.set(item)
+                                data = {'playlist':pl,'wordsplaylist':plwords}
+                                refpl.set(data)
+                                if plwords !="":
+                                    add_video_to_playlist(videoid, plwords, args)
+                                add_video_to_playlist(videoid, pl, args)
+                                mystatus = {}         
+                                mystatus['privacyStatus'] = "private"
                                 
                                 youtube = get_authenticated_service(args)
                                 videos_update_response = youtube.videos().update(

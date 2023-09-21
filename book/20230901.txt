@@ -64,7 +64,7 @@ Essentially we have a bed of 88 hotkeys which we have assigned a few to so far.
 Even work in something like making inefficient screen control motions disonant by matching the keys well perhaps.  
 
 
-**record.py
+**record.py - Done
 Cant ignore the screen off/on midi keys completely.  
 Something here not quite right still.  
 
@@ -94,6 +94,8 @@ Make a live meeting/chat for each Song Name
 Can we generate that.  
 Also this could be a review of what was discussed.  
 All past timelines discussion.  
+how to embed google meeting.  
+https://developers.google.com/meet/live-sharing/guides/overview
 
 
 **sidebar
@@ -143,6 +145,13 @@ Have to find something that makes it significantly easier than mouse/keyboard or
 
 **recent.html
 Should track repository commit activity as well.  
+https://docs.github.com/en/free-pro-team@latest/rest/activity/events?apiVersion=2022-11-28#list-repository-events
+curl -L \
+  -H "Accept: application/vnd.github+json" \
+  -H "Authorization: Bearer <YOUR-TOKEN>" \
+  -H "X-GitHub-Api-Version: 2022-11-28" \
+  https://api.github.com/repos/OWNER/REPO/events
+https://api.github.com/repos/DevinDJdj/mrrubato/events
 
 
 **config.py
@@ -161,4 +170,6 @@ Will this actually work?
 Lets just do with the midi data first.  
 
 So each iteration is train/test.  
+Essentially we need a sequential Convolution for the midi, shouldnt be that much different than what is done for graphics.  
+Each note is an entity.  
 

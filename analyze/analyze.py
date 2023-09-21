@@ -54,6 +54,9 @@ EMBEDDING_DIM = 10
 import mymidi
 
 
+mappgram = {} #map [ SIGNGRAM ] [PGRAM]
+mapsgram = {} #map [seqngram][pgram]
+
 channel_id = cred.CHANNELID
 api_key = cred.APIKEY
 def get_channel_stat() -> dict:
@@ -345,7 +348,10 @@ def printNgrams(t, title, GroupName, videoid, midilink):
                 if (on > 0 and it > -1):  
                     prevTime = currentTime
                 on = isOn(mymsg.note, on)
-
+                
+    #this should have something
+    print(mappgram)
+    
 def getNgrams(t):
     it = -1
     on = 0
@@ -379,6 +385,13 @@ def getNgrams(t):
                 it = getIteration(currentTime, starttimes, endtimes)
                 i = 0
                 tempmsg = mymsg
+                while (i < mymidi.MAXNGRAM and tempmsg.nextmsg is not None):
+                    tempmsg = tempmsg.nextmsg
+                    mymsg.fngrams[i] = tempmsg.note
+                    i = i+1
+
+                i = 0
+                tempmsg = mymsg
                 while (i < mymidi.MAXNGRAM and tempmsg.prevmsg is not None):
                     tempmsg = tempmsg.prevmsg
                     i = i+1
@@ -394,7 +407,25 @@ def getNgrams(t):
                 #for now 2 seconds is max time
                 rythmdata[it][getNoteQuant(mymsg.prevmsg.msg.time)][getNoteQuant(mymsg.msg.time)] += 1
                 
+
                 #for now return the random note based on probability distribution from this array
+                wrds = mymsg.getWords()
+                #print(wrds)
+                pgram = mymsg.getPGram(wrds)
+                seqgram = mymsg.getSeqNGram(wrds)
+                signs = mymsg.getSigns(wrds) 
+                
+                #here can use seqgram as well.  
+                #try to find the patterns.  
+                #what sequences are the same, probably find more about playing quality than anything intrinsic to the piece.  
+                if signs not in mappgram:
+                    mappgram[signs] = {}
+                mappgram[ signs ] [ pgram ]  = mymsg
+                
+                if seqgram not in mapsgram:
+                    mapsgram[seqgram] = {}
+                mapsgram[ seqgram ] [ pgram ]  = mymsg
+
             if (mymsg.msg.type=='note_on'):
                 if (on > 0 and it > -1):  
                     prevTime = currentTime
