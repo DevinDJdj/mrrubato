@@ -48,3 +48,37 @@ Need to test this later.
 printNgrams
 
 
+match up mappgram and mapsgram
+Add relative time into the mymsg.  
+Add totalduration etc. as well what we are calculating in the print.  
+pedal info.  
+Want to use this.  
+For now look at relative time and the pgram/sgram to identify the same location.  
+We can use this for splicing as well as analyzing progress.  
+Create some UI component between the images to connect the same locations.  
+Should be fairly easy.  
+Maybe just create a simple image to go between the piano rolls.  
+To visualize what location we are at.  
+
+OPENAI go ahead and utilize the last iteration words to generate an image when we play.  
+See what that looks like if anything.  
+We really need a better transcription API than google transcribe, it misses too much.  
+
+eventually this will be the next iteration.  
+We should have some visualization of the last midi here as well.  
+And this should be recording while playing.  
+But that should not be main thing.  Put that over my face perhaps.  
+So the previous visualization will be generated.  
+For now just take the previous images.  
+See if we can make this work.  
+
+Can we ingest a video into OBS when we start?  
+
+Oogonhi (in japaese)
+a+b/a = a/b
+
+1920 = a+b
+1920 - 1080 = 840
+a+b/1080 = 1080/840
+1080/1920
+
