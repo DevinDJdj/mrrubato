@@ -381,6 +381,13 @@ if __name__ == '__main__':
         
 #    print(cred.MY_PLAYLIST)
 #    add_video_to_playlist('7Aadr9Fmftk', cred.MY_PLAYLIST, args)
+    temp = "C:\\Temp\\prevIteration.mkv"
+    cmd = f'del "{temp}"'
+     
+    # Copy File
+    os.system(cmd)
+    print("delete previousIteration")
+
 
     databaseURL = "https://misterrubato-test-default-rtdb.firebaseio.com/"
     if (args.rerun == "true"):
@@ -634,6 +641,7 @@ if __name__ == '__main__':
 #call again to run the any post-analysis like finger locations.  
     subprocess.call('python ./analyze/analyze.py --title "' + args.title + '"')
     
+
     
     #cant automate this, as it will become public.  
 #   if (len(transcribe_file) > 500):
