@@ -359,6 +359,7 @@ def get_latest_file():
     print(latest_file)
     return latest_file
 
+
 if __name__ == '__main__':
 
     argparser.add_argument("--rerun", help="Rerun upload",
@@ -378,7 +379,7 @@ if __name__ == '__main__':
     if (args.title == "New Upload"):
         args.title = args.description
         
-    print(cred.MY_PLAYLIST)
+#    print(cred.MY_PLAYLIST)
 #    add_video_to_playlist('7Aadr9Fmftk', cred.MY_PLAYLIST, args)
 
     databaseURL = "https://misterrubato-test-default-rtdb.firebaseio.com/"
@@ -572,7 +573,9 @@ if __name__ == '__main__':
                         keyboard.release(Key.shift)
                         print("Stop Recording" + str(temptime))
                         break
-                    lastnote = msg.note
+                        
+                    if not ignorelast:
+                        lastnote = msg.note
                     
                 if hasattr(msg, 'time') and not ignorelast:
 #                    msg.time = time.time()-starttime-delay

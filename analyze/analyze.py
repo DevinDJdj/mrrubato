@@ -9,6 +9,7 @@
 
 import sys
  
+import datetime
 # adding Folder_2/subfolder to the system path
 sys.path.insert(0, 'c:/devinpiano/')
 
@@ -111,6 +112,7 @@ def search(title, limit: int=50) -> dict:
     
     ref = db.reference(f'/misterrubato')
     snapshot = ref.order_by_child('snippet/title').equal_to(title).get()
+
     return snapshot.items()
 
 #    channelId = "UC4dK3RpqBq2JpIkRmQn6HOA"
@@ -737,17 +739,19 @@ if __name__ == '__main__':
     
 
     data = search(title)
-    print(data)
+#    print(data)
 
     iterations = []    
     totalidx = 0
     latestvideo = None
+    latestvideoitem = None
     latestvideoDate = None
+    latestmidilink = None
     for key, item in reversed(data):
 #    for item in reversed(data["items"]):
 #    for item in data['items']:
 #        print(item["id"])
-        print(item)
+#        print(item)
         if (item["kind"] == "youtube#video"):
             videoid = item["id"]
 #            url = f'https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,status\
@@ -760,9 +764,11 @@ if __name__ == '__main__':
             totalduration = item['contentDetails']['duration']
             GroupName = ""
             publishedDate = item['snippet']['publishedAt']
-            if (latestvideo is None or publishedDate > latestvideoDate):
+            date = datetime.datetime.strptime(publishedDate, '%Y-%m-%dT%H:%M:%SZ')
+            if (latestvideo is None or date > latestvideoDate):
                 latestvideo = videoid
-                latestvideoDate = publishedDate
+                latestvideoDate = date
+                print(date)
             title = item['snippet']['title']
             privacystatus = item['status']['privacyStatus']
             gs = title.find("(")
@@ -793,12 +799,18 @@ if __name__ == '__main__':
                 midie = desc.find("\n", midis)
                 midilink = desc[midis+5:midie]
                 midisize = printMidi(midilink, title, GroupName, videoid)
+                if (videoid==latestvideo):
+                    latestmidilink = midilink
+                    latestvideoitem = item
+#                    print(latestvideoitem)
+                    
                 fingers = desc.find("FINGERS:")
                 if (fingers > 0):
                     print("already has fingers")
                 else:
                     #just update DB for now.  Then timestep.py will update Youtube info
                     if (args.skipfinger !="true"):
+                        
                         cmd = ["python", "./analyze/fingertest.py", "--video", videoid, "--midi", midilink]
                         print(cmd)
 #                        os.spawn("python", cmd, no_wait=True)
@@ -823,9 +835,34 @@ if __name__ == '__main__':
 #                        print(mydata)
                     iterations.append(mydata)
     
-    if (latestvideo is not None):
+    #this is same check as latestmidilink
+    if (latestvideoitem is not None):
         #open misterrubato.com/analyze.html?video=
         #autoraise=False, sick of waiting for this analyze.py to finish.  
         webbrowser.open('https://www.misterrubato.com/analyze.html?video=' + latestvideo, autoraise=False)
+        item = latestvideoitem
+        #here we should copy the existing video if it exists to previousIteration
+        midilink = latestmidilink.replace("\r", "")
+        midiname = os.path.basename(midilink)
+        midiname = os.path.splitext(midiname)[0]
+        midiname = midiname.replace('%20', ' ')
+        inputpath = 'C:\\Users\\devin\\Videos\\'
+        sys.path.insert(0, 'C:\\Users\\devin\\Videos\\')
+        #mkv saved locally already
+        print(midiname)
+        path = 'c:\\Temp\\'
+        if not os.path.exists(os.path.join(inputpath , midiname + ".mkv")):
+            print("Skipping Previous Iteration " + midiname)
+        else:
+            temp = inputpath + midiname + ".mkv"
+            tempout = path + "prevIteration.mkv"
+            #copy to previousIteration
+            cmd = f'copy "{temp}" "{tempout}"'
+             
+            # Copy File
+            os.system(cmd)
+            print("copy to previousIteration")
+            
+        
     print(iterations)
     
