@@ -48,3 +48,61 @@ Need to test this later.
 printNgrams
 
 
+match up mappgram and mapsgram
+Add relative time into the mymsg.  
+Add totalduration etc. as well what we are calculating in the print.  
+pedal info.  
+Want to use this.  
+For now look at relative time and the pgram/sgram to identify the same location.  
+We can use this for splicing as well as analyzing progress.  
+Create some UI component between the images to connect the same locations.  
+Should be fairly easy.  
+Maybe just create a simple image to go between the piano rolls.  
+To visualize what location we are at.  
+
+OPENAI go ahead and utilize the last iteration words to generate an image when we play.  
+See what that looks like if anything.  
+We really need a better transcription API than google transcribe, it misses too much.  
+
+eventually this will be the next iteration.  
+We should have some visualization of the last midi here as well.  
+And this should be recording while playing.  
+But that should not be main thing.  Put that over my face perhaps.  
+So the previous visualization will be generated.  
+For now just take the previous images.  
+See if we can make this work.  
+
+Can we ingest a video into OBS when we start?  
+
+Oogonhi (in japanese)
+a+b/a = a/b
+
+1920 = a+b
+1920 - 1080 = 840
+a+b/1080 = 1080/840
+1080/1920
+
+
+**analyze.py
+Copy prev iteration to PreviousIteration on analyze.py
+
+**analyze.html
+Make the canvas between iterations and match up here, follow along with the playback of the recording.  
+Not sure if easier to make the piano roll one big canvas or use separate.  
+highlight the active section as it plays.  
+
+Use when analyzing also when recording perhaps do playback without sound for now.  
+
+
+How do we shorten audio without distortion?  
+Lets aim for getting the same sound as a Sped up midi file.  
+Why are we not getting the same quality sound when we speed up audio?  
+
+
+**record.py 
+probably need a screen control file separated.  
+Not sure what to separate.  
+Right now the ignoring of the screen display/hide messages though is not good.  
+We do want to save this data.  
+just make a separate control track for now and use absolute time here.  
+

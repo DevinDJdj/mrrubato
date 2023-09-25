@@ -112,6 +112,10 @@ class MyMsg:
       i = i+1
     return words
     
+  def simpleprint(self):
+    print('{0},{1},{2},{3}'.format(str(self.note), str(self.prevmsg), str(self.nextmsg), str(self.currentTime)))
+    
+    
   def print(self, iteration, song, group, videoid, midilink):
     shortenedmidilink = midilink.split('/')[-1]
     i = 0
