@@ -406,8 +406,10 @@ if __name__ == '__main__':
 #    mid.ticks_per_beat = 1000000
 #    mid.tempo = 60
     track = MidiTrack()
+    controltrack = MidiTrack()
 #    track.append(MetaMessage('set_tempo', tempo=100000, time=0))
     mid.tracks.append(track)
+    #mid.tracks.append(controltrack)
     test = """
     track.append(Message('program_change', program=12, time=0))
     track.append(Message('note_on', note=64, velocity=64, time=32))
@@ -440,6 +442,7 @@ if __name__ == '__main__':
     test = """
     """
     lasttick = 0
+    controltick = 0
     #mido doc is crap.  But this seems ok for now.  
     #the video and midi appear to match up pretty well.  But not perfect I think.  
     #at least enough to get the start times now.  
@@ -581,10 +584,20 @@ if __name__ == '__main__':
                         msg.time = 0
                     
                     lasttick = temptime - starttime - delay
-
+                else:
+                    #control track. 
+                    
+                    msg.time = temptime - starttime - delay - controltick #absolutetime                    
+                    msg.time = int(round(msg.time*1000))
+                    if msg.time < 0:
+                        msg.time = 0
+                    controltick = temptime - starttime - delay
                 #print(msg) #dont need all this info.  
                 if not ignorelast:
                     track.append(msg)
+                else:
+                    #control track
+                    controltrack.append(msg)
     
     
     

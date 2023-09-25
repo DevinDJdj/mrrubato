@@ -161,18 +161,19 @@ def getTrackTimes(mytrack):
     endtimes = []
     for mymsg in mytrack.notes:        
     #getting duplicates with multiple channels.  
-        if mymsg.msg.channel == 0:
-            if (on > 0):
-                currentTime += mymsg.msg.time
-            if (mymsg.msg.type == 'note_on'):
-                if mymsg.prevmsg is not None and (mymsg.prevmsg.note == 21 or mymsg.prevmsg.note == 108) and mymsg.msg.channel == 0:
-                    starttimes.append(currentTime)
-                if mymsg.nextmsg is not None and (mymsg.nextmsg.note == 22 or mymsg.nextmsg.note == 107) and mymsg.msg.channel == 0:
-                    endtimes.append(currentTime)
-            if (mymsg.msg.type == 'note_on'):
-                on = isOn(mymsg.msg.note, on)
+        if on > 0 and hasattr(mymsg.msg, 'time'):
+            currentTime += mymsg.msg.time
+        if (mymsg.msg.type == 'note_on' and mymsg.msg.channel==0):
+            if mymsg.prevmsg is not None and (mymsg.prevmsg.note == 21 or mymsg.prevmsg.note == 108) and mymsg.msg.channel == 0:
+                starttimes.append(currentTime)
+            if mymsg is not None and (mymsg.note == 22 or mymsg.note == 107) and mymsg.msg.channel == 0:
+                endtimes.append(currentTime)
+        if (mymsg.msg.type == 'note_on' and mymsg.msg.channel==0):
+            on = isOn(mymsg.msg.note, on)
                 
 
+#    mymsg.simpleprint()
+#    mymsg.prevmsg.simpleprint()
     return starttimes, endtimes
 
 def getTrackTime(track):
@@ -180,7 +181,7 @@ def getTrackTime(track):
     currentTime = 0
     on = 0
     for msg in track:        
-        if (on > 0):
+        if on > 0 and hasattr(msg, 'time'):
             currentTime += msg.time
         if (msg.type == 'note_on'):
             on = isOn(msg.note, on)
@@ -220,6 +221,14 @@ def getIteration(currentTime, starttimes, endtimes):
     print(endtimes)
     return -1
     
+
+def getRelativeTime(it, currentTime, starttimes, endtimes):
+    if it < 0:
+        return -1
+    reltime = 0
+    reltime = currentTime - starttimes[it]
+    reltime /= (endtimes[it] - starttimes[it])
+    return reltime
 
 def midiToImage(t, midilink):
     
@@ -295,16 +304,16 @@ def enhanceMidi(mid):
             if (msg.type=='note_on'):
                 if (on > 0):  
                     m = mymidi.MyMsg(msg, prevMsg, pedal)
-                    if (prevMsg is not None):
-                        prevMsg.nextmsg = m
-                        if (maxtime < msg.time):
-                            maxtime = msg.time
-                    prevMsg = m
                     m.msg.time += othertime
                     othertime = 0
                     t.notes.append(m)
+                    if (m.prevmsg is not None):
+                        m.prevmsg.nextmsg = m
+                        if (maxtime < msg.time):
+                            maxtime = msg.time
+                    prevMsg = m
                 on = isOn(msg.note, on)
-            elif hasattr(msg, 'time'):
+            elif on > 0 and hasattr(msg, 'time'):
                 othertime += msg.time
             if (msg.type=='control_change'):
                 #https://www.midi.org/specifications-old/item/table-3-control-change-messages-data-bytes-2
@@ -329,8 +338,10 @@ def printNgrams(t, title, GroupName, videoid, midilink):
     starttimes, endtimes = getTrackTimes(t)
     if (len(endtimes) > len(starttimes)):
         del endtimes[len(starttimes):]
-    if len(starttimes) != len(endtimes) or len(starttimes) < 1:
+    if (len(starttimes) != len(endtimes)) or len(starttimes) < 1:
         print("Incorrect data, please fix")
+        print(starttimes)
+        print(endtimes)
         return None, None
         
     else:    
@@ -360,8 +371,10 @@ def getNgrams(t):
     starttimes, endtimes = getTrackTimes(t)
     if (len(endtimes) > len(starttimes)):
         del endtimes[len(starttimes):]
-    if len(starttimes) != len(endtimes) or len(starttimes) < 1:
+    if (len(starttimes) != len(endtimes)) or len(starttimes) < 1:
         print("Incorrect data, please fix")
+        print(starttimes)
+        print(endtimes)
         return None, None
         
     else:    
@@ -420,11 +433,21 @@ def getNgrams(t):
                 #what sequences are the same, probably find more about playing quality than anything intrinsic to the piece.  
                 if signs not in mappgram:
                     mappgram[signs] = {}
-                mappgram[ signs ] [ pgram ]  = mymsg
+                if pgram not in mappgram[signs]:
+                    mappgram[ signs ] [ pgram ] = { 'time': [], 'iteration': [] }
+                    
+                it = getIteration(currentTime, starttimes, endtimes)
+                reltime = getRelativeTime(it, currentTime, starttimes, endtimes)
+                mappgram[ signs ] [ pgram ]['time'].append( reltime)
+                mappgram[ signs ] [ pgram ]['iteration'].append(it)
+                
                 
                 if seqgram not in mapsgram:
                     mapsgram[seqgram] = {}
-                mapsgram[ seqgram ] [ pgram ]  = mymsg
+                if pgram not in mapsgram[seqgram]:
+                    mapsgram[ seqgram ] [ pgram ] = { 'time': [], 'iteration': [] }
+                mapsgram[ seqgram ] [ pgram ]['time'].append(reltime)
+                mapsgram[ seqgram ] [ pgram ]['iteration'].append(it)
 
             if (mymsg.msg.type=='note_on'):
                 if (on > 0 and it > -1):  
@@ -499,7 +522,7 @@ def printMidi(midilink, title, GroupName, videoid):
     #dont redo this.  Live with the analysis of the time for now.  
     if (os.path.exists(os.path.join(path , filename))):
         print("Skipping " + midilink)
-        return
+#        return
     
     r = requests.get(midilink)
     print(len(r.content))
@@ -519,7 +542,7 @@ def printMidi(midilink, title, GroupName, videoid):
     if (data is None):
         return
         
-#    printNgrams(t, title, GroupName, videoid, midilink)
+ #   printNgrams(t, title, GroupName, videoid, midilink)
     img = midiToImage(t, midilink)
 
     height = 200
