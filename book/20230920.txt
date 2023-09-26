@@ -106,3 +106,52 @@ Right now the ignoring of the screen display/hide messages though is not good.
 We do want to save this data.  
 just make a separate control track for now and use absolute time here.  
 
+
+**recent.html
+Should track repository commit activity as well.  
+https://docs.github.com/en/free-pro-team@latest/rest/activity/events?apiVersion=2022-11-28#list-repository-events
+curl -L \
+  -H "Accept: application/vnd.github+json" \
+  -H "Authorization: Bearer <YOUR-TOKEN>" \
+  -H "X-GitHub-Api-Version: 2022-11-28" \
+  https://api.github.com/repos/OWNER/REPO/events
+https://api.github.com/repos/DevinDJdj/mrrubato/events
+
+
+https://api.github.com/repos/DevinDJdj/mrrubato/commits?sha=master
+But how do we get the number of lines committed?  
+
+Then get the individual ones via url parameter:
+URL
+"url": "https://api.github.com/repos/DevinDJdj/mrrubato/commits/478fb459af5591430e75530b6252657f834e1793",
+
+Or.  
+"html_url": "https://github.com/DevinDJdj/mrrubato/commit/478fb459af5591430e75530b6252657f834e1793",
+
+in the result of this API, we can get stats here:
+  "stats": {
+    "total": 146,
+    "additions": 122,
+    "deletions": 24
+  },
+  "files": [
+    {
+      "filename": "analyze/analyze.py",
+      "status": "modified",
+      "additions": 46,
+      "deletions": 23,
+      "changes": 69,
+      "blob_url": "https://github.com/DevinDJdj/mrrubato/blob/478fb459af5591430e75530b6252657f834e1793/analyze%2Fanalyze.py",
+      "raw_url": "https://github.com/DevinDJdj/mrrubato/raw/478fb459af5591430e75530b6252657f834e1793/analyze%2Fanalyze.py",
+      "contents_url": "https://api.github.com/repos/DevinDJdj/mrrubato/contents/analyze%2Fanalyze.py?ref=478fb459af5591430e75530b6252657f834e1793",
+      "patch": "@@ -163,26 +163,27 @@ def getTrackTimes(mytrack):\n     endtimes = []\n     for mymsg in mytrack.notes:        \n     #getting duplicates with multiple channels.  \n-        if mymsg.msg.channel == 0:\n-            if (on > 0):\n-                currentTime += mymsg.msg.time\n-            if (mymsg.msg.type == 'note_on'):\n-                if mymsg.prevmsg is not None and (mymsg.prevmsg.note == 21 or mymsg.prevmsg.note == 108) and mymsg.msg.channel == 0:\n-                    starttimes.append(currentTime)\n-                if mymsg.nextmsg is not None and (mymsg.nextmsg.note == 22 or mymsg.nextmsg.note == 107) and mymsg.msg.channel == 0:\n-                    endtimes.append(currentTime)\n-            if (mymsg.msg.type == 'note_on'):\n-                on = isOn(mymsg.msg.note, on)\n+        if on > 0 and hasattr(mymsg.msg, 'time'):\n+            currentTime += mymsg.msg.time\n+        if (mymsg.msg.type == 'note_on' and mymsg.msg.channel==0):\n+            if mymsg.prevmsg is not None and (mymsg.prevmsg.note == 21 or mymsg.prevmsg.note == 108) and mymsg.msg.channel == 0:\n+                starttimes.append(currentTime)\n+            if mymsg is not None and (mymsg.note == 22 or mymsg.note == 107) and mymsg.msg.channel == 0:\n+                endtimes.append(currentTime)\n+        if (mymsg.msg.type == 'note_on' and mymsg.msg.channel==0):\n+            on = isOn(mymsg.msg.note, on)\n                 \n \n+#    mymsg.simpleprint()\n+#    mymsg.prevmsg.simpleprint()\n     return starttimes, endtimes\n \n def getTrackTime(track):\n     #skip between pauses and only start with the start signal.  \n     currentTime = 0\n     on = 0\n     for msg in track:        \n-        if (on > 0):\n+        if on > 0 and hasattr(msg, 'time'):\n             currentTime += msg.time\n         if (msg.type == 'note_on'):\n             on = isOn(msg.note, on)\n@@ -223,6 +224,14 @@ def getIteration(currentTime, starttimes, endtimes):\n     return -1\n     \n \n+def getRelativeTime(it, currentTime, starttimes, endtimes):\n+    if it < 0:\n+        return -1\n+    reltime = 0\n+    reltime = currentTime - starttimes[it]\n+    reltime /= (endtimes[it] - starttimes[it])\n+    return reltime\n+\n def midiToImage(t, midilink):\n     \n     print('Track: {}'.format(t.track.name))\n@@ -297,16 +306,16 @@ def enhanceMidi(mid):\n             if (msg.type=='note_on'):\n                 if (on > 0):  \n                     m = mymidi.MyMsg(msg, prevMsg, pedal)\n-                    if (prevMsg is not None):\n-                        prevMsg.nextmsg = m\n-                        if (maxtime < msg.time):\n-                            maxtime = msg.time\n-                    prevMsg = m\n                     m.msg.time += othertime\n                     othertime = 0\n                     t.notes.append(m)\n+                    if (m.prevmsg is not None):\n+                        m.prevmsg.nextmsg = m\n+                        if (maxtime < msg.time):\n+                            maxtime = msg.time\n+                    prevMsg = m\n                 on = isOn(msg.note, on)\n-            elif hasattr(msg, 'time'):\n+            elif on > 0 and hasattr(msg, 'time'):\n                 othertime += msg.time\n             if (msg.type=='control_change'):\n                 #https://www.midi.org/specifications-old/item/table-3-control-change-messages-data-bytes-2\n@@ -331,8 +340,10 @@ def printNgrams(t, title, GroupName, videoid, midilink):\n     starttimes, endtimes = getTrackTimes(t)\n     if (len(endtimes) > len(starttimes)):\n         del endtimes[len(starttimes):]\n-    if len(starttimes) != len(endtimes) or len(starttimes) < 1:\n+    if (len(starttimes) != len(endtimes)) or len(starttimes) < 1:\n         print(\"Incorrect data, please fix\")\n+        print(starttimes)\n+        print(endtimes)\n         return None, None\n         \n     else:    \n@@ -362,8 +373,10 @@ def getNgrams(t):\n     starttimes, endtimes = getTrackTimes(t)\n     if (len(endtimes) > len(starttimes)):\n         del endtimes[len(starttimes):]\n-    if len(starttimes) != len(endtimes) or len(starttimes) < 1:\n+    if (len(starttimes) != len(endtimes)) or len(starttimes) < 1:\n         print(\"Incorrect data, please fix\")\n+        print(starttimes)\n+        print(endtimes)\n         return None, None\n         \n     else:    \n@@ -422,11 +435,21 @@ def getNgrams(t):\n                 #what sequences are the same, probably find more about playing quality than anything intrinsic to the piece.  \n                 if signs not in mappgram:\n                     mappgram[signs] = {}\n-                mappgram[ signs ] [ pgram ]  = mymsg\n+                if pgram not in mappgram[signs]:\n+                    mappgram[ signs ] [ pgram ] = { 'time': [], 'iteration': [] }\n+                    \n+                it = getIteration(currentTime, starttimes, endtimes)\n+                reltime = getRelativeTime(it, currentTime, starttimes, endtimes)\n+                mappgram[ signs ] [ pgram ]['time'].append( reltime)\n+                mappgram[ signs ] [ pgram ]['iteration'].append(it)\n+                \n                 \n                 if seqgram not in mapsgram:\n                     mapsgram[seqgram] = {}\n-                mapsgram[ seqgram ] [ pgram ]  = mymsg\n+                if pgram not in mapsgram[seqgram]:\n+                    mapsgram[ seqgram ] [ pgram ] = { 'time': [], 'iteration': [] }\n+                mapsgram[ seqgram ] [ pgram ]['time'].append(reltime)\n+                mapsgram[ seqgram ] [ pgram ]['iteration'].append(it)\n \n             if (mymsg.msg.type=='note_on'):\n                 if (on > 0 and it > -1):  \n@@ -501,7 +524,7 @@ def printMidi(midilink, title, GroupName, videoid):\n     #dont redo this.  Live with the analysis of the time for now.  \n     if (os.path.exists(os.path.join(path , filename))):\n         print(\"Skipping \" + midilink)\n-        return\n+#        return\n     \n     r = requests.get(midilink)\n     print(len(r.content))\n@@ -521,7 +544,7 @@ def printMidi(midilink, title, GroupName, videoid):\n     if (data is None):\n         return\n         \n-#    printNgrams(t, title, GroupName, videoid, midilink)\n+ #   printNgrams(t, title, GroupName, videoid, midilink)\n     img = midiToImage(t, midilink)\n \n     height = 200"
+    },
+
+
+https://github.com/DevinDJdj/mrrubato/commits/master?author=devindjdj
+
+So we could get the data for this.  Maybe just do in timestep.  
+**timestep.py
+get commit info.  
+Do we want files?  
+Sure why not, we can use individual files and overall.  

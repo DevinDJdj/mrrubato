@@ -171,6 +171,26 @@ def getPlaylistFromGrade(grade):
     else:
         return config.cfg['youtube']['OK_PLAYLIST']
         
+        
+def getCodeHistory():
+#this should be a parameter.  
+#similar functionality can be used in other ways.  
+    url = 'https://api.github.com/repos/DevinDJdj/mrrubato/commits?sha=master'
+    r = requests.get(url)
+    arr = r.json()
+    i = 0
+    limit = 100
+    for e in arr[:limit]:
+        print(e['url'])
+        print(e['html_url']) #this is the link we want to use in UI somewhere.  
+        stats = requests.get(e['url']).json()
+        print(stats['stats'])
+        for f in stats['files']:
+            print(f['filename'])
+            print(f['changes'])
+            #f['blob_url'
+#    return r.json()    
+        
 if __name__ == '__main__':
     args = argparser.parse_args()
 
@@ -313,6 +333,8 @@ if __name__ == '__main__':
                     )).execute()            
                 print(videos_update_response)
 
+
+    getCodeHistory()
     prior = """
     for item in reversed(data["items"]):
     
