@@ -72,7 +72,9 @@ var title = '';
 
 
 	var dataTable;
+	var dataTableGit;
     var options;
+	var optionsGit;
 
 
       document.addEventListener('DOMContentLoaded', function() {
@@ -368,7 +370,7 @@ function drawDurationChart(vids){
 
 }
 
-function gitDownload(data, dataTable){
+function gitDownload(data, dataTableGit){
     myarray = [];
 	//lets limit the number we display.  
 	totalcnt = 100;
@@ -377,7 +379,14 @@ function gitDownload(data, dataTable){
 		commit = data[j];
         console.log(commit.url);
 
-	   $.getJSON(commit.url,function(commitdata){
+//	   $.getJSON(commit.url,function(commitdata){
+		$.ajax({
+		  url: commit.url,
+		  dataType: 'json',
+		  async: false,
+		  success: function(commitdata) {
+		  
+
 		   console.log(commitdata);
 		   console.log(commitdata.stats);
 
@@ -395,12 +404,12 @@ function gitDownload(data, dataTable){
 				aTag.innerText += " " + commitdata.commit.committer.date;
 
 				console.log(tag);
-				obj = [ tag, vid.snippet.title, mydate, tempdate ];
+				obj = [ tag, commitdata.files[i].filename, mydate, tempdate ];
 				//getIterations(vid.snippet.description, vid.snippet.publishedAt) ];
 				console.log(obj);
 				myarray.push(obj);
-				dataTable.addRows(obj);
 			}
+		  }
 		});
 
 
@@ -412,8 +421,8 @@ function gitDownload(data, dataTable){
 async function gitChart(data){
 	var container = document.getElementById('gitchart');
 	var chart = new google.visualization.Timeline(container);
-	dataTable = new google.visualization.DataTable();
-    options = {
+	dataTableGit = new google.visualization.DataTable();
+    optionsGit = {
 	     height: 300,
          title: 'Git',
          legend: { position: 'labeled' },
@@ -434,24 +443,25 @@ async function gitChart(data){
        };
 	   
 	   
-	dataTable.addColumn({ type: 'string', id: 'Name' });
-	dataTable.addColumn({type: 'string', role: 'tooltip', 'p': {'html': true}});
-	dataTable.addColumn({ type: 'date', id: 'DatePlayed' });
-	dataTable.addColumn({ type: 'date', id: 'DateEnded' });
+	dataTableGit.addColumn({ type: 'string', id: 'Name' });
+	dataTableGit.addColumn({type: 'string', role: 'tooltip', 'p': {'html': true}});
+	dataTableGit.addColumn({ type: 'date', id: 'DatePlayed' });
+	dataTableGit.addColumn({ type: 'date', id: 'DateEnded' });
 	
 //	dataTable.addColumn({ type: 'number', id: 'Iterations' });
 //	dataTable.addColumn({ type: 'number', id: 'Duration' });
 	
 //	dataTable.addColumn({ type: 'number', id: 'Iteration#' });
-    myarray = await gitDownload(data, dataTable);
+    myarray = await gitDownload(data, dataTableGit);
+	dataTableGit.addRows(myarray);
 
-	console.log(dataTable);
+	console.log(myarray);
 
 
 
 
   google.visualization.events.addListener(chart, 'ready', readyHandlerGit);
-  chart.draw(dataTable, options);
+  chart.draw(dataTableGit, optionsGit);
 
 }
 
