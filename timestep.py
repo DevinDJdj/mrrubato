@@ -175,6 +175,8 @@ def getPlaylistFromGrade(grade):
 def getCodeHistory():
 #this should be a parameter.  
 #similar functionality can be used in other ways.  
+#where do we store this?  
+#dont, just do this on the front-end.  
     url = 'https://api.github.com/repos/DevinDJdj/mrrubato/commits?sha=master'
     r = requests.get(url)
     arr = r.json()

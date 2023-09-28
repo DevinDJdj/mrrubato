@@ -155,3 +155,14 @@ So we could get the data for this.  Maybe just do in timestep.
 get commit info.  
 Do we want files?  
 Sure why not, we can use individual files and overall.  
+
+**recent.html
+Above logic should be done here.  
+
+Getting closer to what we want.  
+Unfortunately we have a rate limit for github.  
+Dont think I need to worry about this in general.  
+But perhaps in the future.  
+1000/hour should be sufficient for one user.  
+recent will do ~30 per refresh so 30 refreshes per hour.  
+

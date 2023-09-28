@@ -10,6 +10,7 @@
 </head>
 
     <!-- update the version number as needed -->
+	<script src="config.js"></script>
     <script defer src="/__/firebase/9.19.1/firebase-app-compat.js"></script>
     <!-- include only the Firebase features as you need -->
     <script defer src="/__/firebase/9.19.1/firebase-auth-compat.js"></script>
@@ -35,10 +36,13 @@
     <div id="recent"></div>
 	</td></tr>
     <tr><td width="100%" align="right">
-	<div id="timeline" style="height:500px;"></div>
+	<div id="timeline" style="height:300px;"></div>
 	</td></tr>
     <tr><td width="100%" align="right">
-	<div id="durationchart" style="height:300px;"></div>
+	<div id="durationchart" style="height:200px;"></div>
+	</td></tr>
+    <tr><td width="100%" align="right">
+	<div id="gitchart" style="height:200px;"></div>
 	</td></tr>
   </table>
   <br>
@@ -60,12 +64,11 @@
   
 // https://stackoverflow.com/questions/901115/how-can-i-get-query-string-values-in-javascript
 var urlParams;
-var channelId = 'UC4dK3RpqBq2JpIkRmQn6HOA'; //@misterrubato doesnt work in URL, probably need to escape the @, but who cares.  
 var title = '';
 
 //setup https://www.youtube.com/watch?v=3jZ5vnv-LZc
 //then restrict the key if needed to your site and youtube data API.  
-webkey = 'AIzaSyCBCSiFLWm-3oBKvnS-yaHtU5QcFfRtZ_E';
+
 
 
 	var dataTable;
@@ -147,7 +150,7 @@ webkey = 'AIzaSyCBCSiFLWm-3oBKvnS-yaHtU5QcFfRtZ_E';
 
 		google.charts.load('current', {'packages':['corechart', 'timeline', 'bar']});
 		
-		var vRef = firebase.database().ref('/misterrubato/');
+		var vRef = firebase.database().ref(dbname);
 		if (typeof(uid) != "undefined" && uid !==null){
 		}
 		vRef.on("value", function(snapshot) {
@@ -156,6 +159,7 @@ webkey = 'AIzaSyCBCSiFLWm-3oBKvnS-yaHtU5QcFfRtZ_E';
 			vids = getRecent(videojson);
 			drawChart(vids);
 			drawDurationChart(vids);
+			getGit();
 			
 		});
 		  
@@ -188,7 +192,7 @@ function getRecent(videojson){
 	for (it=0; it< vids.length && it < maxcnt; it++){
 		var obj = vids[it];
 		var aTag = document.createElement('a');
-		aTag.setAttribute('href',"https://misterrubato.com/analyze.html?video=" + obj.id);
+		aTag.setAttribute('href',domain + 'analyze.html?video=' + obj.id);
 		
 		fnd = obj.snippet.description.indexOf("MIDI");
 		if (fnd < 0){
@@ -275,6 +279,17 @@ function getDuration(desc, vidtime){
 }
 
 
+function readyHandlerGit() {
+	var container = document.getElementById('gitchart');
+    var labels = container.getElementsByTagName('text');
+    Array.prototype.forEach.call(labels, function(label) {
+//      if (label.getAttribute('fill') === options.timeline.rowLabelStyle.color) {
+        label.addEventListener('click', clickHandler);
+        label.setAttribute('style', 'cursor: pointer; text-decoration: underline;');
+//      }
+    });
+  }
+
 function readyHandler() {
 	var container = document.getElementById('timeline');
     var labels = container.getElementsByTagName('text');
@@ -353,6 +368,103 @@ function drawDurationChart(vids){
 
 }
 
+function gitDownload(data, dataTable){
+    myarray = [];
+	//lets limit the number we display.  
+	totalcnt = 100;
+    for (j=0; j<data.length && j< totalcnt; j++){
+//    for (j=vids.length-1; j> -1; j--){
+		commit = data[j];
+        console.log(commit.url);
+
+	   $.getJSON(commit.url,function(commitdata){
+		   console.log(commitdata);
+		   console.log(commitdata.stats);
+
+			for (i=0; i< commitdata.files.length; i++){
+				console.log(commitdata.files[i].filename);
+				console.log(commitdata.files[i].changes);
+				console.log(commitdata.commit.committer.date);
+				mydate = new Date(commitdata.commit.committer.date);
+				tempdate = new Date(commitdata.commit.committer.date);
+				tempdate.setMinutes(tempdate.getMinutes()+commitdata.files[i].changes);
+				tag = { v: commitdata.files[i].filename, p: { link: commit.html_url }};
+				var aTag = document.createElement('a');
+				aTag.setAttribute('href',commit.html_url);
+				aTag.innerText = " " + commitdata.files[i].filename;
+				aTag.innerText += " " + commitdata.commit.committer.date;
+
+				console.log(tag);
+				obj = [ tag, vid.snippet.title, mydate, tempdate ];
+				//getIterations(vid.snippet.description, vid.snippet.publishedAt) ];
+				console.log(obj);
+				myarray.push(obj);
+				dataTable.addRows(obj);
+			}
+		});
+
+
+    }
+
+    return myarray;
+}
+
+async function gitChart(data){
+	var container = document.getElementById('gitchart');
+	var chart = new google.visualization.Timeline(container);
+	dataTable = new google.visualization.DataTable();
+    options = {
+	     height: 300,
+         title: 'Git',
+         legend: { position: 'labeled' },
+		 tooltip: {isHtml: true},
+         crosshair: { trigger: 'both', orientation: 'both' },
+		 timeline: {
+			rowLabelStyle: {
+				color: '#3399cc'
+			}
+		 },
+         trendlines: {
+           0: {
+             type: 'polynomial',
+             degree: 3,
+             visibleInLegend: true,
+           }
+         }
+       };
+	   
+	   
+	dataTable.addColumn({ type: 'string', id: 'Name' });
+	dataTable.addColumn({type: 'string', role: 'tooltip', 'p': {'html': true}});
+	dataTable.addColumn({ type: 'date', id: 'DatePlayed' });
+	dataTable.addColumn({ type: 'date', id: 'DateEnded' });
+	
+//	dataTable.addColumn({ type: 'number', id: 'Iterations' });
+//	dataTable.addColumn({ type: 'number', id: 'Duration' });
+	
+//	dataTable.addColumn({ type: 'number', id: 'Iteration#' });
+    myarray = await gitDownload(data, dataTable);
+
+	console.log(dataTable);
+
+
+
+
+  google.visualization.events.addListener(chart, 'ready', readyHandlerGit);
+  chart.draw(dataTable, options);
+
+}
+
+function getGit(){
+	//get github
+    url = giturl;
+	
+   $.getJSON(giturl,function(data){
+       console.log(data);
+	   gitChart(data);
+	});
+}
+
 function drawChart(vids) {
 	var container = document.getElementById('timeline');
 	var chart = new google.visualization.Timeline(container);
@@ -395,9 +507,9 @@ function drawChart(vids) {
 		mydate = new Date(vid.snippet.publishedAt);
 		tempdate = new Date(vid.snippet.publishedAt);
 		tempdate.setSeconds(tempdate.getSeconds()+getDuration(vid.snippet.description, vid.snippet.publishedAt)[0]);
-		tag = { v: vid.snippet.title, p: { link: 'https://misterrubato.com/analyze.html?video=' + vid.id + '' }};
+		tag = { v: vid.snippet.title, p: { link: domain + 'analyze.html?video=' + vid.id + '' }};
 		var aTag = document.createElement('a');
-		aTag.setAttribute('href',"https://misterrubato.com/analyze.html?video=" + vid.id);
+		aTag.setAttribute('href',domain + 'analyze.html?video=' + vid.id);
 		aTag.innerText = " " + vid.snippet.description;
 		aTag.innerText += " " + vid.snippet.publishedAt;
 
