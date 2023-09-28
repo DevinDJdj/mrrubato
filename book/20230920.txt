@@ -166,3 +166,5 @@ But perhaps in the future.
 1000/hour should be sufficient for one user.  
 recent will do ~30 per refresh so 30 refreshes per hour.  
 
+Need a clickHandler for each individual element in the chart.  
+

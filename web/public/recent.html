@@ -70,7 +70,8 @@ var title = '';
 //then restrict the key if needed to your site and youtube data API.  
 
 
-
+    var gitchart;
+	var vidchart;
 	var dataTable;
 	var dataTableGit;
     var options;
@@ -286,10 +287,25 @@ function readyHandlerGit() {
     var labels = container.getElementsByTagName('text');
     Array.prototype.forEach.call(labels, function(label) {
 //      if (label.getAttribute('fill') === options.timeline.rowLabelStyle.color) {
-        label.addEventListener('click', clickHandler);
+        label.addEventListener('click', clickHandlerGit);
         label.setAttribute('style', 'cursor: pointer; text-decoration: underline;');
 //      }
     });
+  }
+
+function selectHandlerGit() {
+	var container = document.getElementById('gitchart');
+	var selection = gitchart.getSelection();
+  var message = '';
+//  for (var i = 0; i < selection.length; i++) {
+//		var item = selection[i];
+		console.log("Selection");
+		console.log(selection);
+		console.log(dataTableGit.getValue(selection[0].row, 1));
+      var link = dataTableGit.getProperty(selection[0].row, 0, 'link');
+	  console.log(link);
+      window.open(link, '_blank');
+  
   }
 
 function readyHandler() {
@@ -303,6 +319,19 @@ function readyHandler() {
     });
   }
 
+  function clickHandlerGit(sender) {
+    var rowLabel = sender.target.textContent;
+    var dataRows = dataTableGit.getFilteredRows([{
+      column: 0,
+      value: rowLabel
+    }]);
+    if (dataRows.length > 0) {
+      var link = dataTableGit.getProperty(dataRows[0], 0, 'link');
+	  console.log(link);
+      window.open(link, '_blank');
+    }
+  }
+
   function clickHandler(sender) {
     var rowLabel = sender.target.textContent;
     var dataRows = dataTable.getFilteredRows([{
@@ -314,6 +343,20 @@ function readyHandler() {
 	  console.log(link);
       window.open(link, '_blank');
     }
+  }
+
+  function selectHandler(sender) {
+	var container = document.getElementById('timeline');
+	var selection = vidchart.getSelection();
+  var message = '';
+//  for (var i = 0; i < selection.length; i++) {
+//		var item = selection[i];
+		console.log("Selection");
+		console.log(selection);
+		console.log(dataTable.getValue(selection[0].row, 1));
+      var link = dataTable.getProperty(selection[0].row, 0, 'link');
+	  console.log(link);
+      window.open(link, '_blank');
   }
 
 function drawDurationChart(vids){
@@ -420,7 +463,8 @@ function gitDownload(data, dataTableGit){
 
 async function gitChart(data){
 	var container = document.getElementById('gitchart');
-	var chart = new google.visualization.Timeline(container);
+	gitchart = new google.visualization.Timeline(container);
+	chart = gitchart;
 	dataTableGit = new google.visualization.DataTable();
     optionsGit = {
 	     height: 300,
@@ -444,6 +488,7 @@ async function gitChart(data){
 	   
 	   
 	dataTableGit.addColumn({ type: 'string', id: 'Name' });
+//	dataTableGit.addColumn({type: 'string', id: 'Label' });
 	dataTableGit.addColumn({type: 'string', role: 'tooltip', 'p': {'html': true}});
 	dataTableGit.addColumn({ type: 'date', id: 'DatePlayed' });
 	dataTableGit.addColumn({ type: 'date', id: 'DateEnded' });
@@ -461,6 +506,7 @@ async function gitChart(data){
 
 
   google.visualization.events.addListener(chart, 'ready', readyHandlerGit);
+  google.visualization.events.addListener(chart, 'select', selectHandlerGit);
   chart.draw(dataTableGit, optionsGit);
 
 }
@@ -478,6 +524,7 @@ function getGit(){
 function drawChart(vids) {
 	var container = document.getElementById('timeline');
 	var chart = new google.visualization.Timeline(container);
+	vidchart = chart;
 	dataTable = new google.visualization.DataTable();
     options = {
 	     height: 500,
@@ -535,6 +582,7 @@ function drawChart(vids) {
 
 
   google.visualization.events.addListener(chart, 'ready', readyHandler);
+  google.visualization.events.addListener(chart, 'select', selectHandler);
   chart.draw(dataTable, options);
 
 
