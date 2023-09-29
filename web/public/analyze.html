@@ -526,6 +526,7 @@ function getAnalyze(midiurl){
 	console.log(pianoroll);
     url = storageRef.child(pianoroll).getDownloadURL()
 	  .then((url) => {
+        console.log(url);
 	addImage(url);
    })
    

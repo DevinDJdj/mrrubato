@@ -471,6 +471,8 @@ if __name__ == '__main__':
                 if hasattr(msg, 'note') and msg.channel == 0: #for now this is a workaround to only use channel 0 as control.  
                     #oh yeah I dont think this has the time.  
                     #tried to adjust midi settings on the device.  See if we can get the time transmitted.  
+                    #config.keymap.global.Unpause
+                    #config.cfg['keymap']['global']['ShowScreen']
                     if msg.note==105:
                         #adding two more controllers on piano.  
                         keyboard.press(Key.ctrl)

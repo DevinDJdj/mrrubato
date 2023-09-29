@@ -168,3 +168,5 @@ recent will do ~30 per refresh so 30 refreshes per hour.
 
 Need a clickHandler for each individual element in the chart.  
 
+gcloud storage buckets update gs://misterrubato-test.appspot.com --cors-file=cors.json
+
