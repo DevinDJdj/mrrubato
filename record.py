@@ -55,6 +55,9 @@ from mido import Message, MidiFile, MidiTrack
 
 from mido.ports import MultiPort
 
+
+import config 
+
 #pip install pynput
 #key input for hotkeys to trigger recording etc.  
 from pynput.keyboard import Key, Controller
@@ -472,8 +475,8 @@ if __name__ == '__main__':
                     #oh yeah I dont think this has the time.  
                     #tried to adjust midi settings on the device.  See if we can get the time transmitted.  
                     #config.keymap.global.Unpause
-                    #config.cfg['keymap']['global']['ShowScreen']
-                    if msg.note==105:
+                    if msg.note ==config.cfg['keymap']['global']['ShowScreen']:
+                    #if msg.note==105:
                         #adding two more controllers on piano.  
                         keyboard.press(Key.ctrl)
                         keyboard.press(Key.shift)
@@ -484,7 +487,8 @@ if __name__ == '__main__':
                         keyboard.release(Key.shift)
                         print("Showing Screen" + str(time.time()))
                         ignorelast = True
-                    if msg.note==106:
+                    if msg.note ==config.cfg['keymap']['global']['HideScreen']:
+                    #if msg.note==106:
                         #adding two more controllers on piano to show screen and hide screen.   
                         keyboard.press(Key.ctrl)
                         keyboard.press(Key.shift)
@@ -496,7 +500,8 @@ if __name__ == '__main__':
                         print("Hiding Screen" + str(time.time()))
                         ignorelast = True
 
-                    if lastnote == 21 and msg.note !=lastnote and not ignorelast:
+                    if lastnote ==config.cfg['keymap']['global']['Start'] and msg.note !=lastnote and not ignorelast:
+                    #if lastnote == 21 and msg.note !=lastnote and not ignorelast:
                         #1st
 #                        mytime = time.time() - starttime - delay
                         mytime = temptime - starttime - delay
@@ -508,7 +513,8 @@ if __name__ == '__main__':
                         args.description += "\nTRIAL#1"
                         args.description += " (" + str(mins) + ":" + filler + str(secs) + ")"
                         
-                    if msg.note == 107 and msg.note !=lastnote and not ignorelast:
+                    if msg.note == config.cfg['keymap']['global']['Pause'] and msg.note !=lastnote and not ignorelast:
+                    #if msg.note == 107 and msg.note !=lastnote and not ignorelast:
                         pausestart.append(time.time())
 
                         keyboard.press(Key.ctrl)
@@ -530,7 +536,8 @@ if __name__ == '__main__':
                             filler = "0"
                         args.description += "\nEND#" + str(iterations)
                         args.description += " (" + str(mins) + ":" + filler + str(secs) + ")"
-                    if msg.note == 108 and msg.note !=lastnote and not ignorelast:
+                    if msg.note == config.cfg['keymap']['global']['Unpause'] and msg.note !=lastnote and not ignorelast:
+                    #if msg.note == 108 and msg.note !=lastnote and not ignorelast:
                         pauseend.append(temptime)
                         delay = calculatedelay(pausestart, pauseend)
                         lasttick = temptime - starttime - delay
@@ -547,7 +554,8 @@ if __name__ == '__main__':
                         print("Unpause Recording" + str(temptime))
 
                         print("delay " + str(delay))
-                    if lastnote==108 and msg.note !=lastnote and not ignorelast:
+                    if lastnote==config.cfg['keymap']['global']['Unpause'] and msg.note !=lastnote and not ignorelast:
+                    #if lastnote==108 and msg.note !=lastnote and not ignorelast:
                         #2nd etc.  
                         iterations = len(pauseend) + 1
                         mytime = temptime - starttime - delay
@@ -558,7 +566,8 @@ if __name__ == '__main__':
                             filler = "0"
                         args.description += "\nTRIAL#" + str(iterations)
                         args.description += " (" + str(mins) + ":" + filler + str(secs) + ")"
-                    if msg.note == 21:
+                    if msg.note == config.cfg['keymap']['global']['Start']:
+                    #if msg.note == 21:
 
                         keyboard.press(Key.ctrl)
                         keyboard.press(Key.shift)
@@ -570,7 +579,8 @@ if __name__ == '__main__':
                         print("Start Recording" + str(temptime))
                         starttime = temptime
                         msg.time = 0
-                    if msg.note == 22:
+                    if msg.note == config.cfg['keymap']['global']['Stop']
+                    #if msg.note == 22:
                         endtime = temptime
 
                         keyboard.press(Key.ctrl)
