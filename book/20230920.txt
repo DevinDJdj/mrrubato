@@ -191,4 +191,7 @@ But we should be able to add midi files, and then combine them.
 These will be feedback files.  
 
 
-
+https://github.com/djipco/webmidi/blob/master/examples/quick-start/index.html
+For now just record midi and send.  
+I think this is mostly what we want anyway.  
+We want something which is understandable and we are able to aggregate easily.  
