@@ -170,3 +170,25 @@ Need a clickHandler for each individual element in the chart.
 
 gcloud storage buckets update gs://misterrubato-test.appspot.com --cors-file=cors.json
 
+
+**analyze.html
+**mictest.html
+Want to record audio itself eventually with something like this WebRTC library combined with
+the firebase file functionalities.  
+So we would save the recording with offset info as well as midi data with offset info.  
+Essentially the basic functionality of what we are doing with OBS but within the browser.  
+Of course timing wont be as good.  
+Midi is much smaller and better, maybe for now just do this.  
+Something like this may work:
+https://mortenson.coffee/blog/making-multi-track-tape-recorder-midi-javascript/
+or this, I think we tried to use this before.  
+https://jazz-soft.net/demo/RecordMidiFile.html
+
+Are we loading the midi file in the webpage, I dont think so.  
+
+Anyway, no need really I think.  
+But we should be able to add midi files, and then combine them.  
+These will be feedback files.  
+
+
+
