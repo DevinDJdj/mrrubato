@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Mic Test</title>
+
+</head>
+
+<body translate="no" >
+  <div id="clock" 
+       style=	"display: inline-block;
+		font-family: monospace;
+		font-size: 30px;
+		text-align: right;
+		color: lightgray; 
+		border-radius: 10px; 
+		padding: 10px; 
+		background-color: rgba(0, 0, 0, 0.75);">
+  </div>
+  <div id="secondselapsed" 
+       style=	"display: inline-block;
+		font-family: monospace;
+		font-size: 30px;
+		text-align: right;
+		color: lightgray; 
+		border-radius: 10px; 
+		padding: 10px; 
+		background-color: rgba(0, 0, 0, 0.75);">
+  </div>
+  <br>
+    <div id="previous"></div>
+
+  <br>
+    <div id="old"></div>  
+  
+<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js'></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/webmidi@latest/dist/iife/webmidi.iife.js"></script>
+
+  <script>
+  //firebase deploy to deploy this.  
+//https://github.com/djipco/webmidi/blob/master/examples/quick-start/index.html
+
+</script>
+    <script type="module">
+
+      // Enable WebMidi.js and trigger the onEnabled() function when ready.
+      WebMidi
+        .enable()
+        .then(onEnabled)
+        .catch(err => alert(err));
+
+      function onEnabled() {
+
+        if (WebMidi.inputs.length < 1) {
+          document.body.innerHTML+= "No device detected.";
+        } else {
+          WebMidi.inputs.forEach((device, index) => {
+            document.body.innerHTML+= `${index}: ${device.name} <br>`;
+          });
+        }
+
+        const mySynth = WebMidi.inputs[0];
+        // const mySynth = WebMidi.getInputByName("TYPE NAME HERE!")
+
+        mySynth.channels[1].addListener("noteon", e => {
+          document.body.innerHTML+= `${e.note.name} <br>`;
+        });
+
+      }
+
+    </script>
+
+
+  <body>
+    <h1>WebMidi.js Quick Start</h1>
+  </body>
+
+</html>
