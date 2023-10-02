@@ -64,7 +64,7 @@
           });
         }
 
-        const mySynth = WebMidi.inputs[0];
+        const mySynth = WebMidi.inputs[1];
         // const mySynth = WebMidi.getInputByName("TYPE NAME HERE!")
 
         mySynth.channels[1].addListener("noteon", e => {
