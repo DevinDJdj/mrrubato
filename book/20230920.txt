@@ -195,3 +195,33 @@ https://github.com/djipco/webmidi/blob/master/examples/quick-start/index.html
 For now just record midi and send.  
 I think this is mostly what we want anyway.  
 We want something which is understandable and we are able to aggregate easily.  
+
+
+Should have the recent info display underneath the analyze info regarding which files were edited in the same timeframe.  
+Maybe just a selection is enough.  
+When we select a file it highlights the videos related to that timeframe.  
+When we select a video, it highlights all code related to that timeframe that song was played.  
+Do we move to single page app and just load analyze in a DIV which can be closed or opened.  
+
+
+**recent.html
+should display GIT info in the middle graph.  
+We have lines changed just add it to the data there.  
+Not that important.  
+
+
+**mictest.html
+Should finish the midi recording
+These times should be based on the playback.  
+add video=xxx
+For now just make sure we can upload to DB and load from DB again, and play it.  
+Then add logic to **analyze.html
+This is an option for providing feedback along with the comments.  
+should track what was watched and what not as well.  
+Should be some feedback system to know what needs to be reviewed still.  
+This is for some sort of business logic.  
+
+**analyze.html
+We still need to create hyperlinks for the timestamps in comments and notes.  
+Any 00:00 will get a hyperlink.  
+
