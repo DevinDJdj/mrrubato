@@ -579,7 +579,7 @@ if __name__ == '__main__':
                         print("Start Recording" + str(temptime))
                         starttime = temptime
                         msg.time = 0
-                    if msg.note == config.cfg['keymap']['global']['Stop']
+                    if msg.note == config.cfg['keymap']['global']['Stop']:
                     #if msg.note == 22:
                         endtime = temptime
 
