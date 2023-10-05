@@ -28,12 +28,13 @@
 		padding: 10px; 
 		background-color: rgba(0, 0, 0, 0.75);">
   </div>
-  <br>
-    <div id="previous"></div>
-
-  <br>
-    <div id="old"></div> 
+  
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js'></script>
+<script type="text/javascript" src="clock.js"></script>
+	
+    <button type="button" onclick="saveMidi();">Save Midi</button>
     <div id="out"></div>	
+  </body>
   
 <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
@@ -58,6 +59,8 @@
         .then(onEnabled)
         .catch(err => alert(err));
 	  
+	  
+	  const start = Date.now();
 	  writeMidi();
 
 
@@ -189,11 +192,16 @@ function getMIDIMessage(message) {
 }
 
 function noteOn(note, velocity){
-    console.log("Note On " + note);
+    const now = Date.now();
+	abstime = now - start;
+	
+    console.log("Note On " + note + " at " + abstime);
 }
 
 function noteOff(note){
-	console.log("Note Off " + note);
+    const now = Date.now();
+	abstime = now - start;
+	console.log("Note Off " + note + " at " + abstime);
 }
 
 
@@ -225,9 +233,5 @@ function noteOff(note){
     </script>
 
 
-  <body>
-    <h1>WebMidi.js Quick Start</h1>
-    <button type="button" onclick="saveMidi();">Save Midi</button>
-  </body>
 
 </html>

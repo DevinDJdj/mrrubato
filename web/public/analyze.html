@@ -101,47 +101,15 @@
 //can we add this link to the top of all descriptions on record?  
   
 // https://stackoverflow.com/questions/901115/how-can-i-get-query-string-values-in-javascript
-var urlParams;
 var video = 'T7aCHEAGCsU';
 var videojson = null;
 var channelId = 'UC4dK3RpqBq2JpIkRmQn6HOA'; //@misterrubato doesnt work in URL, probably need to escape the @, but who cares.  
 var title = '';
-(function () {
-    var match,
-        pl     = /\+/g,  // Regex for replacing addition symbol with a space
-        search = /([^&=]+)=?([^&]*)/g,
-        decode = function (s) { return decodeURIComponent(s.replace(pl, " ")); },
-        query  = window.location.search.substring(1);
-    urlParams = {};
-    while (match = search.exec(query))
-       urlParams[decode(match[1])] = decode(match[2]);
-})();
-var output = document.getElementById("clock");
-if (urlParams["style"]) output.setAttribute("style", urlParams["style"]);
-if (urlParams["bodyStyle"]) document.body.setAttribute("style", urlParams["bodyStyle"]);
-if (urlParams["video"]){ 
-  video = urlParams["video"];
-  console.log(video);
-}
 
-var c;
-setInterval(
-c = function() {
-	output.innerText = moment().format(urlParams["format"] || 'DD/MM/YYYY HH:mm:ss');
-//    output.innerText = moment().format(urlParams["format"] || '');
-}, 1000);
-c();
+</script>
 
-var secondselapsed = document.getElementById("secondselapsed");
-start = moment()
-var se;
-setInterval(
-se = function() {
-    end = moment()
-	secondselapsed.innerText = (end - start)/1000;
-//    output.innerText = moment().format(urlParams["format"] || '');
-}, 1000);
-se();
+<script type="text/javascript" src="clock.js"></script>
+<script>
 
 
 var player;
