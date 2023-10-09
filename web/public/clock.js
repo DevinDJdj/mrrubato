@@ -41,3 +41,15 @@ se = function() {
 //    output.innerText = moment().format(urlParams["format"] || '');
 }, 1000);
 se();
+
+
+function seekTo(seconds)
+{
+  if (player.getPlayerState() == 1) {
+    player.seekTo(seconds);
+  }
+  else {
+    ytSeconds = seconds;
+    player.playVideo();
+  }
+}

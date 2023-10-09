@@ -67,12 +67,15 @@
  <div id="midi"></div>
 
 </td>
+
 <td>
-    <textarea id="notes" rows="40" cols="40"></textarea>
+    <div id="iterationsh"></div>
+<!--    <textarea id="iterations" rows="40" cols="40"></textarea> -->
 </td><td>
-    <textarea id="mycomments" rows="40" cols="40"></textarea>
+    <div id="mycommentsh"></div>
+    <textarea id="mycomments" rows="20" cols="40"></textarea>
 </td><td>
-    <textarea id="transcript" rows="40" cols="80"></textarea>
+    <textarea id="transcript" rows="20" cols="60"></textarea>
 </td>
 </tr>
 </table>
@@ -115,6 +118,7 @@ var title = '';
 var player;
 var delay = 10;
 var notesarray = [];
+var descarray = [];
 var commentsarray = [];
 var starttimes = [];
 var endtimes = [];
@@ -190,6 +194,7 @@ var uid = null;
 						    console.log(snapshot.val().comments);
 						    if (snapshot.val().comments !==null){
 								$('#mycomments').val(snapshot.val().comments);
+								$('#mycommentsh').html(makeTimeLinks(snapshot.val().comments));
 							}
 							
 							if (snapshot.val().sentiment !==null){
@@ -247,7 +252,7 @@ function updateVideo(){
 	
 	if (uid !==null){
 	    var uRef = firebase.database().ref('/misterrubato/' + video + '/comments/' + uid);
-//		videojson.snippet.description = $('#notes').val();
+//		videojson.snippet.description = $('#iterations').val();
 		videojson.snippet.description.context = null;
 //		videojson = JSON.parse( JSON.stringify(videojson ) );
 		console.log(uid);
@@ -267,10 +272,12 @@ function updateNotes(){
 	    allnotes += notesarray[i] + "\n";
 	}
     $('#mycomments').val(allnotes);
+	$('#mycommentsh').html(makeTimeLinks(allnotes));
 	
 }
 
 function createNotesArray(){
+//also update the new DIV with links.  
 	allnotes = $('#mycomments').val();
 	notesarray = [];
     const lines = allnotes.split("\n");
@@ -544,15 +551,36 @@ function getTranscript(desc){
  }
 }
 
+function makeTimeLinks(desc){
+    desc = desc.replaceAll("\n", "<br>");
+//    desc = desc.replace(")", ")<br>");
+	const regExp = /\(([^)]+)\)/g;
+    const matches = [...desc.matchAll(regExp)].flat();
+	for (i=0; i<matches.length; i++){
+	    secs = getSecsFromTime(matches[i]);
+		if (secs > 0){
+    		desc = desc.replace(matches[i], '<a href="#" onclick="seekTo(' + secs + ');">' + matches[i] + '</a>');
+		}
+
+	}
+//    console.log(matches);
+	return desc;
+}
+
 function getVideoJson(videoid){
 	
     ref = firebase.database().ref('/misterrubato/' + videoid);
 	ref.on('value',(snap)=>{
 		item = snap.val();
 		console.log(snap.val());
-		$('#notes').val(snap.val().snippet.description);
-
+		$('#iterationsh').html(makeTimeLinks(snap.val().snippet.description))
+//		$('#iterations').val(snap.val().snippet.description);
+		
+		//<a href="#" onclick="seekTo(120);">02:00</a>
+		
 	    createNotesArray();
+		//all of these comments as well should have this.  
+		
 		//get previous iterations of this.  
 		title = snap.val().snippet.description.split('\n')[0];
 		console.log(title);
@@ -566,7 +594,7 @@ function getVideoJson(videoid){
     if (typeof(data.items[0]) != "undefined") {
 //	    videojson = data.items[0];
         console.log('video exists ' + data.items[0].snippet.title);
-		$('#notes').val(data.items[0].snippet.description);
+		$('#iterations').val(data.items[0].snippet.description);
 	    createNotesArray();
 		//get previous iterations of this.  
 		title = notesarray[0];

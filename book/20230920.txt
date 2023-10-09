@@ -220,8 +220,17 @@ This is an option for providing feedback along with the comments.
 should track what was watched and what not as well.  
 Should be some feedback system to know what needs to be reviewed still.  
 This is for some sort of business logic.  
+for now just use the video location and text.  
+But eventually want to overlay this midi on top of the midi graphs/images.  
+Perhaps just do this dynamically in analyze.html
+Need to scroll/highlight this canvas as video is playing.  
+For now just add to comments in form of special message.  
+At least make a smaller text box to hold this.  
+No real need to convert to midi format, but we may want to sound this during playback.  
+
 
 **analyze.html
 We still need to create hyperlinks for the timestamps in comments and notes.  
 Any 00:00 will get a hyperlink.  
+Dont limit the display to 100 iterations.  
 
