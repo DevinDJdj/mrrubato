@@ -571,22 +571,39 @@ function getVideoJson(videoid){
 	
     ref = firebase.database().ref('/misterrubato/' + videoid);
 	ref.on('value',(snap)=>{
-		item = snap.val();
-		console.log(snap.val());
-		$('#iterationsh').html(makeTimeLinks(snap.val().snippet.description))
-//		$('#iterations').val(snap.val().snippet.description);
-		
-		//<a href="#" onclick="seekTo(120);">02:00</a>
-		
-	    createNotesArray();
-		//all of these comments as well should have this.  
-		
-		//get previous iterations of this.  
-		title = snap.val().snippet.description.split('\n')[0];
-		console.log(title);
-		searchPrevious(videoid);
-		getTranscript(item.snippet.description);
-		getMidi(item.snippet.description);
+	    if (snap.exists()){
+			item = snap.val();
+			console.log(snap.val());
+			$('#iterationsh').html(makeTimeLinks(snap.val().snippet.description))
+	//		$('#iterations').val(snap.val().snippet.description);
+			
+			//<a href="#" onclick="seekTo(120);">02:00</a>
+			
+			createNotesArray();
+			//all of these comments as well should have this.  
+			
+			//get previous iterations of this.  
+			title = snap.val().snippet.description.split('\n')[0];
+			console.log(title);
+			searchPrevious(videoid);
+			getTranscript(item.snippet.description);
+			getMidi(item.snippet.description);
+		}
+		else{
+			//this is not our video, need to retrieve and allow for commenting.  
+			console.log(videoid + " Not in DB.  Retrieving from Youtube API");
+			ref = firebase.database().ref('/misterrubato/watch/' + videoid);
+			ref.on('value',(snap)=>{
+				if (snap.exists()){
+				//retrieve previous comments etc.  
+				}
+				else{
+				//		obj = {"comments": mycomments, "sentiment": grade };
+				//uRef.set(obj);
+				}
+			});
+
+		}
 	});
 
 /*	

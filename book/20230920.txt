@@ -234,3 +234,6 @@ We still need to create hyperlinks for the timestamps in comments and notes.
 Any 00:00 will get a hyperlink.  
 Dont limit the display to 100 iterations.  
 
+Add to a DIV the current comments and iterations with links.  
+Iterations just change to DIV.  
+Comments get current comments and update that div in updateNotesArray
