@@ -1,5 +1,6 @@
 var midiarray = [];
 var notes = [];
+var midienabled = 0;
 var obj = {"note": 0, "velocity": 0, "time": 0, "duration": 0};
 
 for (let i=0; i<120;i++){
@@ -42,6 +43,9 @@ function getMidiFeedback(){
 }
 
 function getMIDIMessage(message) {
+	if (midienabled==0){
+		return;
+	}
 	var command = message.data[0];
 	var note = message.data[1];
 	var velocity = (message.data.length > 2) ? message.data[2] : 0; // a velocity value might not be included with a noteOff command
@@ -116,8 +120,7 @@ function noteOff(note, abstime){
 
       }
 
-
-      WebMidi
-        .enable()
-        .then(onEnabled)
-        .catch(err => alert(err));
+		  WebMidi
+			.enable()
+			.then(onEnabled)
+			.catch(err => alert(err));
