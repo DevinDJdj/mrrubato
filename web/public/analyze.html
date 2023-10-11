@@ -65,6 +65,8 @@
 		<button type="button" onclick="updateVideo()">Update</button>
 	</div>
  <div id="midi"></div>
+<!--    <button type="button" onclick="saveMidiFeedback();">Save Midi Feedback</button> -->
+    <div id="out"></div>	
 
 </td>
 
@@ -96,6 +98,12 @@
 		<script src='https://apis.google.com/js/platform.js' async defer></script>
 
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/webmidi@latest/dist/iife/webmidi.iife.js"></script>
+
+
+<script src="JZZ/JZZ.js"></script>
+<script src="JZZ/JZZ.midi.SMF.js"></script>
 		
   <script>
   //firebase deploy to deploy this.  
@@ -109,9 +117,14 @@ var videojson = null;
 var channelId = 'UC4dK3RpqBq2JpIkRmQn6HOA'; //@misterrubato doesnt work in URL, probably need to escape the @, but who cares.  
 var title = '';
 
+
+      // Enable WebMidi.js and trigger the onEnabled() function when ready.
 </script>
 
+
 <script type="text/javascript" src="clock.js"></script>
+<script type="text/javascript" src="midi.js"></script>
+
 <script>
 
 
@@ -242,6 +255,10 @@ function str_pad_left(string,pad,length) {
 }
 
 
+
+//should combine with updateVideo afterward.  
+//not sure if the struct should be uid / comments, or comments /uid
+
 function updateVideo(){
 	//get authuid.  
 	//getref to uid
@@ -259,7 +276,9 @@ function updateVideo(){
 		mycomments = $('#mycomments').val();
 
 //		sentiment = "test"; //for now
-		obj = {"comments": mycomments, "sentiment": grade };
+	    midifeedback = getMidiFeedback();
+
+		obj = {"comments": mycomments, "sentiment": grade, "midi": midifeedback };
 		uRef.set(obj);
 	}
 	
@@ -591,6 +610,14 @@ function getVideoJson(videoid){
 		}
 		else{
 			//this is not our video, need to retrieve and allow for commenting.  
+			//this can be for comments.  Then we can retrieve comments from the person.  via API
+			//misterrubato/watch/xxxx
+			//combine this from several people you like.  
+			//Need to record the audio though if we do like this.  
+			//but this is sustainable then.  This is a web server per person.  
+			//when you are following someone, the algorithm would overlay that audio on top of 
+			//whatever you are watching based on your settings.  
+			//we need a master DB though probably, otherwise you have too much unnecessary traffic.  
 			console.log(videoid + " Not in DB.  Retrieving from Youtube API");
 			ref = firebase.database().ref('/misterrubato/watch/' + videoid);
 			ref.on('value',(snap)=>{
