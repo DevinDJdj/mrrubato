@@ -574,7 +574,8 @@ function makeTimeLinks(desc){
     desc = desc.replaceAll("\n", "<br>");
 //    desc = desc.replace(")", ")<br>");
 	const regExp = /\(([^)]+)\)/g;
-    const matches = [...desc.matchAll(regExp)].flat();
+	regExp2 = /\d+\:\d\d?/g;
+    const matches = [...desc.matchAll(regExp2)].flat();
 	for (i=0; i<matches.length; i++){
 	    secs = getSecsFromTime(matches[i]);
 		if (secs > 0){
