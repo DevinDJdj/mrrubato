@@ -229,7 +229,12 @@ def getRelativeTime(it, currentTime, starttimes, endtimes):
         return -1
     reltime = 0
     reltime = currentTime - starttimes[it]
-    reltime /= (endtimes[it] - starttimes[it])
+    if reltime < 0:
+        reltime = 0
+    div = (endtimes[it] - starttimes[it])
+    if div <= 0:
+        return -1
+    reltime /= div
     return reltime
 
 def midiToImage(t, midilink):
