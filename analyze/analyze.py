@@ -8,10 +8,13 @@
 
 
 import sys
- 
+
 import datetime
 # adding Folder_2/subfolder to the system path
+#not great mechanism for config.  Maybe just make absolute path?
 sys.path.insert(0, 'c:/devinpiano/')
+sys.path.append('../')
+import config  
 
 import os
 import cred
