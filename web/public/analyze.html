@@ -200,7 +200,7 @@ var uid = null;
 					// https://firebase.google.com/docs/reference/js/firebase.User
 					
 					uid = user.uid;
-					
+					addUser(user);
 					firebase.database().ref('/misterrubato/' + video + '/comments/' + uid).once('value')
 					  .then((snapshot) => {
 						if (snapshot.exists()) {
@@ -249,6 +249,22 @@ var uid = null;
           loadEl.textContent = 'Error loading the Firebase SDK, check the console.';
         }
       });
+
+
+function addUser(user){
+    uid = user.uid;
+	displayname = user.displayName;
+	email = user.email;
+	phone = user.phoneNumber;
+	pic = user.photoURL;
+	console.log(displayname + " " + email + " " + phone + " " + pic);
+    //add to DB.  
+	var uRef = firebase.database().ref('/misterrubato/users/' + uid);
+
+	obj = {"name": displayname, "pic": pic};
+	uRef.set(obj);
+	
+}
 
 function str_pad_left(string,pad,length) {
     return (new Array(length+1).join(pad)+string).slice(-length);
