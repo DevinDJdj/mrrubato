@@ -1,0 +1,133 @@
+**analyze.html
+probably need to ignore midi unless activated.  
+On Play, activate the midi.  
+Otherwise we dont want to accept midi messages.  
+
+
+**Feedback
+Should have keys which switch to practice mode and feedback mode and display control mode.  
+Keys:
+Make this editable from the start.  
+Use the config file for these.  
+For now:
+Start: High C
+Stop: High B
+Pause: High B
+Play: High C
+MODE SELECT: High Bb
+(flat will indicate slightly less.  Arpeggio will indicate more.  So this will be scaled)
+Upper octave is slightly better graded.  
+Moderate: Gb
+Good: G
+New lyrics: A
+Keep creation: Ab
+ChordError: Eb
+
+
+ReadingStuck: B
+FingerFail: F
+RythmFail: D
+Slow: Db
+ImprovFail: C
+
+Need to play the sound when pressing the keys as well.  
+Need to associate the sound with meaning.  
+Display something as well based on the notes pressed.  
+
+
+**Display:
+Shift+Tab+#: 
+PGDN:
+PGUP:
+
+
+10/11/2023
+River Seine first successful feedback save.  
+
+Should have the feedback delay set at playback.  
+But should also save the preference when recording and be able to adjust at playback.  
+What is the difference between the actual data and the feedback.  
+Feedback should be done as an overlay on the MIDI PNG.  
+Have a color for the feedback meaning at the moment.  
+
+Use standard left hand on Keyboard if there is no midi device available.  
+
+D->D
+E->Db
+Space->E
+R->Eb
+F->F
+G->G
+T->Gb
+
+So far these are the most used it seems at least initially.  
+***We need to make sure this is always editable and adjustable.  ***
+This will become mini-languages for feedback and possibly playing as well.  
+Not sure the Keyboard->MIDIKeyboard mapping is good
+
+I chose the left hand only for feedback as it is generally the less dominant, and we want the dominant hand free for
+other tasks.  This is an oft-seen pattern in music anyway where you have the left hand focusing on 
+a generally more repetetive task whereas the right is free to experiment.  
+
+**sidebar
+There is surely a reason behind this, but I'm not sure I fully understand what it is.  
+I think understanding this relationship may unlock some interesting truths.  Hard to say if 
+you could understand.  
+I think a deeper understanding of this statement is necessary:
+
+i.e. https://sloanschoolofmusic.com/how-music-stimulates-left-and-right-brain-function/
+
+The right brain is the body’s creativity center. It’s where imagination, intuition, and non-verbal language process. The right brain is also responsible for impulse.
+
+Language patterns and sounds are organized in the left brain before leaving your mouth as words and phrases. The ability to order and register objects in relation to other objects also takes place here.
+
+Just the simple fact that it increases pathways between left and right brain may be key here.  
+Because you must focus on a task but also include the weaker (calculative) side of the brain.  
+Which then makes your weaker lobe again more calculative.  
+Surely instead of calculative we can fill in many potential words.  
+**end sidebar.  
+
+
+**/web/public/generate/test.html
+Testing Babylon.js.  Like the name and it should work as a visualization engine.  
+We want this to be realtime visualization, this is a difficult task.  But I think we can do something in 
+this area to improve mathematical type communication.  
+The other potential is to generate via someone elses API like /generate/test.py
+
+OK, so first task is to try to create some visualization from a midi file.  
+Should have timing as an important aspect.  
+Can we use this library to do so.  
+
+
+**web/public/analyze.html
+Need to add some feedback sound to see if it is tolerable.  
+How do we do this without being annoying.  
+Also need some more statistics displayed to see the #notes played and density etc as a measure along
+with just time.  
+Keep this measure throughout, and try to determine a preferred density of notes.  
+Still have to match up the WORDS and see if we can create a visualization between the iterations.  
+
+Load the MIDI file and add to it if it already exists. 
+Also the UID should be a group of admins, not just one.  
+That way we have an easy way to add multiple on the same site.  
+watch/videoid/comments/
+should be the same.  
+This is if it doesnt exist in the DB.  
+
+Record audio.  
+SPACE bar to start and stop audio.  
+mark it with MIDI, and have some data structure which includes audio snippets only.  
+No need to record for the full time, be efficient.  
+
+**web/public/mictest2.html
+This seems to work ok.  Thanks for sample https://gist.github.com/meziantou/edb7217fddfbb70e899e
+Now adopt to analyze and save to DB base64.  
+Then use same playback mechanism.  
+Can we play back along with Youtube video?  
+This may bulk up DB significantly.  
+
+/users
+not sure if this is the path we want, but lets start adding this here.  
+
+
+
