@@ -98,6 +98,8 @@ def get_channel_stat() -> dict:
 
     
 def add_video_to_playlist(videoID,playlistID, args):
+    if playlistID == "":
+        return
     youtube = get_authenticated_service(args) #write it yourself
     body=dict(
       snippet=dict(
@@ -232,7 +234,7 @@ if __name__ == '__main__':
 #    for item in reversed(data["items"]):
 #    for item in data['items']:
 #        print(item["id"])
-        if (item["kind"] == "youtube#video"):
+        if (key !="users" and item["kind"] == "youtube#video"):
 #            print(item)
             videoid = item["id"]
             privacystatus = item['status']['privacyStatus']
@@ -276,6 +278,7 @@ if __name__ == '__main__':
                                 vref.set(item)
                                 data = {'playlist':pl,'wordsplaylist':plwords}
                                 refpl.set(data)
+                                #do we really need this?  
                                 if plwords !="":
                                     add_video_to_playlist(videoid, plwords, args)
                                 add_video_to_playlist(videoid, pl, args)
@@ -291,27 +294,23 @@ if __name__ == '__main__':
                                     )).execute()            
                                 print(videos_update_response)
                             
-                            else:
-                                item['status']['privacyStatus'] = "private"
-                                vref = db.reference(f'/misterrubato/' + videoid)
-                                vref.set(item)
-                                data = {'playlist':pl,'wordsplaylist':plwords}
-                                refpl.set(data)
-                                if plwords !="":
-                                    add_video_to_playlist(videoid, plwords, args)
-                                add_video_to_playlist(videoid, pl, args)
-                                mystatus = {}         
-                                mystatus['privacyStatus'] = "private"
-                                
-                                youtube = get_authenticated_service(args)
-                                videos_update_response = youtube.videos().update(
-                                    part='status',
-                                    body=dict(
-                                      status=mystatus,
-                                      id=videoid
-                                    )).execute()            
-                                print(videos_update_response)
+                        else:
+                            item['status']['privacyStatus'] = "private"
+                            vref = db.reference(f'/misterrubato/' + videoid)
+                            vref.set(item)
+                            add_video_to_playlist(videoid, pl, args)
+                            mystatus = {}         
+                            mystatus['privacyStatus'] = "private"
                             
+                            youtube = get_authenticated_service(args)
+                            videos_update_response = youtube.videos().update(
+                                part='status',
+                                body=dict(
+                                  status=mystatus,
+                                  id=videoid
+                                )).execute()            
+                            print(videos_update_response)
+                        
 
                 
             if ((privacystatus=="public" or privacystatus=="unlisted") and pDate.date() < mydate ):

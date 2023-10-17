@@ -32,6 +32,27 @@ for (let i=0; i<120;i++){
 var prevtime = 0;
 var prevvelocity = 0;
 
+
+
+function load(data) {
+  try {
+//	data = data.substring(data.indexOf(',')+1);
+    smf = JZZ.MIDI.SMF(data);
+	console.log(smf.dump());
+	//ok so now we have to utilize this.  
+	//load into midiarray somehow.  
+  }
+  catch (e) {
+    console.log(e);
+  }
+}
+
+function setMidiFeedback(mid){
+	if (mid !==null && mid !=""){
+		load(JZZ.lib.fromBase64(mid));
+	}
+}
+
 function getMidiFeedback(){
 	//
 	var smf = new JZZ.MIDI.SMF(1, 100); //this second param is ppqn pulses per quarter note
@@ -98,6 +119,17 @@ function getMIDIMessage(message) {
 	}
 }
 
+function insertNote(note){
+	//usually inserting last.  
+	//fine for now.  
+	i=midiarray.length-1;
+	while (i >-1 && note.time < midiarray[i].time){		
+		i--;
+	}
+	midiarray.splice(i+1, 0, note);
+	
+}
+
 function noteOn(note, velocity, abstime){
 	
     console.log("Note On " + note + " at " + abstime + " vel " + velocity);
@@ -112,7 +144,8 @@ function noteOff(note, abstime){
 	clone.duration = abstime - obj.time;
 	
 	console.log("Note Off " + note + " at " + abstime);
-	midiarray.push(clone);
+	//midiarray.push(clone);
+	insertNote(clone);
 	
 	obj.velocity = 0;
 	notes[note] = obj;

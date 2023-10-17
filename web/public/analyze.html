@@ -213,6 +213,11 @@ var uid = null;
 							if (snapshot.val().sentiment !==null){
     							$('#points').val(snapshot.val().sentiment);
 							}
+							//load midi.  
+							midifeedback = snapshot.val().midi;
+							setMidiFeedback(midifeedback);
+							document.getElementById('out').innerHTML = 'New file: <a download=my.mid href=' + midifeedback + '>DOWNLOAD</a> <embed src=' + midifeedback + ' autostart=false>';
+
 						} else {
 						  console.log('No comments yet from you');
 						}
@@ -293,6 +298,8 @@ function updateVideo(){
 
 //		sentiment = "test"; //for now
 	    midifeedback = getMidiFeedback();
+		document.getElementById('out').innerHTML = 'New file: <a download=my.mid href=' + midifeedback + '>DOWNLOAD</a> <embed src=' + midifeedback + ' autostart=false>';
+
 
 		obj = {"comments": mycomments, "sentiment": grade, "midi": midifeedback };
 		uRef.set(obj);
@@ -442,6 +449,9 @@ function searchPrevious(videoid){
 		  return dateb - datea;
 		});		
 		var mydiv = document.getElementById("previous");
+		while (mydiv.firstChild) {
+		  mydiv.removeChild(mydiv.lastChild);
+		}
 		for (it=0; it< vids.length; it++){
 			var obj = vids[it];
 			var aTag = document.createElement('a');

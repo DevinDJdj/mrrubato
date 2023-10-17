@@ -129,5 +129,18 @@ This may bulk up DB significantly.
 /users
 not sure if this is the path we want, but lets start adding this here.  
 
+Need to fix the reloading of objects via RTDB as this causes problems. 
+But this will be advantageous when we work on real-time interaction.  
+
+dont really want this to remain in the DB, maybe just generate an ID and use this internally.  
+Yes like this idea.  UID is ok to expose or not really?  
 
 
+When do we want to generate future iterations?  
+That might be fun.  
+Lets wait for the feedback portion first.  
+Kind of annoying to do but important.  
+And we need to match up the midi words still.  
+
+
+Start to show the people which have commented.  

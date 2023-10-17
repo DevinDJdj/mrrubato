@@ -192,6 +192,9 @@ function getRecent(videojson){
 	//now display the recent videos which are not published and which are published etc.  
 
 	var mydiv = document.getElementById("recent");
+	while (mydiv.firstChild) {
+      mydiv.removeChild(mydiv.lastChild);
+    }
 	maxcnt = 5;
 	for (it=0; it< vids.length && it < maxcnt; it++){
 		var obj = vids[it];
