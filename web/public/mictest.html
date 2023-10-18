@@ -29,10 +29,12 @@
 		background-color: rgba(0, 0, 0, 0.75);">
   </div>
   
+  
   <script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js'></script>
 <script type="text/javascript" src="clock.js"></script>
 	
     <button type="button" onclick="saveMidi();">Save Midi</button>
+	<button type="button" onclick="showMidi();">Show Midi</button>
     <div id="out"></div>	
   </body>
   
@@ -46,6 +48,10 @@
 
 <script src="JZZ/JZZ.js"></script>
 <script src="JZZ/JZZ.midi.SMF.js"></script>
+<script src="js/midiparser.js"></script>
+
+<input type="file" id="filereader"/>
+
   <script>
   //firebase deploy to deploy this.  
 //https://github.com/djipco/webmidi/blob/master/examples/quick-start/index.html
@@ -63,6 +69,16 @@
 	  const start = Date.now();
 	  writeMidi();
 
+
+function showMidi(){
+	var source = document.getElementById('filereader');
+	MidiParser.parse( source, function(obj){
+		// Your callback function
+		console.log(obj);
+//            document.getElementById("output").innerHTML = JSON.stringify(obj, undefined, 2);
+	});
+
+}
 
 function saveMidi(){
 	var smf = new JZZ.MIDI.SMF(1, 100);
@@ -212,6 +228,7 @@ function noteOff(note){
         } else {
           WebMidi.inputs.forEach((device, index) => {
             document.body.innerHTML+= `${index}: ${device.name} <br>`;
+			
           });
         }
 

@@ -144,3 +144,20 @@ And we need to match up the midi words still.
 
 
 Start to show the people which have commented.  
+get users/xxxx and show images along with comments.  
+Have a general function run each second which checks for new comments via the loaded comments.  
+Also check update the graphic on the MIDI visualization.  
+We really need to change this visualization to some canvas which we control.  
+Make each iteration centered
+
+Still need to get the midi feedback on load.  Not quite done.  
+
+https://www.toptal.com/web/creating-browser-based-audio-applications-controlled-by-midi-hardware
+
+Get details from here:
+https://github.com/colxi/midi-parser-js/blob/master/src/main.js
+Wow why is there no easy library?
+
+**mictest.html
+OK, we can see this info coming from midiparser.  
+Now what do we want to do with it.  And can we load it from Base64 where we actually want to load it.  

@@ -24,6 +24,7 @@
       to avoid connecting the SDK to running emulators.
     -->
     <script defer src="/__/firebase/init.js?useEmulator=true"></script>
+	
 
 
 
@@ -104,6 +105,9 @@
 
 <script src="JZZ/JZZ.js"></script>
 <script src="JZZ/JZZ.midi.SMF.js"></script>
+
+
+
 		
   <script>
   //firebase deploy to deploy this.  
@@ -238,6 +242,8 @@ var uid = null;
 			  });
 
 		google.charts.load('current', {'packages':['corechart', 'timeline']});
+        
+		
 		
 		var vRef = firebase.database().ref('/misterrubato/' + video);
 		if (typeof(uid) != "undefined" && uid !==null){
