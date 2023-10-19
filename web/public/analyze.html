@@ -53,6 +53,11 @@
   <br>
     <p id="load">Firebase SDK Loading&hellip;</p>
   
+
+<script src="js/midiparser.js"></script>
+
+<input type="file" id="filereader"/>
+
   <table>
   <tr>
   <td>
@@ -220,6 +225,7 @@ var uid = null;
 							//load midi.  
 							midifeedback = snapshot.val().midi;
 							setMidiFeedback(midifeedback);
+							
 							document.getElementById('out').innerHTML = 'New file: <a download=my.mid href=' + midifeedback + '>DOWNLOAD</a> <embed src=' + midifeedback + ' autostart=false>';
 
 						} else {
@@ -543,10 +549,19 @@ function getAnalyze(midiurl){
     midiurl = midiurl.replace("\r", "");
     var storage = firebase.storage();
 
+	var lastPart = midiurl.split("/").pop();
+
 //make this more general.  
 // Create a storage reference from our storage service
     var storageRef = storage.ref();
-	var lastPart = midiurl.split("/").pop();
+	//why does this URL have space and others are %20?  
+	midiloc = "midi/" + lastPart.replace("%20", " ");
+	url = storageRef.child(midiloc).getDownloadURL()
+	  .then((url) => {
+        console.log(url);
+		getFile(url);
+   })
+		
     pianoroll = "analyze/" + lastPart
 	pianoroll = pianoroll.replace(".mid", ".jpg");
 	console.log(pianoroll);

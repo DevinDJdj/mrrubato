@@ -47,6 +47,36 @@ function load(data) {
   }
 }
 
+
+function getFile(url){
+// Create a reference to the file we want to download
+    // Insert url into an <img> tag to "download"
+		var xhr = new XMLHttpRequest();
+		xhr.open('GET', url, true);
+		xhr.responseType = 'blob';
+		xhr.onload = function(e) {
+		  if (this.status == 200) {
+			var myBlob = this.response;
+			// myBlob is now the blob that the object URL pointed to.
+			console.log(myBlob);
+		  }
+		};
+		xhr.send();
+}
+
+
+function showMidi(){
+	var source = document.getElementById('filereader');
+	MidiParser.parse( source, function(obj){
+		// Your callback function
+		console.log(obj);
+		console.log(obj.track[0].event[0]);
+
+//            document.getElementById("output").innerHTML = JSON.stringify(obj, undefined, 2);
+	});
+
+}
+
 function setMidiFeedback(mid){
 	if (mid !==null && mid !=""){
 		load(JZZ.lib.fromBase64(mid));

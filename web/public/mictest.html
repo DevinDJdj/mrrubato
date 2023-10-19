@@ -35,6 +35,7 @@
 	
     <button type="button" onclick="saveMidi();">Save Midi</button>
 	<button type="button" onclick="showMidi();">Show Midi</button>
+	<button type="button" onclick="getMidiFile();">Get Midi File</button>
     <div id="out"></div>	
   </body>
   
@@ -70,15 +71,9 @@
 	  writeMidi();
 
 
-function showMidi(){
-	var source = document.getElementById('filereader');
-	MidiParser.parse( source, function(obj){
-		// Your callback function
-		console.log(obj);
-//            document.getElementById("output").innerHTML = JSON.stringify(obj, undefined, 2);
-	});
 
-}
+
+
 
 function saveMidi(){
 	var smf = new JZZ.MIDI.SMF(1, 100);

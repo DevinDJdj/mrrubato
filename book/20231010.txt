@@ -161,3 +161,54 @@ Wow why is there no easy library?
 **mictest.html
 OK, we can see this info coming from midiparser.  
 Now what do we want to do with it.  And can we load it from Base64 where we actually want to load it.  
+
+Try to combine the midi feedback with a visualization.  
+How can we visualize the feedback that we are giving?  
+We need to denote what the feedback means as we give it.  
+https://aframe.io/
+Babylonjs
+Add generate/test.html to mictest perhaps.  
+What/how do we want to visualize though.  
+May as well visualize the music/midi to start with.  
+Need to download the midi from midilink and then combine with the feedback midi and visualize this in some way.  
+And should have realtime feedback.  
+Perhaps use babylon to utilize the existing generated images?  
+Or just regenerate the images from midi in JS.  
+
+obj.track[0].event[0]
+81 = https://mido.readthedocs.io/en/latest/meta_message_types.html#set-tempo-0x51
+3 = https://mido.readthedocs.io/en/latest/meta_message_types.html#track-name-0x03
+47 = https://mido.readthedocs.io/en/latest/meta_message_types.html#end-of-track-0x2f
+
+https://github.com/soulfresh/midi-parser/blob/master/src/midi-message.js#L39
+export const StatusBytes = {
+  NOTE_OFF         : 0x80,
+  NOTE_ON          : 0x90,
+  KEY_PRESSURE     : 0xa0,
+  CC               : 0xb0,
+  PROGRAM_CHANGE   : 0xc0,
+  CHANNEL_PRESSURE : 0xd0,
+  PITCH_BEND       : 0xe0
+}
+
+timeDivision = BPM
+Just make a larger time division.  
+Then we can get more detailed timing.  
+480 should be sufficient.  8 ticks/second is enough.  
+Right now we dont have anything that exact anyway.  
+Probably increase BPM of feedback to 480 so that we have the same.  
+Adjust calculation.  
+Could be better data but Just live with this midiparser for now.  
+This is just for display purposes anyway.  
+The actual midi is generated properly.  
+in MidiParser
+Timing ends up being essentially 10 ticks per second.  
+Check for actual midi file, we need this to be correct as well.  
+
+analyze.html
+OK, we have the midi blob, now what to do with it.  
+
+
+https://github.com/willianjusten/awesome-audio-visualization
+
+
