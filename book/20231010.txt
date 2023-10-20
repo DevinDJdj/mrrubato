@@ -205,10 +205,30 @@ in MidiParser
 Timing ends up being essentially 10 ticks per second.  
 Check for actual midi file, we need this to be correct as well.  
 
-analyze.html
+**analyze.html
 OK, we have the midi blob, now what to do with it.  
+Make a simple data struct with the midiarray
+use nested array [0][] is the original.  
+Perhaps get previous as well.  
+Comments should go in similar struct.  
+[1][] ...
+Use the images of users to indicate feedback by that user.  
+
+
 
 
 https://github.com/willianjusten/awesome-audio-visualization
 
+Should list dates of commits.  
 
+**recent.html
+Need to have a search in recent.html to search if we want to see.  
+
+
+
+**analyze.html
+some of these TD components should be collapsible.  
+
+
+write image on top of pianoroll.  
+Lets go ahead and see if we can make that a BabylonJS component.  
