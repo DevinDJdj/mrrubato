@@ -232,3 +232,10 @@ some of these TD components should be collapsible.
 
 write image on top of pianoroll.  
 Lets go ahead and see if we can make that a BabylonJS component.  
+ok, started.  
+
+**sidebar**
+Mathematical functions
+https://dlmf.nist.gov/
+
+

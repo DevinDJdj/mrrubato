@@ -105,6 +105,7 @@
   
 
         <script src="https://cdn.babylonjs.com/babylon.js"></script>
+		<script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
 <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
   <script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js'></script>
@@ -153,6 +154,7 @@ var commentsarray = [];
 var starttimes = [];
 var endtimes = [];
 var durations = [];
+var maxduration = 0;
 
 var uid = null;
 //setup https://www.youtube.com/watch?v=3jZ5vnv-LZc
@@ -410,6 +412,9 @@ function getIterations(desc, vidtime){
 			tempdate.setSeconds(tempdate.getSeconds()+st[i]);
 			starttimes.push(tempdate);
 			durations.push([tempdate, et[i]-st[i]]);
+			if (et[i]-st[i] > maxduration){
+			    maxduration = et[i]-st[i];
+			}
 			tempdate.setSeconds(tempdate.getSeconds()+(et[i]-st[i]));
 			endtimes.push(tempdate);
 		}
@@ -551,12 +556,14 @@ function getMidi(desc){
 }
 
 //use canvas for pianoroll.  Use graphics engine of some kind.  
-function loadCanvas(id) {
+function loadCanvas(id, pianoimg) {
+    numiterations = starttimes.length;
 	var canvas = document.createElement('canvas');
 	div = document.getElementById(id); 
 	canvas.id     = "PianoRollCanvas";
-	canvas.width  = 1224;
-	canvas.height = 178;
+	canvas.width  = (maxduration*20);
+	canvas.height = 200*numiterations; //200 176 for piano roll and 24 for the lines between iterations
+	//not sure the best way to visualize this, but for now just lines between same location in pianoroll.  
 	canvas.style.zIndex   = 8;
 	canvas.style.position = "absolute";
 	canvas.style.border   = "1px solid";
@@ -567,16 +574,29 @@ function loadCanvas(id) {
 	const createScene = function () {
 		// Creates a basic Babylon Scene object
 		const scene = new BABYLON.Scene(engine);
+
+/*
+    var advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+
+	
+//	const ctx = sv.getContext();
+    var image = new BABYLON.GUI.Image("but", pianoimg);
+    image.width = (maxduration*20).toString() + "px";;
+    image.height = (200*numiterations).toString() + "px";
+	image.left = 25;
+	image.top = 55;
+    advancedTexture.addControl(image);  
+*/	
 		// Creates and positions a free camera
 		const camera = new BABYLON.FreeCamera("camera1", 
-			new BABYLON.Vector3(0, 5, -10), scene);
+			new BABYLON.Vector3(0, 25, 0), scene);
 		// Targets the camera to scene origin
 		camera.setTarget(BABYLON.Vector3.Zero());
 		// This attaches the camera to the canvas
 		camera.attachControl(canvas, true);
 		// Creates a light, aiming 0,1,0 - to the sky
 		const light = new BABYLON.HemisphericLight("light", 
-			new BABYLON.Vector3(0, 1, 0), scene);
+			new BABYLON.Vector3(0, 5, 0), scene);
 		// Dim the light a small amount - 0 to 1
 		light.intensity = 0.7;
 		// Built-in 'sphere' shape.
@@ -584,9 +604,18 @@ function loadCanvas(id) {
 			{diameter: 2, segments: 32}, scene);
 		// Move the sphere upward 1/2 its height
 		sphere.position.y = 1;
+		sphere.position.x = 0;
+		sphere.position.z = 0;
 		// Built-in 'ground' shape.
-		const ground = BABYLON.MeshBuilder.CreateGround("ground", 
-			{width: 6, height: 6}, scene);
+		
+		var ground = BABYLON.MeshBuilder.CreateGround("ground", {width:(maxduration), height:(numiterations*2*2)});
+		//rotation necessary for some reason.  
+        ground.rotation = new BABYLON.Vector3(0, Math.PI, 0); //alpha, beta, gamma in radians
+		var prollMat = new BABYLON.StandardMaterial("pianorollground", scene);
+		prollMat.diffuseTexture = new BABYLON.Texture(pianoimg, scene);
+		prollMat.alpha = 0.5;	
+		ground.material = prollMat;
+	//        var layer = new BABYLON.Layer('',pianoimg, scene, false);			
 		return scene;
 	};
 	const scene = createScene(); //Call the createScene function
@@ -601,7 +630,7 @@ function addImage(url, type=0){
     var mydiv = document.getElementById("images");
 	if (type > 0){
 		mydiv = document.getElementById("pianoroll");
-		loadCanvas("pianoroll");
+		loadCanvas("pianoroll", url);
 	}
 	const img = document.createElement("img");
 	img.src = url;
