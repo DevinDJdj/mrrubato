@@ -419,6 +419,7 @@ function getIterations(desc, vidtime){
 			endtimes.push(tempdate);
 		}
 	}
+	return st.length;
 	//from here generate some sort of graphic.  
 }
 
@@ -502,7 +503,10 @@ function searchPrevious(videoid){
 			//get description, add some info to javascript object for iteration info.  
 			//words and non-word links.  Makes it easier to review.  
 			//create graph for all iterations in time.  
-			getIterations(obj.snippet.description, obj.snippet.publishedAt);
+			numit = getIterations(obj.snippet.description, obj.snippet.publishedAt);
+			if (videoid == obj.id){
+			    numiterations = numit;
+			}
 		}
 		console.log(starttimes);
 		drawChart();
@@ -557,17 +561,20 @@ function getMidi(desc){
 
 //use canvas for pianoroll.  Use graphics engine of some kind.  
 function loadCanvas(id, pianoimg) {
-    numiterations = starttimes.length;
+//    numiterations = starttimes.length;
+//this was not right variable.  
 	var canvas = document.createElement('canvas');
 	div = document.getElementById(id); 
 	canvas.id     = "PianoRollCanvas";
-	canvas.width  = (maxduration*20);
+	canvas.width  = 1500;//(maxduration*20);
 	canvas.height = 200*numiterations; //200 176 for piano roll and 24 for the lines between iterations
 	//not sure the best way to visualize this, but for now just lines between same location in pianoroll.  
 	canvas.style.zIndex   = 8;
 	canvas.style.position = "absolute";
 	canvas.style.border   = "1px solid";
+//	canvas.style.left = "-100px";
 	div.appendChild(canvas);
+
 
     
 	const engine = new BABYLON.Engine(document.getElementById("PianoRollCanvas"), true); // Generate the BABYLON 3D engine
@@ -587,28 +594,46 @@ function loadCanvas(id, pianoimg) {
 	image.top = 55;
     advancedTexture.addControl(image);  
 */	
+		xmultiplier = maxduration*20;
+		ymultiplier = 200*numiterations;
 		// Creates and positions a free camera
 		const camera = new BABYLON.FreeCamera("camera1", 
-			new BABYLON.Vector3(0, 25, 0), scene);
+			new BABYLON.Vector3(0, ymultiplier*1.2, 0), scene);
 		// Targets the camera to scene origin
 		camera.setTarget(BABYLON.Vector3.Zero());
 		// This attaches the camera to the canvas
 		camera.attachControl(canvas, true);
 		// Creates a light, aiming 0,1,0 - to the sky
-		const light = new BABYLON.HemisphericLight("light", 
-			new BABYLON.Vector3(0, 5, 0), scene);
+		const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(-(numiterations*5/2), (numiterations*5/2), (numiterations*5/2)), scene);
 		// Dim the light a small amount - 0 to 1
-		light.intensity = 0.7;
+		light.intensity = 0.4;
+		
+		//just use the light to enunciate what we want.  
+		
+
+
+//		const dirlight = new BABYLON.DirectionalLight("DirectionalLight", new BABYLON.Vector3(0, -1, 0), scene);
+		//new BABYLON.Vector3(0, -1, 0)
+		//need to figure out the X component needed here.  
+		//then move the spotlight or the camera one or the other
+		const spotlight = new BABYLON.SpotLight("spotLight", new BABYLON.Vector3(0, xmultiplier, 0), new BABYLON.Vector3(0, -1, 0), Math.PI / 24, 2, scene);
+		spotlight.intensity = 0.2;
+
+		//try to point at the right area.  
+		//start here.  ********
+		camera.position = new BABYLON.Vector3((xmultiplier/2)-50, ymultiplier*1.2, 0);
+		spotlight.position = new BABYLON.Vector3((xmultiplier/2)-50, xmultiplier, 0);
+
 		// Built-in 'sphere' shape.
 		const sphere = BABYLON.MeshBuilder.CreateSphere("sphere", 
 			{diameter: 2, segments: 32}, scene);
 		// Move the sphere upward 1/2 its height
-		sphere.position.y = 1;
-		sphere.position.x = 0;
-		sphere.position.z = 0;
+		sphere.position.y = numiterations*5/2;
+		sphere.position.x = maxduration/2;
+		sphere.position.z = numiterations*5/2;
 		// Built-in 'ground' shape.
 		
-		var ground = BABYLON.MeshBuilder.CreateGround("ground", {width:(maxduration), height:(numiterations*2*2)});
+		var ground = BABYLON.MeshBuilder.CreateGround("ground", {width:(xmultiplier), height:(ymultiplier)});
 		//rotation necessary for some reason.  
         ground.rotation = new BABYLON.Vector3(0, Math.PI, 0); //alpha, beta, gamma in radians
 		var prollMat = new BABYLON.StandardMaterial("pianorollground", scene);

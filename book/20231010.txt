@@ -239,3 +239,8 @@ Mathematical functions
 https://dlmf.nist.gov/
 
 
+
+Should use the light to enunciate what should be focused.  
+Dont need to mess with the midi for now, just show the light on the pianoroll over time.  
+
+Now shrink the canvas and move the cameras instead of scrolling.  
