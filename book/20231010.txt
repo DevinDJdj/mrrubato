@@ -237,10 +237,50 @@ ok, started.
 **sidebar**
 Mathematical functions
 https://dlmf.nist.gov/
+*Latin*
+* 3 * 4 * 5
+* 2/3 *9/8 * 44/45 * 
+1/3 -> 3/8 -> 11/30
+2/6 -> 9/24 -> 44/120          -> 257/720
+a/b  -> a*4+1/b*4 -> a*5-1/b*5 -> a*6+1/b*6
++1/2! + 1/3! - 1/4! + 1/5!
 
+3x3
+2 = none
+3 = exactly 1
+0 = exactly 2
+1 = exactly 3
+
+4x4
+9 = none
+8 = exactly 1 (N*(N-2)*A(subN-2)
+6 = exactly 2
+0 = exactly 3
+1 = exactly 4
+
+5x5
+44 = none
+45 = exactly 1 N*(N-2)*Asub(N-2)
+20 = exactly 2 5PICK2*Asub(N-3)
+10 = exactly 3 5PICK2*Asub(N-4)
+0 = exactly 4
+1 = exactly 5
+What is this breakdown?  
+This is a binomial distribution of a sort.  
+What is this distribution?  
+
+If we understand this, probably it will lead to more understanding for counting latin squares.  
+This is the same calculation that is at the core of the latin square steps.  
+Does this Asub(N-x) compute?  
+
+Can we use this to go further?  
+*Latin*
+Middle vs external always 1/3?
+Is this prime distribution related?  
 
 
 Should use the light to enunciate what should be focused.  
 Dont need to mess with the midi for now, just show the light on the pianoroll over time.  
 
 Now shrink the canvas and move the cameras instead of scrolling.  
+

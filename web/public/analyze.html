@@ -153,8 +153,18 @@ var descarray = [];
 var commentsarray = [];
 var starttimes = [];
 var endtimes = [];
+var st = [];
+var	et = [];
+var myst = [];
+var myet = [];
+
 var durations = [];
 var maxduration = 0;
+var xmultiplier;
+var ymultiplier;
+var camera;
+var light;
+var spotlight;
 
 var uid = null;
 //setup https://www.youtube.com/watch?v=3jZ5vnv-LZc
@@ -379,8 +389,8 @@ function addComment(comment, commenttime){
 	
 }
 
-function getIterations(desc, vidtime){
-    st = [];
+function getIterations(desc, vidtime, isme=false){
+	st = [];
 	et = [];
 	s = 0;
 	for (i=1; i< 20; i++){
@@ -412,14 +422,20 @@ function getIterations(desc, vidtime){
 			tempdate.setSeconds(tempdate.getSeconds()+st[i]);
 			starttimes.push(tempdate);
 			durations.push([tempdate, et[i]-st[i]]);
-			if (et[i]-st[i] > maxduration){
-			    maxduration = et[i]-st[i];
+			if (isme){
+			    myst.push(st[i]);
+				myet.push(et[i]);
+    			if (et[i]-st[i] > maxduration){
+					maxduration = et[i]-st[i];
+					
+				}
 			}
 			tempdate.setSeconds(tempdate.getSeconds()+(et[i]-st[i]));
 			endtimes.push(tempdate);
 		}
 	}
-	return st.length;
+	if (isme)
+	    numiterations = st.length;
 	//from here generate some sort of graphic.  
 }
 
@@ -503,10 +519,12 @@ function searchPrevious(videoid){
 			//get description, add some info to javascript object for iteration info.  
 			//words and non-word links.  Makes it easier to review.  
 			//create graph for all iterations in time.  
-			numit = getIterations(obj.snippet.description, obj.snippet.publishedAt);
+			isme = false;
 			if (videoid == obj.id){
-			    numiterations = numit;
+			    isme = true;
 			}
+
+			getIterations(obj.snippet.description, obj.snippet.publishedAt, isme);
 		}
 		console.log(starttimes);
 		drawChart();
@@ -559,6 +577,27 @@ function getMidi(desc){
  }
 }
 
+function getIteration(currentTime){
+    for (j=0; j< myst.length; j++){
+		if (currentTime >= myst[j] && currentTime <= myet[j]){
+			return j;
+		}
+	}
+	return -1;
+}
+
+function updateCanvas(){
+    if (player.getCurrentTime){
+		var tempTime = player.getCurrentTime();
+		i = getIteration(tempTime);
+		secs = tempTime - myst[i];
+		if (i > -1){
+			camera.position = new BABYLON.Vector3((xmultiplier/2)-20*secs, ymultiplier*1.2, 0);
+			spotlight.position = new BABYLON.Vector3((xmultiplier/2)-20*secs, xmultiplier, 0);
+		}
+	}
+}
+
 //use canvas for pianoroll.  Use graphics engine of some kind.  
 function loadCanvas(id, pianoimg) {
 //    numiterations = starttimes.length;
@@ -597,14 +636,14 @@ function loadCanvas(id, pianoimg) {
 		xmultiplier = maxduration*20;
 		ymultiplier = 200*numiterations;
 		// Creates and positions a free camera
-		const camera = new BABYLON.FreeCamera("camera1", 
+		camera = new BABYLON.FreeCamera("camera1", 
 			new BABYLON.Vector3(0, ymultiplier*1.2, 0), scene);
 		// Targets the camera to scene origin
 		camera.setTarget(BABYLON.Vector3.Zero());
 		// This attaches the camera to the canvas
 		camera.attachControl(canvas, true);
 		// Creates a light, aiming 0,1,0 - to the sky
-		const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(-(numiterations*5/2), (numiterations*5/2), (numiterations*5/2)), scene);
+		light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(-(numiterations*5/2), (numiterations*5/2), (numiterations*5/2)), scene);
 		// Dim the light a small amount - 0 to 1
 		light.intensity = 0.4;
 		
@@ -616,13 +655,16 @@ function loadCanvas(id, pianoimg) {
 		//new BABYLON.Vector3(0, -1, 0)
 		//need to figure out the X component needed here.  
 		//then move the spotlight or the camera one or the other
-		const spotlight = new BABYLON.SpotLight("spotLight", new BABYLON.Vector3(0, xmultiplier, 0), new BABYLON.Vector3(0, -1, 0), Math.PI / 24, 2, scene);
+		spotlight = new BABYLON.SpotLight("spotLight", new BABYLON.Vector3(0, xmultiplier, 0), new BABYLON.Vector3(0, -1, 0), Math.PI / 24, 2, scene);
 		spotlight.intensity = 0.2;
 
 		//try to point at the right area.  
 		//start here.  ********
-		camera.position = new BABYLON.Vector3((xmultiplier/2)-50, ymultiplier*1.2, 0);
-		spotlight.position = new BABYLON.Vector3((xmultiplier/2)-50, xmultiplier, 0);
+		setInterval(
+		upd = function() {
+			updateCanvas();
+		}, 500);
+		upd();
 
 		// Built-in 'sphere' shape.
 		const sphere = BABYLON.MeshBuilder.CreateSphere("sphere", 

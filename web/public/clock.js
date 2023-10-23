@@ -37,7 +37,7 @@ se = function() {
     end = moment()
 	secondselapsed.innerText = (end - start)/1000;
 //	$("#secondselapsed").load(" #secondselapsed > *");
-
+	
 //    output.innerText = moment().format(urlParams["format"] || '');
 }, 1000);
 se();
