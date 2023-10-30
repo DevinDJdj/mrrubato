@@ -39,6 +39,29 @@ function load(data) {
 //	data = data.substring(data.indexOf(',')+1);
     smf = JZZ.MIDI.SMF(data);
 	console.log(smf.dump());
+	console.log(smf);
+	console.log(smf[0].smfBPM());
+	//smf[0]
+	for (i=0; i<smf[0].length;i++){
+		if (smf[0][i][1] == 107 || smf[0][i][1] == 108 || smf[0][i][1] == 21){
+			console.log(smf[0][i]);
+			//use this as the timing basis, then just use TT variable here.  
+			//match up with start/end times.  
+			//smf[0][i].tt
+		}
+		//0 = 144?  channel 1
+		//1 = note
+		//2 = velocity (0=off)
+	}
+	/*
+	MidiParser.parse( smf.toUint8Array(), function(obj){
+		// Your callback function
+		console.log(obj);
+		console.log(obj.track[0].event[0]);
+
+//            document.getElementById("output").innerHTML = JSON.stringify(obj, undefined, 2);
+	});
+	*/
 	//ok so now we have to utilize this.  
 	//load into midiarray somehow.  
   }
@@ -48,17 +71,69 @@ function load(data) {
 }
 
 
+function getWords(b){
+	//need to do same as analyze.py and get the Words.  
+	//then match up across iterations.  
+	//analyze.py getNgrams
+	//not sure this is the best sample.  Maybe rethink this.  
+	//what struct do we want.  
+	//javascript int is accurate to 15 digits.  
+	//maybe just use 7-letter word held in int using MIDI key numbers.  
+	//this can be used along with other structs.  
+	//then we can compare after/before to have a sequence of same or not same.  
+	//have a running count as we build the similartity struct.  
+    //still build the pgram struct, and signgram
+	//seqngram is ok I guess.  
+	//pgram and seqngram distinguish the structure.  
+	//what rythm ngram do we want?  
+	//relative time based on longest note.  
+//	window.open(b, '_blank', 'resizable, width=1020,height=600');
+	load(b);
+	//not sure if this works.  Really we want more detailed info here, but for now whatever we can load.  
+	//JZZ load failing for some reason.  
+	//I think JZZ and MIDO are somehow incompatible.  
+	/*
+	const uint8array = new Uint8Array(b.length);
+	for (let i = 0; i < b.length; i++) {
+	  uint8array[i] = b.charCodeAt(i);
+	}
+	var decoder = new TextDecoder('utf8');
+	var b64encoded = btoa(uint8array);
+
+	load(JZZ.lib.fromBase64(b64encoded));
+*/
+	
+
+	
+}
+
 function getFile(url){
-// Create a reference to the file we want to download
-    // Insert url into an <img> tag to "download"
+	//getting the original midi file for the video
 		var xhr = new XMLHttpRequest();
 		xhr.open('GET', url, true);
-		xhr.responseType = 'blob';
+		xhr.overrideMimeType("application/x-binary; charset=ISO-8859-1");
+//		xhr.responseType = 'binary';
 		xhr.onload = function(e) {
 		  if (this.status == 200) {
 			var myBlob = this.response;
 			// myBlob is now the blob that the object URL pointed to.
+			/*
+			let reader = new FileReader();
+			reader.readAsDataURL(myBlob); // converts the blob to base64 and calls onload
+			reader.onload = function() {
+			  console.log(reader.result);
+			  getWords(reader.result);
+			}
+			*/
+			/*
+			const myFile = new File([myBlob], 'current.mid', {
+				type: myBlob.type,
+			});
+			
+			console.log(myFile);
+			*/
 			console.log(myBlob);
+			getWords(myBlob);
 		  }
 		};
 		xhr.send();

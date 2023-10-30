@@ -99,10 +99,17 @@
 </tr>
 	</table>
 
-	
-<div id="pianoroll"></div>
-<div id="images"></div>	
-  
+
+<table>
+<tr><td>	
+<div id="pianoroll" style="display: flex;" ></div>
+</td>
+</tr>
+<tr><td>
+<div id="images" style="display: flex;"></div>	
+</td>
+</tr>
+</table>  
 
         <script src="https://cdn.babylonjs.com/babylon.js"></script>
 		<script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
@@ -246,7 +253,8 @@ var uid = null;
 							midifeedback = snapshot.val().midi;
 							setMidiFeedback(midifeedback);
 							
-							document.getElementById('out').innerHTML = 'New file: <a download=my.mid href=' + midifeedback + '>DOWNLOAD</a> <embed src=' + midifeedback + ' autostart=false>';
+							console.log("MIDI:" + midifeedback);
+//							document.getElementById('out').innerHTML = 'New file: <a download=my.mid href=' + midifeedback + '>DOWNLOAD</a> <embed src=' + midifeedback + ' autostart=false>';
 
 						} else {
 						  console.log('No comments yet from you');
@@ -611,6 +619,7 @@ function loadCanvas(id, pianoimg) {
 	canvas.style.zIndex   = 8;
 	canvas.style.position = "absolute";
 	canvas.style.border   = "1px solid";
+	canvas.style.opacity = 0.8
 //	canvas.style.left = "-100px";
 	div.appendChild(canvas);
 
@@ -699,11 +708,12 @@ function addImage(url, type=0){
 		mydiv = document.getElementById("pianoroll");
 		loadCanvas("pianoroll", url);
 	}
-	const img = document.createElement("img");
-	img.src = url;
-	console.log(url);
-	mydiv.appendChild(img);
-
+	else{
+		const img = document.createElement("img");
+		img.src = url;
+		console.log(url);
+		mydiv.appendChild(img);
+	}
 }
 
 function getAnalyze(midiurl){

@@ -284,3 +284,40 @@ Dont need to mess with the midi for now, just show the light on the pianoroll ov
 
 Now shrink the canvas and move the cameras instead of scrolling.  
 
+OK, have a start.  
+Now we want to be able to interact with this, or make it more interesting.  
+Now we have to split the ground tiles and match them up, or just draw some lines with existing is probably enough.  
+
+OK, some things are not failing now with this:
+xhr.overrideMimeType("application/x-binary; charset=ISO-8859-1");
+What is still failing vs not?
+
+6500157/3511668 =~ 1236/670
+
+Ratio seems to be around 
+tt/5300 = time.  
+480*11?
+
+
+What is this tt divisor?  
+just use it and match up the pause/unpause.  
+
+**web/public/config.js
+Have to add the keys to the front end config file.  
+
+
+**web/public/analyze.html
+Need to make sure we save the midi correctly second time through.  
+Should be able to select instrument for feedback.  
+Should be able to adjust time using the Youtube UI or the graphical UI.  
+Graphical UI should add comments on top.  
+Pull all comments from any source or the top 10 sources, and then add to the UI, 
+have a minimap of comment density and then utilize the minimap (fixed to 1 hour or so for the screen).  
+generate this image within analyze.html?  
+I think all stats should be generated here.  
+The initial images we did with python are not necessary.  
+Add the visualizations to the BabylonJS canvas somehow.  
+Maybe just add the minified map to the top of this canvas and allow for interaction.  
+
+How do we associate the sound words with colors?  
+
