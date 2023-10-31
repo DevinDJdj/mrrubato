@@ -308,6 +308,7 @@ Have to add the keys to the front end config file.
 
 **web/public/analyze.html
 Need to make sure we save the midi correctly second time through.  
+-->think this should work now, need to test.  
 Should be able to select instrument for feedback.  
 Should be able to adjust time using the Youtube UI or the graphical UI.  
 Graphical UI should add comments on top.  
@@ -320,4 +321,30 @@ Add the visualizations to the BabylonJS canvas somehow.
 Maybe just add the minified map to the top of this canvas and allow for interaction.  
 
 How do we associate the sound words with colors?  
+
+
+
+*Dataskeptic Podcast
+Jianan Zhao
+
+GPT4Graph?
+Ultra
+
+Using a tree we can design the graph inductive bias.  
+GraphML
+
+GCNI
+
+
+GNN
+Geometric analysis.  
+We need this.  
+Need to read this.  
+https://arxiv.org/pdf/2310.01089.pdf
+
+Chain of reasoning Graph structures for language.  
+Can something like this bridge the gap between human language and computer languages perhaps?  
+
+
+
 

@@ -34,7 +34,7 @@ var prevvelocity = 0;
 
 
 
-function load(data) {
+function load(data, feedback=false) {
   try {
 //	data = data.substring(data.indexOf(',')+1);
     smf = JZZ.MIDI.SMF(data);
@@ -48,6 +48,11 @@ function load(data) {
 			//use this as the timing basis, then just use TT variable here.  
 			//match up with start/end times.  
 			//smf[0][i].tt
+		}
+		if (feedback == true && (smf[0][i][0] == 144 || smf[0][i][0] == 128)){
+			
+			getMIDIMessage(smf[0][i], Math.round(smf[0][i].tt*10)); 
+			//*10 because we have 100 ppqn and 60 bpm and we need milliseconds
 		}
 		//0 = 144?  channel 1
 		//1 = note
@@ -64,6 +69,7 @@ function load(data) {
 	*/
 	//ok so now we have to utilize this.  
 	//load into midiarray somehow.  
+	return smf;
   }
   catch (e) {
     console.log(e);
@@ -152,9 +158,11 @@ function showMidi(){
 
 }
 
-function setMidiFeedback(mid){
+function loadMidiFeedback(mid){
 	if (mid !==null && mid !=""){
-		load(JZZ.lib.fromBase64(mid));
+		//this is feedback
+		load(JZZ.lib.fromBase64(mid), true);
+		//clear notes
 	}
 }
 
@@ -193,27 +201,32 @@ function getMidiFeedback(){
     return uri;
 }
 
-function getMIDIMessage(message) {
-	if (midienabled==0){
+function getMIDIMessage(message, mytime=0) {
+	if (midienabled==0 && mytime==0){
 		return;
 	}
-	var command = message.data[0];
-	var note = message.data[1];
-	var velocity = (message.data.length > 2) ? message.data[2] : 0; // a velocity value might not be included with a noteOff command
+	var command = message[0];
+	var note = message[1];
+	var velocity = (message.length > 2) ? message[2] : 0; // a velocity value might not be included with a noteOff command
 
-    const now = Date.now();
-	abstime = now - start;
-    if (player.getCurrentTime)
+    if (mytime > 0){
+		abstime = mytime;
+	}
+    else if (player.getCurrentTime){
+		const now = Date.now();
+		abstime = now - start;
 		var temptime = player.getCurrentTime();
 	    abstime = Math.round(temptime * 1000);
-
+	}
+		
 	switch (command) {
 		case 144: // noteOn
 			if (velocity > 0) {
 				noteOn(note, velocity, abstime);
 				prevvelocity = velocity;
 				prevtime = abstime;
-			} else {
+			} 
+			else {
 				noteOff(note, abstime);
 			}
 			break;
@@ -269,7 +282,7 @@ function noteOff(note, abstime){
         }
 
       	for (var input of WebMidi.inputs.values()) {
-			input.channels[1].addListener("midimessage", (event) => {console.log(event); getMIDIMessage(event);});
+			input.channels[1].addListener("midimessage", (event) => {console.log(event); getMIDIMessage(event.data);});
 			//input.onmidimessage = getMIDIMessage;
 		}
 		
