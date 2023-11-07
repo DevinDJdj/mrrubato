@@ -1,0 +1,113 @@
+**analyze.html
+We really want a realtime meeting to be an option when recording or when reviewing.  
+Not sure if this is feasible to integrate this.  
+
+https://developers.google.com/calendar/api/guides/create-events
+
+In any case, lets create an event in calendar to start.  
+Have to ponder what exactly we want.  
+
+GNN
+Geometric analysis.  
+We need this.  
+Need to read this.  
+https://arxiv.org/pdf/2310.01089.pdf
+
+Topological Neural networks
+https://github.com/awesome-tnns/awesome-tnns
+What frameworks do we have?  
+https://pytorch-topological.readthedocs.io/en/latest/
+https://www.youtube.com/watch?v=GOSdahsCUjs
+
+
+**Feedback
+How can I give feedback on normal videos without using this UI?  
+Or perhaps I just want to allow for the UI to be opened from a browser plugin or something.  
+Best is if we can just get any youtube video playing to provide feedback for it without needing to open the UI.  
+
+So we would want something like this, but dont make it the focus.  
+https://chrome.google.com/webstore/detail/improve-youtube-%F0%9F%8E%A7-for-yo/bnomihfieiccainjcjblhegjgglakjdd
+Add a button which will allow you to set the default Destination for feedback, and then load the webmidi 
+and update button.  
+Enable voice feedback or not, and by default just webmidi feedback.  
+
+
+**analyze.html
+We need to display the feedback language expected at least in some popup.  
+
+**feedback.html
+Lets make a new page to explain this.  
+
+
+First octave is for preference feedback
+Use second octave for understanding feedback
+C=clear
+G=Good
+F=Unclear
+E=
+
+
+Language not yet decided.  
+But we can provide info now at least.  
+
+If we have a feedback window, do we really need to launch what is being watched.  
+Maybe best strategy is to have a plugin which you can launch just a monitoring window, which will detect
+playing youtube videos in other windows?  
+Maybe not possble, but see.  
+
+
+For other videos, need to get the title etc and save the data.  
+
+**timestep.py
+Print out recent comments for memory.  
+Dont need all the details of github printed.  
+
+
+How do we create some structure so the language is simple yet has possibility to be diverse.  
+Need some underlying structure which will be similar.  
+Maybe just the sentiment structure is ok.  
+
+Learning vs preference is there enough of a difference?  
+
+We should just visualize the Midi in some meaningful way and use this in a variety of ways.  
+i.e. 1 particular color for each combination of notes.  
+Then we have a time->color distribution, and we can create different width images each representing
+variable time distinctions along with those colors for each quantized time-step.  
+
+
+https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html
+**analyze/Torch/test.py
+
+https://github.com/yunjey/pytorch-tutorial/tree/master/tutorials/03-advanced/image_captioning
+
+
+
+**analyze.html
+Should have option to generate a subtask which will essentially make a branch with that video as previousIteration.  
+This will go onto their server, but will point back to the previous server used to create citation.  
+Branch to  -> URL ...
+Not sure if we can get previousIteration, probably annoying work.  But at least make the framework to leave citation.  
+Should we separate analyze.html from watch.html?  
+Maybe.  
+
+**android
+Need a wireless app which connects to bluetooth midi piano and detects youtube being played via API.  
+Can we get this?  
+If we can get this, then we may not need to embed.  
+Otherwise just make the URL easy.  
+Make some sort of interaction between Youtube UI queue or watchlist.  Can we get this from API?  
+player.cueVideoById(videoId:String,
+                    startSeconds:Number):Void
+player.cueVideoByUrl(mediaContentUrl:String,
+                     startSeconds:Number):Void
+player.getPlaybackRate():Number
+
+How do we make this more seemless with the interaction with youtube?  
+
+
+
+**timestep.py 
+test the update of watch videos.  
+this is coded.  
+
+

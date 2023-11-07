@@ -346,5 +346,8 @@ Chain of reasoning Graph structures for language.
 Can something like this bridge the gap between human language and computer languages perhaps?  
 
 
+Paul Nimarovsky
+
+
 
 

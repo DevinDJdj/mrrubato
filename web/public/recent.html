@@ -178,9 +178,11 @@ function getRecent(videojson){
 	for (const [key, value] of Object.entries(videojson)) {	
 	    //sort by date and list in some way.  
 		//right now just like we do, most recent and least recent
-		if (key !="users"){
+		//need something better than this?  
+		if (key !="users" && key !="watch"){
 			vids.push(value);
 		}
+		
 	}
 
 	vids.sort(function(a, b) {

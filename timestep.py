@@ -195,6 +195,33 @@ def getCodeHistory():
             #f['blob_url'
 #    return r.json()    
         
+        
+
+def getWatched():
+    #add the description from youtube so that we have this info for UI.  
+    ref = db.reference(f'/misterrubato/watch')
+    snapshot = ref.order_by_child('addedAt').get()
+    ref = snapshot.items()
+    
+    for key, item in ref:
+        url = f'https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails\
+            &id={key}&key={api_key}'
+        json_url = requests.get(url)
+        datav = json.loads(json_url.text)
+        if (len(datav['items']) > 0):
+#            print(datav)
+            
+#            print(datav['items'][0]['snippet']['publishedAt'])
+#            print(datav['items'][0]['snippet']['title'])
+#            print(datav['items'][0]['snippet']['description'])
+#            print(datav['items'][0]['snippet']['thumbnails']['default']['url'])
+#            print(datav['items'][0]['contentDetails']['duration'])
+            updRef = db.reference(f'/misterrubato/watch/' + key)
+            updRef.set(datav['items'][0])
+
+    return snapshot.items()
+
+        
 if __name__ == '__main__':
     args = argparser.parse_args()
 

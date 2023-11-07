@@ -172,6 +172,7 @@ var ymultiplier;
 var camera;
 var light;
 var spotlight;
+var watch = false;
 
 var uid = null;
 //setup https://www.youtube.com/watch?v=3jZ5vnv-LZc
@@ -240,24 +241,18 @@ var uid = null;
 					firebase.database().ref('/misterrubato/' + video + '/comments/' + uid).once('value')
 					  .then((snapshot) => {
 						if (snapshot.exists()) {
-						    console.log(snapshot.val().comments);
-						    if (snapshot.val().comments !==null){
-								$('#mycomments').val(snapshot.val().comments);
-								$('#mycommentsh').html(makeTimeLinks(snapshot.val().comments));
-							}
-							
-							if (snapshot.val().sentiment !==null){
-    							$('#points').val(snapshot.val().sentiment);
-							}
-							//load midi.  
-							midifeedback = snapshot.val().midi;
-							loadMidiFeedback(midifeedback);
-							
-							console.log("MIDI:" + midifeedback);
-//							document.getElementById('out').innerHTML = 'New file: <a download=my.mid href=' + midifeedback + '>DOWNLOAD</a> <embed src=' + midifeedback + ' autostart=false>';
+							loadPreviousComments(snapshot);
 
 						} else {
-						  console.log('No comments yet from you');
+							firebase.database().ref('/misterrubato/watch/' + video + '/comments/' + uid).once('value')
+							    .then((snapshot) => {
+									if (snapshot.exists()){
+										loadPreviousComments(snapshot);
+									}
+									else{
+									  console.log('No comments yet from you');									
+									}
+ 								});
 						}
 					  });
 					
@@ -275,26 +270,45 @@ var uid = null;
 				// ...
 			  });
 
-		google.charts.load('current', {'packages':['corechart', 'timeline']});
+			google.charts.load('current', {'packages':['corechart', 'timeline']});
         
-		
-		
-		var vRef = firebase.database().ref('/misterrubato/' + video);
-		if (typeof(uid) != "undefined" && uid !==null){
-		}
-		vRef.on("value", function(snapshot) {
-			console.log(snapshot.val());
-			videojson = snapshot.val();
 			getVideoJson(video);
-			
-		});
-		  
+/*		
+			var vRef = firebase.database().ref('/misterrubato/' + video);
+			if (typeof(uid) != "undefined" && uid !==null){
+			}
+			vRef.on("value", function(snapshot) {
+				console.log(snapshot.val());
+				videojson = snapshot.val();
+				getVideoJson(video);
+				
+			});
+*/		  
         } catch (e) {
           console.error(e);
           loadEl.textContent = 'Error loading the Firebase SDK, check the console.';
         }
       });
 
+
+function loadPreviousComments(snapshot){
+	console.log(snapshot.val().comments);
+	if (snapshot.val().comments !==null){
+		$('#mycomments').val(snapshot.val().comments);
+		$('#mycommentsh').html(makeTimeLinks(snapshot.val().comments));
+	}
+	
+	if (snapshot.val().sentiment !==null){
+		$('#points').val(snapshot.val().sentiment);
+	}
+	//load midi.  
+	midifeedback = snapshot.val().midi;
+	loadMidiFeedback(midifeedback);
+	
+	console.log("MIDI:" + midifeedback);
+//							document.getElementById('out').innerHTML = 'New file: <a download=my.mid href=' + midifeedback + '>DOWNLOAD</a> <embed src=' + midifeedback + ' autostart=false>';
+
+}
 
 function addUser(user){
     uid = user.uid;
@@ -329,20 +343,34 @@ function updateVideo(){
 	var grade = $('#points').val();
 	
 	if (uid !==null){
-	    var uRef = firebase.database().ref('/misterrubato/' + video + '/comments/' + uid);
-//		videojson.snippet.description = $('#iterations').val();
-		videojson.snippet.description.context = null;
-//		videojson = JSON.parse( JSON.stringify(videojson ) );
-		console.log(uid);
-		mycomments = $('#mycomments').val();
+		const currentdate = new Date();
+	    if (watch === false){
+			var uRef = firebase.database().ref('/misterrubato/' + video + '/comments/' + uid);
+	//		videojson.snippet.description = $('#iterations').val();
+			videojson.snippet.description.context = null;
+	//		videojson = JSON.parse( JSON.stringify(videojson ) );
+			console.log(uid);
+			mycomments = $('#mycomments').val();
 
-//		sentiment = "test"; //for now
-	    midifeedback = getMidiFeedback();
-		document.getElementById('out').innerHTML = 'New file: <a download=my.mid href=' + midifeedback + '>DOWNLOAD</a> <embed src=' + midifeedback + ' autostart=false>';
+	//		sentiment = "test"; //for now
+			midifeedback = getMidiFeedback();
+//			document.getElementById('out').innerHTML = 'New file: <a download=my.mid href=' + midifeedback + '>DOWNLOAD</a> <embed src=' + midifeedback + ' autostart=false>';
 
 
-		obj = {"comments": mycomments, "sentiment": grade, "midi": midifeedback };
-		uRef.set(obj);
+			obj = {"comments": mycomments, "sentiment": grade, "midi": midifeedback, "updated": currentdate };
+			uRef.set(obj);
+		}
+		else{
+			console.log(video + " Not in DB.  Adding watch comments");
+			var uRef = firebase.database().ref('/misterrubato/watch/' + video + '/comments/' + uid);
+			mycomments = $('#mycomments').val();
+
+	//		sentiment = "test"; //for now
+			midifeedback = getMidiFeedback();
+			obj = {"comments": mycomments, "sentiment": grade, "midi": midifeedback, "updated": currentdate };
+			uRef.set(obj);
+		
+		}
 	}
 	
 	
@@ -841,8 +869,11 @@ function getVideoJson(videoid){
 			//when you are following someone, the algorithm would overlay that audio on top of 
 			//whatever you are watching based on your settings.  
 			//we need a master DB though probably, otherwise you have too much unnecessary traffic.  
+			//add this description to our DB using timestep.  
+			//item.snippet.description
 			console.log(videoid + " Not in DB.  Retrieving from Youtube API");
 			ref = firebase.database().ref('/misterrubato/watch/' + videoid);
+			watch = true;
 			ref.on('value',(snap)=>{
 				if (snap.exists()){
 				//retrieve previous comments etc.  
@@ -852,6 +883,8 @@ function getVideoJson(videoid){
 				//uRef.set(obj);
 				}
 			});
+
+
 
 		}
 	});
