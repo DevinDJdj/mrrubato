@@ -1,8 +1,14 @@
 {
   "rules": {
     "misterrubato": {
-      ".indexOn": ["snippet/title", "snippet/description", "snippet/publishedAt", "snippet/channelId"]
-    },
+      ".indexOn": ["snippet/title", "snippet/description", "snippet/publishedAt", "snippet/channelId"],
+	  "watch": {
+	    ".indexOn": ["snippet/title", "snippet/description", "snippet/addedAt", "snippet/publishedAt"]
+	  },	  
+	  "users": {
+	    ".indexOn": ["name"]
+	  },
+	},
     ".read": "auth != null",
 	".write": "'ZW130KE3xXMvdDoIXTe9kbOkp003' === auth.uid"
 

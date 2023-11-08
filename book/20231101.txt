@@ -111,3 +111,25 @@ test the update of watch videos.
 this is coded.  
 
 
+
+**testspeech.html
+This should be ok.  
+We can get the speech recognition and the actual audio.  
+Now now sure how we want to do the audio.  
+I think we should have to continually press some button to get audio.  
+Should have similar functionality for keyboard and midi keyboard.  
+But mapping should be midi keyboard prioritized.  
+So press to record.  
+But how to store the recordings?  
+For now lets just make a struct in the RTDB.  
+In comments with the midi, make a base64 along with start time offset of recording.  
+Array struct
+
+
+**DB
+really should move
+/misterrubato/xyzabcde to /misterrubato/videos/xyzabcde
+
+
+**analyze.html
+Need feedback after update.  

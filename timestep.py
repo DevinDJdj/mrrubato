@@ -179,6 +179,7 @@ def getCodeHistory():
 #similar functionality can be used in other ways.  
 #where do we store this?  
 #dont, just do this on the front-end.  
+  try:
     url = 'https://api.github.com/repos/DevinDJdj/mrrubato/commits?sha=master'
     r = requests.get(url)
     arr = r.json()
@@ -194,30 +195,41 @@ def getCodeHistory():
             print(f['changes'])
             #f['blob_url'
 #    return r.json()    
-        
+  except Exception as e:
+    print(e)
         
 
 def getWatched():
     #add the description from youtube so that we have this info for UI.  
     ref = db.reference(f'/misterrubato/watch')
-    snapshot = ref.order_by_child('addedAt').get()
+    #snapshot = ref.get()
+    snapshot = ref.order_by_child('snippet/addedAt').get()  #this doesnt accept null values.  
     ref = snapshot.items()
     
     for key, item in ref:
-        url = f'https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails\
-            &id={key}&key={api_key}'
-        json_url = requests.get(url)
-        datav = json.loads(json_url.text)
-        if (len(datav['items']) > 0):
-#            print(datav)
-            
-#            print(datav['items'][0]['snippet']['publishedAt'])
-#            print(datav['items'][0]['snippet']['title'])
-#            print(datav['items'][0]['snippet']['description'])
-#            print(datav['items'][0]['snippet']['thumbnails']['default']['url'])
-#            print(datav['items'][0]['contentDetails']['duration'])
-            updRef = db.reference(f'/misterrubato/watch/' + key)
-            updRef.set(datav['items'][0])
+        if "snippet" not in item:
+            url = f'https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails\
+                &id={key}&key={api_key}'
+            json_url = requests.get(url)
+            datav = json.loads(json_url.text)
+            if (len(datav['items']) > 0):
+    #            print(datav)
+                
+    #            print(datav['items'][0]['snippet']['publishedAt'])
+    #            print(datav['items'][0]['snippet']['title'])
+    #            print(datav['items'][0]['snippet']['description'])
+    #            print(datav['items'][0]['snippet']['thumbnails']['default']['url'])
+    #            print(datav['items'][0]['contentDetails']['duration'])
+                updRef = db.reference(f'/misterrubato/watch/' + key)
+                
+                current_datetime = datetime.now()
+                current_datetime_string = current_datetime.strftime("%Y-%m-%dT%H:%M:%SZ")
+                datav['items'][0]['snippet']['addedAt'] = current_datetime_string
+                if "comments" in item: #really this shouldnt occur.  
+                #just failed when we first started doing this.  
+                    c = item['comments']
+                    datav['items'][0]['comments'] = c
+                updRef.set(datav['items'][0])
 
     return snapshot.items()
 
@@ -261,7 +273,7 @@ if __name__ == '__main__':
 #    for item in reversed(data["items"]):
 #    for item in data['items']:
 #        print(item["id"])
-        if (key !="users" and item["kind"] == "youtube#video"):
+        if (key !="users" and key !="watch" and item["kind"] == "youtube#video"):
 #            print(item)
             videoid = item["id"]
             privacystatus = item['status']['privacyStatus']
@@ -363,6 +375,8 @@ if __name__ == '__main__':
 
 
     getCodeHistory()
+    
+    getWatched()
     prior = """
     for item in reversed(data["items"]):
     
