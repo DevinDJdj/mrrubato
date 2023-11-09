@@ -133,3 +133,30 @@ really should move
 
 **analyze.html
 Need feedback after update.  
+
+
+
+**ControlSchema
+All this must have feedback on the screen to show mode and state information.  
+: = simultaneous
+; = divided
++ = up octave
+- = down octave
+
+C:C+ (octave) = mode change (if not already in this mode)
+otherwise means equal
+C:C+ C:C+ = functionaly semicolon (statement complete)
+Once a word is defined, they can be used to represent their longer set.  
+12 octaves = 12 modes for now.  Can potentially have submodes.  
+key of C = motion
+middle C = draw in combination with other keys.  
+C-:C:C+ = complete.  
+
+Oct+ = C;C+
+Oct- = C-;C
+
+key of D = object definition.  
+Can define objects drawn from i.e. key of C
+
+
+key of E = feedback
