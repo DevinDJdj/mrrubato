@@ -1,0 +1,175 @@
+See if we can use some rendering library to do something in real-time utilizing the music.  
+For now use python since it is what we are using, but we can essentially utilize the midi notes to create something perhaps.  
+
+https://docs.panda3d.org/1.10/python/introduction/tutorial/loading-the-grassy-scenery
+
+or 
+
+https://www.renpy.org/
+
+**visualize.py
+Make a transparent layer over either me or the screen or both.  
+Maybe start out with a transparent layer of the keys being pressed.  
+But would need to pass this real time.  
+something like this should be sufficient.  
+https://stackoverflow.com/questions/18006869/python-sharing-message-between-processes
+Dont really want the visualization process same as the recording process.  
+We could have visualize.py and accompany.py for instance.  
+Then pass the midi to each of these processes.  
+Start out with a visualization just from the midi, then we can change it to real-time midi messages.  
+Be able to do both anyway.  
+Not sure what will be preferable.  
+
+
+What is the visualization we want though?  
+This is the key question.  
+
+Or perhaps even add some notes based on prior iterations of the song.  
+This is a bit further down the road.  
+
+analyze
+
+
+Try to improve the model for mpHands.  
+One way is to create a image classification dataset.  
+We really only need the order of fingers and how many fingers are on the keys.  
+So we would have the standard 10 fingers side by side. 
+Then thumb under, etc.  Lot of work to do this ourselves.  
+
+
+We dont want class identification logic like this:
+https://towardsdatascience.com/input-pipeline-for-images-using-keras-and-tensorflow-c5e107b6d7b9
+
+We need to look at the image for fingers.  
+Try to just look for skin tone from bitmap.  
+For now just detect thumb and assume fingers are in the right order.  
+Detect thumb and fingers.  
+All this AI code and I have to do this myself??
+Because I cant find anything useful.  
+
+**fingertest.py
+For now fingertest.py should randomly collect data from highest note frequency (number of notes per second) for i.e. 10 sequential notes.  
+This way we get fast transitions.  
+Slower transitions should be easiest.  
+
+
+**analyze.html - Done
+Need to update the "rating" bar if there is an existing value when the page is loaded.  
+OK this mundane thing done.  
+
+
+Fleeting idea, keys could contain instruction commands for the mouse pointer.  
+Mouse move, mouse click the commands we are used to.  
+Essentially we have a bed of 88 hotkeys which we have assigned a few to so far.  
+Even work in something like making inefficient screen control motions disonant by matching the keys well perhaps.  
+
+
+**record.py - Done
+Cant ignore the screen off/on midi keys completely.  
+Something here not quite right still.  
+
+
+**stats.py
+Think I need a stats portion to the DB.  
+This way I can use in analyze, but do I really want to bulk things up for that purpose?  
+more stats
+published vs nonpublished
+ratings
+#words
+words/duration
+
+Need a .js file to share some of the javascript now getting to be enough helper functions what I am writing.  
+i.e. getSecsFromTime, etc.  getIterations, etc.  
+
+**recent.html
+Need this timeline to be sortable by name.  
+Also why cant we select each item in the chart instead of just the header.  
+
+analyze.html
+need to adjust for bad data.  If we dont have iterations.  
+analyze.py doesnt need as much check logic.  
+
+
+Make a live meeting/chat for each Song Name
+Can we generate that.  
+Also this could be a review of what was discussed.  
+All past timelines discussion.  
+how to embed google meeting.  
+https://developers.google.com/meet/live-sharing/guides/overview
+
+
+**sidebar
+faa file a notam
+Flag on the main tether and beacons on the other tethers.  
+Helicopter traffic.  
+RF FCC oversight.  
+Wifi payload - standard doesnt work well.  
+
+
+
+
+How can we make the piano speak.  
+I think it may work to memorize combinations of two notes which represent Kanji.  
+We should investigate how to organize this.  
+But once you associate a concept with a sound and/or image, this is progress.  
+So take the middle of the keyboard and have 50*49 Kanji represented by two note combinations.  
+Single notes can be letters.  
+This is very crude, but I think if we use Kanji, this may work in some way.  
+
+Also when displaying screen, have a map of notes -> commands.  
+Control the computer screen with the hotkeys (notes).  
+Maybe we can have both the bed of 50, and then 20 or so hotkeys at one end, probably the lower end, as we 
+dont really need to distinguish these as there is visual confirmation as well.  
+We should also display the Kanji once we play the note.  
+
+So several maps 
+ONE NOTE -> Letter
+TWO NOTE -> Kanji
+This mapping is key though. 
+Perhaps use kanji components to decide which two keys.  
+Have to associate key/distance in a meaningful way.  
+Most should be playable by one hand.  
+Perhaps 3 note?  
+One hand 15*14*13 maybe enough?  
+
+Anyway
+Other map is for the controls.  
+Move up/down, switch to typing, etc.  
+
+So essentially a MIDI file will be able to represent a presentation control series of events.  
+Doable?  yes.  
+Intriguing? yes.  
+Will people adapt to this?  probably not.  
+Have to find something that makes it significantly easier than mouse/keyboard or have some significant advantage.  
+
+
+**recent.html
+Should track repository commit activity as well.  
+https://docs.github.com/en/free-pro-team@latest/rest/activity/events?apiVersion=2022-11-28#list-repository-events
+curl -L \
+  -H "Accept: application/vnd.github+json" \
+  -H "Authorization: Bearer <YOUR-TOKEN>" \
+  -H "X-GitHub-Api-Version: 2022-11-28" \
+  https://api.github.com/repos/OWNER/REPO/events
+https://api.github.com/repos/DevinDJdj/mrrubato/events
+
+
+**config.py
+ok, so we have a start here, look at timestep.py for example how to use.  
+Lets try to decrease config files necessary where it makes sense.  
+From now on just use this config file.  
+
+worth doing?
+https://realpython.com/generative-adversarial-networks/
+https://www.tensorflow.org/tutorials/generative/dcgan
+
+Maybe CGAN can be used, try to generate another trial based on the 
+previous video inputs and the previous iterations.  
+Will this actually work?  
+
+Lets just do with the midi data first.  
+
+So each iteration is train/test.  
+Essentially we need a sequential Convolution for the midi, shouldnt be that much different than what is done for graphics.  
+Each note is an entity.  
+

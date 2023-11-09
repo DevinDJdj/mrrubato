@@ -1,0 +1,97 @@
+
+なぜこれを始めたか。
+説明するのは難しいですね。
+複数な理由が重なって、岡が山になって、山が噴火した感じ。
+世界が変化、自分が変化、親戚、世代。
+考えを残すのは大事になると信じている。
+言葉とコンピューターを通して、自分の歴史を残すことが出来るようになった。
+AI技術を通して、何となく利用出来る形になれる道は見え始めた。
+子供、二世、一般人に役に立つ可能性ある。
+お金を通して残すことが出来ない物の価値が上がる一方になるであろう。
+
+心配も多いですが、残すことを決めた。
+残すことによって、恥じになる可能性は消して小さくないですが、未来を信用することを決めた。
+世界にもある程度このプロセスとその中身をシェアすることも決めた。
+世界が受け止めるでしょうか。悪意又は幸福を起こすでしょうか。
+
+祖先のことをもっと知りたいようになったのも一つの切っ掛け。
+もちろん祖先から残っているものは少ない。
+
+こう言う個人歴史が宝になる可能性はある思います。
+今までほぼ何も残していないのは残念と思い始めた。
+
+ソースコード、文章、独白、音楽を経由して何が伝わるかな。
+伝えたいことが伝わらない気がするが、将来の子供のために頑張ろうか。
+先周りして、今お詫びします。
+
+
+record.py 
+Automatically calculate whether we should put this into certain playlist
+based on the number of words in the transcript.  
+DONE - cant do this and leave unlisted.  
+
+
+How can we expand the capability to communicate using this type of monologue.  
+First lets try some sentiment analysis around certain topics.  
+Can we ingest all the data and create accurate sentiment regarding any particular topic?  
+i.e. make any random inquiry against the dataset and get a sentiment along with a confidence interval.  
+Then we have settings to review all external inquiries with a sentiment confidence less than xx%
+Then we can respond or not depending on time and desire to fix the system/data.  
+How much data is needed?  
+How accurate is the sentiment based on the data?  
+
+
+play.py 
+need to create main function and be able to use this with other functions.  
+DONE
+
+
+How do I share the watch history in some meaningful way?  
+Or do I want to?  
+
+Brushing up on Machine learning info:
+https://github.com/karpathy/nanoGPT
+-perhaps a basis for simple start.  
+
+
+3Blue1Brown - nice channel.  
+
+https://www.youtube.com/watch?v=h7apO7q16V0
+https://www.youtube.com/watch?v=KuXjwB4LzSA
+https://www.youtube.com/watch?v=Ilg3gGewQ5U
+https://www.youtube.com/watch?v=aircAruvnKk
+
+
+
+Regarding speed.  
+You are so much more familiar with something you create.  
+This would be faster.  
+But finger speed is still probably the biggest problem for piano.  
+The problem comes when combining singing and live piano.  
+Maybe try recording then singing with recorded piano at 1.5x speed or 2x speed.  
+Not sure I like this idea, but see if it helps at least with singing.  
+Lets focus more on the AI and analysis.  Then creation.  
+The quality of play and singing not so important right now.  
+As long as it is improving somewhat.  
+
+
+Lets just forget the speed aspect right now.  
+We can always speed it up digitally.  
+I think recording at half speed is ok for the most part.  
+that is about where I am in most songs.  
+
+We could also fix excessive pauses/page turns etc programatically.  
+Kind of cheating, but I dont know how long it will take to get faster.  
+
+rewrite timestep.py
+No real point to make unlisted if it is still visible from playlist
+We want the playlists to be only a short segment of time.  
+Create unlisted_xxx for each section?  
+Then move to these playlists.  
+This is a better solution I think.  
+Annoying but cant think of anything better at the moment. 
+Then we still preserve the history.  
+Make some like 
+ZZZ_OK, etc.  
+
+

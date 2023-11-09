@@ -1,0 +1,28 @@
+https://github.com/cg2121/obs-vintage-filter/releases/tag/1.0.0
+Adding this for face camera.  
+I think that is better.  
+
+Should use color to represent age of comments.  
+Fade color with age.  
+Should keep dates with all comments.  
+Then have options regarding how to display when those comments were made.  
+This is really meant for commenting once, but could have very different applications
+as a communication tool.  
+
+
+**fingertest.py
+Break down hit or miss by Iteration.  
+If first iteration is far better, then we know we have a problem with timing.  
+Check if it is a timing issue, paint the midi notes on the images we display.  
+Then we will see if there is some problem or not.  
+
+Midi is definitely faster than the frames.  
+I think I need to ignore some frames perhaps?  
+Or the starttime calculation needs to change.  
+
+Print out the midi time and the frame time.  
+Cant see where this is coming from, matching the time.  
+
+Maybe build in the lag as a multiple of how much has been played.  
+Not sure why but it seems slightly lagged.  
+Did we change record to get the original message time?  

@@ -1,0 +1,169 @@
+OK, so we have started using internal DB.  
+Need to only do updates through this though now.  
+This will take some time, so until this is done with analyze.html, 
+we may have some out of sync data with this and the youtube comments.  
+Dont really care at the moment.  
+Now we have record.py->analyze.py
+Next
+analyze.py->analyze.html
+
+shouldnt open analyze.html except for once.  
+Figure out how many we want to run analyze on.  
+Perhaps previous two years?  
+
+this is working now, but we have to open only once, seems we are opening several times.  
+
+Still to consider:
+de-sync from youtube DB.  
+analyze.html save from here to DB.  
+Only update youtube data with batch?  
+This is probably simplest solution.  
+But then we need to only allow owner of the channel to do the editing to that branch of the DB.  
+Can we make such a rule?  
+Maybe others can use the site as is, and then just use that channel based on user login.  
+Wont get multiple channels I wouldnt think, but maybe make it possible to allow for in the future.  
+
+
+
+
+Overall good progress this weekend I think.  
+Consolidating the process into a few steps was good.  
+
+--index.html
+Next make general index first.  
+Then make the update via analyze.html.  
+
+
+add this write rule.  
+Then get the userID when using the page.  
+right now analyze.html only thing which will write anything.  
+
+why are the rules deleted.  
+keep the rules here, these are what gets written.  
+--web/database.rules.json
+
+OK, not a great solution, but for now this is ok.  
+I sign in and can update.  
+Eventually allow for any update based on the UID
+Allow that user to have their own data.  
+Perhaps lets just add the user comments to the video underneath the video data.  
+And any user can edit their own comments.  
+Have a separate textbox for other user comments?  
+Then combine the timestamped data from user x, y, z.  
+Then each song is a conversation.  
+So when playing the song the next time, via analyze.html, this will show other comments.  
+
+
+Then we can combine all comments.  
+Have one video entry which we can control, then any user can comment as they wish underneath the video entry.  
+And we can index that data and pull that data to display.  
+We should save the user name.  
+We can save the audio as well perhaps eventually.  
+For now lets just add it to the video or around where the video is playing.  
+Then we can choose to show the user or block the user from the UI.  
+
+
+Lets manage the timestep.py.  
+For now just run it each day is fine on a batch.  
+
+For now having the data in the DB is fine.  
+We should just compare all, sort by date desc with the DB
+and if there is a difference update it.  
+Same with the timestep, just sort by date asc, and whatever needs updating, update it.  
+We need to have a filter though, not sure privacyStatus is best.  
+Lets just use the DB for the timestep as well.  
+sort by creationDate, then we dont need to depend on the privacyStatus, and can just use other data we 
+make, like separate dates for tracking.  
+This should keep everything in sync essentially good enough.  
+The website will update the RTDB, and then timestep will update the Youtube DB.  
+Keep this rule regarding the workflow I think should make things simple.  
+
+
+
+Right now dont want to focus on deployment and packaging, but have to keep this in mind while designing.  
+
+
+have a sentiment indicator which can be used easily, instead of talking.  
+Just use +/- for instance.  Each TRIAL resets this counter.  
+Get start/end array when initializing the data.  
+The generated data wont change now, so ...
+For each user hold commentsarray and sentiment
+Also have delay parameter which is editable.  
+
+
+Comments should be used for something more substantial.  
+Allow for update of the comments area, and make sure we can pull this data.  
+All comments should have a timestamp.  
+Figure out an interesting way to overlay this onto the video.  
+This functionality could be used for any video really.  
+
+OK, so now we have the comments saving in the way that is needed.  
+Next we need to query these comments and display them in some interesting way.  
+We should try to get the user icon perhaps or some avatar to display them around the video.  
+
+Just extend the music cam cable and use it as the second cam in the usb hub.  
+Doesnt matter if that is slow.  
+
+Can we filter the comments properly?  
+Is it a problem that the DB is world readable?  
+I dont think so.  Well, they could read the video descriptions if they want even if they are private etc.  
+This was always the intention though to make the data available.  
+There is a problem with the poor quality of the Speech-to-text which may end up having some unintended consequences.  
+
+
+Lets just use the OBS caption plugin instead of doing this manually with python.  
+I think the quality is probably better.  
+--record.py 
+Adjust to use the recorded transcript and upload that.  
+No, this is basically similar quality, so I dont think I need to use this.  
+
+--how do I create more readable sheet music from the existing musical language that we use today?  
+Need an open source sheet music generation tool first of all.  
+That is probably the first step.  
+We can generate from the midi or just take existing stuff.  
+From there, we need to measure if it is actually easier to read or not.  
+Play from original sheet music and then generated.  
+And analyze results.  
+
+Sheet music aggregators
+openscore.cc
+https://github.com/musescore/MuseScore
+https://github.com/LibreScore/webmscore
+https://imslp.org/
+
+
+Ah something maybe useful which I can use without too much trouble.  
+https://github.com/0xfe/vexflow
+https://vexflow.com/vexwarp/
+
+Or this:
+https://github.com/magenta/magenta
+https://magenta.tensorflow.org/demos/web/
+https://magenta.tensorflow.org/get-started
+https://hello-magenta.glitch.me/
+
+Yeah this is probably going to be the best thing to get started with.  
+Pretty awesome tool it looks like and exactly the languages I want, python/js.  
+
+Maybe see if we can generate something from the recorded midi.  
+Just generate the data struct from the midi file to start with.  
+Then play it in a page.  
+
+
+
+So 
+--generate sheet music from the midi or another musical format.  
+
+Go through some of the code and samples here and then see where we land in our thought process.  
+--use the generated midi which we have been recording with some of the stuff from magenta.  
+
+Past week has been quite bitter.  
+Lacking desire to play.  This may be problematic if it continues.  
+
+
+Finish analyze.html 
+Forget to update on this page.  
+
+maybe just try to use this
+
+https://cloud.google.com/video-intelligence

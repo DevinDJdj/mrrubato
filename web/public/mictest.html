@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Mic Test</title>
+
+</head>
+
+<body translate="no" >
+  <div id="clock" 
+       style=	"display: inline-block;
+		font-family: monospace;
+		font-size: 30px;
+		text-align: right;
+		color: lightgray; 
+		border-radius: 10px; 
+		padding: 10px; 
+		background-color: rgba(0, 0, 0, 0.75);">
+  </div>
+  <div id="secondselapsed" 
+       style=	"display: inline-block;
+		font-family: monospace;
+		font-size: 30px;
+		text-align: right;
+		color: lightgray; 
+		border-radius: 10px; 
+		padding: 10px; 
+		background-color: rgba(0, 0, 0, 0.75);">
+  </div>
+  
+  
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js'></script>
+<script type="text/javascript" src="clock.js"></script>
+	
+    <button type="button" onclick="saveMidi();">Save Midi</button>
+	<button type="button" onclick="showMidi();">Show Midi</button>
+	<button type="button" onclick="getMidiFile();">Get Midi File</button>
+    <div id="out"></div>	
+  </body>
+  
+<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js'></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/webmidi@latest/dist/iife/webmidi.iife.js"></script>
+
+
+<script src="JZZ/JZZ.js"></script>
+<script src="JZZ/JZZ.midi.SMF.js"></script>
+<script src="js/midiparser.js"></script>
+
+<input type="file" id="filereader"/>
+
+  <script>
+  //firebase deploy to deploy this.  
+//https://github.com/djipco/webmidi/blob/master/examples/quick-start/index.html
+
+</script>
+    <script>
+
+      // Enable WebMidi.js and trigger the onEnabled() function when ready.
+      WebMidi
+        .enable()
+        .then(onEnabled)
+        .catch(err => alert(err));
+	  
+	  
+	  const start = Date.now();
+	  writeMidi();
+
+
+
+
+
+
+function saveMidi(){
+	var smf = new JZZ.MIDI.SMF(1, 100);
+
+	// Add MIDI file tracks:
+	var trk0 = new JZZ.MIDI.SMF.MTrk(); smf.push(trk0); // First track in Type 1 MIDI file is normally used for tempo changes
+	trk0.smfSeqName('Feedback')
+    .smfBPM(60); // Tempo. Normally set at clock 0, but can be also changed later
+	
+	var trk1 = new JZZ.MIDI.SMF.MTrk(); smf.push(trk1); // This one will be for the karaoke lyrics
+    
+	trk1.smfSeqName('Music')
+	.ch(0) // all subsequent messahes will go to channel 0
+    .program(0x0b); // set channel 0 program to vibraphone
+	
+	trk = trk1;
+	for (i=0; i< 10; i++){
+		trk = trk.ch(0).program(0x0b).tick(100).note(60+i, 127, 75);
+	}
+	trk.tick(100).smfEndOfTrack(); // otherwise it will end on clock 1690
+	var str = smf.dump(); // MIDI file dumped as a string
+	var b64 = JZZ.lib.toBase64(str); // convert to base-64 string
+	var uri = 'data:audio/midi;base64,' + b64; // data URI
+
+	// Finally, write it to the document as a link and as an embedded object:
+	document.getElementById('out').innerHTML = 'New file: <a download=my.mid href=' + uri + '>DOWNLOAD</a> <embed src=' + uri + ' autostart=false>';
+
+}
+
+function writeMidi(){
+	var smf = new JZZ.MIDI.SMF(1, 100);
+
+	// Add MIDI file tracks:
+	var trk0 = new JZZ.MIDI.SMF.MTrk(); smf.push(trk0); // First track in Type 1 MIDI file is normally used for tempo changes
+	var trk1 = new JZZ.MIDI.SMF.MTrk(); smf.push(trk1); // This one will be for the karaoke lyrics
+	var trk2 = new JZZ.MIDI.SMF.MTrk(); smf.push(trk2); // This one will be for the music
+trk0.smfSeqName('Little Lame') // The name of the first track serves as the file title
+    .smfBPM(90); // Tempo. Normally set at clock 0, but can be also changed later
+
+trk1.smfSeqName('Lyrics') // The names of other tracks don't have any particular meaning
+    .smfText('@TMary Was A Little Lame') // Karaoke player will recognize this track by the "@T" tag
+    .tick(100).smfText('\\Ma') // New verse starts with a backslash "\"
+    .tick(75).smfText('ry ')
+    .tick(25).smfText('was ')
+    .tick(50).smfText('a ')
+    .tick(50).smfText('lit')
+    .tick(50).smfText('tle ')
+    .tick(50).smfText('lame,')
+    .tick(100).smfText('/Lit') // New line starts with a slash "/"
+    .tick(50).smfText('tle ')
+    .tick(50).smfText('lame,')
+    .tick(100).smfText('/Lit')
+    .tick(50).smfText('tle ')
+    .tick(50).smfText('lame,')
+    .tick(100).smfText('/Ma')
+    .tick(75).smfText('ry ')
+    .tick(25).smfText('was ')
+    .tick(50).smfText('a ')
+    .tick(50).smfText('lit')
+    .tick(50).smfText('tle ')
+    .tick(50).smfText('lame,')
+    .tick(50).smfText('/A ')
+    .tick(50).smfText('lit')
+    .tick(50).smfText('tle ')
+    .tick(50).smfText('lame ')
+    .tick(50).smfText('was ')
+    .tick(50).smfText('she!');
+
+trk2.smfSeqName('Music')
+    .ch(0) // all subsequent messahes will go to channel 0
+    .program(0x0b) // set channel 0 program to vibraphone
+    .tick(100).note('E5', 127, 75) // clock: 100, MIDI channel: 0, note: E5, velocity: 127, duration: 50 clocks
+    .tick(75).note('D5', 127, 25)  // etc...
+    .tick(25).note('C5', 127, 50)
+    .tick(50).note('D5', 127, 50)
+    .tick(50).note('E5',127, 50)
+    .tick(50).note(64, 127, 50)   // can also use numerical values for the notes
+    .tick(50).note(0x40, 127, 90)
+    .tick(100).note('D5', 127, 50)
+    .tick(50).note('D5', 127, 50)
+    .tick(50).note('D5', 127, 90)
+    .tick(100).note('E5', 127, 50)
+    .tick(50).note('G5', 127, 50)
+    .tick(50).note('G5', 127, 90)
+    .tick(100).note('E5', 127, 75)
+    .tick(75).note('D5', 127, 25)
+    .tick(25).note('C5', 127, 50)
+    .tick(50).note('D5', 127, 50)
+    .tick(50).note('E5', 127, 50)
+    .tick(50).note('E5', 127, 50)
+    .tick(50).note('E5', 127, 50)
+    .tick(75).note('E5', 127, 25)
+    .tick(25).note('D5', 127, 50)
+    .tick(50).note('D5', 127, 50)
+    .tick(50).note('E5', 127, 50)
+    .tick(50).note('D5', 127, 50)
+    .tick(50).note('C5', 127, 190)
+    .tick(100).note('E5', 100, 90).note('G5', 100, 90).note('C6', 127, 90)
+    .tick(100).smfEndOfTrack(); // otherwise it will end on clock 1690
+
+var str = smf.dump(); // MIDI file dumped as a string
+var b64 = JZZ.lib.toBase64(str); // convert to base-64 string
+var uri = 'data:audio/midi;base64,' + b64; // data URI
+
+// Finally, write it to the document as a link and as an embedded object:
+document.getElementById('out').innerHTML = 'New file: <a download=lame.mid href=' + uri + '>DOWNLOAD</a> <embed src=' + uri + ' autostart=false>';
+}
+
+function getMIDIMessage(message) {
+	var command = message.data[0];
+	var note = message.data[1];
+	var velocity = (message.data.length > 2) ? message.data[2] : 0; // a velocity value might not be included with a noteOff command
+
+	switch (command) {
+		case 144: // noteOn
+			if (velocity > 0) {
+				noteOn(note, velocity);
+			} else {
+				noteOff(note);
+			}
+			break;
+		case 128: // noteOff
+			noteOff(note);
+			break;
+		// we could easily expand this switch statement to cover other types of commands such as controllers or sysex
+	}
+}
+
+function noteOn(note, velocity){
+    const now = Date.now();
+	abstime = now - start;
+	
+    console.log("Note On " + note + " at " + abstime);
+}
+
+function noteOff(note){
+    const now = Date.now();
+	abstime = now - start;
+	console.log("Note Off " + note + " at " + abstime);
+}
+
+
+      function onEnabled() {
+
+        if (WebMidi.inputs.length < 1) {
+          document.body.innerHTML+= "No device detected.";
+        } else {
+          WebMidi.inputs.forEach((device, index) => {
+            document.body.innerHTML+= `${index}: ${device.name} <br>`;
+			
+          });
+        }
+
+      	for (var input of WebMidi.inputs.values()) {
+			input.channels[1].addListener("midimessage", (event) => {console.log(event); getMIDIMessage(event);});
+			//input.onmidimessage = getMIDIMessage;
+		}
+		
+        const mySynth = WebMidi.inputs[1];
+        // const mySynth = WebMidi.getInputByName("TYPE NAME HERE!")
+
+//        mySynth.channels[1].addListener("noteon", e => {
+//          document.body.innerHTML+= `${e.note.name} <br>`;
+//		  console.log(e);
+//        });
+
+      }
+
+    </script>
+
+
+
+</html>

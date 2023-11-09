@@ -1,0 +1,353 @@
+**analyze.html
+probably need to ignore midi unless activated.  
+On Play, activate the midi.  
+Otherwise we dont want to accept midi messages.  
+
+
+**Feedback
+Should have keys which switch to practice mode and feedback mode and display control mode.  
+Keys:
+Make this editable from the start.  
+Use the config file for these.  
+For now:
+Start: High C
+Stop: High B
+Pause: High B
+Play: High C
+MODE SELECT: High Bb
+(flat will indicate slightly less.  Arpeggio will indicate more.  So this will be scaled)
+Upper octave is slightly better graded.  
+Moderate: Gb
+Good: G
+New lyrics: A
+Keep creation: Ab
+ChordError: Eb
+
+
+ReadingStuck: B
+FingerFail: F
+RythmFail: D
+Slow: Db
+ImprovFail: C
+
+Need to play the sound when pressing the keys as well.  
+Need to associate the sound with meaning.  
+Display something as well based on the notes pressed.  
+
+
+**Display:
+Shift+Tab+#: 
+PGDN:
+PGUP:
+
+
+10/11/2023
+River Seine first successful feedback save.  
+
+Should have the feedback delay set at playback.  
+But should also save the preference when recording and be able to adjust at playback.  
+What is the difference between the actual data and the feedback.  
+Feedback should be done as an overlay on the MIDI PNG.  
+Have a color for the feedback meaning at the moment.  
+
+Use standard left hand on Keyboard if there is no midi device available.  
+
+D->D
+E->Db
+Space->E
+R->Eb
+F->F
+G->G
+T->Gb
+
+So far these are the most used it seems at least initially.  
+***We need to make sure this is always editable and adjustable.  ***
+This will become mini-languages for feedback and possibly playing as well.  
+Not sure the Keyboard->MIDIKeyboard mapping is good
+
+I chose the left hand only for feedback as it is generally the less dominant, and we want the dominant hand free for
+other tasks.  This is an oft-seen pattern in music anyway where you have the left hand focusing on 
+a generally more repetetive task whereas the right is free to experiment.  
+
+**sidebar
+There is surely a reason behind this, but I'm not sure I fully understand what it is.  
+I think understanding this relationship may unlock some interesting truths.  Hard to say if 
+you could understand.  
+I think a deeper understanding of this statement is necessary:
+
+i.e. https://sloanschoolofmusic.com/how-music-stimulates-left-and-right-brain-function/
+
+The right brain is the body’s creativity center. It’s where imagination, intuition, and non-verbal language process. The right brain is also responsible for impulse.
+
+Language patterns and sounds are organized in the left brain before leaving your mouth as words and phrases. The ability to order and register objects in relation to other objects also takes place here.
+
+Just the simple fact that it increases pathways between left and right brain may be key here.  
+Because you must focus on a task but also include the weaker (calculative) side of the brain.  
+Which then makes your weaker lobe again more calculative.  
+Surely instead of calculative we can fill in many potential words.  
+**end sidebar.  
+
+
+**/web/public/generate/test.html
+Testing Babylon.js.  Like the name and it should work as a visualization engine.  
+We want this to be realtime visualization, this is a difficult task.  But I think we can do something in 
+this area to improve mathematical type communication.  
+The other potential is to generate via someone elses API like /generate/test.py
+
+OK, so first task is to try to create some visualization from a midi file.  
+Should have timing as an important aspect.  
+Can we use this library to do so.  
+
+
+**web/public/analyze.html
+Need to add some feedback sound to see if it is tolerable.  
+How do we do this without being annoying.  
+Also need some more statistics displayed to see the #notes played and density etc as a measure along
+with just time.  
+Keep this measure throughout, and try to determine a preferred density of notes.  
+Still have to match up the WORDS and see if we can create a visualization between the iterations.  
+
+Load the MIDI file and add to it if it already exists. 
+Also the UID should be a group of admins, not just one.  
+That way we have an easy way to add multiple on the same site.  
+watch/videoid/comments/
+should be the same.  
+This is if it doesnt exist in the DB.  
+
+Record audio.  
+SPACE bar to start and stop audio.  
+mark it with MIDI, and have some data structure which includes audio snippets only.  
+No need to record for the full time, be efficient.  
+
+**web/public/mictest2.html
+This seems to work ok.  Thanks for sample https://gist.github.com/meziantou/edb7217fddfbb70e899e
+Now adopt to analyze and save to DB base64.  
+Then use same playback mechanism.  
+Can we play back along with Youtube video?  
+This may bulk up DB significantly.  
+
+/users
+not sure if this is the path we want, but lets start adding this here.  
+
+Need to fix the reloading of objects via RTDB as this causes problems. 
+But this will be advantageous when we work on real-time interaction.  
+
+dont really want this to remain in the DB, maybe just generate an ID and use this internally.  
+Yes like this idea.  UID is ok to expose or not really?  
+
+
+When do we want to generate future iterations?  
+That might be fun.  
+Lets wait for the feedback portion first.  
+Kind of annoying to do but important.  
+And we need to match up the midi words still.  
+
+
+Start to show the people which have commented.  
+get users/xxxx and show images along with comments.  
+Have a general function run each second which checks for new comments via the loaded comments.  
+Also check update the graphic on the MIDI visualization.  
+We really need to change this visualization to some canvas which we control.  
+Make each iteration centered
+
+Still need to get the midi feedback on load.  Not quite done.  
+
+https://www.toptal.com/web/creating-browser-based-audio-applications-controlled-by-midi-hardware
+
+Get details from here:
+https://github.com/colxi/midi-parser-js/blob/master/src/main.js
+Wow why is there no easy library?
+
+**mictest.html
+OK, we can see this info coming from midiparser.  
+Now what do we want to do with it.  And can we load it from Base64 where we actually want to load it.  
+
+Try to combine the midi feedback with a visualization.  
+How can we visualize the feedback that we are giving?  
+We need to denote what the feedback means as we give it.  
+https://aframe.io/
+Babylonjs
+Add generate/test.html to mictest perhaps.  
+What/how do we want to visualize though.  
+May as well visualize the music/midi to start with.  
+Need to download the midi from midilink and then combine with the feedback midi and visualize this in some way.  
+And should have realtime feedback.  
+Perhaps use babylon to utilize the existing generated images?  
+Or just regenerate the images from midi in JS.  
+
+obj.track[0].event[0]
+81 = https://mido.readthedocs.io/en/latest/meta_message_types.html#set-tempo-0x51
+3 = https://mido.readthedocs.io/en/latest/meta_message_types.html#track-name-0x03
+47 = https://mido.readthedocs.io/en/latest/meta_message_types.html#end-of-track-0x2f
+
+https://github.com/soulfresh/midi-parser/blob/master/src/midi-message.js#L39
+export const StatusBytes = {
+  NOTE_OFF         : 0x80,
+  NOTE_ON          : 0x90,
+  KEY_PRESSURE     : 0xa0,
+  CC               : 0xb0,
+  PROGRAM_CHANGE   : 0xc0,
+  CHANNEL_PRESSURE : 0xd0,
+  PITCH_BEND       : 0xe0
+}
+
+timeDivision = BPM
+Just make a larger time division.  
+Then we can get more detailed timing.  
+480 should be sufficient.  8 ticks/second is enough.  
+Right now we dont have anything that exact anyway.  
+Probably increase BPM of feedback to 480 so that we have the same.  
+Adjust calculation.  
+Could be better data but Just live with this midiparser for now.  
+This is just for display purposes anyway.  
+The actual midi is generated properly.  
+in MidiParser
+Timing ends up being essentially 10 ticks per second.  
+Check for actual midi file, we need this to be correct as well.  
+
+**analyze.html
+OK, we have the midi blob, now what to do with it.  
+Make a simple data struct with the midiarray
+use nested array [0][] is the original.  
+Perhaps get previous as well.  
+Comments should go in similar struct.  
+[1][] ...
+Use the images of users to indicate feedback by that user.  
+
+
+
+
+https://github.com/willianjusten/awesome-audio-visualization
+
+Should list dates of commits.  
+
+**recent.html
+Need to have a search in recent.html to search if we want to see.  
+
+
+
+**analyze.html
+some of these TD components should be collapsible.  
+
+
+write image on top of pianoroll.  
+Lets go ahead and see if we can make that a BabylonJS component.  
+ok, started.  
+
+**sidebar**
+Mathematical functions
+https://dlmf.nist.gov/
+*Latin*
+* 3 * 4 * 5
+* 2/3 *9/8 * 44/45 * 
+1/3 -> 3/8 -> 11/30
+2/6 -> 9/24 -> 44/120          -> 257/720
+a/b  -> a*4+1/b*4 -> a*5-1/b*5 -> a*6+1/b*6
++1/2! + 1/3! - 1/4! + 1/5!
+
+3x3
+2 = none
+3 = exactly 1
+0 = exactly 2
+1 = exactly 3
+
+4x4
+9 = none
+8 = exactly 1 (N*(N-2)*A(subN-2)
+6 = exactly 2
+0 = exactly 3
+1 = exactly 4
+
+5x5
+44 = none
+45 = exactly 1 N*(N-2)*Asub(N-2)
+20 = exactly 2 5PICK2*Asub(N-3)
+10 = exactly 3 5PICK2*Asub(N-4)
+0 = exactly 4
+1 = exactly 5
+What is this breakdown?  
+This is a binomial distribution of a sort.  
+What is this distribution?  
+
+If we understand this, probably it will lead to more understanding for counting latin squares.  
+This is the same calculation that is at the core of the latin square steps.  
+Does this Asub(N-x) compute?  
+
+Can we use this to go further?  
+*Latin*
+Middle vs external always 1/3?
+Is this prime distribution related?  
+
+
+Should use the light to enunciate what should be focused.  
+Dont need to mess with the midi for now, just show the light on the pianoroll over time.  
+
+Now shrink the canvas and move the cameras instead of scrolling.  
+
+OK, have a start.  
+Now we want to be able to interact with this, or make it more interesting.  
+Now we have to split the ground tiles and match them up, or just draw some lines with existing is probably enough.  
+
+OK, some things are not failing now with this:
+xhr.overrideMimeType("application/x-binary; charset=ISO-8859-1");
+What is still failing vs not?
+
+6500157/3511668 =~ 1236/670
+
+Ratio seems to be around 
+tt/5300 = time.  
+480*11?
+
+
+What is this tt divisor?  
+just use it and match up the pause/unpause.  
+
+**web/public/config.js
+Have to add the keys to the front end config file.  
+
+
+**web/public/analyze.html
+Need to make sure we save the midi correctly second time through.  
+-->think this should work now, need to test.  
+Should be able to select instrument for feedback.  
+Should be able to adjust time using the Youtube UI or the graphical UI.  
+Graphical UI should add comments on top.  
+Pull all comments from any source or the top 10 sources, and then add to the UI, 
+have a minimap of comment density and then utilize the minimap (fixed to 1 hour or so for the screen).  
+generate this image within analyze.html?  
+I think all stats should be generated here.  
+The initial images we did with python are not necessary.  
+Add the visualizations to the BabylonJS canvas somehow.  
+Maybe just add the minified map to the top of this canvas and allow for interaction.  
+
+How do we associate the sound words with colors?  
+
+
+
+*Dataskeptic Podcast
+Jianan Zhao
+
+GPT4Graph?
+Ultra
+
+Using a tree we can design the graph inductive bias.  
+GraphML
+
+GCNI
+
+
+GNN
+Geometric analysis.  
+We need this.  
+Need to read this.  
+https://arxiv.org/pdf/2310.01089.pdf
+
+Chain of reasoning Graph structures for language.  
+Can something like this bridge the gap between human language and computer languages perhaps?  
+
+
+Paul Nimarovsky
+
+
+
+

@@ -1,0 +1,103 @@
+Eventually we should be playing from the data we have.  
+record.html or whatever and use this info to actually show the music 
+and potentially based on the feedback, update the page?  
+Probably too slow.  
+But either way, the record.py should bring up record.html which will have 
+a variety of statistics on the song last iterations and the other things
+which are done via analyze.py
+We do need some ability to play back and build on top of existing layers though.  
+Select layers and then utilize that to play with as part of the record.py process?  
+This is significantly ahead.  
+First of all need to work on analyze.py to create some more interesting information.  
+
+maybe save the analytics as data.  
+This is easier than looking at the images.  
+
+Find the latest output for a certain song, and then run the analyze before we do the record?  
+
+OK, so uploading the images to analyze/xxx.jpg
+Now display this in analyze.html if we have this.  
+
+Wow much harder than I thought that would be adding to analyze.html.  
+I had to use firebase storage functions because the URL by itself doesnt work.  
+Anyway, I now have something to look at, but probably want to adjust the piano roll to be vertical and show it in time with the video.  
+Or just leave as is and make a vertical version as well so we can play with that.  
+It is not actually that interesting of a problem.  As long as you have an image, you can just display it and scroll through it.  
+Unless we will analyze midi in the html page, dont even bother with those libraries.  
+The image is sufficient, and just scroll with video time.  
+
+
+Lets try to find the most prevalent rhythm patterns and the note patterns.  
+
+Lets try to improve the speech recognition quality.  
+Maybe we can get lyrics too.  
+
+Libraries to try:
+Pyaudio
+librosa
+librosa.feature.tempogram_ratio
+librosa.feature.fourier_tempogram
+librosa.interp_harmonics
+librosa.effects.time_stretch
+librosa.effects.pitch_shift
+SpeechRecognition
+
+
+Why does analyze have that pattern for the rythms.  
+What is the function, looks kind of like 1/x perhaps.  
+And why.  
+Also why does analyze.py not pull newly uploaded videos?  
+
+
+start to use the github assistant.  
+copilot
+and
+codex
+
+not sure I use git enough to be useful.  
+
+Use the OpenAI image generator to generate images from the text that is being spoken.  
+https://api.openai.com/v1/images/generations
+I think when this generates text and image from a website or a correlatable website that would be nice.  
+If we are going to use this, may as well use it for the transcription and see if it is better.  
+Then we can just update the transcripts.  
+https://api.openai.com/v1/audio/transcriptions
+I think there should be an audio driven browser.  
+That is what we really need.  
+To start something with the generated images based on the text may be interesting at least for music.  
+But I think we need to see if we can get the text from the audio while singing.  
+
+Use second display and get in habit of using analyze.html before playing something.  
+Even though there wont be much yet.  
+
+
+When record.py is launched, also launch analyze.html with the latest video or title.  
+Get in the habit of using a webpage to think about the last time a piece was played.  
+
+For now do analyze.py to launch a review, and have this launch analyze.html with the latest video to be reviewed.  
+
+First thing I think we have to create a DB for this.  
+The Youtube API is almost good enough for what we want to do, but not really.  
+On record.py, we will make an entry for the uploaded video.  
+videoid, categories/playlist, midi, transcript, title, author, keywords, status.  
+status = new, reviewed, archived (x months)
+Stop using the youtube playlists.  
+
+Then we have essentially the same info as on youtube, in case we need to re-upload everything.  
+Make a user for just reading for the web.  
+
+--youtubetortdb.py
+good enough for now.  
+We really need to run through the list and store all data by calling this job for each videoid.  
+Add the desired parameters on top of the youtube JSON structure.  
+
+can also now have an index page easier.  
+Just pull the latest videos which havent been reviewed.  
+
+record.py -> analyze.py -> analyze.html on display without starting the latest video.  
+
+analyze.html will update the video descriptions as well and do all management there.  
+index.html->analyze.html->update.  
+yeah this was inevitable at some point I would have to manage a DB of some kind.  
+It is minimal, so hopefully it is not too annoying.  
+

@@ -11,18 +11,25 @@
 #python ./upload.py --file="./input/2022-12-12_13-46-58.mkv" --title="Test Upload" --description="Wow this should be easy" --keywords="music, piano" --category="10" --privacyStatus="private"
 #python ./upload.py --file="./output/testmidi/2022-12-22 20-43-48.mkv" --title="Test Upload" --description="Wow this should be easy" --keywords="music, piano" --category="10" --privacyStatus="private"
 
+#I use description not title.  
+#python ./record.py --description "Claire De Lune"
+
 
 #!/usr/bin/python
 #getting stuff for image processing.  
-#pip install opencv-python
+#pip install opencv-python #key detection
 
-#pip install mido
-#pip install rtmidi
-#pip install py-midi
+#pip install mido #midi capture
+#pip install rtmidi #midi capture
+#pip install py-midi 
 #pip install python-rtmidi
 #install vc++ redistributable.  
 
 #pip install pydrive
+
+#pip install manim #math visualization
+#moviepy 1.0.3 requires decorator<5.0,>=4.0.2, but you have decorator 5.1.1 which is incompatible.
+
 
 #from midi file get start times and stop times.  
 #for now just use the next note after the start video/stop video (21/22)
@@ -52,6 +59,14 @@ from mido import Message, MidiFile, MidiTrack
 
 from mido.ports import MultiPort
 
+
+import config 
+
+#pip install pynput
+#key input for hotkeys to trigger recording etc.  
+from pynput.keyboard import Key, Controller
+
+import subprocess
 import sys
 sys.path.insert(0, 'c:/devinpiano/')
  
@@ -59,6 +74,8 @@ sys.path.insert(0, 'c:/devinpiano/')
 import cred
 
 
+channel_id = cred.CHANNELID
+api_key = cred.APIKEY
 
 
 
@@ -68,6 +85,19 @@ from apiclient.http import MediaFileUpload
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.file import Storage
 from oauth2client.tools import argparser, run_flow
+
+
+from transcribe import transcribe_me, get_timestamp
+
+import firebase_admin
+from firebase_admin import db
+from firebase_admin import firestore
+
+from firebase_admin import credentials
+from firebase_admin import initialize_app, storage
+
+import requests
+import json
 
 
 # Explicitly tell the underlying HTTP transport library not to retry, since
@@ -103,6 +133,7 @@ CLIENT_SECRETS_FILE = "./../client_secrets.json"
 # This OAuth 2.0 access scope allows an application to upload files to the
 # authenticated user's YouTube channel, but doesn't allow other types of access.
 YOUTUBE_UPLOAD_SCOPE = "https://www.googleapis.com/auth/youtube.upload"
+YOUTUBE_SCOPE = "https://www.googleapis.com/auth/youtube"
 YOUTUBE_API_SERVICE_NAME = "youtube"
 YOUTUBE_API_VERSION = "v3"
 
@@ -141,14 +172,16 @@ VALID_PRIVACY_STATUSES = ("public", "private", "unlisted")
     
 
 
-def get_authenticated_service(args):
+def get_authenticated_service(args, myscope=YOUTUBE_SCOPE):
   flow = flow_from_clientsecrets(CLIENT_SECRETS_FILE,
-    scope=YOUTUBE_UPLOAD_SCOPE,
+    scope=myscope,
     message=MISSING_CLIENT_SECRETS_MESSAGE)
+  
 
   storage = Storage("%s-oauth2.json" % sys.argv[0])
   credentials = storage.get()
-
+  #this local storage of creds was causing problems.  Finally this works now to add to the playlist.  
+#  credentials = None
   if credentials is None or credentials.invalid:
     credentials = run_flow(flow, storage, args)
 
@@ -190,7 +223,31 @@ def initialize_upload(youtube, options):
     media_body=MediaFileUpload(options.file, chunksize=-1, resumable=True)
   )
 
-  resumable_upload(insert_request)
+  return resumable_upload(insert_request)
+
+
+def addtodb(videoid):
+ 
+    url = f'https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,status\
+        &id={videoid}&key={api_key}'
+    json_url = requests.get(url)
+    datav = json.loads(json_url.text)
+    if (len(datav['items']) > 0):
+        GroupName = ""
+        title = datav['items'][0]['snippet']['title']
+        gs = title.find("(")
+        ge = title.find(")")
+        url = "https://www.youtube.com/watch?v=" + videoid
+        
+        if (gs > 0):
+            GroupName = title[gs+1:ge]
+            title = title[0:gs]
+            datav['items'][0]['snippet']['group'] = GroupName
+
+        
+        #insert into DB
+        ref = db.reference(f'/misterrubato/' + videoid)
+        ref.set(datav['items'][0])
 
 # This method implements an exponential backoff strategy to resume a
 # failed upload.
@@ -205,6 +262,8 @@ def resumable_upload(insert_request):
       if response is not None:
         if 'id' in response:
           print ("Video id '%s' was successfully uploaded." % response['id'])
+          videoid = response['id']
+          return response['id']
         else:
           exit("The upload failed with an unexpected response: %s" % response)
     except HttpError as e:
@@ -226,13 +285,25 @@ def resumable_upload(insert_request):
       sleep_seconds = random.random() * max_sleep
       print ("Sleeping %f seconds and then retrying..." % sleep_seconds)
       time.sleep(sleep_seconds)
+  return None
+  
+def uploadtranscript(file, title):
+ 
+    # Put your local file path 
+    Title = title + '.txt'
+    fileName = file + '.txt'
+    bucket = storage.bucket()
+    blob = bucket.blob('words/' + Title)
+    blob.upload_from_filename(fileName)
 
+    # Opt : if you want to make public access from the URL
+    blob.make_public()
+
+    print("your transcript file url", blob.public_url)
+    return blob.public_url
 
 def uploadmidi(file, title):
-    from firebase_admin import credentials, initialize_app, storage
-    # Init firebase with your credentials
-    cred = credentials.Certificate("../misterrubato-test.json")
-    initialize_app(cred, {'storageBucket': 'misterrubato-test.appspot.com'})
+
 
     # Put your local file path 
     Title = title + '.mid'
@@ -244,7 +315,7 @@ def uploadmidi(file, title):
     # Opt : if you want to make public access from the URL
     blob.make_public()
 
-    print("your file url", blob.public_url)
+    print("your midi file url", blob.public_url)
     return blob.public_url
     
     
@@ -257,7 +328,49 @@ def calculatedelay(pausestart, pauseend):
         delay += pauseend[idx] - pausestart[idx]
     return delay
     
+    
+def add_video_to_playlist(videoID,playlistID, args):
+    youtube = get_authenticated_service(args, YOUTUBE_SCOPE) #write it yourself
+    body=dict(
+      snippet=dict(
+        playlistId=playlistID,
+        resourceId=dict(
+          kind="youtube#video",
+          videoId=videoID
+        ),
+      ),
+    )
+#    add_video_request=youtube.playlistItems().insert(
+#        part="snippet",
+#        body=body
+#    ).execute()
+
+    request = youtube.playlistItems().insert(
+    part="snippet",
+    body={
+      "snippet": {
+        "playlistId": playlistID,
+        "position": 0,
+        "resourceId": {
+          "kind": "youtube#video",
+          "videoId": videoID
+        }
+      }
+    }
+    )
+    response = request.execute()
+    
+def get_latest_file():
+    list_of_files = glob.glob('C:/Users/devin/Videos/*.mkv') # * means all if need specific format then *.csv
+    latest_file = max(list_of_files, key=os.path.getctime)
+    print(latest_file)
+    return latest_file
+
+
 if __name__ == '__main__':
+
+    argparser.add_argument("--rerun", help="Rerun upload",
+      default="false") #--rerun true perhaps add other options but right now this is all that really fails.  
     argparser.add_argument("--file", required=False, help="Video file to upload")
     argparser.add_argument("--title", help="Video title", default="New Upload")
     argparser.add_argument("--description", help="Video description",
@@ -268,17 +381,54 @@ if __name__ == '__main__':
     argparser.add_argument("--keywords", help="Video keywords, comma separated",
       default="music,learning,experiment")
     argparser.add_argument("--privacyStatus", choices=VALID_PRIVACY_STATUSES,
-      default=VALID_PRIVACY_STATUSES[1], help="Video privacy status.")
+      default=VALID_PRIVACY_STATUSES[2], help="Video privacy status.") #default unlisted
     args = argparser.parse_args()
+    if (args.title == "New Upload"):
+        args.title = args.description
+        
+#    print(cred.MY_PLAYLIST)
+#    add_video_to_playlist('7Aadr9Fmftk', cred.MY_PLAYLIST, args)
+    temp = "C:\\Temp\\prevIteration.mkv"
+    cmd = f'del "{temp}"'
+     
+    # Copy File
+    os.system(cmd)
+    print("delete previousIteration")
 
 
+    databaseURL = "https://misterrubato-test-default-rtdb.firebaseio.com/"
+    if (args.rerun == "true"):
+        # Init firebase with your credentials
+        creda = credentials.Certificate("../misterrubato-test.json")
+        initialize_app(creda, {'storageBucket': 'misterrubato-test.appspot.com', 'databaseURL':databaseURL})    
+        args.file = get_latest_file()
+        tempfile = open('desc.txt', 'r')
+        args.description = tempfile.read()
+        tempfile.close()
+        youtube = get_authenticated_service(args)
+        videoid = initialize_upload(youtube, args)    
+        addtodb(videoid)
+        add_video_to_playlist(videoid, cred.MY_PLAYLIST, args)
+        sys.exit(0)
+
+
+    #start up analyze.py with this title/description.  
+#    os.system('python ./analyze/analyze.py --title "' + args.description + '"')
+#use title here as description contains all info
+    subprocess.call('python ./analyze/analyze.py --title "' + args.title + '"')
+    print("analyze complete");
+    obsp = subprocess.Popen("C:\\Program Files\\obs-studio\\bin\\64bit\\obs64.exe", start_new_session=True, cwd="C:\\Program Files\\obs-studio\\bin\\64bit")
+    
+    time.sleep(3)
 #    mido.set_backend('mido.backends.portmidi')   
     mid = MidiFile()
 #    mid.ticks_per_beat = 1000000
 #    mid.tempo = 60
     track = MidiTrack()
+    controltrack = MidiTrack()
 #    track.append(MetaMessage('set_tempo', tempo=100000, time=0))
     mid.tracks.append(track)
+    #mid.tracks.append(controltrack)
     test = """
     track.append(Message('program_change', program=12, time=0))
     track.append(Message('note_on', note=64, velocity=64, time=32))
@@ -296,6 +446,11 @@ if __name__ == '__main__':
 """    
     inputs = mido.get_input_names()
     print(mido.get_input_names())
+    
+    #when we start the recording, lets get data from the previous iterations so that we have some comparison
+    #spit out previous statistics on iterations here in this record.py for reference.  
+    #separate function, or separate file?  Use Youtube Query to get data/time analysis and analyze midi as well.  
+    #printPrevStats(title)    
     delay = 0
     timeoffset = 0
     starttime = 0
@@ -306,16 +461,58 @@ if __name__ == '__main__':
     test = """
     """
     lasttick = 0
+    controltick = 0
     #mido doc is crap.  But this seems ok for now.  
     #the video and midi appear to match up pretty well.  But not perfect I think.  
     #at least enough to get the start times now.  
+    #need some comment here, what is input[1].  Having hardware issues, lol.  
+    #some problems here when we use overlays like "Concert Guitar" or "Strings"
+    #sometimes the midi msg of 21 or pause etc occurs twice or inadvertently
+    keyboard = Controller()    
     with mido.open_input(inputs[1]) as inport:
+        print("hello")
         for msg in inport:
+#            print(msg)
+#            print(msg.time)
+            ignorelast = False
             if msg:
-                if hasattr(msg, 'note'):
-                    if lastnote == 21 and msg.note !=lastnote:
+                
+                if hasattr(msg, 'time'):
+                    temptime = time.time() #msg.time #time.time() #msg.time
+                if hasattr(msg, 'note') and msg.channel == 0: #for now this is a workaround to only use channel 0 as control.  
+                    #oh yeah I dont think this has the time.  
+                    #tried to adjust midi settings on the device.  See if we can get the time transmitted.  
+                    #config.keymap.global.Unpause
+                    if msg.note ==config.cfg['keymap']['global']['ShowScreen']:
+                    #if msg.note==105:
+                        #adding two more controllers on piano.  
+                        keyboard.press(Key.ctrl)
+                        keyboard.press(Key.shift)
+                        keyboard.press('5')
+                        time.sleep(0.25)
+                        keyboard.release('5')
+                        keyboard.release(Key.ctrl)
+                        keyboard.release(Key.shift)
+                        print("Showing Screen" + str(time.time()))
+                        ignorelast = True
+                    if msg.note ==config.cfg['keymap']['global']['HideScreen']:
+                    #if msg.note==106:
+                        #adding two more controllers on piano to show screen and hide screen.   
+                        keyboard.press(Key.ctrl)
+                        keyboard.press(Key.shift)
+                        keyboard.press('6')
+                        time.sleep(0.25)
+                        keyboard.release('6')
+                        keyboard.release(Key.ctrl)
+                        keyboard.release(Key.shift)
+                        print("Hiding Screen" + str(time.time()))
+                        ignorelast = True
+
+                    if lastnote ==config.cfg['keymap']['global']['Start'] and msg.note !=lastnote and not ignorelast:
+                    #if lastnote == 21 and msg.note !=lastnote and not ignorelast:
                         #1st
-                        mytime = time.time() - starttime - delay
+#                        mytime = time.time() - starttime - delay
+                        mytime = temptime - starttime - delay
                         mins = math.floor(mytime/60)
                         secs = math.floor(mytime - mins*60)
                         filler = ""
@@ -323,10 +520,23 @@ if __name__ == '__main__':
                             filler = "0"
                         args.description += "\nTRIAL#1"
                         args.description += " (" + str(mins) + ":" + filler + str(secs) + ")"
-                    if lastnote==107 and msg.note !=lastnote:
+                        
+                    if msg.note == config.cfg['keymap']['global']['Pause'] and msg.note !=lastnote and not ignorelast:
+                    #if msg.note == 107 and msg.note !=lastnote and not ignorelast:
+                        pausestart.append(time.time())
+
+                        keyboard.press(Key.ctrl)
+                        keyboard.press(Key.shift)
+                        keyboard.press('8')
+                        time.sleep(0.25)
+                        keyboard.release('8')
+                        keyboard.release(Key.ctrl)
+                        keyboard.release(Key.shift)
+                        print("Pause Recording" + str(time.time()))
+                        print(msg.time)
                         #adding END messages.  For now they are only using the pause button as indicator.  
-                        iterations = len(pausestart) + 1
-                        mytime = time.time() - starttime - delay - (time.time() - starttime - delay - lasttick)
+                        iterations = len(pausestart)
+                        mytime = temptime - starttime - delay - (temptime - starttime - delay - lasttick)
                         mins = math.floor(mytime/60)
                         secs = math.floor(mytime - mins*60)
                         filler = ""
@@ -334,10 +544,29 @@ if __name__ == '__main__':
                             filler = "0"
                         args.description += "\nEND#" + str(iterations)
                         args.description += " (" + str(mins) + ":" + filler + str(secs) + ")"
-                    if lastnote==108 and msg.note !=lastnote:
+                    if msg.note == config.cfg['keymap']['global']['Unpause'] and msg.note !=lastnote and not ignorelast:
+                    #if msg.note == 108 and msg.note !=lastnote and not ignorelast:
+                        pauseend.append(temptime)
+                        delay = calculatedelay(pausestart, pauseend)
+                        lasttick = temptime - starttime - delay
+                        msg.time = temptime - starttime - delay - lasttick
+#                        msg.time = int(round(msg.time*1000))
+
+                        keyboard.press(Key.ctrl)
+                        keyboard.press(Key.shift)
+                        keyboard.press('9')
+                        time.sleep(0.25)
+                        keyboard.release('9')
+                        keyboard.release(Key.ctrl)
+                        keyboard.release(Key.shift)
+                        print("Unpause Recording" + str(temptime))
+
+                        print("delay " + str(delay))
+                    if lastnote==config.cfg['keymap']['global']['Unpause'] and msg.note !=lastnote and not ignorelast:
+                    #if lastnote==108 and msg.note !=lastnote and not ignorelast:
                         #2nd etc.  
                         iterations = len(pauseend) + 1
-                        mytime = time.time() - starttime - delay
+                        mytime = temptime - starttime - delay
                         mins = math.floor(mytime/60)
                         secs = math.floor(mytime - mins*60)
                         filler = ""
@@ -345,39 +574,70 @@ if __name__ == '__main__':
                             filler = "0"
                         args.description += "\nTRIAL#" + str(iterations)
                         args.description += " (" + str(mins) + ":" + filler + str(secs) + ")"
-                    if msg.note == 21:
-                        starttime = time.time()
+                    if msg.note == config.cfg['keymap']['global']['Start']:
+                    #if msg.note == 21:
+
+                        keyboard.press(Key.ctrl)
+                        keyboard.press(Key.shift)
+                        keyboard.press('1')
+                        time.sleep(0.25)
+                        keyboard.release('1')
+                        keyboard.release(Key.ctrl)
+                        keyboard.release(Key.shift)
+                        print("Start Recording" + str(temptime))
+                        starttime = temptime
                         msg.time = 0
-                    if msg.note == 22:
-                        endtime = time.time()
+                    if msg.note == config.cfg['keymap']['global']['Stop']:
+                    #if msg.note == 22:
+                        endtime = temptime
+
+                        keyboard.press(Key.ctrl)
+                        keyboard.press(Key.shift)
+                        keyboard.press('2')
+                        time.sleep(0.25)
+                        keyboard.release('2')
+                        keyboard.release(Key.ctrl)
+                        keyboard.release(Key.shift)
+                        print("Stop Recording" + str(temptime))
                         break
-                    if msg.note == 107 and msg.note !=lastnote:
-                        pausestart.append(time.time())
-                        print(msg.time)
-                    if msg.note == 108 and msg.note !=lastnote:
-                        pauseend.append(time.time())
-                        delay = calculatedelay(pausestart, pauseend)
-                        lasttick = time.time() - starttime - delay
-                        msg.time = time.time() - starttime - delay - lasttick
-                        msg.time = int(round(msg.time*1000))
-                        print("delay " + str(delay))
-                    lastnote = msg.note
+                        
+                    if not ignorelast:
+                        lastnote = msg.note
                     
-                if hasattr(msg, 'time'):
+                if hasattr(msg, 'time') and not ignorelast:
 #                    msg.time = time.time()-starttime-delay
 #                    msg.time = faketime
 #                    faketime = faketime +1
-                    msg.time = time.time() - starttime - delay - lasttick
+                    msg.time = temptime - starttime - delay - lasttick
                     msg.time = int(round(msg.time*1000))
+                    if msg.time < 0:
+                        msg.time = 0
                     
-                    lasttick = time.time() - starttime - delay
+                    lasttick = temptime - starttime - delay
+                else:
+                    #control track. 
+                    
+                    msg.time = temptime - starttime - delay - controltick #absolutetime                    
+                    msg.time = int(round(msg.time*1000))
+                    if msg.time < 0:
+                        msg.time = 0
+                    controltick = temptime - starttime - delay
+                #print(msg) #dont need all this info.  
+                if not ignorelast:
+                    track.append(msg)
+                    #here we need to set up a on/off keymap like with analyze image creation.  
+                    #need an include file here.  
+                    #master keycontrol and then one for each function.  
+                else:
+                    #control track
+                    controltrack.append(msg)
+    
+    
+    
+    creda = credentials.Certificate("../misterrubato-test.json")
+    initialize_app(creda, {'storageBucket': 'misterrubato-test.appspot.com', 'databaseURL':databaseURL})    
 
-                print(msg)
-                track.append(msg)
-                
-    list_of_files = glob.glob('C:/Users/devin/Videos/*.mkv') # * means all if need specific format then *.csv
-    latest_file = max(list_of_files, key=os.path.getctime)
-    print(latest_file)
+    latest_file = get_latest_file()    
     args.file = latest_file
     fn = latest_file.split('.')
     mid.save(fn[0] + '.mid')
@@ -391,9 +651,36 @@ if __name__ == '__main__':
     print(pathnames)
     midifile = uploadmidi(fn[0], pathnames[len(pathnames)-1])
     
+    
+    
     args.description += '\r\n\r\nMIDI:' + midifile
     args.description += '\r\n\r\nKEYWORDS:' + args.keywords #add here like sightread or book, etc.  
 
     print(args.description)
+    print(latest_file)
+    transcribe_me(latest_file)
+
+    transcribe_file = uploadtranscript(fn[0], pathnames[len(pathnames)-1])
+    args.description += '\r\n\r\nTRANSCRIPT:' + transcribe_file + '\r\n'
+    print(args.description)
+    tempfile = open('desc.txt', 'w')
+    tempfile.write(args.description)
+    tempfile.close()
+    
     youtube = get_authenticated_service(args)
-    initialize_upload(youtube, args)
+    videoid = initialize_upload(youtube, args)
+
+    addtodb(videoid)
+
+    add_video_to_playlist(videoid, cred.MY_PLAYLIST, args)
+    
+#call again to run the any post-analysis like finger locations.  
+    subprocess.call('python ./analyze/analyze.py --title "' + args.title + '"')
+    
+    time.sleep(20)
+    obsp.terminate()
+
+    
+    #cant automate this, as it will become public.  
+#   if (len(transcribe_file) > 500):
+#       add_video_to_playlist(videoid, cred.WORD_PLAYLIST, args)

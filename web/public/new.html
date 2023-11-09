@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Analyze me</title>
+
+</head>
+
+<body translate="no" >
+  <div id="clock" 
+       style=	"display: inline-block;
+		font-family: monospace;
+		font-size: 30px;
+		text-align: right;
+		color: lightgray; 
+		border-radius: 10px; 
+		padding: 10px; 
+		background-color: rgba(0, 0, 0, 0.75);">
+  </div>
+  <div id="secondselapsed" 
+       style=	"display: inline-block;
+		font-family: monospace;
+		font-size: 30px;
+		text-align: right;
+		color: lightgray; 
+		border-radius: 10px; 
+		padding: 10px; 
+		background-color: rgba(0, 0, 0, 0.75);">
+  </div>
+  <br>
+    <div id="previous"></div>
+
+  <br>
+    <div id="old"></div>  
+  
+<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js'></script>
+  <script>
+  //firebase deploy to deploy this.  
+  //usage:
+//  https://www.misterrubato.com/analyze.html?video=s5zoEwEUPu0
+//can we add this link to the top of all descriptions on record?  
+  
+// https://stackoverflow.com/questions/901115/how-can-i-get-query-string-values-in-javascript
+var urlParams;
+var video = 'T7aCHEAGCsU';
+var channelId = 'UC4dK3RpqBq2JpIkRmQn6HOA'; //@misterrubato doesnt work in URL, probably need to escape the @, but who cares.  
+var title = '';
+(function () {
+    var match,
+        pl     = /\+/g,  // Regex for replacing addition symbol with a space
+        search = /([^&=]+)=?([^&]*)/g,
+        decode = function (s) { return decodeURIComponent(s.replace(pl, " ")); },
+        query  = window.location.search.substring(1);
+    urlParams = {};
+    while (match = search.exec(query))
+       urlParams[decode(match[1])] = decode(match[2]);
+})();
+var output = document.getElementById("clock");
+if (urlParams["style"]) output.setAttribute("style", urlParams["style"]);
+if (urlParams["bodyStyle"]) document.body.setAttribute("style", urlParams["bodyStyle"]);
+if (urlParams["video"]){ 
+  video = urlParams["video"];
+  console.log(video);
+}
+
+var c;
+setInterval(
+c = function() {
+	output.innerText = moment().format(urlParams["format"] || 'DD/MM/YYYY HH:mm:ss');
+//    output.innerText = moment().format(urlParams["format"] || '');
+}, 1000);
+c();
+
+var secondselapsed = document.getElementById("secondselapsed");
+start = moment()
+var se;
+setInterval(
+se = function() {
+    end = moment()
+	secondselapsed.innerText = (end - start)/1000;
+//    output.innerText = moment().format(urlParams["format"] || '');
+}, 1000);
+se();
+
+
+var player;
+var delay = 10;
+var notesarray = [];
+
+//setup https://www.youtube.com/watch?v=3jZ5vnv-LZc
+//then restrict the key if needed to your site and youtube data API.  
+webkey = 'AIzaSyCBCSiFLWm-3oBKvnS-yaHtU5QcFfRtZ_E';
+
+function searchOld(mydate){
+	//use title
+ $.getJSON('https://www.googleapis.com/youtube/v3/search?maxResults=20&channelId=' + channelId + '&order=date&publishedBefore=' + mydate + '&key=' + webkey + '&part=snippet&type=video',function(data){
+      if (typeof(data.items[0]) != "undefined") {
+	      for (i=0; i<data.items.length; i++){
+		    if (data.items[i].id.kind == "youtube#video"){
+				console.log('found  ' + data.items[i].snippet);
+				
+				videoid = data.items[i].id.videoId;
+				url = 'https://www.googleapis.com/youtube/v3/videos?part=snippet,status&id=' + videoid + '&key=' + webkey;
+				$.getJSON(url,function(vdata){
+				
+				if (typeof(vdata.items[0]) != "undefined"){
+					privacystatus = vdata.items[0].status.privacyStatus;
+					if (privacystatus == "unlisted"){
+						var mydiv = document.getElementById("previous");
+						var aTag = document.createElement('a');
+						aTag.setAttribute('href',"https://misterrubato.com/analyze.html?video=" + data.items[i].id.videoId);
+						aTag.innerText = data.items[i].snippet.title;
+						mydiv.appendChild(aTag);
+						var br = document.createElement("br");
+						mydiv.appendChild(br);
+					}
+				}
+				});
+			}
+		  }
+       } 
+	   else {
+        console.log('video not exists');
+       }   
+    });
+}
+
+//cant get unlisted videos so this doesnt really work.  
+
+function searchPrevious(){
+	//use title
+ $.getJSON('https://www.googleapis.com/youtube/v3/search?maxResults=20&forMine=true&channelId=' + channelId + '&order=date&key=' + webkey + '&part=snippet&type=video',function(data){
+      if (typeof(data.items[0]) != "undefined") {
+	      for (i=0; i<data.items.length; i++){
+		    if (data.items[i].id.kind == "youtube#video"){
+				console.log('found  ' + data.items[i].snippet);
+				
+				videoid = data.items[i].id.videoId;
+				url = 'https://www.googleapis.com/youtube/v3/videos?part=snippet,status&id=' + videoid + '&key=' + webkey;
+				$.getJSON(url,function(vdata){
+				
+				if (typeof(vdata.items[0]) != "undefined"){
+					privacystatus = vdata.items[0].status.privacyStatus;
+					console.log(privacystatus);
+					if (privacystatus == "unlisted"){
+						var mydiv = document.getElementById("previous");
+						var aTag = document.createElement('a');
+						aTag.setAttribute('href',"https://misterrubato.com/analyze.html?video=" + vdata.items[i].id.videoId);
+						aTag.innerText = vdata.items[i].snippet.title;
+						mydiv.appendChild(aTag);
+						var br = document.createElement("br");
+						mydiv.appendChild(br);
+					}
+				}
+				});
+			}
+		  }
+       } 
+	   else {
+        console.log('video not exists');
+       }   
+    });
+	
+}
+
+
+const getDaysInMonth = (year, month) => new Date(year, month, 0).getDate();
+
+const addMonths = (input, months) => {
+  const date = new Date(input);
+  date.setDate(1);
+  date.setMonth(date.getMonth() + months);
+  date.setDate(Math.min(input.getDate(), getDaysInMonth(date.getFullYear(), date.getMonth()+1)));
+  return date;
+}
+
+searchPrevious();
+
+var mydate = new Date();
+mydate.setFullYear(mydate.getFullYear() - 1);
+mydate = addMonths(mydate, -6);
+searchOld(mydate.toISOString());
+
+</script>  
+
+	
+</body>
+</html>

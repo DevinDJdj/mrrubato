@@ -1,0 +1,239 @@
+Need to do more programming.  
+
+Need UI to go through the notes for each item.  
+**xxxx
+take all these comments by file, and then we need to have some sort of way to indicate completion.  
+Match up the comment with completion or at least progress. 
+
+Lots of comments that just get forgotten. 
+automate the addition to latest book.txt
+When we complete something mark as - done in the original and also in the new book.txt
+Must be some github tool to do this easier.  
+
+
+**analyze.py
+First find matches across iterations. 
+What sequence of notes can we find that is the same.  
+Then we can expand this.  
+
+Map -> start note -> relative N-Gram -> iteration / time in piece.  
+
+Create this structure.  
+Then we can do something with it.  
+Add to this function
+->getNgrams()
+
+Can have relative and non-relative
+Map -> relative N-Gram -> iteration / time in piece
+
+make the calculation for single harmonic word.  
+Already have a place for this ngramsp
+
+we should really have mathematical relationship between 
+actual frequency and ngramsp.  
+But right now hard to figure out how to do this.  
+
+So for now mathematical relationship between ngramsp word and midi representation is ok.  
+
+**sidebar
+Word - This reminds me of old windows programming, and when things first were starting we represented function parameters as "words".  
+
+
+I think we need future relationship as well.  
+So not just prevmsg, but future msg as well.  
+Create this array.  
+
+
+Need to test this later.  
+printNgrams
+
+
+match up mappgram and mapsgram
+Add relative time into the mymsg.  
+Add totalduration etc. as well what we are calculating in the print.  
+pedal info.  
+Want to use this.  
+For now look at relative time and the pgram/sgram to identify the same location.  
+We can use this for splicing as well as analyzing progress.  
+Create some UI component between the images to connect the same locations.  
+Should be fairly easy.  
+Maybe just create a simple image to go between the piano rolls.  
+To visualize what location we are at.  
+
+OPENAI go ahead and utilize the last iteration words to generate an image when we play.  
+See what that looks like if anything.  
+We really need a better transcription API than google transcribe, it misses too much.  
+
+eventually this will be the next iteration.  
+We should have some visualization of the last midi here as well.  
+And this should be recording while playing.  
+But that should not be main thing.  Put that over my face perhaps.  
+So the previous visualization will be generated.  
+For now just take the previous images.  
+See if we can make this work.  
+
+Can we ingest a video into OBS when we start?  
+
+Oogonhi (in japanese)
+a+b/a = a/b
+
+1920 = a+b
+1920 - 1080 = 840
+a+b/1080 = 1080/840
+1080/1920
+
+
+**analyze.py
+Copy prev iteration to PreviousIteration on analyze.py
+
+**analyze.html
+Make the canvas between iterations and match up here, follow along with the playback of the recording.  
+Not sure if easier to make the piano roll one big canvas or use separate.  
+highlight the active section as it plays.  
+
+Use when analyzing also when recording perhaps do playback without sound for now.  
+
+
+How do we shorten audio without distortion?  
+Lets aim for getting the same sound as a Sped up midi file.  
+Why are we not getting the same quality sound when we speed up audio?  
+
+
+**record.py 
+probably need a screen control file separated.  
+Not sure what to separate.  
+Right now the ignoring of the screen display/hide messages though is not good.  
+We do want to save this data.  
+just make a separate control track for now and use absolute time here.  
+
+
+**recent.html
+Should track repository commit activity as well.  
+https://docs.github.com/en/free-pro-team@latest/rest/activity/events?apiVersion=2022-11-28#list-repository-events
+curl -L \
+  -H "Accept: application/vnd.github+json" \
+  -H "Authorization: Bearer <YOUR-TOKEN>" \
+  -H "X-GitHub-Api-Version: 2022-11-28" \
+  https://api.github.com/repos/OWNER/REPO/events
+https://api.github.com/repos/DevinDJdj/mrrubato/events
+
+
+https://api.github.com/repos/DevinDJdj/mrrubato/commits?sha=master
+But how do we get the number of lines committed?  
+
+Then get the individual ones via url parameter:
+URL
+"url": "https://api.github.com/repos/DevinDJdj/mrrubato/commits/478fb459af5591430e75530b6252657f834e1793",
+
+Or.  
+"html_url": "https://github.com/DevinDJdj/mrrubato/commit/478fb459af5591430e75530b6252657f834e1793",
+
+in the result of this API, we can get stats here:
+  "stats": {
+    "total": 146,
+    "additions": 122,
+    "deletions": 24
+  },
+  "files": [
+    {
+      "filename": "analyze/analyze.py",
+      "status": "modified",
+      "additions": 46,
+      "deletions": 23,
+      "changes": 69,
+      "blob_url": "https://github.com/DevinDJdj/mrrubato/blob/478fb459af5591430e75530b6252657f834e1793/analyze%2Fanalyze.py",
+      "raw_url": "https://github.com/DevinDJdj/mrrubato/raw/478fb459af5591430e75530b6252657f834e1793/analyze%2Fanalyze.py",
+      "contents_url": "https://api.github.com/repos/DevinDJdj/mrrubato/contents/analyze%2Fanalyze.py?ref=478fb459af5591430e75530b6252657f834e1793",
+      "patch": "@@ -163,26 +163,27 @@ def getTrackTimes(mytrack):\n     endtimes = []\n     for mymsg in mytrack.notes:        \n     #getting duplicates with multiple channels.  \n-        if mymsg.msg.channel == 0:\n-            if (on > 0):\n-                currentTime += mymsg.msg.time\n-            if (mymsg.msg.type == 'note_on'):\n-                if mymsg.prevmsg is not None and (mymsg.prevmsg.note == 21 or mymsg.prevmsg.note == 108) and mymsg.msg.channel == 0:\n-                    starttimes.append(currentTime)\n-                if mymsg.nextmsg is not None and (mymsg.nextmsg.note == 22 or mymsg.nextmsg.note == 107) and mymsg.msg.channel == 0:\n-                    endtimes.append(currentTime)\n-            if (mymsg.msg.type == 'note_on'):\n-                on = isOn(mymsg.msg.note, on)\n+        if on > 0 and hasattr(mymsg.msg, 'time'):\n+            currentTime += mymsg.msg.time\n+        if (mymsg.msg.type == 'note_on' and mymsg.msg.channel==0):\n+            if mymsg.prevmsg is not None and (mymsg.prevmsg.note == 21 or mymsg.prevmsg.note == 108) and mymsg.msg.channel == 0:\n+                starttimes.append(currentTime)\n+            if mymsg is not None and (mymsg.note == 22 or mymsg.note == 107) and mymsg.msg.channel == 0:\n+                endtimes.append(currentTime)\n+        if (mymsg.msg.type == 'note_on' and mymsg.msg.channel==0):\n+            on = isOn(mymsg.msg.note, on)\n                 \n \n+#    mymsg.simpleprint()\n+#    mymsg.prevmsg.simpleprint()\n     return starttimes, endtimes\n \n def getTrackTime(track):\n     #skip between pauses and only start with the start signal.  \n     currentTime = 0\n     on = 0\n     for msg in track:        \n-        if (on > 0):\n+        if on > 0 and hasattr(msg, 'time'):\n             currentTime += msg.time\n         if (msg.type == 'note_on'):\n             on = isOn(msg.note, on)\n@@ -223,6 +224,14 @@ def getIteration(currentTime, starttimes, endtimes):\n     return -1\n     \n \n+def getRelativeTime(it, currentTime, starttimes, endtimes):\n+    if it < 0:\n+        return -1\n+    reltime = 0\n+    reltime = currentTime - starttimes[it]\n+    reltime /= (endtimes[it] - starttimes[it])\n+    return reltime\n+\n def midiToImage(t, midilink):\n     \n     print('Track: {}'.format(t.track.name))\n@@ -297,16 +306,16 @@ def enhanceMidi(mid):\n             if (msg.type=='note_on'):\n                 if (on > 0):  \n                     m = mymidi.MyMsg(msg, prevMsg, pedal)\n-                    if (prevMsg is not None):\n-                        prevMsg.nextmsg = m\n-                        if (maxtime < msg.time):\n-                            maxtime = msg.time\n-                    prevMsg = m\n                     m.msg.time += othertime\n                     othertime = 0\n                     t.notes.append(m)\n+                    if (m.prevmsg is not None):\n+                        m.prevmsg.nextmsg = m\n+                        if (maxtime < msg.time):\n+                            maxtime = msg.time\n+                    prevMsg = m\n                 on = isOn(msg.note, on)\n-            elif hasattr(msg, 'time'):\n+            elif on > 0 and hasattr(msg, 'time'):\n                 othertime += msg.time\n             if (msg.type=='control_change'):\n                 #https://www.midi.org/specifications-old/item/table-3-control-change-messages-data-bytes-2\n@@ -331,8 +340,10 @@ def printNgrams(t, title, GroupName, videoid, midilink):\n     starttimes, endtimes = getTrackTimes(t)\n     if (len(endtimes) > len(starttimes)):\n         del endtimes[len(starttimes):]\n-    if len(starttimes) != len(endtimes) or len(starttimes) < 1:\n+    if (len(starttimes) != len(endtimes)) or len(starttimes) < 1:\n         print(\"Incorrect data, please fix\")\n+        print(starttimes)\n+        print(endtimes)\n         return None, None\n         \n     else:    \n@@ -362,8 +373,10 @@ def getNgrams(t):\n     starttimes, endtimes = getTrackTimes(t)\n     if (len(endtimes) > len(starttimes)):\n         del endtimes[len(starttimes):]\n-    if len(starttimes) != len(endtimes) or len(starttimes) < 1:\n+    if (len(starttimes) != len(endtimes)) or len(starttimes) < 1:\n         print(\"Incorrect data, please fix\")\n+        print(starttimes)\n+        print(endtimes)\n         return None, None\n         \n     else:    \n@@ -422,11 +435,21 @@ def getNgrams(t):\n                 #what sequences are the same, probably find more about playing quality than anything intrinsic to the piece.  \n                 if signs not in mappgram:\n                     mappgram[signs] = {}\n-                mappgram[ signs ] [ pgram ]  = mymsg\n+                if pgram not in mappgram[signs]:\n+                    mappgram[ signs ] [ pgram ] = { 'time': [], 'iteration': [] }\n+                    \n+                it = getIteration(currentTime, starttimes, endtimes)\n+                reltime = getRelativeTime(it, currentTime, starttimes, endtimes)\n+                mappgram[ signs ] [ pgram ]['time'].append( reltime)\n+                mappgram[ signs ] [ pgram ]['iteration'].append(it)\n+                \n                 \n                 if seqgram not in mapsgram:\n                     mapsgram[seqgram] = {}\n-                mapsgram[ seqgram ] [ pgram ]  = mymsg\n+                if pgram not in mapsgram[seqgram]:\n+                    mapsgram[ seqgram ] [ pgram ] = { 'time': [], 'iteration': [] }\n+                mapsgram[ seqgram ] [ pgram ]['time'].append(reltime)\n+                mapsgram[ seqgram ] [ pgram ]['iteration'].append(it)\n \n             if (mymsg.msg.type=='note_on'):\n                 if (on > 0 and it > -1):  \n@@ -501,7 +524,7 @@ def printMidi(midilink, title, GroupName, videoid):\n     #dont redo this.  Live with the analysis of the time for now.  \n     if (os.path.exists(os.path.join(path , filename))):\n         print(\"Skipping \" + midilink)\n-        return\n+#        return\n     \n     r = requests.get(midilink)\n     print(len(r.content))\n@@ -521,7 +544,7 @@ def printMidi(midilink, title, GroupName, videoid):\n     if (data is None):\n         return\n         \n-#    printNgrams(t, title, GroupName, videoid, midilink)\n+ #   printNgrams(t, title, GroupName, videoid, midilink)\n     img = midiToImage(t, midilink)\n \n     height = 200"
+    },
+
+
+https://github.com/DevinDJdj/mrrubato/commits/master?author=devindjdj
+
+So we could get the data for this.  Maybe just do in timestep.  
+**timestep.py
+get commit info.  
+Do we want files?  
+Sure why not, we can use individual files and overall.  
+
+**recent.html
+Above logic should be done here.  
+
+Getting closer to what we want.  
+Unfortunately we have a rate limit for github.  
+Dont think I need to worry about this in general.  
+But perhaps in the future.  
+1000/hour should be sufficient for one user.  
+recent will do ~30 per refresh so 30 refreshes per hour.  
+
+Need a clickHandler for each individual element in the chart.  
+
+gcloud storage buckets update gs://misterrubato-test.appspot.com --cors-file=cors.json
+
+
+**analyze.html
+**mictest.html
+Want to record audio itself eventually with something like this WebRTC library combined with
+the firebase file functionalities.  
+So we would save the recording with offset info as well as midi data with offset info.  
+Essentially the basic functionality of what we are doing with OBS but within the browser.  
+Of course timing wont be as good.  
+Midi is much smaller and better, maybe for now just do this.  
+Something like this may work:
+https://mortenson.coffee/blog/making-multi-track-tape-recorder-midi-javascript/
+or this, I think we tried to use this before.  
+https://jazz-soft.net/demo/RecordMidiFile.html
+
+Are we loading the midi file in the webpage, I dont think so.  
+
+Anyway, no need really I think.  
+But we should be able to add midi files, and then combine them.  
+These will be feedback files.  
+
+
+https://github.com/djipco/webmidi/blob/master/examples/quick-start/index.html
+For now just record midi and send.  
+I think this is mostly what we want anyway.  
+We want something which is understandable and we are able to aggregate easily.  
+
+
+Should have the recent info display underneath the analyze info regarding which files were edited in the same timeframe.  
+Maybe just a selection is enough.  
+When we select a file it highlights the videos related to that timeframe.  
+When we select a video, it highlights all code related to that timeframe that song was played.  
+Do we move to single page app and just load analyze in a DIV which can be closed or opened.  
+
+
+**recent.html
+should display GIT info in the middle graph.  
+We have lines changed just add it to the data there.  
+Not that important.  
+
+
+**mictest.html
+Should finish the midi recording
+These times should be based on the playback.  
+add video=xxx
+For now just make sure we can upload to DB and load from DB again, and play it.  
+Then add logic to **analyze.html
+This is an option for providing feedback along with the comments.  
+should track what was watched and what not as well.  
+Should be some feedback system to know what needs to be reviewed still.  
+This is for some sort of business logic.  
+for now just use the video location and text.  
+But eventually want to overlay this midi on top of the midi graphs/images.  
+Perhaps just do this dynamically in analyze.html
+Need to scroll/highlight this canvas as video is playing.  
+For now just add to comments in form of special message.  
+At least make a smaller text box to hold this.  
+No real need to convert to midi format, but we may want to sound this during playback.  
+
+
+**analyze.html
+We still need to create hyperlinks for the timestamps in comments and notes.  
+Any 00:00 will get a hyperlink.  
+Dont limit the display to 100 iterations.  
+
+Add to a DIV the current comments and iterations with links.  
+Iterations just change to DIV.  
+Comments get current comments and update that div in updateNotesArray

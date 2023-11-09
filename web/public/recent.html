@@ -2,20 +2,60 @@
 <html>
 
 <head>
+
   <meta charset="UTF-8">
+
   <title>Recent recordings</title>
 
 </head>
 
+    <!-- update the version number as needed -->
+	<script src="config.js"></script>
+    <script defer src="/__/firebase/9.19.1/firebase-app-compat.js"></script>
+    <!-- include only the Firebase features as you need -->
+    <script defer src="/__/firebase/9.19.1/firebase-auth-compat.js"></script>
+    <script defer src="/__/firebase/9.19.1/firebase-database-compat.js"></script>
+    <script defer src="/__/firebase/9.19.1/firebase-firestore-compat.js"></script>
+    <script defer src="/__/firebase/9.19.1/firebase-functions-compat.js"></script>
+    <script defer src="/__/firebase/9.19.1/firebase-messaging-compat.js"></script>
+    <script defer src="/__/firebase/9.19.1/firebase-storage-compat.js"></script>
+    <script defer src="/__/firebase/9.19.1/firebase-analytics-compat.js"></script>
+    <script defer src="/__/firebase/9.19.1/firebase-remote-config-compat.js"></script>
+    <script defer src="/__/firebase/9.19.1/firebase-performance-compat.js"></script>
+    <!-- 
+      initialize the SDK after all desired features are loaded, set useEmulator to false
+      to avoid connecting the SDK to running emulators.
+    -->
+    <script defer src="/__/firebase/init.js?useEmulator=true"></script>
+
+
 <body translate="no" >
   <br>
+  <table>
+    <tr><td>
     <div id="recent"></div>
-	
-  
+	</td></tr>
+    <tr><td width="100%" align="right">
+	<div id="timeline" style="height:300px;"></div>
+	</td></tr>
+    <tr><td width="100%" align="right">
+	<div id="durationchart" style="height:200px;"></div>
+	</td></tr>
+    <tr><td width="100%" align="right">
+	<div id="gitchart" style="height:200px;"></div>
+	</td></tr>
+  </table>
+  <br>
+      <p id="load">Firebase SDK Loading&hellip;</p>
+
 <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 
   <script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js'></script>
+
+		<script src='https://apis.google.com/js/platform.js' async defer></script>
+
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
   <script>
   //firebase deploy to deploy this.  
   //usage:
@@ -24,39 +64,535 @@
   
 // https://stackoverflow.com/questions/901115/how-can-i-get-query-string-values-in-javascript
 var urlParams;
-var channelId = 'UC4dK3RpqBq2JpIkRmQn6HOA'; //@misterrubato doesnt work in URL, probably need to escape the @, but who cares.  
 var title = '';
 
 //setup https://www.youtube.com/watch?v=3jZ5vnv-LZc
 //then restrict the key if needed to your site and youtube data API.  
-webkey = 'AIzaSyCUinmE8NN5BoGqHkNlVveLCOuebxEHCyY';
 
 
-function searchRecent(){
-	//use title
- $.getJSON('https://www.googleapis.com/youtube/v3/search?maxResults=30&channelId=' + channelId + '&order=date&key=' + webkey + '&part=snippet',function(data){
-      if (typeof(data.items[0]) != "undefined") {
-	      for (i=0; i<data.items.length; i++){
-            console.log('found  ' + data.items[i].snippet);
-			var mydiv = document.getElementById("recent");
-			var aTag = document.createElement('a');
-			aTag.setAttribute('href',"https://misterrubato.com/analyze.html?video=" + data.items[i].id.videoId);
-			const t = data.items[i].snippet.description;
-			console.log(t);
-			aTag.innerText = t;
-			mydiv.appendChild(aTag);
-			var br = document.createElement("br");
-			mydiv.appendChild(br);
-		  }
-       } 
-	   else {
-        console.log('no videos returned');
-       }   
-    });
+    var gitchart;
+	var vidchart;
+	var dataTable;
+	var dataTableGit;
+    var options;
+	var optionsGit;
+
+
+      document.addEventListener('DOMContentLoaded', function() {
+        const loadEl = document.querySelector('#load');
+        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
+        // // The Firebase SDK is initialized and available here!
+        //
+         firebase.auth().onAuthStateChanged(user => { 
+		   if (user) {
+			// User is signed in, see docs for a list of available properties
+			// https://firebase.google.com/docs/reference/js/firebase.User
+			
+			uid = user.uid;
+				// ...
+			  } else {
+				// User is signed out
+				// ...
+			  }
+			});
+        // firebase.database().ref('/path/to/ref').on('value', snapshot => { });
+        // firebase.firestore().doc('/foo/bar').get().then(() => { });
+        // firebase.functions().httpsCallable('yourFunction')().then(() => { });
+        // firebase.messaging().requestPermission().then(() => { });
+        // firebase.storage().ref('/path/to/ref').getDownloadURL().then(() => { });
+        // firebase.analytics(); // call to activate
+        // firebase.analytics().logEvent('tutorial_completed');
+        // firebase.performance(); // call to activate
+        //
+        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
+
+        try {
+          let app = firebase.app();
+          let features = [
+            'auth', 
+            'functions',
+            'storage', 
+			'database',
+          ].filter(feature => typeof app[feature] === 'function');
+          loadEl.textContent = `Firebase SDK loaded with ${features.join(', ')}`;
+		  
+		//use this as the base, and then we can write an update to whatever.  
+		//we can also use this, if the user is logged in, get that info instead.  
+			 var provider = new firebase.auth.GoogleAuthProvider();
+
+			firebase.auth()
+			  .signInWithPopup(provider)
+			  .then((result) => {
+				/** @type {firebase.auth.OAuthCredential} */
+				var credential = result.credential;
+
+				// This gives you a Google Access Token. You can use it to access the Google API.
+				var token = credential.accessToken;
+				// The signed-in user info.
+				var user = result.user;
+				//not sure why we need this, but the asynchronous check is not getting kicked off.  
+				   if (user) {
+					// User is signed in, see docs for a list of available properties
+					// https://firebase.google.com/docs/reference/js/firebase.User
+					
+						uid = user.uid;
+										
+					}
+				// IdP data available in result.additionalUserInfo.profile.
+				  // ...
+			  }).catch((error) => {
+				// Handle Errors here.
+				var errorCode = error.code;
+				var errorMessage = error.message;
+				// The email of the user's account used.
+				var email = error.email;
+				// The firebase.auth.AuthCredential type that was used.
+				var credential = error.credential;
+				// ...
+			  });
+
+		google.charts.load('current', {'packages':['corechart', 'timeline', 'bar']});
+		
+		var vRef = firebase.database().ref(dbname);
+		if (typeof(uid) != "undefined" && uid !==null){
+		}
+		vRef.on("value", function(snapshot) {
+			console.log(snapshot.val());
+			videojson = snapshot.val();
+			vids = getRecent(videojson);
+			drawChart(vids);
+			drawDurationChart(vids);
+			getGit();
+			
+		});
+		  
+        } catch (e) {
+          console.error(e);
+          loadEl.textContent = 'Error loading the Firebase SDK, check the console.';
+        }
+      });
+
+
+function getRecent(videojson){
+    vids = [];
+	for (const [key, value] of Object.entries(videojson)) {	
+	    //sort by date and list in some way.  
+		//right now just like we do, most recent and least recent
+		//need something better than this?  
+		if (key !="users" && key !="watch"){
+			vids.push(value);
+		}
+		
+	}
+
+	vids.sort(function(a, b) {
+	   datea = new Date(a.snippet.publishedAt);
+	   dateb = new Date(b.snippet.publishedAt);
+	   
+	  return dateb - datea;
+	});		
+	//now display the recent videos which are not published and which are published etc.  
+
+	var mydiv = document.getElementById("recent");
+	while (mydiv.firstChild) {
+      mydiv.removeChild(mydiv.lastChild);
+    }
+	maxcnt = 5;
+	for (it=0; it< vids.length && it < maxcnt; it++){
+		var obj = vids[it];
+		var aTag = document.createElement('a');
+		aTag.setAttribute('href',domain + 'analyze.html?video=' + obj.id);
+		
+		fnd = obj.snippet.description.indexOf("MIDI");
+		if (fnd < 0){
+			fnd = obj.snippet.description.length -1
+		}
+		aTag.innerText = " " + it + obj.snippet.description.substring(0,fnd);
+		aTag.innerText += " " + obj.snippet.publishedAt;
+		//should really add a date driven graphic representation.  
+		console.log(aTag);
+		mydiv.appendChild(aTag);
+		var br = document.createElement("br");
+		mydiv.appendChild(br);
+	}
+	return vids;
+	
+    
+}
+
+
+//need JS to share some of this stuff.  
+function getSecsFromTime(time){
+	minsec = time.split(":");
+	if (minsec == time)
+	    return 0;
+//	console.log(+parseInt(minsec[0])*60 + +parseInt(minsec[1]));
+	return +parseInt(minsec[0])*60 + +parseInt(minsec[1]);
 	
 }
 
-searchRecent();
+function getIterations(desc, vidtime){
+    st = [];
+	et = [];
+	for (i=1; i< 20; i++){
+	    fnd = "TRIAL#" + i;
+		ts = desc.indexOf(fnd);
+		te = desc.indexOf(")", ts);
+		if (ts > -1)
+			st.push(getSecsFromTime(desc.substring(ts+(fnd.length)+2, te)));
+	}
+	for (i=1; i<20; i++){
+	    fnd = "END#" + i;
+		ts = desc.indexOf(fnd);
+		te = desc.indexOf(")", ts);
+		if (ts > -1)
+			et.push(getSecsFromTime(desc.substring(ts+(fnd.length)+2, te)));
+	}
+//    console.log(st);
+//	console.log(et);
+	//arrays of all iterations
+	return st.length;
+
+}
+
+function getDuration(desc, vidtime){
+    totaldur = 0;
+    st = [];
+	et = [];
+	for (i=1; i< 20; i++){
+	    fnd = "TRIAL#" + i;
+		ts = desc.indexOf(fnd);
+		te = desc.indexOf(")", ts);
+		if (ts > -1)
+			st.push(getSecsFromTime(desc.substring(ts+(fnd.length)+2, te)));
+	}
+	for (i=1; i<20; i++){
+	    fnd = "END#" + i;
+		ts = desc.indexOf(fnd);
+		te = desc.indexOf(")", ts);
+		if (ts > -1)
+			et.push(getSecsFromTime(desc.substring(ts+(fnd.length)+2, te)));
+	}
+
+	mydate = new Date(vidtime);
+	for (i=0; i< st.length; i++){
+	    if (et[i] !==null){
+			totaldur += et[i] - st[i];
+		}
+	}
+	//WORDS = 
+//	et[st.length-1] - totaldur
+    if (totaldur < 0)
+	    totaldur = 1;
+    return [totaldur, et[st.length-1] - totaldur];
+}
+
+
+function readyHandlerGit() {
+	var container = document.getElementById('gitchart');
+    var labels = container.getElementsByTagName('text');
+    Array.prototype.forEach.call(labels, function(label) {
+//      if (label.getAttribute('fill') === options.timeline.rowLabelStyle.color) {
+        label.addEventListener('click', clickHandlerGit);
+        label.setAttribute('style', 'cursor: pointer; text-decoration: underline;');
+//      }
+    });
+  }
+
+function selectHandlerGit() {
+	var container = document.getElementById('gitchart');
+	var selection = gitchart.getSelection();
+  var message = '';
+//  for (var i = 0; i < selection.length; i++) {
+//		var item = selection[i];
+		console.log("Selection");
+		console.log(selection);
+		console.log(dataTableGit.getValue(selection[0].row, 1));
+      var link = dataTableGit.getProperty(selection[0].row, 0, 'link');
+	  console.log(link);
+      window.open(link, '_blank');
+  
+  }
+
+function readyHandler() {
+	var container = document.getElementById('timeline');
+    var labels = container.getElementsByTagName('text');
+    Array.prototype.forEach.call(labels, function(label) {
+//      if (label.getAttribute('fill') === options.timeline.rowLabelStyle.color) {
+        label.addEventListener('click', clickHandler);
+        label.setAttribute('style', 'cursor: pointer; text-decoration: underline;');
+//      }
+    });
+  }
+
+  function clickHandlerGit(sender) {
+    var rowLabel = sender.target.textContent;
+    var dataRows = dataTableGit.getFilteredRows([{
+      column: 0,
+      value: rowLabel
+    }]);
+    if (dataRows.length > 0) {
+      var link = dataTableGit.getProperty(dataRows[0], 0, 'link');
+	  console.log(link);
+      window.open(link, '_blank');
+    }
+  }
+
+  function clickHandler(sender) {
+    var rowLabel = sender.target.textContent;
+    var dataRows = dataTable.getFilteredRows([{
+      column: 0,
+      value: rowLabel
+    }]);
+    if (dataRows.length > 0) {
+      var link = dataTable.getProperty(dataRows[0], 0, 'link');
+	  console.log(link);
+      window.open(link, '_blank');
+    }
+  }
+
+  function selectHandler(sender) {
+	var container = document.getElementById('timeline');
+	var selection = vidchart.getSelection();
+  var message = '';
+//  for (var i = 0; i < selection.length; i++) {
+//		var item = selection[i];
+		console.log("Selection");
+		console.log(selection);
+		console.log(dataTable.getValue(selection[0].row, 1));
+      var link = dataTable.getProperty(selection[0].row, 0, 'link');
+	  console.log(link);
+      window.open(link, '_blank');
+  }
+
+function drawDurationChart(vids){
+	dataTableDur = new google.visualization.DataTable();
+    options = {
+	     height: 500,
+		 isStacked: true,
+         title: 'Duration',
+         legend: { position: 'bottom' },
+		 tooltip: {isHtml: true},
+         crosshair: { trigger: 'both', orientation: 'both' },
+		 timeline: {
+			rowLabelStyle: {
+				color: '#3399cc'
+			}
+		 }
+       };
+
+	dataTableDur.addColumn({ type: 'date', id: 'DatePlayed' });
+//	dataTable.addColumn({ type: 'string', id: 'Name' });
+	dataTableDur.addColumn({type: 'number', id: 'Duration' });
+	dataTableDur.addColumn({type: 'number', id: 'Words Duration' });
+	dataTableDur.addColumn({type: 'number', id: 'Aggregated Duration' });
+
+    myarray = [];
+	//lets limit the number we display.  
+	totalcnt = 100;
+	prevDate = null;
+	aggDuration = 0;
+    for (j=0; j<vids.length && j< totalcnt; j++){
+//    for (j=vids.length-1; j> -1; j--){
+		vid = vids[j];
+		mydate = new Date(vid.snippet.publishedAt);
+		if (prevDate === null)
+		    prevDate = mydate;
+		if (mydate.getDate() != prevDate.getDate()){
+			aggDuration = 0;
+		}
+		duration = getDuration(vid.snippet.description, vid.snippet.publishedAt);
+		aggDuration += duration[0];
+		
+
+	    obj = [ mydate, duration[0], duration[1], aggDuration ];
+		//getIterations(vid.snippet.description, vid.snippet.publishedAt) ];
+		console.log(obj);
+		myarray.push(obj);
+		prevDate = mydate;
+    }
+	dataTableDur.addRows(myarray);
+
+	var container = document.getElementById('durationchart');
+	var chart = new google.visualization.SteppedAreaChart(container);
+	chart.draw(dataTableDur);
+
+}
+
+function gitDownload(data, dataTableGit){
+    myarray = [];
+	//lets limit the number we display.  
+	totalcnt = 100;
+    for (j=0; j<data.length && j< totalcnt; j++){
+//    for (j=vids.length-1; j> -1; j--){
+		commit = data[j];
+        console.log(commit.url);
+
+//	   $.getJSON(commit.url,function(commitdata){
+		$.ajax({
+		  url: commit.url,
+		  dataType: 'json',
+		  async: false,
+		  success: function(commitdata) {
+		  
+
+		   console.log(commitdata);
+		   console.log(commitdata.stats);
+
+			for (i=0; i< commitdata.files.length; i++){
+				console.log(commitdata.files[i].filename);
+				console.log(commitdata.files[i].changes);
+				console.log(commitdata.commit.committer.date);
+				mydate = new Date(commitdata.commit.committer.date);
+				tempdate = new Date(commitdata.commit.committer.date);
+				tempdate.setMinutes(tempdate.getMinutes()+commitdata.files[i].changes);
+				tag = { v: commitdata.files[i].filename, p: { link: commit.html_url }};
+				var aTag = document.createElement('a');
+				aTag.setAttribute('href',commit.html_url);
+				aTag.innerText = " " + commitdata.files[i].filename;
+				aTag.innerText += " " + commitdata.commit.committer.date;
+
+				console.log(tag);
+				obj = [ tag, commitdata.files[i].filename, mydate, tempdate ];
+				//getIterations(vid.snippet.description, vid.snippet.publishedAt) ];
+				console.log(obj);
+				myarray.push(obj);
+			}
+		  }
+		});
+
+
+    }
+
+    return myarray;
+}
+
+async function gitChart(data){
+	var container = document.getElementById('gitchart');
+	gitchart = new google.visualization.Timeline(container);
+	chart = gitchart;
+	dataTableGit = new google.visualization.DataTable();
+    optionsGit = {
+	     height: 300,
+         title: 'Git',
+         legend: { position: 'labeled' },
+		 tooltip: {isHtml: true},
+         crosshair: { trigger: 'both', orientation: 'both' },
+		 timeline: {
+			rowLabelStyle: {
+				color: '#3399cc'
+			}
+		 },
+         trendlines: {
+           0: {
+             type: 'polynomial',
+             degree: 3,
+             visibleInLegend: true,
+           }
+         }
+       };
+	   
+	   
+	dataTableGit.addColumn({ type: 'string', id: 'Name' });
+//	dataTableGit.addColumn({type: 'string', id: 'Label' });
+	dataTableGit.addColumn({type: 'string', role: 'tooltip', 'p': {'html': true}});
+	dataTableGit.addColumn({ type: 'date', id: 'DatePlayed' });
+	dataTableGit.addColumn({ type: 'date', id: 'DateEnded' });
+	
+//	dataTable.addColumn({ type: 'number', id: 'Iterations' });
+//	dataTable.addColumn({ type: 'number', id: 'Duration' });
+	
+//	dataTable.addColumn({ type: 'number', id: 'Iteration#' });
+    myarray = await gitDownload(data, dataTableGit);
+	dataTableGit.addRows(myarray);
+
+	console.log(myarray);
+
+
+
+
+  google.visualization.events.addListener(chart, 'ready', readyHandlerGit);
+  google.visualization.events.addListener(chart, 'select', selectHandlerGit);
+  chart.draw(dataTableGit, optionsGit);
+
+}
+
+function getGit(){
+	//get github
+    url = giturl;
+	
+   $.getJSON(giturl,function(data){
+       console.log(data);
+	   gitChart(data);
+	});
+}
+
+function drawChart(vids) {
+	var container = document.getElementById('timeline');
+	var chart = new google.visualization.Timeline(container);
+	vidchart = chart;
+	dataTable = new google.visualization.DataTable();
+    options = {
+	     height: 300,
+         title: 'Timeline',
+         legend: { position: 'labeled' },
+		 tooltip: {isHtml: true},
+         crosshair: { trigger: 'both', orientation: 'both' },
+		 timeline: {
+			rowLabelStyle: {
+				color: '#3399cc'
+			}
+		 },
+         trendlines: {
+           0: {
+             type: 'polynomial',
+             degree: 3,
+             visibleInLegend: true,
+           }
+         }
+       };
+	   
+	   
+	dataTable.addColumn({ type: 'string', id: 'Name' });
+	dataTable.addColumn({type: 'string', role: 'tooltip', 'p': {'html': true}});
+	dataTable.addColumn({ type: 'date', id: 'DatePlayed' });
+	dataTable.addColumn({type: 'date', id: 'DateEnded' });
+//	dataTable.addColumn({ type: 'number', id: 'Iterations' });
+//	dataTable.addColumn({ type: 'number', id: 'Duration' });
+	
+//	dataTable.addColumn({ type: 'number', id: 'Iteration#' });
+    myarray = [];
+	//lets limit the number we display.  
+	totalcnt = 100;
+    for (j=0; j<vids.length && j< totalcnt; j++){
+//    for (j=vids.length-1; j> -1; j--){
+		vid = vids[j];
+		mydate = new Date(vid.snippet.publishedAt);
+		tempdate = new Date(vid.snippet.publishedAt);
+		tempdate.setSeconds(tempdate.getSeconds()+getDuration(vid.snippet.description, vid.snippet.publishedAt)[0]);
+		tag = { v: vid.snippet.title, p: { link: domain + 'analyze.html?video=' + vid.id + '' }};
+		var aTag = document.createElement('a');
+		aTag.setAttribute('href',domain + 'analyze.html?video=' + vid.id);
+		aTag.innerText = " " + vid.snippet.description;
+		aTag.innerText += " " + vid.snippet.publishedAt;
+
+        console.log(tag);		
+	    obj = [ tag, vid.snippet.title, mydate, tempdate ];
+		//getIterations(vid.snippet.description, vid.snippet.publishedAt) ];
+		console.log(obj);
+		myarray.push(obj);
+    }
+	dataTable.addRows(myarray);
+
+
+
+
+  google.visualization.events.addListener(chart, 'ready', readyHandler);
+  google.visualization.events.addListener(chart, 'select', selectHandler);
+  chart.draw(dataTable, options);
+
+
+}
 
   </script>
   

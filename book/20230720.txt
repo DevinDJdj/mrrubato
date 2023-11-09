@@ -1,0 +1,67 @@
+Try to generate some images while playing and put them in the Open area where my face used to be.  
+Perhaps use some text to add subtitles while playing?  
+https://analyticsindiamag.com/how-to-generate-an-image-from-text-using-stable-diffusion-on-python/
+Use this in the postprocessing of record.py?  
+If we make this too large we need to be able to run parallel record.py.  
+
+
+Probably run into CUDA issues.  
+This looks like a decent start though to be able to control visuals to some extent.  
+
+
+Use the second monitor to display this as well as real-time text.  
+We should try to generate it real-time.  
+Leave the text on the screen from whatever is generated.  
+Be able to interact with touchscreen in some meaningful way.  
+This will be real-time generation.  
+
+Keep the context from the previous iteration of the song and when running analyze.py
+load previous context for current iteration.  
+
+
+See if we can check/use this?  
+Generate image from sound clip.  Nod designed for music, but that shouldnt matter I think.  
+https://towardsdatascience.com/audio-deep-learning-made-simple-sound-classification-step-by-step-cebc936bbe5
+Just a sample for now.  
+
+https://github.com/CompVis/stable-diffusion/blob/main/scripts/txt2img.py
+
+can we use this, need a sample with this.  
+maybe use a combination.  
+If we have words, use this as a starting point perhaps.  
+
+**analyze.html
+Need to display the text with timestamps so I can skip forward.  
+
+
+So when we do analyze.py at startup of record.py, 
+we want to get the text for the past X iterations.  
+For now just do 1.  
+When we get the text, call
+generateimage.py randomly throughout the record.py session, once each 5 minutes based on the previous iteration for now.  
+and add the image to OBS where we have a blank now.  
+
+Over time we want this image to represent something.  For now it will be somewhat random based on the words we said.  
+
+How do we determine a musical word for the piano, and what sequence represents a word.  
+I think we need to utilize the way that it is represented musically, not just sequentially.  
+You get too much muddled information. 
+So the word should be long if possible, and we need to separate sequence and rhythm.  
+How can we pick a meaningful word though.  
+Just look mathematically which one belongs in the sequence.  
+If there is none determined, pick the latest or closest previous one, and then move on.  
+
+Once we have these words, we should compare sequences across songs as well as within the same song (different iterations).  
+What is the rhythm/timing of these sequences.  
+
+which are structured sequences and which are lyrical sequences.  
+This should all be part of analyze.  
+Then we could see which ones are slower/faster, which ones are played with and which not.  
+
+Need a function MidiToWords
+This will be a similar structure to Midi, but will include separate "Tracks" I guess.  
+From here we can compare two iterations and try to see similar words/tracks and compare timings.  
+We need to illustrate all of this.  
+Probably illustrating this with different fingerings is important for learning.  
+I suspect I will find that the most improved over time do have different fingerings.  
+And we need to see what those are.  

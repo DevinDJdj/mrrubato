@@ -1,0 +1,67 @@
+**transcribe.py
+So initial iteration of this is there.  
+Need to utilize with record.py so we transcribe then upload.  
+10 second segments good enough for now for the timing.  
+
+
+**web/index.html
+Lets make a page to make it easier to see the videos that should be reviewed.  
+-Most recent
+-Oldest section
+both pointing to the analyze.html
+*cant do this easily as with the Youtube API, search doesnt list any unlisted videos, this is annoying.  
+Guess we can create a firebase DB and put this info in there.  Then we can run off that?  We already need to have some sort of backup anyway.  
+We may as well just generate a DB entry from the start of the recording.  
+Just put the videoID, and then the links and original description.  
+Then we can get the details in the future even if it remains unlisted.  
+
+
+
+
+using analyze.html while watching something.  
+
+https://www.youtube.com/watch?v=egLvHierAuQ&pp=sAQB
+
+Figured that wouldnt work.  
+**MEMORY
+This is a good way to take notes though anyway on whatever is watched.  
+Then feedback can be provided.  
+That should be the standard way to watch stuff.  
+There should be a way to provide timed feedback easily.  I could only do this with audio feedback.  
+But perhaps the younger generation would do this with chat feedback.  
+Why is there no software like this, or why is this not the default?  
+At least for text data, this type of data is nothing volume-wise.  
+
+Then the producer can analyze those comments.  
+People are capable enough to mute themselves I would suspect and then you dont get too much background noise.  
+Anyway the garbage could be filtered in some way.  
+
+
+**record.py
+add --rerun option for when there is a failure.  
+put all description into a temp file.  
+--rerun just takes the latest video and the latest temp file and uploads.  
+then adds to the table. 
+--skipupload for when we have run out of API tokens.  
+firebase simple table (videoID, description)
+from this we can generate whatever table wanted for stats etc.  
+This can all be post processing batch jobs, part of timestep.py perhaps. 
+other tables can include every instance etc of the song.  
+
+**transcribe.py --DONE
+adjust the format to the same as we have
+....... (0:10)
+
+**web/analyze.html
+display the transcription in case we want to add some of it to the video description.  --DONE
+-get videos from new playlist.  
+
+
+**play.py
+Make something to play back on the midi port and send the midi to the midi controller.  
+This way we can have something comparable when we combine and adjust speed for the recordings.  
+Should be able to accept local as well as remote files.  
+Just download from the saved description.  
+When will we utilize this?  
+
+

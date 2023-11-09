@@ -7,7 +7,54 @@
 
 </head>
 
+    <!-- update the version number as needed -->
+    <script defer src="/__/firebase/9.19.1/firebase-app-compat.js"></script>
+    <!-- include only the Firebase features as you need -->
+    <script defer src="/__/firebase/9.19.1/firebase-auth-compat.js"></script>
+    <script defer src="/__/firebase/9.19.1/firebase-database-compat.js"></script>
+    <script defer src="/__/firebase/9.19.1/firebase-firestore-compat.js"></script>
+    <script defer src="/__/firebase/9.19.1/firebase-functions-compat.js"></script>
+    <script defer src="/__/firebase/9.19.1/firebase-messaging-compat.js"></script>
+    <script defer src="/__/firebase/9.19.1/firebase-storage-compat.js"></script>
+    <script defer src="/__/firebase/9.19.1/firebase-analytics-compat.js"></script>
+    <script defer src="/__/firebase/9.19.1/firebase-remote-config-compat.js"></script>
+    <script defer src="/__/firebase/9.19.1/firebase-performance-compat.js"></script>
+    <!-- 
+      initialize the SDK after all desired features are loaded, set useEmulator to false
+      to avoid connecting the SDK to running emulators.
+    -->
+    <script defer src="/__/firebase/init.js?useEmulator=true"></script>
+	
+
+
+
 <body translate="no" >
+  
+
+<script src="js/midiparser.js"></script>
+
+<input type="file" id="filereader"/>
+
+  <table>
+  <tr>
+  <td>
+<div id="player" valign="top"></div>
+
+    <div class="words" contenteditable>
+		 <input type="text" id="p" name="p">
+    </div>
+	<div id="submit" valign="top">
+	    <input type="range" id="points" name="points" min="0" max="10" value="1" />
+		<button type="button" onclick="updateVideo()">Update</button>
+	</div>
+ <div id="midi"></div>
+<!--    <button type="button" onclick="saveMidiFeedback();">Save Midi Feedback</button> -->
+    <div id="out"></div>	
+
+</td>
+
+<td>
+
   <div id="clock" 
        style=	"display: inline-block;
 		font-family: monospace;
@@ -28,27 +75,60 @@
 		padding: 10px; 
 		background-color: rgba(0, 0, 0, 0.75);">
   </div>
-  <br>
-  <table>
-  <tr>
-  <td>
-<div id="player" valign="top"></div>
-
-    <div class="words" contenteditable>
-		 <input type="text" id="p" name="p">
-    </div>
-
-</td><td>
-    <textarea id="notes" rows="40" cols="80"></textarea>
-</td>
-</table>
-    <div id="previous"></div>
-	
   
+  <br>
+    <p id="load">Firebase SDK Loading&hellip;</p>
+    <div id="iterationsh" style="height: 390px;overflow:auto;"></div>
+<!--    <textarea id="iterations" rows="40" cols="40"></textarea> -->
+</td><td>
+    <div id="mycommentsh"></div>
+    <textarea id="mycomments" rows="20" cols="40"></textarea>
+</td><td>
+    <textarea id="transcript" rows="20" cols="60"></textarea>
+</td>
+</tr>
+</table>
+<table>
+<tr>
+    <td>
+    <div id="previous" style="width: 100%;height: 180px;overflow:auto;"></div>
+	</td>
+	<td>
+	<div id="timeline" style="height: 180px;"></div>
+	</td>
+</tr>
+	</table>
+
+
+<table>
+<tr><td>	
+<div id="pianoroll" style="display: flex;" ></div>
+</td>
+</tr>
+<tr><td>
+<div id="images" style="display: flex;"></div>	
+</td>
+</tr>
+</table>  
+
+        <script src="https://cdn.babylonjs.com/babylon.js"></script>
+		<script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
 <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-
   <script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js'></script>
+		<script src='https://apis.google.com/js/platform.js' async defer></script>
+
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/webmidi@latest/dist/iife/webmidi.iife.js"></script>
+
+
+<script src="JZZ/JZZ.js"></script>
+<script src="JZZ/JZZ.midi.SMF.js"></script>
+
+
+
+		
   <script>
   //firebase deploy to deploy this.  
   //usage:
@@ -56,70 +136,259 @@
 //can we add this link to the top of all descriptions on record?  
   
 // https://stackoverflow.com/questions/901115/how-can-i-get-query-string-values-in-javascript
-var urlParams;
 var video = 'T7aCHEAGCsU';
+var videojson = null;
 var channelId = 'UC4dK3RpqBq2JpIkRmQn6HOA'; //@misterrubato doesnt work in URL, probably need to escape the @, but who cares.  
 var title = '';
-(function () {
-    var match,
-        pl     = /\+/g,  // Regex for replacing addition symbol with a space
-        search = /([^&=]+)=?([^&]*)/g,
-        decode = function (s) { return decodeURIComponent(s.replace(pl, " ")); },
-        query  = window.location.search.substring(1);
-    urlParams = {};
-    while (match = search.exec(query))
-       urlParams[decode(match[1])] = decode(match[2]);
-})();
-var output = document.getElementById("clock");
-if (urlParams["style"]) output.setAttribute("style", urlParams["style"]);
-if (urlParams["bodyStyle"]) document.body.setAttribute("style", urlParams["bodyStyle"]);
-if (urlParams["video"]){ 
-  video = urlParams["video"];
-  console.log(video);
-}
 
-var c;
-setInterval(
-c = function() {
-	output.innerText = moment().format(urlParams["format"] || 'DD/MM/YYYY HH:mm:ss');
-//    output.innerText = moment().format(urlParams["format"] || '');
-}, 1000);
-c();
 
-var secondselapsed = document.getElementById("secondselapsed");
-start = moment()
-var se;
-setInterval(
-se = function() {
-    end = moment()
-	secondselapsed.innerText = (end - start)/1000;
-//    output.innerText = moment().format(urlParams["format"] || '');
-}, 1000);
-se();
+      // Enable WebMidi.js and trigger the onEnabled() function when ready.
+</script>
+
+
+<script type="text/javascript" src="clock.js"></script>
+<script type="text/javascript" src="midi.js"></script>
+
+<script>
 
 
 var player;
 var delay = 10;
+var prevmax = 10;
 var notesarray = [];
+var descarray = [];
+var commentsarray = [];
+var starttimes = [];
+var endtimes = [];
+var st = [];
+var	et = [];
+var myst = [];
+var myet = [];
 
+var durations = [];
+var maxduration = 0;
+var xmultiplier;
+var ymultiplier;
+var camera;
+var light;
+var spotlight;
+var watch = false;
+
+var uid = null;
 //setup https://www.youtube.com/watch?v=3jZ5vnv-LZc
 //then restrict the key if needed to your site and youtube data API.  
-webkey = 'AIzaSyCUinmE8NN5BoGqHkNlVveLCOuebxEHCyY';
+
+
+      document.addEventListener('DOMContentLoaded', function() {
+        const loadEl = document.querySelector('#load');
+        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
+        // // The Firebase SDK is initialized and available here!
+        //
+         firebase.auth().onAuthStateChanged(user => { 
+		   if (user) {
+			// User is signed in, see docs for a list of available properties
+			// https://firebase.google.com/docs/reference/js/firebase.User
+			
+			uid = user.uid;
+				// ...
+			  } else {
+				// User is signed out
+				// ...
+			  }
+			});
+        // firebase.database().ref('/path/to/ref').on('value', snapshot => { });
+        // firebase.firestore().doc('/foo/bar').get().then(() => { });
+        // firebase.functions().httpsCallable('yourFunction')().then(() => { });
+        // firebase.messaging().requestPermission().then(() => { });
+        // firebase.storage().ref('/path/to/ref').getDownloadURL().then(() => { });
+        // firebase.analytics(); // call to activate
+        // firebase.analytics().logEvent('tutorial_completed');
+        // firebase.performance(); // call to activate
+        //
+        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
+
+        try {
+          let app = firebase.app();
+          let features = [
+            'auth', 
+            'functions',
+            'storage', 
+			'database',
+          ].filter(feature => typeof app[feature] === 'function');
+          loadEl.textContent = `Firebase SDK loaded with ${features.join(', ')}`;
+		  
+		//use this as the base, and then we can write an update to whatever.  
+		//we can also use this, if the user is logged in, get that info instead.  
+			 var provider = new firebase.auth.GoogleAuthProvider();
+
+			firebase.auth()
+			  .signInWithPopup(provider)
+			  .then((result) => {
+				/** @type {firebase.auth.OAuthCredential} */
+				var credential = result.credential;
+
+				// This gives you a Google Access Token. You can use it to access the Google API.
+				var token = credential.accessToken;
+				// The signed-in user info.
+				var user = result.user;
+				//not sure why we need this, but the asynchronous check is not getting kicked off.  
+				   if (user) {
+					// User is signed in, see docs for a list of available properties
+					// https://firebase.google.com/docs/reference/js/firebase.User
+					
+					uid = user.uid;
+					addUser(user);
+					firebase.database().ref('/misterrubato/' + video + '/comments/' + uid).once('value')
+					  .then((snapshot) => {
+						if (snapshot.exists()) {
+							loadPreviousComments(snapshot);
+
+						} else {
+							firebase.database().ref('/misterrubato/watch/' + video + '/comments/' + uid).once('value')
+							    .then((snapshot) => {
+									if (snapshot.exists()){
+										loadPreviousComments(snapshot);
+									}
+									else{
+									  console.log('No comments yet from you');									
+									}
+ 								});
+						}
+					  });
+					
+					}
+				// IdP data available in result.additionalUserInfo.profile.
+				  // ...
+			  }).catch((error) => {
+				// Handle Errors here.
+				var errorCode = error.code;
+				var errorMessage = error.message;
+				// The email of the user's account used.
+				var email = error.email;
+				// The firebase.auth.AuthCredential type that was used.
+				var credential = error.credential;
+				// ...
+			  });
+
+			google.charts.load('current', {'packages':['corechart', 'timeline']});
+        
+			getVideoJson(video);
+/*		
+			var vRef = firebase.database().ref('/misterrubato/' + video);
+			if (typeof(uid) != "undefined" && uid !==null){
+			}
+			vRef.on("value", function(snapshot) {
+				console.log(snapshot.val());
+				videojson = snapshot.val();
+				getVideoJson(video);
+				
+			});
+*/		  
+        } catch (e) {
+          console.error(e);
+          loadEl.textContent = 'Error loading the Firebase SDK, check the console.';
+        }
+      });
+
+
+function loadPreviousComments(snapshot){
+	console.log(snapshot.val().comments);
+	if (snapshot.val().comments !==null){
+		$('#mycomments').val(snapshot.val().comments);
+		$('#mycommentsh').html(makeTimeLinks(snapshot.val().comments));
+	}
+	
+	if (snapshot.val().sentiment !==null){
+		$('#points').val(snapshot.val().sentiment);
+	}
+	//load midi.  
+	midifeedback = snapshot.val().midi;
+	loadMidiFeedback(midifeedback);
+	
+	console.log("MIDI:" + midifeedback);
+//							document.getElementById('out').innerHTML = 'New file: <a download=my.mid href=' + midifeedback + '>DOWNLOAD</a> <embed src=' + midifeedback + ' autostart=false>';
+
+}
+
+function addUser(user){
+    uid = user.uid;
+	displayname = user.displayName;
+	email = user.email;
+	phone = user.phoneNumber;
+	pic = user.photoURL;
+	console.log(displayname + " " + email + " " + phone + " " + pic);
+    //add to DB.  
+	var uRef = firebase.database().ref('/misterrubato/users/' + uid);
+
+	obj = {"name": displayname, "pic": pic};
+	uRef.set(obj);
+	
+}
+
 function str_pad_left(string,pad,length) {
     return (new Array(length+1).join(pad)+string).slice(-length);
 }
 
+
+
+//should combine with updateVideo afterward.  
+//not sure if the struct should be uid / comments, or comments /uid
+
+function updateVideo(){
+	//get authuid.  
+	//getref to uid
+	//then under here store the videos.  
+	//does the video have to be associated with the channel, I guess not.  
+	
+	var grade = $('#points').val();
+	
+	if (uid !==null){
+		const currentdate = new Date();
+	    if (watch === false){
+			var uRef = firebase.database().ref('/misterrubato/' + video + '/comments/' + uid);
+	//		videojson.snippet.description = $('#iterations').val();
+	//		videojson = JSON.parse( JSON.stringify(videojson ) );
+			console.log(uid);
+			mycomments = $('#mycomments').val();
+
+	//		sentiment = "test"; //for now
+			midifeedback = getMidiFeedback();
+//			document.getElementById('out').innerHTML = 'New file: <a download=my.mid href=' + midifeedback + '>DOWNLOAD</a> <embed src=' + midifeedback + ' autostart=false>';
+
+
+			obj = {"comments": mycomments, "sentiment": grade, "midi": midifeedback, "updated": currentdate };
+			uRef.set(obj);
+		}
+		else{
+			console.log(video + " Not in DB.  Adding watch comments");
+			var uRef = firebase.database().ref('/misterrubato/watch/' + video + '/comments/' + uid);
+			mycomments = $('#mycomments').val();
+
+	//		sentiment = "test"; //for now
+			midifeedback = getMidiFeedback();
+			obj = {"comments": mycomments, "sentiment": grade, "midi": midifeedback, "updated": currentdate };
+			uRef.set(obj);
+		
+		}
+	}
+	
+	
+}
 
 function updateNotes(){
     var allnotes = "";
 	for (i=0; i<notesarray.length; i++){
 	    allnotes += notesarray[i] + "\n";
 	}
-    $('#notes').val(allnotes);
+    $('#mycomments').val(allnotes);
+	$('#mycommentsh').html(makeTimeLinks(allnotes));
 	
 }
 
-function createNotes(allnotes){
+function createNotesArray(){
+//also update the new DIV with links.  
+	allnotes = $('#mycomments').val();
+	notesarray = [];
     const lines = allnotes.split("\n");
 	for (i = 0; i< lines.length; i++){
 	    notesarray[i] = lines[i];
@@ -144,6 +413,7 @@ function getTime(comment){
 function addComment(comment, commenttime){
     //find where to splice and then reset the notes
 	//notesarray.splice(i, 0, comment);
+	createNotesArray();
 	i = 0;
 	while (i< notesarray.length && getTime(notesarray[i]) < getSecsFromTime(commenttime)){
         i++;
@@ -154,40 +424,487 @@ function addComment(comment, commenttime){
 	
 }
 
-function searchPrevious(){
+function getIterations(desc, vidtime, isme=false){
+	st = [];
+	et = [];
+	s = 0;
+	for (i=1; i< 20; i++){
+	    s = -1;
+		e = -1;
+	    fnd = "TRIAL#" + i;
+		ts = desc.indexOf(fnd);
+		te = desc.indexOf(")", ts);
+		if (ts > -1)
+			s = getSecsFromTime(desc.substring(ts+(fnd.length)+2, te));
+			
+	    fnd = "END#" + i;
+		ts = desc.indexOf(fnd);
+		te = desc.indexOf(")", ts);
+		if (ts > -1)
+			e = getSecsFromTime(desc.substring(ts+(fnd.length)+2, te));
+		if (s > 0 && e > 0 && e > s){
+		    st.push(s);
+			et.push(e);
+		}
+	}
+    console.log(st);
+	console.log(et);
+	//arrays of all iterations
+	mydate = new Date(vidtime);
+	for (i=0; i< st.length; i++){
+	    if (et[i] !==null){
+			tempdate = mydate;
+			tempdate.setSeconds(tempdate.getSeconds()+st[i]);
+			starttimes.push(tempdate);
+			durations.push([tempdate, et[i]-st[i]]);
+			if (isme){
+			    myst.push(st[i]);
+				myet.push(et[i]);
+    			if (et[i]-st[i] > maxduration){
+					maxduration = et[i]-st[i];
+					
+				}
+			}
+			tempdate.setSeconds(tempdate.getSeconds()+(et[i]-st[i]));
+			endtimes.push(tempdate);
+		}
+	}
+	if (isme)
+	    numiterations = st.length;
+	//from here generate some sort of graphic.  
+}
+
+function drawChart() {
+	var container = document.getElementById('timeline');
+	var chart = new google.visualization.LineChart(container);
+	var dataTable = new google.visualization.DataTable();
+	   
+       var options = {
+         title: 'Duration',
+         legend: 'none',
+         crosshair: { trigger: 'both', orientation: 'both' },
+         trendlines: {
+           0: {
+             type: 'polynomial',
+             degree: 3,
+             visibleInLegend: true,
+           }
+         }
+       };
+	   
+	dataTable.addColumn({ type: 'date', id: 'DatePlayed' });
+	dataTable.addColumn({ type: 'number', id: 'Duration' });
+//	dataTable.addColumn({ type: 'number', id: 'Iteration#' });
+
+    for (i=0; i< starttimes.length; i++){
+		dataTable.addRows(durations);
+    }
+	chart.draw(dataTable);
+}
+
+function removeAllChildren(el){
+	var mydiv = document.getElementById(el);
+	while (mydiv.firstChild) {
+	  mydiv.removeChild(mydiv.lastChild);
+	}
+    return mydiv;
+}
+	  
+function searchPrevious(videoid){
 	//use title
- $.getJSON('https://www.googleapis.com/youtube/v3/search?maxResults=15&channelId=' + channelId + '&order=date&q=' + title + '&key=' + webkey + '&part=snippet',function(data){
-      if (typeof(data.items[0]) != "undefined") {
-	      for (i=0; i<data.items.length; i++){
-            console.log('found  ' + data.items[i].snippet);
-			var mydiv = document.getElementById("previous");
+    ref = firebase.database().ref('/misterrubato');
+	console.log(title);
+    ref.orderByChild('snippet/title').equalTo(title).on("value", function(snapshot) {
+		it = 1
+		vids = [];
+		snapshot.forEach((childSnapshot) => {
+			console.log(childSnapshot.key);
+			console.log('found  ' + childSnapshot.val().snippet);
+			var obj = childSnapshot.val();
+			
+			vids.push(obj);
+			it = it + 1;
+		});
+		console.log("why" + vids.length);
+				
+		vids.sort(function(a, b) {
+		   datea = new Date(a.snippet.publishedAt);
+		   dateb = new Date(b.snippet.publishedAt);
+		   
+		  return dateb - datea;
+		});		
+		
+		mydiv = removeAllChildren("previous");
+
+		for (it=0; it< vids.length; it++){
+			var obj = vids[it];
 			var aTag = document.createElement('a');
-			aTag.setAttribute('href',"https://misterrubato.com/analyze.html?video=" + data.items[i].id.videoId);
-			aTag.innerText = "PREV#" + i;
+			aTag.setAttribute('href',"https://misterrubato.com/analyze.html?video=" + obj.id);
+			aTag.innerText = "PREV#" + it;
+			aTag.innerText += " " + obj.snippet.publishedAt;
+			//should really add a date driven graphic representation.  
+			if (videoid == obj.id){
+				aTag.innerText += " <- THIS VIDEO";
+			}
+			console.log(aTag);
 			mydiv.appendChild(aTag);
 			var br = document.createElement("br");
 			mydiv.appendChild(br);
+			
+			//get description, add some info to javascript object for iteration info.  
+			//words and non-word links.  Makes it easier to review.  
+			//create graph for all iterations in time.  
+			isme = false;
+			if (videoid == obj.id){
+			    isme = true;
+			}
+
+			getIterations(obj.snippet.description, obj.snippet.publishedAt, isme);
+		}
+		console.log(starttimes);
+		drawChart();
+	});
+
+	//display the tags.  
+
+/*	
+ $.getJSON('https://www.googleapis.com/youtube/v3/search?maxResults=15&channelId=' + channelId + '&order=date&q=' + title + '&key=' + webkey + '&part=snippet',function(data){
+      if (typeof(data.items[0]) != "undefined") {
+	      for (i=0; i<data.items.length; i++){
+		    if (data.items[i].id.kind == "youtube#video"){
+				console.log('found  ' + data.items[i].snippet);
+				var mydiv = document.getElementById("previous");
+				var aTag = document.createElement('a');
+				aTag.setAttribute('href',"https://misterrubato.com/analyze.html?video=" + data.items[i].id.videoId);
+				aTag.innerText = "PREV#" + i;
+				if (videoid == data.items[i].id.videoId){
+				    aTag.innerText += " <- THIS VIDEO";
+				}
+				mydiv.appendChild(aTag);
+				var br = document.createElement("br");
+				mydiv.appendChild(br);
+			}
 		  }
        } 
 	   else {
         console.log('video not exists');
        }   
     });
+*/
 	
 }
 
+function getMidi(desc){
+ var tempDiv = $('#midi');
+ //find in notes array the TRANSCRIPT:
+ //gsutil cors set cors.json gs://misterrubato-test.appspot.com
+ let tposition = desc.indexOf("MIDI:");
+ if (tposition > -1){
+    eposition = desc.indexOf('\n', tposition);
+	if (eposition > -1){
+    	url = desc.substring(tposition+5, eposition);
+	}
+	else {
+		url = desc.substring(tposition+5);
+	}
+	tempDiv.html(url);
+	getAnalyze(url);
+ }
+}
+
+function getIteration(currentTime){
+    for (j=0; j< myst.length; j++){
+		if (currentTime >= myst[j] && currentTime <= myet[j]){
+			return j;
+		}
+	}
+	return -1;
+}
+
+function updateCanvas(){
+    if (player.getCurrentTime){
+		var tempTime = player.getCurrentTime();
+		i = getIteration(tempTime);
+		secs = tempTime - myst[i];
+		if (i > -1){
+			camera.position = new BABYLON.Vector3((xmultiplier/2)-20*secs, ymultiplier*1.2, 0);
+			spotlight.position = new BABYLON.Vector3((xmultiplier/2)-20*secs, xmultiplier, 0);
+		}
+	}
+}
+
+//use canvas for pianoroll.  Use graphics engine of some kind.  
+function loadCanvas(id, pianoimg) {
+//    numiterations = starttimes.length;
+//this was not right variable.  
+	var canvas = document.createElement('canvas');
+	div = document.getElementById(id); 
+	canvas.id     = "PianoRollCanvas";
+	canvas.width  = 1500;//(maxduration*20);
+	canvas.height = 200*numiterations; //200 176 for piano roll and 24 for the lines between iterations
+	//not sure the best way to visualize this, but for now just lines between same location in pianoroll.  
+	canvas.style.zIndex   = 8;
+	canvas.style.position = "absolute";
+	canvas.style.border   = "1px solid";
+	canvas.style.opacity = 0.8
+//	canvas.style.left = "-100px";
+	div.appendChild(canvas);
+
+
+    
+	const engine = new BABYLON.Engine(document.getElementById("PianoRollCanvas"), true); // Generate the BABYLON 3D engine
+	const createScene = function () {
+		// Creates a basic Babylon Scene object
+		const scene = new BABYLON.Scene(engine);
+
+/*
+    var advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+
+	
+//	const ctx = sv.getContext();
+    var image = new BABYLON.GUI.Image("but", pianoimg);
+    image.width = (maxduration*20).toString() + "px";;
+    image.height = (200*numiterations).toString() + "px";
+	image.left = 25;
+	image.top = 55;
+    advancedTexture.addControl(image);  
+*/	
+		xmultiplier = maxduration*20;
+		ymultiplier = 200*numiterations;
+		// Creates and positions a free camera
+		camera = new BABYLON.FreeCamera("camera1", 
+			new BABYLON.Vector3(0, ymultiplier*1.2, 0), scene);
+		// Targets the camera to scene origin
+		camera.setTarget(BABYLON.Vector3.Zero());
+		// This attaches the camera to the canvas
+		camera.attachControl(canvas, true);
+		// Creates a light, aiming 0,1,0 - to the sky
+		light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(-(numiterations*5/2), (numiterations*5/2), (numiterations*5/2)), scene);
+		// Dim the light a small amount - 0 to 1
+		light.intensity = 0.4;
+		
+		//just use the light to enunciate what we want.  
+		
+
+
+//		const dirlight = new BABYLON.DirectionalLight("DirectionalLight", new BABYLON.Vector3(0, -1, 0), scene);
+		//new BABYLON.Vector3(0, -1, 0)
+		//need to figure out the X component needed here.  
+		//then move the spotlight or the camera one or the other
+		spotlight = new BABYLON.SpotLight("spotLight", new BABYLON.Vector3(0, xmultiplier, 0), new BABYLON.Vector3(0, -1, 0), Math.PI / 24, 2, scene);
+		spotlight.intensity = 0.2;
+
+		//try to point at the right area.  
+		//start here.  ********
+		setInterval(
+		upd = function() {
+			updateCanvas();
+		}, 500);
+		upd();
+
+		// Built-in 'sphere' shape.
+		const sphere = BABYLON.MeshBuilder.CreateSphere("sphere", 
+			{diameter: 2, segments: 32}, scene);
+		// Move the sphere upward 1/2 its height
+		sphere.position.y = numiterations*5/2;
+		sphere.position.x = maxduration/2;
+		sphere.position.z = numiterations*5/2;
+		// Built-in 'ground' shape.
+		
+		var ground = BABYLON.MeshBuilder.CreateGround("ground", {width:(xmultiplier), height:(ymultiplier)});
+		//rotation necessary for some reason.  
+        ground.rotation = new BABYLON.Vector3(0, Math.PI, 0); //alpha, beta, gamma in radians
+		var prollMat = new BABYLON.StandardMaterial("pianorollground", scene);
+		prollMat.diffuseTexture = new BABYLON.Texture(pianoimg, scene);
+		prollMat.alpha = 0.5;	
+		ground.material = prollMat;
+	//        var layer = new BABYLON.Layer('',pianoimg, scene, false);			
+		return scene;
+	};
+	const scene = createScene(); //Call the createScene function
+	// Register a render loop to repeatedly render the scene
+	engine.runRenderLoop(function () {
+			scene.render();
+	});
+	
+}
+	
+function addImage(url, type=0){
+    var mydiv = document.getElementById("images");
+	if (type > 0){
+		mydiv = document.getElementById("pianoroll");
+		loadCanvas("pianoroll", url);
+	}
+	else{
+		const img = document.createElement("img");
+		img.src = url;
+		console.log(url);
+		mydiv.appendChild(img);
+	}
+}
+
+function getAnalyze(midiurl){
+    //in case we have \r\n
+    midiurl = midiurl.replace("\r", "");
+    var storage = firebase.storage();
+
+	var lastPart = midiurl.split("/").pop();
+
+//make this more general.  
+// Create a storage reference from our storage service
+    var storageRef = storage.ref();
+	//why does this URL have space and others are %20?  
+	midiloc = "midi/" + lastPart.replace("%20", " ");
+	url = storageRef.child(midiloc).getDownloadURL()
+	  .then((url) => {
+        console.log(url);
+		getFile(url);
+   })
+		
+	removeAllChildren("pianoroll");
+	removeAllChildren("images");
+
+    pianoroll = "analyze/" + lastPart
+	pianoroll = pianoroll.replace(".mid", ".jpg");
+	console.log(pianoroll);
+    url = storageRef.child(pianoroll).getDownloadURL()
+	  .then((url) => {
+        console.log(url);
+	addImage(url, 1);
+   })
+   
+	var lastPart = midiurl.split("/").pop();
+    analyzeurl = "analyze/kk_" + lastPart
+	analyzeurl = analyzeurl.replace(".mid", ".png");
+	console.log(analyzeurl);
+    url = storageRef.child(analyzeurl).getDownloadURL()
+	  .then((url) => {
+	addImage(url);
+   })
+
+	var lastPart = midiurl.split("/").pop();
+    analyzeurl = "analyze/ks_" + lastPart
+	analyzeurl = analyzeurl.replace(".mid", ".png");
+	console.log(analyzeurl);
+    url = storageRef.child(analyzeurl).getDownloadURL()
+	  .then((url) => {
+	addImage(url);
+   })
+
+	var lastPart = midiurl.split("/").pop();
+    analyzeurl = "analyze/ks2_" + lastPart
+	analyzeurl = analyzeurl.replace(".mid", ".png");
+	console.log(analyzeurl);
+    url = storageRef.child(analyzeurl).getDownloadURL()
+	  .then((url) => {
+	addImage(url);
+   })
+	
+}
+
+function getTranscript(desc){
+ var tempDiv = $('#transcript');
+ //find in notes array the TRANSCRIPT:
+ //gsutil cors set cors.json gs://misterrubato-test.appspot.com
+ let tposition = desc.indexOf("TRANSCRIPT:");
+ if (tposition > -1){
+    eposition = desc.indexOf('\n', tposition);
+	if (eposition > -1){
+    	url = desc.substring(tposition+11, eposition);
+	}
+	else {
+		url = desc.substring(tposition+11);
+	}
+	tempDiv.load(url);
+ }
+}
+
+function makeTimeLinks(desc){
+    desc = desc.replaceAll("\n", "<br>");
+//    desc = desc.replace(")", ")<br>");
+	const regExp = /\(([^)]+)\)/g;
+	regExp2 = /\d+\:\d\d?/g;
+    const matches = [...desc.matchAll(regExp2)].flat();
+	for (i=0; i<matches.length; i++){
+	    secs = getSecsFromTime(matches[i]);
+		if (secs > 0){
+    		desc = desc.replace(matches[i], '<a href="#" onclick="seekTo(' + secs + ');">' + matches[i] + '</a>');
+		}
+
+	}
+//    console.log(matches);
+	return desc;
+}
+
 function getVideoJson(videoid){
+	
+    ref = firebase.database().ref('/misterrubato/' + videoid);
+	ref.on('value',(snap)=>{
+	    if (snap.exists()){
+			item = snap.val();
+			console.log(snap.val());
+			$('#iterationsh').html(makeTimeLinks(snap.val().snippet.description))
+	//		$('#iterations').val(snap.val().snippet.description);
+			
+			//<a href="#" onclick="seekTo(120);">02:00</a>
+			
+			createNotesArray();
+			//all of these comments as well should have this.  
+			
+			//get previous iterations of this.  
+			title = snap.val().snippet.description.split('\n')[0];
+			console.log(title);
+			searchPrevious(videoid);
+			getTranscript(item.snippet.description);
+			getMidi(item.snippet.description);
+		}
+		else{
+			//this is not our video, need to retrieve and allow for commenting.  
+			//this can be for comments.  Then we can retrieve comments from the person.  via API
+			//misterrubato/watch/xxxx
+			//combine this from several people you like.  
+			//Need to record the audio though if we do like this.  
+			//but this is sustainable then.  This is a web server per person.  
+			//when you are following someone, the algorithm would overlay that audio on top of 
+			//whatever you are watching based on your settings.  
+			//we need a master DB though probably, otherwise you have too much unnecessary traffic.  
+			//add this description to our DB using timestep.  
+			//item.snippet.description
+			console.log(videoid + " Not in DB.  Retrieving from Youtube API");
+			ref = firebase.database().ref('/misterrubato/watch/' + videoid);
+			watch = true;
+			ref.on('value',(snap)=>{
+				if (snap.exists()){
+				//retrieve previous comments etc.  
+				}
+				else{
+				//		obj = {"comments": mycomments, "sentiment": grade };
+				//uRef.set(obj);
+				}
+			});
+
+
+
+		}
+	});
+
+/*	
  $.getJSON('https://www.googleapis.com/youtube/v3/videos?id=' + videoid + '&key=' + webkey + '&part=snippet&callback=?',function(data){
     if (typeof(data.items[0]) != "undefined") {
+//	    videojson = data.items[0];
         console.log('video exists ' + data.items[0].snippet.title);
-		createNotes(data.items[0].snippet.description);
+		$('#iterations').val(data.items[0].snippet.description);
+	    createNotesArray();
 		//get previous iterations of this.  
 		title = notesarray[0];
-		searchPrevious();
+		searchPrevious(videoid);
+		getTranscript(data.items[0].snippet.description);
+		getMidi(data.items[0].snippet.description);
        } else {
         console.log('video not exists');
      }   
     });
+*/
 }
 
 function getSecsFromTime(time){
@@ -246,8 +963,6 @@ function helpme(){
 		  }
 	   });
 	   
-	   json = getVideoJson(video);
-	   console.log(json);
 		
 
 
@@ -288,8 +1003,16 @@ function helpme(){
       //    the player should play for six seconds and then stop.
       var done = false;
       function onPlayerStateChange(event) {
-        if (event.data == YT.PlayerState.PLAYING && !done) {
+        if (event.data == YT.PlayerState.PAUSED || event.data == YT.PlayerState.ENDED) {
+			//should use same for transcript function.  
+			midienabled = 0;
+		}
+
+        if (event.data == YT.PlayerState.PLAYING) {
 //          setTimeout(stopVideo, 6000);
+//			console.log("state change");
+			midienabled = 1;
+			
           done = true;
         }
       }

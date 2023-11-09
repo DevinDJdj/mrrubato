@@ -1,0 +1,85 @@
+What is the point of keeping a diary?  
+I believe writing to yourself helps your communicative ability overall. 
+It is also a nice way to try to reach logical conclusions about topics over time.  
+Often we forget or are unaware of the conclusions we draw.  
+Some more than others.  
+
+I was thinking about this project more as an enhanced diary.  
+Since I am essentially using any communication available to store my thoughts.  
+Does the fact that I cant share personal details hinder my ability to communicate about the topics I care about?  
+More than this, my limited linguistic mastery prevents me from sharing my thoughts.  
+
+When I was about 17 I wrote down many of my thoughts, sometimes pages per day.  Unfortunately none of that remains.  
+I hope to continue this though so that some of my thoughts do remain.  
+
+Importance of Process improvement:
+I tend to focus more on processes lately rather than results.  
+This is because I have seen many times how improvement of process can affect people 
+in a more fundamental fashion than the result of any one particular project or idea.  
+If you have the right set of processes, the work required to accomplish something seems trivial.  
+However improving processes is not an easy task.  
+There are many simple and complex processes I would like to see improved, and I cant seem to affect them in a timely manner.  
+This means it would take far too much of my time to instigate any lasting or significant change.  
+Although I have the desire to effect change, all what we do is a tradeoff.  
+And for most of us this time requirement is a non-starter.  
+So how do we effect change in complex systems without this overbearing time constraint?  
+Most of us attempt to write or communicate in some way what it is that would be more desireable.  
+Unfortunately even if the time is taken to write these things down, most of it goes unread.  
+Even if it is read, is it read by someone who is actually able or in a position to effect the change that is suggested?  
+So many hurdles to overcome.  
+How do you get relevant information to relevant people?  
+Right now this burden lies on the information consumer 
+to attempt to sort through the current tsunami of information that comes at us each day.  
+The information dissemination platforms reward popularity.  
+Popularity begets information disseminators who desire popularity.  
+Information disseminators who desire popularity begets shallow content.  
+Shallow content is necessary so that a large swath of the population can participate.  
+If a large swath of the population can understand and participate in the content, there is a higher probability that the content will become popular.  
+Most people utilize information dissemination platforms which are global.  
+So how do we get targeted content which goes to individuals who may act on that information.  
+And how do we provide information which has sufficient depth to be truly educational.  
+How do we provide this on a large scale?  
+Are there enough people able to provide intelligible content?  
+How do we improve the algorithms to target this content properly?  
+How can we disassociate targeted content with advertisement?  
+
+Whatever the Communication medium, we need some far more organized writing structure.  
+We need some sort of algorithmic writing which builds on itself like mathematics.  
+Some would say that this exists with Citation methods.  
+What other methodologies exist?  Citations are a start, but they are not good enough.  
+
+
+**backup.py
+Need to write something to get the data generated from Youtube in some form of backup.  
+
+
+**analyze/analyze.py
+-Count how many times my eyes stray from the music to the hands.  
+-Get data on what finger is used to play each note, this may be difficult at this point.  
+
+**words/words.py
+want to extract all words between TRIAL#x and END#x, or perhaps just see if we can get the speaking during the piece as well.  
+This doesnt really happen often enough to worry about.  
+Just run a speech-to-text on the videos and store under words/ directory datestamped.  
+From here we can pull things to put into book as part of the process.  
+If we have some lyrics in there that is fine.  Just timestamp the words, so that we can sort it out if necessary.  
+
+See if we can use this library.  
+Distraction maybe, but lets compile this and look a bit at the code.  
+Just randomly found for JP and ENG Speech to text.  
+Originally from University of Kyoto.  
+https://julius.osdn.jp/juliusbook/en/desc_install.html
+
+https://github.com/julius-speech/dictation-kit
+https://github.com/julius-speech/julius
+
+Yeah, distraction I think.  
+Let's just use the python libraries for now.  
+
+**transcribe.py
+See if we can get this to work and modify to utilize probably during record.py.  
+We can use it in here and before uploading get the transcript.  We need timestamps though.  
+And then just save that in a separate file the same way we do the midi file.  
+Then when we do analyze, we can pull the text we want from this file.  
+
+

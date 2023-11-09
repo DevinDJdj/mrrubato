@@ -1,0 +1,327 @@
+Cant play due to tendonitis in the wrist.  
+Unfortunately I think playing not with the right form caused this.  
+Bit depressing that I cant play but I may be able to use the time to teach the kids.  
+Or perhaps I can use this time to reflect or do a bit more programming.  
+
+Really need to create something like 
+**history.py
+this should show info across iterations.  
+Focus on general progress across songs, compared to other songs etc.  
+What is the timing between iterations, and what is the best use of time overall.  
+
+Finally fixed the annoying problem that analyze.py was taking too much time synchronously.  
+
+Try to utilize some of the things I have been testing for video manipulation.  
+Also need to still generate some image from sound.  
+
+Too many things to do, not enough time and/or inspiration.  
+
+**analyze.py
+add some logic to detect at least the harmonic correlations between notes.  
+Change midi -> Hz and find correlations.  
+
+Can we visualize something which will actually represent the sound itself, like a wave.  
+multiple note frequencies.  
+Beat frequencies.  A - B
+If the beat frequency of two waves or tones is in the mid-frequency range (500 - 2000 Hz), then our ear perceives it as a third wave/tone
+
+Yeah for now just do a realtime sound visualization.  
+Then we will have a sequence of sounds visualized.  
+We also want context.  
+
+https://wesbos.com/javascript/15-final-round-of-exercise/85-audio-visualization
+
+This is interesting:
+http://touchpianist.com/
+No reason not to make the keyboard a keyboard.  
+Dont have weight though.  
+Can we get weight from keys?  
+
+Check out some more of this:
+https://github.com/willianjusten/awesome-audio-visualization
+
+https://tympanus.net/Development/MusicalInteractions/
+
+https://mfcc64.github.io/html5-showcqtbar/index.html?s=auto
+
+First of all just stick with piano for now.  
+Do all things we can do to improve that.  
+
+Need to detect fingers with midi.  
+
+Then detect patterns along with speed.  
+Which patterns are preferable for certain sets of notes.  
+Then we find the most useful fingering patterns for the person.  
+And compare to other fingering patterns.  
+start with this perhaps:
+https://techvidvan.com/tutorials/hand-gesture-recognition-tensorflow-opencv/
+
+Add the visualization like above instead of the keyboard when I am showing the screen.  
+Also what to display instead of facecam.  
+Display what is being created, but how to represent that?  
+Maybe just display the last image visualization I guess.  Stick with that idea for a while.  
+
+Need to use the program to remove empty audio space as well especially if we start sharing what is being done on the computer.  
+This way there is no post-processing necessary.  
+
+
+
+Also detect the mathematics in the note sets.  
+Have some Midi->notepattern like referred above for analyze.py
+And then visualize that note pattern in a way that is useful and has the mathematical structures correlated.  
+
+We should be able to do this while playing.  In record, we should be able to detect realtime the finger structures
+and add suggestions perhaps from past reference of recordings.  
+Wont get this real-time immediately, just focus on being able to do it properly.  
+Then see how close to real-time we can get.  
+We can perhaps just do it in analyze, and display those results.  
+Not necessarily while playing.  
+
+Create some music with some interesting beat frequencies, so that the beat frequencies are harmonic in a way along with the original notes.  
+
+
+Maintenance tasks:
+**analyze.html
+"Update" should also update the public/private.  
+This way we dont have to do anything in youtube UI.  
+But this is just a flag in the DB and then from there update it in Youtube with 
+
+**timestep.py
+add something to essentially ensure the DB and the Youtube DB is in sync.  
+This is a common thing to do or will be more common. 
+Surely there is some tooling to do this, but it is not a hard task I think.  
+
+**stats.html
+Go ahead and make some interesting graphs about the history of each song.  
+Stats about group and song played
+Top groups played, top songs played over time.  
+By Time.  
+Make some stats about how many words spoken over time.  
+Use the 
+stats.py should populate this info into the DB.  
+Doesnt need to be real-time.  
+Then stats.html should display this along with other things.  
+But should be easy to execute.  
+When I run stats.py should just pull all that hasnt been done yet and generate the data for that.  
+And then bring up stats.html
+
+**analyze.py
+data to populate:
+#time without playing
+#time played
+#notes played
+#words recognized
+
+
+OK, so added this data.  
+Got stats.py to work with the DB instead of Youtube DB.  
+
+
+timestep.py
+need to update DB with status change info.  What date status was changed.  
+
+Same for 
+analyze.py if we update to public here, we should keep history of when this occurred.  
+
+
+OK, so we want relative pitch and relative timing.  
+How do we get this though.  
+Relative pitch should be fairly straightforward.  
+Timing is a little more difficult to analyze.  
+
+Relative pitch sequences, what are the most prevalent etc.  
+How to represent the n-gram?  
+Also where will we store this info.  
+I think we need a separate DB for this.  
+Or do we just calculate it every time from the midi?  
+We want to query across the DB so I guess we need something.  
+Is the RTDB enough though?  
+We will have 
+2-gram, 3-gram etc db.  
+This is simply the size of the midi file * however many n-grams we use.  
+So we are talking about 100KB/song * 10 perhaps.  
+1MB per set of iterations.  
+
+Well, lets just use something local for now, posgre I guess since that is the popular one of the day.  
+Lets make a relative n-gram and an absolute n-gram
+Then lets make a sequence n-gram which uses the sequence of the sorted relative n-gram
+for now we just use
+0 = 2
+1 = 3
+-1 = 5
+2 = 7
+-2 = 11
+3 = 13
+-3 = 17 
+4 = 19
+-4 = 23
+etc.  
+To create the n-gram
+i.e. 
++3, +1, -4, -2 
+= 2
+= 13*3*23*11
+Sequence n-gram = 4-bit * 16 = DWORD up to 16 positions
+Smallest -> largest for instance
+1, 3, 0, 2
+
+Recreate from n-grams
+get sorted Components of n-gram
+generate array from sequence n-gram
+hmm, maybe just use the bytes themselves and create a string.  
+Or just use the meaningful names.  
+A5C3 etc.  
+Convert to frequency now?  
+We just want relative sequence.  
+This is what is primarily perceived.  
+for now just use a byte and string of bytes.  
+note - prevnote
+base64 encode/decode.  
+
+Just do the basic portion, then worry about getting meaningful musical words.  
+We do still want a non-sequenced n-gram as well, so we can still calculate this.  
+**
+start note (absolute), n-gram primorial, sequence n-gram, iteration, song, starttime, endtime
+**
+for now lets just generate a CSV file with this info for 2 - 16 n-grams.  
+
+OK, so we have something with 
+**analyze.py
+printNgrams
+
+Not good, but its a start.  
+Now need to save to a file -> DB somewhere. 
+
+Have to check if I broke something as only got one pianoroll with the analyze.py result.  
+
+Combination possibilities are:
+88 PICK 16 ~ 140 trillion
+But in reality very few used maybe.  
+PICK 10 = 4 billion
+
+Sequence possibilities:
+16! ~20 billion
+10! ~ 3 million
+Similarly not so many used.  
+
+Maybe start with 4-10 and see how we go.  
+
+OK, so lets start here.  
+Do we have any repeats even within the same song?  
+NGram or SeqNGram?  
+
+Lets do multiple lengths.  
+This is kind of random at the moment.  
+There is no meaning behind the lengths.  
+
+Still need to generate the finger data.  
+Lets just include it in the midi, is there any midi message which can take this.  
+First of all can we include data to the note_on file?  
+I guess just copy the midi file with finger numbers in the velocity.  
+We should also take this into consideration the correlation between velocity and finger number.  
+Then we just match time and combin afterward.  
+This should be fine.  
+
+Need param for total movement.  
+ok that works. 
+mymidi.py -> MyMsg -> print
+
+What to analyze first here?  
+Surely there is correlation between totalmovement, abstotalmovement
+and endtime - starttime
+Need to have some sort of determination whether keys were hit at same time or not.  
+For now there is nothing so we dont know the rythmic complexity (or randomness in my case perhaps).  
+
+**analyze.py
+Ugh where do we store this?  
+essentially midi file size * 20?  
+First of all, get rid of most of the midi link.  
+Thats better.  
+So we have approx. 1MB per video.  
+Where do we store this?  
+Create another flat file and upload like record.py does for midi.  
+Upload this on analyze.py
+Then check if the entry exists in description.  
+If it does, then skip this logic.  
+If it doesnt, then produce save and add to description (Really shouldnt be manually edited now I think)
+
+
+Do we need datetime on comments?  
+This can be changed anytime so perhaps not.  
+But this would be what everyone is used to so maybe yes.  
+
+In any case text comments are prior
+Sound is realtime
+Image is after.  
+Is this a good policy?  
+
+**analyze.html 
+can we record sound and save?  
+Then we can work on playback mechanisms and timing.  
+
+
+**record.py or analyze.py
+kick off the finger detection program after this.  
+Then we just keep all there, but dont have to wait so long for this process to finish.  
+Try to keep as close to real-time as possible.  But dont worry about this being real-time for now.  
+It is only significant when we use analyze.py anyway.  
+--OK, launch process ok.  
+not perfect, but good enough for now.  
+still need to do the logic.  
+You must be kidding.  I have to get the video from somewhere else?  <<<<<<
+That is no good.  Need a way to get the frames from a video or another transfer mechanism.  <<<<<<
+--OK, so we need to run analyze.py -> fingertest.py immediately after record.py
+Finish doing the work though first, and then run analyze after record.py as well as before.  
+We want to bring up the URL before we play, and then actually run the finger analysis after.  
+Didnt really want to do this but seems the best solution overall.  
+Just make sure it is asynchronous
+I had contemplated this anyway.  
+More problems.  
+The Frames dont appear to be matching up very well.  
+Not sure why.  
+
+
+
+**timestep.py
+Need to compare DB data with youtube data and flag/update.  
+Do this in timestep.py?  
+We are already getting the full DB here.  
+While doing this store the DB locally.  
+
+
+**analyze.html
+Essentially should have the option to auto-play.  
+This will autosave and autoplay the next in the list.  
+
+Just create the logic to follow the midi image in analyze.html
+This way we can see when we watch analyze.html and should figure out where the fingertest.py is going wrong.  
+
+
+**analyze.html
+make some graphs following the iterations and length.  
+I guess we can do this for just the iterations in each one with analyze.py
+Then we just concatenate the images?  
+That would be better I think.  
+
+Create some graph visuals along with any comments.  
+Allow to start up the video at that particular time.  
+Graph1: Timeline: time taken for each iteration by date/time.  
+Pull all words from transcript, pull all comments from previous iterations for review.  
+analyze.html -> searchPrevious
+Add some 
+Graph2: Comparison: Relative time within iteration, Moving average of Notes per second.  
+Many iterations on same graph.  
+This will be the primary type of graph used I think.  What else can we investigate here across iterations?  
+Later: Calculate similarity across iterations with the ngrams.  
+
+**history.html
+show latest videos, and link to analyze.html
+
+**analyze.html
+remember to do all the workflow here, and in timestep.py.  
+Finish that up so it is working.  
+This is now updating sentiment.  
+
+**timestep.py
+For now if this exists, use this and make public if should.  
+OK, something like this.  

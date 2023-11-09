@@ -1,0 +1,74 @@
+{
+    "youtube":{
+		"APIKEY": APIKEY,
+		"CHANNELID": CHANNELID,
+		"MY_PLAYLIST": MY_PLAYLIST, 
+		"OK_PLAYLIST": OK_PLAYLIST, 
+		"GOOD_PLAYLIST": GOOD_PLAYLIST, 
+		"GREAT_PLAYLIST": GREAT_PLAYLIST, 
+		"WORDS_PLAYLIST": WORDS_PLAYLIST, 
+		"ADMIN_USERID": ADMIN_USERID
+	}
+	"openai":{
+        "APIKEY":OPENAI_KEY
+    },
+    "firebase":{
+	    "fbconfig": {  
+		    "apiKey": FBAPIKEY,
+            "authDomain": FBAUTHDOMAIN,
+            "databaseURL": FBDBURL,
+            "storageBucket": STORAGEURL
+		}
+		"fbsettings": {
+			  "type": "service_account",
+			  "project_id": MYPROJECT,
+			  "private_key_id": MYKEYID,
+			  "private_key": MYKEY,
+			  "client_email": EMAIL,
+			  "client_id": CLIENTID,
+			  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+			  "token_uri": "https://oauth2.googleapis.com/token",
+			  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+			  "client_x509_cert_url": MYCERTURL
+			
+		}
+    },
+	"web": {
+		"client_id": CLIENTID,
+		"client_secret": CLIENTSECRET,
+		"redirect_uris": [],
+		"auth_uri": "https://accounts.google.com/o/oauth2/auth",
+		"token_uri": "https://accounts.google.com/o/oauth2/token"
+	},
+	"dbrules": {
+	  "rules": {
+		"misterrubato": {
+		  ".indexOn": ["snippet/title", "snippet/description", "snippet/publishedAt", "snippet/channelId"]
+		},
+		".read": "auth != null",
+		".write": "'AUTHID' === auth.uid"
+
+	  }
+	
+	},
+	
+	"keymap":{
+	    "global":{
+			"Unpause": 108,
+			"Pause": 107,
+			"Start": 21, 
+			"Stop": 22, 
+			"ShowScreen": 105, 
+			"HideScreen": 106
+		}
+		"screen":{
+			"Click": 60
+			"PageDown": 55
+			"PageUp": 56
+		}
+		"language":{
+			"a": 40, 
+			"b": 41
+		}
+	}
+}
