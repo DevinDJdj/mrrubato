@@ -17,15 +17,19 @@
 
 #!/usr/bin/python
 #getting stuff for image processing.  
-#pip install opencv-python
+#pip install opencv-python #key detection
 
-#pip install mido
-#pip install rtmidi
-#pip install py-midi
+#pip install mido #midi capture
+#pip install rtmidi #midi capture
+#pip install py-midi 
 #pip install python-rtmidi
 #install vc++ redistributable.  
 
 #pip install pydrive
+
+#pip install manim #math visualization
+#moviepy 1.0.3 requires decorator<5.0,>=4.0.2, but you have decorator 5.1.1 which is incompatible.
+
 
 #from midi file get start times and stop times.  
 #for now just use the next note after the start video/stop video (21/22)
@@ -412,6 +416,10 @@ if __name__ == '__main__':
 #    os.system('python ./analyze/analyze.py --title "' + args.description + '"')
 #use title here as description contains all info
     subprocess.call('python ./analyze/analyze.py --title "' + args.title + '"')
+    print("analyze complete");
+    obsp = subprocess.Popen("C:\\Program Files\\obs-studio\\bin\\64bit\\obs64.exe", start_new_session=True, cwd="C:\\Program Files\\obs-studio\\bin\\64bit")
+    
+    time.sleep(3)
 #    mido.set_backend('mido.backends.portmidi')   
     mid = MidiFile()
 #    mid.ticks_per_beat = 1000000
@@ -617,6 +625,9 @@ if __name__ == '__main__':
                 #print(msg) #dont need all this info.  
                 if not ignorelast:
                     track.append(msg)
+                    #here we need to set up a on/off keymap like with analyze image creation.  
+                    #need an include file here.  
+                    #master keycontrol and then one for each function.  
                 else:
                     #control track
                     controltrack.append(msg)
@@ -666,6 +677,8 @@ if __name__ == '__main__':
 #call again to run the any post-analysis like finger locations.  
     subprocess.call('python ./analyze/analyze.py --title "' + args.title + '"')
     
+    time.sleep(20)
+    obsp.terminate()
 
     
     #cant automate this, as it will become public.  

@@ -13,7 +13,8 @@ import datetime
 # adding Folder_2/subfolder to the system path
 #not great mechanism for config.  Maybe just make absolute path?
 sys.path.insert(0, 'c:/devinpiano/')
-sys.path.append('../')
+sys.path.insert(1, 'c:/devinpiano/music')
+#sys.path.append('../')
 import config  
 
 import os
@@ -819,7 +820,8 @@ if __name__ == '__main__':
                     #just update DB for now.  Then timestep.py will update Youtube info
                     if (args.skipfinger !="true"):
                         
-                        cmd = ["python", "./analyze/fingertest.py", "--video", videoid, "--midi", midilink]
+                        #doesnt work for videoid starting with -
+                        cmd = ["python", "./analyze/fingertest.py", "--video", "\"" + videoid + "\"", "--midi", midilink]
                         print(cmd)
 #                        os.spawn("python", cmd, no_wait=True)
                         proc = subprocess.Popen(cmd)
