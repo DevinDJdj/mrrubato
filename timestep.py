@@ -2,7 +2,7 @@
 #link, title, GroupName, Published date, Iteration#, PlayedInSeconds, #notesplayed-calculated
 #for now just generate a csv file.  
 #dont download the videos, just get the written description
-
+#on login failure, change status/privacyStatus -> unlisted, remove playlist data.  
 
 #notesplayed
 
@@ -233,8 +233,24 @@ def getWatched():
 
     return snapshot.items()
 
+
+def addAdmins(uid):
+    auth.set_custom_user_claims(uid, {'admin': True})
+
+def checkAdmins():
+
+    ref = db.reference(f'/misterrubato/users')
+    snapshot = ref.get()  
+    for key, item in snapshot.items():
+    
+        # Lookup the user associated with the specified uid.
+        user = auth.get_user(key)
+        # The claims can be accessed on the user record.
+        print(key + " " + item['name'] + str(user.custom_claims.get('admin')))
+    
         
 if __name__ == '__main__':
+    argparser.add_argument("--admin", help="Add Admin user", default="")
     args = argparser.parse_args()
 
     stats = get_channel_stat()
@@ -250,7 +266,11 @@ if __name__ == '__main__':
     # Init firebase with your credentials
     creda = credentials.Certificate("../misterrubato-test.json")
     initialize_app(creda, {'storageBucket': 'misterrubato-test.appspot.com', 'databaseURL':databaseURL})    
-
+    
+    if args.admin is not None and args.admin !="":
+        addAdmins(args.admin)
+        checkAdmins()
+        
     data = search(dt.strftime('%Y-%m-%dT%H:%M:%SZ'))
     print(data)
 

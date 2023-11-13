@@ -160,3 +160,76 @@ Can define objects drawn from i.e. key of C
 
 
 key of E = feedback
+
+
+**database.rules
+https://firebase.google.com/docs/auth/admin/custom-claims#python
+Lets change this to be just group instead of UID.  
+
+These dont expire.  
+So we just have to set this and they are valid for our app I guess.  
+Python
+**timestep.py or separate?  
+auth.set_custom_user_claims(uid, {'admin': True})
+# Verify the ID token first.
+claims = auth.verify_id_token(id_token)
+if claims['admin'] is True:
+    # Allow access to requested admin resource.
+    pass
+
+JS:
+firebase.auth().currentUser.getIdTokenResult()
+  .then((idTokenResult) => {
+     // Confirm the user is an Admin.
+     if (!!idTokenResult.claims.admin) {
+       // Show admin UI.
+       showAdminUI();
+     } else {
+       // Show regular user UI.
+       showRegularUI();
+     }
+  })
+  .catch((error) => {
+    console.log(error);
+  });
+
+database.rules -> admin
+    "adminContent": {
+      ".read": "auth.token.admin === true",
+      ".write": "auth.token.admin === true",
+    }
+
+--Done
+OK, this is good enough for now.  
+timestep.py --admin MYID to add as admin.  
+
+
+Not really used to github, but try to use this with VSCode so we can use the copilot stuff perhaps.  
+
+
+Midi frequency how to change based on the rules?  
+Perhaps just use output on another channel.  
+Which then should get passed back to the midi and recorded.  
+However, can we adjust to 24-note etc.  or 48 note.  
+
+https://mido.readthedocs.io/en/latest/meta_message_types.html
+New or custom meta messages
+
+Not sure we can do what we want.  
+Right now just thinking to accept the midi value as is on Channel 0, and send the output to another channel.  
+Channel 0,1 input from piano directly would have no volume.  
+This may work, but not sure if I can actually change the scale of the output like I want.  
+Yes this and pitch bend.  
+We can use multiple channels, this becomes more complex though.  
+i.e. https://www.matthiaskronlachner.com/?p=817
+
+This is a general solution, not a pretty one though.  
+So once we adjust to our control plane, we silence 0, 1 and then enable other channels and send messages.  
+Will other channels be vocalized?  
+
+Just test with an octave up on channel 3.  
+Press the [CHANNEL ON/OFF] button several times to call up the Channel On/Off
+(Song) display
+
+Yeah lets try for now to send an octave change to i.e. channel 4, then mute channel 0 and see what happens.  
+
