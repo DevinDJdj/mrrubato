@@ -1,0 +1,84 @@
+
+Lets try to flesh out the language a bit more.  
+
+Switch control: Mouse -> Feedback -> ?
+General control:
+High C -> up octave
+Low C -> Down octave
+Middle C -> Act
+
+Center 23 keys for control.  
+
+
+Mouse control:
+
+Diatonic scale (white) -> scale
+Vector motion
+DEFGABCDEFGAB
+High C *2 or Low C /2
+
+
+B = -(2^1) .. D = -(2^6)
+Pentatonic (black)
+DEGABDEGAB
+
+Rotation
+Middle BD = act
+Right clockwise, left counterclockwise
+A = -PI*2^-4
+E = PI*2^-4
+
+Depending on octave
+
+
+Maybe have the whole frame moving i.e. set the frame in sinusoidal motion and move slowly right (adjustable)
+When the Action key is pressed it acts wherever that sinusoidal reference goes at the origin. 
+So move the frame not the action key.  
+Utilize some keys for this and some keys to act.  
+i.e. 2 keys = act
+3 keys = adjust frame or speed etc.  
+Only use the difference between keys.  
+The "lowest key" will represent the root.  
+
+But either way have multiple ways of adjusting the frames for visual representation.  
+
+
+**analyze.html 
+We should also visualize a spectrum frequency.  
+
+https://www.misterrubato.com/analyze.html?video=aBMIdlJfYRU
+
+Can we use this?  
+
+https://github.com/QUVA-Lab/e2cnn
+
+
+I think I like the separation of White/black keys.  
+We need the ability to shift pitch if we want.  
+Then utilize the same keys for same meaning but have a different feel.  
+How do we shift keys?  
+
+How do we start and end ideas?  
+
+Primary ideas:
+Mouse Movement - Diatonic vector, pentatonic rotation
+Mouse Movement - Alternating field of view
+Vector and rotation same, add sin wave at location
+Set up the sound field where we set the relative volume of each note.  
+Can we adjust this on the fly?  
+
+Mouse hotkey - can we send to every window, we already have some intercepts?  
+
+
+
+**MathVisualization
+
+What libraries do we have.  
+3Blue1Brown
+pip install manim==0.9.0
+
+https://docs.manim.community/en/stable/examples.html
+
+Lets try a quick plotter functionality with this to see what it entails.  
+
+Then maybe we have a better idea of how to proceed.  
