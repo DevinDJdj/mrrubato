@@ -468,6 +468,13 @@ if __name__ == '__main__':
     #need some comment here, what is input[1].  Having hardware issues, lol.  
     #some problems here when we use overlays like "Concert Guitar" or "Strings"
     #sometimes the midi msg of 21 or pause etc occurs twice or inadvertently
+
+    outputs = mido.get_output_names()
+    print(mido.get_output_names())
+
+    #Portable Grand-1 2
+    output = mido.open_output(outputs[2])
+
     keyboard = Controller()    
     with mido.open_input(inputs[1]) as inport:
         print("hello")
@@ -475,7 +482,7 @@ if __name__ == '__main__':
 #            print(msg)
 #            print(msg.time)
             ignorelast = False
-            if msg:
+            if msg and hasattr(msg, 'channel') and msg.channel < 3: #0, 1, 2 for input from user.  #others for feedback.  
                 
                 if hasattr(msg, 'time'):
                     temptime = time.time() #msg.time #time.time() #msg.time
@@ -631,7 +638,11 @@ if __name__ == '__main__':
                 else:
                     #control track
                     controltrack.append(msg)
-    
+                
+                if hasattr(msg, 'channel') and hasattr(msg, 'note'):
+                    msg.channel = 3
+                    msg.note = msg.note + 12
+                    output.send(msg)    
     
     
     creda = credentials.Certificate("../misterrubato-test.json")
