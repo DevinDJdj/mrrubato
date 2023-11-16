@@ -238,5 +238,10 @@ Yeah lets try for now to send an octave change to i.e. channel 4, then mute chan
 changed line 1563.  Not sure if this will mess up other things, but for some reason the JZZ library 
 has issues reading some of the midi messages.  
 The actual notes look there.  I suspect it is just the control messages, but not entirely sure.  
+Anyway, something caused problems with the analyze.py since 11/11, if this gets fixed, perhaps 
 
+
+**analyze/analyze.py
+Top right of video should have QR code identifier.  
+This should encode previous videoid's hash.  
 

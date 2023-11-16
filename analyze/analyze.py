@@ -58,6 +58,8 @@ EMBEDDING_DIM = 10
 
 import mymidi
 
+#pip install qrcode
+import qrcode
 
 mappgram = {} #map [ SIGNGRAM ] [PGRAM]
 mapsgram = {} #map [seqngram][pgram]
@@ -719,6 +721,19 @@ def updatestatsdb(videoid, starttimes, endtimes, midisize, numwords):
     data = {'timeplaying':timeplaying,'timewithoutplaying':timewithoutplaying, 'midisize':midisize, 'wordsrecognized':numwords}
     ref.set(data)
 
+def getqrcode(prev):
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=1,
+        border=1,
+    )
+    qr.add_data(prev)
+    qr.make(fit=True)
+
+    img = qr.make_image(fill_color="black", back_color="white")
+    #save as C:\Temp\prevIterationQR.jpg
+    img.save("C:\\Temp\\prevIterationQR.jpg")
 
 if __name__ == '__main__':
     argparser.add_argument("--title", help="Video title", default="What a Wonderful World")
@@ -847,6 +862,7 @@ if __name__ == '__main__':
     
     #this is same check as latestmidilink
     if (latestvideoitem is not None):
+        getqrcode(latestvideo)
         #open misterrubato.com/analyze.html?video=
         #autoraise=False, sick of waiting for this analyze.py to finish.  
         webbrowser.open('https://www.misterrubato.com/analyze.html?video=' + latestvideo, autoraise=False)
