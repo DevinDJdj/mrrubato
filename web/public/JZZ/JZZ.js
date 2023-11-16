@@ -1559,8 +1559,13 @@
         if (self[0] >= 0x80 && self[0] <= 0xAF) n = MIDI.noteValue(n);
         if (self[0] >= 0xC0 && self[0] <= 0xCF) n = MIDI.programValue(n);
       }
-      if (n != parseInt(n) || n < 0 || n > 255) _throw(arr[i]);
-      self.push(n);
+      if (n != parseInt(n) || n < 0 || n > 255){ 
+	    console.log("midi " + i + " bad " + arr[i]);
+		//_throw(arr[i]);
+	  }
+	  else{
+		self.push(n);
+	  }
     }
     return self;
   }

@@ -162,15 +162,6 @@ Can define objects drawn from i.e. key of C
 key of E = feedback
 
 
-
-
-One of modes should also be channel control.  
-Turn on/off channels.  
-Channels should represent some mathematical feedback correlated to the meaning of the Control channels.  
-i.e. switch octaves and/or bend notes to represent o24 or o48
-
-
-
 **database.rules
 https://firebase.google.com/docs/auth/admin/custom-claims#python
 Lets change this to be just group instead of UID.  
@@ -241,5 +232,11 @@ Press the [CHANNEL ON/OFF] button several times to call up the Channel On/Off
 (Song) display
 
 Yeah lets try for now to send an octave change to i.e. channel 4, then mute channel 0 and see what happens.  
+
+
+**web/public/JZZ/JZZ.js
+changed line 1563.  Not sure if this will mess up other things, but for some reason the JZZ library 
+has issues reading some of the midi messages.  
+The actual notes look there.  I suspect it is just the control messages, but not entirely sure.  
 
 
