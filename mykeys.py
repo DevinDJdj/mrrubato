@@ -16,12 +16,25 @@ import numpy as np
 
 #will not use timing at the moment, this is too hard for users to reproduce.  
 #only sequence is important.  
+class MyKeysConfig:
+  def __init__(self, bottom=21, top=108):
+    self.bottom = bottom
+    self.top = top
+
 
 class MyKeys:
   def __init__(self, config):
     self.config = config
+    self.sequence = []
     self.notes = np.zeros(config.top - config.bottom, dtype=int)
 
   
-  def key(self, msg):
+  def key(self, note):
     #add this key to the notes map
+    self.sequence.append(note)
+  
+  def getSequence(self, length=2):
+    if (len(self.sequence) >= length):
+      return self.sequence[-length:]
+    else:
+      return -1

@@ -99,6 +99,7 @@ from firebase_admin import initialize_app, storage
 import requests
 import json
 
+import mykeys
 
 # Explicitly tell the underlying HTTP transport library not to retry, since
 # we are handling retry logic ourselves.
@@ -444,8 +445,6 @@ if __name__ == '__main__':
     track.append(Message('note_on', note=69, velocity=64, time=32))
     track.append(Message('note_off', note=69, velocity=127, time=32))
 """    
-    inputs = mido.get_input_names()
-    print(mido.get_input_names())
     
     #when we start the recording, lets get data from the previous iterations so that we have some comparison
     #spit out previous statistics on iterations here in this record.py for reference.  
@@ -469,12 +468,15 @@ if __name__ == '__main__':
     #some problems here when we use overlays like "Concert Guitar" or "Strings"
     #sometimes the midi msg of 21 or pause etc occurs twice or inadvertently
 
+    inputs = mido.get_input_names()
+    print(mido.get_input_names())
     outputs = mido.get_output_names()
     print(mido.get_output_names())
 
     #Portable Grand-1 2
     output = mido.open_output(outputs[2])
-
+    mkconfig = mykeys.MyKeysConfig(21, 108)
+    mk = mykeys.MyKeys(mkconfig)
     keyboard = Controller()    
     with mido.open_input(inputs[1]) as inport:
         print("hello")
@@ -486,11 +488,17 @@ if __name__ == '__main__':
                 
                 if hasattr(msg, 'time'):
                     temptime = time.time() #msg.time #time.time() #msg.time
+                if hasattr(msg, 'type') and msg.type=='note_on' and hasattr(msg, 'note') and msg.channel==0:
+                    mk.key(msg.note)
+                
+                #here we need to set up a on/off keymap like with analyze image creation.  
+                #need an include file here.  
+                #master keycontrol and then one for each function.  
                 if hasattr(msg, 'note') and msg.channel == 0: #for now this is a workaround to only use channel 0 as control.  
                     #oh yeah I dont think this has the time.  
                     #tried to adjust midi settings on the device.  See if we can get the time transmitted.  
                     #config.keymap.global.Unpause
-                    if msg.note ==config.cfg['keymap']['global']['ShowScreen']:
+                    if msg.note ==config.cfg['keymap']['global']['ShowScreen'] and mk.getSequence(1) == [ config.cfg['keymap']['global']['ShowScreen'] ]:
                     #if msg.note==105:
                         #adding two more controllers on piano.  
                         keyboard.press(Key.ctrl)
@@ -632,15 +640,16 @@ if __name__ == '__main__':
                 #print(msg) #dont need all this info.  
                 if not ignorelast:
                     track.append(msg)
-                    #here we need to set up a on/off keymap like with analyze image creation.  
-                    #need an include file here.  
-                    #master keycontrol and then one for each function.  
                 else:
                     #control track
                     controltrack.append(msg)
                 
                 if hasattr(msg, 'channel') and hasattr(msg, 'note'):
                     msg.channel = 3
+                    if hasattr(msg, 'velocity') and msg.velocity > 0:
+                        vel = int(msg.velocity)
+                        vel = round(vel*0.5)
+                        msg.velocity = vel
                     msg.note = msg.note + 12
                     output.send(msg)    
     

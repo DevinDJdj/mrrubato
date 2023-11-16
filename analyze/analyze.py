@@ -284,6 +284,15 @@ def midiToImage(t, midilink):
     
     return midi_image
 
+
+
+
+def isInputMessage(msg):
+  if (hasattr(msg, 'channel') and msg.channel < 3):
+    return True;
+  else:
+    return False;
+
 #continue here.  Need to further this.      
 #from this I think we can generate N-grams of notes.  
 #for now not focused on rhythm.  #lets just give the notes weights based on their msg.velocity
@@ -307,30 +316,33 @@ def enhanceMidi(mid):
     pedal = 0
     maxtime = 0
     for i, track in enumerate(mid.tracks):
-        totalTime = getTrackTime(track)
-        t = mymidi.MyTrack(track, totalTime, maxtime)
-        on = 0
-        othertime = 0
-        for msg in track:
-            if (msg.type=='note_on'):
-                if (on > 0):  
-                    m = mymidi.MyMsg(msg, prevMsg, pedal)
-                    m.msg.time += othertime
-                    othertime = 0
-                    t.notes.append(m)
-                    if (m.prevmsg is not None):
-                        m.prevmsg.nextmsg = m
-                        if (maxtime < msg.time):
-                            maxtime = msg.time
-                    prevMsg = m
-                on = isOn(msg.note, on)
-            elif on > 0 and hasattr(msg, 'time'):
-                othertime += msg.time
-            if (msg.type=='control_change'):
-                #https://www.midi.org/specifications-old/item/table-3-control-change-messages-data-bytes-2
-                if (msg.control == 64):  #assuming this is pedal, yep 
-                    pedal = msg.value
-           # print(msg)
+        if i==0: #for now just using 1 track.  
+            totalTime = getTrackTime(track)
+            t = mymidi.MyTrack(track, totalTime, maxtime)
+            on = 0
+            othertime = 0
+            for msg in track:
+              #ignore feedback channels.  
+              if isInputMessage(msg):
+                if (msg.type=='note_on'):
+                    if (on > 0):  
+                        m = mymidi.MyMsg(msg, prevMsg, pedal)
+                        m.msg.time += othertime
+                        othertime = 0
+                        t.notes.append(m)
+                        if (m.prevmsg is not None):
+                            m.prevmsg.nextmsg = m
+                            if (maxtime < msg.time):
+                                maxtime = msg.time
+                        prevMsg = m
+                    on = isOn(msg.note, on)
+                elif on > 0 and hasattr(msg, 'time'):
+                    othertime += msg.time
+                if (msg.type=='control_change'):
+                    #https://www.midi.org/specifications-old/item/table-3-control-change-messages-data-bytes-2
+                    if (msg.control == 64):  #assuming this is pedal, yep 
+                        pedal = msg.value
+               # print(msg)
     t.maxtime = maxtime                    
     return t
 
