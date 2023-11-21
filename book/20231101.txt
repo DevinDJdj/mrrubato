@@ -244,4 +244,88 @@ Anyway, something caused problems with the analyze.py since 11/11, if this gets 
 **analyze/analyze.py
 Top right of video should have QR code identifier.  
 This should encode previous videoid's hash.  
+This should also include some metadata info about this video chain.  
+Not sure exactly what.  
+
+
+
+https://github.com/tryptech/obs-zoom-and-follow
+pip install pynput
+pip install screeninfo
+
+That was crappy.  
+Just use ZoomIt standard.  
+https://learn.microsoft.com/en-us/sysinternals/downloads/zoomit
+
+
+create an eye tracker.  
+This is the mouse and then the piano is the clicks for things like highlighting etc.  
+So if eye tracker is on keys or on input or output.  
+Output is the screen.  
+I think eye tracking wont work, so just use touching the screen to initiate or as an input parameter.  
+
+Add this to recording 
+https://pynput.readthedocs.io/en/latest/mouse.html
+
+
+
+Mouse Control function and highlight.  
+
+from pynput.mouse import Listener
+def click(x,y,button,pressed):
+    print("Mouse is Clicked at (",x,",",y,")","with",button)
+with Listener(on_click=click) as listener:
+    listener.join()
+
+from pynput.mouse import Button, Controller
+
+mouse = Controller()
+# Set pointer position
+mouse.position = (10, 20)
+print('Now we have moved it to {0}'.format(
+    mouse.position))
+
+# Move pointer relative to current position
+mouse.move(5, -5)
+# Press and release
+mouse.press(Button.left)
+mouse.release(Button.left)
+
+# Double click; this is different from pressing and releasing
+# twice on macOS
+mouse.click(Button.left, 2)
+
+# Scroll two steps down
+mouse.scroll(0, 2)
+
+
+
+
+https://github.com/reasoning-machines/CoCoGen
+
+
+**analyze/analyze.py
+Lets try to make this work.  
+https://github.com/CompVis/stable-diffusion
+Create an image from any comments.  
+Where do we display this?  
+Something like a banner, which is same as previousIteration height.  
+Display while previousIteration is on same with 60% alpha perhaps.  
+
+
+
+**todo
+finish so that we have two clicks for start/stop/pause etc.  
+And then add some sort of visualization screen, just use the manim stuff for now.  
+Biomorphs can we use this library?  
+Kind of what we want, some set of shapes in some location with some rotational properties.  
+Not sure we need a library like this.  
+
+https://cs.lmu.edu/~ray/notes/biomorphs/
+
+
+How do we utilize the reinforcement learning tools which are already done?  
+
+https://neptune.ai/blog/the-best-tools-for-reinforcement-learning-in-python
+
 
