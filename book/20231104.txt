@@ -63,12 +63,20 @@ How do we start and end ideas?
 Primary ideas:
 Mouse Movement - Diatonic vector, pentatonic rotation
 Mouse Movement - Alternating field of view
+Screen drawing --
 Vector and rotation same, add sin wave at location
 Set up the sound field where we set the relative volume of each note.  
 Can we adjust this on the fly?  
 
 Mouse hotkey - can we send to every window, we already have some intercepts?  
 
+Feedback language selection --
+Scale selection -- this goes to record.py output on channel 3-15
+Manual input comes on 0-2
+
+Everything will go by MINNOTE and MAXNOTE and relative distance from there.  
+Leave the existing functionality we have.  
+How do we detect multiple keys.  
 
 
 **MathVisualization
@@ -82,3 +90,10 @@ https://docs.manim.community/en/stable/examples.html
 Lets try a quick plotter functionality with this to see what it entails.  
 
 Then maybe we have a better idea of how to proceed.  
+
+**mykeys.py
+OK we have an initial iteration.  
+We should really use the same structure as the mymidi though.  
+One is enough I would think.  
+Or mykeys can be for control and mymidi for analysis.  
+
