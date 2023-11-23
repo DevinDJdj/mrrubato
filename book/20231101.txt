@@ -345,3 +345,11 @@ How do we utilize the reinforcement learning tools which are already done?
 https://neptune.ai/blog/the-best-tools-for-reinforcement-learning-in-python
 
 
+Auth mechanism for remote API calls?  
+I hate this kind of tedium.  
+
+
+**generate/testmanim.py
+WHY DO I NEED TO LAUNCH A COMMAND LINE?
+This is a great tool with a stupid design decision.  
+
