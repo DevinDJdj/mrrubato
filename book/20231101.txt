@@ -314,9 +314,25 @@ Display while previousIteration is on same with 60% alpha perhaps.
 
 
 
-**todo
+**todo**
 finish so that we have two clicks for start/stop/pause etc.  
 And then add some sort of visualization screen, just use the manim stuff for now.  
+Create a DB query UI.  
+Should be able to search for previous videos on perhaps a new page.  
+Allow for searching other DBs as well.  
+Create essentially a Favorites, and then randomly select a few to search whenever we do a search.  
+Like the Netx stuff in the past.  
+For now of course just do local.  
+Should search all content and all transcripts and comments.  
+Lets move the transcript to the DB for this.  
+Do we just want to move the midi to the RTDB as well?  
+This is minimal I think.  100kb per iteration.  *1000 = 100MB should be fine I think.  
+Looks like the RTDB limit is 100GB.  
+I suspect this will increase eventually.  
+
+
+
+
 Biomorphs can we use this library?  
 Kind of what we want, some set of shapes in some location with some rotational properties.  
 Not sure we need a library like this.  
