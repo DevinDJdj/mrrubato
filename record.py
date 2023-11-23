@@ -484,7 +484,7 @@ if __name__ == '__main__':
 #            print(msg)
 #            print(msg.time)
             ignorelast = False
-            if msg and hasattr(msg, 'channel') and msg.channel < 3: #0, 1, 2 for input from user.  #others for feedback.  
+            if msg and hasattr(msg, 'channel') and msg.channel < 8: #0, 1, 2 for input from user.  #others for feedback.  
                 
                 if hasattr(msg, 'time'):
                     temptime = time.time() #msg.time #time.time() #msg.time
@@ -498,7 +498,10 @@ if __name__ == '__main__':
                     #oh yeah I dont think this has the time.  
                     #tried to adjust midi settings on the device.  See if we can get the time transmitted.  
                     #config.keymap.global.Unpause
-                    if msg.note ==config.cfg['keymap']['global']['ShowScreen'] and mk.getSequence(1) == [ config.cfg['keymap']['global']['ShowScreen'] ]:
+                    #we can use set(mk.getSequence(2) if order is not significant.  
+                    twonotes = mk.getSequence(2)
+                    print(twonotes)
+                    if twonotes == config.cfg['keymap']['global']['ShowScreen']:
                     #if msg.note==105:
                         #adding two more controllers on piano.  
                         keyboard.press(Key.ctrl)
@@ -645,13 +648,14 @@ if __name__ == '__main__':
                     controltrack.append(msg)
                 
                 if hasattr(msg, 'channel') and hasattr(msg, 'note'):
-                    msg.channel = 3
-                    if hasattr(msg, 'velocity') and msg.velocity > 0:
-                        vel = int(msg.velocity)
-                        vel = round(vel*0.5)
-                        msg.velocity = vel
-                    msg.note = msg.note + 12
-                    output.send(msg)    
+                    omsg = Message('note_on', note=msg.note, velocity=msg.velocity, time=msg.time)
+                    omsg.channel = 8
+                    vel = int(omsg.velocity)
+                    vel = round(vel*0.25)
+                    omsg.velocity = vel
+                    omsg.note = omsg.note + 12
+                    print(omsg)
+                    #output.send(omsg)    
     
     
     creda = credentials.Certificate("../misterrubato-test.json")

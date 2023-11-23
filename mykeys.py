@@ -16,6 +16,7 @@ import numpy as np
 
 #will not use timing at the moment, this is too hard for users to reproduce.  
 #only sequence is important.  
+#Lets 
 class MyKeysConfig:
   def __init__(self, bottom=21, top=108):
     self.bottom = bottom

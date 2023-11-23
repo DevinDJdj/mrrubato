@@ -97,3 +97,31 @@ We should really use the same structure as the mymidi though.
 One is enough I would think.  
 Or mykeys can be for control and mymidi for analysis.  
 
+
+OK, have twonotes working now limited.  
+However, why are we getting the notes we are sending back to the piano?  
+Perhaps there is a setting needed on the piano to send to a specific channel the stuff which is received no the USB port.  
+
+**todo
+Change to identifier to start the song instead of using the lastnote etc.  
+Create an identifier.  
+After we have the multi-note hotkeys working we can do this.  
+
+Need option to turn on/off each track from browser during playback.  
+Default Channel 0-7 off and 8-15 on.  
+And creation the opposite.  
+Use 0-7 for generation channels and 8-15 for feedback channels.  
+
+How can we group things.  
+What is important?  Do we use primes to solidify connection with numbers in a fundamental way?  
+But then what represents what prime?  Does each fundamental note represent a prime?  
+2 is special
+12TET -> 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41
+From there we just use the multiples if we divide this structure into more fundamental components?  
+Not sure I like this mapping.  But I think there should be a mapping in some way like this.  
+**How do we create multiple fundamental mappings which can intertwine?  
+
+
+Why do I have so much noise at the moment.  
+Anyway, lets just change mics and install pedals then figure it out.  
+

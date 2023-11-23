@@ -58,10 +58,10 @@
 			"Pause": 107,
 			"Start": 21, 
 			"Stop": 22, 
-			"ShowScreen": 105, 
+			"ShowScreen": [105, 105], 
 			"HideScreen": 106, 
 			"ModeSelect": [21, 23],
-			"
+
 		}
 		"languages":{
 			"mousemovement1": {
