@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Biomorph</title>
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        height: 100%;
+      }
+      canvas {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="js/three.min.js"></script>
+    <div id="controlPanel" style="position: fixed; top: 10px; left: 10px; z-index: 1;">
+      <button id="startOver">Start Over</button>
+      <button id="replay">Replay</button>
+    </div>    
+    <script>
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+camera.position.z = 20;
+const light = new THREE.AmbientLight( 0xff0000 );
+const light2 = new THREE.PointLight(0xffffff, 1, 100);
+
+light2.position.set(10, 10, 10);
+
+scene.add(light);
+scene.add(light2);
+
+const shapes = ['sphere', 'box', 'torus', 'pyramid'];
+
+function createBiomorph(genes) {
+  const biomorph = new THREE.Object3D();
+
+  // Change the color as it recurses
+  const color = new THREE.Color().setHSL(genes.hue, 0.7, 0.5);
+  const material = new THREE.MeshPhongMaterial({ color, flatShading: false }); // Use MeshPhongMaterial for lighting effect
+
+  // Create geometry based on shapeType
+  let geometry;
+  switch (shapes[genes.shapeType]) {
+    case 'sphere':
+      geometry = new THREE.SphereGeometry(genes.size1, genes.radialSegments, genes.tubularSegments);
+      break;
+    case 'box':
+      geometry = new THREE.BoxGeometry(genes.size1, genes.size2, genes.size3);
+      break;
+    case 'torus':
+      geometry = new THREE.TorusGeometry(genes.size1, genes.size2, genes.radialSegments, genes.tubularSegments);
+      break;
+    case 'pyramid':
+      geometry = new THREE.ConeGeometry(genes.topRadius, genes.height, genes.radialSegments);
+      break;
+  }
+
+  const baseShape = new THREE.Mesh(geometry, material);
+  biomorph.add(baseShape);
+
+  // Create recursive sub-shapes
+  if (genes.recursionDepth > 0) {
+    const childGenes = { ...genes };
+    childGenes.hue = (genes.hue + genes.colorChange) % 1; // Slightly change the hue for each recursion
+    childGenes.recursionDepth -= 1;
+    childGenes.shapeType = (genes.shapeType + genes.recursiveShapeOffset) % 4; // Change the shape type for each recursion
+    console.log('next recursion')
+    for (let i = 0; i < genes.numBranches; i++) {
+      const subBiomorph = createBiomorph(childGenes);
+      subBiomorph.position.set(
+        genes.offsetX * (i+1),
+        genes.offsetY * (i+1),
+        genes.offsetZ * (i+1)
+      );
+      console.log(subBiomorph.position)
+      const rotationAxisX = new THREE.Vector3(1, 0, 0);
+      const rotationAxisY = new THREE.Vector3(0, 1, 0);
+      const rotationAxisZ = new THREE.Vector3(0, 0, 1);
+
+      subBiomorph.rotateOnAxis(rotationAxisX, genes.angleX * i);
+      subBiomorph.rotateOnAxis(rotationAxisY, genes.angleY * i);
+      subBiomorph.rotateOnAxis(rotationAxisZ, genes.angleZ * i);
+      subBiomorph.rotation.set(genes.angleX*i + biomorph.rotation.x, genes.angleY*i + biomorph.rotation.y, genes.angleZ*i + biomorph.rotation.z);
+      subBiomorph.scale.multiplyScalar(genes.scaleFactor);
+      biomorph.add(subBiomorph);
+    }
+  }
+  biomorph.genes = genes
+
+  return biomorph;
+}
+
+function randomInRange(min, max) {
+  return min + Math.random() * (max - min);
+}
+
+function randomGene() {
+  return {
+    hue: Math.random(),
+    shapeType: Math.floor(Math.random() * 4),
+    size1: randomInRange(0.5, 3),
+    size2: randomInRange(0.5, 3),
+    size3: randomInRange(0.5, 3),
+    radialSegments: Math.floor(randomInRange(6, 16)),
+    tubularSegments: Math.floor(randomInRange(6, 16)),
+    angleX: randomInRange(-2*Math.PI, 2*Math.PI),
+    angleY: randomInRange(-2*Math.PI, 2*Math.PI),
+    angleZ: randomInRange(-2*Math.PI, 2*Math.PI),
+    scaleFactor: randomInRange(0.4, 0.8),
+    colorChange: randomInRange(0, 0.2),
+    recursionDepth: Math.floor(randomInRange(1, 4)),
+    numBranches: Math.floor(randomInRange(1, 4)),
+    height: randomInRange(0.1, 10),
+    topRadius: randomInRange(0.2, 5),
+    bottomRadius: randomInRange(0.1, 2),
+    offsetX: randomInRange(-1, 1),
+    offsetY: randomInRange(-1, 1),
+    offsetZ: randomInRange(-1, 1),
+    rotationSpeedX: randomInRange(-0.01, 0.01),
+    rotationSpeedY: randomInRange(-0.01, 0.01),
+    rotationSpeedZ: randomInRange(-0.01, 0.01),
+    recursiveShapeOffset: Math.floor(randomInRange(0, 2)),
+  };
+}
+
+function mutateGene(gene) {
+  const mutationChance = 0.2;
+  const mutationFactor = 0.5;
+
+  function mutateValue(value, range) {
+    if (Math.random() < mutationChance) {
+      const delta = (Math.random() * 2 - 1) * range;
+      return value + delta;
+    }
+    return value;
+  }
+
+  function mutateInt(value, range) {
+    if (Math.random() < mutationChance) {
+      const delta = Math.round((Math.random() * 2 - 1) * range);
+      return value + delta;
+    }
+    return value;
+  }
+
+  function mutateShapeType(value) {
+    if (Math.random() < mutationChance) {
+      return Math.floor(Math.random() * shapes.length);
+    }
+    return value;
+  }
+
+  const mutatedGene = {
+    ...gene,
+    hue: Math.min(Math.max(mutateValue(gene.hue, mutationFactor), 0), 1),
+    shapeType: mutateShapeType(gene.shapeType),
+    size1: Math.min(Math.max(mutateValue(gene.size1, mutationFactor), 0.1), 10),
+    size2: Math.min(Math.max(mutateValue(gene.size2, mutationFactor), 0.1), 10),
+    size3: Math.min(Math.max(mutateValue(gene.size3, mutationFactor), 0.1), 10),
+    radialSegments: Math.max(mutateInt(gene.radialSegments, 2), 3),
+    tubularSegments: Math.max(mutateInt(gene.tubularSegments, 2), 3),
+    angleX: mutateValue(gene.angleX, Math.PI / 4 * mutationFactor),
+    angleY: mutateValue(gene.angleY, Math.PI / 4 * mutationFactor),
+    angleZ: mutateValue(gene.angleZ, Math.PI / 4 * mutationFactor),
+    scaleFactor: Math.min(Math.max(mutateValue(gene.scaleFactor, mutationFactor), 0.1), 1.2),
+    colorChange: Math.min(Math.max(mutateValue(gene.colorChange, mutationFactor*0.1), 0), 1),
+    recursionDepth: Math.min(Math.max(mutateInt(gene.recursionDepth, 1), 1), 8),
+    numBranches: Math.min(Math.max(mutateInt(gene.numBranches, 1), 2), 8),
+    height: Math.max(Math.min(mutateValue(gene.height, mutationFactor), 10), -10),
+    topRadius: Math.max(mutateValue(gene.topRadius, mutationFactor), 0.1),
+    bottomRadius: Math.max(mutateValue(gene.bottomRadius, mutationFactor * 2), 0.1),
+    offsetX: mutateValue(gene.offsetX, mutationFactor),
+    offsetY: mutateValue(gene.offsetY, mutationFactor),
+    offsetZ: mutateValue(gene.offsetZ, mutationFactor),
+    rotationSpeedX: mutateValue(gene.rotationSpeedX, mutationFactor * 0.02),
+    rotationSpeedY: mutateValue(gene.rotationSpeedY, mutationFactor * 0.02),
+    rotationSpeedZ: mutateValue(gene.rotationSpeedZ, mutationFactor * 0.02),
+    recursiveShapeOffset: Math.max(mutateInt(gene.recursiveShapeOffset, 1),0),
+  };
+
+  return mutatedGene;
+}
+
+
+const biomorphs = [];
+for (let i = 0; i < 4; i++) {
+  const genes = randomGene();
+  const biomorph = createBiomorph(genes);
+  biomorphs.push(biomorph);
+  scene.add(biomorph);
+}
+biomorphs[0].position.set(-10, 10, 0); // Top-left
+biomorphs[1].position.set(10, 10, 0); // Top-right
+biomorphs[2].position.set(-10, -10, 0); // Bottom-left
+biomorphs[3].position.set(10, -10, 0); // Bottom-right
+camera.position.z = 30;
+
+const raycaster = new THREE.Raycaster();
+raycaster.params.Line.threshold = 1; // Increase the threshold value
+
+const mouse = new THREE.Vector2();
+
+document.addEventListener('click', onMouseClick);
+
+function updateBiomorphs(clickedBiomorphIndex) {
+  const clickedBiomorph = biomorphs[clickedBiomorphIndex];
+
+ if (clickedBiomorph) {
+    const selectedGenes = clickedBiomorph.genes;
+
+    for (let i = 0; i < biomorphs.length; i++) {
+      let newGenes;
+      if (biomorphs[i] === clickedBiomorph) {
+        newGenes = selectedGenes;
+      } else {
+        newGenes = mutateGene(selectedGenes);
+      }
+
+      const newBiomorph = createBiomorph(newGenes);
+      newBiomorph.position.copy(biomorphs[i].position);
+      scene.add(newBiomorph);
+
+      // Remove the old biomorph and replace it with the new one
+      disposeBiomorph(biomorphs[i]);
+      scene.remove(biomorphs[i]);
+      biomorphs[i] = newBiomorph;
+    }
+  }
+}
+
+
+function onMouseClick(event) {
+  event.preventDefault();
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+  raycaster.setFromCamera(mouse, camera);
+  const intersects = raycaster.intersectObjects(scene.children, true);
+
+  if (intersects.length > 0) {
+    let clickedObject = intersects[0].object;
+    
+    // Traverse up the object tree to find the root biomorph object
+    while (clickedObject.parent !== scene) {
+      clickedObject = clickedObject.parent;
+    }
+
+    const biomorphIndex = biomorphs.indexOf(clickedObject);
+    if (biomorphIndex !== -1) {
+      updateBiomorphs(biomorphIndex);
+    }
+  }
+}
+
+function disposeBiomorph(biomorph) {
+  biomorph.traverse((child) => {
+    if (child instanceof THREE.Mesh) {
+      child.geometry.dispose();
+      child.material.dispose();
+    }
+  });
+}
+
+let zoomSpeed = 1.05;
+
+// Store the initial biomorph positions in an array
+let initialBiomorphPositions = biomorphs.map(biomorph => new THREE.Vector3().copy(biomorph.position));
+
+// Set min and max values for FOV
+let minFOV = 10;
+let maxFOV = 170;
+
+function onMouseWheel(event) {
+  // Determine the zoom direction
+  let zoomDirection = (event.deltaY > 0) ? zoomSpeed : 1 / zoomSpeed;
+
+  // Calculate new FOV 
+  console.log(camera.fov)
+
+  let newFOV = camera.fov * zoomDirection;
+
+  // Check if the new FOV are within the min/max ranges
+  if (newFOV >= minFOV && newFOV <= maxFOV) {
+    // Update the camera's field of view and position
+    camera.fov = newFOV;
+    camera.updateProjectionMatrix();
+
+    // Update the biomorphs' positions
+    biomorphs.forEach((biomorph, index) => {
+      const initialPosition = initialBiomorphPositions[index];
+      const scaleFactor = camera.fov/75;
+      biomorph.position.x = initialPosition.x * scaleFactor;
+      biomorph.position.y = initialPosition.y * scaleFactor;
+    });
+  }
+}
+
+// Attach the event listener
+window.addEventListener('wheel', onMouseWheel);
+
+const startOverButton = document.getElementById('startOver');
+const replayButton = document.getElementById('replay');
+
+startOverButton.addEventListener('click', () => {
+  for (let i = 0; i < 4; i++) {
+    scene.remove(biomorphs[i]);
+    const newGenes = randomGene();
+    biomorphs[i] = createBiomorph(newGenes);
+    biomorphs[i].position.copy(initialBiomorphPositions[i]);
+    scene.add(biomorphs[i]);
+  }
+});
+
+replayButton.addEventListener('click', () => {
+  for (const biomorph of biomorphs) {
+    biomorph.rotation.set(0, 0, 0);
+  }
+});
+
+
+
+function animate() {
+    requestAnimationFrame(animate);
+    for (let biomorph of biomorphs) {
+      biomorph.rotation.x += biomorph.genes.rotationSpeedX;
+      biomorph.rotation.y += biomorph.genes.rotationSpeedY;
+      biomorph.rotation.z += biomorph.genes.rotationSpeedZ;
+    }
+    renderer.render(scene, camera);
+}
+
+animate();
+</script>
