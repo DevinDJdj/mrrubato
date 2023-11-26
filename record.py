@@ -489,7 +489,7 @@ if __name__ == '__main__':
                 
                 if hasattr(msg, 'time'):
                     temptime = time.time() #msg.time #time.time() #msg.time
-                if hasattr(msg, 'type') and msg.type=='note_on' and hasattr(msg, 'note') and msg.channel==0:
+                if hasattr(msg, 'note') and msg.channel==0:
                     #is just the note enough.  Extra complexity by passing other variables.  
                     #lets just pass them and then figure out later if we want to use.  
                     #how to get the note length?  This is what we may want.  
@@ -517,7 +517,7 @@ if __name__ == '__main__':
                         keyboard.release(Key.shift)
                         print("Showing Screen" + str(time.time()))
                         ignorelast = True
-                    if msg.note ==config.cfg['keymap']['global']['HideScreen']:
+                    if twonotes ==config.cfg['keymap']['global']['HideScreen']:
                     #if msg.note==106:
                         #adding two more controllers on piano to show screen and hide screen.   
                         keyboard.press(Key.ctrl)
@@ -651,7 +651,7 @@ if __name__ == '__main__':
                     #control track
                     controltrack.append(msg)
                 
-                if hasattr(msg, 'channel') and hasattr(msg, 'note'):
+                if hasattr(msg, 'channel') and hasattr(msg, 'note') and msg.channel == 0:
                     omsg = Message('note_on', note=msg.note, velocity=msg.velocity, time=msg.time)
                     omsg.channel = 8
                     vel = int(omsg.velocity)
@@ -680,7 +680,7 @@ if __name__ == '__main__':
     midifile = uploadmidi(fn[0], pathnames[len(pathnames)-1])
     
     
-    
+    args.description += '\r\n\r\nLANG:' + mk.getLangs()
     args.description += '\r\n\r\nMIDI:' + midifile
     args.description += '\r\n\r\nKEYWORDS:' + args.keywords #add here like sightread or book, etc.  
 
