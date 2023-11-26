@@ -54,30 +54,22 @@
 	
 	"keymap":{
 	    "global":{
+			"top": 108,
+			"bottom": 21,
 			"Unpause": 108,
 			"Pause": 107,
 			"Start": 21, 
 			"Stop": 22, 
 			"ShowScreen": [105, 105], 
 			"HideScreen": 106, 
-			"ModeSelect": [21, 23],
+			"LangSelect": [21, 23], #for now just use this and cycle through.  
 
-		}
+
+		},
 		"languages":{
-			"mousemovement1": {
-				"Base": 
-				"a": 40, 
-				"b": 41
-			},
-			
-			"mousemovement2": {
-			
-			},
-			"Hotkeys":{
-				"Click": 60
-				"PageDown": 55
-				"PageUp": 56
-			},			
+			"mousemovement1": [60, 61],			
+			"mousemovement2": [62, 63],
+			"Hotkeys": [64, 65]			
 			
 		}
 	}

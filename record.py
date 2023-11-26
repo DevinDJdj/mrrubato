@@ -477,8 +477,7 @@ if __name__ == '__main__':
 
     #Portable Grand-1 2
     output = mido.open_output(outputs[2])
-    mkconfig = mykeys.MyKeysConfig(21, 108)
-    mk = mykeys.MyKeys(mkconfig)
+    mk = mykeys.MyKeys(config.cfg)
     keyboard = Controller()    
     with mido.open_input(inputs[1]) as inport:
         print("hello")
@@ -491,7 +490,10 @@ if __name__ == '__main__':
                 if hasattr(msg, 'time'):
                     temptime = time.time() #msg.time #time.time() #msg.time
                 if hasattr(msg, 'type') and msg.type=='note_on' and hasattr(msg, 'note') and msg.channel==0:
-                    mk.key(msg.note)
+                    #is just the note enough.  Extra complexity by passing other variables.  
+                    #lets just pass them and then figure out later if we want to use.  
+                    #how to get the note length?  This is what we may want.  
+                    mk.key(msg.note, msg)
                 
                 #here we need to set up a on/off keymap like with analyze image creation.  
                 #need an include file here.  
