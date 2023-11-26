@@ -69,7 +69,7 @@
 		"languages":{
 			"mousemovement1": [60, 61],			
 			"mousemovement2": [62, 63],
-			"Hotkeys": [64, 65]			
+			"hotkeys": [64, 65]			
 			
 		}
 	}
