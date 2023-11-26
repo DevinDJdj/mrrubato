@@ -353,3 +353,24 @@ I hate this kind of tedium.
 WHY DO I NEED TO LAUNCH A COMMAND LINE?
 This is a great tool with a stupid design decision.  
 
+
+**web/public/analyze.py
+We need a overall image which shows where comments are and where the current PianoRoll Canvas shows.  
+
+Also need to display youtube description info somewhere if it is not our video.  
+  
+
+**mykeys.py
+Need to check integrity of 
+KEYS->Function mapping.  
+Do we allow multiple calls.  
+i.e. if [100, 101] -> F and [99, 100, 101] -> G, how do we handle this.  
+Either have integrity check, or just allow multiple functions to be called.  
+Separate file for each dict, but how do we control the functions?  
+
+**languages/hotkeys.py
+Lets use this first and see if we can replace the record.py functionality.  
+If the mechanism works, I think this will be ok to start.  
+dynamically loading libraries in /languages directory and then we have to select the languages.  
+So gradually use this functionality then remove the hotkey functionality from record.py
+

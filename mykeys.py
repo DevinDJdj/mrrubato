@@ -107,7 +107,7 @@ class MyKeys:
     self.currentlangna = self.langna[lkey]
     if self.currentlangna in self.langused:
       self.currentchannel = self.langused.index(self.currentlangna)
-      print("channel " + self.currentchannel)
+      print("channel " + str(self.currentchannel))
 
     print("switchLang " + self.currentlangna)
   
