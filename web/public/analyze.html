@@ -244,7 +244,7 @@ var uid = null;
 							loadPreviousComments(snapshot);
 
 						} else {
-							firebase.database().ref('/misterrubato/watch/' + video + '/comments/' + uid).once('value')
+							firebase.database().ref('/watch/' + video + '/comments/' + uid).once('value')
 							    .then((snapshot) => {
 									if (snapshot.exists()){
 										loadPreviousComments(snapshot);
@@ -318,7 +318,7 @@ function addUser(user){
 	pic = user.photoURL;
 	console.log(displayname + " " + email + " " + phone + " " + pic);
     //add to DB.  
-	var uRef = firebase.database().ref('/misterrubato/users/' + uid);
+	var uRef = firebase.database().ref('/users/' + uid);
 
 	obj = {"name": displayname, "pic": pic};
 	uRef.set(obj);
@@ -361,7 +361,7 @@ function updateVideo(){
 		}
 		else{
 			console.log(video + " Not in DB.  Adding watch comments");
-			var uRef = firebase.database().ref('/misterrubato/watch/' + video + '/comments/' + uid);
+			var uRef = firebase.database().ref('/watch/' + video + '/comments/' + uid);
 			mycomments = $('#mycomments').val();
 
 	//		sentiment = "test"; //for now
@@ -871,7 +871,7 @@ function getVideoJson(videoid){
 			//add this description to our DB using timestep.  
 			//item.snippet.description
 			console.log(videoid + " Not in DB.  Retrieving from Youtube API");
-			ref = firebase.database().ref('/misterrubato/watch/' + videoid);
+			ref = firebase.database().ref('/watch/' + videoid);
 			watch = true;
 			ref.on('value',(snap)=>{
 				if (snap.exists()){

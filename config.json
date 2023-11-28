@@ -41,14 +41,21 @@
 		"token_uri": "https://accounts.google.com/o/oauth2/token"
 	},
 	"dbrules": {
-	  "rules": {
-		"misterrubato": {
-		  ".indexOn": ["snippet/title", "snippet/description", "snippet/publishedAt", "snippet/channelId"]
-		},
-		".read": "auth != null",
-		".write": "'AUTHID' === auth.uid"
-
-	  }
+		
+		"rules": {
+			"misterrubato": {
+			".indexOn": ["snippet/title", "snippet/description", "snippet/publishedAt", "snippet/channelId"]
+			},
+			"watch": {
+				".indexOn": ["snippet/title", "snippet/description", "snippet/addedAt", "snippet/publishedAt"]
+			},	  
+			"users": {
+				".indexOn": ["name"]
+			},
+			".read": "auth != null",
+				".write": "'ZW130KE3xXMvdDoIXTe9kbOkp003' === auth.uid || auth.token.admin === true"
+			}
+		
 	
 	},
 	

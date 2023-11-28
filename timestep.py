@@ -143,7 +143,7 @@ def search(mydate, limit: int=50) -> dict:
     
 def localBackup():
     # Get the Firebase reference
-    ref = db.reference(f'/misterrubato/')
+    ref = db.reference(f'/')
 
     # Get the backup path
     backup_path = "c:/devinpiano/backup/"
@@ -156,6 +156,7 @@ def localBackup():
         json.dump(ref.get(), f)
         
 
+    ref = db.reference(f'/misterrubato/')
     snapshot = ref.order_by_child('snippet/publishedAt').get()
     return snapshot.items()
 #    return ref.items()
@@ -201,7 +202,7 @@ def getCodeHistory():
 
 def getWatched():
     #add the description from youtube so that we have this info for UI.  
-    ref = db.reference(f'/misterrubato/watch')
+    ref = db.reference(f'/watch')
     #snapshot = ref.get()
     snapshot = ref.order_by_child('snippet/addedAt').get()  #this doesnt accept null values.  
     ref = snapshot.items()
@@ -220,7 +221,7 @@ def getWatched():
     #            print(datav['items'][0]['snippet']['description'])
     #            print(datav['items'][0]['snippet']['thumbnails']['default']['url'])
     #            print(datav['items'][0]['contentDetails']['duration'])
-                updRef = db.reference(f'/misterrubato/watch/' + key)
+                updRef = db.reference(f'/watch/' + key)
                 
                 current_datetime = datetime.now()
                 current_datetime_string = current_datetime.strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -239,7 +240,7 @@ def addAdmins(uid):
 
 def checkAdmins():
 
-    ref = db.reference(f'/misterrubato/users')
+    ref = db.reference(f'/users')
     snapshot = ref.get()  
     for key, item in snapshot.items():
     
