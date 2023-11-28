@@ -101,6 +101,8 @@ import json
 
 import mykeys
 
+
+import manim
 # Explicitly tell the underlying HTTP transport library not to retry, since
 # we are handling retry logic ourselves.
 httplib2.RETRIES = 1
@@ -475,8 +477,7 @@ if __name__ == '__main__':
 
     #Portable Grand-1 2
     output = mido.open_output(outputs[2])
-    mkconfig = mykeys.MyKeysConfig(21, 108)
-    mk = mykeys.MyKeys(mkconfig)
+    mk = mykeys.MyKeys(config.cfg)
     keyboard = Controller()    
     with mido.open_input(inputs[1]) as inport:
         print("hello")
@@ -484,12 +485,15 @@ if __name__ == '__main__':
 #            print(msg)
 #            print(msg.time)
             ignorelast = False
-            if msg and hasattr(msg, 'channel') and msg.channel < 3: #0, 1, 2 for input from user.  #others for feedback.  
+            if msg and hasattr(msg, 'channel') and msg.channel < 8: #0, 1, 2 for input from user.  #others for feedback.  
                 
                 if hasattr(msg, 'time'):
                     temptime = time.time() #msg.time #time.time() #msg.time
-                if hasattr(msg, 'type') and msg.type=='note_on' and hasattr(msg, 'note') and msg.channel==0:
-                    mk.key(msg.note)
+                if hasattr(msg, 'note') and msg.channel==0:
+                    #is just the note enough.  Extra complexity by passing other variables.  
+                    #lets just pass them and then figure out later if we want to use.  
+                    #how to get the note length?  This is what we may want.  
+                    mk.key(msg.note, msg)
                 
                 #here we need to set up a on/off keymap like with analyze image creation.  
                 #need an include file here.  
@@ -498,7 +502,10 @@ if __name__ == '__main__':
                     #oh yeah I dont think this has the time.  
                     #tried to adjust midi settings on the device.  See if we can get the time transmitted.  
                     #config.keymap.global.Unpause
-                    if msg.note ==config.cfg['keymap']['global']['ShowScreen'] and mk.getSequence(1) == [ config.cfg['keymap']['global']['ShowScreen'] ]:
+                    #we can use set(mk.getSequence(2) if order is not significant.  
+                    twonotes = mk.getSequence(2)
+                    print(twonotes)
+                    if twonotes == config.cfg['keymap']['global']['ShowScreen']:
                     #if msg.note==105:
                         #adding two more controllers on piano.  
                         keyboard.press(Key.ctrl)
@@ -510,7 +517,7 @@ if __name__ == '__main__':
                         keyboard.release(Key.shift)
                         print("Showing Screen" + str(time.time()))
                         ignorelast = True
-                    if msg.note ==config.cfg['keymap']['global']['HideScreen']:
+                    if twonotes ==config.cfg['keymap']['global']['HideScreen']:
                     #if msg.note==106:
                         #adding two more controllers on piano to show screen and hide screen.   
                         keyboard.press(Key.ctrl)
@@ -644,14 +651,15 @@ if __name__ == '__main__':
                     #control track
                     controltrack.append(msg)
                 
-                if hasattr(msg, 'channel') and hasattr(msg, 'note'):
-                    msg.channel = 3
-                    if hasattr(msg, 'velocity') and msg.velocity > 0:
-                        vel = int(msg.velocity)
-                        vel = round(vel*0.5)
-                        msg.velocity = vel
-                    msg.note = msg.note + 12
-                    output.send(msg)    
+                if hasattr(msg, 'channel') and hasattr(msg, 'note') and msg.channel == 0:
+                    omsg = Message('note_on', note=msg.note, velocity=msg.velocity, time=msg.time)
+                    omsg.channel = 8
+                    vel = int(omsg.velocity)
+                    vel = round(vel*0.25)
+                    omsg.velocity = vel
+                    omsg.note = omsg.note + 12
+                    print(omsg)
+                    #output.send(omsg)    
     
     
     creda = credentials.Certificate("../misterrubato-test.json")
@@ -672,7 +680,7 @@ if __name__ == '__main__':
     midifile = uploadmidi(fn[0], pathnames[len(pathnames)-1])
     
     
-    
+    args.description += '\r\n\r\nLANG:' + mk.getLangs()
     args.description += '\r\n\r\nMIDI:' + midifile
     args.description += '\r\n\r\nKEYWORDS:' + args.keywords #add here like sightread or book, etc.  
 

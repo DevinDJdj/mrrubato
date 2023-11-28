@@ -291,9 +291,9 @@ def midiToImage(t, midilink):
 
 def isInputMessage(msg):
   if (hasattr(msg, 'channel') and msg.channel < 3):
-    return True;
+    return True
   else:
-    return False;
+    return False
 
 #continue here.  Need to further this.      
 #from this I think we can generate N-grams of notes.  
@@ -317,7 +317,10 @@ def enhanceMidi(mid):
     prevMsg = None
     pedal = 0
     maxtime = 0
+    
+    print("Enhance Midi start")
     for i, track in enumerate(mid.tracks):
+        print("Track number " + str(i))
         if i==0: #for now just using 1 track.  
             totalTime = getTrackTime(track)
             t = mymidi.MyTrack(track, totalTime, maxtime)
