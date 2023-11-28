@@ -101,7 +101,10 @@
 
 
 <table>
-<tr><td>	
+<tr style="height:140px;"><td>
+	<div id="pianorollmini" style="display: flex;"></div>
+</td></tr>
+	<tr><td>	
 <div id="pianoroll" style="display: flex;" ></div>
 </td>
 </tr>
@@ -167,11 +170,17 @@ var myet = [];
 
 var durations = [];
 var maxduration = 0;
-var xmultiplier;
-var ymultiplier;
-var camera;
+
+var xmultiplier1;
+var ymultiplier1;
+var xmultiplier2;
+var ymultiplier2;
+
+var camera1;
+var camera2;
 var light;
-var spotlight;
+var spotlight1;
+var spotlight2;
 var watch = false;
 
 var uid = null;
@@ -627,21 +636,29 @@ function updateCanvas(){
 		i = getIteration(tempTime);
 		secs = tempTime - myst[i];
 		if (i > -1){
-			camera.position = new BABYLON.Vector3((xmultiplier/2)-20*secs, ymultiplier*1.2, 0);
-			spotlight.position = new BABYLON.Vector3((xmultiplier/2)-20*secs, xmultiplier, 0);
+			camera1.position = new BABYLON.Vector3((xmultiplier1/2)-20*secs, ymultiplier1*1.2, 0);
+			spotlight1.position = new BABYLON.Vector3((xmultiplier1/2)-20*secs, xmultiplier1, 0);
+			camera2.position = new BABYLON.Vector3((xmultiplier2/2)-2*secs, ymultiplier2*1.2, 0);
+			spotlight2.position = new BABYLON.Vector3((xmultiplier2/2)-2*secs, xmultiplier2, 0);
 		}
 	}
 }
 
 //use canvas for pianoroll.  Use graphics engine of some kind.  
-function loadCanvas(id, pianoimg) {
+function loadCanvas(id, pianoimg, mini="") {
 //    numiterations = starttimes.length;
 //this was not right variable.  
 	var canvas = document.createElement('canvas');
 	div = document.getElementById(id); 
-	canvas.id     = "PianoRollCanvas";
+	canvas.id     = "PianoRollCanvas" + mini;
 	canvas.width  = 1500;//(maxduration*20);
-	canvas.height = 200*numiterations; //200 176 for piano roll and 24 for the lines between iterations
+	xm = 20;
+	ym = 200;
+	if (mini !=""){
+		xm = 2;
+		ym = 20;
+	}
+	canvas.height = ym*numiterations; //200 176 for piano roll and 24 for the lines between iterations
 	//not sure the best way to visualize this, but for now just lines between same location in pianoroll.  
 	canvas.style.zIndex   = 8;
 	canvas.style.position = "absolute";
@@ -652,7 +669,7 @@ function loadCanvas(id, pianoimg) {
 
 
     
-	const engine = new BABYLON.Engine(document.getElementById("PianoRollCanvas"), true); // Generate the BABYLON 3D engine
+	const engine = new BABYLON.Engine(document.getElementById("PianoRollCanvas" + mini), true); // Generate the BABYLON 3D engine
 	const createScene = function () {
 		// Creates a basic Babylon Scene object
 		const scene = new BABYLON.Scene(engine);
@@ -669,17 +686,32 @@ function loadCanvas(id, pianoimg) {
 	image.top = 55;
     advancedTexture.addControl(image);  
 */	
-		xmultiplier = maxduration*20;
-		ymultiplier = 200*numiterations;
 		// Creates and positions a free camera
-		camera = new BABYLON.FreeCamera("camera1", 
-			new BABYLON.Vector3(0, ymultiplier*1.2, 0), scene);
+		if (mini == ""){
+			xmultiplier1 = maxduration*xm;
+			ymultiplier1 = ym*numiterations;
+			ymultiplier = ymultiplier1;
+			xmultiplier = xmultiplier1;
+			camera1 = new BABYLON.FreeCamera("camera" + mini, 
+				new BABYLON.Vector3(0, ymultiplier*1.2, 0), scene);
+			camera = camera1;
+		}
+		else{
+			xmultiplier2 = maxduration*xm;
+			ymultiplier2 = ym*numiterations;
+			ymultiplier = ymultiplier2;
+			xmultiplier = xmultiplier2;
+			camera2 = new BABYLON.FreeCamera("camera" + mini, 
+				new BABYLON.Vector3(0, ymultiplier*1.2, 0), scene);
+			camera = camera2;
+
+		}
 		// Targets the camera to scene origin
 		camera.setTarget(BABYLON.Vector3.Zero());
 		// This attaches the camera to the canvas
 		camera.attachControl(canvas, true);
 		// Creates a light, aiming 0,1,0 - to the sky
-		light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(-(numiterations*5/2), (numiterations*5/2), (numiterations*5/2)), scene);
+		light = new BABYLON.HemisphericLight("light" + mini, new BABYLON.Vector3(-(numiterations*5/2), (numiterations*5/2), (numiterations*5/2)), scene);
 		// Dim the light a small amount - 0 to 1
 		light.intensity = 0.4;
 		
@@ -691,19 +723,27 @@ function loadCanvas(id, pianoimg) {
 		//new BABYLON.Vector3(0, -1, 0)
 		//need to figure out the X component needed here.  
 		//then move the spotlight or the camera one or the other
-		spotlight = new BABYLON.SpotLight("spotLight", new BABYLON.Vector3(0, xmultiplier, 0), new BABYLON.Vector3(0, -1, 0), Math.PI / 24, 2, scene);
+		if (mini==""){
+			spotlight1 = new BABYLON.SpotLight("spotLight" + mini, new BABYLON.Vector3(0, xmultiplier, 0), new BABYLON.Vector3(0, -1, 0), Math.PI / 24, 2, scene);
+			spotlight = spotlight1;			
+		}
+		else{
+			spotlight2 = new BABYLON.SpotLight("spotLight" + mini, new BABYLON.Vector3(0, xmultiplier, 0), new BABYLON.Vector3(0, -1, 0), Math.PI / 24, 2, scene);
+			spotlight = spotlight2;
+		}
 		spotlight.intensity = 0.2;
 
 		//try to point at the right area.  
 		//start here.  ********
-		setInterval(
-		upd = function() {
-			updateCanvas();
-		}, 500);
-		upd();
-
+		if (mini ==""){
+			setInterval(
+			upd = function() {
+				updateCanvas();
+			}, 500);
+			upd();
+		}
 		// Built-in 'sphere' shape.
-		const sphere = BABYLON.MeshBuilder.CreateSphere("sphere", 
+		const sphere = BABYLON.MeshBuilder.CreateSphere("sphere" + mini, 
 			{diameter: 2, segments: 32}, scene);
 		// Move the sphere upward 1/2 its height
 		sphere.position.y = numiterations*5/2;
@@ -711,10 +751,10 @@ function loadCanvas(id, pianoimg) {
 		sphere.position.z = numiterations*5/2;
 		// Built-in 'ground' shape.
 		
-		var ground = BABYLON.MeshBuilder.CreateGround("ground", {width:(xmultiplier), height:(ymultiplier)});
+		var ground = BABYLON.MeshBuilder.CreateGround("ground" + mini, {width:(xmultiplier), height:(ymultiplier)});
 		//rotation necessary for some reason.  
         ground.rotation = new BABYLON.Vector3(0, Math.PI, 0); //alpha, beta, gamma in radians
-		var prollMat = new BABYLON.StandardMaterial("pianorollground", scene);
+		var prollMat = new BABYLON.StandardMaterial("pianorollground" + mini, scene);
 		prollMat.diffuseTexture = new BABYLON.Texture(pianoimg, scene);
 		prollMat.alpha = 0.5;	
 		ground.material = prollMat;
@@ -734,6 +774,7 @@ function addImage(url, type=0){
 	if (type > 0){
 		mydiv = document.getElementById("pianoroll");
 		loadCanvas("pianoroll", url);
+		loadCanvas("pianorollmini", url, "mini")
 	}
 	else{
 		const img = document.createElement("img");
@@ -760,7 +801,8 @@ function getAnalyze(midiurl){
         console.log(url);
 		getFile(url);
    })
-		
+	
+    removeAllChildren("pianorollmini");
 	removeAllChildren("pianoroll");
 	removeAllChildren("images");
 
