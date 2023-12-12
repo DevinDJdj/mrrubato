@@ -1,0 +1,18 @@
+Todo:
+Look into the localGPT options we have.  
+https://github.com/PromtEngineer/localGPT
+
+Continue with setup of alternate machine.  
+
+
+Case sensitivity not supported by the realtimedb, forget for now.  
+
+Set up machine for transcription service to start.  
+Add this to the repository.  
+Can be run locally or remotely.  
+
+**record.py 
+should check that it is available prior to start.  
+Need config param for this server.  
+What general server to use?  Stick with python I think.  
+or autostart it.  

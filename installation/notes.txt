@@ -1,0 +1,27 @@
+Win11
+
+Chrome install
+https://www.google.com/chrome/
+
+OBS install
+https://obsproject.com/download
+OBS-Studio-29.1.3-Full-Installer-x64.exe /S
+
+Set up Google account if dont have. 
+
+Set up Firebase Account with RTDB.  
+Set up Youtube Account with API.  
+Download from Github.  
+Set up settings.json
+Set up Github Project.  
+
+
+
+Install driver for Yamaha - done
+Install drivers for Cameras.  
+Install drivers for Audiobox.  - done
+
+
+git config --global user.email "petuniajacobson@gmail.com"
+git config --global user.name "Petunia Jacobson"
+
