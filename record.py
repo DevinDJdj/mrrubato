@@ -686,6 +686,10 @@ if __name__ == '__main__':
 
     print(args.description)
     print(latest_file)
+
+    #move to external service, can we still add the link?  
+    #lets just put this into the DB I think.  That makes our life easier.  
+    #to start we are going to use text anyway.  This is 1KB or so per video, nothing.  
     transcribe_me(latest_file)
 
     transcribe_file = uploadtranscript(fn[0], pathnames[len(pathnames)-1])
