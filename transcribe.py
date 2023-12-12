@@ -31,6 +31,66 @@ def get_timestamp(s):
         filler = "0"
     return str(mins) + ":" + filler + str(secs)
     
+
+def transcribe_fromyoutube(videoid="3haowENzdLo"):
+
+    from pytube import YouTube
+    youtube_video_url = "https://www.youtube.com/watch?v={videoid}"
+    youtube_video_content = YouTube(youtube_video_url)
+
+    for stream in youtube_video_content.streams:
+    print(stream)
+
+    audio_streams = youtube_video_content.streams.filter(only_audio = True)
+    for stream in audio_streams:
+    print(stream)
+
+    audio_stream = audio_streams[1]
+    print(audio_stream)
+
+    audio_stream.download("earnings_call_microsoft_q4_2022.mp4")
+    transcribe_whisper("C:/devinpiano/testing/openai-whisper/earnings_call_microsoft_q4_2022_filtered.mp4")
+
+
+
+def transcribe_whisper(filename = "C:/devinpiano/testing/openai-whisper/earnings_call_microsoft_q4_2022_filtered.mp4"):
+    import whisper
+    import pandas as pd
+    from datetime import datetime
+
+    print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+
+    model = whisper.load_model("large")
+
+    print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+
+    result = model.transcribe(filename)
+    print(result["text"])
+
+    print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+
+    speech = pd.DataFrame.from_dict(result['segments'])
+    #speech['id'], 'start', 'end', 'text', 'tokens', 'no_speech_prob'
+    print(speech.head())
+
+    text = []
+    times = []
+    for s in speech:
+        text.append(s['text']) 
+        times.append(s['start'])
+
+    return text, times
+#    audio = whisper.load_audio("C:/devinpiano/testing/openai-whisper/content/harvard.wav")
+#    audio = whisper.pad_or_trim(audio)
+
+
+    #mel = whisper.log_mel_spectrogram(audio).to(model.device)
+
+    #_, probs = model.detect_language(mel)
+    #probs
+    #print(f"Detected language: {max(probs, key=probs.get)}")
+
+
 def transcribe_me(filename):
     fn = filename.split('.')
 
@@ -62,18 +122,22 @@ def transcribe_me(filename):
     audior = []
     text = []
     times = []
-    for i in range(number_of_iterations):
-        with test as source:
-            audior.append(r.record(source, offset=i*segment_length, duration=segment_length))
-    for i in range(number_of_iterations):
-        print(audior[i])
-        try:
-            text.append(r.recognize_google(audior[i], show_all=False)) 
-            times.append(get_timestamp(i*segment_length))
-            #print(text) 
-        except Exception as e:
-            print(e)
-            
+    testing = False
+    if testing==False:
+        for i in range(number_of_iterations):
+            with test as source:
+                audior.append(r.record(source, offset=i*segment_length, duration=segment_length))
+        for i in range(number_of_iterations):
+            print(audior[i])
+            try:
+                text.append(r.recognize_google(audior[i], show_all=False)) 
+                times.append(get_timestamp(i*segment_length))
+                #print(text) 
+            except Exception as e:
+                print(e)
+    else:
+         text, times = transcribe_whisper(audio_filename)           
+
     f = open(txt_filename, "w")
     for i in range(len(text)):
         print(times[i])
