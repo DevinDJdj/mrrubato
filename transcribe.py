@@ -6,6 +6,8 @@
 #pip install moviepy
 #pip install pydub
 #pip install speechrecognition
+#pip install pytube
+#pip install openai-whisper
 #https://alphacephei.com/vosk/models
 import wave
 import json
@@ -32,35 +34,45 @@ def get_timestamp(s):
     return str(mins) + ":" + filler + str(secs)
     
 
-def transcribe_fromyoutube(videoid="3haowENzdLo"):
+def transcribe_fromyoutube(videoid="ZshYVeNHkOM"):
 
     from pytube import YouTube
-    youtube_video_url = "https://www.youtube.com/watch?v={videoid}"
+    youtube_video_url = "https://www.youtube.com/watch?v=" + videoid
     youtube_video_content = YouTube(youtube_video_url)
 
     for stream in youtube_video_content.streams:
-    print(stream)
+        print(stream)
 
     audio_streams = youtube_video_content.streams.filter(only_audio = True)
     for stream in audio_streams:
-    print(stream)
+        print(stream)
 
     audio_stream = audio_streams[1]
     print(audio_stream)
 
-    audio_stream.download("earnings_call_microsoft_q4_2022.mp4")
-    transcribe_whisper("C:/devinpiano/testing/openai-whisper/earnings_call_microsoft_q4_2022_filtered.mp4")
+    audio_stream.download("output/" + videoid)
+    list_of_files = glob.glob('c:/devinpiano/music/output/' + videoid + '/*') # * means all if need specific format then *.csv
+    latest_file = max(list_of_files, key=os.path.getctime)
+    print(latest_file)
+    text, times = transcribe_whisper(latest_file)
+    f = open("output/" + videoid + ".txt", "w")
+    for i in range(len(text)):
+        print(times[i])
+        print(text[i]) 
+#        f.write(times[i] + '\n')
+        f.write(text[i] + ' (' + times[i] + ')\n')
+    f.close()
 
 
 
-def transcribe_whisper(filename = "C:/devinpiano/testing/openai-whisper/earnings_call_microsoft_q4_2022_filtered.mp4"):
+def transcribe_whisper(filename = "C:\\devinpiano\\test\\openai-whisper\\test.mp4"):
     import whisper
     import pandas as pd
     from datetime import datetime
 
     print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
-    model = whisper.load_model("large")
+    model = whisper.load_model("medium")
 
     print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
@@ -70,14 +82,17 @@ def transcribe_whisper(filename = "C:/devinpiano/testing/openai-whisper/earnings
     print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
     speech = pd.DataFrame.from_dict(result['segments'])
+    speech = speech.dropna()
     #speech['id'], 'start', 'end', 'text', 'tokens', 'no_speech_prob'
-    print(speech.head())
+#    print(speech.head())
 
     text = []
     times = []
-    for s in speech:
-        text.append(s['text']) 
-        times.append(s['start'])
+    for ind in speech.index:
+        print(speech['text'][ind])
+        print(speech['start'][ind])
+        text.append(speech['text'][ind]) 
+        times.append(get_timestamp(speech['start'][ind])) 
 
     return text, times
 #    audio = whisper.load_audio("C:/devinpiano/testing/openai-whisper/content/harvard.wav")
@@ -189,8 +204,9 @@ def transcribe_me(filename):
     f.close()
     """    
 if __name__ == '__main__':
+    transcribe_fromyoutube()
     list_of_files = glob.glob('C:/Users/devin/Videos/*.mkv') # * means all if need specific format then *.csv
     latest_file = max(list_of_files, key=os.path.getctime)
     print(latest_file)
     #transcribe_me(latest_file)
-    transcribe_me(r"C:\Users\devin\Videos\2023-02-11 11-23-44.mkv")
+#    transcribe_me(r"C:\Users\devin\Videos\2023-02-11 11-23-44.mkv")
