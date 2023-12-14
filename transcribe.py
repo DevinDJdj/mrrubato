@@ -62,6 +62,9 @@ def transcribe_fromyoutube(videoid="ZshYVeNHkOM"):
 #        f.write(times[i] + '\n')
         f.write(text[i] + ' (' + times[i] + ')\n')
     f.close()
+    with open("output/" + videoid + ".txt", 'r') as file:
+        data = file.read()
+        return data
 
 
 
