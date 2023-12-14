@@ -11,14 +11,15 @@ Set up Google account if dont have.
 
 Set up Firebase Account with RTDB.  
 Set up Youtube Account with API.  
-Download from Github.  
-Set up settings.json
+Download from Github.  - done
+
+**Set up settings.json
 Set up Github Project.  
 
 
 
 Install driver for Yamaha - done
-Install drivers for Cameras.  
+Install drivers for Cameras.  - done
 Install drivers for Audiobox.  - done
 
 
