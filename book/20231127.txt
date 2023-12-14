@@ -161,3 +161,5 @@ Need to check empty case, dont want to redo empty cases many times.
 See if we can serve on GCP easily.  
 gcloud run deploy
 Then it doesnt really matter.  
+
+CAI Content authentication initiative.  
