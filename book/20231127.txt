@@ -163,3 +163,50 @@ gcloud run deploy
 Then it doesnt really matter.  
 
 CAI Content authentication initiative.  
+
+
+**GCloud GKE cluster setup
+gcloud container clusters update cluster-1 --project=misterrubato-test --zone=us-west1 --update-addons=CloudRun=ENABLED
+
+gcloud container clusters get-credentials cluster-1 --region us-west1 --project misterrubato-test
+gcloud components install gke-gcloud-auth-plugin
+
+Cloud Run pricing seems far more reasonable, lets see if this works ok.  
+gcloud components install kubectl
+gcloud container fleet cloudrun apply --gke-cluster=us-west1/cluster-1
+
+
+Anthos sample deployment on google cloud
+Then use 
+gcloud run deploy
+
+./asmcli install --project_id misterrubato-test --cluster_name cluster-1 --cluster_location us-west1 --enable_all --ca mesh_ca
+
+https://cloud.google.com/service-mesh/docs/unified-install/install-dependent-tools#download_asmcli
+https://cloud.google.com/service-mesh/docs/unified-install/install-anthos-service-mesh
+
+Cant use autopilot cluster.  
+Do same process with standard cluster.  
+gcloud container clusters create cluster-1 --project=misterrubato-test --zone=us-west1 --machine-type n1-standard-2 --num-nodes 2
+gcloud container clusters update cluster-1 --project=misterrubato-test --zone=us-west1 --update-addons=CloudRun=ENABLED
+
+gcloud container clusters describe cluster-1 --region us-west1 --format="value(workloadIdentityConfig.workloadPool)"
+gcloud container clusters update cluster-1 --region=us-west1 --workload-pool=misterrubato-test.svc.id.goog
+
+Wow why do I have to do this.  
+Pretty annoying to set this up.  
+
+gcloud services enable mesh.googleapis.com --project=misterrubato-test
+https://cloud.google.com/service-mesh/docs/managed/provision-managed-anthos-service-mesh
+echo "management: automatic" > mesh.yaml
+gcloud container fleet mesh enable --project misterrubato-test --fleet-default-member-config mesh.yaml
+gcloud container fleet memberships describe cluster-1
+
+gcloud iam service-accounts create gke-anthos --project=misterrubato-test
+gcloud projects add-iam-policy-binding misterrubato-test --member="serviceAccount:gke-anthos@misterrubato-test.iam.gserviceaccount.com" --role="roles/owner"
+
+gcloud beta container --project "misterrubato-test" clusters create "cluster-2" --no-enable-basic-auth --cluster-version "1.27.3-gke.100" --release-channel "regular" --machine-type "e2-medium" --image-type "COS_CONTAINERD" --disk-type "pd-balanced" --disk-size "100" --metadata disable-legacy-endpoints=true --scopes "https://www.googleapis.com/auth/devstorage.read_only","https://www.googleapis.com/auth/logging.write","https://www.googleapis.com/auth/monitoring","https://www.googleapis.com/auth/servicecontrol","https://www.googleapis.com/auth/service.management.readonly","https://www.googleapis.com/auth/trace.append" --num-nodes "3" --logging=SYSTEM,WORKLOAD --monitoring=SYSTEM --enable-ip-alias --network "projects/misterrubato-test/global/networks/default" --subnetwork "projects/misterrubato-test/regions/us-west1/subnetworks/default" --no-enable-intra-node-visibility --default-max-pods-per-node "110" --security-posture=standard --workload-vulnerability-scanning=disabled --no-enable-master-authorized-networks --addons HorizontalPodAutoscaling,HttpLoadBalancing,GcePersistentDiskCsiDriver --enable-autoupgrade --enable-autorepair --max-surge-upgrade 1 --max-unavailable-upgrade 0 --binauthz-evaluation-mode=DISABLED --enable-managed-prometheus --enable-shielded-nodes --node-locations "us-west1-c"
+
+
+Wow none of this works properly.  
+

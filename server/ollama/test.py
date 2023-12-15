@@ -5,7 +5,7 @@
 import requests
 import json
 
-url = 'http://localhost:11434/api/generate'
+url = 'http://localhost:8181/api/generate'
 
 myobj = {'model': 'llama2', 'stream': False, 'prompt': 'Why is the sky Blue?'}
 myobj = {'model': 'llama2', 'stream': False, 'prompt': 'Who wrote the document Orca: Progressive Learning from Complex Explanation Traces of GPT-4'}

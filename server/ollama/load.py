@@ -24,9 +24,9 @@ def create_vector_db():
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=50)
     texts=text_splitter.split_documents(documents)
     #this results in OSError: /lib/x86_64-linux-gnu/libc.so.6: version `GLIBC_2.32' not found
-#    vectorstore = Chroma.from_documents(documents=texts, embedding=GPT4AllEmbeddings(),persist_directory=DB_PATH)      
+    vectorstore = Chroma.from_documents(documents=texts, embedding=GPT4AllEmbeddings(),persist_directory=DB_PATH)      
 #    vectorstore = Chroma.from_documents(documents=texts, embedding=LlamaCppEmbeddings(),persist_directory=DB_PATH) 
-    vectorstore = Chroma.from_documents(documents=texts, embedding=FastEmbedEmbeddings(),persist_directory=DB_PATH)      
+#    vectorstore = Chroma.from_documents(documents=texts, embedding=FastEmbedEmbeddings(),persist_directory=DB_PATH)      
          
     vectorstore.persist()
 
