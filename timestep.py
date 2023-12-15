@@ -312,6 +312,17 @@ if __name__ == '__main__':
             #update to public if we have reviewed.  
             #if we dont want to publish, rank as 0.  
             if (privacystatus=="unlisted" and pDate.date() > mydate):
+
+                reftranscript = db.reference(f'/misterrubato/' + videoid + '/transcript')
+
+                if reftranscript.get() is None:
+                    #http://192.168.1.120/transcribe/?videoid=ZshYVeNHkOM
+                    localserver = config.cfg['localserver']['host'] + ":" + config.cfg['localserver']['port']
+                    url = f'http://{localserver}/transcribe/?videoid={videoid}'
+                    transcript = requests.get(url).json().text
+                    data = {'transcript':transcript}
+                    reftranscript.set(data)
+
                 refpl = db.reference(f'/misterrubato/' + videoid + '/playlist')
                 #if this exists, return
                 #probably not hte best way to do this.  

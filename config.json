@@ -1,4 +1,8 @@
 {
+	"localserver":{
+		"port": 5000, 
+		"host": "192.68.1.120"
+	},
     "youtube":{
 		"APIKEY": APIKEY,
 		"CHANNELID": CHANNELID,
@@ -8,7 +12,7 @@
 		"GREAT_PLAYLIST": GREAT_PLAYLIST, 
 		"WORDS_PLAYLIST": WORDS_PLAYLIST, 
 		"ADMIN_USERID": ADMIN_USERID
-	}
+	},
 	"openai":{
         "APIKEY":OPENAI_KEY
     },
@@ -18,7 +22,7 @@
             "authDomain": FBAUTHDOMAIN,
             "databaseURL": FBDBURL,
             "storageBucket": STORAGEURL
-		}
+		},
 		"fbsettings": {
 			  "type": "service_account",
 			  "project_id": MYPROJECT,

@@ -1,0 +1,165 @@
+How can we use Github Copilot API?  
+
+**web/public/search.html
+Find Video and history of that video.  
+Or anything that has that search term.  
+Does RTDB not have a wildcard search?  
+How bad is this for us?  
+Right now we are storing transcripts separately and midi separately.  
+But comments are not going to be searchable easily.  
+Can we get around this limitation? 
+Maybe just add all comments to the git repository or another repository?  
+https://docs.github.com/en/rest/search/search?apiVersion=2022-11-28
+"https://api.github.com/search/labels?repository_id=REPOSITORY_ID&q=Q"
+Need to be authenticated to do almost anything.  
+
+**ftsproblem
+https://console.cloud.google.com/marketplace/product/bitnami-launchpad/solr?pli=1&project=xxxx
+Then we would need to utilize this though from the frontend.  
+
+
+
+
+
+**web/public/analyze.html
+Need to show all GIT changes occurring during this time period.  
+Show on these dates and +- 24h for now, adjustable.  
+
+git log -p --since="2022-01-01" --until="2022-01-31"
+
+OK so if we cant query certain days, perhaps we need to hold the git info in RTDB?  
+Dont like that.  
+
+Show the overview pianoroll. 
+Just make an image which has height and width, and then highlight.  
+Dont use the 3D stuff.  
+Then we have two ways in case we have problems.  
+
+Have a start of a map in map.  
+OK, we need to adjust the height of canvas.  
+And we need to add links and make clickable.  
+Then create more regarding the feedback midi.  
+
+
+can we use this?
+
+https://pypi.org/project/openllm/
+Where can we upload the data from the transcripts.  
+Maybe we can just use this for search and for other use-cases.  
+Yeah lets try something other than what we already know like solr or elasticsearch.  
+
+
+Also see if this is any better than the current speech recognition.  
+Compare with other, and then just rewrite the times to be simpler.  
+
+Whisper
+
+**https://analyzingalpha.com/openai-whisper-python-tutorial
+pip install -U openai-whisper
+pip install pytube -q
+
+testing folder currently not in git tracked, do we want this to be?  
+**testing/openai-whisper
+python ./youtubetest.py
+
+ffmpeg -ss 1924 -i "/content/earnings_call_microsoft_q4_2022.mp4/Microsoft (MSFT) Q4 2022 Earnings Call.mp4" -t 2515 "earnings_call_microsoft_q4_2022_filtered.mp4"
+python ./test.py
+Need full path because ffmpeg not in this directory I think.  
+
+
+install PromptEngineer/localGPT
+visualstudio.microsoft.com/visual-cpp-build-tools
+
+Wait for localGPT which works better or use a cloud server.  
+Dont really want to increase cost of ownership but going to need a server I think so may as well do it.  
+Can we put search and this on the same machine?  
+Best if we have description ingested as well, and have a standard prompt to get all "xxxx" songs.  
+Or really want to get all songs with certain musical word or combination as well.  
+How do we store this though?  
+We could just translate to characters.  Or can we make a different binary structure of some sort.  
+NGRAM->VideoID
+Lets just stick with this for now, but what will be the density of this map.  
+Have to choose at least 9-gram word I think.  Just use what we have set up as a test-case already.  
+Should we just store in the existing DB?  
+I think we need another storage mechanism.  
+
+**web/public/analyze.html
+For now translate to text and then find all entries which map to this same set i.e. on analyze.html or maybe 
+a different page.  
+
+
+Finish using the openai-whisper
+python ./test.py takes quite a while.  
+looks like this takes about 10-20x the length of the file.  
+Lets try on the GPU.  But we really dont want to have to do this.  
+Need to time.  
+
+Maybe this is the best option for now.  
+https://console.cloud.google.com/marketplace/vm/config/click-to-deploy-images/deeplearning?project=xxxx
+
+
+Wow what a crappy message:
+ZONE_RESOURCE_POOL_EXHAUSTED constantly when trying to deploy.  
+From search, just says try again.  
+First see if we get good transcription with this then determine how to move forward.  
+
+
+Yeah lets try this, and maybe make this a service.  
+Yeah this is probably going to be necessary anyway.  
+We will need something to integrate with the firebase app.  
+Lets test this and then determine how to interface with it.  
+We would need to do this in the JS pages at the moment.  
+I suspect this is fine if we create an endpoint.  
+
+
+
+gcloud config set compute/zone NAME
+
+Need to read this if we are going to create any instances.  
+Prefer to do it programatically.  The UI is not great anyway, and this may have 
+at least some reproducibility and staying power.  
+
+https://blog.pratikkale.in/how-to-manage-google-cloud-compute-engine-with-python
+
+After creating this VM with NVIDIA GPU, create localGPT on that instance.  
+
+Vector database is similar to what has been done before with recommendation engines.  
+This is just a general tool for this sort of analysis.  
+
+Lets use this and see.  
+chroma DB 
+
+
+First of all quality of transcription much better with the openai-whisper
+So lets start using this.  
+
+**server/transcription/server.py
+using standard flask app, may as well make this real-time I guess.  
+Do both, add this transcript to the DB.  
+if there is no transcript at timestep.py, add it again.  
+For now start a server on the NVIDIA GPU machine so it doesnt take forever, either this or 
+run this in the **timestep.py
+
+**transcribe.py
+How do we get rid of the 
+
+**record.py make sure the transcription is called after upload.  
+may not be able to do this real-time if we are getting from the videoid.  
+So may need to just do at timestep.py
+Either way though from timestep.py try to use the server, if it is not available do locally.  
+Yeah anything that takes a long time we can do this at timestep.py
+
+
+**timestep.py
+for now just doing here.  
+This is sufficient I think.  
+Also we dont need to do during record.py after we see this is working.  
+This will save a lot of time.  
+Need to check empty case, dont want to redo empty cases many times.  
+
+
+See if we can serve on GCP easily.  
+gcloud run deploy
+Then it doesnt really matter.  
+
+CAI Content authentication initiative.  
