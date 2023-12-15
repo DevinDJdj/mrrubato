@@ -9,11 +9,13 @@ import chainlit as cl
 from langchain.chains import RetrievalQA,RetrievalQAWithSourcesChain
 # Set up RetrievelQA model
 QA_CHAIN_PROMPT = hub.pull("rlm/rag-prompt-mistral")
+MY_MODEL = "llama2" #"mistral"
+myEmbeddings = OllamaEmbeddings(model="llama2") #GPT4AllEmbeddings()
 
 #load the LLM
 def load_llm():
  llm = Ollama(
- model="mistral",
+ model=MY_MODEL,
  verbose=True,
  callback_manager=CallbackManager([StreamingStdOutCallbackHandler()]),
  )
@@ -33,7 +35,7 @@ def retrieval_qa_chain(llm,vectorstore):
 def qa_bot(): 
  llm=load_llm() 
  DB_PATH = "vectorstores/db/"
- vectorstore = Chroma(persist_directory=DB_PATH, embedding_function=GPT4AllEmbeddings())
+ vectorstore = Chroma(persist_directory=DB_PATH, embedding_function=myEmbeddings)
 
  qa = retrieval_qa_chain(llm,vectorstore)
  return qa 

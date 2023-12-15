@@ -24,11 +24,22 @@ def create_vector_db():
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=50)
     texts=text_splitter.split_documents(documents)
     #this results in OSError: /lib/x86_64-linux-gnu/libc.so.6: version `GLIBC_2.32' not found
-    vectorstore = Chroma.from_documents(documents=texts, embedding=GPT4AllEmbeddings(),persist_directory=DB_PATH)      
+#    vectorstore = Chroma.from_documents(documents=texts, embedding=GPT4AllEmbeddings(),persist_directory=DB_PATH)      
 #    vectorstore = Chroma.from_documents(documents=texts, embedding=LlamaCppEmbeddings(),persist_directory=DB_PATH) 
-#    vectorstore = Chroma.from_documents(documents=texts, embedding=FastEmbedEmbeddings(),persist_directory=DB_PATH)      
+    vectorstore = Chroma.from_documents(documents=texts, embedding=FastEmbedEmbeddings(),persist_directory=DB_PATH)      
          
     vectorstore.persist()
 
+
+def create_llama2_db():
+    loader = DirectoryLoader(DATA_PATH, glob="**/*.txt", loader_cls=TextLoader)
+    documents = loader.load()
+    text_splitter = CharacterTextSplitter(chunk_size=390, chunk_overlap=0)
+    texts = text_splitter.split_documents(documents)
+    ollamaEmbeddings = OllamaEmbeddings(model="llama2")
+    vectorstore = Chroma.from_documents(documents=texts, embedding=ollamaEmbeddings,persist_directory=DB_PATH) 
+    vectorstore.persist()
+
 if __name__=="__main__":
-    create_vector_db()
+#    create_vector_db()
+    create_llama2_db()
