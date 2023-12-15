@@ -1,10 +1,19 @@
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+#pip install chromadb
+#pip install langchain
+#pip install BeautifulSoup4
+#pip install gpt4all
+#pip install langchainhub
+#pip install pypdf
+#pip install chainlit
+
+from langchain.text_splitter import RecursiveCharacterTextSplitter, CharacterTextSplitter
 from langchain.document_loaders import PyPDFLoader, DirectoryLoader, TextLoader
 from langchain.document_loaders.pdf import PyPDFDirectoryLoader
 from langchain.document_loaders import UnstructuredHTMLLoader, BSHTMLLoader
 from langchain.vectorstores import Chroma
 from langchain.embeddings import GPT4AllEmbeddings
 from langchain.embeddings import LlamaCppEmbeddings
+from langchain.embeddings import OllamaEmbeddings
 from langchain.embeddings import FastEmbedEmbeddings #pip install fastembed
 
 #from langchain.embeddings import OllamaEmbeddings
@@ -34,7 +43,7 @@ def create_vector_db():
 def create_llama2_db():
     loader = DirectoryLoader(DATA_PATH, glob="**/*.txt", loader_cls=TextLoader)
     documents = loader.load()
-    text_splitter = CharacterTextSplitter(chunk_size=390, chunk_overlap=0)
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=390, chunk_overlap=40)
     texts = text_splitter.split_documents(documents)
     ollamaEmbeddings = OllamaEmbeddings(model="llama2")
     vectorstore = Chroma.from_documents(documents=texts, embedding=ollamaEmbeddings,persist_directory=DB_PATH) 

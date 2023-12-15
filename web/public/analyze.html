@@ -143,7 +143,7 @@ var video = 'T7aCHEAGCsU';
 var videojson = null;
 var channelId = 'UC4dK3RpqBq2JpIkRmQn6HOA'; //@misterrubato doesnt work in URL, probably need to escape the @, but who cares.  
 var title = '';
-
+var seek = -1;
 
       // Enable WebMidi.js and trigger the onEnabled() function when ready.
 </script>
@@ -1038,6 +1038,9 @@ function helpme(){
       // 4. The API will call this function when the video player is ready.
       function onPlayerReady(event) {
         event.target.playVideo();
+		if (seek > 0){
+			event.target.seekTo(seek);
+		}
       }
 
       // 5. The API calls this function when the player's state changes.

@@ -16,6 +16,10 @@ if (urlParams["video"]){
   video = urlParams["video"];
   console.log(video);
 }
+if (urlParams["seek"]){
+  seek = urlParams["seek"];
+  console.log(seek);
+}
 
 var output = document.getElementById("clock");
 

@@ -1,6 +1,7 @@
 #import required dependencies
 from langchain import hub
 from langchain.embeddings import GPT4AllEmbeddings
+from langchain.embeddings import OllamaEmbeddings
 from langchain.vectorstores import Chroma
 from langchain.llms import Ollama
 from langchain.callbacks.manager import CallbackManager
@@ -63,9 +64,14 @@ async def main(message):
  answer=res["result"]
  answer=answer.replace(".",".\n")
  sources=res["source_documents"]
+# sources = [s.replace('\\n', '\n') for s in sources]
+
 
  if sources:
-  answer+=f"\nSources: "+str(str(sources))
+  s = str(str(sources))
+  s = s.replace("\\n", "\n")
+  #read sources here and add a link to the time.  
+  answer+=f"\nSources: "+s
  else:
   answer+=f"\nNo Sources found"
 
