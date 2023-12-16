@@ -1,9 +1,8 @@
 #pip install flask
 #pip install python-dotenv
 #python ./server/transcription/server.py
+#pip install moviepy
 import sys
-
-sys.path.insert(0, 'c:/devinpiano/music/')
 
 from transcribe import transcribe_fromyoutube
 
@@ -16,11 +15,11 @@ app = Flask(__name__)
 def hello():
     return 'Hello, World!'
 
-#http://127.0.0.1:5000/transcribe/?videoid=UUUoYYW7SsE
+#http://127.0.0.1:8001/transcribe/?videoid=UUUoYYW7SsE
 @app.route('/transcribe/')
 def transcribe():
     video = request.args.get('videoid')
     return transcribe_fromyoutube(video)
 
 if (__name__ == '__main__'):
-    app.run(host='0.0.0.0')
+    app.run(host='0.0.0.0', port=8001)

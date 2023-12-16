@@ -3,6 +3,7 @@
 #pip install vosk
 #pip install ffmpeg
 #choco install ffmpeg
+#sudo apt install ffmpeg
 #pip install moviepy
 #pip install pydub
 #pip install speechrecognition
@@ -12,8 +13,8 @@
 import wave
 import json
 import moviepy.editor as mp
-from vosk import Model, KaldiRecognizer, SetLogLevel
-import Word as custom_Word
+#from vosk import Model, KaldiRecognizer, SetLogLevel
+#import Word as custom_Word
 from pydub import AudioSegment
 from os import path
 import subprocess
@@ -51,7 +52,7 @@ def transcribe_fromyoutube(videoid="ZshYVeNHkOM"):
     print(audio_stream)
 
     audio_stream.download("output/" + videoid)
-    list_of_files = glob.glob('c:/devinpiano/music/output/' + videoid + '/*') # * means all if need specific format then *.csv
+    list_of_files = glob.glob('output/' + videoid + '/*') # * means all if need specific format then *.csv
     latest_file = max(list_of_files, key=os.path.getctime)
     print(latest_file)
     text, times = transcribe_whisper(latest_file)

@@ -24,6 +24,7 @@ from langchain.embeddings import FastEmbedEmbeddings #pip install fastembed
 import os
 
 DATA_PATH="data/"
+#DATA_PATH="../transcription/output/"
 DB_PATH = "vectorstores/db/"
 
 def create_vector_db():

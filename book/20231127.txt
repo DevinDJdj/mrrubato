@@ -210,3 +210,28 @@ gcloud beta container --project "misterrubato-test" clusters create "cluster-2" 
 
 Wow none of this works properly.  
 
+
+Anyway, just using a simple VM for now.  
+
+Use GCP template Deeplearning VM.  
+gcloud compute scp --project misterrubato-test --zone us-west1-b --recurse c:/devinpiano/music/server/ deeplearning-1-vm:/home/devin/server
+
+python ./server/transcription/server.py
+http://x.x.x.x:8001/transcribe/?videoid=UUUoYYW7SsE
+Can we get unlisted stuff as well?  
+Nice this works now.  
+
+Then use ingested info.  
+**ollama start
+curl https://ollama.ai/install.sh | sh
+export OLLAMA_HOST=0.0.0.0:8181
+ollama serve
+ollama run mistral
+ollama run llama2
+
+chainlit run RAG.py
+http://x.x.x.x:8000/
+
+
+Still very basic.  
+

@@ -1,4 +1,7 @@
 #import required dependencies
+#this default port is 8000
+#chainlit run RAG.py
+
 from langchain import hub
 from langchain.embeddings import GPT4AllEmbeddings
 from langchain.embeddings import OllamaEmbeddings
