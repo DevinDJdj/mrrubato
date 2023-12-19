@@ -13,7 +13,7 @@ from datetime import datetime
 
 app = Flask(__name__)
 
-
+model = None
 @app.route('/')
 def hello():
     return 'Hello, World!'
@@ -23,12 +23,10 @@ def hello():
 def transcribe():
     video = request.args.get('videoid')
     try:
-
-        model = g.get("model", None)
+        global model
         if (model is None):
             print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-            model = whisper.load_model("large")
-            g.model = model
+            model = whisper.load_model("medium")
             print("loaded model")
             print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         ret = transcribe_fromyoutube(video, model)
