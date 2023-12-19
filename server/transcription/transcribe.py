@@ -22,6 +22,9 @@ import glob
 import os
 import speech_recognition as sr
 import math
+import whisper
+import pandas as pd
+from datetime import datetime
 
 
 
@@ -35,7 +38,7 @@ def get_timestamp(s):
     return str(mins) + ":" + filler + str(secs)
     
 
-def transcribe_fromyoutube(videoid="ZshYVeNHkOM"):
+def transcribe_fromyoutube(videoid="ZshYVeNHkOM", model=None):
 
     from pytube import YouTube
     youtube_video_url = "https://www.youtube.com/watch?v=" + videoid
@@ -55,13 +58,30 @@ def transcribe_fromyoutube(videoid="ZshYVeNHkOM"):
     list_of_files = glob.glob('output/' + videoid + '/*') # * means all if need specific format then *.csv
     latest_file = max(list_of_files, key=os.path.getctime)
     print(latest_file)
-    text, times = transcribe_whisper(latest_file)
+    text, times = transcribe_whisper(latest_file, model)
+    os.remove(latest_file)
+    os.rmdir("output/" + videoid)
     f = open("output/" + videoid + ".txt", "w")
+    prev = ""
+    ignore = {}
     for i in range(len(text)):
-        print(times[i])
-        print(text[i]) 
+#        print(times[i])
+#        print(text[i]) 
 #        f.write(times[i] + '\n')
-        f.write(text[i] + ' (' + times[i] + ')\n')
+        if (ignore.get(i) == None):
+            indices = [j for j in range(i, len(text)) if text[j] == text[i] ]
+            print(indices)
+            if (len(indices) > 2):
+                diffs = [x - indices[j - 1] for j, x in enumerate(indices)][1:]
+                print(diffs)
+                if (len(diffs) > 1):
+                    diff2 = [x - diffs[j - 1] for j, x in enumerate(diffs)][1:]
+                    if (diff2[0] == 0):
+                        for j in indices:
+                            ignore[j] = True
+        if text[i] != prev and ignore.get(i) == None:
+            prev = text[i]
+            f.write(text[i] + ' (' + times[i] + ')\n')
     f.close()
     with open("output/" + videoid + ".txt", 'r') as file:
         data = file.read()
@@ -69,19 +89,10 @@ def transcribe_fromyoutube(videoid="ZshYVeNHkOM"):
 
 
 
-def transcribe_whisper(filename = "C:\\devinpiano\\test\\openai-whisper\\test.mp4"):
-    import whisper
-    import pandas as pd
-    from datetime import datetime
-
-    print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-
-    model = whisper.load_model("medium")
-
-    print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+def transcribe_whisper(filename = "C:\\devinpiano\\test\\openai-whisper\\test.mp4", model=None):
 
     result = model.transcribe(filename)
-    print(result["text"])
+#    print(result["text"])
 
     print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
@@ -93,8 +104,8 @@ def transcribe_whisper(filename = "C:\\devinpiano\\test\\openai-whisper\\test.mp
     text = []
     times = []
     for ind in speech.index:
-        print(speech['text'][ind])
-        print(speech['start'][ind])
+#        print(speech['text'][ind])
+#        print(speech['start'][ind])
         text.append(speech['text'][ind]) 
         times.append(get_timestamp(speech['start'][ind])) 
 

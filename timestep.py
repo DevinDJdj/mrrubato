@@ -68,7 +68,7 @@ https://developers.google.com/api-client-library/python/guide/aaa_client_secrets
                                    CLIENT_SECRETS_FILE))
 
 
-TIME_WINDOW = 6
+TIME_WINDOW = 9
 
 
 def get_authenticated_service(args):
@@ -314,14 +314,17 @@ if __name__ == '__main__':
             if (privacystatus=="unlisted" and pDate.date() > mydate):
 
                 reftranscript = db.reference(f'/misterrubato/' + videoid + '/transcript')
-
-                if reftranscript.get() is None:
+                reftr = reftranscript.get()
+                if reftr is None:
                     #http://192.168.1.120/transcribe/?videoid=ZshYVeNHkOM
-                    localserver = config.cfg['localserver']['host'] + ":" + config.cfg['localserver']['port']
+                    localserver = config.cfg['localserver']['host'] + ":" + str(config.cfg['localserver']['port'])
                     url = f'http://{localserver}/transcribe/?videoid={videoid}'
-                    transcript = requests.get(url).json().text
-                    data = {'transcript':transcript}
-                    reftranscript.set(data)
+                    print(url)
+                    transcript = requests.get(url, timeout=(5, None)).text
+                    if (transcript is not None and transcript !="error"):
+                        data = {'transcript':transcript}
+                        reftranscript.set(data)
+                        print(data)
 
                 refpl = db.reference(f'/misterrubato/' + videoid + '/playlist')
                 #if this exists, return

@@ -16,3 +16,9 @@ should check that it is available prior to start.
 Need config param for this server.  
 What general server to use?  Stick with python I think.  
 or autostart it.  
+
+really need to go back and read what was spoken on previous iterations.  
+This is a good way to get a summary.  
+Probably should generate a summary after we get the better quality transcription.  
+It is song, so the transcription is not great, but it does pick up some it seems.  
+i.e. p_JAbn0GHEE

@@ -6,7 +6,10 @@ import sys
 
 from transcribe import transcribe_fromyoutube
 
-from flask import Flask, request
+from flask import Flask, request, session, g
+import whisper
+import pandas as pd
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -19,7 +22,21 @@ def hello():
 @app.route('/transcribe/')
 def transcribe():
     video = request.args.get('videoid')
-    return transcribe_fromyoutube(video)
+    try:
+
+        model = g.get("model", None)
+        if (model is None):
+            print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+            model = whisper.load_model("large")
+            g.model = model
+            print("loaded model")
+            print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        ret = transcribe_fromyoutube(video, model)
+        
+    except Exception as e: # work on python 3.x
+        print(e)
+        ret = 'error'
+    return ret
 
 if (__name__ == '__main__'):
     app.run(host='0.0.0.0', port=8001)
