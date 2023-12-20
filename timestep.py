@@ -311,8 +311,7 @@ if __name__ == '__main__':
             plwords = ""
             #update to public if we have reviewed.  
             #if we dont want to publish, rank as 0.  
-            if (privacystatus=="unlisted" and pDate.date() > mydate):
-
+            if ((privacystatus=="unlisted" or privacystatus=="public") and pDate.date() > mydate):
                 reftranscript = db.reference(f'/misterrubato/' + videoid + '/transcript')
                 reftr = reftranscript.get()
                 if reftr is None:
@@ -325,6 +324,11 @@ if __name__ == '__main__':
                         data = {'transcript':transcript}
                         reftranscript.set(data)
                         print(data)
+                    else:
+                        print('transcript error' + videoid)
+
+            if (privacystatus=="unlisted" and pDate.date() > mydate):
+
 
                 refpl = db.reference(f'/misterrubato/' + videoid + '/playlist')
                 #if this exists, return

@@ -22,3 +22,14 @@ This is a good way to get a summary.
 Probably should generate a summary after we get the better quality transcription.  
 It is song, so the transcription is not great, but it does pick up some it seems.  
 i.e. p_JAbn0GHEE
+
+
+embed this in a web UI?  
+
+https://docs.chainlit.io/guides/iframe
+
+
+See if we can get some basic sort of reinforcement learning 
+https://pytorch.org/tutorials/intermediate/reinforcement_q_learning.html
+https://tensorforce.readthedocs.io/en/latest/
+

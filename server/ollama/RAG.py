@@ -5,6 +5,7 @@
 from langchain import hub
 from langchain.embeddings import GPT4AllEmbeddings
 from langchain.embeddings import OllamaEmbeddings
+from langchain.embeddings import FastEmbedEmbeddings
 from langchain.vectorstores import Chroma
 from langchain.llms import Ollama
 from langchain.callbacks.manager import CallbackManager
@@ -12,9 +13,9 @@ from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 import chainlit as cl
 from langchain.chains import RetrievalQA,RetrievalQAWithSourcesChain
 # Set up RetrievelQA model
-QA_CHAIN_PROMPT = hub.pull("rlm/rag-prompt-mistral")
+QA_CHAIN_PROMPT = hub.pull("rlm/rag-prompt-llama")
 MY_MODEL = "llama2" #"mistral"
-myEmbeddings = OllamaEmbeddings(model="llama2") #GPT4AllEmbeddings()
+myEmbeddings = FastEmbedEmbeddings() #OllamaEmbeddings(model="llama2") #GPT4AllEmbeddings()
 
 #load the LLM
 def load_llm():

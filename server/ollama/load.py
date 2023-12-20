@@ -5,6 +5,7 @@
 #pip install langchainhub
 #pip install pypdf
 #pip install chainlit
+#pip install fastembed
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter, CharacterTextSplitter
 from langchain.document_loaders import PyPDFLoader, DirectoryLoader, TextLoader
@@ -44,10 +45,12 @@ def create_vector_db():
 def create_llama2_db():
     loader = DirectoryLoader(DATA_PATH, glob="**/*.txt", loader_cls=TextLoader)
     documents = loader.load()
+    print(f"Processed {len(documents)} txt files")
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=390, chunk_overlap=40)
     texts = text_splitter.split_documents(documents)
     ollamaEmbeddings = OllamaEmbeddings(model="llama2")
-    vectorstore = Chroma.from_documents(documents=texts, embedding=ollamaEmbeddings,persist_directory=DB_PATH) 
+#    vectorstore = Chroma.from_documents(documents=texts, embedding=ollamaEmbeddings,persist_directory=DB_PATH) 
+    vectorstore = Chroma.from_documents(documents=texts, embedding=FastEmbedEmbeddings(),persist_directory=DB_PATH)      
     vectorstore.persist()
 
 if __name__=="__main__":
