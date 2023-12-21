@@ -2,9 +2,8 @@
 #pip install python-dotenv
 #python ./server/transcription/server.py
 #pip install moviepy
+#pip install fastembed
 import sys
-
-from transcribe import transcribe_fromyoutube
 
 from flask import Flask, request, session, g
 import whisper
@@ -12,7 +11,7 @@ import pandas as pd
 from datetime import datetime
 from langchain import hub
 from langchain.embeddings import GPT4AllEmbeddings
-from langchain.embeddings import OllamaEmbeddings
+#from langchain.embeddings import OllamaEmbeddings
 from langchain.embeddings import FastEmbedEmbeddings
 from langchain.vectorstores import Chroma
 from langchain.llms import Ollama
@@ -71,15 +70,13 @@ def hello():
 @app.route('/chat/')
 def chat():
     query = request.args.get('query')
+    print("chat query" + query)
     try:
         chain=qa_bot()
-        cb = cl.AsyncLangchainCallbackHandler(
-        stream_final_answer=True,
-        answer_prefix_tokens=["FINAL", "ANSWER"]
-        )
-        cb.answer_reached=True
+        print("two")
         # res=await chain.acall(message, callbacks=[cb])
-        res= chain.call(query, callbacks=[cb])
+#        res= chain.call(query, callbacks=[cb])
+        res= chain.invoke(query)
         print(f"response: {res}")
         answer=res["result"]
         answer=answer.replace(".",".\n")
