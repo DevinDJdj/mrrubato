@@ -27,9 +27,47 @@ i.e. p_JAbn0GHEE
 embed this in a web UI?  
 
 https://docs.chainlit.io/guides/iframe
+Just use the 
+**server/ollama/server.py
+Good enough, make this JSON response and then embed some calls to this in the website.  
+Maybe need to get SSL cert for this.  
+i.e. https://blog.miguelgrinberg.com/post/running-your-flask-application-over-https
+Then just make request to this server.  
+http://x.x.x.x:8000/chat/?query=whats around the river bend
 
 
+***
 See if we can get some basic sort of reinforcement learning 
+This is key to make this sort of system work.  
 https://pytorch.org/tutorials/intermediate/reinforcement_q_learning.html
 https://tensorforce.readthedocs.io/en/latest/
+
+
+Overall flow
+**chat.html -> analyze.html -> feedback -> reinforcement_q_learning for model for this user -> restart.  
+Or something similar, either way the feedback learning must be part of the process.  
+Once we have this in an ongoing process, things will change.  
+Right now most models are static.  
+But the overall industry surely will make that change too sooner rather than later.  
+User data is already used in a variety of ways.  
+But with advanced models, this will essentially equate to "getting to know" the user.  
+Once all parts come together with video generation etc. it could be quite interesting.  
+Long road.  
+Can we perhaps map the text to video clips, we already have that info.  
+So We just need a lookup process for snippets of text to point to the video->Time.  
+Take the textual response from the model and link it to videos to start.  
+Then use the Youtube interface to intelligently mix those videos.  
+Maybe just load two at a time, and queue the other when one is going to stop.  
+Do it with some window of error.  
+First need the mapping lookup, for now just use the sources results.  
+already have the start times there.  
+Timestamps represent start of speech.  
+
+This is the future though, these will really be intelligent agents who get to know users.  
+Have to make the endpoint URL interchangable.  
+Maybe this is a way we can do this, from chat interface, they are redirected to whatever URL.  
+And the chat should be an accumulation of preferred sites data.  
+Transcripts only shared between friends.  
+Man so many things I want to make.  
+
 

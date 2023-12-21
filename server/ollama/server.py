@@ -66,7 +66,7 @@ app = Flask(__name__)
 def hello():
     return 'Hello, World!'
 
-#http://127.0.0.1:8000/transcribe/?query=how are you
+#http://127.0.0.1:8000/chat/?query=how are you
 @app.route('/chat/')
 def chat():
     query = request.args.get('query')
@@ -76,6 +76,7 @@ def chat():
         print("two")
         # res=await chain.acall(message, callbacks=[cb])
 #        res= chain.call(query, callbacks=[cb])
+        #this performance will hinder things I suspect.  
         res= chain.invoke(query)
         print(f"response: {res}")
         answer=res["result"]
@@ -92,6 +93,38 @@ def chat():
         else:
             answer+=f"\nNo Sources found"
         ret = answer
+    except Exception as e: # work on python 3.x
+        print(e)
+        ret = 'error'
+    return ret
+
+#http://127.0.0.1:8000/api/?query=how are you
+@app.route('/api/')
+def chat():
+    query = request.args.get('query')
+    print("chat query" + query)
+    try:
+        chain=qa_bot()
+        print("two")
+        # res=await chain.acall(message, callbacks=[cb])
+#        res= chain.call(query, callbacks=[cb])
+        #this performance will hinder things I suspect.  
+        res= chain.invoke(query)
+        print(f"response: {res}")
+        answer=res["result"]
+        answer=answer.replace(".",".\n")
+        sources=res["source_documents"]
+        # sources = [s.replace('\\n', '\n') for s in sources]
+
+
+        if sources:
+            s = str(str(sources))
+            s = s.replace("\\n", "\n")
+            #read sources here and add a link to the time.  
+            answer+=f"\nSources: "+s
+        else:
+            answer+=f"\nNo Sources found"
+        ret = res
     except Exception as e: # work on python 3.x
         print(e)
         ret = 'error'
