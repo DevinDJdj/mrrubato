@@ -319,14 +319,17 @@ if __name__ == '__main__':
                     localserver = config.cfg['localserver']['host'] + ":" + str(config.cfg['localserver']['port'])
                     url = f'http://{localserver}/transcribe/?videoid={videoid}'
                     print(url)
-                    transcript = requests.get(url, timeout=(5, None)).text
-                    if (transcript is not None and transcript !="error"):
-                        data = {'transcript':transcript}
-                        reftranscript.set(data)
-                        print(data)
-                    else:
-                        print('transcript error' + videoid)
-
+                    try:
+                        transcript = requests.get(url, timeout=(5, None)).text
+                        if (transcript is not None and transcript !="error"):
+                            data = {'transcript':transcript}
+                            reftranscript.set(data)
+                            print(data)
+                        else:
+                            print('transcript error' + videoid)
+                    except:
+                        print('error using transcript service' + videoid)
+                        
             if (privacystatus=="unlisted" and pDate.date() > mydate):
 
 

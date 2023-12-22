@@ -5,7 +5,7 @@
 #pip install fastembed
 import sys
 
-from flask import Flask, request, session, g
+from flask import Flask, request, session, g, json
 import whisper
 import pandas as pd
 from datetime import datetime
@@ -100,7 +100,7 @@ def chat():
 
 #http://127.0.0.1:8000/api/?query=how are you
 @app.route('/api/')
-def chat():
+def api():
     query = request.args.get('query')
     print("chat query" + query)
     try:
@@ -116,15 +116,13 @@ def chat():
         sources=res["source_documents"]
         # sources = [s.replace('\\n', '\n') for s in sources]
 
-
+        retsource = []
         if sources:
-            s = str(str(sources))
-            s = s.replace("\\n", "\n")
-            #read sources here and add a link to the time.  
-            answer+=f"\nSources: "+s
-        else:
-            answer+=f"\nNo Sources found"
-        ret = res
+            for s in sources:               
+               retsource.append({'content': s.content, 'metadata': s.metadata['source']})
+            
+        ret = {'answer': answer, 'sources': retsource, 'query': query}
+        ret = json.dumps(res)
     except Exception as e: # work on python 3.x
         print(e)
         ret = 'error'
