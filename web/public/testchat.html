@@ -1,0 +1,158 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content=
+		"width=device-width, initial-scale=1.0">
+<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<link href="css/app-dictaphone.css" rel="stylesheet" type="text/css">
+	<title>Speech to Text</title>
+</head>
+
+<body>
+	<input type="text" id="chatbox" name="chatbox" value="Open to Chat">
+	<button type="button" onclick="inputChat()">Update</button>
+<table>
+		<tr>
+		<td>
+		
+			  <div id="player" valign="top"></div>
+	  
+		  <div class="words" contenteditable>
+			   <input type="text" id="p" name="p">
+		  </div>
+		  <div id="submit" valign="top">
+			  <input type="range" id="points" name="points" min="0" max="10" value="1" />
+			  <button type="button" onclick="updateVideo()">Update</button>
+		  </div>
+	   <div id="midi"></div>
+	  <!--    <button type="button" onclick="saveMidiFeedback();">Save Midi Feedback</button> -->
+		  <div id="out"></div>	
+	  
+	  </td>
+	  
+	  <td>
+	  
+		<div id="clock" 
+			 style=	"display: inline-block;
+			  font-family: monospace;
+			  font-size: 30px;
+			  text-align: right;
+			  color: lightgray; 
+			  border-radius: 10px; 
+			  padding: 10px; 
+			  background-color: rgba(0, 0, 0, 0.75);">
+		</div>
+		<div id="secondselapsed" 
+			 style=	"display: inline-block;
+			  font-family: monospace;
+			  font-size: 30px;
+			  text-align: right;
+			  color: lightgray; 
+			  border-radius: 10px; 
+			  padding: 10px; 
+			  background-color: rgba(0, 0, 0, 0.75);">
+		</div>
+		
+		<br>
+		  <p id="load">Firebase SDK Loading&hellip;</p>
+		  <div id="iterationsh" style="height: 390px;overflow:auto;"></div>
+	  <!--    <textarea id="iterations" rows="40" cols="40"></textarea> -->
+	  </td><td>
+		  <div id="mycommentsh"></div>
+		  <textarea id="mycomments" rows="20" cols="40"></textarea>
+	  </td><td>
+		  <textarea id="transcript" rows="20" cols="60"></textarea>
+	  </td>
+	  </tr>
+	  </table>
+	  
+
+		<script>
+
+
+			function getSecsFromTime(time){
+				minsec = time.split(":");
+				if (minsec == time)
+					return 0;
+				console.log(+parseInt(minsec[0])*60 + +parseInt(minsec[1]));
+				return +parseInt(minsec[0])*60 + +parseInt(minsec[1]);
+				
+			}
+			
+			function updateNotes(){
+				var allnotes = "";
+				for (i=0; i<notesarray.length; i++){
+					allnotes += notesarray[i] + "\n";
+				}
+				$('#mycomments').val(allnotes);
+				$('#mycommentsh').html(makeTimeLinks(allnotes));
+				
+			}
+			
+			function createNotesArray(){
+			//also update the new DIV with links.  
+				allnotes = $('#mycomments').val();
+				notesarray = [];
+				const lines = allnotes.split("\n");
+				for (i = 0; i< lines.length; i++){
+					notesarray[i] = lines[i];
+				}
+				console.log(notesarray);
+				//set title
+				updateNotes();
+			}
+			
+			function getTime(comment){
+				const regExp = /\(([^)]+)\)/g;
+				const matches = [...comment.matchAll(regExp)].flat();
+			//    console.log(matches);
+				if (matches.length > 0){
+					return getSecsFromTime(matches[1]);
+				}
+				else{
+					return 0;
+				}
+			}
+			
+			function addComment(comment, commenttime){
+				//find where to splice and then reset the notes
+				//notesarray.splice(i, 0, comment);
+				createNotesArray();
+				i = 0;
+				while (i< notesarray.length && getTime(notesarray[i]) < getSecsFromTime(commenttime)){
+					i++;
+				}
+			//	if (i==0) i=1;
+				notesarray.splice(i, 0, comment + " (" + commenttime + ")");
+				updateNotes();
+				
+			}
+			
+			function inputChat() {
+				mychat = $('#chatbox').val();
+			
+				$.getJSON('https://chat.misterrubato.com:8000/api/?query=' + encodeURIComponent(mychat),function(data){
+				  if (typeof(data.result) != "undefined") {
+					console.log('response  ' + data.result);
+					console.log('response  ' + data.source_documents);
+					for (s in data.source_documents) {
+						console.log('doc ' + s );
+					}
+				   } 
+				   else {
+					console.log('chat failed');
+				   }   
+				});
+			
+			}
+			
+			</script>
+			
+	</body>
+
+
+</html>
