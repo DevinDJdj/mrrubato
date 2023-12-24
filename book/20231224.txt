@@ -1,0 +1,24 @@
+**web/public/chat.html
+Need to finish this.  
+Just have a simple scrolling chat with smart agent.  
+Calling the ollama/server.py
+And Some videos which are sources to the right.  
+Snippets of the videos, and link to analyze.html
+
+
+**web/public/analyze.html
+Show the selected language and some common words.  
+Show the switch language as well.  
+All of this should just be simple piano fingering images.  
+Also when something is played, have a scrolling translation?  
+Or just show that it is a known word.  
+Have a few listed and then a popup to show/search many more.  
+We could have a language as well for each embedding?  
+
+Get rid of the top duplicate voice input.  
+Pull the transcript from the DB if it is there.  
+
+
+*How do we associate sequences with meaning?  
+*How do we make new sequence->meaning definitions?  
+

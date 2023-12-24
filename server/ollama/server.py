@@ -19,6 +19,7 @@ from langchain.callbacks.manager import CallbackManager
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 import chainlit as cl
 from langchain.chains import RetrievalQA,RetrievalQAWithSourcesChain
+from fastapi.encoders import jsonable_encoder
 
 
 QA_CHAIN_PROMPT = hub.pull("rlm/rag-prompt-llama")
@@ -119,10 +120,10 @@ def api():
         retsource = []
         if sources:
             for s in sources:               
-               retsource.append({'content': s.content, 'metadata': s.metadata['source']})
+               retsource.append({'content': s.page_content, 'metadata': s.metadata['source']})
             
         ret = {'answer': answer, 'sources': retsource, 'query': query}
-        ret = json.dumps(res)
+        ret = json.dumps(ret)
     except Exception as e: # work on python 3.x
         print(e)
         ret = 'error'
