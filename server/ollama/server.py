@@ -6,6 +6,8 @@
 import sys
 
 from flask import Flask, request, session, g, json
+from flask_cors import CORS
+#pip install flask.ext
 import whisper
 import pandas as pd
 from datetime import datetime
@@ -62,6 +64,7 @@ def qa_bot():
 
 
 app = Flask(__name__)
+CORS(app)
 
 @app.route('/')
 def hello():
@@ -130,4 +133,4 @@ def api():
     return ret
 
 if (__name__ == '__main__'):
-    app.run(host='0.0.0.0', port=8000)
+    app.run(host='0.0.0.0', port=8000, ssl_context=('cert.pem', 'key.pem'))

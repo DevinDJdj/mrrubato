@@ -4,6 +4,8 @@ Just have a simple scrolling chat with smart agent.
 Calling the ollama/server.py
 And Some videos which are sources to the right.  
 Snippets of the videos, and link to analyze.html
+Some feedback to rate the accuracy of the answer.  
+But not entirely sure how to use the feedback yet.  
 
 
 **web/public/analyze.html
@@ -14,6 +16,17 @@ Also when something is played, have a scrolling translation?
 Or just show that it is a known word.  
 Have a few listed and then a popup to show/search many more.  
 We could have a language as well for each embedding?  
+
+Language goes to the right of the graph.  
+Show what we are playing at least on the midi.  
+Can we get this along with pass to the other?  
+https://jazz-soft.net/demo/Echo.html
+Load very small keyboards which is what is being played.  
+Show this from the midi file.  
+Have separate? one for midi input
+Then show a few common words.  
+Keep the word/idea dictionary in the realtimedb.  
+
 
 Get rid of the top duplicate voice input.  
 Pull the transcript from the DB if it is there.  
