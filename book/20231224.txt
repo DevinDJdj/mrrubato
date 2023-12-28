@@ -6,6 +6,21 @@ And Some videos which are sources to the right.
 Snippets of the videos, and link to analyze.html
 Some feedback to rate the accuracy of the answer.  
 But not entirely sure how to use the feedback yet.  
+--OK we have a start.  
+Still need to cache 10,000 or so results, show this in the chat page.  
+RTDB is fine I think, but we probably dont want this re-queried every time it changes.  
+--So not sure if we can do this easily.  
+have a datatable/filter for recent results.  
+have some sort of voting mechanism for query/result.  
+sort by most popular etc or most recent.  
+Custom chat interface, make links for all timestamps.  
+Auto-load one of the sources.  
+
+
+**/server/ollama/load.py
+Need to finish the process.  
+This needs to be ongoing.  Something needs to kick off the load.py
+for the newly ingested data.  
 
 
 **web/public/analyze.html

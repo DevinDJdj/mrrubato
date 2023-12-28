@@ -311,24 +311,6 @@ if __name__ == '__main__':
             plwords = ""
             #update to public if we have reviewed.  
             #if we dont want to publish, rank as 0.  
-            if ((privacystatus=="unlisted" or privacystatus=="public") and pDate.date() > mydate):
-                reftranscript = db.reference(f'/misterrubato/' + videoid + '/transcript')
-                reftr = reftranscript.get()
-                if reftr is None:
-                    #http://192.168.1.120/transcribe/?videoid=ZshYVeNHkOM
-                    localserver = config.cfg['localserver']['host'] + ":" + str(config.cfg['localserver']['port'])
-                    url = f'http://{localserver}/transcribe/?videoid={videoid}'
-                    print(url)
-                    try:
-                        transcript = requests.get(url, timeout=(5, None)).text
-                        if (transcript is not None and transcript !="error"):
-                            data = {'transcript':transcript}
-                            reftranscript.set(data)
-                            print(data)
-                        else:
-                            print('transcript error' + videoid)
-                    except:
-                        print('error using transcript service' + videoid)
                         
             if (privacystatus=="unlisted" and pDate.date() > mydate):
 
@@ -394,6 +376,25 @@ if __name__ == '__main__':
                         
 
                 
+            if ((privacystatus=="unlisted" or privacystatus=="public") and "transcript" not in item and pDate.date() > mydate):
+                reftranscript = db.reference(f'/misterrubato/' + videoid + '/transcript')
+                reftr = reftranscript.get()
+                if reftr is None:
+                    #http://192.168.1.120/transcribe/?videoid=ZshYVeNHkOM
+                    localserver = config.cfg['localserver']['host'] + ":" + str(config.cfg['localserver']['port'])
+                    url = f'http://{localserver}/transcribe/?videoid={videoid}'
+                    print(url)
+                    try:
+                        transcript = requests.get(url, timeout=(5, None)).text
+                        if (transcript is not None and transcript !="error"):
+                            data = {'transcript':transcript}
+                            reftranscript.set(data)
+                            print(data)
+                        else:
+                            print('transcript error' + videoid)
+                    except:
+                        print('error using transcript service' + videoid)
+
             if ((privacystatus=="public" or privacystatus=="unlisted") and pDate.date() < mydate ):
                 print(videoid)
                 print("Making private")

@@ -17,6 +17,9 @@ from langchain.embeddings import LlamaCppEmbeddings
 from langchain.embeddings import OllamaEmbeddings
 from langchain.embeddings import FastEmbedEmbeddings #pip install fastembed
 
+
+from oauth2client.tools import argparser, run_flow
+
 #from langchain.embeddings import OllamaEmbeddings
 #dont think this is working.  
 #try to continue here 
@@ -25,7 +28,7 @@ from langchain.embeddings import FastEmbedEmbeddings #pip install fastembed
 import os
 
 DATA_PATH="data/"
-DATA_PATH="../transcription/output/"
+DATA_PATH="/home/devin/server/transcription/output/"
 DB_PATH = "vectorstores/db/"
 
 def create_vector_db():
@@ -42,8 +45,8 @@ def create_vector_db():
     vectorstore.persist()
 
 
-def create_llama2_db():
-    loader = DirectoryLoader(DATA_PATH, glob="**/*.txt", loader_cls=TextLoader)
+def create_llama2_db(video = "*"):
+    loader = DirectoryLoader(DATA_PATH, glob="**/" + video + ".txt", loader_cls=TextLoader)
     documents = loader.load()
     print(f"Processed {len(documents)} txt files")
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=390, chunk_overlap=40)
@@ -53,6 +56,14 @@ def create_llama2_db():
     vectorstore = Chroma.from_documents(documents=texts, embedding=FastEmbedEmbeddings(),persist_directory=DB_PATH)      
     vectorstore.persist()
 
+
+
 if __name__=="__main__":
 #    create_vector_db()
-    create_llama2_db()
+    argparser.add_argument("--video", help="Add video to DB", default="")
+    #called from transcript server
+    args = argparser.parse_args()
+    video = "*"
+    if args.video is not None and args.video !="":
+        video = args.video
+    create_llama2_db(video)

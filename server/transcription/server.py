@@ -11,6 +11,8 @@ import whisper
 import pandas as pd
 from datetime import datetime
 
+import subprocess
+
 app = Flask(__name__)
 
 model = None
@@ -34,6 +36,8 @@ def transcribe():
     except Exception as e: # work on python 3.x
         print(e)
         ret = 'error'
+    if ret !='error' and ret !='':
+        subprocess.call('python ../ollama/load.py --video ' + video, shell=True)
     return ret
 
 if (__name__ == '__main__'):
