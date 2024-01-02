@@ -8,6 +8,8 @@
 		"width=device-width, initial-scale=1.0">
 <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js'></script>
+<script src="https://cdn.jsdelivr.net/npm/webmidi@latest/dist/iife/webmidi.iife.js"></script>
 <link href="css/app-dictaphone.css" rel="stylesheet" type="text/css">
 	<title>Speech to Text</title>
 </head>
@@ -16,7 +18,7 @@
 	<input type="text" id="chatbox" name="chatbox" value="Open to Chat">
 	<button type="button" onclick="inputChat()">Update</button>
 <table>
-		<tr>
+		<tr valign="top">
 		<td>
 		
 			  <div id="player" valign="top"></div>
@@ -62,16 +64,45 @@
 		  <div id="iterationsh" style="height: 390px;overflow:auto;"></div>
 	  <!--    <textarea id="iterations" rows="40" cols="40"></textarea> -->
 	  </td><td>
-		  <div id="mycommentsh"></div>
-		  <textarea id="mycomments" rows="20" cols="40"></textarea>
+		  <div id="mychatsh"></div>
+		  <textarea hidden id="mychat" rows="20" cols="10"></textarea>
 	  </td><td>
-		  <textarea id="transcript" rows="20" cols="60"></textarea>
+        <div id="sourcessh"></div>
+        <textarea hidden id="sources" rows="20" cols="10"></textarea>
 	  </td>
 	  </tr>
 	  </table>
 	  
 
-		<script>
+      <script type="text/javascript" src="clock.js"></script>
+      <script type="text/javascript" src="midi.js"></script>
+
+    <script>
+
+        var video = 'T7aCHEAGCsU';
+        var videojson = null;
+        var channelId = 'UC4dK3RpqBq2JpIkRmQn6HOA'; //@misterrubato doesnt work in URL, probably need to escape the @, but who cares.  
+        var title = '';
+        var seek = -1;
+        var sources = [];
+
+
+            function makeTimeLinks(desc, vid){
+                desc = desc.replaceAll("\n", "<br>");
+            //    desc = desc.replace(")", ")<br>");
+                const regExp = /\(([^)]+)\)/g;
+                regExp2 = /\d+\:\d\d?/g;
+                const matches = [...desc.matchAll(regExp2)].flat();
+                for (var i=0; i<matches.length; i++){
+                    secs = getSecsFromTime(matches[i]);
+                    if (secs > 0){
+                        desc = desc.replace(matches[i], '<a href="#" onclick="seekTo(' + secs + ', &quot;' + vid + '&quot;);">' + matches[i] + '</a>');
+                    }
+
+                }
+            //    console.log(matches);
+                return desc;
+            }
 
 
 			function getSecsFromTime(time){
@@ -85,17 +116,28 @@
 			
 			function updateNotes(){
 				var allnotes = "";
-				for (i=0; i<notesarray.length; i++){
+                var allnoteshtml = "";
+				for (var i=0; i<notesarray.length; i++){
 					allnotes += notesarray[i] + "\n";
+                    allnoteshtml += makeTimeLinks(notesarray[i]) + "<br>";
 				}
-				$('#mycomments').val(allnotes);
-				$('#mycommentsh').html(makeTimeLinks(allnotes));
+				$('#mychat').val(allnotes);
+				$('#mychatsh').html(allnoteshtml);
 				
 			}
 			
-			function createNotesArray(){
+			function updateSources(){
+                allsources = '';
+				for (i=0; i<sources.length; i++){
+					allsources += makeTimeLinks(sources[i].content, getVidFromMetadata(sources[i].metadata));
+				}
+				$('#sourcessh').html(allsources);
+				
+			}
+
+            function createNotesArray(){
 			//also update the new DIV with links.  
-				allnotes = $('#mycomments').val();
+				allnotes = $('#mychat').val();
 				notesarray = [];
 				const lines = allnotes.split("\n");
 				for (i = 0; i< lines.length; i++){
@@ -106,7 +148,8 @@
 				updateNotes();
 			}
 			
-			function getTime(comment){
+
+            function getTime(comment){
 				const regExp = /\(([^)]+)\)/g;
 				const matches = [...comment.matchAll(regExp)].flat();
 			//    console.log(matches);
@@ -132,21 +175,34 @@
 				
 			}
 			
+			function addSource(source){
+                sources.splice(0, 0, source);
+                updateSources();
+			}
+
+            function getVidFromMetadata(m){
+                vid = m.substring(m.lastIndexOf("/")+1, m.lastIndexOf("."));
+                return vid;
+            }
 
             //openssl req -x509 -newkey rsa:4096 -nodes -out cert.pem -keyout key.pem -days 365
             //app.run(ssl_context=('cert.pem', 'key.pem'))
 			function inputChat() {
 				mychat = $('#chatbox').val();
-			
+                addComment(mychat, "00:00");
 				$.getJSON('https://chat.misterrubato.com:8000/api/?query=' + encodeURIComponent(mychat),function(data){
                   
 				  if (typeof(data.answer) != "undefined") {
                     console.log('query ' +  data.query);
+                    addComment(data.answer, "00:00")
 					console.log('response  ' + data.answer);
 					console.log('sources  ' + data.sources);
-					for (i=0; i<data.sources.length; i++) {
-						console.log('content ' + data.sources[i].content );
-                        console.log('metadata ' + data.sources[i].metadata);
+					for (j=0; j<data.sources.length; j++) {
+						console.log('content ' + data.sources[j].content );
+                        console.log('metadata ' + data.sources[j].metadata);
+                        vid = getVidFromMetadata(data.sources[j].metadata);
+                        addSource(data.sources[j]);
+                        
 					}
 				   } 
 				   else {
@@ -159,7 +215,64 @@
 			
 			</script>
 			
-	</body>
+
+            <script>
+                // 2. This code loads the IFrame Player API code asynchronously.
+                var tag = document.createElement('script');
+          
+                tag.src = "https://www.youtube.com/iframe_api";
+                var firstScriptTag = document.getElementsByTagName('script')[0];
+                firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+          
+                // 3. This function creates an <iframe> (and YouTube player)
+                //    after the API code downloads.
+                function onYouTubeIframeAPIReady() {
+                  player = new YT.Player('player', {
+                    height: '390',
+                    width: '640',
+                    videoId: video,
+                    playerVars: {
+                      'playsinline': 1
+                    },
+                    events: {
+                      'onReady': onPlayerReady,
+                      'onStateChange': onPlayerStateChange
+                    }
+                  });
+                }
+          
+                // 4. The API will call this function when the video player is ready.
+                function onPlayerReady(event) {
+                  event.target.playVideo();
+                  if (seek > 0){
+                      event.target.seekTo(seek);
+                  }
+                }
+          
+                // 5. The API calls this function when the player's state changes.
+                //    The function indicates that when playing a video (state=1),
+                //    the player should play for six seconds and then stop.
+                var done = false;
+                function onPlayerStateChange(event) {
+                  if (event.data == YT.PlayerState.PAUSED || event.data == YT.PlayerState.ENDED) {
+                      //should use same for transcript function.  
+                      midienabled = 0;
+                  }
+          
+                  if (event.data == YT.PlayerState.PLAYING) {
+          //          setTimeout(stopVideo, 6000);
+          //			console.log("state change");
+                      midienabled = 1;
+                      
+                    done = true;
+                  }
+                }
+                function stopVideo() {
+                  player.stopVideo();
+                }
+              </script>
+
+</body>
 
 
 </html>

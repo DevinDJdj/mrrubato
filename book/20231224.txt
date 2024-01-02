@@ -4,7 +4,7 @@ Just have a simple scrolling chat with smart agent.
 Calling the ollama/server.py
 And Some videos which are sources to the right.  
 Snippets of the videos, and link to analyze.html
-Some feedback to rate the accuracy of the answer.  
+*Some feedback to rate the accuracy of the answer.  *
 But not entirely sure how to use the feedback yet.  
 --OK we have a start.  
 Still need to cache 10,000 or so results, show this in the chat page.  
@@ -16,11 +16,23 @@ sort by most popular etc or most recent.
 Custom chat interface, make links for all timestamps.  
 Auto-load one of the sources.  
 
+Right now I dont think we have any context from previous questions.  
+This is something we should add.  But not right now.  
+Try to use this:
+https://github.com/webrtc/samples
+We also have screen share possibility.  
+More complex than I want really, but need a component, worth it?
+https://codelabs.developers.google.com/codelabs/webrtc-web#1
+
+
+
 
 **/server/ollama/load.py
 Need to finish the process.  
 This needs to be ongoing.  Something needs to kick off the load.py
 for the newly ingested data.  
+--OK, looks to be working.  
+
 
 
 **web/public/analyze.html
@@ -49,4 +61,39 @@ Pull the transcript from the DB if it is there.
 
 *How do we associate sequences with meaning?  
 *How do we make new sequence->meaning definitions?  
+
+
+**web/public/language.html
+This page first should show the languages as they exist and allow for editing by any admin.  
+Must keep a history of the language, so every word should have an update date, and we can go back through the history of backups
+to see how this evolved?  
+This needs to have the small piano image of the word itself so that we have a good understanding.  
+Also the sound, a variety of sounds as right now the word is only a combination of notes in sequence.  
+But no rhythm attributed.  
+Should also be able to create words within the language.  
+Perhaps this should be a universal word.  
+Then afterward attribute a "definition" to that word.  
+Probably easier that the interface to be the piano interface when thinking of how to form words.  
+
+
+**web/public/metalanguage.html
+This should be the language switching structure.  
+This also could be different, maybe nobody would change if designed well I suspect.  
+
+
+either way languages should be stored in the DB and not settings files.  
+
+First need to scan the pieces played for potential words.  
+Have a workflow to give meaning to those words while listening.  
+Highlight the words while listening.  
+Only take the most prevalent from any particular song.  
+**analyze.py
+This should be done during analyze.py
+Already have something close to this.  
+Put this in the Language DB, then have a location for words -> Song -> iterations
+Then we can go between songs as well.  
+How significant is length of word?  We need to do some analysis before defining word lengths.  
+I dont know that a single word length is what we want.  Perhaps we do need multiple word lengths and then a 
+metalanguage switch between word lengths.  
+Perhaps a few standard word lengths.  What can we use as word delimiter if we do this?  
 
