@@ -1,0 +1,30 @@
+Lets use this modus operandi for watching on one machine and creating on the other.  
+This will be a useful way to do things.  
+
+**web/public/analyze.html
+Cant do autosave, but perhaps remind after certain period of time.  
+Also make sure we can save and then resave.  This is what is preventing.  
+Need to make sure update and re-update works.  I think we have already tested this
+in a rudimentary way.  
+
+**web/public/chat.html
+webrtc
+
+**web/public/watch.html
+Show watch list.  Show video details, are we able to get, I forget.  
+Save where left off.  Update the RTDB every minute or so if watching.  
+Same for analyze.html?  Only save video timer.  
+
+
+**web/public/history.html
+Show created list along with search filter. 
+Search filter needs to search the transcripts as well. 
+Just load everything and use javascript?  
+For now this is ok, but perhaps need a better solution.  
+
+**web/public/users.html
+Only visible to logged in users.  
+How many comments, review time.  
+Inside of here, show preference.  
+Per user, there will be "favorite" or similar mechanism.  
+NxN map, just store favorites and then have a calculation.  
