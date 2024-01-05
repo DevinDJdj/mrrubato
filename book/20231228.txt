@@ -28,3 +28,40 @@ How many comments, review time.
 Inside of here, show preference.  
 Per user, there will be "favorite" or similar mechanism.  
 NxN map, just store favorites and then have a calculation.  
+Just allow for similar to thumbs up feature and track this with some statistics
+likes / opportunities
+If there is no commentary by any of the likes, just take a somewhat random sample.  
+Again calculated by likes / opportunities
+
+
+
+**web/public/language.html
+How do we utilize this along with 
+**languages/**.py
+
+This is a significant architectural decision how we structure the language.  
+Definitely need some logic, but can it be encoded? 
+We can think of it perhaps like the .py includes the verbs and 
+all of the management from html page is the nouns and modifiers.  
+This allows us to grow in two distinct ways using different programmatic mechanisms.  
+Good for experimentation.  
+
+
+
+Need a feedback process.  
+Reinforcement Learning From Human Feedback (RLHF)
+This is key.  
+https://huggingface.co/docs/trl/quickstart
+
+This looks interesting, but we need to utilize the midi feedback
+in order to train the model, and this will need to be based on the 
+feedback language.  
+So similarly for the UI interface we will need to use a *.py, 
+we also need this same sort of structure for
+
+**server/llmtune/server.py
+for each feedback language we perhaps need a *.py
+in order to ingest properly.  
+Perhaps just pass the model.  
+*.py -> train(model, feedback)
+
