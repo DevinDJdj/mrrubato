@@ -97,3 +97,9 @@ I dont know that a single word length is what we want.  Perhaps we do need multi
 metalanguage switch between word lengths.  
 Perhaps a few standard word lengths.  What can we use as word delimiter if we do this?  
 
+Word -> Song/video -> iteration
+Language -> Song/video -> iteration
+
+Feedback should be part of the language
+
+https://data.commoncrawl.org/crawl-data/CC-MAIN-2023-50/index.html
