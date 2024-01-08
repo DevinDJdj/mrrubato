@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content=
+		"width=device-width, initial-scale=1.0">
+<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js'></script>
+<script src="https://cdn.jsdelivr.net/npm/webmidi@latest/dist/iife/webmidi.iife.js"></script>
+<link href="css/app-dictaphone.css" rel="stylesheet" type="text/css">
+	<title>Language selection and editing</title>
+</head>
+
+<body>
+    <table>
+		<tr valign="top">
+		<td>
+        </td>
+	  
+        <td>
+        
+          <div id="clock" 
+               style=	"display: inline-block;
+                font-family: monospace;
+                font-size: 30px;
+                text-align: right;
+                color: lightgray; 
+                border-radius: 10px; 
+                padding: 10px; 
+                background-color: rgba(0, 0, 0, 0.75);">
+          </div>
+          <div id="secondselapsed" 
+               style=	"display: inline-block;
+                font-family: monospace;
+                font-size: 30px;
+                text-align: right;
+                color: lightgray; 
+                border-radius: 10px; 
+                padding: 10px; 
+                background-color: rgba(0, 0, 0, 0.75);">
+          </div>
+          
+          <br>
+            <p id="load">Firebase SDK Loading&hellip;</p>
+        </td><td>
+          <div id="languagessh"></div>
+          <textarea hidden id="sources" rows="20" cols="10"></textarea>
+        </td>
+        </tr>
+        </table>
+  
+</body>
+</html>

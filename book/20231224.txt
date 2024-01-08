@@ -103,3 +103,43 @@ Language -> Song/video -> iteration
 Feedback should be part of the language
 
 https://data.commoncrawl.org/crawl-data/CC-MAIN-2023-50/index.html
+
+
+Need to get back to the language
+**web/public/languages.html
+
+
+**server/ollama/server.py
+How do we prioritize more recent entities within the model?  
+
+
+webrtc backend:
+chat.misterrubato.com
+pip install websocket-server
+This is good enough:
+https://github.com/Pithikos/python-websocket-server
+
+Then use simple example like this:
+https://github.com/heyletscode/webrtc-videocall-javascript
+if we want to do this.  
+
+So anyone who is on at the same time with the same video, we want to get audio streams.  
+**web/public/analyze.html
+
+Have a live section, and then all other comments/users are displayed in time.  
+This doesnt help with the chat.html UI.  
+
+
+**web/public/chat.html
+Seems to work a bit better now.  
+For some reason allow embedding is off for some videos.  
+Cant find the pattern at the moment.  
+So many annoying issues.  
+
+
+**DB/
+Should make a wrapper for DB calls.  In case we need to change something.  
+Also Youtube maybe make a wrapper for this as well.  
+Practical or not?  
+
+
