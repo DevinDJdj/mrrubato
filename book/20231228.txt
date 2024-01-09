@@ -62,6 +62,42 @@ we also need this same sort of structure for
 **server/llmtune/server.py
 for each feedback language we perhaps need a *.py
 in order to ingest properly.  
+Separate the feedback by language.  
 Perhaps just pass the model.  
 *.py -> train(model, feedback)
+
+
+**web/public/analyze.html
+Need to save the video time when "Update" button used.  
+This should load at this location.  
+Need to pull the description of the original video.  
+
+
+When creating the language, perhaps we can generate the image via a language, 
+then have an abbreviated form which is identified by a certain structure 
+in the piano keys and/or some combination of verbalized word.  
+
+The initial image should be screen-based in addition with feedback?  
+The combination of the image and the feedback will adjust the image.  
+So all languages are essentially feedback languages.  
+
+Also when cutting video, act in time based on speed, 
+and cut on certain words depending on the act.  
+
+Need QR code generation on each page on site to be picked up.  
+Wish list.  
+
+If fail to open/generate, then can just rewind, i.e. after login.  
+
+www.zompist.com/resources
+
+Keep statistics on generation speed of words and frequency of use of 
+words, and use this to suggest alternatives to existing vocabulary.  
+
+Have fake timer for now for videos which cant be embedded.  
+Need a browser plugin really, but this gets too complex already.  
+Still possibility to try to design browser plugin, but this never really works.  
+
+But I like the idea of trying to have the definition generation a part 
+of the inherent language.  
 
