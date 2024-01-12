@@ -74,6 +74,9 @@ This should load at this location.
 Need to pull the description of the original video.  
 
 
+***LANGUAGE***
+***IDEATION***
+
 When creating the language, perhaps we can generate the image via a language, 
 then have an abbreviated form which is identified by a certain structure 
 in the piano keys and/or some combination of verbalized word.  
@@ -81,10 +84,18 @@ in the piano keys and/or some combination of verbalized word.
 LEFT - Image generation - The initial image should be screen-based in addition with feedback?  
 In general this will utilize stop/start, or complete pause while generation occurs.  
 RIGHT - Audio/Language Feedback - The combination of the image and the feedback will adjust the image.  
-In general this will be in time.  
+In general this will be in time.  This is also nice to have the history here.  
+Need to make the image of the KEYSET highlighted.  
+Use KEYSET words.  
+Match up times later.  
+
+
 BOTTOM - Generated Concept Audialized - we have to make this term much more well known.  
 So all languages are essentially feedback languages.  
+This is also current feedback on this IDEA.  
+This also affects the screen above.  
 
+Time cuts need to figure out later in more detail.  
 
 Also when cutting video, act in time based on speed, 
 and cut on certain words depending on the act.  
@@ -116,7 +127,7 @@ Lets try dividing at the octave.
 Key itself doesnt matter just sequence of keys.  
 Meta-Language:
 Aa = A followed by next octave a
-AaAaAa = Language switch
+Aa(aa)(aa)aA = Language switch
 AaCc = Key change - what does this mean?  
 Aa aa Aa aa = start
 aa aA aa aA = stop
@@ -138,10 +149,30 @@ BBCDbb
 or if CDEFc takes a parameter
 CCDEcc
 
-or perhaps
+So basic language sequence will be:
+**GRAMMAR**
+This is end of word marker whatever octave we are on, go back down the octaves.  
+
+WORD (ABCDa ... aa aaaA) -> Predicates to be used (AED..a) -> Predicates (EFGHe_EBCe BCDEb Bb CDEFc Cc next predicate DEFGd_Dd ) -> Sentence completion (AaaA)
+All sequences starting with AaA will be meta sequences.  
+
+This is also part of the predicate structure.  
+We can include prepositions to identify what the Current word is referring to, a post-reference I guess you could say.  
+We need perhaps further post and pre-references.  
+This is a key component to being able to add deeper structures.  
+
+**GRAMMAR**
+Example post-reference structure:
 BAB... means B is a qualifier for a
 CBC ... means C is a qualifier for b
 Define what is relating to what in this way perhaps?  
+
+Example Meta-language control structure word:
+Meta-language means /languages/*
+AaACDGa
+
+This may be difficult to program, but I think it should work ok.  
+
 
 Utilize this logic though
 if continued through a....aa then this is still further defining the function.  
@@ -156,6 +187,7 @@ If no open parentheses, then next note starts the sequence again.
 Never use the first note in any calculation other than to compare with the previous logic chain if it exists.  
 
 
+**GRAMMAR RULE**?
 Parameter prominence sequence should be Major 4th/5th, then sequence above/below
 A=0 on twelve tone this should probably be the prominence list due to harmonics.  
 0->7->4->5->9->8->3->2->6->11->1->12
@@ -163,6 +195,15 @@ A=0 on twelve tone this should probably be the prominence list due to harmonics.
 
 Do we need this sequence to be different?  
 How important is it?  
+Its quite important.  
+I like this sequence as it is written at the moment.  
+DIFF is 7U-3D-1U-4U-1D-5D-1D-4U-5U-10D-11U
+UDUUDDDUUDU
+Nice symetry and distinguishable I think in most intervals.  
+
+We can use from the front or the back depending on the mechanism.  
+BACK is 11D-10U-5D-4D-1U-5U-1U-4D-1D-3U-7D
+Harmony from the front and dissonance from the back.  
 
 For creation mechanism, whatever the word is that we are starting with, or the proto-word, 
 We use the creation sequence, and this context is remembered for this language.  
@@ -183,6 +224,30 @@ Show before -> after for each of those.
 In many ways each word will be similar to a kanji which retains some concept from previous iteration of the non-extended word.  
 What is the sequence to implement this?  
 
+**GRAMMAR RULE**
+The language inherently has no speed factor.  
+Rhythm will be utilized to determine personal preference of the listener.  
+And one of the most basic feedback mechanisms must be to speed up or slow down time in the system.  
+Stop time in order to add something.  
+This can be post-processing all of these cut out preferences for the recorder.  
+
+i.e. pause IDEATION, find other reference IDEA and link it utilizing the language.  
+
+Need only one active stream at a time.  Can have many windows open but feedback active or not 
+will need to be actively determined.  
+Feedback will only go to the last played video in analyze.html.  
+If not started ever, need manual interaction to start.  
+
+
+
+How do we solve the problem of simultaneous play with left and right hand being more natural.  
+Leave this for another time.  
+
+
+
+***IDEATION***
+***LANGUAGE***
+
 **record.py
 I think we have to start here.  
 Display the current key/word and potential options for continuing.  
@@ -193,3 +258,16 @@ Can we share this?
 
 **web/public/analyze.html
 activate the midi sounds, need the feedback.  
+
+**GRAMMAR**
+How do we make reference to other IDEA/TIME in the feedback mechanism?  
+Should have list of previously referenced videos and selection language.  
+This is picked from the watched list and has a filter to include this group or other groups.  
+Yes need selection language which is picked up in analyze.html
+then be able to copy link to IDEA/TIME and reference it to the currently analyzed IDEA/TIME
+Then inside of user preferences you can auto-jump to references by certain users/groups.  
+And then you can have a nested-depth setting.  
+
+From time to time need to crawl other sites for references to owned site.  
+
+
