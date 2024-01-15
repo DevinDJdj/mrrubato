@@ -1,0 +1,18 @@
+**web/public/synth.html
+Simple sample, utilize this to provide sound feedback in analyze.html
+How do we get better sounds?  
+https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Simple_synth
+https://medium.com/geekculture/building-a-modular-synth-with-web-audio-api-and-javascript-d38ccdeca9ea
+
+
+
+This combines with Recordrtc
+Variety of things to do.  
+Image recognition and description generation.  
+Essentially real-time descriptive audio generation.  
+In time feedback generation for communication in analyze.  
+I would like to use the midi controller, but we can always allow for just clicking on the 
+language definition in the page.  
+Need to do languages.html.  
+
+
