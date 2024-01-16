@@ -15,4 +15,16 @@ I would like to use the midi controller, but we can always allow for just clicki
 language definition in the page.  
 Need to do languages.html.  
 
+pip install torchviz
+pip install tensorboard
+https://appsilon.com/visualize-pytorch-neural-networks/
+
+Can we use this?  
+peertube.org
+Use this with the recordrtc results.  
+And then expand this with the midi info as well?  
+
+Not sure using Youtube is best.  
+At least create a scaffolding for using another service.  
+Need to do this with DB as well as Video Service.  
 
