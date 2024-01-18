@@ -26,3 +26,100 @@ Install drivers for Audiobox.  - done
 git config --global user.email "petuniajacobson@gmail.com"
 git config --global user.name "Petunia Jacobson"
 
+
+copy c:/Users/user/AppData/Roaming/obs-studio
+to new PC
+
+*install python
+
+*install anaconda
+This is for testing.  
+
+testing AI dev.  
+pip3 install torch torchvision torchaudio
+
+
+What do we maximize when generating music?  
+What will be the Q value?  
+I think a mathematical approach will have meaning here, but what exactly.  
+
+
+
+**https://huggingface.co/docs/trl/quickstart
+
+pip install trl
+(trl) C:\mrrubato\mrrubato\server\llmtune>
+
+
+**peertube
+sudo service postgresql start
+https://docs.joinpeertube.org/install/any-os#installation
+annoyance of SSL making me use the DEV branch for now.  
+then
+sudo -u postgres createuser -P peertube
+
+Cannot find package 'express' imported from /var/www/peertube/versions/peertube-v6.0.2/dist/server.js
+
+npm install express
+https://github.com/Chocobozzz/PeerTube/blob/develop/support/doc/dependencies.md
+https://github.com/Chocobozzz/PeerTube/blob/develop/.github/CONTRIBUTING.md#develop
+
+git remote add me git@github.com:petuniajacobson/PeerTube.git
+
+git push --set-upstream me PeerTube
+psql --host localhost --username postgres --password --dbname template1
+
+npm run dev
+
+upgrade redis
+
+Try to use API to add videos to this instance.  
+Lets perhaps use the AWS storage as well afterward to get that part down.  
+
+I guess we change the DB at this point as well?  
+
+https://framagit.org/framasoft/peertube/clients/python/-/blob/master/peertube/api/video_api.py?ref_type=heads
+Key functions:
+videos_id_watching_put - save where left off.  
+videos_id_description_get_with_http_info
+videos_id_get
+videos_id_put_with_http_info - update video
+videos_imports_post
+videos_live_id_put
+videos_live_post
+videos_upload_post
+videos_upload_post_with_http_info
+
+https://docs.joinpeertube.org/maintain/tools
+
+
+https://docs.joinpeertube.org/api/embed-player
+how do we get current time?  
+playbackStatusUpdate() should give this.  
+
+I think we have all functionality.  
+sudo npm install -g @peertube/peertube-cli
+
+curl http://localhost:3000/api/v1/oauth-clients/local
+{"client_id":"a0vwmafy7lcbkr5nn0yttld98s2amwot","client_secret":"WIJn6Hl6kTWo1hQhWlyTK3fVQBqStZBy"}
+
+curl -X POST -d "client_id=a0vwmafy7lcbkr5nn0yttld98s2amwot&client_secret=WIJn6Hl6kTWo1hQhWlyTK3fVQBqStZBy&grant_type=password&response_type=code&username=petunia&password=Passw0rd" http://localhost:3000/api/v1/users/token
+
+{"token_type":"Bearer","access_token":"0c1684ca8589e713c9d6d77857ab2142ac8a3dc1","refresh_token":"b51e72f9f8a1fae5499f3c4fe04d235a7e98df4c","expires_in":86399,"refresh_token_expires_in":1209599}
+
+curl -H 'Authorization: Bearer 7b6edeca8221e2645a235c71c205c4559d215dbd' http://localhost:3000/api/v1/jobs/completed
+
+peertube-cli get-access-token 
+Guess just this is needed.  
+peertube-cli upload -u localhost:3000 -U petunia -p Passw0rd -n "Start Peertube thinking" -d "Start Peertube thinking" --file "/mnt/c/Users/Devin/Videos/2024-01-16 12-08-48.mkv"
+
+curl "http://localhost:3000/videos/upload" -H "Authorization: Bearer 4098ae0218e69034fb00149ddaa8d0ba71d78f02" --output curl-out.txt --form videofile=@"/mnt/c/Users/Devin/Videos/2024-01-16 12-08-48.mkv" --form name="Start Peertube thinking" --form description="Start Peertube thinking" 
+
+Need a token I guess to do this?  
+
+Why didnt signup complete?  
+Do this later:
+http://localhost:3000/admin/config/edit-custom#instance-homepage
+
+npm run reset-password -- -u root
+
