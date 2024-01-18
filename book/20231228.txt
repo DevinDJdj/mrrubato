@@ -1,0 +1,273 @@
+Lets use this modus operandi for watching on one machine and creating on the other.  
+This will be a useful way to do things.  
+
+**web/public/analyze.html
+Cant do autosave, but perhaps remind after certain period of time.  
+Also make sure we can save and then resave.  This is what is preventing.  
+Need to make sure update and re-update works.  I think we have already tested this
+in a rudimentary way.  
+
+**web/public/chat.html
+webrtc
+
+**web/public/watch.html
+Show watch list.  Show video details, are we able to get, I forget.  
+Save where left off.  Update the RTDB every minute or so if watching.  
+Same for analyze.html?  Only save video timer.  
+analyze.html will redirect here if video not from this site.  
+
+
+**web/public/history.html
+Show created list along with search filter. 
+Search filter needs to search the transcripts as well. 
+Just load everything and use javascript?  
+For now this is ok, but perhaps need a better solution.  
+
+**web/public/users.html
+Only visible to logged in users.  
+How many comments, review time.  
+Inside of here, show preference.  
+Per user, there will be "favorite" or similar mechanism.  
+NxN map, just store favorites and then have a calculation.  
+Just allow for similar to thumbs up feature and track this with some statistics
+likes / opportunities
+If there is no commentary by any of the likes, just take a somewhat random sample.  
+Again calculated by likes / opportunities
+
+
+
+**web/public/language.html
+How do we utilize this along with 
+**languages/**.py
+
+This is a significant architectural decision how we structure the language.  
+Definitely need some logic, but can it be encoded? 
+We can think of it perhaps like the .py includes the verbs and 
+all of the management from html page is the nouns and modifiers.  
+This allows us to grow in two distinct ways using different programmatic mechanisms.  
+Good for experimentation.  
+
+
+
+Need a feedback process.  
+Reinforcement Learning From Human Feedback (RLHF)
+This is key.  
+https://huggingface.co/docs/trl/quickstart
+
+This looks interesting, but we need to utilize the midi feedback
+in order to train the model, and this will need to be based on the 
+feedback language.  
+So similarly for the UI interface we will need to use a *.py, 
+we also need this same sort of structure for
+
+**server/llmtune/server.py
+for each feedback language we perhaps need a *.py
+in order to ingest properly.  
+Separate the feedback by language.  
+Perhaps just pass the model.  
+*.py -> train(model, feedback)
+
+
+**web/public/analyze.html
+Need to save the video time when "Update" button used.  
+This should load at this location.  
+Need to pull the description of the original video.  
+
+
+***LANGUAGE***
+***IDEATION***
+
+When creating the language, perhaps we can generate the image via a language, 
+then have an abbreviated form which is identified by a certain structure 
+in the piano keys and/or some combination of verbalized word.  
+
+LEFT - Image generation - The initial image should be screen-based in addition with feedback?  
+In general this will utilize stop/start, or complete pause while generation occurs.  
+RIGHT - Audio/Language Feedback - The combination of the image and the feedback will adjust the image.  
+In general this will be in time.  This is also nice to have the history here.  
+Need to make the image of the KEYSET highlighted.  
+Use KEYSET words.  
+Match up times later.  
+
+
+BOTTOM - Generated Concept Audialized - we have to make this term much more well known.  
+So all languages are essentially feedback languages.  
+This is also current feedback on this IDEA.  
+This also affects the screen above.  
+
+Time cuts need to figure out later in more detail.  
+
+Also when cutting video, act in time based on speed, 
+and cut on certain words depending on the act.  
+
+Need QR code generation on each page on site to be picked up.  
+Wish list.  
+
+If fail to open/generate, then can just rewind, i.e. after login.  
+
+www.zompist.com/resources
+
+Keep statistics on generation speed of words and frequency of use of 
+words, and use this to suggest alternatives to existing vocabulary.  
+
+Have fake timer for now for videos which cant be embedded.  
+Need a browser plugin really, but this gets too complex already.  
+Still possibility to try to design browser plugin, but this never really works.  
+
+But I like the idea of trying to have the definition generation a part 
+of the inherent language.  
+->Not only definition generation, but also definition adjustment
+If we utilize the above process along with statistical analysis of the generated language, 
+we can automatically adjust the concept words as most properly represents the group.  
+How do we allow for language factions though?  
+
+
+Lets try dividing at the octave.  
+**Potential proto-language**
+Key itself doesnt matter just sequence of keys.  
+Meta-Language:
+Aa = A followed by next octave a
+Aa(aa)(aa)aA = Language switch
+AaCc = Key change - what does this mean?  
+Aa aa Aa aa = start
+aa aA aa aA = stop
+AEae aaee AEae aaee = create
+eeaa eaEA eeaa eaEA = create complete.  
+
+Base Language:
+Word split at i.e.
+ABCDa or ABDa etc.  
+Word length insignificant, but we do want to have structure within.  
+Perhaps each 4 will have a nested structure to get more specific perhaps.  
+ABCDABCDa = function
+Then
+BCDEb = parameter
+CDEFc = parameter 
+etc.  
+if BCDEb takes a parameter we can put it anywhere
+BBCDbb
+or if CDEFc takes a parameter
+CCDEcc
+
+So basic language sequence will be:
+**GRAMMAR**
+This is end of word marker whatever octave we are on, go back down the octaves.  
+
+WORD (ABCDa ... aa aaaA) -> Predicates to be used (AED..a) -> Predicates (EFGHe_EBCe BCDEb Bb CDEFc Cc next predicate DEFGd_Dd ) -> Sentence completion (AaaA)
+All sequences starting with AaA will be meta sequences.  
+
+This is also part of the predicate structure.  
+We can include prepositions to identify what the Current word is referring to, a post-reference I guess you could say.  
+We need perhaps further post and pre-references.  
+This is a key component to being able to add deeper structures.  
+
+**GRAMMAR**
+Example post-reference structure:
+BAB... means B is a qualifier for a
+CBC ... means C is a qualifier for b
+Define what is relating to what in this way perhaps?  
+
+Example Meta-language control structure word:
+Meta-language means /languages/*
+AaACDGa
+
+This may be difficult to program, but I think it should work ok.  
+
+
+Utilize this logic though
+if continued through a....aa then this is still further defining the function.  
+This should be some sort of virtual function for the /languages directory.  
+a...aa will kick as well as the A..a portion.  
+But none of the logic kicks off until the thought is complete?  
+
+*
+Function closure only occurs when coming back to original marker
+AaA
+If no open parentheses, then next note starts the sequence again.  
+Never use the first note in any calculation other than to compare with the previous logic chain if it exists.  
+
+
+**GRAMMAR RULE**?
+Parameter prominence sequence should be Major 4th/5th, then sequence above/below
+A=0 on twelve tone this should probably be the prominence list due to harmonics.  
+0->7->4->5->9->8->3->2->6->11->1->12
+*3/2 *5/6 *16/15 *5/4 *24/25 *3/4 *15/16 *5/4 *4/3 (1/N *2) *15/8
+
+Do we need this sequence to be different?  
+How important is it?  
+Its quite important.  
+I like this sequence as it is written at the moment.  
+DIFF is 7U-3D-1U-4U-1D-5D-1D-4U-5U-10D-11U
+UDUUDDDUUDU
+Nice symetry and distinguishable I think in most intervals.  
+
+We can use from the front or the back depending on the mechanism.  
+BACK is 11D-10U-5D-4D-1U-5U-1U-4D-1D-3U-7D
+Harmony from the front and dissonance from the back.  
+
+For creation mechanism, whatever the word is that we are starting with, or the proto-word, 
+We use the creation sequence, and this context is remembered for this language.  
+Until the creation sequence ends, all keys will be remembered.  
+And then it will be shortened depending on the language.  
+For the base language outlined, this will result in a definition with a prior word and a long sequence 
+then pointing to the abbreviated form in this language.  
+We can utilize the original definition in certain cases if needed.  
+Or refer to the original definition.  
+Image/Sound/meaning
+Keep track of the abbreviated forms and utilize those which are most prevalent and most similar from definition.  
+How do we know which one we are using?  
+Show most prevalent possibilities and allow for selection via image.  
+Only keep a certain number of same meanings.  
+Show before -> after for each of those.  
+
+
+In many ways each word will be similar to a kanji which retains some concept from previous iteration of the non-extended word.  
+What is the sequence to implement this?  
+
+**GRAMMAR RULE**
+The language inherently has no speed factor.  
+Rhythm will be utilized to determine personal preference of the listener.  
+And one of the most basic feedback mechanisms must be to speed up or slow down time in the system.  
+Stop time in order to add something.  
+This can be post-processing all of these cut out preferences for the recorder.  
+
+i.e. pause IDEATION, find other reference IDEA and link it utilizing the language.  
+
+Need only one active stream at a time.  Can have many windows open but feedback active or not 
+will need to be actively determined.  
+Feedback will only go to the last played video in analyze.html.  
+If not started ever, need manual interaction to start.  
+
+
+
+How do we solve the problem of simultaneous play with left and right hand being more natural.  
+Leave this for another time.  
+
+
+
+***IDEATION***
+***LANGUAGE***
+
+**record.py
+I think we have to start here.  
+Display the current key/word and potential options for continuing.  
+This should be come from each language file.  
+So each language has functions in language.html and in record.py/language...
+Can we share this?  
+
+
+**web/public/analyze.html
+activate the midi sounds, need the feedback.  
+
+**GRAMMAR**
+How do we make reference to other IDEA/TIME in the feedback mechanism?  
+Should have list of previously referenced videos and selection language.  
+This is picked from the watched list and has a filter to include this group or other groups.  
+Yes need selection language which is picked up in analyze.html
+then be able to copy link to IDEA/TIME and reference it to the currently analyzed IDEA/TIME
+Then inside of user preferences you can auto-jump to references by certain users/groups.  
+And then you can have a nested-depth setting.  
+
+From time to time need to crawl other sites for references to owned site.  
+
+

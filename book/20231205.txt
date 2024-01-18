@@ -71,3 +71,13 @@ Transcripts only shared between friends.
 Man so many things I want to make.  
 
 
+Need a watch queue.  
+Then we just add to the queue.  
+Or can we get this from youtube?  
+Seems maybe they dont support this
+	The API does not support the ability to list the specified playlist. For example, you can't list your watch later playlist.
+https://developers.google.com/youtube/v3/docs/playlists/list
+
+Unfortunate.  So we would have to add some sort of Browser plugin.  
+Any other way to get around this?  
+Either way we need this sort of functionality like the existing similar or podcast queue for instance. 

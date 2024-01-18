@@ -1,0 +1,42 @@
+Golden ratio calculation
+
+a/b = a+b/a
+
+Piano location
+8/34
+=
+1080 screen:
+
+n/1080 = 8/34
+8640/34
+255
+
+or
+13/34 = n/1080
+14040/34 = 412
+Logo size is ok for this.  
+10/34 = 10800/34 = 317
+OK lets land here.  
+
+816 + 1105 = 1920 ok.  
+So 1920 width is what I am recording I guess.  
+make this 21/55 = 816/1920
+21/55 * 1920 = 733
+
+1920 - 733 = 1087
+
+
+Good enough for now.  
+Not perfect.  
+
+
+For now mute the PrevIteration.  
+
+npm install -g firebase-tools
+
+**mictest.html
+allow selection.  
+Seems to work though.  
+Now need to integrate this with analyze.html.  
+Should be able to give feedback.  
+Also test analyze.html with video which I have not created.  
