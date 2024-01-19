@@ -131,8 +131,10 @@ Aa(aa)(aa)aA = Language switch
 AaCc = Key change - what does this mean?  
 Aa aa Aa aa = start
 aa aA aa aA = stop
-AEae aaee AEae aaee = create
+AEae aaee AEae aaee = Create
+one more octave = Create language.  
 eeaa eaEA eeaa eaEA = create complete.  
+
 
 Base Language:
 Word split at i.e.
@@ -155,6 +157,34 @@ This is end of word marker whatever octave we are on, go back down the octaves.
 
 WORD (ABCDa ... aa aaaA) -> Predicates to be used (AED..a) -> Predicates (EFGHe_EBCe BCDEb Bb CDEFc Cc next predicate DEFGd_Dd ) -> Sentence completion (AaaA)
 All sequences starting with AaA will be meta sequences.  
+
+
+Create first word sequence
+To Think - 
+Aa aa Aa aa (start)
+Aa aa aa aA (switch language)
+AE ae aa ee aaa eee AE ae aa ee aaa eee (create  language)
+AEaaA (Base language AE)
+eee aaa eeaa eaEA eee aaa eeaa eaEA = create language complete.  
+
+AE ae aa ee AE ae aa ee (create (word))
+--This takes more than 3 octaves, is that ok?  Idea was to not use too much
+--keyboard to allow for 25-key usage.  
+AEa AEa AaA (takes one argument) -> this gets saved in a dictionary
+AaaA (completion)
+eeaa eaEA eeaa eaEA = create complete
+
+Then what do we use as the abbreviation here, I guess AEa
+This can never overlap.  
+So all words of this length should be thought out well.  
+ABA ACA ...
+Shortness of words should be associated with frequency of use.  
+
+
+
+Perhaps we need to define that can always take a particular argument
+like 11 or 1 as a descriptor of itself.  I like this idea.  
+
 
 This is also part of the predicate structure.  
 We can include prepositions to identify what the Current word is referring to, a post-reference I guess you could say.  
@@ -270,4 +300,17 @@ And then you can have a nested-depth setting.
 
 From time to time need to crawl other sites for references to owned site.  
 
+
+Loom (bought by Atlassian)
+Somewhat similar to functionality I want.  
+
+
+https://recordrtc.org/
+Essentially this would be the part of this which I would be interested in.  
+Perhaps integrate this or create new extension for our purposes.  
+This is probably easier to integrate than WebRTC.  
+This along with MIDI input and Audio input separately.  
+Yeah, this combined with control from the midi device might be interesting.  
+Not sure this would work though.  
+Anyway try this before webrtc.  
 

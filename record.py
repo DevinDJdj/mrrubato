@@ -700,6 +700,11 @@ if __name__ == '__main__':
     tempfile.close()
     
     youtube = get_authenticated_service(args)
+
+#upload to peertube (Need Node)
+#default upload both, option to turn off.  
+    #sudo npm install -g @peertube/peertube-cli
+#peertube-cli upload -u peertube.misterrubato.com:3000 -U petunia -p Passw0rd -n "Start Peertube thinking" -d "Start Peertube thinking" --file "/mnt/c/Users/Devin/Videos/2024-01-16 12-08-48.mkv"
     videoid = initialize_upload(youtube, args)
 
     addtodb(videoid)
