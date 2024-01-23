@@ -3,6 +3,20 @@ var notes = [];
 var midienabled = 0;
 var obj = {"note": 0, "velocity": 0, "time": 0, "duration": 0};
 
+//create sound easy
+const audioContext = new AudioContext();
+let mainGainNode = null;
+const wavePicker = "triangle" //document.querySelector("select[name='waveform']");
+const volumeControl = "0.2" //document.querySelector("input[name='volume']");
+let sineTerms = null;
+let cosineTerms = null;
+
+let attackTime = 0.2;
+let sustainLevel = 0.8;
+let releaseTime = 0.2;
+
+
+
 //for notes.  
 var _instr = [
 'Acoustic Grand Piano', 'Bright Acoustic Piano', 'Electric Grand Piano', 'Honky-tonk Piano', 'Electric Piano 1', 'Electric Piano 2', 'Harpsichord', 'Clavinet', 
@@ -33,6 +47,50 @@ var prevtime = 0;
 var prevvelocity = 0;
 
 
+function setupAudioFeedback(){
+	mainGainNode = audioContext.createGain();
+	mainGainNode.connect(audioContext.destination);
+	mainGainNode.gain.value = volumeControl;
+	
+}
+
+function midiToFreq(midinum, velocity=0){
+	freq = 440;
+	if (velocity > 0){
+		freq *= Math.pow(2, (midinum - 69) / 12); 
+		console.log(freq);
+		return freq;
+	}
+	else{
+		return 0;
+	}
+
+}
+
+function playTone(freq) {
+	console.log("playing feedback " + freq);
+	const osc = audioContext.createOscillator();
+	osc.connect(mainGainNode);
+  
+	mainGainNode.gain.setValueAtTime(0, 0);
+	  mainGainNode.gain.linearRampToValueAtTime(sustainLevel, audioContext.currentTime + attackTime);
+	  mainGainNode.gain.setValueAtTime(sustainLevel, audioContext.currentTime + 1 - releaseTime);
+	  mainGainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 1);
+  
+	const type = wavePicker;
+  
+	if (type === "custom") {
+	  osc.setPeriodicWave(customWaveform);
+	} else {
+	  osc.type = type;
+	}
+  
+	osc.frequency.value = freq;
+	osc.start();
+  
+	return osc;
+  }
+  
 
 function load(data, feedback=false) {
   try {
@@ -251,13 +309,17 @@ function insertNote(note){
 function noteOn(note, velocity, abstime){
 	
     console.log("Note On " + note + " at " + abstime + " vel " + velocity);
-	var obj = {"note": note, "velocity": velocity, "time": abstime, "duration": 0};
+	//make sound here.  
+	osc = playTone(midiToFreq(note, velocity));
+	var obj = {"note": note, "velocity": velocity, "time": abstime, "duration": 0, osc: osc};
+	
 	notes[note] = obj;
 //	midiarray.push(obj);
 }
 
 function noteOff(note, abstime){
 	var obj = notes[note];
+	obj.osc.stop();
 	let clone = Object.assign({}, obj);
 	clone.duration = abstime - obj.time;
 	
@@ -273,16 +335,21 @@ function noteOff(note, abstime){
 
       function onEnabled() {
 
+		setupAudioFeedback();
+		var tempDiv = $('#midi');
         if (WebMidi.inputs.length < 1) {
-          document.body.innerHTML+= "No device detected.";
+			tempDiv.after("No device detected.");
+			document.body.innerHTML+= "No device detected.";
         } else {
           WebMidi.inputs.forEach((device, index) => {
+			tempDiv.after(`${index}: ${device.name} <br>`);
             document.body.innerHTML+= `${index}: ${device.name} <br>`;
           });
         }
 
       	for (var input of WebMidi.inputs.values()) {
-			input.channels[1].addListener("midimessage", (event) => {console.log(event); getMIDIMessage(event.data);});
+			input.channels[1].addListener("midimessage", (event) => {console.log(event); getMIDIMessage(event.data); });
+			
 			//input.onmidimessage = getMIDIMessage;
 		}
 		
