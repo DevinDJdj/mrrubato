@@ -1,0 +1,30 @@
+
+Perhaps the meta-language needs a time component to it.  
+This way it can be used in other languages as well to reflect 
+a recursive type meaning.  
+0->7->4->5->9->8->3->2->6->11->1->12
+
+CGEFAA-E-DF+BC+C
+Lets play this.  
+
+Maybe this needs to be closure
+
+So words may be like:
+ABCDaA
+I like this a little because we are going back to begin a new word.  
+
+AaA
+AaaA
+
+
+Change to peertube.  
+Or is there another alternative.  
+Anyway, wanted to refactor.  
+
+Annoyances of Youtube and lack of control.  
+
+
+Should we have 
+./install.py in each directory, maybe this mechanism is good enough.  
+There must be a better mechanism.  
+We could use the requirements.txt mechanism, essentially the same.  
