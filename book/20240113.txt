@@ -83,3 +83,11 @@ testing/unigram_frequency.csv
 from https://www.kaggle.com/datasets/rtatman/english-word-frequency?resource=download
 
 
+**web/public/analyze.html
+Should be displaying piano roll in the video itself perhaps as an overlay.  
+
+
+**web/public/chat.html
+Should just have one DIV perhaps with response and then sources in different color.  
+Or have to line up the request/response better.  
+

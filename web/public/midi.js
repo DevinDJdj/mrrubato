@@ -7,7 +7,9 @@ var obj = {"note": 0, "velocity": 0, "time": 0, "duration": 0};
 const audioContext = new AudioContext();
 let mainGainNode = null;
 const wavePicker = "triangle" //document.querySelector("select[name='waveform']");
-const volumeControl = "0.2" //document.querySelector("input[name='volume']");
+//add logic to get a nicer sound.  Can get piano sounds or other perhaps.  
+//i.e. https://www.gregjopa.com/2023/03/piano-sounds-with-web-audio-api
+const volumeControl = "0.1" //document.querySelector("input[name='volume']");
 let sineTerms = null;
 let cosineTerms = null;
 
