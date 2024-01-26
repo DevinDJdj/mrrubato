@@ -701,16 +701,20 @@ if __name__ == '__main__':
     
     youtube = get_authenticated_service(args)
 
-#upload to peertube (Need Node)
-#default upload both, option to turn off.  
-    #sudo npm install -g @peertube/peertube-cli
-#peertube-cli upload -u peertube.misterrubato.com:3000 -U petunia -p Passw0rd -n "Start Peertube thinking" -d "Start Peertube thinking" --file "/mnt/c/Users/Devin/Videos/2024-01-16 12-08-48.mkv"
     videoid = initialize_upload(youtube, args)
-
     addtodb(videoid)
 
     add_video_to_playlist(videoid, cred.MY_PLAYLIST, args)
-    
+
+#upload to peertube (Need Node)
+#default upload both, option to turn off.  
+    #sudo npm install -g @peertube/peertube-cli
+#peertube-cli upload -u "peertube.misterrubato.com:3000" -U petunia -p Passw0rd -n "Start Peertube thinking" -d "Start Peertube thinking" --file "/mnt/c/Users/Devin/Videos/2024-01-17 23-53-52.mkv"
+    #perhaps should make server in between.  And then this can change as need be.  
+    #makybe no reason to reconfigure peertube for instance.  Can just serve as need be.  
+
+    print('peertube-cli upload -u "' + config.cfg['peertube']['host'] + ':' + str(config.cfg['peertube']['port']) + '" -U ' + config.cfg['peertube']['ADMIN_USERID'] + ' -p ' + config.cfg['peertube']['ADMIN_PASSWORD'] + ' -n "' + args.title + '" -d "' + args.description + '" --file "' + latest_file + '"')
+#    subprocess.call('peertube-cli upload -u ' + config.cfg['peertube']['host'] + ':' + config.cfg['peertube']['port'] + ' -U ' + config.cfg['peertube']['ADMIN_USERID'] + ' -p ' + config.cfg['peertube']['ADMIN_PASSWORD'] + ' -n "' + args.title + '" -d "' + args.description + '" --file "' + latest_file + '"')
 #call again to run the any post-analysis like finger locations.  
     subprocess.call('python ./analyze/analyze.py --title "' + args.title + '"')
     
