@@ -91,3 +91,9 @@ Should be displaying piano roll in the video itself perhaps as an overlay.
 Should just have one DIV perhaps with response and then sources in different color.  
 Or have to line up the request/response better.  
 
+
+**web/public/testvideo.html
+upload video and use that link to test videojs component.  
+Thought about using recordRTC for this, but doesnt look like this is a general player for that purpose, it is focused on the recording.  
+Unfortunate we have to use two different components.  
+https://www.webrtc-experiment.com/RecordRTC/simple-demos/

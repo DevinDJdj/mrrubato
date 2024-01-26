@@ -1,0 +1,197 @@
+
+<style>
+    html, body {
+        margin: 0!important;
+        padding: 0!important;
+        text-align: center;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        font-size: 1em;
+    }
+
+    video {
+        width: 30%;
+        border-radius: 5px;
+        border: 1px solid black;
+    }
+</style>
+
+<title>Video+Screen recording using RecordRTC</title>
+
+<h1>
+    Video+Screen recording using RecordRTC
+</h1>
+
+<p>It will record 10-seconds video and automatically stop the recording.</p>
+
+<button id="btn-start-recording">Start Recording</button>
+<button id="btn-stop-recording" disabled>Stop Recording</button>
+
+<video controls autoplay playsinline style="width: 40%;"></video>
+
+<script src="record/RecordRTC.js"></script>
+<script>
+
+var recorder; // globally accessible
+
+document.getElementById('btn-start-recording').onclick = function() {
+    this.disabled = true;
+    captureScreen(function(screen) {
+        video.srcObject = screen;
+
+        recorder = RecordRTC(screen, {
+            type: 'video'
+        });
+
+        recorder.startRecording();
+
+        // release screen on stopRecording
+        recorder.screen = screen;
+
+        document.getElementById('btn-stop-recording').disabled = false;
+    });
+};
+
+document.getElementById('btn-stop-recording').onclick = function() {
+    this.disabled = true;
+    recorder.stopRecording(stopRecordingCallback);
+};
+
+
+function captureScreen(callback) {
+    invokeGetDisplayMedia(function(screen) {
+        addStreamStopListener(screen, function() {
+            document.getElementById('btn-stop-recording').click();
+        });
+        callback(screen);
+    }, function(error) {
+        console.error(error);
+        alert('Unable to capture your screen. Please check console logs.\n' + error);
+    });
+}
+
+function invokeGetDisplayMedia(success, error) {
+    var displaymediastreamconstraints = {
+        video: {
+            displaySurface: 'monitor', // monitor, window, application, browser
+            logicalSurface: true,
+            cursor: 'always' // never, always, motion
+        }
+    };
+
+    // above constraints are NOT supported YET
+    // that's why overriding them
+    displaymediastreamconstraints = {
+        video: true
+    };
+
+    if(navigator.mediaDevices.getDisplayMedia) {
+        navigator.mediaDevices.getDisplayMedia(displaymediastreamconstraints).then(success).catch(error);
+    }
+    else {
+        navigator.getDisplayMedia(displaymediastreamconstraints).then(success).catch(error);
+    }
+}
+
+
+function addStreamStopListener(stream, callback) {
+    stream.addEventListener('ended', function() {
+        callback();
+        callback = function() {};
+    }, false);
+    stream.addEventListener('inactive', function() {
+        callback();
+        callback = function() {};
+    }, false);
+    stream.getTracks().forEach(function(track) {
+        track.addEventListener('ended', function() {
+            callback();
+            callback = function() {};
+        }, false);
+        track.addEventListener('inactive', function() {
+            callback();
+            callback = function() {};
+        }, false);
+    });
+}
+
+function stopRecordingCallback() {
+    video.src = video.srcObject = null;
+    video.src = URL.createObjectURL(recorder.getBlob());
+    
+    //upload to server.  
+        // generating a random file name
+        var fileName = getFileName('webm');
+
+        // we need to upload "File" --- not "Blob"
+        var fileObject = new File([blob], fileName, {
+            type: 'video/webm'
+        });
+
+        var formData = new FormData();
+
+        // recorded data
+        formData.append('video-blob', fileObject);
+
+        // file name
+        formData.append('video-filename', fileObject.name);
+
+        document.getElementById('header').innerHTML = 'Uploading to PHP using jQuery.... file size: (' +  bytesToSize(fileObject.size) + ')';
+
+        var upload_url = 'https://chat.misterrubato.com/upload';
+        // var upload_url = 'RecordRTC-to-PHP/save.php';
+
+        var upload_directory = upload_url;
+        // var upload_directory = 'RecordRTC-to-PHP/uploads/';
+
+        // upload using jQuery
+        $.ajax({
+            url: upload_url, // replace with your own server URL
+            data: formData,
+            cache: false,
+            contentType: false,
+            processData: false,
+            type: 'POST',
+            success: function(response) {
+                if (response === 'success') {
+                    alert('successfully uploaded recorded blob');
+
+                } else {
+                    alert(response); // error/failure
+                }
+            }
+        });
+
+    recorder.screen.stop();
+    recorder.destroy();
+    recorder = null;
+
+    document.getElementById('btn-start-recording').disabled = false;
+}
+
+
+navigator.mediaDevices.getUserMedia({
+    video: true,
+    audio: true
+}).then(async function(stream) {
+    //load from server
+    //play or record option
+    /*
+    let recorder = RecordRTC(stream, {
+        type: 'video'
+    });
+    recorder.startRecording();
+
+    const sleep = m => new Promise(r => setTimeout(r, m));
+    await sleep(3000);
+
+    recorder.stopRecording(function() {
+        let blob = recorder.getBlob();
+        invokeSaveAsDialog(blob);
+    });
+    */
+});
+
+</script>
+
+<footer style="margin-top: 20px; text-align: left;"><small id="send-message"></small></footer>
+<script src="https://www.webrtc-experiment.com/common.js"></script>

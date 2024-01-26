@@ -22,5 +22,4 @@ def success():
         return render_template("Acknowledgement.html", name = f.filename)   
   
 if __name__ == '__main__':   
-    app.run(host='0.0.0.0', port=8002)
-    
+    app.run(host='0.0.0.0', port=8002, ssl_context=('../../private/cert.pem', '../../private/secret.key'))
