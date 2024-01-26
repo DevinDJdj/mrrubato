@@ -28,3 +28,72 @@ Not sure using Youtube is best.
 At least create a scaffolding for using another service.  
 Need to do this with DB as well as Video Service.  
 
+Advantages to peertube, we could probably make a plugin to do some things we want.  
+But it is very minor.  
+Just be able to play youtube videos as well, and should be ok.  
+Annoying to maintain.  
+They are already using webrtc as well, which is a bonus.  
+Probably can hook into this somehow without much coding.  
+
+Either way play with it a bit before we go down the road of recreating a lot of this UI.  
+What does the embedding look like?  
+23$/TB/month is standard S3, so perhaps doable to just use S3 storage.  
+This further confuses things though.  
+
+First see if it even works ok.  
+
+Create a script for server deploy components as well.  
+Need single installation script and single startup/shutdown.  
+ollama and transcription
+
+
+**web/public/plan.html
+
+Create a UI to display this latest info from github at least the book folder.  
+
+Peertube basic running.  
+Similar interface to Youtube with embedding.  
+**record.py
+See if we can add Peertube info and upload video.  
+
+**web/public/analyze.html
+See if we can load from Peertube instead of Youtube.  
+I see no reason to get rid of the Youtube functionality, just add an option.  
+At the same time try to modularize the code around the video management.  
+
+**server/startup.py
+start up all servers in threads.  
+Need single startup job for whatever servers we will have involved.  
+
+**server/install.py
+Also need to document/script the setup of the server portion.  
+So much work, maybe later for script but at least document here and automate what we can.  
+
+**server/ollama/server.py
+we should be storing the past questions, these are great to see for the siteholder.  
+
+**web/public/languages.html
+Need to start with possible words.  
+For now lets just make a translation to english.  
+This will help us make the infrastructure, and perhaps help as a guide to what is really distinguishable.  
+Just use a small subset, say 1000 or 10,000 words.  
+Utilize sequences of 5 around 10^5 possibilities.  
+What can we actually distinguish, and can we organize the words in a meaningful way.  
+testing/unigram_frequency.csv 
+from https://www.kaggle.com/datasets/rtatman/english-word-frequency?resource=download
+
+
+**web/public/analyze.html
+Should be displaying piano roll in the video itself perhaps as an overlay.  
+
+
+**web/public/chat.html
+Should just have one DIV perhaps with response and then sources in different color.  
+Or have to line up the request/response better.  
+
+
+**web/public/testvideo.html
+upload video and use that link to test videojs component.  
+Thought about using recordRTC for this, but doesnt look like this is a general player for that purpose, it is focused on the recording.  
+Unfortunate we have to use two different components.  
+https://www.webrtc-experiment.com/RecordRTC/simple-demos/

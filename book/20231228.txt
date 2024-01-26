@@ -288,6 +288,7 @@ Can we share this?
 
 **web/public/analyze.html
 activate the midi sounds, need the feedback.  
+use from synth.html
 
 **GRAMMAR**
 How do we make reference to other IDEA/TIME in the feedback mechanism?  

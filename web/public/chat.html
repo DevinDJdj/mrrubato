@@ -14,21 +14,40 @@
 	<title>Speech to Text</title>
 </head>
 
+    <!-- update the version number as needed -->
+    <script defer src="/__/firebase/9.19.1/firebase-app-compat.js"></script>
+    <!-- include only the Firebase features as you need -->
+    <script defer src="/__/firebase/9.19.1/firebase-auth-compat.js"></script>
+    <script defer src="/__/firebase/9.19.1/firebase-database-compat.js"></script>
+    <script defer src="/__/firebase/9.19.1/firebase-firestore-compat.js"></script>
+    <script defer src="/__/firebase/9.19.1/firebase-functions-compat.js"></script>
+    <script defer src="/__/firebase/9.19.1/firebase-messaging-compat.js"></script>
+    <script defer src="/__/firebase/9.19.1/firebase-storage-compat.js"></script>
+    <script defer src="/__/firebase/9.19.1/firebase-analytics-compat.js"></script>
+    <script defer src="/__/firebase/9.19.1/firebase-remote-config-compat.js"></script>
+    <script defer src="/__/firebase/9.19.1/firebase-performance-compat.js"></script>
+    <!-- 
+      initialize the SDK after all desired features are loaded, set useEmulator to false
+      to avoid connecting the SDK to running emulators.
+    -->
+    <script defer src="/__/firebase/init.js?useEmulator=true"></script>
+
+
 <body>
-	<input type="text" id="chatbox" name="chatbox" value="Open to Chat">
-	<button type="button" onclick="inputChat()">Update</button>
+    <div class="words" contenteditable>
+		<input type="text" id="p" name="p">
+   </div>
+
+	<button type="button" onclick="Chat()">Update</button>
 <table>
 		<tr valign="top">
 		<td>
 		
 			  <div id="player" valign="top"></div>
 	  
-		  <div class="words" contenteditable>
-			   <input type="text" id="p" name="p">
-		  </div>
 		  <div id="submit" valign="top">
 			  <input type="range" id="points" name="points" min="0" max="10" value="1" />
-			  <button type="button" onclick="updateVideo()">Update</button>
+			  <button type="button" onclick="rateResponse()">Update</button>
 		  </div>
 	   <div id="midi"></div>
 	  <!--    <button type="button" onclick="saveMidiFeedback();">Save Midi Feedback</button> -->
@@ -76,6 +95,7 @@
 
       <script type="text/javascript" src="clock.js"></script>
       <script type="text/javascript" src="midi.js"></script>
+	  <script type="text/javascript" src="db.js"></script>
 
     <script>
 
@@ -85,6 +105,82 @@
         var title = '';
         var seek = -1;
         var sources = [];
+		var uid = null;
+		var delay = 0;
+
+
+		document.addEventListener('DOMContentLoaded', function() {
+        const loadEl = document.querySelector('#load');
+        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
+        // // The Firebase SDK is initialized and available here!
+        //
+         firebase.auth().onAuthStateChanged(user => { 
+		   if (user) {
+			// User is signed in, see docs for a list of available properties
+			// https://firebase.google.com/docs/reference/js/firebase.User
+			
+			uid = user.uid;
+				// ...
+			  } else {
+				// User is signed out
+				// ...
+			  }
+			});
+        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
+
+        try {
+          let app = firebase.app();
+          let features = [
+            'auth', 
+            'functions',
+            'storage', 
+			'database',
+          ].filter(feature => typeof app[feature] === 'function');
+          loadEl.textContent = `Firebase SDK loaded with ${features.join(', ')}`;
+		  
+		//use this as the base, and then we can write an update to whatever.  
+		//we can also use this, if the user is logged in, get that info instead.  
+			 var provider = new firebase.auth.GoogleAuthProvider();
+
+			firebase.auth()
+			  .signInWithPopup(provider)
+			  .then((result) => {
+				/** @type {firebase.auth.OAuthCredential} */
+				var credential = result.credential;
+
+				// This gives you a Google Access Token. You can use it to access the Google API.
+				var token = credential.accessToken;
+				// The signed-in user info.
+				var user = result.user;
+				//not sure why we need this, but the asynchronous check is not getting kicked off.  
+				   if (user) {
+					// User is signed in, see docs for a list of available properties
+					// https://firebase.google.com/docs/reference/js/firebase.User
+					
+					uid = user.uid;
+					addUser(user);
+					
+					}
+				// IdP data available in result.additionalUserInfo.profile.
+				  // ...
+			  }).catch((error) => {
+				// Handle Errors here.
+				var errorCode = error.code;
+				var errorMessage = error.message;
+				// The email of the user's account used.
+				var email = error.email;
+				// The firebase.auth.AuthCredential type that was used.
+				var credential = error.credential;
+				// ...
+			  });
+
+			//google.charts.load('current', {'packages':['corechart', 'timeline']});
+        			
+        } catch (e) {
+          console.error(e);
+          loadEl.textContent = 'Error loading the Firebase SDK, check the console.';
+        }
+      });
 
 
             function makeTimeLinks(desc, vid){
@@ -129,7 +225,16 @@
 			function updateSources(){
                 allsources = '';
 				for (i=0; i<sources.length; i++){
-					allsources += makeTimeLinks(sources[i].content, getVidFromMetadata(sources[i].metadata));
+					vid = getVidFromMetadata(sources[i].metadata);
+					//get vid details
+					allsources += '<br><br>';
+					if (i%2==0){
+						allsources += '<font color="red">';
+					}
+					allsources += makeTimeLinks(sources[i].content, vid);
+					if (i%2==0){
+						allsources += '</font>';
+					}
 				}
 				$('#sourcessh').html(allsources);
 				
@@ -161,19 +266,6 @@
 				}
 			}
 			
-			function addComment(comment, commenttime){
-				//find where to splice and then reset the notes
-				//notesarray.splice(i, 0, comment);
-				createNotesArray();
-				i = 0;
-				while (i< notesarray.length && getTime(notesarray[i]) < getSecsFromTime(commenttime)){
-					i++;
-				}
-			//	if (i==0) i=1;
-				notesarray.splice(i, 0, comment + " (" + commenttime + ")");
-				updateNotes();
-				
-			}
 			
 			function addSource(source){
                 sources.splice(0, 0, source);
@@ -187,14 +279,15 @@
 
             //openssl req -x509 -newkey rsa:4096 -nodes -out cert.pem -keyout key.pem -days 365
             //app.run(ssl_context=('cert.pem', 'key.pem'))
-			function inputChat() {
-				mychat = $('#chatbox').val();
-                addComment(mychat, "00:00");
+			function Chat(transcript) {
+				mychat = transcript; //$('#p').val();
+                addComment(mychat, helpme());
+				//this should be linked to the video being watched loosely perhaps.  
 				$.getJSON('https://chat.misterrubato.com:8000/api/?query=' + encodeURIComponent(mychat),function(data){
                   
 				  if (typeof(data.answer) != "undefined") {
                     console.log('query ' +  data.query);
-                    addComment(data.answer, "00:00")
+                    addComment(data.answer, helpme())
 					console.log('response  ' + data.answer);
 					console.log('sources  ' + data.sources);
 					for (j=0; j<data.sources.length; j++) {
@@ -213,8 +306,15 @@
 			
 			}
 			
+
+			function rateResponse(){
+
+			}
 			</script>
-			
+
+
+
+<script type="text/javascript" src="speech.js"></script>
 
             <script>
                 // 2. This code loads the IFrame Player API code asynchronously.
