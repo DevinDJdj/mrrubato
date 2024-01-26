@@ -381,8 +381,10 @@ if __name__ == '__main__':
                 reftr = reftranscript.get()
                 if reftr is None:
                     #http://192.168.1.120/transcribe/?videoid=ZshYVeNHkOM
+                    #need to use http or https as necessary
                     localserver = config.cfg['localserver']['host'] + ":" + str(config.cfg['localserver']['port'])
-                    url = f'http://{localserver}/transcribe/?videoid={videoid}'
+                    #should be able to use both https or http, too annoying to address now.  
+                    url = f'{localserver}/transcribe/?videoid={videoid}'
                     print(url)
                     try:
                         transcript = requests.get(url, timeout=(5, None)).text

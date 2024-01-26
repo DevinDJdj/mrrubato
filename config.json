@@ -1,7 +1,7 @@
 {
 	"localserver":{
 		"port": 5000, 
-		"host": "192.68.1.120"
+		"host": "http://192.68.1.120"
 	},
     "youtube":{
 		"APIKEY": APIKEY,
