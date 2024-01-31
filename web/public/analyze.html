@@ -80,8 +80,28 @@
     <p id="load">Firebase SDK Loading&hellip;</p>
     <div id="iterationsh" style="height: 390px;overflow:auto;"></div>
 <!--    <textarea id="iterations" rows="40" cols="40"></textarea> -->
-</td><td>
-    <div id="mycommentsh"></div>
+</td>
+<td>
+
+	<video
+	id="my-video"
+	class="video-js"
+	preload="auto"
+	controls
+	width="320"
+	height="180"
+	data-setup="{}"
+	>
+	<p class="vjs-no-js">
+		To view this video please enable JavaScript, and consider upgrading to a
+		web browser that
+		<a href="https://videojs.com/html5-video-support/" target="_blank"
+		  >supports HTML5 video</a
+		>
+	  </p>
+	  <source src="https://storage.googleapis.com/misterrubato-test.appspot.com/videos/2024-01-29%2016-47-54.mp4" type="video/mp4"></source>
+  </video>
+	<div id="mycommentsh"></div>
     <textarea id="mycomments" rows="20" cols="40"></textarea>
 </td><td>
     <textarea id="transcript" rows="20" cols="60"></textarea>
@@ -967,7 +987,7 @@ function Chat(transcript){
       //    after the API code downloads.
       function onYouTubeIframeAPIReady() {
         player = new YT.Player('player', {
-          height: '390',
+          height: '360',
           width: '640',
           videoId: video,
           playerVars: {

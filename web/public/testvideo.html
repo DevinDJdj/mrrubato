@@ -28,6 +28,64 @@
 
 <video controls autoplay playsinline style="width: 40%;"></video>
 
+
+<video
+id="my-video"
+class="video-js"
+preload="auto"
+controls
+width="640"
+height="264"
+data-setup="{}"
+>
+<p class="vjs-no-js">
+  To view this video please enable JavaScript, and consider upgrading to a
+  web browser that
+  <a href="https://videojs.com/html5-video-support/" target="_blank"
+    >supports HTML5 video</a
+  >
+</p>
+<source src="https://storage.googleapis.com/misterrubato-test.appspot.com/videos/2024-01-29%2016-47-54.mp4" type="video/mp4"></source>
+</video>
+
+<!-- <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script> -->
+
+<script>
+//load video from server
+//pseudocode untested for now.  
+//call loadVideo()
+//video.play(), video.pause, video.currentTime (in seconds)
+//preload="auto" buffers media
+//create webvtt files in the transcription
+function getVideoFile(url){
+    //getting the original midi file for the video
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);
+        xhr.overrideMimeType("application/x-binary; charset=ISO-8859-1");
+//		xhr.responseType = 'binary';
+        xhr.onload = function(e) {
+        if (this.status == 200) {
+            var myBlob = this.response;
+            console.log(myBlob);
+            var myvideo = document.querySelector('my-video');
+            myvideo.src = URL.createObjectURL(myBlob);
+        }
+        };
+        xhr.send();
+}
+
+function loadVideo(){
+    var storageRef = storage.ref();
+	//why does this URL have space and others are %20?  
+	loc = "video.mp4";
+	url = storageRef.child(loc).getDownloadURL()
+	  .then((url) => {
+        console.log(url);
+		getVideoFile(url);
+   })
+}
+</script>
+
 <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 <script src="record/RecordRTC.js"></script>

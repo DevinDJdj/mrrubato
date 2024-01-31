@@ -97,3 +97,62 @@ upload video and use that link to test videojs component.
 Thought about using recordRTC for this, but doesnt look like this is a general player for that purpose, it is focused on the recording.  
 Unfortunate we have to use two different components.  
 https://www.webrtc-experiment.com/RecordRTC/simple-demos/
+OK, this works now at least initially.  
+
+Now need to add the component for playback for that file.  
+Try to load this.  
+https://storage.googleapis.com/misterrubato-test.appspot.com/videos/2024-01-29%2016-47-54.mp4
+
+
+**server/llmtune.py
+modify this to utilize llama2 our test case and get reward feedback from UI.  
+https://huggingface.co/docs/trl/main/en/using_llama_models
+Do we need a smaller model?  
+Perhaps this will be possible sometime in the future.  
+>80GB RAM to train
+
+
+
+**record.py
+need to upload MP4 to GCP for videojs
+use analyze.html getFile
+
+**web/public/analyze.html
+**web/public/chat.html
+generate webvtt format to load after we are using video component.  
+This can be generated I guess, no need to have two transcription formats.  
+Just use what we have already and automate with start and length based on text length.  
+
+
+**server/ollama/server.py
+This is stopping at the moment sometimes, not sure the reason.  
+
+
+**web/public/analyze.html
+Put for now side by side the videos.  
+Then replace after we have other things working with them.  
+Need to just adjust the call mostly I think to get the time of the video.  
+Should we have a counter after the seconds digits so that things can be added at the same time in a video?  
+Perhaps this would be good, but then we may need to redo the link finding logic.  
+
+
+**testing/chrome-extensions-samples-main
+https://github.com/GoogleChrome/chrome-extensions-samples/tree/main?tab=readme-ov-file
+chrome://serviceworker-internals/?devtools
+chrome-extensions-samples-main\functional-samples\cookbook.offscreen-dom
+chrome-extensions-samples-main\functional-samples\cookbook.sidepanel-global
+combine these.  And use SpeechRecognition component.  
+\AppData\Local\Google\Chrome\User Data\Default\Extensions
+added this:
+chrome-extensions-samples-main\checkmylinks
+chrome-extensions-samples-main\speech-recognition-anywhere\sr.js
+combination of these three to start will allow for some navigation without using hands perhaps.  
+Lets include this I guess.  
+
+**extensions/handsfree
+
+
+**testing/nanoGPT-master
+https://github.com/karpathy/nanoGPT
+Lets play with this a bit.  
+Train it just with the dataset we have perhaps.  
