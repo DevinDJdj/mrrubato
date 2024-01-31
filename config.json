@@ -3,6 +3,12 @@
 		"port": 5000, 
 		"host": "http://192.68.1.120"
 	},
+    "peertube":{
+		"host": "localhost",
+		"port": 3000,
+		"ADMIN_USERID": ADMIN_USERID, 
+		"ADMIN_PASSWORD": ADMIN_PASSWORD
+	},
     "youtube":{
 		"APIKEY": APIKEY,
 		"CHANNELID": CHANNELID,
