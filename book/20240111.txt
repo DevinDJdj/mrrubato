@@ -28,3 +28,15 @@ Should we have
 ./install.py in each directory, maybe this mechanism is good enough.  
 There must be a better mechanism.  
 We could use the requirements.txt mechanism, essentially the same.  
+
+
+Step1: 
+OBS
+Try to switch to mp4 format so that we can upload and use 
+video tag instead of youtube.  
+
+Step2:
+adjust upload process
+
+Step3: 
+finish videotest.html

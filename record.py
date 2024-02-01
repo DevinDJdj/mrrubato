@@ -191,6 +191,7 @@ def get_authenticated_service(args, myscope=YOUTUBE_SCOPE):
   return build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION,
     http=credentials.authorize(httplib2.Http()))
 
+   
 def initialize_upload(youtube, options):
   tags = None
   if options.keywords:
@@ -230,7 +231,8 @@ def initialize_upload(youtube, options):
 
 
 def addtodb(videoid):
- 
+#need to utilize a different mechanism here.  
+    #this youtube data structure is really not needed.  
     url = f'https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,status\
         &id={videoid}&key={api_key}'
     json_url = requests.get(url)
@@ -290,6 +292,22 @@ def resumable_upload(insert_request):
       time.sleep(sleep_seconds)
   return None
   
+
+def uploadmediafile(file, title):
+    # Put your local file path 
+    Title = title + '.mp4'
+    fileName = file + '.mp4'
+    bucket = storage.bucket()
+    blob = bucket.blob('videos/' + Title)
+    blob.upload_from_filename(fileName)
+
+    # Opt : if you want to make public access from the URL
+    blob.make_public()
+
+    print("your media file url", blob.public_url)
+    return blob.public_url
+   
+
 def uploadtranscript(file, title):
  
     # Put your local file path 
@@ -364,7 +382,7 @@ def add_video_to_playlist(videoID,playlistID, args):
     response = request.execute()
     
 def get_latest_file():
-    list_of_files = glob.glob('C:/Users/devin/Videos/*.mkv') # * means all if need specific format then *.csv
+    list_of_files = glob.glob('C:/Users/devin/Videos/*.mp4') # * means all if need specific format then *.csv
     latest_file = max(list_of_files, key=os.path.getctime)
     print(latest_file)
     return latest_file
@@ -391,7 +409,7 @@ if __name__ == '__main__':
         
 #    print(cred.MY_PLAYLIST)
 #    add_video_to_playlist('7Aadr9Fmftk', cred.MY_PLAYLIST, args)
-    temp = "C:\\Temp\\prevIteration.mkv"
+    temp = "C:\\Temp\\prevIteration.mp4"
     cmd = f'del "{temp}"'
      
     # Copy File
@@ -701,7 +719,12 @@ if __name__ == '__main__':
     
     youtube = get_authenticated_service(args)
 
+    mediafile = uploadmediafile(fn[0], pathnames[len(pathnames)-1] )
+    args.description += '\r\n\r\nMEDIAFILE:' + mediafile + '\r\n'
+
     videoid = initialize_upload(youtube, args)
+
+
     addtodb(videoid)
 
     add_video_to_playlist(videoid, cred.MY_PLAYLIST, args)
@@ -713,7 +736,7 @@ if __name__ == '__main__':
     #perhaps should make server in between.  And then this can change as need be.  
     #makybe no reason to reconfigure peertube for instance.  Can just serve as need be.  
 
-    print('peertube-cli upload -u "' + config.cfg['peertube']['host'] + ':' + str(config.cfg['peertube']['port']) + '" -U ' + config.cfg['peertube']['ADMIN_USERID'] + ' -p ' + config.cfg['peertube']['ADMIN_PASSWORD'] + ' -n "' + args.title + '" -d "' + args.description + '" --file "' + latest_file + '"')
+#    print('peertube-cli upload -u "' + config.cfg['peertube']['host'] + ':' + str(config.cfg['peertube']['port']) + '" -U ' + config.cfg['peertube']['ADMIN_USERID'] + ' -p ' + config.cfg['peertube']['ADMIN_PASSWORD'] + ' -n "' + args.title + '" -d "' + args.description + '" --file "' + latest_file + '"')
 #    subprocess.call('peertube-cli upload -u ' + config.cfg['peertube']['host'] + ':' + config.cfg['peertube']['port'] + ' -U ' + config.cfg['peertube']['ADMIN_USERID'] + ' -p ' + config.cfg['peertube']['ADMIN_PASSWORD'] + ' -n "' + args.title + '" -d "' + args.description + '" --file "' + latest_file + '"')
 #call again to run the any post-analysis like finger locations.  
     subprocess.call('python ./analyze/analyze.py --title "' + args.title + '"')

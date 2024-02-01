@@ -892,11 +892,16 @@ if __name__ == '__main__':
         #mkv saved locally already
         print(midiname)
         path = 'c:\\Temp\\'
-        if not os.path.exists(os.path.join(inputpath , midiname + ".mkv")):
-            print("Skipping Previous Iteration " + midiname)
+        ext = ''
+        if os.path.exists(os.path.join(inputpath , midiname + ".mp4")):
+            ext = ".mp4"
+        elif os.path.exists(os.path.join(inputpath, midiname + ".mkv")):
+            ext = ".mkv"
+        if ext == '':
+            print("prevIteration not found")
         else:
-            temp = inputpath + midiname + ".mkv"
-            tempout = path + "prevIteration.mkv"
+            temp = inputpath + midiname + ".mp4"
+            tempout = path + "prevIteration.mp4"
             #copy to previousIteration
             cmd = f'copy "{temp}" "{tempout}"'
              
