@@ -156,3 +156,23 @@ Lets include this I guess.
 https://github.com/karpathy/nanoGPT
 Lets play with this a bit.  
 Train it just with the dataset we have perhaps.  
+
+
+For now just store the data, but use Youtube for playback except for testing.  
+Create a switch for this.  
+
+Can we use a tiny LLM for browser interaction?  
+i.e. https://github.com/rahuldshetty/llm.js
+
+Can we add RAG to this?  
+
+
+
+**extensions/handsfree
+We have speechrecognition for now, but this is problematic I think to have multiple pages using this component.  
+Really this needs to be managed in a more intelligent way by the browser.  
+Really you need one overarching function which is listening and then results are sent to whatever the active tab and component is.  
+List anything that is wanting access to the mic, and then indicate which is active at the moment.  
+
+Can we receive events from the extensions?  
+Then we can do something useful perhaps.  
