@@ -3,6 +3,8 @@ console.log('sidepanel.js');
 var speech = true;
 var currentTabs = {};
 var tabnames = {};
+var allTabs = {};
+var activeChannel = 0;
 var channels = [];
 window.SpeechRecognition = window.SpeechRecognition
                 || window.webkitSpeechRecognition;
@@ -65,12 +67,15 @@ $("#p").on('keyup', function (event) {
 });
 
 function getDom(tabid){
-    chrome.tabs.sendMessage(tabid, {text: 'report_back'}, doStuffWithDom);
+    //add requestedTabId to know who this is coming from.  
+    //this function mechanism should really allow for that by default.  
+    chrome.tabs.sendMessage(tabid, {text: 'report_back', requestedTabId: tabid}, doStuffWithDom);
 
 }
 
 function doStuffWithDom(domContent) {
-    console.log('I received the following DOM content:\n' + domContent);
+    console.log('I received the following DOM content from ' + domContent['tabid'] + '\n' + domContent['dom']);
+    allTabs[domContent['tabid']]['dom'] = domContent['dom'];
 }
 
 
@@ -80,16 +85,86 @@ function injectedFunction() {
         if (msg.text === 'report_back') {
             // Call the specified callback, passing
             // the web-page's DOM content as argument
-            sendResponse(document.all[0].outerHTML);
+            //should pass dom as well as the tabid.  
+            obj = {'dom': document.all[0].outerHTML, 'tabid': msg.requestedTabId};
+            sendResponse(obj);
         }
-        if (msg.text === 'scroll down') {
+        else if (msg.text === 'scroll down') {
             // Call the specified callback, passing
             // the web-page's DOM content as argument
             window.scrollBy(0, 100);
         }
+        else{
+            console.log(msg.text);
+        }
     });
 
     document.body.style.backgroundColor = "orange";
+  }
+
+
+  function changeFocus(channelid){
+    if (channelid < channels.length){
+        windowId = channels[channelid];
+        tabid = currentTabs[ windowId ];
+    }
+    else{
+        //this is the tab id.  
+        windowId = allTabs[channelid].tab.windowId;
+        tabid = channelid;
+    }
+    chrome.windows.update(windowId, {focused: true});
+        chrome.tabs.get(tabid, function(tab) {
+        if (windowId == tab.windowId){
+            chrome.tabs.highlight({'windowId': windowId, 'tabs': tab.index}, function() {});
+        }
+    });
+}
+
+  function updateSidePanel(){
+    //add to the channels list.  
+    var chandiv = document.getElementById('channels');
+    chandiv.innerHTML = '';
+    for (var i=0; i<channels.length; i++){
+        var a = document.createElement('a');
+        var linkText = document.createTextNode(tabnames[ currentTabs[ channels[i] ] ]);
+        a.appendChild(linkText);
+        a.title = tabnames[ currentTabs[ channels[i] ] ];
+        a.href = '#channel' + i;
+        a.id = i;
+        a.addEventListener('click', function(event) {
+            console.log(event);
+            console.log(parseInt(event.target.id));
+            changeFocus(parseInt(event.target.id));
+
+        });
+        chandiv.appendChild(a);
+        chandiv.appendChild(document.createElement('br'));
+
+    }
+
+    var tabdiv = document.getElementById('alltabs');
+        for (let tabid in allTabs) {
+            var a = document.createElement('a');
+            var linkText = document.createTextNode(tabnames[ tabid ] );
+            a.appendChild(linkText);
+            a.title = tabnames[ tabid ];
+            a.href = '#tab' + tabid;
+            a.id = tabid;
+            a.addEventListener('click', function(event) {
+                console.log(event);
+                console.log(parseInt(event.target.id));
+                changeFocus(parseInt(event.target.id));
+    
+            });
+            tabdiv.appendChild(a);
+            tabdiv.appendChild(document.createElement('br'));
+    
+        
+//            tabdiv.innerHTML += '<div id="tab' + tabid + '"><a onclick="changeFocus(' + tabid + ');" href="#">' + tabnames[tabid] + '</a></div>';
+//            console.log(key, value);
+        } 
+
   }
 
 function Chat(transcript){
@@ -101,18 +176,32 @@ function Chat(transcript){
             for (var i=0; i<tabs.length; i++) {
                 console.log(tabs[i].url);
                 tabnames[tabs[i].id] = tabs[i].title;
+                if (allTabs[tabs[i].id] == undefined){
+                    //initialize the tab.
+                    allTabs[tabs[i].id] = { 'tab': tabs[i], 'scriptLoaded': false, 'dom': ''};
+                }
+                else{
+                    //save latest state of the tab.
+                    allTabs[tabs[i].id]['tab'] = tabs[i];
+                }
                 if (tabs[i].active){
                     currentTabs[tabs[i].windowId] = tabs[i].id;
-                    channels.push(tabs[i].windowId);
+
+                    if (channels.indexOf(tabs[i].windowId) == -1){
+                        channels.push(tabs[i].windowId);
+                    }
                     if (tabs[i].url.includes("chrome-extension")){
                         console.log('skipping ' + tabs[i].url);
                     }
                     else{
                         try{
-                            chrome.scripting.executeScript({
-                                target : {tabId : tabs[i].id  },
-                                func : injectedFunction,
-                            });
+                            if (!allTabs[tabs[i].id].scriptLoaded){
+                                chrome.scripting.executeScript({
+                                    target : {tabId : tabs[i].id  },
+                                    func : injectedFunction,
+                                });
+                                allTabs[tabs[i].id].scriptLoaded = true;
+                            }
                             getDom(tabs[i].id);
                         }
                         catch(err){
@@ -122,23 +211,29 @@ function Chat(transcript){
                 }
             }
         });
+
+        updateSidePanel();
     }
     //switch window/channel.  
-    if (transcript.toLowerCase().startsWith("channel")) {
+    else if (transcript.toLowerCase().startsWith("channel")) {
         console.log(transcript);
+        //change channel if needed.  
         //inject script to listen to channelX messages.  
         //maintain a list of tabs -> ChannelID, and only 
 //        for (const [key, value] of myMap.entries()) {
 //            console.log(key, value);
 //        } 
-        console.log(currentTabs[ channels[0] ] );
-        console.log(tabnames[ currentTabs[ channels[0] ] ]);
-        getDom(currentTabs[ channels[0] ]);
+        console.log(currentTabs[ channels[activeChannel] ] );
+        console.log(tabnames[ currentTabs[ channels[activeChannel] ] ]);
+        getDom(currentTabs[ channels[activeChannel] ]);
         
     }
-    if (transcript.toLowerCase() == "scroll down"){
+    else if (transcript.toLowerCase() == "scroll down"){
         console.log('scrolling');
-        chrome.tabs.sendMessage(currentTabs[ channels[0] ], {text: 'scroll down'});
+        chrome.tabs.sendMessage(currentTabs[ channels[activeChannel] ], {text: 'scroll down'});
+    }
+    else{
+        chrome.tabs.sendMessage(currentTabs[ channels[activeChannel] ], {text: 'scroll down'});
     }
 
 }
