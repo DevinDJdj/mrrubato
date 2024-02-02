@@ -1,6 +1,7 @@
 *.mkv
 *.mid
 *.png
+!icon*.png
 *.jpg
 *.fgt
 server/transcription/output/*
