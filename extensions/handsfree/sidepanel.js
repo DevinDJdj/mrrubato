@@ -104,13 +104,21 @@ function Chat(transcript){
                 if (tabs[i].active){
                     currentTabs[tabs[i].windowId] = tabs[i].id;
                     channels.push(tabs[i].windowId);
-
-                    chrome.scripting.executeScript({
-                        target : {tabId : tabs[i].id  },
-                        func : injectedFunction,
-                    });
-                    getDom(tabs[i].id);
-
+                    if (tabs[i].url.includes("chrome-extension")){
+                        console.log('skipping ' + tabs[i].url);
+                    }
+                    else{
+                        try{
+                            chrome.scripting.executeScript({
+                                target : {tabId : tabs[i].id  },
+                                func : injectedFunction,
+                            });
+                            getDom(tabs[i].id);
+                        }
+                        catch(err){
+                            console.log(err);
+                        }
+                    }
                 }
             }
         });
