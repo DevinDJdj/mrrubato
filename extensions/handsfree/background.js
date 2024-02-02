@@ -114,4 +114,9 @@ function getAllStorageSyncData(top_key) {
 			chrome.tabs.update(tab.id, {autoDiscardable: false}); // Version 1.7.15 - Added
 		});
 	});
+  }
+
+
+function doStuffWithDom(domContent) {
+    console.log('I received the following DOM content:\n' + domContent);
 }

@@ -176,3 +176,4 @@ List anything that is wanting access to the mic, and then indicate which is acti
 
 Can we receive events from the extensions?  
 Then we can do something useful perhaps.  
+OK, some basic functions there, now just need to choose the right tab, and make sense of the DOM perhaps.  
