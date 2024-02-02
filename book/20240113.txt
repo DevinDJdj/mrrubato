@@ -163,7 +163,7 @@ Create a switch for this.
 
 Can we use a tiny LLM for browser interaction?  
 i.e. https://github.com/rahuldshetty/llm.js
-
+https://rahuldshetty.github.io/ggml.js-examples/playground.html
 Can we add RAG to this?  
 
 
@@ -177,3 +177,5 @@ List anything that is wanting access to the mic, and then indicate which is acti
 Can we receive events from the extensions?  
 Then we can do something useful perhaps.  
 OK, some basic functions there, now just need to choose the right tab, and make sense of the DOM perhaps.  
+
+**testllm.html
