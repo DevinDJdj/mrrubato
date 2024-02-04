@@ -1,0 +1,3 @@
+each octave represents a functionality, and the notes between the octave represent the word.  
+This will be sufficient.  
+48, 49, 71, 72 are Special function keys

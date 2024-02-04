@@ -159,7 +159,8 @@ function injectedFunction() {
             });
             tabdiv.appendChild(a);
             tabdiv.appendChild(document.createElement('br'));
-    
+            
+            //show if MIC is active or not, show if Midi is active or not.  
         
 //            tabdiv.innerHTML += '<div id="tab' + tabid + '"><a onclick="changeFocus(' + tabid + ');" href="#">' + tabnames[tabid] + '</a></div>';
 //            console.log(key, value);

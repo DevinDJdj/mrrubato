@@ -1,0 +1,73 @@
+{
+    "keymap":{
+        "global":{
+            "notes": ["use the midi keys input -> language mapping.  use the language inside of the messaging in JS components"
+            ],
+            "top": 72,
+            "bottom": 48,
+            "unpause": [72, 72, 72],
+            "pause": [71, 71, 71],
+            "start": [48, 48, 48],
+            "stop": [49, 49, 49], 
+            "start record": [48, 60, 48], 
+            "stop record": [49, 61, 49], 
+            "channels": [48, 55, 60],
+            "mouse": [48, 53, 60],
+            "LangMouse2": [48, 52, 60],
+            "create": [48, 60, 60],
+            "create end": [60, 60, 48],
+            "clear": [48, 49, 48],
+            "bookmark": [48, 57, 60]
+        },
+        "languages":{
+            "channels": {
+                "notes": ["each octave represents a function to run on the channel", 
+                    "i.e. 48, 55, 55, 60, any functions must contain two or more notes between octaves", 
+                    "each channel can have a different active language",
+                    "48, and 49 not used these are only meta language.  50-59 are the channels",
+                    "only those active tabs with the same language will be utilized simultaneously"
+                ],
+                "where am i": [48, 48, 60, 60], 
+                "activate mic": [48, 52, 55, 60],
+                "deactivate mic": [60, 55, 52, 48],
+                "activate piano": [48, 51, 55, 60], 
+                "deactivate piano": [60, 55, 51, 48], 
+                "switch tab": [48, 55, 55, 60], 
+                "tabnum1": ["language to represent tab.",
+                    "  base 10 representation for now # of the tabs to move, i.e. 48, 50, 48, xx, 60, 60 multiple of 10.",
+                    "  48, 52, 48 xx, 60, 60 = multiple of 100.  48, xx, 60, 60"
+                    ],
+                "switch tab end": [60, 55, 55, 48],
+                "move tab": [48, 53, 53, 60],
+                "tabnum2": "switch tab location with that tab, create a name for the tab",
+                "move tab end": [60, 53, 53, 48],
+                "move channel": [48, 52, 52, 60], 
+                "channelnum1": "48, xx, 60, 60 only 10 channels for now 50 - 59",
+                "move channel end": [60, 52, 52, 48]
+            },
+            "mouse": {
+                "notes": ["click and right click for now", 
+                   "whereami tells direction and location of mouse", 
+                    "movestart and moveend", 
+                    "movement also based on octave/channel, and after movement some feedback should be provided" 
+                ],
+                "where am i": [48, 48, 60, 60], 
+                "click": [48, 52, 55, 60], 
+                "right click": [48, 51, 55, 60], 
+                "rightclicknotes": "need to select within the context menu in this case.  Not sure if we can do this easily ",
+                "select start": [48, 57, 57, 60],
+                "select end": [60, 57, 57, 48],
+                "move start": [48, 55, 55, 60], 
+                "move end": [60, 55, 55, 48],
+                "move up start": [49, 56, 56, 61],
+                "move up end": [61, 56, 56, 49],
+                "rotate start": [48, 51, 51, 60],
+                "rotatenotes": "this rotates the frame of reference for upstart and sidestart moving left/down uses 60 58 60, xx 48 48 multiple of 10, 60 56 60, xx 48 48",
+                "rotate end": [60, 51, 51, 48], 
+                "scroll start": [48, 52, 52, 60],
+                "scroll end": [60, 52, 52, 48]
+            }
+            
+        }
+    }
+}
