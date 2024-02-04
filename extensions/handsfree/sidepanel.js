@@ -5,6 +5,7 @@ var currentTabs = {};
 var tabnames = {};
 var allTabs = {};
 var activeChannel = 0;
+var currentTabId = 0;
 var channels = [];
 window.SpeechRecognition = window.SpeechRecognition
                 || window.webkitSpeechRecognition;
@@ -69,7 +70,27 @@ $("#p").on('keyup', function (event) {
 function getDom(tabid){
     //add requestedTabId to know who this is coming from.  
     //this function mechanism should really allow for that by default.  
-    chrome.tabs.sendMessage(tabid, {text: 'report_back', requestedTabId: tabid}, doStuffWithDom);
+    url = allTabs[tabid].tab.url;
+
+    var div = document.getElementById('qrgenerator');
+    while(div.firstChild){
+        div.removeChild(div.firstChild);
+    }
+
+    var qrcode = new QRCode("qrgenerator", {
+        text: url,
+        width: 128,
+        height: 128,
+        colorDark : "#000000",
+        colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.H
+    });
+    var canvas = document.getElementById('qrgenerator').querySelector('canvas');
+
+    var dataURL = canvas.toDataURL();
+    console.log(dataURL);
+
+    chrome.tabs.sendMessage(tabid, {text: 'report_back', requestedTabId: tabid, qrdata: dataURL}, doStuffWithDom);
 
 }
 
@@ -86,20 +107,40 @@ function injectedFunction() {
             // Call the specified callback, passing
             // the web-page's DOM content as argument
             //should pass dom as well as the tabid.  
+            //pass the qrcode image here.  
             obj = {'dom': document.all[0].outerHTML, 'tabid': msg.requestedTabId};
             sendResponse(obj);
+            qr = document.getElementById('qr');
+            console.log(msg.qrdata);
+            if (qr == null){
+                qr = document.createElement('img');
+                qr.id = 'qr';
+                qr.src = msg.qrdata;
+                //style="position: fixed; bottom: 20px; right: 20px; z-index: 10000;
+                qr.style.position = "fixed";
+                qr.style.bottom = "20px";
+                qr.style.right = "20px";
+                qr.style.zIndex = "10000";
+                document.body.appendChild(qr);
+            }
+            
+        
         }
         else if (msg.text === 'scroll down') {
             // Call the specified callback, passing
             // the web-page's DOM content as argument
             window.scrollBy(0, 100);
         }
+        else if (msg.text === 'qr'){
+        }
         else{
             console.log(msg.text);
         }
+        
     });
 
     document.body.style.backgroundColor = "orange";
+
   }
 
 
@@ -158,6 +199,11 @@ function injectedFunction() {
     
             });
             tabdiv.appendChild(a);
+
+            tab = allTabs[tabid];
+            console.log(tab.audible);
+            console.log(tab.url);
+//            console.log(tab.mutedInfo.muted);
             tabdiv.appendChild(document.createElement('br'));
             
             //show if MIC is active or not, show if Midi is active or not.  
@@ -197,6 +243,7 @@ function Chat(transcript){
                     else{
                         try{
                             if (!allTabs[tabs[i].id].scriptLoaded){
+                                currentTabId = tabs[i].id;
                                 chrome.scripting.executeScript({
                                     target : {tabId : tabs[i].id  },
                                     func : injectedFunction,

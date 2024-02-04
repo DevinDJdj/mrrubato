@@ -1,0 +1,27 @@
+**languages/base
+create struct.  
+
+**extensions/handsfree/sidepanel.js
+inject generated QR code based on the URL.  
+Needs to be visible in the case that we utilize the recording or activate when recording active.  
+Probably we can get from tabs, but do we need to display?  I think it is better this way.  
+This QR code should be visible on each page.  
+Or maybe this functionality if we can keep it visible.  
+https://developer.chrome.com/docs/extensions/develop/ui/add-popup
+
+OK, this might work.  
+
+Want to trigger this QR load onactivate though perhaps?  
+
+
+also use built-in bookmarks 
+chrome.bookmarks.getTree(function (
+    bookmarkTreeNodes
+  ) {
+    $('#bookmarks').append(dumpTreeNodes(bookmarkTreeNodes, query));
+  });
+
+  Just add to the injection function.  
+
+
+  <button id="speechToTextButton" style="position: fixed; bottom: 20px; right: 20px; z-index: 10000; background: rgb(0, 0, 0); color: rgb(255, 255, 255); border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 24px; cursor: pointer; display: block;">🎙️</button>
