@@ -83,19 +83,34 @@
 		  <div id="iterationsh" style="height: 390px;overflow:auto;"></div>
 	  <!--    <textarea id="iterations" rows="40" cols="40"></textarea> -->
 	  </td><td>
+		<div id="mycommentsh"></div>
+		<textarea id="mycomments" rows="20" cols="40"></textarea>
+	
 		  <div id="mychatsh"></div>
 		  <textarea hidden id="mychat" rows="20" cols="10"></textarea>
 	  </td><td>
+		<div id="transcriptsh"></div>
         <div id="sourcessh"></div>
         <textarea hidden id="sources" rows="20" cols="10"></textarea>
 	  </td>
 	  </tr>
 	  </table>
 	  
+	  <table id="ChatTable">
+		<tr id="templateRow">
+		<td>id</td>
+		<td>query</td>
+		<td>AI Response</td>
+		<td width="50%">Sources</td>
+		</tr>
+		</table>
 
       <script type="text/javascript" src="clock.js"></script>
       <script type="text/javascript" src="midi.js"></script>
 	  <script type="text/javascript" src="db.js"></script>
+	  <script src="JZZ/JZZ.js"></script>
+	  <script src="JZZ/JZZ.midi.SMF.js"></script>
+	  
 
     <script>
 
@@ -107,6 +122,7 @@
         var sources = [];
 		var uid = null;
 		var delay = 0;
+		var ChatID = 0;
 
 
 		document.addEventListener('DOMContentLoaded', function() {
@@ -182,6 +198,75 @@
         }
       });
 
+	  		function loadVideo(secs, v){
+				if (v !="" && v != video){
+					video = v;
+					player.loadVideoById(video);
+					//load data and transcript from this video.  
+					if (uid != null){
+						//get the data from the database.  
+						firebase.database().ref('/misterrubato/' + video + '/comments/' + uid).once('value')
+						.then((snapshot) => {
+							if (snapshot.exists()) {
+								loadPreviousComments(snapshot);
+							}
+							
+							firebase.database().ref('/misterrubato/' + video + '/transcript').once('value')
+								.then((snapshot) => {
+									if (snapshot.exists()){
+										loadTranscript(snapshot);
+									}
+									else{
+										console.log('No transcript');									
+										//should never occur
+									}
+								});
+						});
+
+					}
+					//ontimer.. wait for video to load.  
+					setTimeout(() => {
+						if (player.getPlayerState() == 1) {
+							player.seekTo(secs);
+						}
+						else {
+							ytSeconds = secs;
+							player.playVideo();
+						}
+					}, 2000);
+				}
+			}
+
+			function loadTranscript(snapshot){
+				console.log(snapshot.val().transcript);
+				if (snapshot.val().transcript !==null){
+					$('#transcriptsh').html(makeTimeLinks(snapshot.val().transcript));
+				}
+			}
+
+			function loadPreviousComments(snapshot){
+				console.log(snapshot.val().comments);
+				if (snapshot.val().comments !==null){
+					$('#mycomments').val(snapshot.val().comments);
+					$('#mycommentsh').html(makeTimeLinks(snapshot.val().comments));
+				}
+				else{
+					$('#mycomments').val('');
+					$('#mycommentsh').html('');
+
+				}
+				
+				if (snapshot.val().sentiment !==null){
+					$('#points').val(snapshot.val().sentiment);
+				}
+				//load midi.  
+				midifeedback = snapshot.val().midi;
+				loadMidiFeedback(midifeedback);
+				
+				console.log("MIDI:" + midifeedback);
+			//							document.getElementById('out').innerHTML = 'New file: <a download=my.mid href=' + midifeedback + '>DOWNLOAD</a> <embed src=' + midifeedback + ' autostart=false>';
+
+			}
 
             function makeTimeLinks(desc, vid){
                 desc = desc.replaceAll("\n", "<br>");
@@ -192,7 +277,7 @@
                 for (var i=0; i<matches.length; i++){
                     secs = getSecsFromTime(matches[i]);
                     if (secs > 0){
-                        desc = desc.replace(matches[i], '<a href="#" onclick="seekTo(' + secs + ', &quot;' + vid + '&quot;);">' + matches[i] + '</a>');
+                        desc = desc.replace(matches[i], '<a href="#" onclick="loadVideo(' + secs + ', &quot;' + vid + '&quot;);">' + matches[i] + '</a>');
                     }
 
                 }
@@ -222,6 +307,25 @@
 				
 			}
 			
+			function getSourceHTML(sources, rowid){
+                allsources = '<table><tr>';
+				for (i=0; i<sources.length; i++){
+					vid = getVidFromMetadata(sources[i].metadata);
+					//get vid details
+					allsources += '<td width="25%">';
+					if ((i+rowid)%2==0){
+						allsources += '<font color="red">';
+					}
+					allsources += makeTimeLinks(sources[i].content, vid);
+					if ((i+rowid)%2==0){
+						allsources += '</font>';
+					}
+					allsources += '</td>';
+				}
+				allsources += '</tr></table>';
+				return allsources;
+
+			}
 			function updateSources(){
                 allsources = '';
 				for (i=0; i<sources.length; i++){
@@ -236,7 +340,7 @@
 						allsources += '</font>';
 					}
 				}
-				$('#sourcessh').html(allsources);
+				return allsources;
 				
 			}
 
@@ -269,7 +373,8 @@
 			
 			function addSource(source){
                 sources.splice(0, 0, source);
-                updateSources();
+                s = updateSources();
+				$('#sourcessh').html(s);
 			}
 
             function getVidFromMetadata(m){
@@ -279,22 +384,40 @@
 
             //openssl req -x509 -newkey rsa:4096 -nodes -out cert.pem -keyout key.pem -days 365
             //app.run(ssl_context=('cert.pem', 'key.pem'))
+
+			function addChatRow(query, answer, source) {
+				var t = document.getElementById("ChatTable");
+				var rows = t.getElementsByTagName("tr");
+				var r = rows[0];
+				ChatID += 1;
+				t.insertRow(1);
+				r = rows[1]; //always insert after the header row any new info.  
+				for (i=0; i<4; i++){
+					r.insertCell(i);
+				}
+				r.cells[0].innerHTML = ChatID;
+				r.cells[1].innerHTML = query;
+				r.cells[2].innerHTML = answer;
+				r.cells[3].innerHTML = getSourceHTML(source, ChatID);
+			}
+
 			function Chat(transcript) {
 				mychat = transcript; //$('#p').val();
-                addComment(mychat, helpme());
+//                addComment(mychat, helpme());
 				//this should be linked to the video being watched loosely perhaps.  
 				$.getJSON('https://chat.misterrubato.com:8000/api/?query=' + encodeURIComponent(mychat),function(data){
                   
 				  if (typeof(data.answer) != "undefined") {
+					addChatRow(data.query, data.answer, data.sources);
                     console.log('query ' +  data.query);
-                    addComment(data.answer, helpme())
+//                    addComment(data.answer, helpme())
 					console.log('response  ' + data.answer);
 					console.log('sources  ' + data.sources);
 					for (j=0; j<data.sources.length; j++) {
 						console.log('content ' + data.sources[j].content );
                         console.log('metadata ' + data.sources[j].metadata);
                         vid = getVidFromMetadata(data.sources[j].metadata);
-                        addSource(data.sources[j]);
+//                        addSource(data.sources[j]);
                         
 					}
 				   } 

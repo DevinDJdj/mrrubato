@@ -384,10 +384,11 @@ if __name__ == '__main__':
                     #need to use http or https as necessary
                     localserver = config.cfg['localserver']['host'] + ":" + str(config.cfg['localserver']['port'])
                     #should be able to use both https or http, too annoying to address now.  
+                    #why does this video fail?  jRpisYQZmjU now set to null.  
                     url = f'{localserver}/transcribe/?videoid={videoid}'
                     print(url)
                     try:
-                        transcript = requests.get(url, timeout=(5, None)).text
+                        transcript = requests.get(url, timeout=(30, None)).text
                         if (transcript is not None and transcript !="error"):
                             data = {'transcript':transcript}
                             reftranscript.set(data)

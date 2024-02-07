@@ -12,7 +12,13 @@ https://developer.chrome.com/docs/extensions/develop/ui/add-popup
 OK, this might work.  
 
 Want to trigger this QR load onactivate though perhaps?  
-
+OK, this works ok.  
+Need to have function to hide these elements.  
+Maybe only make visible if recording.  
+Do we want to divide between URL and path?  
+We can do that on backend.  
+Need URL -> Video(time)
+and 
 
 also use built-in bookmarks 
 chrome.bookmarks.getTree(function (
@@ -25,3 +31,15 @@ chrome.bookmarks.getTree(function (
 
 
   <button id="speechToTextButton" style="position: fixed; bottom: 20px; right: 20px; z-index: 10000; background: rgb(0, 0, 0); color: rgb(255, 255, 255); border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 24px; cursor: pointer; display: block;">🎙️</button>
+
+**timestep.py
+something timing out here for a certain video.  
+Need to check why.  
+
+
+**web/public/chat.html
+Need to organize the responses better still.  
+We should have a table which grows in a more orderly fashion.  
+Latest comments should be at the top for ease of use.  
+This is better with a table, but what do we put on the right of this screen?  
+Load the full transcript on the right of whatever video is playing.  

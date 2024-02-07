@@ -59,6 +59,28 @@ if (speech == true) {
     recognition.addEventListener('end', recognition.start);
 
     Chat("tabs"); //get current tabs.  
+
+    //listen to when the tabs are changed.  
+    chrome.tabs.onUpdated.addListener(function
+        (tabId, changeInfo, tab) {
+          // read changeInfo data and do something with it (like read the url)
+          if (changeInfo.url) {
+            // do something here
+            console.log(tabId.toString() + ' ' +  changeInfo.url);
+            //send message with refreshed DOM and QR code.  
+            allTabs[tabId] = { 'tab': tab, 'scriptLoaded': false, 'dom': ''};
+            chrome.scripting.executeScript({
+                target : {tabId : tabId  },
+                func : injectedFunction,
+            });
+            allTabs[tabId].scriptLoaded = true;
+            setTimeout(() => {
+                getDom(tabId);
+            }, 1000);
+          }
+        }
+      );  
+
 }
 $("#p").on('keyup', function (event) {
   if (event.keyCode === 13) {
@@ -118,10 +140,13 @@ function injectedFunction() {
                 qr.src = msg.qrdata;
                 //style="position: fixed; bottom: 20px; right: 20px; z-index: 10000;
                 qr.style.position = "fixed";
-                qr.style.bottom = "20px";
+                qr.style.bottom = "40px";
                 qr.style.right = "20px";
                 qr.style.zIndex = "10000";
                 document.body.appendChild(qr);
+            }
+            else{
+                qr.src = msg.qrdata;
             }
             
         
