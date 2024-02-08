@@ -89,7 +89,7 @@
 		  <div id="mychatsh"></div>
 		  <textarea hidden id="mychat" rows="20" cols="10"></textarea>
 	  </td><td>
-		<div id="transcriptsh"></div>
+		<div id="transcriptsh" style="height: 390px;overflow:auto;"></div>
         <div id="sourcessh"></div>
         <textarea hidden id="sources" rows="20" cols="10"></textarea>
 	  </td>
@@ -260,8 +260,16 @@
 					$('#points').val(snapshot.val().sentiment);
 				}
 				//load midi.  
+				//this causing some problems for sure.  
+				//need to check again in analyze as well.  
 				midifeedback = snapshot.val().midi;
-				loadMidiFeedback(midifeedback);
+				try{
+					loadMidiFeedback(midifeedback);
+				}	
+				catch(err){
+					console.log(err);
+				}
+
 				
 				console.log("MIDI:" + midifeedback);
 			//							document.getElementById('out').innerHTML = 'New file: <a download=my.mid href=' + midifeedback + '>DOWNLOAD</a> <embed src=' + midifeedback + ' autostart=false>';

@@ -43,3 +43,13 @@ We should have a table which grows in a more orderly fashion.
 Latest comments should be at the top for ease of use.  
 This is better with a table, but what do we put on the right of this screen?  
 Load the full transcript on the right of whatever video is playing.  
+--loadMidiFeedback
+Check errors in loadMidiFeedback function
+
+
+**server/transcription/server.py
+Change this to use the Blob instead of downloading.  
+
+**web/public/analyze.html
+Change to load the mediafile if exists.  
+Then slowly change to use this component.  
