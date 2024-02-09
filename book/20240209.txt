@@ -13,3 +13,26 @@ Perhaps we can list multiple answers and then choose the preferred answer.
 Not sure we can generate this data well though.  
 
 tiny GPU so for now just use the GPT2 sample and see where we can get.  
+
+**server/llmtune/testing
+https://medium.com/@ogbanugot/notes-on-fine-tuning-llama-2-using-qlora-a-detailed-breakdown-370be42ccca1
+Looks to work perhaps, but need better GPU.  
+Needs further work.  
+--continue testing.  
+peft - parameter efficient fine-tuning (just cheap tuning, but not precise)
+sft  - supervised fine tuning (usually human generated/approved control)
+QLora - Quantized LoRA (Low-Rank Adaptation of Large Language Models)
+
+
+**server/ollama/server.py
+Also look at prompting doc for llama2:
+https://huggingface.co/blog/llama2#how-to-prompt-llama-2
+Allow this to be a free parameter in the interaction.  
+Add this to current 
+
+
+Potential to investigate:
+5L4s9mi9eUc
+LR3BmWCg7Y0
+LitybCiLhSc
+
