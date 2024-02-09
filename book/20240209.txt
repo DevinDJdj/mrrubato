@@ -1,0 +1,15 @@
+Not sure 
+#al8cyr-gH6M
+#https://github.com/facebookresearch/llama
+#./download.sh
+#stack-exchange-paired
+#https://huggingface.co/datasets/lvwerra/stack-exchange-paired
+
+#https://github.com/huggingface/trl/tree/main/examples/research_projects/stack_llama_2/scripts
+
+#DPO -> Chosen/rejected pair
+Perhaps we can list multiple answers and then choose the preferred answer.  
+
+Not sure we can generate this data well though.  
+
+tiny GPU so for now just use the GPT2 sample and see where we can get.  

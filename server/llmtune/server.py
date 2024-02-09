@@ -1,6 +1,8 @@
 # 0. imports
 #pip install torch
 #pip install trl
+#huggingface-cli login
+#https://huggingface.co/settings/tokens
 
 import torch
 from transformers import GPT2Tokenizer
@@ -20,7 +22,7 @@ model = AutoModelForCausalLM.from_pretrained("my-fine-tuned-model-ppo")
 
 # 1. load a pretrained model
 #model = AutoModelForCausalLMWithValueHead.from_pretrained("gpt2")
-model_ref = AutoModelForCausalLMWithValueHead.from_pretrained("gpt2")
+model_ref = AutoModelForCausalLMWithValueHead.from_pretrained("my-fine-tuned-model-ppo")
 tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
 tokenizer.pad_token = tokenizer.eos_token
 
@@ -53,7 +55,7 @@ reward = [torch.tensor(1.0, device=model.pretrained_model.device)]
 train_stats = ppo_trainer.step([query_tensor[0]], [response_tensor[0]], reward)
 
 # push the model on the Hub
-model.push_to_hub("my-fine-tuned-model-ppo")
+#model.push_to_hub("my-fine-tuned-model-ppo")
 
 # or save it locally
 model.save_pretrained("my-fine-tuned-model-ppo")
