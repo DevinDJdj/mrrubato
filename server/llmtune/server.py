@@ -18,10 +18,11 @@ from trl import AutoModelForCausalLMWithValueHead, PPOConfig, PPOTrainer
 
 model = AutoModelForCausalLM.from_pretrained("my-fine-tuned-model-ppo")
 
+initial_model = "gpt2" #llama2
 # 1. load a pretrained model
 #model = AutoModelForCausalLMWithValueHead.from_pretrained("gpt2")
-model_ref = AutoModelForCausalLMWithValueHead.from_pretrained("gpt2")
-tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
+model_ref = AutoModelForCausalLMWithValueHead.from_pretrained(initial_model)
+tokenizer = GPT2Tokenizer.from_pretrained(initial_model)
 tokenizer.pad_token = tokenizer.eos_token
 
 # 2. initialize trainer
@@ -53,7 +54,7 @@ reward = [torch.tensor(1.0, device=model.pretrained_model.device)]
 train_stats = ppo_trainer.step([query_tensor[0]], [response_tensor[0]], reward)
 
 # push the model on the Hub
-model.push_to_hub("my-fine-tuned-model-ppo")
+#model.push_to_hub("my-fine-tuned-model-ppo")
 
 # or save it locally
 model.save_pretrained("my-fine-tuned-model-ppo")

@@ -53,3 +53,50 @@ Change this to use the Blob instead of downloading.
 **web/public/analyze.html
 Change to load the mediafile if exists.  
 Then slowly change to use this component.  
+
+
+**backup.py
+just use backupy is fine.  
+Run these scripts though from timestep.py
+
+
+**server/ollama/server.py
+AutoModelForCausalLM.from_pretrained
+
+langchain.llms.Ollama(
+ model="llama2",
+)
+So we want to load and save to here.  
+
+/usr/share/ollama/.ollama/models
+
+GGUF model can be loaded into ollama
+
+https://github.com/ollama/ollama/blob/main/docs/modelfile.md#examples
+Need to figure out how to utilize this.  
+ollama2 trained is fine.  
+
+See if we can find a tutorial for this.  
+https://huggingface.co/docs/trl/using_llama_models
+
+
+https://llama.meta.com/get-started
+This has info on fine-tuning.  
+python examples/scripts/sft.py --output_dir sft_openassistant-guanaco  --model_name meta-llama/Llama-2-7b-hf --dataset_name timdettmers/openassistant-guanaco --load_in_4bit --use_peft --per_device_train_batch_size 4 --gradient_accumulation_steps 2
+
+https://github.com/mert-kurttutan/torchview
+can we use this?  
+
+
+
+ollama create choose-a-model-name -f <location of the file e.g. ./Modelfile>'
+ollama run choose-a-model-name
+
+how do we overwrite the llama2 model that is being used?  
+
+Need at least pause/play/rewind/ff
+Implement this after switching from Youtube.  
+
+llama-peft
+https://colab.research.google.com/drive/1vIjBtePIZwUaHWfjfNHzBjwuXOyU_ugD?usp=sharing
+
