@@ -17,6 +17,7 @@ words.appendChild(p);
 
 
 recognition.onstart = function() {
+
     console.log("We are listening. Try speaking into the microphone.");
 };
 
@@ -57,6 +58,7 @@ recognition.addEventListener('result', e => {
 if (speech == true) {
     recognition.start();
     recognition.addEventListener('end', recognition.start);
+    midienabled = 1;
 
     Chat("tabs"); //get current tabs.  
 

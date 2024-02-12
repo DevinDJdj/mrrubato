@@ -32,8 +32,9 @@
                 "deactivate mic": [60, 55, 52, 48],
                 "activate piano": [48, 51, 55, 60], 
                 "deactivate piano": [60, 55, 51, 48], 
+                "new tab": [48, 50, 50, 60], 
                 "switch tab": [48, 55, 55, 60], 
-                "tabnum1": ["language to represent tab.",
+                "tabnum1": ["language to represent tab.  List tabs until one is chosen.  Naming these will probably be best",
                     "  base 10 representation for now # of the tabs to move, i.e. 48, 50, 48, xx, 60, 60 multiple of 10.",
                     "  48, 52, 48 xx, 60, 60 = multiple of 100.  48, xx, 60, 60"
                     ],

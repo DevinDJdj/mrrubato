@@ -31,8 +31,20 @@ Allow this to be a free parameter in the interaction.
 Add this to current 
 
 
+
 Potential to investigate:
 5L4s9mi9eUc
 LR3BmWCg7Y0
 LitybCiLhSc
 
+
+
+**extension/handsfree/audio
+pulled from here.  https://github.com/gregjopa/piano-flash-cards/tree/main/public/audio
+Lets use these sounds.  
+OK, change to these sounds.  
+WebMidi initialized.  
+Also why incompatible with **web/public/analyze.html
+
+**extension/handsfree/sidepanel.js
+need to interact with history object for browser.  
