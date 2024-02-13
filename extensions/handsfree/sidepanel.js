@@ -125,6 +125,9 @@ function doStuffWithDom(domContent) {
 
 
 function injectedFunction() {
+    var localcursorx = 100; //local mouse cursor
+    var localcursory = 100; //local mouse cursor
+    //document.elementFromPoint(localcursorx, localcursory).click();
     chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
         // If the received message has the expected format...
         if (msg.text === 'report_back') {
@@ -154,9 +157,34 @@ function injectedFunction() {
         
         }
         else if (msg.text === 'scroll down') {
-            // Call the specified callback, passing
-            // the web-page's DOM content as argument
             window.scrollBy(0, 100);
+        }
+        else if (msg.text === 'scroll up') {
+            window.scrollBy(0, -100);
+        }
+        else if (msg.text === 'scroll right') {
+            window.scrollBy(100, 0);
+        }
+        else if (msg.text === 'scroll left') {
+            window.scrollBy(-100, 0);
+        }
+        else if (msg.text == 'click'){
+            document.elementFromPoint(localcursorx, localcursory).click();
+        }
+        else if (msg.text == 'read'){
+            //read the page.  
+            var text = document.body.innerText;
+            console.log(text);
+
+            var ss = new SpeechSynthesisUtterance(text);
+            ss.rate = 0.7;
+            ss.pitch = 1;
+            window.speechSynthesis.speak(ss);
+        }
+        else if (msg.text == 'stop'){
+            //stop reading the page.  
+            console.log('stopping speech');
+            window.speechSynthesis.cancel();
         }
         else if (msg.text === 'qr'){
         }
@@ -170,24 +198,36 @@ function injectedFunction() {
 
   }
 
-
-  function changeFocus(channelid){
-    if (channelid < channels.length){
-        windowId = channels[channelid];
-        tabid = currentTabs[ windowId ];
-    }
-    else{
+  function changeTab(id){
         //this is the tab id.  
-        windowId = allTabs[channelid].tab.windowId;
-        tabid = channelid;
+        windowId = allTabs[id].tab.windowId;
+        tabid = id;
+        for (var i=0; i<channels.length; i++){  
+            if (channels[i] == windowId){
+                activeChannel = i;
+            }
+        }
+        updateFocus(windowId, tabid);
+  }
+
+  function changeChannel(id){
+    if (id < channels.length){
+        windowId = channels[id];
+        tabid = currentTabs[ windowId ];
+        activeChannel = id;
+        updateFocus(windowId, tabid);
     }
+  }
+
+  function updateFocus(windowId, tabid){
     chrome.windows.update(windowId, {focused: true});
         chrome.tabs.get(tabid, function(tab) {
         if (windowId == tab.windowId){
             chrome.tabs.highlight({'windowId': windowId, 'tabs': tab.index}, function() {});
         }
     });
-}
+
+  }
 
   function updateSidePanel(){
     //add to the channels list.  
@@ -203,7 +243,7 @@ function injectedFunction() {
         a.addEventListener('click', function(event) {
             console.log(event);
             console.log(parseInt(event.target.id));
-            changeFocus(parseInt(event.target.id));
+            changeChannel(parseInt(event.target.id));
 
         });
         chandiv.appendChild(a);
@@ -222,8 +262,7 @@ function injectedFunction() {
             a.addEventListener('click', function(event) {
                 console.log(event);
                 console.log(parseInt(event.target.id));
-                changeFocus(parseInt(event.target.id));
-    
+                changeTab(parseInt(event.target.id));    
             });
             tabdiv.appendChild(a);
 
@@ -305,10 +344,10 @@ function Chat(transcript){
     }
     else if (transcript.toLowerCase() == "scroll down"){
         console.log('scrolling');
-        chrome.tabs.sendMessage(currentTabs[ channels[activeChannel] ], {text: 'scroll down'});
+        chrome.tabs.sendMessage(currentTabs[ channels[activeChannel] ], {text: transcript.toLowerCase()});
     }
     else{
-        chrome.tabs.sendMessage(currentTabs[ channels[activeChannel] ], {text: 'scroll down'});
+        chrome.tabs.sendMessage(currentTabs[ channels[activeChannel] ], {text: transcript.toLowerCase()});
     }
 
 }

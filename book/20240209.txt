@@ -48,3 +48,8 @@ Also why incompatible with **web/public/analyze.html
 
 **extension/handsfree/sidepanel.js
 need to interact with history object for browser.  
+Can we put the JS function in the config file?  
+This would be cleanest.  
+Anyway, just start implementing.  
+Maintain cursors for each window.  
+Do we want this in the QR Code as well?  
