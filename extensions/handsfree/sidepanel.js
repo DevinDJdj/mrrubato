@@ -7,6 +7,7 @@ var allTabs = {};
 var activeChannel = 0;
 var currentTabId = 0;
 var channels = [];
+var prevtranscript = '';
 window.SpeechRecognition = window.SpeechRecognition
                 || window.webkitSpeechRecognition;
 
@@ -38,6 +39,7 @@ recognition.onresult = function(event) {
     var confidence = event.results[0][0].confidence;
 };
 
+/*
 recognition.addEventListener('result', e => {
     const transcript = Array.from(e.results)
         .map(result => result[0])
@@ -54,7 +56,8 @@ recognition.addEventListener('result', e => {
 //    document.getElementById("p").value = ""
     
 });
-  
+*/
+
 if (speech == true) {
     recognition.start();
     recognition.addEventListener('end', recognition.start);
@@ -127,6 +130,9 @@ function doStuffWithDom(domContent) {
 function injectedFunction() {
     var localcursorx = 100; //local mouse cursor
     var localcursory = 100; //local mouse cursor
+    var myrate = 0.7;
+    var mypitch = 1.0;
+    var ss = null;
     //document.elementFromPoint(localcursorx, localcursory).click();
     chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
         // If the received message has the expected format...
@@ -156,6 +162,46 @@ function injectedFunction() {
             
         
         }
+        else if (msg.text === 'links'){
+            var array = [];
+            var links = document.getElementsByTagName("a");
+            for(var i=0, max=links.length; i<max; i++) {
+                array.push(links[i].href);
+            }            
+        }
+        else if (msg.text === 'where am i'){
+            //send back response with localcursorx, localcursory and other info
+            var limit = Math.max( document.body.scrollHeight, document.body.offsetHeight, 
+                document.documentElement.clientHeight, document.documentElement.scrollHeight, document.documentElement.offsetHeight );
+            currenty = window.scrollY;
+            pctscrolled = currenty / limit;
+            var s = Number(pctscrolled).toLocaleString(undefined,{style: 'percent', minimumFractionDigits:2});
+            text = s;
+            text += ' down the page';
+            text += document.title;
+            
+            console.log(localcursorx + ', ' + localcursory);
+
+            ss = new SpeechSynthesisUtterance(text);
+            ss.rate = myrate;
+            ss.pitch = mypitch;
+            window.speechSynthesis.speak(ss);
+
+
+        }
+        else if (msg.text === 'move down') {
+            localcursory += 100;
+        }
+        else if (msg.text === 'move up') {
+            localcursory -= 100;
+        }
+        else if (msg.text === 'move right') {
+            localcursorx += 100;
+        }
+        else if (msg.text === 'move left') {
+            localcursorx -= 100;
+        }
+
         else if (msg.text === 'scroll down') {
             window.scrollBy(0, 100);
         }
@@ -173,12 +219,14 @@ function injectedFunction() {
         }
         else if (msg.text == 'read'){
             //read the page.  
-            var text = document.body.innerText;
-            console.log(text);
+            var el = document.elementFromPoint(localcursorx, localcursory);
+            console.log(el);
+            console.log(localcursorx + ', ' + localcursory);
+            text = el.textContent;
 
-            var ss = new SpeechSynthesisUtterance(text);
-            ss.rate = 0.7;
-            ss.pitch = 1;
+            ss = new SpeechSynthesisUtterance(text);
+            ss.rate = myrate;
+            ss.pitch = mypitch;
             window.speechSynthesis.speak(ss);
         }
         else if (msg.text == 'stop'){
@@ -186,11 +234,17 @@ function injectedFunction() {
             console.log('stopping speech');
             window.speechSynthesis.cancel();
         }
+        else if (msg.text == 'speed up'){
+            ss.rate += 0.2;
+            myrate += 0.2;
+        }
+        else if (msg.text == 'slow down'){
+            ss.rate -= 0.2;
+            myrate -= 0.2;
+        }
         else if (msg.text === 'qr'){
         }
-        else{
-            console.log(msg.text);
-        }
+        console.log(msg.text);
         
     });
 
