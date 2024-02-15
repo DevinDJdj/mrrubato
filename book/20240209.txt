@@ -53,3 +53,57 @@ This would be cleanest.
 Anyway, just start implementing.  
 Maintain cursors for each window.  
 Do we want this in the QR Code as well?  
+
+
+document.elementFromPoint(cursorX, cursorY)
+
+Need to fix focus issues.  
+Need to voice switch channel/tab.  
+Name channel/tab.  
+Or perhaps just use the keys to represent channel/tab.  
+and/or site name for new tabs.  
+Assign tab to 2-key combo.  
+Use time sensitivity.  
+Assign name -> hotkey
+3-key+ with *48* within 2 second is a name.  
+read-back the name.  
+Then this hotkey combo and name and/or command are associated with this tab.  
+So we could associate "where am i" with a 3-key+ combo if entered and spoken at the same time.  
+Could have default combos, for now just make the creation function.  
+
+addl keywords:
+new tab ... (use name or )
+new search ...
+open search results new tab
+search ...
+open latest search tab if exists with new results
+save ... save current tab/config and scroll location and location as ...
+chrome.storage.sync.set({ mytext: txtValue });
+eventually have playback functionality.  Start saving sequences and timings now.  
+Midi perhaps cant do this unless we have a lookup for all.  
+Each tab can be a midi track?  
+
+
+load ... load config from 
+chrome.storage.sync.get('mytext', function(data) {
+    yourTextArea.value = data.mytext;
+});
+
+
+chrome.history.getVisits(
+  details: UrlDetails,
+  callback?: function,
+)
+chrome.history.search(
+  query: object,
+  callback?: function,
+)
+
+occurs before page is loaded.  
+chrome.history.onVisited.addListener(
+  callback: function,
+)
+
+otherwise, just switching channel/tab.  
+Save all config after each action.  
+

@@ -8,6 +8,16 @@ var activeChannel = 0;
 var currentTabId = 0;
 var channels = [];
 var prevtranscript = '';
+var latestSearchTab = null;
+var currentSelection = -1;
+var baseSearch = 'https://www.google.com/search?q=';
+
+var myrate = 0.7;
+var mypitch = 1.0;
+var ss = null;
+var tempTabs = [];
+
+
 window.SpeechRecognition = window.SpeechRecognition
                 || window.webkitSpeechRecognition;
 
@@ -62,10 +72,32 @@ if (speech == true) {
     recognition.start();
     recognition.addEventListener('end', recognition.start);
     midienabled = 1;
-
+    getHistory();
     Chat("tabs"); //get current tabs.  
 
     //listen to when the tabs are changed.  
+    /*
+    chrome.tabs.onActivated.addListener(function
+        (activeInfo) {
+          // read changeInfo data and do something with it (like read the url)
+          if (activeInfo.tabId) {
+            tabId = activeInfo.tabId;
+            // do something here
+            console.log(activeInfo.tabId.toString() + ' ' +  activeInfo.windowId + ' activated');
+            //send message with refreshed DOM and QR code.  
+            allTabs[tabId] = { 'tab': tab, 'scriptLoaded': false, 'dom': ''};
+            chrome.scripting.executeScript({
+                target : {tabId : tabId  },
+                func : injectedFunction,
+            });
+            allTabs[tabId].scriptLoaded = true;
+            setTimeout(() => {
+                getDom(tabId);
+            }, 2000);
+          }
+        }
+      );  
+    */    
     chrome.tabs.onUpdated.addListener(function
         (tabId, changeInfo, tab) {
           // read changeInfo data and do something with it (like read the url)
@@ -81,18 +113,83 @@ if (speech == true) {
             allTabs[tabId].scriptLoaded = true;
             setTimeout(() => {
                 getDom(tabId);
-            }, 1000);
+            }, 2000);
           }
         }
       );  
 
 }
+
 $("#p").on('keyup', function (event) {
   if (event.keyCode === 13) {
      console.log(document.getElementById("p").value);
      document.getElementById("p").value = ""
   }
 });
+
+
+function getNum(str){
+    mynum = parseInt(str);
+    if (isNaN(mynum)){
+        mynum = text2num(str);
+    }
+    if (isNaN(mynum)){
+        return -1;
+    }
+    else{
+        return mynum;
+    }
+}
+
+function findTabs(searchText = ''){
+    var allItems = [];
+    s = '*' + searchText + '*';
+    //just make my own function here to find case-insensitive.  Also fixes the 
+    //async call.  We have all the titles already anyway in allTabs.  
+    chrome.tabs.query({'title': s}, function(tabs) {        
+        console.log(tabs);
+        if (tabs.length > 0){
+            if (tabs.length == 1){
+                changeTab(tabs[0].id);
+            }
+            else{
+                tempTabs = tabs;
+                currentSelection = -1;
+                text = '';
+                for (var i=0; i<tabs.length; i++){
+                    text += i.toString() + ' ' + tabs[i].title;
+                    text += ' ';
+                    console.log(tabs[i].title);
+                }
+                ss = new SpeechSynthesisUtterance(text);
+                ss.rate = myrate;
+                ss.pitch = mypitch;
+                window.speechSynthesis.speak(ss);
+        }
+        }
+    });
+}
+
+function getHistory(searchText = '', maxItems = 25){
+    var params = {text:searchText, maxResults:maxItems};
+    var allItems = [];
+    var itemIdToIndex = {};
+    params.startTime = 0;
+    params.endTime = Date.now();
+    chrome.history.search(params, function(items) {
+      var newCount = 0;
+      for (var i = 0; i < items.length; i++) {
+        var item = items[i];
+        if (item.id in itemIdToIndex)
+          continue;
+        newCount += 1;
+        allItems.push(item);
+        itemIdToIndex[item.id] = allItems.length - 1;
+      }    
+    });
+    return allItems;
+
+}
 
 function getDom(tabid){
     //add requestedTabId to know who this is coming from.  
@@ -122,7 +219,8 @@ function getDom(tabid){
 }
 
 function doStuffWithDom(domContent) {
-    console.log('I received the following DOM content from ' + domContent['tabid'] + '\n' + domContent['dom']);
+    console.log('I received the following DOM content from ' + domContent['tabid']);
+//    console.log('I received the following DOM content from ' + domContent['tabid'] + '\n' + domContent['dom']);
     allTabs[domContent['tabid']]['dom'] = domContent['dom'];
 }
 
@@ -256,6 +354,7 @@ function injectedFunction() {
         //this is the tab id.  
         windowId = allTabs[id].tab.windowId;
         tabid = id;
+        currentTabs[ windowId ] = tabid;
         for (var i=0; i<channels.length; i++){  
             if (channels[i] == windowId){
                 activeChannel = i;
@@ -382,6 +481,15 @@ function Chat(transcript){
 
         updateSidePanel();
     }
+    else if (transcript == "home"){
+        //go to the home page.  
+        //open my sidepanel
+    }
+    else if (transcript == "stop"){
+        console.log('stopping speech');
+        window.speechSynthesis.cancel();
+        chrome.tabs.sendMessage(currentTabs[ channels[activeChannel] ], {text: transcript.toLowerCase()});
+    }
     //switch window/channel.  
     else if (transcript.toLowerCase().startsWith("channel")) {
         console.log(transcript);
@@ -391,10 +499,53 @@ function Chat(transcript){
 //        for (const [key, value] of myMap.entries()) {
 //            console.log(key, value);
 //        } 
+        getNum(transcript.toLowerCase().substring(7));
+        if (mynum < channels.length){
+
+            changeChannel(mynum);
+        }
         console.log(currentTabs[ channels[activeChannel] ] );
         console.log(tabnames[ currentTabs[ channels[activeChannel] ] ]);
         getDom(currentTabs[ channels[activeChannel] ]);
         
+    }
+    else if (transcript.toLowerCase().startsWith("select")){
+        currentSelection = getNum(transcript.toLowerCase().substring(7));
+        console.log('selected ' + currentSelection);
+        window.speechSynthesis.cancel();
+        if (currentSelection > -1 && currentSelection < tempTabs.length){
+            changeTab(tempTabs[currentSelection].id);
+        }
+        chrome.tabs.sendMessage(currentTabs[ channels[activeChannel] ], {text: transcript.toLowerCase()});
+
+    }
+    else if (transcript.toLowerCase().startsWith("open")) {
+        console.log(transcript);
+        findTabs(transcript.substring(5));
+        //search the tabs
+        //list tabs which have this search.  
+        //allow selection with midi controller.  
+        //if no result inform.  
+
+    }
+    else if (transcript.toLowerCase().startsWith("history")) {
+        //search history for this term.  
+        //list history items for this term.  
+        console.log(transcript);
+        items = getHistory(transcript.substring(7));
+        console.log(items);
+        //allow selection with midi
+        
+    }
+    else if (transcript.toLowerCase().startsWith("search")) {
+        console.log(transcript);
+        //allow to open a google search for the query term on existing search.  
+        //or open new tab for this search.  
+        action_url = baseSearch + transcript.substring(7);
+        chrome.tabs.create({ url: action_url });
+
+        chrome.tabs.sendMessage(currentTabs[ channels[activeChannel] ], {text: transcript.toLowerCase()});
+
     }
     else if (transcript.toLowerCase() == "scroll down"){
         console.log('scrolling');
