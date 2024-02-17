@@ -48,8 +48,49 @@ for (let i=0; i<120;i++){
 var prevtime = 0;
 var prevvelocity = 0;
 var start = 0;
+var audioSamples = {'p': [], 'link': [], 'image': [], 'text':[]};
+
+
+function loadSample(url){
+    return (
+      fetch(url)
+        .then((response) => response.arrayBuffer())
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        .then((buffer) => audioContext.decodeAudioData(buffer))
+    );
+  }
 
 function loadPianoSounds() {
+	//probably should load all actual sounds, but good enough for now.  
+	//not great audio quality.  
+    const fileNames = ["C2v10", "C3v10", "C4v10", "C5v10", "C6v10", "C7v10"];
+
+    Promise.all(
+      fileNames.map((fileName) =>
+        loadSample(
+          './audio/' + fileName + '.mp3'
+		)
+      )
+    ).then((audioBuffers) => {
+	    audioSamples['p'] = audioBuffers;
+    });
+
+}
+
+function loadSounds(folder = 'link', mapstr = 'link') {
+	//probably should load all actual sounds, but good enough for now.  
+	//not great audio quality.  
+    const fileNames = ["C3", "C4", "C5"];
+
+    Promise.all(
+      fileNames.map((fileName) =>
+        loadSample(
+          './audio/' + folder + '/' + fileName + '.mp3'
+		)
+      )
+    ).then((audioBuffers) => {
+	    audioSamples[mapstr] = audioBuffers;
+    });
 
 }
 
@@ -61,6 +102,9 @@ function setupAudioFeedback(){
 	start = now;
 
 	loadPianoSounds();
+	loadSounds('link', 'link');
+	loadSounds('frenchhorn', 'image');
+	loadSounds('viola', 'text');
 	
 }
 
@@ -78,8 +122,44 @@ function midiToFreq(midinum, velocity=0){
 }
 
 function playNote(midinum, velocity=0){
-	return null;
-	if (midinum > 40 && midnum < 80 && velocity > 0){
+//	return null;
+	octave = Math.round(midinum/12);
+	//C4 is 60
+	notevalue = midinum%12;
+	if (notevalue > 5) {
+		notevalue -= 12;
+		//this rounds up from 6-11
+	}	
+
+	if (octave > 1 && octave < 8 && velocity > 0){
+		sample = audioSamples['p'][octave-2];
+		const source = audioContext.createBufferSource();
+		source.buffer = sample;
+		// first try to use the detune property for pitch shifting
+		if (source.detune) {
+			source.detune.value = notevalue * 100;
+		} else {
+			// fallback to using playbackRate for pitch shifting
+			source.playbackRate.value = 2 ** (noteValue / 12);
+		}
+
+		
+
+		const panNode = audioContext.createStereoPanner()
+		panNode.pan.value = Math.random(); // center -1 left, 1 right
+		if (Math.random() > 0.5) {
+			panNode.pan.value = -panNode.pan.value;
+		}
+		source.connect(mainGainNode).connect(panNode).connect(audioContext.destination)
+
+//		source.connect(audioContext.destination);
+		source.start();
+		notes[midinum].pnote = source;
+		return source;
+
+	}
+	/*
+	if (midinum > 40 && midinum < 80 && velocity > 0){
 		fetch("./audio/C4v10.mp3")
 		.then((response) => response.arrayBuffer())
 		.then((buffer) => audioContext.decodeAudioData(buffer))
@@ -88,12 +168,15 @@ function playNote(midinum, velocity=0){
 		source.buffer = sample;
 		source.connect(audioContext.destination);
 		source.start();
+		notes[midinum].pnote = source;
 		return source;
 		});
 	}
+	*/
 }
 
 function playTone(freq) {
+	return null;
 	console.log("playing feedback " + freq);
 	const osc = audioContext.createOscillator();
 	osc.connect(mainGainNode);
@@ -350,7 +433,8 @@ function noteOn(note, velocity, abstime){
 
 function noteOff(note, abstime){
 	var obj = notes[note];
-	obj.osc.stop();
+	if (obj.osc != null)
+		obj.osc.stop();
 	if (obj.pnote != null)
 		obj.pnote.stop();
 	let clone = Object.assign({}, obj);
@@ -365,6 +449,24 @@ function noteOff(note, abstime){
 	
 }
 
+function getMidiRecent(){
+	//get the most recent midi notes
+	i=midiarray.length-1;
+	while (i >-1 && midiarray[i].time > Date.now()-start-3000){		
+		i--;
+	}
+	if (i == midiarray.length-1){
+		return null;
+	}
+	else{
+		retarray = [];
+		temp = midiarray.slice(i+1);
+		for (j=0; j<temp.length; j++){
+			retarray.push(temp[j].note);
+		}
+		return retarray;
+	}
+}
 
       function onEnabled() {
 

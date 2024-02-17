@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Hands free speech to text",
+  "name": "my-side-panel",
   "version": "1.0",
   "description": "Drive the browser hands-free",
   "icons": {

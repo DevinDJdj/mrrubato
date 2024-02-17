@@ -11,11 +11,14 @@ var prevtranscript = '';
 var latestSearchTab = null;
 var currentSelection = -1;
 var baseSearch = 'https://www.google.com/search?q=';
+var mymidicommand = null;
 
 var myrate = 0.7;
 var mypitch = 1.0;
 var ss = null;
 var tempTabs = [];
+
+var mr = new Mrrubato();
 
 
 window.SpeechRecognition = window.SpeechRecognition
@@ -36,7 +39,7 @@ recognition.onspeechend = function() {
     // when user is done speaking
 //    recognition.stop();
 }
-              
+
 // This runs when the speech recognition service returns result
 recognition.onresult = function(event) {
     var transcript = event.results[0][0].transcript;
@@ -45,6 +48,13 @@ recognition.onresult = function(event) {
     //this function could be different for each use-case, right now same function
     //we are interacting via voice here, so we call Chat()
     //this is blank for analyze.html.  
+    const now = Date.now();
+    abstime = now - start;
+    console.log(abstime);
+    //match this with the midi messages.  If we have midi messages within the same time frame, utilize those.  
+    //meaning will differ based on the command.  
+    mymidicommand = getMidiRecent();
+    console.log(mymidicommand);
     Chat(transcript);
     var confidence = event.results[0][0].confidence;
 };
@@ -550,6 +560,9 @@ function Chat(transcript){
     else if (transcript.toLowerCase() == "scroll down"){
         console.log('scrolling');
         chrome.tabs.sendMessage(currentTabs[ channels[activeChannel] ], {text: transcript.toLowerCase()});
+    }
+    else if (  transcript.toLowerCase().startsWith("help")){
+        mr.Chat(transcript)
     }
     else{
         chrome.tabs.sendMessage(currentTabs[ channels[activeChannel] ], {text: transcript.toLowerCase()});

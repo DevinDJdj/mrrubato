@@ -1,4 +1,17 @@
+/*
+importScripts('ExtPay.js')
 
+// To test payments, replace 'sample-extension' with the ID of
+// the extension you registered on ExtensionPay.com. You may
+// need to uninstall and reinstall the extension.
+// And don't forget to change the ID in popup.js too!
+var extpay = ExtPay('my-side-panel');
+extpay.startBackground(); // this line is required to use ExtPay in the rest of your extension
+
+extpay.getUser().then(user => {
+	console.log(user)
+})
+*/
 //this not working.  
 //maybe use chrome.tabs.create and use a static page with SR kit.  
 
@@ -113,10 +126,14 @@ function getAllStorageSyncData(top_key) {
 			chrome.action.setBadgeBackgroundColor({"color": [255, 0, 0, 100]}); 
 			chrome.tabs.update(tab.id, {autoDiscardable: false}); // Version 1.7.15 - Added
 		});
+
+        
 	});
   }
 
 
+
+  
 function doStuffWithDom(domContent) {
     console.log('I received the following DOM content:\n' + domContent);
 }
