@@ -188,13 +188,17 @@ Utilize context to determine meaning.
 
 Should we try to use this?  
 github.com/facebookresearch/jepa
-
+or new text->video?  
+Not really what we are after at the moment.  
 
 **web/public/chat.html
 create test Chat() feedback here.  
 
 **record.py
 Allow to switch config.json to adjust destination of recording.  
+Need to fix "rerun" with MEDIAFILE.  
 
 
 
+OK, base heatmap populated.  
+Continue.  

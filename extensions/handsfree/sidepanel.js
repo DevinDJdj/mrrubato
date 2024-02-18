@@ -205,6 +205,8 @@ function getDom(tabid){
     //add requestedTabId to know who this is coming from.  
     //this function mechanism should really allow for that by default.  
     url = allTabs[tabid].tab.url;
+    //this qrcode only represents around 1000 chars
+    url = url.padEnd(220); //gets around some bug https://stackoverflow.com/questions/30796584/qrcode-js-error-code-length-overflow-17161056
 
     var div = document.getElementById('qrgenerator');
     while(div.firstChild){
@@ -242,6 +244,20 @@ function injectedFunction() {
     var mypitch = 1.0;
     var ss = null;
     //document.elementFromPoint(localcursorx, localcursory).click();
+    function getPositionXY(element) {
+        let rect = element.getBoundingClientRect();
+        if (rect.x < 0)
+            rect.x = 0;
+        if (rect.y < 0)
+            rect.y = 0;
+        return {
+            x: rect.x,
+            y: rect.y, 
+            width: rect.width,
+            height: rect.height
+        };
+    } 
+
     chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
         // If the received message has the expected format...
         if (msg.text === 'report_back') {
@@ -249,6 +265,67 @@ function injectedFunction() {
             // the web-page's DOM content as argument
             //should pass dom as well as the tabid.  
             //pass the qrcode image here.  
+
+            var all = document.getElementsByTagName("*");
+            //does this have a text field?  If so, we can use it.  
+            //get all interactive elements.  Can we tell if they have a function associated?  
+            //This would be good info to have.  Then we know which are actually interactive, instead of just display elements.  
+            var links = document.body.getElementsByTagName("a");
+
+            var heatmap = []; //double array of y, x internal value represents another array of the elements obj which are at this position.  
+            //we want y, x because we are scrolling, so x is always visible or the smaller dimension.  
+//            var rowmap = []; 
+            //we dont want a map of pixels, this is wasteful.  We want a map structure which is quantized (recent trend word lol).  
+            //we also want to represent the key positions.  perhaps a single octave 12 is not enough.  Lets try 24.  
+            //I like separation of keys for this, but for now we can use 24.  
+            var docheight = Math.max( document.body.scrollHeight, document.body.offsetHeight, 
+                document.documentElement.clientHeight, document.documentElement.scrollHeight, document.documentElement.offsetHeight  );
+            var docwidth = Math.max(document.body.scrollWidth, document.body.offsetWidth,
+                document.documentElement.clientWidth, document.documentElement.scrollWidth, document.documentElement.offsetWidth );
+            //had to look up the word for this.  
+            var aspectratio = docheight / docwidth;
+                //a bit of waste here, but its fine, just include all pixels size of width/24.  --
+            //I was thinking about rounding for some reason for a moment, but dont think that is necessary.  
+            //scroll and page control will be bottom octave perhaps.  top octave for interacting with the page.
+            //essentially the top octave can be controlled by either mouse or keyboard.  
+            var numkeys = 24;
+            var maxx = numkeys-1;
+            var maxy = numkeys*aspectratio-1;
+            heatmap = Array(Math.floor(numkeys*aspectratio)).fill().map(() => Array(numkeys).fill([]));
+            //so we have a 24 x 24 empty array.  
+            //we will put the elements here.  
+            //document.documentElement; //is this what we want?  
+
+            for (var i=0, max=all.length; i < max; i++) {
+                // Do something with the element here
+                var pos = getPositionXY(all[i]);
+                var xpixel = Math.floor(pos.x*numkeys/docwidth);
+                var ypixel = Math.floor(pos.y*numkeys*aspectratio/docheight);
+                if (xpixel > maxx)
+                    xpixel = maxx;
+                if (ypixel > maxy)
+                    ypixel = maxy;
+                //do we want to include the element in all pixels that it resides in?  
+                //I think we do, but this may be wasteful.  
+                //or do we create a tree struct of some sort?  
+                //for now lets just search left and up if we dont have anything in the current pixel.  
+                //if we have something in the current pixel, will it include a pointer to other elements?  
+                //element.nextElementSibling, element.previousElementSibling, 
+                //element.children, element.parentNode
+                //allow zoom in and zoom out functionality when using the layout command.  
+                //so once we get one element we are fine.  I suspect we will have an element in every pixel in most pages.  
+                var width = all[i].clientWidth;
+                var height = all[i].clientHeight;
+                var innerHTML = all[i].innerHTML;
+                var id = all[i].id;
+
+                //is this enough?  
+                heatmap[ypixel][xpixel].push({'x': xpixel, 'y': ypixel, 'width': width, 'height': height, 'innerHTML': innerHTML, 'id': id});
+                //then just use getelementbyid to get the element for any operations.  
+
+            }
+            console.log('heatmap populated');
+            
             obj = {'dom': document.all[0].outerHTML, 'tabid': msg.requestedTabId};
             sendResponse(obj);
             qr = document.getElementById('qr');
