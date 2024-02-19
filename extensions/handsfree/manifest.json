@@ -8,21 +8,42 @@
     "48": "images/icon-48.png",
     "128": "images/icon-128.png"
   },
-  "permissions": ["activeTab", "scripting", "tabs","clipboardWrite", "clipboardRead", "storage", "unlimitedStorage", "history"],
+  "permissions": ["activeTab", "scripting", "tabs","clipboardWrite", "clipboardRead", "storage", "unlimitedStorage", "history", "geolocation"],
   "host_permissions": [
     "http://*/*",
     "https://*/*"
   ],  
   "action": {
     "default_title": "Toggle Speech to Text"
+
   },
   "commands": {
-    "toggle_speech_to_text": {
+    "mic_on": {
       "suggested_key": {
-        "default": "Alt+U"
+        "default": "Ctrl+Shift+8"
       },
-      "description": "Toggle Speech to Text"
-    }
+      "description": "Enable mic"
+    },
+    "mic_off": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+7"
+      },
+      "description": "Disable mic"
+    },
+    "record_start": {
+        "suggested_key": {
+            "default": "Ctrl+Shift+1"
+        }, 
+        "description": "Start Recording"
+    },
+    "record_stop": {
+      "suggested_key": {
+          "default": "Ctrl+Shift+2"
+      }, 
+      "description": "Stop Recording"
+
+  }
+
   },
   "background": {
     "service_worker": "background.js"

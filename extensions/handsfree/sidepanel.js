@@ -84,6 +84,9 @@ if (speech == true) {
     midienabled = 1;
     getHistory();
     Chat("tabs"); //get current tabs.  
+    chrome.action.setPopup({popup: 'popup.html'});    
+    chrome.action.setBadgeText({text: "on"}); // Version 1.1.8 - Initializing...
+	chrome.action.setBadgeBackgroundColor({"color": [255, 255, 255, 100]}); 
 
     //listen to when the tabs are changed.  
     /*
@@ -325,7 +328,7 @@ function injectedFunction() {
 
             }
             console.log('heatmap populated');
-            
+
             obj = {'dom': document.all[0].outerHTML, 'tabid': msg.requestedTabId};
             sendResponse(obj);
             qr = document.getElementById('qr');

@@ -202,3 +202,15 @@ Need to fix "rerun" with MEDIAFILE.
 
 OK, base heatmap populated.  
 Continue.  
+
+dont think we need an options page, just put any settings in the side-panel page itself.  
+-SpeechRecognition Language
+-SpeechSynth voice
+
+only 4 hotkeys allowed.  
+-mic on/off (hotkey) (feedback in badge).  
+-record/stop (hotkey)
+use these actions.  
+
+
+

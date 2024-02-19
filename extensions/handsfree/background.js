@@ -59,6 +59,22 @@ async function toggleSpeechToText() {
     if (command === "toggle_speech_to_text") {
       toggleSpeechToText();
     }
+    else if (command === "mic_on"){
+        //chrome.action.setIcon();
+        chrome.action.setBadgeText({text: "on"}); // Version 1.1.8 - Initializing...
+    }
+    else if (command === "mic_off"){
+//        chrome.action.setIcon();
+        chrome.action.setBadgeText({text: "off"}); // Version 1.1.8 - Initializing...
+    }
+    else if (command === "record_start"){
+        chrome.action.setBadgeBackgroundColor({"color": [255, 0, 0, 100]}); 
+
+    }
+    else if (command === "record_stop"){
+        chrome.action.setBadgeBackgroundColor({"color": [255, 255, 255, 100]}); 
+
+    }
   });
 
 
@@ -123,7 +139,7 @@ function getAllStorageSyncData(top_key) {
 			$GLOBALS.window_id = tab.windowId; // Version 1.2.0
 			//updateBadge(); // Version 1.1.8 - Removed
 			chrome.action.setBadgeText({text: "..."}); // Version 1.1.8 - Initializing...
-			chrome.action.setBadgeBackgroundColor({"color": [255, 0, 0, 100]}); 
+//			chrome.action.setBadgeBackgroundColor({"color": [255, 0, 0, 100]}); 
 			chrome.tabs.update(tab.id, {autoDiscardable: false}); // Version 1.7.15 - Added
 		});
 
