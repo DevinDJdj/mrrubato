@@ -213,4 +213,26 @@ only 4 hotkeys allowed.
 use these actions.  
 
 
+Did we check this?
+https://github.com/mlc-ai/web-llm
+
+
+**extensions/handsfree/sidepanel.js
+On-close adjust icon status.  
+
+
+need to search for nearest text when we are moving/scrolling.  
+Need to fix 
+need to just start part of the way down the text if we are having to move a large amount.  
+Track where we have moved to.  Search not just straight up/down etc.  
+
+Initial detection is also bad for new/updated tabs.  
+add a click functionality.  
+Just try to find a href with the text which we just read.  
+
+
+commands
+--listen (open any media on page or list media)
+--mute (mute any media playing)
+
 

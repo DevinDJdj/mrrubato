@@ -11,7 +11,8 @@
   "permissions": ["activeTab", "scripting", "tabs","clipboardWrite", "clipboardRead", "storage", "unlimitedStorage", "history", "geolocation"],
   "host_permissions": [
     "http://*/*",
-    "https://*/*"
+    "https://*/*",
+    "chrome-extension://*/*"
   ],  
   "action": {
     "default_title": "Toggle Speech to Text"
