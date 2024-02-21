@@ -1,4 +1,50 @@
 // constructor function
+
+class Keymap{
+    constructor(){
+        this.keys = [];
+        this.keymap = []; //midinum - 48
+        this.keydict = {};
+        this.loadKeys();
+    }
+    loadKeys(){
+        //spoken work + key = action
+        //keydict["keyword"]["numkeys"]["key,key,key"] = "action"
+        //find word command, if doesnt exist, we can search this blank dict, and if it keys match, we can see if the 
+        //word represents a number.  If it does, we can use that number in the command.
+        //i.e. "0,5,12" + "fifteen" = "tab 15"
+        this.keydict[ "" ] = { "3": { "0,12,0" : "start record", "0,10,0": "stop record",
+            "0,7,12": "channel", //channel selector will be 13 and up to 23
+            "0,5,12": "tab", //tab selector will be 13 and up to 23, 2 keys for up to 100 tabs each channel.  Need to store index of the tab in window
+            //this will use channeltab variable to select from current channel.  
+            "0,9,12": "bookmark", //bookmark selector will be 13 and up to 23, 3 keys or more.  
+            //this will be usable in subsequent "tab commands" to open this named tab, this will also save the tab
+            "0,7,0": "click",
+            "0,6,0": "right click", 
+            "0,5,0": "read", 
+            "0,4,0": "scroll down",
+            "0,4,12": "scroll up",
+            "0,3,0": "page down",
+            "0,3,12": "page up",
+            "0,2,0": "stop"
+            }, 
+            "4": {"0,0,12,12": "where am i", 
+            "0,4,7,12": "activate mic", "12,7,4,0": "deactivate mic", 
+            "0,3,7,12": "activate piano", "12,7,3,0": "deactivate piano",
+            } };
+        this.keydict["help"] = {};
+        this.keydict["move"] = {};
+        this.keydict["scroll"] = {};
+        this.keydict["page"] = {};
+        this.keydict["stop"] = {};
+        this.keydict["read"] = {};
+        this.keydict["where am i"] = {};
+        this.keydict["search"] = {};
+        this.keydict["tabs"] = {};
+    }
+
+}
+
 class Command {
     constructor(name, help, action, type = "full", mr = null){
         this.name = name;
@@ -34,6 +80,7 @@ class Mrrubato {
         this.activeChannel = 0, 
         this.currentTabId = 0, 
         this.channels = [], 
+        this.channeltab = [],
         this.prevtranscript = '', 
         this.latestSearchTab = null, 
         this.currentSelection = -1, 
@@ -46,6 +93,7 @@ class Mrrubato {
         this.version = 1.0, 
         this.name = "Mrrubato"
 
+        this.keymap = new Keymap(); //midinum - 48
         this.initCommands();
     }
 
@@ -159,12 +207,21 @@ class Mrrubato {
                         //save latest state of the tab.
                         this.mr.allTabs[tabs[i].id]['tab'] = tabs[i];
                     }
+
+                    channelindex = this.mr.channels.indexOf(tabs[i].windowId);
+                    if (channelindex == -1){
+                        this.mr.channels.push(tabs[i].windowId);
+                        this.mr.channeltab.push([]);
+                        channelindex = this.mr.channels.indexOf(tabs[i].windowId);
+                    }
+
+                    if (this.mr.channeltab[channelindex].indexOf(tabs[i].id) == -1){
+                        this.mr.channeltab[channelindex].push(tabs[i].id);
+                    }
+
                     if (tabs[i].active){
                         this.mr.currentTabs[tabs[i].windowId] = tabs[i].id;
     
-                        if (this.mr.channels.indexOf(tabs[i].windowId) == -1){
-                            this.mr.channels.push(tabs[i].windowId);
-                        }
                         if (tabs[i].url.includes("chrome-extension") || tabs[i].url.includes("chrome://")){
                             console.log('skipping ' + tabs[i].url);
                         }
