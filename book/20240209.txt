@@ -228,11 +228,32 @@ Track where we have moved to.  Search not just straight up/down etc.
 
 Initial detection is also bad for new/updated tabs.  
 add a click functionality.  
-Just try to find a href with the text which we just read.  
+
+As we read we should highlight the words, or at least track the x, y position so that we can click at any moment.  
+
+Just control this by the keys:  
+keys -> Chat -> action
+--Mark
+--Pause
+--Continue
+--click
+
+a href with the text which we just read.  
 
 
 commands
 --listen (open any media on page or list media)
 --mute (mute any media playing)
 
+Lot of pages not working, why?  
+
+create 25-key images with selected items.  
+These images will be 
+
+
+**web/public/testtinymidi.html
+Use this to generate some images perhaps.  
+Should be able to just get the canvas image from this.  
+Or just use this library to generate images of what this looks like.  
+Can we select keys etc?  
 

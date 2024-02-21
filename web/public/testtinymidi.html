@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>JZZ.synth.Tiny</title>
+<style type="text/css">
+.inner {position:absolute; bottom:0; left:0; width:100%; text-align:center;}
+</style>
+<script src="JZZ/JZZ.js"></script>
+<script src="JZZ/JZZ.synth.Tiny.js"></script>
+<script src="JZZ/JZZ.input.Kbd.js"></script>
+</head>
+
+<body>
+<h1>JZZ.synth.Tiny</h1>
+
+<div id=piano></div>
+
+<script>
+var synth = JZZ.synth.Tiny();
+
+var piano = JZZ.input.Kbd({at:'piano', from:'C3', to:'C5', wl: 30, ww: 8, bl: 20, bw: 5, onCreate:function() {
+  this.getBlackKeys().setStyle({color:'#fff'});
+  this.getKey('C5').setInnerHTML('<span class=inner style="color:red">*</span>');
+  this.getKey('C4').setInnerHTML('<span class=inner style="color:red">*</span>');
+  this.getKey('C#4').setInnerHTML('<span class=inner style="color:red">*</span>');
+}});
+
+var ascii = JZZ.input.ASCII({
+  Z:'C5', S:'C#5', X:'D5', D:'D#5', C:'E5', V:'F5',
+  G:'F#5', B:'G5', H:'Ab5', N:'A5', J:'Bb5', M:'B5'
+});
+
+ascii.connect(piano);
+//piano.connect(synth);
+</script>
+
+</body>
+</html>

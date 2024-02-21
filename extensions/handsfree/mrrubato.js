@@ -165,7 +165,7 @@ class Mrrubato {
                         if (this.mr.channels.indexOf(tabs[i].windowId) == -1){
                             this.mr.channels.push(tabs[i].windowId);
                         }
-                        if (tabs[i].url.includes("chrome-extension")){
+                        if (tabs[i].url.includes("chrome-extension") || tabs[i].url.includes("chrome://")){
                             console.log('skipping ' + tabs[i].url);
                         }
                         else{
@@ -219,7 +219,7 @@ class Mrrubato {
         var dataURL = canvas.toDataURL();
         console.log(dataURL);
     
-        chrome.tabs.sendMessage(tabid, {text: 'report_back', requestedTabId: tabid, qrdata: dataURL}, this.doStuffWithDom);
+        chrome.tabs.sendMessage(tabid, {text: 'report_back', requestedTabId: tabid, qrdata: dataURL});//, this.doStuffWithDom);
     
     }
 
@@ -245,6 +245,7 @@ class Mrrubato {
                 }
             }
             this.updateFocus(windowId, tabid);
+            this.getDom(this.currentTabs[ windowId ]);
     }
 
     changeChannel(id){
@@ -464,8 +465,9 @@ function injectedFunction(){
             }
             console.log('heatmap populated');
 
-            obj = {'dom': document.all[0].outerHTML, 'tabid': msg.requestedTabId};
-            sendResponse(obj);
+            //why is this not working properly?  
+//            obj = {'dom': document.all[0].outerHTML, 'tabid': msg.requestedTabId};
+//            sendResponse(obj);
             qr = document.getElementById('qr');
             console.log(msg.qrdata);
             if (qr == null){

@@ -107,10 +107,34 @@ function getNum(str){
 }
 
 function findTabs(searchText = ''){
-    var allItems = [];
+    tempTabs = [];
     s = '*' + searchText + '*';
+
     //just make my own function here to find case-insensitive.  Also fixes the 
     //async call.  We have all the titles already anyway in allTabs.  
+    for (const [key, value] of Object.entries(mr.tabnames)) {
+        if (value.toLowerCase().includes(searchText.toLowerCase())){
+            console.log(key, value);
+            tempTabs.push(parseInt(key));
+        }
+    }
+    if (tempTabs.length == 1){
+        mr.changeTab(tempTabs[0]);
+    }
+    else if (tempTabs.length > 1){
+        currentSelection = -1;
+        text = '';
+        for (var i=0; i<tempTabs.length; i++){
+            text += i.toString() + ' ' + mr.tabnames[ tempTabs[i] ];
+            text += ' ';
+        }
+        mr.ss = new SpeechSynthesisUtterance(text);
+        mr.ss.rate = mr.myrate;
+        mr.ss.pitch = mr.mypitch;
+        window.speechSynthesis.speak(mr.ss);
+    }
+
+/*
     chrome.tabs.query({'title': s}, function(tabs) {        
         console.log(tabs);
         if (tabs.length > 0){
@@ -133,6 +157,7 @@ function findTabs(searchText = ''){
         }
         }
     });
+*/
 }
 
 function getHistory(searchText = '', maxItems = 25){
@@ -160,11 +185,20 @@ function getHistory(searchText = '', maxItems = 25){
 
   function updateSidePanel(){
     //add to the channels list.  
+    //these links dont work for some stupid reason due to the bad design in the chrome-extension framework.  
+    //cant find easy workaround yet.  
+    //leave for now.  
     var chandiv = document.getElementById('channels');
+    chantbl = document.createElement('table');
+    chantbl.style.border = '1px solid black';
     chandiv.innerHTML = '';
+
     for (var i=0; i<mr.channels.length; i++){
         var a = document.createElement('a');
+        
+        const tr = chantbl.insertRow();
         var linkText = document.createTextNode(mr.tabnames[ mr.currentTabs[ mr.channels[i] ] ]);
+        linkText.id = i;
         a.appendChild(linkText);
         a.title = mr.tabnames[ mr.currentTabs[ mr.channels[i] ] ];
         a.href = '#channel' + i;
@@ -175,13 +209,22 @@ function getHistory(searchText = '', maxItems = 25){
             mr.changeChannel(parseInt(event.target.id));
 
         });
-        chandiv.appendChild(a);
-        chandiv.appendChild(document.createElement('br'));
+        const td = tr.insertCell();
+        td.style.border = '1px solid black';
+        td.appendChild(a);
 
     }
+    chandiv.appendChild(chantbl);
+    chandiv.appendChild(document.createElement('br'));
+
 
     var tabdiv = document.getElementById('alltabs');
+    tabdiv.innerHTML = '';
+    tabtbl = document.createElement('table');
+    tabtbl.style.border = '1px solid black';
         for (let tabid in mr.allTabs) {
+
+            const tr = tabtbl.insertRow();
             var a = document.createElement('a');
             var linkText = document.createTextNode(mr.tabnames[ tabid ] );
             a.appendChild(linkText);
@@ -193,20 +236,23 @@ function getHistory(searchText = '', maxItems = 25){
                 console.log(parseInt(event.target.id));
                 mr.changeTab(parseInt(event.target.id));    
             });
-            tabdiv.appendChild(a);
-
+            td = tr.insertCell();
+            td.style.border = '1px solid black';
+            td.appendChild(a);
+            td = tr.insertCell();
+            td.style.border = '1px solid black';            
             tab = mr.allTabs[tabid];
-            console.log(tab.audible);
-            console.log(tab.url);
+            td.appendChild(document.createTextNode(tab.audible));
 //            console.log(tab.mutedInfo.muted);
-            tabdiv.appendChild(document.createElement('br'));
+            //tabdiv.appendChild(document.createElement('br'));
             
             //show if MIC is active or not, show if Midi is active or not.  
         
 //            tabdiv.innerHTML += '<div id="tab' + tabid + '"><a onclick="changeFocus(' + tabid + ');" href="#">' + tabnames[tabid] + '</a></div>';
 //            console.log(key, value);
         } 
-
+        tabdiv.appendChild(tabtbl);
+        tabdiv.appendChild(document.createElement('br'));        
   }
 
 function Chat(transcript){
@@ -241,7 +287,8 @@ function Chat(transcript){
         console.log('selected ' + currentSelection);
         window.speechSynthesis.cancel();
         if (currentSelection > -1 && currentSelection < tempTabs.length){
-            mr.changeTab(tempTabs[currentSelection].id);
+//            mr.changeTab(tempTabs[currentSelection].id);
+            mr.changeTab(tempTabs[currentSelection]);
         }
 //        chrome.tabs.sendMessage(mr.currentTabs[ mr.channels[mr.activeChannel] ], {text: transcript.toLowerCase()});
 
