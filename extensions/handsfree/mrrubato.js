@@ -26,7 +26,8 @@ class Keymap{
             "0,4,12": "scroll up",
             "0,3,0": "page down",
             "0,3,12": "page up",
-            "0,2,0": "stop"
+            "0,2,0": "continue",
+            "0,2,12": "stop"
             }, 
             "4": {"0,0,12,12": "where am i", 
             "0,4,7,12": "activate mic", "12,7,4,0": "deactivate mic", 
@@ -171,9 +172,34 @@ class Mrrubato {
         }, "full", this);
         this.commands.push(c);
 
+        c = new Command("continue", "continue reading next element", function(transcript){
+            console.log('continue next');
+            window.speechSynthesis.cancel();
+            chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()});
+        }, "full", this);
+        this.commands.push(c);
+
         c = new Command("read", "read from current cursor", function(transcript){
             chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()});
         }, "full", this);
+        this.commands.push(c);
+
+        c = new Command("click", "click on current element - list links in element and select one", function(transcript){
+            chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()});
+        }, "full", this);
+        this.commands.push(c);
+
+        c = new Command("back", "go back on current page", function(transcript){
+            chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()});
+        }, "full", this);
+        this.commands.push(c);
+
+        c = new Command("select", "make selection from list of links", function(transcript){
+            console.log(transcript);
+            //allow to open a google search for the query term on existing search.  
+            //or open new tab for this search.              
+            chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()});
+        }, "partial", this);
         this.commands.push(c);
 
         c = new Command("where am i", "gives status of current cursor and window", function(transcript){
@@ -208,7 +234,7 @@ class Mrrubato {
                         this.mr.allTabs[tabs[i].id]['tab'] = tabs[i];
                     }
 
-                    channelindex = this.mr.channels.indexOf(tabs[i].windowId);
+                    let channelindex = this.mr.channels.indexOf(tabs[i].windowId);
                     if (channelindex == -1){
                         this.mr.channels.push(tabs[i].windowId);
                         this.mr.channeltab.push([]);
@@ -399,7 +425,127 @@ function injectedFunction(){
     var mypitch = 1.0;
     var ss = null;
     var currentElement = null;
-    //document.elementFromPoint(localcursorx, localcursory).click();
+    var heatmap = []; //double array of y, x internal value represents another array of the elements obj which are at this position.  
+    //we want y, x because we are scrolling, so x is always visible or the smaller dimension.  
+//            var rowmap = []; 
+    //we dont want a map of pixels, this is wasteful.  We want a map structure which is quantized (recent trend word lol).  
+    //we also want to represent the key positions.  perhaps a single octave 12 is not enough.  Lets try 24.  
+    //I like separation of keys for this, but for now we can use 24.  
+
+    var docheight = Math.max( document.body.scrollHeight, document.body.offsetHeight, 
+        document.documentElement.clientHeight, document.documentElement.scrollHeight, document.documentElement.offsetHeight  );
+    var docwidth = Math.max(document.body.scrollWidth, document.body.offsetWidth,
+        document.documentElement.clientWidth, document.documentElement.scrollWidth, document.documentElement.offsetWidth );
+    //had to look up the word for this.  
+    var aspectratio = docheight / docwidth;
+
+    var numkeys = 24;
+    var maxx = numkeys-1;
+    var maxy = numkeys*aspectratio-1;
+    var tempLinks = [];
+    var currentSelection = -1;
+    var selectionMode = "links";
+//document.elementFromPoint(localcursorx, localcursory).click();
+
+//word2int
+    var Small = {
+        'zero': 0,
+        'one': 1,
+        'two': 2,
+        'three': 3,
+        'four': 4,
+        'five': 5,
+        'six': 6,
+        'seven': 7,
+        'eight': 8,
+        'nine': 9,
+        'ten': 10,
+        'eleven': 11,
+        'twelve': 12,
+        'thirteen': 13,
+        'fourteen': 14,
+        'fifteen': 15,
+        'sixteen': 16,
+        'seventeen': 17,
+        'eighteen': 18,
+        'nineteen': 19,
+        'twenty': 20,
+        'thirty': 30,
+        'forty': 40,
+        'fifty': 50,
+        'sixty': 60,
+        'seventy': 70,
+        'eighty': 80,
+        'ninety': 90
+    };
+
+    var Magnitude = {
+        'thousand':     1000,
+        'million':      1000000,
+    };
+
+    var a, n, g;
+
+    function text2num(s) {
+        a = s.toString().split(/[\s-]+/);
+        n = 0;
+        g = 0;
+        a.forEach(feach);
+        return n + g;
+    }
+
+    function feach(w) {
+        var x = Small[w];
+        if (x != null) {
+            g = g + x;
+        }
+        else if (w == "hundred") {
+            g = g * 100;
+        }
+        else {
+            x = Magnitude[w];
+            if (x != null) {
+                n = n + g * x
+                g = 0;
+            }
+            else { 
+                console.log("Unknown number: "+w); 
+            }
+        }
+    }
+
+    function getNum(str){
+        mynum = parseInt(str);
+        if (isNaN(mynum)){
+            mynum = text2num(str);
+        }
+        if (isNaN(mynum)){
+            return -1;
+        }
+        else{
+            return mynum;
+        }
+    }
+    
+    function speak(text){
+        window.speechSynthesis.cancel();
+        ss = new SpeechSynthesisUtterance(text);
+        ss.rate = myrate;
+        ss.pitch = mypitch;
+        window.speechSynthesis.speak(ss);
+    }
+
+    function getOffset( el ) {
+        var _x = 0;
+        var _y = 0;
+        while( el && !isNaN( el.offsetLeft ) && !isNaN( el.offsetTop ) ) {
+            _x += el.offsetLeft - el.scrollLeft;
+            _y += el.offsetTop - el.scrollTop;
+            el = el.offsetParent;
+        }
+        return { y: _y, x: _x };
+    }
+        
     function getPositionXY(element) {
         let rect = element.getBoundingClientRect();
         if (rect.x < 0)
@@ -414,36 +560,75 @@ function injectedFunction(){
         };
     } 
 
+
+    function getBestParent(element){
+        var w = element.clientWidth;
+        var h = element.clientHeight;
+        var pw = w;
+        var ph = h;
+        if (w < 1){ w = 1;}
+        if (h < 1){ h=1;}
+        var text = element.innerText;
+        var parent = element;
+        var ptext = text;
+        var nextparent = element.parentNode;
+        //200000 = 1000 * 400 (Dont want the full page)
+        var looplimit = 10;
+        while (pw*ph < 400000 && ptext.length < 500 && looplimit-- > 0){
+            parent = element.parentNode;
+            nextparent = parent.parentNode;
+            ptext = parent.innerText;
+            
+            pw = nextparent.clientWidth;
+            ph = nextparent.clientHeight;
+            element = parent;
+        }
+        
+        return parent;
+    }
+
+    function findHeatmapElement(){
+        let scrolly = window.scrollY; 
+        let scrollx = window.scrollX;
+        var xpixel = Math.floor((localcursorx+scrollx)*numkeys/docwidth);
+        var ypixel = Math.floor((localcursory+scrolly)*numkeys*aspectratio/docheight);
+
+        if (heatmap[ypixel][xpixel].length > 0){
+            return getBestParent(heatmap[ypixel][xpixel][0]);
+        }
+
+    }
+
     function findNearestElement(){ //with text        
         let scrolly = window.scrollY; 
         let scrollx = window.scrollX;
-        var el = document.elementFromPoint(scrollx + localcursorx, scrolly+localcursory);
+        var el = document.elementFromPoint(localcursorx, localcursory);
         var text = '';
         var radius = 0;
-        while (text == ''){
-            if (scrollx+localcursorx -radius > 0){
-                el = document.elementFromPoint(scrollx + localcursorx-radius, scrolly+localcursory);
+        while (text == '' && radius < 300){
+            if (localcursorx -radius > 0){
+                el = document.elementFromPoint(localcursorx-radius, localcursory);
                 if (typeof el !=='undefined' && el !==null && el.innerText !==null && el.innerText != ''){
                     localcursorx -=radius;
                     break;
                 }
             } 
-            else if (scrollx+localcursorx + radius < window.innerWidth){
-                el = document.elementFromPoint(scrollx+localcursorx+radius, scrolly+localcursory);
+            else if (localcursorx + radius < window.innerWidth){
+                el = document.elementFromPoint(localcursorx+radius, localcursory);
                 if (typeof el !=='undefined' && el !==null && el.innerText !==null && el.innerText != ''){
                     localcursorx += radius;
                     break;
                 }
             }
-            else if (scrolly+localcursory - radius > 0){
-                el = document.elementFromPoint(scrollx+localcursorx, scrolly+localcursory-radius);
+            else if (localcursory - radius > 0){
+                el = document.elementFromPoint(localcursorx, localcursory-radius);
                 if (typeof el !=='undefined' && el !==null && el.innerText !==null && el.innerText != ''){
                     localcursory -= radius;
                     break;
                 }
             }
-            else if (scrolly+localcursory + radius < window.innerHeight){
-                el = document.elementFromPoint(scrollx+localcursorx, scrolly+localcursory+radius);
+            else if (localcursory + radius < window.innerHeight){
+                el = document.elementFromPoint(localcursorx, localcursory+radius);
                 if (typeof el !=='undefined' && el !==null && el.innerText !==null && el.innerText != ''){
                     localcursory += radius;
                     break;
@@ -451,80 +636,93 @@ function injectedFunction(){
             }
             radius += 50;
         }
-        return el;
+        return getBestParent(el);
+    }
+
+    function initHeatmap(){
+        docheight = Math.max( document.body.scrollHeight, document.body.offsetHeight, 
+            document.documentElement.clientHeight, document.documentElement.scrollHeight, document.documentElement.offsetHeight  );
+        docwidth = Math.max(document.body.scrollWidth, document.body.offsetWidth,
+            document.documentElement.clientWidth, document.documentElement.scrollWidth, document.documentElement.offsetWidth );
+        //had to look up the word for this.  
+        aspectratio = docheight / docwidth;
+    
+        numkeys = 24;
+        maxx = numkeys-1;
+        maxy = numkeys*aspectratio-1;
+
+        heatmap = [];
+        // Call the specified callback, passing
+        // the web-page's DOM content as argument
+        //should pass dom as well as the tabid.  
+        //pass the qrcode image here.  
+
+        var all = document.getElementsByTagName("*");
+        //does this have a text field?  If so, we can use it.  
+        //get all interactive elements.  Can we tell if they have a function associated?  
+        //This would be good info to have.  Then we know which are actually interactive, instead of just display elements.  
+        var links = document.body.getElementsByTagName("a");
+
+        //a bit of waste here, but its fine, just include all pixels size of width/24.  --
+        //I was thinking about rounding for some reason for a moment, but dont think that is necessary.  
+        //scroll and page control will be bottom octave perhaps.  top octave for interacting with the page.
+        //essentially the top octave can be controlled by either mouse or keyboard.  
+        heatmap = Array(Math.floor(numkeys*aspectratio)).fill().map(() => Array(numkeys).fill([]));
+        //so we have a 24 x 24 empty array.  
+        //we will put the elements here.  
+        //document.documentElement; //is this what we want?  
+
+        for (var i=0, max=all.length; i < max; i++) {
+            // Do something with the element here
+            let currenty = 0;//window.scrollY;
+            let currentx = 0;//window.scrollX;
+            var pos = getOffset(all[i]);
+
+            //var pos = getPositionXY(all[i]);
+            var xpixel = Math.floor((pos.x+currentx)*numkeys/docwidth);
+            var ypixel = Math.floor((pos.y+currenty)*numkeys*aspectratio/docheight);
+            if (xpixel < 0)
+                xpixel = 0;
+            if (ypixel < 0)
+                ypixel = 0;
+            if (xpixel > maxx)
+                xpixel = maxx;
+            if (ypixel > maxy)
+                ypixel = maxy;
+            //do we want to include the element in all pixels that it resides in?  
+            //I think we do, but this may be wasteful.  
+            //or do we create a tree struct of some sort?  
+            //for now lets just search left and up if we dont have anything in the current pixel.  
+            //if we have something in the current pixel, will it include a pointer to other elements?  
+            //element.nextElementSibling, element.previousElementSibling, 
+            //element.children, element.parentNode
+            //allow zoom in and zoom out functionality when using the layout command.  
+            //so once we get one element we are fine.  I suspect we will have an element in every pixel in most pages.  
+            /*
+            var width = all[i].clientWidth;
+            var height = all[i].clientHeight;
+            var innerHTML = all[i].innerHTML;
+            var innerText = all[i].innerText;
+            var id = all[i].id;
+            */
+            //is this enough?  
+            //heatmap[ypixel][xpixel].push({'x': xpixel, 'y': ypixel, 'width': width, 'height': height, 'innerHTML': innerHTML, 'innerText': innerText, 'id': id});
+            heatmap[ypixel][xpixel].push(all[i]);
+            //then just use getelementbyid to get the element for any operations.  
+
+        }
+        console.log('heatmap populated');
+
+        //why is this not working properly?  
+//            obj = {'dom': document.all[0].outerHTML, 'tabid': msg.requestedTabId};
+//            sendResponse(obj);
+
     }
 
     chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
         // If the received message has the expected format...
         if (msg.text === 'report_back') {
-            // Call the specified callback, passing
-            // the web-page's DOM content as argument
-            //should pass dom as well as the tabid.  
-            //pass the qrcode image here.  
-
-            var all = document.getElementsByTagName("*");
-            //does this have a text field?  If so, we can use it.  
-            //get all interactive elements.  Can we tell if they have a function associated?  
-            //This would be good info to have.  Then we know which are actually interactive, instead of just display elements.  
-            var links = document.body.getElementsByTagName("a");
-
-            var heatmap = []; //double array of y, x internal value represents another array of the elements obj which are at this position.  
-            //we want y, x because we are scrolling, so x is always visible or the smaller dimension.  
-//            var rowmap = []; 
-            //we dont want a map of pixels, this is wasteful.  We want a map structure which is quantized (recent trend word lol).  
-            //we also want to represent the key positions.  perhaps a single octave 12 is not enough.  Lets try 24.  
-            //I like separation of keys for this, but for now we can use 24.  
-            var docheight = Math.max( document.body.scrollHeight, document.body.offsetHeight, 
-                document.documentElement.clientHeight, document.documentElement.scrollHeight, document.documentElement.offsetHeight  );
-            var docwidth = Math.max(document.body.scrollWidth, document.body.offsetWidth,
-                document.documentElement.clientWidth, document.documentElement.scrollWidth, document.documentElement.offsetWidth );
-            //had to look up the word for this.  
-            var aspectratio = docheight / docwidth;
-                //a bit of waste here, but its fine, just include all pixels size of width/24.  --
-            //I was thinking about rounding for some reason for a moment, but dont think that is necessary.  
-            //scroll and page control will be bottom octave perhaps.  top octave for interacting with the page.
-            //essentially the top octave can be controlled by either mouse or keyboard.  
-            var numkeys = 24;
-            var maxx = numkeys-1;
-            var maxy = numkeys*aspectratio-1;
-            heatmap = Array(Math.floor(numkeys*aspectratio)).fill().map(() => Array(numkeys).fill([]));
-            //so we have a 24 x 24 empty array.  
-            //we will put the elements here.  
-            //document.documentElement; //is this what we want?  
-
-            for (var i=0, max=all.length; i < max; i++) {
-                // Do something with the element here
-                var pos = getPositionXY(all[i]);
-                var xpixel = Math.floor(pos.x*numkeys/docwidth);
-                var ypixel = Math.floor(pos.y*numkeys*aspectratio/docheight);
-                if (xpixel > maxx)
-                    xpixel = maxx;
-                if (ypixel > maxy)
-                    ypixel = maxy;
-                //do we want to include the element in all pixels that it resides in?  
-                //I think we do, but this may be wasteful.  
-                //or do we create a tree struct of some sort?  
-                //for now lets just search left and up if we dont have anything in the current pixel.  
-                //if we have something in the current pixel, will it include a pointer to other elements?  
-                //element.nextElementSibling, element.previousElementSibling, 
-                //element.children, element.parentNode
-                //allow zoom in and zoom out functionality when using the layout command.  
-                //so once we get one element we are fine.  I suspect we will have an element in every pixel in most pages.  
-                var width = all[i].clientWidth;
-                var height = all[i].clientHeight;
-                var innerHTML = all[i].innerHTML;
-                var id = all[i].id;
-
-                //is this enough?  
-                heatmap[ypixel][xpixel].push({'x': xpixel, 'y': ypixel, 'width': width, 'height': height, 'innerHTML': innerHTML, 'id': id});
-                //then just use getelementbyid to get the element for any operations.  
-
-            }
-            console.log('heatmap populated');
-
-            //why is this not working properly?  
-//            obj = {'dom': document.all[0].outerHTML, 'tabid': msg.requestedTabId};
-//            sendResponse(obj);
+            initHeatmap();
             qr = document.getElementById('qr');
             console.log(msg.qrdata);
             if (qr == null){
@@ -544,6 +742,38 @@ function injectedFunction(){
             
         
         }
+        else if (msg.text === 'back'){
+            window.history.back();
+        }
+        else if (msg.text === 'click'){
+            if (currentElement != null){
+                var links = currentElement.getElementsByTagName("a");
+                if (links.length < 1){
+                    links[0].click();
+                }
+                else{                    
+                    tempLinks = links;
+                    currentSelection = -1;
+                    selectionMode = "links";
+                    text = '';
+                    for (var i=0; i<tempLinks.length; i++){
+                        text += i.toString() + ' ' + tempLinks[i].innerText;
+                        text += ' ';
+                    }
+                    speak(text);
+                }
+            }
+        }
+        else if (msg.text.startsWith('select')){
+            let mynum = getNum(msg.text.toLowerCase().substring(7));
+            console.log('selected ' + currentSelection);
+            window.speechSynthesis.cancel();
+            if (selectionMode == "links"){
+                if (mynum > -1 && mynum < tempLinks.length){
+                    tempLinks[mynum].click();
+                }
+            }    
+        }
         else if (msg.text === 'links'){
             var array = [];
             var links = document.getElementsByTagName("a");
@@ -560,7 +790,9 @@ function injectedFunction(){
             var s = Number(pctscrolled).toLocaleString(undefined,{style: 'percent', minimumFractionDigits:2});
             text = s;
             text += ' down the page';
-            text += localcursorx.toString() + ' x ' + localcursory.toString() + ' y ';
+            xpixel = Math.floor(localcursorx*numkeys/docwidth);
+            ypixel = Math.floor((localcursory+currenty)*numkeys*aspectratio/docheight);
+            text += xpixel.toString() + ' x ' + ypixel.toString() + ' y ';
             text += document.title;
             
             console.log(localcursorx + ', ' + localcursory);
@@ -568,12 +800,7 @@ function injectedFunction(){
             //sendResponse(obj);
 
 
-            window.speechSynthesis.cancel();
-            ss = new SpeechSynthesisUtterance(text);
-            ss.rate = myrate;
-            ss.pitch = mypitch;
-            window.speechSynthesis.speak(ss);
-
+            speak(text);
 
         }
         else if (msg.text === 'page up') {
@@ -581,6 +808,7 @@ function injectedFunction(){
         }
         else if (msg.text === 'page down') {
             window.scrollBy(0, window.innerHeight);
+            initHeatmap();
         }
 
         else if (msg.text === 'move down') {
@@ -608,22 +836,42 @@ function injectedFunction(){
         else if (msg.text === 'scroll left') {
             window.scrollBy(-100, 0);
         }
-        else if (msg.text == 'click'){
-            document.elementFromPoint(localcursorx, localcursory).click();
-        }
         else if (msg.text == 'read'){
             //read the page.  
             console.log(localcursorx + ', ' + localcursory);
-            el = findNearestElement();
-            text = el.innerText;
-            console.log('Nearest: ' + localcursorx + ', ' + localcursory);
-            currentElement = el;
+//            el = findNearestElement();
+            el = findHeatmapElement();
+            if (typeof el !=='undefined' && el !==null){
+                text = el.innerText;
 
-            window.speechSynthesis.cancel();
-            ss = new SpeechSynthesisUtterance(text);
-            ss.rate = myrate;
-            ss.pitch = mypitch;
-            window.speechSynthesis.speak(ss);
+                console.log('Nearest: ' + localcursorx + ', ' + localcursory);
+                currentElement = el;
+
+            }
+            else{
+                text = 'no text found';
+            }
+
+            speak(text);
+        }
+        else if (msg.text == 'continue'){
+            //read the page.  
+            console.log(localcursorx + ', ' + localcursory);
+            text = '';
+            if (currentElement != null){
+                el = currentElement.nextElementSibling;
+                text = 'next sibling ';
+            }
+            if (el !=null){
+                text += el.innerText;
+                console.log('Nearest: ' + localcursorx + ', ' + localcursory);
+                currentElement = el;
+
+            }
+            else {
+                text = 'no more elements';
+            }
+            speak(text);
         }
         else if (msg.text == 'stop'){
             //stop reading the page.  

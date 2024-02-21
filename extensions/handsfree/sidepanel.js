@@ -7,6 +7,8 @@ var currentSelection = -1;
 var mymidicommand = null;
 
 var tempTabs = [];
+var tempLinks = [];
+var tempSelect = "tabs";
 
 var mr = new Mrrubato();
 
@@ -68,14 +70,14 @@ if (speech == true) {
             //send message with refreshed DOM and QR code.  
             mr.allTabs[tabId] = { 'tab': tab, 'scriptLoaded': false, 'dom': ''};
             mr.tabnames[tabId] = tab.title;
-            chrome.scripting.executeScript({
-                target : {tabId : tabId  },
-                func : injectedFunction,
-            });
-            mr.allTabs[tabId].scriptLoaded = true;
             setTimeout(() => {
+                chrome.scripting.executeScript({
+                    target : {tabId : tabId  },
+                    func : injectedFunction,
+                });
+                mr.allTabs[tabId].scriptLoaded = true;
                 mr.getDom(tabId);
-            }, 2000);
+            }, 3000);
           }
         }
       );  
@@ -275,7 +277,7 @@ function Chat(transcript){
 //        for (const [key, value] of myMap.entries()) {
 //            console.log(key, value);
 //        } 
-        mr.getNum(transcript.toLowerCase().substring(7));
+        mynum = getNum(transcript.toLowerCase().substring(7));
         if (mynum < mr.channels.length){
 
             mr.changeChannel(mynum);
@@ -286,11 +288,16 @@ function Chat(transcript){
         currentSelection = getNum(transcript.toLowerCase().substring(7));
         console.log('selected ' + currentSelection);
         window.speechSynthesis.cancel();
+
         if (currentSelection > -1 && currentSelection < tempTabs.length){
 //            mr.changeTab(tempTabs[currentSelection].id);
             mr.changeTab(tempTabs[currentSelection]);
+            tempTabs = [];
         }
-//        chrome.tabs.sendMessage(mr.currentTabs[ mr.channels[mr.activeChannel] ], {text: transcript.toLowerCase()});
+        else{
+            //selecting in current page from links or other item.  
+            chrome.tabs.sendMessage(mr.currentTabs[ mr.channels[mr.activeChannel] ], {text: transcript.toLowerCase()});
+        }
 
     }
     else if (transcript.toLowerCase().startsWith("open")) {
