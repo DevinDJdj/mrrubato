@@ -13,6 +13,7 @@
 
 #I use description not title.  
 #python ./record.py --description "Claire De Lune"
+#python ./record.py --description "Claire De Lune" --config "config.json"
 
 
 #!/usr/bin/python
@@ -233,10 +234,26 @@ def initialize_upload(youtube, options):
 def addtodb(videoid):
 #need to utilize a different mechanism here.  
     #this youtube data structure is really not needed.  
-    url = f'https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,status\
-        &id={videoid}&key={api_key}'
-    json_url = requests.get(url)
-    datav = json.loads(json_url.text)
+    if (config.cfg['youtube']['enabled'] == "true"):
+        url = f'https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,status\
+            &id={videoid}&key={api_key}'
+        json_url = requests.get(url)
+        datav = json.loads(json_url.text)
+    else:
+        datav = {}
+        datav['items'] = []
+        datav['items'].append({'snippet': {'title': 'Test', 'description': 'Test'}})
+        datav['items'][0]['snippet']['resourceId'] = {'videoId': videoid}
+        datav['items'][0]['snippet']['publishedAt'] = "2022-12-12T12:12:12Z"
+        datav['items'][0]['snippet']['channelId'] = channel_id
+        datav['items'][0]['snippet']['categoryId'] = "10"
+        datav['items'][0]['snippet']['tags'] = ["Test", "Test"]
+        datav['items'][0]['snippet']['defaultLanguage'] = "en"
+        datav['items'][0]['contentDetails'] = {"duration": "PT1H1M1S", "dimension": "2d", "definition": "hd", "caption": "false", "licensedContent": "true"}
+        datav['items'][0]['status'] = {"uploadStatus": "uploaded", "privacyStatus": "unlisted", "license": "youtube", "embeddable": "true", "publicStatsViewable": "true"}
+        datav['items'][0]['status']['license'] = "CC BY"
+        datav['items'][0]['status']['privacyStatus'] = "unlisted"
+
     if (len(datav['items']) > 0):
         GroupName = ""
         title = datav['items'][0]['snippet']['title']
@@ -396,6 +413,8 @@ if __name__ == '__main__':
     argparser.add_argument("--title", help="Video title", default="New Upload")
     argparser.add_argument("--description", help="Video description",
       default="New Upload")
+    argparser.add_argument("--config", required=False, help="Config file to use", default="config.json")
+    
     argparser.add_argument("--category", default="10",
       help="Numeric video category. " +
         "See https://developers.google.com/youtube/v3/docs/videoCategories/list")
@@ -404,6 +423,10 @@ if __name__ == '__main__':
     argparser.add_argument("--privacyStatus", choices=VALID_PRIVACY_STATUSES,
       default=VALID_PRIVACY_STATUSES[2], help="Video privacy status.") #default unlisted
     args = argparser.parse_args()
+
+    if (args.config != "config.json"):
+        config.cfg = config.init(args.config)
+
     if (args.title == "New Upload"):
         args.title = args.description
         
@@ -426,10 +449,13 @@ if __name__ == '__main__':
         tempfile = open('desc.txt', 'r')
         args.description = tempfile.read()
         tempfile.close()
-        youtube = get_authenticated_service(args)
-        videoid = initialize_upload(youtube, args)    
+        if (config.cfg['youtube']['enabled'] == "true"):
+            youtube = get_authenticated_service(args)
+            videoid = initialize_upload(youtube, args)    
+            add_video_to_playlist(videoid, cred.MY_PLAYLIST, args)
+        else:
+            videoid = time.strftime("%Y%m%d%H%M%S") #for now just use this as ID, not sure if we want global IDs or not.            
         addtodb(videoid)
-        add_video_to_playlist(videoid, cred.MY_PLAYLIST, args)
         sys.exit(0)
 
 

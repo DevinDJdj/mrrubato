@@ -4,12 +4,14 @@
 		"host": "http://192.68.1.120"
 	},
     "peertube":{
+		"enabled": true,
 		"host": "localhost",
 		"port": 3000,
 		"ADMIN_USERID": ADMIN_USERID, 
 		"ADMIN_PASSWORD": ADMIN_PASSWORD
 	},
     "youtube":{
+		"enabled": true,
 		"APIKEY": APIKEY,
 		"CHANNELID": CHANNELID,
 		"MY_PLAYLIST": MY_PLAYLIST, 
