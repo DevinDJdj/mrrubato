@@ -47,7 +47,15 @@ recognition.onresult = function(event) {
     //meaning will differ based on the command.  
     mymidicommand = getMidiRecent();
     console.log(mymidicommand);
-    Chat(transcript);
+    if (mymidicommand == null){
+        Chat(transcript);
+    }
+    else{
+        //waiting for midi command to complete.  
+        let windowId = this.channels[this.activeChannel];
+        let tabid = this.currentTabs[ windowId ];
+        mr.addCommandLog(transcript, null, windowId, tabid, true);
+    }
     var confidence = event.results[0][0].confidence;
 };
 
@@ -57,35 +65,52 @@ if (speech == true) {
     recognition.addEventListener('end', recognition.start);
     midienabled = 1;
     getHistory();
-    chrome.action.setPopup({popup: 'popup.html'});    
+//    chrome.action.setPopup({popup: 'popup.html'});    
     chrome.action.setBadgeText({text: "on"}); // Version 1.1.8 - Initializing...
 	chrome.action.setBadgeBackgroundColor({"color": [255, 255, 255, 100]}); 
 
     chrome.tabs.onUpdated.addListener(function
         (tabId, changeInfo, tab) {
           // read changeInfo data and do something with it (like read the url)
-          if (changeInfo.url) {
+          let mytab = mr.allTabs[tabId];
+          if (changeInfo.status === "complete" && (tab.url.search(mytab.tab.url) == -1 || mytab.tab.url == "")) {
             // do something here
+
+//            mr.allTabs[tabId] = undefined;
             console.log(tabId.toString() + ' ' +  changeInfo.url);
             //send message with refreshed DOM and QR code.  
             mr.allTabs[tabId] = { 'tab': tab, 'scriptLoaded': false, 'dom': ''};
             mr.tabnames[tabId] = tab.title;
+            mr.ping(tabId);
+            //if this has a script already, then this should be set by the time this times out.  
+            //ok maybe this works.  
             setTimeout(() => {
-                chrome.scripting.executeScript({
-                    target : {tabId : tabId  },
-                    func : injectedFunction,
-                });
-                mr.allTabs[tabId].scriptLoaded = true;
-                mr.getDom(tabId);
+                mr.initTab(tab);
             }, 3000);
           }
+
+          /*
+          if (mr.allTabs[tabId] == undefined){
+            setTimeout(() => {
+                mr.initTab(tab);
+            }, 3000);
+          }
+          */
         }
       );  
 
       
       Chat("tabs"); //get current tabs.  
-
+    
+    //check each second if we have some new message to send.  
+    setInterval(checkCommands, 1000);
 }
+
+function checkCommands(){
+    mr.checkCommands();
+}
+
+
 
 $("#p").on('keyup', function (event) {
   if (event.keyCode === 13) {
@@ -277,6 +302,7 @@ function Chat(transcript){
 //        for (const [key, value] of myMap.entries()) {
 //            console.log(key, value);
 //        } 
+//        mr.Chat(transcript);
         mynum = getNum(transcript.toLowerCase().substring(7));
         if (mynum < mr.channels.length){
 
@@ -285,6 +311,9 @@ function Chat(transcript){
         
     }
     else if (transcript.toLowerCase().startsWith("select")){
+//        mr.Chat(transcript);
+        mr.Chat(transcript);
+        /*
         currentSelection = getNum(transcript.toLowerCase().substring(7));
         console.log('selected ' + currentSelection);
         window.speechSynthesis.cancel();
@@ -298,11 +327,13 @@ function Chat(transcript){
             //selecting in current page from links or other item.  
             chrome.tabs.sendMessage(mr.currentTabs[ mr.channels[mr.activeChannel] ], {text: transcript.toLowerCase()});
         }
+        */
 
     }
     else if (transcript.toLowerCase().startsWith("open")) {
         console.log(transcript);
-        findTabs(transcript.substring(5));
+        mr.Chat(transcript);
+//        findTabs(transcript.substring(5));
         //search the tabs
         //list tabs which have this search.  
         //allow selection with midi controller.  

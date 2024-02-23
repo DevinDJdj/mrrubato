@@ -238,14 +238,23 @@ keys -> Chat -> action
 --Continue
 --click
 
+C3 is control key.  C5 is control key.  
+
+then we have 24 bits or 23 bits to represent something.  
+
 a href with the text which we just read.  
 
 
 commands
 --listen (open any media on page or list media)
 --mute (mute any media playing)
+--start/stop feedback
+
+Define feedback langauge.  
 
 Lot of pages not working, why?  
+--must interact with page before tts will work.  (click/space)
+--Can we simulate this?  
 
 create 25-key images with selected items.  
 These images will be 
@@ -256,4 +265,20 @@ Use this to generate some images perhaps.
 Should be able to just get the canvas image from this.  
 Or just use this library to generate images of what this looks like.  
 Can we select keys etc?  
+
+
+Continue with keyboard.  
+window.innerHeight not quite right.  
+Closer though to what we need.  
+
+each note make sure to check phrase combinations and wait briefly if there is no match
+move select, channel, open to mr.  
+
+Not finding deleted stuff when using tabs.  
+
+Somehow I have multiple scripts loaded.  
+This is why there is some weird stuff going on like paging up twice/3 times.  
+Need to fix this.  
+How can we tell if there are functions there?  
+Perhaps there is a better way.  
 

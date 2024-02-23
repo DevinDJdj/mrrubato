@@ -26,8 +26,8 @@ class Keymap{
             "0,4,12": "scroll up",
             "0,3,0": "page down",
             "0,3,12": "page up",
-            "0,2,0": "continue",
-            "0,2,12": "stop"
+            "0,2,12": "continue",
+            "0,2,0": "stop"
             }, 
             "4": {"0,0,12,12": "where am i", 
             "0,4,7,12": "activate mic", "12,7,4,0": "deactivate mic", 
@@ -42,6 +42,12 @@ class Keymap{
         this.keydict["where am i"] = {};
         this.keydict["search"] = {};
         this.keydict["tabs"] = {};
+    }
+    findCommand(transcript, midi){
+        //return transcript
+        //if transcript startswith any of these commands or equals anything in the keydict, prioritize this
+        //if we can translate the midi return transcript, otherwise return ""
+        return transcript;
     }
 
 }
@@ -74,6 +80,13 @@ class Tab{
 //this is the main class for the extension.
 class Mrrubato {
     constructor (){
+//        this.midiLog = []; //history of midi commands.  Already have in midiarray
+//	var obj = {"note": note, "velocity": velocity, "time": abstime, "duration": 0, osc: osc, pnote: pnote};
+//const now = Date.now();
+//abstime = now - start;
+
+        this.commandLog = []; //history of voice commands with time.  {time: abstime, transcript: "command", command: c, channel: 0, tab: 0}
+        this.pendingCommands = [];
         this.commands = [],
         this.currentTabs = {},
         this.tabnames = {},
@@ -98,7 +111,121 @@ class Mrrubato {
         this.initCommands();
     }
 
+    speak(text){
+        window.speechSynthesis.cancel();
+        this.ss = new SpeechSynthesisUtterance(text);
+        this.ss.rate = this.myrate;
+        this.ss.pitch = this.mypitch;
+        window.speechSynthesis.speak(this.ss);
+    }
 
+    checkCommands(){
+        let cl = this.getPendingCommand();
+        let midi = getMidiRecent();
+        let transcript = "";
+        let waiting = false;
+        if (cl != null){
+            transcript = cl.transcript;
+            waiting = cl.waiting;
+        }
+
+        if (midi != null || cl !=null){
+            console.log(cl);
+            console.log(midi);
+                //we have a command.  
+            //try to find if we have something to do with the midi.  
+            transcript = this.keymap.findCommand(transcript, midi);
+            if (transcript != ""){
+                this.Chat(transcript, null, waiting); //add waspendingflag
+            }
+            else{
+                //still waiting for midi to complete?  
+                //we should probably allow for more than 4 seconds.  Add on time here somehow.  
+            }
+        }
+    }
+    
+    addCommandLog(transcript, command, windowId, tabid, waiting=false){
+        let now = Date.now();
+        this.commandLog.push({time: now-start, transcript: transcript, command: command, window: windowId, tab: tabid, waiting: waiting});
+    }
+
+    getPendingCommand(){
+        if (this.commandLog[this.commandLog.length-1].waiting){
+            return this.commandLog[this.commandLog.length-1];
+        }   
+        else{
+            return null;
+        }
+    }
+
+    getCommandLogRecent(since){
+        let i=this.commandLog.length-1;
+        while (i >-1 && ((this.commandLog[i].time > Date.now()-start-since) || this.commandLog[i].waiting)){
+            i--;
+        }
+        if (i == this.commandLog.length-1){
+            return null;
+        }
+        else{
+            let retarray = this.commandLog.slice(i+1);
+            return retarray;
+        }
+    }
+
+    initTab(tab){
+        console.log(tab.url);
+        this.tabnames[tab.id] = tab.title;
+
+        if (this.allTabs[tab.id] == undefined){
+            //initialize the tab.
+            this.allTabs[tab.id] = { 'tab': tab, 'scriptLoaded': false, 'dom': ''};
+        }
+        else{
+            //save latest state of the tab.
+            this.allTabs[tab.id]['tab'] = tab;
+        }
+
+        let channelindex = this.channels.indexOf(tab.windowId);
+        if (channelindex == -1){
+            this.channels.push(tab.windowId);
+            this.channeltab.push([]);
+            channelindex = this.channels.indexOf(tab.windowId);
+        }
+
+        if (this.channeltab[channelindex].indexOf(tab.id) == -1){
+            this.channeltab[channelindex].push(tab.id);
+        }
+
+        if (tab.active){
+            this.currentTabs[tab.windowId] = tab.id;
+
+            if (tab.url.includes("chrome-extension") || tab.url.includes("chrome://")){
+                console.log('skipping ' + tab.url);
+            }
+            else{
+            setTimeout(() => {
+                try{
+                    if (!this.allTabs[tab.id].scriptLoaded){
+                        this.currentTabId = tab.id;
+                        this.allTabs[tab.id].scriptLoaded = true;
+                        chrome.scripting.executeScript({
+                            target : {tabId : tab.id  },
+                            func : injectedFunction,
+                        });
+                    }
+                    this.getDom(tab.id);
+                }
+                catch(err){
+                    console.log(err);
+                }
+            }
+            , 5000);
+            }
+        }
+
+    }
+    
     initCommands(){
         //add in order of importance so help works better.  
         let c = new Command("links", "List all links on the page", function(transcript){
@@ -194,11 +321,36 @@ class Mrrubato {
         }, "full", this);
         this.commands.push(c);
 
+        c = new Command("open", "open a tab", function(transcript){
+            console.log(transcript);
+            //allow to open a google search for the query term on existing search.  
+            //or open new tab for this search.              
+            this.mr.findTabs(transcript.substring(5));
+
+//            chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()});
+        }, "partial", this);
+        this.commands.push(c);
+
         c = new Command("select", "make selection from list of links", function(transcript){
             console.log(transcript);
             //allow to open a google search for the query term on existing search.  
             //or open new tab for this search.              
-            chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()});
+            this.mr.currentSelection = getNum(transcript.toLowerCase().substring(7));
+            console.log('selected ' + this.mr.currentSelection);
+            window.speechSynthesis.cancel();
+    
+            if (this.mr.currentSelection > -1 && this.mr.currentSelection < this.mr.tempTabs.length){
+    //            mr.changeTab(tempTabs[currentSelection].id);
+                this.mr.changeTab(this.mr.tempTabs[this.mr.currentSelection]);
+                this.mr.tempTabs = [];
+            }
+            else{
+                //selecting in current page from links or other item.  
+                chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()});
+//                this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ] = undefined;
+            }
+    
+//            chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()});
         }, "partial", this);
         this.commands.push(c);
 
@@ -223,51 +375,7 @@ class Mrrubato {
         c = new Command("tabs", "reload all tabs", function(transcript, callback){
             chrome.tabs.query({}, function(tabs) {        
                 for (var i=0; i<tabs.length; i++) {
-                    console.log(tabs[i].url);
-                    this.mr.tabnames[tabs[i].id] = tabs[i].title;
-                    if (this.mr.allTabs[tabs[i].id] == undefined){
-                        //initialize the tab.
-                        this.mr.allTabs[tabs[i].id] = { 'tab': tabs[i], 'scriptLoaded': false, 'dom': ''};
-                    }
-                    else{
-                        //save latest state of the tab.
-                        this.mr.allTabs[tabs[i].id]['tab'] = tabs[i];
-                    }
-
-                    let channelindex = this.mr.channels.indexOf(tabs[i].windowId);
-                    if (channelindex == -1){
-                        this.mr.channels.push(tabs[i].windowId);
-                        this.mr.channeltab.push([]);
-                        channelindex = this.mr.channels.indexOf(tabs[i].windowId);
-                    }
-
-                    if (this.mr.channeltab[channelindex].indexOf(tabs[i].id) == -1){
-                        this.mr.channeltab[channelindex].push(tabs[i].id);
-                    }
-
-                    if (tabs[i].active){
-                        this.mr.currentTabs[tabs[i].windowId] = tabs[i].id;
-    
-                        if (tabs[i].url.includes("chrome-extension") || tabs[i].url.includes("chrome://")){
-                            console.log('skipping ' + tabs[i].url);
-                        }
-                        else{
-                            try{
-                                if (!this.mr.allTabs[tabs[i].id].scriptLoaded){
-                                    this.mr.currentTabId = tabs[i].id;
-                                    chrome.scripting.executeScript({
-                                        target : {tabId : tabs[i].id  },
-                                        func : injectedFunction,
-                                    });
-                                    this.mr.allTabs[tabs[i].id].scriptLoaded = true;
-                                }
-                                this.mr.getDom(tabs[i].id);
-                            }
-                            catch(err){
-                                console.log(err);
-                            }
-                        }
-                    }
+                    this.mr.initTab(tabs[i]);//, i, tabs.length, callback);
                 }
                 callback();
             });
@@ -302,19 +410,50 @@ class Mrrubato {
         var dataURL = canvas.toDataURL();
         console.log(dataURL);
     
-        chrome.tabs.sendMessage(tabid, {text: 'report_back', requestedTabId: tabid, qrdata: dataURL});//, this.doStuffWithDom);
+        chrome.tabs.sendMessage(tabid, {text: 'report_back', requestedTabId: tabid, qrdata: dataURL});
     
     }
 
+    ping(tabid){
+        chrome.tabs.sendMessage(tabid, {text: 'report_back', requestedTabId: tabid}, mr.pingResponse);
+    }
+
+    pingResponse(response){
+        mr.allTabs[response['tabid'] ].scriptLoaded = true;        
+    }
+
     doStuffWithDom(domContent) {
-        console.log('I received the following DOM content from ' + domContent['tabid']);
+        console.log('I received the following DOM content from ' + domContent);
+
     //    console.log('I received the following DOM content from ' + domContent['tabid'] + '\n' + domContent['dom']);
-        this.mr.allTabs[domContent['tabid']]['dom'] = domContent['dom'];
+//        this.mr.allTabs[domContent['tabid']]['dom'] = domContent['dom'];
     }
     
 
     findTabs(searchText = ''){
-        
+        this.tempTabs = [];
+
+        //just make my own function here to find case-insensitive.  Also fixes the 
+        //async call.  We have all the titles already anyway in allTabs.  
+        for (const [key, value] of Object.entries(this.tabnames)) {
+            if (value.toLowerCase().includes(searchText.toLowerCase())){
+                console.log(key, value);
+                this.tempTabs.push(parseInt(key));
+            }
+        }
+        if (this.tempTabs.length == 1){
+            this.changeTab(this.tempTabs[0]);
+        }
+        else if (this.tempTabs.length > 1){
+            this.currentSelection = -1;
+            let text = '';
+            for (var i=0; i<this.tempTabs.length; i++){
+                text += i.toString() + ' ' + this.tabnames[ this.tempTabs[i] ];
+                text += ' ';
+            }
+            this.speak(text);
+        }
+            
     }
 
     changeTab(id){
@@ -358,24 +497,43 @@ class Mrrubato {
         console.log(res);
     }
 
-    Chat(transcript, callback=null){
+    Chat(transcript, callback=null, waspending=false){
         transcript = transcript.toLowerCase();
         console.log(transcript);
         //get all full commands - do any match?  
-        console.log(this.commands);
+//        console.log(this.commands);
+        let windowId = this.channels[this.activeChannel];
+        let tabid = this.currentTabs[ windowId ];
+        var commandFound = false;
+        let c = null;
         for (let i = 0; i < this.commands.length; i++){
-            let c = this.commands[i];
+            c = this.commands[i];
             if (c.type == "full" && transcript == c.name){
                 c.action(transcript, callback);
+                commandFound = true;                
                 break;
             }
             else if (c.type == "partial" && transcript.startsWith(c.name)){
                 c.action(transcript, callback);
+                commandFound = true;    
                 break;
             }
         }
-
+        if (!commandFound){
+            c = null;
+        }
+        if (waspending){
+            //should always return something.  
+            let cl = this.getPendingCommand();
+            cl.pending = false;
+            cl.transcript = transcript;
+            cl.c = c;
+        }
+        else{
+            this.addCommandLog(transcript, c, windowId, tabid);
+        }        
     }
+
 
     getNum(str){
         mynum = parseInt(str);
@@ -649,7 +807,7 @@ function injectedFunction(){
     
         numkeys = 24;
         maxx = numkeys-1;
-        maxy = numkeys*aspectratio-1;
+        maxy = Math.floor(numkeys*aspectratio-1);
 
         heatmap = [];
         // Call the specified callback, passing
@@ -707,7 +865,12 @@ function injectedFunction(){
             */
             //is this enough?  
             //heatmap[ypixel][xpixel].push({'x': xpixel, 'y': ypixel, 'width': width, 'height': height, 'innerHTML': innerHTML, 'innerText': innerText, 'id': id});
-            heatmap[ypixel][xpixel].push(all[i]);
+            try{
+                heatmap[ypixel][xpixel].push(all[i]);
+            }
+            catch(err){
+                console.log(err);
+            }
             //then just use getelementbyid to get the element for any operations.  
 
         }
@@ -739,6 +902,8 @@ function injectedFunction(){
             else{
                 qr.src = msg.qrdata;
             }
+            obj = {'text': 'report_back', 'tabid': msg.requestedTabId};
+            sendResponse(obj);
             
         
         }
@@ -841,6 +1006,7 @@ function injectedFunction(){
             console.log(localcursorx + ', ' + localcursory);
 //            el = findNearestElement();
             el = findHeatmapElement();
+            text = "";
             if (typeof el !=='undefined' && el !==null){
                 text = el.innerText;
 
@@ -848,10 +1014,9 @@ function injectedFunction(){
                 currentElement = el;
 
             }
-            else{
+            if (text == ''){
                 text = 'no text found';
             }
-
             speak(text);
         }
         else if (msg.text == 'continue'){

@@ -17,6 +17,7 @@ let attackTime = 0.2;
 let sustainLevel = 0.8;
 let releaseTime = 0.2;
 
+let recentTime = 4000;
 
 
 //for notes.  
@@ -452,7 +453,7 @@ function noteOff(note, abstime){
 function getMidiRecent(){
 	//get the most recent midi notes
 	i=midiarray.length-1;
-	while (i >-1 && midiarray[i].time > Date.now()-start-3000){		
+	while (i >-1 && midiarray[i].time > Date.now()-start-recentTime){		
 		i--;
 	}
 	if (i == midiarray.length-1){
