@@ -278,7 +278,11 @@ Not finding deleted stuff when using tabs.
 
 Somehow I have multiple scripts loaded.  
 This is why there is some weird stuff going on like paging up twice/3 times.  
-Need to fix this.  
+Need to fix this.  --OK I think.  
 How can we tell if there are functions there?  
 Perhaps there is a better way.  
+
+
+Try some commands.  
+What other commands to add?  
 

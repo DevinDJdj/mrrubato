@@ -13,35 +13,55 @@ class Keymap{
         //find word command, if doesnt exist, we can search this blank dict, and if it keys match, we can see if the 
         //word represents a number.  If it does, we can use that number in the command.
         //i.e. "0,5,12" + "fifteen" = "tab 15"
-        this.keydict[ "" ] = { "3": { "0,12,0" : "start record", "0,10,0": "stop record",
-            "0,7,12": "channel", //channel selector will be 13 and up to 23
-            "0,5,12": "tab", //tab selector will be 13 and up to 23, 2 keys for up to 100 tabs each channel.  Need to store index of the tab in window
+        //lookup word command if it doesnt exist, use this map.  
+        //anything ending in 0 is standalone command.  and doesnt require a word.  
+        //ending in 12 requires continuation or additional word/parameter
+        //otherwise it requires a word.  
+        //separate these categories.   
+        //blank
+        this.keydict[ "" ] = { "3": { "0,11,0" : "start record", 
+            "12,11,12": "stop record", //after this we should either have a name or keyset in the upper octave.  
+            //this is essentially creating a commandset with all command log and midi log in time.  
+            //definition should be 11 or 13 keys.  
+            "12,5,12": "channel", //channel selector will be 13 and up to 23
+            "12,7,12": "tab", //tab selector will be 13 and up to 23, 2 keys for up to 100 tabs each channel.  Need to store index of the tab in window
             //this will use channeltab variable to select from current channel.  
-            "0,9,12": "bookmark", //bookmark selector will be 13 and up to 23, 3 keys or more.  
+            "12,9,12": "bookmark", //bookmark selector will be 13 and up to 23, 5 keys or more.  
             //this will be usable in subsequent "tab commands" to open this named tab, this will also save the tab
             "0,7,0": "click",
             "0,6,0": "right click", 
             "0,5,0": "read", 
             "0,4,0": "scroll down",
-            "0,4,12": "scroll up",
             "0,3,0": "page down",
-            "0,3,12": "page up",
-            "0,2,12": "continue",
             "0,2,0": "stop"
             }, 
-            "4": {"0,0,12,12": "where am i", 
-            "0,4,7,12": "activate mic", "12,7,4,0": "deactivate mic", 
-            "0,3,7,12": "activate piano", "12,7,3,0": "deactivate piano",
+            "4": {"0,7,7,0": "where am i", 
+            "0,5,5,0": "tabs",
+            "0,4,4,0": "scroll up",
+            "0,3,3,0": "page up",
+            "0,2,2,0": "continue",
+            "0,4,7,0": "activate mic", "0,7,4,0": "deactivate mic", 
+            "0,3,7,0": "activate piano", "0,7,3,0": "deactivate piano",
             } };
-        this.keydict["help"] = {};
-        this.keydict["move"] = {};
-        this.keydict["scroll"] = {};
-        this.keydict["page"] = {};
-        this.keydict["stop"] = {};
-        this.keydict["read"] = {};
-        this.keydict["where am i"] = {};
-        this.keydict["search"] = {};
+            //basic functionality all keys should come before the word is complete.  Not sure if the user can handle this consistently 
+            //but maybe best to make this a rule, to avoid problems.  Basically if said at the same time, it should work.  
+            //keycommand + parameter word = action.  
+            //wordcommand + parameter keyset = action.  
+            //keycommand + parameter keyset = action.  In this case the keyset should essentially be the upper octave.  
+            //general terms are even numbers.  Identifiers are odd.  
+        this.keydict["help"] = {"1": {"1": "1"} }; //0 means any number, search for commands with this midi function after 1.  
+        //this should also search up keywords which we have generated and correspond to this set of keys.  
+        this.keydict["move"] = {"2": {}}; //bottom octave = Y coord, top octave = X coord
+        this.keydict["scroll"] = {"1": {}}; //number of increments.  from middle C
+        this.keydict["page"] = {"1": {}}; //number of pages to scroll.  from middle C
+        this.keydict["search"] = {"8": {}}; 
+        this.keydict["channel"] = {"5": {}}; //keywords are sets of 5 or 7 and more
         this.keydict["tabs"] = {};
+        this.keydict["tab"] = {"7": {}}; //use the channel with another two keys
+        this.keydict["bookmark"] = {"9": {}}; //probably just use the tab which we have defined with another two keys.  
+        //then we can go to a bookmark without needing to go to the tab first.  
+        this.keydict["commandset"] = {"11": {}, "13": {}}; //probably just use the tab which we have defined with another two keys.  
+        //when running a commandset, how do we speed up?  
     }
     findCommand(transcript, midi){
         //return transcript
