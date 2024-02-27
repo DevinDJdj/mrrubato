@@ -23,8 +23,31 @@ import chainlit as cl
 from langchain.chains import RetrievalQA,RetrievalQAWithSourcesChain
 from fastapi.encoders import jsonable_encoder
 
+from langchain.prompts import PromptTemplate
+
+
+
+
+
+def custom_prompt():
+    prompt_template = """[INST]<<SYS>>Use the following pieces of context to answer the question at the end. Please follow the following rules:
+    1. If you don't know the answer, try to find sources which include **coherent thoughts** relevant to the question. 
+    and add the source links as a list.
+    2. If you find the answer, write the answer in a concise way and add the list of sources that are 
+    **directly** used to derive the answer. Exclude the sources that are irrelevant to the final answer.
+    <</SYS>>
+    {context}
+
+    Question: {question}
+    Helpful Answer:
+    [/INST]"""
+
+    PROMPT = PromptTemplate(input_variables=["context","question"], template=prompt_template)
+    return PROMPT
+
 
 QA_CHAIN_PROMPT = hub.pull("rlm/rag-prompt-llama")
+QA_CHAIN_PROMPT = custom_prompt()
 MY_MODEL = "llama2" #"mistral"
 myEmbeddings = FastEmbedEmbeddings() #OllamaEmbeddings(model="llama2") #GPT4AllEmbeddings()
 

@@ -286,3 +286,5 @@ Perhaps there is a better way.
 Try some commands.  
 What other commands to add?  
 
+
+need arg --config flag for other batch jobs.  

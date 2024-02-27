@@ -102,9 +102,11 @@
 	  <source src="https://storage.googleapis.com/misterrubato-test.appspot.com/videos/2024-01-29%2016-47-54.mp4" type="video/mp4"></source>
   </video>
 	<div id="mycommentsh"></div>
-    <textarea id="mycomments" rows="20" cols="40"></textarea>
+    <textarea id="mycomments" rows="10" cols="40"></textarea>
 </td><td>
-    <textarea id="transcript" rows="20" cols="60"></textarea>
+    <textarea id="transcript" rows="10" cols="60"></textarea>
+	<div id="transcriptsh" style="height: 390px;overflow:auto;"></div>
+
 </td>
 </tr>
 </table>
@@ -285,7 +287,18 @@ var uid = null;
  								});
 						}
 					  });
-					
+
+					  firebase.database().ref('/misterrubato/' + video + '/transcript').once('value')
+								.then((snapshot) => {
+									if (snapshot.exists()){
+										loadTranscript(snapshot);
+									}
+									else{
+										console.log('No transcript');									
+										//should never occur
+									}
+								});
+					  
 					}
 				// IdP data available in result.additionalUserInfo.profile.
 				  // ...
@@ -320,6 +333,13 @@ var uid = null;
         }
       });
 
+
+function loadTranscript(snapshot){
+	console.log(snapshot.val().transcript);
+	if (snapshot.val().transcript !==null){
+		$('#transcriptsh').html(makeTimeLinks(snapshot.val().transcript));
+	}
+}
 
 function loadPreviousComments(snapshot){
 	console.log(snapshot.val().comments);
