@@ -19,4 +19,5 @@ else:
 def init(fname):
     if os.path.isfile(fname):
         cfg = json.load(open(fname))
+        print("config loaded from " + fname)
         return cfg
