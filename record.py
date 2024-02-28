@@ -738,15 +738,20 @@ if __name__ == '__main__':
 
     transcribe_file = uploadtranscript(fn[0], pathnames[len(pathnames)-1])
     args.description += '\r\n\r\nTRANSCRIPT:' + transcribe_file + '\r\n'
+
+    #should have some kind of check here.      
+    mediafile = uploadmediafile(fn[0], pathnames[len(pathnames)-1] )
+    args.description += '\r\n\r\nMEDIAFILE:' + mediafile + '\r\n'
+
     print(args.description)
+    
     tempfile = open('desc.txt', 'w')
     tempfile.write(args.description)
     tempfile.close()
     
+
     youtube = get_authenticated_service(args)
 
-    mediafile = uploadmediafile(fn[0], pathnames[len(pathnames)-1] )
-    args.description += '\r\n\r\nMEDIAFILE:' + mediafile + '\r\n'
 
     videoid = initialize_upload(youtube, args)
 

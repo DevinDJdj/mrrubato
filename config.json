@@ -4,7 +4,7 @@
 		"host": "http://192.68.1.120"
 	},
     "peertube":{
-		"enabled": true,
+		"enabled": "true",
 		"host": "localhost",
 		"port": 3000,
 		"ADMIN_USERID": ADMIN_USERID, 
