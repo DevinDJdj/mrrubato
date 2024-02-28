@@ -12,6 +12,16 @@
 <script src="https://cdn.jsdelivr.net/npm/webmidi@latest/dist/iife/webmidi.iife.js"></script>
 <link href="css/app-dictaphone.css" rel="stylesheet" type="text/css">
 	<title>Speech to Text</title>
+	<style>
+		table {
+		  border-collapse: collapse;
+		  width: 100%;
+		}
+		
+		tr {
+		  border-bottom: 1px solid #ddd;
+		}
+		</style>	
 </head>
 
     <!-- update the version number as needed -->
@@ -417,6 +427,11 @@
 				ChatID += 1;
 				t.insertRow(1);
 				r = rows[1]; //always insert after the header row any new info.  
+				r.style.border = "1px solid #000"
+				// the same as
+				r.style.borderWidth = "1px";
+				r.style.borderColor = "#000";
+				r.style.borderStyle = "solid";
 				for (i=0; i<4; i++){
 					r.insertCell(i);
 				}

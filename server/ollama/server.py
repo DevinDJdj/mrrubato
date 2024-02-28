@@ -72,14 +72,18 @@ def retrieval_qa_chain(llm,vectorstore):
  return qa_chain
 
 
-def qa_bot(): 
+def qa_bot(db): 
  global model
  if (model is None):
   print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
   model = load_llm()
   print("loaded model")
  DB_PATH = "vectorstores/db/"
+ if db is not None:
+  DB_PATH = "vectorstores/db/" + db + "/"
+  print(DB_PATH)
  vectorstore = Chroma(persist_directory=DB_PATH, embedding_function=myEmbeddings)
+# vectorstore = Chroma(persist_directory=DB_PATH, embedding_function=myEmbeddings)
 
  qa = retrieval_qa_chain(model,vectorstore)
  return qa 
@@ -94,12 +98,15 @@ def hello():
     return 'Hello, World!'
 
 #http://127.0.0.1:8000/chat/?query=how are you
+#utilize additional parameter to separate RAG DB.  
+#db=xxx
 @app.route('/chat/')
 def chat():
     query = request.args.get('query')
+    db = request.args.get('db')
     print("chat query" + query)
     try:
-        chain=qa_bot()
+        chain=qa_bot(db)
         print("two")
         # res=await chain.acall(message, callbacks=[cb])
 #        res= chain.call(query, callbacks=[cb])

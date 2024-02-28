@@ -288,3 +288,5 @@ What other commands to add?
 
 
 need arg --config flag for other batch jobs.  
+
+Try to test video/audio playback.  

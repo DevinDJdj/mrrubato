@@ -20,9 +20,9 @@ var synth = JZZ.synth.Tiny();
 
 var piano = JZZ.input.Kbd({at:'piano', from:'C3', to:'C5', wl: 30, ww: 8, bl: 20, bw: 5, onCreate:function() {
   this.getBlackKeys().setStyle({color:'#fff'});
-  this.getKey('C5').setInnerHTML('<span class=inner style="color:red">*</span>');
-  this.getKey('C4').setInnerHTML('<span class=inner style="color:red">*</span>');
-  this.getKey('C#4').setInnerHTML('<span class=inner style="color:red">*</span>');
+  this.getKey('C5').setInnerHTML('<span class=inner style="font-weight: bold;font-size:10px;color:red">*</span>');
+  this.getKey('C4').setInnerHTML('<span class=inner style="font-weight: bold;font-size:10px;color:red">*</span>');
+  this.getKey('C#4').setInnerHTML('<span class=inner style="font-weight: bold;font-size:10px;color:red">*</span>');
 }});
 
 var ascii = JZZ.input.ASCII({

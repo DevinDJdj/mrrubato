@@ -336,6 +336,26 @@ class Mrrubato {
         }, "full", this);
         this.commands.push(c);
 
+        c = new Command("play", "play embedded video/audio", function(transcript){
+            chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()});
+        }, "partial", this);
+        this.commands.push(c);
+
+        c = new Command("pause", "pause embedded video/audio", function(transcript){
+            chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()});
+        }, "partial", this);
+        this.commands.push(c);
+
+        c = new Command("video", "play embedded videos", function(transcript){
+            chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()});
+        }, "full", this);
+        this.commands.push(c);
+
+        c = new Command("audio", "play embedded audios", function(transcript){
+            chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()});
+        }, "full", this);
+        this.commands.push(c);
+
         c = new Command("back", "go back on current page", function(transcript){
             chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()});
         }, "full", this);
@@ -622,6 +642,10 @@ function injectedFunction(){
     var maxy = numkeys*aspectratio-1;
     var tempLinks = [];
     var currentSelection = -1;
+    var allVideos = [];
+    var allAudios = [];
+    var currentVideo = null;
+    var currentAudio = null;
     var selectionMode = "links";
 //document.elementFromPoint(localcursorx, localcursory).click();
 
@@ -887,7 +911,16 @@ function injectedFunction(){
             //heatmap[ypixel][xpixel].push({'x': xpixel, 'y': ypixel, 'width': width, 'height': height, 'innerHTML': innerHTML, 'innerText': innerText, 'id': id});
             try{
                 heatmap[ypixel][xpixel].push(all[i]);
+                if (all[i].tagName == 'video'){
+                    allVideos.push(all[i]);
+                    currentVideo = all[i];
+                }
+                if (all[i].tagName == 'audio'){
+                    allAudios.push(all[i]);
+                    currentAudio = all[i];
+                }
             }
+
             catch(err){
                 console.log(err);
             }
@@ -930,6 +963,95 @@ function injectedFunction(){
         else if (msg.text === 'back'){
             window.history.back();
         }
+        //get audio, get video
+        else if (msg.text === 'audio'){
+            var audios = document.getElementsByTagName("audio");
+            allAudios = audios;
+            if (audios.length < 1){
+                speak('no audio elements found');
+            }
+            else if (audios.length == 1){
+                audios[0].play();
+                currentAudio = audios[0];
+            }
+            else{                    
+                tempLinks = audios;
+                currentSelection = -1;
+                selectionMode = "audios";
+                text = tempLinks.length.toString() + ' audio elements found';
+                for (var i=0; i<tempLinks.length; i++){
+                    let src = tempLinks[i].src;
+                    if (typeof src === 'undefined' || src == ''){
+                        src = tempLinks[i].getElementsByTagName("source")[0].src;
+                    }
+                    text += i.toString() + ' ' + src;
+                    text += ' ';
+                }
+                speak(text);
+            }
+        }
+
+
+        else if (msg.text === 'video'){
+            var videos = document.getElementsByTagName("video");
+            allVideos = videos;
+            if (videos.length < 1){
+                speak('no video elements found');
+            }
+            else if (videos.length == 1){
+                videos[0].play();
+                currentVideo = videos[0];
+            }
+            else{                    
+                tempLinks = videos;
+                currentSelection = -1;
+                selectionMode = "videos";
+                text = tempLinks.length.toString() + ' videos found.  ';
+                for (var i=0; i<tempLinks.length; i++){
+                    let src = tempLinks[i].src;
+                    if (typeof src === 'undefined' || src == ''){
+                        src = tempLinks[i].getElementsByTagName("source")[0].src;
+                    }
+                    text += i.toString() + ' ' + src;
+                    text += ' ';
+                }
+                speak(text);
+            }
+        }
+
+        else if (msg.text.startsWith('play')){
+            //pause video and audio.  
+            let mytype = msg.text.toLowerCase().substring(5);
+            if (mytype == 'audio'){
+                
+            }
+            else{
+                mytype = 'video';
+            }
+            if (currentVideo != null && mytype == 'video'){
+                currentVideo.play();
+            }
+            else if (currentAudio != null && mytype == 'audio'){
+                currentAudio.play();
+            }
+        }
+        else if (msg.text.startsWith('pause')){
+            //pause video and audio.  
+            let mytype = msg.text.toLowerCase().substring(6);
+            if (mytype == 'audio'){
+                
+            }
+            else{
+                mytype = 'video';
+            }
+
+            if (currentVideo != null && mytype == 'video'){
+                currentVideo.pause();
+            }
+            else if (currentAudio != null && mytype == 'audio'){
+                currentAudio.pause();
+            }
+        }
         else if (msg.text === 'click'){
             if (currentElement != null){
                 var links = currentElement.getElementsByTagName("a");
@@ -940,7 +1062,7 @@ function injectedFunction(){
                     tempLinks = links;
                     currentSelection = -1;
                     selectionMode = "links";
-                    text = '';
+                    text = tempLinks.length.toString() + ' links found.  ';
                     for (var i=0; i<tempLinks.length; i++){
                         text += i.toString() + ' ' + tempLinks[i].innerText;
                         text += ' ';
@@ -958,6 +1080,18 @@ function injectedFunction(){
                     tempLinks[mynum].click();
                 }
             }    
+            else if (selectionMode == "videos"){
+                if (mynum > -1 && mynum < tempLinks.length){
+                    tempLinks[mynum].play();
+                    currentVideo = tempLinks[mynum];
+                }
+            }
+            else if (selectionMode == "audios"){
+                if (mynum > -1 && mynum < tempLinks.length){
+                    tempLinks[mynum].play();
+                    currentAudio = tempLinks[mynum];
+                }
+            }
         }
         else if (msg.text === 'links'){
             var array = [];
