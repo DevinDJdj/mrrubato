@@ -290,3 +290,21 @@ What other commands to add?
 need arg --config flag for other batch jobs.  
 
 Try to test video/audio playback.  
+Appears ok.  
+
+Why is the initial tabs command not working?  
+how do we make this our home page?  
+Use the Chrome On Startup to open these pages.  
+Then we just need to start chrome on OS boot.  
+
+--Need search functionality in page.  
+List all of these and then select -> read.  
+"find"
+
+C:\Users\devin\AppData\Local\Google\Chrome\User Data\Default\Extensions
+
+Probably need to get data from Iframe components.  
+docment.getElementByTag("iframe") ...
+Not sure we want to bother with this.  
+But this will be a limitation until we do.  
+

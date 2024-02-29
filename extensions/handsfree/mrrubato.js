@@ -412,6 +412,18 @@ class Mrrubato {
         }, "partial", this);
         this.commands.push(c);
 
+        c = new Command("find", "find ... in page", function(transcript){
+            console.log(transcript);
+            //allow to open a google search for the query term on existing search.  
+            //or open new tab for this search.  
+//            let action_url = this.mr.baseSearch + transcript.substring(5);
+//            chrome.tabs.create({ url: action_url });
+//            this.mr.Chat("tabs");
+    
+            chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()});
+        }, "partial", this);
+        this.commands.push(c);
+
         c = new Command("tabs", "reload all tabs", function(transcript, callback){
             chrome.tabs.query({}, function(tabs) {        
                 for (var i=0; i<tabs.length; i++) {
@@ -789,16 +801,42 @@ function injectedFunction(){
         return parent;
     }
 
-    function findHeatmapElement(){
+    function findHeatmapElement(searchText = ''){
         let scrolly = window.scrollY; 
         let scrollx = window.scrollX;
         var xpixel = Math.floor((localcursorx+scrollx)*numkeys/docwidth);
         var ypixel = Math.floor((localcursory+scrolly)*numkeys*aspectratio/docheight);
 
-        if (heatmap[ypixel][xpixel].length > 0){
-            return getBestParent(heatmap[ypixel][xpixel][0]);
-        }
+        if (searchText != ''){
+            searchResults = [];
+            maxx = numkeys-1;
+            maxy = Math.floor(numkeys*aspectratio-1);
+            for (var i=0; i<maxy; i++){
+                for (var j=0; j<maxx; j++){
+                    for (var k=0; k < heatmap[i][j].length; k++){
 
+                        if (typeof heatmap[i][j][k].innerText !== 'undefined' && heatmap[i][j][k].innerText.toLowerCase().includes(searchText)){
+                            let parent = getBestParent(heatmap[i][j][k]);
+                            if (searchResults.indexOf(parent) == -1){
+                                searchResults.push(parent);
+                            }
+                            k = heatmap[i][j].length;
+                            //no need to push more than one.  
+                        }                        
+                    }
+                }
+            }
+
+            //sort for length, sometimes the 0, 0 element contains the whole page for instance.  
+            searchResults.sort((a, b) => a.innerText.length - b.innerText.length);
+            return searchResults;
+
+        }
+        else{
+            if (heatmap[ypixel][xpixel].length > 0){
+                return getBestParent(heatmap[ypixel][xpixel][0]);
+            }
+        }
     }
 
     function findNearestElement(){ //with text        
@@ -1080,6 +1118,20 @@ function injectedFunction(){
                     tempLinks[mynum].click();
                 }
             }    
+            if (selectionMode == "find"){
+                if (mynum > -1 && mynum < tempLinks.length){
+                    var pos = getOffset(tempLinks[mynum]);
+                    localcursorx = pos.x;
+                    localcursory = pos.y;
+                    window.scrollTo(0, localcursory);
+                    //should we do this other places as well?  
+                    //lets scroll here to avoid confusion.  
+                    let text = tempLinks[mynum].innerText;
+                    //find and speak.  
+                    speak(text);
+                            
+                }
+            }    
             else if (selectionMode == "videos"){
                 if (mynum > -1 && mynum < tempLinks.length){
                     tempLinks[mynum].play();
@@ -1154,6 +1206,48 @@ function injectedFunction(){
         }
         else if (msg.text === 'scroll left') {
             window.scrollBy(-100, 0);
+        }
+        else if (msg.text.startsWith('find')){
+            var searchText = msg.text.substring(5);
+            searchText = searchText.toLowerCase();
+            let els = findHeatmapElement(searchText);
+            let text = '';
+            if (els.length > 0){
+                let tempMap = [];
+
+                for (var i=0; i<els.length; i++){
+                    f = els[i].innerText.indexOf(searchText);
+                    s = els[i].innerText.indexOf(" ", f-30);
+                    if (s < f-50 || s > f){
+                        s = f-50;
+                    }
+                    if (s < 0){
+                        s = 0;
+                    }
+                    e = els[i].innerText.indexOf(" ", f+30);
+                    if (e > f+50 || e < 0){
+                        e = f+50;
+                    }
+                    if (e > els[i].innerText.length){
+                        e = els[i].innerText.length;
+                    }
+                    if (tempMap.indexOf(els[i].innerText.substring(s, e)) == -1){
+                        tempMap.push(els[i].innerText.substring(s, e));
+                        //dont repeat yourself.  There is some repetition because of the parent/child search.  
+                        tempLinks.push(els[i]);
+                    }
+                }
+                text = tempMap.length.toString() + ' instances found.  ';
+                for (var j=0; j<tempMap.length; j++){
+                    text += j.toString() + ' ' + tempMap[j];
+                    text += '. ';
+                }
+                selectionMode = "find";
+            }
+            else{
+                text = searchText + ' not found';
+            }
+            speak(text);
         }
         else if (msg.text == 'read'){
             //read the page.  
