@@ -106,7 +106,17 @@ function setupAudioFeedback(){
 	loadSounds('link', 'link');
 	loadSounds('frenchhorn', 'image');
 	loadSounds('viola', 'text');
-	
+
+	//not sure why this is not playing?  Interaction with page?  
+	a = playNote(60, 100); //indicate we have loaded the page.  
+	b = playNote(64, 100); //indicate we have loaded the page.
+	c = playNote(68, 100); //indicate we have loaded the page.
+	setTimeout(() => {
+	  a.stop();
+	  b.stop();
+	  c.stop();
+	}, 500);
+  
 }
 
 function midiToFreq(midinum, velocity=0){
@@ -426,7 +436,8 @@ function noteOn(note, velocity, abstime){
 	//make sound here.  
 	osc = playTone(midiToFreq(note, velocity));
 	pnote = playNote(note, velocity);
-	var obj = {"note": note, "velocity": velocity, "time": abstime, "duration": 0, osc: osc, pnote: pnote};
+	//mark complete after used in transcript command.  
+	var obj = {"note": note, "velocity": velocity, "time": abstime, "duration": 0, osc: osc, pnote: pnote, complete: false};
 	
 	notes[note] = obj;
 //	midiarray.push(obj);
@@ -453,7 +464,7 @@ function noteOff(note, abstime){
 function getMidiRecent(){
 	//get the most recent midi notes
 	i=midiarray.length-1;
-	while (i >-1 && midiarray[i].time > Date.now()-start-recentTime){		
+	while (i >-1 && midiarray[i].time > Date.now()-start-recentTime && midiarray[i].complete !== true){		
 		i--;
 	}
 	if (i == midiarray.length-1){
@@ -463,7 +474,7 @@ function getMidiRecent(){
 		retarray = [];
 		temp = midiarray.slice(i+1);
 		for (j=0; j<temp.length; j++){
-			retarray.push(temp[j].note);
+			retarray.push(temp[j]);
 		}
 		return retarray;
 	}
@@ -490,7 +501,9 @@ function getMidiRecent(){
 		}
 		
         const mySynth = WebMidi.inputs[1];
-        // const mySynth = WebMidi.getInputByName("TYPE NAME HERE!")
+
+
+		// const mySynth = WebMidi.getInputByName("TYPE NAME HERE!")
 
 //        mySynth.channels[1].addListener("noteon", e => {
 //          document.body.innerHTML+= `${e.note.name} <br>`;

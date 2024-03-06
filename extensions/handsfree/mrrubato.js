@@ -5,6 +5,7 @@ class Keymap{
         this.keys = [];
         this.keymap = []; //midinum - 48
         this.keydict = {};
+        this.funcdict = {};
         this.loadKeys();
     }
     loadKeys(){
@@ -52,7 +53,113 @@ class Keymap{
         this.keydict["help"] = {"1": {"1": "1"} }; //0 means any number, search for commands with this midi function after 1.  
         //this should also search up keywords which we have generated and correspond to this set of keys.  
         this.keydict["move"] = {"2": {}}; //bottom octave = Y coord, top octave = X coord
-        this.keydict["scroll"] = {"1": {}}; //number of increments.  from middle C
+        this.funcdict["move"] = function(transcript, midi, keydict, key){
+            //input transcript and return final transcript.  
+            let commandlength = null;
+            let commanddict = null;
+            for (const [k, v] of Object.entries(keydict[key])) {
+                if (k == midi.length.toString()){
+                    commandlength = k;
+                    commanddict = v;
+                };
+            }
+            //maybe not for all commands, but here, we set to blank in case we have incorrect params.  
+            transcript = "";
+            let x = -1;
+            let y = -1;
+            if (commandlength !== null){
+                //we have a command map at least.  
+                if (commandlength == "2"){
+                    //this is the only length but other commands will have variable lengths.  
+                    //allow for out of order.  
+                    if (midi[0].note > midi[1].note){
+                        x = midi[0].note - 60;
+                        y = midi[1].note - 48;
+                    }
+                    else{
+                        y = midi[0].note - 48;
+                        x = midi[1].note - 60;
+                    }
+
+
+                    if (y > -1 && y < 12 && x > -1 && x < 12){
+                        y = 11 - y; //reverse
+                        transcript = "move " + x.toString() + " " + y.toString();
+                        midi[0].complete = true;
+                        midi[1].complete = true;
+                        //I think this will work ok.  
+                        //this allows us to move on to next command.  
+                    }
+                    else{
+                        //not sure how I want to handle errors yet.  
+                        return "move error - incorrect parameters"
+                    }
+                }
+            }
+            return transcript;
+        };
+        this.keydict["scroll"] = {"1": {}, "2": {}}; //number of increments.  from middle C
+        this.funcdict["scroll"] = function(transcript, midi, keydict, key){
+            //input transcript and return final transcript.  
+            let commandlength = null;
+            let commanddict = null;
+            for (const [k, v] of Object.entries(keydict[key])) {
+                if (k == midi.length.toString()){
+                    commandlength = k;
+                    commanddict = v;
+                };
+            }
+            //maybe not for all commands, but here, we set to blank in case we have incorrect params.  
+            transcript = "";
+            let x = 0;
+            let y = 0;
+            if (commandlength !== null){
+                //we have a command map at least.  
+                if (commandlength == "1"){
+                    y = midi[0].note - 60;
+                    if (y > -13 && y < 13){
+                        y = -y; //reverse
+                        transcript = "scroll " + y.toString();
+                        midi[0].complete = true;
+                        //I think this will work ok.  
+                        //this allows us to move on to next command.  
+                    }
+                    else{
+                        //not sure how I want to handle errors yet.  
+                        return "scroll error - incorrect parameters"
+                    }
+                }
+
+                if (commandlength == "2"){
+                    //this is the only length but other commands will have variable lengths.  
+                    //allow for out of order.  
+                    //scroll up or down 
+                    if (midi[0].note > midi[1].note){
+                        x = midi[0].note - 66;
+                        y = midi[1].note - 54;
+                    }
+                    else{
+                        y = midi[0].note - 54;
+                        x = midi[1].note - 66;
+                    }
+
+
+                    if (y > -7 && y < 7 && x > -7 && x < 7){
+                        y = -y; //reverse
+                        transcript = "scroll " + y.toString() + " " + x.toString();
+                        midi[0].complete = true;
+                        midi[1].complete = true;
+                        //I think this will work ok.  
+                        //this allows us to move on to next command.  
+                    }
+                    else{
+                        //not sure how I want to handle errors yet.  
+                        return "scroll error - incorrect parameters"
+                    }
+                }
+            }
+            return transcript;
+        };
         this.keydict["page"] = {"1": {}}; //number of pages to scroll.  from middle C
         this.keydict["search"] = {"8": {}}; 
         this.keydict["channel"] = {"5": {}}; //keywords are sets of 5 or 7 and more
@@ -62,11 +169,24 @@ class Keymap{
         //then we can go to a bookmark without needing to go to the tab first.  
         this.keydict["commandset"] = {"11": {}, "13": {}}; //probably just use the tab which we have defined with another two keys.  
         //when running a commandset, how do we speed up?  
+
     }
+
     findCommand(transcript, midi){
         //return transcript
         //if transcript startswith any of these commands or equals anything in the keydict, prioritize this
         //if we can translate the midi return transcript, otherwise return ""
+        if (midi != null){
+            for (const [key, value] of Object.entries(this.funcdict)) {
+                if (key != ""){
+                    if (transcript.startsWith(key)){
+                        let f = value;
+                        transcript = f(transcript, midi, this.keydict, key);
+                    }
+                }
+            }
+        }
+
         return transcript;
     }
 
@@ -143,10 +263,10 @@ class Mrrubato {
         let cl = this.getPendingCommand();
         let midi = getMidiRecent();
         let transcript = "";
-        let waiting = false;
+        let pending = false;
         if (cl != null){
             transcript = cl.transcript;
-            waiting = cl.waiting;
+            pending = cl.pending;
         }
 
         if (midi != null || cl !=null){
@@ -156,22 +276,29 @@ class Mrrubato {
             //try to find if we have something to do with the midi.  
             transcript = this.keymap.findCommand(transcript, midi);
             if (transcript != ""){
-                this.Chat(transcript, null, waiting); //add waspendingflag
+                this.Chat(transcript, null, pending); //add waspendingflag
             }
             else{
                 //still waiting for midi to complete?  
                 //we should probably allow for more than 4 seconds.  Add on time here somehow.  
+                //any unknown or incomplete commands will be forgotten after 4 seconds.  
+                //I think this is fine for now.  
+                if (Date.now() - start - cl.time > recentTime){
+                    cl.pending = false;
+                    //pop from the pending commands?  Why keep useless history?  
+                    this.commandLog.pop();
+                }
             }
         }
     }
     
-    addCommandLog(transcript, command, windowId, tabid, waiting=false){
+    addCommandLog(transcript, command, windowId, tabid, pending=false){
         let now = Date.now();
-        this.commandLog.push({time: now-start, transcript: transcript, command: command, window: windowId, tab: tabid, waiting: waiting});
+        this.commandLog.push({time: now-start, transcript: transcript, command: command, window: windowId, tab: tabid, pending: pending});
     }
 
     getPendingCommand(){
-        if (this.commandLog[this.commandLog.length-1].waiting){
+        if (this.commandLog.length > 0 && this.commandLog[this.commandLog.length-1].pending){
             return this.commandLog[this.commandLog.length-1];
         }   
         else{
@@ -181,7 +308,7 @@ class Mrrubato {
 
     getCommandLogRecent(since){
         let i=this.commandLog.length-1;
-        while (i >-1 && ((this.commandLog[i].time > Date.now()-start-since) || this.commandLog[i].waiting)){
+        while (i >-1 && ((this.commandLog[i].time > Date.now()-start-since) || this.commandLog[i].pending)){
             i--;
         }
         if (i == this.commandLog.length-1){
@@ -801,11 +928,38 @@ function injectedFunction(){
         return parent;
     }
 
-    function findHeatmapElement(searchText = ''){
+    function XYtomap(x, y){
         let scrolly = window.scrollY; 
         let scrollx = window.scrollX;
-        var xpixel = Math.floor((localcursorx+scrollx)*numkeys/docwidth);
-        var ypixel = Math.floor((localcursory+scrolly)*numkeys*aspectratio/docheight);
+        var xpixel = Math.floor((x+scrollx)*numkeys/docwidth);
+        var ypixel = Math.floor((y+scrolly)*numkeys*aspectratio/docheight);
+        return xpixel, ypixel;
+    }
+
+    function mapToXY(x, y){
+        let xpixel = x*docwidth/numkeys;
+        let ypixel = y*docwidth/numkeys;
+        ypixel += window.scrollY;
+        xpixel += window.scrollX;
+        if (xpixel > docwidth){
+            xpixel = docwidth;
+        }
+        if (ypixel > docheight){
+            ypixel = docheight;
+        }
+        if (xpixel < 0){
+            xpixel = 0;
+        }
+        if (ypixel < 0){
+            ypixel = 0;
+        }
+        return xpixel, ypixel;
+    }
+
+
+    function findHeatmapElement(searchText = ''){
+
+        xpixel, ypixel = XYtomap(localcursorx, localcursory);
 
         if (searchText != ''){
             searchResults = [];
@@ -1194,6 +1348,28 @@ function injectedFunction(){
         else if (msg.text === 'move left') {
             localcursorx -= 100;
         }
+        else if (msg.text.startsWith('move'))
+        {
+            //move to a specific location.  
+            //this should be a x y location.  
+            params = msg.text.toLowerCase().substring(5).split(' ');
+            //this is the heatmap value.  
+            //multiply by 2 on the send side.  
+            x = getNum(params[0]);
+            y = getNum(params[1]);
+            //for now just use the y value to scroll to this location.  
+            //for now we are just using what is on screen but eventually we can just use all heatmap elements probably.  
+            currenty = window.scrollY;
+            localcursorx, localcursory = mapToXY(x, y);
+//            localcursory = Math.floor((y+currenty)*numkeys*aspectratio/docheight);
+//            localcursorx = Math.floor(x*numkeys/docwidth);
+            
+//            ypixel = Math.floor((y+currenty)*numkeys*aspectratio/docheight);
+
+            //dont actually scroll here.  Just for testing.  
+            //use scroll ... to scroll.  
+            //window.scrollTo(0, localcursory);
+        }
 
         else if (msg.text === 'scroll down') {
             window.scrollBy(0, 100);
@@ -1207,6 +1383,21 @@ function injectedFunction(){
         else if (msg.text === 'scroll left') {
             window.scrollBy(-100, 0);
         }
+        else if (msg.text.startsWith("scroll")){
+            params = msg.text.toLowerCase().substring(7).split(' ');
+            y = getNum(params[0]);
+            x = 0;
+            //we never scroll horizontal.  I guess we can to just show it.  
+            //But there is no recalculation of heatmap pixels for it.  
+            if (params.length > 1){
+                x = getNum(params[1]);
+            }
+//            currenty = window.scrollY;
+            x, y = mapToXY(x, y);
+            window.scrollTo(x, y);
+
+        }
+
         else if (msg.text.startsWith('find')){
             var searchText = msg.text.substring(5);
             searchText = searchText.toLowerCase();

@@ -308,3 +308,31 @@ docment.getElementByTag("iframe") ...
 Not sure we want to bother with this.  
 But this will be a limitation until we do.  
 
+
+have some history of find commands.  
+Then allow to search in documents for all these words.  
+
+Right now this is too language focused.  
+I think this must be language-based.  
+If we need to do in another language, we need to rewrite large sections.  
+Do we want to do another language?  
+Not right now.  
+
+
+**web/public/analyze.html
+What do we have running on a timer?  
+Seems some Chrome memory issues if leave up the page for long time.  
+
+
+--Test move.  
+
+Need feedback sound once loaded.  
+Should we do the feedback of each command set?  
+
+OK, move and scroll are working ok.  
+Now check if we can use all midi.  
+Are we ok using the 48 and 72 in the move/scroll etc.  
+Perhaps we should use all but 60. 
+adjust right a bit.  
+
+

@@ -52,8 +52,8 @@ recognition.onresult = function(event) {
     }
     else{
         //waiting for midi command to complete.  
-        let windowId = this.channels[this.activeChannel];
-        let tabid = this.currentTabs[ windowId ];
+        let windowId = mr.channels[mr.activeChannel];
+        let tabid = mr.currentTabs[ windowId ];
         mr.addCommandLog(transcript, null, windowId, tabid, true);
     }
     var confidence = event.results[0][0].confidence;
@@ -99,9 +99,15 @@ if (speech == true) {
         }
       );  
 
-      
+      text = "ready";
+      mr.ss = new SpeechSynthesisUtterance(text);
+      mr.ss.rate = mr.myrate;
+      mr.ss.pitch = mr.mypitch;
+      window.speechSynthesis.speak(mr.ss);
+
       Chat("tabs"); //get current tabs.  
-    
+
+      
     //check each second if we have some new message to send.  
     setInterval(checkCommands, 1000);
 }
