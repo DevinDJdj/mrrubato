@@ -1,0 +1,129 @@
+
+**server/llmtune/testing
+https://medium.com/@ogbanugot/notes-on-fine-tuning-llama-2-using-qlora-a-detailed-breakdown-370be42ccca1
+Looks to work perhaps, but need better GPU.  
+Needs further work.  
+--continue testing.  
+peft - parameter efficient fine-tuning (just cheap tuning, but not precise)
+sft  - supervised fine tuning (usually human generated/approved control)
+QLora - Quantized LoRA (Low-Rank Adaptation of Large Language Models)
+
+
+**server/ollama/server.py
+Also look at prompting doc for llama2:
+https://huggingface.co/blog/llama2#how-to-prompt-llama-2
+Allow this to be a free parameter in the interaction.  
+Add this to current 
+
+
+**extension/handsfree/audio
+Why incompatible with **web/public/analyze.html
+
+**extension/handsfree/sidepanel.js
+need to interact with history object for browser.  
+Assign name -> hotkey
+3-key+ with *48* within 2 second is a name.  
+read-back the name.  
+Then this hotkey combo and name and/or command are associated with this tab.  
+
+chrome.storage.sync.set({ mytext: txtValue });
+eventually have playback functionality.  Start saving sequences and timings now.  
+Each tab can be a midi track?  
+
+load ... load config from 
+chrome.storage.sync.get('mytext', function(data) {
+    yourTextArea.value = data.mytext;
+});
+
+
+chrome.history.getVisits(
+
+--Think of better name.  
+--Need search functionality in page.  
+How can we use the saved midi/transcript?  
+Yeah use the transcript along with the QR Code
+to generate the same results.  
+
+"layout" - Generate sound heatmap of visible page.  
+
+Same feedback as we move around the page.  
+Certain sound for link, image, text.  
+Use velocity or instrument selection to describe type of element.  
+Stick with 25 keys for now.  
+
+playNote(..., instrument)
+for now static:
+link = trill for cello/viola/violin (volume indicates density)
+image = french horn
+text = piano (volume and repetition indicates density)
+
+**timestep.py
+add functionality to respond to any Youtube comments.  
+Perhaps just pick the latest during timestep and respond to that.  
+After 1-2 weeks for any video that has been published.  
+Then set done flag.
+
+Use server/ollama/server.py API to generate response and adjust links.  
+POST https://www.googleapis.com/youtube/v3/comments
+https://www.googleapis.com/youtube/v3/commentThreads?key={your_api_key}&textFormat=plainText&part=snippet&videoId={video_id}&maxResults=100&pageToken={nextPageToken}
+
+
+
+**languages
+use 2^n option as well as base 10.  
+Negative and positive numbers.  
+
+**web/public/chat.html
+create test Chat() feedback here for extension to send to page.  
+
+
+dont think we need an options page, just put any settings in the side-panel page itself.  
+-SpeechRecognition Language
+-SpeechSynth voice
+
+
+**extensions/handsfree/sidepanel.js
+On-close adjust icon status.  
+
+
+commands
+--listen (open any media on page or list media)
+--mute (mute any media playing)
+--start/stop feedback
+
+Define feedback langauge.  
+
+--create 25-key images with selected items.  
+These images will be displayed in help portion.  
+
+
+Not finding deleted stuff when using tabs.  
+
+
+need arg --config flag for other batch jobs.  
+
+
+C:\Users\devin\AppData\Local\Google\Chrome\User Data\Default\Extensions
+
+Probably need to get data from Iframe components.  
+docment.getElementByTag("iframe") ...
+Not sure we want to bother with this.  
+But this will be a limitation until we do.  
+
+
+have some history of find commands.  
+Then allow to search in documents for all these words.  
+
+**web/public/analyze.html
+What do we have running on a timer?  
+Seems some Chrome memory issues if leave up the page for long time.  
+
+
+Should we do the feedback of each command set?  
+
+OK, move and scroll are working ok.  
+Now check if we can use all midi.  
+Are we ok using the 48 and 72 in the move/scroll etc.  
+Perhaps we should use all but 60. 
+adjust right a bit.  
+
