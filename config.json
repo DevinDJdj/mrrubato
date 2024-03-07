@@ -52,6 +52,11 @@
 		"auth_uri": "https://accounts.google.com/o/oauth2/auth",
 		"token_uri": "https://accounts.google.com/o/oauth2/token"
 	},
+	"timestep": {
+		"client_id": CLIENTID, 
+		"client_secret": CLIENTSECRET
+	},
+
 	"dbrules": {
 		
 		"rules": {

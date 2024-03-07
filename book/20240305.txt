@@ -67,6 +67,78 @@ Use server/ollama/server.py API to generate response and adjust links.
 POST https://www.googleapis.com/youtube/v3/comments
 https://www.googleapis.com/youtube/v3/commentThreads?key={your_api_key}&textFormat=plainText&part=snippet&videoId={video_id}&maxResults=100&pageToken={nextPageToken}
 
+For now just save in a DB, oh this is why we didnt start this.  
+We have to save query and response.  
+Do we?  
+For now just save the link?  
+Put it in feedback under the video json?  
+videoid/comments/userid/comments (do we want a chain?  I think we do want a chain, but seems far to complex for right now)
+
+Can we get the userid from the comment?  
+Lets get the userID and the query/response.  
+Then eventually we can search by user.  
+Not sure what functionality exists for that.  
+Basically youtube brings you to the user, but not the users comments.  
+
+**web/public/chat.html
+We should add the same here.  
+But eventually we will run out of space I think.  
+Depends on the activity of the channel/videos.  
+For now we will just randomly pick the number of comments to store (chat.html) and/or respond to (youtube channel).  
+It will be relative to growth rate of the DB.  
+Keep slow as we dont have any good infrastructure anyway.  
+
+I think this is an interesting thing to do.  Not sure which is more pertinant at the moment handsfree or this.  
+This includes the segregation of knowledge channels for the RAG.  
+How do we do this, essentially we want the idea of tags for the knowledge graph, and then you can search by tag.  
+But with the software structure that would mean that highly used tags would saturate the interesting knowledge.  
+So we need an inverse relationship query essentially on the global knowledge graph along with specific tags.  
+This is a very standard concept like hashtag or Confluence "labels" for instance.  
+So how do we combine multiple queries?  
+hmmm.  I think this is probably going to be the standard structure of knowledge graphs in the future.  
+Aggregation and summarization of entity responses.  
+So essentailly summarize the responses of each individual tag/label.  
+
+This is already essentially what is being done with the original GPT algorithms.  
+In the sense that it takes text from all websites (or a portion) and aggregates the probability of what will come next given the "prior context" or query.  
+
+So then the question is how do we want to create tags?  
+Something to ponder a while.  
+So for now just store a query/response in chat.html
+Rough calculation 1KB*1 million.  
+have a Date/response count or just size of DB.  
+Just store this on the backend side and then use timestep to store it from there.  
+This is better architecture I think.  
+No need to be concious of where the query came from, we already have the userID.  
+Should pass the userID to the backend.  
+Then have timestep.py call the backend as well.  
+Store somewhere though on the backend and then delete after timestep.py run.  
+
+**server/ollama/server.py
+ugh - need to do something like this I think.  
+https://realpython.com/flask-google-login/
+For now just do a test of this.  
+Then add to 
+.  
+OK, lets test this.  
+**server/login/app.py
+This is essentially what we need when we run/store the query/response.  
+For now should we just use this local sqlite DB to store the request/response, yeah I guess so.  
+Then once timestep.py runs delete all, maybe manage the services from this.  
+**server/timestep/server.py server.  
+Then run some of the needed functions here, like passing the transcription to the correct tag iterations.  
+Yeah need some sort of management server.  
+
+
+
+GDjC1e8A2Bc
+This would be useful to index the user comments.  
+I guess that is what the channel is meant to be.  
+But there is no reference back to the video and time which is a comment on a particular other video.  
+This functionality is needed really.  With this we have a much more interesting knowledge graph.  
+
+
+
 
 
 **languages
@@ -126,4 +198,19 @@ Now check if we can use all midi.
 Are we ok using the 48 and 72 in the move/scroll etc.  
 Perhaps we should use all but 60. 
 adjust right a bit.  
+
+
+Need to try to play and record.  See if it actually works.  
+This will be useful in other ways as well.  
+Need to be able to import files or share files.  
+We need to think of a pause mechanism.  
+By default this will pause recording only, but will still allow for interaction.  
+Then we maintain that data and then with the play indicator we restart the video.  
+And then the preparation of the information can be ready if we have watched a previous session.  
+really record here is browser embedded.  But not sure when to use browser embedded recording and when not.  
+
+Maybe play is default.  Can we skip between pauses then?  
+We need to know when the response has come from the commands.  
+If we do not, then what is shown is not necessarily the current state.  
+hmmmm
 

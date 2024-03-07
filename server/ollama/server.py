@@ -97,6 +97,14 @@ CORS(app)
 def hello():
     return 'Hello, World!'
 
+
+@app.route('/timestep/')
+def timestep():
+    query = request.args.get('since')
+    uid = request.args.get('uid')
+    print(uid + " timestep query " + query)
+
+
 #http://127.0.0.1:8000/chat/?query=how are you
 #utilize additional parameter to separate RAG DB.  
 #db=xxx
