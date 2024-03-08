@@ -201,7 +201,7 @@ function getRecent(videojson){
 	for (it=0; it< vids.length && it < maxcnt; it++){
 		var obj = vids[it];
 		var aTag = document.createElement('a');
-		aTag.setAttribute('href',domain + 'analyze.html?video=' + obj.id);
+		aTag.setAttribute('href',domain + '/analyze.html?video=' + obj.id);
 		
 		fnd = obj.snippet.description.indexOf("MIDI");
 		if (fnd < 0){
@@ -570,9 +570,9 @@ function drawChart(vids) {
 		mydate = new Date(vid.snippet.publishedAt);
 		tempdate = new Date(vid.snippet.publishedAt);
 		tempdate.setSeconds(tempdate.getSeconds()+getDuration(vid.snippet.description, vid.snippet.publishedAt)[0]);
-		tag = { v: vid.snippet.title, p: { link: domain + 'analyze.html?video=' + vid.id + '' }};
+		tag = { v: vid.snippet.title, p: { link: domain + '/analyze.html?video=' + vid.id + '' }};
 		var aTag = document.createElement('a');
-		aTag.setAttribute('href',domain + 'analyze.html?video=' + vid.id);
+		aTag.setAttribute('href',domain + '/analyze.html?video=' + vid.id);
 		aTag.innerText = " " + vid.snippet.description;
 		aTag.innerText += " " + vid.snippet.publishedAt;
 

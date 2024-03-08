@@ -6,7 +6,8 @@ import sys
 
 from transcribe import transcribe_fromyoutube
 
-from flask import Flask, request, session, g
+from flask import Flask, request, session, g, json
+from flask_cors import CORS
 import whisper
 import pandas as pd
 from datetime import datetime
@@ -14,11 +15,19 @@ from datetime import datetime
 import subprocess
 
 app = Flask(__name__)
+CORS(app)
+#cors = CORS(app, resources={r"/api/*": {"origins": ["https://chat.misterrubato.com", "https://www.misterrubato.com", "*"]}})
 
 model = None
 @app.route('/')
 def hello():
     return 'Hello, World!'
+
+@app.route('/ping/')
+def ping():
+    ret = {'answer': 'pong'}
+    ret = json.dumps(ret)
+    return ret
 
 #http://127.0.0.1:8001/transcribe/?videoid=UUUoYYW7SsE
 @app.route('/transcribe/')

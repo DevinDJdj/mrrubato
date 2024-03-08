@@ -19,6 +19,7 @@
 # http://flask.pocoo.org/docs/1.0/tutorial/database/
 import sqlite3
 
+from db import init_db_command
 from distutils.log import debug 
 from fileinput import filename 
 from flask import *  
@@ -27,8 +28,15 @@ from flask.cli import with_appcontext
 
 DBNAME  = 'ollama.db'
 app = Flask(__name__)   
-cors = CORS(app, resources={r"/api/*": {"origins": ["http://www.domain1.com", "http://www.domain2.com"]}})
+cors = CORS(app, resources={r"/api/*": {"origins": ["https://chat.misterrubato.com", "https://www.misterrubato.com", "*"]}})
   
+# Naive database setup
+try:
+    init_db_command()
+except sqlite3.OperationalError:
+    # Assume it's already been created
+    pass
+
 @app.route('/')   
 def main():   
     return 'Hello, World!'

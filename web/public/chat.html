@@ -25,6 +25,7 @@
 </head>
 
     <!-- update the version number as needed -->
+	<script src="config.js"></script>
     <script defer src="/__/firebase/9.19.1/firebase-app-compat.js"></script>
     <!-- include only the Firebase features as you need -->
     <script defer src="/__/firebase/9.19.1/firebase-auth-compat.js"></script>
@@ -445,7 +446,7 @@
 				mychat = transcript; //$('#p').val();
 //                addComment(mychat, helpme());
 				//this should be linked to the video being watched loosely perhaps.  
-				$.getJSON('https://chat.misterrubato.com:8000/api/?query=' + encodeURIComponent(mychat),function(data){
+				$.getJSON(chatdomain + ':8000/api/?query=' + encodeURIComponent(mychat),function(data){
                   
 				  if (typeof(data.answer) != "undefined") {
 					addChatRow(data.query, data.answer, data.sources);

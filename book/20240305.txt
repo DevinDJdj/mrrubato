@@ -121,10 +121,44 @@ For now just do a test of this.
 Then add to 
 .  
 OK, lets test this.  
+
+--need to test.  
+See if what we have added will work for a while.  
+OK, problem some responses are far longer than I expected.  
+--need to test with timestep.py
+
+**timestep.py
+Perhaps for now just run some batch commands to retrieve the inquiries data structure 
+and then add it to the shared data store in GCP.  
+This is a simple workaround for now and no need to work with DB really I think?  
+We are just going to retrieve this data on a cycle.  
+We dont want to keep it all anyway.  
+From the shared data store, we can decide how to manage it, i.e. keep some of it for use in the RTDB.  
+**web/public/analyze.html
+We can query the GCP store anyway from here.  
+
+**web/public/recent.html
+run the #http://127.0.0.1:8000/analyze/?command=get&userid=..&topic=ALL
+to get the latest queries.  
+
+**server/**
+Add some ping commands to utilize for status page.  
+Add stats command for info to display on each page.  
+
+**web/public/server/index.html (status etc)
+**web/public/server/transcription.html (get numbers of files /size etc. over time )
+--add info in RTDB?
+**web/public/server/ollama.html (get number of query/response over time etc. )
+**web/public/server/upload.html (get number of recordings and size etc. )
+same structure here?  Just save locally and then batch job copies to GCP?  
+
+
+
 **server/login/app.py
 This is essentially what we need when we run/store the query/response.  
 For now should we just use this local sqlite DB to store the request/response, yeah I guess so.  
 Then once timestep.py runs delete all, maybe manage the services from this.  
+
 **server/timestep/server.py server.  
 Then run some of the needed functions here, like passing the transcription to the correct tag iterations.  
 Yeah need some sort of management server.  

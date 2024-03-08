@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <title>Server Status</title>
+
+</head>
+
+    <!-- update the version number as needed -->
+	<script src="../config.js"></script>
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    
+<body>
+<!-- ping pong with each chatdomain server-->
+<ul>
+    <li>
+        <h4>Ollama</h4>
+        <p id="ollama">Checking...</p>
+    </li>
+    <li>
+        <h4>Transcription</h4>
+        <p id="transcription">Checking...</p>
+    </li>
+    <li>
+        <h4>Upload</h4>
+        <p id="upload">Checking...</p>
+    </li>
+</ul>
+
+<script>
+    //check if servers are running.  
+    checkServer = function(server, port, name) {
+        url = server + ":" + port + "/ping";
+        $.getJSON(url, function(data) {
+            if (typeof(data) != "undefined" && data.answer == 'pong') {
+                console.log(name + ' is running');
+                setStatus(name, 'running');
+            } else {
+                console.log(name + ' is not running');
+                setStatus(name, 'not running');
+            }
+        }).fail( function( xhr, status ) {
+            // do stuff in case of timeout
+            console.log(name + ' is not running');
+            setStatus(name, 'not running ' + status);            
+        });
+    }
+
+    function setStatus(name, status){
+        const p = document.getElementById(name);
+        if (status == 'running'){
+            p.style.color = 'green';
+        } else {
+            p.style.color = 'red';
+        }
+        p.innerHTML = '<p>' + name + ': ' + status + '</p>';
+    }
+
+    checkServer(chatdomain, 8000, 'ollama'); //ollama
+    checkServer(chatdomain, 8001, 'transcription'); //transcription
+    checkServer(chatdomain, 8002, 'upload'); //upload
+
+
+</script>
+
+</body>
+</html>

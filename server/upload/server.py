@@ -7,11 +7,18 @@ from flask_cors import CORS
 
 app = Flask(__name__)   
 CORS(app)
+#cors = CORS(app, resources={r"/api/*": {"origins": ["https://chat.misterrubato.com", "https://www.misterrubato.com", "*"]}})
   
 @app.route('/')   
 def main():   
     return 'Hello, World!'
   
+@app.route('/ping/')
+def ping():
+    ret = {'answer': 'pong'}
+    ret = json.dumps(ret)
+    return ret
+
 @app.route('/upload', methods = ['POST'])   
 def success():   
     if request.method == 'POST':   

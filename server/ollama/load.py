@@ -26,6 +26,7 @@ from oauth2client.tools import argparser, run_flow
 #https://medium.com/@vndee.huynh/build-your-own-rag-and-run-it-locally-langchain-ollama-streamlit-181d42805895
 
 import os
+from pathlib import Path
 
 DATA_PATH="data/"
 DATA_PATH="/home/devin/server/transcription/output/"
@@ -45,7 +46,9 @@ def create_vector_db():
     vectorstore.persist()
 
 
-def create_llama2_db(video = "*"):
+def create_llama2_db(video = "*", topic = "ALL"):
+    topicpath = DB_PATH + topic + "/"
+    Path(topicpath).mkdir(parents=True, exist_ok=True)
     loader = DirectoryLoader(DATA_PATH, glob="**/" + video + ".txt", loader_cls=TextLoader)
     documents = loader.load()
     print(f"Processed {len(documents)} txt files")
@@ -53,9 +56,13 @@ def create_llama2_db(video = "*"):
     texts = text_splitter.split_documents(documents)
     ollamaEmbeddings = OllamaEmbeddings(model="llama2")
 #    vectorstore = Chroma.from_documents(documents=texts, embedding=ollamaEmbeddings,persist_directory=DB_PATH) 
+    #use default ALL model for everything.  
     vectorstore = Chroma.from_documents(documents=texts, embedding=FastEmbedEmbeddings(),persist_directory=DB_PATH)      
     vectorstore.persist()
 
+    if (topic != "ALL"):
+        topicstore = Chroma.from_documents(documents=texts, embedding=FastEmbedEmbeddings(),persist_directory=topicpath)      
+        topicstore.persist()
 
 
 if __name__=="__main__":

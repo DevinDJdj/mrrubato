@@ -24,23 +24,26 @@ from langchain.chains import RetrievalQA,RetrievalQAWithSourcesChain
 from fastapi.encoders import jsonable_encoder
 
 from langchain.prompts import PromptTemplate
+from pathlib import Path
+import glob
 
 
+DATA_PATH="/home/devin/server/inquiries/"
 
 
+prompt_template = """[INST]<<SYS>>Use the following pieces of context to answer the question at the end. Please follow the following rules:
+1. If you don't know the answer, try to find sources which include **coherent thoughts** relevant to the question. 
+and add the source links as a list.
+2. If you find the answer, write the answer in a concise way and add the list of sources that are 
+**directly** used to derive the answer. Exclude the sources that are irrelevant to the final answer.
+<</SYS>>
+{context}
+
+Question: {question}
+Helpful Answer:
+[/INST]"""
 
 def custom_prompt():
-    prompt_template = """[INST]<<SYS>>Use the following pieces of context to answer the question at the end. Please follow the following rules:
-    1. If you don't know the answer, try to find sources which include **coherent thoughts** relevant to the question. 
-    and add the source links as a list.
-    2. If you find the answer, write the answer in a concise way and add the list of sources that are 
-    **directly** used to derive the answer. Exclude the sources that are irrelevant to the final answer.
-    <</SYS>>
-    {context}
-
-    Question: {question}
-    Helpful Answer:
-    [/INST]"""
 
     PROMPT = PromptTemplate(input_variables=["context","question"], template=prompt_template)
     return PROMPT
@@ -72,15 +75,15 @@ def retrieval_qa_chain(llm,vectorstore):
  return qa_chain
 
 
-def qa_bot(db): 
+def qa_bot(topic): 
  global model
  if (model is None):
   print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
   model = load_llm()
   print("loaded model")
  DB_PATH = "vectorstores/db/"
- if db is not None:
-  DB_PATH = "vectorstores/db/" + db + "/"
+ if topic is not None and topic != "ALL":
+  DB_PATH = "vectorstores/db/" + topic + "/"
   print(DB_PATH)
  vectorstore = Chroma(persist_directory=DB_PATH, embedding_function=myEmbeddings)
 # vectorstore = Chroma(persist_directory=DB_PATH, embedding_function=myEmbeddings)
@@ -92,10 +95,19 @@ def qa_bot(db):
 
 app = Flask(__name__)
 CORS(app)
+#cors = CORS(app, resources={r"/api/*": {"origins": ["https://chat.misterrubato.com", "https://www.misterrubato.com", "*"]}})
+
 
 @app.route('/')
 def hello():
     return 'Hello, World!'
+
+
+@app.route('/ping/')
+def ping():
+    ret = {'answer': 'pong'}
+    ret = json.dumps(ret)
+    return ret
 
 
 @app.route('/timestep/')
@@ -111,10 +123,10 @@ def timestep():
 @app.route('/chat/')
 def chat():
     query = request.args.get('query')
-    db = request.args.get('db')
+    topic = request.args.get('topic')
     print("chat query" + query)
     try:
-        chain=qa_bot(db)
+        chain=qa_bot(topic)
         print("two")
         # res=await chain.acall(message, callbacks=[cb])
 #        res= chain.call(query, callbacks=[cb])
@@ -141,13 +153,22 @@ def chat():
     return ret
 
 #http://127.0.0.1:8000/api/?query=how are you
+#utilize additional parameter to separate RAG DB.  
+#db=xxx
 @app.route('/api/')
 def api():
     query = request.args.get('query')
-    print("chat query" + query)
+    userid = request.args.get('userid')
+    topic = request.args.get('topic')
+    if (topic is None):
+       topic = "ALL"
+    if (userid is None):
+       userid = "Anonymous"
+
+    print(userid + " chat query " + topic + ": \n" + query)
     try:
-        chain=qa_bot()
-        print("two")
+        chain=qa_bot(topic)
+        print("thinking...")
         # res=await chain.acall(message, callbacks=[cb])
 #        res= chain.call(query, callbacks=[cb])
         #this performance will hinder things I suspect.  
@@ -163,8 +184,54 @@ def api():
             for s in sources:               
                retsource.append({'content': s.page_content, 'metadata': s.metadata['source']})
             
-        ret = {'answer': answer, 'sources': retsource, 'query': query}
+        #todo get confidence score.  
+        currenttime = datetime.now().strftime('%Y%m%d%H%M%S.%f') #do we want %f microseconds here?  
+        ret = {'answer': answer, 'sources': retsource, 'query': query, 'prompt': prompt_template, 'userid': userid, 'topic': topic, 'currenttime': currenttime, 'confidence': 0.0}
         ret = json.dumps(ret)
+        #save this temporarily to a file.  And then from timestep, we can pull all this data into whatever DB we decide.  
+        #for once we are not limited by disk space rather CPU/GPU.  
+        #simplicity?  just use a directory structure for now?  
+        #so just use the topic as the directory.  
+        #load all these responses for the analyze API.  
+        topicpath = DATA_PATH + topic + "/"
+
+        Path(topicpath).mkdir(parents=True, exist_ok=True)
+        topicpath += currenttime + ".json"
+        with open(topicpath, 'w') as f:
+            f.write(ret)
+    except Exception as e: # work on python 3.x
+        print(e)
+        ret = 'error'
+    return ret
+
+#http://127.0.0.1:8000/analyze/?command=get&userid=..&topic=ALL are you
+
+@app.route('/analyze/')
+def analyze():
+    command = request.args.get('command') #get all or delete all
+    userid = request.args.get('userid')
+    topic = request.args.get('topic')
+    if (topic is None):
+       topic = "ALL"
+    if (userid is None):
+       userid = "Anonymous"
+
+    print(userid + " analyze topic " + topic + ": \n")
+    try:
+        topicpath = DATA_PATH + topic + "/"
+        Path(topicpath).mkdir(parents=True, exist_ok=True)
+        #load all responses for this topic.  
+        #rate the responses if necessary from UI.  
+        i = 0
+        retsource = []
+        for file in glob.glob(topicpath + "*.json"):
+            with open(file, 'r') as f:
+                retsource.append(json.load(f))
+            i += 1
+            if i > 10:
+               break
+        ret = {'inquiries': retsource, 'topic': topic, 'userid': userid}
+        
     except Exception as e: # work on python 3.x
         print(e)
         ret = 'error'

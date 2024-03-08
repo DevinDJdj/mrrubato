@@ -11,25 +11,25 @@ class Inquiry:
         self.created = created
 
     @staticmethod
-    def get(user_id):
+    def get(numrows=10):
         db = get_db()
-        user = db.execute(
-            "SELECT * FROM user WHERE id = ?", (user_id,)
+        inquiry = db.execute(
+            "SELECT * FROM inquiries ORDER BY ROWID ASC LIMIT ?", (numrows,)
         ).fetchone()
-        if not user:
+        if not inquiry:
             return None
 
-        user = User(
-            id_=user[0], name=user[1], email=user[2], profile_pic=user[3]
+        inquiry = Inquiry(
+            query=inquiry[0], response=inquiry[1], context=inquiry[2], prompt=inquiry[3], userid=inquiry[4], confidence=inquiry[5], created=inquiry[6]
         )
-        return user
+        return inquiry
 
     @staticmethod
-    def create(id_, name, email, profile_pic):
+    def create(query, response, context, prompt, userid, confidence):
         db = get_db()
         db.execute(
-            "INSERT INTO user (id, name, email, profile_pic) "
-            "VALUES (?, ?, ?, ?)",
-            (id_, name, email, profile_pic),
+            "INSERT INTO inquiries (query, response, context, prompt, userid, confidence) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (query, response, context, prompt, userid, confidence),
         )
         db.commit()

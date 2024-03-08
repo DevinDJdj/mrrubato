@@ -24,6 +24,12 @@ class Keymap{
             "12,11,12": "stop record", //after this we should either have a name or keyset in the upper octave.  
             //this is essentially creating a commandset with all command log and midi log in time.  
             //definition should be 11 or 13 keys.  
+            //for now just associate this with a word.  We can use the word to find the commandset.
+            //this will be more familiar for people.  This will trigger save commandset, no this should be manual.  
+            //it is 12,10,12 so should be easy to trigger in sequence.  
+            "0,10,0": "open", //open a tab or a previously saved commandset.  
+            "12,10,12": "save", //save a commandset.  This will be a new commandset or overwrite an existing one if it exists.
+            //or maybe prompt if exists.  
             "12,5,12": "channel", //channel selector will be 13 and up to 23
             "12,7,12": "tab", //tab selector will be 13 and up to 23, 2 keys for up to 100 tabs each channel.  Need to store index of the tab in window
             //this will use channeltab variable to select from current channel.  
