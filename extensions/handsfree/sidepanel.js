@@ -216,7 +216,8 @@ function getHistory(searchText = '', maxItems = 25){
 
 
 
-  function updateSidePanel(){
+  function updateSidePanel(response){
+    console.log(response);
     //add to the channels list.  
     //these links dont work for some stupid reason due to the bad design in the chrome-extension framework.  
     //cant find easy workaround yet.  

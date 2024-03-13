@@ -211,10 +211,13 @@ def analyze():
     command = request.args.get('command') #get all or delete all
     userid = request.args.get('userid')
     topic = request.args.get('topic')
+    limit = request.args.get('limit')
     if (topic is None):
        topic = "ALL"
     if (userid is None):
        userid = "Anonymous"
+    if (limit is None):
+       limit = 10
 
     print(userid + " analyze topic " + topic + ": \n")
     try:
@@ -228,7 +231,7 @@ def analyze():
             with open(file, 'r') as f:
                 retsource.append(json.load(f))
             i += 1
-            if i > 10:
+            if i > limit:
                break
         ret = {'inquiries': retsource, 'topic': topic, 'userid': userid}
         

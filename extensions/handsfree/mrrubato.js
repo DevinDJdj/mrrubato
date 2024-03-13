@@ -274,7 +274,7 @@ class Mrrubato {
             transcript = cl.transcript;
             pending = cl.pending;
         }
-
+        let callback = null;
         if (midi != null || cl !=null){
             console.log(cl);
             console.log(midi);
@@ -282,7 +282,7 @@ class Mrrubato {
             //try to find if we have something to do with the midi.  
             transcript = this.keymap.findCommand(transcript, midi);
             if (transcript != ""){
-                this.Chat(transcript, null, pending); //add waspendingflag
+                this.Chat(transcript, callback, pending); //add waspendingflag
             }
             else{
                 //still waiting for midi to complete?  
@@ -378,20 +378,40 @@ class Mrrubato {
         }
 
     }
-    
+
+    onError(error){
+        console.log('error' + error);
+    }
+    setActiveWindow(windowInfo){
+        console.log('set active window' + windowInfo.id);
+        for (var i=0; i< this.channels.length; i++){
+            if (this.channels[i] == windowInfo.id){
+                this.activeChannel = i;
+            }
+        }
+    }
+
+    doCallback(callback, transcript){
+        if (callback != null){
+            callback(transcript);
+        }
+    }
+
     initCommands(){
         //add in order of importance so help works better.  
-        let c = new Command("links", "List all links on the page", function(transcript){
+        let c = new Command("links", "List all links on the page", function(transcript, callback){
             var array = [];
             var links = document.getElementsByTagName("a");
             for(var i=0, max=links.length; i<max; i++) {
                 array.push(links[i].href);
             }            
             console.log(array);
-        });
+            this.mr.doCallback(callback, transcript);
+            
+        }, "partial", this);
         this.commands.push(c);
 
-        c = new Command("help", "", function(transcript){
+        c = new Command("help", "", function(transcript, callback){
 
             if (transcript == "help"){
                 let text = 'Available commands:\n';
@@ -422,89 +442,126 @@ class Mrrubato {
                 window.speechSynthesis.speak(this.mr.ss);
 
             }
+            this.mr.doCallback(callback, transcript);
+            
         }, "partial", this);
 //        c.mr = this;
         this.commands.push(c);
 
-        c = new Command("move", "move mouse up/down/left/right", function(transcript){
-            chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()});
+        c = new Command("move", "move mouse up/down/left/right", function(transcript, callback){
+            chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()}).then((response) => {
+                this.mr.doCallback(callback, transcript);
+            });
 //            window.scrollBy(0, -window.innerHeight);
+
         }, "partial", this);
         this.commands.push(c);
 
-        c = new Command("scroll", "scroll up/down/left/right", function(transcript){
-            chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()});
-//            window.scrollBy(0, -window.innerHeight);
+        c = new Command("scroll", "scroll up/down/left/right", function(transcript, callback){
+            chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()}).then((response) => {
+                this.mr.doCallback(callback, response.response);
+            });
+            
         }, "partial", this);
         this.commands.push(c);
 
-        c = new Command("page", "page up/down", function(transcript){
-            chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()});
-//            window.scrollBy(0, -window.innerHeight);
+        c = new Command("page", "page up/down", function(transcript, callback){
+            chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()}).then((response) => {
+                this.mr.doCallback(callback, response.response);
+            });
+            
         }, "partial", this);
         this.commands.push(c);
 
 
-        c = new Command("stop", "stop speaking", function(transcript){
+        c = new Command("stop", "stop speaking", function(transcript, callback){
             console.log('stopping speech');
             window.speechSynthesis.cancel();
-            chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()});
+            chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()}).then((response) => {
+                this.mr.doCallback(callback, response.response);
+            });
+            
         }, "full", this);
         this.commands.push(c);
 
-        c = new Command("continue", "continue reading next element", function(transcript){
+        c = new Command("continue", "continue reading next element", function(transcript, callback){
             console.log('continue next');
             window.speechSynthesis.cancel();
-            chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()});
+            chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()}).then((response) => {
+                this.mr.doCallback(callback, response.response);
+            });
+            
         }, "full", this);
         this.commands.push(c);
 
-        c = new Command("read", "read from current cursor", function(transcript){
-            chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()});
+        c = new Command("read", "read from current cursor", function(transcript, callback){
+            chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()}).then((response) => {
+                this.mr.doCallback(callback, response.response);
+            });
+
         }, "full", this);
         this.commands.push(c);
 
-        c = new Command("click", "click on current element - list links in element and select one", function(transcript){
-            chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()});
+        c = new Command("click", "click on current element - list links in element and select one", function(transcript, callback){
+            chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()}).then((response) => {
+                this.mr.doCallback(callback, response.response);
+            });
+            
         }, "full", this);
         this.commands.push(c);
 
-        c = new Command("play", "play embedded video/audio", function(transcript){
-            chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()});
+        c = new Command("play", "play embedded video/audio", function(transcript, callback){
+            chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()}).then((response) => {
+                this.mr.doCallback(callback, response.response);
+            });
+            
         }, "partial", this);
         this.commands.push(c);
 
-        c = new Command("pause", "pause embedded video/audio", function(transcript){
-            chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()});
+        c = new Command("pause", "pause embedded video/audio", function(transcript, callback){
+            chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()}).then((response) => {
+                this.mr.doCallback(callback, response.response);
+            });
+            
         }, "partial", this);
         this.commands.push(c);
 
-        c = new Command("video", "play embedded videos", function(transcript){
-            chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()});
+        c = new Command("video", "play embedded videos", function(transcript, callback){
+            chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()}).then((response) => {
+                this.mr.doCallback(callback, response.response);
+            });
+            
         }, "full", this);
         this.commands.push(c);
 
-        c = new Command("audio", "play embedded audios", function(transcript){
-            chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()});
+        c = new Command("audio", "play embedded audios", function(transcript, callback){
+            chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()}).then((response) => {
+                this.mr.doCallback(callback, response.response);
+            });
+            
         }, "full", this);
         this.commands.push(c);
 
-        c = new Command("back", "go back on current page", function(transcript){
-            chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()});
+        c = new Command("back", "go back on current page", function(transcript, callback){
+            chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()}).then((response) => {
+                this.mr.doCallback(callback, response.response);
+            });
+            
         }, "full", this);
         this.commands.push(c);
 
-        c = new Command("open", "open a tab", function(transcript){
+        c = new Command("open", "open a tab", function(transcript, callback){
             console.log(transcript);
             //allow to open a google search for the query term on existing search.  
             //or open new tab for this search.              
             this.mr.findTabs(transcript.substring(5));
+            this.mr.doCallback(callback, transcript);
 
 //            chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()});
         }, "partial", this);
         this.commands.push(c);
 
-        c = new Command("select", "make selection from list of links", function(transcript){
+        c = new Command("select", "make selection from list of links", function(transcript, callback){
             console.log(transcript);
             //allow to open a google search for the query term on existing search.  
             //or open new tab for this search.              
@@ -524,28 +581,35 @@ class Mrrubato {
             }
     
 //            chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()});
+            this.mr.doCallback(callback, transcript);
         }, "partial", this);
         this.commands.push(c);
 
-        c = new Command("where am i", "gives status of current cursor and window", function(transcript){
+        c = new Command("where am i", "gives status of current cursor and window", function(transcript, callback){
             console.log('where am i');
-            chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()});
+            chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()}).then((response) => {
+                this.mr.doCallback(callback, response.response);
+            });
         }, "full", this);
         this.commands.push(c);
 
-        c = new Command("search", "open new search for ...", function(transcript){
+        c = new Command("search", "open new search for ...", function(transcript, callback){
             console.log(transcript);
             //allow to open a google search for the query term on existing search.  
             //or open new tab for this search.  
             let action_url = this.mr.baseSearch + transcript.substring(7);
-            chrome.tabs.create({ url: action_url });
+            chrome.tabs.create({ url: action_url }, function(tab){
+                this.mr.initTab(tab);
+                this.mr.changeTab(tab.id);
+            });
             this.mr.Chat("tabs");
     
+            this.mr.doCallback(callback, transcript);
             //chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()});
         }, "partial", this);
         this.commands.push(c);
 
-        c = new Command("find", "find ... in page", function(transcript){
+        c = new Command("find", "find ... in page", function(transcript, callback){
             console.log(transcript);
             //allow to open a google search for the query term on existing search.  
             //or open new tab for this search.  
@@ -553,16 +617,23 @@ class Mrrubato {
 //            chrome.tabs.create({ url: action_url });
 //            this.mr.Chat("tabs");
     
-            chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()});
+            chrome.tabs.sendMessage(this.mr.currentTabs[ this.mr.channels[this.mr.activeChannel] ], {text: transcript.toLowerCase()}).then((response) => {
+                this.mr.doCallback(callback, response.response);
+            });
+
         }, "partial", this);
         this.commands.push(c);
 
         c = new Command("tabs", "reload all tabs", function(transcript, callback){
+
             chrome.tabs.query({}, function(tabs) {        
                 for (var i=0; i<tabs.length; i++) {
                     this.mr.initTab(tabs[i]);//, i, tabs.length, callback);
                 }
-                callback();
+
+//                chrome.windows.getLastFocused({ populate: true }).then(this.mr.setActiveWindow, this.mr.onError);
+
+                this.mr.doCallback(callback, transcript);
             });
     
         }, "full", this);
@@ -643,6 +714,10 @@ class Mrrubato {
 
     changeTab(id){
             //this is the tab id.  
+            let thistab = this.allTabs[id];
+            if (thistab == undefined){
+                console.log('tab not found');
+            }
             let windowId = this.allTabs[id].tab.windowId;
             let tabid = id;
             this.currentTabs[ windowId ] = tabid;
@@ -939,7 +1014,7 @@ function injectedFunction(){
         let scrollx = window.scrollX;
         var xpixel = Math.floor((x+scrollx)*numkeys/docwidth);
         var ypixel = Math.floor((y+scrolly)*numkeys*aspectratio/docheight);
-        return xpixel, ypixel;
+        return [xpixel, ypixel];
     }
 
     function mapToXY(x, y){
@@ -959,16 +1034,16 @@ function injectedFunction(){
         if (ypixel < 0){
             ypixel = 0;
         }
-        return xpixel, ypixel;
+        return [xpixel, ypixel];
     }
 
 
     function findHeatmapElement(searchText = ''){
 
-        xpixel, ypixel = XYtomap(localcursorx, localcursory);
+        const [xpixel, ypixel] = XYtomap(localcursorx, localcursory);
 
         if (searchText != ''){
-            searchResults = [];
+            let searchResults = [];
             maxx = numkeys-1;
             maxy = Math.floor(numkeys*aspectratio-1);
             for (var i=0; i<maxy; i++){
@@ -1366,7 +1441,7 @@ function injectedFunction(){
             //for now just use the y value to scroll to this location.  
             //for now we are just using what is on screen but eventually we can just use all heatmap elements probably.  
             currenty = window.scrollY;
-            localcursorx, localcursory = mapToXY(x, y);
+            [localcursorx, localcursory] = mapToXY(x, y);
 //            localcursory = Math.floor((y+currenty)*numkeys*aspectratio/docheight);
 //            localcursorx = Math.floor(x*numkeys/docwidth);
             
@@ -1399,7 +1474,7 @@ function injectedFunction(){
                 x = getNum(params[1]);
             }
 //            currenty = window.scrollY;
-            x, y = mapToXY(x, y);
+            [x, y] = mapToXY(x, y);
             window.scrollTo(x, y);
 
         }

@@ -147,10 +147,21 @@ Add stats command for info to display on each page.
 
 **web/public/server/index.html (status etc)
 **web/public/server/transcription.html (get numbers of files /size etc. over time )
---add info in RTDB?
+--add info in RTDB? take the functionality of timestep?  Cant take all the functionality so maybe just for display.  
 **web/public/server/ollama.html (get number of query/response over time etc. )
+--add info to the RTDB from ollama queries.  
+For now just this functionality.  
 **web/public/server/upload.html (get number of recordings and size etc. )
 same structure here?  Just save locally and then batch job copies to GCP?  
+OK, need to embed the video in ollama.  Lets create do the youtube version if we have youtube config flag active.  
+Dont like having the chat.html code and the ollama.html not shared.  
+Minor details.  
+
+
+
+So the server data flow will be local file -> RTDB -> timestep (move offline)
+I think this will work.  
+Do we need this to be RTDB?  probably not.  
 
 
 
@@ -248,3 +259,14 @@ We need to know when the response has come from the commands.
 If we do not, then what is shown is not necessarily the current state.  
 hmmmm
 
+
+
+**extensions/handsfree/
+how do we want to use the callback function, did we really need to pass to each command()?  
+--test if we unbroke this.  
+--no voice initial interaction.  
+
+--continue with sound feedback after loading.  
+search vs find, do we want to use other words?  
+
+Wow had a lot to fix.  
