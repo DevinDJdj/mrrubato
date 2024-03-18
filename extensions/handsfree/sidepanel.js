@@ -73,7 +73,8 @@ if (speech == true) {
         (tabId, changeInfo, tab) {
           // read changeInfo data and do something with it (like read the url)
           let mytab = mr.allTabs[tabId];
-          if (changeInfo.status === "complete" && (tab.url.search(mytab.tab.url) == -1 || mytab.tab.url == "")) {
+          let same = tab.url.indexOf(mytab.tab.url);
+          if (changeInfo.status === "complete" && (same == -1 || mytab.tab.url == "")) {
             // do something here
 
 //            mr.allTabs[tabId] = undefined;
@@ -81,7 +82,7 @@ if (speech == true) {
             //send message with refreshed DOM and QR code.  
             mr.allTabs[tabId] = { 'tab': tab, 'scriptLoaded': false, 'dom': ''};
             mr.tabnames[tabId] = tab.title;
-            mr.ping(tabId);
+//            mr.ping(tabId);
             //if this has a script already, then this should be set by the time this times out.  
             //ok maybe this works.  
             setTimeout(() => {

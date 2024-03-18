@@ -95,6 +95,19 @@ function loadSounds(folder = 'link', mapstr = 'link') {
 
 }
 
+function audioFeedback(midinote=60, velocity=100, timeout=500){
+	//not sure why this is not playing?  Interaction with page?  
+	//how do we get better timing for this?  Or is this good enough?  
+	//we may need a callback to call the next note.  
+	var a = playNote(midinote, velocity); //indicate we have loaded the page.  
+	setTimeout(() => {
+	  a.stop();
+	  //callback to call next note.  Is there a better mechanism?  
+	  //should think about this a bit more.  
+	}, timeout);
+
+}
+
 function setupAudioFeedback(){
 	mainGainNode = audioContext.createGain();
 	mainGainNode.connect(audioContext.destination);
@@ -106,16 +119,10 @@ function setupAudioFeedback(){
 	loadSounds('link', 'link');
 	loadSounds('frenchhorn', 'image');
 	loadSounds('viola', 'text');
+	audioFeedback(60, 100, 500);
+	audioFeedback(64, 100, 500);
+	audioFeedback(68, 100, 500);
 
-	//not sure why this is not playing?  Interaction with page?  
-	a = playNote(60, 100); //indicate we have loaded the page.  
-	b = playNote(64, 100); //indicate we have loaded the page.
-	c = playNote(68, 100); //indicate we have loaded the page.
-	setTimeout(() => {
-	  a.stop();
-	  b.stop();
-	  c.stop();
-	}, 500);
   
 }
 

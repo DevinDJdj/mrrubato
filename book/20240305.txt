@@ -270,3 +270,17 @@ how do we want to use the callback function, did we really need to pass to each 
 search vs find, do we want to use other words?  
 
 Wow had a lot to fix.  
+
+
+--Need to add recording functionality.  How to manage topics for this in the front-end?  
+Each topic has a chromadb.  
+When topics changed in the front-end, call back-end server to update that topic chroma.  
+This is probably a good enough trigger.  So if the text exists for this, we can add it to a topic.  
+For now these text files will just reside in a directory on the server?  
+What should these topics be?  
+
+
+later
+--Need test some full MIDI commands.  
+Fix as we go.  
+Key is can we replay these commands on another browser instance?  

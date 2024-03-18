@@ -20,35 +20,47 @@ class Keymap{
         //otherwise it requires a word.  
         //separate these categories.   
         //blank
-        this.keydict[ "" ] = { "3": { "0,11,0" : "start record", 
-            "12,11,12": "stop record", //after this we should either have a name or keyset in the upper octave.  
-            //this is essentially creating a commandset with all command log and midi log in time.  
-            //definition should be 11 or 13 keys.  
-            //for now just associate this with a word.  We can use the word to find the commandset.
-            //this will be more familiar for people.  This will trigger save commandset, no this should be manual.  
-            //it is 12,10,12 so should be easy to trigger in sequence.  
-            "0,10,0": "open", //open a tab or a previously saved commandset.  
-            "12,10,12": "save", //save a commandset.  This will be a new commandset or overwrite an existing one if it exists.
-            //or maybe prompt if exists.  
-            "12,5,12": "channel", //channel selector will be 13 and up to 23
-            "12,7,12": "tab", //tab selector will be 13 and up to 23, 2 keys for up to 100 tabs each channel.  Need to store index of the tab in window
-            //this will use channeltab variable to select from current channel.  
-            "12,9,12": "bookmark", //bookmark selector will be 13 and up to 23, 5 keys or more.  
-            //this will be usable in subsequent "tab commands" to open this named tab, this will also save the tab
-            "0,7,0": "click",
-            "0,6,0": "right click", 
-            "0,5,0": "read", 
-            "0,4,0": "scroll down",
-            "0,3,0": "page down",
-            "0,2,0": "stop"
+
+        //param dictionary.  1 and 2 are for parameters for functions.  Functions can take more than this, but how to demarcate end of parameters?  
+        //if there is no demarcation, all midi are passed, and the function decides what to pop.  
+        //This seems haphazard, but more convenient for the user.  
+
+        //3 and 4 are for core functions themselves.  
+        //5 and more are for user defined variables and functions which then can take 1-2 parameters.  
+        //
+
+        this.keydict[ "" ] = { 
+            "3": { 
+                "0,11,0" : "start record", 
+                "12,11,12": "stop record", //after this we should either have a name or keyset in the upper octave.  
+                //this is essentially creating a commandset with all command log and midi log in time.  
+                //definition should be 11 or 13 keys.  
+                //for now just associate this with a word.  We can use the word to find the commandset.
+                //this will be more familiar for people.  This will trigger save commandset, no this should be manual.  
+                //it is 12,10,12 so should be easy to trigger in sequence.  
+                "0,10,0": "open", //open a tab or a previously saved commandset.  
+                "12,10,12": "save", //save a commandset.  This will be a new commandset or overwrite an existing one if it exists.
+                //or maybe prompt if exists.  
+                "12,5,12": "channel", //channel selector will be 13 and up to 23
+                "12,7,12": "tab", //tab selector will be 13 and up to 23, 2 keys for up to 100 tabs each channel.  Need to store index of the tab in window
+                //this will use channeltab variable to select from current channel.  
+                "12,9,12": "bookmark", //bookmark selector will be 13 and up to 23, 5 keys or more.  
+                //this will be usable in subsequent "tab commands" to open this named tab, this will also save the tab
+                "0,7,0": "click",
+                "0,6,0": "right click", 
+                "0,5,0": "read", 
+                "0,4,0": "scroll down",
+                "0,3,0": "page down",
+                "0,2,0": "stop"
             }, 
-            "4": {"0,7,7,0": "where am i", 
-            "0,5,5,0": "tabs",
-            "0,4,4,0": "scroll up",
-            "0,3,3,0": "page up",
-            "0,2,2,0": "continue",
-            "0,4,7,0": "activate mic", "0,7,4,0": "deactivate mic", 
-            "0,3,7,0": "activate piano", "0,7,3,0": "deactivate piano",
+            "4": {
+                "0,7,7,0": "where am i", 
+                "0,5,5,0": "tabs",
+                "0,4,4,0": "scroll up",
+                "0,3,3,0": "page up",
+                "0,2,2,0": "continue",
+                "0,4,7,0": "activate mic", "0,7,4,0": "deactivate mic", 
+                "0,3,7,0": "activate piano", "0,7,3,0": "deactivate piano",
             } };
             //basic functionality all keys should come before the word is complete.  Not sure if the user can handle this consistently 
             //but maybe best to make this a rule, to avoid problems.  Basically if said at the same time, it should work.  
@@ -56,15 +68,36 @@ class Keymap{
             //wordcommand + parameter keyset = action.  
             //keycommand + parameter keyset = action.  In this case the keyset should essentially be the upper octave.  
             //general terms are even numbers.  Identifiers are odd.  
-        this.keydict["help"] = {"1": {"1": "1"} }; //0 means any number, search for commands with this midi function after 1.  
+        this.funcdict[""] = function(transcript, midi, keydict, key){            
+            let c3 = keydict[""]["3"];
+            let c4 = keydict[""]["4"];
+            if (midi !=null && midi.length > 2){
+                //search c3
+            }
+            if (midi !=null && midi.length > 3){
+                //search c4
+            }
+
+        };
+
+        this.keydict["help"] = {
+            "1": {"1": "1"} 
+        }; //0 means any number, search for commands with this midi function after 1.  
         //this should also search up keywords which we have generated and correspond to this set of keys.  
-        this.keydict["move"] = {"2": {}}; //bottom octave = Y coord, top octave = X coord
+        
+        //this is essentially the parameters which will be passed.  This needs to be recursive in some way.  Not sure how yet.  
+        //but we need to be able to play this at whatever speed we can.  
+        //return the transcript and the number of midi keys which were used.  
+        this.keydict["move"] = {
+            "1": 0, 
+            "2": 12 //expected minimum offset from 1
+        }; //bottom octave = Y coord, top octave = X coord
         this.funcdict["move"] = function(transcript, midi, keydict, key){
             //input transcript and return final transcript.  
             let commandlength = null;
             let commanddict = null;
             for (const [k, v] of Object.entries(keydict[key])) {
-                if (k == midi.length.toString()){
+                if (parseInt(k) <= midi.length){
                     commandlength = k;
                     commanddict = v;
                 };
@@ -102,15 +135,19 @@ class Keymap{
                     }
                 }
             }
+            //or just pop from midi as we use?  Is this good enough?  
+            //if we have an error in any function it will cause problems downstream.  
+            //I guess this is ok.  
             return transcript;
         };
-        this.keydict["scroll"] = {"1": {}, "2": {}}; //number of increments.  from middle C
+        this.keydict["scroll"] = {"1": {"min": -12, "max": -1}, "2": {"min": 1, "max": 12}}; //number of increments.  from middle C
+        //need a min/max for parameters.  
         this.funcdict["scroll"] = function(transcript, midi, keydict, key){
             //input transcript and return final transcript.  
             let commandlength = null;
             let commanddict = null;
             for (const [k, v] of Object.entries(keydict[key])) {
-                if (k == midi.length.toString()){
+                if (parseInt(k) <= midi.length){
                     commandlength = k;
                     commanddict = v;
                 };
@@ -184,11 +221,17 @@ class Keymap{
         //if we can translate the midi return transcript, otherwise return ""
         if (midi != null){
             for (const [key, value] of Object.entries(this.funcdict)) {
-                if (key != ""){
-                    if (transcript.startsWith(key)){
+                if (transcript !=""){
+                    if (key !="" && transcript.startsWith(key)){
                         let f = value;
                         transcript = f(transcript, midi, this.keydict, key);
+                        return transcript;
                     }
+                }
+                else{
+                    let f = value;
+                    transcript = f(transcript, midi, this.keydict, key);
+                    return transcript;
                 }
             }
         }
@@ -265,42 +308,100 @@ class Mrrubato {
         window.speechSynthesis.speak(this.ss);
     }
 
+    completeMidi(midi){
+        let ret = 0;
+        while (midi.length > 0 && midi[0].complete){
+            midi.shift();
+            ret++;
+        }
+        return ret;
+    }
+
     checkCommands(){
         let cl = this.getPendingCommand();
         let midi = getMidiRecent();
+        //if most recent is too recent wait some more.  
+        //otherwise we assume this is a completed command.  
+        //also if we have punctuation/end command, we can continue.  
+        if (midi != null){
+            this.completeMidi(midi);
+        }
         let transcript = "";
         let pending = false;
-        if (cl != null){
-            transcript = cl.transcript;
-            pending = cl.pending;
-        }
         let callback = null;
-        if (midi != null || cl !=null){
+        if (cl != null){
+                    //we have a command.  
+                //try to find if we have something to do with the midi.  
+                //recurse to find the transcript needed.  
+                //we will find scroll, then we need those parameters.  
             console.log(cl);
-            console.log(midi);
-                //we have a command.  
-            //try to find if we have something to do with the midi.  
-            transcript = this.keymap.findCommand(transcript, midi);
-            if (transcript != ""){
-                this.Chat(transcript, callback, pending); //add waspendingflag
-            }
-            else{
-                //still waiting for midi to complete?  
-                //we should probably allow for more than 4 seconds.  Add on time here somehow.  
-                //any unknown or incomplete commands will be forgotten after 4 seconds.  
-                //I think this is fine for now.  
-                if (Date.now() - start - cl.time > recentTime){
-                    cl.pending = false;
-                    //pop from the pending commands?  Why keep useless history?  
-                    this.commandLog.pop();
+            transcript = cl.transcript;
+            let prevtranscript = transcript;
+            pending = cl.pending;
+            if (midi != null && midi.length > 0){
+                transcript = this.keymap.findCommand(transcript, midi);
+                if (transcript == prevtranscript){
+
+                }
+                else{
+                    this.completeMidi(midi);
+                    this.Chat(transcript, callback, pending); //add waspendingflag
+                    pending = false;
                 }
             }
-        }
-    }
+            else{
+                this.Chat(transcript, callback, pending); //add waspendingflag
+                pending = false;
+            }
+
+            if (pending && Date.now() - cl.time > recentTime){
+                //pop from the pending commands?  Why keep useless history?  
+                this.commandLog.pop();
+            }
     
+        }
+        else{
+            if ((midi != null && midi.length > 0)){
+                console.log(midi);
+
+                let prevtranscript = "";
+                //get command.  
+                transcript = this.keymap.findCommand(transcript, midi);
+                let done = this.completeMidi(midi);
+                let windowId = this.channels[this.activeChannel];
+                let tabid = this.currentTabs[ windowId ];
+
+                if (done > 0 && midi.length > 0){
+                    prevtranscript = transcript;
+                    //get parameters.  
+                    transcript = this.keymap.findCommand(transcript, midi);
+                    if (transcript != prevtranscript){
+                        done = this.completeMidi(midi);
+                        this.Chat(transcript, callback, pending); 
+                    }
+                    else if (transcript != ""){
+                        //we have 4 seconds to add the parameters for this call if .  
+                        //still pending.  Just add pending command.  
+                        //or ignore.  
+                        this.addCommandLog(transcript, null, windowId, tabid, true);
+                    }
+                }
+                else if (transcript !=""){
+                    //single command.  Must have at least half a second open here or whatever the timer is open time in order to execute this command.  
+                    //add a pending command, and if no more midi comes within half a second, we execute.  
+                    //will need to adjust this timer for the user.  
+                    this.addCommandLog(transcript, null, windowId, tabid, true);
+                }
+
+            }
+        }
+
+
+    }
     addCommandLog(transcript, command, windowId, tabid, pending=false){
+        //we want to have the time here.  
         let now = Date.now();
-        this.commandLog.push({time: now-start, transcript: transcript, command: command, window: windowId, tab: tabid, pending: pending});
+        this.commandLog.push({time: now, transcript: transcript, command: command, window: windowId, tab: tabid, pending: pending});
     }
 
     getPendingCommand(){
@@ -361,7 +462,7 @@ class Mrrubato {
                 try{
                     if (!this.allTabs[tab.id].scriptLoaded){
                         this.currentTabId = tab.id;
-                        this.allTabs[tab.id].scriptLoaded = true;
+//                        this.allTabs[tab.id].scriptLoaded = true;
                         chrome.scripting.executeScript({
                             target : {tabId : tab.id  },
                             func : injectedFunction,
@@ -644,6 +745,7 @@ class Mrrubato {
     getDom(tabid){
         //add requestedTabId to know who this is coming from.  
         //this function mechanism should really allow for that by default.  
+
         let url = this.allTabs[tabid].tab.url;
         //this qrcode only represents around 1000 chars
         url = url.padEnd(220); //gets around some bug https://stackoverflow.com/questions/30796584/qrcode-js-error-code-length-overflow-17161056
@@ -665,17 +767,29 @@ class Mrrubato {
     
         var dataURL = canvas.toDataURL();
         console.log(dataURL);
-    
-        chrome.tabs.sendMessage(tabid, {text: 'report_back', requestedTabId: tabid, qrdata: dataURL});
-    
-    }
 
-    ping(tabid){
-        chrome.tabs.sendMessage(tabid, {text: 'report_back', requestedTabId: tabid}, mr.pingResponse);
+
+        this.ping(tabid, dataURL);
+    }    
+
+    ping(tabid, dataURL=""){
+        if (this.allTabs[tabid] != undefined && this.allTabs[tabid].scriptLoaded==true){
+            //already pinged/loaded
+        }
+        else{
+            console.log('pinging' + tabid);
+            chrome.tabs.sendMessage(tabid, {text: 'report_back', requestedTabId: tabid, qrdata: dataURL}, mr.pingResponse);
+        }
     }
 
     pingResponse(response){
         mr.allTabs[response['tabid'] ].scriptLoaded = true;        
+        
+        //use response here for windowId and tabId.  
+        //let windowId = this.allTabs[ response['tabid']].tab.windowId;
+        console.log(response);
+        audioFeedback(60, 100, 500);
+
     }
 
     doStuffWithDom(domContent) {
@@ -727,6 +841,7 @@ class Mrrubato {
                 }
             }
             this.updateFocus(windowId, tabid);
+            //dont think I need this one.  
             this.getDom(this.currentTabs[ windowId ]);
     }
 
@@ -1115,6 +1230,8 @@ function injectedFunction(){
     }
 
     function initHeatmap(){
+
+
         docheight = Math.max( document.body.scrollHeight, document.body.offsetHeight, 
             document.documentElement.clientHeight, document.documentElement.scrollHeight, document.documentElement.offsetHeight  );
         docwidth = Math.max(document.body.scrollWidth, document.body.offsetWidth,
@@ -1125,6 +1242,10 @@ function injectedFunction(){
         numkeys = 24;
         maxx = numkeys-1;
         maxy = Math.floor(numkeys*aspectratio-1);
+        if (heatmap.length >= maxy ){
+            return;
+            //no need to repopulate.  
+        }
 
         heatmap = [];
         // Call the specified callback, passing
@@ -1215,15 +1336,18 @@ function injectedFunction(){
             qr = document.getElementById('qr');
             console.log(msg.qrdata);
             if (qr == null){
-                qr = document.createElement('img');
-                qr.id = 'qr';
-                qr.src = msg.qrdata;
-                //style="position: fixed; bottom: 20px; right: 20px; z-index: 10000;
-                qr.style.position = "fixed";
-                qr.style.bottom = "40px";
-                qr.style.right = "20px";
-                qr.style.zIndex = "10000";
-                document.body.appendChild(qr);
+                if (msg.qrdata != ""){
+                    qr = document.createElement('img');
+                    qr.id = 'qr';
+
+                    qr.src = msg.qrdata;
+                    //style="position: fixed; bottom: 20px; right: 20px; z-index: 10000;
+                    qr.style.position = "fixed";
+                    qr.style.bottom = "40px";
+                    qr.style.right = "20px";
+                    qr.style.zIndex = "10000";
+                    document.body.appendChild(qr);
+                }
             }
             else{
                 qr.src = msg.qrdata;
@@ -1414,7 +1538,7 @@ function injectedFunction(){
         }
         else if (msg.text === 'page down') {
             window.scrollBy(0, window.innerHeight);
-            initHeatmap();
+            setTimeout(initHeatmap, 2000);
         }
 
         else if (msg.text === 'move down') {
@@ -1454,6 +1578,7 @@ function injectedFunction(){
 
         else if (msg.text === 'scroll down') {
             window.scrollBy(0, 100);
+            setTimeout(initHeatmap, 2000);
         }
         else if (msg.text === 'scroll up') {
             window.scrollBy(0, -100);
@@ -1476,6 +1601,7 @@ function injectedFunction(){
 //            currenty = window.scrollY;
             [x, y] = mapToXY(x, y);
             window.scrollTo(x, y);
+            setTimeout(initHeatmap, 2000);
 
         }
 
