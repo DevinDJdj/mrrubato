@@ -73,6 +73,8 @@ class Keymap{
             let c4 = keydict[""]["4"];
             if (midi !=null && midi.length > 2){
                 //search c3
+                //midi[0].complete = true;
+                //return transcript
             }
             if (midi !=null && midi.length > 3){
                 //search c4

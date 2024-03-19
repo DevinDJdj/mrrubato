@@ -284,3 +284,44 @@ later
 --Need test some full MIDI commands.  
 Fix as we go.  
 Key is can we replay these commands on another browser instance?  
+Still have two entries.  
+
+
+Possible other midi instruments for additional expressions:
+--have to check do they actually work with a python midi library or not?  
+Roli Seaboard.  
+Continuum Fingerboard.  
+https://www.hakenaudio.com/slim-continuums
+
+MPE controller?  Need this python lib?  
+How do we actually connect one of these boards?  
+https://en.wikipedia.org/wiki/ROLI
+Will they stay in business?  
+Nice product.  
+What other options?  
+This is the new attempt.  
+https://playlumi.com/lumi-keys
+This looks nice.  Hmm...
+https://roli.com/products/blocks/seaboard-block-m
+
+https://www.embodme.com/
+
+
+**server/ollama/server.py
+Did I break this?  
+No just quite slow on first load. 
+
+**web/public/analyze.html
+**web/public/chat.html
+Make switch between Youtube/Local seemless.  
+Should be a config setting.  
+useyoutube = true;
+OK initially working.  
+Need to separate out video.js
+**web/public/video.js
+--still need to add to chat.  
+--still need to do seek with chat.html
+
+Chat() should return string as an example and extension do tts.  
+
+

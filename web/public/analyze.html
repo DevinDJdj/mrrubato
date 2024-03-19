@@ -39,6 +39,24 @@
   <tr>
   <td>
 <div id="player" valign="top"></div>
+<video
+id="my-video"
+class="video-js"
+preload="auto"
+controls
+width="640"
+height="360"
+data-setup="{}"
+>
+<p class="vjs-no-js">
+	To view this video please enable JavaScript, and consider upgrading to a
+	web browser that
+	<a href="https://videojs.com/html5-video-support/" target="_blank"
+	  >supports HTML5 video</a
+	>
+  </p>
+  <source src="https://storage.googleapis.com/misterrubato-test.appspot.com/videos/2024-01-29%2016-47-54.mp4" type="video/mp4"></source>
+</video>
 
     <div class="words" contenteditable>
 		 <input type="text" id="p" name="p">
@@ -83,24 +101,6 @@
 </td>
 <td>
 
-	<video
-	id="my-video"
-	class="video-js"
-	preload="auto"
-	controls
-	width="320"
-	height="180"
-	data-setup="{}"
-	>
-	<p class="vjs-no-js">
-		To view this video please enable JavaScript, and consider upgrading to a
-		web browser that
-		<a href="https://videojs.com/html5-video-support/" target="_blank"
-		  >supports HTML5 video</a
-		>
-	  </p>
-	  <source src="https://storage.googleapis.com/misterrubato-test.appspot.com/videos/2024-01-29%2016-47-54.mp4" type="video/mp4"></source>
-  </video>
 	<div id="mycommentsh"></div>
     <textarea id="mycomments" rows="10" cols="40"></textarea>
 </td><td>
@@ -174,6 +174,7 @@ var seek = -1;
 <script type="text/javascript" src="clock.js"></script>
 <script type="text/javascript" src="midi.js"></script>
 <script type="text/javascript" src="db.js"></script>
+<script type="text/javascript" src="config.js"></script>
 
 <script>
 
@@ -316,6 +317,7 @@ var uid = null;
 			google.charts.load('current', {'packages':['corechart', 'timeline']});
         
 			getVideoJson(video);
+
 /*		
 			var vRef = firebase.database().ref('/misterrubato/' + video);
 			if (typeof(uid) != "undefined" && uid !==null){
@@ -672,9 +674,7 @@ function getMedia(desc){
 	url = storageRef.child(loc).getDownloadURL()
 	  .then((url) => {
         console.log(url);
-		v = document.getElementById("my-video");
-		v.src = url;
-		v.play();
+		loadVideo(url);
 
    })
  }
@@ -1029,61 +1029,11 @@ function Chat(transcript){
 
 <script type="text/javascript" src="speech.js"></script>
 
+	<script type="text/javascript" src="video.js"></script>	
     <script>
-      // 2. This code loads the IFrame Player API code asynchronously.
-      var tag = document.createElement('script');
-
-      tag.src = "https://www.youtube.com/iframe_api";
-      var firstScriptTag = document.getElementsByTagName('script')[0];
-      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
-      // 3. This function creates an <iframe> (and YouTube player)
-      //    after the API code downloads.
-      function onYouTubeIframeAPIReady() {
-        player = new YT.Player('player', {
-          height: '360',
-          width: '640',
-          videoId: video,
-          playerVars: {
-            'playsinline': 1
-          },
-          events: {
-            'onReady': onPlayerReady,
-            'onStateChange': onPlayerStateChange
-          }
-        });
-      }
-
-      // 4. The API will call this function when the video player is ready.
-      function onPlayerReady(event) {
-        event.target.playVideo();
-		if (seek > 0){
-			event.target.seekTo(seek);
-		}
-      }
-
-      // 5. The API calls this function when the player's state changes.
-      //    The function indicates that when playing a video (state=1),
-      //    the player should play for six seconds and then stop.
-      var done = false;
-      function onPlayerStateChange(event) {
-        if (event.data == YT.PlayerState.PAUSED || event.data == YT.PlayerState.ENDED) {
-			//should use same for transcript function.  
-			midienabled = 0;
-		}
-
-        if (event.data == YT.PlayerState.PLAYING) {
-//          setTimeout(stopVideo, 6000);
-//			console.log("state change");
-			midienabled = 1;
-			
-          done = true;
-        }
-      }
-      function stopVideo() {
-        player.stopVideo();
-      }
-    </script>
-	
-</body>
+		loadVideo();		
+		// 3. This function creates an <iframe> (and YouTube player)
+		//    after the API code downloads.
+	  </script>
+  </body>
 </html>
