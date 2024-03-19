@@ -30,7 +30,6 @@ import glob
 
 DATA_PATH="/home/devin/server/inquiries/"
 
-
 prompt_template = """[INST]<<SYS>>Use the following pieces of context to answer the question at the end. Please follow the following rules:
 1. If you don't know the answer, try to find sources which include **coherent thoughts** relevant to the question. 
 and add the source links as a list.
@@ -43,9 +42,11 @@ Question: {question}
 Helpful Answer:
 [/INST]"""
 
+current_prompt = prompt_template
+
 def custom_prompt():
 
-    PROMPT = PromptTemplate(input_variables=["context","question"], template=prompt_template)
+    PROMPT = PromptTemplate(input_variables=["context","question"], template=current_prompt)
     return PROMPT
 
 
@@ -69,7 +70,7 @@ def retrieval_qa_chain(llm,vectorstore):
  qa_chain = RetrievalQA.from_chain_type(
     llm,
     retriever=vectorstore.as_retriever(),
-    chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
+    chain_type_kwargs={"prompt": custom_prompt()},
     return_source_documents=True,
 )
  return qa_chain
@@ -160,6 +161,11 @@ def api():
     query = request.args.get('query')
     userid = request.args.get('userid')
     topic = request.args.get('topic')
+    prompt = request.args.get('prompt')
+    if (prompt is None):
+        current_prompt = prompt_template
+    else:
+       current_prompt = prompt
     if (topic is None):
        topic = "ALL"
     if (userid is None):
@@ -186,7 +192,7 @@ def api():
             
         #todo get confidence score.  
         currenttime = datetime.now().strftime('%Y%m%d%H%M%S.%f') #do we want %f microseconds here?  
-        ret = {'answer': answer, 'sources': retsource, 'query': query, 'prompt': prompt_template, 'userid': userid, 'topic': topic, 'currenttime': currenttime, 'confidence': 0.0}
+        ret = {'answer': answer, 'sources': retsource, 'query': query, 'prompt': current_prompt, 'userid': userid, 'topic': topic, 'currenttime': currenttime, 'confidence': 0.0}
         ret = json.dumps(ret)
         #save this temporarily to a file.  And then from timestep, we can pull all this data into whatever DB we decide.  
         #for once we are not limited by disk space rather CPU/GPU.  

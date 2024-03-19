@@ -323,5 +323,15 @@ Need to separate out video.js
 --still need to do seek with chat.html
 
 Chat() should return string as an example and extension do tts.  
+pass prompt as optional parameter.  
+
+
+NPlD890yuXY#
+
+**2025
+Use 2025 as cutover to store MEDIA and other things in 
+
+Can we just correct the answers as a part of the process to start maybe?  
+Just look at the recent questions/answers from chat and pick one/two and correct them or expand upon them in the next recording session.  
 
 

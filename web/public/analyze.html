@@ -650,35 +650,6 @@ function getMidi(desc){
 }
 
 
-function getMedia(desc){
- let tposition = desc.indexOf("MEDIAFILE:");
- if (tposition > -1){
-    eposition = desc.indexOf('\n', tposition);
-	if (eposition > -1){
-    	url = desc.substring(tposition+10, eposition);
-	}
-	else {
-		url = desc.substring(tposition+10);
-	}
-
-    url = url.replace("\r", "");
-    var storage = firebase.storage();
-
-	var lastPart = url.split("/").pop();
-
-//make this more general.  
-// Create a storage reference from our storage service
-    var storageRef = storage.ref();
-	//why does this URL have space and others are %20?  
-	loc = "videos/" + lastPart.replace("%20", " ");
-	url = storageRef.child(loc).getDownloadURL()
-	  .then((url) => {
-        console.log(url);
-		loadVideo(url);
-
-   })
- }
-}
 
 function getIteration(currentTime){
     for (j=0; j< myst.length; j++){

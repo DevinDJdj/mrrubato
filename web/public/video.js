@@ -43,7 +43,68 @@ function onYouTubeIframeAPIReady() {
     player.stopVideo();
   }
 
-  function loadVideo(url="", secs=0){
+
+  function seekVideo(secs, v){
+    if (v !=""){
+        if (v == video){
+            player.seekTo(secs);
+        }
+        else{
+            video = v;
+            player.loadVideoById(video);
+            //load data and transcript from this video.  
+            if (uid != null){
+
+                ref = firebase.database().ref('/misterrubato/' + video);
+                ref.on('value',(snap)=>{
+                    if (snap.exists()){
+                        item = snap.val();
+                        console.log(snap.val());
+                        $('#iterationsh').html(makeTimeLinks(snap.val().snippet.description))
+                        
+                        //get previous iterations of this.  Probably dont need here.  
+                        title = snap.val().snippet.description.split('\n')[0];
+                        console.log(title);
+                    }
+                });
+
+                //should just use this object.  
+
+                //get the data from the database.  
+                firebase.database().ref('/misterrubato/' + video + '/comments/' + uid).once('value')
+                .then((snapshot) => {
+                    if (snapshot.exists()) {
+                        loadPreviousComments(snapshot);
+                    }
+                    
+                });
+
+                firebase.database().ref('/misterrubato/' + video + '/transcript').once('value')
+                        .then((snapshot) => {
+                            if (snapshot.exists()){
+                                loadTranscript(snapshot);
+                            }
+                            else{
+                                console.log('No transcript');									
+                                //should never occur
+                            }
+                        });
+            }
+            //ontimer.. wait for video to load.  
+            setTimeout(() => {
+                if (player.getPlayerState() == 1) {
+                    player.seekTo(secs);
+                }
+                else {
+                    ytSeconds = secs;
+                    player.playVideo();
+                }
+            }, 2000);
+        }
+    }
+}
+
+  function loadVideo(url="", secs=0, v=""){
     if (useyoutube){
         //
         var tag = document.createElement('script');
@@ -58,6 +119,9 @@ function onYouTubeIframeAPIReady() {
 //				hideVideo.currentTime = 0;
 //				hideVideo.get(0).pause();
 //				hideVideo.get(0).currentTime = 0;
+        if (secs > 0){
+            seek = secs;
+        }
     }
     else{
 		v = document.getElementById("my-video");
@@ -66,3 +130,34 @@ function onYouTubeIframeAPIReady() {
     }
 
   }
+
+  function getMedia(desc){
+    let tposition = desc.indexOf("MEDIAFILE:");
+    if (tposition > -1){
+       eposition = desc.indexOf('\n', tposition);
+       if (eposition > -1){
+           url = desc.substring(tposition+10, eposition);
+       }
+       else {
+           url = desc.substring(tposition+10);
+       }
+   
+       url = url.replace("\r", "");
+       var storage = firebase.storage();
+   
+       var lastPart = url.split("/").pop();
+   
+   //make this more general.  
+   // Create a storage reference from our storage service
+       var storageRef = storage.ref();
+       //why does this URL have space and others are %20?  
+       loc = "videos/" + lastPart.replace("%20", " ");
+       url = storageRef.child(loc).getDownloadURL()
+         .then((url) => {
+           console.log(url);
+           loadVideo(url, 0, video);
+   
+      })
+    }
+   }
+   

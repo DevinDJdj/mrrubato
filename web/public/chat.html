@@ -46,19 +46,41 @@
 
 	<script src="config.js"></script>
 	<script src="chat.js"></script>
+	<script src="video.js">	</script>
 
 <body>
+	<table><tr><td>
     <div class="words" contenteditable>
 		<input type="text" id="p" name="p">
-   </div>
-
-	<button type="button" onclick="Chat()">Update</button>
+		<button type="button" onclick="Chat()">Update</button>
+	</div>
+</td><td>
+   <textarea id="prompt" name="prompt" rows="10" cols="50"></textarea>
+</td></tr></table>
 <table>
 		<tr valign="top">
 		<td>
 		
-			  <div id="player" valign="top"></div>
-	  
+			<div id="player" valign="top"></div>
+			<video
+			id="my-video"
+			class="video-js"
+			preload="auto"
+			controls
+			width="640"
+			height="360"
+			data-setup="{}"
+			>
+			<p class="vjs-no-js">
+				To view this video please enable JavaScript, and consider upgrading to a
+				web browser that
+				<a href="https://videojs.com/html5-video-support/" target="_blank"
+				  >supports HTML5 video</a
+				>
+			  </p>
+			  <source src="https://storage.googleapis.com/misterrubato-test.appspot.com/videos/2024-01-29%2016-47-54.mp4" type="video/mp4"></source>
+			</video>
+				  
 		  <div id="submit" valign="top">
 			  <input type="range" id="points" name="points" min="0" max="10" value="1" />
 			  <button type="button" onclick="rateResponse()">Update</button>
@@ -136,7 +158,9 @@
         var sources = [];
 		var uid = null;
 		var delay = 0;
-
+		var myrate = 1.7;
+		var mypitch = 1.0;
+		var ss = null;
 
 		document.addEventListener('DOMContentLoaded', function() {
         const loadEl = document.querySelector('#load');
@@ -188,9 +212,18 @@
 					
 					uid = user.uid;
 					addUser(user);
-					
 					}
-				// IdP data available in result.additionalUserInfo.profile.
+
+					$('#prompt').val('[INST]<<SYS>>Use the following pieces of context to answer the question at the end. Please follow the following rules: \
+									1. If you dont know the answer, try to find sources which include **coherent thoughts** relevant to the question. \
+									2. If you find the answer, and give some surrounding information, but write the answer in a concise way, less than two paragraphs.  \
+									<</SYS>> \
+									{context} \
+									Question: {question} \
+									Helpful Answer: \
+									[/INST]	\
+					');
+					// IdP data available in result.additionalUserInfo.profile.
 				  // ...
 			  }).catch((error) => {
 				// Handle Errors here.
@@ -211,60 +244,6 @@
         }
       });
 
-	  		function loadVideo(secs, v){
-				if (v !="" && v != video){
-					video = v;
-					player.loadVideoById(video);
-					//load data and transcript from this video.  
-					if (uid != null){
-	
-						ref = firebase.database().ref('/misterrubato/' + video);
-						ref.on('value',(snap)=>{
-							if (snap.exists()){
-								item = snap.val();
-								console.log(snap.val());
-								$('#iterationsh').html(makeTimeLinks(snap.val().snippet.description))
-								
-								//get previous iterations of this.  Probably dont need here.  
-								title = snap.val().snippet.description.split('\n')[0];
-								console.log(title);
-							}
-						});
-
-						//should just use this object.  
-
-						//get the data from the database.  
-						firebase.database().ref('/misterrubato/' + video + '/comments/' + uid).once('value')
-						.then((snapshot) => {
-							if (snapshot.exists()) {
-								loadPreviousComments(snapshot);
-							}
-							
-						});
-
-						firebase.database().ref('/misterrubato/' + video + '/transcript').once('value')
-								.then((snapshot) => {
-									if (snapshot.exists()){
-										loadTranscript(snapshot);
-									}
-									else{
-										console.log('No transcript');									
-										//should never occur
-									}
-								});
-					}
-					//ontimer.. wait for video to load.  
-					setTimeout(() => {
-						if (player.getPlayerState() == 1) {
-							player.seekTo(secs);
-						}
-						else {
-							ytSeconds = secs;
-							player.playVideo();
-						}
-					}, 2000);
-				}
-			}
 
 			function loadTranscript(snapshot){
 				console.log(snapshot.val().transcript);
@@ -378,12 +357,23 @@
 
 			function Chat(transcript) {
 				mychat = transcript; //$('#p').val();
+				if (mychat == "stop"){
+					window.speechSynthesis.cancel();
+					return;
+				}
+				//get prompt
+				myprompt = $('#prompt').val();
 //                addComment(mychat, helpme());
 				//this should be linked to the video being watched loosely perhaps.  
-				$.getJSON(chatdomain + ':8000/api/?query=' + encodeURIComponent(mychat),function(data){
+				$.getJSON(chatdomain + ':8000/api/?query=' + encodeURIComponent(mychat) + '&prompt=' + encodeURIComponent(myprompt),function(data){
                   
 				  if (typeof(data.answer) != "undefined") {
 					addChatRow(data.query, data.answer, data.sources);
+					ss = new SpeechSynthesisUtterance(data.answer);
+					ss.rate = myrate;
+					ss.pitch = mypitch;
+					window.speechSynthesis.speak(ss);
+
                     console.log('query ' +  data.query);
 //                    addComment(data.answer, helpme())
 					console.log('response  ' + data.answer);
@@ -415,59 +405,7 @@
 <script type="text/javascript" src="speech.js"></script>
 
             <script>
-                // 2. This code loads the IFrame Player API code asynchronously.
-                var tag = document.createElement('script');
-          
-                tag.src = "https://www.youtube.com/iframe_api";
-                var firstScriptTag = document.getElementsByTagName('script')[0];
-                firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-          
-                // 3. This function creates an <iframe> (and YouTube player)
-                //    after the API code downloads.
-                function onYouTubeIframeAPIReady() {
-                  player = new YT.Player('player', {
-                    height: '390',
-                    width: '640',
-                    videoId: video,
-                    playerVars: {
-                      'playsinline': 1
-                    },
-                    events: {
-                      'onReady': onPlayerReady,
-                      'onStateChange': onPlayerStateChange
-                    }
-                  });
-                }
-          
-                // 4. The API will call this function when the video player is ready.
-                function onPlayerReady(event) {
-                  event.target.playVideo();
-                  if (seek > 0){
-                      event.target.seekTo(seek);
-                  }
-                }
-          
-                // 5. The API calls this function when the player's state changes.
-                //    The function indicates that when playing a video (state=1),
-                //    the player should play for six seconds and then stop.
-                var done = false;
-                function onPlayerStateChange(event) {
-                  if (event.data == YT.PlayerState.PAUSED || event.data == YT.PlayerState.ENDED) {
-                      //should use same for transcript function.  
-                      midienabled = 0;
-                  }
-          
-                  if (event.data == YT.PlayerState.PLAYING) {
-          //          setTimeout(stopVideo, 6000);
-          //			console.log("state change");
-                      midienabled = 1;
-                      
-                    done = true;
-                  }
-                }
-                function stopVideo() {
-                  player.stopVideo();
-                }
+				loadVideo();
               </script>
 
 </body>

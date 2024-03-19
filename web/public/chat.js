@@ -1,64 +1,5 @@
 var ChatID = 0;
 
-function loadVideo(secs, v){
-    if (v !=""){
-        if (v == video){
-            player.seekTo(secs);
-        }
-        else{
-            video = v;
-            player.loadVideoById(video);
-            //load data and transcript from this video.  
-            if (uid != null){
-
-                ref = firebase.database().ref('/misterrubato/' + video);
-                ref.on('value',(snap)=>{
-                    if (snap.exists()){
-                        item = snap.val();
-                        console.log(snap.val());
-                        $('#iterationsh').html(makeTimeLinks(snap.val().snippet.description))
-                        
-                        //get previous iterations of this.  Probably dont need here.  
-                        title = snap.val().snippet.description.split('\n')[0];
-                        console.log(title);
-                    }
-                });
-
-                //should just use this object.  
-
-                //get the data from the database.  
-                firebase.database().ref('/misterrubato/' + video + '/comments/' + uid).once('value')
-                .then((snapshot) => {
-                    if (snapshot.exists()) {
-                        loadPreviousComments(snapshot);
-                    }
-                    
-                });
-
-                firebase.database().ref('/misterrubato/' + video + '/transcript').once('value')
-                        .then((snapshot) => {
-                            if (snapshot.exists()){
-                                loadTranscript(snapshot);
-                            }
-                            else{
-                                console.log('No transcript');									
-                                //should never occur
-                            }
-                        });
-            }
-            //ontimer.. wait for video to load.  
-            setTimeout(() => {
-                if (player.getPlayerState() == 1) {
-                    player.seekTo(secs);
-                }
-                else {
-                    ytSeconds = secs;
-                    player.playVideo();
-                }
-            }, 2000);
-        }
-    }
-}
 
 function addChatRow(query, answer, source) {
     answer = answer.replaceAll("\n", "<br>");
@@ -128,7 +69,7 @@ function makeTimeLinks(desc, vid){
     for (var i=0; i<matches.length; i++){
         secs = getSecsFromTime(matches[i]);
         if (secs > 0){
-            desc = desc.replace(matches[i], '<a href="#" onclick="loadVideo(' + secs + ', &quot;' + vid + '&quot;);">' + matches[i] + '</a>');
+            desc = desc.replace(matches[i], '<a href="#" onclick="seekVideo(' + secs + ', &quot;' + vid + '&quot;);">' + matches[i] + '</a>');
         }
 
     }
