@@ -31,6 +31,7 @@ from pathlib import Path
 DATA_PATH="data/"
 DATA_PATH="/home/devin/server/transcription/output/"
 DB_PATH = "vectorstores/db/"
+QUERY_DATA_PATH="/home/devin/server/inquiries/"
 
 def create_vector_db():
     loader = PyPDFDirectoryLoader(DATA_PATH)
@@ -49,6 +50,8 @@ def create_vector_db():
 def create_llama2_db(video = "*", topic = "ALL"):
     topicpath = DB_PATH + topic + "/"
     Path(topicpath).mkdir(parents=True, exist_ok=True)
+    querytopicpath = QUERY_DATA_PATH + topic + "/"
+    Path(querytopicpath).mkdir(parents=True, exist_ok=True)
     loader = DirectoryLoader(DATA_PATH, glob="**/" + video + ".txt", loader_cls=TextLoader)
     documents = loader.load()
     print(f"Processed {len(documents)} txt files")
@@ -57,9 +60,11 @@ def create_llama2_db(video = "*", topic = "ALL"):
     ollamaEmbeddings = OllamaEmbeddings(model="llama2")
 #    vectorstore = Chroma.from_documents(documents=texts, embedding=ollamaEmbeddings,persist_directory=DB_PATH) 
     #use default ALL model for everything.  
-    vectorstore = Chroma.from_documents(documents=texts, embedding=FastEmbedEmbeddings(),persist_directory=DB_PATH)      
+    #always store in ALL
+    vectorstore = Chroma.from_documents(documents=texts, embedding=FastEmbedEmbeddings(),persist_directory=(DB_PATH + "ALL/"))
     vectorstore.persist()
 
+    #store in additional topic
     if (topic != "ALL"):
         topicstore = Chroma.from_documents(documents=texts, embedding=FastEmbedEmbeddings(),persist_directory=topicpath)      
         topicstore.persist()
@@ -68,6 +73,7 @@ def create_llama2_db(video = "*", topic = "ALL"):
 if __name__=="__main__":
 #    create_vector_db()
     argparser.add_argument("--video", help="Add video to DB", default="")
+    argparser.add_argument("--topic", help="Topic for utilization", default="ALL")
     #called from transcript server
     args = argparser.parse_args()
     video = "*"

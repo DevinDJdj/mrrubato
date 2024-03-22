@@ -48,6 +48,7 @@ CLIENT_SECRETS_FILE = "./../client_secrets.json"
 # authenticated user's YouTube channel, but doesn't allow other types of access.
 YOUTUBE_SCOPE = "https://www.googleapis.com/auth/youtube"
 YOUTUBE_UPLOAD_SCOPE = "https://www.googleapis.com/auth/youtube"
+YOUTUBE_UPLOAD_SCOPE = "https://www.googleapis.com/auth/youtube.force-ssl" #needed for comments, does this work?  
 YOUTUBE_API_SERVICE_NAME = "youtube"
 YOUTUBE_API_VERSION = "v3"
 
@@ -233,6 +234,59 @@ def getWatched():
                 updRef.set(datav['items'][0])
 
     return snapshot.items()
+
+#https://github.com/youtube/api-samples/blob/master/python/comment_threads.py
+#include the original question here if we cant reply directly?  
+def insert_comment(youtube, channel_id, video_id, parent_id, text):
+  insert_result = youtube.commentThreads().insert(
+    part="snippet",
+    body=dict(
+      snippet=dict(
+        channelId=channel_id,
+        videoId=video_id,
+        topLevelComment=dict(
+          snippet=dict(
+            parentId=parent_id,
+            textOriginal=text
+          )
+        )
+      )
+    )
+  ).execute()
+
+def getComments(args):
+    youtube = get_authenticated_service(args)
+    results = youtube.commentThreads().list(
+        part="snippet",
+        allThreadsRelatedToChannelId=channel_id,
+        textFormat="plainText"
+    ).execute()
+
+    #for now just -1 to the port to get ollama.  
+    #should be a separate port/server config.  
+    localserver = config.cfg['localserver']['host'] + ":" + str(config.cfg['localserver']['port']-1)
+
+    for item in results["items"]:
+#        threadid = item["id"]
+        comment = item["snippet"]["topLevelComment"]
+        vidid = item["snippet"]["videoId"]
+        commentid = comment["id"]
+        author = comment["snippet"]["authorDisplayName"] #cant get userID
+        authorchannel = comment["snippet"]["authorChannelId"]["value"] #is this better than displayname?  
+        text = comment["snippet"]["textDisplay"]
+        print("Comment by %s: %s" % (author, text))
+
+        url = f'{localserver}/api/?query={text}&userid={author}'
+        print(url)
+        try:
+            res = requests.get(url, timeout=(60, None)).text
+#            print(res)
+#            if (res is not None):
+            data = json.loads(res)
+            print(data["answer"])
+#                insert_comment(youtube, channel_id, vidid, commentid, data.answer)
+        except:
+            print('error using ollama ' + vidid)
 
 
 def addAdmins(uid):
@@ -423,6 +477,8 @@ if __name__ == '__main__':
     getCodeHistory()
     
     getWatched()
+
+    getComments(args)
     prior = """
     for item in reversed(data["items"]):
     

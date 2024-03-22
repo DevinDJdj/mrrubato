@@ -26,9 +26,9 @@ from fastapi.encoders import jsonable_encoder
 from langchain.prompts import PromptTemplate
 from pathlib import Path
 import glob
+import os
 
-
-DATA_PATH="/home/devin/server/inquiries/"
+QUERY_DATA_PATH="/home/devin/server/inquiries/"
 
 prompt_template = """[INST]<<SYS>>Use the following pieces of context to answer the question at the end. Please follow the following rules:
 1. If you don't know the answer, try to find sources which include **coherent thoughts** relevant to the question. 
@@ -83,9 +83,9 @@ def qa_bot(topic):
   model = load_llm()
   print("loaded model")
  DB_PATH = "vectorstores/db/"
- if topic is not None and topic != "ALL":
-  DB_PATH = "vectorstores/db/" + topic + "/"
-  print(DB_PATH)
+ #topic should exist.  
+ DB_PATH = "vectorstores/db/" + topic + "/"
+ print(DB_PATH)
  vectorstore = Chroma(persist_directory=DB_PATH, embedding_function=myEmbeddings)
 # vectorstore = Chroma(persist_directory=DB_PATH, embedding_function=myEmbeddings)
 
@@ -125,6 +125,8 @@ def timestep():
 def chat():
     query = request.args.get('query')
     topic = request.args.get('topic')
+    if (topic is None or topic ==""):
+        topic = "ALL"
     print("chat query" + query)
     try:
         chain=qa_bot(topic)
@@ -160,7 +162,7 @@ def chat():
 def api():
     query = request.args.get('query')
     userid = request.args.get('userid')
-    topic = request.args.get('topic')
+    topic = request.args.get('topic') #this should be multiple and combine results.  
     prompt = request.args.get('prompt')
     if (prompt is None):
         current_prompt = prompt_template
@@ -191,7 +193,12 @@ def api():
                retsource.append({'content': s.page_content, 'metadata': s.metadata['source']})
             
         #todo get confidence score.  
-        currenttime = datetime.now().strftime('%Y%m%d%H%M%S.%f') #do we want %f microseconds here?  
+#        yearmonth = datetime.now().strftime('%Y%m') just use this on timestep side.  
+        #all these files can have this data.  
+        #86400 seconds in a day. * ~ 5000 = 432 MB/day max.  15GB/month.  
+        #so need to clear this potentially every month.  
+        #with multiple topics perhaps more often.  
+        currenttime = datetime.now().strftime('%Y%m%d%H%M%S') #do we want %f microseconds here?  
         ret = {'answer': answer, 'sources': retsource, 'query': query, 'prompt': current_prompt, 'userid': userid, 'topic': topic, 'currenttime': currenttime, 'confidence': 0.0}
         ret = json.dumps(ret)
         #save this temporarily to a file.  And then from timestep, we can pull all this data into whatever DB we decide.  
@@ -199,7 +206,7 @@ def api():
         #simplicity?  just use a directory structure for now?  
         #so just use the topic as the directory.  
         #load all these responses for the analyze API.  
-        topicpath = DATA_PATH + topic + "/"
+        topicpath = QUERY_DATA_PATH + topic + "/"
 
         Path(topicpath).mkdir(parents=True, exist_ok=True)
         topicpath += currenttime + ".json"
@@ -210,13 +217,43 @@ def api():
         ret = 'error'
     return ret
 
+
+@app.route('/listtopics/')
+def listtopics():
+    filter = request.args.get('filter') #get all or delete all
+    limit = request.args.get('limit')
+    userid = request.args.get('userid')
+    if (filter is None):
+       filter = "*"
+    else:
+       filter = "*" + filter + "*"
+    if (limit is None):
+         limit = 10
+    if (userid is None):
+       userid = "Anonymous"
+
+    i = 0
+    retsource = []
+    all_entries = os.listdir(QUERY_DATA_PATH)    
+    print("got entries..." + str(len(all_entries)))
+    for e in all_entries:
+        if os.path.isdir(os.path.join(QUERY_DATA_PATH, e)):
+            retsource.append(e)
+            i += 1
+        if i > limit:
+            break
+    ret = {'topics': retsource, 'userid': userid}
+    ret = json.dumps(ret)
+    return ret
+
+
 #http://127.0.0.1:8000/analyze/?command=get&userid=..&topic=ALL are you
 
 @app.route('/analyze/')
 def analyze():
     command = request.args.get('command') #get all or delete all
     userid = request.args.get('userid')
-    topic = request.args.get('topic')
+    topic = request.args.get('topic') #this should be multiple and combine results.  
     limit = request.args.get('limit')
     if (topic is None):
        topic = "ALL"
@@ -227,23 +264,66 @@ def analyze():
 
     print(userid + " analyze topic " + topic + ": \n")
     try:
-        topicpath = DATA_PATH + topic + "/"
+        topicpath = QUERY_DATA_PATH + topic + "/"
         Path(topicpath).mkdir(parents=True, exist_ok=True)
         #load all responses for this topic.  
         #rate the responses if necessary from UI.  
         i = 0
         retsource = []
-        for file in glob.glob(topicpath + "*.json"):
+
+        #review from newest 
+        files = glob.glob(topicpath + "*.json")
+        print("got files..." + str(len(files)))
+        files.sort(key=os.path.getmtime, reverse=True)
+        for file in files:
             with open(file, 'r') as f:
                 retsource.append(json.load(f))
             i += 1
             if i > limit:
                break
         ret = {'inquiries': retsource, 'topic': topic, 'userid': userid}
+        print("got entries..." + str(len(retsource)))
+        lastscan = ""
+        if (os.path.isfile(topicpath + "lastscan.txt")):
+            with open(topicpath + "lastscan.txt", 'r') as f:
+                lastscan = f.read()
+
+        if (lastscan == ""):
+            lastscan = "20240121000000" 
+
+        date_format = '%Y%m%d%H%M%S'
+        print("calculating delete pct..." + lastscan)
+        lastscandate = datetime.strptime(lastscan, date_format)
+        print("1calculating delete pct..." + lastscan)
+
+        currenttime = datetime.now() #do we want %f microseconds here?  
+        diff = currenttime - lastscandate
+        print("2calculating delete pct..." + lastscan)
+        todeletepct = (diff.total_seconds() / (86400*365))
+        totalfiles = len(glob.glob(topicpath + '*.json'))
+        print("total entries..." + str(totalfiles))
+
+        #delete from oldest
+        files = glob.glob(topicpath + "*.json")
+        files.sort(key=os.path.getmtime)
+        print(str(todeletepct) + " to delete " + str(totalfiles * todeletepct) + " of " + str(totalfiles) + " files")
+        i=0
+        for file in files:
+            i += 1
+            if i > totalfiles * todeletepct:
+               break
+            if (userid !="Anonymous"):
+                os.remove(file)
+        print("deleted" + str(i))
+        lastscan = currenttime.strftime('%Y%m%d%H%M%S')
+        with open(topicpath + "lastscan.txt", 'w+') as f:
+            f.write(lastscan)
         
     except Exception as e: # work on python 3.x
         print(e)
         ret = 'error'
+
+    ret = json.dumps(ret)        
     return ret
 
 if (__name__ == '__main__'):

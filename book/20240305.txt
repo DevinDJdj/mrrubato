@@ -329,9 +329,73 @@ pass prompt as optional parameter.
 NPlD890yuXY#
 
 **2025
-Use 2025 as cutover to store MEDIA and other things in 
+Use 2025 as cutover to store MEDIA and other things in year folders.  
 
+**web/public/analyze.html
 Can we just correct the answers as a part of the process to start maybe?  
+This is similar to what users do now with comments.  
+**server/ollama/server.py
+http://127.0.0.1:8000/analyze/?command=get&userid=..&topic=ALL 
+What order?  Delete after get?  
 Just look at the recent questions/answers from chat and pick one/two and correct them or expand upon them in the next recording session.  
+
+**timestep.py 
+finish the comment->chat function.  
+OK, have a start.  
+Randomly get the json files when timestep is run.  
+If we lose a few it doesnt matter, just make that part of the process on
+
+**server/ollama/server.py/analyze
+Save them locally for now and delete from server.  
+Or upload them to GCP file.  
+Make year/month folders for now.  
+That way we dont have too much in any one folder.  
+Each file is named as the timestamp.  
+We dont need microseconds.  If there are multiple at the same time, just overwrite.  
+What algorithm to decide how much to delete.  
+I guess just use the frequency of analyze function.  Store this somewhere locally.  
+LastAnalyze.  
+Delete all that are read.  
+And be able to delete all in 1 year based on this interval since last time.  
+(dayssincelastscan/365) % of items.  
+
+See if this works.  
+OK, this works now, but need some sort of login mechanism.  
+Or just add this to the 
+**web/public/analyze.html
+**web/public/server/ollama.html
+
+Topic inquiries are only generated if we query on that topic.  
+This should be optional on the chat.  We should be able to filter and select up to X topics from 
+listtopics.  Once a topic is generated with load.py, this should be added to the data path.  
+ALL should always be queried?  
+OK, think the changes are good, but need to confirm 
+**server/ollama/load.py working ok.  
+
+
+**server/ollama/server.py/listtopics
+**web/public/server/ollama.html
+Do the ALL topic here, and have a way to look at other topics.  
+Filter by topic and give stats on this.  
+OK basic function there, but is this scalable?  
+
+
+
+**web/public/analyze.html
+run **server/ollama/server.py/analyze
+Do the topic specific deletion here?  
+Where do we show this data?  
+We need perhaps an accordian panel to do this?  
+
+
+What is the base LLM we should use really.  
+We are using ollama for convenience.  
+Is this good enough?  
+
+Also still need to fine-tune if not too complex.  
+Probably not worth my time to do this as there will be lots of people studying this.  
+For now we live with topic specific RAG generation
+
+Perhaps as a general idea fine-tune the ALL model, and use RAG for the topic specific.  
 
 

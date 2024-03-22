@@ -16,7 +16,7 @@ import googleapiclient.errors
 import sys
 sys.path.insert(0, 'c:/devinpiano/')
  
- 
+import json 
 import cred
 
 import firebase_admin
@@ -28,7 +28,7 @@ from firebase_admin import credentials
 
 #https://misterrubato-test-default-rtdb.firebaseio.com/
 
-def main():
+def test():
     cred = credentials.Certificate("../misterrubato-test.json")
     databaseURL = "https://misterrubato-test-default-rtdb.firebaseio.com/"
     firebase_admin.initialize_app(cred, {
@@ -37,5 +37,13 @@ def main():
     ref = db.reference("/")
     print(ref)
 
+def testjson():
+    f = open("../testing/ollamaresponse.json", 'r')
+    data = json.loads(f.read())
+    print(data)
+
+def main():
+#    test()
+    testjson()
 if __name__ == "__main__":
     main()
