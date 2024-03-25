@@ -39,19 +39,78 @@ function onYouTubeIframeAPIReady() {
       done = true;
     }
   }
+
   function stopVideo() {
-    player.stopVideo();
+    if (useyoutube){
+        player.stopVideo();
+    }
+    else{
+        player2.pause();        
+    }
   }
 
+  function getSecsFromTime(time){
+	minsec = time.split(":");
+	if (minsec == time)
+	    return 0;
+	console.log(+parseInt(minsec[0])*60 + +parseInt(minsec[1]));
+	return +parseInt(minsec[0])*60 + +parseInt(minsec[1]);
+	
+  }
 
-  function seekVideo(secs, v){
+  function makeTimeLinks(desc, vid=""){
+    desc = desc.replaceAll("\n", "<br>");
+//    desc = desc.replace(")", ")<br>");
+    const regExp = /\(([^)]+)\)/g;
+    regExp2 = /\d+\:\d\d?/g;
+    const matches = [...desc.matchAll(regExp2)].flat();
+    for (var i=0; i<matches.length; i++){
+        secs = getSecsFromTime(matches[i]);
+        if (secs > 0){
+            desc = desc.replace(matches[i], '<a href="#" onclick="seekVideo(' + secs + ', &quot;' + vid + '&quot;);">' + matches[i] + '</a>');
+        }
+
+    }
+//    console.log(matches);
+    return desc;
+  }
+
+  function seekTo(seconds, v = "")
+  {
+    seekVideo(seconds, v);
+    /*
+    if (v !="" && v != video){
+      video = v;
+      player.loadVideoById(video);
+    }
+    if (player.getPlayerState() == 1) {
+      player.seekTo(seconds);
+    }
+    else {
+      ytSeconds = seconds;
+      player.playVideo();
+    }
+    */
+  }
+  
+  function seekVideo(secs, v=""){
+    if (v == ""){
+        v = video;
+    }
     if (v !=""){
         if (v == video){
-            player.seekTo(secs);
+            if (useyoutube){
+                player.seekTo(secs);
+            }
+            else{
+                player2.currentTime = secs;
+            }
         }
         else{
             video = v;
-            player.loadVideoById(video);
+            if (useyoutube){
+                player.loadVideoById(video);
+            }
             //load data and transcript from this video.  
             if (uid != null){
 
@@ -65,6 +124,10 @@ function onYouTubeIframeAPIReady() {
                         //get previous iterations of this.  Probably dont need here.  
                         title = snap.val().snippet.description.split('\n')[0];
                         console.log(title);
+
+                        if (!useyoutube){
+                            getMedia(snap.val().snippet.description);
+                        }
                     }
                 });
 
@@ -92,14 +155,22 @@ function onYouTubeIframeAPIReady() {
             }
             //ontimer.. wait for video to load.  
             setTimeout(() => {
-                if (player.getPlayerState() == 1) {
-                    player.seekTo(secs);
+                if (useyoutube){
+                    if (player.getPlayerState() == 1) {
+                        player.seekTo(secs);
+                    }
+                    else {
+                        ytSeconds = secs;
+                        player.playVideo();
+                    }
                 }
-                else {
-                    ytSeconds = secs;
-                    player.playVideo();
+                else{
+                    if (player2.readyState > 0){ //HAVE_METADATA
+                        player2.currentTime = secs;
+                    }
                 }
             }, 2000);
+
         }
     }
 }
@@ -119,14 +190,35 @@ function onYouTubeIframeAPIReady() {
 //				hideVideo.currentTime = 0;
 //				hideVideo.get(0).pause();
 //				hideVideo.get(0).currentTime = 0;
-        if (secs > 0){
-            seek = secs;
-        }
     }
     else{
-		v = document.getElementById("my-video");
-		v.src = url;
-        v.play();
+		player2 = document.getElementById("my-video");
+
+        player2.onplay = (event) => {
+            console.log(
+              "The Boolean paused property is now 'false'. Either the play() method was called or the autoplay attribute was toggled.",
+            );
+            midienabled = 1;
+          };
+
+          player2.onpause = (event) => {
+            console.log(
+              "The Boolean paused property is now 'true'. Either the pause() method was called or the autoplay attribute was toggled.",
+            );
+            midienabled = 0;
+          };
+          player2.onended = (event) => {
+            console.log(
+              "Video stopped either because it has finished playing or no further data is available.",
+            );
+            midienabled = 0;
+          };          
+        player2.src = url;
+        player2.play();
+    }
+
+    if (secs > 0){
+        seek = secs;
     }
 
   }

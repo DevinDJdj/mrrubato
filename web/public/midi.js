@@ -272,11 +272,19 @@ function getMIDIMessage(message, mytime=0) {
     if (mytime > 0){
 		abstime = mytime;
 	}
-    else if (player.getCurrentTime){
+    else if (useyoutube && player.getCurrentTime){
 		const now = Date.now();
 		abstime = now - start;
 		var temptime = player.getCurrentTime();
 	    abstime = Math.round(temptime * 1000);
+	}
+	else{
+		//use the other player time.  
+		const now = Date.now();
+		abstime = now - start;
+		var temptime = player2.currentTime;
+	    abstime = Math.round(temptime * 1000);
+
 	}
 		
 	switch (command) {

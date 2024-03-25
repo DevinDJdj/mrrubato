@@ -47,17 +47,3 @@ se = function() {
 se();
 
 
-function seekTo(seconds, v = "")
-{
-  if (v !="" && v != video){
-    video = v;
-    player.loadVideoById(video);
-  }
-  if (player.getPlayerState() == 1) {
-    player.seekTo(seconds);
-  }
-  else {
-    ytSeconds = seconds;
-    player.playVideo();
-  }
-}

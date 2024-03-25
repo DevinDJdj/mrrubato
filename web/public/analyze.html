@@ -180,6 +180,7 @@ var seek = -1;
 
 
 var player;
+var player2;
 var delay = 10;
 var prevmax = 10;
 var notesarray = [];
@@ -661,15 +662,17 @@ function getIteration(currentTime){
 }
 
 function updateCanvas(){
-    if (player.getCurrentTime){
-		var tempTime = player.getCurrentTime();
-		i = getIteration(tempTime);
-		secs = tempTime - myst[i];
-		if (i > -1){
-			camera1.position = new BABYLON.Vector3((xmultiplier1/2)-20*secs, ymultiplier1*1.2, 0);
-			spotlight1.position = new BABYLON.Vector3((xmultiplier1/2)-20*secs, xmultiplier1, 0);
-			camera2.position = new BABYLON.Vector3((xmultiplier2/2)-2*secs, ymultiplier2*1.2, 0);
-			spotlight2.position = new BABYLON.Vector3((xmultiplier2/2)-2*secs, xmultiplier2, 0);
+	if (useyoutube){
+		if (player.getCurrentTime){
+			var tempTime = player.getCurrentTime();
+			i = getIteration(tempTime);
+			secs = tempTime - myst[i];
+			if (i > -1){
+				camera1.position = new BABYLON.Vector3((xmultiplier1/2)-20*secs, ymultiplier1*1.2, 0);
+				spotlight1.position = new BABYLON.Vector3((xmultiplier1/2)-20*secs, xmultiplier1, 0);
+				camera2.position = new BABYLON.Vector3((xmultiplier2/2)-2*secs, ymultiplier2*1.2, 0);
+				spotlight2.position = new BABYLON.Vector3((xmultiplier2/2)-2*secs, xmultiplier2, 0);
+			}
 		}
 	}
 }
@@ -980,14 +983,6 @@ function getVideoJson(videoid){
 */
 }
 
-function getSecsFromTime(time){
-	minsec = time.split(":");
-	if (minsec == time)
-	    return 0;
-	console.log(+parseInt(minsec[0])*60 + +parseInt(minsec[1]));
-	return +parseInt(minsec[0])*60 + +parseInt(minsec[1]);
-	
-}
 
 
 //right now there is no chatting here, we are just using the comments.

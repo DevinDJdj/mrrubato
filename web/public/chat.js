@@ -51,28 +51,3 @@ function getVidFromMetadata(m){
 
 
 
-function getSecsFromTime(time){
-    minsec = time.split(":");
-    if (minsec == time)
-        return 0;
-    //console.log(+parseInt(minsec[0])*60 + +parseInt(minsec[1]));
-    return +parseInt(minsec[0])*60 + +parseInt(minsec[1]);
-    
-}
-
-function makeTimeLinks(desc, vid){
-    desc = desc.replaceAll("\n", "<br>");
-//    desc = desc.replace(")", ")<br>");
-    const regExp = /\(([^)]+)\)/g;
-    regExp2 = /\d+\:\d\d?/g;
-    const matches = [...desc.matchAll(regExp2)].flat();
-    for (var i=0; i<matches.length; i++){
-        secs = getSecsFromTime(matches[i]);
-        if (secs > 0){
-            desc = desc.replace(matches[i], '<a href="#" onclick="seekVideo(' + secs + ', &quot;' + vid + '&quot;);">' + matches[i] + '</a>');
-        }
-
-    }
-//    console.log(matches);
-    return desc;
-}

@@ -399,3 +399,7 @@ For now we live with topic specific RAG generation
 Perhaps as a general idea fine-tune the ALL model, and use RAG for the topic specific.  
 
 
+**web/public/analyze.html
+finish useyoutube=false functionality.  
+---keep testing this.  
+**web/public/chat.html not sure it is working ok or not.  
