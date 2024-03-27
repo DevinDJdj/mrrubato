@@ -138,6 +138,7 @@ data-setup="{}"
 
         <script src="https://cdn.babylonjs.com/babylon.js"></script>
 		<script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
+		<script src="https://cdn.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
 <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
   <script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js'></script>
@@ -200,6 +201,8 @@ var xmultiplier1;
 var ymultiplier1;
 var xmultiplier2;
 var ymultiplier2;
+var scene1;
+var scene2;
 
 var camera1;
 var camera2;
@@ -344,6 +347,18 @@ function loadTranscript(snapshot){
 	}
 }
 
+function loadAdditionalComments(){
+	firebase.database().ref('/misterrubato/' + video + '/comments/').once('value')
+					  .then((snapshot) => {
+						if (snapshot.exists()) {
+							//iterate here for each uid, get midi feedback and also comments.  
+							//from others.  Need to have some logic as to who to choose.  
+							//users/uid/favorites/uid... or some other mechanism.  
+							//combine these to generate feedback.  
+						}
+					});
+
+}
 function loadPreviousComments(snapshot){
 	console.log(snapshot.val().comments);
 	if (snapshot.val().comments !==null){
@@ -357,11 +372,73 @@ function loadPreviousComments(snapshot){
 	//load midi.  
 	midifeedback = snapshot.val().midi;
 	loadMidiFeedback(midifeedback);
-	
+	getFeedbackImage(null, xmultiplier1, ymultiplier1, scene1);
+	getFeedbackImage(null, xmultiplier2, ymultiplier2, scene2);	
 	console.log("MIDI:" + midifeedback);
 //							document.getElementById('out').innerHTML = 'New file: <a download=my.mid href=' + midifeedback + '>DOWNLOAD</a> <embed src=' + midifeedback + ' autostart=false>';
 
 }
+
+function getFeedbackImage(source, w, h, myscene){
+	//for all notes in midiarray, generate image.  
+	//after this figure out how to add other midifeedback as well.  
+	//this should be loaded already.  
+
+	x = 0;
+	ytop = h/2;
+	ybot = -h/2;
+
+
+	for (i=0; i< midiarray.length; i++){
+		//add a red line at the time
+		//get x from time.  
+		//get color from note.  
+		x = i*2;
+		var tempTime = midiarray[i].time/1000;
+		iter = getIteration(tempTime);
+		if (iter>0){
+			secs = tempTime - myst[iter];
+		}
+		else{
+			secs = 0;
+			//do we need to include non-playing time?  
+		}
+		x = Math.round(secs/maxduration * w);
+
+		const myPoints = [
+        new BABYLON.Vector3(x, 0, ytop),
+        new BABYLON.Vector3(x, 0, ybot)
+		]
+
+//		myPoints.push(myPoints[0]);
+
+		const myColors = [
+			new BABYLON.Color4(1, 0, 0, 1),
+			new BABYLON.Color4(0, 1, 0, 1),
+			new BABYLON.Color4(0, 0, 1, 1),
+			new BABYLON.Color4(1, 1, 0, 1)
+		]
+		
+		const lines = BABYLON.MeshBuilder.CreateLines("lines", {points: myPoints, colors: myColors}, myscene);
+
+	}
+	// put the modified pixels back on the canvas
+
+	loadAdditionalComments();	//this includes midi as well.  
+
+	myscene.onPointerObservable.add((pointerInfo) => {
+		switch (pointerInfo.type) {
+			case BABYLON.PointerEventTypes.POINTERTAP:
+			console.log("POINTER TAP" + pointerInfo.event.x + " " + pointerInfo.event.y);
+			break;
+			case BABYLON.PointerEventTypes.POINTERDOUBLETAP:
+			console.log("POINTER DOUBLE-TAP");
+			break;
+		}
+	});	
+
+}
+
 
 function addUser(user){
     uid = user.uid;
@@ -661,24 +738,36 @@ function getIteration(currentTime){
 	return -1;
 }
 
+
 function updateCanvas(){
 	if (useyoutube){
 		if (player.getCurrentTime){
 			var tempTime = player.getCurrentTime();
 			i = getIteration(tempTime);
 			secs = tempTime - myst[i];
-			if (i > -1){
-				camera1.position = new BABYLON.Vector3((xmultiplier1/2)-20*secs, ymultiplier1*1.2, 0);
-				spotlight1.position = new BABYLON.Vector3((xmultiplier1/2)-20*secs, xmultiplier1, 0);
-				camera2.position = new BABYLON.Vector3((xmultiplier2/2)-2*secs, ymultiplier2*1.2, 0);
-				spotlight2.position = new BABYLON.Vector3((xmultiplier2/2)-2*secs, xmultiplier2, 0);
-			}
 		}
+	}
+	else{
+		if (player2.readyState > 0){
+				var tempTime = player2.currentTime;
+				i = getIteration(tempTime);
+				secs = tempTime - myst[i];
+		}
+	}
+	if (i > -1){
+		camera1.position = new BABYLON.Vector3((xmultiplier1/2)-20*secs, ymultiplier1*1.2, 0);
+		spotlight1.position = new BABYLON.Vector3((xmultiplier1/2)-20*secs, xmultiplier1, 0);
+		camera2.position = new BABYLON.Vector3((xmultiplier2/2)-2*secs, ymultiplier2*1.2, 0);
+		spotlight2.position = new BABYLON.Vector3((xmultiplier2/2)-2*secs, xmultiplier2, 0);
 	}
 }
 
 //use canvas for pianoroll.  Use graphics engine of some kind.  
 function loadCanvas(id, pianoimg, mini="") {
+	//modify this image using feedback if it exists.  
+	//we are just adding this image anyway.  
+	//create a local iteration and modify it.  
+
 //    numiterations = starttimes.length;
 //this was not right variable.  
 	var canvas = document.createElement('canvas');
@@ -721,6 +810,7 @@ function loadCanvas(id, pianoimg, mini="") {
 */	
 		// Creates and positions a free camera
 		if (mini == ""){
+			scene1 = scene;
 			xmultiplier1 = maxduration*xm;
 			ymultiplier1 = ym*numiterations;
 			ymultiplier = ymultiplier1;
@@ -730,6 +820,7 @@ function loadCanvas(id, pianoimg, mini="") {
 			camera = camera1;
 		}
 		else{
+			scene2 = scene;
 			xmultiplier2 = maxduration*xm;
 			ymultiplier2 = ym*numiterations;
 			ymultiplier = ymultiplier2;
@@ -787,10 +878,19 @@ function loadCanvas(id, pianoimg, mini="") {
 		var ground = BABYLON.MeshBuilder.CreateGround("ground" + mini, {width:(xmultiplier), height:(ymultiplier)});
 		//rotation necessary for some reason.  
         ground.rotation = new BABYLON.Vector3(0, Math.PI, 0); //alpha, beta, gamma in radians
+
+
 		var prollMat = new BABYLON.StandardMaterial("pianorollground" + mini, scene);
 		prollMat.diffuseTexture = new BABYLON.Texture(pianoimg, scene);
+
+
 		prollMat.alpha = 0.5;	
 		ground.material = prollMat;
+
+//		getFeedbackImage(pianoimg, xmultiplier, ymultiplier);
+
+//		mix.alpha = 0.5;
+//		ground.material = mix;
 	//        var layer = new BABYLON.Layer('',pianoimg, scene, false);			
 		return scene;
 	};
@@ -806,8 +906,8 @@ function addImage(url, type=0){
     var mydiv = document.getElementById("images");
 	if (type > 0){
 		mydiv = document.getElementById("pianoroll");
-		loadCanvas("pianoroll", url);
 		loadCanvas("pianorollmini", url, "mini")
+		loadCanvas("pianoroll", url);
 	}
 	else{
 		const img = document.createElement("img");

@@ -402,4 +402,34 @@ Perhaps as a general idea fine-tune the ALL model, and use RAG for the topic spe
 **web/public/analyze.html
 finish useyoutube=false functionality.  
 ---keep testing this.  
+--not working with the MIDI visualization.  
+Several things need to be added to this functionality, but cant right now.  
+The MIDI portion is pretty spaghetti, and not robust. 
+I think it works now.  
+
+We should really put something on the 0 mark.  
+Just show lines at the feedback as well to start.  
+
+Lets adjust the image before we put it on the canvas?  
+Or just draw another image to overlay on top of the pianoroll.  
+Create the X/Y->function for all interaction points.  
+Then overlay the image on top.  
+Lets just use standard functionality.  
+https://stackoverflow.com/questions/22823752/creating-image-from-array-in-javascript-and-html5
+inside here:
+loadMidiFeedback
+loadCanvas(
+    //start here.  
+)
+https://doc.babylonjs.com/features/featuresDeepDive/materials/using/dynamicTexture#images
+In the end just use drawLines.  
+
+OK we have a start.  
+
+
+
 **web/public/chat.html not sure it is working ok or not.  
+
+**timestep.py
+How do we tell when we have commented on something?  
+Oh just use the datestamp and only respond to comments > date.  

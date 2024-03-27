@@ -3,10 +3,17 @@ function str_pad_left(string,pad,length) {
 }
 
 function helpme(){
-    if (!player.getCurrentTime)
-	    return "00:00";
-    var temptime = player.getCurrentTime();
-	temptime -= delay;
+    var temptime = 0;
+    if (useyoutube){
+        if (!player.getCurrentTime)
+            return "00:00";
+        var temptime = player.getCurrentTime();
+    }
+    else{
+        temptime = player2.currentTime;
+    }
+    temptime -= delay;
+
     var mins = Math.floor(temptime/60);
 	var secs = Math.floor(temptime - mins*60);
     var finalTime = str_pad_left(mins,'0',2)+':'+str_pad_left(secs,'0',2);
