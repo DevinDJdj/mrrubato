@@ -118,6 +118,17 @@ data-setup="{}"
 	<td>
 	<div id="timeline" style="height: 180px;"></div>
 	</td>
+	<td>
+		<div id="dictionary" style="width: 100%;height: 180px;overflow:auto;">
+			<table id="DictionaryTable">
+				<tr id="templateRow">
+				<td>midisequence</td>
+				<td>meaning</td>
+				<td>times</td>
+				</tr>
+				</table>
+				</div>
+	</td>
 </tr>
 	</table>
 
@@ -180,6 +191,8 @@ var seek = -1;
 <script>
 
 
+var DictionaryID = 0;
+
 var player;
 var player2;
 var delay = 10;
@@ -197,6 +210,8 @@ var myet = [];
 var durations = [];
 var maxduration = 0;
 
+var numiterations = 0;
+
 var xmultiplier1;
 var ymultiplier1;
 var xmultiplier2;
@@ -212,6 +227,8 @@ var spotlight2;
 var watch = false;
 
 var uid = null;
+var isadmin = false;
+
 //setup https://www.youtube.com/watch?v=3jZ5vnv-LZc
 //then restrict the key if needed to your site and youtube data API.  
 
@@ -268,6 +285,17 @@ var uid = null;
 				var token = credential.accessToken;
 				// The signed-in user info.
 				var user = result.user;
+				user.getIdTokenResult(true).then((result) => {
+				    isadmin = result.claims.admin;
+					if (isadmin){
+						console.log("ADMIN USER");
+					}
+					else{
+						console.log("NOT ADMIN USER - send website address to request admin access.  ");
+					}
+					//we can check this prior to updating.  
+				});				
+				console.log(user);
 				//not sure why we need this, but the asynchronous check is not getting kicked off.  
 				   if (user) {
 					// User is signed in, see docs for a list of available properties
@@ -379,6 +407,11 @@ function loadPreviousComments(snapshot){
 
 }
 
+function getYOffset(iter, w, h){
+	y = (iter*h/numiterations) - h/2;
+	return y;
+}
+
 function getFeedbackImage(source, w, h, myscene){
 	//for all notes in midiarray, generate image.  
 	//after this figure out how to add other midifeedback as well.  
@@ -404,6 +437,9 @@ function getFeedbackImage(source, w, h, myscene){
 			//do we need to include non-playing time?  
 		}
 		x = Math.round(secs/maxduration * w);
+
+		ybot = getYOffset(iter, w, h);
+		ytop = getYOffset(iter+1, w, h);
 
 		const myPoints = [
         new BABYLON.Vector3(x, 0, ytop),
@@ -1088,6 +1124,29 @@ function getVideoJson(videoid){
 //right now there is no chatting here, we are just using the comments.
 function Chat(transcript){
     addComment(transcript, helpme());
+}
+
+function addDictionaryRow(midiseq, meaning) {
+
+    answer = answer.replaceAll("\n", "<br>");
+    var t = document.getElementById("DictionaryTable");
+    var rows = t.getElementsByTagName("tr");
+    var r = rows[0];
+    DictionaryID += 1;
+    t.insertRow(1);
+    r = rows[1]; //always insert after the header row any new info.  
+    r.style.border = "1px solid #000"
+    // the same as
+    r.style.borderWidth = "1px";
+    r.style.borderColor = "#000";
+    r.style.borderStyle = "solid";
+    for (i=0; i<4; i++){
+        r.insertCell(i);
+    }
+    r.cells[0].innerHTML = DictionaryID;
+    r.cells[1].innerHTML = midiseq;
+    r.cells[2].innerHTML = meaning;
+    r.cells[3].innerHTML = meaning;
 }
 
   </script>

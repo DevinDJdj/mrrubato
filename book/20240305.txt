@@ -422,9 +422,47 @@ loadCanvas(
     //start here.  
 )
 https://doc.babylonjs.com/features/featuresDeepDive/materials/using/dynamicTexture#images
+
 In the end just use drawLines.  
 
 OK we have a start.  
+Display language and words next to history time chart.  
+Add language parameter?  Or take from midi?  
+div id=dictionary
+use same functionality as addChatRow
+
+Need functionality to create a new word.  
+Just use midiseq -> meaning for now.  
+Need to have this in the RTDB as well.  
+dictionary -> language -> midiseq/meaning.  
+timestep.py --admin MYID to add as admin.  
+Need a process to suggest admins.  
+Read from users/
+Keep stats on users here regarding estimated minutes invested.  
+Estimated contribution etc.  (how many times their feedback was suggested/viewed)
+How do we actually process "admin" requests.  
+Not going to make all kinds of levels, either admin or user.  
+admin = can write.  
+user = can view (anybody)
+Utilize MIDI messaging to control/show/create.  
+
+Can we have multiple meanings for the same sequence.  
+I think we have to?  
+So maybe just speak/play to create a definition?  
+Maybe build out the extension a bit more?  
+
+
+When we load, load any languages (from midi) from RTDB.  
+Need a way where the words can contain multiple meanings.  
+Or how do we want to do this?  
+
+
+Same height.  Auto-scroll to last word played.  
+Adjust to display lines with correct color and height.  
+Have this whole section be an accordian.  
+Most scenarios will only have one iteration, so this should be enough to display the pianoroll.  
+
+--Still have an issue loading midi which includes other instruments.  
 
 
 
@@ -433,3 +471,33 @@ OK we have a start.
 **timestep.py
 How do we tell when we have commented on something?  
 Oh just use the datestamp and only respond to comments > date.  
+
+
+
+Wow they make this really inconvenient to make a few bucks.  
+https://learn.microsoft.com/en-us/azure/ai-services/speech-service/speech-synthesis-markup
+We should be able to just train and add a custom voice to the OS.  
+Instead they are just sending everything through some web service which MS control.  
+This will never last.  
+https://learn.microsoft.com/en-us/azure/ai-services/speech-service/personal-voice-overview
+
+Well what are the other options other than the default speechsynthesis component?  
+
+https://developer.chrome.com/docs/extensions/reference/api/tts
+
+See if this could work, generate the audio via python on backend and transfer the audio response.  
+https://www.youtube.com/watch?v=HJB17HW4M9o
+
+https://rioharper.medium.com/cloning-your-voice-cb321908b060
+
+tortoise-tts?  
+https://www.youtube.com/watch?v=zrZ4efCkaxI
+
+https://www.youtube.com/watch?v=b_we_jma220
+
+pipertts
+
+Probably the only practical way will be to generate server side.  
+
+Framework on client/browser side not ready for this sort of functionality.  
+
