@@ -336,3 +336,6 @@ Perhaps we should use all but 60.
 adjust right a bit.  
 
 
+Increase disk for learning machine:
+https://learn.microsoft.com/en-us/windows/wsl/disk-space#how-to-locate-the-vhdx-file-and-disk-path-for-your-linux-distribution
+

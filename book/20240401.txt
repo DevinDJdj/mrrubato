@@ -1,0 +1,22 @@
+https://github.com/rhasspy/piper
+https://github.com/rhasspy/piper/blob/master/TRAINING.md
+run into issues
+ERROR: Could not find a version that satisfies the requirement piper-phonemize~=1.1.0 (from piper-tts) (from versions: none)
+
+https://github.com/rhasspy/piper-phonemize
+Do we want to go through the trouble of building this.  
+OK, look for other solutions?  
+What other packages exist.  
+
+
+OK, lets try this one.
+try coqui TTS
+wsl --distribution VENV
+https://www.linuxcapable.com/install-python-3-8-on-ubuntu-linux/
+pip install pip setuptools wheel tts
+tts-server --list_models
+tts-server --model_name tts_models/en/jenny/jenny  
+http://localhost:5002/
+
+That worked to start.  
+
