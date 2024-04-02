@@ -20,3 +20,7 @@ http://localhost:5002/
 
 That worked to start.  
 
+
+https://github.com/coqui-ai/TTS
+
+git clone https://github.com/coqui-ai/TTS

@@ -501,3 +501,43 @@ Probably the only practical way will be to generate server side.
 
 Framework on client/browser side not ready for this sort of functionality.  
 
+Try one.  
+pipertts.  
+github.com/rhasspy/piper
+
+Midi feedback we should probably have languages as a parameter in the RTDB.  
+This way we can filter by language.  
+If we can filter by language, we can do a variety of functions using meta-languages.  
+
+
+transcribe_me - prepare any files necessary.  
+Probably can get rid of this function since we are transcribing on the backend.  
+Or make it asynchronous
+
+**web/public/analyze.html
+Show the generated transcript in the analyze.html and fix it if needed.  
+After this is done
+**timestep.py - when we publish (rating available), generate the wav files here between iterations?
+Use these wav files for TTS voice mimicry.  
+Best if we can do without any additional server or on client side.  
+
+How important is voice mimicry, not really sure.  
+
+
+
+https://pypi.org/project/noisereduce/
+
+LJSpeech structure?  
+https://keithito.com/LJ-Speech-Dataset/
+why have caps?  Is this really necessary?  
+Mono 22kbps why do we need this?  
+
+
+So I guess just recreate this as I see fit, then the model is generated from this.  
+
+Should we record audio for the watch set?  
+
+//4YT8WZT_x48
+26:00 - LOL
+
+
