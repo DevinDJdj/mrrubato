@@ -18,7 +18,7 @@
 
 import sys
 
-from flask import Flask, request, session, g, json
+from flask import Flask, request, session, g, json, send_file
 from flask_cors import CORS
 import whisper
 import pandas as pd
@@ -47,8 +47,12 @@ def transcribe():
     text = request.args.get('text')
     try:
         print('tts synthesize')
-        #subprocess.call('python ./synthesize.py --text ' + text, shell=True)
+        #--list_models
+        #--vocoder_paths
+        #python3 ./synthesize.py --text "hello" --model_path "../../recipes/ljspeech/tacotron2-DDC/run-April-03-2024_12+01PM-dbf1a08a/best_model.pth" --config_path "../../recipes/ljspeech/tacotron2-DDC/run-April-03-2024_12+01PM-dbf1a08a/config.json"
+        #subprocess.call('python3 ./TTS/bin/synthesize.py --output_path tts_output.wav --text ' + text, shell=True)
         #get temp file from synthesize.  
+#        return send_file("tts_output.wav", mimetype="audio/wav")
                 
     except Exception as e: # work on python 3.x
         print(e)

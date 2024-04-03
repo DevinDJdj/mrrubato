@@ -72,13 +72,32 @@ output_path=output_path,
 How do we pass this?  
 
 **train_tacotron_ddc.py
+# Load checkpoint if checkpoint_path given:
 CHECKPOINT = "./run-April-03-2024_12+01PM-dbf1a08a/best_model.pth"
+#CHECKPOINT = "/root/.local/share/tts/tts_models--en--ljspeech--tacotron2-DDC/model_file.pth" #config.json also here, do we need?  
 if CHECKPOINT is not None or CHECKPOINT != "":
-     model.load_state_dict(torch.load(CHECKPOINT, map_location=torch.device("cpu")))
-
+     with open(CHECKPOINT, "rb") as fh:
+        buf = io.BytesIO(fh.read())
+     check = torch.load(buf, map_location=torch.device("cuda"))
+     model.load_state_dict(check["model"])
 
 
 This way we train using past iterations as a start.  
+Run for a while and see if we get anything intelligible.  
+If not, use prior model and just merge with this when we have data.  
+
+
+
+--model_name 
+
+python3 ./synthesize.py --text "I am determined to acquire language." --model_path "../../recipes/ljspeech/tacotron2-DDC/run-April-03-2024_12+01PM-dbf1a08a/best_model.pth" --config_path "../../recipes/ljspeech/tacotron2-DDC/run-April-03-2024_12+01PM-dbf1a08a/config.json"
+This works, but output is junk with 6th checkpoint file.  
+Lets see if we can get a better result before moving forward.  
+Why is it 11 minutes long?  
+
+
+"I am determined to acquire language.  "
+
 
 
 
