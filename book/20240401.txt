@@ -38,7 +38,59 @@ Check input DATA:
 --HERE--
 test/tts/coqui/TTS/TTS/bin/compute_statistics.py --config_path (config.json) --out_path (stats_path) 
 
+run 
+TTS/recipes/ljspeech/download_ljspeech.sh
+
+Edit metadata.csv to necessary files.  
+Should be > 100 files for test/train split.  
+
+
+then:
+TTS/recipes/ljspeech/tacotron2-DDC/train_tacotron_ddc.py
+This is quite slow.  
+No response for 1 minute, waiting...
+
+torch.cuda.OutOfMemoryError: CUDA out of memory.
+config = Tacotron2Config(  # This is the config that is saved for the future use
+    audio=audio_config,
+    batch_size=8,
+    eval_batch_size=2,
+    num_loader_workers=1,
+    num_eval_loader_workers=1,
+
+shorten your wav files
+Or use short samples.  
+
+ah good, these two things worked and I am running on 6GB GPU.  
+Slowly.  30 mins / epoch.  
+Suppose we can just leave it training, how do we resume?  
+Or will it automatically? 
+Tacatron2Config
+output_path=output_path,
+
+"restore_path":"run-April-03-2024_12+01PM-dbf1a08a/best_model.pth",
+How do we pass this?  
+
+**train_tacotron_ddc.py
+CHECKPOINT = "./run-April-03-2024_12+01PM-dbf1a08a/best_model.pth"
+if CHECKPOINT is not None or CHECKPOINT != "":
+     model.load_state_dict(torch.load(CHECKPOINT, map_location=torch.device("cpu")))
+
+
+
+This way we train using past iterations as a start.  
+
+
+
+
+I guess this will give us the model/checkpoint.  
+Then we would just need to overwrite the LJSpeech info.  
+and rerun.  
+Go through this first.  
+
+
 config.json (where is this?)
+
 stats_path -> "output.npy"
 test_sentences_file -> "sentences.txt"
 Just anything in this.  
@@ -46,11 +98,17 @@ datasets -> LJSpeech directory.
 
 
 
-**server/tts/train.py --initeration "false"
+**server/tts/train.py --initeration "false" --videos "xxx,yyy,zzz"
 In here download all needed (to start just a few files)
 along with the transcript files.  
+Split the wav file at the transcription point.  
 Utilize all the transcript files.  
 If the transcript time is outside iteration, take the sample.  
+Before analyzing if this is good enough, make sure we have human corrected data.  
+We can keep the Times and splits coming from transcription service.  
+We can use the samples between iterations I think ok as well.  
+
+
 
 
 initeration or not.  Need to detect voice probably or do we?  
@@ -64,6 +122,8 @@ call locally from **server/ollama/server.py or just call after we get response i
 Response speed will improve gradually.  
 
 We can update these transcript files from **web/public/analyze.html
+make separate transcription entry to indicate fixed data.  
+
 **server/transcription/server.py
 ->api->update
 

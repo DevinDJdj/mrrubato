@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <title>Server Status</title>
+
+</head>
+
+    <!-- update the version number as needed -->
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+	<script src="../config.js"></script>
+	<script src="../chat.js"></script>
+    
+<body>
+<!-- ping pong with each chatdomain server-->
+<ul>
+    <li>
+        <h4>TTS</h4>
+        <p id="tts">Checking...</p>
+    </li>
+</ul>
+<button id="traintts" onclick="trainTTS()">Train TTS</button>
+
+<table>
+    <tr valign="top">
+    <td>
+    
+          <div id="player" valign="top"></div>
+  
+      <div id="submit" valign="top">
+          <input type="range" id="points" name="points" min="0" max="10" value="1" />
+          <button type="button" onclick="rateResponse()">Update</button>
+      </div>
+   <div id="midi"></div>
+  <!--    <button type="button" onclick="saveMidiFeedback();">Save Midi Feedback</button> -->
+      <div id="out"></div>	
+  
+  </td>
+  
+  <td>
+  
+    <div id="clock" 
+         style=	"display: inline-block;
+          font-family: monospace;
+          font-size: 30px;
+          text-align: right;
+          color: lightgray; 
+          border-radius: 10px; 
+          padding: 10px; 
+          background-color: rgba(0, 0, 0, 0.75);">
+    </div>
+    <div id="secondselapsed" 
+         style=	"display: inline-block;
+          font-family: monospace;
+          font-size: 30px;
+          text-align: right;
+          color: lightgray; 
+          border-radius: 10px; 
+          padding: 10px; 
+          background-color: rgba(0, 0, 0, 0.75);">
+    </div>
+    
+    <br>
+      <p id="load">Firebase SDK Loading&hellip;</p>
+      <div id="iterationsh" style="height: 390px;overflow:auto;"></div>
+  <!--    <textarea id="iterations" rows="40" cols="40"></textarea> -->
+  </td><td>
+    <div id="mycommentsh"></div>
+    <textarea id="mycomments" rows="20" cols="40"></textarea>
+
+      <div id="mychatsh"></div>
+      <textarea hidden id="mychat" rows="20" cols="10"></textarea>
+  </td><td>
+    <div id="transcriptsh" style="height: 390px;overflow:auto;"></div>
+    <div id="sourcessh"></div>
+    <textarea hidden id="sources" rows="20" cols="10"></textarea>
+  </td>
+  </tr>
+  </table>
+
+<table id="ChatTable">
+    <tr id="templateRow">
+    <td>id</td>
+    <td>query</td>
+    <td>AI Response</td>
+    <td width="50%">Sources</td>
+    </tr>
+    </table>
+
+    <script type="text/javascript" src="clock.js"></script>
+    <script type="text/javascript" src="midi.js"></script>
+    <script type="text/javascript" src="db.js"></script>
+    <script src="JZZ/JZZ.js"></script>
+    <script src="JZZ/JZZ.midi.SMF.js"></script>
+    
+
+  <script>
+
+      var video = 'noop19SUwhY';
+      var videojson = null;
+      var channelId = 'UC4dK3RpqBq2JpIkRmQn6HOA'; //@misterrubato doesnt work in URL, probably need to escape the @, but who cares.  
+      var title = '';
+      var seek = -1;
+      var sources = [];
+      var uid = null;
+      var delay = 0;
+
+
+      document.addEventListener('DOMContentLoaded', function() {
+      const loadEl = document.querySelector('#load');
+      // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
+      // // The Firebase SDK is initialized and available here!
+      //
+       firebase.auth().onAuthStateChanged(user => { 
+         if (user) {
+          // User is signed in, see docs for a list of available properties
+          // https://firebase.google.com/docs/reference/js/firebase.User
+          
+          uid = user.uid;
+              // ...
+            } else {
+              // User is signed out
+              // ...
+            }
+          });
+      // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
+
+      try {
+        let app = firebase.app();
+        let features = [
+          'auth', 
+          'functions',
+          'storage', 
+          'database',
+        ].filter(feature => typeof app[feature] === 'function');
+        loadEl.textContent = `Firebase SDK loaded with ${features.join(', ')}`;
+        
+      //use this as the base, and then we can write an update to whatever.  
+      //we can also use this, if the user is logged in, get that info instead.  
+           var provider = new firebase.auth.GoogleAuthProvider();
+
+          firebase.auth()
+            .signInWithPopup(provider)
+            .then((result) => {
+              /** @type {firebase.auth.OAuthCredential} */
+              var credential = result.credential;
+
+              // This gives you a Google Access Token. You can use it to access the Google API.
+              var token = credential.accessToken;
+              // The signed-in user info.
+              var user = result.user;
+              //not sure why we need this, but the asynchronous check is not getting kicked off.  
+                 if (user) {
+                  // User is signed in, see docs for a list of available properties
+                  // https://firebase.google.com/docs/reference/js/firebase.User
+                  
+                  uid = user.uid;
+                  addUser(user);
+                  
+                  }
+              // IdP data available in result.additionalUserInfo.profile.
+                // ...
+            }).catch((error) => {
+              // Handle Errors here.
+              var errorCode = error.code;
+              var errorMessage = error.message;
+              // The email of the user's account used.
+              var email = error.email;
+              // The firebase.auth.AuthCredential type that was used.
+              var credential = error.credential;
+              // ...
+            });
+
+          //google.charts.load('current', {'packages':['corechart', 'timeline']});
+                  
+      } catch (e) {
+        console.error(e);
+        loadEl.textContent = 'Error loading the Firebase SDK, check the console.';
+      }
+    });
+
+
+          function loadTranscript(snapshot){
+              console.log(snapshot.val().transcript);
+              if (snapshot.val().transcript !==null){
+                  $('#transcriptsh').html(makeTimeLinks(snapshot.val().transcript));
+              }
+          }
+
+          function loadPreviousComments(snapshot){
+              console.log(snapshot.val().comments);
+              if (snapshot.val().comments !==null){
+                  $('#mycomments').val(snapshot.val().comments);
+                  $('#mycommentsh').html(makeTimeLinks(snapshot.val().comments));
+              }
+              else{
+                  $('#mycomments').val('');
+                  $('#mycommentsh').html('');
+
+              }
+              
+              if (snapshot.val().sentiment !==null){
+                  $('#points').val(snapshot.val().sentiment);
+              }
+              //load midi.  
+              //this causing some problems for sure.  
+              //need to check again in analyze as well.  
+              midifeedback = snapshot.val().midi;
+              try{
+                  loadMidiFeedback(midifeedback);
+              }	
+              catch(err){
+                  console.log(err);
+              }
+
+              
+              console.log("MIDI:" + midifeedback);
+          //							document.getElementById('out').innerHTML = 'New file: <a download=my.mid href=' + midifeedback + '>DOWNLOAD</a> <embed src=' + midifeedback + ' autostart=false>';
+
+          }
+</script>
+
+<script>
+
+    //check if servers are running.  
+    getRecent = function(server, port, num=10) {
+        url = server + ":" + port + "/analyze/?command=get&limit=" + num;
+        $.getJSON(url, function(data) {
+            if (typeof(data) != "undefined") {
+                console.log(data);
+                for (var i = 0; i < num; i++) {
+                    console.log(data.inquiries[i]);
+                    addChatRow(data.inquiries[i].query, data.inquiries[i].answer, data.inquiries[i].sources);
+                    //from here have feedback of some sort.  
+                }
+            } else {
+                console.log(data);
+            }
+        }).fail( function( xhr, status ) {
+            // do stuff in case of timeout
+            console.log(name + ' is not running');
+            setStatus(name, 'not running ' + status);            
+        });
+    }
+
+    checkServer = function(server, port, name) {
+        url = server + ":" + port + "/ping";
+        $.getJSON(url, function(data) {
+            if (typeof(data) != "undefined" && data.answer == 'pong') {
+                console.log(name + ' is running');
+                setStatus(name, 'running');
+            } else {
+                console.log(name + ' is not running');
+                setStatus(name, 'not running');
+            }
+        }).fail( function( xhr, status ) {
+            // do stuff in case of timeout
+            console.log(name + ' is not running');
+            setStatus(name, 'not running ' + status);            
+        });
+    }
+
+    function setStatus(name, status){
+        const p = document.getElementById(name);
+        if (status == 'running'){
+            p.style.color = 'green';
+        } else {
+            p.style.color = 'red';
+        }
+        p.innerHTML = '<p>' + name + ': ' + status + '</p>';
+    }
+
+    checkServer(chatdomain, 8003, 'tts'); //tts
+    getRecent(chatdomain, 8000, 10); //get recent responses.  do we really care if this fails?  Do we want to delete after this?  
+    //if we rate it thats fine, if not fine.  
+
+    function trainTTS(){
+        //make call to the 'tts server to launch training from last checkpoint'
+        //only update trained date if successful.  
+
+    }
+
+
+</script>
+
+<!--dont want this yet. <script type="text/javascript" src="../speech.js"></script> -->
+
+
+            <script>
+                // 2. This code loads the IFrame Player API code asynchronously.
+                var tag = document.createElement('script');
+          
+                tag.src = "https://www.youtube.com/iframe_api";
+                var firstScriptTag = document.getElementsByTagName('script')[0];
+                firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+          
+                // 3. This function creates an <iframe> (and YouTube player)
+                //    after the API code downloads.
+                function onYouTubeIframeAPIReady() {
+                  player = new YT.Player('player', {
+                    height: '390',
+                    width: '640',
+                    videoId: video,
+                    playerVars: {
+                      'playsinline': 1
+                    },
+                    events: {
+                      'onReady': onPlayerReady,
+                      'onStateChange': onPlayerStateChange
+                    }
+                  });
+                }
+          
+                // 4. The API will call this function when the video player is ready.
+                function onPlayerReady(event) {
+                  event.target.playVideo();
+                  if (seek > 0){
+                      event.target.seekTo(seek);
+                  }
+                }
+          
+                // 5. The API calls this function when the player's state changes.
+                //    The function indicates that when playing a video (state=1),
+                //    the player should play for six seconds and then stop.
+                var done = false;
+                function onPlayerStateChange(event) {
+                  if (event.data == YT.PlayerState.PAUSED || event.data == YT.PlayerState.ENDED) {
+                      //should use same for transcript function.  
+                      midienabled = 0;
+                  }
+          
+                  if (event.data == YT.PlayerState.PLAYING) {
+          //          setTimeout(stopVideo, 6000);
+          //			console.log("state change");
+                      midienabled = 1;
+                      
+                    done = true;
+                  }
+                }
+                function stopVideo() {
+                  player.stopVideo();
+                }
+              </script>
+
+</body>
+</html>
