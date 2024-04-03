@@ -45,10 +45,39 @@ Just anything in this.
 datasets -> LJSpeech directory.  
 
 
+
+**server/tts/train.py --initeration "false"
+In here download all needed (to start just a few files)
+along with the transcript files.  
+Utilize all the transcript files.  
+If the transcript time is outside iteration, take the sample.  
+
+
+initeration or not.  Need to detect voice probably or do we?  
+
+
+
+**server/tts/server.py
+Call the TTS/bin/synthesize.py
+and return the wav or best format file.  
+call locally from **server/ollama/server.py or just call after we get response in the browser.  
+Response speed will improve gradually.  
+
+We can update these transcript files from **web/public/analyze.html
+**server/transcription/server.py
+->api->update
+
+**web/public/server/tts.html
+->tts/server.py->api->train.py
+
+becoming spaghetti?  
+
+
 TRAIN here:
 test/tts/coqui/TTS/TTS/tts
 
 test/tts/coqui/TTS/TTS/bin/train_tacotron.py
+
 
 Synthesize here:
 test/tts/coqui/TTS/TTS/bin/synthesize.py
@@ -56,4 +85,5 @@ test/tts/coqui/TTS/TTS/bin/synthesize.py
 
 I dont think we need to make this iterative.  
 It is fine to do this once every year or so.  
+
 
