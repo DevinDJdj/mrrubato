@@ -753,7 +753,8 @@ def getqrcode(prev):
 if __name__ == '__main__':
     argparser.add_argument("--title", help="Video title", default="What a Wonderful World")
     argparser.add_argument("--video", help="Video ID", default="4flRJWtfY9c")
-    argparser.add_argument("--skipfinger", help="Skip finger test", default="false")
+    #for now this is kind of getting annoying.  We can always calculate this later.  
+    argparser.add_argument("--skipfinger", help="Skip finger test", default="true")
     args = argparser.parse_args()
 
 
