@@ -70,7 +70,8 @@ https://developers.google.com/api-client-library/python/guide/aaa_client_secrets
 
 
 TIME_WINDOW = 9
-
+st = []
+et = []
 
 def get_authenticated_service(args):
   flow = flow_from_clientsecrets(CLIENT_SECRETS_FILE,
@@ -303,7 +304,52 @@ def checkAdmins():
         # The claims can be accessed on the user record.
         print(key + " " + item['name'] + str(user.custom_claims.get('admin')))
     
-        
+
+def getMediaFile(desc):
+    url = ""
+    tposition = desc.find("MEDIAFILE:")
+    if tposition > -1:
+        eposition = desc.find('\n', tposition)
+        if eposition > -1:
+            url = desc[tposition+10:eposition]
+        else:
+            url = desc[tposition+10:]
+    return url
+
+def getSecsFromTime(time):
+    minsec = time.split(":")
+    if (minsec == time):
+        return 0
+    print(int(minsec[0])*60 + int(minsec[1]))
+    return int(minsec[0])*60 + int(minsec[1])
+	
+
+def getIterations(desc):
+    st = []
+    et = []
+    s = 0
+
+    for i in range(1, 20):
+        s = -1
+        e = -1
+        fnd = "TRIAL#" + str(i)
+        ts = desc.index(fnd)
+        te = desc.index(")", ts)
+        if ts > -1:
+            s = getSecsFromTime(desc[ts+(len(fnd))+2:te])
+            
+        fnd = "END#" + str(i)
+        ts = desc.index(fnd)
+        te = desc.index(")", ts)
+        if ts > -1:
+            e = getSecsFromTime(desc[ts+(len(fnd))+2:te])
+        if s > 0 and e > 0 and e > s:
+            st.append(s)
+            et.append(e)
+
+    print(st)
+    print(et)
+
 if __name__ == '__main__':
     argparser.add_argument("--admin", help="Add Admin user", default="")
     args = argparser.parse_args()
@@ -348,6 +394,7 @@ if __name__ == '__main__':
 #    for item in reversed(data["items"]):
 #    for item in data['items']:
 #        print(item["id"])
+        #this is old dont need key !="watch" and key !="users"
         if (key !="users" and key !="watch" and item["kind"] == "youtube#video"):
 #            print(item)
             videoid = item["id"]
@@ -357,6 +404,8 @@ if __name__ == '__main__':
             #for now get rid of all the old data from the queries gradually everything up to when we use DB.  
             #data quality is too poor to do much with anyway.  Also no midi before Jan/2023.  
             publishedDate = item['snippet']['publishedAt']
+            description = item['snippet']['description']
+            mediafile = getMediaFile(description)
             print(publishedDate + " " + videoid + " " + privacystatus + " " + item['snippet']['title'])
             #what is the state of this and the title etc.  
             
@@ -439,7 +488,15 @@ if __name__ == '__main__':
                     localserver = config.cfg['localserver']['host'] + ":" + str(config.cfg['localserver']['port'])
                     #should be able to use both https or http, too annoying to address now.  
                     #why does this video fail?  jRpisYQZmjU now set to null.  
-                    url = f'{localserver}/transcribe/?videoid={videoid}'
+
+                    #add start and end times here for what we want to use for speech generation.  
+                    #use mediafile to download if this is not stored on youtube.  
+                    getIterations(description)
+                    #pass st and et to allow for creating wav files for voice generation.  
+                    #need a userid as well so that we can generate multiple voices.  
+                    #this userid should be added to the description when recording.  
+                    url = f'{localserver}/transcribe/?videoid={videoid}&mediafile={mediafile}&st={','.join(st)}&et={','.join(et)}'
+#                    url = f'{localserver}/transcribe/?videoid={videoid}'
                     print(url)
                     try:
                         transcript = requests.get(url, timeout=(30, None)).text

@@ -41,7 +41,7 @@ function onYouTubeIframeAPIReady() {
   }
 
   function stopVideo() {
-    if (useyoutube){
+    if (useyoutube || watch){
         player.stopVideo();
     }
     else{
@@ -99,7 +99,7 @@ function onYouTubeIframeAPIReady() {
     }
     if (v !=""){
         if (v == video){
-            if (useyoutube){
+            if (useyoutube || watch){
                 player.seekTo(secs);
             }
             else{
@@ -108,7 +108,7 @@ function onYouTubeIframeAPIReady() {
         }
         else{
             video = v;
-            if (useyoutube){
+            if (useyoutube || watch){
                 player.loadVideoById(video);
             }
             //load data and transcript from this video.  
@@ -155,7 +155,7 @@ function onYouTubeIframeAPIReady() {
             }
             //ontimer.. wait for video to load.  
             setTimeout(() => {
-                if (useyoutube){
+                if (useyoutube || watch){
                     if (player.getPlayerState() == 1) {
                         player.seekTo(secs);
                     }
@@ -176,7 +176,7 @@ function onYouTubeIframeAPIReady() {
 }
 
   function loadVideo(url="", secs=0, v=""){
-    if (useyoutube){
+    if (useyoutube || watch){
         //
         var tag = document.createElement('script');
 

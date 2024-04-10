@@ -484,10 +484,19 @@ function addUser(user){
 	pic = user.photoURL;
 	console.log(displayname + " " + email + " " + phone + " " + pic);
     //add to DB.  
-	var uRef = firebase.database().ref('/users/' + uid);
+	uRef = firebase.database().ref('/users/' + uid)
+	firebase.database().ref('/users/' + uid).once('value')
+					  .then((snapshot) => {
+						if (snapshot.exists() && typeof(snapshot.val().numlogins) !="undefined") {
+							snapshot.val().numlogins = snapshot.val().numlogins + 1;
+							snapshot.val().lastlogin = new Date();
 
-	obj = {"name": displayname, "pic": pic};
-	uRef.set(obj);
+						} else {
+							now = new Date();
+							obj = {"name": displayname, "pic": pic, "firstlogin": now.toISOString().substring(0, 10).replaceAll('-',''), "lastlogin": now.toISOString().substring(0, 10).replaceAll('-',''), "numlogins": 1};	
+							uRef.set(obj);
+						}
+					});
 	
 }
 
@@ -776,7 +785,7 @@ function getIteration(currentTime){
 
 
 function updateCanvas(){
-	if (useyoutube){
+	if (useyoutube || watch){
 		if (player.getCurrentTime){
 			var tempTime = player.getCurrentTime();
 			i = getIteration(tempTime);

@@ -7,7 +7,10 @@
 			".indexOn": ["snippet/title", "snippet/description", "snippet/addedAt", "snippet/publishedAt"]
 		},	  
 		"users": {
-			".indexOn": ["name"]
+			".indexOn": ["name"],
+			"$uid": {
+				".write": "$uid === auth.uid"
+			  }
 		},
 		".read": "auth != null",
 			".write": "'ZW130KE3xXMvdDoIXTe9kbOkp003' === auth.uid || auth.token.admin === true"
