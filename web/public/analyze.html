@@ -487,12 +487,13 @@ function addUser(user){
 	uRef = firebase.database().ref('/users/' + uid)
 	firebase.database().ref('/users/' + uid).once('value')
 					  .then((snapshot) => {
+						now = new Date();
 						if (snapshot.exists() && typeof(snapshot.val().numlogins) !="undefined") {
 							snapshot.val().numlogins = snapshot.val().numlogins + 1;
-							snapshot.val().lastlogin = new Date();
+							snapshot.val().lastlogin = now.toISOString().substring(0, 10).replaceAll('-','');
 
 						} else {
-							now = new Date();
+							
 							obj = {"name": displayname, "pic": pic, "firstlogin": now.toISOString().substring(0, 10).replaceAll('-',''), "lastlogin": now.toISOString().substring(0, 10).replaceAll('-',''), "numlogins": 1};	
 							uRef.set(obj);
 						}

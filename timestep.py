@@ -325,30 +325,30 @@ def getSecsFromTime(time):
 	
 
 def getIterations(desc):
-    st = []
-    et = []
+    st.clear()
+    et.clear()
     s = 0
 
-    for i in range(1, 20):
+    try: 
+        for i in range(1, 20):
+            s = -1
+            e = -1
+            fnd = "TRIAL#" + str(i)
+            ts = desc.index(fnd)
+            te = desc.index(")", ts)
+            if ts > -1:
+                s = getSecsFromTime(desc[ts+(len(fnd))+2:te])
+                
+            fnd = "END#" + str(i)
+            ts = desc.index(fnd)
+            te = desc.index(")", ts)
+            if ts > -1:
+                e = getSecsFromTime(desc[ts+(len(fnd))+2:te])
+            if s > 0 and e > 0 and e > s:
+                st.append(s)
+                et.append(e)
+    except:
         s = -1
-        e = -1
-        fnd = "TRIAL#" + str(i)
-        ts = desc.index(fnd)
-        te = desc.index(")", ts)
-        if ts > -1:
-            s = getSecsFromTime(desc[ts+(len(fnd))+2:te])
-            
-        fnd = "END#" + str(i)
-        ts = desc.index(fnd)
-        te = desc.index(")", ts)
-        if ts > -1:
-            e = getSecsFromTime(desc[ts+(len(fnd))+2:te])
-        if s > 0 and e > 0 and e > s:
-            st.append(s)
-            et.append(e)
-
-    print(st)
-    print(et)
 
 if __name__ == '__main__':
     argparser.add_argument("--admin", help="Add Admin user", default="")
@@ -495,7 +495,11 @@ if __name__ == '__main__':
                     #pass st and et to allow for creating wav files for voice generation.  
                     #need a userid as well so that we can generate multiple voices.  
                     #this userid should be added to the description when recording.  
-                    url = f'{localserver}/transcribe/?videoid={videoid}&mediafile={mediafile}&st={','.join(st)}&et={','.join(et)}'
+                    print(st)
+                    print(et)
+                    sta = ','.join(str(s) for s in st)
+                    eta = ','.join(str(e) for e in et)
+                    url = f'{localserver}/transcribe/?videoid={videoid}&mediafile={mediafile}&st={sta}&et={eta}'
 #                    url = f'{localserver}/transcribe/?videoid={videoid}'
                     print(url)
                     try:
