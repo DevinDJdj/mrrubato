@@ -25,6 +25,7 @@ import math
 import whisper
 import pandas as pd
 from datetime import datetime
+import urllib.request
 
 
 
@@ -38,23 +39,29 @@ def get_timestamp(s):
     return str(mins) + ":" + filler + str(secs)
     
 
-def transcribe_fromyoutube(videoid="ZshYVeNHkOM", model=None):
-
+def transcribe_fromyoutube(videoid="ZshYVeNHkOM", model=None, mediafile=None):
+    #download from mediafile
     from pytube import YouTube
-    youtube_video_url = "https://www.youtube.com/watch?v=" + videoid
-    youtube_video_content = YouTube(youtube_video_url)
+    if mediafile != None and mediafile != "":
+        #should work with this.  
+        #see if transcribe is working still after update.  
+        urllib.request.urlretrieve(mediafile, "output/" + videoid + "/" + videoid + ".mp4")
+    else:
+        youtube_video_url = "https://www.youtube.com/watch?v=" + videoid
+        youtube_video_content = YouTube(youtube_video_url)
 
-    for stream in youtube_video_content.streams:
-        print(stream)
+        for stream in youtube_video_content.streams:
+            print(stream)
 
-    audio_streams = youtube_video_content.streams.filter(only_audio = True)
-    for stream in audio_streams:
-        print(stream)
+        audio_streams = youtube_video_content.streams.filter(only_audio = True)
+        for stream in audio_streams:
+            print(stream)
 
-    audio_stream = audio_streams[1]
-    print(audio_stream)
+        audio_stream = audio_streams[1]
+        print(audio_stream)
 
-    audio_stream.download("output/" + videoid)
+        audio_stream.download("output/" + videoid)
+
     list_of_files = glob.glob('output/' + videoid + '/*') # * means all if need specific format then *.csv
     latest_file = max(list_of_files, key=os.path.getctime)
     print(latest_file)

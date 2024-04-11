@@ -1,0 +1,18 @@
+google.ai/principles
+**extensions/handsfree
+--Full midi message.  
+--start/stop recording.  
+
+
+Should create a custom voice for window.speechSynthesis.  
+https://developer.mozilla.org/en-US/docs/Web/API/SpeechSynthesisUtterance/voice
+https://developer.mozilla.org/en-US/docs/Web/API/SpeechSynthesisVoice/voiceURI
+https://stackoverflow.com/questions/47379725/how-do-i-add-a-voice-language-to-speechsynthesis
+
+How do we add to this, and can we do it remotely.  
+How important is this, not sure, but probably should do it.  
+
+**record.py
+Low Pass? filter needed.  The background sound still quite annoying.  
+some sort of filter to clean up.  
+

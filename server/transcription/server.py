@@ -33,6 +33,7 @@ def ping():
 @app.route('/transcribe/')
 def transcribe():
     video = request.args.get('videoid')
+    mediafile = request.args.get('mediafile')
     try:
         global model
         if (model is None):
@@ -40,7 +41,7 @@ def transcribe():
             model = whisper.load_model("medium")
             print("loaded model")
             print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-        ret = transcribe_fromyoutube(video, model)
+        ret = transcribe_fromyoutube(video, model, mediafile)
         
     except Exception as e: # work on python 3.x
         print(e)
