@@ -61,6 +61,12 @@ config = Tacotron2Config(  # This is the config that is saved for the future use
 shorten your wav files
 Or use short samples.  
 
+can we use this?  
+from model directory?  
+recipes/ljspeech/tacotron2-DDC/run-April-03-2024_04+21PM-dbf1a08a
+../../../../TTS/bin/train_tts.py --continue_path .
+See if this works.  
+
 ah good, these two things worked and I am running on 6GB GPU.  
 Slowly.  30 mins / epoch.  
 Suppose we can just leave it training, how do we resume?  
@@ -89,12 +95,27 @@ If not, use prior model and just merge with this when we have data.
 
 
 --model_name 
-
-python3 ./synthesize.py --text "I am determined to acquire language." --model_path "../../recipes/ljspeech/tacotron2-DDC/run-April-03-2024_12+01PM-dbf1a08a/best_model.pth" --config_path "../../recipes/ljspeech/tacotron2-DDC/run-April-03-2024_12+01PM-dbf1a08a/config.json"
+wsl --distribution VENV
+test/tts/coqui/TTS/TTS/bin
+python3 ./synthesize.py --model_name "tts_models/en/ljspeech/tacotron2-DDC" --text "I am determined to acquire language."
+python3 ./synthesize.py --text "I am determined to acquire language." --model_path "../../recipes/ljspeech/tacotron2-DDC/run-April-03-2024_04+21PM-dbf1a08a/best_model.pth" --config_path "../../recipes/ljspeech/tacotron2-DDC/run-April-03-2024_04+21PM-dbf1a08a/config.json"
 This works, but output is junk with 6th checkpoint file.  
+Apparently need 10,000 steps to even see if it is working.  
+hmmm... that's like 3 weeks or more on my old machine.  
+Well....
+in the meantime try to see if we can generate the files we need for this.  
+This is the important part.  
+
+
+
+we can run the same in server.py
+server.py --config_path ... --model_path ...
+
+
 Lets see if we can get a better result before moving forward.  
 Why is it 11 minutes long?  
-
+test/tts/coqui/TTS/recipes/ljspeech/tacotron2-DDC/run-April-03-2024_04+21PM-dbf1a08a
+tensorboard --logdir=.
 
 "I am determined to acquire language.  "
 
@@ -164,5 +185,32 @@ test/tts/coqui/TTS/TTS/bin/synthesize.py
 
 I dont think we need to make this iterative.  
 It is fine to do this once every year or so.  
+
+
+
+How big does this tacotron2-DDC/.../events file get?  
+currently 6GB after ~50 epochs.  
+
+Falling into a bit of a rabbit hole.  
+50/day at the lower rate as well.  
+Want to do with cheap spare parts basically, but ...
+
+Not sure this is going to be fast enough.  
+The output is all garbage.  
+
+
+**server/transcription/transcribe.py
+pass parameters here with iteration information.  
+Extract wav files here after downloading mp3 info.  
+This is still intertwined with youtube.  
+
+
+And add entry to the training metadata.  
+WAVNAME|TEXT|LOWERCASETEXT
+
+LJ004-0008|Mr. Neild, a second Howard,|Mr. Neild, a second Howard,
+coqui/TTS/recipes/ljspeech/tacotron2-DDC/../LJSpeech-1.1/
+wavs/
+metadata.csv
 
 
