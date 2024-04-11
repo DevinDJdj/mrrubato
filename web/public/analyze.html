@@ -489,8 +489,9 @@ function addUser(user){
 					  .then((snapshot) => {
 						now = new Date();
 						if (snapshot.exists() && typeof(snapshot.val().numlogins) !="undefined") {
-							snapshot.val().numlogins = snapshot.val().numlogins + 1;
-							snapshot.val().lastlogin = now.toISOString().substring(0, 10).replaceAll('-','');
+							num = snapshot.val().numlogins + 1;
+							ll = now.toISOString().substring(0, 10).replaceAll('-','');
+							uRef.update({"numlogins": num, "lastlogin": ll});
 
 						} else {
 							

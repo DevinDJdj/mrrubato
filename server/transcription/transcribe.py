@@ -27,7 +27,7 @@ import pandas as pd
 from datetime import datetime
 import urllib.request
 
-
+from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
 
 
 def get_timestamp(s):
@@ -39,7 +39,7 @@ def get_timestamp(s):
     return str(mins) + ":" + filler + str(secs)
     
 
-def transcribe_fromyoutube(videoid="ZshYVeNHkOM", model=None, mediafile=None):
+def transcribe_fromyoutube(videoid="ZshYVeNHkOM", model=None, mediafile=None, st=None, et=None):
     #download from mediafile
     from pytube import YouTube
     if mediafile != None and mediafile != "":
@@ -66,9 +66,9 @@ def transcribe_fromyoutube(videoid="ZshYVeNHkOM", model=None, mediafile=None):
     latest_file = max(list_of_files, key=os.path.getctime)
     print(latest_file)
     text, times = transcribe_whisper(latest_file, model)
-    os.remove(latest_file)
-    os.rmdir("output/" + videoid)
+
     f = open("output/" + videoid + ".txt", "w")
+
     prev = ""
     ignore = {}
     for i in range(len(text)):
@@ -90,6 +90,23 @@ def transcribe_fromyoutube(videoid="ZshYVeNHkOM", model=None, mediafile=None):
             prev = text[i]
             f.write(text[i] + ' (' + times[i] + ')\n')
     f.close()
+
+    #get wav files before deleting.  
+    for i in range(len(times)-1):
+        starta = times[i].split(":")
+        start = int(starta[0])*60 + int(starta[1])
+        enda = times[i+1].split(":")
+        end = int(enda[0])*60 + int(enda[1])
+
+        #ffmpeg_extract_subclip(latest_file, start, end, targetname="../tts/coqui/TSS/recipes/ljspeech/LJSpeech-1.1/" + videoid + "_" + str(i) + ".wav")
+        command = "ffmpeg -i " + latest_file + " -ss " + start + " -to " + end + " -ar 22050 -ac 1 ../tts/coqui/TTS/recipes/ljspeech/LJSpeech-1.1/" + videoid + "_" + str(i) + ".wav"
+        print(command)
+        os.system(command)
+
+
+    os.remove(latest_file)
+    os.rmdir("output/" + videoid)
+
     with open("output/" + videoid + ".txt", 'r') as file:
         data = file.read()
         return data

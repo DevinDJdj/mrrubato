@@ -497,8 +497,8 @@ if __name__ == '__main__':
                     #this userid should be added to the description when recording.  
                     print(st)
                     print(et)
-                    sta = ','.join(str(s) for s in st)
-                    eta = ','.join(str(e) for e in et)
+                    sta = ",".join(str(s) for s in st)
+                    eta = ",".join(str(e) for e in et)
                     url = f'{localserver}/transcribe/?videoid={videoid}&mediafile={mediafile}&st={sta}&et={eta}'
 #                    url = f'{localserver}/transcribe/?videoid={videoid}'
                     print(url)

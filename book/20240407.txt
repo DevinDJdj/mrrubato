@@ -23,6 +23,16 @@ for non-youtube use.
 If we can get from youtube, do so, otherwise use the media info passed.  
 Just pass every time.  
 
+**server/transcription/server.py
+OK, start times and end times being passed, now have to generate the wav files.  
+Only do this with public videos also have to correct the text prior.  
+
+**web/public/analyze.html
+Need ability to fix the transcription ideally.  
+but dont think I want to deal with that now, due to the way the process works.  
+Not sure how important this is.  
+
+
 **web/public/analyze.html
 **web/public/**
 Add time that user was added.  
