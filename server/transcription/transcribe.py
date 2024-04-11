@@ -37,7 +37,14 @@ def get_timestamp(s):
     if secs < 10:
         filler = "0"
     return str(mins) + ":" + filler + str(secs)
-    
+
+def getIteration(currentTime, starttimes, endtimes):
+    i = 0
+    for i, st in enumerate(starttimes):
+        if (i < len(endtimes) and starttimes[i] <= currentTime and currentTime <= endtimes[i]):
+            return i
+    return -1
+
 
 def transcribe_fromyoutube(videoid="ZshYVeNHkOM", model=None, mediafile=None, st=None, et=None):
     #download from mediafile
@@ -98,10 +105,19 @@ def transcribe_fromyoutube(videoid="ZshYVeNHkOM", model=None, mediafile=None, st
         enda = times[i+1].split(":")
         end = int(enda[0])*60 + int(enda[1])
 
-        #ffmpeg_extract_subclip(latest_file, start, end, targetname="../tts/coqui/TSS/recipes/ljspeech/LJSpeech-1.1/" + videoid + "_" + str(i) + ".wav")
-        command = "ffmpeg -i " + latest_file + " -ss " + start + " -to " + end + " -ar 22050 -ac 1 ../tts/coqui/TTS/recipes/ljspeech/LJSpeech-1.1/" + videoid + "_" + str(i) + ".wav"
-        print(command)
-        os.system(command)
+        #for now only take data from outside of iterations
+        if (getIteration(times[i], st, et) == -1 and ignore.get(i) == None and end - start > 3 and end-start < 12):
+            #only use nice short segments which are mostly continuous.  
+            #ffmpeg_extract_subclip(latest_file, start, end, targetname="../tts/coqui/TSS/recipes/ljspeech/LJSpeech-1.1/" + videoid + "_" + str(i) + ".wav")
+            #need this outside of project, too many files.  
+            command = "ffmpeg -i " + latest_file + " -ss " + start + " -to " + end + " -ar 22050 -ac 1 ../../../coqui/TTS/recipes/ljspeech/LJSpeech-1.1/" + videoid + "_" + str(i) + ".wav"
+            print(command)
+            subprocess.call(command, shell=True)
+            entry = videoid + "_" + str(i) + "|" + text[i] + "|" + text[i].lower()
+            #add this to metadata file.  
+            with open("../../../coqui/TTS/recipes/ljspeech/LJSpeech-1.1/metadata.csv", 'a') as cf:
+                cf.write(entry + "\n")
+            
 
 
     os.remove(latest_file)
