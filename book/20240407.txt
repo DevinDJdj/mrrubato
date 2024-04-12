@@ -26,6 +26,11 @@ Just pass every time.
 **server/transcription/server.py
 OK, start times and end times being passed, now have to generate the wav files.  
 Only do this with public videos also have to correct the text prior.  
+Need to copy coqui to server and test.  
+Rabbit hole continues...
+OK, lets try to see if we can load coqui in base directory and actually get this generating data.  
+So somewhere around 10GB perhaps, then we should delete this all or download/delete after done.  
+
 
 **web/public/analyze.html
 Need ability to fix the transcription ideally.  
@@ -38,3 +43,10 @@ Not sure how important this is.
 Add time that user was added.  
 Code added - See if this worked.  
 
+
+**server/
+Need to make servers more robust.  
+Unexpected queries shouldnt cause problems.  
+
+sudo systemctl start transcription.service
+sudo systemctl start tts.service
