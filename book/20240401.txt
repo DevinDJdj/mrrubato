@@ -78,6 +78,8 @@ output_path=output_path,
 How do we pass this?  
 
 **train_tacotron_ddc.py
+--Dont actually need this IF you are just manually doing.  
+USE ../../../../TTS/bin/train_tts.py --continue_path .
 # Load checkpoint if checkpoint_path given:
 CHECKPOINT = "./run-April-03-2024_12+01PM-dbf1a08a/best_model.pth"
 #CHECKPOINT = "/root/.local/share/tts/tts_models--en--ljspeech--tacotron2-DDC/model_file.pth" #config.json also here, do we need?  

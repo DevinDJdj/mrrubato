@@ -50,3 +50,10 @@ Unexpected queries shouldnt cause problems.
 
 sudo systemctl start transcription.service
 sudo systemctl start tts.service
+
+
+
+**extensions/mrrubato/
+when decreasing frame rate, how do we capture audio, just use speed up algorithm?  
+No should use detect audio dB level of capture, and cut low dB, then speed up.  
+
