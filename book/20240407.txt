@@ -56,4 +56,71 @@ sudo systemctl start tts.service
 **extensions/mrrubato/
 when decreasing frame rate, how do we capture audio, just use speed up algorithm?  
 No should use detect audio dB level of capture, and cut low dB, then speed up.  
+Responding to other youtube videos should be easy.  
+If active tab is youtube link or watch link, 
+need function to respond or not, then if respond is active, should comment on that video via API.  
+Just use text from recording and generate a link to the resulting recording.  
 
+
+
+**server/transcription/server.py
+When transcribing, name the file for the TTS training
+video_sss 
+sss = seconds for this frame.  
+Then we can load and fix any incorrect transcription.  
+This can be adjusted in the actual RTDB transcription and in the ingestion file.  
+Once the video is approved, move all video_... to the ingestion folder.  
+ljspeech/wavs.  
+What do we do with non-reviewed?  
+
+
+
+**generate/tennis.py
+#take input of tennis match audio, and use the timings which occur and separate the sounds of the 
+#ball hitting the racket, the players footsteps, the type of shot, and the applause.  
+#every distinct type of act should be identified and a sound timbre should be created for each.
+#represent the tennis match in a midi file, and compose a piece of music based on the match.  
+#Group by each player, and create a life track for each player in sequence of matches played.  
+#or perhaps also create some combination of multiple matches played.  
+#or by player/location etc.  
+#maxsimultaneous = 4?  
+#work with each player to choose ball striking sound etc.  
+
+Can we get the data here?  
+https://www.atptourarchive.com/site/requireapproval
+i.e. https://imgvideoarchive.com/client/the_wimbledon_archive/results/gentlemens_singles
+
+
+WTA equivalent?
+i.e.https://www.wtatennis.com/videos/3954881/watch-sara-errani-s-underarm-serve-pays-off-in-bogota
+<video id="playlistPlayer_html5_api" data-video-id="6350349713112" data-account="6041795521001" 
+data-player="gdE9yhT4h" data-embed="default" class="vjs-tech" playsinline="playsinline" 
+data-tracker-type="VIDEO" data-tracker-id="3954881" tabindex="-1" role="application" 
+src="blob:https://www.wtatennis.com/7adfe279-4e7b-4e7b-ba57-f46d36ab10ed" style="">
+            </video>
+
+
+Use this:
+https://www.youtube.com/@WTA/playlists
+Unfortunately this is already clipped, but may be interesting.  
+Starting with 202x
+Get all videos here, get audio, then detect player(s) from the video.  
+Before this, the format was not similar enough I think.  
+Perhaps we can just use this.  
+
+Full match playlist
+https://www.youtube.com/playlist?list=PLhQBpwasxUpldXpIymjy_FeQrax9qXGNT
+
+https://www.youtube.com/@tennistv/playlists
+xxx 202x
+This is similar format.  
+not as good here https://www.youtube.com/@ATPTour/playlists
+
+
+Some full match data to test with perhaps:
+https://www.youtube.com/user/argol54227/videos
+Maybe this is more interesting for us as the audio is all we want.  
+Nope this audio is horrible.  
+
+
+Dont find anything nice at the moment.  
