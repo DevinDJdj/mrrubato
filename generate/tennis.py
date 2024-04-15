@@ -52,11 +52,21 @@
 
 #download all videos and create some structure for Player and location etc.  
 #use audio event detection to get events.  
-
-
+#how do we categorize events?  
+#https://github.com/karolpiczak/ESC-50?tab=readme-ov-file
+#use this?  
+#try this:
+#https://medium.com/@ujjawalshah1080/using-deep-learning-for-audio-classification-of-urban8k-dataset-based-on-the-mel-frequency-cepstral-7cc52f55a97
+#or this?  Hmmm...
 #pip install soundata
 #ENV musicgen
 
+
+#https://github.com/amsehili/auditok
+#use this perhaps to split the audio into events and add them to the csv as new categories or whatever structure we need to add it to.  
+#then categorize them.  Tennis events shouldnt be too many.  
+
+test = """
 import soundata
 
 dataset = soundata.initialize('urbansound8k', data_home='c:\\devinpiano\\testing\\urbansound')
@@ -65,3 +75,5 @@ dataset.validate()  # validate that all the expected files are there
 
 example_clip = dataset.choice_clip()  # choose a random example clip
 print(example_clip)  # see the available data
+
+"""
