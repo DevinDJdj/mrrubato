@@ -55,10 +55,11 @@
 
 
 #pip install soundata
+#ENV musicgen
 
 import soundata
 
-dataset = soundata.initialize('urbansound8k')
+dataset = soundata.initialize('urbansound8k', data_home='c:\\devinpiano\\testing\\urbansound')
 dataset.download()  # download the dataset
 dataset.validate()  # validate that all the expected files are there
 
