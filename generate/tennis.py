@@ -64,7 +64,12 @@
 #https://github.com/amsehili/auditok
 #use this perhaps to split the audio into events and add them to the csv as new categories or whatever structure we need to add it to.  
 #then categorize them.  Tennis events shouldnt be too many.  
-
+CAT_SIMPLE = ['ball_hit', 'ball_bounce', 'footsteps', 'applause', 'grunt', 'voice']
+#CATEGORIES = ['ball_hit_top', 'ball_hit_slice', 'ball_hit_overhead', 'footsteps', 'ball_bounce', 'applause', 'volley', 'drop_shot', 
+              
+#CAT_SCORE = ['fault', 'out', 'let', 'game', 'set', 'match', 
+#              '0_15', '0_30', '0_40', '15_0', '15_15', '15_30', '15_40', '30_0', '30_15', '30_30', '30_40', '40_0', '40_15', '40_30', '40_40', 
+#              'DEUCE', 'AD_IN', 'AD_OUT' ]
 test = """
 import soundata
 
@@ -76,3 +81,164 @@ example_clip = dataset.choice_clip()  # choose a random example clip
 print(example_clip)  # see the available data
 
 """
+
+import wave
+import json
+from pydub import AudioSegment
+from os import path
+import subprocess
+import glob
+import os
+import sys
+import math
+import pandas as pd
+from datetime import datetime
+import urllib.request
+
+from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
+
+from pytube import YouTube
+
+
+from oauth2client.tools import argparser, run_flow
+from oauth2client.client import flow_from_clientsecrets
+from oauth2client.file import Storage
+from oauth2client.tools import argparser, run_flow
+
+import firebase_admin
+from firebase_admin import db
+from firebase_admin import firestore
+
+from firebase_admin import credentials
+from firebase_admin import initialize_app, storage, auth
+
+from apiclient.discovery import build
+from apiclient.errors import HttpError
+from apiclient.http import MediaFileUpload
+
+import httplib2 
+# adding Folder_2/subfolder to the system path
+sys.path.insert(0, 'c:/devinpiano/')
+
+CLIENT_SECRETS_FILE = "./../client_secrets.json"
+
+# This OAuth 2.0 access scope allows an application to upload files to the
+# authenticated user's YouTube channel, but doesn't allow other types of access.
+YOUTUBE_SCOPE = "https://www.googleapis.com/auth/youtube"
+YOUTUBE_UPLOAD_SCOPE = "https://www.googleapis.com/auth/youtube"
+YOUTUBE_UPLOAD_SCOPE = "https://www.googleapis.com/auth/youtube.force-ssl" #needed for comments, does this work?  
+YOUTUBE_API_SERVICE_NAME = "youtube"
+YOUTUBE_API_VERSION = "v3"
+
+MISSING_CLIENT_SECRETS_MESSAGE = """
+WARNING: Please configure OAuth 2.0
+
+To make this sample run you will need to populate the client_secrets.json file
+found at:
+
+   %s
+
+with information from the API Console
+https://console.cloud.google.com/
+
+For more information about the client_secrets.json file format, please visit:
+https://developers.google.com/api-client-library/python/guide/aaa_client_secrets
+""" % os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                   CLIENT_SECRETS_FILE))
+
+def get_authenticated_service(args):
+  flow = flow_from_clientsecrets(CLIENT_SECRETS_FILE,
+    scope=YOUTUBE_UPLOAD_SCOPE,
+    message=MISSING_CLIENT_SECRETS_MESSAGE)
+
+  storage = Storage("../%s-oauth2.json" % sys.argv[0])
+  credentials = storage.get()
+
+  if credentials is None or credentials.invalid:
+    credentials = run_flow(flow, storage, args)
+
+  return build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION,
+    http=credentials.authorize(httplib2.Http()))
+
+
+channel_id = config.cfg['youtube']['CHANNELID']
+api_key = config.cfg['youtube']['APIKEY']
+
+def get_audio_map(videoid, mediafile=None, playlist=None, args=None):
+    #download all audio files from playlist.  
+    if playlist != None:
+        #download all videos from playlist.  
+        #use youtube-dl
+        #
+        youtube = get_authenticated_service(args) #write it yourself
+        res = youtube.playlistItems().list(
+        part="snippet",
+        playlistId=playlist,
+        maxResults="50"
+        ).execute()
+
+        nextPageToken = res.get('nextPageToken')
+        while ('nextPageToken' in res):
+            nextPage = youtube.playlistItems().list(
+            part="snippet",
+            playlistId=playlist,
+            maxResults="50",
+            pageToken=nextPageToken
+            ).execute()
+            res['items'] = res['items'] + nextPage['items']
+
+            if 'nextPageToken' not in nextPage:
+                res.pop('nextPageToken', None)
+            else:
+                nextPageToken = nextPage['nextPageToken']
+
+        for item in res['items']:
+            videoid = item['snippet']['resourceId']['videoId']
+            get_audio_map(videoid)
+
+    if mediafile != None and mediafile != "":
+        #should work with this.  
+        #see if transcribe is working still after update.  
+        urllib.request.urlretrieve(mediafile, "output/" + videoid + "/" + videoid + ".mp4")
+    else:
+        youtube_video_url = "https://www.youtube.com/watch?v=" + videoid
+        youtube_video_content = YouTube(youtube_video_url)
+
+        for stream in youtube_video_content.streams:
+            print(stream)
+
+        audio_streams = youtube_video_content.streams.filter(only_audio = True)
+        for stream in audio_streams:
+            print(stream)
+
+        audio_stream = audio_streams[1]
+        print(audio_stream)
+
+        audio_stream.download("output/" + videoid)
+
+    list_of_files = glob.glob('output/' + videoid + '/*') # * means all if need specific format then *.csv
+    latest_file = max(list_of_files, key=os.path.getctime)
+    print(latest_file)
+    
+    command = "ffmpeg -i " + latest_file + " -ar 22050 -ac 1 output/wavs/" + videoid + ".wav"
+    print(command)
+    subprocess.call(command, shell=True)
+
+
+if __name__ == '__main__':
+    argparser.add_argument("--admin", help="Add Admin user", default="")
+    args = argparser.parse_args()
+    get_audio_map(playlist='PLhQBpwasxUpldXpIymjy_FeQrax9qXGNT', args=args)
+
+    #next run #https://github.com/amsehili/auditok or similar to detect events.  
+    #save event files to wavs and csv.  
+    #from original video wav file, split events into separate files.
+    #event.secs.microsecs
+    #in metadata save duration, and label (if we think we know)
+    #then categorize them with trained .  
+    #https://medium.com/@ujjawalshah1080/using-deep-learning-for-audio-classification-of-urban8k-dataset-based-on-the-mel-frequency-cepstral-7cc52f55a97
+    #add to category folder once identified.  
+
+    #then when detecting, we can simply use the same strategy to detect audio events.  
+    #and then just categorize them with the best existing model.  
+
