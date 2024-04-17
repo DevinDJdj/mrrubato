@@ -123,4 +123,8 @@ Maybe this is more interesting for us as the audio is all we want.
 Nope this audio is horrible.  
 
 
+**testreduce.py
+reduce_noise
 Dont find anything nice at the moment.  
+This is a fail.  
+

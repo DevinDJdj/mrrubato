@@ -65,7 +65,8 @@
 #https://github.com/amsehili/auditok
 #use this perhaps to split the audio into events and add them to the csv as new categories or whatever structure we need to add it to.  
 #then categorize them.  Tennis events shouldnt be too many.  
-CAT_SIMPLE = ['ball_hit', 'ball_bounce', 'footsteps', 'applause', 'grunt', 'voice']
+#grunt_hit
+CAT_SIMPLE = ['ball_hit', 'ball_bounce', 'footsteps', 'applause', 'grunt_hit', 'voice']
 #CATEGORIES = ['ball_hit_top', 'ball_hit_slice', 'ball_hit_overhead', 'footsteps', 'ball_bounce', 'applause', 'volley', 'drop_shot', 
               
 #CAT_SCORE = ['fault', 'out', 'let', 'game', 'set', 'match', 
@@ -120,6 +121,12 @@ from apiclient.http import MediaFileUpload
 import httplib2 
 # adding Folder_2/subfolder to the system path
 sys.path.insert(0, 'c:/devinpiano/')
+
+import config 
+
+import matplotlib.pyplot as plt
+from scipy import signal
+from scipy.io import wavfile
 
 CLIENT_SECRETS_FILE = "./../client_secrets.json"
 
@@ -221,15 +228,46 @@ def get_audio_map(videoid, mediafile=None, playlist=None, args=None):
     latest_file = max(list_of_files, key=os.path.getctime)
     print(latest_file)
     
-    command = "ffmpeg -i " + latest_file + " -ar 22050 -ac 1 output/wavs/" + videoid + ".wav"
+    command = "ffmpeg -i \"" + latest_file + "\" -ar 22050 -ac 1 output/wavs/" + videoid + ".wav"
     print(command)
     subprocess.call(command, shell=True)
 
+    command = "ffmpeg -i \"" + latest_file + "\" -ar 16000 -ac 1 output/wavs16000/" + videoid + ".wav"
+    print(command)
+    subprocess.call(command, shell=True)
+
+
+
+def get_speech(filename):
+    import torch
+    torch.set_num_threads(1)
+
+    from IPython.display import Audio
+    from pprint import pprint
+    # download example
+    torch.hub.download_url_to_file('https://models.silero.ai/vad_models/en.wav', 'en_example.wav')
+
+    model, utils = torch.hub.load(repo_or_dir='snakers4/silero-vad',
+                                model='silero_vad',
+                                force_reload=True)
+
+    (get_speech_timestamps,
+    _, read_audio,
+    *_) = utils
+
+
+    sampling_rate = 16000 # also accepts 8000
+    wav = read_audio(filename, sampling_rate=sampling_rate)
+    # get speech timestamps from full audio file
+    speech_timestamps = get_speech_timestamps(wav, model, sampling_rate=sampling_rate, return_seconds=True)
+    pprint(speech_timestamps)
+    return speech_timestamps
 
 if __name__ == '__main__':
     argparser.add_argument("--admin", help="Add Admin user", default="")
     args = argparser.parse_args()
 #    get_audio_map(playlist='PLhQBpwasxUpldXpIymjy_FeQrax9qXGNT', args=args)
+    #mj4jpeBvD2o
     get_audio_map(videoid='5uFAkizQNJI', args=args) #Alcaraz Djokovic Wimbeldon 2023
 
     #next run #https://github.com/amsehili/auditok or similar to detect events.  
@@ -244,9 +282,11 @@ if __name__ == '__main__':
     #then when detecting, we can simply use the same strategy to detect audio events.  
     #and then just categorize them with the best existing model.  
     output_directory = "output/wavs/"
+    output_directory16000 = "output/wavs16000/"
     event_directory = "output/events/"
     for filename in os.listdir(output_directory):
         f = os.path.join(output_directory, filename)
+        f16000 = os.path.join(output_directory16000, filename)
         # checking if it is a file
         if os.path.isfile(f):
             print(f)
@@ -257,25 +297,69 @@ if __name__ == '__main__':
 #sudo pip install auditok            
             import auditok
 
+#maybe this will work better?  
+#https://github.com/biboamy/TVSM-dataset
+            #voice activity detection.  Lets try to get rid of some of the commentary.  
+            #python3 sileo-vad.py --input ex_example.wav --output only_speech.wav
+#            https://github.com/snakers4/silero-vad
+            
             # split returns a generator of AudioRegion objects
             audio_regions = auditok.split(
                 f,
-                min_dur=0.2,     # minimum duration of a valid audio event in seconds
+                min_dur=0.1,     # minimum duration of a valid audio event in seconds
                 max_dur=4,       # maximum duration of an event
-                max_silence=0.1, # maximum duration of tolerated continuous silence within an event
-                energy_threshold=55 # threshold of detection
+                max_silence=0.05, # maximum duration of tolerated continuous silence within an event
+                energy_threshold=25 # threshold of detection
             )
 
-            for i, r in enumerate(audio_regions):
+            speechtimes = get_speech(f16000) 
+            sstart = []
+            send = []
+            for s in speechtimes:
+                sstart.append(s['start'])
+                send.append(s['end'])
 
+
+            currentindex = 0
+            for i, r in enumerate(audio_regions):
+                while send[currentindex] < r.meta.start and len(send) > currentindex + 1:
+                    currentindex += 1
                 # Regions returned by `split` have 'start' and 'end' metadata fields
-                print("Region {i}: {r.meta.start:.3f}s -- {r.meta.end:.3f}s".format(i=i, r=r))
+                if (sstart[currentindex] > r.meta.end):
+                    print("Region {i}: {r.meta.start:.3f}s -- {r.meta.end:.3f}s".format(i=i, r=r))
+                    # play detection
+#                    r.play(progress_bar=True)
+
+                    # region's metadata can also be used with the `save` method
+                    # (no need to explicitly specify region's object and `format` arguments)
+
+                    filename = r.save(event_directory + "{meta.start:.3f}.wav")
+
+                    print("region saved as: {}".format(filename))
+                    sample_rate, samples = wavfile.read(filename)
+                    frequencies, times, spectrogram = signal.spectrogram(samples, sample_rate)
+
+                    plt.pcolormesh(times, frequencies, spectrogram)
+                    plt.imshow(spectrogram)
+                    plt.ylabel('Frequency [Hz]')
+                    plt.xlabel('Time [sec]')
+                    plt.savefig(event_directory + "{r.meta.start:.3f}.png")
+
+                    #look for peaks in each wav file.  
+                    #separate the events on peaks from the spectrograms.  
+                    #pass divided wav for analysis to categorize.  
+
+                    #use only short wav files to identify categories.  
+                    #we can categorize the sound after enhancing the urban8k dataset.
+
+#                print("Region {i}: {r.meta.start:.3f}s -- {r.meta.end:.3f}s".format(i=i, r=r))
 
                 # play detection
                 # r.play(progress_bar=True)
 
                 # region's metadata can also be used with the `save` method
                 # (no need to explicitly specify region's object and `format` arguments)
-                filename = r.save(event_directory + "region_{meta.start:.3f}.wav")
-                print("region saved as: {}".format(filename))
+
+#                filename = r.save(event_directory + "region_{meta.start:.3f}.wav")
+#                print("region saved as: {}".format(filename))
 
