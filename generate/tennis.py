@@ -56,7 +56,11 @@
 #https://github.com/karolpiczak/ESC-50?tab=readme-ov-file
 #use this?  
 #try this:
+##start here##
 #https://medium.com/@ujjawalshah1080/using-deep-learning-for-audio-classification-of-urban8k-dataset-based-on-the-mel-frequency-cepstral-7cc52f55a97
+#do this for tennis events which were extracted.  
+#extract events from one or two matches from each playlist similar to below.  
+
 #or this?  Hmmm...
 #pip install soundata
 #ENV musicgen
@@ -333,7 +337,7 @@ if __name__ == '__main__':
                     # region's metadata can also be used with the `save` method
                     # (no need to explicitly specify region's object and `format` arguments)
 
-                    filename = r.save(event_directory + "{meta.start:.3f}.wav")
+                    filename = r.save(event_directory + "{r.meta.start:.3f}.wav".format(r=r))
 
                     print("region saved as: {}".format(filename))
                     sample_rate, samples = wavfile.read(filename)
@@ -343,12 +347,14 @@ if __name__ == '__main__':
                     plt.imshow(spectrogram)
                     plt.ylabel('Frequency [Hz]')
                     plt.xlabel('Time [sec]')
-                    plt.savefig(event_directory + "{r.meta.start:.3f}.png")
+                    plt.savefig(event_directory + "{r.meta.start:.3f}.png".format(r=r))
 
                     #look for peaks in each wav file.  
                     #separate the events on peaks from the spectrograms.  
                     #pass divided wav for analysis to categorize.  
-
+                    #for now see if we can get all the peaks and save them in a more useful fashion.  
+                    #change auditok?  or start new?  https://github.com/madhavlab/wav2tok
+                    #then categorize them.  
                     #use only short wav files to identify categories.  
                     #we can categorize the sound after enhancing the urban8k dataset.
 
