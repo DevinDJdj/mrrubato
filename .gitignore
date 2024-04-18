@@ -6,3 +6,4 @@
 *.fgt
 server/transcription/output/*
 server/tts/coqui/*
+output/*

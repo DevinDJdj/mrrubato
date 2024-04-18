@@ -4,7 +4,7 @@ function str_pad_left(string,pad,length) {
 
 function helpme(){
     var temptime = 0;
-    if (useyoutube){
+    if (useyoutube || watch){
         if (!player.getCurrentTime)
             return "00:00";
         var temptime = player.getCurrentTime();

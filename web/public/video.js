@@ -16,6 +16,11 @@ function onYouTubeIframeAPIReady() {
   // 4. The API will call this function when the video player is ready.
   function onPlayerReady(event) {
     event.target.playVideo();
+
+    if (watch == true){
+      getIterations("", 0); //get one iteration length of video.  
+      getAnalyze("");
+    }
     if (seek > 0){
         event.target.seekTo(seek);
     }

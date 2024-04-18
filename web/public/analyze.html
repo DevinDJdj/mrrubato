@@ -64,6 +64,7 @@ data-setup="{}"
 	<div id="submit" valign="top">
 	    <input type="range" id="points" name="points" min="0" max="10" value="1" />
 		<button type="button" onclick="updateVideo()">Update</button>
+		<button type="button" onclick="resetFeedback()">Reset Feedback</button>
 	</div>
  <div id="midi"></div>
 <!--    <button type="button" onclick="saveMidiFeedback();">Save Midi Feedback</button> -->
@@ -306,13 +307,13 @@ var isadmin = false;
 					firebase.database().ref('/misterrubato/' + video + '/comments/' + uid).once('value')
 					  .then((snapshot) => {
 						if (snapshot.exists()) {
-							loadPreviousComments(snapshot);
+							setTimeout(function(){ loadPreviousComments(snapshot); }, 4000);
 
 						} else {
 							firebase.database().ref('/watch/' + video + '/comments/' + uid).once('value')
 							    .then((snapshot) => {
 									if (snapshot.exists()){
-										loadPreviousComments(snapshot);
+										setTimeout(function(){ loadPreviousComments(snapshot); }, 5000);
 									}
 									else{
 									  console.log('No comments yet from you');									
@@ -412,6 +413,10 @@ function getYOffset(iter, w, h){
 	return y;
 }
 
+function resetFeedback(){
+	midiarray = [];
+}
+
 function getFeedbackImage(source, w, h, myscene){
 	//for all notes in midiarray, generate image.  
 	//after this figure out how to add other midifeedback as well.  
@@ -429,14 +434,19 @@ function getFeedbackImage(source, w, h, myscene){
 		x = i*2;
 		var tempTime = midiarray[i].time/1000;
 		iter = getIteration(tempTime);
-		if (iter>0){
+		if (iter>-1){
 			secs = tempTime - myst[iter];
 		}
 		else{
 			secs = 0;
 			//do we need to include non-playing time?  
 		}
-		x = Math.round(secs/maxduration * w);
+
+		//funny calculation not sure why maybe we are backwards?  
+		x = Math.round((secs/maxduration) * w); //start at middle of the canvas.  
+		x -= w/2;
+		x = -x;
+//		x = 20;
 
 		ybot = getYOffset(iter, w, h);
 		ytop = getYOffset(iter+1, w, h);
@@ -590,50 +600,64 @@ function getIterations(desc, vidtime, isme=false){
 	st = [];
 	et = [];
 	s = 0;
-	for (i=1; i< 20; i++){
-	    s = -1;
-		e = -1;
-	    fnd = "TRIAL#" + i;
-		ts = desc.indexOf(fnd);
-		te = desc.indexOf(")", ts);
-		if (ts > -1)
-			s = getSecsFromTime(desc.substring(ts+(fnd.length)+2, te));
-			
-	    fnd = "END#" + i;
-		ts = desc.indexOf(fnd);
-		te = desc.indexOf(")", ts);
-		if (ts > -1)
-			e = getSecsFromTime(desc.substring(ts+(fnd.length)+2, te));
-		if (s > 0 && e > 0 && e > s){
-		    st.push(s);
-			et.push(e);
-		}
+
+	if (desc ==""){
+		//one iteration length of video.  
+		//this is for watch.  
+		e = player.getDuration();
+		st.push(1);
+		et.push(e);
+		maxduration = e-1;
+		numiterations = 1;
+		myst.push(st[0]);
+		myet.push(et[0]);
 	}
-    console.log(st);
-	console.log(et);
-	//arrays of all iterations
-	mydate = new Date(vidtime);
-	for (i=0; i< st.length; i++){
-	    if (et[i] !==null){
-			tempdate = mydate;
-			tempdate.setSeconds(tempdate.getSeconds()+st[i]);
-			starttimes.push(tempdate);
-			durations.push([tempdate, et[i]-st[i]]);
-			if (isme){
-			    myst.push(st[i]);
-				myet.push(et[i]);
-    			if (et[i]-st[i] > maxduration){
-					maxduration = et[i]-st[i];
-					
-				}
+	else{
+		for (i=1; i< 20; i++){
+			s = -1;
+			e = -1;
+			fnd = "TRIAL#" + i;
+			ts = desc.indexOf(fnd);
+			te = desc.indexOf(")", ts);
+			if (ts > -1)
+				s = getSecsFromTime(desc.substring(ts+(fnd.length)+2, te));
+				
+			fnd = "END#" + i;
+			ts = desc.indexOf(fnd);
+			te = desc.indexOf(")", ts);
+			if (ts > -1)
+				e = getSecsFromTime(desc.substring(ts+(fnd.length)+2, te));
+			if (s > 0 && e > 0 && e > s){
+				st.push(s);
+				et.push(e);
 			}
-			tempdate.setSeconds(tempdate.getSeconds()+(et[i]-st[i]));
-			endtimes.push(tempdate);
 		}
+		console.log(st);
+		console.log(et);
+		//arrays of all iterations
+		mydate = new Date(vidtime);
+		for (i=0; i< st.length; i++){
+			if (et[i] !==null){
+				tempdate = mydate;
+				tempdate.setSeconds(tempdate.getSeconds()+st[i]);
+				starttimes.push(tempdate);
+				durations.push([tempdate, et[i]-st[i]]);
+				if (isme){
+					myst.push(st[i]);
+					myet.push(et[i]);
+					if (et[i]-st[i] > maxduration){
+						maxduration = et[i]-st[i];
+						
+					}
+				}
+				tempdate.setSeconds(tempdate.getSeconds()+(et[i]-st[i]));
+				endtimes.push(tempdate);
+			}
+		}
+		if (isme)
+			numiterations = st.length;
+		//from here generate some sort of graphic.  
 	}
-	if (isme)
-	    numiterations = st.length;
-	//from here generate some sort of graphic.  
 }
 
 function drawChart() {
@@ -761,6 +785,7 @@ function getMidi(desc){
  //find in notes array the TRANSCRIPT:
  //gsutil cors set cors.json gs://misterrubato-test.appspot.com
  let tposition = desc.indexOf("MIDI:");
+ url = "";
  if (tposition > -1){
     eposition = desc.indexOf('\n', tposition);
 	if (eposition > -1){
@@ -770,6 +795,10 @@ function getMidi(desc){
 		url = desc.substring(tposition+5);
 	}
 	tempDiv.html(url);
+	getAnalyze(url);
+ }
+ else{
+	//initialize blank midi.  
 	getAnalyze(url);
  }
 }
@@ -928,7 +957,9 @@ function loadCanvas(id, pianoimg, mini="") {
 
 
 		var prollMat = new BABYLON.StandardMaterial("pianorollground" + mini, scene);
-		prollMat.diffuseTexture = new BABYLON.Texture(pianoimg, scene);
+		if (pianoimg !=""){
+			prollMat.diffuseTexture = new BABYLON.Texture(pianoimg, scene);
+		}
 
 
 		prollMat.alpha = 0.5;	
@@ -966,62 +997,68 @@ function addImage(url, type=0){
 
 function getAnalyze(midiurl){
     //in case we have \r\n
-    midiurl = midiurl.replace("\r", "");
-    var storage = firebase.storage();
-
-	var lastPart = midiurl.split("/").pop();
-
-//make this more general.  
-// Create a storage reference from our storage service
-    var storageRef = storage.ref();
-	//why does this URL have space and others are %20?  
-	midiloc = "midi/" + lastPart.replace("%20", " ");
-	url = storageRef.child(midiloc).getDownloadURL()
-	  .then((url) => {
-        console.log(url);
-		getFile(url);
-   })
-	
-    removeAllChildren("pianorollmini");
+	removeAllChildren("pianorollmini");
 	removeAllChildren("pianoroll");
 	removeAllChildren("images");
+	if (midiurl == ""){
+		//set up blank image for visualizing feedback anyway.  
+		addImage("", 1);
+	}
+	else{
 
-    pianoroll = "analyze/" + lastPart
-	pianoroll = pianoroll.replace(".mid", ".jpg");
-	console.log(pianoroll);
-    url = storageRef.child(pianoroll).getDownloadURL()
-	  .then((url) => {
-        console.log(url);
-	addImage(url, 1);
-   })
-   
-	var lastPart = midiurl.split("/").pop();
-    analyzeurl = "analyze/kk_" + lastPart
-	analyzeurl = analyzeurl.replace(".mid", ".png");
-	console.log(analyzeurl);
-    url = storageRef.child(analyzeurl).getDownloadURL()
-	  .then((url) => {
-	addImage(url);
-   })
+		midiurl = midiurl.replace("\r", "");
+		var storage = firebase.storage();
 
-	var lastPart = midiurl.split("/").pop();
-    analyzeurl = "analyze/ks_" + lastPart
-	analyzeurl = analyzeurl.replace(".mid", ".png");
-	console.log(analyzeurl);
-    url = storageRef.child(analyzeurl).getDownloadURL()
-	  .then((url) => {
-	addImage(url);
-   })
+		var lastPart = midiurl.split("/").pop();
 
-	var lastPart = midiurl.split("/").pop();
-    analyzeurl = "analyze/ks2_" + lastPart
-	analyzeurl = analyzeurl.replace(".mid", ".png");
-	console.log(analyzeurl);
-    url = storageRef.child(analyzeurl).getDownloadURL()
-	  .then((url) => {
-	addImage(url);
-   })
+	//make this more general.  
+	// Create a storage reference from our storage service
+		var storageRef = storage.ref();
+		//why does this URL have space and others are %20?  
+		midiloc = "midi/" + lastPart.replace("%20", " ");
+		url = storageRef.child(midiloc).getDownloadURL()
+		.then((url) => {
+			console.log(url);
+			getFile(url);
+		})
+		
+
+		pianoroll = "analyze/" + lastPart
+		pianoroll = pianoroll.replace(".mid", ".jpg");
+		console.log(pianoroll);
+		url = storageRef.child(pianoroll).getDownloadURL()
+		.then((url) => {
+			console.log(url);
+		addImage(url, 1);
+		})
 	
+		var lastPart = midiurl.split("/").pop();
+		analyzeurl = "analyze/kk_" + lastPart
+		analyzeurl = analyzeurl.replace(".mid", ".png");
+		console.log(analyzeurl);
+		url = storageRef.child(analyzeurl).getDownloadURL()
+		.then((url) => {
+		addImage(url);
+		})
+
+		var lastPart = midiurl.split("/").pop();
+		analyzeurl = "analyze/ks_" + lastPart
+		analyzeurl = analyzeurl.replace(".mid", ".png");
+		console.log(analyzeurl);
+		url = storageRef.child(analyzeurl).getDownloadURL()
+		.then((url) => {
+		addImage(url);
+		})
+
+		var lastPart = midiurl.split("/").pop();
+		analyzeurl = "analyze/ks2_" + lastPart
+		analyzeurl = analyzeurl.replace(".mid", ".png");
+		console.log(analyzeurl);
+		url = storageRef.child(analyzeurl).getDownloadURL()
+		.then((url) => {
+		addImage(url);
+		})
+	}	
 }
 
 function getTranscript(desc){
@@ -1063,6 +1100,7 @@ function getVideoJson(videoid){
     ref = firebase.database().ref('/misterrubato/' + videoid);
 	ref.on('value',(snap)=>{
 	    if (snap.exists()){
+			loadVideo();
 			item = snap.val();
 			console.log(snap.val());
 			$('#iterationsh').html(makeTimeLinks(snap.val().snippet.description))
@@ -1093,9 +1131,10 @@ function getVideoJson(videoid){
 			//we need a master DB though probably, otherwise you have too much unnecessary traffic.  
 			//add this description to our DB using timestep.  
 			//item.snippet.description
+			watch = true;
+			loadVideo();
 			console.log(videoid + " Not in DB.  Retrieving from Youtube API");
 			ref = firebase.database().ref('/watch/' + videoid);
-			watch = true;
 			ref.on('value',(snap)=>{
 				if (snap.exists()){
 				//retrieve previous comments etc.  
@@ -1167,7 +1206,7 @@ function addDictionaryRow(midiseq, meaning) {
 
 	<script type="text/javascript" src="video.js"></script>	
     <script>
-		loadVideo();		
+//		loadVideo();
 		// 3. This function creates an <iframe> (and YouTube player)
 		//    after the API code downloads.
 	  </script>

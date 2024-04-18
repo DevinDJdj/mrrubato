@@ -128,3 +128,84 @@ reduce_noise
 Dont find anything nice at the moment.  
 This is a fail.  
 
+
+**generate/tennis.py
+Just use **web/public/analyze.html to mark with the midi device while watching.  
+Then we can mark all types of actions, then we have a good start.  
+Rather than trying to detect.  
+
+Then can we embed YoutubeTV like youtube, or do we have to watch past matches?  
+Use two octaves for all.  
+50 and 62
+Set Player xxx
+50 56 xxx
+Set Player xxx
+50 51 point
+50 52 game
+50 54 set
+50 58 match
+
+
+Bounce 53
+Grunt 56
+Hit 57
+Applause 51
+Footsteps 54, 55
+
+Take this data and generate wav files for categorizing with i.e. with urban8k dataset.  
+Then separate audio into chunks about the same length and detect events.  
+
+
+**language
+create language "xxxxx" (xxx is spoken, continue with key definition)
+select language "xxxxx" (spoken or keys)
+create word "xxxx" (xxx is spoken, continue with key definition)
+"xxxx" (usage of word is just like any other predefined meta)
+first search meta language, then search used language.  
+meta language only searched if 48, 49, 71, 72 utilized.  
+These will be control keys.  
+Otherwise pass to the selected language.  
+For now this doesnt leave us much room, but enough.  
+Unfortunately it will be hard to generate pleasing combinations.  
+
+
+**web/public/analyze.html
+Need to display feedback on watch videos.  
+loadMidiFeedback
+getFeedbackImage
+
+We are not even using the midi, except the midi feedback.  
+We just need to load blank images.  
+
+See if we have a blank image.  
+
+
+Is midi timing good enough.  
+Yes we have ms here.  
+noteOff...
+
+OK, still not quite there.  
+Feedback is not displaying.  
+It is displaying but some wierd problem with Babylonjs perhaps.  
+Time->X calculation incorrect?  
+
+x = Math.round((secs/maxduration) * w - (w/2));
+not quite right.  
+
+
+
+Fill in dictionary with words created.  
+/dictionary/
+
+dictionary -> language -> midiseq/meaning.  
+
+dictionary -> language -> word -> {midi, definition, created}
+
+dictionary -> word -> language -> {midi, definition, created}
+
+for now just hold the midi keys as an array.  
+Need more data probably to keep history of language in tact, but for now this will do.  
+
+Allow definition to be edited
+TODO: How do we keep the history of words/definitions.  
+

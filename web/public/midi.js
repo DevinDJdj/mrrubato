@@ -17,6 +17,7 @@ let attackTime = 0.2;
 let sustainLevel = 0.8;
 let releaseTime = 0.2;
 
+var lastnote = null;
 
 
 //for notes.  
@@ -272,7 +273,7 @@ function getMIDIMessage(message, mytime=0) {
     if (mytime > 0){
 		abstime = mytime;
 	}
-    else if (useyoutube && player.getCurrentTime){
+    else if ((useyoutube || watch) && player.getCurrentTime){
 		const now = Date.now();
 		abstime = now - start;
 		var temptime = player.getCurrentTime();
@@ -332,13 +333,19 @@ function noteOff(note, abstime){
 	obj.osc.stop();
 	let clone = Object.assign({}, obj);
 	clone.duration = abstime - obj.time;
-	
 	console.log("Note Off " + note + " at " + abstime);
 	//midiarray.push(clone);
-	insertNote(clone);
-	
-	obj.velocity = 0;
-	notes[note] = obj;
+
+	if (lastnote !== null && lastnote.note == obj.note && lastnote.time == obj.time){
+	}
+	else{
+		lastnote = obj;	
+		insertNote(clone);
+		obj.velocity = 0;
+		notes[note] = obj;
+	}
+
+
 	
 }
 
