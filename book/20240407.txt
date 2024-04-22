@@ -191,6 +191,10 @@ Time->X calculation incorrect?
 
 x = Math.round((secs/maxduration) * w - (w/2));
 not quite right.  
+maybe this works:
+		x = Math.round((secs/maxduration) * w); //start at middle of the canvas.  
+		x -= w/2;
+		x = -x;
 
 
 
@@ -209,3 +213,66 @@ Need more data probably to keep history of language in tact, but for now this wi
 Allow definition to be edited
 TODO: How do we keep the history of words/definitions.  
 
+
+**extensions
+ROLI: Top of Keys = control
+bottom of keys = free
+
+**web/public/analyze.html
+Show topics/add topics.  
+Make suggestion list of topics (some work needed), easy interface to just click add/remove.  
+
+DB need top folder /topics
+/topics/topicname/topicvalue/YYYYMMdd/videoid
+relevance: 90%
+
+for now.  
+What data do we want here. mostly point back to videos.  Perhaps we want a date
+Where we click on the topic will indicate the relevance for the video.  
+Dont have multiple clicks for this.  
+Feedback in some sort of color indication (or bar)
+
+For now need to be admin to create topic or word definitions.  
+
+
+**timestep.py 
+pass all topics to **server/transcription
+
+
+
+
+I cant do this all alone.  Too much to do.  
+But how to make a community?  
+Never been good at this.  
+
+**petunia 
+Need a second server (useyoutube=false), need to complete this.  
+This will allow for more participation.  
+
+**web/public/server
+Need to be able to register other instances and need API to connect.  
+to start just 1-deep tree search.  
+DB need top folder /servers
+
+**web/public/analyze.html
+Get subset of user feedback and display words based on language.  
+Start with (base)
+
+
+**web/public/search.html
+Search/Chat, and also with connected instances.  
+
+
+RTDB how do we allow write on a nested dynamic folder.  
+can we do
+"misterrubato": {
+    "$videoid": {
+        "comments": {
+            "$uid": {
+				".write": "$uid === auth.uid"                
+            }
+        }
+    }
+}
+
+test this.  
