@@ -16,7 +16,10 @@
 		"users": {
 			".indexOn": ["name"],
 			"$uid": {
-				".write": "$uid === auth.uid"
+				".write": "$uid === auth.uid",
+				"settings": {
+					".read": "auth.uid === $uid"
+				}
 			  }
 		},		
 		".read": "auth != null",

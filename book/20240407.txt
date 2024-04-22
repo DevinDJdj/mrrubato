@@ -212,6 +212,9 @@ Need more data probably to keep history of language in tact, but for now this wi
 
 Allow definition to be edited
 TODO: How do we keep the history of words/definitions.  
+on edit add to history table?  
+
+Test dictable.  
 
 
 **extensions
@@ -226,6 +229,7 @@ DB need top folder /topics
 /topics/topicname/topicvalue/YYYYMMdd/videoid
 relevance: 90%
 
+author, name, other
 for now.  
 What data do we want here. mostly point back to videos.  Perhaps we want a date
 Where we click on the topic will indicate the relevance for the video.  
@@ -276,3 +280,9 @@ can we do
 }
 
 test this.  
+
+create a section where only the user can read
+/users?  
+/users/$uid/settings
+Does this actually work?  
+
