@@ -12,10 +12,14 @@ var langstart = {};
 var langend = {};
 var wordtimes = {};
 
+var dictable = null;
+var DIC_LANG = 5;
+var DIC_WORD = 0;
+var DIC_TIMES = 2;
 //config.js keybot
 //do we want to allow for some function to adjust keybot/keytop?  
 
-function loadAllLanguages(){
+function loadLanguages(){
     ref = firebase.database().ref('/dictionary/languages');
 	ref.on('value',(snap)=>{
 	    if (snap.exists()){
@@ -28,12 +32,12 @@ function loadAllLanguages(){
 
 }
 
-function loadAll(){
+function loadDictionaries(){
     //find language in midi
     //find language in words "change language base" "change language to base"
     //need to use this more.  Probably more convenient.  
-    const dictable = new DataTable('#DictionaryTable');
-    loadAllLanguages();
+    dictable = new DataTable('#DictionaryTable');
+    loadLanguages();
     //go through midiarray.  
     //should be in order.  
     //find sequences we need.  
@@ -98,17 +102,31 @@ function loadAll(){
     }
 
     //now go through the langstart and langend looking for words.  
+    //need a better mechanism but for now just timeout to wait for all loadLanguage calls to complete.  
+    setTimeout(function(){findWords();}, 3000);
+
+}
+
+function findWords(){
     for (const [key, value] of Object.entries(langstart)) {	
         for (j=0; j<value.length; j++){
             //maxwordlength
-            temp = midiarray.slice(value[j], langend[key][j]).join();
+            temp = midiarray.slice(value[j], langend[key][j]);
+
+            miditostrindex = [];
+            tempstr = "";
+            for (mi=0; mi<temp.length; mi++){
+                miditostrindex.push(tempstr.length);
+                tempstr += temp[mi].note + ",";
+            }
+            //get the representation of the notes.  
             //this is inside of the language representation.  
             //value[j] is start of this language.  
             //full array of midi.  
             //just go through words and find any instance.  
             for (const [k2, v2] of Object.entries(langs[key])) {	//k2 = length of midiseq, v2 = array of words
                 for (const [k3, v3] of Object.entries(langs[key][k2])) { //k3 = midi seq, v3 = word
-                    const indexes = [...temp.matchAll(new RegExp(k3, 'gi'))].map(a => a.index);
+                    const indexes = [...tempstr.matchAll(new RegExp(k3, 'gi'))].map(a => a.index);
                     //is this fast enough?  if we have only a few words in the language yes.  
                     //but if we get lots of words, probably want to change this logic to build some sort of array search.  
                     //also really need to search from longest to shortest.  
@@ -121,7 +139,12 @@ function loadAll(){
                         if (typeof(wordtimes[key][v3]) === "undefined"){
                             wordtimes[key][v3] = [];
                         }
-                        wordtimes[key][v3].push(midiarray[ value[j] + indexes[i] ].time);
+                        //get the index of this
+                        wordindex = miditostrindex.indexOf(indexes[i]);
+                        //value[j] is start of this language.
+                        if (wordtimes[key][v3].indexOf(midiarray[ value[j] + wordindex ].time) < 0){
+                            wordtimes[key][v3].push(midiarray[ value[j] + wordindex ].time);
+                        }
                         //wordtimes[lang][word] = [time1, time2, time3]
                         //add this to the table.  
                     }
@@ -132,24 +155,22 @@ function loadAll(){
             }
         }
     }
-}
 
+}
 function loadLanguage(lang){
     //get lang from DB.  
-    ref = firebase.database().ref('/dictionary/language' + lang);
+    ref = firebase.database().ref('/dictionary/language/' + lang);
 	ref.on('value',(snap)=>{
 	    if (snap.exists()){
             mydic = snap.val();
             langs[lang] = {};
-            langmaxwordlength[lang] = 0;
-            langminwordlength[lang] = 1000;
             for (const [key, value] of Object.entries(mydic)) {	
-                m = value.split(",");
+                m = value.midi.split(",");
                 //lang["base"]["length"]["midiseq"] = word
-                if (langs[lang][m.length] === "undefined"){
+                if (typeof(langs[lang][m.length]) === "undefined"){
                     langs[lang][m.length] = {};
                 }
-                langs[lang][m.length][value] = key; //midiseq -> word lookup.  
+                langs[lang][m.length][value.midi] = key; //midiseq -> word lookup.  
 
                 addDictRow(lang, key, value);
             }                    
@@ -165,25 +186,27 @@ function loadLanguage(lang){
 
 
 function setTimes(lang, word, times){
-    var word = dictable
-    .rows( function ( idx, data, node ) {
-        return (data.lang === lang  && data.word=== word) ?
-            true : false;
-    } )
-    .data(); 
-    console.log(word);   
+//    table.row( 0 ).data( newData ).draw();
 
-    hyperlink = "";
-    for (i=0; i<times.length; i++){
-        //think this is milliseconds.  
-        //think this should display ok.  
-        hyperlink += '<a href="#" onclick="seekTo(' + Math.round(times[i]/1000) + ');">' + Math.round(times[i]/1000) + '</a>, ';
-        //this is a listing of what is in the pianoroll.  
-        //also put here the color/icon/glyph/kanji of the word which is being displayed in the piano roll.  
-        //how do we associate the user images?  
-    }    
-    //have to add hyperlink to each of these times.  
-    word[0]['times'] = times.join();
+    dictable.rows().every(function () {
+        //brute force search, not great.  
+        var d = this.data();
+        if (d[DIC_LANG] === lang && d[DIC_WORD] === word) {
+            hyperlink = "";
+            for (i=0; i<times.length; i++){
+                //think this is milliseconds.  
+                //think this should display ok.  
+                hyperlink += '<a href="#" onclick="seekTo(' + Math.round(times[i]/1000) + ');">' + Math.round(times[i]/1000) + '</a>, ';
+                //this is a listing of what is in the pianoroll.  
+                //also put here the color/icon/glyph/kanji of the word which is being displayed in the piano roll.  
+                //how do we associate the user images?  
+            }    
+            d[DIC_TIMES] = hyperlink;
+            this.data(d);
+            this.invalidate(); // invalidate the data DataTables has cached for this row
+        }
+    
+    });
 
 }
 

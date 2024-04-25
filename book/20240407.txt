@@ -279,6 +279,10 @@ Start with (base)
 Search/Chat, and also with connected instances.  
 
 
+**database.rules
+This is opening the DB for comments by anyone.  
+Probably should be an option.  
+
 RTDB how do we allow write on a nested dynamic folder.  
 can we do
 "misterrubato": {
@@ -311,3 +315,6 @@ ROLI hope it has good midi/API access.
 **server/transcription.py
 Is this actually working?  
 ../../../coqui/TTS/recipes/ljspeech/LJSpeech-1.1/metadata.csv
+
+
+Need color picker/icon picker for display of words.  

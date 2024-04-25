@@ -410,6 +410,7 @@ function loadPreviousComments(snapshot){
 	//load midi.  
 	midifeedback = snapshot.val().midi;
 	loadMidiFeedback(midifeedback);
+	loadDictionaries();
 	getFeedbackImage(null, xmultiplier1, ymultiplier1, scene1);
 	getFeedbackImage(null, xmultiplier2, ymultiplier2, scene2);	
 	console.log("MIDI:" + midifeedback);
