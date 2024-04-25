@@ -215,6 +215,18 @@ TODO: How do we keep the history of words/definitions.
 on edit add to history table?  
 
 Test dictable.  
+Not done yet with this.  
+Add logic for spoken language change.  
+Then test.  
+
+Then add functionality to add words.  
+Need command delay control (how many seconds prior to start) and speed control.  
+Play control for each word/concept to find/play all locations associated with that concept.  
+can we generate a new video for this, or is jumping in the video control enough?  
+Probably enough for most use-cases.  
+
+
+
 
 
 **extensions
@@ -286,3 +298,16 @@ create a section where only the user can read
 /users/$uid/settings
 Does this actually work?  
 
+
+**languages/ or extensions/keydict
+Need to have point function and basic attention markers BBOX, Oval, Arrow etc.  
+start recording and pause recording may also need to pause the original screen simultaneously as well.  
+Yes probably.  
+
+ROLI hope it has good midi/API access.  
+
+
+
+**server/transcription.py
+Is this actually working?  
+../../../coqui/TTS/recipes/ljspeech/LJSpeech-1.1/metadata.csv

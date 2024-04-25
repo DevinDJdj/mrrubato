@@ -12,6 +12,9 @@ var langstart = {};
 var langend = {};
 var wordtimes = {};
 
+//config.js keybot
+//do we want to allow for some function to adjust keybot/keytop?  
+
 function loadAllLanguages(){
     ref = firebase.database().ref('/dictionary/languages');
 	ref.on('value',(snap)=>{
@@ -27,29 +30,40 @@ function loadAllLanguages(){
 
 function loadAll(){
     //find language in midi
+    //find language in words "change language base" "change language to base"
+    //need to use this more.  Probably more convenient.  
     const dictable = new DataTable('#DictionaryTable');
     loadAllLanguages();
     //go through midiarray.  
     //should be in order.  
     //find sequences we need.  
     //load base langauge to start.  
-    loadLanguage("base");
+//    loadLanguage("base");
+
     cl = [];
     cle = [];
     for (i=0; i<midiarray.length-5; i++){
-        if (midiarray[i] == 12 && midiarray[i+1] == 5 && midiarray[i+2] == 7 && midiarray[i+3] == 12){
+        if (midiarray[i] == keybot+12 && midiarray[i+1] == keybot+5 && midiarray[i+2] == keybot+7 && midiarray[i+3] == keybot+12){
             //change language (add language)
             cl.push(i);
         }
-        else if (midiarray[i]==12 && midiarray[i+1] == 7 && midiarray[i+2] == 5 && midiarray[i+3] == 12){
+        else if (midiarray[i]==keybot+12 && midiarray[i+1] == keybot+7 && midiarray[i+2] == keybot+5 && midiarray[i+3] == keybot+12){
             cle.push(i);
         }
     }
+    numlangs = 0;
     for (i=0; i<cl.length; i++){
         //change language
-        langmidi = midiarray.slice(cl[i]+4, cle[i]).join();
+        tempmidi = midiarray.slice(cl[i], cle[i]+4);
+        for (j=0; j<tempmidi.length; j++){
+            tempmidi[j] = tempmidi[j] - keybot;
+        }
+        langmidi = tempmidi.join();
         if (typeof(alllangs[langmidi]) !=="undefined"){
+            //find the language setting.  
+            //so start base language = [12, 5, 7, 12]
             lang = alllangs[langmidi];
+
             if (typeof(langstart[lang]) === "undefined"){
                 langstart[lang] = [];
                 langend[lang] = [];
@@ -64,6 +78,22 @@ function loadAll(){
                 langend[lang].push(midiarray.length);
             }
             loadLanguage(lang);
+            numlangs++;
+        }
+    }
+
+    if (numlangs == 0){
+        //no language changes.  
+        //just go through base language.  
+        langstart["base"] = [0];
+        langend["base"] = [midiarray.length];
+        loadLanguage("base");
+    }
+    else{
+        if (cl[0] > 0){
+            langstart["base"] = [0];
+            langend["base"] = [cl[0]];
+            loadLanguage("base");
         }
     }
 
@@ -72,12 +102,17 @@ function loadAll(){
         for (j=0; j<value.length; j++){
             //maxwordlength
             temp = midiarray.slice(value[j], langend[key][j]).join();
+            //this is inside of the language representation.  
             //value[j] is start of this language.  
             //full array of midi.  
             //just go through words and find any instance.  
             for (const [k2, v2] of Object.entries(langs[key])) {	//k2 = length of midiseq, v2 = array of words
-                for (const [k3, v3] of Object.entries(langs[key][k2])) {
+                for (const [k3, v3] of Object.entries(langs[key][k2])) { //k3 = midi seq, v3 = word
                     const indexes = [...temp.matchAll(new RegExp(k3, 'gi'))].map(a => a.index);
+                    //is this fast enough?  if we have only a few words in the language yes.  
+                    //but if we get lots of words, probably want to change this logic to build some sort of array search.  
+                    //also really need to search from longest to shortest.  
+                    //at the moment leave as is.  
                     console.log(indexes); // [2, 25, 27, 33]
                     if (typeof(wordtimes[key]) === "undefined"){                        
                         wordtimes[key] = {};
@@ -87,7 +122,11 @@ function loadAll(){
                             wordtimes[key][v3] = [];
                         }
                         wordtimes[key][v3].push(midiarray[ value[j] + indexes[i] ].time);
+                        //wordtimes[lang][word] = [time1, time2, time3]
                         //add this to the table.  
+                    }
+                    if (indexes.length > 0){
+                        setTimes(key, v3, wordtimes[key][v3]);
                     }
                 }
             }
@@ -133,7 +172,18 @@ function setTimes(lang, word, times){
     } )
     .data(); 
     console.log(word);   
-    word[0]['times'] = times;
+
+    hyperlink = "";
+    for (i=0; i<times.length; i++){
+        //think this is milliseconds.  
+        //think this should display ok.  
+        hyperlink += '<a href="#" onclick="seekTo(' + Math.round(times[i]/1000) + ');">' + Math.round(times[i]/1000) + '</a>, ';
+        //this is a listing of what is in the pianoroll.  
+        //also put here the color/icon/glyph/kanji of the word which is being displayed in the piano roll.  
+        //how do we associate the user images?  
+    }    
+    //have to add hyperlink to each of these times.  
+    word[0]['times'] = times.join();
 
 }
 
