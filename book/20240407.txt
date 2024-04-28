@@ -315,6 +315,41 @@ ROLI hope it has good midi/API access.
 **server/transcription.py
 Is this actually working?  
 ../../../coqui/TTS/recipes/ljspeech/LJSpeech-1.1/metadata.csv
-
+Test with new setup.  
 
 Need color picker/icon picker for display of words.  
+Need user icon somewhere.  
+Need dropdown datatable filter for lang
+
+
+
+https://open.spotify.com/episode/7H4ICIgQET0xy33q1QyKmP?si=73329696932641b1
+Sleap
+https://sleap.ai/
+
+having some issues with pianoimg in loadCanvas.  
+We should check if the URL is giving us an image before adding.  
+Unfortunately sometimes we get no image.  
+
+Show feedback from a mix of users.  
+Selection to include or not certain users.  
+
+Just add all to the midiarray, or just change midiarray to a multi-array and load each one separately.  
+This is probably better.  
+Then determine which words to show depending on the density of information.  
+Filter by word or by user.  
+Just have user in the columns.  
+OK, this seems to work ok.  
+
+OK, the structure is there I think.  
+Now need to load more user feedback, but need to add feedback from another user.  
+Then test.  
+
+Need to limit feedback if we have lots of user feedback info.  
+
+Play by word or by user.  
+What is constitutes a segment?  
+
+Have to go through word start/end and push to one side.  
+First of all need to get rid of the excess midi messages.  
+

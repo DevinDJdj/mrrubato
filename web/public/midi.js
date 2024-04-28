@@ -1,4 +1,5 @@
-var midiarray = [];
+var midiarray = [[]];
+var currentmidiuser = 0;
 var notes = [];
 var midienabled = 0;
 var obj = {"note": 0, "velocity": 0, "time": 0, "duration": 0};
@@ -227,7 +228,8 @@ function loadMidiFeedback(mid){
 	}
 }
 
-function getMidiFeedback(){
+function getMidiFeedback(midiuser=0){
+
 	//
 	var smf = new JZZ.MIDI.SMF(1, 100); //this second param is ppqn pulses per quarter note
 
@@ -238,19 +240,19 @@ function getMidiFeedback(){
 	
 	trk = trk0;
 	prevtime = 0;
-	if (midiarray.length == 0){
+	if (midiarray[midiuser].length == 0){
 		return "";
 		
 	}
 	
-	for (i=0; i< midiarray.length; i++){
-		tick = Math.round((midiarray[i].time-prevtime)/10);
+	for (i=0; i< midiarray[midiuser].length; i++){
+		tick = Math.round((midiarray[midiuser][i].time-prevtime)/10);
 	
-		if (tick < 0){ tick = 0;console.log(midiarray[i]);}
-		if (midiarray[i].duration < 0){midiarray[i].duration = 0;console.log(midiarray[i]);}
-		trk = trk.ch(0).program(0x0b).tick(tick).note(midiarray[i].note, midiarray[i].velocity, Math.round(midiarray[i].duration/10));
-		console.log(midiarray[i]);
-		prevtime = midiarray[i].time;
+		if (tick < 0){ tick = 0;console.log(midiarray[midiuser][i]);}
+		if (midiarray[midiuser][i].duration < 0){midiarray[midiuser][i].duration = 0;console.log(midiarray[midiuser][i]);}
+		trk = trk.ch(0).program(0x0b).tick(tick).note(midiarray[midiuser][i].note, midiarray[midiuser][i].velocity, Math.round(midiarray[midiuser][i].duration/10));
+		console.log(midiarray[midiuser][i]);
+		prevtime = midiarray[midiuser][i].time;
 	}
 	trk.tick(100).smfEndOfTrack(); // otherwise it will end on clock 1690
 	var str = smf.dump(); // MIDI file dumped as a string
@@ -309,11 +311,11 @@ function getMIDIMessage(message, mytime=0) {
 function insertNote(note){
 	//usually inserting last.  
 	//fine for now.  
-	i=midiarray.length-1;
-	while (i >-1 && note.time < midiarray[i].time){		
+	i=midiarray[currentmidiuser].length-1;
+	while (i >-1 && note.time < midiarray[currentmidiuser][i].time){		
 		i--;
 	}
-	midiarray.splice(i+1, 0, note);
+	midiarray[currentmidiuser].splice(i+1, 0, note);
 	
 }
 

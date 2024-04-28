@@ -125,17 +125,18 @@ data-setup="{}"
 					<tr>
 						<th>word</th>
 						<th>midisequence</th>
+						<th>user</th>
 						<th>times</th>
 						<th>meaning</th>
 						<th>created</th>
 						<th>lang</th>
 					</tr>
 				</thead>
-				</table>
-				</div>
+			</table>
+		</div>
 	</td>
 </tr>
-	</table>
+</table>
 
 
 <table>
@@ -217,6 +218,7 @@ var	et = [];
 var myst = [];
 var myet = [];
 
+var users = [];
 var durations = [];
 var maxduration = 0;
 
@@ -313,6 +315,27 @@ var isadmin = false;
 					
 					uid = user.uid;
 					addUser(user);
+					//loadPreviousComments for multiple users.  
+
+
+					firebase.database().ref('/misterrubato/' + video + '/comments').once('value')
+					  .then((snapshot) => {
+						if (snapshot.exists()) {							
+							setTimeout(function(){ loadPreviousComments(snapshot, uid); }, 4000);
+
+						} else {
+							firebase.database().ref('/watch/' + video + '/comments').once('value')
+							    .then((snapshot) => {
+									if (snapshot.exists()){
+										setTimeout(function(){ loadPreviousComments(snapshot, uid); }, 5000);
+									}
+									else{
+									  console.log('No comments yet');									
+									}
+ 								});
+						}
+					  });
+					/*
 					firebase.database().ref('/misterrubato/' + video + '/comments/' + uid).once('value')
 					  .then((snapshot) => {
 						if (snapshot.exists()) {
@@ -330,7 +353,7 @@ var isadmin = false;
  								});
 						}
 					  });
-
+*/
 					  firebase.database().ref('/misterrubato/' + video + '/transcript').once('value')
 								.then((snapshot) => {
 									if (snapshot.exists()){
@@ -397,7 +420,38 @@ function loadAdditionalComments(){
 					});
 
 }
-function loadPreviousComments(snapshot){
+function loadPreviousComments(snapshot, uid=0){
+
+	user=0;
+	allcomments = snapshot.val();
+
+	for (const [key, value] of Object.entries(allcomments)){
+		if (key == uid){
+			$('#mycomments').val(value.comments);
+			$('#mycommentsh').html(makeTimeLinks(value.comments));
+			if (value.sentiment !==null){
+				$('#points').val(value.sentiment);
+			}
+			currentmidiuser = 0;
+		}
+		else{
+			midiarray.push([]);
+			currentmidiuser=midiarray.length-1;
+		}
+		midifeedback = value.midi;
+		loadMidiFeedback(midifeedback);
+		getFeedbackImage(null, xmultiplier1, ymultiplier1, scene1);
+		getFeedbackImage(null, xmultiplier2, ymultiplier2, scene2);	
+
+		loadDictionaries(user);
+		console.log("MIDI:" + midifeedback);
+	}
+	//set back to our user.  
+	currentmidiuser = 0;
+
+	//load midi.  
+
+	/*
 	console.log(snapshot.val().comments);
 	if (snapshot.val().comments !==null){
 		$('#mycomments').val(snapshot.val().comments);
@@ -410,12 +464,13 @@ function loadPreviousComments(snapshot){
 	//load midi.  
 	midifeedback = snapshot.val().midi;
 	loadMidiFeedback(midifeedback);
-	loadDictionaries();
 	getFeedbackImage(null, xmultiplier1, ymultiplier1, scene1);
 	getFeedbackImage(null, xmultiplier2, ymultiplier2, scene2);	
+
+	loadDictionaries(user);
 	console.log("MIDI:" + midifeedback);
 //							document.getElementById('out').innerHTML = 'New file: <a download=my.mid href=' + midifeedback + '>DOWNLOAD</a> <embed src=' + midifeedback + ' autostart=false>';
-
+*/
 }
 
 function getYOffset(iter, w, h){
@@ -424,10 +479,11 @@ function getYOffset(iter, w, h){
 }
 
 function resetFeedback(){
-	midiarray = [];
+	midiarray = [[]];
 }
 
-function getFeedbackImage(source, w, h, myscene){
+//for now display one user at a time, then combine users?  
+function getFeedbackImage(source, w, h, myscene,midiuser=0){
 	//for all notes in midiarray, generate image.  
 	//after this figure out how to add other midifeedback as well.  
 	//this should be loaded already.  
@@ -437,12 +493,12 @@ function getFeedbackImage(source, w, h, myscene){
 	ybot = -h/2;
 
 
-	for (i=0; i< midiarray.length; i++){
+	for (i=0; i< midiarray[midiuser].length; i++){
 		//add a red line at the time
 		//get x from time.  
 		//get color from note.  
 		x = i*2;
-		var tempTime = midiarray[i].time/1000;
+		var tempTime = midiarray[midiuser][i].time/1000;
 		iter = getIteration(tempTime);
 		if (iter>-1){
 			secs = tempTime - myst[iter];
@@ -968,7 +1024,15 @@ function loadCanvas(id, pianoimg, mini="") {
 
 		var prollMat = new BABYLON.StandardMaterial("pianorollground" + mini, scene);
 		if (pianoimg !=""){
-			prollMat.diffuseTexture = new BABYLON.Texture(pianoimg, scene);
+			$.get(pianoimg)
+			.done(function() { 
+				// Do something now you know the image exists.
+				prollMat.diffuseTexture = new BABYLON.Texture(pianoimg, scene);
+
+			}).fail(function() { 
+				// Image doesn't exist - do something else.
+				console.log("Piano roll load error " + pianoimg);
+			})
 		}
 
 
@@ -994,7 +1058,7 @@ function addImage(url, type=0){
     var mydiv = document.getElementById("images");
 	if (type > 0){
 		mydiv = document.getElementById("pianoroll");
-		loadCanvas("pianorollmini", url, "mini")
+		loadCanvas("pianorollmini", url, "mini");
 		loadCanvas("pianoroll", url);
 	}
 	else{
@@ -1040,6 +1104,11 @@ function getAnalyze(midiurl){
 		.then((url) => {
 			console.log(url);
 		addImage(url, 1);
+		})
+		.catch((error) => {			
+			console.log(error);
+			addImage("", 1);
+
 		})
 	
 		var lastPart = midiurl.split("/").pop();

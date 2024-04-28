@@ -13,9 +13,9 @@ var langend = {};
 var wordtimes = {};
 
 var dictable = null;
-var DIC_LANG = 5;
+var DIC_LANG = 6;
 var DIC_WORD = 0;
-var DIC_TIMES = 2;
+var DIC_TIMES = 3;
 //config.js keybot
 //do we want to allow for some function to adjust keybot/keytop?  
 
@@ -32,12 +32,14 @@ function loadLanguages(){
 
 }
 
-function loadDictionaries(){
+function loadDictionaries(user){
     //find language in midi
     //find language in words "change language base" "change language to base"
     //need to use this more.  Probably more convenient.  
     dictable = new DataTable('#DictionaryTable');
-    loadLanguages();
+    if (user==0){
+        loadLanguages();
+    }
     //go through midiarray.  
     //should be in order.  
     //find sequences we need.  
@@ -46,19 +48,19 @@ function loadDictionaries(){
 
     cl = [];
     cle = [];
-    for (i=0; i<midiarray.length-5; i++){
-        if (midiarray[i] == keybot+12 && midiarray[i+1] == keybot+5 && midiarray[i+2] == keybot+7 && midiarray[i+3] == keybot+12){
+    for (i=0; i<midiarray[user].length-5; i++){
+        if (midiarray[user][i] == keybot+12 && midiarray[user][i+1] == keybot+5 && midiarray[user][i+2] == keybot+7 && midiarray[user][i+3] == keybot+12){
             //change language (add language)
             cl.push(i);
         }
-        else if (midiarray[i]==keybot+12 && midiarray[i+1] == keybot+7 && midiarray[i+2] == keybot+5 && midiarray[i+3] == keybot+12){
+        else if (midiarray[user][i]==keybot+12 && midiarray[user][i+1] == keybot+7 && midiarray[user][i+2] == keybot+5 && midiarray[user][i+3] == keybot+12){
             cle.push(i);
         }
     }
     numlangs = 0;
     for (i=0; i<cl.length; i++){
         //change language
-        tempmidi = midiarray.slice(cl[i], cle[i]+4);
+        tempmidi = midiarray[user].slice(cl[i], cle[i]+4);
         for (j=0; j<tempmidi.length; j++){
             tempmidi[j] = tempmidi[j] - keybot;
         }
@@ -81,7 +83,7 @@ function loadDictionaries(){
             else{
                 langend[lang].push(midiarray.length);
             }
-            loadLanguage(lang);
+            loadLanguage(lang, user);
             numlangs++;
         }
     }
@@ -90,24 +92,24 @@ function loadDictionaries(){
         //no language changes.  
         //just go through base language.  
         langstart["base"] = [0];
-        langend["base"] = [midiarray.length];
-        loadLanguage("base");
+        langend["base"] = [midiarray[user].length];
+        loadLanguage("base", user);
     }
     else{
         if (cl[0] > 0){
             langstart["base"] = [0];
             langend["base"] = [cl[0]];
-            loadLanguage("base");
+            loadLanguage("base", user);
         }
     }
 
     //now go through the langstart and langend looking for words.  
     //need a better mechanism but for now just timeout to wait for all loadLanguage calls to complete.  
-    setTimeout(function(){findWords();}, 3000);
+    setTimeout(function(){findWords(user);}, 5000);
 
 }
 
-function findWords(){
+function findWords(user){
     for (const [key, value] of Object.entries(langstart)) {	
         for (j=0; j<value.length; j++){
             //maxwordlength
@@ -142,8 +144,8 @@ function findWords(){
                         //get the index of this
                         wordindex = miditostrindex.indexOf(indexes[i]);
                         //value[j] is start of this language.
-                        if (wordtimes[key][v3].indexOf(midiarray[ value[j] + wordindex ].time) < 0){
-                            wordtimes[key][v3].push(midiarray[ value[j] + wordindex ].time);
+                        if (wordtimes[key][v3].indexOf(midiarray[user][ value[j] + wordindex ].time) < 0){
+                            wordtimes[key][v3].push(midiarray[user][ value[j] + wordindex ].time);
                         }
                         //wordtimes[lang][word] = [time1, time2, time3]
                         //add this to the table.  
@@ -157,26 +159,36 @@ function findWords(){
     }
 
 }
-function loadLanguage(lang){
-    //get lang from DB.  
-    ref = firebase.database().ref('/dictionary/language/' + lang);
-	ref.on('value',(snap)=>{
-	    if (snap.exists()){
-            mydic = snap.val();
-            langs[lang] = {};
-            for (const [key, value] of Object.entries(mydic)) {	
-                m = value.midi.split(",");
-                //lang["base"]["length"]["midiseq"] = word
-                if (typeof(langs[lang][m.length]) === "undefined"){
-                    langs[lang][m.length] = {};
-                }
-                langs[lang][m.length][value.midi] = key; //midiseq -> word lookup.  
+function loadLanguage(lang, user){
+    if (typeof(langs[lang]) !== "undefined"){
+        mydic = langs[lang];
+        for (const [key, value] of Object.entries(mydic)) {	
+            //just adding an entry for each user.  
+            //not sure this is the best way, but for now.  
+            addDictRow(lang, key, value, user);
+        }                    
+    }
 
-                addDictRow(lang, key, value);
-            }                    
-        }
-    });
+    else{
+        //get lang from DB.  
+        ref = firebase.database().ref('/dictionary/language/' + lang);
+        ref.on('value',(snap)=>{
+            if (snap.exists()){
+                mydic = snap.val();
+                langs[lang] = {};
+                for (const [key, value] of Object.entries(mydic)) {	
+                    m = value.midi.split(",");
+                    //lang["base"]["length"]["midiseq"] = word
+                    if (typeof(langs[lang][m.length]) === "undefined"){
+                        langs[lang][m.length] = {};
+                    }
+                    langs[lang][m.length][value.midi] = key; //midiseq -> word lookup.  
 
+                    addDictRow(lang, key, value, user);
+                }                    
+            }
+        });
+    }
 
 }
 
@@ -207,14 +219,15 @@ function setTimes(lang, word, times){
         }
     
     });
-
+    dictable.columns.adjust().draw();
 }
 
-function addDictRow(lang, word, row) {
+function addDictRow(lang, word, row, user) {
     dictable.row
         .add([
             word,
             row['midi'],
+            user,
             "", //times, will need to update this.  
             row['definition'],
             row['created'],
