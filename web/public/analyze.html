@@ -437,6 +437,7 @@ function loadPreviousComments(snapshot, uid=0){
 		else{
 			midiarray.push([]);
 			currentmidiuser=midiarray.length-1;
+			users[currentmidiuser] = key; //lookup for array location -> uid
 		}
 		midifeedback = value.midi;
 		loadMidiFeedback(midifeedback);

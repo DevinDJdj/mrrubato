@@ -22,6 +22,8 @@ pass file download info to
 for non-youtube use.  
 If we can get from youtube, do so, otherwise use the media info passed.  
 Just pass every time.  
+--done, but not using on server side.  
+
 
 **server/transcription/server.py
 OK, start times and end times being passed, now have to generate the wav files.  
@@ -30,7 +32,7 @@ Need to copy coqui to server and test.
 Rabbit hole continues...
 OK, lets try to see if we can load coqui in base directory and actually get this generating data.  
 So somewhere around 10GB perhaps, then we should delete this all or download/delete after done.  
-
+--done
 
 **web/public/analyze.html
 Need ability to fix the transcription ideally.  
@@ -42,7 +44,7 @@ Not sure how important this is.
 **web/public/**
 Add time that user was added.  
 Code added - See if this worked.  
-
+--done
 
 **server/
 Need to make servers more robust.  
@@ -72,7 +74,7 @@ This can be adjusted in the actual RTDB transcription and in the ingestion file.
 Once the video is approved, move all video_... to the ingestion folder.  
 ljspeech/wavs.  
 What do we do with non-reviewed?  
-
+--done
 
 
 **generate/tennis.py
@@ -173,6 +175,7 @@ Unfortunately it will be hard to generate pleasing combinations.
 Need to display feedback on watch videos.  
 loadMidiFeedback
 getFeedbackImage
+--done
 
 We are not even using the midi, except the midi feedback.  
 We just need to load blank images.  
@@ -273,7 +276,7 @@ DB need top folder /servers
 **web/public/analyze.html
 Get subset of user feedback and display words based on language.  
 Start with (base)
-
+--done
 
 **web/public/search.html
 Search/Chat, and also with connected instances.  
@@ -352,4 +355,19 @@ What is constitutes a segment?
 
 Have to go through word start/end and push to one side.  
 First of all need to get rid of the excess midi messages.  
+
+
+**TTS/TTS/bin/synthesize.py
+Finally got something out of this 180k steps in training:
+python3 ./TTS/TTS/bin/synthesize.py --text "I am determined to acquire language." --model_path "./TTS/recipes/ljspeech/tacotron2-DCA/run-April-19-2024_02+00AM-0000000/best_model.pth" --config_path "./TTS/recipes/ljspeech/tacotron2-DCA/run-April-19-2024_02+00AM-0000000/config.json"
+
+Still bunch of empty space after the actual spoken/broken text.  
+
+See if 400k training steps allows for less broken or less empty space.  
+
+
+If the feedback includes visual cues, could combine the feedback from multiple users to create a new iteration.  
+Also eventually will need an algorithm for combining feedback in a meaningful way for each viewer.  
+There is a rudimentary type of this algorithm already in social media functionality.  
+
 
