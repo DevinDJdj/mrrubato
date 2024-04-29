@@ -1,0 +1,101 @@
+**server/...
+
+Do we want to set up as services?  
+https://medium.com/codex/setup-a-python-script-as-a-service-through-systemctl-systemd-f0cc55a42267
+
+**web/public/analyze.html
+Need ability to fix the transcription ideally.  
+but dont think I want to deal with that now, due to the way the process works.  
+Not sure how important this is.  
+
+
+**server/
+Need to make servers more robust.  
+Unexpected queries shouldnt cause problems.  
+
+sudo systemctl start transcription.service
+sudo systemctl start tts.service
+
+**extensions/mrrubato/
+when decreasing frame rate, how do we capture audio, just use speed up algorithm?  
+No should use detect audio dB level of capture, and cut low dB, then speed up.  
+Responding to other youtube videos should be easy.  
+If active tab is youtube link or watch link, 
+need function to respond or not, then if respond is active, should comment on that video via API.  
+Just use text from recording and generate a link to the resulting recording.  
+
+
+**language
+create language "xxxxx" (xxx is spoken, continue with key definition)
+select language "xxxxx" (spoken or keys)
+create word "xxxx" (xxx is spoken, continue with key definition)
+"xxxx" (usage of word is just like any other predefined meta)
+first search meta language, then search used language.  
+meta language only searched if 48, 49, 71, 72 utilized.  
+These will be control keys.  
+Otherwise pass to the selected language.  
+For now this doesnt leave us much room, but enough.  
+Unfortunately it will be hard to generate pleasing combinations.  
+
+**extensions
+ROLI: Top of Keys = control
+bottom of keys = free
+
+
+**web/public/analyze.html
+Show topics/add topics.  
+Make suggestion list of topics (some work needed), easy interface to just click add/remove.  
+
+DB need top folder /topics
+/topics/topicname/topicvalue/YYYYMMdd/videoid
+relevance: 90%
+
+author, name, other
+for now.  
+What data do we want here. mostly point back to videos.  Perhaps we want a date
+Where we click on the topic will indicate the relevance for the video.  
+Dont have multiple clicks for this.  
+Feedback in some sort of color indication (or bar)
+
+For now need to be admin to create topic or word definitions.  
+
+**timestep.py 
+pass all topics to **server/transcription
+
+
+**petunia 
+Need a second server (useyoutube=false), need to complete this.  
+This will allow for more participation.  
+
+**web/public/search.html
+Search/Chat, and also with connected instances.  
+
+
+**database.rules
+test comments from other user.  
+
+
+**languages/ or extensions/keydict
+Need to have point function and basic attention markers BBOX, Oval, Arrow etc.  
+start recording and pause recording may also need to pause the original screen simultaneously as well.  
+Yes probably.  
+
+ROLI hope it has good midi/API access.  
+
+**web/public/analyze.html
+Need color picker/icon picker for display of words.  
+-put this in the datatable with words.  
+
+Need user icon somewhere.  
+-put this in the large pianoroll view.  
+
+Need dropdown datatable filter for lang
+-words datatable
+
+Play by word or by user.  
+What is constitutes a segment?  
+Need pre/post buffer of X seconds.  
+
+**TTS/TTS/bin/synthesize.py
+Finally got something out of this 180k steps in training:
+python3 ./TTS/TTS/bin/synthesize.py --text "I am determined to acquire language." --model_path "./TTS/recipes/ljspeech/tacotron2-DCA/run-April-19-2024_02+00AM-0000000/best_model.pth" --config_path "./TTS/recipes/ljspeech/tacotron2-DCA/run-April-19-2024_02+00AM-0000000/config.json"
