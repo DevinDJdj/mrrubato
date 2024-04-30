@@ -16,14 +16,15 @@ Unexpected queries shouldnt cause problems.
 sudo systemctl start transcription.service
 sudo systemctl start tts.service
 
+***
 **extensions/mrrubato/
 when decreasing frame rate, how do we capture audio, just use speed up algorithm?  
 No should use detect audio dB level of capture, and cut low dB, then speed up.  
 Responding to other youtube videos should be easy.  
 If active tab is youtube link or watch link, 
 need function to respond or not, then if respond is active, should comment on that video via API.  
-Just use text from recording and generate a link to the resulting recording.  
-
+Just use text from recording and generate a link to the resulting recording which will be on mrrubato instance.  
+***
 
 **language
 create language "xxxxx" (xxx is spoken, continue with key definition)
@@ -81,6 +82,7 @@ start recording and pause recording may also need to pause the original screen s
 Yes probably.  
 
 ROLI hope it has good midi/API access.  
+Hope the quality of the device is good.  
 
 **web/public/analyze.html
 Need color picker/icon picker for display of words.  
@@ -91,11 +93,80 @@ Need user icon somewhere.
 
 Need dropdown datatable filter for lang
 -words datatable
+--done
 
-Play by word or by user.  
+Need edit mode as well as feedback mode.  
+Pause should always be part of meta-language.  
+When playing segments, should be able to edit at a keytouch.  
+use "wordtimes" parameters.  
+But use the filters (only language, word, user)
+Push the whole midi structure
+
+Dynamically calculate lead-in and trail-off.  
+But have minimum time 
+
+Word creation, word edit.  
+Play all by word or by user.  
 What is constitutes a segment?  
 Need pre/post buffer of X seconds.  
 
 **TTS/TTS/bin/synthesize.py
 Finally got something out of this 180k steps in training:
 python3 ./TTS/TTS/bin/synthesize.py --text "I am determined to acquire language." --model_path "./TTS/recipes/ljspeech/tacotron2-DCA/run-April-19-2024_02+00AM-0000000/best_model.pth" --config_path "./TTS/recipes/ljspeech/tacotron2-DCA/run-April-19-2024_02+00AM-0000000/config.json"
+
+
+**generate/tennis.py
+Should make sure we can go through the same video and identify aspects in time separately.  
+footsteps then bounces then ....
+
+**extensions/handsfree
+Each tab should identify content in some meaningful way
+in addition to the QR code for url
+Perhaps adjust the QR Code based on time salted with the URL each X seconds.  
+For now just include the time in the QR Code.  
+Include title perhaps, or truncated title up to 200 chars.  
+youtube tv, utilize the 
+tv.youtube.com/watch/xxxxxxx
+xxxxx = Video ID.  
+
+Special case for Youtube.  
+Can we retrieve details about a youtube video via javascript without API key?  
+https://www.googleapis.com/youtube/v3/videos?part=snippet%2CcontentDetails%2Cstatistics&id=DQ5w8LBI0kI&key=[YOUR_API_KEY]
+
+We already have the embed into the page in this case.  
+Should be another way to get the details about the video, what javascript funciton do they use?  
+
+Or just use the     
+https://tv.youtube.com/watch/NgpFsmdsmyE?onboard=1&vp=0gEEEgIwAQ%3D%3D
+https://tv.youtube.com/sw.js
+
+ytcfg.set...
+"INNERTUBE_API_KEY": "AIzaSyD-L7DIyuMgBk-B4DYmjJZ5UG-D6Y-vkMc
+INNERTUBE_CONTEXT
+"ACCOUNTS"
+YTU_EMBEDDED_DATA
+ytuEmbeddedData
+
+and create the javascript calls necessary to go to the above URL.  
+
+This is a bit of work.  
+Also not sure if this will actually work.  
+If we do this, do just this use-case (Youtube TV) to get a feel for if it will work.  
+
+var id = 'dQw4w9WgXcQ';
+var url = 'https://www.youtube.com/watch?v=' + id;
+
+$.getJSON('https://noembed.com/embed',
+    {format: 'json', url: url}, function (data) {
+    alert(data.title);
+});
+
+
+
+Not enough hands.  
+
+**web/public/analyze.html
+Should be able to add a link to feedback easily.  
+i.e. for enhancement/bug system.  
+Should probably have a registered JIRA (or equivalent), and add link to any tickets referenced.  
+

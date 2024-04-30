@@ -32,12 +32,13 @@
 
 <script src="js/midiparser.js"></script>
 
-<input type="file" id="filereader"/>
+<!--<input type="file" id="filereader"/> -->
 
   <table>
   <tr>
   <td>
-<div id="player" valign="top"></div>
+<div id="vidinfo" valign="top"></div>
+	<div id="player" valign="top"></div>
 <video
 id="my-video"
 class="video-js"
@@ -57,9 +58,16 @@ data-setup="{}"
   <source src="https://storage.googleapis.com/misterrubato-test.appspot.com/videos/2024-01-29%2016-47-54.mp4" type="video/mp4"></source>
 </video>
 
-    <div class="words" contenteditable>
+
+    <div class="words" contenteditable style="display: none;">
 		 <input type="text" id="p" name="p">
     </div>
+	<div id="delay-params">
+		<label for="intro">Intro:</label>
+		<input type="range" id="intro" name="intro" min="1" max="60" value="10" />
+		<label for="intro">Outro:</label>
+		<input type="range" id="outro" name="outro" min="1" max="60" value="10" />
+	</div>
 	<div id="submit" valign="top">
 	    <input type="range" id="points" name="points" min="0" max="10" value="1" />
 		<button type="button" onclick="updateVideo()">Update</button>
@@ -132,6 +140,17 @@ data-setup="{}"
 						<th>lang</th>
 					</tr>
 				</thead>
+				<tfoot>
+					<tr>
+						<th>word</th>
+						<th>midisequence</th>
+						<th>user</th>
+						<th>times</th>
+						<th>meaning</th>
+						<th>created</th>
+						<th>lang</th>
+					</tr>
+				</tfoot>
 			</table>
 		</div>
 	</td>
@@ -188,6 +207,8 @@ var video = 'T7aCHEAGCsU';
 var videojson = null;
 var channelId = 'UC4dK3RpqBq2JpIkRmQn6HOA'; //@misterrubato doesnt work in URL, probably need to escape the @, but who cares.  
 var title = '';
+var author = '';
+var authorurl = '';
 var seek = -1;
 
       // Enable WebMidi.js and trigger the onEnabled() function when ready.
@@ -327,10 +348,18 @@ var isadmin = false;
 							firebase.database().ref('/watch/' + video + '/comments').once('value')
 							    .then((snapshot) => {
 									if (snapshot.exists()){
-										setTimeout(function(){ loadPreviousComments(snapshot, uid); }, 5000);
+										setTimeout(function(){ 
+											loadPreviousComments(snapshot, uid); }, 5000);
 									}
 									else{
 									  console.log('No comments yet');									
+									  		//no comments yet.  
+										loadDictionaries(0);
+//										initDicFilters();
+										//load dictionary anyway.  
+										//need a way to add languages.  
+										//do this via controls or via midi.  
+
 									}
  								});
 						}
@@ -423,6 +452,7 @@ function loadAdditionalComments(){
 function loadPreviousComments(snapshot, uid=0){
 
 	user=0;
+	currentmidiuser = 0;
 	allcomments = snapshot.val();
 
 	for (const [key, value] of Object.entries(allcomments)){
@@ -444,11 +474,13 @@ function loadPreviousComments(snapshot, uid=0){
 		getFeedbackImage(null, xmultiplier1, ymultiplier1, scene1);
 		getFeedbackImage(null, xmultiplier2, ymultiplier2, scene2);	
 
-		loadDictionaries(user);
+		loadDictionaries(currentmidiuser);
 		console.log("MIDI:" + midifeedback);
 	}
+
 	//set back to our user.  
 	currentmidiuser = 0;
+//	initDicFilters();
 
 	//load midi.  
 
@@ -1193,6 +1225,9 @@ function getVideoJson(videoid){
 			
 			//get previous iterations of this.  
 			title = snap.val().snippet.description.split('\n')[0];
+			author = snap.val().snippet.channelTitle;
+			authorurl = "https://www.youtube.com/channel/" + snap.val().snippet.channelId;
+			$('#vidinfo').html(title + " (<a href=\"" + authorurl + "\">" + author + "</a>)");
 			console.log(title);
 			searchPrevious(videoid);
 			getTranscript(item.snippet.description);
@@ -1224,10 +1259,23 @@ function getVideoJson(videoid){
 				//uRef.set(obj);
 				}
 			});
+				tempurl = 'https://www.youtube.com/watch?v=' + videoid;
 
-
+				//https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=R4LoM208_Ow
+				$.getJSON('https://www.youtube.com/oembed?url=' + tempurl, function (data) {
+					console.log(data.title);
+					title = data.title;
+					console.log(data.author_name);
+					author = data.author_name;
+					console.log(data.author_url);
+					authorurl = data.author_url;
+					console.log(data.thumbnail_url);
+					$('#vidinfo').html(title + " (<a href=\"" + authorurl + "\">" + author + "</a>)");
+				});
+				//input details about this video
 
 		}
+
 	});
 
 /*	

@@ -15,7 +15,9 @@ function helpme(){
     temptime -= delay;
 
     var mins = Math.floor(temptime/60);
+    if (mins < 0) mins = 0;
 	var secs = Math.floor(temptime - mins*60);
+    if (secs < 0) secs = 0;
     var finalTime = str_pad_left(mins,'0',2)+':'+str_pad_left(secs,'0',2);
 	
 	return finalTime;

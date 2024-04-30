@@ -11,6 +11,7 @@ var alllangs = {};
 var langstart = {};
 var langend = {};
 var wordtimes = {};
+var midiwords = {};
 
 var dictable = null;
 var DIC_LANG = 6;
@@ -36,7 +37,41 @@ function loadDictionaries(user){
     //find language in midi
     //find language in words "change language base" "change language to base"
     //need to use this more.  Probably more convenient.  
-    dictable = new DataTable('#DictionaryTable');
+//    dictable = new DataTable('#DictionaryTable');
+        //column dropdown filter.  
+        //not efficient but ok for now, really only want to call this once.  
+        dictable = new DataTable('#DictionaryTable', {
+            createdRow: function (row, data, dataIndex) {
+                this.api()
+                    .columns()
+                    .every(function () {
+                        let column = this;
+        
+                        // Create select element
+                        let select = document.createElement('select');
+                        select.add(new Option(''));
+                        column.footer().replaceChildren(select);
+        
+                        // Apply listener for user change in value
+                        select.addEventListener('change', function () {
+                            column
+                                .search(select.value, {exact: true})
+                                .draw();
+                        });
+        
+                        // Add list of options
+                        column
+                            .data()
+                            .unique()
+                            .sort()
+                            .each(function (d, j) {
+                                select.add(new Option(d));
+                            });
+                    });
+            },
+
+        });
+
     if (user==0){
         loadLanguages();
     }
@@ -113,7 +148,7 @@ function findWords(user){
     for (const [key, value] of Object.entries(langstart)) {	
         for (j=0; j<value.length; j++){
             //maxwordlength
-            temp = midiarray.slice(value[j], langend[key][j]);
+            temp = midiarray[user].slice(value[j], langend[key][j]);
 
             miditostrindex = [];
             tempstr = "";
@@ -136,16 +171,24 @@ function findWords(user){
                     console.log(indexes); // [2, 25, 27, 33]
                     if (typeof(wordtimes[key]) === "undefined"){                        
                         wordtimes[key] = {};
+                        midiwords[key] = {};
                     }
                     for (i=0; i<indexes.length; i++){
                         if (typeof(wordtimes[key][v3]) === "undefined"){
                             wordtimes[key][v3] = [];
+                            midiwords[key][v3] = [];
                         }
                         //get the index of this
                         wordindex = miditostrindex.indexOf(indexes[i]);
                         //value[j] is start of this language.
                         if (wordtimes[key][v3].indexOf(midiarray[user][ value[j] + wordindex ].time) < 0){
                             wordtimes[key][v3].push(midiarray[user][ value[j] + wordindex ].time);
+                            //push the whole midi struct.  to use later
+                            midiwords[key][v3].push(midiarray[user][value[j] + wordindex]);
+                            //we should have the user here to filter by.  words[key][v3][i].user
+                            //filters are lang, word, user
+                            //just get from the datatable and run though by time.  
+
                         }
                         //wordtimes[lang][word] = [time1, time2, time3]
                         //add this to the table.  

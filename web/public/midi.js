@@ -2,7 +2,7 @@ var midiarray = [[]];
 var currentmidiuser = 0;
 var notes = [];
 var midienabled = 0;
-var obj = {"note": 0, "velocity": 0, "time": 0, "duration": 0};
+var obj = {"note": 0, "velocity": 0, "time": 0, "duration": 0, "user": 0};
 
 //create sound easy
 const audioContext = new AudioContext();
@@ -324,7 +324,7 @@ function noteOn(note, velocity, abstime){
     console.log("Note On " + note + " at " + abstime + " vel " + velocity);
 	//make sound here.  
 	osc = playTone(midiToFreq(note, velocity));
-	var obj = {"note": note, "velocity": velocity, "time": abstime, "duration": 0, osc: osc};
+	var obj = {"note": note, "velocity": velocity, "time": abstime, "duration": 0, osc: osc, user: currentmidiuser};
 	
 	notes[note] = obj;
 //	midiarray.push(obj);
