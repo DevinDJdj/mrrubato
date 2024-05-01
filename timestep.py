@@ -75,7 +75,8 @@ et = []
 
 def get_authenticated_service(args):
   flow = flow_from_clientsecrets(CLIENT_SECRETS_FILE,
-    scope=YOUTUBE_UPLOAD_SCOPE,
+    scope=[YOUTUBE_UPLOAD_SCOPE],
+           #, "https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/plus.me"],
     message=MISSING_CLIENT_SECRETS_MESSAGE)
 
   storage = Storage("../%s-oauth2.json" % sys.argv[0])
@@ -83,6 +84,12 @@ def get_authenticated_service(args):
 
   if credentials is None or credentials.invalid:
     credentials = run_flow(flow, storage, args)
+ 
+ # r = requests.get("https://www.googleapis.com/oauth2/v3/userinfo",
+ #               headers = {"Authorization": "Bearer " + credentials.access_token})
+
+#  data = r.json()
+#  print(data)
 
   return build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION,
     http=credentials.authorize(httplib2.Http()))
@@ -90,6 +97,7 @@ def get_authenticated_service(args):
 
 channel_id = config.cfg['youtube']['CHANNELID']
 api_key = config.cfg['youtube']['APIKEY']
+
 def get_channel_stat() -> dict:
     url = f'https://www.googleapis.com/youtube/v3/channels?part=statistics&id={channel_id}&key={api_key}'
 
@@ -372,9 +380,13 @@ if __name__ == '__main__':
         addAdmins(args.admin)
         checkAdmins()
         
+#    youtube = get_authenticated_service(args)
+
     data = search(dt.strftime('%Y-%m-%dT%H:%M:%SZ'))
     print(data)
 
+
+    
     iterations = []    
     totalidx = 0
     #take local backup of full DB.  

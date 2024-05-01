@@ -170,3 +170,79 @@ Should be able to add a link to feedback easily.
 i.e. for enhancement/bug system.  
 Should probably have a registered JIRA (or equivalent), and add link to any tickets referenced.  
 
+
+
+**web/public/recent.html
+Need some status info for listings.  
+Also change the color in the timeline chart?  
+dont want filters for all?  
+--good start.  
+refer to this for RTDB and Datatable queries.  
+
+
+How much to unwind this and use multiple channels and the same server instance?  
+Does this even make sense?  
+
+Not sure where to attack this.   
+What is the max size instance we envision?  
+
+
+This would essentially be a set for each content creator.  
+
+FBAPIKEY
+create additional 
+credentials.Certificate
+YOUTUBE_API_KEY
+
+**record.py
+CLIENT_SECRETS_FILE
+create new instance of this.  
+
+Possibly could do with just Youtube_API_KEY and then generate entries based on that channel.  
+
+**record.py
+Really just need the storage bucket and the DB update privilege.  
+Need to really use the parameters from config.json.  
+Lets switch to use this before doing more in record.py
+
+
+**web/database.rules.json
+anyone can write comments.  
+admin can write all.  
+creator can write?
+if we have /misterrubato/uid/videoid will this harm anything?  
+With this, the user will default to their own videos.  
+Then they can browse/search any of the other creators.  
+creator will be allowed to edit /misterrubator/uid/*
+Fairly large change.  
+Think on it.  
+I think the limitation on the RTDB search prevents this structure.  
+Just store the creator: UID under the videoid?  
+Then we can filter all with specific uid values.  
+Unfortunately this doesnt solve any problem except minor one.  
+
+Maybe this will work, then we can just use uid in the structure.  
+/misterrubato/videoid/
+".write": "root.child('uid').val() === auth.uid"
+With this and the record.py, should only be able to update videos which uid created.  
+
+kind of a hack but maybe this will work:
+			"$videoid":{				
+				"snippet": {
+					".write": "!data.exists() || auth.token.admin === true || auth.uid === data.parent().child('uid').child('uid').val()"
+				},
+				"uid": {
+					".write": "!data.exists()"
+				},
+
+
+have to test if it is actually working.  
+
+This allows to freely add videos even with different credentials, but still retain integrity of DB in case of bad actors.  
+I think.  
+
+
+
+**analyze/analyze.py
+kk and ks2 is good but rs and ks probably not so useful.  
+What do we want to visualize?  

@@ -142,6 +142,7 @@ YOUTUBE_API_SERVICE_NAME = "youtube"
 YOUTUBE_API_VERSION = "v3"
 
 GOOGLE_PLUS_SCOPE = "https://www.googleapis.com/auth/plus.me"
+#https://www.googleapis.com/auth/userinfo.profile
 GOOGLE_PLUS_SERVICE_NAME = "plus"
 GOOGLE_PLUS_VERSION = "v1"
 
@@ -270,6 +271,8 @@ def addtodb(videoid):
     if (len(datav['items']) > 0):
         GroupName = ""
         title = datav['items'][0]['snippet']['title']
+        #add userid.  
+        #datav['items'][0]['uid'] = me
         gs = title.find("(")
         ge = title.find(")")
         url = "https://www.youtube.com/watch?v=" + videoid

@@ -1,8 +1,17 @@
 {
 	"rules": {
 		"misterrubato": {
-			".indexOn": ["snippet/title", "snippet/description", "snippet/publishedAt", "snippet/channelId", "updated"],
-			"$videoid":{
+			".indexOn": ["snippet/title", "snippet/description", "snippet/publishedAt", "snippet/channelId", "updated", "uid/uid"],
+			"$videoid":{				
+				"snippet": {
+					".write": "!data.exists() || auth.token.admin === true || auth.uid === data.parent().child('uid').child('uid').val()"
+				},
+				"stats": {
+					".write": "!data.exists() || auth.token.admin === true || auth.uid === data.parent().child('uid').child('uid').val()"
+				},
+				"uid": {
+					".write": "!data.exists()"
+				},
 				"comments": {
 					"$uid": {
 						".write": "$uid === auth.uid"

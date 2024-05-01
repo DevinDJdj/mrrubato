@@ -329,6 +329,8 @@ var isadmin = false;
 					//we can check this prior to updating.  
 				});				
 				console.log(user);
+				//if not set, set the DB uid.  
+
 				//not sure why we need this, but the asynchronous check is not getting kicked off.  
 				   if (user) {
 					// User is signed in, see docs for a list of available properties
@@ -595,7 +597,20 @@ function addUser(user){
 	pic = user.photoURL;
 	console.log(displayname + " " + email + " " + phone + " " + pic);
     //add to DB.  
-	uRef = firebase.database().ref('/users/' + uid)
+	
+	uRef2 = firebase.database().ref('/misterrubato/' + video + '/uid');
+	firebase.database().ref('/misterrubato/' + video + '/uid').once('value')
+					  .then((snapshot) => {
+						if (snapshot.exists()) {
+
+						} else {
+							
+							obj = {"uid": uid};	
+							uRef2.set(obj);
+						}
+					});
+
+	uRef = firebase.database().ref('/users/' + uid);
 	firebase.database().ref('/users/' + uid).once('value')
 					  .then((snapshot) => {
 						now = new Date();
