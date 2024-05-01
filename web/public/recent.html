@@ -33,7 +33,28 @@
   <br>
   <table>
     <tr><td>
-    <div id="recent"></div>
+		<div id="recent" style="width: 100%;height: 180px;overflow:auto;">
+			<table id="RecentTable" class="display" style="width: 100%">
+				<thead>
+					<tr>
+						<th>id</th>
+						<th>date</th>
+						<th>Title</th>
+						<th>Status</th>
+						<th>Desc</th>
+					</tr>
+				</thead>
+				<tfoot>
+					<tr>
+						<th>id</th>
+						<th>date</th>
+						<th>Title</th>
+						<th>Status</th>
+						<th>Desc</th>
+					</tr>
+				</tfoot>
+			</table>	
+	</div>
 	</td></tr>
     <tr><td width="100%" align="right">
 	<div id="timeline" style="height:300px;"></div>
@@ -55,7 +76,12 @@
 
 		<script src='https://apis.google.com/js/platform.js' async defer></script>
 
-<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
+		<link href="js/datatables/datatables.min.css" rel="stylesheet">
+ 
+		<script src="js/datatables/datatables.min.js"></script>
+		
+		<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
   <script>
   //firebase deploy to deploy this.  
   //usage:
@@ -65,7 +91,7 @@
 // https://stackoverflow.com/questions/901115/how-can-i-get-query-string-values-in-javascript
 var urlParams;
 var title = '';
-
+var recenttable = null;
 //setup https://www.youtube.com/watch?v=3jZ5vnv-LZc
 //then restrict the key if needed to your site and youtube data API.  
 
@@ -156,7 +182,7 @@ var title = '';
 		var vRef = firebase.database().ref(dbname);
 		if (typeof(uid) != "undefined" && uid !==null){
 		}
-		vRef.on("value", function(snapshot) {
+		vRef.orderByChild('snippet/publishedAt').limitToLast(50).on("value", function(snapshot) {
 			console.log(snapshot.val());
 			videojson = snapshot.val();
 			vids = getRecent(videojson);
@@ -173,7 +199,70 @@ var title = '';
       });
 
 
+function loadRecentTable(){
+	recenttable = new DataTable('#RecentTable', {
+		order: [[1, 'desc']],
+		columns: [null, null, null, null, { width: 500 }],
+		createdRow: function (row, data, dataIndex) {
+			this.api()
+				.columns([2,3])
+				.every(function () {
+					let column = this;
+					
+					// Create select element
+					let select = document.createElement('select');
+					select.add(new Option(''));
+					column.footer().replaceChildren(select);
+	
+					// Apply listener for user change in value
+					select.addEventListener('change', function () {
+						column
+							.search(select.value, {exact: true})
+							.draw();
+					});
+	
+					// Add list of options
+					column
+						.data()
+						.unique()
+						.sort()
+						.each(function (d, j) {
+							select.add(new Option(d));
+						});
+				});
+		},
+
+	});
+
+
+}
+
+function addRecentRow(recentrow) {
+	var aTag = document.createElement('a');
+	aTag.setAttribute('href',domain + '/analyze.html?video=' + recentrow.id);
+	aTag.innerText = " " + recentrow.snippet.title;
+	desc = recentrow.snippet.description;
+	fnd = desc.indexOf("MIDI");
+	if (fnd < 0){
+		fnd = recentrow.snippet.description.length -1
+	}
+	desc = desc.substring(0,fnd);
+
+	recenttable.row
+        .add([
+            aTag,
+			recentrow.snippet.publishedAt,
+			recentrow.snippet.title,
+			recentrow.status.privacyStatus,
+//			"","","",
+			desc
+        ])
+        .draw(false);    
+}
+
+
 function getRecent(videojson){
+	loadRecentTable();
     vids = [];
 	for (const [key, value] of Object.entries(videojson)) {	
 	    //sort by date and list in some way.  
@@ -194,12 +283,16 @@ function getRecent(videojson){
 	//now display the recent videos which are not published and which are published etc.  
 
 	var mydiv = document.getElementById("recent");
+	/*
 	while (mydiv.firstChild) {
       mydiv.removeChild(mydiv.lastChild);
     }
-	maxcnt = 5;
+	*/
+	maxcnt = 100;
 	for (it=0; it< vids.length && it < maxcnt; it++){
 		var obj = vids[it];
+		addRecentRow(obj);
+		/*
 		var aTag = document.createElement('a');
 		aTag.setAttribute('href',domain + '/analyze.html?video=' + obj.id);
 		
@@ -214,6 +307,7 @@ function getRecent(videojson){
 		mydiv.appendChild(aTag);
 		var br = document.createElement("br");
 		mydiv.appendChild(br);
+		*/
 	}
 	return vids;
 	

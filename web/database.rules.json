@@ -1,7 +1,7 @@
 {
 	"rules": {
 		"misterrubato": {
-			".indexOn": ["snippet/title", "snippet/description", "snippet/publishedAt", "snippet/channelId"],
+			".indexOn": ["snippet/title", "snippet/description", "snippet/publishedAt", "snippet/channelId", "updated"],
 			"$videoid":{
 				"comments": {
 					"$uid": {
@@ -11,10 +11,10 @@
 			}
 		},
 		"watch": {
-			".indexOn": ["snippet/title", "snippet/description", "snippet/addedAt", "snippet/publishedAt"]
+			".indexOn": ["snippet/title", "snippet/description", "snippet/addedAt", "snippet/publishedAt", "updated"]
 		},	  
 		"users": {
-			".indexOn": ["name"],
+			".indexOn": ["name", "firstlogin", "lastlogin"],
 			"$uid": {
 				".write": "$uid === auth.uid",
 				"settings": {

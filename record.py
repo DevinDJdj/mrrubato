@@ -141,6 +141,10 @@ YOUTUBE_SCOPE = "https://www.googleapis.com/auth/youtube"
 YOUTUBE_API_SERVICE_NAME = "youtube"
 YOUTUBE_API_VERSION = "v3"
 
+GOOGLE_PLUS_SCOPE = "https://www.googleapis.com/auth/plus.me"
+GOOGLE_PLUS_SERVICE_NAME = "plus"
+GOOGLE_PLUS_VERSION = "v1"
+
 # This variable defines a message to display if the CLIENT_SECRETS_FILE is
 # missing.
 MISSING_CLIENT_SECRETS_MESSAGE = """
@@ -179,8 +183,17 @@ VALID_PRIVACY_STATUSES = ("public", "private", "unlisted")
 def get_authenticated_service(args, myscope=YOUTUBE_SCOPE):
   flow = flow_from_clientsecrets(CLIENT_SECRETS_FILE,
     scope=myscope,
+#    scope=[GOOGLE_PLUS_SCOPE, myscope],
     message=MISSING_CLIENT_SECRETS_MESSAGE)
   
+
+#  userservice = build(GOOGLE_PLUS_SERVICE_NAME, GOOGLE_PLUS_VERSION, http=http)
+#  userpeople = userservice.people()
+#  me = userpeople.get(userId="me").execute()
+
+#  print(me)
+  #then use this to add uid to the video info.  
+
 
   storage = Storage("%s-oauth2.json" % sys.argv[0])
   credentials = storage.get()
@@ -707,6 +720,7 @@ if __name__ == '__main__':
     
     
     creda = credentials.Certificate("../misterrubato-test.json")
+    #auth.current_user['localId']
     initialize_app(creda, {'storageBucket': 'misterrubato-test.appspot.com', 'databaseURL':databaseURL})    
 
     latest_file = get_latest_file()    
@@ -721,7 +735,7 @@ if __name__ == '__main__':
     
     pathnames = fn[0].split('\\')
     print(pathnames)
-    midifile = uploadmidi(fn[0], pathnames[len(pathnames)-1])
+    midifile = uploadmidi(fn[0], pathnames[len(pathnames)-1]) #fb bucket upload
     
     
     args.description += '\r\n\r\nLANG:' + mk.getLangs()
@@ -740,7 +754,7 @@ if __name__ == '__main__':
     args.description += '\r\n\r\nTRANSCRIPT:' + transcribe_file + '\r\n'
 
     #should have some kind of check here.      
-    mediafile = uploadmediafile(fn[0], pathnames[len(pathnames)-1] )
+    mediafile = uploadmediafile(fn[0], pathnames[len(pathnames)-1] ) #fb bucket upload.  
     args.description += '\r\n\r\nMEDIAFILE:' + mediafile + '\r\n'
 
     print(args.description)
