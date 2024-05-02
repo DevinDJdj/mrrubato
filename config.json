@@ -12,6 +12,7 @@
 	},
     "youtube":{
 		"enabled": true,
+		"CLIENT_SECRETS_FILE": CLIENT_SECRETS_FILE,
 		"APIKEY": APIKEY,
 		"CHANNELID": CHANNELID,
 		"MY_PLAYLIST": MY_PLAYLIST, 
@@ -25,6 +26,7 @@
         "APIKEY":OPENAI_KEY
     },
     "firebase":{
+		"credentialsfile": CREDENTIALS_FILE,
 	    "fbconfig": {  
 		    "apiKey": FBAPIKEY,
             "authDomain": FBAUTHDOMAIN,

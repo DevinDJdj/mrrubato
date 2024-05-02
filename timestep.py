@@ -42,7 +42,7 @@ from firebase_admin import firestore
 from firebase_admin import credentials
 from firebase_admin import initialize_app, storage, auth
 
-CLIENT_SECRETS_FILE = "./../client_secrets.json"
+CLIENT_SECRETS_FILE = config.cfg['youtube']['CLIENT_SECRETS_FILE']
 
 # This OAuth 2.0 access scope allows an application to upload files to the
 # authenticated user's YouTube channel, but doesn't allow other types of access.
@@ -371,10 +371,10 @@ if __name__ == '__main__':
     #unlist anything older than this.  
 
     
-    databaseURL = "https://misterrubato-test-default-rtdb.firebaseio.com/"
+    databaseURL = config.cfg["firebase"]["fbconfig"]["databaseURL"]
     # Init firebase with your credentials
-    creda = credentials.Certificate("../misterrubato-test.json")
-    initialize_app(creda, {'storageBucket': 'misterrubato-test.appspot.com', 'databaseURL':databaseURL})    
+    creda = credentials.Certificate(config.cfg["firebase"]["credentialsfile"])
+    initialize_app(creda, {'storageBucket': config.cfg["firebase"]["fbconfig"]["storageBucket"], 'databaseURL':databaseURL})    
     
     if args.admin is not None and args.admin !="":
         addAdmins(args.admin)
@@ -537,14 +537,16 @@ if __name__ == '__main__':
                 
                 mystatus = {}         
                 mystatus['privacyStatus'] = "private"
-                
-                videos_update_response = youtube.videos().update(
-                    part='status',
-                    body=dict(
-                      status=mystatus,
-                      id=videoid
-                    )).execute()            
-                print(videos_update_response)
+                try: 
+                    videos_update_response = youtube.videos().update(
+                        part='status',
+                        body=dict(
+                        status=mystatus,
+                        id=videoid
+                        )).execute()            
+                    print(videos_update_response)
+                except:
+                    print('error updating video' + videoid)
 
 
     getCodeHistory()

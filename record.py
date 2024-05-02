@@ -132,7 +132,7 @@ RETRIABLE_STATUS_CODES = [500, 502, 503, 504]
 #   https://developers.google.com/youtube/v3/guides/authentication
 # For more information about the client_secrets.json file format, see:
 #   https://developers.google.com/api-client-library/python/guide/aaa_client_secrets
-CLIENT_SECRETS_FILE = "./../client_secrets.json"
+CLIENT_SECRETS_FILE = config.cfg['youtube']['CLIENT_SECRETS_FILE']
 
 # This OAuth 2.0 access scope allows an application to upload files to the
 # authenticated user's YouTube channel, but doesn't allow other types of access.
@@ -456,11 +456,11 @@ if __name__ == '__main__':
     print("delete previousIteration")
 
 
-    databaseURL = "https://misterrubato-test-default-rtdb.firebaseio.com/"
+    databaseURL = config.cfg["firebase"]["fbconfig"]["databaseURL"]
     if (args.rerun == "true"):
         # Init firebase with your credentials
-        creda = credentials.Certificate("../misterrubato-test.json")
-        initialize_app(creda, {'storageBucket': 'misterrubato-test.appspot.com', 'databaseURL':databaseURL})    
+        creda = credentials.Certificate(config.cfg["firebase"]["credentialsfile"])
+        initialize_app(creda, {'storageBucket': config.cfg["firebase"]["fbconfig"]["storageBucket"], 'databaseURL':databaseURL})    
         args.file = get_latest_file()
         tempfile = open('desc.txt', 'r')
         args.description = tempfile.read()
