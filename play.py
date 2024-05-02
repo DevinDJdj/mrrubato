@@ -96,7 +96,7 @@ if __name__ == '__main__':
     for i, track in enumerate(mid.tracks):
         print('Track {}: {}'.format(i, track.name))
         for msg in mid.play():
-            msg.velocity = round(msg.velocity / 2)
+  #          msg.velocity = round(msg.velocity / 2)
             outport.send(msg)
             print(msg)
     

@@ -722,9 +722,11 @@ if __name__ == '__main__':
                     #output.send(omsg)    
     
     
-    creda = credentials.Certificate("../misterrubato-test.json")
+    databaseURL = config.cfg["firebase"]["fbconfig"]["databaseURL"]
+        # Init firebase with your credentials
+    creda = credentials.Certificate(config.cfg["firebase"]["credentialsfile"])
     #auth.current_user['localId']
-    initialize_app(creda, {'storageBucket': 'misterrubato-test.appspot.com', 'databaseURL':databaseURL})    
+    initialize_app(creda, {'storageBucket': config.cfg["firebase"]["fbconfig"]["storageBucket"], 'databaseURL':databaseURL})    
 
     latest_file = get_latest_file()    
     args.file = latest_file
