@@ -29,9 +29,9 @@ import os
 from pathlib import Path
 
 DATA_PATH="data/"
-DATA_PATH="/home/devin/server/transcription/output/"
+DATA_PATH="/home/devin/mrrubato/server/transcription/output/"
 DB_PATH = "vectorstores/db/"
-QUERY_DATA_PATH="/home/devin/server/inquiries/"
+QUERY_DATA_PATH="/home/devin/mrrubato/server/inquiries/"
 
 def create_vector_db():
     loader = PyPDFDirectoryLoader(DATA_PATH)

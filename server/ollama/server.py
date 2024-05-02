@@ -28,7 +28,7 @@ from pathlib import Path
 import glob
 import os
 
-QUERY_DATA_PATH="/home/devin/server/inquiries/"
+QUERY_DATA_PATH="/home/devin/mrrubato/server/inquiries/"
 
 prompt_template = """[INST]<<SYS>>Use the following pieces of context to answer the question at the end. Please follow the following rules:
 1. If you don't know the answer, try to find sources which include **coherent thoughts** relevant to the question. 
