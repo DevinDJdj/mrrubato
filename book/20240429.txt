@@ -190,13 +190,17 @@ What is the max size instance we envision?
 This would essentially be a set for each content creator.  
 
 FBAPIKEY
+https://console.cloud.google.com/iam-admin/serviceaccounts/details
 create additional 
 credentials.Certificate
+for YoutubeMaintenance
 YOUTUBE_API_KEY
+https://console.cloud.google.com/apis/credentials
 
 **record.py
 CLIENT_SECRETS_FILE
 create new instance of this.  
+https://console.cloud.google.com/apis/credentials
 
 Possibly could do with just Youtube_API_KEY and then generate entries based on that channel.  
 
@@ -246,3 +250,108 @@ I think.
 **analyze/analyze.py
 kk and ks2 is good but rs and ks probably not so useful.  
 What do we want to visualize?  
+
+**web/public/speech.js
+Need commands here.  
+
+**web/public/midi.js
+Keep recentmidi commands here to combine with speech.js
+Specific keyset to activate and deactivate so we know if this should go to feedback or not.  
+
+For this just use 48 and 49 I guess in this interface.  
+Mic on/off -> 71, 72?  
+Need this in the UI, need session variable here if possible.  
+Save this in user settings /users/uid/settings....
+
+**web/public/config.js
+Default here, then load from DB, or just generate defaults when user is generated.  
+
+48
+create word xxxxxxx
+55, 56 ...
+49
+
+on 49 generate the action.  
+Or use time lag?  This is more natural but harder implementation.  
+
+Can we use words like this? 
+55, 56, 57
+and 
+55, 56
+
+With time lag detection?  
+Or do we just allow free-form and then try to distinguish based on context?  
+Perhaps this is the better solution but it leaves a lot of ambiguity.  
+Based on timings and context perhaps we can distinguish.  
+Or start search using the longer word, but still use timings and context to separate.  
+Create word association map for any language.  
+This will be our poor mans "context" detection.  
+
+How do we handle when the input stream is paused?  
+just use microsecond increments I guess.  
+
+Need feedback for recent commands in text format.  
+These will be associated with midi segments, and can be deleted by the user if they were unintended.  
+So basically a transcript by time, not sure if we can do this easily with the Babylon graphical representation or not.  
+
+
+Should be a by time view if preferred instead of a by word view and easy deletion.  
+Maybe just make separate records for each time instead of concatenating.  
+This would be easier to filter and play anyway.  
+
+Or this datatable should highlight the words/times which are in the transcript at the current time of the input stream.  
+Just have an ID associated and then change the style?  
+
+getCurrentMidi(window=10 secs)
+from Midi generate ID, and highlight segments.  Add delete icon for each (confirmation dialog?)
+--this kind of works.  Not updating canvas at the moment.  
+But this may be good to follow along some things.  
+Not entirely sure why this is necessary.  
+
+
+
+generate word2vec model for each language?  
+https://radimrehurek.com/gensim/models/word2vec.html
+
+model = Word2Vec(sentences, min_count=10)
+https://rare-technologies.com/word2vec-tutorial/
+
+model.similarity('woman', 'man')
+
+Use time distance as a parameter for this.  
+Essentially create a word2vec type algorithm.  
+Or adopt one in javascript.  
+https://github.com/remykarem/word2vec-demo
+Probably something like this is where we want to start.  
+Simple enough to follow easily.  
+
+Others:
+https://github.com/YaleDHLab/wordmap
+
+
+https://www.misterrubato.com/test/word2vec-demo/index.html
+
+Load this for all transcription data?  
+Anything interesting?
+
+
+**web/public/analyze.html
+Can we add a date/time to each midi note?  
+This would be useful.  
+using JZZ lib to load this.  
+
+Lets allow for multiple tracks to be recorded by the same user.  
+so we need to make midiarray a 3d array
+[user][track][...]
+Always default to the first track, then we leave this open to explore in the future without actually coding it.  
+But I can see use-cases.  
+
+
+
+Why are we saving the data structure as midi anyway, well I guess having a common format is ok in case of reuse.  
+
+
+**server/ollama/server.py
+really we want this to be interchangable and we want to use more recent base model.  
+
+

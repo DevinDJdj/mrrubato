@@ -24,6 +24,19 @@ function helpme(){
 
 }
 
+//right now there is no chatting here, we are just using the comments.
+function Chat(transcript){
+    if (transcript.startsWith("help")){
+
+    }
+    else if (transcript.startsWith("create language")){
+        
+    }
+    //...
+    addComment(transcript, helpme());
+}
+
+
 function addComment(comment, commenttime){
     //find where to splice and then reset the notes
     //notesarray.splice(i, 0, comment);

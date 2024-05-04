@@ -13,10 +13,17 @@ var langend = {};
 var wordtimes = {};
 var midiwords = {};
 
+
+var currentwtindex = 0;
+var currentvidtime = 0;
+var wordplay = -1;
+
+var vidbuffer = 10;
 var dictable = null;
-var DIC_LANG = 6;
+var DIC_LANG = 7;
 var DIC_WORD = 0;
-var DIC_TIMES = 3;
+var DIC_PLAYALL = 1;
+var DIC_TIMES = 4;
 //config.js keybot
 //do we want to allow for some function to adjust keybot/keytop?  
 
@@ -140,7 +147,10 @@ function loadDictionaries(user){
 
     //now go through the langstart and langend looking for words.  
     //need a better mechanism but for now just timeout to wait for all loadLanguage calls to complete.  
-    setTimeout(function(){findWords(user);}, 5000);
+    setTimeout(function(){findWords(user);
+        //set up to highlight video times
+        setInterval(function(){updateVidTimes(user);}, 1000);        
+    }, 5000);
 
 }
 
@@ -238,7 +248,87 @@ function loadLanguage(lang, user){
 //get languages from feedback midi.  search 
 //dropdown for language selection, then load meanings into table.  
 //load languages.js
+function getHighlightArray(t, dur, user=0, trk=0){
+    
+    i = Math.round(midiarray[user].length*t/dur);
 
+    if (i>0 && i<midiarray[user].length-1 && midiarray[user][i].time < t-vidbuffer*1000){
+        while (i < midiarray[user].length-1 && midiarray[user][i].time < t-vidbuffer*1000){
+            i++;
+        }
+        return i;
+    }
+    else {
+        while (i>=0 && midiarray[user][i].time > t-vidbuffer*1000){
+            i--;
+        }
+        return i+1;
+    }
+}
+
+function updateVidTimes(user=0, trk=0){
+    //update video times for the below link IDs.  
+    dur = 0;
+    if ((useyoutube || watch) && player.getCurrentTime){
+        const now = Date.now();
+        var temptime = player.getCurrentTime();
+        abstime = Math.round(temptime * 1000);
+        dur = player.getDuration()*1000;
+    }
+    else{
+        //use the other player time.  
+        const now = Date.now();
+        var temptime = player2.currentTime;
+        abstime = Math.round(temptime * 1000);
+        dur = player2.duration*1000;
+    }
+    currentvidtime = abstime;
+    start = getHighlightArray(abstime, dur, user, trk);
+
+
+    for (i=start; i< midiarray[user].length; i++){
+        //expect this in order.  
+        //need better search algorithm here.  
+        if (midiarray[user][i].time > abstime + vidbuffer*1000){
+            break;
+        }
+        //highlight the IDs for this time.  
+        document.getElementById("feed" + Math.round(midiarray[user][i].time)).style.color = "red";
+    }
+}
+
+function seekNext(lang, word){
+    if (wordplay >= 0){
+        wt = wordtimes[lang][word];
+        if (currentwtindex > -1 && currentwtindex < wt.length){
+            if (currentvidtime > wt[currentwtindex]+vidbuffer*1000){
+                currentwtindex++;
+                seekTo((wt[currentwtindex]-vidbuffer*1000)/1000);
+                setTimeout(() => {seekNext(lang, word)}, vidbuffer*2*1000+2000);  //add one second so we dont time out because of lag.  
+            }
+            else{
+                //not in sync.  
+//                setTimeout(() => {seekNext(lang, word)}, 2000);
+            }
+        }
+    }
+
+}
+
+function seekAll(lang, word, index=0){
+
+    if (wordplay >= 0){
+        wt = wordtimes[lang][word];
+        if (currentwtindex > -1 && currentwtindex < wt.length){
+            seekTo((wt[currentwtindex]-vidbuffer*1000)/1000);
+            setTimeout(() => {seekNext(lang, word)}, vidbuffer*2*1000+2000); //add one second so we dont time out because of lag. 
+        }
+        else{
+            wordplay = -1;
+            currentwtindex = -1;
+        }
+    }
+}
 
 function setTimes(lang, word, times){
 //    table.row( 0 ).data( newData ).draw();
@@ -251,12 +341,19 @@ function setTimes(lang, word, times){
             for (i=0; i<times.length; i++){
                 //think this is milliseconds.  
                 //think this should display ok.  
-                hyperlink += '<a href="#" onclick="seekTo(' + Math.round(times[i]/1000) + ');">' + Math.round(times[i]/1000) + '</a>, ';
+                //use id link feed + time for highlight operations.  Highlight the time on timer.  
+                hyperlink += '<a id="feed' + Math.round(times[i]) + '" href="#" onclick="seekTo(' + Math.round(times[i]/1000) + ');">' + Math.round(times[i]/1000) + '</a>, ';
                 //this is a listing of what is in the pianoroll.  
                 //also put here the color/icon/glyph/kanji of the word which is being displayed in the piano roll.  
                 //how do we associate the user images?  
             }    
             d[DIC_TIMES] = hyperlink;
+            d[DIC_PLAYALL] = '<a href="#" onclick="wordplay=1;seekAll(\'' + lang + '\', \'' + word + '\');"><img src="images/play.png" /></a>';
+            d[DIC_PLAYALL] += '<a href="#" onclick="wordplay=-1;"><img src="images/pause.png" /></a>';
+            d[DIC_PLAYALL] += '<a href="#" onclick="wordplay=1;currentwtindex=currentwtindex-1;seekAll(\'' + lang + '\', \'' + word + '\');"><img src="images/backward.png" /></a>';
+            d[DIC_PLAYALL] += '<a href="#" onclick="wordplay=1;currentwtindex=currentwtindex+1;seekAll(\'' + lang + '\', \'' + word + '\');"><img src="images/forward.png" /></a>';
+            d[DIC_PLAYALL] += '<a href="#" onclick="wordplay=-1;currentwtindex=-1;"><img src="images/stop.png" /></a>';
+            //unable to track multiple indexes multiple with separate stop buttons, so probably should just have one stop button.  
             this.data(d);
             this.invalidate(); // invalidate the data DataTables has cached for this row
         }
@@ -269,6 +366,7 @@ function addDictRow(lang, word, row, user) {
     dictable.row
         .add([
             word,
+            "", //play all
             row['midi'],
             user,
             "", //times, will need to update this.  
