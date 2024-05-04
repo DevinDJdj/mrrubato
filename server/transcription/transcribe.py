@@ -29,6 +29,8 @@ import urllib.request
 
 from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
 
+myhome = os.environ['HOME']
+
 
 def get_timestamp(s):
     mins = math.floor(s/60)
@@ -52,7 +54,7 @@ def transcribe_fromyoutube(videoid="ZshYVeNHkOM", model=None, mediafile=None, st
     if mediafile != None and mediafile != "":
         #should work with this.  
         #see if transcribe is working still after update.  
-        urllib.request.urlretrieve(mediafile, "output/" + videoid + "/" + videoid + ".mp4")
+        urllib.request.urlretrieve(mediafile, myhome + "output/" + videoid + "/" + videoid + ".mp4")
     else:
         youtube_video_url = "https://www.youtube.com/watch?v=" + videoid
         youtube_video_content = YouTube(youtube_video_url)

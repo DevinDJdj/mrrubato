@@ -3,7 +3,7 @@
 #python ./server/transcription/server.py
 #pip install moviepy
 import sys
-
+import os
 from transcribe import transcribe_fromyoutube
 
 from flask import Flask, request, session, g, json
@@ -13,6 +13,8 @@ import pandas as pd
 from datetime import datetime
 
 import subprocess
+
+myhome = os.environ['HOME']
 
 app = Flask(__name__)
 CORS(app)
@@ -49,8 +51,8 @@ def transcribe():
         print(e)
         ret = 'error'
     if ret !='error' and ret !='':
-        subprocess.call('python ../ollama/load.py --video ' + video, shell=True)
+        subprocess.call('python ' + myhome + '/mrrubato/server/ollama/load.py --video ' + video, shell=True)
     return ret
 
 if (__name__ == '__main__'):
-    app.run(host='0.0.0.0', port=8001, ssl_context=('../../private/cert.pem', '../../private/secret.key'))
+    app.run(host='0.0.0.0', port=8001, ssl_context=(myhome + '/private/cert.pem', myhome + '/private/secret.key'))

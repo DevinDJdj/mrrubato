@@ -28,10 +28,11 @@ from oauth2client.tools import argparser, run_flow
 import os
 from pathlib import Path
 
+myhome = os.getenv("HOME")
 DATA_PATH="data/"
-DATA_PATH="/home/devin/mrrubato/server/transcription/output/"
-DB_PATH = "vectorstores/db/"
-QUERY_DATA_PATH="/home/devin/mrrubato/server/inquiries/"
+DATA_PATH=myhome + "/mrrubato/data/transcription/output/"
+DB_PATH = myhome + "/mrrubato/data/vectorstores/db/"
+QUERY_DATA_PATH=myhome + "/mrrubato/data/inquiries/"
 
 def create_vector_db():
     loader = PyPDFDirectoryLoader(DATA_PATH)

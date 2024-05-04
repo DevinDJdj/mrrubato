@@ -6,3 +6,15 @@ pytube==15.0.0
 triton>=2.0.0
 torch
 openai-whisper
+langchain
+fastembed
+chromadb
+BeautifulSoup4
+langchainhub
+pypdf
+chainlit
+moviepy
+pydub
+speechrecognition
+pytube
+flask_cors

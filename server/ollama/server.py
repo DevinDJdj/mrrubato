@@ -28,7 +28,8 @@ from pathlib import Path
 import glob
 import os
 
-QUERY_DATA_PATH="/home/devin/mrrubato/server/inquiries/"
+myhome = os.environ['HOME'] + "/mrrubato/data"
+QUERY_DATA_PATH=myhome + "/inquiries/"
 
 prompt_template = """[INST]<<SYS>>Use the following pieces of context to answer the question at the end. Please follow the following rules:
 1. If you don't know the answer, try to find sources which include **coherent thoughts** relevant to the question. 
@@ -82,9 +83,9 @@ def qa_bot(topic):
   print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
   model = load_llm()
   print("loaded model")
- DB_PATH = "vectorstores/db/"
+ DB_PATH = myhome + "/vectorstores/db/"
  #topic should exist.  
- DB_PATH = "vectorstores/db/" + topic + "/"
+ DB_PATH = myhome + "/vectorstores/db/" + topic + "/"
  print(DB_PATH)
  vectorstore = Chroma(persist_directory=DB_PATH, embedding_function=myEmbeddings)
 # vectorstore = Chroma(persist_directory=DB_PATH, embedding_function=myEmbeddings)
@@ -327,4 +328,4 @@ def analyze():
     return ret
 
 if (__name__ == '__main__'):
-    app.run(host='0.0.0.0', port=8000, ssl_context=('../../private/cert.pem', '../../private/secret.key'))
+    app.run(host='0.0.0.0', port=8000, ssl_context=(os.environ['HOME'] + '/private/cert.pem', os.environ['HOME'] + '/private/secret.key'))
