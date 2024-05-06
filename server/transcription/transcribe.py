@@ -30,7 +30,7 @@ import urllib.request
 from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
 
 myhome = "/home/devin"
-
+OUTPUT_DIR = myhome + "/data/transcription/output/"
 
 def get_timestamp(s):
     mins = math.floor(s/60)
@@ -54,7 +54,7 @@ def transcribe_fromyoutube(videoid="ZshYVeNHkOM", model=None, mediafile=None, st
     if mediafile != None and mediafile != "":
         #should work with this.  
         #see if transcribe is working still after update.  
-        urllib.request.urlretrieve(mediafile, myhome + "output/" + videoid + "/" + videoid + ".mp4")
+        urllib.request.urlretrieve(mediafile, OUTPUT_DIR + videoid + "/" + videoid + ".mp4")
     else:
         youtube_video_url = "https://www.youtube.com/watch?v=" + videoid
         youtube_video_content = YouTube(youtube_video_url)
@@ -69,14 +69,14 @@ def transcribe_fromyoutube(videoid="ZshYVeNHkOM", model=None, mediafile=None, st
         audio_stream = audio_streams[1]
         print(audio_stream)
 
-        audio_stream.download(myhome + "output/" + videoid)
+        audio_stream.download(OUTPUT_DIR + videoid)
 
-    list_of_files = glob.glob(myhome + 'output/' + videoid + '/*') # * means all if need specific format then *.csv
+    list_of_files = glob.glob(OUTPUT_DIR + videoid + '/*') # * means all if need specific format then *.csv
     latest_file = max(list_of_files, key=os.path.getctime)
     print(latest_file)
     text, times = transcribe_whisper(latest_file, model)
 
-    f = open(myhome + "output/" + videoid + ".txt", "w")
+    f = open(OUTPUT_DIR + videoid + ".txt", "w")
 
     prev = ""
     ignore = {}
