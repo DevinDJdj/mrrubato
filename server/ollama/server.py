@@ -28,7 +28,7 @@ from pathlib import Path
 import glob
 import os
 
-myhome = os.environ['HOME'] + "/mrrubato/data"
+myhome = "/home/devin/mrrubato/data"
 QUERY_DATA_PATH=myhome + "/inquiries/"
 
 prompt_template = """[INST]<<SYS>>Use the following pieces of context to answer the question at the end. Please follow the following rules:

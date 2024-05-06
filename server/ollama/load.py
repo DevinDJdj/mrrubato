@@ -28,7 +28,7 @@ from oauth2client.tools import argparser, run_flow
 import os
 from pathlib import Path
 
-myhome = os.getenv("HOME")
+myhome = "/home/devin"
 DATA_PATH="data/"
 DATA_PATH=myhome + "/mrrubato/data/transcription/output/"
 DB_PATH = myhome + "/mrrubato/data/vectorstores/db/"

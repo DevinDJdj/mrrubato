@@ -29,7 +29,7 @@ import urllib.request
 
 from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
 
-myhome = os.environ['HOME']
+myhome = "/home/devin"
 
 
 def get_timestamp(s):

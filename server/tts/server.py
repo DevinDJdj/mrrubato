@@ -32,7 +32,7 @@ from datetime import datetime
 import subprocess
 
 
-myhome = os.environ['HOME']
+myhome = "/home/devin"
 
 TACOTRON_DIR = myhome + '/TSS/recipes/ljspeech/tacotron2-DCA/'
 
