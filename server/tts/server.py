@@ -29,8 +29,12 @@ import whisper
 import pandas as pd
 from datetime import datetime
 
-TACOTRON_DIR = './coqui/TSS/recipes/ljspeech/tacotron2-DDC/'
 import subprocess
+
+
+myhome = os.environ['HOME']
+
+TACOTRON_DIR = myhome + '/TSS/recipes/ljspeech/tacotron2-DCA/'
 
 app = Flask(__name__)
 CORS(app)
@@ -58,7 +62,7 @@ def transcribe():
         all_subdirs = [d for d in os.listdir(TACOTRON_DIR) if os.path.isdir(d)]
         latest_subdir = max(all_subdirs, key=os.path.getmtime)
         #python3 ./synthesize.py --text text --model_path "../../recipes/ljspeech/tacotron2-DDC/' + latest_subdir + '/best_model.pth" --config_path "../../recipes/ljspeech/tacotron2-DDC/' + latest_subdir + '/config.json"
-        subprocess.call('python3 ./coqui/TTS/bin/synthesize.py --output_path tts_output.wav --text "' + text + '" --model_path ' + TACOTRON_DIR + latest_subdir + 'best_model.pth --config_path ' + TACOTRON_DIR + latest_subdir + '/config.json', shell=True)
+        subprocess.call('python3 ' + myhome + '/TTS/bin/synthesize.py --output_path tts_output.wav --text "' + text + '" --model_path ' + TACOTRON_DIR + latest_subdir + 'best_model.pth --config_path ' + TACOTRON_DIR + latest_subdir + '/config.json', shell=True)
         #get temp file from synthesize.  
         return send_file("tts_output.wav", mimetype="audio/wav")
                 
@@ -120,4 +124,4 @@ def train():
 
 
 if (__name__ == '__main__'):
-    app.run(host='0.0.0.0', port=8003, ssl_context=('../../private/cert.pem', '../../private/secret.key'))
+    app.run(host='0.0.0.0', port=8003, ssl_context=(myhome + '/private/cert.pem', myhome + '/private/secret.key'))

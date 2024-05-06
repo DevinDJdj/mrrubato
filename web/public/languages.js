@@ -250,6 +250,10 @@ function loadLanguage(lang, user){
 //load languages.js
 function getHighlightArray(t, dur, user=0, trk=0){
     
+    if (midiarray[user].length == 0){
+        return 0;
+    }
+
     i = Math.round(midiarray[user].length*t/dur);
 
     if (i>0 && i<midiarray[user].length-1 && midiarray[user][i].time < t-vidbuffer*1000){
@@ -293,7 +297,11 @@ function updateVidTimes(user=0, trk=0){
             break;
         }
         //highlight the IDs for this time.  
-        document.getElementById("feed" + Math.round(midiarray[user][i].time)).style.color = "red";
+        //this is undefined if these are new notes.  
+        var obj = document.getElementById("feed" + Math.round(midiarray[user][i].time));
+        if (typeof(obj) !== "undefined" && obj !== null){
+            obj.style.color = "red";
+        }
     }
 }
 

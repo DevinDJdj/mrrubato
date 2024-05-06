@@ -355,3 +355,23 @@ Why are we saving the data structure as midi anyway, well I guess having a commo
 really we want this to be interchangable and we want to use more recent base model.  
 
 
+**7uBr8tHtjBA
+Browser asking for MIDI permissions for each site, I dont think this will actually be problematic.  
+
+
+
+Server deploy again with new deploy script.  
+**install.sh
+all server install steps.  
+Hate writing shell scripts, may change to python script.  
+
+make all directories.  
+
+**server
+Adjusted all the directories to specify full paths.  
+
+
+**handsfree
+Need off state, should be able to switch on with voice or midi.  
+
+
