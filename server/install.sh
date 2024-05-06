@@ -28,7 +28,6 @@ After=multi-user.target
 
 [Service]
 Type=simple
-Restart=always
 ExecStart=/usr/bin/python3 $myhome/mrrubato/server/transcription/server.py
 
 [Install]
@@ -44,7 +43,6 @@ After=multi-user.target
 
 [Service]
 Type=simple
-Restart=always
 ExecStart=/usr/bin/python3 $myhome/mrrubato/server/ollama/server.py
 
 [Install]

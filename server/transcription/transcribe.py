@@ -69,14 +69,14 @@ def transcribe_fromyoutube(videoid="ZshYVeNHkOM", model=None, mediafile=None, st
         audio_stream = audio_streams[1]
         print(audio_stream)
 
-        audio_stream.download("output/" + videoid)
+        audio_stream.download(myhome + "output/" + videoid)
 
-    list_of_files = glob.glob('output/' + videoid + '/*') # * means all if need specific format then *.csv
+    list_of_files = glob.glob(myhome + 'output/' + videoid + '/*') # * means all if need specific format then *.csv
     latest_file = max(list_of_files, key=os.path.getctime)
     print(latest_file)
     text, times = transcribe_whisper(latest_file, model)
 
-    f = open("output/" + videoid + ".txt", "w")
+    f = open(myhome + "output/" + videoid + ".txt", "w")
 
     prev = ""
     ignore = {}
@@ -124,9 +124,9 @@ def transcribe_fromyoutube(videoid="ZshYVeNHkOM", model=None, mediafile=None, st
 
 
     os.remove(latest_file)
-    os.rmdir("output/" + videoid)
+    os.rmdir(myhome + "output/" + videoid)
 
-    with open("output/" + videoid + ".txt", 'r') as file:
+    with open(myhome + "output/" + videoid + ".txt", 'r') as file:
         data = file.read()
         return data
 

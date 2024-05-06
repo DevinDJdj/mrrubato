@@ -328,4 +328,4 @@ def analyze():
     return ret
 
 if (__name__ == '__main__'):
-    app.run(host='0.0.0.0', port=8000, ssl_context=(os.environ['HOME'] + '/private/cert.pem', os.environ['HOME'] + '/private/secret.key'))
+    app.run(host='0.0.0.0', port=8000, ssl_context=(myhome + '/private/cert.pem', myhome + '/private/secret.key'))
