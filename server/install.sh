@@ -16,12 +16,12 @@ mkdir -p $myhome/data/vectorstores/db
 
 #install requirements
 echo "installing requirements"
-pip install $myhome/mrrubato/server/requirements.txt
+pip install -r $myhome/mrrubato/server/requirements.txt
 
 
 #create services shell script.  
 echo "Creating transcription service"
-cat > /etc/systemd/system/transcription.service << EOF
+sudo cat > /etc/systemd/system/transcription.service << EOF
 [Unit]
 Description=Transcription service
 After=multi-user.target
@@ -37,7 +37,7 @@ EOF
 
 #create services shell script.  
 echo "Creating chat service"
-cat > /etc/systemd/system/chat.service << EOF
+sudo cat > /etc/systemd/system/chat.service << EOF
 [Unit]
 Description=Ollama Chat service
 After=multi-user.target
@@ -54,9 +54,9 @@ EOF
 
 
 echo "Reloading systemctl daemon"
-systemctl daemon-reload
-systemctl enable transcription.service
-systemctl enable chat.service
-systemctl start transcription.service
-systemctl start chat.service
+sudo systemctl daemon-reload
+sudo systemctl enable transcription.service
+sudo systemctl enable chat.service
+sudo systemctl start transcription.service
+sudo systemctl start chat.service
 
