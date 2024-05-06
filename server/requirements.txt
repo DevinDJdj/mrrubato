@@ -18,3 +18,4 @@ pydub
 speechrecognition
 pytube
 flask_cors
+pandas
