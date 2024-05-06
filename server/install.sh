@@ -1,0 +1,62 @@
+#run this to set up basic RAG and transcription.  
+#install.sh
+
+#pass owner/user which will run the server
+myowner=$1
+#myhome should be data containing mrrubato and TTS and any other packages.  
+myhome=$2
+
+#myhome=env | grep HOME | cut -d'=' -f2
+echo $myhome
+
+#set up all data directories
+mkdir -p $myhome/data/transcription/output
+mkdir -p $myhome/private
+mkdir -p $myhome/data/vectorstores/db
+
+#install requirements
+echo "installing requirements"
+pip install $myhome/mrrubato/server/requirements.txt
+
+
+#create services shell script.  
+echo "Creating transcription service"
+cat > /etc/systemd/system/transcription.service << EOF
+[Unit]
+Description=Transcription service
+After=multi-user.target
+
+[Service]
+Type=simple
+Restart=always
+ExecStart=/usr/bin/python3 $myhome/mrrubato/server/transcription/server.py
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+#create services shell script.  
+echo "Creating chat service"
+cat > /etc/systemd/system/chat.service << EOF
+[Unit]
+Description=Ollama Chat service
+After=multi-user.target
+
+[Service]
+Type=simple
+Restart=always
+ExecStart=/usr/bin/python3 $myhome/mrrubato/server/ollama/server.py
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+
+
+echo "Reloading systemctl daemon"
+systemctl daemon-reload
+systemctl enable transcription.service
+systemctl enable chat.service
+systemctl start transcription.service
+systemctl start chat.service
+
