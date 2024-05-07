@@ -374,4 +374,22 @@ Adjusted all the directories to specify full paths.
 **handsfree
 Need off state, should be able to switch on with voice or midi.  
 
+**server
+time should be part of queries in general.  
+Need to make time significant
 
+
+Some sort of incompatibility with whisper and the latest VM?  
+Or steps to set up.  
+OpenAI 
+whisper.load_model just hangs.  
+
+
+**analyze/analyze.py
+**IIAMMVxCsOw
+why is this failing to generate images with this midi?  
+
+
+Whisper AI failing, switch to coqui-ai STT?  
+Or other?  
+https://github.com/coqui-ai/STT-examples/tree/r1.0/vad_transcriber
