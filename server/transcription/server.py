@@ -14,7 +14,7 @@ from datetime import datetime
 
 import subprocess
 
-myhome = "/home/devin"
+myhome = "/mnt/c/devinpiano" #"/home/devin"
 
 app = Flask(__name__)
 CORS(app)
@@ -51,7 +51,7 @@ def transcribe():
         print(e)
         ret = 'error'
     if ret !='error' and ret !='':
-        subprocess.call('python ' + myhome + '/mrrubato/server/ollama/load.py --video ' + video, shell=True)
+        subprocess.call('python3 ' + myhome + '/mrrubato/server/ollama/load.py --video ' + video, shell=True)
     return ret
 
 if (__name__ == '__main__'):
