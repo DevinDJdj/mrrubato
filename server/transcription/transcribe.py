@@ -29,7 +29,7 @@ import urllib.request
 
 from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
 
-myhome = "/home/devin"
+myhome = "/mnt/c/devinpiano" #"/home/devin"
 OUTPUT_DIR = myhome + "/data/transcription/output/"
 
 def get_timestamp(s):
@@ -58,6 +58,7 @@ def transcribe_fromyoutube(videoid="ZshYVeNHkOM", model=None, mediafile=None, st
     else:
         youtube_video_url = "https://www.youtube.com/watch?v=" + videoid
         youtube_video_content = YouTube(youtube_video_url)
+        print("here")
 
         for stream in youtube_video_content.streams:
             print(stream)
@@ -74,6 +75,7 @@ def transcribe_fromyoutube(videoid="ZshYVeNHkOM", model=None, mediafile=None, st
     list_of_files = glob.glob(OUTPUT_DIR + videoid + '/*') # * means all if need specific format then *.csv
     latest_file = max(list_of_files, key=os.path.getctime)
     print(latest_file)
+    
     text, times = transcribe_whisper(latest_file, model)
 
     f = open(OUTPUT_DIR + videoid + ".txt", "w")
@@ -124,9 +126,9 @@ def transcribe_fromyoutube(videoid="ZshYVeNHkOM", model=None, mediafile=None, st
 
 
     os.remove(latest_file)
-    os.rmdir(myhome + "output/" + videoid)
+    os.rmdir(OUTPUT_DIR + videoid)
 
-    with open(myhome + "output/" + videoid + ".txt", 'r') as file:
+    with open(OUTPUT_DIR + videoid + ".txt", 'r') as file:
         data = file.read()
         return data
 

@@ -1,6 +1,7 @@
 git clone https://github.com/coqui-ai/TTS
 
-python3 ./TTS/setup.py install
+cd TTS
+python3 ./setup.py install
 
 cd ./TTS/recipes/ljspeech
 vi ./download_ljspeech.sh
