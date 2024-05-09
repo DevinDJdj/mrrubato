@@ -1,3 +1,119 @@
+
+commandLog = [];
+pendingCommands = [];
+ss = null;
+myrate = 0.7;
+mypitch = 1;
+keymap = new Keymap();
+
+function addCommandLog(transcript, command, pending=false){
+    //we want to have the time here.  
+    let now = Date.now();
+    commandLog.push({time: now, transcript: transcript, command: command, pending: pending});
+}
+
+function getPendingCommand(){
+    if (commandLog.length > 0 && commandLog[commandLog.length-1].pending){
+        return commandLog[commandLog.length-1];
+    }   
+    else{
+        return null;
+    }
+}
+
+
+function checkCommands(){
+    let cl = getPendingCommand();
+    let midi = getMidiRecent();
+    //if most recent is too recent wait some more.  
+    //otherwise we assume this is a completed command.  
+    //also if we have punctuation/end command, we can continue.  
+    if (midi != null){
+        completeMidi(midi);
+    }
+    let transcript = "";
+    let pending = false;
+    let callback = null;
+    if (cl != null){
+                //we have a command.  
+            //try to find if we have something to do with the midi.  
+            //recurse to find the transcript needed.  
+            //we will find scroll, then we need those parameters.  
+        console.log(cl);
+        transcript = cl.transcript;
+        let prevtranscript = transcript;
+        pending = cl.pending;
+        if (midi != null && midi.length > 0){
+            transcript = keymap.findCommand(transcript, midi);
+            if (transcript == prevtranscript){
+
+            }
+            else{
+                completeMidi(midi);
+                Chat(transcript, callback, pending); //add waspendingflag
+                pending = false;
+            }
+        }
+        else{
+            Chat(transcript, callback, pending); //add waspendingflag
+            pending = false;
+        }
+
+        if (pending && Date.now() - cl.time > recentTime){ //recentTime in midi.js
+            //pop from the pending commands?  Why keep useless history?  
+            commandLog.pop();
+        }
+
+    }
+    else{
+        if ((midi != null && midi.length > 0)){
+            console.log(midi);
+
+            let prevtranscript = "";
+            //get command.  
+            transcript = keymap.findCommand(transcript, midi);
+            let done = completeMidi(midi);
+
+            if (done > 0 && midi.length > 0){
+                prevtranscript = transcript;
+                //get parameters.  
+                transcript = keymap.findCommand(transcript, midi);
+                if (transcript != prevtranscript){
+                    done = completeMidi(midi);
+                    Chat(transcript, callback, pending); 
+                }
+                else if (transcript != ""){
+                    //we have 4 seconds to add the parameters for this call if .  
+                    //still pending.  Just add pending command.  
+                    //or ignore.  
+                    addCommandLog(transcript, null, true);
+                }
+            }
+            else if (transcript !=""){
+                //single command.  Must have at least half a second open here or whatever the timer is open time in order to execute this command.  
+                //add a pending command, and if no more midi comes within half a second, we execute.  
+                //will need to adjust this timer for the user.  
+                addCommandLog(transcript, null, true);
+            }
+
+        }
+    }
+
+
+}
+
+
+function completeMidi(midi){
+    let ret = 0;
+    while (midi.length > 0 && midi[0].complete){
+        midi.shift();
+        ret++;
+    }
+    return ret;
+}
+
+
+
 function str_pad_left(string,pad,length) {
     return (new Array(length+1).join(pad)+string).slice(-length);
 }
@@ -25,15 +141,23 @@ function helpme(){
 }
 
 //right now there is no chatting here, we are just using the comments.
-function Chat(transcript){
-    if (transcript.startsWith("help")){
+function Chat(transcript, callback=null, pending=false){
+    if (transcript.toLowerCase().startsWith("help")){
 
     }
-    else if (transcript.startsWith("create language")){
+    else if (transcript.toLowerCase() == "stop"){
+        window.speechSynthesis.cancel();
+    }
+    else if (transcript.toLowerCase().startsWith("create language")){
         
     }
-    //...
-    addComment(transcript, helpme());
+    else if (transcript.toLowerCase().startsWith("create word")){
+    }
+    
+    else{
+        //...
+        addComment(transcript, helpme());
+    }
 }
 
 
@@ -42,7 +166,7 @@ function addComment(comment, commenttime){
     //notesarray.splice(i, 0, comment);
     createNotesArray();
     i = 0;
-    while (i< notesarray.length && getTime(notesarray[i]) < getSecsFromTime(commenttime)){
+    while (i< notesarray.length && getTime(notesarray[i]) <= getSecsFromTime(commenttime)){
         i++;
     }
 //	if (i==0) i=1;

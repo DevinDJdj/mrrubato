@@ -34,12 +34,12 @@ c = function() {
 c();
 
 var secondselapsed = document.getElementById("secondselapsed");
-start = moment()
+startc = moment()
 var se;
 setInterval(
 se = function() {
-    end = moment()
-	secondselapsed.innerText = (end - start)/1000;
+    endc = moment()
+	secondselapsed.innerText = (endc - startc)/1000;
 //	$("#secondselapsed").load(" #secondselapsed > *");
 	
 //    output.innerText = moment().format(urlParams["format"] || '');

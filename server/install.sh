@@ -18,6 +18,8 @@ mkdir -p $myhome/data/vectorstores/db
 echo "installing requirements"
 pip install -r $myhome/mrrubato/server/requirements.txt
 
+sudo apt update
+sudo apt install ffmpeg
 
 #create services shell script.  
 echo "Creating transcription service"

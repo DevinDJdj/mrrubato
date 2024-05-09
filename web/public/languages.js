@@ -287,10 +287,10 @@ function updateVidTimes(user=0, trk=0){
         dur = player2.duration*1000;
     }
     currentvidtime = abstime;
-    start = getHighlightArray(abstime, dur, user, trk);
+    starth = getHighlightArray(abstime, dur, user, trk);
 
 
-    for (i=start; i< midiarray[user].length; i++){
+    for (i=starth; i< midiarray[user].length; i++){
         //expect this in order.  
         //need better search algorithm here.  
         if (midiarray[user][i].time > abstime + vidbuffer*1000){
