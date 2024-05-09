@@ -1,0 +1,33 @@
+<html>
+<head>
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    
+</head>
+
+<script>
+
+var id = 'dQw4w9WgXcQ';
+var url = 'https://www.youtube.com/watch?v=' + id;
+
+//https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=R4LoM208_Ow
+$.getJSON('https://www.youtube.com/oembed?url=' + url, function (data) {
+    console.log(data.title);
+    console.log(data.author_name);
+    console.log(data.author_url);
+    console.log(data.thumbnail_url);
+});
+
+/*
+$.getJSON('https://noembed.com/embed',
+    {format: 'json', url: url}, function (data) {
+    console.log(data.title);
+    console.log(data.author_name);
+    console.log(data.author_url);
+    console.log(data.thumbnail_url);
+});
+*/
+
+</script>
+
+</html>
