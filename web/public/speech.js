@@ -21,7 +21,10 @@ function getPendingCommand(){
     }
 }
 
-
+//called from clock.js every second.  
+//open-ended definitions must end with midi 60, 60.  
+//add language, add word etc.  But 60, 60 not stored in keymap.  
+//others will be defined in keymap.  
 function checkCommands(){
     let cl = getPendingCommand();
     let midi = getMidiRecent();
@@ -41,25 +44,35 @@ function checkCommands(){
             //we will find scroll, then we need those parameters.  
         console.log(cl);
         transcript = cl.transcript;
-        let prevtranscript = transcript;
+        let prevtranscript = "";
         pending = cl.pending;
-        if (midi != null && midi.length > 0){
+        let done = 1;
+        while (done > 0 && midi.length > 0){
+            prevtranscript = transcript;
             transcript = keymap.findCommand(transcript, midi);
-            if (transcript == prevtranscript){
+            if (transcript != prevtranscript){
 
+                done = completeMidi(midi);
+                if (transcript.endsWith(" ")){  //use space as indicator of more parameters needed.
+                    //still waiting.  
+                }
+                else{
+                    Chat(transcript, callback, pending); //add waspendingflag
+                    transcript = "";
+                }
             }
             else{
-                completeMidi(midi);
-                Chat(transcript, callback, pending); //add waspendingflag
-                pending = false;
+                if (transcript != cl.transcript){
+                    cl.transcript = transcript;
+                }
+                done = 0;
             }
         }
-        else{
+        
+        if (midi.length == 0 && transcript != ""){
             Chat(transcript, callback, pending); //add waspendingflag
-            pending = false;
         }
-
-        if (pending && Date.now() - cl.time > recentTime){ //recentTime in midi.js
+        else if (Date.now() - cl.time > recentTime){ //recentTime in midi.js
             //pop from the pending commands?  Why keep useless history?  
             commandLog.pop();
         }
@@ -71,29 +84,41 @@ function checkCommands(){
 
             let prevtranscript = "";
             //get command.  
-            transcript = keymap.findCommand(transcript, midi);
-            let done = completeMidi(midi);
-
-            if (done > 0 && midi.length > 0){
+            let done = 1;
+            while (done > 0 && midi.length > 0){
                 prevtranscript = transcript;
                 //get parameters.  
                 transcript = keymap.findCommand(transcript, midi);
+                //have to set .complete to true.  
                 if (transcript != prevtranscript){
                     done = completeMidi(midi);
-                    Chat(transcript, callback, pending); 
+                    if (transcript.endsWith(" ")){  //use space as indicator of more parameters needed.
+                        //still waiting.  
+                    }
+                    else{
+                        Chat(transcript, callback, pending); //add waspendingflag
+                        transcript = "";
+                    }
                 }
-                else if (transcript != ""){
+                else {
                     //we have 4 seconds to add the parameters for this call if .  
                     //still pending.  Just add pending command.  
                     //or ignore.  
-                    addCommandLog(transcript, null, true);
+                    done = 0;
                 }
             }
-            else if (transcript !=""){
-                //single command.  Must have at least half a second open here or whatever the timer is open time in order to execute this command.  
-                //add a pending command, and if no more midi comes within half a second, we execute.  
-                //will need to adjust this timer for the user.  
-                addCommandLog(transcript, null, true);
+
+            if (transcript !=""){
+                if (transcript.endsWith(" ")){ //add pending command.  
+                    addCommandLog(transcript, null, true);
+                    //single command.  Must have at least half a second open here or whatever the timer is open time in order to execute this command.  
+                    //add a pending command, and if no more midi comes within half a second, we execute.  
+                    //will need to adjust this timer for the user.  
+                }
+                else{
+                    //should never end up here.  
+                    Chat(transcript, callback, pending); 
+                }
             }
 
         }
@@ -197,6 +222,17 @@ recognition.addEventListener('result', e => {
     //this function could be different for each use-case, right now same function
     //we are interacting via voice here, so we call Chat()
     //this is blank for analyze.html.  
+
+
+    mymidicommand = getMidiRecent();
+    if (mymidicommand == null){
+        Chat(transcript);
+    }
+    else{
+        //waiting for midi command to complete.  
+        console.log(mymidicommand);
+        addCommandLog(transcript, null, true);
+    }
     Chat(transcript);
     //not sure if we should reset this.  
 //    document.getElementById("p").value = ""

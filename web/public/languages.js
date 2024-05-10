@@ -149,7 +149,10 @@ function loadDictionaries(user){
     //need a better mechanism but for now just timeout to wait for all loadLanguage calls to complete.  
     setTimeout(function(){findWords(user);
         //set up to highlight video times
-        setInterval(function(){updateVidTimes(user);}, 1000);        
+        setInterval(function(){
+            updateVidTimes(user);     
+            checkCommands();
+        }, 1000);        
     }, 5000);
 
 }

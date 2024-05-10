@@ -1,3 +1,6 @@
+var MAX_COMMANDLENGTH = 6;
+var currentlanguage = "base";
+
 class Keymap{
     constructor(){
         this.keys = [];
@@ -6,6 +9,7 @@ class Keymap{
         this.funcdict = {};
         this.loadKeys();
     }
+
     loadKeys(){
         //spoken work + key = action
         //keydict["keyword"]["numkeys"]["key,key,key"] = "action"
@@ -28,6 +32,10 @@ class Keymap{
         //
 
         this.keydict[ "" ] = { 
+            "2": {
+                "23,23": "pause",
+                "24,24": "play"
+            },
             "3": { 
                 "0,11,0" : "start record", 
                 "12,11,12": "stop record", //after this we should either have a name or keyset in the upper octave.  
@@ -59,25 +67,58 @@ class Keymap{
                 "0,2,2,0": "continue",
                 "0,4,7,0": "activate mic", "0,7,4,0": "deactivate mic", 
                 "0,3,7,0": "activate piano", "0,7,3,0": "deactivate piano",
-            } };
+                "12,5,7,12": "change language " //need further parameter
+            },
+            "5": {
+                "12,9,10,11,12": "add word ", //need further parameter
+                "12,2,3,4,12": "add language ", //need further parameter
+
+            } 
+        };
             //basic functionality all keys should come before the word is complete.  Not sure if the user can handle this consistently 
             //but maybe best to make this a rule, to avoid problems.  Basically if said at the same time, it should work.  
             //keycommand + parameter word = action.  
             //wordcommand + parameter keyset = action.  
             //keycommand + parameter keyset = action.  In this case the keyset should essentially be the upper octave.  
             //general terms are even numbers.  Identifiers are odd.  
-        this.funcdict[""] = function(transcript, midi, keydict, key){            
-            let c3 = keydict[""]["3"];
-            let c4 = keydict[""]["4"];
-            if (midi !=null && midi.length > 2){
-                //search c3
-                //midi[0].complete = true;
-                //return transcript
+        this.funcdict[""] = function(transcript, midi, keydict, key){
+            for (i=MAX_COMMANDLENGTH; i>0; i--){
+                if (midi != null && midi.length >=i){
+                    let keyset = keydict[""][i.toString()];
+                    let keys = "";
+                    for (j=0; j<i; j++){
+                        keys += midi[j].note.toString();
+                        if (j<i-1){
+                            keys += ",";
+                        }
+                    }
+                    if (keyset[keys] != null){
+                        //run this function.  
+                        transcript += keyset[keys];
+                    }
+                }
             }
-            if (midi !=null && midi.length > 3){
-                //search c4
-            }
+        };
 
+        this.funcdict["add language"] = function(transcript, midi, keydict, key){
+            //must end with 12,12
+            if (midi.length > 2){
+                if (midi[midi.length-1].note - keybot == 12 && midi[midi.length-2].note - keybot == 12){                    
+                    //we have a language
+                    //we can add this language to the DB.  
+                }
+            }
+        };
+
+        this.funcdict["add word"] = function(transcript, midi, keydict, key){
+            //must end with 12,12
+            if (midi.length > 2){
+                if (midi[midi.length-1].note - keybot == 12 && midi[midi.length-2].note - keybot == 12){                    
+                    //we have a word
+                    //use currentlanguage.  
+                    //we can add this word to the DB.  
+                }
+            }
         };
 
         this.keydict["help"] = {
@@ -221,6 +262,7 @@ class Keymap{
         //if we can translate the midi return transcript, otherwise return ""
         if (midi != null){
             for (const [key, value] of Object.entries(this.funcdict)) {
+                prevtranscript = transcript;
                 if (transcript !=""){
                     if (key !="" && transcript.startsWith(key)){
                         let f = value;

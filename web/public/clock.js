@@ -23,23 +23,14 @@ if (urlParams["seek"]){
 
 var output = document.getElementById("clock");
 
-var c;
-setInterval(
-c = function() {
-	output.innerText = moment().format(urlParams["format"] || 'DD/MM/YYYY HH:mm:ss');
-//	$("#clock").load(" #clock > *");
-
-//    output.innerText = moment().format(urlParams["format"] || '');
-}, 1000);
-c();
-
 var secondselapsed = document.getElementById("secondselapsed");
-startc = moment()
+startc = moment();
 var se;
 setInterval(
 se = function() {
-    endc = moment()
-	secondselapsed.innerText = (endc - startc)/1000;
+    endc = moment();
+    output.innerText = endc.format(urlParams["format"] || 'DD/MM/YYYY HH:mm:ss');
+    secondselapsed.innerText = (endc - startc)/1000;
 //	$("#secondselapsed").load(" #secondselapsed > *");
 	
 //    output.innerText = moment().format(urlParams["format"] || '');
