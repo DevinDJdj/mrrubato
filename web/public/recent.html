@@ -182,14 +182,17 @@ var recenttable = null;
 		var vRef = firebase.database().ref(dbname);
 		if (typeof(uid) != "undefined" && uid !==null){
 		}
-		vRef.orderByChild('snippet/publishedAt').limitToLast(50).on("value", function(snapshot) {
-			console.log(snapshot.val());
-			videojson = snapshot.val();
-			vids = getRecent(videojson);
-			drawChart(vids);
-			drawDurationChart(vids);
-			getGit();
-			
+		vRef.orderByChild('snippet/publishedAt').limitToLast(50).once("value")
+		.then((snapshot) => {
+			if (snapshot.exists()) {							
+
+				console.log(snapshot.val());
+				videojson = snapshot.val();
+				vids = getRecent(videojson);
+				drawChart(vids);
+				drawDurationChart(vids);
+				getGit();
+			}			
 		});
 		  
         } catch (e) {

@@ -174,7 +174,13 @@ function Chat(transcript, callback=null, pending=false){
         window.speechSynthesis.cancel();
     }
     else if (transcript.toLowerCase().startsWith("create language")){
-        
+        //
+        tokens = transcript.split(" ");
+        if (tokens.length > 3){
+            midi = tokens[tokens.length-1];
+            lang = tokens.slice(2, tokens.length-1).join(" ");
+            createLanguage(lang, midi);
+        }
     }
     else if (transcript.toLowerCase().startsWith("create word")){
     }

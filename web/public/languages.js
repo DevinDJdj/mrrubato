@@ -16,6 +16,7 @@ var midiwords = {};
 
 var currentwtindex = 0;
 var currentvidtime = 0;
+var currentlanguage = "base";
 var wordplay = -1;
 
 var vidbuffer = 10;
@@ -23,21 +24,52 @@ var dictable = null;
 var DIC_LANG = 7;
 var DIC_WORD = 0;
 var DIC_PLAYALL = 1;
+var DIC_USER = 3;
 var DIC_TIMES = 4;
 //config.js keybot
 //do we want to allow for some function to adjust keybot/keytop?  
 
+function createLanguage(lang, midi){
+    ref = firebase.database().ref('/dictionary/languages/' + lang);
+	ref.once('value')
+    .then((snap) => {
+        if (snap.exists()){
+            let mylang = snap.val();
+            if (mylang != midi){
+                ref.set(midi);
+            }
+        }
+    });
+
+}
+
+function selectLanguage(lang){
+    currentlanguage = lang;
+}
+
 function loadLanguages(){
     ref = firebase.database().ref('/dictionary/languages');
-	ref.on('value',(snap)=>{
+	ref.once('value')
+    .then((snap) => {
 	    if (snap.exists()){
-            mylangs = snap.val();
+            let mylangs = snap.val();
             for (const [key, value] of Object.entries(mylangs)) {
                 alllangs[value] = key;
             }                    
         }
     });
 
+}
+
+function initLangData(lang, user){
+    if (typeof(langstart[lang]) === "undefined"){
+        langstart[lang] = {};
+        langend[lang] = {};
+    }
+    if (typeof(langstart[lang][user])==="undefined"){
+        langstart[lang][user] = [];
+        langend[lang][user] = [];
+    }
 }
 
 function loadDictionaries(user){
@@ -112,18 +144,15 @@ function loadDictionaries(user){
             //so start base language = [12, 5, 7, 12]
             lang = alllangs[langmidi];
 
-            if (typeof(langstart[lang]) === "undefined"){
-                langstart[lang] = [];
-                langend[lang] = [];
-            }
+            initLangData(lang, user);
             //keep sequential
-            langstart[lang].push(cle[i]+4);
+            langstart[lang][user].push(cle[i]+4);
 
             if (cl.length > i+1){
-                langend[lang].push(cl[i+1]);
+                langend[lang][user].push(cl[i+1]);
             }
             else{
-                langend[lang].push(midiarray.length);
+                langend[lang][user].push(midiarray.length);
             }
             loadLanguage(lang, user);
             numlangs++;
@@ -133,14 +162,16 @@ function loadDictionaries(user){
     if (numlangs == 0){
         //no language changes.  
         //just go through base language.  
-        langstart["base"] = [0];
-        langend["base"] = [midiarray[user].length];
+        initLangData("base", user);
+        langstart["base"][user] = [0];
+        langend["base"][user] = [midiarray[user].length];
         loadLanguage("base", user);
     }
     else{
         if (cl[0] > 0){
-            langstart["base"] = [0];
-            langend["base"] = [cl[0]];
+            initLangData("base", user);
+            langstart["base"][user] = [0];
+            langend["base"][user] = [cl[0]];
             loadLanguage("base", user);
         }
     }
@@ -159,55 +190,57 @@ function loadDictionaries(user){
 
 function findWords(user){
     for (const [key, value] of Object.entries(langstart)) {	
-        for (j=0; j<value.length; j++){
-            //maxwordlength
-            temp = midiarray[user].slice(value[j], langend[key][j]);
+        if (typeof(value[user]) !=="undefined" && value[user].length > 0){
+            for (j=0; j<value[user].length; j++){
+                //maxwordlength
+                temp = midiarray[user].slice(value[user][j], langend[key][user][j]);
 
-            miditostrindex = [];
-            tempstr = "";
-            for (mi=0; mi<temp.length; mi++){
-                miditostrindex.push(tempstr.length);
-                tempstr += temp[mi].note + ",";
-            }
-            //get the representation of the notes.  
-            //this is inside of the language representation.  
-            //value[j] is start of this language.  
-            //full array of midi.  
-            //just go through words and find any instance.  
-            for (const [k2, v2] of Object.entries(langs[key])) {	//k2 = length of midiseq, v2 = array of words
-                for (const [k3, v3] of Object.entries(langs[key][k2])) { //k3 = midi seq, v3 = word
-                    const indexes = [...tempstr.matchAll(new RegExp(k3, 'gi'))].map(a => a.index);
-                    //is this fast enough?  if we have only a few words in the language yes.  
-                    //but if we get lots of words, probably want to change this logic to build some sort of array search.  
-                    //also really need to search from longest to shortest.  
-                    //at the moment leave as is.  
-                    console.log(indexes); // [2, 25, 27, 33]
-                    if (typeof(wordtimes[key]) === "undefined"){                        
-                        wordtimes[key] = {};
-                        midiwords[key] = {};
-                    }
-                    for (i=0; i<indexes.length; i++){
-                        if (typeof(wordtimes[key][v3]) === "undefined"){
-                            wordtimes[key][v3] = [];
-                            midiwords[key][v3] = [];
+                miditostrindex = [];
+                tempstr = "";
+                for (mi=0; mi<temp.length; mi++){
+                    miditostrindex.push(tempstr.length);
+                    tempstr += temp[mi].note + ",";
+                }
+                //get the representation of the notes.  
+                //this is inside of the language representation.  
+                //value[j] is start of this language.  
+                //full array of midi.  
+                //just go through words and find any instance.  
+                for (const [k2, v2] of Object.entries(langs[key])) {	//k2 = length of midiseq, v2 = array of words
+                    for (const [k3, v3] of Object.entries(langs[key][k2])) { //k3 = midi seq, v3 = word
+                        const indexes = [...tempstr.matchAll(new RegExp(k3, 'gi'))].map(a => a.index);
+                        //is this fast enough?  if we have only a few words in the language yes.  
+                        //but if we get lots of words, probably want to change this logic to build some sort of array search.  
+                        //also really need to search from longest to shortest.  
+                        //at the moment leave as is.  
+                        console.log(indexes); // [2, 25, 27, 33]
+                        if (typeof(wordtimes[key]) === "undefined"){                        
+                            wordtimes[key] = {};
+                            midiwords[key] = {};
                         }
-                        //get the index of this
-                        wordindex = miditostrindex.indexOf(indexes[i]);
-                        //value[j] is start of this language.
-                        if (wordtimes[key][v3].indexOf(midiarray[user][ value[j] + wordindex ].time) < 0){
-                            wordtimes[key][v3].push(midiarray[user][ value[j] + wordindex ].time);
-                            //push the whole midi struct.  to use later
-                            midiwords[key][v3].push(midiarray[user][value[j] + wordindex]);
-                            //we should have the user here to filter by.  words[key][v3][i].user
-                            //filters are lang, word, user
-                            //just get from the datatable and run though by time.  
+                        for (i=0; i<indexes.length; i++){
+                            if (typeof(wordtimes[key][v3]) === "undefined"){
+                                wordtimes[key][v3] = [];
+                                midiwords[key][v3] = [];
+                            }
+                            //get the index of this
+                            wordindex = miditostrindex.indexOf(indexes[i]);
+                            //value[j] is start of this language.
+                            if (wordtimes[key][v3].indexOf(midiarray[user][ value[user][j] + wordindex ].time) < 0){
+                                wordtimes[key][v3].push(midiarray[user][ value[user][j] + wordindex ].time);
+                                //push the whole midi struct.  to use later
+                                midiwords[key][v3].push(midiarray[user][value[user][j] + wordindex]);
+                                //we should have the user here to filter by.  words[key][v3][i].user
+                                //filters are lang, word, user
+                                //just get from the datatable and run though by time.  
 
+                            }
+                            //wordtimes[lang][word] = [time1, time2, time3]
+                            //add this to the table.  
                         }
-                        //wordtimes[lang][word] = [time1, time2, time3]
-                        //add this to the table.  
-                    }
-                    if (indexes.length > 0){
-                        setTimes(key, v3, wordtimes[key][v3]);
+                        if (indexes.length > 0){
+                            setTimes(key, v3, wordtimes[key][v3], user);
+                        }
                     }
                 }
             }
@@ -215,6 +248,7 @@ function findWords(user){
     }
 
 }
+
 function loadLanguage(lang, user){
     if (typeof(langs[lang]) !== "undefined"){
         mydic = langs[lang];
@@ -228,7 +262,8 @@ function loadLanguage(lang, user){
     else{
         //get lang from DB.  
         ref = firebase.database().ref('/dictionary/language/' + lang);
-        ref.on('value',(snap)=>{
+        ref.once('value')
+        .then((snap) => {
             if (snap.exists()){
                 mydic = snap.val();
                 langs[lang] = {};
@@ -341,13 +376,13 @@ function seekAll(lang, word, index=0){
     }
 }
 
-function setTimes(lang, word, times){
+function setTimes(lang, word, times, user=0){
 //    table.row( 0 ).data( newData ).draw();
 
     dictable.rows().every(function () {
         //brute force search, not great.  
         var d = this.data();
-        if (d[DIC_LANG] === lang && d[DIC_WORD] === word) {
+        if (d[DIC_LANG] === lang && d[DIC_WORD] === word && d[DIC_USER] == user) {
             hyperlink = "";
             for (i=0; i<times.length; i++){
                 //think this is milliseconds.  
