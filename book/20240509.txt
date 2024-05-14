@@ -1,0 +1,185 @@
+**web/public/midi.js
+Adjust to mimic handsfree.  
+Cant use **handsfree/mrrubato.js
+As it is too specific to this use-case, but need quite similar functionality.  
+
+getMidiRecent()
+utilize this to check for change language etc.  
+recentTime = 4000
+is this enough, 4 seconds to complete a thought.  
+I think so.  
+
+Key is to switch between feedback and control.  
+Control:
+
+Pause/unpause - 71/72
+
+//add/edit word [12, 9, 10, 11, 12] utterance = [midi]
+//add/edit language [12, 2, 3, 4, 12] utterance = [midi]
+//change language [12, 5, 7, 12] utterance or [midi]
+
+//follow last link [?]
+
+languages[lang].keymap = new keymap
+init commands for each word in the language.  
+Some of them will be active.  
+If they have activations, they will trigger function calls.  
+
+Rewrote keymap, see if keymap works ok.  
+
+Need functionality to add language to DB.  
+right now we only have 
+/dictionary/languages/
+base: 2,3,4
+check if combo exists besides what we already have.  
+
+Need to add data from another user.  
+Then check the addLanguage functionality and continue with addWord.  
+
+
+
+**web/public/recent.html
+Add date parameter
+now=xxxx
+pull last X from here for github, and videos.  
+Also add book for this perhaps.  
+
+
+**handsfree
+separate out keymap.js
+--Done need to test.  
+
+
+For now just have snapshots each day of the languages/dictionaries.  
+Along with new words with date_created = today.  
+Create page with statistics on this as well.  
+
+
+languages
+All combinatoric within an octave
+Just use 10^10
+But should be tree structured.  
+Essentially all concepts should follow this heirarchical pattern.  
+This way if we leave off notes, we still are 
+hmm.  
+How can we have this inherited structure?  
+lang = 1-key - words - 1-key
+lang = 2-key - words - 2-key etc.  
+Perhaps just show the parent language as well while using the language?  
+This kind of gives a mathematical structure.  
+Dont need hard fast rule, but this philosophy may be enough.  
+Longer structure should be more precise and follow the prior structure for each concept.  
+
+So what should the first proto-languages represent?  
+
+Also cant use the current key octave as these will always belong to the meta-language.  
+If this is the case though it may be difficult to find pleasing combinations.  
+Anyway heirarchical construct is good, not quite sure how to implement.  
+
+Similar enclosure mentality may work which we already started with the meta-language.  
+1-x-x-1
+2-x-x-2
+
+Also nested enclosure.  
+1-x-x-2-y-y-2-x-x-1
+
+1- words can  not contain a 1.  
+2- words cant contain a 2 etc.  
+
+This way the nesting structure is sound.  
+Basically a change of key.  
+How do we know when nesting starts though.  
+
+Backwards nesting structure?  
+1-x-x-2-1-2-y-y-2-1-2-x-x-1
+
+SVO
+The boy walked into town.  
+x = walk, y=boy, z=town
+1-x-x-2-1-2-y-y-2-1-2-3-1-3-z-z-3-1-3-1
+
+1-x-x-2-1 - concept complete.  Addition of -2 we can take as communication loss if this occurs.  
+Since concepts are heirarchical it wont matter too much.  
+
+2-1-2 continues concept.  
+2-y-y-2 is self-contained word.  
+3-z-z-3 also.  
+End of simple concept = 1-x-x-1
+End of complete concept with nested concepts
+3-1-3-1
+What if 2-y-y-2 is 2-1-y-2?  
+
+What if we miss a nesting marker, and ruin the whole sentence?  
+If any word is > 20, then ignore and find the next x-1-x.  
+
+Perhaps double concept start, concept end is needed.  
+1-1-.. 1-1
+
+This means we must have another rule no double within any word.  
+cant have 1-2-2-1 as a word for instance.  
+So just a few rules.  
+Cant contain meta start/stop 0-12
+Cant contain its start-word 1- word cant contain 1.  
+Cant contain two sequential of same letter.  2-2, or 3-3
+
+This (1-1) indicates sentence start/end
+
+(1-1-1) can indicate larger concept start/end etc.  
+Can parse altogether to understand structure, but 
+for the most part should parse in real-time.  
+
+If we do this though, the smallest word becomes 3-letters.  
+Perhaps allow for 1 or 2-letter single concept mode.  
+0-x-x-0 start/stop single concept mode.  
+1-letter and 2-letter modes.  
+
+By default this would be active based on language settings.  
+
+Shorthand 12-12 for end of language identifier perhaps.  
+Or perhaps beginning and end.  12-12-l-l-l-12-12
+
+Switch back to previous language, or make a hotkey cache of 10 languages.  
+12-12-x-12-12
+
+Language names can also be heirarchical.  
+And the latest selected language is whichever one was in that family.  
+
+Perhaps trill should have different meaning.  Right now with this structure, trill will not exist.  
+
+Need geometric forms to be meaningful.  This would be like a mirror word, similar to opposite.  
+Complements
+12-5-7-12 -> 12-7-5-12
+in this case on/off
+12-3-7-12 -> 12-9-5-12
+
+Taxonomy and ontologies look at some examples.  
+
+https://www.fasb.org/projects/fasb-taxonomies
+
+https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi
+
+https://www.itis.gov/servlet/SingleRpt/SingleRpt?search_topic=TSN&search_value=183833#null
+
+
+https://www.catalogueoflife.org/data/taxon/V2
+
+Need an abbreviation marker.  
+Maybe we can use abbreviation marker 1-2-1-2-1.  
+and other ten keys are used in words.  
+
+octaves continue for further detail, maybe 5 keys per octave is enough for normal use cases.  
+Distinguishing this will be difficult enough.  
+
+So we have 10^5 general cases, and for further constraint we can go another octave.  
+
+
+What other overarching taxonomies exist besides biological?  
+
+taxonomy of goods, any shopping catalog.  
+
+old DMOZ:
+https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/OMV93V
+
+Could use the heirarchy here as an example.  
+Need to study structure of heirarchical datasets.  
+

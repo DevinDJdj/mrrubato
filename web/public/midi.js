@@ -124,9 +124,9 @@ function setupAudioFeedback(){
 	loadSounds('link', 'link');
 	loadSounds('frenchhorn', 'image');
 	loadSounds('viola', 'text');
-	audioFeedback(60, 100, 500);
-	audioFeedback(64, 100, 500);
-	audioFeedback(68, 100, 500);
+//	audioFeedback(60, 100, 500);
+//	audioFeedback(64, 100, 500);
+//	audioFeedback(68, 100, 500);
 	
 }
 
@@ -421,7 +421,7 @@ function getMIDIMessage(message, mytime=0) {
 	switch (command) {
 		case 144: // noteOn
 			if (velocity > 0) {
-				noteOn(note, velocity, abstime);
+				noteOn(note, velocity, abstime, mytime);
 				prevvelocity = velocity;
 				prevtime = abstime;
 			} 
@@ -447,12 +447,16 @@ function insertNote(note){
 	
 }
 
-function noteOn(note, velocity, abstime){
+function noteOn(note, velocity, abstime, mytime=0){ //mytime is the original time in the midi file, or 0 when playing live.  
 	
     console.log("Note On " + note + " at " + abstime + " vel " + velocity);
 	//make sound here.  
-	osc = playTone(midiToFreq(note, velocity));
-	pnote = playNote(note, velocity);
+	osc = null;
+	pnote = null;
+	if (mytime == 0){ //no feedback sound for existing midi files except in time.  Probably need to rewrite this area to read midi files.  
+		osc = playTone(midiToFreq(note, velocity));
+		pnote = playNote(note, velocity);
+	}
 	var obj = {"note": note, "velocity": velocity, "time": abstime, "duration": 0, osc: osc, pnote: pnote, complete: false, user: currentmidiuser};
 	
 	notes[note] = obj;
