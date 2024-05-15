@@ -43,6 +43,9 @@ Add date parameter
 now=xxxx
 pull last X from here for github, and videos.  
 Also add book for this perhaps.  
+recent.html?date=2024-05-05
+--done
+Jump here for instance from analyze page.  
 
 
 **handsfree
@@ -182,4 +185,9 @@ https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/OMV93V
 
 Could use the heirarchy here as an example.  
 Need to study structure of heirarchical datasets.  
+
+
+
+**web/public/analyze.html
+Need a display of the midi feedback in real-time, have a x second window to generate.  
 

@@ -55,6 +55,10 @@ function checkCommands(){
                 done = completeMidi(midi);
                 if (transcript.endsWith(" ")){  //use space as indicator of more parameters needed.
                     //still waiting.  
+                    cl.transcript = transcript;
+                    //we have added to the pending command.  
+                    //can continue the command with more midi
+                    //no use case at the moment for this.  
                 }
                 else{
                     Chat(transcript, callback, pending); //add waspendingflag
@@ -72,7 +76,8 @@ function checkCommands(){
         if (midi.length == 0 && transcript != ""){
             Chat(transcript, callback, pending); //add waspendingflag
         }
-        else if (Date.now() - cl.time > recentTime){ //recentTime in midi.js
+        else if (Date.now() - cl.time > recentTime*2){ //recentTime in midi.js
+            //allow for double the time to complete the command.  
             //pop from the pending commands?  Why keep useless history?  
             commandLog.pop();
         }
@@ -93,7 +98,7 @@ function checkCommands(){
                 if (transcript != prevtranscript){
                     done = completeMidi(midi);
                     if (transcript.endsWith(" ")){  //use space as indicator of more parameters needed.
-                        //still waiting.  
+                        //still waiting.  in this case perhaps extend the pendingTime.  
                     }
                     else{
                         Chat(transcript, callback, pending); //add waspendingflag
@@ -173,16 +178,24 @@ function Chat(transcript, callback=null, pending=false){
     else if (transcript.toLowerCase() == "stop"){
         window.speechSynthesis.cancel();
     }
-    else if (transcript.toLowerCase().startsWith("create language")){
+    else if (transcript.toLowerCase().startsWith("add language")){
         //
         tokens = transcript.split(" ");
         if (tokens.length > 3){
             midi = tokens[tokens.length-1];
             lang = tokens.slice(2, tokens.length-1).join(" ");
-            createLanguage(lang, midi);
+            addLanguage(lang, midi);
         }
     }
-    else if (transcript.toLowerCase().startsWith("create word")){
+    else if (transcript.toLowerCase().startsWith("add word")){
+        tokens = transcript.split(" ");
+        if (tokens.length > 3){
+            midi = tokens[tokens.length-1];
+            //for now single word?  I dont think it matters, logic allows for multiple words.  
+            //but we do need to time the speech and the midi well if we want to use the 4s timeout.  
+            word = tokens.slice(2, tokens.length-1).join(" ");
+            addWord(word, midi);
+        }
     }
     
     else{

@@ -20,6 +20,11 @@ if (urlParams["seek"]){
   seek = urlParams["seek"];
   console.log(seek);
 }
+if (urlParams["date"]){ 
+  querydate = urlParams["date"];
+  console.log(querydate);
+}
+
 
 var output = document.getElementById("clock");
 

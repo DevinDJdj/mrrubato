@@ -403,19 +403,8 @@ function getMIDIMessage(message, mytime=0) {
     if (mytime > 0){
 		abstime = mytime;
 	}
-    else if ((useyoutube || watch) && player.getCurrentTime){
-		const now = Date.now();
-		abstime = now - start;
-		var temptime = player.getCurrentTime();
-	    abstime = Math.round(temptime * 1000);
-	}
 	else{
-		//use the other player time.  
-		const now = Date.now();
-		abstime = now - start;
-		var temptime = player2.currentTime;
-	    abstime = Math.round(temptime * 1000);
-
+		abstime = getReferenceTime();
 	}
 		
 	switch (command) {
@@ -487,12 +476,36 @@ function noteOff(note, abstime){
 	
 }
 
+function getReferenceTime(){
+    if ((useyoutube || watch) && player.getCurrentTime){
+		var temptime = player.getCurrentTime();
+	    abstime = Math.round(temptime * 1000);
+	}
+	else if (player2.currentTime){
+		//use the other player time.  
+		var temptime = player2.currentTime;
+	    abstime = Math.round(temptime * 1000);
+
+	}
+	else{
+		const now = Date.now();
+		return now-start;
+	}
+
+}
 
 function getMidiRecent(){
 	//get the most recent midi notes
+	//use video time as reference.  
+
+
 	i=midiarray.length-1;
-	while (i >-1 && midiarray[i].time > Date.now()-start-recentTime && midiarray[i].complete !== true){		
+	lasttime = getReferenceTime();
+	while (i >-1 && midiarray[i].time > lasttime-recentTime && midiarray[i].complete !== true){		
 		i--;
+		lasttime = midiarray[i].time-start;
+		//now all midi is context if it is within the last 4 seconds of the previous midi and not complete.  
+		//need 4 second gap to clear midi.  
 	}
 	if (i == midiarray.length-1){
 		return null;

@@ -29,15 +29,45 @@ var DIC_TIMES = 4;
 //config.js keybot
 //do we want to allow for some function to adjust keybot/keytop?  
 
-function createLanguage(lang, midi){
-    ref = firebase.database().ref('/dictionary/languages/' + lang);
+//add definition MIDI my definition of this word.  
+//think we need to allow for stoppage or just keep the transcript pending.  
+
+function addWord(word, midi){
+    ref = firebase.database().ref('/dictionary/language/' + currentlanguage + "/" + word);
 	ref.once('value')
     .then((snap) => {
+        now = new Date();
         if (snap.exists()){
             let mylang = snap.val();
             if (mylang != midi){
-                ref.set(midi);
+                ref.update({"midi": midi, "updated": now.toISOString().substring(0, 10).replaceAll('-','')});
             }
+        }
+        else{
+            //probably should include create user and update user etc.  
+            obj = {"midi": midi, "created": now.toISOString().substring(0, 10).replaceAll('-',''), "updated": now.toISOString().substring(0, 10).replaceAll('-','') };
+            ref.set(obj);
+        }
+    });
+
+}
+
+
+function addLanguage(lang, midi){
+    ref = firebase.database().ref('/dictionary/languages/' + lang);
+	ref.once('value')
+    .then((snap) => {
+        now = new Date();
+        if (snap.exists()){
+            let mylang = snap.val();
+            if (mylang != midi){
+                ref.update({"midi": midi, "updated": now.toISOString().substring(0, 10).replaceAll('-','')});
+            }
+        }
+        else{
+            //probably should include create user and update user etc.  
+            obj = {"midi": midi, "created": now.toISOString().substring(0, 10).replaceAll('-',''), "updated": now.toISOString().substring(0, 10).replaceAll('-','') };
+            ref.set(obj);
         }
     });
 
@@ -54,7 +84,7 @@ function loadLanguages(){
 	    if (snap.exists()){
             let mylangs = snap.val();
             for (const [key, value] of Object.entries(mylangs)) {
-                alllangs[value] = key;
+                alllangs[value.midi] = key;
             }                    
         }
     });

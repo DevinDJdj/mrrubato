@@ -1,5 +1,6 @@
 var MAX_COMMANDLENGTH = 6;
 var currentlanguage = "base";
+var EOW = 12; //end of word
 
 class Keymap{
     constructor(){
@@ -67,7 +68,7 @@ class Keymap{
                 "0,2,2,0": "continue",
                 "0,4,7,0": "activate mic", "0,7,4,0": "deactivate mic", 
                 "0,3,7,0": "activate piano", "0,7,3,0": "deactivate piano",
-                "12,5,7,12": "change language " //need further parameter
+                "12,5,7,12": "change language " //just end with 12,12, "12,7,5,12": "change language end" //need further parameter
             },
             "5": {
                 "12,9,10,11,12": "add word ", //need further parameter
@@ -100,25 +101,60 @@ class Keymap{
             }
         };
 
-        this.funcdict["add language"] = function(transcript, midi, keydict, key){
+        this.funcdict["add language "] = function(transcript, midi, keydict, key){
             //must end with 12,12
             if (midi.length > 2){
-                if (midi[midi.length-1].note - keybot == 12 && midi[midi.length-2].note - keybot == 12){                    
-                    //we have a language
-                    //we can add this language to the DB.  
+                //for now this is ok, but must code for continuous speech.  
+                temptr = " ";
+                for (i=0; i<midi.length-1; i++){
+                    if (i>0 && midi[i].note - keybot == EOW && midi[i+1].note - keybot == EOW){
+                        //we have a language
+                        //we can add this language to the DB.  
+                        //end of word indicator.  
+                        for (j=0; j<i+2; j++){
+                            midi[j].complete = true;
+                        }
+                        console.log(temptr);
+                        transcript += " " + temptr;
+                        i = midi.length; //exit loop
+                    }
+
+                    if (i>0 && i<midi.length){
+                        temptr += ",";
+                    }
+                    temptr += (midi[i].note - keybot).toString();
+
                 }
             }
+            return transcript; //add language xxxx 2,3,4
         };
 
-        this.funcdict["add word"] = function(transcript, midi, keydict, key){
+        this.funcdict["add word "] = function(transcript, midi, keydict, key){
             //must end with 12,12
             if (midi.length > 2){
-                if (midi[midi.length-1].note - keybot == 12 && midi[midi.length-2].note - keybot == 12){                    
-                    //we have a word
-                    //use currentlanguage.  
-                    //we can add this word to the DB.  
+                //for now this is ok, but must code for continuous speech.  So must find the first two 12s.  
+                temptr = " ";
+                for (i=0; i<midi.length-1; i++){
+                    if (i>0 && midi[i].note - keybot == EOW && midi[i+1].note - keybot == EOW){
+                        //we have a word
+                        //we can add this language to the DB.  
+                        //end of word indicator.  
+                        for (j=0; j<i+2; j++){
+                            midi[j].complete = true;
+                        }
+                        console.log(temptr);
+                        transcript += " " + temptr;
+                        i = midi.length; //exit loop
+                    }
+
+                    if (i>0 && i<midi.length){
+                        temptr += ",";
+                    }
+                    temptr += (midi[i].note - keybot).toString();
+
                 }
             }
+            return transcript;
         };
 
         this.keydict["help"] = {
