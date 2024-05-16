@@ -191,3 +191,61 @@ Need to study structure of heirarchical datasets.
 **web/public/analyze.html
 Need a display of the midi feedback in real-time, have a x second window to generate.  
 
+Show feedback in seconds based on the intro/outro.  
+Create possibility to associate color with words.  
+Assign color with keys.  
+Similar function
+"change color for " word (color, 12-12)
+Allow for english representation as well as midi representation.  
+"change color " (color, 12-12)
+How to represent color
+Numerically in some way.  
+Anything that is logical to represented numerically will by default use keymapping instead of words.  
+HSV representation 
+Hue - octave 1 (1 or 2 keys), Saturation - octave 2 (1 or 2 keys), Value = velocity.  
+
+"change icon for " word (icon how do we represent this, should we)
+to start perhaps create calculated icons based on the midi keys used.  
+For this use timing, length and velocity.  
+Adjust each icon based on these properties.  
+Use the actual midi representation for the word itself if we can to start.  
+This way we have an association both ways.  
+
+These will only be created once?  
+How to generate this?  
+
+
+**web/public/speech.js
+Always can represent via midi or words.  
+words will get translated into midi if they are known words in the language.  
+If words are used to represent this, the midi should play in background when creating.  
+This allows us to still add additional comments but anything which is defined in our language will be precise 
+and represented in time.  
+
+**language
+How do we deal with changes in the language.  
+Track every change to every word, or generate a full dictionary for each day/month if there are changes to the language.  
+Then use the dictionary based on the date?  
+Default use the latest version of the language.  
+If we pass a date, use a previous iteration of the language.  
+Need to keep each change in midi representation.  
+Probably worth doing, but it is quite distracting to actually do this.  
+
+
+
+What data do we want in regular DB vs real-time DB.  
+Firebase dataconnect makes it easier to do:
+/dataconnect
+
+Past data just store in DB.  
+
+RTDB
+video info
+and comments
+and
+dictionary
+
+SQL:
+https://firebase.google.com/docs/data-connect/quickstart?authuser=0#local-development
+topics
+
