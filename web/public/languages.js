@@ -32,6 +32,10 @@ var DIC_TIMES = 4;
 //add definition MIDI my definition of this word.  
 //think we need to allow for stoppage or just keep the transcript pending.  
 
+function changeColor(word, color){
+
+}
+
 function addWord(word, midi){
     ref = firebase.database().ref('/dictionary/language/' + currentlanguage + "/" + word);
 	ref.once('value')
@@ -45,7 +49,7 @@ function addWord(word, midi){
         }
         else{
             //probably should include create user and update user etc.  
-            obj = {"midi": midi, "created": now.toISOString().substring(0, 10).replaceAll('-',''), "updated": now.toISOString().substring(0, 10).replaceAll('-','') };
+            obj = {"midi": midi, "color": 0, "created": now.toISOString().substring(0, 10).replaceAll('-',''), "updated": now.toISOString().substring(0, 10).replaceAll('-','') };
             ref.set(obj);
         }
     });
@@ -322,7 +326,7 @@ function getHighlightArray(t, dur, user=0, trk=0){
         return 0;
     }
 
-    i = Math.round(midiarray[user].length*t/dur);
+    i = Math.round(midiarray[user].length*t/dur)-1;
 
     if (i>0 && i<midiarray[user].length-1 && midiarray[user][i].time < t-vidbuffer*1000){
         while (i < midiarray[user].length-1 && midiarray[user][i].time < t-vidbuffer*1000){
@@ -331,7 +335,7 @@ function getHighlightArray(t, dur, user=0, trk=0){
         return i;
     }
     else {
-        while (i>=0 && midiarray[user][i].time > t-vidbuffer*1000){
+        while (i>=0 && i < midiarray[user].length && midiarray[user][i].time > t-vidbuffer*1000){
             i--;
         }
         return i+1;

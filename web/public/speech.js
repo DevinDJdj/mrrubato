@@ -237,7 +237,7 @@ recognition.addEventListener('result', e => {
         .join('')
 
     document.getElementById("p").setAttribute('value', transcript);
-    console.log(transcript + ' (' + (end-start)/1000 + ')');
+//    console.log(transcript + ' (' + (end-start)/1000 + ')');
     //this function could be different for each use-case, right now same function
     //we are interacting via voice here, so we call Chat()
     //this is blank for analyze.html.  
@@ -252,7 +252,7 @@ recognition.addEventListener('result', e => {
         console.log(mymidicommand);
         addCommandLog(transcript, null, true);
     }
-    Chat(transcript);
+//    Chat(transcript);
     //not sure if we should reset this.  
 //    document.getElementById("p").value = ""
     

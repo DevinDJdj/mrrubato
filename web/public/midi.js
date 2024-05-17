@@ -492,6 +492,8 @@ function getReferenceTime(){
 		return now-start;
 	}
 
+	return abstime;
+
 }
 
 function getMidiRecent(){
