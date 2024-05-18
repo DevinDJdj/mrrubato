@@ -11,6 +11,11 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter, CharacterTex
 from langchain.document_loaders import PyPDFLoader, DirectoryLoader, TextLoader
 from langchain.document_loaders.pdf import PyPDFDirectoryLoader
 from langchain.document_loaders import UnstructuredHTMLLoader, BSHTMLLoader
+
+__import__('pysqlite3')
+import sys
+sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+
 from langchain.vectorstores import Chroma
 from langchain.embeddings import GPT4AllEmbeddings
 from langchain.embeddings import LlamaCppEmbeddings

@@ -28,8 +28,8 @@ from pathlib import Path
 import glob
 import os
 
-myhome = "/home/devin/data"
-QUERY_DATA_PATH=myhome + "/inquiries/"
+myhome = "/home/devin"
+QUERY_DATA_PATH=myhome + "/data/inquiries/"
 
 prompt_template = """[INST]<<SYS>>Use the following pieces of context to answer the question at the end. Please follow the following rules:
 1. If you don't know the answer, try to find sources which include **coherent thoughts** relevant to the question. 
@@ -83,9 +83,9 @@ def qa_bot(topic):
   print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
   model = load_llm()
   print("loaded model")
- DB_PATH = myhome + "/vectorstores/db/"
+ DB_PATH = myhome + "/data/vectorstores/db/"
  #topic should exist.  
- DB_PATH = myhome + "/vectorstores/db/" + topic + "/"
+ DB_PATH = myhome + "/data/vectorstores/db/" + topic + "/"
  print(DB_PATH)
  vectorstore = Chroma(persist_directory=DB_PATH, embedding_function=myEmbeddings)
 # vectorstore = Chroma(persist_directory=DB_PATH, embedding_function=myEmbeddings)
