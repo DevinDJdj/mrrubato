@@ -42,7 +42,7 @@ def transcribe():
         global model
         if (model is None):
             print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-            model = whisper.load_model("medium")
+            model = whisper.load_model("medium") #have to use base here?  
             print("loaded model")
             print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         ret = transcribe_fromyoutube(video, model, mediafile, st, et)

@@ -20,6 +20,7 @@ import config
 import pandas as pd
 import requests
 import json
+import re
 from oauth2client.tools import argparser, run_flow
 
 #print(cred.APIKEY)
@@ -263,7 +264,42 @@ def insert_comment(youtube, channel_id, video_id, parent_id, text):
     )
   ).execute()
 
-def getComments(args):
+
+def getVidFromMetadata(metadata):
+    vid = os.path.splitext(os.path.basename(metadata))[0]
+    return vid
+
+
+def makeTimeLinks(desc, vid):
+    desc = desc.replace("\n", "<br>")
+    # desc = desc.replace(")", ")<br>")
+
+    regex1 = r"\(([^)]+)\)"
+    regex2 = r"\d+:\d\d?"
+
+    matches = re.findall(regex2, desc)
+
+    for match in matches:
+        secs = getSecsFromTime(match)
+        if secs > 0:
+            #this will be mixed up if comments at the same time for two different videos.  Do we care?
+            repl = "youtu.be/watch?v=" + vid + "&t=" + str(secs) + "s"
+            desc = re.sub(match, repl, desc)
+
+    return desc
+
+def massageComment(data):
+    final = data["answer"]
+    allsources = ""
+    for s in data["sources"]:
+        vid = getVidFromMetadata(s["metadata"])
+        allsources += makeTimeLinks(s["content"], vid)
+        allsources += "<br><br>"
+
+    final += allsources
+    return final
+
+def respondtoComments(args):
     youtube = get_authenticated_service(args)
     results = youtube.commentThreads().list(
         part="snippet",
@@ -278,24 +314,28 @@ def getComments(args):
     for item in results["items"]:
 #        threadid = item["id"]
         comment = item["snippet"]["topLevelComment"]
-        vidid = item["snippet"]["videoId"]
-        commentid = comment["id"]
-        author = comment["snippet"]["authorDisplayName"] #cant get userID
-        authorchannel = comment["snippet"]["authorChannelId"]["value"] #is this better than displayname?  
-        text = comment["snippet"]["textDisplay"]
-        print("Comment by %s: %s" % (author, text))
+        numreplies = item["snippet"]["totalReplyCount"]
+        if numreplies < 1:
+            vidid = item["snippet"]["videoId"]
+            commentid = comment["id"]
+            author = comment["snippet"]["authorDisplayName"] #cant get userID
+            authorchannel = comment["snippet"]["authorChannelId"]["value"] #is this better than displayname?  
+            text = comment["snippet"]["textDisplay"]
+            print("Comment by %s: %s" % (author, text))
 
-        url = f'{localserver}/api/?query={text}&userid={author}'
-        print(url)
-        try:
-            res = requests.get(url, timeout=(60, None)).text
-#            print(res)
-#            if (res is not None):
-            data = json.loads(res)
-            print(data["answer"])
-#                insert_comment(youtube, channel_id, vidid, commentid, data.answer)
-        except:
-            print('error using ollama ' + vidid)
+            url = f'{localserver}/api/?query={text}&userid={author}'
+            print(url)
+            try:
+                res = requests.get(url, timeout=(60, None)).text
+    #            print(res)
+    #            if (res is not None):
+                data = json.loads(res)
+                print(data["answer"])
+                mycomment = massageComment(data)
+                print(mycomment)
+#                insert_comment(youtube, channel_id, vidid, commentid, mycomment)
+            except:
+                print('error using ollama ' + vidid)
 
 
 def addAdmins(uid):
@@ -553,7 +593,7 @@ if __name__ == '__main__':
     
     getWatched()
 
-    getComments(args)
+    respondtoComments(args)
     prior = """
     for item in reversed(data["items"]):
     

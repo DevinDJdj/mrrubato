@@ -29,7 +29,7 @@ import urllib.request
 
 from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
 
-myhome = "/mnt/c/devinpiano" #"/home/devin"
+myhome = "/home/devin"
 OUTPUT_DIR = myhome + "/data/transcription/output/"
 
 def get_timestamp(s):
@@ -103,26 +103,27 @@ def transcribe_fromyoutube(videoid="ZshYVeNHkOM", model=None, mediafile=None, st
     f.close()
 
     #get wav files before deleting.  
-    for i in range(len(times)-1):
-        starta = times[i].split(":")
-        start = int(starta[0])*60 + int(starta[1])
-        enda = times[i+1].split(":")
-        end = int(enda[0])*60 + int(enda[1])
+    if (st !=None and et !=None):
+        for i in range(len(times)-1):
+            starta = times[i].split(":")
+            start = int(starta[0])*60 + int(starta[1])
+            enda = times[i+1].split(":")
+            end = int(enda[0])*60 + int(enda[1])
 
-        #for now only take data from outside of iterations
-        if (getIteration(times[i], st, et) == -1 and ignore.get(i) == None and end - start > 3 and end-start < 12):
-            #only use nice short segments which are mostly continuous.  
-            #ffmpeg_extract_subclip(latest_file, start, end, targetname="../tts/coqui/TSS/recipes/ljspeech/LJSpeech-1.1/" + videoid + "_" + str(i) + ".wav")
-            #need this outside of project, too many files.  
-            #baseaudioconfig uses 22050, 1 channel.  
-            command = "ffmpeg -i " + latest_file + " -ss " + start + " -to " + end + " -ar 22050 -ac 1 " + myhome + "/TTS/recipes/ljspeech/LJSpeech-1.1/" + videoid + "_" + str(start) + ".wav"
-            print(command)
-            subprocess.call(command, shell=True)
-            entry = videoid + "_" + str(i) + "|" + text[i] + "|" + text[i].lower()
-            #add this to metadata file.  
-            with open(myhome + "/TTS/recipes/ljspeech/LJSpeech-1.1/metadata.csv", 'a') as cf:
-                cf.write(entry + "\n")
-            
+            #for now only take data from outside of iterations
+            if (getIteration(times[i], st, et) == -1 and ignore.get(i) == None and end - start > 3 and end-start < 12):
+                #only use nice short segments which are mostly continuous.  
+                #ffmpeg_extract_subclip(latest_file, start, end, targetname="../tts/coqui/TSS/recipes/ljspeech/LJSpeech-1.1/" + videoid + "_" + str(i) + ".wav")
+                #need this outside of project, too many files.  
+                #baseaudioconfig uses 22050, 1 channel.  
+                command = "ffmpeg -i " + latest_file + " -ss " + start + " -to " + end + " -ar 22050 -ac 1 " + myhome + "/TTS/recipes/ljspeech/LJSpeech-1.1/" + videoid + "_" + str(start) + ".wav"
+                print(command)
+                subprocess.call(command, shell=True)
+                entry = videoid + "_" + str(i) + "|" + text[i] + "|" + text[i].lower()
+                #add this to metadata file.  
+                with open(myhome + "/TTS/recipes/ljspeech/LJSpeech-1.1/metadata.csv", 'a') as cf:
+                    cf.write(entry + "\n")
+                
 
 
     os.remove(latest_file)

@@ -249,3 +249,14 @@ SQL:
 https://firebase.google.com/docs/data-connect/quickstart?authuser=0#local-development
 topics
 
+
+**server/ollama/server.py
+Why is this so slow now?  
+Takes 10 minutes for one question.  
+vectorstore=ALL too large?  
+
+Something screwed up the nvidia driver install
+sudo /opt/deeplearning/install-driver.sh
+
+Wow so many problems with this at the moment.  
+
