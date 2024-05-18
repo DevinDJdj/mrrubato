@@ -57,6 +57,6 @@ echo "Reloading systemctl daemon"
 sudo systemctl daemon-reload
 sudo systemctl enable transcription.service
 sudo systemctl enable chat.service
-sudo systemctl start transcription.service
-sudo systemctl start chat.service
+#sudo systemctl start transcription.service
+#sudo systemctl start chat.service
 
