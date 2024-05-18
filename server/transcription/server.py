@@ -14,7 +14,7 @@ from datetime import datetime
 
 import subprocess
 
-myhome = "/mnt/c/devinpiano" #"/home/devin"
+myhome = "/home/devin"
 
 app = Flask(__name__)
 CORS(app)

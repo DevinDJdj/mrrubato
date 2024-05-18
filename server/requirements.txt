@@ -4,7 +4,7 @@ Werkzeug==3.0.1
 moviepy==1.0.3
 pytube==15.0.0
 triton>=2.0.0
-torch
+torch==2.1.2
 openai-whisper
 langchain
 fastembed
@@ -19,3 +19,5 @@ speechrecognition
 pytube
 flask_cors
 pandas
+oauth2client
+langchain-community

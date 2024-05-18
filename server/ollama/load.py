@@ -30,9 +30,9 @@ from pathlib import Path
 
 myhome = "/home/devin"
 DATA_PATH="data/"
-DATA_PATH=myhome + "/mrrubato/data/transcription/output/"
-DB_PATH = myhome + "/mrrubato/data/vectorstores/db/"
-QUERY_DATA_PATH=myhome + "/mrrubato/data/inquiries/"
+DATA_PATH=myhome + "/data/transcription/output/"
+DB_PATH = myhome + "/data/vectorstores/db/"
+QUERY_DATA_PATH=myhome + "/data/inquiries/"
 
 def create_vector_db():
     loader = PyPDFDirectoryLoader(DATA_PATH)
