@@ -260,3 +260,11 @@ sudo /opt/deeplearning/install-driver.sh
 
 Wow so many problems with this at the moment.  
 
+
+**web/public/midi.js
+Need midi command to erase recent
+0-0-0 can be the to erase?  
+
+
+**web/public/analyze.html
+Need to try add language, add word

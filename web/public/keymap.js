@@ -38,6 +38,7 @@ class Keymap{
                 "24,24": "play"
             },
             "3": { 
+                "0,0,0": "erase", //erase all uncomplete midi.  not sure if this will work ok.  
                 "0,11,0" : "start record", 
                 "12,11,12": "stop record", //after this we should either have a name or keyset in the upper octave.  
                 //this is essentially creating a commandset with all command log and midi log in time.  
@@ -105,24 +106,25 @@ class Keymap{
             //must end with 12,12
             if (midi.length > 2){
                 //for now this is ok, but must code for continuous speech.  
-                temptr = " ";
-                for (i=0; i<midi.length-1; i++){
+                let temptr = " ";
+                for (let i=0; i<midi.length-1; i++){
                     if (i>0 && midi[i].note - keybot == EOW && midi[i+1].note - keybot == EOW){
                         //we have a language
                         //we can add this language to the DB.  
                         //end of word indicator.  
-                        for (j=0; j<i+2; j++){
+                        for (let j=0; j<i+2; j++){
                             midi[j].complete = true;
+                        }
+                        for (j=0; j<i; j++){
+                            temptr += (midi[j].note - keybot).toString();
+                            if (j<i-1){
+                                temptr += ",";
+                            }
                         }
                         console.log(temptr);
                         transcript += " " + temptr;
-                        i = midi.length; //exit loop
+                        return transcript;
                     }
-
-                    if (i>0 && i<midi.length){
-                        temptr += ",";
-                    }
-                    temptr += (midi[i].note - keybot).toString();
 
                 }
             }
@@ -133,25 +135,25 @@ class Keymap{
             //must end with 12,12
             if (midi.length > 2){
                 //for now this is ok, but must code for continuous speech.  So must find the first two 12s.  
-                temptr = " ";
-                for (i=0; i<midi.length-1; i++){
+                let temptr = " ";
+                for (let i=0; i<midi.length-1; i++){
                     if (i>0 && midi[i].note - keybot == EOW && midi[i+1].note - keybot == EOW){
                         //we have a word
                         //we can add this language to the DB.  
                         //end of word indicator.  
-                        for (j=0; j<i+2; j++){
+                        for (let j=0; j<i+2; j++){
                             midi[j].complete = true;
+                        }
+                        for (j=0; j<i; j++){
+                            temptr += (midi[j].note - keybot).toString();
+                            if (j<i-1){
+                                temptr += ",";
+                            }
                         }
                         console.log(temptr);
                         transcript += " " + temptr;
-                        i = midi.length; //exit loop
+                        return transcript;
                     }
-
-                    if (i>0 && i<midi.length){
-                        temptr += ",";
-                    }
-                    temptr += (midi[i].note - keybot).toString();
-
                 }
             }
             return transcript;
@@ -298,7 +300,7 @@ class Keymap{
         //if we can translate the midi return transcript, otherwise return ""
         if (midi != null){
             for (const [key, value] of Object.entries(this.funcdict)) {
-                prevtranscript = transcript;
+                let prevtranscript = transcript;
                 if (transcript !=""){
                     if (key !="" && transcript.startsWith(key)){
                         let f = value;

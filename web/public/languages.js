@@ -216,8 +216,9 @@ function loadDictionaries(user){
         //set up to highlight video times
         setInterval(function(){
             updateVidTimes(user);     
-            checkCommands();
-        }, 1000);        
+            t = checkCommands();
+            $('#mycommand').val(t); //incomplete command.  
+        }, 500);
     }, 5000);
 
 }

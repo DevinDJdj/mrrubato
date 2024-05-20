@@ -501,20 +501,20 @@ function getMidiRecent(){
 	//use video time as reference.  
 
 
-	i=midiarray.length-1;
+	i=midiarray[currentmidiuser].length-1;
 	lasttime = getReferenceTime();
-	while (i >-1 && midiarray[i].time > lasttime-recentTime && midiarray[i].complete !== true){		
+	while (i >-1 && midiarray[currentmidiuser][i].time > lasttime-recentTime && midiarray[currentmidiuser][i].complete !== true){		
+		lasttime = midiarray[currentmidiuser][i].time; //why -start?  
 		i--;
-		lasttime = midiarray[i].time-start;
 		//now all midi is context if it is within the last 4 seconds of the previous midi and not complete.  
 		//need 4 second gap to clear midi.  
 	}
-	if (i == midiarray.length-1){
+	if (i == midiarray[currentmidiuser].length-1){
 		return null;
 	}
 	else{
 		retarray = [];
-		temp = midiarray.slice(i+1);
+		temp = midiarray[currentmidiuser].slice(i+1);
 		for (j=0; j<temp.length; j++){
 			retarray.push(temp[j]);
 		}

@@ -47,7 +47,7 @@ function checkCommands(){
         let prevtranscript = "";
         pending = cl.pending;
         let done = 1;
-        while (done > 0 && midi.length > 0){
+        while (done > 0 && midi !=null && midi.length > 0){
             prevtranscript = transcript;
             transcript = keymap.findCommand(transcript, midi);
             if (transcript != prevtranscript){
@@ -73,13 +73,17 @@ function checkCommands(){
             }
         }
         
-        if (midi.length == 0 && transcript != ""){
+        if ((midi ==null || midi.length == 0) && transcript != ""){
             Chat(transcript, callback, pending); //add waspendingflag
+            transcript = "";
         }
-        else if (Date.now() - cl.time > recentTime*2){ //recentTime in midi.js
+
+        //get rid of incomplete commands.  
+        if (Date.now() - cl.time > recentTime*2){ //recentTime in midi.js
             //allow for double the time to complete the command.  
             //pop from the pending commands?  Why keep useless history?  
             commandLog.pop();
+            transcript = "";
         }
 
     }
@@ -123,12 +127,21 @@ function checkCommands(){
                 else{
                     //should never end up here.  
                     Chat(transcript, callback, pending); 
+                    transcript = "";
                 }
             }
 
         }
     }
 
+    midi = getMidiRecent();
+    mtemp = "";
+    if (midi != null){
+        for (let i=0; i<midi.length; i++){
+            mtemp += midi[i].note + ",";
+        }
+    }
+    return transcript + " " + mtemp;
 
 }
 
