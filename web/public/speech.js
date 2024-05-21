@@ -49,6 +49,8 @@ function checkCommands(){
         let done = 1;
         while (done > 0 && midi !=null && midi.length > 0){
             prevtranscript = transcript;
+            //find words in current language.  
+            
             transcript = keymap.findCommand(transcript, midi);
             if (transcript != prevtranscript){
 

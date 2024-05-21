@@ -104,6 +104,12 @@ function initLangData(lang, user){
         langstart[lang][user] = [];
         langend[lang][user] = [];
     }
+    /*
+    if (typeof(midiarray[user][lang]) === "undefined"){
+        //midiarray[user][lang] = [];
+    }
+    */
+
 }
 
 function loadDictionaries(user){
@@ -178,6 +184,7 @@ function loadDictionaries(user){
             //so start base language = [12, 5, 7, 12]
             lang = alllangs[langmidi];
 
+            loadLanguage(lang, user);
             initLangData(lang, user);
             //keep sequential
             langstart[lang][user].push(cle[i]+4);
@@ -188,7 +195,6 @@ function loadDictionaries(user){
             else{
                 langend[lang][user].push(midiarray.length);
             }
-            loadLanguage(lang, user);
             numlangs++;
         }
     }
@@ -196,10 +202,10 @@ function loadDictionaries(user){
     if (numlangs == 0){
         //no language changes.  
         //just go through base language.  
+        loadLanguage("base", user);
         initLangData("base", user);
         langstart["base"][user] = [0];
         langend["base"][user] = [midiarray[user].length];
-        loadLanguage("base", user);
     }
     else{
         if (cl[0] > 0){
@@ -210,8 +216,7 @@ function loadDictionaries(user){
                 loadLanguage("base", user);
             }
             else{
-                langstart["base"][user].splice(0, 0, 0);
-                langend["base"][user].splice(0, 0, cl[0]);
+                updateLangRange("base", user, 0, cl[0]);
             }
         }
     }
@@ -228,6 +233,32 @@ function loadDictionaries(user){
     }, 5000);
 
 }
+
+//keep track of the current language here.  
+//just update the indexes each time something is played until there is another language change.  
+//ok, now we would need multiple tracks if we want simultaneous languages.  Or make start/end, a time instead of an index.  
+//yeah this is easier.  Just use the video time instead of the midiarray index.  
+//ok so we need an additional nest for "lang"  -> midiarray[user][lang][index]
+//then we are able to add to a different track for each language.  
+//need to adjust midifeedback load.  getMidiFeedback
+//
+
+
+function updateLangRange(lang, user, start, end){
+    let idx = 0;
+    for (let i=0; i< langstart[lang][user].length; i++) {
+        if (langstart[lang][user][i] < start){
+        }
+        else{
+            idx = i;
+            i = langstart[lang][user].length;
+            //break;
+        }
+    }
+    langstart[lang][user].splce(idx, 0, start);
+    langend[lang][user].splice(idx, 0, end);
+}
+
 
 function findWords(user){
     for (const [key, value] of Object.entries(langstart)) {	

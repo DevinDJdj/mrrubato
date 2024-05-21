@@ -1,4 +1,4 @@
-var midiarray = [[]];
+var midiarray = [[]]; //[{}]; //array of [user][language][array of notes]
 var currentmidiuser = 0;
 var notes = [];
 var midienabled = 0;
@@ -231,22 +231,34 @@ function load(data, feedback=false) {
 	console.log(smf.dump());
 	console.log(smf);
 	console.log(smf[0].smfBPM());
-	//smf[0]
-	for (i=0; i<smf[0].length;i++){
-		if (smf[0][i][1] == 107 || smf[0][i][1] == 108 || smf[0][i][1] == 21){
-			console.log(smf[0][i]);
-			//use this as the timing basis, then just use TT variable here.  
-			//match up with start/end times.  
-			//smf[0][i].tt
+	//
+	//smf[trknum][0].dd;  //this is track name.  Not sure if we can use smfSeqName for this.
+	for (trknum=0; trknum<smf.length; trknum++){
+		lang = smf[trknum][0].dd;
+		//initialize midiarray for this track.  
+		/*
+		if (typeof(midiarray[currentmidiuser][lang]) === "undefined"){
+			//midiarray[currentmidiuser][lang] = [];
 		}
-		if (feedback == true && (smf[0][i][0] == 144 || smf[0][i][0] == 128)){
-			
-			getMIDIMessage(smf[0][i], Math.round(smf[0][i].tt*10)); 
-			//*10 because we have 100 ppqn and 60 bpm and we need milliseconds
+		*/
+
+		for (i=0; i<smf[trknum].length;i++){
+			if (smf[trknum][i][1] == 107 || smf[trknum][i][1] == 108 || smf[trknum][i][1] == 21){ //notes
+				console.log(smf[0][i]);
+				//use this as the timing basis, then just use TT variable here.  
+				//match up with start/end times.  
+				//smf[0][i].tt
+			}
+			if (feedback == true && (smf[trknum][i][0] == 144 || smf[trknum][i][0] == 128)){ //midicommands ON OFF
+				//add to the right language.  
+				
+				getMIDIMessage(smf[0][i], Math.round(smf[0][i].tt*10), lang); 
+				//*10 because we have 100 ppqn and 60 bpm and we need milliseconds
+			}
+			//0 = 144?  channel 1
+			//1 = note
+			//2 = velocity (0=off)
 		}
-		//0 = 144?  channel 1
-		//1 = note
-		//2 = velocity (0=off)
 	}
 	/*
 	MidiParser.parse( smf.toUint8Array(), function(obj){
@@ -361,7 +373,36 @@ function getMidiFeedback(midiuser=0){
 	//
 	var smf = new JZZ.MIDI.SMF(1, 100); //this second param is ppqn pulses per quarter note
 
-	// Add MIDI file tracks:
+	// Add MIDI file tracks for each language:
+	//for each lang in midiarray[midiuser][lang]
+	/*
+	var tracks = {};
+    for (const [lang, value] of Object.entries(midiarray[midiuser])) {
+		tracks[lang] = new JZZ.MIDI.SMF.MTrk(); smf.push(tracks[lang]); // First track in Type 1 MIDI file is normally used for tempo changes
+		tracks[lang].smfSeqName(lang)
+		.smfBPM(60); // Tempo. Normally set at clock 0, but can be also changed later
+		trk = tracks[lang];
+
+		prevtime = 0;
+		if (midiarray[midiuser][lang].length == 0){
+			//should never occur
+		}
+		else{		
+			for (i=0; i< midiarray[midiuser][lang].length; i++){
+				tick = Math.round((midiarray[midiuser][lang][i].time-prevtime)/10);
+			
+				if (tick < 0){ tick = 0;console.log(midiarray[midiuser][lang][i]);}
+				if (midiarray[midiuser][lang][i].duration < 0){midiarray[midiuser][lang][i].duration = 0;console.log(midiarray[midiuser][lang][i]);}
+				trk = trk.ch(0).program(0x0b).tick(tick).note(midiarray[midiuser][lang][i].note, midiarray[midiuser][lang][i].velocity, Math.round(midiarray[midiuser][lang][i].duration/10));
+				console.log(midiarray[midiuser][lang][i]);
+				prevtime = midiarray[midiuser][lang][i].time;
+			}
+			trk.tick(100).smfEndOfTrack(); // otherwise it will end on clock 1690
+		}
+	}
+	//logic below for each
+	*/
+
 	var trk0 = new JZZ.MIDI.SMF.MTrk(); smf.push(trk0); // First track in Type 1 MIDI file is normally used for tempo changes
 	trk0.smfSeqName('Feedback')
     .smfBPM(60); // Tempo. Normally set at clock 0, but can be also changed later
@@ -392,9 +433,18 @@ function getMidiFeedback(midiuser=0){
     return uri;
 }
 
-function getMIDIMessage(message, mytime=0) {
+function getMIDIMessage(message, mytime=0, lang="") {
 	if (midienabled==0 && mytime==0){
 		return;
+	}
+	if (lang == ""){
+		//load languages.js before midi.js so this exists.  
+		lang = currentlanguage;
+	}
+	else{
+		//set current language.  Should be fine if this remains current language?  
+		//best is if we keep track of the age of the tracks.  too much...
+		currentlanguage = lang;
 	}
 	var command = message[0];
 	var note = message[1];
@@ -428,6 +478,9 @@ function getMIDIMessage(message, mytime=0) {
 function insertNote(note){
 	//usually inserting last.  
 	//fine for now.  
+	//use currentlanguage
+	//i = midiarray[currentmidiuser][currentlanguage].length-1;
+
 	i=midiarray[currentmidiuser].length-1;
 	while (i >-1 && note.time < midiarray[currentmidiuser][i].time){		
 		i--;
