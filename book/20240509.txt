@@ -268,3 +268,15 @@ Need midi command to erase recent
 
 **web/public/analyze.html
 Need to try add language, add word
+
+We have to do 
+checkCommands
+on all feedback.  
+Maybe we should be checking for words in the current language first, then checking for commands.  
+Put this in checkCommands.  
+Then We dont have this looping and perhaps making a mistaken command.  
+So if 
+midifeedback doesnt start with 0 or 12, we check for words in current language, and deactivate that midi if it is part of the language.  
+Could also try to rule out the midi, but probably not worth.  
+I think this will be enough.  
+

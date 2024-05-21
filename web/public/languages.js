@@ -168,7 +168,7 @@ function loadDictionaries(user){
     numlangs = 0;
     for (i=0; i<cl.length; i++){
         //change language
-        tempmidi = midiarray[user].slice(cl[i], cle[i]+4);
+        tempmidi = midiarray[user].slice(cl[i]+4, cle[i]);
         for (j=0; j<tempmidi.length; j++){
             tempmidi[j] = tempmidi[j] - keybot;
         }
@@ -203,10 +203,16 @@ function loadDictionaries(user){
     }
     else{
         if (cl[0] > 0){
-            initLangData("base", user);
-            langstart["base"][user] = [0];
-            langend["base"][user] = [cl[0]];
-            loadLanguage("base", user);
+            if (langstart["base"][user].length == 0){
+                initLangData("base", user);
+                langstart["base"][user] = [0];
+                langend["base"][user] = [cl[0]];
+                loadLanguage("base", user);
+            }
+            else{
+                langstart["base"][user].splice(0, 0, 0);
+                langend["base"][user].splice(0, 0, cl[0]);
+            }
         }
     }
 

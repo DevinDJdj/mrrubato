@@ -94,12 +94,13 @@ class Keymap{
                             keys += ",";
                         }
                     }
-                    if (keyset[keys] != null){
+                    if (typeof(keyset) !=="undefined" && typeof(keyset[keys]) !=="undefined" && keyset[keys] != null){
                         //run this function.  
                         transcript += keyset[keys];
                     }
                 }
             }
+            return transcript;
         };
 
         this.funcdict["add language "] = function(transcript, midi, keydict, key){

@@ -448,6 +448,10 @@ function noteOn(note, velocity, abstime, mytime=0){ //mytime is the original tim
 	}
 	var obj = {"note": note, "velocity": velocity, "time": abstime, "duration": 0, osc: osc, pnote: pnote, complete: false, user: currentmidiuser};
 	
+	if (mytime > 0){
+		//this is loaded data.  
+		obj.complete = true;
+	}
 	notes[note] = obj;
 //	midiarray.push(obj);
 }
