@@ -1,3 +1,6 @@
+import spacy
+from IPython.core.display import display, HTML
+
 nlp_ner = spacy.load("model-best")
 
 doc = nlp_ner("Antiretroviral therapy (ART) is recommended for all HIV-infected\
@@ -11,4 +14,7 @@ therapy on the basis of clinical and/or psychosocial factors.")
 colors = {"PATHOGEN": "#F67DE3", "MEDICINE": "#7DF6D9", "MEDICALCONDITION":"#FFFFFF"}
 options = {"colors": colors} 
 
-spacy.displacy.render(doc, style="ent", options= options, jupyter=True)
+#html = spacy.displacy.render(doc, style="ent", options= options, page=True)
+spacy.displacy.serve(doc, style="ent", options= options)
+#http://localhost:5000/
+#display(HTML(html))

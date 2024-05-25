@@ -58,4 +58,6 @@ doc_bin.to_disk("training_data.spacy") # save the docbin object
 #train("./config.cfg", overrides={"paths.train": "./training_data.spacy", "paths.dev": "./training_data.spacy"})
 
 #pip install cupy
-#python -m spacy train config.cfg --output ./ --paths.train ./training_data.spacy --paths.dev ./training_data.spacy --gpu-id 0
+#python -m spacy train config.cfg --output ./ --paths.train ./training_data.spacy --paths.dev ./training_data.spacy
+
+#python ./test2.py
