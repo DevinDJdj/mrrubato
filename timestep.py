@@ -551,11 +551,13 @@ if __name__ == '__main__':
                     print(et)
                     sta = ",".join(str(s) for s in st)
                     eta = ",".join(str(e) for e in et)
-                    url = f'{localserver}/transcribe/?videoid={videoid}&mediafile={mediafile}&st={sta}&et={eta}'
-#                    url = f'{localserver}/transcribe/?videoid={videoid}'
+                    params = [('videoid', videoid),('st',sta),('et',eta)] #('mediafile',mediafile),
+#                    url = f'{localserver}/transcribe/?videoid={videoid}&mediafile={mediafile}&st={sta}&et={eta}'
+                    url = f'{localserver}/transcribe/'
                     print(url)
                     try:
-                        transcript = requests.get(url, timeout=(30, None)).text
+#                        transcript = requests.get(url, timeout=(30, None)).text
+                        transcript = requests.get(url, params=params, timeout=(30, None)).text
                         if (transcript is not None and transcript !="error"):
                             data = {'transcript':transcript}
                             reftranscript.set(data)

@@ -33,9 +33,8 @@ QUERY_DATA_PATH=myhome + "/data/inquiries/"
 
 prompt_template = """[INST]<<SYS>>Use the following pieces of context to answer the question at the end. Please follow the following rules:
 1. If you don't know the answer, try to find sources which include **coherent thoughts** relevant to the question. 
-and add the source links as a list.
 2. If you find the answer, write the answer in a concise way and add the list of sources that are 
-**directly** used to derive the answer. Exclude the sources that are irrelevant to the final answer.
+**directly** used to derive the answer. 
 <</SYS>>
 {context}
 

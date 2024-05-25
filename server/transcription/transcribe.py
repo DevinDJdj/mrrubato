@@ -54,6 +54,7 @@ def transcribe_fromyoutube(videoid="ZshYVeNHkOM", model=None, mediafile=None, st
     if mediafile != None and mediafile != "":
         #should work with this.  
         #see if transcribe is working still after update.  
+        #this is not working.  
         urllib.request.urlretrieve(mediafile, OUTPUT_DIR + videoid + "/" + videoid + ".mp4")
     else:
         youtube_video_url = "https://www.youtube.com/watch?v=" + videoid

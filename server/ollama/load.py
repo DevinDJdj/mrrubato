@@ -7,20 +7,20 @@
 #pip install chainlit
 #pip install fastembed
 
-from langchain.text_splitter import RecursiveCharacterTextSplitter, CharacterTextSplitter
-from langchain.document_loaders import PyPDFLoader, DirectoryLoader, TextLoader
-from langchain.document_loaders.pdf import PyPDFDirectoryLoader
-from langchain.document_loaders import UnstructuredHTMLLoader, BSHTMLLoader
+from langchain_community.text_splitter import RecursiveCharacterTextSplitter, CharacterTextSplitter
+from langchain_community.document_loaders import PyPDFLoader, DirectoryLoader, TextLoader
+from langchain_community.document_loaders.pdf import PyPDFDirectoryLoader
+from langchain_community.document_loaders import UnstructuredHTMLLoader, BSHTMLLoader
 
 __import__('pysqlite3')
 import sys
 sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
-from langchain.vectorstores import Chroma
-from langchain.embeddings import GPT4AllEmbeddings
-from langchain.embeddings import LlamaCppEmbeddings
-from langchain.embeddings import OllamaEmbeddings
-from langchain.embeddings import FastEmbedEmbeddings #pip install fastembed
+from langchain_community.vectorstores import Chroma
+from langchain_community.embeddings import GPT4AllEmbeddings
+from langchain_community.embeddings import LlamaCppEmbeddings
+from langchain_community.embeddings import OllamaEmbeddings
+from langchain_community.embeddings import FastEmbedEmbeddings #pip install fastembed
 
 
 from oauth2client.tools import argparser, run_flow

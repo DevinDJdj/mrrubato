@@ -280,3 +280,53 @@ midifeedback doesnt start with 0 or 12, we check for words in current language, 
 Could also try to rule out the midi, but probably not worth.  
 I think this will be enough.  
 
+
+Need volume control for feedback.  
+Think about possibility to change key for words.  
+
+Need to investigate some heirarchical language structures.  
+Word2Vec I guess could be similar to what we need, but we would need to know what the attributes actually mean.  
+
+**server/ollama/server.py
+Need different prompt perhaps, not pulling enough actual sources.  
+Something wrong with data path.  
+How do we have multiple nested output/output/output...
+Looks like this was a problem with copying.  
+Doesnt really matter I think, but should fix for next copy.  
+Question is why are we not getting more sources.  
+Try different prompt?  
+
+
+
+**server/ollama/loadall.py
+
+confirm if it is working as normal
+from langchain.vectorstores import Chroma
+from langchain.embeddings import FastEmbedEmbeddings
+myEmbeddings = FastEmbedEmbeddings() #OllamaEmbeddings(model="llama2") #GPT4AllEmbeddings()
+MY_DATA = '/home/devin/data/vectorstores/db/ALL/'
+vectorstore = Chroma(persist_directory=MY_DATA, embedding_function=myEmbeddings)
+len(vectorstore.get()['documents'])
+
+In a more general sense, how do we understand the embeddings?  
+
+Try to train 
+word2vec or 
+spacy 
+to get a feel for the workflow.  
+https://realpython.com/chromadb-vector-database/
+
+
+XAI - explainable AI
+https://ceur-ws.org/Vol-3637/paper6.pdf
+
+Lets take the same approach as this, but actually analyze 
+a variety of concepts further what each of the embeddings represents.  
+How to make this meaningful?  
+
+
+
+https://shap.readthedocs.io/en/latest/index.html
+
+
+create 
