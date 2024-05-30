@@ -330,3 +330,41 @@ https://shap.readthedocs.io/en/latest/index.html
 
 
 create 
+
+OK, played with spacy a bit.  
+Train and display results from a model.  
+
+**languages/spacy/test.py
+word2vec basics.  
+
+**languages/spacy/train.py
+**languages/spacy/test2.py
+spacy basics.  
+
+
+
+**web/public/analyze.html
+create basic controls for the midi controller.  
+volume, pause, etc.  
+Check if octave controls on the midi controller work ok with browser APIs.  
+->yes this works.  
+See if we can display the current octave in the browser after octave change.  
+WebMidi.octaveOffset
+also for each input			
+//device.octaveOffset
+hmm not what expected, this is not coming from the device.  Device holds this on its own.  
+We can probably use this separately, but do we want to?  
+
+
+Should we use the Joystick 224 messages (pitch bend?)
+224, ?, ?
+knobs are captured
+176, 7x, value
+
+Joystick and knobs are captured, but not the pads
+
+This would allow us to simply use those and keep the same start/stop/pause etc controls.  
+Maybe switch default octaves as well for basic controls, just use a 4 or 5 octaves.  
+C2 -> C7
+Maybe use certain octaves for meta control, i.e. C2->C3
+This provides some advantages.  

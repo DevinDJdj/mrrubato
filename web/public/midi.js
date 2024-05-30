@@ -434,6 +434,16 @@ function getMidiFeedback(midiuser=0){
 }
 
 function getMIDIMessage(message, mytime=0, lang="") {
+
+	var tempDiv = $('#devices');
+	var devhtml = "";
+	WebMidi.inputs.forEach((device, index) => {
+		devhtml += `${index}: ${device.name} (${device.state})<br>`;
+
+//		document.body.innerHTML+= `${index}: ${device.name} <br>`;
+		//device.octaveOffset
+	  });
+
 	if (midienabled==0 && mytime==0){
 		return;
 	}
@@ -447,6 +457,12 @@ function getMIDIMessage(message, mytime=0, lang="") {
 		currentlanguage = lang;
 	}
 	var command = message[0];
+	if (command == 144 || command == 128){
+		devhtml += " LastNote: " + message[1];
+	}
+
+	tempDiv.html(devhtml);
+
 	var note = message[1];
 	var velocity = (message.length > 2) ? message[2] : 0; // a velocity value might not be included with a noteOff command
 
@@ -582,16 +598,22 @@ function getMidiRecent(){
       function onEnabled() {
 
 		setupAudioFeedback();
-		var tempDiv = $('#midi');
+		var tempDiv = $('#devices');
         if (WebMidi.inputs.length < 1) {
-			tempDiv.after("No device detected.");
-			document.body.innerHTML+= "No device detected.";
+			tempDiv.html("No device detected.");
+//			document.body.innerHTML+= "No device detected.";
         } else {
-          WebMidi.inputs.forEach((device, index) => {
-			tempDiv.after(`${index}: ${device.name} <br>`);
-            document.body.innerHTML+= `${index}: ${device.name} <br>`;
-          });
-        }
+			var tempDiv = $('#devices');
+			var devhtml = "";
+			WebMidi.inputs.forEach((device, index) => {
+				devhtml += `${index}: ${device.name} ( ${device.state} )<br>`;
+		
+		//		document.body.innerHTML+= `${index}: ${device.name} <br>`;
+				//device.octaveOffset
+			  });
+			  tempDiv.html(devhtml);
+
+			}
 
       	for (var input of WebMidi.inputs.values()) {
 			input.channels[1].addListener("midimessage", (event) => {console.log(event); getMIDIMessage(event.data); });
