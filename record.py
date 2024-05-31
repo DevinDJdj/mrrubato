@@ -200,7 +200,7 @@ def get_authenticated_service(args, myscope=YOUTUBE_SCOPE):
   credentials = storage.get()
   #this local storage of creds was causing problems.  Finally this works now to add to the playlist.  
 #  credentials = None
-  if credentials is None or credentials.invalid:
+  if credentials is None or credentials.invalid or args.config != "config.json":
     credentials = run_flow(flow, storage, args)
 
   return build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION,
@@ -421,6 +421,7 @@ def get_latest_file():
     return latest_file
 
 
+#python ./record.py --description "Test" --config "../config_ms.json"
 if __name__ == '__main__':
 
     argparser.add_argument("--rerun", help="Rerun upload",
@@ -442,6 +443,11 @@ if __name__ == '__main__':
 
     if (args.config != "config.json"):
         config.cfg = config.init(args.config)
+        CLIENT_SECRETS_FILE = config.cfg['youtube']['CLIENT_SECRETS_FILE']
+
+    channel_id = config.cfg["youtube"]["CHANNELID"] #cred.CHANNELID
+    api_key = config.cfg["youtube"]["APIKEY"] #cred.APIKEY
+
 
     if (args.title == "New Upload"):
         args.title = args.description
@@ -458,6 +464,7 @@ if __name__ == '__main__':
 
     databaseURL = config.cfg["firebase"]["fbconfig"]["databaseURL"]
     if (args.rerun == "true"):
+        print("Start Rerun")
         # Init firebase with your credentials
         creda = credentials.Certificate(config.cfg["firebase"]["credentialsfile"])
         initialize_app(creda, {'storageBucket': config.cfg["firebase"]["fbconfig"]["storageBucket"], 'databaseURL':databaseURL})    
@@ -466,12 +473,14 @@ if __name__ == '__main__':
         args.description = tempfile.read()
         tempfile.close()
         if (config.cfg['youtube']['enabled'] == "true"):
+            print("Authentication with Youtube")
             youtube = get_authenticated_service(args)
             videoid = initialize_upload(youtube, args)    
             add_video_to_playlist(videoid, cred.MY_PLAYLIST, args)
         else:
             videoid = time.strftime("%Y%m%d%H%M%S") #for now just use this as ID, not sure if we want global IDs or not.            
         addtodb(videoid)
+        print("End Rerun")
         sys.exit(0)
 
 
