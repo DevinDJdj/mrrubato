@@ -1,4 +1,5 @@
-var midiarray = [[]]; //[{}]; //array of [user][language][array of notes]
+//var midiarray = [[]]; //[{}]; //array of [user][language][array of notes]
+var midiarray = [{"base": []}];
 var currentmidiuser = 0;
 var notes = [];
 var midienabled = 0;
@@ -235,12 +236,20 @@ function load(data, feedback=false) {
 	//smf[trknum][0].dd;  //this is track name.  Not sure if we can use smfSeqName for this.
 	for (trknum=0; trknum<smf.length; trknum++){
 		lang = smf[trknum][0].dd;
-		//initialize midiarray for this track.  
-		/*
-		if (typeof(midiarray[currentmidiuser][lang]) === "undefined"){
-			//midiarray[currentmidiuser][lang] = [];
+
+		if (lang == "Feedback"){
+			lang = "base";
 		}
-		*/
+		else if (typeof(lang) == "undefined"){
+			//not sure what this is, but doesnt really matter, there are no notes.  
+			//seems to be loading twice somehow.  
+			lang = "base";
+		}
+		//initialize midiarray for this track.  
+
+		if (typeof(midiarray[currentmidiuser][lang]) === "undefined"){
+			midiarray[currentmidiuser][lang] = [];
+		}
 
 		for (i=0; i<smf[trknum].length;i++){
 			if (smf[trknum][i][1] == 107 || smf[trknum][i][1] == 108 || smf[trknum][i][1] == 21){ //notes
@@ -375,13 +384,12 @@ function getMidiFeedback(midiuser=0){
 
 	// Add MIDI file tracks for each language:
 	//for each lang in midiarray[midiuser][lang]
-	/*
 	var tracks = {};
     for (const [lang, value] of Object.entries(midiarray[midiuser])) {
 		tracks[lang] = new JZZ.MIDI.SMF.MTrk(); smf.push(tracks[lang]); // First track in Type 1 MIDI file is normally used for tempo changes
 		tracks[lang].smfSeqName(lang)
 		.smfBPM(60); // Tempo. Normally set at clock 0, but can be also changed later
-		trk = tracks[lang];
+		let trk = tracks[lang];
 
 		prevtime = 0;
 		if (midiarray[midiuser][lang].length == 0){
@@ -401,8 +409,8 @@ function getMidiFeedback(midiuser=0){
 		}
 	}
 	//logic below for each
-	*/
 
+	/*
 	var trk0 = new JZZ.MIDI.SMF.MTrk(); smf.push(trk0); // First track in Type 1 MIDI file is normally used for tempo changes
 	trk0.smfSeqName('Feedback')
     .smfBPM(60); // Tempo. Normally set at clock 0, but can be also changed later
@@ -424,6 +432,8 @@ function getMidiFeedback(midiuser=0){
 		prevtime = midiarray[midiuser][i].time;
 	}
 	trk.tick(100).smfEndOfTrack(); // otherwise it will end on clock 1690
+	*/
+
 	var str = smf.dump(); // MIDI file dumped as a string
 	var b64 = JZZ.lib.toBase64(str); // convert to base-64 string
 	var uri = 'data:audio/midi;base64,' + b64; // data URI
@@ -497,11 +507,11 @@ function insertNote(note){
 	//use currentlanguage
 	//i = midiarray[currentmidiuser][currentlanguage].length-1;
 
-	i=midiarray[currentmidiuser].length-1;
-	while (i >-1 && note.time < midiarray[currentmidiuser][i].time){		
+	i=midiarray[currentmidiuser][currentlanguage].length-1;
+	while (i >-1 && note.time < midiarray[currentmidiuser][currentlanguage][i].time){		
 		i--;
 	}
-	midiarray[currentmidiuser].splice(i+1, 0, note);
+	midiarray[currentmidiuser][currentlanguage].splice(i+1, 0, note);
 	
 }
 
@@ -574,20 +584,20 @@ function getMidiRecent(){
 	//use video time as reference.  
 
 
-	i=midiarray[currentmidiuser].length-1;
+	i=midiarray[currentmidiuser][currentlanguage].length-1;
 	lasttime = getReferenceTime();
-	while (i >-1 && midiarray[currentmidiuser][i].time > lasttime-recentTime && midiarray[currentmidiuser][i].complete !== true){		
-		lasttime = midiarray[currentmidiuser][i].time; //why -start?  
+	while (i >-1 && midiarray[currentmidiuser][currentlanguage][i].time > lasttime-recentTime && midiarray[currentmidiuser][currentlanguage][i].complete !== true){		
+		lasttime = midiarray[currentmidiuser][currentlanguage][i].time; //why -start?  
 		i--;
 		//now all midi is context if it is within the last 4 seconds of the previous midi and not complete.  
 		//need 4 second gap to clear midi.  
 	}
-	if (i == midiarray[currentmidiuser].length-1){
+	if (i == midiarray[currentmidiuser][currentlanguage].length-1){
 		return null;
 	}
 	else{
 		retarray = [];
-		temp = midiarray[currentmidiuser].slice(i+1);
+		temp = midiarray[currentmidiuser][currentlanguage].slice(i+1);
 		for (j=0; j<temp.length; j++){
 			retarray.push(temp[j]);
 		}

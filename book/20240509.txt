@@ -368,3 +368,18 @@ Maybe switch default octaves as well for basic controls, just use a 4 or 5 octav
 C2 -> C7
 Maybe use certain octaves for meta control, i.e. C2->C3
 This provides some advantages.  
+
+
+Currently used Llama2 and Mistral AI models.  
+Using OpenAI transcription, but it has some problems.  
+Is the Coqui AI stuff I integrated working to generate voice?  
+
+Try Sana AI?  
+What other companies are interesting enough to perhaps try to use?  
+
+
+
+OK, now we have structure
+midiarray[user][language][]
+
+Probably some issues still.  Check if we can save this.  

@@ -479,7 +479,7 @@ function loadPreviousComments(snapshot, uid=0){
 			currentmidiuser = 0;
 		}
 		else{
-			midiarray.push([]);
+			midiarray.push({"base": []});
 			currentmidiuser=midiarray.length-1;
 			users[currentmidiuser] = key; //lookup for array location -> uid
 		}
