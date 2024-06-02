@@ -2,7 +2,10 @@
 var midiarray = [{"base": []}];
 var currentmidiuser = 0;
 var notes = [];
+var lastmidirecent = [];
 var midienabled = 0;
+var ispaused = 0;
+var midioffset = 0;
 var obj = {"note": 0, "velocity": 0, "time": 0, "duration": 0, "user": 0};
 
 //create sound easy
@@ -454,8 +457,8 @@ function getMIDIMessage(message, mytime=0, lang="") {
 		//device.octaveOffset
 	  });
 
-	if (midienabled==0 && mytime==0){
-		return;
+	if (ispaused==1 && mytime==0){
+		midioffset +=1;
 	}
 	if (lang == ""){
 		//load languages.js before midi.js so this exists.  
@@ -575,7 +578,7 @@ function getReferenceTime(){
 		return now-start;
 	}
 
-	return abstime;
+	return abstime+midioffset; //add midioffset for when paused we can still get commands.  
 
 }
 
@@ -586,8 +589,8 @@ function getMidiRecent(){
 
 	i=midiarray[currentmidiuser][currentlanguage].length-1;
 	lasttime = getReferenceTime();
-	while (i >-1 && midiarray[currentmidiuser][currentlanguage][i].time > lasttime-recentTime && midiarray[currentmidiuser][currentlanguage][i].complete !== true){		
-		lasttime = midiarray[currentmidiuser][currentlanguage][i].time; //why -start?  
+	while (i >-1 && midiarray[currentmidiuser][currentlanguage][i].time > lasttime-recentTime){		
+//		lasttime = midiarray[currentmidiuser][currentlanguage][i].time; //why -start?  
 		i--;
 		//now all midi is context if it is within the last 4 seconds of the previous midi and not complete.  
 		//need 4 second gap to clear midi.  
@@ -599,7 +602,9 @@ function getMidiRecent(){
 		retarray = [];
 		temp = midiarray[currentmidiuser][currentlanguage].slice(i+1);
 		for (j=0; j<temp.length; j++){
-			retarray.push(temp[j]);
+			if (temp[j].complete !== true){
+				retarray.push(temp[j]);
+			}
 		}
 		return retarray;
 	}

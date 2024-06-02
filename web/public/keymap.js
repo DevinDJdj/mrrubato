@@ -33,11 +33,8 @@ class Keymap{
         //
 
         this.keydict[ "" ] = { 
-            "2": {
-                "23,23": "pause",
-                "24,24": "play"
-            },
             "3": { 
+                "24,23,24": "play",
                 "0,0,0": "erase", //erase all uncomplete midi.  not sure if this will work ok.  
                 "0,11,0" : "start record", 
                 "12,11,12": "stop record", //after this we should either have a name or keyset in the upper octave.  
@@ -62,6 +59,8 @@ class Keymap{
                 "0,2,0": "stop"
             }, 
             "4": {
+                "24,23,23,24": "pause",
+                "0,1,1,0": "set speed", //set speed of playback.  This will be a number from -12 to 12.  0 is normal speed.
                 "0,7,7,0": "where am i", 
                 "0,5,5,0": "tabs",
                 "0,4,4,0": "scroll up",
@@ -69,7 +68,10 @@ class Keymap{
                 "0,2,2,0": "continue",
                 "0,4,7,0": "activate mic", "0,7,4,0": "deactivate mic", 
                 "0,3,7,0": "activate piano", "0,7,3,0": "deactivate piano",
-                "12,5,7,12": "change language " //just end with 12,12, "12,7,5,12": "change language end" //need further parameter
+                "12,5,7,12": "change language ", //just end with 12,12, "12,7,5,12": "change language end" //need further parameter
+                "12,10,11,12": "change user ", //just end with 12,12, "12,11,10,12": "change user end" //need further parameter
+                "12,4,5,12": "filter ", //just end with 12,12, "12,5,4,12": "filter end" //need further parameter
+                "12,5,4,12": "filter clear"
             },
             "5": {
                 "12,9,10,11,12": "add word ", //need further parameter
@@ -89,7 +91,8 @@ class Keymap{
                     let keyset = keydict[""][i.toString()];
                     let keys = "";
                     for (j=0; j<i; j++){
-                        keys += midi[j].note.toString();
+                        keys += (midi[j].note - keybot).toString();
+//                        keys += midi[j].note.toString();
                         if (j<i-1){
                             keys += ",";
                         }
@@ -97,13 +100,113 @@ class Keymap{
                     if (typeof(keyset) !=="undefined" && typeof(keyset[keys]) !=="undefined" && keyset[keys] != null){
                         //run this function.  
                         transcript += keyset[keys];
+                        for (j=0; j<i; j++){
+                            midi[j].complete = true;
+                        }
+                        return transcript;
                     }
                 }
             }
             return transcript;
         };
 
-        this.funcdict["add language "] = function(transcript, midi, keydict, key){
+
+        //sequential
+        this.keydict["set speed"] = {"1": {"min": -12, "max": 12}}; //number of increments.  from middle C
+        //no space means additional word is optional (can be midi).  
+        this.funcdict["set speed"] = function(transcript, midi, keydict, key){
+            let commandlength = null;
+            let commanddict = null;
+            for (const [k, v] of Object.entries(keydict[key])) {
+                if (parseInt(k) <= midi.length){
+                    commandlength = k;
+                    commanddict = v;
+                };
+            }
+            //maybe not for all commands, but here, we set to blank in case we have incorrect params.  
+            transcript = "";
+            let speed = 1;
+            if (commandlength !== null){
+                //we have a command map at least.  
+                if (commandlength == "1"){
+                    speed = midi[0].note - 60;
+                    if (speed > -13 && speed < 13){
+                        speed = speed/3;
+                        if (speed < 0){
+                            speed = 1/Math.abs(speed);
+                        }                                
+                        transcript = "set speed " + speed.toFixed(2);
+                        midi[0].complete = true;
+                        //I think this will work ok.  
+                        //this allows us to move on to next command.  
+                    }
+                    else{
+                        //not sure how I want to handle errors yet.  
+                        return "ERROR set speed - incorrect parameters"
+                    }
+                }
+
+            }
+            return transcript; //add language xxxx 2,3,4
+        };
+
+        //no space means additional word is optional (can be midi).  
+        this.funcdict["filter"] = function(transcript, midi, keydict, key){
+            //must end with 12,12
+            //default is filter on word
+            if (midi.length > 2){
+                //for now this is ok, but must code for continuous speech.  
+                let temptr = " ";
+                for (let i=0; i<midi.length-1; i++){
+                    if (i>0 && midi[i].note - keybot == EOW && midi[i+1].note - keybot == EOW){
+                        //we have a language
+                        //we can add this language to the DB.  
+                        //end of word indicator.  
+
+                        let func = " word ";
+                        if (i>2 && midi[i-1].note - keybot == 10 && midi[i-2].note - keybot == 11){
+                            //filter user
+                            func = " user ";
+                        }
+                        else if (i>2 && midi[i-1].note - keybot == 5 && midi[i-2].note - keybot == 7){
+                            //filter language
+                            func = " language ";
+                        }
+                        else if (i>2 && midi[i-1].note - keybot == 4 && midi[i-2].note - keybot == 5){
+                            //filter language
+                            func = " clear";
+                        }
+
+                        let end = i;
+                        if (func != " word "){
+                            end = i-2;
+                        }
+                        for (let j=0; j<i+2; j++){
+                            midi[j].complete = true;
+                        }
+                        for (j=0; j<end; j++){
+                            if (func == " user "){
+                                temptr += (midi[j].note - keybot).toString();
+                            }
+                            else{
+                                temptr += (midi[j].note).toString();
+                            }
+                            if (j<end-1){
+                                temptr += ",";
+                            }
+                        }
+                        console.log(temptr);
+                        transcript += func + temptr;
+                        return transcript;
+                    }
+
+                }
+            }
+            return transcript; //add language xxxx 2,3,4
+        };
+
+        //no space means additional word is optional (can be midi).  
+        this.funcdict["change language"] = function(transcript, midi, keydict, key){
             //must end with 12,12
             if (midi.length > 2){
                 //for now this is ok, but must code for continuous speech.  
@@ -117,7 +220,8 @@ class Keymap{
                             midi[j].complete = true;
                         }
                         for (j=0; j<i; j++){
-                            temptr += (midi[j].note - keybot).toString();
+                            temptr += (midi[j].note).toString();
+//                            temptr += (midi[j].note - keybot).toString();
                             if (j<i-1){
                                 temptr += ",";
                             }
@@ -132,6 +236,38 @@ class Keymap{
             return transcript; //add language xxxx 2,3,4
         };
 
+        //space means must have additional word in transcript.  
+        this.funcdict["add language "] = function(transcript, midi, keydict, key){
+            //must end with 12,12
+            if (midi.length > 2){
+                //for now this is ok, but must code for continuous speech.  
+                let temptr = " ";
+                for (let i=0; i<midi.length-1; i++){
+                    if (i>0 && midi[i].note - keybot == EOW && midi[i+1].note - keybot == EOW){
+                        //we have a language
+                        //we can add this language to the DB.  
+                        //end of word indicator.  
+                        for (let j=0; j<i+2; j++){
+                            midi[j].complete = true;
+                        }
+                        for (j=0; j<i; j++){
+                            temptr += (midi[j].note).toString();
+//                            temptr += (midi[j].note - keybot).toString();
+                            if (j<i-1){
+                                temptr += ",";
+                            }
+                        }
+                        console.log(temptr);
+                        transcript += " " + temptr;
+                        return transcript;
+                    }
+
+                }
+            }
+            return transcript; //add language xxxx 2,3,4
+        };
+
+        //space means must have additional word in transcript.  
         this.funcdict["add word "] = function(transcript, midi, keydict, key){
             //must end with 12,12
             if (midi.length > 2){
@@ -146,7 +282,8 @@ class Keymap{
                             midi[j].complete = true;
                         }
                         for (j=0; j<i; j++){
-                            temptr += (midi[j].note - keybot).toString();
+                            temptr += (midi[j].note).toString();
+//                            temptr += (midi[j].note - keybot).toString();
                             if (j<i-1){
                                 temptr += ",";
                             }
@@ -211,7 +348,7 @@ class Keymap{
                     }
                     else{
                         //not sure how I want to handle errors yet.  
-                        return "move error - incorrect parameters"
+                        return "ERROR move - incorrect parameters"
                     }
                 }
             }
@@ -249,7 +386,7 @@ class Keymap{
                     }
                     else{
                         //not sure how I want to handle errors yet.  
-                        return "scroll error - incorrect parameters"
+                        return "ERROR scroll - incorrect parameters"
                     }
                 }
 
@@ -277,7 +414,7 @@ class Keymap{
                     }
                     else{
                         //not sure how I want to handle errors yet.  
-                        return "scroll error - incorrect parameters"
+                        return "ERROR scroll - incorrect parameters"
                     }
                 }
             }

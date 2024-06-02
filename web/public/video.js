@@ -33,18 +33,42 @@ function onYouTubeIframeAPIReady() {
   function onPlayerStateChange(event) {
     if (event.data == YT.PlayerState.PAUSED || event.data == YT.PlayerState.ENDED) {
         //should use same for transcript function.  
-        midienabled = 0;
+      ispaused = 1;
     }
 
     if (event.data == YT.PlayerState.PLAYING) {
 //          setTimeout(stopVideo, 6000);
 //			console.log("state change");
-        midienabled = 1;
+        ispaused = 0;
+        midioffset = 0;
         
       done = true;
     }
   }
 
+
+  function pauseVideo(){
+    stopVideo();
+  }
+
+  function setVideoSpeed(speed){
+    if (useyoutube || watch){
+        player.setPlaybackRate(speed);
+    }
+    else{
+        player2.playbackRate = speed;
+    }
+  }
+
+  function playVideo() {
+    if (useyoutube || watch){
+        player.playVideo();
+    }
+    else{
+        player2.play();        
+    }
+  }
+  
   function stopVideo() {
     if (useyoutube || watch){
         player.stopVideo();
@@ -203,20 +227,22 @@ function onYouTubeIframeAPIReady() {
             console.log(
               "The Boolean paused property is now 'false'. Either the play() method was called or the autoplay attribute was toggled.",
             );
-            midienabled = 1;
+            ispaused = 0;
+            midioffset = 0;
           };
 
           player2.onpause = (event) => {
             console.log(
               "The Boolean paused property is now 'true'. Either the pause() method was called or the autoplay attribute was toggled.",
             );
-            midienabled = 0;
+            ispaused = 1;
           };
           player2.onended = (event) => {
             console.log(
               "Video stopped either because it has finished playing or no further data is available.",
             );
-            midienabled = 0;
+            ispaused = 1;
+
           };          
         player2.src = url;
         player2.play();

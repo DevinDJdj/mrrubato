@@ -77,8 +77,24 @@ function addLanguage(lang, midi){
 
 }
 
+function changeLanguage(midi){
+    //find the language.  
+    if (typeof(alllangs[midi]) !== "undefined"){
+        lang = alllangs[midi];
+        currentlanguage = lang;
+    }
+    else{
+        console.log("Language not found" + midi);
+    }
+}
+
 function selectLanguage(lang){
-    currentlanguage = lang;
+    if (alllangs.find(lang) > -1){
+        currentlanguage = lang;
+    }
+    else{
+        console.log("Language not found" + lang);    
+    }
 }
 
 function loadLanguages(){
