@@ -44,7 +44,9 @@
     <script defer src="/__/firebase/init.js?useEmulator=true"></script>
 
 
-	<script src="config.js"></script>
+	<script src="languages.js"></script>
+	<script src="keymap.js"></script>
+		<script src="config.js"></script>
 	<script src="chat.js"></script>
 	<script src="video.js">	</script>
 
@@ -356,7 +358,7 @@
             //app.run(ssl_context=('cert.pem', 'key.pem'))
 
 
-			function Chat(transcript) {
+			function MyChat(transcript) {
 				mychat = transcript; //$('#p').val();
 				if (mychat == "stop"){
 					window.speechSynthesis.cancel();

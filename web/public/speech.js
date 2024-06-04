@@ -50,7 +50,7 @@ function checkCommands(){
         while (done > 0 && midi !=null && midi.length > 0){
             prevtranscript = transcript;
             //find words in current language.  
-            
+
             transcript = keymap.findCommand(transcript, midi);
             if (transcript != prevtranscript){
 
@@ -92,6 +92,13 @@ function checkCommands(){
     else{
         if ((midi != null && midi.length > 0)){
             console.log(midi);
+
+            //clear out any pending commands with 0,0,0
+            if (ispaused && midi.length > 3 && midi[midi.length-1].note -keybot == 0 && midi[midi.length-2].note -keybot == 0 && midi[midi.length-3].note -keybot == 0){
+                for (let i=0; i<midi.length; i++){
+                    midi[i].complete = true;
+                }
+            }
 
             let prevtranscript = "";
             //get command.  
@@ -185,6 +192,10 @@ function helpme(){
 
 }
 
+function hasNumber(myString) {
+    return /\d/.test(myString);
+}
+
 //right now there is no chatting here, we are just using the comments.
 function Chat(transcript, callback=null, pending=false){
     if (transcript.toLowerCase().startsWith("help")){
@@ -193,13 +204,74 @@ function Chat(transcript, callback=null, pending=false){
     else if (transcript.toLowerCase() == "stop"){
         window.speechSynthesis.cancel();
     }
+    else if (transcript.toLowerCase() == "play"){
+        //play video
+        playVideo();
+    }
+    else if (transcript.toLowerCase() == "pause"){
+        //pause video
+        pauseVideo();
+    }
+    else if (transcript.toLowerCase().startsWith("set speed")){
+        //adjust playback speed of video.  
+        tokens = transcript.split(" ");
+        //logic check is in prior function
+        if (tokens.length > 2 && tokens[2] !=""){
+            speed = parseFloat(tokens[2]);
+            setVideoSpeed(speed);
+        }
+    }
+    else if (transcript.toLowerCase().startsWith("filter")){
+        tokens = transcript.split(" ");
+        if (tokens.length > 2){
+            func = tokens[1];
+            if (func == "clear"){
+                //clear filter
+            }
+            else if (func == "word"){
+                //filter by word
+                filter = tokens.slice(2, tokens.length).join(" ");
+            }
+            else if (func == "language"){
+                //filter by language
+                filter = tokens.slice(2, tokens.length).join(" ");
+            }
+            else if (func == "user"){
+                //filter by user, probably need to be able to name users.  
+                filter = tokens.slice(2, tokens.length).join(" ");
+            }
+        }
+    }
+    else if (transcript.toLowerCase().startsWith("change language")){
+        //
+        tokens = transcript.split(" ");
+        if (tokens.length > 3){
+            midi = tokens[tokens.length-1];
+            lang = tokens.slice(2, tokens.length-1).join(" ");
+            changeLanguage(lang, midi);
+        }
+        else if (tokens.length == 3){
+            //accept midi or language name.  
+            midi = tokens[2];
+            if (hasNumber(midi)){
+                changeLanguage(midi);
+            }
+            else{
+                lang = tokens[2];
+                selectLanguage(midi);
+            }
+        
+        }
+    }
     else if (transcript.toLowerCase().startsWith("add language")){
         //
         tokens = transcript.split(" ");
         if (tokens.length > 3){
             midi = tokens[tokens.length-1];
             lang = tokens.slice(2, tokens.length-1).join(" ");
-            addLanguage(lang, midi);
+            if (hasNumber(midi)){ //check if we have actually put in the midi.  
+                addLanguage(lang, midi);
+            }
         }
     }
     else if (transcript.toLowerCase().startsWith("add word")){
@@ -209,13 +281,20 @@ function Chat(transcript, callback=null, pending=false){
             //for now single word?  I dont think it matters, logic allows for multiple words.  
             //but we do need to time the speech and the midi well if we want to use the 4s timeout.  
             word = tokens.slice(2, tokens.length-1).join(" ");
-            addWord(word, midi);
+            if (hasNumber(midi)){ //check if we have actually put in the midi.
+                addWord(word, midi);
+            }
         }
     }
     
     else{
         //...
-        addComment(transcript, helpme());
+        if (typeof(MyChat) === "function"){
+            MyChat(transcript);
+        }
+        else{
+            addComment(transcript, helpme());
+        }
     }
 }
 

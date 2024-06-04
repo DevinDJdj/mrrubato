@@ -177,6 +177,7 @@ def api():
     try:
         chain=qa_bot(topic)
         print("thinking...")
+        print(current_prompt)
         # res=await chain.acall(message, callbacks=[cb])
 #        res= chain.call(query, callbacks=[cb])
         #this performance will hinder things I suspect.  

@@ -479,7 +479,7 @@ function loadPreviousComments(snapshot, uid=0){
 			currentmidiuser = 0;
 		}
 		else{
-			midiarray.push([]);
+			midiarray.push({"base": []});
 			currentmidiuser=midiarray.length-1;
 			users[currentmidiuser] = key; //lookup for array location -> uid
 		}
@@ -526,7 +526,7 @@ function getYOffset(iter, w, h){
 }
 
 function resetFeedback(){
-	midiarray = [[]];
+	midiarray = [{"base": []}];
 }
 
 //for now display one user at a time, then combine users?  
@@ -540,46 +540,50 @@ function getFeedbackImage(source, w, h, myscene,midiuser=0){
 	ybot = -h/2;
 
 
-	for (i=0; i< midiarray[midiuser].length; i++){
-		//add a red line at the time
-		//get x from time.  
-		//get color from note.  
-		x = i*2;
-		var tempTime = midiarray[midiuser][i].time/1000;
-		iter = getIteration(tempTime);
-		if (iter>-1){
-			secs = tempTime - myst[iter];
+	//go through all users/languages
+    for (const [lang, value] of Object.entries(midiarray[midiuser])) {
+
+		for (i=0; i< value.length; i++){
+			//add a red line at the time
+			//get x from time.  
+			//get color from note.  
+			x = i*2;
+			var tempTime = value[i].time/1000;
+			iter = getIteration(tempTime);
+			if (iter>-1){
+				secs = tempTime - myst[iter];
+			}
+			else{
+				secs = 0;
+				//do we need to include non-playing time?  
+			}
+
+			//funny calculation not sure why maybe we are backwards?  
+			x = Math.round((secs/maxduration) * w); //start at middle of the canvas.  
+			x -= w/2;
+			x = -x;
+	//		x = 20;
+
+			ybot = getYOffset(iter, w, h);
+			ytop = getYOffset(iter+1, w, h);
+
+			const myPoints = [
+			new BABYLON.Vector3(x, 0, ytop),
+			new BABYLON.Vector3(x, 0, ybot)
+			]
+
+	//		myPoints.push(myPoints[0]);
+
+			const myColors = [
+				new BABYLON.Color4(1, 0, 0, 1),
+				new BABYLON.Color4(0, 1, 0, 1),
+				new BABYLON.Color4(0, 0, 1, 1),
+				new BABYLON.Color4(1, 1, 0, 1)
+			]
+			
+			const lines = BABYLON.MeshBuilder.CreateLines("lines", {points: myPoints, colors: myColors}, myscene);
+
 		}
-		else{
-			secs = 0;
-			//do we need to include non-playing time?  
-		}
-
-		//funny calculation not sure why maybe we are backwards?  
-		x = Math.round((secs/maxduration) * w); //start at middle of the canvas.  
-		x -= w/2;
-		x = -x;
-//		x = 20;
-
-		ybot = getYOffset(iter, w, h);
-		ytop = getYOffset(iter+1, w, h);
-
-		const myPoints = [
-        new BABYLON.Vector3(x, 0, ytop),
-        new BABYLON.Vector3(x, 0, ybot)
-		]
-
-//		myPoints.push(myPoints[0]);
-
-		const myColors = [
-			new BABYLON.Color4(1, 0, 0, 1),
-			new BABYLON.Color4(0, 1, 0, 1),
-			new BABYLON.Color4(0, 0, 1, 1),
-			new BABYLON.Color4(1, 1, 0, 1)
-		]
-		
-		const lines = BABYLON.MeshBuilder.CreateLines("lines", {points: myPoints, colors: myColors}, myscene);
-
 	}
 	// put the modified pixels back on the canvas
 
