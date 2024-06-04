@@ -52,11 +52,13 @@ function onYouTubeIframeAPIReady() {
   }
 
   function setVideoSpeed(speed){
-    if (useyoutube || watch){
+    if (speed > 0 && speed < 5){
+      if (useyoutube || watch){
         player.setPlaybackRate(speed);
-    }
-    else{
-        player2.playbackRate = speed;
+      }
+      else{
+          player2.playbackRate = speed;
+      }
     }
   }
 

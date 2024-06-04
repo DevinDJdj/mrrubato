@@ -60,7 +60,7 @@ class Keymap{
             }, 
             "4": {
                 "24,23,23,24": "pause",
-                "0,1,1,0": "set speed", //set speed of playback.  This will be a number from -12 to 12.  0 is normal speed.
+                "0,1,1,0": "set speed ", //set speed of playback.  This will be a number from -12 to 12.  0 is normal speed.
                 "0,7,7,0": "where am i", 
                 "0,5,5,0": "tabs",
                 "0,4,4,0": "scroll up",
@@ -112,9 +112,9 @@ class Keymap{
 
 
         //sequential
-        this.keydict["set speed"] = {"1": {"min": -12, "max": 12}}; //number of increments.  from middle C
+        this.keydict["set speed "] = {"1": {"min": -12, "max": 12}}; //number of increments.  from middle C
         //no space means additional word is optional (can be midi).  
-        this.funcdict["set speed"] = function(transcript, midi, keydict, key){
+        this.funcdict["set speed "] = function(transcript, midi, keydict, key){
             let commandlength = null;
             let commanddict = null;
             for (const [k, v] of Object.entries(keydict[key])) {
@@ -131,10 +131,15 @@ class Keymap{
                 if (commandlength == "1"){
                     speed = midi[0].note - 60;
                     if (speed > -13 && speed < 13){
-                        speed = speed/3;
                         if (speed < 0){
-                            speed = 1/Math.abs(speed);
-                        }                                
+                            //1/12 increments
+                            speed = Math.abs(speed+13)/12;
+                        }               
+                        else{
+                            //.25 increments
+                            speed = speed/4;
+                            speed = 1 + speed;
+                        }                 
                         transcript = "set speed " + speed.toFixed(2);
                         midi[0].complete = true;
                         //I think this will work ok.  
@@ -151,7 +156,7 @@ class Keymap{
         };
 
         //no space means additional word is optional (can be midi).  
-        this.funcdict["filter"] = function(transcript, midi, keydict, key){
+        this.funcdict["filter "] = function(transcript, midi, keydict, key){
             //must end with 12,12
             //default is filter on word
             if (midi.length > 2){
@@ -206,7 +211,7 @@ class Keymap{
         };
 
         //no space means additional word is optional (can be midi).  
-        this.funcdict["change language"] = function(transcript, midi, keydict, key){
+        this.funcdict["change language "] = function(transcript, midi, keydict, key){
             //must end with 12,12
             if (midi.length > 2){
                 //for now this is ok, but must code for continuous speech.  
@@ -309,7 +314,7 @@ class Keymap{
             "1": 0, 
             "2": 12 //expected minimum offset from 1
         }; //bottom octave = Y coord, top octave = X coord
-        this.funcdict["move"] = function(transcript, midi, keydict, key){
+        this.funcdict["move "] = function(transcript, midi, keydict, key){
             //input transcript and return final transcript.  
             let commandlength = null;
             let commanddict = null;

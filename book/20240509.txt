@@ -458,6 +458,10 @@ OK, lets test pause/play
 set speed (x)
 0,1,1,0 (x)
 
+
+play,pause working
+
+test set speed.  
 Then test filter
 
 
@@ -489,4 +493,15 @@ add word score (2,2) (param = 3,4,5,6,7)
 
 2,1 = set player 1
 2,10 = set player 2
+
+
+**web/public/chat.html
+Need to check out some prompts a bit more.  
+Try to find a laguage model and prompts that make sense.  
+See if responses can be improved.  
+For now just stick with the RAG DB structure, as anything else will require significant work.  
+
+Some responses are ok, but mostly too wordy (from original model), and they tend to only note one source.  
+They note from the same video multiple times.  
+Not sure why this is the case.  
 

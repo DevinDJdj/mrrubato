@@ -212,16 +212,16 @@ function Chat(transcript, callback=null, pending=false){
         //pause video
         pauseVideo();
     }
-    else if (transcript.toLowerCase() == "set speed"){
+    else if (transcript.toLowerCase().startsWith("set speed")){
         //adjust playback speed of video.  
         tokens = transcript.split(" ");
         //logic check is in prior function
-        if (tokens.length > 2){
-            speed = parseInt(tokens[2]);
+        if (tokens.length > 2 && tokens[2] !=""){
+            speed = parseFloat(tokens[2]);
             setVideoSpeed(speed);
         }
     }
-    else if (transcript.toLowerCase() == "filter"){
+    else if (transcript.toLowerCase().startsWith("filter")){
         tokens = transcript.split(" ");
         if (tokens.length > 2){
             func = tokens[1];
@@ -289,7 +289,12 @@ function Chat(transcript, callback=null, pending=false){
     
     else{
         //...
-        addComment(transcript, helpme());
+        if (typeof(MyChat) === "function"){
+            MyChat(transcript);
+        }
+        else{
+            addComment(transcript, helpme());
+        }
     }
 }
 

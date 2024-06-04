@@ -117,7 +117,7 @@ def transcribe_fromyoutube(videoid="ZshYVeNHkOM", model=None, mediafile=None, st
                 #ffmpeg_extract_subclip(latest_file, start, end, targetname="../tts/coqui/TSS/recipes/ljspeech/LJSpeech-1.1/" + videoid + "_" + str(i) + ".wav")
                 #need this outside of project, too many files.  
                 #baseaudioconfig uses 22050, 1 channel.  
-                command = "ffmpeg -i " + latest_file + " -ss " + start + " -to " + end + " -ar 22050 -ac 1 " + myhome + "/TTS/recipes/ljspeech/LJSpeech-1.1/" + videoid + "_" + str(start) + ".wav"
+                command = "ffmpeg -i \'" + latest_file + "\' -ss " + str(start) + " -to " + str(end) + " -ar 22050 -ac 1 " + myhome + "/TTS/recipes/ljspeech/LJSpeech-1.1/" + videoid + "_" + str(start) + ".wav"
                 print(command)
                 subprocess.call(command, shell=True)
                 entry = videoid + "_" + str(i) + "|" + text[i] + "|" + text[i].lower()
