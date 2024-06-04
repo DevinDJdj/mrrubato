@@ -196,7 +196,7 @@ def get_authenticated_service(args, myscope=YOUTUBE_SCOPE):
   #then use this to add uid to the video info.  
 
 
-  storage = Storage("%s-oauth2.json" % sys.argv[0])
+  storage = Storage("%s-oauth2.json" % config.cfg["youtube"]["CHANNELID"])
   credentials = storage.get()
   #this local storage of creds was causing problems.  Finally this works now to add to the playlist.  
 #  credentials = None
@@ -245,7 +245,7 @@ def initialize_upload(youtube, options):
   return resumable_upload(insert_request)
 
 
-def addtodb(videoid):
+def addtodb(videoid, args):
 #need to utilize a different mechanism here.  
     #this youtube data structure is really not needed.  
     if (config.cfg['youtube']['enabled'] == "true"):
@@ -256,7 +256,7 @@ def addtodb(videoid):
     else:
         datav = {}
         datav['items'] = []
-        datav['items'].append({'snippet': {'title': 'Test', 'description': 'Test'}})
+        datav['items'].append({'snippet': {'title': args.title, 'description': args.description}})
         datav['items'][0]['snippet']['resourceId'] = {'videoId': videoid}
         datav['items'][0]['snippet']['publishedAt'] = "2022-12-12T12:12:12Z"
         datav['items'][0]['snippet']['channelId'] = channel_id
@@ -412,6 +412,7 @@ def add_video_to_playlist(videoID,playlistID, args):
       }
     }
     )
+    print(playlistID)
     response = request.execute()
     
 def get_latest_file():
@@ -479,7 +480,7 @@ if __name__ == '__main__':
             add_video_to_playlist(videoid, cred.MY_PLAYLIST, args)
         else:
             videoid = time.strftime("%Y%m%d%H%M%S") #for now just use this as ID, not sure if we want global IDs or not.            
-        addtodb(videoid)
+        addtodb(videoid, args)
         print("End Rerun")
         sys.exit(0)
 
@@ -757,6 +758,15 @@ if __name__ == '__main__':
     args.description += '\r\n\r\nKEYWORDS:' + args.keywords #add here like sightread or book, etc.  
 
     print(args.description)
+
+    #should have some kind of check here.      
+    mediafile = uploadmediafile(fn[0], pathnames[len(pathnames)-1] ) #fb bucket upload.  
+    args.description += '\r\n\r\nMEDIAFILE:' + mediafile + '\r\n'
+
+    #in case we have difficulty with generating transcript etc.  
+    tempfile = open('desc.txt', 'w')
+    tempfile.write(args.description)
+    tempfile.close()
     print(latest_file)
 
     #move to external service, can we still add the link?  
@@ -766,10 +776,6 @@ if __name__ == '__main__':
 
     transcribe_file = uploadtranscript(fn[0], pathnames[len(pathnames)-1])
     args.description += '\r\n\r\nTRANSCRIPT:' + transcribe_file + '\r\n'
-
-    #should have some kind of check here.      
-    mediafile = uploadmediafile(fn[0], pathnames[len(pathnames)-1] ) #fb bucket upload.  
-    args.description += '\r\n\r\nMEDIAFILE:' + mediafile + '\r\n'
 
     print(args.description)
     
@@ -784,7 +790,7 @@ if __name__ == '__main__':
     videoid = initialize_upload(youtube, args)
 
 
-    addtodb(videoid)
+    addtodb(videoid, args)
 
     add_video_to_playlist(videoid, cred.MY_PLAYLIST, args)
 
