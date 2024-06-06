@@ -1,6 +1,7 @@
 Very fitting
 
 Tennis test:
+wsl --distribution VENV
 Test:
 analyze.html?video=mj4jpeBvD2o
 
@@ -67,12 +68,14 @@ follow installation instructions.
 **generate/tennis-tracking/requirements.txt
 get rid of all versions on requirements.txt
 rename
+pip install -r requirements.txt
+pip install torchvision
 **generate/tennis-tracking/WeightsTracknet
 model.1 -> model.1.h5
 **generate/tennis-tracking/predict_video.py
 save_weights_path = 'WeightsTracknet/model.1.h5'
 
-python predict_video.py --input_video_path=VideoInput/video_input3.mp4 --output_video_path=VideoOutput/video_output.mp4 --minimap=0 --bounce=0
+python3 predict_video.py --input_video_path=VideoInput/video_input3.mp4 --output_video_path=VideoOutput/video_output.mp4 --minimap=0 --bounce=0
 Takes quite a bit of time even just this 3 seconds of video.  
 with a wimpy GPU, probably not practical.  
 
@@ -83,5 +86,19 @@ pip freeze > requirements.txt
 
 From here we can generate some MIDI and see what it sounds like.  
 I wanted to do this anyway, a bit separate from what I was doing.  
+
+
+generate video to document language generation.  
+Test (tennis)
+
+How do we deal with changes in language?  
+
+
+Not using GPU still.  
+python3 -c "import cv2; print('CUDA support:', 'Yes' if cv2.cuda.getCudaEnabledDeviceCount() > 0 else 'No')"
+torch appears to be ok.  
+
+Why do I have to compile this, so annoying, rabbit hole.  
+https://medium.com/@juancrrn/installing-opencv-4-with-cuda-in-ubuntu-20-04-fde6d6a0a367
 
 
