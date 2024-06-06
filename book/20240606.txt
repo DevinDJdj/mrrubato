@@ -94,11 +94,30 @@ Test (tennis)
 How do we deal with changes in language?  
 
 
-Not using GPU still.  
+CV2 Not using GPU still.  
 python3 -c "import cv2; print('CUDA support:', 'Yes' if cv2.cuda.getCudaEnabledDeviceCount() > 0 else 'No')"
-torch appears to be ok.  
 
-Why do I have to compile this, so annoying, rabbit hole.  
+torch appears to be ok.  
+import torch
+torch.cuda.is_available()
+torch.cuda.current_device()
+torch.cuda.get_device_name(0)
+
+
+Tensorflow not using GPU
+import tensorflow as tf
+assert tf.test.is_gpu_available()
+assert tf.test.is_built_with_cuda()
+tf.sysconfig.get_build_info()['cuda_version']
+print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
+
+
+
+pip install tensorflow[and-cuda]
+
+Why do I have to compile this, so annoying, rabbit hole.  Dont want to go down it.  Should be able with this command
+
 https://medium.com/@juancrrn/installing-opencv-4-with-cuda-in-ubuntu-20-04-fde6d6a0a367
 
+Definitely not great cohesion in this area.  
 
