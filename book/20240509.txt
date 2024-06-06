@@ -462,14 +462,25 @@ set speed (x)
 play,pause working
 
 test set speed.  
+--OK this works.  
+
 Then test filter
 
+
+
+
+Test:
+analyze.html?video=mj4jpeBvD2o
 
 Also test multiple tracks (languages) and multiple user feedback.  
 
 add language tennis (-6,6)
+--start here.  
+analyze.html?video=mj4jpeBvD2o
 change language (-6,6)
 add word hit (6,6)
+how do we have synonyms?  This would get overwritten
+Could have something mimicing back and forth across net.  
 add word backhand (6,1) 
 add word forehand (6,3) 
 add word slice (6,2)
@@ -489,10 +500,24 @@ add word noise (3,5)
 
 add word score (2,2) (param = 3,4,5,6,7)
 2,2 = 0, 2,3=15, 2,4=30, 2,5=40, 2,6=AD, 2,7=GAME, 2,8=SET, 2,9=MATCH
-2,11 = switch sides
+2,1 = replay do we need?  Doesnt hurt.  
 
-2,1 = set player 1
-2,10 = set player 2
+add word player one (3,1)
+add word player two (3,11)
+3,1 = set player 1
+3,11 = set player 2
+
+3,1,2,3 = player 1 = 15
+
+
+
+Should we return a state?  
+This would be like score and serve state etc.  
+Score counted etc.  
+Display state on screen near video.  
+
+Also to start maybe we want to add all the translated language to the comments.  
+
 
 
 **web/public/chat.html
@@ -504,4 +529,66 @@ For now just stick with the RAG DB structure, as anything else will require sign
 Some responses are ok, but mostly too wordy (from original model), and they tend to only note one source.  
 They note from the same video multiple times.  
 Not sure why this is the case.  
+
+try llama3
+ollama run llama3
+try phi
+try llama3-chatqa
+try llava-llama3
+
+
+Should separate out the meta track when we accept incoming commands.  
+This should not be shared in general I think, but we could keep it just in case we want to utilize later.  
+Need logic to delete these messages from currentlanguage and add to meta track.  
+
+**server/ollama/server.py
+I think we should only use the last two years of info.  
+Perhaps we can store the transcriptions in year folders and only use the last two years.  
+Either this or some other mechanism.  
+How do we do this?  
+Just reset each year and load the previous years with loadall.  
+This is a simple mechanism.  
+Really we want all data but just to prioritize the recent data.  
+Until we can do that this workaround may be ok.  
+
+How do we train a STT engine.  
+Lets try to use this same one.  
+
+I guess try this:
+https://medium.com/visionwizard/train-your-own-speech-recognition-model-in-5-simple-steps-512d5ac348a5
+
+Make it modular, who knows which of these is going to survive (coqui or deepspeech etc.)
+Good to try a few.  
+
+Need the logic to fix.  
+
+**server/transcription/server.py (get transcription / save transcription)
+Add function
+**web/public/analyze.html
+When loaded - run initial Whisper transcription and get result into page.  
+While playing fix these entries.  
+Then OnSave generate CSV entries.  
+
+Create a simple server which fixes CSV files in this format.  
+Pull from one video at a time, so this should be part of the analyze process.  
+Would like this to be minimally invasive, but how do we match up the start/finish?  
+UI -> Play all comments.  Fix by typing I guess.  
+Then just save, and part of the save process will trigger a separate engine to generate these CSV entries.  
+Same as 
+**server/transcription/transcribe.py
+Part of the analyze process, so make a flag to say these are checked or not.  
+Or default to true, and uncheck if we dont check this.  
+
+This is the logic needed, the STT or TTS training is fairly simple after this workflow is done.  
+
+**web/public/analyze.html
+Need midi command to mute the sound output from feedback in case this is already audible.  
+
+Mute/unmute
+add commands to meta track.  
+
+**web/public/recent.html
+Need recent watch as well as created.  
+Then we can continue to watch.  
+Not sure if the cookies are enough or we should save place.  
 

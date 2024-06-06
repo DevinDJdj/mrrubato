@@ -5,6 +5,9 @@ ss = null;
 myrate = 0.7;
 mypitch = 1;
 keymap = new Keymap();
+lastcommand = "";
+lastcommandtime = 0;
+
 
 function addCommandLog(transcript, command, pending=false){
     //we want to have the time here.  
@@ -198,6 +201,16 @@ function hasNumber(myString) {
 
 //right now there is no chatting here, we are just using the comments.
 function Chat(transcript, callback=null, pending=false){
+    if (lastcommand !=transcript || Date.now() - lastcommandtime > recentTime*2){
+        lastcommand = transcript;
+        lastcommandtime = Date.now();
+    }
+    else{
+        //dont repeat for at least 5 seconds.  
+        return;
+    }
+
+    //find and handle command.  
     if (transcript.toLowerCase().startsWith("help")){
 
     }
@@ -258,7 +271,7 @@ function Chat(transcript, callback=null, pending=false){
             }
             else{
                 lang = tokens[2];
-                selectLanguage(midi);
+                selectLanguage(lang);
             }
         
         }
@@ -270,7 +283,7 @@ function Chat(transcript, callback=null, pending=false){
             midi = tokens[tokens.length-1];
             lang = tokens.slice(2, tokens.length-1).join(" ");
             if (hasNumber(midi)){ //check if we have actually put in the midi.  
-                addLanguage(lang, midi);
+                addLanguage(lang.trim(), midi);
             }
         }
     }
@@ -282,13 +295,13 @@ function Chat(transcript, callback=null, pending=false){
             //but we do need to time the speech and the midi well if we want to use the 4s timeout.  
             word = tokens.slice(2, tokens.length-1).join(" ");
             if (hasNumber(midi)){ //check if we have actually put in the midi.
-                addWord(word, midi);
+                addWord(word.trim(), midi);
             }
         }
     }
     
     else{
-        //...
+        //if we have any useful info add it.  
         if (typeof(MyChat) === "function"){
             MyChat(transcript);
         }
