@@ -1,0 +1,55 @@
+Very fitting
+
+Tennis test:
+Test:
+analyze.html?video=mj4jpeBvD2o
+
+Also test multiple tracks (languages) and multiple user feedback.  
+
+add language tennis (-6,6)
+--start here.  
+analyze.html?video=mj4jpeBvD2o
+change language (-6,6)
+add word hit (6,6)
+how do we have synonyms?  This would get overwritten
+Could have something mimicing back and forth across net.  
+add word backhand (6,1) 
+add word forehand (6,3) 
+add word slice (6,2)
+add word topspin (6,4)
+add word volley (6,8)
+add word drop (6,10)
+add word serve (10,10)
+
+add word fault (10,11)
+add word let (10,9)
+add word out (5,5)
+add word long (5,11)
+add word net (5,2)
+add word bounce (4,4)
+add word applause (3,4)
+add word noise (3,5)
+
+add word score (2,2) (param = 3,4,5,6,7)
+2,2 = 0, 2,3=15, 2,4=30, 2,5=40, 2,6=AD, 2,7=GAME, 2,8=SET, 2,9=MATCH
+2,1 = replay do we need?  Doesnt hurt.  
+
+add word player one (3,1)
+add word player two (3,11)
+3,1 = set player 1
+3,11 = set player 2
+
+3,1,2,3 = player 1 = 15
+
+
+
+Should we return a state?  
+This would be like score and serve state etc.  
+Score counted etc.  
+Display state on screen near video.  
+
+Also to start maybe we want to add all the translated language to the comments.  
+
+
+
+**generate/tennis.py
