@@ -17,6 +17,9 @@
 #https://medium.com/@kosolapov.aetp/tennis-analysis-using-deep-learning-and-machine-learning-a5a74db7e2ee
 #tennis ball/player detection
 #https://github.com/yastrebksv/TennisProject
+#https://github.com/ArtLabss/tennis-tracking
+#this looks a bit better.  
+
 #https://www.youtube.com/watch?v=L23oIHZE14w
 #audio event detection
 #https://github.com/amsehili/auditok

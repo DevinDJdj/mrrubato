@@ -611,7 +611,9 @@ function addUser(user){
 	pic = user.photoURL;
 	console.log(displayname + " " + email + " " + phone + " " + pic);
     //add to DB.  
-	
+
+	//do we need this, this doesnt work with Watch:
+	/*
 	uRef2 = firebase.database().ref('/misterrubato/' + video + '/uid');
 	firebase.database().ref('/misterrubato/' + video + '/uid').once('value')
 					  .then((snapshot) => {
@@ -623,6 +625,7 @@ function addUser(user){
 							uRef2.set(obj);
 						}
 					});
+	*/
 
 	uRef = firebase.database().ref('/users/' + uid);
 	firebase.database().ref('/users/' + uid).once('value')

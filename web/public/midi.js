@@ -264,7 +264,7 @@ function load(data, feedback=false) {
 			if (feedback == true && (smf[trknum][i][0] == 144 || smf[trknum][i][0] == 128)){ //midicommands ON OFF
 				//add to the right language.  
 				
-				getMIDIMessage(smf[0][i], Math.round(smf[0][i].tt*10), lang); 
+				getMIDIMessage(smf[trknum][i], Math.round(smf[trknum][i].tt*10), lang); 
 				//*10 because we have 100 ppqn and 60 bpm and we need milliseconds
 			}
 			//0 = 144?  channel 1
@@ -407,6 +407,9 @@ function getMidiFeedback(midiuser=0){
 				trk = trk.ch(0).program(0x0b).tick(tick).note(midiarray[midiuser][lang][i].note, midiarray[midiuser][lang][i].velocity, Math.round(midiarray[midiuser][lang][i].duration/10));
 				console.log(midiarray[midiuser][lang][i]);
 				prevtime = midiarray[midiuser][lang][i].time;
+				//set to complete.  This is so we dont continually look for commands.  
+				//need to check if functioning as expected.  
+				midiarray[midiuser][lang][i].complete = true;
 			}
 			trk.tick(100).smfEndOfTrack(); // otherwise it will end on clock 1690
 		}
@@ -471,7 +474,7 @@ function getMIDIMessage(message, mytime=0, lang="") {
 	}
 	var command = message[0];
 	if (command == 144 || command == 128){
-		devhtml += " LastNote: " + message[1];
+		devhtml += " LastNote: " + message[1] + " (" + currentlanguage + ")";
 	}
 
 	tempDiv.html(devhtml);
