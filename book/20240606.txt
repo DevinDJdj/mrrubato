@@ -31,15 +31,23 @@ add word applause (3,4)
 add word noise (3,5)
 
 add word score (2,2) (param = 3,4,5,6,7)
-2,2 = 0, 2,3=15, 2,4=30, 2,5=40, 2,6=AD, 2,7=GAME, 2,8=SET, 2,9=MATCH
-2,1 = replay do we need?  Doesnt hurt.  
+2,8 = minus point, 2,3 = plus point, 2,4 plus game, 2,5 plus set
+2,9 = minus game, 2,10 minus set 
 
-add word player one (3,1)
-add word player two (3,11)
-3,1 = set player 1
-3,11 = set player 2
 
-3,1,2,3 = player 1 = 15
+
+add word player one (9,8)
+add word player two (9,10)
+9,8 = set player 1
+9,10 = set player 2
+
+2,3,9,8 = player 1 gets point
+
+In general should structure from left to right.  
+So in this case player can be a prefix or a postfix.  
+Structure should contain an element of distance.  
+
+
 
 
 
@@ -52,4 +60,28 @@ Also to start maybe we want to add all the translated language to the comments.
 
 
 
-**generate/tennis.py
+**generate/tennis2.py
+utilize this to generate some metadata about the match.  
+git clone https://github.com/ArtLabss/tennis-tracking.git
+follow installation instructions.  
+**generate/tennis-tracking/requirements.txt
+get rid of all versions on requirements.txt
+rename
+**generate/tennis-tracking/WeightsTracknet
+model.1 -> model.1.h5
+**generate/tennis-tracking/predict_video.py
+save_weights_path = 'WeightsTracknet/model.1.h5'
+
+python predict_video.py --input_video_path=VideoInput/video_input3.mp4 --output_video_path=VideoOutput/video_output.mp4 --minimap=0 --bounce=0
+Takes quite a bit of time even just this 3 seconds of video.  
+with a wimpy GPU, probably not practical.  
+
+
+
+Should really start using this with virtual envs.  
+pip freeze > requirements.txt
+
+From here we can generate some MIDI and see what it sounds like.  
+I wanted to do this anyway, a bit separate from what I was doing.  
+
+
