@@ -393,3 +393,7 @@ why is this failing to generate images with this midi?
 Whisper AI failing, switch to coqui-ai STT?  
 Or other?  
 https://github.com/coqui-ai/STT-examples/tree/r1.0/vad_transcriber
+
+
+https://github.com/coqui-ai/STT/blob/main/notebooks/train_personal_model_with_common_voice.ipynb
+
