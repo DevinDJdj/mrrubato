@@ -592,3 +592,8 @@ Need recent watch as well as created.
 Then we can continue to watch.  
 Not sure if the cookies are enough or we should save place.  
 
+
+**languages
+When generating video, title should look like this
+Title (Language)
+
