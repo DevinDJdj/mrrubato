@@ -79,7 +79,7 @@ CAT_SIMPLE = ['ball_hit', 'ball_bounce', 'footsteps', 'applause', 'grunt_hit', '
 test = """
 import soundata
 
-dataset = soundata.initialize('urbansound8k', data_home='c:\\devinpiano\\testing\\urbansound')
+dataset = soundata.initialize('urbansound8k', data_home='c:\\devinpiano\\test\\urbansound')
 dataset.download()  # download the dataset
 dataset.validate()  # validate that all the expected files are there
 
@@ -124,7 +124,7 @@ from apiclient.http import MediaFileUpload
 
 import httplib2 
 # adding Folder_2/subfolder to the system path
-sys.path.insert(0, 'c:/devinpiano/')
+sys.path.insert(0, 'c:/devinpiano/music/')
 
 import config 
 
