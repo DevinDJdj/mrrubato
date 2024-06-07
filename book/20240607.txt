@@ -1,0 +1,52 @@
+
+**server/transcription/transcribe.py
+set up and use this if possible.  Or create separate transcribe2.py
+https://github.com/coqui-ai/STT/blob/main/notebooks/train_personal_model_with_common_voice.ipynb
+https://medium.com/visionwizard/train-your-own-speech-recognition-model-in-5-simple-steps-512d5ac348a5
+
+
+**web/public/analyze.html
+id="transcript" 
+Save same result we get to 
+/words/YYYY/file
+And /misterrubato/[videoid]/transcript/
+When updated via UI, update this file contents as well.  
+Perhaps need .xxx ms as well
+
+
+**web/public/recent.html
+Need recent watch as well as created.  
+Add watch parameter
+watch=true
+
+sort by: 
+/watch/[videoid]/snippet/addedAt
+
+add value:
+/watch/[videoid]/comments/[uid]/pctWatched
+
+Use these two parameters to sort results.  
+
+
+**web/public/analyze.html
+**web/public/keymap.js
+Need midi command to mute the sound output from feedback in case this is already audible.  
+Mute/unmute
+add commands to meta track.  
+Need volume control for feedback.  
+Need a display of the midi feedback in real-time, have a x second window to generate.  
+Create possibility to associate color with words.  
+Assign color with keys.  
+Similar function
+"change color for " word (color, 12-12)
+
+
+
+**analyze/analyze.py
+launch process to do transcription via server.  
+Exchange this for local client process.  
+
+
+**web/public/analyze.html
+test filter functionality
+
