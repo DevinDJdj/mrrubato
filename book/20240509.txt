@@ -597,3 +597,5 @@ Not sure if the cookies are enough or we should save place.
 When generating video, title should look like this
 Title (Language)
 
+
+https://github.com/coqui-ai/STT/blob/main/notebooks/train_personal_model_with_common_voice.ipynb
