@@ -62,6 +62,17 @@ function onYouTubeIframeAPIReady() {
     }
   }
 
+function setVideoVolume(volume){
+    if (volume >= 0 && volume <= 1){
+      if (useyoutube || watch){
+        player.setVolume(volume*100); //not sure if we need *100 should be in form 0.xx already.  
+      }
+      else{
+          player2.volume = volume;
+      }
+    }
+  }
+
   function playVideo() {
     if (useyoutube || watch){
         player.playVideo();

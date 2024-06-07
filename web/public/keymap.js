@@ -61,6 +61,7 @@ class Keymap{
             "4": {
                 "24,23,23,24": "pause",
                 "0,1,1,0": "set speed ", //set speed of playback.  This will be a number from -12 to 12.  0 is normal speed.
+                "12,6,6,12": "set volume ", //set volume of playback.  This will be a number from 0 to 12.  0 is mute.
                 "0,7,7,0": "where am i", 
                 "0,5,5,0": "tabs",
                 "0,4,4,0": "scroll up",
@@ -112,6 +113,41 @@ class Keymap{
 
 
         //sequential
+        this.keydict["set volume "] = {"1": {"min": -12, "max": 12}}; //number of increments.  from middle C
+        //no space means additional word is optional (can be midi).  
+        this.funcdict["set volume "] = function(transcript, midi, keydict, key){
+            let commandlength = null;
+            let commanddict = null;
+            for (const [k, v] of Object.entries(keydict[key])) {
+                if (parseInt(k) <= midi.length){
+                    commandlength = k;
+                    commanddict = v;
+                };
+            }
+            //maybe not for all commands, but here, we set to blank in case we have incorrect params.  
+            transcript = "";
+            let volume = 1;
+            if (commandlength !== null){
+                //we have a command map at least.  
+                if (commandlength == "1"){
+                    volume = midi[0].note - 60;
+                    if (volume > -13 && volume < 13){
+                        volume = (volume + 12)/24;
+                        transcript = "set volume " + volume.toFixed(2);
+                        midi[0].complete = true;
+                        //I think this will work ok.  
+                        //this allows us to move on to next command.  
+                    }
+                    else{
+                        //not sure how I want to handle errors yet.  
+                        return "ERROR set volume - incorrect parameters"
+                    }
+                }
+
+            }
+            return transcript; //add language xxxx 2,3,4
+        };
+
         this.keydict["set speed "] = {"1": {"min": -12, "max": 12}}; //number of increments.  from middle C
         //no space means additional word is optional (can be midi).  
         this.funcdict["set speed "] = function(transcript, midi, keydict, key){
@@ -130,11 +166,11 @@ class Keymap{
                 //we have a command map at least.  
                 if (commandlength == "1"){
                     speed = midi[0].note - 60;
-                    if (speed > -13 && speed < 13){
+                    if (speed > -11 && speed < 13){
                         if (speed < 0){
-                            //1/12 increments
-                            speed = Math.abs(speed+13)/12;
-                        }               
+                            //1/10 increments
+                            speed = Math.abs(speed+11)/10;
+                        }
                         else{
                             //.25 increments
                             speed = speed/4;
@@ -144,6 +180,14 @@ class Keymap{
                         midi[0].complete = true;
                         //I think this will work ok.  
                         //this allows us to move on to next command.  
+                    }
+                    else if (speed == -11){
+                        transcript = "play";
+                        midi[0].complete = true;
+                    }
+                    else if (speed == -12){
+                        transcript = "pause";
+                        midi[0].complete = true;
                     }
                     else{
                         //not sure how I want to handle errors yet.  

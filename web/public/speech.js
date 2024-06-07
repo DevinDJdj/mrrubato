@@ -234,6 +234,15 @@ function Chat(transcript, callback=null, pending=false){
             setVideoSpeed(speed);
         }
     }
+    else if (transcript.toLowerCase().startsWith("set volume")){
+        //adjust playback speed of video.  
+        tokens = transcript.split(" ");
+        //logic check is in prior function
+        if (tokens.length > 2 && tokens[2] !=""){
+            volume = parseFloat(tokens[2]);
+            setVideoVolume(volume);
+        }
+    }
     else if (transcript.toLowerCase().startsWith("filter")){
         tokens = transcript.split(" ");
         if (tokens.length > 2){

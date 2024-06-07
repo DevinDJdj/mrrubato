@@ -32,6 +32,11 @@ Use these two parameters to sort results.
 **web/public/keymap.js
 Need midi command to mute the sound output from feedback in case this is already audible.  
 Mute/unmute
+mute = 12,6,6,12,0
+set volume 100% = 12,6,6,12,24
+additional pause/play with set speed.  
+pause = 0,1,1,0,0
+play = 0,1,1,0,1
 add commands to meta track.  
 Need volume control for feedback.  
 Need a display of the midi feedback in real-time, have a x second window to generate.  
@@ -44,9 +49,12 @@ Similar function
 
 **analyze/analyze.py
 launch process to do transcription via server.  
-Exchange this for local client process.  
+Exchange this for current local client process.  
 
 
 **web/public/analyze.html
 test filter functionality
 
+
+**web/public/keymap.js
+How do we make this more ordered?  
