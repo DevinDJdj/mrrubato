@@ -665,7 +665,7 @@ function updateVideo(){
 	//does the video have to be associated with the channel, I guess not.  
 	
 	var grade = $('#points').val();
-	
+	var transcript = $('#transcript').val();
 	if (uid !==null){
 		const currentdate = new Date();
 	    if (watch === false){
@@ -682,6 +682,13 @@ function updateVideo(){
 
 			obj = {"comments": mycomments, "sentiment": grade, "midi": midifeedback, "updated": currentdate };
 			uRef.set(obj);
+
+			//set transcript
+			if (isadmin){
+				var tRef = firebase.database().ref('/misterrubato/' + video + '/transcript');
+				obj = {"transcript": transcript, "updated": currentdate };
+				tRef.set(obj);
+			}
 		}
 		else{
 			console.log(video + " Not in DB.  Adding watch comments");
