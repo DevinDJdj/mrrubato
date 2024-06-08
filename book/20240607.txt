@@ -90,3 +90,24 @@ Need to watch timestep.py and analyze.py if any problems.
 analyze.py still not using new **util.py
 
 **web/public/analyze.html
+
+
+**server/transcription/server.py
+also add transcriptfile=xxx
+when this is passed, use this as the local file to pass to ollama.  
+When not present dont pass, use the mediafile, when this not present use youtube videoid.  
+Do check that the URL passed is allowed.  
+--done, needs test
+
+**timestep.py 
+upload new transcriptfile if updated not null.  
+--done
+
+
+**web/public/analyze.html
+Need to start showing events.  
+need to add 'transcript' and 'meta' tracks.  
+Flag for including transcript/meta events in flow.  
+Then when skipping, search for next word (with filter) and/or meta/transcript event.  
+Then show the event details.  
+

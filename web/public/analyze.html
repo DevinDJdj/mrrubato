@@ -455,6 +455,10 @@ function loadTranscript(snapshot){
 	console.log(snapshot.val().transcript);
 	if (snapshot.val().transcript !==null){
 		$('#transcriptsh').html(makeTimeLinks(snapshot.val().transcript));
+		//not sure if we want this or not.  Here we dont keep history about the original transcript.  
+		//is this important?  
+		var tempDiv = $('#transcript');
+		tempDiv.val(snapshot.val().transcript);
 	}
 }
 
@@ -668,6 +672,7 @@ function updateVideo(){
 	var transcript = $('#transcript').val();
 	if (uid !==null){
 		const currentdate = new Date();
+		strdate = currentdate.toISOString().substring(0, 19).replaceAll('-','').replaceAll(':','');
 	    if (watch === false){
 			var uRef = firebase.database().ref('/misterrubato/' + video + '/comments/' + uid);
 	//		videojson.snippet.description = $('#iterations').val();
@@ -680,13 +685,13 @@ function updateVideo(){
 //			document.getElementById('out').innerHTML = 'New file: <a download=my.mid href=' + midifeedback + '>DOWNLOAD</a> <embed src=' + midifeedback + ' autostart=false>';
 
 
-			obj = {"comments": mycomments, "sentiment": grade, "midi": midifeedback, "updated": currentdate };
+			obj = {"comments": mycomments, "sentiment": grade, "midi": midifeedback, "updated": strdate };
 			uRef.set(obj);
 
 			//set transcript
-			if (isadmin){
+			if (isadmin && transcript.trim() !== ""){
 				var tRef = firebase.database().ref('/misterrubato/' + video + '/transcript');
-				obj = {"transcript": transcript, "updated": currentdate };
+				obj = {"transcript": transcript, "updated": strdate };
 				tRef.set(obj);
 			}
 		}
@@ -697,7 +702,7 @@ function updateVideo(){
 
 	//		sentiment = "test"; //for now
 			midifeedback = getMidiFeedback();
-			obj = {"comments": mycomments, "sentiment": grade, "midi": midifeedback, "updated": currentdate };
+			obj = {"comments": mycomments, "sentiment": grade, "midi": midifeedback, "updated": strdate };
 			uRef.set(obj);
 		
 		}

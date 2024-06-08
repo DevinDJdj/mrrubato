@@ -215,6 +215,12 @@ function Chat(transcript, callback=null, pending=false){
     if (transcript.toLowerCase().startsWith("help")){
 
     }
+    else if (transcript.toLowerCase() == "skip"){
+        //skip to next event?  
+    }
+    else if (transcript.toLowerCase() == "back"){
+        //skip to previous event?
+    }
     else if (transcript.toLowerCase() == "stop"){
         window.speechSynthesis.cancel();
     }

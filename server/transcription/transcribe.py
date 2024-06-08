@@ -32,12 +32,15 @@ from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
 myhome = "/home/devin"
 OUTPUT_DIR = myhome + "/data/transcription/output/"
 
-def get_timestamp(s):
+def get_timestamp(s, tenths=False):
     mins = math.floor(s/60)
     secs = math.floor(s - mins*60)
     filler = ""
     if secs < 10:
         filler = "0"
+    #do we want tenths?  probably breaks other areas so leave for now.  
+    #secs = (s - mins*60)
+    #'{0:.2f}'.format(secs)
     return str(mins) + ":" + filler + str(secs)
 
 def getIteration(currentTime, starttimes, endtimes):
@@ -46,6 +49,45 @@ def getIteration(currentTime, starttimes, endtimes):
         if (i < len(endtimes) and starttimes[i] <= currentTime and currentTime <= endtimes[i]):
             return i
     return -1
+
+def parseTranscript(filename):
+    with open(filename, 'r') as file:
+        data = file.read()
+        lines = data.split('\n')
+        text = []
+        times = []
+        for line in lines:
+            if (line != ""):
+                parts = line.split(' (')
+                text.append(parts[0])
+                times.append(parts[1][0:-1])
+        return text, times
+
+def downloadtranscript(transcriptfile, videoid, st, et):
+    transcriptfile = transcriptfile.replace(" ", "%20")
+    if not os.path.exists(OUTPUT_DIR + videoid):
+        os.makedirs(OUTPUT_DIR + videoid)
+    urllib.request.urlretrieve(transcriptfile, OUTPUT_DIR + videoid + ".txt")
+    text, times = parseTranscript(OUTPUT_DIR + videoid + ".txt")
+    for i in range(len(times)-1):
+        starta = times[i].split(":")
+        start = int(starta[0])*60 + int(starta[1])
+        enda = times[i+1].split(":")
+        end = int(enda[0])*60 + int(enda[1])
+
+        #for now only take data from outside of iterations
+        if (getIteration(times[i], st, et) == -1 and end - start > 3 and end-start < 12):
+            #only use nice short segments which are mostly continuous.  
+            #ffmpeg_extract_subclip(latest_file, start, end, targetname="../tts/coqui/TSS/recipes/ljspeech/LJSpeech-1.1/" + videoid + "_" + str(i) + ".wav")
+            #need this outside of project, too many files.  
+            #baseaudioconfig uses 22050, 1 channel.  
+            command = "ffmpeg -i \'" + latest_file + "\' -ss " + str(start) + " -to " + str(end) + " -ar 22050 -ac 1 " + myhome + "/TTS/recipes/ljspeech/LJSpeech-1.1/" + videoid + "_" + str(start) + ".wav"
+            print(command)
+            subprocess.call(command, shell=True)
+            entry = videoid + "_" + str(i) + "|" + text[i] + "|" + text[i].lower()
+            #add this to metadata file.  
+            with open(myhome + "/TTS/recipes/ljspeech/LJSpeech-1.1/metadata.csv", 'a') as cf:
+                cf.write(entry + "\n")
 
 
 def transcribe_fromyoutube(videoid="ZshYVeNHkOM", model=None, mediafile=None, st=None, et=None):
