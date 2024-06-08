@@ -556,8 +556,14 @@ function seekNext(lang, word){
 
 }
 
+function getIntroLength(){
+    if (typeof($("#intro").slider("value")) !== "undefined"){
+        vidbuffer = $("#intro").slider("value");
+    }
+}
 function seekAll(lang, word, index=0){
-
+    //really should move this somewhere else.  
+    getIntroLength();
     if (wordplay >= 0){
         wt = wordtimes[lang][word];
         if (currentwtindex > -1 && currentwtindex < wt.length){

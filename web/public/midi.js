@@ -6,6 +6,7 @@ var lastmidirecent = [];
 var midienabled = 0;
 var ispaused = 0;
 var midioffset = 0;
+var playfeedback = true;
 var obj = {"note": 0, "velocity": 0, "time": 0, "duration": 0, "user": 0};
 
 //create sound easy
@@ -147,7 +148,15 @@ function midiToFreq(midinum, velocity=0){
 
 }
 
+function setFeedbackVolume(vol){
+	//this is way too loud.  
+	vol = vol/2;
+	mainGainNode.gain.value = vol.toFixed(1);
+
+}
+
 function playNote(midinum, velocity=0){
+
 	//	return null;
 	octave = Math.round(midinum/12);
 	//C4 is 60
@@ -527,7 +536,7 @@ function noteOn(note, velocity, abstime, mytime=0){ //mytime is the original tim
 	//make sound here.  
 	osc = null;
 	pnote = null;
-	if (mytime == 0){ //no feedback sound for existing midi files except in time.  Probably need to rewrite this area to read midi files.  
+	if (mytime == 0 && playfeedback){ //no feedback sound for existing midi files except in time.  Probably need to rewrite this area to read midi files.  
 		osc = playTone(midiToFreq(note, velocity));
 		pnote = playNote(note, velocity);
 	}

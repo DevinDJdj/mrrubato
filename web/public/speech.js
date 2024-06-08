@@ -201,6 +201,7 @@ function hasNumber(myString) {
 
 //right now there is no chatting here, we are just using the comments.
 function Chat(transcript, callback=null, pending=false){
+    let executed = true;
     if (lastcommand !=transcript || Date.now() - lastcommandtime > recentTime*2){
         lastcommand = transcript;
         lastcommandtime = Date.now();
@@ -233,6 +234,9 @@ function Chat(transcript, callback=null, pending=false){
             speed = parseFloat(tokens[2]);
             setVideoSpeed(speed);
         }
+        else{
+            executed = false;
+        }
     }
     else if (transcript.toLowerCase().startsWith("set volume")){
         //adjust playback speed of video.  
@@ -240,7 +244,22 @@ function Chat(transcript, callback=null, pending=false){
         //logic check is in prior function
         if (tokens.length > 2 && tokens[2] !=""){
             volume = parseFloat(tokens[2]);
+            if (volume == 0.5){
+                //mute piano sounds
+                playfeedback = false;
+            }
+            else if (volume == 1){
+                //unmute piano sounds
+                playfeedback = true;
+            }
+            else{
+                //maybe want a different function for this, but for now its ok I guess.  
+                setFeedbackVolume(volume);
+            }
             setVideoVolume(volume);
+        }
+        else{
+            executed = false;
         }
     }
     else if (transcript.toLowerCase().startsWith("filter")){
@@ -263,6 +282,9 @@ function Chat(transcript, callback=null, pending=false){
                 filter = tokens.slice(2, tokens.length).join(" ");
             }
         }
+        else{
+            executed = false;
+        }
     }
     else if (transcript.toLowerCase().startsWith("change language")){
         //
@@ -284,6 +306,9 @@ function Chat(transcript, callback=null, pending=false){
             }
         
         }
+        else{
+            executed = false;
+        }
     }
     else if (transcript.toLowerCase().startsWith("add language")){
         //
@@ -294,6 +319,9 @@ function Chat(transcript, callback=null, pending=false){
             if (hasNumber(midi)){ //check if we have actually put in the midi.  
                 addLanguage(lang.trim(), midi);
             }
+        }
+        else{
+            executed = false;
         }
     }
     else if (transcript.toLowerCase().startsWith("add word")){
@@ -307,16 +335,20 @@ function Chat(transcript, callback=null, pending=false){
                 addWord(word.trim(), midi);
             }
         }
+        else{
+            executed = false;
+        }
+    }
+    else{
+        executed = false;
     }
     
+    //if we have any useful info add it.  
+    if (typeof(MyChat) === "function" && executed==false){
+        MyChat(transcript);
+    }
     else{
-        //if we have any useful info add it.  
-        if (typeof(MyChat) === "function"){
-            MyChat(transcript);
-        }
-        else{
-            addComment(transcript, helpme());
-        }
+        addComment(transcript, helpme());
     }
 }
 

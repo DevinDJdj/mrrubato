@@ -551,7 +551,7 @@ if __name__ == '__main__':
                     print(et)
                     sta = ",".join(str(s) for s in st)
                     eta = ",".join(str(e) for e in et)
-                    params = [('videoid', videoid),('st',sta),('et',eta)] #('mediafile',mediafile),
+                    params = [('videoid', videoid),('st',sta),('et',eta),('mediafile',mediafile)]
 #                    url = f'{localserver}/transcribe/?videoid={videoid}&mediafile={mediafile}&st={sta}&et={eta}'
                     url = f'{localserver}/transcribe/'
                     print(url)

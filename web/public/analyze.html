@@ -63,12 +63,15 @@ data-setup="{}"
 		 <input type="text" id="p" name="p">
     </div>
 	<div id="delay-params">
+		<label for="commentdelay">Comment Delay:</label>
+		<input type="range" id="commentdelay" name="commentdelay" min="0" max="20" value="10" />
 		<label for="intro">Intro:</label>
 		<input type="range" id="intro" name="intro" min="1" max="60" value="10" />
 		<label for="intro">Outro:</label>
 		<input type="range" id="outro" name="outro" min="1" max="60" value="10" />
 	</div>
 	<div id="submit" valign="top">
+		<label for="points">Score:</label>
 	    <input type="range" id="points" name="points" min="0" max="10" value="1" />
 		<button type="button" onclick="updateVideo()">Update</button>
 		<button type="button" onclick="resetFeedback()">Reset Feedback</button>
@@ -275,6 +278,10 @@ var isadmin = false;
 //setup https://www.youtube.com/watch?v=3jZ5vnv-LZc
 //then restrict the key if needed to your site and youtube data API.  
 
+$(document).on('input', '#commentdelay', function() {
+	delay = $(this).val();
+	console.log("delay set " + delay);
+});
 
       document.addEventListener('DOMContentLoaded', function() {
         const loadEl = document.querySelector('#load');

@@ -33,6 +33,7 @@ Use these two parameters to sort results.
 Need midi command to mute the sound output from feedback in case this is already audible.  
 Mute/unmute
 mute = 12,6,6,12,0
+mute output = 12,6,6,12,1
 set volume 100% = 12,6,6,12,24
 additional pause/play with set speed.  
 pause = 0,1,1,0,0
@@ -58,3 +59,30 @@ test filter functionality
 
 **web/public/keymap.js
 How do we make this more ordered?  
+
+**web/public/chat.html
+**web/public/analyze.html
+Show user icon of logged in user.  
+Check how prompting works and change user function.  
+Annoying but I think we need it.  
+
+
+**server/transcription/loadall.py
+re-transcribe all data after changing back to whisper-large.  
+Or changing to STT mechanism.  
+
+**server/transcription/transcribe.py
+Need to be able to load from MEDIAFILE.  
+/transcribe/?videoid=sdtc1to0CM8&mediafile=https://storage.googleapis.com/misterrubato-test.appspot.com/videos/2024-06-04%2022-00-17.mp4&st=141,541,949,1321&et=529,885,1286,1657
+--fixed I think.  
+**timestep.py
+test.  
+
+
+**record.py
+change to use this transcription
+/transcribe/?videoid=sdtc1to0CM8&mediafile=https://storage.googleapis.com/misterrubato-test.appspot.com/videos/2024-06-04%2022-00-17.mp4&st=141,541,949,1321&et=529,885,1286,1657
+Save to DB and to text file.  
+pull from timestep.py (535)
+change transcribe_me to point to separate function same as in timestep.py
+
