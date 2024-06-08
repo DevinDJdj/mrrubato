@@ -88,7 +88,8 @@ from oauth2client.file import Storage
 from oauth2client.tools import argparser, run_flow
 
 
-from transcribe import transcribe_me, get_timestamp
+from transcribe import transcribe_me, transcribe_me2, get_timestamp
+import util
 
 import firebase_admin
 from firebase_admin import db
@@ -462,7 +463,7 @@ if __name__ == '__main__':
     os.system(cmd)
     print("delete previousIteration")
 
-
+    myid = time.strftime("%Y%m%d%H%M%S") #for now just use this as ID, not sure if we want global IDs or not.           
     databaseURL = config.cfg["firebase"]["fbconfig"]["databaseURL"]
     if (args.rerun == "true"):
         print("Start Rerun")
@@ -479,7 +480,7 @@ if __name__ == '__main__':
             videoid = initialize_upload(youtube, args)    
             add_video_to_playlist(videoid, cred.MY_PLAYLIST, args)
         else:
-            videoid = time.strftime("%Y%m%d%H%M%S") #for now just use this as ID, not sure if we want global IDs or not.            
+            videoid = myid 
         addtodb(videoid, args)
         print("End Rerun")
         sys.exit(0)
@@ -772,9 +773,16 @@ if __name__ == '__main__':
     #move to external service, can we still add the link?  
     #lets just put this into the DB I think.  That makes our life easier.  
     #to start we are going to use text anyway.  This is 1KB or so per video, nothing.  
-    transcribe_me(latest_file)
+#    transcribe_me(latest_file)
 
-    transcribe_file = uploadtranscript(fn[0], pathnames[len(pathnames)-1])
+    localserver = config.cfg['localserver']['host'] + ":" + str(config.cfg['localserver']['port'])
+    transcript = transcribe_me2(args.description, latest_file, mediafile, localserver, myid) #use myid as we havent uploaded yet.  
+
+    if transcript is not None:
+      transcribe_file = uploadtranscript(fn[0], pathnames[len(pathnames)-1])
+    else:
+      transcribe_file = "error"
+
     args.description += '\r\n\r\nTRANSCRIPT:' + transcribe_file + '\r\n'
 
     print(args.description)

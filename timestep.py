@@ -16,6 +16,8 @@ sys.path.insert(0, 'c:/devinpiano/')
 import config 
 #import cred
 #import record
+import util
+
 
 import pandas as pd
 import requests
@@ -71,8 +73,6 @@ https://developers.google.com/api-client-library/python/guide/aaa_client_secrets
 
 
 TIME_WINDOW = 9
-st = []
-et = []
 
 def get_authenticated_service(args):
   flow = flow_from_clientsecrets(CLIENT_SECRETS_FILE,
@@ -265,35 +265,15 @@ def insert_comment(youtube, channel_id, video_id, parent_id, text):
   ).execute()
 
 
-def getVidFromMetadata(metadata):
-    vid = os.path.splitext(os.path.basename(metadata))[0]
-    return vid
 
 
-def makeTimeLinks(desc, vid):
-    desc = desc.replace("\n", "<br>")
-    # desc = desc.replace(")", ")<br>")
-
-    regex1 = r"\(([^)]+)\)"
-    regex2 = r"\d+:\d\d?"
-
-    matches = re.findall(regex2, desc)
-
-    for match in matches:
-        secs = getSecsFromTime(match)
-        if secs > 0:
-            #this will be mixed up if comments at the same time for two different videos.  Do we care?
-            repl = "youtu.be/watch?v=" + vid + "&t=" + str(secs) + "s"
-            desc = re.sub(match, repl, desc)
-
-    return desc
 
 def massageComment(data):
     final = data["answer"]
     allsources = ""
     for s in data["sources"]:
-        vid = getVidFromMetadata(s["metadata"])
-        allsources += makeTimeLinks(s["content"], vid)
+        vid = util.getVidFromMetadata(s["metadata"])
+        allsources += util.makeTimeLinks(s["content"], vid)
         allsources += "<br><br>"
 
     final += allsources
@@ -353,50 +333,9 @@ def checkAdmins():
         print(key + " " + item['name'] + str(user.custom_claims.get('admin')))
     
 
-def getMediaFile(desc):
-    url = ""
-    tposition = desc.find("MEDIAFILE:")
-    if tposition > -1:
-        eposition = desc.find('\n', tposition)
-        if eposition > -1:
-            url = desc[tposition+10:eposition]
-        else:
-            url = desc[tposition+10:]
-    return url
 
-def getSecsFromTime(time):
-    minsec = time.split(":")
-    if (minsec == time):
-        return 0
-    print(int(minsec[0])*60 + int(minsec[1]))
-    return int(minsec[0])*60 + int(minsec[1])
 	
 
-def getIterations(desc):
-    st.clear()
-    et.clear()
-    s = 0
-
-    try: 
-        for i in range(1, 20):
-            s = -1
-            e = -1
-            fnd = "TRIAL#" + str(i)
-            ts = desc.index(fnd)
-            te = desc.index(")", ts)
-            if ts > -1:
-                s = getSecsFromTime(desc[ts+(len(fnd))+2:te])
-                
-            fnd = "END#" + str(i)
-            ts = desc.index(fnd)
-            te = desc.index(")", ts)
-            if ts > -1:
-                e = getSecsFromTime(desc[ts+(len(fnd))+2:te])
-            if s > 0 and e > 0 and e > s:
-                st.append(s)
-                et.append(e)
-    except:
-        s = -1
 
 if __name__ == '__main__':
     argparser.add_argument("--admin", help="Add Admin user", default="")
@@ -457,7 +396,7 @@ if __name__ == '__main__':
             #data quality is too poor to do much with anyway.  Also no midi before Jan/2023.  
             publishedDate = item['snippet']['publishedAt']
             description = item['snippet']['description']
-            mediafile = getMediaFile(description)
+            mediafile = util.getMediaFile(description)
             print(publishedDate + " " + videoid + " " + privacystatus + " " + item['snippet']['title'])
             #what is the state of this and the title etc.  
             
@@ -531,7 +470,10 @@ if __name__ == '__main__':
                         
 
                 
-            if ((privacystatus=="unlisted" or privacystatus=="public") and "transcript" not in item and pDate.date() > mydate):
+            transcript_file = util.getTranscriptFile(description)
+            #dont repeat if not error.  
+            #update "transcript" from webUI if we have a transcript.  
+            if (((privacystatus=="unlisted" and transcript_file=="error") or privacystatus=="public") and "transcript" not in item and pDate.date() > mydate):
                 reftranscript = db.reference(f'/misterrubato/' + videoid + '/transcript')
                 reftr = reftranscript.get()
                 if reftr is None:
@@ -543,14 +485,14 @@ if __name__ == '__main__':
 
                     #add start and end times here for what we want to use for speech generation.  
                     #use mediafile to download if this is not stored on youtube.  
-                    getIterations(description)
+                    util.getIterations(description)
                     #pass st and et to allow for creating wav files for voice generation.  
                     #need a userid as well so that we can generate multiple voices.  
                     #this userid should be added to the description when recording.  
-                    print(st)
-                    print(et)
-                    sta = ",".join(str(s) for s in st)
-                    eta = ",".join(str(e) for e in et)
+                    print(util.st)
+                    print(util.et)
+                    sta = ",".join(str(s) for s in util.st)
+                    eta = ",".join(str(e) for e in util.et)
                     params = [('videoid', videoid),('st',sta),('et',eta),('mediafile',mediafile)]
 #                    url = f'{localserver}/transcribe/?videoid={videoid}&mediafile={mediafile}&st={sta}&et={eta}'
                     url = f'{localserver}/transcribe/'

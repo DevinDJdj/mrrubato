@@ -555,7 +555,7 @@ def printMidi(midilink, title, GroupName, videoid):
     r = requests.get(midilink)
     print(len(r.content))
     midisize = len(r.content)
-    if (len(r.content) < 500):
+    if (len(r.content) < 200): #not sure why this is here.  Change 500->200
         print(r.content)
         return
     
@@ -706,10 +706,10 @@ def uploadanalyze(file, fullpath):
 
 
 def getSecsFromTime(time):
-	minsec = time.split(":")
-	if (minsec == time):
-	    return 0;
-	return int(minsec[0])*60 + int(minsec[1])
+    minsec = time.split(":")
+    if (minsec == time):
+	    return 0
+    return int(minsec[0])*60 + int(minsec[1])
 
 def calctimes(starttimes, endtimes):
     #calculate from timestamps

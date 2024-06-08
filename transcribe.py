@@ -21,7 +21,8 @@ import glob
 import os
 import speech_recognition as sr
 import math
-
+import requests
+import util
 
 
 
@@ -107,6 +108,45 @@ def transcribe_whisper(filename = "C:\\devinpiano\\test\\openai-whisper\\test.mp
     #_, probs = model.detect_language(mel)
     #probs
     #print(f"Detected language: {max(probs, key=probs.get)}")
+
+
+def transcribe_me2(description, filename, mediafile, localserver, videoid):
+    fn = filename.split('.')
+    txt_filename = fn[0] + ".txt"
+
+    #should be able to use both https or http, too annoying to address now.  
+    #why does this video fail?  jRpisYQZmjU now set to null.  
+
+    #add start and end times here for what we want to use for speech generation.  
+    #use mediafile to download if this is not stored on youtube.  
+    util.getIterations(description)
+    #pass st and et to allow for creating wav files for voice generation.  
+    #need a userid as well so that we can generate multiple voices.  
+    #this userid should be added to the description when recording.  
+    print(util.st)
+    print(util.et)
+    sta = ",".join(str(s) for s in util.st)
+    eta = ",".join(str(e) for e in util.et)
+    params = [('videoid', videoid),('st',sta),('et',eta),('mediafile',mediafile)]
+#                    url = f'{localserver}/transcribe/?videoid={videoid}&mediafile={mediafile}&st={sta}&et={eta}'
+    url = f'{localserver}/transcribe/'
+    print(url)
+    try:
+#                        transcript = requests.get(url, timeout=(30, None)).text
+        transcript = requests.get(url, params=params, timeout=(30, None)).text
+        if (transcript is not None and transcript !="error"):
+            f = open(txt_filename, "w")
+            f.write(transcript)
+            f.close()
+            print('transcript for ' + videoid + ' written to ' + txt_filename)
+            return txt_filename
+        else:
+            print('transcript error' + videoid)
+            return None
+    except:
+        print('error using transcript service' + videoid)
+        return None
+
 
 
 def transcribe_me(filename):
