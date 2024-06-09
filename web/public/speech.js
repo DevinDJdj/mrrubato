@@ -345,6 +345,25 @@ function Chat(transcript, callback=null, pending=false){
             executed = false;
         }
     }
+    else if (transcript.toLowerCase().startsWith("add tag")){
+        tokens = transcript.split(" ");
+        if (tokens.length > 3){
+            midi = tokens[tokens.length-1];
+            //for now single word?  I dont think it matters, logic allows for multiple words.  
+            //but we do need to time the speech and the midi well if we want to use the 4s timeout.  
+            tag = tokens.slice(2, tokens.length-1).join(" ");
+            if (hasNumber(midi)){ //check if we have actually put in the midi.
+                addTag(tag.trim(), "", midi);
+            }
+            else{
+                tag = tokens.slice(2, tokens.length).join(" ");
+                addTag(tag.trim());
+            }
+        }
+        else{
+            executed = false;
+        }
+    }
     else{
         executed = false;
     }

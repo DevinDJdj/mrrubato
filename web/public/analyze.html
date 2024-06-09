@@ -95,25 +95,25 @@ data-setup="{}"
 		padding: 10px; 
 		background-color: rgba(0, 0, 0, 0.75);">
   </div>
-  <div id="secondselapsed" 
-       style=	"display: inline-block;
-		font-family: monospace;
-		font-size: 30px;
-		text-align: right;
-		color: lightgray; 
-		border-radius: 10px; 
-		padding: 10px; 
-		background-color: rgba(0, 0, 0, 0.75);">
-  </div>
   
   <br>
     <p id="load">Firebase SDK Loading&hellip;</p>
-    <div id="iterationsh" style="height: 390px;overflow:auto;"></div>
+    <div id="iterationsh" style="height: 260px;overflow:auto;"></div>
 <!--    <textarea id="iterations" rows="40" cols="40"></textarea> -->
 </td>
 <td>
 
-	<div id="mycommentsh"></div>
+	<div id="secondselapsed" 
+	style=	"display: inline-block;
+	 font-family: monospace;
+	 font-size: 30px;
+	 text-align: right;
+	 color: lightgray; 
+	 border-radius: 10px; 
+	 padding: 10px; 
+	 background-color: rgba(0, 0, 0, 0.75);">
+</div>
+ <div id="mycommentsh"></div>
     <textarea id="mycomments" rows="10" cols="40"></textarea>
 
 	<div id="speak">
@@ -121,6 +121,12 @@ data-setup="{}"
 		<input type="text" id="mycommand" name="mycommand" size="50">
 
 	</div>
+    <div class="tags-input"> 
+        <ul id="tags"></ul> 
+        <input type="text" id="input-tag" 
+            placeholder="Add a tag" /> 
+    </div> 
+
 </td><td>
     <textarea id="transcript" rows="10" cols="60"></textarea>
 	<div id="transcriptsh" style="height: 390px;overflow:auto;"></div>
@@ -206,7 +212,7 @@ data-setup="{}"
 
 <script src="languages.js"></script>
 <script src="keymap.js"></script>
-
+<script src="tags.js"></script>
 
 		
   <script>
@@ -474,6 +480,7 @@ function loadAdditionalComments(){
 					});
 
 }
+
 function loadPreviousComments(snapshot, uid=0){
 
 	user=0;

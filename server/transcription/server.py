@@ -39,6 +39,7 @@ def transcribe():
     transcriptfile = request.args.get('transcriptfile')
     st = request.args.get('st')
     et = request.args.get('et')
+    reviewed = ""
     try:
         global model
         if (model is None):
@@ -48,6 +49,7 @@ def transcribe():
             print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         if (transcriptfile != None and transcriptfile != ""):
             ret = downloadtranscript(transcriptfile, video, st, et)
+            reviewed = " --topic REVIEWED"
         else:
             ret = transcribe_fromyoutube(video, model, mediafile, st, et)
         
@@ -55,7 +57,7 @@ def transcribe():
         print(e)
         ret = 'error'
     if ret !='error' and ret !='':
-        subprocess.call('python3 ' + myhome + '/mrrubato/server/ollama/load.py --video ' + video, shell=True)
+        subprocess.call('python3 ' + myhome + '/mrrubato/server/ollama/load.py --video ' + video + reviewed, shell=True)
     return ret
 
 if (__name__ == '__main__'):

@@ -89,6 +89,7 @@ def downloadtranscript(transcriptfile, videoid, st, et):
             with open(myhome + "/TTS/recipes/ljspeech/LJSpeech-1.1/metadata.csv", 'a') as cf:
                 cf.write(entry + "\n")
 
+    return transcriptfile
 
 def transcribe_fromyoutube(videoid="ZshYVeNHkOM", model=None, mediafile=None, st=None, et=None):
     #download from mediafile

@@ -103,6 +103,8 @@ Do check that the URL passed is allowed.
 upload new transcriptfile if updated not null.  
 --done
 
+This is all still messy
+
 
 **web/public/analyze.html
 Need to start showing events.  
@@ -110,4 +112,40 @@ need to add 'transcript' and 'meta' tracks.
 Flag for including transcript/meta events in flow.  
 Then when skipping, search for next word (with filter) and/or meta/transcript event.  
 Then show the event details.  
+
+
+**server/ollama/load.py
+adjust to use REVIEWED topic when we have reviewed the transcript.  
+
+**web/public/chat.html
+use topic REVIEWED in future to see what difference this makes.  
+yeah, then we get all transcript and REVIEWED separately.  
+
+Not adding topics for other transcription yet.  
+How do we do this?  In analyze.html add topics/labels.  
+
+**record.py use Groupname as topic.  
+
+In order for this to have much meaning, we need to figure out how to use a minimal base LLM.  
+With enough data, probably doesnt matter, but without a large amount of data, we mostly get the LLM data which is not all that interesting for our use-case.  
+
+
+**web/public/languages.js
+statefeedback.  
+Need to dynamically generate this from the transcript.  
+In transcript we can see the change language etc.  
+So each language will have a function to do this that will be dynamically loaded if it exists.  
+If doesnt exist, use the base statefeedback function.  
+This will be like a dashboard.  
+Should we make separate transcripts based on language?  
+I think no, but we may want to change color of the text based on the language color.  
+
+**web/public/tags.js
+logic for tagging.  
+Need autocomplete here.  
+Pull from /topics in DB.  
+Then have pointer to any videos underneath this tag name.  
+This will be added to topics parameter when ingesting to ollama.  
+topics must start with certain
+Should we add uid who create word/tag etc?  
 
