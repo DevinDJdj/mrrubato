@@ -16,13 +16,35 @@
                 // Create a new list item element for the tag 
                 const tag = document.createElement('li'); 
               
-                // Set the text content of the tag to the input value 
-                tag.innerText = input.value; 
+                // Get the trimmed value of the input element 
+                const tagContent = input.value.trim(); 
               
-                // Append the tag to the tags list 
-                tags.appendChild(tag); 
+                // If the trimmed value is not an empty string 
+                if (tagContent !== '') { 
               
-                // Clear the input element's value 
-                input.value = ''; 
+                    // Set the text content of the tag to  
+                    // the trimmed value 
+                    tag.innerText = tagContent; 
+  
+                    // Add a delete button to the tag 
+                    tag.innerHTML += '<button class="delete-button">X</button>'; 
+                      
+                    // Append the tag to the tags list 
+                    tags.appendChild(tag); 
+                      
+                    // Clear the input element's value 
+                    input.value = ''; 
+                } 
             } 
         }); 
+
+                // Add an event listener for click on the tags list 
+                tags.addEventListener('click', function (event) { 
+  
+                    // If the clicked element has the class 'delete-button' 
+                    if (event.target.classList.contains('delete-button')) { 
+                      
+                        // Remove the parent element (the tag) 
+                        event.target.parentNode.remove(); 
+                    } 
+                }); 

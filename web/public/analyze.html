@@ -114,16 +114,19 @@ data-setup="{}"
 	 background-color: rgba(0, 0, 0, 0.75);">
 </div>
  <div id="mycommentsh"></div>
+	<label for="mycomments">My Comments:</label><br>
     <textarea id="mycomments" rows="10" cols="40"></textarea>
 
 	<div id="speak">
 		<!-- status and current command for now just display the string and add any additional midi params-->
+		<label for="mycommand">Building Command:</label><br>
 		<input type="text" id="mycommand" name="mycommand" size="50">
 
 	</div>
-    <div class="tags-input"> 
+	<br>
+    <div class="tags-input" style="width:100%;"> 
         <ul id="tags"></ul> 
-        <input type="text" id="input-tag" 
+        <input type="text" id="input-tag" size="45"
             placeholder="Add a tag" /> 
     </div> 
 
@@ -212,6 +215,8 @@ data-setup="{}"
 
 <script src="languages.js"></script>
 <script src="keymap.js"></script>
+
+<link href="css/tags.css" rel="stylesheet">
 <script src="tags.js"></script>
 
 		
