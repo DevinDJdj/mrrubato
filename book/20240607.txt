@@ -149,3 +149,7 @@ This will be added to topics parameter when ingesting to ollama.
 topics must start with certain
 Should we add uid who create word/tag etc?  
 
+Finish loadTags from DB and remove tag speech.  
+addTag and removeTag need to touch UI.  
+
+

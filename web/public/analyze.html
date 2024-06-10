@@ -114,7 +114,9 @@ data-setup="{}"
 	 background-color: rgba(0, 0, 0, 0.75);">
 </div>
  <div id="mycommentsh"></div>
-	<label for="mycomments">My Comments:</label><br>
+	<label for="currentstate">Current State:</label><br>
+	<textarea id="currentstate" rows="5" cols="40"></textarea><br>
+	<label for="mycomments">My Transcript:</label><br>
     <textarea id="mycomments" rows="10" cols="40"></textarea>
 
 	<div id="speak">
@@ -131,6 +133,7 @@ data-setup="{}"
     </div> 
 
 </td><td>
+	<label for="transcript">Original Transcript:</label><br>
     <textarea id="transcript" rows="10" cols="60"></textarea>
 	<div id="transcriptsh" style="height: 390px;overflow:auto;"></div>
 
@@ -862,9 +865,9 @@ function removeAllChildren(el){
 	  
 function searchPrevious(videoid){
 	//use title
-    ref = firebase.database().ref('/misterrubato');
+    prevref = firebase.database().ref('/misterrubato');
 	console.log(title);
-    ref.orderByChild('snippet/title').equalTo(title).on("value", function(snapshot) {
+    prevref.orderByChild('snippet/title').equalTo(title).on("value", function(snapshot) {
 		it = 1
 		vids = [];
 		snapshot.forEach((childSnapshot) => {
@@ -1274,8 +1277,10 @@ function makeTimeLinks(desc){
 
 function getVideoJson(videoid){
 	
-    ref = firebase.database().ref('/misterrubato/' + videoid);
-	ref.on('value',(snap)=>{
+    vref = firebase.database().ref('/misterrubato/' + videoid);
+	vref.once('value')
+					  .then((snap) => {
+						//.on('value',(snap)=>{
 	    if (snap.exists()){
 			loadVideo();
 			item = snap.val();
@@ -1314,8 +1319,8 @@ function getVideoJson(videoid){
 			watch = true;
 			loadVideo();
 			console.log(videoid + " Not in DB.  Retrieving from Youtube API");
-			ref = firebase.database().ref('/watch/' + videoid);
-			ref.on('value',(snap)=>{
+			vref = firebase.database().ref('/watch/' + videoid);
+			vref.on('value',(snap)=>{
 				if (snap.exists()){
 				//retrieve previous comments etc.  
 				}

@@ -80,6 +80,7 @@ class Keymap{
                 "12,9,10,11,12": "add word ", //need further parameter
                 "12,2,3,4,12": "add language ", //need further parameter
                 "12,7,9,11,12": "add tag ", //need further parameter or word
+                "12,11,9,7,12": "remove tag ", //need further parameter or word
 
             } 
         };
