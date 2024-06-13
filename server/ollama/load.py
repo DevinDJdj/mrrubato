@@ -6,8 +6,10 @@
 #pip install pypdf
 #pip install chainlit
 #pip install fastembed
+#pip install langchain-text-splitters
 
-from langchain_community.text_splitter import RecursiveCharacterTextSplitter, CharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+#from langchain_community.text_splitter import RecursiveCharacterTextSplitter, CharacterTextSplitter
 from langchain_community.document_loaders import PyPDFLoader, DirectoryLoader, TextLoader
 from langchain_community.document_loaders.pdf import PyPDFDirectoryLoader
 from langchain_community.document_loaders import UnstructuredHTMLLoader, BSHTMLLoader
