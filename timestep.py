@@ -334,6 +334,23 @@ def checkAdmins():
     
 
 
+def updatetranscript(vidid, updated, transcript):
+ 
+    # Put your local file path 
+    Title = vidid + '.txt'
+    fileName = updated + '.txt'
+    with open('../words/' + fileName, 'w') as f:
+        f.write(transcript)
+
+    bucket = storage.bucket()
+    blob = bucket.blob('words/' + updated[0:4] + '/' + Title)
+    blob.upload_from_filename(fileName)
+
+    # Opt : if you want to make public access from the URL
+    blob.make_public()
+
+    print("your new transcript file url", blob.public_url)
+    return blob.public_url
 	
 
 
@@ -473,7 +490,42 @@ if __name__ == '__main__':
             transcript_file = util.getTranscriptFile(description)
             #dont repeat if not error.  
             #update "transcript" from webUI if we have a transcript.  
-            if (((privacystatus=="unlisted" and transcript_file=="error") or privacystatus=="public") and "transcript" not in item and pDate.date() > mydate):
+            if (((privacystatus=="public")) and pDate.date() > mydate):
+                reftranscript = db.reference(f'/misterrubato/' + videoid + '/transcript')
+                reftr = reftranscript.get()
+                #only loading once.  
+                if reftr is not None and "updated" in reftr and "loaded" not in reftr:
+                    print("STT training ready")
+                    new_transcript_file = updatetranscript(transcript_file, reftr["updated"], reftr["transcript"]) #just creating a new instance.  
+                    #update with new transcript file.  Youtube info not updated.  Do we care?  
+                    description = description.replace(transcript_file, new_transcript_file)
+                    item['snippet']['description'] = description
+                    vref = db.reference(f'/misterrubato/' + videoid)
+                    vref.set(item)
+                    data = {'transcript':transcript, 'updated': reftr['updated'], 'loaded': reftr['updated']}
+                    reftranscript.set(data)
+
+                    localserver = config.cfg['localserver']['host'] + ":" + str(config.cfg['localserver']['port'])
+                    #update the transcriptfile.  
+                    #http://
+                    util.getIterations(description)
+                    sta = ",".join(str(s) for s in util.st)
+                    eta = ",".join(str(e) for e in util.et)
+                    params = [('videoid', videoid),('st',sta),('et',eta),('transcriptfile',transcript_file)]
+#                    url = f'{localserver}/transcribe/?videoid={videoid}&mediafile={mediafile}&st={sta}&et={eta}'
+                    url = f'{localserver}/transcribe/'
+                    print(url)
+                    try:
+#                        transcript = requests.get(url, timeout=(30, None)).text
+                        transcript = requests.get(url, params=params, timeout=(30, None)).text
+                        if (transcript is not None and transcript !="error"):
+                            print("STT training complete")
+                        else:
+                            print('STT training error' + videoid)
+                    except:
+                        print('error using transcript service' + videoid)
+
+            if (((privacystatus=="unlisted" and transcript_file=="error")) and "transcript" not in item and pDate.date() > mydate):
                 reftranscript = db.reference(f'/misterrubato/' + videoid + '/transcript')
                 reftr = reftranscript.get()
                 if reftr is None:

@@ -215,6 +215,12 @@ function Chat(transcript, callback=null, pending=false){
     if (transcript.toLowerCase().startsWith("help")){
 
     }
+    else if (transcript.toLowerCase() == "skip"){
+        //skip to next event?  
+    }
+    else if (transcript.toLowerCase() == "back"){
+        //skip to previous event?
+    }
     else if (transcript.toLowerCase() == "stop"){
         window.speechSynthesis.cancel();
     }
@@ -339,6 +345,45 @@ function Chat(transcript, callback=null, pending=false){
             executed = false;
         }
     }
+    else if (transcript.toLowerCase().startsWith("add tag")){
+        tokens = transcript.split(" ");
+        if (tokens.length >= 3){
+            midi = tokens[tokens.length-1];
+            //for now single word?  I dont think it matters, logic allows for multiple words.  
+            //but we do need to time the speech and the midi well if we want to use the 4s timeout.  
+            tag = tokens.slice(2, tokens.length-1).join(" ");
+            if (hasNumber(midi)){ //check if we have actually put in the midi.
+                addTag(tag.trim(), "", midi);
+            }
+            else{
+                tag = tokens.slice(2, tokens.length).join(" ");
+                addTag(tag.trim());
+            }
+        }
+        else{
+            executed = false;
+        }
+    }
+    else if (transcript.toLowerCase().startsWith("remove tag")){
+        tokens = transcript.split(" ");
+        if (tokens.length >= 3){
+            midi = tokens[tokens.length-1];
+            //for now single word?  I dont think it matters, logic allows for multiple words.  
+            //but we do need to time the speech and the midi well if we want to use the 4s timeout.  
+            tag = tokens.slice(2, tokens.length-1).join(" ");
+            if (hasNumber(midi)){ //check if we have actually put in the midi.
+                console.log("error removing tag " + tag.trim() + " " + midi); 
+                removeTag(tag.trim(), "", midi);
+            }
+            else{
+                tag = tokens.slice(2, tokens.length).join(" ");
+                removeTag(tag.trim());
+            }
+        }
+        else{
+            executed = false;
+        }
+    }
     else{
         executed = false;
     }
@@ -364,6 +409,7 @@ function addComment(comment, commenttime){
 //	if (i==0) i=1;
     notesarray.splice(i, 0, comment + " (" + commenttime + ")");
     updateNotes();
+    updateState(comment, commenttime, notesarray);
     
 }
 

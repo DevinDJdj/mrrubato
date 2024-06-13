@@ -36,21 +36,117 @@ function changeColor(word, color){
 
 }
 
+
+function updateState(entry, entrytime, transcript){
+    //function to get the state of the entire transcript up to this point.  
+    //this is a bit of a mess.  Need to clean up.
+    //get the state info and 
+    //for now just show latest entry.  
+    $('#currentstate').val(entry);
+
+}
+
+function removeTag(tag, videoid=""){
+    removeTagUI(tag);
+    if (videoid==""){
+        videoid=video;
+    }
+    //remove from tag lookup.  
+    tagrref = firebase.database().ref('/tags/' + tag + '/videos/' + videoid);
+    tagrref.remove().then(function() {
+        console.log("Remove succeeded.");
+    });
+    //remove from video tags
+    let prefix = '/misterrubato/';
+    if (watch === true){
+        prefix = '/watch/';
+    }
+    tagvref = firebase.database().ref(prefix + videoid + '/tags/' + tag);
+    tagvref.remove().then(function() {
+        console.log("Remove succeeded.");
+    });
+
+
+}
+
+function addTag(tag, videoid="", midi=null){
+    //once a tag is in the DB, there is no deleting it, but we can remove from videos, I think this is fine for now.  
+    //topics must start with certain midi sequence.  1,1 or should they just be a word.  Dont necessarily need a word.  
+    //so I think separate.  start with 1,1 or some easy identifier.  
+    //they can be just a normal word after this if a word exists.  
+    //make sure to use unique variables as the .then is a promise.
+    addTagUI(tag);
+    if (videoid==""){
+        videoid=video;
+    }
+
+    now = new Date();
+    if (midi !==null){
+        tagaref = firebase.database().ref('/tags/' + tag);
+        tagaref.once('value')
+        .then((snap) => {
+            if (snap.exists()){
+                let mymidi = snap.val().midi;
+                if (mymidi != midi){
+                    tagaref.update({"midi": midi, "updated": now.toISOString().substring(0, 10).replaceAll('-','')});
+                }
+            }
+            else{
+                //probably should include create user and update user etc.  
+                obj = {"midi": midi, "color": 0, "created": now.toISOString().substring(0, 10).replaceAll('-',''), "updated": now.toISOString().substring(0, 10).replaceAll('-','') };
+                tagaref.set(obj);
+            }
+        });
+    }
+    else{
+        //add to tag lookup.  
+        tagaref = firebase.database().ref('/tags/' + tag + '/videos/' + videoid);
+        tagaref.once('value')
+        .then((snap) => {
+            if (snap.exists()){
+            }
+            else{
+                //probably should include create user and update user etc.  
+                obj = {"added": now.toISOString().substring(0, 10).replaceAll('-','')};
+                tagaref.set(obj);
+            }
+        });
+        
+        //add to video tags
+        let prefix = '/misterrubato/';
+        if (watch === true){
+            prefix = '/watch/';
+        }
+        tagvref = firebase.database().ref(prefix + videoid + '/tags/' + tag);
+        tagvref.once('value')
+        .then((snap) => {
+            if (snap.exists()){
+            }
+            else{
+                //probably should include create user and update user etc.  
+                obj = {"added": now.toISOString().substring(0, 10).replaceAll('-','')};
+                tagvref.set(obj);
+            }
+        });
+    }
+
+}
+
 function addWord(word, midi){
-    ref = firebase.database().ref('/dictionary/language/' + currentlanguage + "/" + word);
-	ref.once('value')
+    wordref = firebase.database().ref('/dictionary/language/' + currentlanguage + "/" + word);
+	wordref.once('value')
     .then((snap) => {
         now = new Date();
         if (snap.exists()){
             let mymidi = snap.val().midi;
             if (mymidi != midi){
-                ref.update({"midi": midi, "updated": now.toISOString().substring(0, 10).replaceAll('-','')});
+                wordref.update({"midi": midi, "updated": now.toISOString().substring(0, 10).replaceAll('-','')});
             }
         }
         else{
             //probably should include create user and update user etc.  
             obj = {"midi": midi, "color": 0, "created": now.toISOString().substring(0, 10).replaceAll('-',''), "updated": now.toISOString().substring(0, 10).replaceAll('-','') };
-            ref.set(obj);
+            wordref.set(obj);
         }
     });
 
@@ -58,20 +154,20 @@ function addWord(word, midi){
 
 
 function addLanguage(lang, midi){
-    ref = firebase.database().ref('/dictionary/languages/' + lang);
-	ref.once('value')
+    langref = firebase.database().ref('/dictionary/languages/' + lang);
+	langref.once('value')
     .then((snap) => {
         now = new Date();
         if (snap.exists()){
             let mymidi = snap.val().midi;
             if (mymidi != midi){
-                ref.update({"midi": midi, "updated": now.toISOString().substring(0, 10).replaceAll('-','')});
+                langref.update({"midi": midi, "updated": now.toISOString().substring(0, 10).replaceAll('-','')});
             }
         }
         else{
             //probably should include create user and update user etc.  
             obj = {"midi": midi, "created": now.toISOString().substring(0, 10).replaceAll('-',''), "updated": now.toISOString().substring(0, 10).replaceAll('-','') };
-            ref.set(obj);
+            langref.set(obj);
         }
     });
 
@@ -80,6 +176,7 @@ function addLanguage(lang, midi){
 
 function changeLanguage(midi){
     //find the language.  
+    lang = lang.toLowerCase().replaceAll(" ", "_");
     if (typeof(alllangs[midi]) !== "undefined"){
         lang = alllangs[midi];
         currentlanguage = lang;
@@ -91,6 +188,7 @@ function changeLanguage(midi){
 }
 
 function selectLanguage(lang){
+    lang = lang.toLowerCase().replaceAll(" ", "_");
     if (Object.values(alllangs).includes(lang) > -1){
         currentlanguage = lang;
         initLangData(lang);
@@ -101,8 +199,8 @@ function selectLanguage(lang){
 }
 
 function loadLanguages(){
-    ref = firebase.database().ref('/dictionary/languages');
-	ref.once('value')
+    langsref = firebase.database().ref('/dictionary/languages');
+	langsref.once('value')
     .then((snap) => {
 	    if (snap.exists()){
             let mylangs = snap.val();
@@ -114,6 +212,7 @@ function loadLanguages(){
 
 }
 
+//this is the initial function to load everything.  
 function initLangData(lang, user=-1){
     if (user==-1){
         user = currentmidiuser;
@@ -121,6 +220,16 @@ function initLangData(lang, user=-1){
 
     if (typeof(midiarray[user][lang]) === "undefined"){
         midiarray[user][lang] = [];
+        //if never used before.  
+        let loaded = false;
+        for (i=0; i<midiarray.length; i++){
+            if (typeof(midiarray[i][lang]) !== "undefined"){
+                loaded = true;
+            }
+        }
+        if (!loaded){
+            loadLanguage(lang, user);
+        }
     }
 /*
     if (typeof(langstart[lang]) === "undefined"){
@@ -134,6 +243,64 @@ function initLangData(lang, user=-1){
 */
 
 }
+
+function loadLanguageScript(lang){
+    let scriptEle = document.createElement("script");
+    scriptEle.setAttribute("src", "languages/" + lang + ".js");
+    scriptEle.setAttribute("type", "text/javascript");
+    scriptEle.setAttribute("async", async);
+    document.body.appendChild(scriptEle);
+    
+      // success event 
+      scriptEle.addEventListener("load", () => {
+        console.log("Language loaded " + lang);
+      });
+       // error event
+      scriptEle.addEventListener("error", (ev) => {
+        console.log("Error loading language " + lang, ev);
+      });
+    
+}
+
+function loadLanguage(lang, user){
+    lang = lang.toLowerCase().replaceAll(" ", "_");
+    if (typeof(langs[lang]) !== "undefined"){
+        mydic = langs[lang];
+        for (const [key, value] of Object.entries(mydic)) {	
+            //just adding an entry for each user.  
+            //not sure this is the best way, but for now.  
+            //should really only load the words which exist in the feedback.  
+            addDictRow(lang, key, value, user);
+        }                    
+    }
+
+    else{
+        //get lang from DB.  
+        langref = firebase.database().ref('/dictionary/language/' + lang);
+        langref.once('value')
+        .then((snap) => {
+            if (snap.exists()){
+                mydic = snap.val();
+                langs[lang] = {};
+                for (const [key, value] of Object.entries(mydic)) {	
+                    m = value.midi.split(",");
+                    //lang["base"]["length"]["midiseq"] = word
+                    if (typeof(langs[lang][m.length]) === "undefined"){
+                        langs[lang][m.length] = {};
+                    }
+                    langs[lang][m.length][value.midi] = key; //midiseq -> word lookup.  
+
+                    addDictRow(lang, key, value, user);
+                }                    
+                //dynamic functions for this language.  
+//                loadLanguageScript(lang);                    
+            }
+        });
+
+    }
+
+}
+
 
 function loadDictionaries(user){
     //find language in midi
@@ -414,40 +581,6 @@ function findWords(user){
 
 }
 
-function loadLanguage(lang, user){
-    if (typeof(langs[lang]) !== "undefined"){
-        mydic = langs[lang];
-        for (const [key, value] of Object.entries(mydic)) {	
-            //just adding an entry for each user.  
-            //not sure this is the best way, but for now.  
-            //should really only load the words which exist in the feedback.  
-            addDictRow(lang, key, value, user);
-        }                    
-    }
-
-    else{
-        //get lang from DB.  
-        ref = firebase.database().ref('/dictionary/language/' + lang);
-        ref.once('value')
-        .then((snap) => {
-            if (snap.exists()){
-                mydic = snap.val();
-                langs[lang] = {};
-                for (const [key, value] of Object.entries(mydic)) {	
-                    m = value.midi.split(",");
-                    //lang["base"]["length"]["midiseq"] = word
-                    if (typeof(langs[lang][m.length]) === "undefined"){
-                        langs[lang][m.length] = {};
-                    }
-                    langs[lang][m.length][value.midi] = key; //midiseq -> word lookup.  
-
-                    addDictRow(lang, key, value, user);
-                }                    
-            }
-        });
-    }
-
-}
 
 //get languages from feedback midi.  search 
 //dropdown for language selection, then load meanings into table.  

@@ -60,6 +60,8 @@ class Keymap{
             }, 
             "4": {
                 "24,23,23,24": "pause",
+                "24,21,23,24": "skip",
+                "24,23,21,24": "back",
                 "0,1,1,0": "set speed ", //set speed of playback.  This will be a number from -12 to 12.  0 is normal speed.
                 "12,6,6,12": "set volume ", //set volume of playback.  This will be a number from 0 to 12.  0 is mute.
                 "0,7,7,0": "where am i", 
@@ -77,6 +79,8 @@ class Keymap{
             "5": {
                 "12,9,10,11,12": "add word ", //need further parameter
                 "12,2,3,4,12": "add language ", //need further parameter
+                "12,7,9,11,12": "add tag ", //need further parameter or word
+                "12,11,9,7,12": "remove tag ", //need further parameter or word
 
             } 
         };
