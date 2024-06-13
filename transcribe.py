@@ -133,7 +133,7 @@ def transcribe_me2(description, filename, mediafile, localserver, videoid):
     print(url)
     try:
 #                        transcript = requests.get(url, timeout=(30, None)).text
-        transcript = requests.get(url, params=params, timeout=(30, None)).text
+        transcript = requests.get(url, params=params, timeout=(300, None)).text
         if (transcript is not None and transcript !="error"):
             f = open(txt_filename, "w")
             f.write(transcript)
@@ -142,6 +142,8 @@ def transcribe_me2(description, filename, mediafile, localserver, videoid):
             return txt_filename
         else:
             print('transcript error' + videoid)
+            print(url)
+            print(params)
             return None
     except:
         print('error using transcript service' + videoid)
