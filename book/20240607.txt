@@ -214,3 +214,6 @@ Generate wav -> CSV after fixing.
 
 **server/transcription/transcribe.py
 maybe return and then make different function for getting wav files.  
+
+
+Test skipVideo

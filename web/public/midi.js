@@ -600,9 +600,14 @@ function getMidiRecent(){
 
 
 	i=midiarray[currentmidiuser][currentlanguage].length-1;
+	j=midiarray[currentmidiuser][currentlanguage].length-1;
 	lasttime = getReferenceTime();
-	while (i >-1 && midiarray[currentmidiuser][currentlanguage][i].time > lasttime-recentTime){		
+	//need window not just future.  
+	while (i >-1 && midiarray[currentmidiuser][currentlanguage][i].time > lasttime-recentTime*2){
 //		lasttime = midiarray[currentmidiuser][currentlanguage][i].time; //why -start?  
+		if (midiarray[currentmidiuser][currentlanguage][i].time >= lasttime){
+			j--;
+		}
 		i--;
 		//now all midi is context if it is within the last 4 seconds of the previous midi and not complete.  
 		//need 4 second gap to clear midi.  
@@ -612,7 +617,7 @@ function getMidiRecent(){
 	}
 	else{
 		retarray = [];
-		temp = midiarray[currentmidiuser][currentlanguage].slice(i+1);
+		temp = midiarray[currentmidiuser][currentlanguage].slice(i+1, j+1);
 		for (j=0; j<temp.length; j++){
 			if (temp[j].complete !== true){
 				retarray.push(temp[j]);
