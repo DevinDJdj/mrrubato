@@ -60,8 +60,8 @@ class Keymap{
             }, 
             "4": {
                 "24,23,23,24": "pause",
-                "24,21,23,24": "skip",
-                "24,23,21,24": "back",
+                "24,21,23,24": "skip ",
+                "24,23,21,24": "back ",
                 "0,1,1,0": "set speed ", //set speed of playback.  This will be a number from -12 to 12.  0 is normal speed.
                 "12,6,6,12": "set volume ", //set volume of playback.  This will be a number from 0 to 12.  0 is mute.
                 "0,7,7,0": "where am i", 
@@ -116,6 +116,43 @@ class Keymap{
         };
 
 
+
+        this.keydict["skip "] = {"1": {"min": -12, "max": 12}}; //number of increments.  from middle C
+
+        this.funcdict["skip "] = function(transcript, midi, keydict, key){
+            let commandlength = null;
+            let commanddict = null;
+            for (const [k, v] of Object.entries(keydict[key])) {
+                if (parseInt(k) <= midi.length){
+                    commandlength = k;
+                    commanddict = v;
+                };
+            }
+            //maybe not for all commands, but here, we set to blank in case we have incorrect params.  
+            transcript = "";
+            let skip = 0;
+            if (commandlength !== null){
+                //we have a command map at least.  
+                if (commandlength == "1"){
+                    skip = midi[0].note - 60;
+                    if (skip > -13 && skip < 13){
+
+                        skip = Math.sign(skip)*Math.pow(2, (Math.abs(skip)));
+                        transcript = "skip " + skip.toFixed(2);
+                        midi[0].complete = true;
+                        //I think this will work ok.  
+                        //this allows us to move on to next command.  
+                    }
+                    else{
+                        //not sure how I want to handle errors yet.  
+                        return "ERROR skip - incorrect parameters"
+                    }
+                }
+
+            }
+            return transcript; //add language xxxx 2,3,4
+        };
+        
         //sequential
         this.keydict["set volume "] = {"1": {"min": -12, "max": 12}}; //number of increments.  from middle C
         //no space means additional word is optional (can be midi).  

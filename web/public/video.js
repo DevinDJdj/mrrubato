@@ -134,7 +134,16 @@ function setVideoVolume(volume){
     }
     */
   }
-  
+
+  function skipVideo(secs, v=""){
+      if (useyoutube || watch){
+          player.seekTo(player.getCurrentTime() + secs);
+      }
+      else{
+          player2.currentTime = player2.currentTime + secs;
+      }
+  }
+
   function seekVideo(secs, v=""){
     if (v == ""){
         v = video;

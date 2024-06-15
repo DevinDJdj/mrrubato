@@ -35,11 +35,22 @@ function checkCommands(){
     //otherwise we assume this is a completed command.  
     //also if we have punctuation/end command, we can continue.  
     if (midi != null){
+        //clear out any midi or pending commands with 0,0,0
+        if (ispaused && midi.length > 3 && midi[midi.length-1].note -keybot == 0 && midi[midi.length-2].note -keybot == 0 && midi[midi.length-3].note -keybot == 0){
+            for (let i=0; i<midi.length; i++){
+                midi[i].complete = true;
+                commandLog.pop();
+                cl = null;
+                return "";
+            }
+        }
+
         completeMidi(midi);
     }
     let transcript = "";
     let pending = false;
     let callback = null;
+    let executed = false;
     if (cl != null){
                 //we have a command.  
             //try to find if we have something to do with the midi.  
@@ -50,7 +61,7 @@ function checkCommands(){
         let prevtranscript = "";
         pending = cl.pending;
         let done = 1;
-        while (done > 0 && midi !=null && midi.length > 0){
+        while (done > 0 && midi !=null && midi.length > 0 && executed==false){
             prevtranscript = transcript;
             //find words in current language.  
 
@@ -58,6 +69,7 @@ function checkCommands(){
             if (transcript != prevtranscript){
 
                 done = completeMidi(midi);
+                //refresh midi with only incomplete commands.  
                 if (transcript.endsWith(" ")){  //use space as indicator of more parameters needed.
                     //still waiting.  
                     cl.transcript = transcript;
@@ -66,7 +78,8 @@ function checkCommands(){
                     //no use case at the moment for this.  
                 }
                 else{
-                    Chat(transcript, callback, pending); //add waspendingflag
+                    executed = Chat(transcript, callback, pending); //add waspendingflag
+
                     transcript = "";
                 }
             }
@@ -79,8 +92,14 @@ function checkCommands(){
         }
         
         if ((midi ==null || midi.length == 0) && transcript != ""){
-            Chat(transcript, callback, pending); //add waspendingflag
+            executed = Chat(transcript, callback, pending); //add waspendingflag
             transcript = "";
+
+        }
+
+        //get rid of executed commands.  
+        if (executed){
+            commandLog.pop();
         }
 
         //get rid of incomplete commands.  
@@ -96,17 +115,11 @@ function checkCommands(){
         if ((midi != null && midi.length > 0)){
             console.log(midi);
 
-            //clear out any pending commands with 0,0,0
-            if (ispaused && midi.length > 3 && midi[midi.length-1].note -keybot == 0 && midi[midi.length-2].note -keybot == 0 && midi[midi.length-3].note -keybot == 0){
-                for (let i=0; i<midi.length; i++){
-                    midi[i].complete = true;
-                }
-            }
 
             let prevtranscript = "";
             //get command.  
             let done = 1;
-            while (done > 0 && midi.length > 0){
+            while (done > 0 && midi.length > 0 && executed==false){
                 prevtranscript = transcript;
                 //get parameters.  
                 transcript = keymap.findCommand(transcript, midi);
@@ -117,7 +130,7 @@ function checkCommands(){
                         //still waiting.  in this case perhaps extend the pendingTime.  
                     }
                     else{
-                        Chat(transcript, callback, pending); //add waspendingflag
+                        executed = Chat(transcript, callback, pending); //add waspendingflag
                         transcript = "";
                     }
                 }
@@ -138,7 +151,7 @@ function checkCommands(){
                 }
                 else{
                     //should never end up here.  
-                    Chat(transcript, callback, pending); 
+                    executed = Chat(transcript, callback, pending); 
                     transcript = "";
                 }
             }
@@ -160,7 +173,10 @@ function checkCommands(){
 
 function completeMidi(midi){
     let ret = 0;
-    while (midi.length > 0 && midi[0].complete){
+    let reftime = getReferenceTime();
+    while (midi.length > 0 && (midi[0].time < reftime-recentTime || midi[0].complete == true)){
+        //complete midi commands that are too old.  
+        midi[0].complete = true;
         midi.shift();
         ret++;
     }
@@ -202,7 +218,9 @@ function hasNumber(myString) {
 //right now there is no chatting here, we are just using the comments.
 function Chat(transcript, callback=null, pending=false){
     let executed = true;
-    if (lastcommand !=transcript || Date.now() - lastcommandtime > recentTime*2){
+    //this causes problems with the commands.  Dont think we need this anyway
+    /*
+    if (lastcommand !=transcript || Date.now() - lastcommandtime > recentTime){
         lastcommand = transcript;
         lastcommandtime = Date.now();
     }
@@ -210,13 +228,23 @@ function Chat(transcript, callback=null, pending=false){
         //dont repeat for at least 5 seconds.  
         return;
     }
+    */
 
     //find and handle command.  
     if (transcript.toLowerCase().startsWith("help")){
 
     }
-    else if (transcript.toLowerCase() == "skip"){
+    else if (transcript.toLowerCase().startsWith("skip")){
         //skip to next event?  
+        tokens = transcript.split(" ");
+        //logic check is in prior function
+        if (tokens.length > 1 && tokens[1] !=""){
+            skip = parseFloat(tokens[1]);
+            skipVideo(skip);
+        }
+        else{
+            executed=false;
+        }
     }
     else if (transcript.toLowerCase() == "back"){
         //skip to previous event?
@@ -393,8 +421,11 @@ function Chat(transcript, callback=null, pending=false){
         MyChat(transcript);
     }
     else{
-        addComment(transcript, helpme());
+        if (executed){
+            addComment(transcript, helpme());
+        }
     }
+    return executed;
 }
 
 

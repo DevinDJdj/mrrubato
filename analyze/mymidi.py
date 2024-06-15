@@ -59,8 +59,8 @@ class MyMsg:
     for i in indexes:
       ret += i*(10**digits)
       digits -= 1
-    print(words)
-    print(indexes)
+#    print(words)
+#    print(indexes)
     return ret
 
 #thought of this twice, deserves a new name

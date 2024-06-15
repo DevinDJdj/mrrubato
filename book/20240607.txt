@@ -151,5 +151,69 @@ Should we add uid who create word/tag etc?
 
 Finish loadTags from DB and remove tag speech.  
 addTag and removeTag need to touch UI.  
+--done, maybe working ok.  
+
+Carefule with DB mechanism.  Can delete data if not careful.  
+Need to use separate ref variable name as this is used in the promise afterward.  
 
 
+Why are we getting this in transcript:
+set speed 1.50 (01:55)
+set speed  (01:56)
+
+Test timestep to make sure nothing broke.  
+
+
+Can we use word2vec somehow with the tagging or vocabulary?  
+Find similar tag suggestions based on the input?  
+Or if we find something similar enough just use that as the tag?  
+Have some default similarity parameter so we dont end up with too many tags.  
+
+
+JS example:
+https://www.misterrubato.com/test/word2vec-demo/index.html
+combine/train with custom data
+python example:
+https://www.analyticsvidhya.com/blog/2023/07/step-by-step-guide-to-word2vec-with-gensim/
+
+
+**web/public/midi.js
+forgot what are we doing with the original midi track?  
+getFile()
+OK we are loading but not using.  We can use.  Mostly it is valid unless there is some overlay which JZZ doesnt parse correctly.  
+So if we want to use this, we can just adjust this:
+			if (feedback == true && (smf[trknum][i][0] == 144 || smf[trknum][i][0] == 128)){ //midicommands ON OFF
+How do we want to use the original MIDI?  
+
+
+**server
+Try Deepspeech insead of Coqui for STT/TTS training.  
+There is some poor compatibility with the NVIDIA driver that Coqui causes.  
+Functionality is the same.  
+
+
+**/web/public/keymap.js
+Need an ending Pre or postfix.  
+Probably need to stick with pre-fix only strategy.  
+This will probably be easier programming-wise
+
+**timestep.py
+Would be convenient to have ollamaload function
+with date to load anything after date=20240518.  
+For when we inevitably screw up the data.  
+
+**server/transcription/server.py
+Need update of STT to use Deepspeech or similar.  
+I guess try this:
+https://medium.com/visionwizard/train-your-own-speech-recognition-model-in-5-simple-steps-512d5ac348a5
+
+whisper is not good enough.  
+Get workflow working first.  
+Generate wav -> CSV after fixing.  
+
+
+**server/transcription/transcribe.py
+maybe return and then make different function for getting wav files.  
+
+
+Test skipVideo

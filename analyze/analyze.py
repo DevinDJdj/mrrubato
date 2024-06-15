@@ -381,7 +381,8 @@ def printNgrams(t, title, GroupName, videoid, midilink):
                 #not very efficient, but good enough for now.  
                 it = getIteration(currentTime, starttimes, endtimes)
                 i = 0
-                mymsg.print(it, title, GroupName, videoid, midilink)
+                #too much printing.  
+#                mymsg.print(it, title, GroupName, videoid, midilink)
                 #for now return the random note based on probability distribution from this array
             if (mymsg.msg.type=='note_on'):
                 if (on > 0 and it > -1):  
