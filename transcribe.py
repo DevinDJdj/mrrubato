@@ -23,7 +23,7 @@ import speech_recognition as sr
 import math
 import requests
 import util
-
+import io
 
 
 def get_timestamp(s):
@@ -135,9 +135,12 @@ def transcribe_me2(description, filename, mediafile, localserver, videoid):
 #                        transcript = requests.get(url, timeout=(30, None)).text
         transcript = requests.get(url, params=params, timeout=(300, None)).text
         if (transcript is not None and transcript !="error"):
-            f = open(txt_filename, "w")
+            f = io.open(txt_filename, "w", encoding='utf-8')
             f.write(transcript)
             f.close()
+#            f = open(txt_filename, "w")
+#            f.write(transcript)
+#            f.close()
             print('transcript for ' + videoid + ' written to ' + txt_filename)
             return txt_filename
         else:
@@ -145,8 +148,9 @@ def transcribe_me2(description, filename, mediafile, localserver, videoid):
             print(url)
             print(params)
             return None
-    except:
+    except requests.exceptions.RequestException as e:
         print('error using transcript service' + videoid)
+        print(e)
         return None
 
 
