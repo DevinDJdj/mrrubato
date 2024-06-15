@@ -123,3 +123,5 @@ https://medium.com/@juancrrn/installing-opencv-4-with-cuda-in-ubuntu-20-04-fde6d
 
 Definitely not great cohesion in this area.  
 
+https://github.com/avivcaspi/TennisProject
+https://spiral.imperial.ac.uk/handle/10044/1/67949
