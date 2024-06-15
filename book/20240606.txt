@@ -79,6 +79,8 @@ python3 predict_video.py --input_video_path=VideoInput/video_input3.mp4 --output
 Takes quite a bit of time even just this 3 seconds of video.  
 with a wimpy GPU, probably not practical.  
 
+Possible with better GPU.  Still quite slow.  
+
 
 
 Should really start using this with virtual envs.  
