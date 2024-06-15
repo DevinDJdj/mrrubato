@@ -1,5 +1,6 @@
 //var midiarray = [[]]; //[{}]; //array of [user][language][array of notes]
 var midiarray = [{"base": []}];
+
 var currentmidiuser = 0;
 var notes = [];
 var lastmidirecent = [];

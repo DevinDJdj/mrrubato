@@ -217,3 +217,19 @@ maybe return and then make different function for getting wav files.
 
 
 Test skipVideo
+--looks ok.  
+
+**web/public/analyze.html
+Show the User Icon/name.  
+Show name on hover.  ah who cares.  
+
+
+Test
+
+Show meta commands and filter for that based on input.  
+
+
+UI Original Transcript is actually the edited transcript.  
+Original Computer generated transcript is saved, but not displayed anywhere.  
+
+

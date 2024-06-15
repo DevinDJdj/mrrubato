@@ -84,8 +84,7 @@ data-setup="{}"
 </td>
 
 <td>
-
-  <div id="clock" 
+   <div id="clock" 
        style=	"display: inline-block;
 		font-family: monospace;
 		font-size: 30px;
@@ -94,25 +93,36 @@ data-setup="{}"
 		border-radius: 10px; 
 		padding: 10px; 
 		background-color: rgba(0, 0, 0, 0.75);">
-  </div>
-  
+   </div>
+
+</div>
+  <div id="iterationsh" style="height: 260px;overflow:auto;"></div>  
   <br>
     <p id="load">Firebase SDK Loading&hellip;</p>
     <div id="iterationsh" style="height: 260px;overflow:auto;"></div>
 <!--    <textarea id="iterations" rows="40" cols="40"></textarea> -->
 </td>
 <td>
+	<table style="width:250px">
+		<tr >
+			<td>
+		<div id="secondselapsed" 
+			style=	"display: inline-block;
+			font-family: monospace;
+			font-size: 30px;
+			text-align: right;
+			color: lightgray; 
+			border-radius: 10px; 
+			padding: 10px; 
+			background-color: rgba(0, 0, 0, 0.75);">
+		</div>
+		</td>
+		<td align="right">
+			<div id="usericon"></div>
+			</td>
+		</tr>
+	</table>
 
-	<div id="secondselapsed" 
-	style=	"display: inline-block;
-	 font-family: monospace;
-	 font-size: 30px;
-	 text-align: right;
-	 color: lightgray; 
-	 border-radius: 10px; 
-	 padding: 10px; 
-	 background-color: rgba(0, 0, 0, 0.75);">
-</div>
  <div id="mycommentsh"></div>
 	<label for="currentstate">Current State:</label><br>
 	<textarea id="currentstate" rows="5" cols="40"></textarea><br>
@@ -286,7 +296,7 @@ var spotlight1;
 var spotlight2;
 var watch = false;
 
-var uid = null;
+var myuid = null;
 var isadmin = false;
 
 //setup https://www.youtube.com/watch?v=3jZ5vnv-LZc
@@ -307,7 +317,7 @@ $(document).on('input', '#commentdelay', function() {
 			// User is signed in, see docs for a list of available properties
 			// https://firebase.google.com/docs/reference/js/firebase.User
 			
-			uid = user.uid;
+			myuid = user.uid;
 				// ...
 			  } else {
 				// User is signed out
@@ -368,7 +378,7 @@ $(document).on('input', '#commentdelay', function() {
 					// https://firebase.google.com/docs/reference/js/firebase.User
 					
 					uid = user.uid;
-					addUser(user);
+					addMe(user);
 					//loadPreviousComments for multiple users.  
 
 
@@ -506,8 +516,9 @@ function loadPreviousComments(snapshot, uid=0){
 		}
 		else{
 			midiarray.push({"base": []});
+			users.push({"uid": key, "pic": "", "name": ""}); //lookup for array location -> uid
 			currentmidiuser=midiarray.length-1;
-			users[currentmidiuser] = key; //lookup for array location -> uid
+			getUser(currentmidiuser);
 		}
 		midifeedback = value.midi;
 		loadMidiFeedback(midifeedback);
@@ -629,14 +640,57 @@ function getFeedbackImage(source, w, h, myscene,midiuser=0){
 }
 
 
-function addUser(user){
+function getUser(userindex){
+
+  //if uid is array
+  //user = users.find((u) => u.uid.includes(uid));
+//  user = users.find((u) => u.uid == (uid));
+//  userindex = users.findIndex((u) => u.uid == (uid));
+	user = users[userindex];
+
+
+	uRef = firebase.database().ref('/users/' + uid);
+	firebase.database().ref('/users/' + uid).once('value')
+					  .then((snapshot) => {
+						if (snapshot.exists()) {
+							//use snapshot.key here because of many subsequent calls uid will change.  
+							if (user.uid == snapshot.key && user.pic == ""){ //initialize this user and add image
+								
+								users[userindex].pic = snapshot.val().pic;
+								users[userindex].name = snapshot.val().name;
+								var elem = document.createElement("img");
+								elem.setAttribute("src", users[userindex].pic);
+								elem.setAttribute("alt", users[userindex].name);
+								elem.setAttribute("height", "64");
+								elem.setAttribute("width", "64");
+								document.getElementById("usericon").appendChild(elem);	//add to DB.  
+
+						} else {
+							console.log("User not found" + snapshot.key);
+						}
+					}
+				});
+
+}
+
+function addMe(user){
     uid = user.uid;
 	displayname = user.displayName;
-	email = user.email;
-	phone = user.phoneNumber;
+//	email = user.email;
+//	phone = user.phoneNumber;
 	pic = user.photoURL;
-	console.log(displayname + " " + email + " " + phone + " " + pic);
-    //add to DB.  
+
+	users.push({"uid": uid, "pic": pic, "name": displayname}); //lookup for array location -> uid
+
+	console.log(displayname + " " + pic);
+
+	//add user icon
+	var elem = document.createElement("img");
+      elem.setAttribute("src", user.photoURL);
+	  elem.setAttribute("alt", user.displayName);
+      elem.setAttribute("height", "64");
+      elem.setAttribute("width", "64");
+      document.getElementById("usericon").appendChild(elem);	//add to DB.  
 
 	//do we need this, this doesnt work with Watch:
 	/*
