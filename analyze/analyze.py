@@ -688,9 +688,13 @@ def printMidi(midilink, title, GroupName, videoid):
     #read with mido?  
 
 def printTranscript(transcriptlink):
-    r = requests.get(transcriptlink)
-    print(r.content)
-    return len(r.content.split()) #wordcount
+    print(transcriptlink)
+    if (transcriptlink == "error"):
+        return 0
+    else:
+        r = requests.get(transcriptlink)
+        print(r.content)
+        return len(r.content.split()) #wordcount
     
 def uploadanalyze(file, fullpath):
 
