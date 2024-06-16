@@ -1,4 +1,5 @@
 {
+	"uid": MY_UID,
 	"localserver":{
 		"port": 5000, 
 		"host": "http://192.68.1.120"
