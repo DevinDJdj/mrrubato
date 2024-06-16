@@ -309,13 +309,34 @@ function loadDictionaries(user){
 //    dictable = new DataTable('#DictionaryTable');
         //column dropdown filter.  
         //not efficient but ok for now, really only want to call this once.  
+
+    if (user==0){
         dictable = new DataTable('#DictionaryTable', {
+        /*
+        columns: [
+            { data: 'word' },
+            { data: 'playall' },
+            { data: 'midisequence' },
+            { data: 'user' },
+            { data: 'times' },
+            { data: 'meaning' },
+            { data: 'created' },
+            { data: 'lang' }
+        ],
+        */
+            columnDefs: [
+                {
+                    targets: DIC_USER,
+                    render: function (data, type, row, meta) {
+                        return '<img height="40px" src="' + users[ row[DIC_USER] ].pic + '" />' + users[ row[DIC_USER] ].name; 
+                    }
+                }
+            ],            
             createdRow: function (row, data, dataIndex) {
                 this.api()
                     .columns()
                     .every(function () {
                         let column = this;
-        
                         // Create select element
                         let select = document.createElement('select');
                         select.add(new Option(''));
@@ -329,96 +350,39 @@ function loadDictionaries(user){
                         });
         
                         // Add list of options
+                        //could be more efficient
                         column
                             .data()
                             .unique()
                             .sort()
                             .each(function (d, j) {
-                                select.add(new Option(d));
+                                if (column[0][0]==DIC_USER){ //not sure why I use this column[0][0] but it works.  Surely better way.  
+                                    select.add(new Option(users[d].name));
+                                }
+                                else{
+                                    select.add(new Option(d));
+                                }
+
                             });
                     });
-            },
+                },
 
-        });
+            });
 
-    if (user==0){
         loadLanguages();
-        //do we want all languages or not?  
+    //do we want all languages or not?  
     }
     //go through midiarray.  
     //should be in order.  
     //find sequences we need.  
     //load base langauge to start.  
 //    loadLanguage("base");
-/*
-    cl = [];
-    cle = [];
-    for (i=0; i<midiarray[user].length-5; i++){
-        if (midiarray[user][i] == keybot+12 && midiarray[user][i+1] == keybot+5 && midiarray[user][i+2] == keybot+7 && midiarray[user][i+3] == keybot+12){
-            //change language (add language)
-            cl.push(i);
-        }
-        else if (midiarray[user][i]==keybot+12 && midiarray[user][i+1] == keybot+7 && midiarray[user][i+2] == keybot+5 && midiarray[user][i+3] == keybot+12){
-            cle.push(i);
-        }
-    }
-    numlangs = 0;
-    for (i=0; i<cl.length; i++){
-        //change language
-        tempmidi = midiarray[user].slice(cl[i]+4, cle[i]);
-        for (j=0; j<tempmidi.length; j++){
-            tempmidi[j] = tempmidi[j] - keybot;
-        }
-        langmidi = tempmidi.join();
-        if (typeof(alllangs[langmidi]) !=="undefined"){
-            //find the language setting.  
-            //so start base language = [12, 5, 7, 12]
-            lang = alllangs[langmidi];
-
-            loadLanguage(lang, user);
-            initLangData(lang, user);
-            //keep sequential
-            langstart[lang][user].push(cle[i]+4);
-
-            if (cl.length > i+1){
-                langend[lang][user].push(cl[i+1]);
-            }
-            else{
-                langend[lang][user].push(midiarray.length);
-            }
-            numlangs++;
-        }
-    }
-*/
 
     for (const [lang, value] of Object.entries(midiarray[user])) {
         loadLanguage(lang, user);
 //        initLangData(lang, user);
     }
 
-    /*
-    if (numlangs == 0){
-        //no language changes.  
-        //just go through base language.  
-        loadLanguage("base", user);
-        initLangData("base", user);
-        langstart["base"][user] = [0];
-        langend["base"][user] = [midiarray[user].length];
-    }
-    else{
-        if (cl[0] > 0){
-            if (langstart["base"][user].length == 0){
-                initLangData("base", user);
-                langstart["base"][user] = [0];
-                langend["base"][user] = [cl[0]];
-                loadLanguage("base", user);
-            }
-            else{
-                updateLangRange("base", user, 0, cl[0]);
-            }
-        }
-    }
-    */
     //now go through the langstart and langend looking for words.  
     //need a better mechanism but for now just timeout to wait for all loadLanguage calls to complete.  
     setTimeout(function(){findWordsA(user);
@@ -743,6 +707,7 @@ function setTimes(lang, word, times, user=0){
 }
 
 function addDictRow(lang, word, row, user) {
+    
     dictable.row
         .add([
             word,

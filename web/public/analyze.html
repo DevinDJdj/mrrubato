@@ -486,24 +486,13 @@ function loadTranscript(snapshot){
 	}
 }
 
-function loadAdditionalComments(){
-	firebase.database().ref('/misterrubato/' + video + '/comments/').once('value')
-					  .then((snapshot) => {
-						if (snapshot.exists()) {
-							//iterate here for each uid, get midi feedback and also comments.  
-							//from others.  Need to have some logic as to who to choose.  
-							//users/uid/favorites/uid... or some other mechanism.  
-							//combine these to generate feedback.  
-						}
-					});
-
-}
 
 function loadPreviousComments(snapshot, uid=0){
 
 	user=0;
 	currentmidiuser = 0;
 	allcomments = snapshot.val();
+	foundme = false;
 
 	for (const [key, value] of Object.entries(allcomments)){
 		if (key == uid){
@@ -513,6 +502,7 @@ function loadPreviousComments(snapshot, uid=0){
 				$('#points').val(value.sentiment);
 			}
 			currentmidiuser = 0;
+			foundme = true;
 		}
 		else{
 			midiarray.push({"base": []});
@@ -522,39 +512,21 @@ function loadPreviousComments(snapshot, uid=0){
 		}
 		midifeedback = value.midi;
 		loadMidiFeedback(midifeedback);
-		getFeedbackImage(null, xmultiplier1, ymultiplier1, scene1);
-		getFeedbackImage(null, xmultiplier2, ymultiplier2, scene2);	
+		getFeedbackImage(null, xmultiplier1, ymultiplier1, scene1, currentmidiuser);
+		getFeedbackImage(null, xmultiplier2, ymultiplier2, scene2, currentmidiuser);	
 
 		loadDictionaries(currentmidiuser);
 		console.log("MIDI:" + midifeedback);
 	}
-
+	if (!foundme){
+		//logged in user has no comments.  
+		//need to load anyway.  
+		loadDictionaries(0);
+	}
 	//set back to our user.  
 	currentmidiuser = 0;
 //	initDicFilters();
 
-	//load midi.  
-
-	/*
-	console.log(snapshot.val().comments);
-	if (snapshot.val().comments !==null){
-		$('#mycomments').val(snapshot.val().comments);
-		$('#mycommentsh').html(makeTimeLinks(snapshot.val().comments));
-	}
-	
-	if (snapshot.val().sentiment !==null){
-		$('#points').val(snapshot.val().sentiment);
-	}
-	//load midi.  
-	midifeedback = snapshot.val().midi;
-	loadMidiFeedback(midifeedback);
-	getFeedbackImage(null, xmultiplier1, ymultiplier1, scene1);
-	getFeedbackImage(null, xmultiplier2, ymultiplier2, scene2);	
-
-	loadDictionaries(user);
-	console.log("MIDI:" + midifeedback);
-//							document.getElementById('out').innerHTML = 'New file: <a download=my.mid href=' + midifeedback + '>DOWNLOAD</a> <embed src=' + midifeedback + ' autostart=false>';
-*/
 }
 
 function getYOffset(iter, w, h){
@@ -618,13 +590,12 @@ function getFeedbackImage(source, w, h, myscene,midiuser=0){
 				new BABYLON.Color4(1, 1, 0, 1)
 			]
 			
-			const lines = BABYLON.MeshBuilder.CreateLines("lines", {points: myPoints, colors: myColors}, myscene);
+			const lines = BABYLON.MeshBuilder.CreateLines("lines" + midiuser, {points: myPoints, colors: myColors}, myscene);
 
 		}
 	}
 	// put the modified pixels back on the canvas
 
-	loadAdditionalComments();	//this includes midi as well.  
 
 	myscene.onPointerObservable.add((pointerInfo) => {
 		switch (pointerInfo.type) {
@@ -661,8 +632,8 @@ function getUser(userindex){
 								var elem = document.createElement("img");
 								elem.setAttribute("src", users[userindex].pic);
 								elem.setAttribute("alt", users[userindex].name);
-								elem.setAttribute("height", "64");
-								elem.setAttribute("width", "64");
+								elem.setAttribute("height", "32");
+								elem.setAttribute("width", "32");
 								document.getElementById("usericon").appendChild(elem);	//add to DB.  
 
 						} else {

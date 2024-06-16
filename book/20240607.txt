@@ -222,6 +222,21 @@ Test skipVideo
 **web/public/analyze.html
 Show the User Icon/name.  
 Show name on hover.  ah who cares.  
+How do we distinguish the original author?  
+We should hold this in the video structure.  
+Just add to record.  
+Test:
+MscGMds1wn4
+
+OK, multiple users ok now, but how do we distinguish between them in the feedbackImage?  
+
+
+
+**record.py 
+add UID of creator in DB structure.  
+
+
+I mean they will have comments, maybe list by comment date.  
 
 
 Test
@@ -232,4 +247,9 @@ Show meta commands and filter for that based on input.
 UI Original Transcript is actually the edited transcript.  
 Original Computer generated transcript is saved, but not displayed anywhere.  
 
+
+**server/transcription/server.py
+why is this getting killed sometimes?  
+Got rid of the wav file generation, except for when explicitly called.  
+I think this is what we want anyway.  
 

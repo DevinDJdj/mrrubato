@@ -151,6 +151,9 @@ def transcribe_fromyoutube(videoid="ZshYVeNHkOM", model=None, mediafile=None, st
     f.close()
 
     #get wav files before deleting.  
+    #this is not working with stability.  
+    #want this in separate function anyway, after reviewed.  
+    getwave = """
     if (st !=None and et !=None):
         for i in range(len(times)-1):
             starta = times[i].split(":")
@@ -172,7 +175,7 @@ def transcribe_fromyoutube(videoid="ZshYVeNHkOM", model=None, mediafile=None, st
                 with open(myhome + "/TTS/recipes/ljspeech/LJSpeech-1.1/metadata.csv", 'a') as cf:
                     cf.write(entry + "\n")
                 
-
+    """
 
     os.remove(latest_file)
     os.rmdir(OUTPUT_DIR + videoid)
