@@ -283,7 +283,7 @@ def addtodb(videoid, args):
             title = title[0:gs]
             datav['items'][0]['snippet']['group'] = GroupName
 
-        
+        datav['items'][0]['snippet']['uid'] = config.cfg["uid"]
         #insert into DB
         ref = db.reference(f'/misterrubato/' + videoid)
         ref.set(datav['items'][0])
