@@ -152,6 +152,8 @@ def transcribe_fromyoutube(videoid="ZshYVeNHkOM", model=None, mediafile=None, st
                 f.write(text[i] + ' (' + times[i] + ')\n')
         f.close()
     except Exception as e:
+        os.remove(latest_file)
+        os.rmdir(OUTPUT_DIR + videoid)
         print(e)
         return "error"
     #get wav files before deleting.  
