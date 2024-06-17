@@ -124,32 +124,36 @@ def transcribe_fromyoutube(videoid="ZshYVeNHkOM", model=None, mediafile=None, st
     latest_file = max(list_of_files, key=os.path.getctime)
     print(latest_file)
     
-    text, times = transcribe_whisper(latest_file, model)
+    try:
+        text, times = transcribe_whisper(latest_file, model)
 
-    f = open(OUTPUT_DIR + videoid + ".txt", "w")
 
-    prev = ""
-    ignore = {}
-    for i in range(len(text)):
-#        print(times[i])
-#        print(text[i]) 
-#        f.write(times[i] + '\n')
-        if (ignore.get(i) == None):
-            indices = [j for j in range(i, len(text)) if text[j] == text[i] ]
-            print(indices)
-            if (len(indices) > 2):
-                diffs = [x - indices[j - 1] for j, x in enumerate(indices)][1:]
-                print(diffs)
-                if (len(diffs) > 1):
-                    diff2 = [x - diffs[j - 1] for j, x in enumerate(diffs)][1:]
-                    if (diff2[0] == 0):
-                        for j in indices:
-                            ignore[j] = True
-        if text[i] != prev and ignore.get(i) == None:
-            prev = text[i]
-            f.write(text[i] + ' (' + times[i] + ')\n')
-    f.close()
+        f = open(OUTPUT_DIR + videoid + ".txt", "w")
 
+        prev = ""
+        ignore = {}
+        for i in range(len(text)):
+    #        print(times[i])
+    #        print(text[i]) 
+    #        f.write(times[i] + '\n')
+            if (ignore.get(i) == None):
+                indices = [j for j in range(i, len(text)) if text[j] == text[i] ]
+                print(indices)
+                if (len(indices) > 2):
+                    diffs = [x - indices[j - 1] for j, x in enumerate(indices)][1:]
+                    print(diffs)
+                    if (len(diffs) > 1):
+                        diff2 = [x - diffs[j - 1] for j, x in enumerate(diffs)][1:]
+                        if (diff2[0] == 0):
+                            for j in indices:
+                                ignore[j] = True
+            if text[i] != prev and ignore.get(i) == None:
+                prev = text[i]
+                f.write(text[i] + ' (' + times[i] + ')\n')
+        f.close()
+    except Exception as e:
+        print(e)
+        return "error"
     #get wav files before deleting.  
     #this is not working with stability.  
     #want this in separate function anyway, after reviewed.  
