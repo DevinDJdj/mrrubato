@@ -9,4 +9,10 @@ var channelId = 'UC4dK3RpqBq2JpIkRmQn6HOA'; //@misterrubato doesnt work in URL, 
 //define length of keyboard.  use keybot to define where we start looking.  
 var keybot = 48;
 var keytop = 72;
+var playfeedback = false;
+const volumeControl = "0.1" //document.querySelector("input[name='volume']");
 
+var myrate = 1.7;
+var mypitch = 1.0;
+
+var vidbuffer = 10;

@@ -2,8 +2,8 @@
 commandLog = [];
 pendingCommands = [];
 ss = null;
-myrate = 0.7;
-mypitch = 1;
+//myrate = 0.7;
+//mypitch = 1;
 keymap = new Keymap();
 lastcommand = "";
 lastcommandtime = 0;

@@ -241,10 +241,44 @@ I mean they will have comments, maybe list by comment date.
 
 Test
 
+**web/public/analyze.html
 Show meta commands and filter for that based on input.  
+autodic
+show any autocomplete or expected commands.  
+Keep usage statistics in lang somewhere.  
+But we want contextual info.  
+For now just use most common, we can worry about the contextual later?  
+Recently used, combined with most common.  
+Here we want piano images in midisequence if possible.  
+Do this on checkCommands.  
+
+Need multiselect combo box for existing DicTable filter.  
+https://live.datatables.net/xehexoye/1/edit
+<!-- Select2 plugin -->
+	<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css">
+	<!-- Select2 plugin -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js"></script>
+
+Input commands should come in the current language, but if they are identified as meta commands, they should be squished and moved to another track.  
+Then if there is playback requested we can unsquish them.  
+Do we want this or we want the actual time, but if we have actual time we run risk of mixing words.  
+Maybe this is ok, but right now we dont have any way of detecting this.  Mixed data will just not show up and this will be confusing.  
+Maybe just add in real-time on separate open track always.  
+Then once recognized move to the right track and place/squish if necessary.  
+This is a rare case that the same person is adding again with the same language.  Maybe dont worry right now about that.  
+
+Are we getting duplicate entries?  
+
+--should be ok I think to start.  
+Now we need to get data from the filtered list.  
+And have a master playback to play back all that is in this list.  
+
+**web/public/languages.js
+seekAll
+Need to adjust.  
 
 
-UI Original Transcript is actually the edited transcript.  
+UI Original Transcript is actually the edited transcript if edited.  
 Original Computer generated transcript is saved, but not displayed anywhere.  
 
 
@@ -253,3 +287,20 @@ why is this getting killed sometimes?
 Got rid of the wav file generation, except for when explicitly called.  
 I think this is what we want anyway.  
 
+
+**web/public/analyze.html
+What do we need to move to config.js
+playfeedback;
+...
+volumecontrol.  
+vidbuffer
+myrate
+mypitch
+
+
+**web/public/db.js
+Need to move some things here as well.  
+
+**web/public/speech.js
+addComment do we only want this when there is a command or do we want free-form as well?  
+Maybe separate the two.  

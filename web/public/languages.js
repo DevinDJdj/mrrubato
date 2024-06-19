@@ -19,13 +19,14 @@ var currentvidtime = 0;
 var currentlanguage = "base";
 var wordplay = -1;
 
-var vidbuffer = 10;
 var dictable = null;
+var autodic = null;
 var DIC_LANG = 7;
 var DIC_WORD = 0;
 var DIC_PLAYALL = 1;
 var DIC_USER = 3;
 var DIC_TIMES = 4;
+var DIC_CREATED = 5;
 //config.js keybot
 //do we want to allow for some function to adjust keybot/keytop?  
 
@@ -280,6 +281,11 @@ function loadLanguage(lang, user){
         langref.once('value')
         .then((snap) => {
             if (snap.exists()){
+                add = 0;
+                if (typeof(langs[lang]) === "undefined"){
+                    //only add to the lookup dict if it has not been added yet.  
+                    add = 1;
+                }       
                 mydic = snap.val();
                 langs[lang] = {};
                 for (const [key, value] of Object.entries(mydic)) {	
@@ -290,10 +296,10 @@ function loadLanguage(lang, user){
                     }
                     langs[lang][m.length][value.midi] = key; //midiseq -> word lookup.  
 
-                    addDictRow(lang, key, value, user);
+                    addDictRow(lang, key, value, user, add);
                 }                    
                 //dynamic functions for this language.  
-//                loadLanguageScript(lang);                    
+//                loadLanguageScript(lang);             
             }
         });
 
@@ -301,6 +307,119 @@ function loadLanguage(lang, user){
 
 }
 
+
+function createAutoDic(user){
+    if (user==0){
+        autodic = new DataTable('#autodic', {
+            /*
+            columns: [
+                { data: 'word' },
+                { data: 'playall' },
+                { data: 'midisequence' },
+                { data: 'user' },
+                { data: 'times' },
+                { data: 'meaning' },
+                { data: 'created' },
+                { data: 'lang' }
+            ],
+            */
+            searching: false, paging: false,
+            info: false,
+                createdRow: function (row, data, dataIndex) {
+                    this.api()
+                        .columns()
+                        .every(function () {
+
+                            let column = this;
+                            if (column.visible()){
+                                // Create select element
+                                let select = document.createElement('select');
+                                select.add(new Option(''));
+                                column.footer().replaceChildren(select);
+                
+                                // Apply listener for user change in value
+                                select.addEventListener('change', function () {
+                                    column
+                                        .search(select.value, {exact: true})
+                                        .draw();
+                                });
+                
+                                // Add list of options
+                                //could be more efficient
+                                column
+                                .data()
+                                .unique()
+                                .sort()
+                                .each(function (d, j) {
+                                    select.add(new Option(d));
+
+                                });
+                            
+                            }
+                        });
+            },
+
+        });
+    
+    }
+}
+
+
+function createMetaDic(user){
+    if (user==0){
+        metadic = new DataTable('#metadic', {
+            /*
+            columns: [
+                { data: 'word' },
+                { data: 'playall' },
+                { data: 'midisequence' },
+                { data: 'user' },
+                { data: 'times' },
+                { data: 'meaning' },
+                { data: 'created' },
+                { data: 'lang' }
+            ],
+            */
+            searching: false, paging: false,
+            info: false,
+                createdRow: function (row, data, dataIndex) {
+                    this.api()
+                        .columns()
+                        .every(function () {
+
+                            let column = this;
+                            if (column.visible()){
+                                // Create select element
+                                let select = document.createElement('select');
+                                select.add(new Option(''));
+                                column.footer().replaceChildren(select);
+                
+                                // Apply listener for user change in value
+                                select.addEventListener('change', function () {
+                                    column
+                                        .search(select.value, {exact: true})
+                                        .draw();
+                                });
+                
+                                // Add list of options
+                                //could be more efficient
+                                column
+                                .data()
+                                .unique()
+                                .sort()
+                                .each(function (d, j) {
+                                    select.add(new Option(d));
+
+                                });
+                            
+                            }
+                        });
+            },
+
+        });
+    
+    }
+}
 
 function loadDictionaries(user){
     //find language in midi
@@ -311,6 +430,7 @@ function loadDictionaries(user){
         //not efficient but ok for now, really only want to call this once.  
 
     if (user==0){
+        createAutoDic(user);
         dictable = new DataTable('#DictionaryTable', {
         /*
         columns: [
@@ -332,6 +452,60 @@ function loadDictionaries(user){
                     }
                 }
             ],            
+        //    initComplete: function () {
+//                count = 0;
+            createdRow: function (row, data2, dataIndex) {
+                    this.api().columns().every( function () {
+                    var title = this.header();
+                    //replace spaces with dashes
+                    title = $(title).html().replace(/[\W]/g, '-');
+                    var column = this;
+                    var select = $('<select id="' + title + '" class="select2" ></select>')
+                        .appendTo( $(column.footer()).empty() )
+                        .on( 'change', function () {
+                          //Get the "text" property from each selected data 
+                          //regex escape the value and store in array
+                          var data = $.map( $(this).select2('data'), function( value, key ) {
+                            return value.text ? '^' + $.fn.dataTable.util.escapeRegex(value.text) + '$' : null;
+                                     });
+                          
+                          //if no data selected use ""
+                          if (data.length === 0) {
+                            data = [""];
+                          }
+                          
+                          //join array into string with regex or (|)
+                          var val = data.join('|');
+                          
+                          //search for the option(s) selected
+                          column
+                                .search( val ? val : '', true, false )
+                                .draw();
+                        } );
+     
+                    column.data().unique().sort().each( function ( d, j ) {
+                        if (column[0][0]==DIC_USER){ //not sure why I use this column[0][0] but it works.  Surely better way.  
+                            select.append( '<option value="'+d+'">'+users[d].name+'</option>' );
+                        }
+                        else{
+                            select.append( '<option value="'+d+'">'+d+'</option>' );
+                        }
+                    } );
+                  
+                  //use column title as selector and placeholder
+                  $('#' + title).select2({
+                    multiple: true,
+                    closeOnSelect: false,
+                    placeholder: "Select a " + title
+                  });
+                  
+                  //initially clear select otherwise first option is selected
+                  $('.select2').val(null).trigger('change');
+                } );
+            }
+        });
+    
+            /*
             createdRow: function (row, data, dataIndex) {
                 this.api()
                     .columns()
@@ -368,6 +542,7 @@ function loadDictionaries(user){
                 },
 
             });
+            */
 
         loadLanguages();
     //do we want all languages or not?  
@@ -706,8 +881,27 @@ function setTimes(lang, word, times, user=0){
     dictable.columns.adjust().draw();
 }
 
-function addDictRow(lang, word, row, user) {
-    
+function addDictRow(lang, word, row, user=0, add=0) {
+    //if meta language then add to meta dictionary for reference.
+    if (add > 0){
+        if (lang == "meta"){
+            metadic.row.add([
+                word,
+                row['midi'],
+                lang,
+                row['definition']
+            ])
+        }
+        else{
+            autodic.row.add([
+                    word,
+                    row['midi'],
+                    lang,
+                    row['definition']
+                ])
+                .draw(false);
+        }
+    }
     dictable.row
         .add([
             word,

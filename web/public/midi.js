@@ -4,10 +4,14 @@ var midiarray = [{"base": []}];
 var currentmidiuser = 0;
 var notes = [];
 var lastmidirecent = [];
-var midienabled = 0;
 var ispaused = 0;
 var midioffset = 0;
-var playfeedback = true;
+
+//this was meant for the same.  
+var midienabled = 0;
+//var playfeedback = true; //dont actually play the feedback by default.  
+//add to config.js
+
 var obj = {"note": 0, "velocity": 0, "time": 0, "duration": 0, "user": 0};
 
 //create sound easy
@@ -16,7 +20,7 @@ let mainGainNode = null;
 const wavePicker = "triangle" //document.querySelector("select[name='waveform']");
 //add logic to get a nicer sound.  Can get piano sounds or other perhaps.  
 //i.e. https://www.gregjopa.com/2023/03/piano-sounds-with-web-audio-api
-const volumeControl = "0.1" //document.querySelector("input[name='volume']");
+
 let sineTerms = null;
 let cosineTerms = null;
 
@@ -539,7 +543,7 @@ function noteOn(note, velocity, abstime, mytime=0){ //mytime is the original tim
 	pnote = null;
 	if (mytime == 0 && playfeedback){ //no feedback sound for existing midi files except in time.  Probably need to rewrite this area to read midi files.  
 		osc = playTone(midiToFreq(note, velocity));
-		pnote = playNote(note, velocity);
+		pnote = playNote(note, Math.round(velocity/2)); //dont want this to be loud to detract from the ongoing video.  
 	}
 	var obj = {"note": note, "velocity": velocity, "time": abstime, "duration": 0, osc: osc, pnote: pnote, complete: false, user: currentmidiuser};
 	
