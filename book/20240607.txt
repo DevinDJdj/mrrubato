@@ -272,6 +272,41 @@ Are we getting duplicate entries?
 --should be ok I think to start.  
 Now we need to get data from the filtered list.  
 And have a master playback to play back all that is in this list.  
+Need to be able to interact with the filter.  
+filter word ...
+$('#word').select2('val', ['good'])
+filter user ...
+$('#user').select2('val', ['0'])
+filter langauge ...
+$('#language').select2('val', ['base'])
+etc.
+
+Check filterDic
+--ok maybe working ok.  
+
+Build meta commands, playback filtered list.  
+This should also run the commands associated with the transcript.  Whatever they are, or have the option to.  
+If we are running the commands, we should add to our feedback channel of whatever the language is for our user?  
+Or should that be separate option?
+
+
+
+Switch between Original Transcript and links seemlessly.  
+Original transcript displayed for admin otherwise not.  
+Just switch to non-editable with edit button or checkbox.  
+Current state is not editable, this is calculated.  
+My Transcript and Original Transcript should work the same.  
+--ok this should be ok.  
+
+
+language -> keymap functions, try to build this structure.  
+Can potentially move languages around on keymap up and down octaves, to allow for multiple simultaneous uses.  
+**web/public/speech.js
+change keymap to array of languages.  
+Always check base and current language keymap in checkCommands.  
+Keep ongoing transcript of each language.  
+Hmmm...
+
 
 **web/public/languages.js
 seekAll

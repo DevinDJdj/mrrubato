@@ -21,6 +21,11 @@ var wordplay = -1;
 
 var dictable = null;
 var autodic = null;
+var DIC1_WORD = 0;
+var DIC1_KEYS = 1;
+var DIC1_LANG = 2;
+var DIC1_MEANING = 3;
+
 var DIC_LANG = 7;
 var DIC_WORD = 0;
 var DIC_PLAYALL = 1;
@@ -308,6 +313,27 @@ function loadLanguage(lang, user){
 }
 
 
+function filterDic(transcript){
+    if (autodic !== null && transcript !="" && transcript.length > 2){
+        var isMidi = /^[0-9,]*$/.test(transcript);
+        if (isMidi){
+            autodic.columns().search(''); //clear all filters.
+//            $('#keys').select2('val', ['good'])
+            transcript = transcript.slice(0,-1); //remove last comma.
+            autodic.column(DIC1_KEYS).search(transcript).draw();
+        }
+        else{
+            autodic.columns().search(''); //clear all filters.
+            autodic.column(DIC1_LANG).search(currentlanguage).draw();
+            autodic.column(DIC1_WORD).search(transcript).draw();
+        }
+    }
+    if (autodic !==null && transcript == ""){
+        autodic.columns().search(''); //clear all filters.
+        autodic.column(DIC1_LANG).search(currentlanguage).draw();
+    }
+}
+
 function createAutoDic(user){
     if (user==0){
         autodic = new DataTable('#autodic', {
@@ -323,8 +349,8 @@ function createAutoDic(user){
                 { data: 'lang' }
             ],
             */
-            searching: false, paging: false,
-            info: false,
+            searching: true, paging: false,
+            info: false, dom: 'lrt',
                 createdRow: function (row, data, dataIndex) {
                     this.api()
                         .columns()
@@ -380,7 +406,7 @@ function createMetaDic(user){
                 { data: 'lang' }
             ],
             */
-            searching: false, paging: false,
+            searching: true, paging: false,
             info: false,
                 createdRow: function (row, data, dataIndex) {
                     this.api()
@@ -456,9 +482,8 @@ function loadDictionaries(user){
 //                count = 0;
             createdRow: function (row, data2, dataIndex) {
                     this.api().columns().every( function () {
-                    var title = this.header();
-                    //replace spaces with dashes
-                    title = $(title).html().replace(/[\W]/g, '-');
+                    var title = this.header().textContent;
+
                     var column = this;
                     var select = $('<select id="' + title + '" class="select2" ></select>')
                         .appendTo( $(column.footer()).empty() )
@@ -565,7 +590,11 @@ function loadDictionaries(user){
         setInterval(function(){
             updateVidTimes(user);     
             t = checkCommands();
-            $('#mycommand').val(t); //incomplete command.  
+            $('#mycommand').val(t.trim()); //incomplete command.  
+            filterDic(t.trim());
+            //filter commands.  autodic and metadic.  
+            //if only midi.  
+
         }, 500);
     }, 5000);
 

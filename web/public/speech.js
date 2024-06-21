@@ -78,6 +78,7 @@ function checkCommands(){
                     //no use case at the moment for this.  
                 }
                 else{
+                    //attempt to execute complete command.  
                     executed = Chat(transcript, callback, pending); //add waspendingflag
 
                     transcript = "";
@@ -91,15 +92,17 @@ function checkCommands(){
             }
         }
         
+        //when does this occur? when we dont have midi.  
         if ((midi ==null || midi.length == 0) && transcript != ""){
             executed = Chat(transcript, callback, pending); //add waspendingflag
-            transcript = "";
+//            transcript = "";
 
         }
 
         //get rid of executed commands.  
         if (executed){
             commandLog.pop();
+            transcript = "";
         }
 
         //get rid of incomplete commands.  
@@ -166,7 +169,12 @@ function checkCommands(){
             mtemp += midi[i].note + ",";
         }
     }
-    return transcript + " " + mtemp;
+    if (transcript != ""){
+        return transcript + " " + mtemp;
+    }
+    else{
+        return mtemp;
+    }
 
 }
 
@@ -470,7 +478,11 @@ recognition.addEventListener('result', e => {
 
     mymidicommand = getMidiRecent();
     if (mymidicommand == null){
-        Chat(transcript);
+        //if not executed immediately, add to pending commands, and wait for midi or further command.  
+        if (Chat(transcript) == false){
+            addCommandLog(transcript, null, true);
+        }
+//        Chat(transcript);
     }
     else{
         //waiting for midi command to complete.  
