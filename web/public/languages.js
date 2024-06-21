@@ -7,6 +7,7 @@
 //change language [12, 5, 7, 12] .. [12, 7, 5, 12]
 
 var langs = {};
+var langsa = {};
 var alllangs = {};
 var langstart = {};
 var langend = {};
@@ -21,6 +22,7 @@ var wordplay = -1;
 
 var dictable = null;
 var autodic = null;
+var metadic = null;
 var DIC1_WORD = 0;
 var DIC1_KEYS = 1;
 var DIC1_LANG = 2;
@@ -37,6 +39,21 @@ var DIC_CREATED = 5;
 
 //add definition MIDI my definition of this word.  
 //think we need to allow for stoppage or just keep the transcript pending.  
+
+function reinitLanguages(){
+    langs = {};
+    langsa = {};
+    alllangs = {};
+    langstart = {};
+    langend = {};
+    wordtimes = {};
+    midiwords = {};
+    currentwtindex = 0;
+    currentvidtime = 0;
+    currentlanguage = "base";
+    wordplay = -1;
+    destroyDics();    
+}
 
 function changeColor(word, color){
 
@@ -272,10 +289,13 @@ function loadLanguage(lang, user){
     lang = lang.toLowerCase().replaceAll(" ", "_");
     if (typeof(langs[lang]) !== "undefined"){
         mydic = langs[lang];
-        for (const [key, value] of Object.entries(mydic)) {	
+        mydica = langsa[lang];
+        for (const [key, value] of Object.entries(mydica)) {	
             //just adding an entry for each user.  
             //not sure this is the best way, but for now.  
             //should really only load the words which exist in the feedback.  
+            //this is length -> words.  so need nested array.  
+            //why did we save like this, not sure if we actually need.  
             addDictRow(lang, key, value, user);
         }                    
     }
@@ -293,13 +313,16 @@ function loadLanguage(lang, user){
                 }       
                 mydic = snap.val();
                 langs[lang] = {};
+                langsa[lang] = {};
                 for (const [key, value] of Object.entries(mydic)) {	
                     m = value.midi.split(",");
                     //lang["base"]["length"]["midiseq"] = word
                     if (typeof(langs[lang][m.length]) === "undefined"){
                         langs[lang][m.length] = {};
                     }
+                    
                     langs[lang][m.length][value.midi] = key; //midiseq -> word lookup.  
+                    langsa[lang][key] = value; //full word info.  
 
                     addDictRow(lang, key, value, user, add);
                 }                    
@@ -447,6 +470,23 @@ function createMetaDic(user){
     }
 }
 
+function destroyDics(){
+    if (autodic !== null){
+        autodic.clear().draw();
+    }
+    if (metadic !== null){
+        metadic.clear().draw();
+    }
+    if (dictable !== null){
+        dictable.clear().draw();
+    }
+//do we need this?  
+//2nd empty html
+//$(tableId + " tbody").empty();
+//$(tableId + " thead").empty();
+
+}
+
 function loadDictionaries(user){
     //find language in midi
     //find language in words "change language base" "change language to base"
@@ -455,8 +495,11 @@ function loadDictionaries(user){
         //column dropdown filter.  
         //not efficient but ok for now, really only want to call this once.  
 
-    if (user==0){
+    if (user==0 && dictable == null){
+//        destroyDics();
         createAutoDic(user);
+        createMetaDic(user);
+
         dictable = new DataTable('#DictionaryTable', {
         /*
         columns: [

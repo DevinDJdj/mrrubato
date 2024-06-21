@@ -2,6 +2,7 @@
 *.mid
 *.png
 !icon*.png
+!web/public/images/*.png
 *.jpg
 *.fgt
 server/transcription/output/*

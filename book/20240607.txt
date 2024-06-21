@@ -283,11 +283,38 @@ etc.
 
 Check filterDic
 --ok maybe working ok.  
+Should add phrasetoVector calculation and try to find similar command/words.  
+Quick way to integrate this functionality to see what it may be like.  
+
+https://developers.google.com/meet/api/guides/artifacts#python_2
+How to do recording?  
+
 
 Build meta commands, playback filtered list.  
 This should also run the commands associated with the transcript.  Whatever they are, or have the option to.  
 If we are running the commands, we should add to our feedback channel of whatever the language is for our user?  
 Or should that be separate option?
+EOW,EOW can just clear the buffer.  
+For now not required.  
+But it will clear the buffer and the filter.  
+EOW,EOW or other combination could also trigger add to comments.  
+Need filter for comments by language?  
+If midi can be encoded, should we encode?  
+User Options?  
+
+
+
+
+**record.py
+update extension/keymap.js
+Start using with extension.  
+
+TTENIS only video and midi.  
+generate midi from video/audio?  
+
+
+
+
 
 
 
@@ -339,3 +366,11 @@ Need to move some things here as well.
 **web/public/speech.js
 addComment do we only want this when there is a command or do we want free-form as well?  
 Maybe separate the two.  
+
+**web/public/analyze.html
+refresh user login appears ok.  
+Now how do we default to previous login?  
+--seems ok.  Not pretty code :)
+
+Now need to be able to link to other items.  
+This is what we can put next to the feedbackImage
