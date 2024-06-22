@@ -333,6 +333,14 @@ change keymap to array of languages.
 Always check base and current language keymap in checkCommands.  
 Keep ongoing transcript of each language.  
 Hmmm...
+Something slowed the loading down quite a bit.  
+This is all the datatables. 
+Hard to load much.  
+So I think we need a NULL value to add after everything.  
+OK, this is much faster, but ...
+Not a great solution.  
+So after every language load, we will update the filters etc.  
+
 
 
 **web/public/languages.js

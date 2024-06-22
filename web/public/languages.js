@@ -9,6 +9,7 @@
 var langs = {};
 var langsa = {};
 var alllangs = {};
+var alllangsa = {};
 var langstart = {};
 var langend = {};
 var wordtimes = {};
@@ -44,6 +45,7 @@ function reinitLanguages(){
     langs = {};
     langsa = {};
     alllangs = {};
+    alllangsa = {};
     langstart = {};
     langend = {};
     wordtimes = {};
@@ -229,6 +231,7 @@ function loadLanguages(){
             let mylangs = snap.val();
             for (const [key, value] of Object.entries(mylangs)) {
                 alllangs[value.midi] = key;
+                alllangsa[key] = value; //additional info on the language.  langname -> all values.  
             }                    
         }
     });
@@ -285,6 +288,51 @@ function loadLanguageScript(lang){
     
 }
 
+
+function loadMetaLanguage(lang="meta", user=0){
+    console.log('Load Meta Language start ' + Date.now());
+
+    //do we just loadLanguage(meta, 0)
+    //need to add this to the languages if we want to do this.  
+    //lets just work from the code.  
+    //keymap comes from speech.js
+    //keymap.keydict[""]
+    add = 0;
+    if (langs[lang] === undefined){
+        langs[lang] = {};
+        langsa[lang] = {};
+        add = 1;
+    }
+    today = new Date().toISOString().substring(0, 10).replaceAll('-','');
+    for (const [key, value] of Object.entries(keymap.keydict[""])) {	
+        if (typeof(langs[lang][key]) === "undefined"){
+            langs[lang][key] = {};
+        }
+
+        for (const [key2, value2] of Object.entries(value)) {
+            
+            //rebuild keys with keybot.  
+            //we can change keybot/keytop if we want.  
+            midikeys = key2.split(",");
+            for (i=0; i<midikeys.length; i++){
+                midikeys[i] = parseInt(midikeys[i]) + keybot;
+            }
+            key2a = midikeys.join(",");
+
+            langs[lang][key][key2a] = value2; //midiseq -> word lookup.  
+            langsa[lang][key2a] = value2; //full word info.  
+
+
+            temp = {"word": value2, "midi": key2a, "user": user, "times": 0, "definition": value2, "created": today, "lang": lang};
+            addDictRow(lang, value2, temp, user, add);
+        }
+    }                    
+    console.log('Load Meta Language end ' + Date.now());
+    metadic.draw();
+
+}
+
+
 function loadLanguage(lang, user){
     lang = lang.toLowerCase().replaceAll(" ", "_");
     if (typeof(langs[lang]) !== "undefined"){
@@ -297,7 +345,8 @@ function loadLanguage(lang, user){
             //this is length -> words.  so need nested array.  
             //why did we save like this, not sure if we actually need.  
             addDictRow(lang, key, value, user);
-        }                    
+        }
+        addDictRow(lang, "test", {"word": "test", "midi": "1,1", "user": user, "times": 0, "definition": "test", "created": "20210101", "lang": lang}, user);
     }
 
     else{
@@ -328,6 +377,8 @@ function loadLanguage(lang, user){
                 }                    
                 //dynamic functions for this language.  
 //                loadLanguageScript(lang);             
+                //populate the filters.  
+                addDictRow(lang, "test", {"word": "test", "midi": "1,1", "user": user, "times": 0, "definition": "test", "created": "20210101", "lang": lang}, user);
             }
         });
 
@@ -344,16 +395,22 @@ function filterDic(transcript){
 //            $('#keys').select2('val', ['good'])
             transcript = transcript.slice(0,-1); //remove last comma.
             autodic.column(DIC1_KEYS).search(transcript).draw();
+            metadic.column(DIC1_KEYS).search(transcript).draw();
         }
         else{
             autodic.columns().search(''); //clear all filters.
+            metadic.columns().search('');
             autodic.column(DIC1_LANG).search(currentlanguage).draw();
             autodic.column(DIC1_WORD).search(transcript).draw();
+            metadic.column(DIC1_WORD).search(transcript).draw();
+
         }
     }
     if (autodic !==null && transcript == ""){
         autodic.columns().search(''); //clear all filters.
         autodic.column(DIC1_LANG).search(currentlanguage).draw();
+        metadic.columns().search('');
+        metadic.draw();
     }
 }
 
@@ -430,7 +487,7 @@ function createMetaDic(user){
             ],
             */
             searching: true, paging: false,
-            info: false,
+            info: false, dom: 'lrt',
                 createdRow: function (row, data, dataIndex) {
                     this.api()
                         .columns()
@@ -519,57 +576,67 @@ function loadDictionaries(user){
                     render: function (data, type, row, meta) {
                         return '<img height="40px" src="' + users[ row[DIC_USER] ].pic + '" />' + users[ row[DIC_USER] ].name; 
                     }
+                },
+                {
+                    targets: DIC_TIMES,
+                    width: '40%'
                 }
+
             ],            
         //    initComplete: function () {
 //                count = 0;
             createdRow: function (row, data2, dataIndex) {
+                if (data2[DIC_WORD] == "test"){
                     this.api().columns().every( function () {
                     var title = this.header().textContent;
-
-                    var column = this;
-                    var select = $('<select id="' + title + '" class="select2" ></select>')
-                        .appendTo( $(column.footer()).empty() )
-                        .on( 'change', function () {
-                          //Get the "text" property from each selected data 
-                          //regex escape the value and store in array
-                          var data = $.map( $(this).select2('data'), function( value, key ) {
-                            return value.text ? '^' + $.fn.dataTable.util.escapeRegex(value.text) + '$' : null;
-                                     });
-                          
-                          //if no data selected use ""
-                          if (data.length === 0) {
-                            data = [""];
-                          }
-                          
-                          //join array into string with regex or (|)
-                          var val = data.join('|');
-                          
-                          //search for the option(s) selected
-                          column
-                                .search( val ? val : '', true, false )
-                                .draw();
+                    
+                    if (title !=="times"){ //dont want the filter here.  
+                        var column = this;
+                        var select = $('<select id="' + title + '" class="select2" ></select>')
+                            .appendTo( $(column.footer()).empty() )
+                            .on( 'change', function () {
+                            //Get the "text" property from each selected data 
+                            //regex escape the value and store in array
+                            var data = $.map( $(this).select2('data'), function( value, key ) {
+                                return value.text ? '^' + $.fn.dataTable.util.escapeRegex(value.text) + '$' : null;
+                                        });
+                            
+                            //if no data selected use ""
+                            if (data.length === 0) {
+                                data = [""];
+                            }
+                            
+                            //join array into string with regex or (|)
+                            var val = data.join('|');
+                            
+                            //search for the option(s) selected
+                            column
+                                    .search( val ? val : '', true, false )
+                                    .draw();
+                            } );
+        
+                        column.data().unique().sort().each( function ( d, j ) {
+                            if (column[0][0]==DIC_USER){ //not sure why I use this column[0][0] but it works.  Surely better way.  
+                                select.append( '<option value="'+d+'">'+users[d].name+'</option>' );
+                            }
+                            else{
+                                select.append( '<option value="'+d+'">'+d+'</option>' );
+                            }
                         } );
-     
-                    column.data().unique().sort().each( function ( d, j ) {
-                        if (column[0][0]==DIC_USER){ //not sure why I use this column[0][0] but it works.  Surely better way.  
-                            select.append( '<option value="'+d+'">'+users[d].name+'</option>' );
-                        }
-                        else{
-                            select.append( '<option value="'+d+'">'+d+'</option>' );
-                        }
+                    
+                        //use column title as selector and placeholder
+                        $('#' + title).select2({
+                            multiple: true,
+                            closeOnSelect: false,
+                            placeholder: "Select a " + title
+                        });
+                        
+                        //initially clear select otherwise first option is selected
+                        $('.select2').val(null).trigger('change');
+                    }
+                        
                     } );
-                  
-                  //use column title as selector and placeholder
-                  $('#' + title).select2({
-                    multiple: true,
-                    closeOnSelect: false,
-                    placeholder: "Select a " + title
-                  });
-                  
-                  //initially clear select otherwise first option is selected
-                  $('.select2').val(null).trigger('change');
-                } );
+                }
             }
         });
     
@@ -613,6 +680,7 @@ function loadDictionaries(user){
             */
 
         loadLanguages();
+        loadMetaLanguage();
     //do we want all languages or not?  
     }
     //go through midiarray.  
@@ -670,6 +738,7 @@ function updateLangRange(lang, user, start, end){
 
 
 function findWordsA(user){
+    console.log('Findwords start ' + Date.now());
     for (const [lang, value] of Object.entries(midiarray[user])) {
         temp = value;
         key = lang;
@@ -728,6 +797,7 @@ function findWordsA(user){
             }
         }
     }
+    console.log('Findwords end ' + Date.now());
 
 }
 function findWords(user){
@@ -962,7 +1032,7 @@ function addDictRow(lang, word, row, user=0, add=0) {
                 row['midi'],
                 lang,
                 row['definition']
-            ])
+            ]).draw(false);
         }
         else{
             autodic.row.add([
@@ -974,16 +1044,19 @@ function addDictRow(lang, word, row, user=0, add=0) {
                 .draw(false);
         }
     }
-    dictable.row
-        .add([
-            word,
-            "", //play all
-            row['midi'],
-            user,
-            "", //times, will need to update this.  
-            row['definition'],
-            row['created'],
-            lang
-        ])
-        .draw(false);    
+    //very slow if we have many words.  This is problematic.  How do we make this faster?  
+//    if (lang !== "meta"){
+        dictable.row
+            .add([
+                word,
+                "", //play all
+                row['midi'],
+                user,
+                "", //times, will need to update this.  
+                row['definition'],
+                row['created'],
+                lang
+            ])
+            .draw(false);    
+//    }
 }
