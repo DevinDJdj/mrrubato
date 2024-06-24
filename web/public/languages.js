@@ -8,6 +8,7 @@
 
 var langs = {};
 var langsa = {};
+var octaves = {};
 var alllangs = {};
 var alllangsa = {};
 var langstart = {};
@@ -32,6 +33,7 @@ var DIC1_MEANING = 3;
 var DIC_LANG = 7;
 var DIC_WORD = 0;
 var DIC_PLAYALL = 1;
+var DIC_KEYS = 2;
 var DIC_USER = 3;
 var DIC_TIMES = 4;
 var DIC_CREATED = 5;
@@ -246,6 +248,7 @@ function initLangData(lang, user=-1){
 
     if (typeof(midiarray[user][lang]) === "undefined"){
         midiarray[user][lang] = [];
+
         //if never used before.  
         let loaded = false;
         for (i=0; i<midiarray.length; i++){
@@ -289,6 +292,15 @@ function loadLanguageScript(lang){
 }
 
 
+function convertKeys(midikeys, octaveshift=0){
+    midikeys = midikeys.split(",");
+    for (i=0; i<midikeys.length; i++){
+        midikeys[i] = parseInt(midikeys[i]) + octaveshift*12;
+    }
+    midikeys = midikeys.join(",");
+    return midikeys;
+}
+
 function loadMetaLanguage(lang="meta", user=0){
     console.log('Load Meta Language start ' + Date.now());
 
@@ -313,17 +325,15 @@ function loadMetaLanguage(lang="meta", user=0){
             
             //rebuild keys with keybot.  
             //we can change keybot/keytop if we want.  
-            midikeys = key2.split(",");
-            for (i=0; i<midikeys.length; i++){
-                midikeys[i] = parseInt(midikeys[i]) + keybot;
-            }
-            key2a = midikeys.join(",");
+
+            key2a = convertKeys(key2, true); //get keys + keybot
 
             langs[lang][key][key2a] = value2; //midiseq -> word lookup.  
-            langsa[lang][key2a] = value2; //full word info.  
+
+            temp = {"word": value2, "midi": key2, "user": user, "times": 0, "definition": value2, "created": today, "lang": lang};
+            langsa[lang][value2] = temp; //full word info.  
 
 
-            temp = {"word": value2, "midi": key2a, "user": user, "times": 0, "definition": value2, "created": today, "lang": lang};
             addDictRow(lang, value2, temp, user, add);
         }
     }                    
@@ -332,6 +342,11 @@ function loadMetaLanguage(lang="meta", user=0){
 
 }
 
+
+//move language to a different octave.  
+function moveLanguage(lang, user, octave=0){
+
+}
 
 function loadLanguage(lang, user){
     lang = lang.toLowerCase().replaceAll(" ", "_");
@@ -363,6 +378,13 @@ function loadLanguage(lang, user){
                 mydic = snap.val();
                 langs[lang] = {};
                 langsa[lang] = {};
+                //set up octaves for language.  
+                //if we do this, we need to save the octave information.  
+                //perhaps we can just allow this to be done each time, and so the full recording will have octave information.  
+                //at start of meta track, save all of these changes if we put into settings.  
+                //not sure if we need user based settings.  
+                octaves[lang] = 0;
+
                 for (const [key, value] of Object.entries(mydic)) {	
                     m = value.midi.split(",");
                     //lang["base"]["length"]["midiseq"] = word
@@ -371,10 +393,15 @@ function loadLanguage(lang, user){
                     }
                     
                     langs[lang][m.length][value.midi] = key; //midiseq -> word lookup.  
+
+                    //convert keys down for now.  Probably get rid of this, converting to 0 based.  
+                    //except for lookup.  
+                    //shift keys down.  
+                    value.midi = convertKeys(value.midi, -keybot/12);
                     langsa[lang][key] = value; //full word info.  
 
                     addDictRow(lang, key, value, user, add);
-                }                    
+                }
                 //dynamic functions for this language.  
 //                loadLanguageScript(lang);             
                 //populate the filters.  
@@ -544,6 +571,20 @@ function destroyDics(){
 
 }
 
+function getMiniPiano(row){
+    let pcanvas = document.getElementById("pcanvas");    
+    let RedKeys = row[DIC_KEYS].split(",");
+    RedKeys = RedKeys.map(function (x) { 
+        return parseInt(x, 10); 
+    });
+    DrawKeyboard(pcanvas, RedKeys, 25, 15);
+    const img    = pcanvas.toDataURL('image/png');
+//    document.getElementById("generatedkeys4").src = img4;
+    return img;
+
+}
+
+
 function loadDictionaries(user){
     //find language in midi
     //find language in words "change language base" "change language to base"
@@ -574,7 +615,18 @@ function loadDictionaries(user){
                 {
                     targets: DIC_USER,
                     render: function (data, type, row, meta) {
-                        return '<img height="40px" src="' + users[ row[DIC_USER] ].pic + '" />' + users[ row[DIC_USER] ].name; 
+                        return '<img height="40px" src="' + users[ row[DIC_USER] ].pic + '" /><br>' + users[ row[DIC_USER] ].name; 
+                    }
+                },
+                {
+                    //langs[lang][ row[DIC_WORD] ] = word.  
+                    targets: DIC_KEYS,
+                    render: function (data, type, row, meta) {
+                        tmp = langsa[ row[DIC_LANG] ][ row[DIC_WORD] ];
+                        if (typeof(tmp["img"]) === "undefined"){
+                            tmp["img"] = getMiniPiano(row);
+                        }
+                        return '<img width="110px" height="22px" src="' + tmp["img"] + '" alt="' + row[DIC_KEYS] + '" /><br>' + row[DIC_KEYS]; 
                     }
                 },
                 {

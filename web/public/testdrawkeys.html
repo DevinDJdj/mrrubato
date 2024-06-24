@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Draw Keys</title>
+<script src="js/drawkeyboard.js"></script>
+</head>
+
+<body>
+<h1>Draw</h1>
+
+<div id="keys1">
+    <canvas id="canvas" width="110" height="22">Your browser does not support the HTML5 canvas tag.</canvas>    
+</div>
+
+<br>
+<img id="generatedkeys" width="110" height="25" >
+<br>
+<img id="generatedkeys2" width="110" height="25" >
+<br>
+<img id="generatedkeys3" width="110" height="25" >
+<br>
+<img id="generatedkeys4" width="110" height="25" >
+
+<script>
+    var canvas = document.getElementById("canvas");    
+    RedKeys = [39, 43, 46];
+    DrawKeyboard(canvas, RedKeys);
+
+    RedKeys = [4,8,12,8,5,4];
+    DrawKeyboard(canvas, RedKeys, 25, 15);
+    const img    = canvas.toDataURL('image/png');
+    document.getElementById("generatedkeys").src = img;
+
+    RedKeys = [0,1,1,0];
+    DrawKeyboard(canvas, RedKeys, 25, 15);
+    const img2    = canvas.toDataURL('image/png');
+    document.getElementById("generatedkeys2").src = img2;
+
+    RedKeys = [24,23,23,24,15,14,14];
+    DrawKeyboard(canvas, RedKeys, 25, 15);
+    const img3    = canvas.toDataURL('image/png');
+    document.getElementById("generatedkeys3").src = img3;
+
+    //if 6 apart, we have display issues due to the logic.  
+    //maybe set 1 offset.  
+    RedKeys = [24,23,22,21,15,15,13,12,23,24];
+    DrawKeyboard(canvas, RedKeys, 25, 15);
+    const img4    = canvas.toDataURL('image/png');
+    document.getElementById("generatedkeys4").src = img4;
+
+</script>
+
+</body>
+</html>
