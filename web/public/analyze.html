@@ -359,6 +359,7 @@ var watch = false;
 var myuid = null;
 var myuser = null;
 var isadmin = false;
+var originaltranscript = null;
 
 //setup https://www.youtube.com/watch?v=3jZ5vnv-LZc
 //then restrict the key if needed to your site and youtube data API.  
@@ -604,6 +605,7 @@ function loadTranscript(snapshot){
 	if (snapshot.val().transcript !==null){
 		//not sure if we want this or not.  Here we dont keep history about the original transcript.  
 		//is this important?  
+		originaltranscript = snapshot.val().transcript;
 		setTranscript(snapshot.val().transcript);
 	}
 }
@@ -851,8 +853,8 @@ function updateVideo(){
 			obj = {"comments": mycomments, "sentiment": grade, "midi": midifeedback, "updated": strdate };
 			uRef.set(obj);
 
-			//set transcript
-			if (isadmin && transcript.trim() !== ""){
+			//set transcript only if we have actually updated it.  
+			if (isadmin && transcript.trim() !== "" && originaltranscript !== transcript){
 				var tRef = firebase.database().ref('/misterrubato/' + video + '/transcript');
 				obj = {"transcript": transcript, "updated": strdate };
 				tRef.set(obj);

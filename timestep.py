@@ -163,7 +163,7 @@ def localBackup():
     today = date. today()
     today = today. strftime("%Y%m%d")
     
-    with open(backup_path + today + '.json', 'w') as f:
+    with open(backup_path + today + '.json', 'w', encoding="utf-8") as f:
         json.dump(ref.get(), f)
         
 
@@ -339,12 +339,12 @@ def updatetranscript(vidid, updated, transcript):
     # Put your local file path 
     Title = vidid + '.txt'
     fileName = updated + '.txt'
-    with open('../words/' + fileName, 'w') as f:
+    with open('../words/' + fileName, 'w', encoding="utf-8") as f:
         f.write(transcript)
 
     bucket = storage.bucket()
     blob = bucket.blob('words/' + updated[0:4] + '/' + Title)
-    blob.upload_from_filename(fileName)
+    blob.upload_from_filename('../words/' + fileName)
 
     # Opt : if you want to make public access from the URL
     blob.make_public()
@@ -497,12 +497,14 @@ if __name__ == '__main__':
                 if reftr is not None and "updated" in reftr and "loaded" not in reftr:
                     print("STT training ready")
                     new_transcript_file = updatetranscript(transcript_file, reftr["updated"], reftr["transcript"]) #just creating a new instance.  
+                    #store in words/...
                     #update with new transcript file.  Youtube info not updated.  Do we care?  
                     description = description.replace(transcript_file, new_transcript_file)
                     item['snippet']['description'] = description
                     vref = db.reference(f'/misterrubato/' + videoid)
                     vref.set(item)
-                    data = {'transcript':transcript, 'updated': reftr['updated'], 'loaded': reftr['updated']}
+                    #we add the file link here.  only load once.  
+                    data = {'transcript': reftr["transcript"], 'transcript_file':new_transcript_file, 'updated': reftr['updated'], 'loaded': reftr['updated']}
                     reftranscript.set(data)
 
                     localserver = config.cfg['localserver']['host'] + ":" + str(config.cfg['localserver']['port'])
@@ -511,7 +513,7 @@ if __name__ == '__main__':
                     util.getIterations(description)
                     sta = ",".join(str(s) for s in util.st)
                     eta = ",".join(str(e) for e in util.et)
-                    params = [('videoid', videoid),('st',sta),('et',eta),('transcriptfile',transcript_file)]
+                    params = [('videoid', videoid),('st',sta),('et',eta),('transcriptfile',new_transcript_file)]
 #                    url = f'{localserver}/transcribe/?videoid={videoid}&mediafile={mediafile}&st={sta}&et={eta}'
                     url = f'{localserver}/transcribe/'
                     print(url)

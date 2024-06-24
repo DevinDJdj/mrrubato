@@ -405,7 +405,10 @@ function loadLanguage(lang, user){
                 //dynamic functions for this language.  
 //                loadLanguageScript(lang);             
                 //populate the filters.  
-                addDictRow(lang, "test", {"word": "test", "midi": "1,1", "user": user, "times": 0, "definition": "test", "created": "20210101", "lang": lang}, user);
+                obj = {"word": "test", "midi": "1,1", "user": user, "times": 0, "definition": "test", "created": "20210101", "lang": lang};
+                langsa[lang]["test"] = obj;
+                addDictRow(lang, "test", obj, user);
+
             }
         });
 
@@ -611,6 +614,13 @@ function loadDictionaries(user){
             { data: 'lang' }
         ],
         */
+            rowCallback: function (row, data) {
+                /*
+                if (row[DIC_WORD] == 'test') { //initialize this data.  
+                    dictable.rows().invalidate().draw();
+                }
+                */
+            },
             columnDefs: [
                 {
                     targets: DIC_USER,
@@ -623,7 +633,7 @@ function loadDictionaries(user){
                     targets: DIC_KEYS,
                     render: function (data, type, row, meta) {
                         tmp = langsa[ row[DIC_LANG] ][ row[DIC_WORD] ];
-                        if (typeof(tmp["img"]) === "undefined"){
+                        if (!("img" in tmp) || typeof(tmp["img"]) === "undefined"){
                             tmp["img"] = getMiniPiano(row);
                         }
                         return '<img width="110px" height="22px" src="' + tmp["img"] + '" alt="' + row[DIC_KEYS] + '" /><br>' + row[DIC_KEYS]; 
@@ -1110,5 +1120,14 @@ function addDictRow(lang, word, row, user=0, add=0) {
                 lang
             ])
             .draw(false);    
+        
+        if (word=="test"){ //initialize the table.  
+//            setTimeout(function(){
+                //$('.select2').val(null).trigger('change');
+//                $('.select2').select2();
+                dictable.columns(DIC_WORD).search("test").draw(); //have to do this to initialize the table.  Not a great solution.  
+//            }, 5000);
+
+        }
 //    }
 }
