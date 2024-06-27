@@ -1,6 +1,8 @@
 var MAX_COMMANDLENGTH = 6;
 var currentlanguage = "base";
 var EOW = 12; //end of word
+var OCTAVE = 12;
+//for now two octave structure.  12 keys per octave.  This should be changeable though.  
 
 class Keymap{
     constructor(){
@@ -61,7 +63,7 @@ class Keymap{
             "4": {
                 "24,23,23,24": "pause",
                 "24,21,23,24": "skip ",
-                "24,23,21,24": "back ",
+//                "24,23,21,24": "back ", //just use skip forward or back.  
                 "0,1,1,0": "set speed ", //set speed of playback.  This will be a number from -12 to 12.  0 is normal speed.
                 "12,6,6,12": "set volume ", //set volume of playback.  This will be a number from 0 to 12.  0 is mute.
                 "0,7,7,0": "where am i", 
@@ -73,8 +75,8 @@ class Keymap{
                 "0,3,7,0": "activate piano", "0,7,3,0": "deactivate piano",
                 "12,5,7,12": "change language ", //just end with 12,12, "12,7,5,12": "change language end" //need further parameter
                 "12,10,11,12": "change user ", //just end with 12,12, "12,11,10,12": "change user end" //need further parameter
-                "12,4,5,12": "filter ", //just end with 12,12, "12,5,4,12": "filter end" //need further parameter
-                "12,5,4,12": "filter clear"
+                "12,4,5,12": "filter add ", //just end with 12,12, "12,5,4,12": "filter end" //need further parameter
+                "12,5,4,12": "filter remove "
             },
             "5": {
                 "12,9,10,11,12": "add word ", //need further parameter
@@ -134,8 +136,8 @@ class Keymap{
             if (commandlength !== null){
                 //we have a command map at least.  
                 if (commandlength == "1"){
-                    skip = midi[0].note - 60;
-                    if (skip > -13 && skip < 13){
+                    skip = midi[0].note - keybot - OCTAVE;
+                    if (skip > -OCTAVE-1 && skip < OCTAVE+1){
 
                         skip = Math.sign(skip)*Math.pow(2, (Math.abs(skip)));
                         transcript = "skip " + skip.toFixed(2);
@@ -171,9 +173,9 @@ class Keymap{
             if (commandlength !== null){
                 //we have a command map at least.  
                 if (commandlength == "1"){
-                    volume = midi[0].note - 60;
-                    if (volume > -13 && volume < 13){
-                        volume = (volume + 12)/24;
+                    volume = midi[0].note - keybot - OCTAVE;
+                    if (volume > -OCTAVE-1 && volume < OCTAVE+1){
+                        volume = (volume + OCTAVE)/(OCTAVE*2);
                         transcript = "set volume " + volume.toFixed(2);
                         midi[0].complete = true;
                         //I think this will work ok.  
@@ -206,11 +208,11 @@ class Keymap{
             if (commandlength !== null){
                 //we have a command map at least.  
                 if (commandlength == "1"){
-                    speed = midi[0].note - 60;
-                    if (speed > -11 && speed < 13){
+                    speed = midi[0].note - keybot - OCTAVE;
+                    if (speed > -OCTAVE+1 && speed < OCTAVE+1){
                         if (speed < 0){
                             //1/10 increments
-                            speed = Math.abs(speed+11)/10;
+                            speed = Math.abs(speed+OCTAVE-1)/(OCTAVE-2);
                         }
                         else{
                             //.25 increments
@@ -222,11 +224,11 @@ class Keymap{
                         //I think this will work ok.  
                         //this allows us to move on to next command.  
                     }
-                    else if (speed == -11){
+                    else if (speed == -OCTAVE+1){
                         transcript = "play";
                         midi[0].complete = true;
                     }
-                    else if (speed == -12){
+                    else if (speed == -OCTAVE){
                         transcript = "pause";
                         midi[0].complete = true;
                     }
@@ -240,8 +242,7 @@ class Keymap{
             return transcript; //add language xxxx 2,3,4
         };
 
-        //no space means additional word is optional (can be midi).  
-        this.funcdict["filter "] = function(transcript, midi, keydict, key){
+        this.funcdict["filter clear "] = function(transcript, midi, keydict, key){
             //must end with 12,12
             //default is filter on word
             if (midi.length > 2){
@@ -262,9 +263,37 @@ class Keymap{
                             //filter language
                             func = " language ";
                         }
-                        else if (i>2 && midi[i-1].note - keybot == 4 && midi[i-2].note - keybot == 5){
+
+                        transcript += func;
+                        return transcript;
+                    }
+
+                }
+            }
+            return transcript; //filter remove language xxxx
+        };
+
+        //no space means additional word is optional (can be midi).  
+        this.funcdict["filter add "] = function(transcript, midi, keydict, key){
+            //must end with 12,12
+            //default is filter on word
+            if (midi.length > 2){
+                //for now this is ok, but must code for continuous speech.  
+                let temptr = " ";
+                for (let i=0; i<midi.length-1; i++){
+                    if (i>0 && midi[i].note - keybot == EOW && midi[i+1].note - keybot == EOW){
+                        //we have a language
+                        //we can add this language to the DB.  
+                        //end of word indicator.  
+
+                        let func = " word ";
+                        if (i>2 && midi[i-1].note - keybot == 10 && midi[i-2].note - keybot == 11){
+                            //filter user
+                            func = " user ";
+                        }
+                        else if (i>2 && midi[i-1].note - keybot == 5 && midi[i-2].note - keybot == 7){
                             //filter language
-                            func = " clear";
+                            func = " language ";
                         }
 
                         let end = i;
@@ -292,7 +321,57 @@ class Keymap{
 
                 }
             }
-            return transcript; //add language xxxx 2,3,4
+            return transcript; //filter add language xxxx
+        };
+
+        this.funcdict["filter remove "] = function(transcript, midi, keydict, key){
+            //must end with 12,12
+            //default is filter on word
+            if (midi.length > 2){
+                //for now this is ok, but must code for continuous speech.  
+                let temptr = " ";
+                for (let i=0; i<midi.length-1; i++){
+                    if (i>0 && midi[i].note - keybot == EOW && midi[i+1].note - keybot == EOW){
+                        //we have a language
+                        //we can add this language to the DB.  
+                        //end of word indicator.  
+
+                        let func = " word ";
+                        if (i>2 && midi[i-1].note - keybot == 10 && midi[i-2].note - keybot == 11){
+                            //filter user
+                            func = " user ";
+                        }
+                        else if (i>2 && midi[i-1].note - keybot == 5 && midi[i-2].note - keybot == 7){
+                            //filter language
+                            func = " language ";
+                        }
+
+                        let end = i;
+                        if (func != " word "){
+                            end = i-2;
+                        }
+                        for (let j=0; j<i+2; j++){
+                            midi[j].complete = true;
+                        }
+                        for (j=0; j<end; j++){
+                            if (func == " user "){
+                                temptr += (midi[j].note - keybot).toString();
+                            }
+                            else{
+                                temptr += (midi[j].note).toString();
+                            }
+                            if (j<end-1){
+                                temptr += ",";
+                            }
+                        }
+                        console.log(temptr);
+                        transcript += func + temptr;
+                        return transcript;
+                    }
+
+                }
+            }
+            return transcript; //filter remove language xxxx
         };
 
         //no space means additional word is optional (can be midi).  
@@ -419,17 +498,17 @@ class Keymap{
                     //this is the only length but other commands will have variable lengths.  
                     //allow for out of order.  
                     if (midi[0].note > midi[1].note){
-                        x = midi[0].note - 60;
-                        y = midi[1].note - 48;
+                        x = midi[0].note - keybot - OCTAVE;
+                        y = midi[1].note - keybot;
                     }
                     else{
-                        y = midi[0].note - 48;
-                        x = midi[1].note - 60;
+                        y = midi[0].note - keybot;
+                        x = midi[1].note - keybot - OCTAVE;
                     }
 
 
-                    if (y > -1 && y < 12 && x > -1 && x < 12){
-                        y = 11 - y; //reverse
+                    if (y > -1 && y < OCTAVE && x > -1 && x < OCTAVE){
+                        y = OCTAVE - 1 - y; //reverse
                         transcript = "move " + x.toString() + " " + y.toString();
                         midi[0].complete = true;
                         midi[1].complete = true;
@@ -466,8 +545,8 @@ class Keymap{
             if (commandlength !== null){
                 //we have a command map at least.  
                 if (commandlength == "1"){
-                    y = midi[0].note - 60;
-                    if (y > -13 && y < 13){
+                    y = midi[0].note - keybot - OCTAVE;;
+                    if (y > -OCTAVE-1 && y < OCTAVE+1){
                         y = -y; //reverse
                         transcript = "scroll " + y.toString();
                         midi[0].complete = true;
@@ -485,16 +564,16 @@ class Keymap{
                     //allow for out of order.  
                     //scroll up or down 
                     if (midi[0].note > midi[1].note){
-                        x = midi[0].note - 66;
-                        y = midi[1].note - 54;
+                        x = midi[0].note - keybot - OCTAVE - OCTAVE/2;
+                        y = midi[1].note - keybot - OCTAVE/2;
                     }
                     else{
-                        y = midi[0].note - 54;
-                        x = midi[1].note - 66;
+                        y = midi[0].note - keybot - OCTAVE/2;
+                        x = midi[1].note - keybot - OCTAVE - OCTAVE/2;
                     }
 
 
-                    if (y > -7 && y < 7 && x > -7 && x < 7){
+                    if (y > -(OCTAVE/2)-1 && y < (OCTAVE/2)+1 && x > -(OCTAVE/2)-1 && x < (OCTAVE/2)+1){
                         y = -y; //reverse
                         transcript = "scroll " + y.toString() + " " + x.toString();
                         midi[0].complete = true;

@@ -219,6 +219,7 @@ function selectLanguage(lang){
     if (Object.values(alllangs).includes(lang) > -1){
         currentlanguage = lang;
         initLangData(lang);
+        $('.langlabel').html('<a id="langlink" href="#" onclick="filterDicManual();return false;">' + currentlanguage + '</a>');
     }
     else{
         console.log("Language not found" + lang);    
@@ -326,7 +327,7 @@ function loadMetaLanguage(lang="meta", user=0){
             //rebuild keys with keybot.  
             //we can change keybot/keytop if we want.  
 
-            key2a = convertKeys(key2, true); //get keys + keybot
+            key2a = convertKeys(key2, keybot/12); //get keys + keybot
 
             langs[lang][key][key2a] = value2; //midiseq -> word lookup.  
 
@@ -401,6 +402,15 @@ function loadLanguage(lang, user){
                     langsa[lang][key] = value; //full word info.  
 
                     addDictRow(lang, key, value, user, add);
+
+                    langa = lang.toLowerCase().replaceAll(" ", "_");
+                    langlink = document.getElementById("langlink_" + langa);
+                    if (typeof(langlink) === "undefined" || langlink === null){
+                        $('.langlabel').append('<a id="langlink_' + langa + '" href="#">' + lang + '</a>');
+                        langlink = document.getElementById("langlink_" + langa);
+                        langlink.onclick = function() { filterDicManual(lang); return false; };
+                    }
+                                
                 }
                 //dynamic functions for this language.  
 //                loadLanguageScript(lang);             
@@ -416,14 +426,54 @@ function loadLanguage(lang, user){
 
 }
 
+function unfilterDicManual(lang="current"){
+    currentselection = $('#lang').select2('data');
+    if (currentselection.length > 0){
+        const idx = currentselection.findIndex((l) => l.text == (lang));//  userindex = users.findIndex((u) => u.uid == (uid));        
+        currentselection.splice(idx, 1);
+        if (currentselection.length == 0){
+            $('#lang').val(null).trigger('change');//$('#lang').select2('val', null);
+        }
+        else{
+            $('#lang').select2('val', currentselection);
+        }
+//        dictable.draw();
+    }
+    langa = lang.toLowerCase().replaceAll(" ", "_");
+    langlink = document.getElementById("langlink_" + langa);
+    if (typeof(langlink) === "undefined" || langlink === null){
+    }
+    else{
+        langlink.innerHTML = lang;
+        langlink.onclick = function() { filterDicManual(lang); return false; };
+    }
+}
+//quick filter for languages.  
+function filterDicManual(lang="current"){
+    currentselection = $('#lang').select2('data');
+    currentselection.push(lang);
+    $('#lang').select2('val', currentselection);
+    langa = lang.toLowerCase().replaceAll(" ", "_");
+    langlink = document.getElementById("langlink_" + langa);
+    if (typeof(langlink) === "undefined" || langlink === null){
+    }
+    else{
+        langlink.innerHTML = "*" + lang + "*";
+        langlink.onclick = function() { unfilterDicManual(lang); return false; };
+    }
+}
 
-function filterDic(transcript){
+
+function filterDicAuto(transcript){
     if (autodic !== null && transcript !="" && transcript.length > 2){
         var isMidi = /^[0-9,]*$/.test(transcript);
         if (isMidi){
             autodic.columns().search(''); //clear all filters.
 //            $('#keys').select2('val', ['good'])
             transcript = transcript.slice(0,-1); //remove last comma.
+            
+            transcript = convertKeys(transcript, -keybot/12);
+
             autodic.column(DIC1_KEYS).search(transcript).draw();
             metadic.column(DIC1_KEYS).search(transcript).draw();
         }
@@ -459,6 +509,7 @@ function createAutoDic(user){
                 { data: 'lang' }
             ],
             */
+            columnDefs: [{ visible: false, targets: DIC1_LANG }],
             searching: true, paging: false,
             info: false, dom: 'lrt',
                 createdRow: function (row, data, dataIndex) {
@@ -516,6 +567,7 @@ function createMetaDic(user){
                 { data: 'lang' }
             ],
             */
+            columnDefs: [{ visible: false, targets: DIC1_LANG }],
             searching: true, paging: false,
             info: false, dom: 'lrt',
                 createdRow: function (row, data, dataIndex) {
@@ -764,7 +816,7 @@ function loadDictionaries(user){
             updateVidTimes(user);     
             t = checkCommands();
             $('#mycommand').val(t.trim()); //incomplete command.  
-            filterDic(t.trim());
+            filterDicAuto(t.trim());
             //filter commands.  autodic and metadic.  
             //if only midi.  
 
@@ -1126,6 +1178,7 @@ function addDictRow(lang, word, row, user=0, add=0) {
                 //$('.select2').val(null).trigger('change');
 //                $('.select2').select2();
                 dictable.columns(DIC_WORD).search("test").draw(); //have to do this to initialize the table.  Not a great solution.  
+                dictable.search("").draw();
 //            }, 5000);
 
         }

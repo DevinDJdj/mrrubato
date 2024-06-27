@@ -278,8 +278,19 @@ $('#word').select2('val', ['good'])
 filter user ...
 $('#user').select2('val', ['0'])
 filter langauge ...
-$('#language').select2('val', ['base'])
+$('#lang').select2('val', ['base'])
 etc.
+Use lang as reference.  
+
+filter add word ..
+filter remove word ..
+
+
+created a timing issue of some sort.  
+feedbackImage not working now on reload.  
+--ok maybe fixed.  
+
+
 
 Check filterDic
 --ok maybe working ok.  
@@ -291,6 +302,9 @@ How to do recording?
 
 
 Build meta commands, playback filtered list.  
+Playback with filter functionality.  
+Need to create/test this.  
+
 This should also run the commands associated with the transcript.  Whatever they are, or have the option to.  
 If we are running the commands, we should add to our feedback channel of whatever the language is for our user?  
 Or should that be separate option?
@@ -381,6 +395,13 @@ And possibly the key, but this would be confusing maybe.
 get rid of lang in autodic and metadic.  
 Show current lang above autodic.  
 
+get rid of mini piano canvas or hide it after all is generated.  
+Or can we hide it period?  
+Make midifeedback less wide.  
+
+Load user settings like intro and last used language.  
+Load on start.  
+
 
 
 **web/public/analyze.html
@@ -403,10 +424,14 @@ i.e. annotate a location on the screen.
 create a box 12x12 is fine or 10x10 whatever.  
 Then add STT text to that location.  
 This should just be in the transcript.  
-
-
-
-
+Eventually can have STT engine for each person perhaps.  
+Keeping with text data instead of audio has its advantages.  
+A good personalized STT/TTS engine will be one of the primary functions that AI enables in the near term.  
+Already MS and Google working on this.  
+Maybe see if this is reasonable/integratable at all.  
+https://learn.microsoft.com/en-us/azure/ai-services/speech-service/professional-voice-deploy-endpoint?pivots=speech-studio
+Not yet worth the effort I think.  
+Will still change some.  
 
 
 **web/public/languages.js
@@ -448,3 +473,9 @@ Now how do we default to previous login?
 
 Now need to be able to link to other items.  
 This is what we can put next to the feedbackImage
+
+
+**web/public/keymap.js
+need to use center of keys, not absolute.  
+Should essentially be based on Centerpoint.  
+Then we can set to a particular octave.  

@@ -304,24 +304,63 @@ function Chat(transcript, callback=null, pending=false){
             executed = false;
         }
     }
-    else if (transcript.toLowerCase().startsWith("filter")){
+    //filter clear, filter add, filter remove
+    else if (transcript.toLowerCase().startsWith("filter clear")){
         tokens = transcript.split(" ");
         if (tokens.length > 2){
-            func = tokens[1];
-            if (func == "clear"){
-                //clear filter
+            func = tokens[2];
+            if (func == "word"){
+                //clear filter by word                
             }
-            else if (func == "word"){
+            else if (func == "language"){
+                //clear filter by language
+
+            }
+            else if (func == "user"){
+                //clear filter by user, probably need to be able to name users.  
+            }
+        }
+        else{
+            executed = false;
+        }        
+    }
+
+    else if (transcript.toLowerCase().startsWith("filter add")){
+        tokens = transcript.split(" ");
+        if (tokens.length > 3){
+            func = tokens[2];
+            if (func == "word"){
                 //filter by word
-                filter = tokens.slice(2, tokens.length).join(" ");
+                filter = tokens.slice(3, tokens.length).join(" ");
             }
             else if (func == "language"){
                 //filter by language
-                filter = tokens.slice(2, tokens.length).join(" ");
+                filter = tokens.slice(3, tokens.length).join(" ");
             }
             else if (func == "user"){
                 //filter by user, probably need to be able to name users.  
-                filter = tokens.slice(2, tokens.length).join(" ");
+                filter = tokens.slice(3, tokens.length).join(" ");
+            }
+        }
+        else{
+            executed = false;
+        }
+    }
+    else if (transcript.toLowerCase().startsWith("filter remove")){
+        tokens = transcript.split(" ");
+        if (tokens.length > 3){
+            func = tokens[2];
+            if (func == "word"){
+                //filter by word
+                filter = tokens.slice(3, tokens.length).join(" ");
+            }
+            else if (func == "language"){
+                //filter by language
+                filter = tokens.slice(3, tokens.length).join(" ");
+            }
+            else if (func == "user"){
+                //filter by user, probably need to be able to name users.  
+                filter = tokens.slice(3, tokens.length).join(" ");
             }
         }
         else{
