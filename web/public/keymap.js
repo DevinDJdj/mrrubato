@@ -98,7 +98,7 @@ class Keymap{
                     let keyset = keydict[""][i.toString()];
                     let keys = "";
                     for (j=0; j<i; j++){
-                        keys += (midi[j].note - keybot).toString();
+                        keys += (midi[j].note - keybot["meta"]).toString();
 //                        keys += midi[j].note.toString();
                         if (j<i-1){
                             keys += ",";
@@ -136,7 +136,7 @@ class Keymap{
             if (commandlength !== null){
                 //we have a command map at least.  
                 if (commandlength == "1"){
-                    skip = midi[0].note - keybot - OCTAVE;
+                    skip = midi[0].note - keybot["meta"] - OCTAVE;
                     if (skip > -OCTAVE-1 && skip < OCTAVE+1){
 
                         skip = Math.sign(skip)*Math.pow(2, (Math.abs(skip)));
@@ -173,7 +173,7 @@ class Keymap{
             if (commandlength !== null){
                 //we have a command map at least.  
                 if (commandlength == "1"){
-                    volume = midi[0].note - keybot - OCTAVE;
+                    volume = midi[0].note - keybot["meta"] - OCTAVE;
                     if (volume > -OCTAVE-1 && volume < OCTAVE+1){
                         volume = (volume + OCTAVE)/(OCTAVE*2);
                         transcript = "set volume " + volume.toFixed(2);
@@ -208,7 +208,7 @@ class Keymap{
             if (commandlength !== null){
                 //we have a command map at least.  
                 if (commandlength == "1"){
-                    speed = midi[0].note - keybot - OCTAVE;
+                    speed = midi[0].note - keybot["meta"] - OCTAVE;
                     if (speed > -OCTAVE+1 && speed < OCTAVE+1){
                         if (speed < 0){
                             //1/10 increments
@@ -249,17 +249,17 @@ class Keymap{
                 //for now this is ok, but must code for continuous speech.  
                 let temptr = " ";
                 for (let i=0; i<midi.length-1; i++){
-                    if (i>0 && midi[i].note - keybot == EOW && midi[i+1].note - keybot == EOW){
+                    if (i>0 && midi[i].note - keybot["meta"] == EOW && midi[i+1].note - keybot["meta"] == EOW){
                         //we have a language
                         //we can add this language to the DB.  
                         //end of word indicator.  
 
                         let func = " word ";
-                        if (i>2 && midi[i-1].note - keybot == 10 && midi[i-2].note - keybot == 11){
+                        if (i>2 && midi[i-1].note - keybot["meta"] == 10 && midi[i-2].note - keybot["meta"] == 11){
                             //filter user
                             func = " user ";
                         }
-                        else if (i>2 && midi[i-1].note - keybot == 5 && midi[i-2].note - keybot == 7){
+                        else if (i>2 && midi[i-1].note - keybot["meta"] == 5 && midi[i-2].note - keybot["meta"] == 7){
                             //filter language
                             func = " language ";
                         }
@@ -281,17 +281,17 @@ class Keymap{
                 //for now this is ok, but must code for continuous speech.  
                 let temptr = " ";
                 for (let i=0; i<midi.length-1; i++){
-                    if (i>0 && midi[i].note - keybot == EOW && midi[i+1].note - keybot == EOW){
+                    if (i>0 && midi[i].note - keybot["meta"] == EOW && midi[i+1].note - keybot["meta"] == EOW){
                         //we have a language
                         //we can add this language to the DB.  
                         //end of word indicator.  
 
                         let func = " word ";
-                        if (i>2 && midi[i-1].note - keybot == 10 && midi[i-2].note - keybot == 11){
+                        if (i>2 && midi[i-1].note - keybot["meta"] == 10 && midi[i-2].note - keybot["meta"] == 11){
                             //filter user
                             func = " user ";
                         }
-                        else if (i>2 && midi[i-1].note - keybot == 5 && midi[i-2].note - keybot == 7){
+                        else if (i>2 && midi[i-1].note - keybot["meta"] == 5 && midi[i-2].note - keybot["meta"] == 7){
                             //filter language
                             func = " language ";
                         }
@@ -305,7 +305,7 @@ class Keymap{
                         }
                         for (j=0; j<end; j++){
                             if (func == " user "){
-                                temptr += (midi[j].note - keybot).toString();
+                                temptr += (midi[j].note - keybot["meta"]).toString();
                             }
                             else{
                                 temptr += (midi[j].note).toString();
@@ -331,17 +331,17 @@ class Keymap{
                 //for now this is ok, but must code for continuous speech.  
                 let temptr = " ";
                 for (let i=0; i<midi.length-1; i++){
-                    if (i>0 && midi[i].note - keybot == EOW && midi[i+1].note - keybot == EOW){
+                    if (i>0 && midi[i].note - keybot["meta"] == EOW && midi[i+1].note - keybot["meta"] == EOW){
                         //we have a language
                         //we can add this language to the DB.  
                         //end of word indicator.  
 
                         let func = " word ";
-                        if (i>2 && midi[i-1].note - keybot == 10 && midi[i-2].note - keybot == 11){
+                        if (i>2 && midi[i-1].note - keybot["meta"] == 10 && midi[i-2].note - keybot["meta"] == 11){
                             //filter user
                             func = " user ";
                         }
-                        else if (i>2 && midi[i-1].note - keybot == 5 && midi[i-2].note - keybot == 7){
+                        else if (i>2 && midi[i-1].note - keybot["meta"] == 5 && midi[i-2].note - keybot["meta"] == 7){
                             //filter language
                             func = " language ";
                         }
@@ -355,7 +355,7 @@ class Keymap{
                         }
                         for (j=0; j<end; j++){
                             if (func == " user "){
-                                temptr += (midi[j].note - keybot).toString();
+                                temptr += (midi[j].note - keybot["meta"]).toString();
                             }
                             else{
                                 temptr += (midi[j].note).toString();
@@ -381,7 +381,7 @@ class Keymap{
                 //for now this is ok, but must code for continuous speech.  
                 let temptr = " ";
                 for (let i=0; i<midi.length-1; i++){
-                    if (i>0 && midi[i].note - keybot == EOW && midi[i+1].note - keybot == EOW){
+                    if (i>0 && midi[i].note - keybot["meta"] == EOW && midi[i+1].note - keybot["meta"] == EOW){
                         //we have a language
                         //we can add this language to the DB.  
                         //end of word indicator.  
@@ -390,7 +390,7 @@ class Keymap{
                         }
                         for (j=0; j<i; j++){
                             temptr += (midi[j].note).toString();
-//                            temptr += (midi[j].note - keybot).toString();
+//                            temptr += (midi[j].note - keybot["meta"]).toString();
                             if (j<i-1){
                                 temptr += ",";
                             }
@@ -412,7 +412,7 @@ class Keymap{
                 //for now this is ok, but must code for continuous speech.  
                 let temptr = " ";
                 for (let i=0; i<midi.length-1; i++){
-                    if (i>0 && midi[i].note - keybot == EOW && midi[i+1].note - keybot == EOW){
+                    if (i>0 && midi[i].note - keybot["meta"] == EOW && midi[i+1].note - keybot["meta"] == EOW){
                         //we have a language
                         //we can add this language to the DB.  
                         //end of word indicator.  
@@ -421,7 +421,7 @@ class Keymap{
                         }
                         for (j=0; j<i; j++){
                             temptr += (midi[j].note).toString();
-//                            temptr += (midi[j].note - keybot).toString();
+//                            temptr += (midi[j].note - keybot["meta"]).toString();
                             if (j<i-1){
                                 temptr += ",";
                             }
@@ -443,7 +443,7 @@ class Keymap{
                 //for now this is ok, but must code for continuous speech.  So must find the first two 12s.  
                 let temptr = " ";
                 for (let i=0; i<midi.length-1; i++){
-                    if (i>0 && midi[i].note - keybot == EOW && midi[i+1].note - keybot == EOW){
+                    if (i>0 && midi[i].note - keybot["meta"] == EOW && midi[i+1].note - keybot["meta"] == EOW){
                         //we have a word
                         //we can add this language to the DB.  
                         //end of word indicator.  
@@ -452,7 +452,7 @@ class Keymap{
                         }
                         for (j=0; j<i; j++){
                             temptr += (midi[j].note).toString();
-//                            temptr += (midi[j].note - keybot).toString();
+//                            temptr += (midi[j].note - keybot["meta"]).toString();
                             if (j<i-1){
                                 temptr += ",";
                             }
@@ -498,12 +498,12 @@ class Keymap{
                     //this is the only length but other commands will have variable lengths.  
                     //allow for out of order.  
                     if (midi[0].note > midi[1].note){
-                        x = midi[0].note - keybot - OCTAVE;
-                        y = midi[1].note - keybot;
+                        x = midi[0].note - keybot["meta"] - OCTAVE;
+                        y = midi[1].note - keybot["meta"];
                     }
                     else{
-                        y = midi[0].note - keybot;
-                        x = midi[1].note - keybot - OCTAVE;
+                        y = midi[0].note - keybot["meta"];
+                        x = midi[1].note - keybot["meta"] - OCTAVE;
                     }
 
 
@@ -545,7 +545,7 @@ class Keymap{
             if (commandlength !== null){
                 //we have a command map at least.  
                 if (commandlength == "1"){
-                    y = midi[0].note - keybot - OCTAVE;;
+                    y = midi[0].note - keybot["meta"] - OCTAVE;;
                     if (y > -OCTAVE-1 && y < OCTAVE+1){
                         y = -y; //reverse
                         transcript = "scroll " + y.toString();
@@ -564,12 +564,12 @@ class Keymap{
                     //allow for out of order.  
                     //scroll up or down 
                     if (midi[0].note > midi[1].note){
-                        x = midi[0].note - keybot - OCTAVE - OCTAVE/2;
-                        y = midi[1].note - keybot - OCTAVE/2;
+                        x = midi[0].note - keybot["meta"] - OCTAVE - OCTAVE/2;
+                        y = midi[1].note - keybot["meta"] - OCTAVE/2;
                     }
                     else{
-                        y = midi[0].note - keybot - OCTAVE/2;
-                        x = midi[1].note - keybot - OCTAVE - OCTAVE/2;
+                        y = midi[0].note - keybot["meta"] - OCTAVE/2;
+                        x = midi[1].note - keybot["meta"] - OCTAVE - OCTAVE/2;
                     }
 
 

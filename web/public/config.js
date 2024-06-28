@@ -7,7 +7,7 @@ var useyoutube = false;
 var channelId = 'UC4dK3RpqBq2JpIkRmQn6HOA'; //@misterrubato doesnt work in URL, probably need to escape the @, but who cares.  
 
 //define length of keyboard.  use keybot to define where we start looking.  
-var keybot = 48;
+var keybot = {"base": 48, "meta": 48};
 var keytop = 72;
 var playfeedback = false;
 const volumeControl = "0.1" //document.querySelector("input[name='volume']");

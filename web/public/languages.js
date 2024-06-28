@@ -249,6 +249,7 @@ function initLangData(lang, user=-1){
 
     if (typeof(midiarray[user][lang]) === "undefined"){
         midiarray[user][lang] = [];
+        keybot[lang] = 48;
 
         //if never used before.  
         let loaded = false;
@@ -293,10 +294,10 @@ function loadLanguageScript(lang){
 }
 
 
-function convertKeys(midikeys, octaveshift=0){
+function convertKeys(midikeys, octaveshift=0, keyshift=0){
     midikeys = midikeys.split(",");
     for (i=0; i<midikeys.length; i++){
-        midikeys[i] = parseInt(midikeys[i]) + octaveshift*12;
+        midikeys[i] = parseInt(midikeys[i]) + octaveshift*12+keyshift;
     }
     midikeys = midikeys.join(",");
     return midikeys;
@@ -327,7 +328,7 @@ function loadMetaLanguage(lang="meta", user=0){
             //rebuild keys with keybot.  
             //we can change keybot/keytop if we want.  
 
-            key2a = convertKeys(key2, keybot/12); //get keys + keybot
+            key2a = convertKeys(key2, keybot[lang]/12); //get keys + keybot
 
             langs[lang][key][key2a] = value2; //midiseq -> word lookup.  
 
@@ -398,7 +399,7 @@ function loadLanguage(lang, user){
                     //convert keys down for now.  Probably get rid of this, converting to 0 based.  
                     //except for lookup.  
                     //shift keys down.  
-                    value.midi = convertKeys(value.midi, -keybot/12);
+                    value.midi = convertKeys(value.midi, -keybot[lang]/12);
                     langsa[lang][key] = value; //full word info.  
 
                     addDictRow(lang, key, value, user, add);
@@ -464,6 +465,7 @@ function filterDicManual(lang="current"){
 }
 
 
+//this is run each time the checkCommands is done which pulls the midi.  
 function filterDicAuto(transcript){
     if (autodic !== null && transcript !="" && transcript.length > 2){
         var isMidi = /^[0-9,]*$/.test(transcript);
@@ -471,8 +473,10 @@ function filterDicAuto(transcript){
             autodic.columns().search(''); //clear all filters.
 //            $('#keys').select2('val', ['good'])
             transcript = transcript.slice(0,-1); //remove last comma.
-            
-            transcript = convertKeys(transcript, -keybot/12);
+
+            transcript = convertKeys(transcript, -keybot[currentlanguage]/12);
+
+            getFullPiano(transcript);
 
             autodic.column(DIC1_KEYS).search(transcript).draw();
             metadic.column(DIC1_KEYS).search(transcript).draw();
@@ -626,9 +630,26 @@ function destroyDics(){
 
 }
 
-function getMiniPiano(row){
+function getFullPiano(midikeys=null){
+    let fullpcanvas = document.getElementById("fullpcanvas");    
+    let RedKeys = [];
+    if (midikeys !== null){
+        midikeys = convertKeys(midikeys, keybot[currentlanguage]/12, 3); //get keys + keybot + shift 3 for 88-key.  
+        RedKeys = midikeys.split(",");
+        RedKeys = RedKeys.map(function (x) { 
+            return parseInt(x, 10); 
+        });
+    }
+    DrawKeyboard(fullpcanvas, RedKeys);
+//    const img    = pcanvas.toDataURL('image/png');
+//    document.getElementById("generatedkeys4").src = img4;
+//    return img;
+
+}
+
+function getMiniPiano(midikeys){
     let pcanvas = document.getElementById("pcanvas");    
-    let RedKeys = row[DIC_KEYS].split(",");
+    let RedKeys = midikeys.split(",");
     RedKeys = RedKeys.map(function (x) { 
         return parseInt(x, 10); 
     });
@@ -686,7 +707,7 @@ function loadDictionaries(user){
                     render: function (data, type, row, meta) {
                         tmp = langsa[ row[DIC_LANG] ][ row[DIC_WORD] ];
                         if (!("img" in tmp) || typeof(tmp["img"]) === "undefined"){
-                            tmp["img"] = getMiniPiano(row);
+                            tmp["img"] = getMiniPiano(row[DIC_KEYS]);
                         }
                         return '<img width="110px" height="22px" src="' + tmp["img"] + '" alt="' + row[DIC_KEYS] + '" /><br>' + row[DIC_KEYS]; 
                     }

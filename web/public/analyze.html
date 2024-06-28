@@ -76,7 +76,10 @@ data-setup="{}"
 		<button type="button" onclick="updateVideo()">Update</button>
 		<button type="button" onclick="resetFeedback()">Reset Feedback</button>
 	</div>
- <div id="midi"></div>
+ <div id="midi">
+	<canvas id="fullpcanvas" width="640" height="36">Your browser does not support the HTML5 canvas tag.</canvas>    
+ </div>
+
  <div id="devices">	</div>
 <!--    <button type="button" onclick="saveMidiFeedback();">Save Midi Feedback</button> -->
     <div id="out"></div>	
@@ -349,6 +352,8 @@ var xmultiplier2;
 var ymultiplier2;
 var scene1;
 var scene2;
+var engine1;
+var engine2;
 
 var camera1;
 var camera2;
@@ -510,6 +515,7 @@ function loadAll(reload = false){
 	midiarray = [{"base": []}]; //reinitialize necessary?  
 	currentmidiuser = 0;
 	reinitLanguages();
+	getFullPiano();
 
 firebase.auth().setPersistence('session').then(() => {
 	if (reload){
@@ -577,10 +583,10 @@ function setTranscript(transcript){
 	//is this important?  
 	var tempDiv = $('#transcript');
 	if (isadmin){
-		tempDiv.readOnly(false);
+		tempDiv.readOnly = false;
 	}
 	else{
-		tempDiv.readOnly(true);
+		tempDiv.readOnly = true;
 		//we get the updated transcript, but cant edit further.  This removes confusion about if you can edit.  
 	}
 	tempDiv.val(transcript);
@@ -645,8 +651,8 @@ function loadPreviousComments(snapshot, uid=0){
 		}
 		midifeedback = value.midi;
 		loadMidiFeedback(midifeedback);
-		getFeedbackImage(null, xmultiplier1, ymultiplier1, scene1, currentmidiuser);
-		getFeedbackImage(null, xmultiplier2, ymultiplier2, scene2, currentmidiuser);	
+		getFeedbackImage(null, xmultiplier1, ymultiplier1, scene1, engine1, currentmidiuser);
+		getFeedbackImage(null, xmultiplier2, ymultiplier2, scene2, engine2, currentmidiuser);	
 
 		loadDictionaries(currentmidiuser);
 		console.log("MIDI:" + midifeedback);
@@ -667,12 +673,26 @@ function getYOffset(iter, w, h){
 	return y;
 }
 
+function getSecsFromXY(x, y, scene, engine){
+	i, secs = getIterationAndSecs();
+	h = engine.getRenderHeight();
+	w = engine.getRenderWidth();
+	xm = 20;
+	if (h < 200){
+		xm = 2;
+	}
+	console.log("X: " + x + " Y: " + y);
+	iter = Math.floor(((y / h) * numiterations));
+	secs = secs + (x - w/2) / xm;
+	return myst[iter] + secs;
+}
+
 function resetFeedback(){
 	midiarray = [{"base": []}];
 }
 
 //for now display one user at a time, then combine users?  
-function getFeedbackImage(source, w, h, myscene,midiuser=0){
+function getFeedbackImage(source, w, h, myscene,myengine, midiuser=0){
 	//for all notes in midiarray, generate image.  
 	//after this figure out how to add other midifeedback as well.  
 	//this should be loaded already.  
@@ -734,6 +754,9 @@ function getFeedbackImage(source, w, h, myscene,midiuser=0){
 		switch (pointerInfo.type) {
 			case BABYLON.PointerEventTypes.POINTERTAP:
 			console.log("POINTER TAP" + pointerInfo.event.x + " " + pointerInfo.event.y);
+
+//			console.log("JUMP TO " + getSecsFromXY(pointerInfo.event.x, pointerInfo.event.y, myscene, myengine));
+			console.log("JUMP TO " + getSecsFromXY(myscene.pointerX, myscene.pointerY, myscene, myengine));
 			break;
 			case BABYLON.PointerEventTypes.POINTERDOUBLETAP:
 			console.log("POINTER DOUBLE-TAP");
@@ -1123,7 +1146,8 @@ function getMidi(desc){
 	else {
 		url = desc.substring(tposition+5);
 	}
-	tempDiv.html(url);
+//	tempDiv.html(url);
+//using up space.  Need this space.  
 	getAnalyze(url);
  }
  else{
@@ -1144,7 +1168,7 @@ function getIteration(currentTime){
 }
 
 
-function updateCanvas(){
+function getIterationAndSecs(){
 	if (useyoutube || watch){
 		if (player.getCurrentTime){
 			var tempTime = player.getCurrentTime();
@@ -1159,6 +1183,11 @@ function updateCanvas(){
 				secs = tempTime - myst[i];
 		}
 	}
+	return i, secs;
+}
+
+function updateCanvas(){
+	i, secs = getIterationAndSecs();
 	if (i > -1){
 		camera1.position = new BABYLON.Vector3((xmultiplier1/2)-20*secs, ymultiplier1*1.2, 0);
 		spotlight1.position = new BABYLON.Vector3((xmultiplier1/2)-20*secs, xmultiplier1, 0);
@@ -1166,6 +1195,7 @@ function updateCanvas(){
 		spotlight2.position = new BABYLON.Vector3((xmultiplier2/2)-2*secs, xmultiplier2, 0);
 	}
 }
+
 
 //use canvas for pianoroll.  Use graphics engine of some kind.  
 function loadCanvas(id, pianoimg, mini="") {
@@ -1216,6 +1246,7 @@ function loadCanvas(id, pianoimg, mini="") {
 		// Creates and positions a free camera
 		if (mini == ""){
 			scene1 = scene;
+			engine1 = engine;
 			xmultiplier1 = maxduration*xm;
 			ymultiplier1 = ym*numiterations;
 			ymultiplier = ymultiplier1;
@@ -1226,6 +1257,7 @@ function loadCanvas(id, pianoimg, mini="") {
 		}
 		else{
 			scene2 = scene;
+			engine2 = engine;
 			xmultiplier2 = maxduration*xm;
 			ymultiplier2 = ym*numiterations;
 			ymultiplier = ymultiplier2;
@@ -1420,7 +1452,9 @@ function getTranscript(desc){
 	}
 	if (url.trim() !== "error"){
 		tempDiv.load(url);
-		tempDiv2.load(url);
+		tempDiv2.load(url, function(){
+			tempDiv2.html(makeTimeLinks(tempDiv2.html()));
+		});
 	}
  }
 }

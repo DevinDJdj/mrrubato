@@ -468,7 +468,7 @@ function getMIDIMessage(message, mytime=0, lang="") {
 	var tempDiv = $('#devices');
 	var devhtml = "";
 	WebMidi.inputs.forEach((device, index) => {
-		devhtml += `${index}: ${device.name} (${device.state})<br>`;
+		devhtml += `${index}: ${device.name} (${device.state}) `;
 
 //		document.body.innerHTML+= `${index}: ${device.name} <br>`;
 		//device.octaveOffset

@@ -474,8 +474,53 @@ Now how do we default to previous login?
 Now need to be able to link to other items.  
 This is what we can put next to the feedbackImage
 
+Adjust feedbackImage to include feedback in more meaningful way.  
+Adjust login for more than just current tab.  
+
 
 **web/public/keymap.js
 need to use center of keys, not absolute.  
 Should essentially be based on Centerpoint.  
 Then we can set to a particular octave.  
+Lets just use keybot, for each language.  
+meta language included.  
+This keybot is editable by the user, however not the key intervals in words.  
+In order to change this, they would need to change the language implementation.  
+So musical key will be mutable for any language by using keybot.  
+But words within the musical key are non-mutable.  
+Octaves are mutable for any language the same way using keybot.  
+Is this sufficient?  
+What language takes priority in case of overlap.  
+Obviously meta-language will take priority.  
+And then just whatever was set first I guess.  
+Need language shift function and UI for this.  
+Also would need to update the images based on any keybot change.  
+But only show the 2-octave image.  
+Adjust the image based on keybot.  
+keybot[lang]...
+keybot = {"base": 48, "meta": 48};
+Somewhat significant adjustment.  
+Create full keyboard interactive image to show sequence played and fade each note gradually.  
+Probably need to build this.  Use same colors to show sequence and just fade relative to time.  
+Just use same piano drawing logic but this will be live canvas implementation.  
+Should represent the keyboard attached numkeys.  
+
+
+**web/public/languages.js
+fullpcanvas can display feedback midi, but could also switch to show input midi.  
+Need a line for NOW in the feedbackImage.  
+updateVidTimes
+
+**web/public/analyze.html
+updateCanvas
+we want to be able to drag the canvas side to side.  
+Right now it is free.  
+Just do on-click move to that location and also the video move to that location.  
+Detect which iteration and what secs.  
+Should be able to do on mini-canvas and main canvas.  
+OK, getSecsFromXY appears to work ok.  
+So we can skip by clicking on the minimap as well.  
+Much more annoying than I thought.  
+This logic is not so intuitive for BabylonJS.  
+Maybe disable the drag functionality.  
+Not sure....
