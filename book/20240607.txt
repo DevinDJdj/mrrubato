@@ -504,6 +504,37 @@ Create full keyboard interactive image to show sequence played and fade each not
 Probably need to build this.  Use same colors to show sequence and just fade relative to time.  
 Just use same piano drawing logic but this will be live canvas implementation.  
 Should represent the keyboard attached numkeys.  
+Still need to make octave jump keypattern.  G3->G4->G4?  
+Skip also needs to be remapped.  
+Most common patterns should be central.  
+Keep list of selected languages.  
+So we can change language easily with them.  
+Change language with midi will pick from prevlang[]
+Should test
+set octave 
+
+Have to store saved language octaves and load before midi is loaded.  
+Or do we just leave as default and then check from the midi language if octave was changed?  
+This would be like a macro, but we would have these macros inside of each midi structure.  
+Do we want this?  
+I think for now pull from the midi directly.  
+We can change later if needed.  
+So by default unless there is a octave change, default = 48
+
+Loading is slow when we have too many embedded keys.  
+Maybe we need to stop listening when we get a 21 until we hear a 22.  
+Lets use these keys to ignore.  
+We can also use the 107, 108 markers, but this has potential overlap.  
+I think the 21, 22,23 keys should be used for pause/unpause as well probably.  
+
+Lets display a state.  
+--ok basic functionality there
+Need to move commands to meta
+checkCommands()
+if executed move to the lang of choice.  
+OK, now we are returning language from findCommand.  
+How do we make this logical to search through multiple languages.  
+
 
 
 **web/public/languages.js

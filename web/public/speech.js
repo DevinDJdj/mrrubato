@@ -31,6 +31,7 @@ function getPendingCommand(){
 function checkCommands(){
     let cl = getPendingCommand();
     let midi = getMidiRecent();
+    let executed = false;
     //if most recent is too recent wait some more.  
     //otherwise we assume this is a completed command.  
     //also if we have punctuation/end command, we can continue.  
@@ -50,7 +51,7 @@ function checkCommands(){
     let transcript = "";
     let pending = false;
     let callback = null;
-    let executed = false;
+    let lang = "meta";
     if (cl != null){
                 //we have a command.  
             //try to find if we have something to do with the midi.  
@@ -65,10 +66,10 @@ function checkCommands(){
             prevtranscript = transcript;
             //find words in current language.  
 
-            transcript = keymap.findCommand(transcript, midi);
+            [transcript, lang] = keymap.findCommand(transcript, midi);
             if (transcript != prevtranscript){
 
-                done = completeMidi(midi);
+                done = completeMidi(midi, lang);
                 //refresh midi with only incomplete commands.  
                 if (transcript.endsWith(" ")){  //use space as indicator of more parameters needed.
                     //still waiting.  
@@ -125,10 +126,10 @@ function checkCommands(){
             while (done > 0 && midi.length > 0 && executed==false){
                 prevtranscript = transcript;
                 //get parameters.  
-                transcript = keymap.findCommand(transcript, midi);
+                [transcript, lang] = keymap.findCommand(transcript, midi);
                 //have to set .complete to true.  
                 if (transcript != prevtranscript){
-                    done = completeMidi(midi);
+                    done = completeMidi(midi, lang);
                     if (transcript.endsWith(" ")){  //use space as indicator of more parameters needed.
                         //still waiting.  in this case perhaps extend the pendingTime.  
                     }
@@ -179,12 +180,14 @@ function checkCommands(){
 }
 
 
-function completeMidi(midi){
+function completeMidi(midi, lang=""){
     let ret = 0;
     let reftime = getReferenceTime();
     while (midi.length > 0 && (midi[0].time < reftime-recentTime || midi[0].complete == true)){
         //complete midi commands that are too old.  
+        
         midi[0].complete = true;
+        insertNote(midi[0], lang);
         midi.shift();
         ret++;
     }
@@ -267,6 +270,28 @@ function Chat(transcript, callback=null, pending=false){
     else if (transcript.toLowerCase() == "pause"){
         //pause video
         pauseVideo();
+    }
+    else if (transcript.toLowerCase().startsWith("set octave")){
+        //adjust playback speed of video.  
+        tokens = transcript.split(" ");
+        //logic check is in prior function
+        if (tokens.length > 2 && tokens[2] !=""){
+            if (tokens.length > 3 && tokens[3] !=""){
+                octave = parseInt(tokens[2]);
+                lang = tokens[3];
+                SetOctave(octave, lang);
+
+            }
+            else{
+                octave = parseInt(tokens[2]);
+                setOctave(octave);
+            }
+
+
+        }
+        else{
+            executed = false;
+        }
     }
     else if (transcript.toLowerCase().startsWith("set speed")){
         //adjust playback speed of video.  
@@ -469,6 +494,7 @@ function Chat(transcript, callback=null, pending=false){
     }
     else{
         if (executed){
+
             addComment(transcript, helpme());
         }
     }

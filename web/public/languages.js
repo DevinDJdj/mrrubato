@@ -64,12 +64,24 @@ function changeColor(word, color){
 }
 
 
-function updateState(entry, entrytime, transcript){
+//should really be able to see the users transcript in words, so when clicking a user, we show his transcript.  
+//list all user icons/names next to your own to be clicked
+function updateState(transcript=""){
     //function to get the state of the entire transcript up to this point.  
     //this is a bit of a mess.  Need to clean up.
     //get the state info and 
     //for now just show latest entry.  
-    $('#currentstate').val(entry);
+    //use midi array with current language and meta.  
+    mytranscript = $('#mycomments').val();
+    mystate = "";
+    mystate += currentlanguage + ": " + midiarray[currentmidiuser][currentlanguage].length + "<br>";
+    mystate += "meta: " + midiarray[currentmidiuser]["meta"].length + "<br>";
+    mystate += "last entry: " + transcript + "<br>";
+    mystate += "current video time: " + currentvidtime + "<br>";
+    if (lastnote !==null){
+        mystate += "Last Note: " + lastnote.note + "<br>";
+    }
+    $('#currentstate').html(mystate);
 
 }
 
@@ -201,6 +213,20 @@ function addLanguage(lang, midi){
 }
 
 
+function setOctave(octave, lang=""){
+    if (lang==""){
+        lang = currentlanguage;
+    }
+    keybot[lang] = octave*12;
+    for (const [key, value] of Object.entries(langsa[lang])) {	
+        value.midi = convertKeys(value.midi, keybot[lang]/12);
+        m = value.midi.split(",");
+        langs[lang][m.length][value.midi] = key; //full word info.  
+        //reset inline conversion.  
+    }
+
+}
+
 function changeLanguage(midi){
     //find the language.  
     lang = lang.toLowerCase().replaceAll(" ", "_");
@@ -312,6 +338,9 @@ function loadMetaLanguage(lang="meta", user=0){
     //keymap comes from speech.js
     //keymap.keydict[""]
     add = 0;
+    if (typeof(midiarray[user][lang]) === "undefined"){
+        midiarray[user][lang] = [];
+    }
     if (langs[lang] === undefined){
         langs[lang] = {};
         langsa[lang] = {};
@@ -363,7 +392,9 @@ function loadLanguage(lang, user){
             //why did we save like this, not sure if we actually need.  
             addDictRow(lang, key, value, user);
         }
-        addDictRow(lang, "test", {"word": "test", "midi": "1,1", "user": user, "times": 0, "definition": "test", "created": "20210101", "lang": lang}, user);
+        obj = {"word": "test", "midi": "1,1", "user": user, "times": 0, "definition": "test", "created": "20210101", "lang": lang};
+        langsa[lang]["test"] = obj;
+        addDictRow(lang, "test", obj, user);
     }
 
     else{
@@ -394,15 +425,16 @@ function loadLanguage(lang, user){
                         langs[lang][m.length] = {};
                     }
                     
+                    langsa[lang][key] = value; //full word info.  
+
+                    addDictRow(lang, key, value, user, add);
+
+                    value.midi = convertKeys(value.midi, keybot[lang]/12);
                     langs[lang][m.length][value.midi] = key; //midiseq -> word lookup.  
 
                     //convert keys down for now.  Probably get rid of this, converting to 0 based.  
                     //except for lookup.  
                     //shift keys down.  
-                    value.midi = convertKeys(value.midi, -keybot[lang]/12);
-                    langsa[lang][key] = value; //full word info.  
-
-                    addDictRow(lang, key, value, user, add);
 
                     langa = lang.toLowerCase().replaceAll(" ", "_");
                     langlink = document.getElementById("langlink_" + langa);
@@ -474,12 +506,15 @@ function filterDicAuto(transcript){
 //            $('#keys').select2('val', ['good'])
             transcript = transcript.slice(0,-1); //remove last comma.
 
-            transcript = convertKeys(transcript, -keybot[currentlanguage]/12);
+            transcripta = convertKeys(transcript, -keybot[currentlanguage]/12);
 
-            getFullPiano(transcript);
 
-            autodic.column(DIC1_KEYS).search(transcript).draw();
-            metadic.column(DIC1_KEYS).search(transcript).draw();
+            autodic.column(DIC1_KEYS).search(transcripta).draw();
+
+            transcriptb = convertKeys(transcript, -keybot["meta"]/12);
+            metadic.column(DIC1_KEYS).search(transcriptb).draw();
+
+            getFullPiano(transcript); //dont use converted keys for this.  
         }
         else{
             autodic.columns().search(''); //clear all filters.
@@ -496,6 +531,8 @@ function filterDicAuto(transcript){
         metadic.columns().search('');
         metadic.draw();
     }
+    //only update if we have transcript.  
+    updateState(transcript);
 }
 
 function createAutoDic(user){
@@ -630,17 +667,40 @@ function destroyDics(){
 
 }
 
-function getFullPiano(midikeys=null){
+function labelDic(lang){
+    let fullpcanvas_labels = document.getElementById("fullpcanvas_labels");    
+    var context = fullpcanvas_labels.getContext("2d");
+    context.fillStyle = "red";
+    context.font = "bold 12px Arial";
+    context.textAlign = 'left';
+    x = keybot[currentlanguage];
+    y = 16;
+    context.fillText("     " + currentlanguage, ((x+3)/88)*fullpcanvas_labels.width, y);
+    context.strokeStyle = "red";
+    context.lineWidth = 2;
+    context.beginPath();
+    context.rect(((x+3)/88)*fullpcanvas_labels.width, 0, ((24)/88)*fullpcanvas_labels.width, fullpcanvas_labels.height-2);
+    context.stroke();
+
+}
+
+function getFullPiano(midikeys=null, midikeys2=null){
     let fullpcanvas = document.getElementById("fullpcanvas");    
     let RedKeys = [];
     if (midikeys !== null){
-        midikeys = convertKeys(midikeys, keybot[currentlanguage]/12, 3); //get keys + keybot + shift 3 for 88-key.  
+//        midikeys = convertKeys(midikeys, keybot[currentlanguage]/12, 3); //get keys + keybot + shift 3 for 88-key.  
+        //still need the shift
+        midikeys = convertKeys(midikeys, 0, 3); //get keys + shift 3 for 88-key.
         RedKeys = midikeys.split(",");
         RedKeys = RedKeys.map(function (x) { 
             return parseInt(x, 10); 
         });
     }
     DrawKeyboard(fullpcanvas, RedKeys);
+
+    labelDic(currentlanguage);
+    labelDic("meta");
+
 //    const img    = pcanvas.toDataURL('image/png');
 //    document.getElementById("generatedkeys4").src = img4;
 //    return img;
@@ -706,7 +766,10 @@ function loadDictionaries(user){
                     targets: DIC_KEYS,
                     render: function (data, type, row, meta) {
                         tmp = langsa[ row[DIC_LANG] ][ row[DIC_WORD] ];
-                        if (!("img" in tmp) || typeof(tmp["img"]) === "undefined"){
+                        if (typeof(tmp) === "undefined"){
+                            tmp = null
+                        }
+                        if (tmp !==null && (!("img" in tmp) || typeof(tmp["img"]) === "undefined")){
                             tmp["img"] = getMiniPiano(row[DIC_KEYS]);
                         }
                         return '<img width="110px" height="22px" src="' + tmp["img"] + '" alt="' + row[DIC_KEYS] + '" /><br>' + row[DIC_KEYS]; 
@@ -874,6 +937,28 @@ function updateLangRange(lang, user, start, end){
 
 function findWordsA(user){
     console.log('Findwords start ' + Date.now());
+    //should load meta array first.  Or we really need to do this logic in time, not order of language?  
+    //right now we have no easy way to search time across languages.  
+    //essentially we would need to make a string of each language and check all times until the minimum time from all other languages.  
+    //this is not efficient?  
+    //also really need to search from longest to shortest.  
+
+    //pseudo-code
+    /*
+        find all word in meta
+        for each word in meta
+            save any set octave or set language commands
+        for each language in midiarray
+            we can search through the midiarray for any language until set language or set octave.  
+            locally run the set octave or set language, then continue the tempstr.  
+            Dont think this changes the tempstr.  Just changes what we should be searching.  
+            So we will have to search through all languages up until the set octave or set language commands.  
+            Then start a new tempstr until the next set octave or set language command.  
+            This changes the langs[lang][midiseq.length][midiseq] = word array
+            This algorithm may actually be slightly faster.  Hard to say the efficiency of the tempstr.matchAll with large strings.  
+
+    */
+
     for (const [lang, value] of Object.entries(midiarray[user])) {
         temp = value;
         key = lang;
@@ -935,6 +1020,8 @@ function findWordsA(user){
     console.log('Findwords end ' + Date.now());
 
 }
+
+
 function findWords(user){
 
     for (const [key, value] of Object.entries(langstart)) {	

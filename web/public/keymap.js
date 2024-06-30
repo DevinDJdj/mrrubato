@@ -58,7 +58,8 @@ class Keymap{
                 "0,5,0": "read", 
                 "0,4,0": "scroll down",
                 "0,3,0": "page down",
-                "0,2,0": "stop"
+                "0,2,0": "stop", 
+                "5,17,17": "octave ",
             }, 
             "4": {
                 "24,23,23,24": "pause",
@@ -152,6 +153,70 @@ class Keymap{
                 }
 
             }
+            return transcript; //add language xxxx 2,3,4
+        };
+
+        this.keydict["set octave "] = {"1": {"min": -12, "max": 12}, "2":{"relative": 1, "lang": 2}}; //number of increments.  from middle C
+
+        this.funcdict["set octave "] = function(transcript, midi, keydict, key){
+            //if we have up/down.  black keys = meta.  white keys = current.  
+            let commandlength = 0;
+            let commanddict = null;
+            for (const [k, v] of Object.entries(keydict[key])) {
+                if (parseInt(k) <= midi.length){
+                    if (parseInt(k) > commandlength){
+                        //always want to take the longest command.  
+                        commandlength = parseInt(k);
+                        commanddict = v;
+                    }
+                };
+
+            }
+            //maybe not for all commands, but here, we set to blank in case we have incorrect params.  
+            transcript = "";
+            let octave = 0;
+            let octave1 = 0;
+            if (commandlength > 0){
+                //we have a command map at least.  
+                if (commandlength == 1){
+                    octave = midi[0].note - keybot["meta"] - OCTAVE;
+                    //start at middle, only need top octave as parameter.  
+                    if (octave > -1 && octave < OCTAVE+1){
+
+                        transcript = "set octave " + octave;
+                        midi[0].complete = true;
+                        //I think this will work ok.  
+                        //this allows us to move on to next command.  
+                    }
+                    else{
+                        //not sure how I want to handle errors yet.  
+                        return "ERROR set octave - incorrect parameters"
+                    }
+                }
+
+                if (commandlength == 2){
+                    octave = midi[0].note - keybot["meta"] - OCTAVE;
+                    octave1 = midi[1].note - keybot["meta"] - OCTAVE;
+                    if (octave > -1 && octave < OCTAVE+1 && octave == octave1){                        
+                        transcript = "set octave " + octave + " meta";
+                        midi[0].complete = true;
+                        midi[1].complete = true;
+                        //I think this will work ok.  
+                        //this allows us to move on to next command.  
+                    }
+                    else if (octave > -1 && octave < OCTAVE+1){
+                        transcript = "set octave " + octave;
+                        midi[0].complete = true;
+                        //I think this will work ok.  
+                        //this allows us to move on to next command.
+                    }
+                    else{
+                        //not sure how I want to handle errors yet.  
+                        return "ERROR set octave - incorrect parameters"
+                    }
+                }
+            }
+
             return transcript; //add language xxxx 2,3,4
         };
         
@@ -605,25 +670,35 @@ class Keymap{
         //return transcript
         //if transcript startswith any of these commands or equals anything in the keydict, prioritize this
         //if we can translate the midi return transcript, otherwise return ""
+        lang = "";
+        //right now only using meta commands.  
+        //we should add to the right language in the midiarray.  
+        //generally this will be currentlanguage, but could be meta or other.  
+        //we can have overlapping languages I suspect.  
+        //we need this to be this.funcdict[lang][key] = function
+        //right now all commands are meta.  
+
         if (midi != null){
             for (const [key, value] of Object.entries(this.funcdict)) {
                 let prevtranscript = transcript;
                 if (transcript !=""){
                     if (key !="" && transcript.startsWith(key)){
                         let f = value;
-                        transcript = f(transcript, midi, this.keydict, key);
-                        return transcript;
+                        let ret = f(transcript, midi, this.keydict, key);
+                        lang = "meta";
+                        return [ret, lang];
                     }
                 }
                 else{
                     let f = value;
-                    transcript = f(transcript, midi, this.keydict, key);
-                    return transcript;
+                    let ret = f(transcript, midi, this.keydict, key);
+                    lang = "meta";
+                    return [ret, lang];
                 }
             }
         }
 
-        return transcript;
+        return [transcript, lang];
     }
 
 }

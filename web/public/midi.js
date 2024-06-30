@@ -521,17 +521,20 @@ function getMIDIMessage(message, mytime=0, lang="") {
 	}
 }
 
-function insertNote(note){
+function insertNote(note, lang=""){
 	//usually inserting last.  
 	//fine for now.  
 	//use currentlanguage
 	//i = midiarray[currentmidiuser][currentlanguage].length-1;
 
-	i=midiarray[currentmidiuser][currentlanguage].length-1;
-	while (i >-1 && note.time < midiarray[currentmidiuser][currentlanguage][i].time){		
+	if (lang == ""){
+		lang = currentlanguage;	
+	}
+	i=midiarray[currentmidiuser][lang].length-1;
+	while (i >-1 && note.time < midiarray[currentmidiuser][lang][i].time){		
 		i--;
 	}
-	midiarray[currentmidiuser][currentlanguage].splice(i+1, 0, note);
+	midiarray[currentmidiuser][lang].splice(i+1, 0, note);
 	
 }
 
