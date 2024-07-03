@@ -484,7 +484,9 @@ function getMIDIMessage(message, mytime=0, lang="") {
 	else{
 		//set current language.  Should be fine if this remains current language?  
 		//best is if we keep track of the age of the tracks.  too much...
-		currentlanguage = lang;
+		//this screws things up.  
+		//we can pass to the right track now.  
+//		currentlanguage = lang;
 	}
 	var command = message[0];
 	if (command == 144 || command == 128){
@@ -506,16 +508,16 @@ function getMIDIMessage(message, mytime=0, lang="") {
 	switch (command) {
 		case 144: // noteOn
 			if (velocity > 0) {
-				noteOn(note, velocity, abstime, mytime);
+				noteOn(note, velocity, abstime, mytime, lang);
 				prevvelocity = velocity;
 				prevtime = abstime;
 			} 
 			else {
-				noteOff(note, abstime);
+				noteOff(note, abstime, lang);
 			}
 			break;
 		case 128: // noteOff
-			noteOff(note, abstime);
+			noteOff(note, abstime, lang);
 			break;
 		// we could easily expand this switch statement to cover other types of commands such as controllers or sysex
 	}
@@ -538,7 +540,10 @@ function insertNote(note, lang=""){
 	
 }
 
-function noteOn(note, velocity, abstime, mytime=0){ //mytime is the original time in the midi file, or 0 when playing live.  
+function noteOn(note, velocity, abstime, mytime=0, lang=""){ //mytime is the original time in the midi file, or 0 when playing live.  
+	if (lang==""){
+		lang = currentlanguage;
+	}
 	
     console.log("Note On " + note + " at " + abstime + " vel " + velocity);
 	//make sound here.  
@@ -558,7 +563,11 @@ function noteOn(note, velocity, abstime, mytime=0){ //mytime is the original tim
 //	midiarray.push(obj);
 }
 
-function noteOff(note, abstime){
+function noteOff(note, abstime, lang=""){
+	if (lang==""){
+		lang = currentlanguage;
+	}
+
 	var obj = notes[note];
 	if (obj.osc != null)
 		obj.osc.stop();
@@ -573,7 +582,7 @@ function noteOff(note, abstime){
 	}
 	else{
 		lastnote = obj;	
-		insertNote(clone);
+		insertNote(clone, lang);
 		obj.velocity = 0;
 		notes[note] = obj;
 	}

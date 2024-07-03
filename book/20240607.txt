@@ -535,6 +535,9 @@ if executed move to the lang of choice.
 OK, now we are returning language from findCommand.  
 How do we make this logical to search through multiple languages.  
 
+Why are we getting two notes for each base note?  
+
+
 
 
 **web/public/languages.js
@@ -555,3 +558,5 @@ Much more annoying than I thought.
 This logic is not so intuitive for BabylonJS.  
 Maybe disable the drag functionality.  
 Not sure....
+
+Need to fix the login functionality.  

@@ -195,7 +195,8 @@ var querydate = null;
 					// https://firebase.google.com/docs/reference/js/firebase.User
 					
 						uid = user.uid;
-										
+						
+						loadAll();
 					}
 				// IdP data available in result.additionalUserInfo.profile.
 				  // ...
@@ -212,42 +213,48 @@ var querydate = null;
 
 		google.charts.load('current', {'packages':['corechart', 'timeline', 'bar']});
 		
-		var vRef = firebase.database().ref(dbname);
-		if (typeof(uid) != "undefined" && uid !==null){
-		}
-		//get mydate if exists.  
-		if (querydate ==null){
-			var now = new Date();
-			now.setDate(now.getDate() + 1); //add a day so we get today as well.  
-//			now.setMilliseconds(0);
-			querydate = now.toISOString().substring(0,10);
-//			mydate = now.toISOString().replace(/.000/, "");
+		//loadAll();
 
-		}
-		else{
-			//?date=2021-09-01
-		}
-//		ref.orderByChild('snippet/title').equalTo(title).on("value", function(snapshot) {
-//		vRef.orderByChild('snippet/publishedAt').limitToLast(50).once("value")
-		vRef.orderByChild('snippet/publishedAt').endAt(querydate).limitToLast(50).once("value")
-		.then((snapshot) => {
-			if (snapshot.exists()) {							
-
-				console.log(snapshot.val());
-				videojson = snapshot.val();
-				vids = getRecent(videojson);
-				drawChart(vids);
-				drawDurationChart(vids);
-				getGit();
-			}			
-		});
-		  
         } catch (e) {
           console.error(e);
           loadEl.textContent = 'Error loading the Firebase SDK, check the console.';
         }
       });
 
+
+
+function loadAll(reload = false){
+	var vRef = firebase.database().ref(dbname);
+	if (typeof(uid) != "undefined" && uid !==null){
+	}
+	//get mydate if exists.  
+	if (querydate ==null){
+		var now = new Date();
+		now.setDate(now.getDate() + 1); //add a day so we get today as well.  
+//			now.setMilliseconds(0);
+		querydate = now.toISOString().substring(0,10);
+//			mydate = now.toISOString().replace(/.000/, "");
+
+	}
+	else{
+		//?date=2021-09-01
+	}
+//		ref.orderByChild('snippet/title').equalTo(title).on("value", function(snapshot) {
+//		vRef.orderByChild('snippet/publishedAt').limitToLast(50).once("value")
+	vRef.orderByChild('snippet/publishedAt').endAt(querydate).limitToLast(50).once("value")
+	.then((snapshot) => {
+		if (snapshot.exists()) {							
+
+			console.log(snapshot.val());
+			videojson = snapshot.val();
+			vids = getRecent(videojson);
+			drawChart(vids);
+			drawDurationChart(vids);
+			getGit();
+		}			
+	});
+
+}
 
 function loadRecentTable(){
 	recenttable = new DataTable('#RecentTable', {

@@ -673,9 +673,9 @@ function labelDic(lang){
     context.fillStyle = "red";
     context.font = "bold 12px Arial";
     context.textAlign = 'left';
-    x = keybot[currentlanguage];
+    x = keybot[lang];
     y = 16;
-    context.fillText("     " + currentlanguage, ((x+3)/88)*fullpcanvas_labels.width, y);
+    context.fillText("     " + lang, ((x+3)/88)*fullpcanvas_labels.width, y);
     context.strokeStyle = "red";
     context.lineWidth = 2;
     context.beginPath();
@@ -698,8 +698,8 @@ function getFullPiano(midikeys=null, midikeys2=null){
     }
     DrawKeyboard(fullpcanvas, RedKeys);
 
-    labelDic(currentlanguage);
     labelDic("meta");
+    labelDic(currentlanguage);
 
 //    const img    = pcanvas.toDataURL('image/png');
 //    document.getElementById("generatedkeys4").src = img4;
