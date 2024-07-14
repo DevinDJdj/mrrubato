@@ -135,6 +135,53 @@ function setVideoVolume(volume){
     */
   }
 
+  function getVideoWH(){
+    if (useyoutube || watch){
+      return [player.getVideoWidth(), player.getVideoHeight()]
+    }
+    else{
+        return [player2.videoWidth, player2.videoHeight];
+    }
+  }
+
+  
+  function mapToXY(x, y){
+    [docwidth, docheight] = getVideoWH();
+    let xpixel = x*docwidth/12;
+    let ypixel = y*docwidth/12;
+    if (xpixel > docwidth){
+        xpixel = docwidth;
+    }
+    if (ypixel > docheight){
+        ypixel = docheight;
+    }
+    if (xpixel < 0){
+        xpixel = 0;
+    }
+    if (ypixel < 0){
+        ypixel = 0;
+    }
+    return [xpixel, ypixel];
+  }
+
+  function highlightVideo(x, y, x1=0, y1=0){
+    console.log("highlight video" + x + " " + y + " " + x1 + " " + y1);
+    [x, y] = mapToXY(x, y);
+    [x1, y1] = mapToXY(x1, y1);
+
+  } 
+
+  function drawVideo(){
+    var canvas = document.getElementById("myvideocanvas");
+    var ctx = canvas.getContext("2d");
+    if (useyoutube || watch){
+    }
+    else{
+      ctx.drawImage(player2, 0, 0, canvas.width, canvas.height);
+    }
+
+  }
+
   function skipVideo(secs, v=""){
       if (useyoutube || watch){
           player.seekTo(player.getCurrentTime() + secs);
@@ -251,6 +298,7 @@ function setVideoVolume(volume){
             );
             ispaused = 0;
             midioffset = 0;
+            requestAnimationFrame(drawVideo);
           };
 
           player2.onpause = (event) => {

@@ -39,6 +39,8 @@
   <td>
 <div id="vidinfo" valign="top"></div>
 	<div id="player" valign="top"></div>
+	
+<canvas id="myvideocanvas" width="640" height="360" style="display: none">Your browser does not support the HTML5 canvas tag.</canvas>
 <video
 id="my-video"
 class="video-js"
@@ -758,6 +760,7 @@ function getFeedbackImage(source, w, h, myscene,myengine, midiuser=0){
 
 //			console.log("JUMP TO " + getSecsFromXY(pointerInfo.event.x, pointerInfo.event.y, myscene, myengine));
 			console.log("JUMP TO " + getSecsFromXY(myscene.pointerX, myscene.pointerY, myscene, myengine));
+			seekVideo(getSecsFromXY(myscene.pointerX, myscene.pointerY, myscene, myengine));
 			break;
 			case BABYLON.PointerEventTypes.POINTERDOUBLETAP:
 			console.log("POINTER DOUBLE-TAP");

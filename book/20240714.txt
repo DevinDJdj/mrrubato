@@ -1,0 +1,76 @@
+
+**web/public/recent.html
+Need recent watch as well as created.  
+Add watch parameter
+watch=true
+
+sort by: 
+/watch/[videoid]/snippet/addedAt
+
+add value:
+/watch/[videoid]/comments/[uid]/pctWatched
+
+Use these two parameters to sort results.  
+
+
+**web/public/languages.js
+"change color for " word (color, 12-12)
+
+
+**server
+Try Deepspeech insead of Coqui for STT/TTS training.  
+There is some poor compatibility with the NVIDIA driver that Coqui causes.  
+Functionality is the same.  
+
+**server/transcription/server.py
+Need update of STT to use Deepspeech or similar.  
+I guess try this:
+https://medium.com/visionwizard/train-your-own-speech-recognition-model-in-5-simple-steps-512d5ac348a5
+
+
+**web/public/analyze.html
+Test:
+MscGMds1wn4
+
+OK, multiple users ok now, but how do we distinguish between them in the feedbackImage?  
+
+Build meta commands, playback filtered list.  
+Playback with filter functionality.  
+Need to create/test this.  
+
+This should also run the commands associated with the transcript.  Whatever they are, or have the option to.  
+If we are running the commands, we should add to our feedback channel of whatever the language is for our user?  
+Or should that be separate option?
+
+Should test
+set octave 
+
+Go ahead and complete seekTo Functionality.  
+
+Need to fix the login functionality.  
+
+
+**web/public/db.js
+Need to move some things here as well.  
+
+
+
+
+**web/public/analyze.html
+How do we draw on the frame of the video?  
+Annotation on the video should be a basic function.  
+Need to drive from MIDI first
+https://stackoverflow.com/questions/33834724/draw-video-on-canvas-html5
+https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Manipulating_video_using_canvas
+draw transcript just above keys?  
+Not sure if it will work well with youtube.  
+
+test highlightvideo function.  
+
+How/what do we want to display?  
+Embed video on BabylonJS
+https://playground.babylonjs.com/#1DX9UE#3
+
+Make video hidden and draw canvas in the same location as the video.  
+
+Make video hidden, and then 

@@ -245,6 +245,27 @@ function Chat(transcript, callback=null, pending=false){
     if (transcript.toLowerCase().startsWith("help")){
 
     }
+    else if (transcript.toLowerCase().startsWith("highlight")){
+        //skip to next event?  
+        tokens = transcript.split(" ");
+        //logic check is in prior function
+        if (tokens.length > 4){
+            x = parseFloat(tokens[1]);
+            y = parseFloat(tokens[2]);
+            x1 = parseFloat(tokens[3]);
+            y1 = parseFloat(tokens[4]);
+            highlightVideo(x, y, x1, y1);
+
+        }
+        else if (tokens.length > 2){
+            x = parseFloat(tokens[1]);
+            y = parseFloat(tokens[2]);
+            highlightVideo(x, y);
+        }
+        else{
+            executed=false;
+        }
+    }
     else if (transcript.toLowerCase().startsWith("skip")){
         //skip to next event?  
         tokens = transcript.split(" ");

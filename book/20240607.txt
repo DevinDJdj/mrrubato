@@ -51,7 +51,7 @@ Similar function
 **analyze/analyze.py
 launch process to do transcription via server.  
 Exchange this for current local client process.  
-
+--done
 
 **web/public/analyze.html
 test filter functionality
@@ -414,6 +414,8 @@ draw transcript just above keys?
 Not sure if it will work well with youtube.  
 Random solution
 https://community.adobe.com/t5/animate-discussions/embedding-youtube-videos-in-an-html5-canvas/m-p/9988866
+
+test highlightvideo function.  
 
 
 

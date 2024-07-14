@@ -4,6 +4,30 @@ var EOW = 12; //end of word
 var OCTAVE = 12;
 //for now two octave structure.  12 keys per octave.  This should be changeable though.  
 
+function text2num(s) {
+    a = s.toString().split(/[\s-]+/);
+    n = 0;
+    g = 0;
+    a.forEach(feach);
+    return n + g;
+}
+
+function getNum(str){
+    mynum = parseInt(str);
+    if (isNaN(mynum)){
+        mynum = text2num(str);
+    }
+    if (isNaN(mynum)){
+        return -1;
+    }
+    else{
+        return mynum;
+    }
+}
+
+
+
+
 class Keymap{
     constructor(){
         this.keys = [];
@@ -64,6 +88,7 @@ class Keymap{
             "4": {
                 "24,23,23,24": "pause",
                 "24,21,23,24": "skip ",
+                "24,22,22,24": "highlight ",
 //                "24,23,21,24": "back ", //just use skip forward or back.  
                 "0,1,1,0": "set speed ", //set speed of playback.  This will be a number from -12 to 12.  0 is normal speed.
                 "12,6,6,12": "set volume ", //set volume of playback.  This will be a number from 0 to 12.  0 is mute.
@@ -119,6 +144,96 @@ class Keymap{
         };
 
 
+        this.keydict["highlight "] = {"1": {"min": -12, "max": 12}}; //number of increments.  from middle C
+
+        this.funcdict["highlight "] = function(transcript, midi, keydict, key){
+            let commandlength = null;
+            let commanddict = null;
+            for (const [k, v] of Object.entries(keydict[key])) {
+                if (parseInt(k) <= midi.length){
+                    commandlength = k;
+                    commanddict = v;
+                };
+            }
+            //maybe not for all commands, but here, we set to blank in case we have incorrect params.  
+            transcript = "";
+            let skip = 0;
+            if (commandlength !== null){
+                //we have a command map at least.  
+                if (commandlength == "4"){
+                    //BBOX
+                    if (midi[0].note > midi[1].note){
+                        x = midi[0].note - keybot["meta"] - OCTAVE;
+                        y = midi[1].note - keybot["meta"];
+                    }
+                    else{
+                        y = midi[0].note - keybot["meta"];
+                        x = midi[1].note - keybot["meta"] - OCTAVE;
+                    }
+
+                    if (midi[2].note > midi[3].note){
+                        x1 = midi[2].note - keybot["meta"] - OCTAVE;
+                        y1 = midi[3].note - keybot["meta"];
+                    }
+                    else{
+                        y1 = midi[2].note - keybot["meta"];
+                        x1 = midi[3].note - keybot["meta"] - OCTAVE;
+                    }
+
+                    if (y > -1 && y < OCTAVE && x > -1 && x < OCTAVE && y1 > -1 && y1 < OCTAVE && x1 > -1 && x1 < OCTAVE){
+                        y = OCTAVE - 1 - y; //reverse
+                        y1 = OCTAVE - 1 - y1; //reverse
+                        if (y1 < y){
+                            temp = y1;
+                            y1 = y;
+                            y = temp;
+                        }
+                        if (x1 < x){
+                            temp = x1;
+                            x1 = x;
+                            x = temp;                    
+                        }
+
+                        transcript = "highlight " + x.toString() + " " + y.toString() + " " + x1.toString() + " " + y1.toString();
+                        midi[0].complete = true;
+                        midi[1].complete = true;
+                        midi[2].complete = true;
+                        midi[3].complete = true;
+                        //I think this will work ok.  
+                        //this allows us to move on to next command.  
+                    }
+                    else{
+                        //not sure how I want to handle errors yet.  
+                        return "ERROR highlight - incorrect parameters"
+                    }
+                }
+                else if (commandlength == "2"){
+                    if (midi[0].note > midi[1].note){
+                        x = midi[0].note - keybot["meta"] - OCTAVE;
+                        y = midi[1].note - keybot["meta"];
+                    }
+                    else{
+                        y = midi[0].note - keybot["meta"];
+                        x = midi[1].note - keybot["meta"] - OCTAVE;
+                    }
+
+
+                    if (y > -1 && y < OCTAVE && x > -1 && x < OCTAVE){
+                        y = OCTAVE - 1 - y; //reverse
+                        transcript = "move " + x.toString() + " " + y.toString();
+                        midi[0].complete = true;
+                        midi[1].complete = true;
+                        //I think this will work ok.  
+                        //this allows us to move on to next command.  
+                    }
+                    else{
+                        //not sure how I want to handle errors yet.  
+                        return "ERROR move - incorrect parameters"
+                    }
+                }
+            }
+            return transcript; //add language xxxx 2,3,4
+        };
 
         this.keydict["skip "] = {"1": {"min": -12, "max": 12}}; //number of increments.  from middle C
 
@@ -654,6 +769,8 @@ class Keymap{
             }
             return transcript;
         };
+
+        
         this.keydict["page"] = {"1": {}}; //number of pages to scroll.  from middle C
         this.keydict["search"] = {"8": {}}; 
         this.keydict["channel"] = {"5": {}}; //keywords are sets of 5 or 7 and more
@@ -665,6 +782,7 @@ class Keymap{
         //when running a commandset, how do we speed up?  
 
     }
+
 
     findCommand(transcript, midi){
         //return transcript
