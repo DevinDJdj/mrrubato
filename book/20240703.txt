@@ -21,7 +21,7 @@ import tensorflow as tf
 print(tf.test.is_gpu_available())
 
 
-**generate/tennis.py
+**generate/tennis3.py
 Try a new tack.  
 **generate/exceltocsv.py
 See if we can generate something interesting just with this data.  
@@ -95,4 +95,32 @@ All players, #matches per day = seconds per day.
 How to identify players in this case?  
 
 Different for individual players.  
+
+
+OK have a start.  
+Need more distinction for each match.  
+Distinction for each tournament name.  
+Set instruments.  
+
+Need dataset with exact start times or end times, or both.  
+Cant find.  
+We should generate video along with this.  
+Users should have identifier.  
+Play simultaneously.  
+
+
+**generate/notes.py
+https://medium.com/@gallaghersam95/extract-piano-notes-from-wav-files-in-python-3954a1876e8e
+https://pypi.org/project/audio-to-midi/
+https://github.com/NFJones/audio-to-midi
+use activation_level = 0.05 perhaps, see if we can get notes from standard 
+
+audio-to-midi ./new-home-in-the-stars-16k.wav -b 120 -t 30
+
+audio-to-midi ./new-home-in-the-stars-16k.wav -b 60 --activation-level 5
+audio-to-midi ./new-home-in-the-stars-16k.wav -b 60 --activation-level 5 -C 10
+
+git clone https://github.com/NFJones/audio-to-midi.git
+python3 ./setup.py install
+meh.. broken.
 
