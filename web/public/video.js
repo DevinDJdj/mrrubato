@@ -144,7 +144,7 @@ function setVideoVolume(volume){
     }
   }
 
-  
+
   function mapToXY(x, y){
     [docwidth, docheight] = getVideoWH();
     let xpixel = x*docwidth/12;
@@ -178,6 +178,10 @@ function setVideoVolume(volume){
     }
     else{
       ctx.drawImage(player2, 0, 0, canvas.width, canvas.height);
+      ctx.beginPath(); // Start a new path
+      ctx.rect(10, 40, 100, 150); // Add a rectangle to the current path
+      ctx.fill(); // Render the path
+      requestAnimationFrame(drawVideo);
     }
 
   }
@@ -298,6 +302,9 @@ function setVideoVolume(volume){
             );
             ispaused = 0;
             midioffset = 0;
+            var canvas = document.getElementById("myvideocanvas");
+            canvas.style.display = 'block';
+            canvas.style.position = 'absolute';
             requestAnimationFrame(drawVideo);
           };
 

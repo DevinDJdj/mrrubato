@@ -74,3 +74,36 @@ https://playground.babylonjs.com/#1DX9UE#3
 Make video hidden and draw canvas in the same location as the video.  
 
 Make video hidden, and then 
+
+
+OK, lets keep this along with the video for now.  
+Draw on this copy any text and info needed.  
+Could also match up the midi keyboard notes.  
+Maybe match up the BabylonJS underneath.  
+And push the static info to the right.  
+Yeah I think that's better organization.  
+Make video a bit larger and Stack previous and graphic in the first td
+
+
+Lets only display the words in the list which we have times for.  
+Others we can hide.  
+So on setTimes, we should display the row.  
+$(row).hide();
+
+Just do with filter.  
+Not sure if this is what we want.  
+                    dictable.columns(DIC_TIMES).search((d) => d !== "").draw();
+
+
+Add function to add transcript (comments) in a general fashion.  
+Need EOW with this.  
+Need different EOW I guess?  
+0,0,0 clears.  24,24,24 accepts.  
+24,24,24?  Allow empty midi, and just pull spoken text.  
+
+Shifted language-specific command sets should mimic meta set if possible.  
+
+Accept use of keyboard if there is no midi.  
+Turn on/off keyboard function.  
+Or accept topline numbers (~-+ = 0-12, SHIFT = 12-24)
+

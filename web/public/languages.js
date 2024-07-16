@@ -784,6 +784,7 @@ function loadDictionaries(user){
         //    initComplete: function () {
 //                count = 0;
             createdRow: function (row, data2, dataIndex) {
+//                $(row).hide();
                 if (data2[DIC_WORD] == "test"){
                     this.api().columns().every( function () {
                     var title = this.header().textContent;
@@ -1238,6 +1239,7 @@ function setTimes(lang, word, times, user=0){
             d[DIC_PLAYALL] += '<a href="#" onclick="wordplay=-1;currentwtindex=-1;"><img src="images/stop.png" /></a>';
             //unable to track multiple indexes multiple with separate stop buttons, so probably should just have one stop button.  
             this.data(d);
+//            this.show();
             this.invalidate(); // invalidate the data DataTables has cached for this row
         }
     
@@ -1287,6 +1289,10 @@ function addDictRow(lang, word, row, user=0, add=0) {
 //                $('.select2').select2();
                 dictable.columns(DIC_WORD).search("test").draw(); //have to do this to initialize the table.  Not a great solution.  
                 dictable.search("").draw();
+                  setTimeout(function(){
+                    dictable.columns(DIC_TIMES).search((d) => d !== "").draw();
+                  }, 5000);
+
 //            }, 5000);
 
         }
