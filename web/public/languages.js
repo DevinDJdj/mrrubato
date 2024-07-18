@@ -210,6 +210,22 @@ function addLanguage(lang, midi){
         }
     });
 
+    //initialize language with test word.  
+    langref1 = firebase.database().ref('/dictionary/language/' + lang + '/abc');
+	langref1.once('value')
+    .then((snap1) => {
+        now = new Date();
+        if (snap1.exists()){
+
+        }
+        else{
+            //probably should include create user and update user etc.  
+            midi = "1,1,1";
+            obj = {"midi": midi, "definition": "first word", "created": now.toISOString().substring(0, 10).replaceAll('-',''), "updated": now.toISOString().substring(0, 10).replaceAll('-','') };
+            langref1.set(obj);
+        }
+    });
+
 }
 
 
@@ -224,6 +240,7 @@ function setOctave(octave, lang=""){
         langs[lang][m.length][value.midi] = key; //full word info.  
         //reset inline conversion.  
     }
+    labelDicRedraw();
 
 }
 
@@ -245,7 +262,7 @@ function selectLanguage(lang){
     if (Object.values(alllangs).includes(lang) > -1){
         currentlanguage = lang;
         initLangData(lang);
-        $('.langlabel').html('<a id="langlink" href="#" onclick="filterDicManual();return false;">' + currentlanguage + '</a>');
+//        $('.langlabel').html('<a id="langlink" href="#" onclick="filterDicManual();return false;">' + currentlanguage + '</a>');
     }
     else{
         console.log("Language not found" + lang);    
@@ -264,6 +281,17 @@ function loadLanguages(){
             }                    
         }
     });
+
+}
+
+function addLangLabel(lang){
+    langa = lang.toLowerCase().replaceAll(" ", "_");
+    langlink = document.getElementById("langlink_" + langa);
+    if (typeof(langlink) === "undefined" || langlink === null){
+        $('.langlabel').append(' <a id="langlink_' + langa + '" href="#">' + lang + '</a> ');
+        langlink = document.getElementById("langlink_" + langa);
+        langlink.onclick = function() { filterDicManual(lang); return false; };
+    }
 
 }
 
@@ -287,6 +315,7 @@ function initLangData(lang, user=-1){
         if (!loaded){
             loadLanguage(lang, user);
         }
+        addLangLabel(lang);
     }
 /*
     if (typeof(langstart[lang]) === "undefined"){
@@ -368,6 +397,7 @@ function loadMetaLanguage(lang="meta", user=0){
             addDictRow(lang, value2, temp, user, add);
         }
     }                    
+    addLangLabel("meta");
     console.log('Load Meta Language end ' + Date.now());
     metadic.draw();
 
@@ -436,21 +466,20 @@ function loadLanguage(lang, user){
                     //except for lookup.  
                     //shift keys down.  
 
-                    langa = lang.toLowerCase().replaceAll(" ", "_");
-                    langlink = document.getElementById("langlink_" + langa);
-                    if (typeof(langlink) === "undefined" || langlink === null){
-                        $('.langlabel').append('<a id="langlink_' + langa + '" href="#">' + lang + '</a>');
-                        langlink = document.getElementById("langlink_" + langa);
-                        langlink.onclick = function() { filterDicManual(lang); return false; };
-                    }
                                 
                 }
-                //dynamic functions for this language.  
+                addLangLabel(lang);
+            //dynamic functions for this language.  
 //                loadLanguageScript(lang);             
                 //populate the filters.  
+                if (typeof(langs[lang][2]) === "undefined"){
+                    langs[lang][2] = {};
+                }
                 obj = {"word": "test", "midi": "1,1", "user": user, "times": 0, "definition": "test", "created": "20210101", "lang": lang};
                 langsa[lang]["test"] = obj;
                 addDictRow(lang, "test", obj, user);
+                obj.midi = convertKeys(obj.midi, keybot[lang]/12);
+                langs[lang][m.length][obj.midi] = "test"; //midiseq -> word lookup.  
 
             }
         });
@@ -665,6 +694,15 @@ function destroyDics(){
 //$(tableId + " tbody").empty();
 //$(tableId + " thead").empty();
 
+}
+
+function labelDicRedraw(){
+    let fullpcanvas_labels = document.getElementById("fullpcanvas_labels");    
+    var context = fullpcanvas_labels.getContext("2d");
+    context.clearRect(0, 0, fullpcanvas_labels.width, fullpcanvas_labels.height);
+    //pull all languages used.  
+    labelDic(currentlanguage);
+    labelDic("meta");
 }
 
 function labelDic(lang){

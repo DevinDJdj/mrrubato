@@ -107,3 +107,38 @@ Accept use of keyboard if there is no midi.
 Turn on/off keyboard function.  
 Or accept topline numbers (~-+ = 0-12, SHIFT = 12-24)
 
+
+List languages.  
+If lang is being used.  
+Redraw labelDic() each time.  
+
+OK, 
+need to adjust funcdict
+need this to be this.funcdict[lang][key] = function
+right now all meta.  
+Need a list of languages to check.  
+
+Do language listing/management first.  
+Do we want to add to transcript?  Not sure yet.  
+This is all transcribed data, so it is just preference.  
+Maybe just show transcript of the currently selected language.  
+
+use midiarray[currentuser][lang]
+Any array that exists here
+This should only exist if it is already used or if we selected the language.  
+So we want to load all languages in the midi if there is select language...
+Also if it has been used in the feedback.  
+Do we need another structure here besides midiarray?  
+
+Eventually may want to hold same data in midiarray2[lang][user...]
+
+all languages in the piano map should be included in AutoDic
+
+Need button to filter "includes word" (times) or not filter on times.  
+
+Why does bottom octave not work?  
+
+Test add language.  
+
+Need to dynamically add the words.  
+

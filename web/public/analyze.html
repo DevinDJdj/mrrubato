@@ -538,7 +538,9 @@ function loadAll(reload = false){
 	reinitLanguages();
 	getFullPiano();
 
-firebase.auth().setPersistence('session').then(() => {
+	//firebase.auth.Auth.Persistence.LOCAL 'local'
+	firebase.auth().setPersistence('local').then(() => {
+//firebase.auth().setPersistence('session').then(() => {
 	if (reload){
 		user = null;
 	}

@@ -83,7 +83,7 @@ class Keymap{
                 "0,4,0": "scroll down",
                 "0,3,0": "page down",
                 "0,2,0": "stop", 
-                "5,17,17": "octave ",
+                "5,17,17": "set octave ",
             }, 
             "4": {
                 "24,23,23,24": "pause",
@@ -559,7 +559,7 @@ class Keymap{
             //must end with 12,12
             if (midi.length > 2){
                 //for now this is ok, but must code for continuous speech.  
-                let temptr = " ";
+                let temptr = "";
                 for (let i=0; i<midi.length-1; i++){
                     if (i>0 && midi[i].note - keybot["meta"] == EOW && midi[i+1].note - keybot["meta"] == EOW){
                         //we have a language
@@ -569,14 +569,15 @@ class Keymap{
                             midi[j].complete = true;
                         }
                         for (j=0; j<i; j++){
-                            temptr += (midi[j].note).toString();
-//                            temptr += (midi[j].note - keybot["meta"]).toString();
+//                            temptr += (midi[j].note).toString();
+                            temptr += (midi[j].note - keybot["meta"]).toString();
                             if (j<i-1){
                                 temptr += ",";
                             }
                         }
                         console.log(temptr);
-                        transcript += " " + temptr;
+
+                        transcript = transcript.trim() + " " + temptr;
                         return transcript;
                     }
 
