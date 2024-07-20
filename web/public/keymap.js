@@ -32,9 +32,9 @@ class Keymap{
     constructor(){
         this.keys = [];
         this.keymap = []; //midinum - 48
+        this.langdict = {}; //this should contain "lang": {"keymap": [], "keydict": {}, "funcdict": {}}
         this.keydict = {};
         this.funcdict = {};
-        this.loadKeys();
     }
 
     loadKeys(){
@@ -118,6 +118,20 @@ class Keymap{
             //wordcommand + parameter keyset = action.  
             //keycommand + parameter keyset = action.  In this case the keyset should essentially be the upper octave.  
             //general terms are even numbers.  Identifiers are odd.  
+        
+        this.funcdict["updateState"] = function(transcript, midi, keydict, key){
+            mytranscript = $('#mycomments').val();
+            mystate = "";
+            mystate += currentlanguage + ": " + midiarray[currentmidiuser][currentlanguage].length + "<br>";
+            mystate += "meta: " + midiarray[currentmidiuser]["meta"].length + "<br>";
+            mystate += "last entry: " + transcript + "<br>";
+            mystate += "current video time: " + currentvidtime + "<br>";
+            if (lastnote !==null){
+                mystate += "Last Note: " + lastnote.note + "<br>";
+            }
+            $('#currentstate').html(mystate);                                                
+        }
+
         this.funcdict[""] = function(transcript, midi, keydict, key){
             for (i=MAX_COMMANDLENGTH; i>0; i--){
                 if (midi != null && midi.length >=i){
@@ -785,11 +799,10 @@ class Keymap{
     }
 
 
-    findCommand(transcript, midi){
+    findCommand(transcript, midi, lang="meta"){
         //return transcript
         //if transcript startswith any of these commands or equals anything in the keydict, prioritize this
         //if we can translate the midi return transcript, otherwise return ""
-        lang = "";
         //right now only using meta commands.  
         //we should add to the right language in the midiarray.  
         //generally this will be currentlanguage, but could be meta or other.  
@@ -798,20 +811,18 @@ class Keymap{
         //right now all commands are meta.  
 
         if (midi != null){
-            for (const [key, value] of Object.entries(this.funcdict)) {
+            for (const [key, value] of Object.entries(keymaps[lang].funcdict)) {
                 let prevtranscript = transcript;
                 if (transcript !=""){
                     if (key !="" && transcript.startsWith(key)){
                         let f = value;
-                        let ret = f(transcript, midi, this.keydict, key);
-                        lang = "meta";
+                        let ret = f(transcript, midi, keymaps[lang].keydict, key);
                         return [ret, lang];
                     }
                 }
                 else{
                     let f = value;
-                    let ret = f(transcript, midi, this.keydict, key);
-                    lang = "meta";
+                    let ret = f(transcript, midi, keymaps[lang].keydict, key);
                     return [ret, lang];
                 }
             }

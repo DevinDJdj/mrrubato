@@ -139,6 +139,46 @@ Need button to filter "includes word" (times) or not filter on times.
 Why does bottom octave not work?  
 
 Test add language.  
+Does this make sense as a command?  
+Not sure, but in general let's make any substantial action taken in use of the software, allow for function generation via language and midi.  
 
 Need to dynamically add the words.  
+
+How can we check for words as they are added?  
+findWordsA
+
+Decect word added via keymap.  
+Then reset wordtimes
+Then call setTimes with
+setTimes(lang, word, wordtimes[lang][word], user);
+getFeedbackImage(null, xmultiplier1, ymultiplier1, scene1, engine1, currentmidiuser, lang);
+getFeedbackImage(null, xmultiplier2, ymultiplier2, scene2, engine2, currentmidiuser, lang);	
+
+const options = {
+  points: myPoints, //vec3 array,
+  updatable: true,
+};
+
+let lines = BABYLON.MeshBuilder.CreateLines("lines", options, scene); //scene is optional and defaults to the current scene
+
+
+**web/public/languages/tennis.js
+in each language.js, need a 
+//Need to load others from /languages/LANG.js LANG.Keymap(), LANG.updateState()
+
+**web/public/speech.js
+keymaps[lang] = new Keymap();
+
+**web/public/languages/tennis.js
+overwrite whatever functions we need.  
+keymaps["tennis"].funcdict["..."] = function ....
+
+How are we mapping octaves here?  
+using keybot["lang"]
+
+
+foreach keymaps[lang].findCommand(...)
+
+Bring loadKeys out of constructor.  
+
 

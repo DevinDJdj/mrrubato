@@ -66,7 +66,7 @@ function changeColor(word, color){
 
 //should really be able to see the users transcript in words, so when clicking a user, we show his transcript.  
 //list all user icons/names next to your own to be clicked
-function updateState(transcript=""){
+function updateState(transcript="", lang=""){
     //function to get the state of the entire transcript up to this point.  
     //this is a bit of a mess.  Need to clean up.
     //get the state info and 
@@ -561,7 +561,7 @@ function filterDicAuto(transcript){
         metadic.draw();
     }
     //only update if we have transcript.  
-    updateState(transcript);
+    updateState(transcript, currentlanguage);
 }
 
 function createAutoDic(user){

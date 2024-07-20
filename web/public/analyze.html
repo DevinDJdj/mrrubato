@@ -715,7 +715,7 @@ function resetFeedback(){
 }
 
 //for now display one user at a time, then combine users?  
-function getFeedbackImage(source, w, h, myscene,myengine, midiuser=0){
+function getFeedbackImage(source, w, h, myscene,myengine, midiuser=0, flang=""){
 	//for all notes in midiarray, generate image.  
 	//after this figure out how to add other midifeedback as well.  
 	//this should be loaded already.  
@@ -726,7 +726,11 @@ function getFeedbackImage(source, w, h, myscene,myengine, midiuser=0){
 
 
 	//go through all users/languages
+	//if flang, only use that lang.  
     for (const [lang, value] of Object.entries(midiarray[midiuser])) {
+		if (flang !=="" && lang !==flang){
+			continue;
+		}
 
 		for (i=0; i< value.length; i++){
 			//add a red line at the time
@@ -766,8 +770,28 @@ function getFeedbackImage(source, w, h, myscene,myengine, midiuser=0){
 				new BABYLON.Color4(1, 1, 0, 1)
 			]
 			
-			const lines = BABYLON.MeshBuilder.CreateLines("lines" + midiuser, {points: myPoints, colors: myColors}, myscene);
+//			const lines = BABYLON.MeshBuilder.CreateLines("lines" + midiuser, {points: myPoints, colors: myColors}, myscene);
 
+			if (flang==""){
+				const options = {
+				points: myPoints, //vec3 array,
+				updatable: true,
+				colors: myColors
+				};
+
+				const lines = BABYLON.MeshBuilder.CreateLines("lines" + lang + midiuser, options, myscene);
+			}
+			else{
+				//update the lines?  
+				//probably just recreate.  for now the same.  
+				const options = {
+				points: myPoints, //vec3 array,
+				updatable: true,
+				colors: myColors
+				};
+
+				const lines = BABYLON.MeshBuilder.CreateLines("lines" + lang + midiuser, options, myscene);
+			}
 		}
 	}
 	// put the modified pixels back on the canvas

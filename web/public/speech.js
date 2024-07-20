@@ -4,7 +4,15 @@ pendingCommands = [];
 ss = null;
 //myrate = 0.7;
 //mypitch = 1;
+keymaps = {};
+
+//this is the meta keymap.  
+//Need to load others from /languages/LANG.js LANG.Keymap(), LANG.updateState()
 keymap = new Keymap();
+
+keymaps["meta"] = keymap;
+keymaps["meta"].loadKeys();
+
 lastcommand = "";
 lastcommandtime = 0;
 
@@ -23,6 +31,18 @@ function getPendingCommand(){
         return null;
     }
 }
+
+
+function findCommand(transcript, midi, prevtranscript=""){
+    //could search most likely or in some order.  For now this is ok.  
+    for (const [key, value] of Object.entries(keymaps)) {
+        [transcript, lang] = value.findCommand(transcript, midi);
+        if (transcript != prevtranscript){
+            return [transcript, lang];
+        }
+    }
+}
+
 
 //called from clock.js every second.  
 //open-ended definitions must end with midi 60, 60.  
@@ -66,7 +86,7 @@ function checkCommands(){
             prevtranscript = transcript;
             //find words in current language.  
 
-            [transcript, lang] = keymap.findCommand(transcript, midi);
+            [transcript, lang] = keymaps[lang].findCommand(transcript, midi);
             if (transcript != prevtranscript){
 
                 done = completeMidi(midi, lang);
@@ -126,7 +146,7 @@ function checkCommands(){
             while (done > 0 && midi.length > 0 && executed==false){
                 prevtranscript = transcript;
                 //get parameters.  
-                [transcript, lang] = keymap.findCommand(transcript, midi);
+                [transcript, lang] = keymaps[lang].findCommand(transcript, midi);
                 //have to set .complete to true.  
                 if (transcript != prevtranscript){
                     done = completeMidi(midi, lang);
