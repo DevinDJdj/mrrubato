@@ -13,6 +13,9 @@ keymap = new Keymap();
 keymaps["meta"] = keymap;
 keymaps["meta"].loadKeys();
 
+keymaps["base"] = new Keymap();
+
+
 lastcommand = "";
 lastcommandtime = 0;
 
@@ -33,14 +36,23 @@ function getPendingCommand(){
 }
 
 
-function findCommand(transcript, midi, prevtranscript=""){
-    //could search most likely or in some order.  For now this is ok.  
-    for (const [key, value] of Object.entries(keymaps)) {
-        [transcript, lang] = value.findCommand(transcript, midi);
+function findCommand(transcript, midi, prevtranscript="", lang=""){
+    if (lang==""){
+        //could search most likely or in some order.  For now this is ok.
+        for (const [key, value] of Object.entries(keymaps)) {
+            [transcript, lang] = value.findCommand(transcript, midi);
+            if (transcript != prevtranscript){
+                return [transcript, lang];
+            }
+        }
+    }
+    else{
+        [transcript, lang] = keymaps[lang].findCommand(transcript, midi);
         if (transcript != prevtranscript){
             return [transcript, lang];
         }
     }
+    return [transcript, lang];
 }
 
 
@@ -48,7 +60,7 @@ function findCommand(transcript, midi, prevtranscript=""){
 //open-ended definitions must end with midi 60, 60.  
 //add language, add word etc.  But 60, 60 not stored in keymap.  
 //others will be defined in keymap.  
-function checkCommands(){
+function checkCommands(lang="meta"){
     let cl = getPendingCommand();
     let midi = getMidiRecent();
     let executed = false;
@@ -71,7 +83,6 @@ function checkCommands(){
     let transcript = "";
     let pending = false;
     let callback = null;
-    let lang = "meta";
     if (cl != null){
                 //we have a command.  
             //try to find if we have something to do with the midi.  
@@ -86,7 +97,7 @@ function checkCommands(){
             prevtranscript = transcript;
             //find words in current language.  
 
-            [transcript, lang] = keymaps[lang].findCommand(transcript, midi);
+            [transcript, lang] = findCommand(transcript, midi, prevtranscript, lang);
             if (transcript != prevtranscript){
 
                 done = completeMidi(midi, lang);
@@ -146,7 +157,7 @@ function checkCommands(){
             while (done > 0 && midi.length > 0 && executed==false){
                 prevtranscript = transcript;
                 //get parameters.  
-                [transcript, lang] = keymaps[lang].findCommand(transcript, midi);
+                [transcript, lang] = findCommand(transcript, midi, prevtranscript, lang);
                 //have to set .complete to true.  
                 if (transcript != prevtranscript){
                     done = completeMidi(midi, lang);

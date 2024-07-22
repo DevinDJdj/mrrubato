@@ -182,3 +182,20 @@ foreach keymaps[lang].findCommand(...)
 Bring loadKeys out of constructor.  
 
 
+**web/public/languages.js
+Sort order of AutoDic, MetaDic sould be based on Feedback.  
+Most used in Feedback combined with most used of the user.  
+Need some ability to hide/put at the bottom any particular word.  
+Should still be searchable, but just pushed to the bottom.  
+This allows us to get the words we need in reference.  
+
+
+Maybe this is working ok for now.  
+
+OK, load the keydict of the language from the DB.  
+
+Filter should actually filter by key.  
+Right now filtering 1 will show 11, 12
+filtering for 0 will show 10.  
+Do we care?  
+

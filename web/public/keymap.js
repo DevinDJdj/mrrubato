@@ -34,7 +34,9 @@ class Keymap{
         this.keymap = []; //midinum - 48
         this.langdict = {}; //this should contain "lang": {"keymap": [], "keydict": {}, "funcdict": {}}
         this.keydict = {};
+        this.keydict[""] = {};
         this.funcdict = {};
+        this.funcdict[""] = function(transcript, midi, keydict, key){ return transcript;};
     }
 
     loadKeys(){
@@ -821,9 +823,11 @@ class Keymap{
                     }
                 }
                 else{
-                    let f = value;
-                    let ret = f(transcript, midi, keymaps[lang].keydict, key);
-                    return [ret, lang];
+                    if (key ==""){
+                        let f = value;
+                        let ret = f(transcript, midi, keymaps[lang].keydict, key);
+                        return [ret, lang];
+                    }
                 }
             }
         }

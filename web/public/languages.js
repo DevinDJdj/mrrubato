@@ -234,12 +234,14 @@ function setOctave(octave, lang=""){
         lang = currentlanguage;
     }
     keybot[lang] = octave*12;
+    /*
     for (const [key, value] of Object.entries(langsa[lang])) {	
         value.midi = convertKeys(value.midi, keybot[lang]/12);
         m = value.midi.split(",");
         langs[lang][m.length][value.midi] = key; //full word info.  
         //reset inline conversion.  
     }
+    */
     labelDicRedraw();
 
 }
@@ -459,8 +461,8 @@ function loadLanguage(lang, user){
 
                     addDictRow(lang, key, value, user, add);
 
-                    value.midi = convertKeys(value.midi, keybot[lang]/12);
-                    langs[lang][m.length][value.midi] = key; //midiseq -> word lookup.  
+                    key2a = convertKeys(value.midi, keybot[lang]/12);
+                    langs[lang][m.length][key2a] = key; //midiseq -> word lookup.  
 
                     //convert keys down for now.  Probably get rid of this, converting to 0 based.  
                     //except for lookup.  
@@ -478,8 +480,8 @@ function loadLanguage(lang, user){
                 obj = {"word": "test", "midi": "1,1", "user": user, "times": 0, "definition": "test", "created": "20210101", "lang": lang};
                 langsa[lang]["test"] = obj;
                 addDictRow(lang, "test", obj, user);
-                obj.midi = convertKeys(obj.midi, keybot[lang]/12);
-                langs[lang][m.length][obj.midi] = "test"; //midiseq -> word lookup.  
+                key2a = convertKeys(obj.midi, keybot[lang]/12);
+                langs[lang][m.length][key2a] = "test"; //midiseq -> word lookup.  
 
             }
         });
@@ -527,7 +529,7 @@ function filterDicManual(lang="current"){
 
 
 //this is run each time the checkCommands is done which pulls the midi.  
-function filterDicAuto(transcript){
+function filterDicAuto(transcript, lang="base"){
     if (autodic !== null && transcript !="" && transcript.length > 2){
         var isMidi = /^[0-9,]*$/.test(transcript);
         if (isMidi){
@@ -535,7 +537,7 @@ function filterDicAuto(transcript){
 //            $('#keys').select2('val', ['good'])
             transcript = transcript.slice(0,-1); //remove last comma.
 
-            transcripta = convertKeys(transcript, -keybot[currentlanguage]/12);
+            transcripta = convertKeys(transcript, -keybot[lang]/12);
 
 
             autodic.column(DIC1_KEYS).search(transcripta).draw();
@@ -548,7 +550,7 @@ function filterDicAuto(transcript){
         else{
             autodic.columns().search(''); //clear all filters.
             metadic.columns().search('');
-            autodic.column(DIC1_LANG).search(currentlanguage).draw();
+            autodic.column(DIC1_LANG).search(lang).draw();
             autodic.column(DIC1_WORD).search(transcript).draw();
             metadic.column(DIC1_WORD).search(transcript).draw();
 
@@ -937,9 +939,20 @@ function loadDictionaries(user){
         //set up to highlight video times
         setInterval(function(){
             updateVidTimes(user);     
-            t = checkCommands();
+            //all languages checkCommands.  
+
+            //actually execute commands.  
+            //if we include the language in the currentmidi.  
+            let midi = getMidiRecent();
+            let langs = getLangsFromMidi(midi);
+            let t = "";
+            for (let li=0; li<langs.length; li++){
+                t = checkCommands(langs[li]);
+            }
+
+            [t2, lang] = findCommand(t);
             $('#mycommand').val(t.trim()); //incomplete command.  
-            filterDicAuto(t.trim());
+            filterDicAuto(t2.trim(), lang);
             //filter commands.  autodic and metadic.  
             //if only midi.  
 
@@ -957,6 +970,18 @@ function loadDictionaries(user){
 //need to adjust midifeedback load.  getMidiFeedback
 //
 
+function getLangsFromMidi(midi){
+    //right now just return the first.  
+    langs = [];
+    if (midi !== null && midi.length > 0){ 
+        for (const [key, value] of Object.entries(keybot)) {
+            if (midi[0].note >= value && midi[0].note <= value + 24){
+                langs.push(key);
+            }
+        }
+    }   
+    return langs;
+}
 
 function updateLangRange(lang, user, start, end){
     let idx = 0;
