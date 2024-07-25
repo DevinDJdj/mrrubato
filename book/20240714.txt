@@ -199,3 +199,105 @@ Right now filtering 1 will show 11, 12
 filtering for 0 will show 10.  
 Do we care?  
 
+**web/public/keymap.js
+Should we use 21, 22 in the web UI?  
+Could use to load (pull for any updates)/update (save my updates).  
+Probably lets use a different set of commands.  
+21,21,21 perhaps.  22,22,22
+
+Can we combine words from different languages ok with the current structure.  
+This is important, we will have some dictionaries of just identifiers.  
+And we want to be able to create abstract terms which refer to those identifiers.  
+So i.e. 
+add language company directory
+add word yyyy@zzz.com (identifier)
+
+Then afterward
+****COMPANYDIRECTORY****xxxMYLANGxxx
+use multiple dics and combine words/parameters
+MYLANGFUNC -> Directory entry.  
+
+current structure allows for 4/8 seconds from start of word to end of word.  
+This should be adjustable.  
+**web/public/midi.js 
+recentTime
+
+Is this good enough for tempo?  
+Depending on the language this should be adjusted probably.  
+
+500 ms for the command check interval.  
+
+Not sure this structure is optimal, but seems to work, so let it be for now.  
+
+But should work for combining languages/directories.  
+
+Should words have sub functions?  
+How can we structure this better.  
+Post-prefix operators?  
+We already have that structure, but right now we are only using midi as post-prefix operators.  
+Structure is ok.  
+
+How do we deal with ambiguity?  
+
+Check commands without midi.  
+May have broken this.  
+addCommandLog() - spoken
+Then checkCommands - spoken + midi
+midi is after, and appends to the transcript.  
+Then we could potentially add more to the transcript with spoken again.  
+The timing of the speechrecognition component will be crucial to make it natural.  
+
+We continue to hold the command log with " " 
+
+How do we know which goes first spoken text or midi commands.  
+If commands are translated first will spoken get added?  
+getPendingCommand() could append commands.  
+
+How can we chain commands.  
+send info to (find user 4,5,6)
+Should we have a command log per language?  
+Perhaps yes.  
+Put as part of hte keymap struct.  
+under keymaps[lang]
+
+Perhaps lets use the word or phrase vector to find commands.  
+So if there is no command found, run through a filter to find likely commands and replace.  
+
+Midi keys are better suited to represent numbers.  
+Need a better way how do we meaningfully map words to keys?  
+heirarchical structure is good.  
+0,3,0
+-> 0,3,4,0 (any similar prefix is similar word/heirarchy)
+-> 0,3,4,7,0 (etc..)
+
+Should have similarity between 0,3 and 1,4 as well.  
+1st order diff.  
+
+
+MusicXML is there a repository of this?  
+https://www.w3.org/2021/06/musicxml40/tutorial/hello-world/
+can we get musescore musicxml?  
+Perhaps find/write a musicxml viewer
+
+Maybe not so interesting.  
+
+Should just use midi->staff.  
+i.e.
+https://github.com/Stereo101/python-MidiToVirtualPianoMacro
+
+
+
+Ah something maybe useful which I can use without too much trouble.  
+https://github.com/0xfe/vexflow
+https://vexflow.com/vexwarp/
+
+We want a new rendering though.  
+
+
+Why are we getting extra midi messages after save?  
+--OK I think this is fixed.  
+Javascript has a problem with local variables if you dont actually instantiate with 
+var ....
+annoying.  
+Run into this a few times now.  
+Have to get in the habit of instantiating with var ...

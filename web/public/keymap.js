@@ -39,6 +39,22 @@ class Keymap{
         this.funcdict[""] = function(transcript, midi, keydict, key){ return transcript;};
     }
 
+    //add a word to this dictionary for transcript usage.  
+    addWord(key, value){
+        //add entry from dictionary.  
+        m = value.midi.split(",");
+        if (m > 0){
+            if (typeof(this.keydict[""][m.length.toString()]) === "undefined"){
+                this.keydict[""][m.length.toString()] = {};
+            }
+            this.keydict[""][m.length.toString()][value.midi] = key;
+            this.funcdict[key] = function(transcript, midi, keydict, key){            
+                return transcript; //add language xxxx 2,3,4
+            };
+        }
+
+    }
+
     loadKeys(){
         //spoken work + key = action
         //keydict["keyword"]["numkeys"]["key,key,key"] = "action"

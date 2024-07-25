@@ -23,7 +23,18 @@ lastcommandtime = 0;
 function addCommandLog(transcript, command, pending=false){
     //we want to have the time here.  
     let now = Date.now();
+    let intranscript = transcript;
+    transcript = "";
+    //get previous pending commands if they exist.  //only within 8 seconds.  Otherwise they are popped.  
+    for (let i=commandLog.length -1; i>-1; i--){
+        if (commandLog[i].pending){
+            transcript = commandLog[i].transcript + transcript;
+            commandLog[i].pending = false;
+        }
+    }
+    transcript += intranscript;
     commandLog.push({time: now, transcript: transcript, command: command, pending: pending});
+    //command here is the callback.  Not using at the moment.  
 }
 
 function getPendingCommand(){

@@ -461,6 +461,8 @@ function loadLanguage(lang, user){
 
                     addDictRow(lang, key, value, user, add);
 
+                    keymaps[lang].addWord(key, value);
+
                     key2a = convertKeys(value.midi, keybot[lang]/12);
                     langs[lang][m.length][key2a] = key; //midiseq -> word lookup.  
 
@@ -949,8 +951,10 @@ function loadDictionaries(user){
             for (let li=0; li<langs.length; li++){
                 t = checkCommands(langs[li]);
             }
+            
+            [t2, lang] = findCommand(t); //this points to speech.js->findCommand
+            //do we need this?  
 
-            [t2, lang] = findCommand(t);
             $('#mycommand').val(t.trim()); //incomplete command.  
             filterDicAuto(t2.trim(), lang);
             //filter commands.  autodic and metadic.  

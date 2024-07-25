@@ -413,17 +413,17 @@ function getMidiFeedback(midiuser=0){
 			//should never occur
 		}
 		else{		
-			for (i=0; i< midiarray[midiuser][lang].length; i++){
-				tick = Math.round((midiarray[midiuser][lang][i].time-prevtime)/10);
+			for (var mi=0; mi< midiarray[midiuser][lang].length; mi++){
+				tick = Math.round((midiarray[midiuser][lang][mi].time-prevtime)/10);
 			
-				if (tick < 0){ tick = 0;console.log(midiarray[midiuser][lang][i]);}
-				if (midiarray[midiuser][lang][i].duration < 0){midiarray[midiuser][lang][i].duration = 0;console.log(midiarray[midiuser][lang][i]);}
-				trk = trk.ch(0).program(0x0b).tick(tick).note(midiarray[midiuser][lang][i].note, midiarray[midiuser][lang][i].velocity, Math.round(midiarray[midiuser][lang][i].duration/10));
-				console.log(midiarray[midiuser][lang][i]);
-				prevtime = midiarray[midiuser][lang][i].time;
+				if (tick < 0){ tick = 0;console.log(midiarray[midiuser][lang][mi]);}
+				if (midiarray[midiuser][lang][mi].duration < 0){midiarray[midiuser][lang][mi].duration = 0;console.log(midiarray[midiuser][lang][mi]);}
+				trk = trk.ch(0).program(0x0b).tick(tick).note(midiarray[midiuser][lang][mi].note, midiarray[midiuser][lang][mi].velocity, Math.round(midiarray[midiuser][lang][mi].duration/10));
+				console.log(midiarray[midiuser][lang][mi]);
+				prevtime = midiarray[midiuser][lang][mi].time;
 				//set to complete.  This is so we dont continually look for commands.  
 				//need to check if functioning as expected.  
-				midiarray[midiuser][lang][i].complete = true;
+				midiarray[midiuser][lang][mi].complete = true;
 			}
 			trk.tick(100).smfEndOfTrack(); // otherwise it will end on clock 1690
 		}
@@ -533,10 +533,17 @@ function insertNote(note, lang=""){
 		lang = currentlanguage;	
 	}
 	i=midiarray[currentmidiuser][lang].length-1;
+
 	while (i >-1 && note.time < midiarray[currentmidiuser][lang][i].time){		
 		i--;
 	}
-	midiarray[currentmidiuser][lang].splice(i+1, 0, note);
+//	if (i == midiarray[currentmidiuser][lang].length-1 && note.time == midiarray[currentmidiuser][lang][i].time && note.note == midiarray[currentmidiuser][lang][i].note){
+		//this note is already existing in the current language.  
+		//this is a common scenario as we are adding to the current language.  
+//	}
+//	else{
+		midiarray[currentmidiuser][lang].splice(i+1, 0, note);
+//	}
 	
 }
 
