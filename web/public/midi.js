@@ -657,6 +657,37 @@ function getMidiRecent(){
 		var tempDiv = $('#devices');
         if (WebMidi.inputs.length < 1) {
 			tempDiv.html("No device detected.");
+			document.addEventListener("keydown", function onPress(event) {
+				msg = [];
+				msg.push(144);
+
+				var key = 0;
+				var validkeys = ['`', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '='];
+				if ((key = validkeys.indexOf(event.key)) > -1){
+					if (event.shiftKey){
+						key += 12;
+					}						
+					msg.push(key+keybot[currentlanguage]);
+					getMIDIMessage(msg);
+				}
+			});
+
+			document.addEventListener("keyup", function onPress(event) {
+				msg = [];
+				msg.push(128);
+
+				var key = 0;
+				var validkeys = ['`', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '='];
+				if ((key = validkeys.indexOf(event.key)) > -1){
+					if (event.shiftKey){
+						key += 12;
+					}						
+					msg.push(key+keybot[currentlanguage]);
+					getMIDIMessage(msg);
+				}
+				
+			});
+			
 //			document.body.innerHTML+= "No device detected.";
         } else {
 			var tempDiv = $('#devices');

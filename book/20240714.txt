@@ -301,3 +301,32 @@ var ....
 annoying.  
 Run into this a few times now.  
 Have to get in the habit of instantiating with var ...
+
+
+
+**web/public/midi.js
+onEnabled()->
+Accept use of keyboard if there is no midi.  
+Lets just accept it anyway as a substitute regardless of midi presence.  
+
+
+Turn on/off keyboard function.  
+Or accept topline numbers (~-+ = 0-12, SHIFT = 12-24)
+document.addEventListener("keypress", function onPress(event) {
+    if (event.key === "z" && event.ctrlKey) {
+        // Do something awesome
+    }
+});
+--meh...
+
+
+Sentence to vector manipulation:
+https://www.misterrubato.com/test/word2vec-demo/index.html
+
+
+Analyze midi sequences.  
+**analyze/analyze3.py
+Transcript service being off affects /stats/numwords
+printMidi
+printTranscript
+
