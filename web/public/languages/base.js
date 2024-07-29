@@ -1,6 +1,6 @@
 
 keymaps["base"].funcdict = {};
-this.keydict[ "" ] = {"1": { "4": "error", "6": "ok", "7": "good"} };
+//this.keydict[ "" ] = {"1": { "4": "error", "6": "ok", "7": "good"} };
 
 
 keymaps["base"].funcdict["updateState"] = function(transcript, midi, keydict, key){
@@ -44,11 +44,7 @@ keymaps["base"].funcdict[""] = function(transcript, midi, keydict, key){
     return transcript;
 };
 
-this.keydict[ "" ] = { 
-    "4": {
-        "24,21,23,24": "skip "
-    }
-};
+keymaps["base"].keydict[ "" ] ["4"] = {"24,21,23,24": "skip " };
 
 keymaps["base"].keydict["skip "] = {"1": {"min": -12, "max": 12}}; //number of increments.  from middle C
 

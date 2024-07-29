@@ -337,3 +337,11 @@ not returning correct language.
 is this only if we change octaves?  
 
 
+Check loading "base".  
+Then switch to dynamic keydict
+
+--OK, appears to work.  
+
+Transcript only added to our history when we have "Chat" function which is recognized.  
+I think this is close to what we want.  
+

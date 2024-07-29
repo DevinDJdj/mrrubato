@@ -336,7 +336,7 @@ function loadLanguageScript(lang){
     let scriptEle = document.createElement("script");
     scriptEle.setAttribute("src", "languages/" + lang + ".js");
     scriptEle.setAttribute("type", "text/javascript");
-    scriptEle.setAttribute("async", async);
+    scriptEle.setAttribute("async", true);
     document.body.appendChild(scriptEle);
     
       // success event 
@@ -450,6 +450,10 @@ function loadLanguage(lang, user){
                 //not sure if we need user based settings.  
                 octaves[lang] = 0;
 
+                addLangLabel(lang);
+            //dynamic functions for this language.  
+                loadLanguageScript(lang);             
+
                 for (const [key, value] of Object.entries(mydic)) {	
                     m = value.midi.split(",");
                     //lang["base"]["length"]["midiseq"] = word
@@ -472,9 +476,6 @@ function loadLanguage(lang, user){
 
                                 
                 }
-                addLangLabel(lang);
-            //dynamic functions for this language.  
-//                loadLanguageScript(lang);             
                 //populate the filters.  
                 if (typeof(langs[lang][2]) === "undefined"){
                     langs[lang][2] = {};
