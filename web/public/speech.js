@@ -51,14 +51,14 @@ function findCommand(transcript, midi, prevtranscript="", lang=""){
     if (lang==""){
         //could search most likely or in some order.  For now this is ok.
         for (const [key, value] of Object.entries(keymaps)) {
-            [transcript, lang] = value.findCommand(transcript, midi);
+            [transcript, lang] = value.findCommand(transcript, midi, key);
             if (transcript != prevtranscript){
                 return [transcript, lang];
             }
         }
     }
     else{
-        [transcript, lang] = keymaps[lang].findCommand(transcript, midi);
+        [transcript, lang] = keymaps[lang].findCommand(transcript, midi, lang);
         if (transcript != prevtranscript){
             return [transcript, lang];
         }

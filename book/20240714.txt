@@ -330,3 +330,10 @@ Transcript service being off affects /stats/numwords
 printMidi
 printTranscript
 
+
+**web/public/keymap.js
+findCommand
+not returning correct language.  
+is this only if we change octaves?  
+
+

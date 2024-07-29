@@ -29,8 +29,9 @@ function getNum(str){
 
 
 class Keymap{
-    constructor(){
+    constructor(lang="meta"){
         this.keys = [];
+        this.lang=lang;
         this.keymap = []; //midinum - 48
         this.langdict = {}; //this should contain "lang": {"keymap": [], "keydict": {}, "funcdict": {}}
         this.keydict = {};
@@ -817,7 +818,7 @@ class Keymap{
     }
 
 
-    findCommand(transcript, midi, lang="meta"){
+    findCommand(transcript, midi, lang=""){
         //return transcript
         //if transcript startswith any of these commands or equals anything in the keydict, prioritize this
         //if we can translate the midi return transcript, otherwise return ""
@@ -826,7 +827,10 @@ class Keymap{
         //generally this will be currentlanguage, but could be meta or other.  
         //we can have overlapping languages I suspect.  
         //we need this to be this.funcdict[lang][key] = function
-        //right now all commands are meta.  
+        //right now all commands are meta. 
+        if (lang == ""){
+            lang = this.lang;
+        } 
 
         if (midi != null){
             for (const [key, value] of Object.entries(keymaps[lang].funcdict)) {
@@ -842,7 +846,10 @@ class Keymap{
                     if (key ==""){
                         let f = value;
                         let ret = f(transcript, midi, keymaps[lang].keydict, key);
-                        return [ret, lang];
+                        if (ret !="" && ret != prevtranscript){
+                            return [ret, lang];
+                        }
+//                        return [ret, lang];
                     }
                 }
             }
