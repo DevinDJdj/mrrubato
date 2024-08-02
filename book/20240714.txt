@@ -424,12 +424,6 @@ https://radimrehurek.com/gensim/auto_examples/howtos/run_doc2vec_imdb.html
 
 https://towardsdatascience.com/named-entity-recognition-with-nltk-and-spacy-8c4a7d88e7da
 
-def preprocess(sent):
-    sent = nltk.word_tokenize(sent)
-    sent = nltk.pos_tag(sent)
-
-import en_core_web_sm
-nlp = en_core_web_sm.load()
 
 article = nlp(text)
 labels = [x.label_ for x in article.ents]
