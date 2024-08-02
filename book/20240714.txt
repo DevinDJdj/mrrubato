@@ -380,3 +380,55 @@ List most similar videos on analyze page.
 
 Add Doc2vec similarity service.  
 
+
+
+**web/public/languages.js
+Need a set group functionality.  
+And group identifier.  
+This will essentially be a notifier/access control function.  
+
+Add group
+Add user
+Dont really want to do user management, but it is necessary.  
+Can we store this in the google record?  
+Essentially just get the groups that user is in.  
+
+Create notification structure for users.  
+This is delivered with ./timstep.py
+
+user/[id]/groups/...
+
+groups/[id]/users/...
+NxN entries.  
+
+Maybe hash struct?  
+Make the hash represent locality?  
+
+Make this the default heirarchical search.  
+This is within the group.  
+Depending on participation calculation of some sort, move up and down the heirarchy for this group.  
+Notify those one level above and below level of participation for said topic.  
+Or could just be the people who have commented on similar topics.  
+
+Also use some sort of similarity vector and notify those working on similar topics with some randomness.  
+Each document/video is a topic in and of itself which receives a vector.  
+So essentially something similar to a recommendation engine will be used for notification if activated.  
+This is already what is occurring with all the video/media streaming services.  
+
+
+
+Locality group
+
+good sample:
+https://radimrehurek.com/gensim/auto_examples/howtos/run_doc2vec_imdb.html
+
+def preprocess(sent):
+    sent = nltk.word_tokenize(sent)
+    sent = nltk.pos_tag(sent)
+
+import en_core_web_sm
+nlp = en_core_web_sm.load()
+
+article = nlp(text)
+labels = [x.label_ for x in article.ents]
+Counter(labels)

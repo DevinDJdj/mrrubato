@@ -85,6 +85,36 @@ function updateState(transcript="", lang=""){
 
 }
 
+
+
+function addUser(user, group){ //add user to group 
+    //can only do if this is our user or we are admin.  
+    //otherwise add request is sent to the user.  too many details...
+    
+
+}
+
+//function newUser(user){} //only users existing in DB can be added?  
+//DB existence depends on if they have logged in or not.  
+
+
+function addGroup(group, group){ //add group to group
+    //can only do if this is our user or we are admin.  
+
+}
+
+function newGroup(group){
+
+}
+
+function getUsersFromGroup(group, nesting = 1){
+    //get users from this group and any "subgroups" such an annoying structure to deal with.  
+    //just get the full group structure locally and then do the filtering for now?  
+    //no this is not scalable.  make a IN ( ) query once.  
+}
+
+
+
 function removeTag(tag, videoid=""){
     removeTagUI(tag);
     if (videoid==""){
