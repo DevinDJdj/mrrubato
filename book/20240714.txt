@@ -345,3 +345,38 @@ Then switch to dynamic keydict
 Transcript only added to our history when we have "Chat" function which is recognized.  
 I think this is close to what we want.  
 
+
+**extensions/
+Can we use this:
+https://chromewebstore.google.com/detail/instant-data-scraper/ofaokhiedipichpaobibbnahnkdoiiah?hl=en-US
+C:\Users\[login_name]\AppData\Local\Google\Chrome\User Data\Default\Extensions
+
+No too much code and obfuscated.  
+
+Would be good to have some additional logic in extension for summarizing content.  
+https://github.com/Yale-LILY/SummerTime
+
+Try this:
+https://github.com/miso-belica/sumy
+
+Where can we use this.  
+Better if we have in Javascript...
+Maybe just add a simple server for now.  
+Summarize and find most similar documents.  
+https://wolliq.medium.com/ranking-document-similarity-at-scale-with-spark-nlp-4b7a23f32694
+https://radimrehurek.com/gensim/auto_examples/tutorials/run_doc2vec_lee.html
+
+Test script:
+https://www.geeksforgeeks.org/doc2vec-in-nlp/
+
+
+Just use this with text in page and divide into bits.  
+Dont find javascript implementation.  
+
+Create doc2vec of the text from transcription.  
+So just load/save the model as we train it per doc.  
+Get similar doc graphs from this service.  
+List most similar videos on analyze page.  
+
+Add Doc2vec similarity service.  
+
