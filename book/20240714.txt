@@ -422,6 +422,8 @@ Locality group
 good sample:
 https://radimrehurek.com/gensim/auto_examples/howtos/run_doc2vec_imdb.html
 
+https://towardsdatascience.com/named-entity-recognition-with-nltk-and-spacy-8c4a7d88e7da
+
 def preprocess(sent):
     sent = nltk.word_tokenize(sent)
     sent = nltk.pos_tag(sent)
