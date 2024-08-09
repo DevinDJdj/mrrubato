@@ -13,7 +13,7 @@ keymap = new Keymap();
 keymaps["meta"] = keymap;
 keymaps["meta"].loadKeys();
 
-keymaps["base"] = new Keymap();
+keymaps["base"] = new Keymap("base");
 
 
 lastcommand = "";
@@ -28,8 +28,14 @@ function addCommandLog(transcript, command, pending=false){
     //get previous pending commands if they exist.  //only within 8 seconds.  Otherwise they are popped.  
     for (let i=commandLog.length -1; i>-1; i--){
         if (commandLog[i].pending){
-            transcript = commandLog[i].transcript + transcript;
-            commandLog[i].pending = false;
+            if (commandLog[i].transcript == transcript){
+                //dont keep adding the same commands
+                return;
+            }
+            else{
+                transcript = commandLog[i].transcript + transcript;
+                commandLog[i].pending = false;
+            }
         }
     }
     transcript += intranscript;
@@ -170,6 +176,7 @@ function checkCommands(lang="meta"){
                 //get parameters.  
                 [transcript, lang] = findCommand(transcript, midi, prevtranscript, lang);
                 //have to set .complete to true.  
+                //we add space to this
                 if (transcript != prevtranscript){
                     done = completeMidi(midi, lang);
                     if (transcript.endsWith(" ")){  //use space as indicator of more parameters needed.
@@ -229,7 +236,8 @@ function completeMidi(midi, lang=""){
         //complete midi commands that are too old.  
         
         midi[0].complete = true;
-        insertNote(midi[0], lang);
+        //why did we have this here?  
+//        insertNote(midi[0], lang);
         midi.shift();
         ret++;
     }
@@ -557,6 +565,8 @@ function Chat(transcript, callback=null, pending=false){
     }
     else{
         if (executed){
+            //make sound.  
+            audioFeedback(commandcompletion);
 
             addComment(transcript, helpme());
         }

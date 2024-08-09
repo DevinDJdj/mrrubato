@@ -223,6 +223,10 @@ function addWord(word, midi){
 
 
 function addLanguage(lang, midi){
+    if (lang==""){
+        console.log("Language identifier required");
+        return;
+    }
     langref = firebase.database().ref('/dictionary/languages/' + lang);
 	langref.once('value')
     .then((snap) => {
@@ -482,7 +486,8 @@ function loadLanguage(lang, user){
 
                 addLangLabel(lang);
             //dynamic functions for this language.  
-                loadLanguageScript(lang);             
+                keymaps[lang] = new Keymap(lang);
+                loadLanguageScript(lang);
 
                 for (const [key, value] of Object.entries(mydic)) {	
                     m = value.midi.split(",");

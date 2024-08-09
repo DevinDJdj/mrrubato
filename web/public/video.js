@@ -211,7 +211,9 @@ function setVideoVolume(volume){
         else{
             video = v;
             if (useyoutube || watch){
-                player.loadVideoById(video);
+                params = {videoId: video, startSeconds: secs};
+                player.loadVideoById(params);
+                //player.cueVideoById(video);
             }
             //load data and transcript from this video.  
             if (uid != null){

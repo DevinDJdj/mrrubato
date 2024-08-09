@@ -634,7 +634,7 @@ class Keymap{
                             midi[j].complete = true;
                         }
                         for (j=0; j<i; j++){
-                            temptr += (midi[j].note).toString();
+                            temptr += (midi[j].note - keybot["meta"]).toString();
 //                            temptr += (midi[j].note - keybot["meta"]).toString();
                             if (j<i-1){
                                 temptr += ",";
@@ -835,8 +835,9 @@ class Keymap{
         if (midi != null){
             for (const [key, value] of Object.entries(keymaps[lang].funcdict)) {
                 let prevtranscript = transcript;
+
                 if (transcript !=""){
-                    if (key !="" && transcript.startsWith(key)){
+                    if (key !="" && ((transcript + " ").startsWith(key))){
                         let f = value;
                         let ret = f(transcript, midi, keymaps[lang].keydict, key);
                         return [ret, lang];

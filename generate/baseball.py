@@ -229,15 +229,21 @@ def getVelocity(row, base=31):
 
 def getInstrument(row):
     global instcount
-    temp = row['outcomeDescription']
+    temp = row['venueName']
     if (temp not in instruments.keys()):
 
         instcount = instcount + 1
         instruments[temp] = instcount
-        instruments[temp] = random.randint(0, 120)
+        rando1 = random.randint(0,60)
+        rando2 = random.randint(0,60)
+        if (rando1 + rando2 < 60):
+            rando = 60 + rando1 + rando2    
+        else:
+            rando = math.abs(rando1 - rando2)
+        instruments[temp] = rando
     return instruments[temp]
 
-def getTime(row, track, orig_time = 120): #use 120 so we are divisible by 2,3,4,5
+def getTime(row, track, orig_time = 5): #use 120 so we are divisible by 2,3,4,5
     global windowstart, windowend
     mytime = datetime.strptime(row['createdAt'], '%Y-%m-%d %H:%M:%S UTC')
 
@@ -245,20 +251,37 @@ def getTime(row, track, orig_time = 120): #use 120 so we are divisible by 2,3,4,
     if (mytime.hour*60 + mytime.minute > windowend and prevtime[track].hour*60 + prevtime[track].minute < windowstart):
         #new day add time until 
         #add time between prevdate and windowstart + mytime - windowend
-        numseconds = windowstart*60 - ((prevtime[track].hour*60 + prevtime[track].minute)*60 + prevtime[track].second) + mytime.hour*60 + mytime.minute +mytime.second - windowend*60
+        numseconds = windowstart*60  - windowend*60 - prevtime[track].hour*60*60 - prevtime[track].minute*60 + prevtime[track].second + mytime.hour*60*60 + mytime.minute*60 +mytime.second
         #add time for this interval
     else:
+            
         numseconds = mytime.hour*60*60 + mytime.minute*60+mytime.second - prevtime[track].hour*60*60 - prevtime[track].minute*60 - prevtime[track].second
         #possible there is millisecond hits etc.  
-    prevtime[track] = mytime
 
-    return numseconds
+    if (mytime.day != prevtime[track].day):
+        numseconds += 24*60*60
+    if (numseconds < 0):
+        print(row)
+        print(prevtime[track])
+        print(mytime)
+        print(numseconds)
+        print(windowstart)
+        print(windowend)
+        print("Time Error")
+    prevtime[track] = mytime
+    return numseconds*orig_time
 
 def getShift(row, away=False):
     if (away):
+        if (row['awayTeamName'] not in teamShift.keys()):
+            return 0
         shift = teamShift[row['awayTeamName']]
     else:
+        if (row['homeTeamName'] not in teamShift.keys()):
+            return 0
         shift = teamShift[row['homeTeamName']]
+
+    shift -= shift%2
     return shift
 
 
@@ -271,7 +294,8 @@ def getBatterId(row):
             return i, False
         elif (row['awayBatter' + str(i)] == hitterid):
             return i, True
-    print(row)
+    print(row['createdAt'])
+    print("Batter Error")
     return 0, False
 
 def getNotesFromEvent(row, baserow):
@@ -354,24 +378,26 @@ def addNotes(row, baserow, trackid, numseconds, myvel, shift, mid):
     events = getNotesFromEvent(row, baserow)
     runs = getNotesFromRuns(row)
     track = mid.tracks[trackid]
-    totalmessageseconds = 120
+    totalmessageseconds = 600
     messageseconds = math.floor(totalmessageseconds/(len(events)+len(runs)+4))
     #message length 120 seconds
     #playing just before the event actually takes place.  
-    if (numseconds < 120*2):
+    if (numseconds < totalmessageseconds*2):
         #problem here.  
         messageseconds = math.floor(numseconds/(len(events)+len(runs)+4))
-        track.append(Message('note_on', note=basenote, velocity=myvel, time=messageseconds*2))
-        track.append(Message('note_off', note=basenote, velocity=myvel, time=messageseconds*2))
+        tempvel = math.floor(myvel/2)
+        track.append(Message('note_on', note=basenote, velocity=tempvel, time=messageseconds*2))
+        track.append(Message('note_off', note=basenote, velocity=127, time=messageseconds*2))
     else:
-        track.append(Message('note_on', note=basenote, velocity=1, time=numseconds-totalmessageseconds))
+        tempvel = math.floor(myvel/4)
+        track.append(Message('note_on', note=basenote, velocity=tempvel, time=numseconds-totalmessageseconds))
         track.append(Message('note_off', note=basenote, velocity=127, time=messageseconds*4))
     #this is actually the time between previous and now.  We want this to be static.  But what is the average time between?  
     for i in events:
         track.append(Message('note_on', note=basenote + i, velocity=myvel, time=messageseconds))
         track.append(Message('note_off', note=basenote + i, velocity=127, time=messageseconds))
     for i in runs:
-        track.append(Message('note_on', note=basenote + i, velocity=myvel, time=messageseconds))
+        track.append(Message('note_on', note=basenote + i, velocity=myvel*2, time=messageseconds))
         track.append(Message('note_off', note=basenote + i, velocity=127, time=messageseconds))
                      
 
@@ -400,9 +426,10 @@ trackcnt = 32
 for index, row in filtered_df.iterrows():
     gameId = row['gameId']
     createdAt = row['createdAt']
-    row2 = filtered_df2[(filtered_df2['gameId'] == gameId) & (filtered_df2['createdAt'] == createdAt)]
+#    row2 = filtered_df2[(filtered_df2['gameId'] == gameId) & (filtered_df2['createdAt'] == createdAt)]
+#    row2 = row2.iloc[0]
+    row2 = filtered_df2.loc[index]
 #    print(row2)
-    row2 = row2.iloc[0]
     if (row2['atBatEventType'] == 'STEAL'):
         continue
     if (row2['atBatEventType'] == 'PITCH'):
@@ -424,15 +451,23 @@ for index, row in filtered_df.iterrows():
 
         myvel = getVelocity(row2)
 
+        currentinst = getInstrument(row)
+        if (currentinst != previnst):
+            track.append(Message('program_change', program=currentinst, time=0))
+            previnst = currentinst
+#            print('new instrument ' + str(currentinst))
+#            print(instruments)
+
 
         addNotes(row2, row, trackid, numseconds, myvel, shift, mid)
-        if index%10000 == 0:
-            print(str(index) + " records complete")
-            print(row2)
+#        if index%10000 == 0:
+#            print(str(index) + " records complete")
+#            print(row2)
 
     else:
         #delay for average time if day off.  
         myvel = 0
         basenote = 60
 
-mid.save('baseball.mid')
+
+mid.save('baseball4.mid')

@@ -438,6 +438,10 @@ Also test multiple tracks (languages) and multiple user feedback.
 
 add language tennis (-6,6)
 --start here.  
+Hmmmm... not working great.  
+Also feedback is multiplied by the number of languages.  
+Why is this occurring.  
+
 analyze.html?video=mj4jpeBvD2o
 change language (-6,6)
 add word hit (6,6)
@@ -476,4 +480,10 @@ add word player two (9,10)
 In general should structure from left to right.  
 So in this case player can be a prefix or a postfix.  
 Structure should contain an element of distance.  
+
+**generate/baseball.py
+getTime
+Need to check for skipped days
+Need more harmony.  
+Slow down? 
 

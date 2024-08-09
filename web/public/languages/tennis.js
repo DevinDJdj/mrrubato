@@ -1,3 +1,4 @@
+
 keymaps["tennis"].funcdict = {};
 
 keymaps["tennis"].funcdict["updateState"] = function(transcript, midi, keydict, key){
@@ -38,7 +39,7 @@ keymaps["tennis"].funcdict[""] = function(transcript, midi, keydict, key){
     return transcript;
 };
 
-this.keydict[ "" ] = { 
+keymaps["tennis"].keydict[ "" ] = { 
     "4": {
         "24,21,23,24": "skip "
     }
