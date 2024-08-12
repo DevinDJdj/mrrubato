@@ -1,0 +1,118 @@
+**web/public/recent.html
+Need recent watch as well as created.  
+Add watch parameter
+watch=true
+
+sort by: 
+/watch/[videoid]/snippet/addedAt
+
+add value:
+/watch/[videoid]/comments/[uid]/pctWatched
+
+Use these two parameters to sort results.  
+
+
+**web/public/languages.js
+"change color for " word (color, 12-12)
+
+
+**server
+Try Deepspeech insead of Coqui for STT/TTS training.  
+There is some poor compatibility with the NVIDIA driver that Coqui causes.  
+Functionality is the same.  
+
+**server/transcription/server.py
+Need update of STT to use Deepspeech or similar.  
+I guess try this:
+https://medium.com/visionwizard/train-your-own-speech-recognition-model-in-5-simple-steps-512d5ac348a5
+
+
+**web/public/db.js
+Need to move some things here as well.  
+
+
+
+**web/public/keymap.js
+Should we use 21, 22 in the web UI?  
+Could use to load (pull for any updates)/update (save my updates).  
+Probably lets use a different set of commands.  
+21,21,21 perhaps.  22,22,22
+
+Can we combine words from different languages ok with the current structure.  
+This is important, we will have some dictionaries of just identifiers.  
+And we want to be able to create abstract terms which refer to those identifiers.  
+So i.e. 
+add language company directory
+add word yyyy@zzz.com (identifier)
+
+Then afterward
+****COMPANYDIRECTORY****xxxMYLANGxxx
+use multiple dics and combine words/parameters
+MYLANGFUNC -> Directory entry.  
+
+
+Ah something maybe useful which I can use without too much trouble.  
+https://github.com/0xfe/vexflow
+https://vexflow.com/vexwarp/
+
+
+
+
+**web/public/midi.js
+onEnabled()->
+Accept use of keyboard if there is no midi.  
+
+Turn on/off keyboard function.  
+Or accept topline numbers (~-+ = 0-12, SHIFT = 12-24)
+
+Test this
+
+
+Sentence to vector manipulation:
+https://www.misterrubato.com/test/word2vec-demo/index.html
+
+
+add language tennis (-6,6)
+--start here.  
+Hmmmm... not working great.  
+Also feedback is multiplied by the number of languages.  
+Why is this occurring.  
+
+analyze.html?video=mj4jpeBvD2o
+change language (-6,6)
+add word hit (6,6)
+how do we have synonyms?  This would get overwritten
+Could have something mimicing back and forth across net.  
+add word backhand (6,1) 
+add word forehand (6,3) 
+add word slice (6,2)
+add word topspin (6,4)
+add word volley (6,8)
+add word drop (6,10)
+add word serve (10,11)
+
+add word fault (10,9)
+add word let (10,8)
+add word out (5,5)
+add word long (5,6)
+add word net (5,4)
+add word bounce (4,4)
+add word applause (3,4)
+add word noise (3,5)
+
+add word score (2,2) (param = 3,4,5,6,7)
+2,8 = minus point, 2,3 = plus point, 2,4 plus game, 2,5 plus set
+2,9 = minus game, 2,10 minus set 
+
+
+
+add word player one (9,8)
+add word player two (9,10)
+9,8 = set player 1
+9,10 = set player 2
+
+2,3,9,8 = player 1 gets point
+
+In general should structure from left to right.  
+So in this case player can be a prefix or a postfix.  
+Structure should contain an element of distance.  
