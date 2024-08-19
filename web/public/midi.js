@@ -29,6 +29,7 @@ let sustainLevel = 0.8;
 let releaseTime = 0.2;
 
 let recentTime = 4000;
+let pedal = false;
 
 var lastnote = null;
 
@@ -519,8 +520,34 @@ function getMIDIMessage(message, mytime=0, lang="") {
 		case 128: // noteOff
 			noteOff(note, abstime, lang);
 			break;
+		case 176: // pedal?  
+			if (velocity > 0){
+				pedal = false;
+				triggerCheckCommands();
+			}
+			else{
+				pedal = true;
+			}
+
+			break;
 		// we could easily expand this switch statement to cover other types of commands such as controllers or sysex
 	}
+}
+
+function removeNote(note, lang=""){
+	if (lang==""){
+		lang = currentlanguage;
+	}
+	//remove note from midiarray
+	i=midiarray[currentmidiuser][lang].length-1;
+	while (i >-1 && midiarray[currentmidiuser][lang][i].time > note.time){
+		i--;
+	}
+
+	if (i > -1 && midiarray[currentmidiuser][lang][i].time == note.time && midiarray[currentmidiuser][lang][i].note == note.note){
+		midiarray[currentmidiuser][lang].splice(i, 1);
+	}
+
 }
 
 function insertNote(note, lang=""){

@@ -11,6 +11,9 @@ add value:
 
 Use these two parameters to sort results.  
 
+How do we add videos to watch?  
+
+
 
 **web/public/languages.js
 "change color for " word (color, 12-12)
@@ -116,3 +119,62 @@ add word player two (9,10)
 In general should structure from left to right.  
 So in this case player can be a prefix or a postfix.  
 Structure should contain an element of distance.  
+
+
+
+**web/public/analyze.html
+Can we use a pressed SHIFT/CTRL to extend the command input?  
+Cant capture this off-screen.  So wont work.  Could use midi keys for this I guess.  
+As long as this is in pressed state, dont remove input queue.  
+Need some adjustment to the command building.  
+How do we get better timing from the voice input?  
+checkCommands...
+
+
+---------Use pedal??----------
+once pedal is released read the command.  This may be a good option.  
+Lets try two methodologies.  
+With pedal and as we started.  
+Maybe annoying to need to do the pedal.  
+Perhaps when pedal is down, dont checkCommands until released.  
+This way we just use the same function and just react differently based on pedal.  
+Also commands arent very harmonic at the moment.  
+Maybe make more musical even if we have to make longer commands.  
+
+Seaboard Block M messages not detected by webmidi.  
+**web/public/midi.js
+What messages are we getting?  
+			input.channels[1].addListener("midimessage", (event) => {console.log(event); getMIDIMessage(event.data); });
+
+This is not receiving any, but device seems connected.  
+I like the device, but only 24 keys instead of 25.  This will be a problem.  
+
+
+**analyze/analyze.py
+Lets go ahead and make some more stats about note frequency etc.  
+/misterrubato/[id]/stats
+timeplaying
+numnotes
+
+Consistency between iterations
+#unique words
+#word duration
+#stddev of duration
+Analyze a few different word lengths in this way.  
+Use relative distance from initial key, not absolute
+This will find some generated patterns.  
+Try to distinguish generated patterns from read patterns.  
+General Tempo analysis.  
+
+**extension
+From extension can we open the site and work side-by-side?  
+
+
+
+**web/public/analyze.html
+
+Need a flag to accept incoming text
+
+
+Some spaghetti around the pedal logic.  
+Lets see if this improves the functionality though.  

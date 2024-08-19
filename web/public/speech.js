@@ -33,7 +33,7 @@ function addCommandLog(transcript, command, pending=false){
                 return;
             }
             else{
-                transcript = commandLog[i].transcript + transcript;
+                transcript = commandLog[i].transcript;
                 commandLog[i].pending = false;
             }
         }
@@ -54,6 +54,10 @@ function getPendingCommand(){
 
 
 function findCommand(transcript, midi, prevtranscript="", lang=""){
+    if (pedal){
+        //dont search for midi commands if pedal is down.  Just wait for pedal to be released.  
+        return [transcript, lang];
+    }
     if (lang==""){
         //could search most likely or in some order.  For now this is ok.
         for (const [key, value] of Object.entries(keymaps)) {
@@ -136,6 +140,7 @@ function checkCommands(lang="meta"){
             else{
                 if (transcript != cl.transcript){
                     cl.transcript = transcript;
+                    cl.time = Date.now();
                 }
                 done = 0;
             }
@@ -237,7 +242,10 @@ function completeMidi(midi, lang=""){
         
         midi[0].complete = true;
         //why did we have this here?  
-//        insertNote(midi[0], lang);
+        if (lang != currentlanguage){
+            insertNote(midi[0], lang);
+            removeNote(midi[0], currentlanguage);
+        }
         midi.shift();
         ret++;
     }
@@ -569,6 +577,11 @@ function Chat(transcript, callback=null, pending=false){
             audioFeedback(commandcompletion);
 
             addComment(transcript, helpme());
+        }
+        else{
+            if (pedal){
+                addComment(transcript, helpme());                
+            }
         }
     }
     return executed;

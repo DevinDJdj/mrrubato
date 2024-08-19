@@ -978,29 +978,32 @@ function loadDictionaries(user){
         setInterval(function(){
             updateVidTimes(user);     
             //all languages checkCommands.  
-
-            //actually execute commands.  
-            //if we include the language in the currentmidi.  
-            let midi = getMidiRecent();
-            let langs = getLangsFromMidi(midi);
-            let t = "";
-            for (let li=0; li<langs.length; li++){
-                t = checkCommands(langs[li]);
-            }
-            
-            [t2, lang] = findCommand(t); //this points to speech.js->findCommand
-            //do we need this?  
-
-            $('#mycommand').val(t.trim()); //incomplete command.  
-            filterDicAuto(t2.trim(), lang);
-            //filter commands.  autodic and metadic.  
-            //if only midi.  
+            triggerCheckCommands();
 
         }, 500);
     }, 5000);
 
 }
 
+function triggerCheckCommands(){
+    //actually execute commands.  
+    //if we include the language in the currentmidi.  
+    let midi = getMidiRecent();
+    let langs = getLangsFromMidi(midi);
+    let t = "";
+    for (let li=0; li<langs.length; li++){
+        t = checkCommands(langs[li]);
+    }
+    
+    [t2, lang] = findCommand(t); //this points to speech.js->findCommand
+    //do we need this?  
+
+    $('#mycommand').val(t.trim()); //incomplete command.  
+    filterDicAuto(t2.trim(), lang);
+    //filter commands.  autodic and metadic.  
+    //if only midi.  
+
+}
 //keep track of the current language here.  
 //just update the indexes each time something is played until there is another language change.  
 //ok, now we would need multiple tracks if we want simultaneous languages.  Or make start/end, a time instead of an index.  
