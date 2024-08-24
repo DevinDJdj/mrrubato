@@ -39,6 +39,8 @@ tagged_data = [TaggedDocument(words=word_tokenize(doc.lower()),
                doc in enumerate(data)]
  
 # train the Doc2vec model
+#actually based on others seems we shouldnt load a model, 
+#but retrain from scratch from time to time.  
 if (os.path.exists('doc2vec.model')):
     model = g.Doc2Vec.load('doc2vec.model')
     print('model loaded')

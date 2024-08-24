@@ -47,6 +47,9 @@ And we want to be able to create abstract terms which refer to those identifiers
 So i.e. 
 add language company directory
 add word yyyy@zzz.com (identifier)
+Need location to input this text.  
+Then we refer using this directory.  
+
 
 Then afterward
 ****COMPANYDIRECTORY****xxxMYLANGxxx
@@ -178,3 +181,15 @@ Need a flag to accept incoming text
 
 Some spaghetti around the pedal logic.  
 Lets see if this improves the functionality though.  
+
+
+**web/public/analyze.html
+Still need to show the feedback immediately.  
+
+
+**doc2vec
+BLAS library for optimized bulk vector operations
+Dont worry for now, it is 50x slower on non-optimized. 
+
+
+https://storage.googleapis.com/misterrubato-test.appspot.com/videos/2024-01-31%2011-38-27.mp4
