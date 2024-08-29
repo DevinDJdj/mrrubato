@@ -567,7 +567,10 @@ function filterDicManual(lang="current"){
 
 
 //this is run each time the checkCommands is done which pulls the midi.  
-function filterDicAuto(transcript, lang="base"){
+function filterDicAuto(transcript, lang=""){
+    if (lang==""){
+        lang = currentlanguage;
+    }
     if (autodic !== null && transcript !="" && transcript.length > 2){
         var isMidi = /^[0-9,]*$/.test(transcript);
         if (isMidi){
@@ -991,13 +994,20 @@ function triggerCheckCommands(){
     let midi = getMidiRecent();
     let langs = getLangsFromMidi(midi);
     let t = "";
-    for (let li=0; li<langs.length; li++){
-        t = checkCommands(langs[li]);
-    }
-    
+    if (!pedal){
+        for (let li=0; li<langs.length; li++){
+            t = checkCommands(langs[li]);
+        }
+    }    
     [t2, lang] = findCommand(t); //this points to speech.js->findCommand
     //do we need this?  
 
+    if (t == ""){
+        p = getPendingCommand();
+        if (p !== null){
+            t = p.transcript;
+        }
+    }
     $('#mycommand').val(t.trim()); //incomplete command.  
     filterDicAuto(t2.trim(), lang);
     //filter commands.  autodic and metadic.  

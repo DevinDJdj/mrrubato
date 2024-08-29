@@ -193,3 +193,11 @@ Dont worry for now, it is 50x slower on non-optimized.
 
 
 https://storage.googleapis.com/misterrubato-test.appspot.com/videos/2024-01-31%2011-38-27.mp4
+
+
+When pedal down, just use filter and nothing else.  
+Should be working like this.  
+Need to use this more. 
+Just use voice commands.  
+When voice commands are used, we should filter and see key commands.  
+Gradually may/should use this.  
