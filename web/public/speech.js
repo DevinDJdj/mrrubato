@@ -20,7 +20,7 @@ lastcommand = "";
 lastcommandtime = 0;
 
 
-function addCommandLog(transcript, command, pending=false){
+function addCommandLog(transcript, command, pending=false){+
     //we want to have the time here.  
     let now = Date.now();
     let intranscript = transcript;
@@ -216,20 +216,8 @@ function checkCommands(lang="meta"){
 
         }
     }
-
-    midi = getMidiRecent();
-    mtemp = "";
-    if (midi != null){
-        for (let i=0; i<midi.length; i++){
-            mtemp += midi[i].note + ",";
-        }
-    }
-    if (transcript != ""){
-        return transcript + " " + mtemp;
-    }
-    else{
-        return mtemp;
-    }
+    
+    return transcript;
 
 }
 

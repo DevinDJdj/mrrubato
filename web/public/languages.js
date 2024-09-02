@@ -1008,8 +1008,21 @@ function triggerCheckCommands(){
             t = p.transcript;
         }
     }
+    midi = getMidiRecent();
+    mtemp = "";
+    if (midi != null){
+        for (let i=0; i<midi.length; i++){
+            mtemp += midi[i].note + ",";
+        }
+    }
+
     $('#mycommand').val(t.trim()); //incomplete command.  
-    filterDicAuto(t2.trim(), lang);
+    if (mtemp != ""){
+        filterDicAuto(mtemp.trim(), lang);
+    }
+    else{
+        filterDicAuto(t.trim(), lang);
+    }
     //filter commands.  autodic and metadic.  
     //if only midi.  
 

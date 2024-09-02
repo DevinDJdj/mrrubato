@@ -201,3 +201,5 @@ Need to use this more.
 Just use voice commands.  
 When voice commands are used, we should filter and see key commands.  
 Gradually may/should use this.  
+
+Maybe show midiRecent in the status
