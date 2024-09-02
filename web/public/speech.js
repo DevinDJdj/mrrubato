@@ -33,12 +33,12 @@ function addCommandLog(transcript, command, pending=false){
                 return;
             }
             else{
-                transcript = commandLog[i].transcript;
+                transcript = commandLog[i].transcript.trim();
                 commandLog[i].pending = false;
             }
         }
     }
-    transcript += intranscript;
+    transcript += " " + intranscript;
     commandLog.push({time: now, transcript: transcript, command: command, pending: pending});
     //command here is the callback.  Not using at the moment.  
 }
@@ -324,6 +324,10 @@ function Chat(transcript, callback=null, pending=false){
             executed=false;
         }
     }
+    else if (transcript.toLowerCase().startsWith("comment")){
+        //make this comment to next event?  
+        transcript = transcript.substr(transcript.indexOf(" ") + 1);
+    }
     else if (transcript.toLowerCase().startsWith("skip")){
         //skip to next event?  
         tokens = transcript.split(" ");
@@ -580,7 +584,7 @@ function Chat(transcript, callback=null, pending=false){
         }
         else{
             if (pedal){
-                addComment(transcript, helpme());                
+//                addComment(transcript, helpme());
             }
         }
     }
@@ -628,7 +632,7 @@ recognition.addEventListener('result', e => {
 
 
     mymidicommand = getMidiRecent();
-    if (mymidicommand == null){
+    if (mymidicommand == null && !pedal){
         //if not executed immediately, add to pending commands, and wait for midi or further command.  
         if (Chat(transcript) == false){
             addCommandLog(transcript, null, true);

@@ -103,6 +103,7 @@ class Keymap{
                 "0,3,0": "page down",
                 "0,2,0": "stop", 
                 "5,17,17": "set octave ",
+                "12,15,15": "comment "
             }, 
             "4": {
                 "24,23,23,24": "pause",
@@ -165,7 +166,7 @@ class Keymap{
                     }
                     if (typeof(keyset) !=="undefined" && typeof(keyset[keys]) !=="undefined" && keyset[keys] != null){
                         //run this function.  
-                        transcript += keyset[keys];
+                        transcript = keyset[keys] + transcript;
                         for (j=0; j<i; j++){
                             midi[j].complete = true;
                         }
@@ -264,6 +265,39 @@ class Keymap{
                         return "ERROR move - incorrect parameters"
                     }
                 }
+            }
+            return transcript; //add language xxxx 2,3,4
+        };
+
+        this.keydict["comment "] = {"2": {"min": -12, "max": 12}}; //number of increments.  from middle C
+
+        this.funcdict["comment "] = function(transcript, midi, keydict, key){
+            let commandlength = null;
+            let commanddict = null;
+            for (const [k, v] of Object.entries(keydict[key])) {
+                if (parseInt(k) <= midi.length){
+                    commandlength = k;
+                    commanddict = v;
+                };
+            }
+            //maybe not for all commands, but here, we set to blank in case we have incorrect params.  
+
+            if (commandlength !== null){
+                //we have a command map at least.  
+                if (commandlength == "2"){
+                    if (midi[0].note - keybot["meta"] == EOW && midi[1].note - keybot["meta"] == EOW){
+                        midi[0].complete = true;
+                        midi[1].complete = true;
+                        //I think this will work ok.  
+                        //this allows us to move on to next command.  
+                        return transcript;
+                    }
+                    else{
+                        //not sure how I want to handle errors yet.  
+                        return "ERROR comment - incorrect parameters"
+                    }
+                }
+
             }
             return transcript; //add language xxxx 2,3,4
         };
@@ -841,6 +875,13 @@ class Keymap{
                         let f = value;
                         let ret = f(transcript, midi, keymaps[lang].keydict, key);
                         return [ret, lang];
+                    }
+                    else if (key == ""){
+                        let f = value;
+                        let ret = f(transcript, midi, keymaps[lang].keydict, key);
+                        if (ret !="" && ret != prevtranscript){
+                            return [ret, lang];
+                        }
                     }
                 }
                 else{
