@@ -20,7 +20,7 @@ lastcommand = "";
 lastcommandtime = 0;
 
 
-function addCommandLog(transcript, command, pending=false){+
+function addCommandLog(transcript, command, pending=false){
     //we want to have the time here.  
     let now = Date.now();
     let intranscript = transcript;

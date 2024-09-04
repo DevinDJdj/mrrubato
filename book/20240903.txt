@@ -1,0 +1,35 @@
+Seaboard Block M messages not detected by webmidi.  
+**web/public/midi.js
+What messages are we getting?  
+			input.channels[1].addListener("midimessage", (event) => {console.log(event); getMIDIMessage(event.data); });
+
+
+The remaining channels (usually Channels 2–16) are used to transmit notes and expressive data – 
+including note-on velocity, pitch bend, channel pressure (aftertouch), CC74 (brightness), and note-off (release) velocity – 
+on a note-per-channel basis. The expressive data will only apply to the note which is on the same channel.
+
+So we are getting the notes per channel.  
+And the expression on those notes.  
+So need a channel->Note lookup.  
+Not great design.  
+We are jumping around channels based on the note.  
+reverse engineering:
+Last message from MPE:
+135, 66, 12
+NOTEOFF, NOTE, ?
+
+NOTEOFF ()
+
+
+152, 70, 2
+NOTEON, NOTE, ?
+
+NOTEON = NOTEOFF + 16
+So if NOTEON is 135, then NOTEOFF comes on 151
+etc.  
+
+For now just capture this.  
+
+**web/public/midi.js
+Should we have LastNote per device?  
+

@@ -730,7 +730,19 @@ function getMidiRecent(){
 			}
 
       	for (var input of WebMidi.inputs.values()) {
-			input.channels[1].addListener("midimessage", (event) => {console.log(event); getMIDIMessage(event.data); });
+			if (input.name == "Seaboard Block"){
+				console.log(input);
+//				input.onmidimessage = (event) => {console.log(event); getMIDIMessage(event.data); };
+				for (var i=2; i<16; i++){
+					input.channels[i].addListener("midimessage", (event) => {console.log(event); getMIDIMessage(event.data); });
+					//ok getting messages, but no idea the meaning.  
+
+				}
+			}
+			else{
+				input.channels[1].addListener("midimessage", (event) => {console.log(event); getMIDIMessage(event.data); });
+			}
+	//		input.channels[1].addListener("midimessage", (event) => {console.log(event); getMIDIMessage(event.data); });
 			
 			//input.onmidimessage = getMIDIMessage;
 		}

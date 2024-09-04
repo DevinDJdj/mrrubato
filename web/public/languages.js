@@ -1017,6 +1017,7 @@ function triggerCheckCommands(){
     }
 
     $('#mycommand').val(t.trim()); //incomplete command.  
+    $('#midicommand').val(mtemp.trim()); //incomplete command.
     if (mtemp != ""){
         filterDicAuto(mtemp.trim(), lang);
     }
