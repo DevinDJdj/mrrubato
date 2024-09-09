@@ -27,9 +27,13 @@ NOTEON, NOTE, ?
 NOTEON = NOTEOFF + 16
 So if NOTEON is 135, then NOTEOFF comes on 151
 etc.  
+129 - 144, 145-159
 
 For now just capture this.  
 
 **web/public/midi.js
 Should we have LastNote per device?  
+
+
+[Violation] 'requestAnimationFrame' handler took 52ms
 

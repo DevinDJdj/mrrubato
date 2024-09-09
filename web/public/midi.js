@@ -493,6 +493,9 @@ function getMIDIMessage(message, mytime=0, lang="") {
 	if (command == 144 || command == 128){
 		devhtml += " LastNote: " + message[1] + " (" + currentlanguage + ")";
 	}
+	else if (command > 144 && command < 160){
+		devhtml += " LastNote: " + message[1] + " (" + currentlanguage + ")";
+	}
 
 	tempDiv.html(devhtml);
 
@@ -508,6 +511,21 @@ function getMIDIMessage(message, mytime=0, lang="") {
 		
 	switch (command) {
 		case 144: // noteOn
+		case 145:
+		case 146:
+		case 147:			
+		case 148:
+		case 149:
+		case 150:			
+		case 151:
+		case 152:
+		case 153:			
+		case 154:			
+		case 155:
+		case 156:
+		case 157:
+		case 158:
+		case 159:
 			if (velocity > 0) {
 				noteOn(note, velocity, abstime, mytime, lang);
 				prevvelocity = velocity;
@@ -518,6 +536,21 @@ function getMIDIMessage(message, mytime=0, lang="") {
 			}
 			break;
 		case 128: // noteOff
+		case 129:
+		case 130:
+		case 131:			
+		case 132:
+		case 133:
+		case 134:			
+		case 135:
+		case 136:
+		case 137:			
+		case 138:			
+		case 139:
+		case 140:
+		case 141:
+		case 142:
+		case 143:
 			noteOff(note, abstime, lang);
 			break;
 		case 176: // pedal?  
