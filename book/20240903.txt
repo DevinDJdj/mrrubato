@@ -37,3 +37,6 @@ Should we have LastNote per device?
 
 [Violation] 'requestAnimationFrame' handler took 52ms
 
+
+**web/public/analyze.html
+Add notes immediately to graphic.  

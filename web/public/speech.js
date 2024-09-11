@@ -90,13 +90,15 @@ function checkCommands(lang="meta"){
     //also if we have punctuation/end command, we can continue.  
     if (midi != null){
         //clear out any midi or pending commands with 0,0,0
-        if (ispaused && midi.length > 3 && midi[midi.length-1].note -keybot["meta"] == 0 && midi[midi.length-2].note -keybot["meta"] == 0 && midi[midi.length-3].note -keybot["meta"] == 0){
+        //why ispaused here?  
+        if (midi.length > 2 && midi[midi.length-1].note -keybot["meta"] == 0 && midi[midi.length-2].note -keybot["meta"] == 0 && midi[midi.length-3].note -keybot["meta"] == 0){
             for (let i=0; i<midi.length; i++){
                 midi[i].complete = true;
-                commandLog.pop();
-                cl = null;
-                return "";
             }
+            commandLog.pop();
+            cl = null;
+            completeMidi(midi, "meta");
+            return "";
         }
 
         completeMidi(midi);
