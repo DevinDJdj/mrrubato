@@ -1,0 +1,58 @@
+**server
+Try Deepspeech insead of Coqui for STT/TTS training.  
+There is some poor compatibility with the NVIDIA driver that Coqui causes.  
+Functionality is the same.  
+
+**server/transcription/server.py
+Need update of STT to use Deepspeech or similar.  
+I guess try this:
+
+https://medium.com/visionwizard/train-your-own-speech-recognition-model-in-5-simple-steps-512d5ac348a5
+
+python3 -m venv $HOME/tmp/deepspeech-train-venv/
+source $HOME/tmp/deepspeech-train-venv/bin/activate
+
+git clone -b 'v0.6.0' --single-branch --depth 1 https://github.com/mozilla/DeepSpeech.git
+
+cd DeepSpeech
+pip3 install -r requirements.txt
+pip3 install deepspeech==0.6.0
+pip3 install ds_ctcdecoder
+pip3 install tensorflow-gpu==1.14.0
+pip3 install tensorflow
+pip3 install -U numpy
+pip3 install sox
+https://github.com/mozilla/DeepSpeech/releases/download/v0.6.0/deepspeech-0.6.0-checkpoint.tar.gz
+
+
+wav_filename,wav_filesize,transcript
+train.csv, dev.csv, and test.csv
+
+What data do we have up to this point?  
+Download all data.  
+myhome + "/TTS/recipes/ljspeech/LJSpeech-1.1/metadata.csv"
+
+Reformat, and then ingest.  
+
+
+https://rasa.com/blog/how-to-build-a-voice-assistant-with-open-source-rasa-and-mozilla-tools/
+
+https://github.com/mozilla/TTS
+
+Try to just use this first.  
+
+https://stackoverflow.com/questions/66307611/how-do-i-get-started-training-a-custom-voice-model-with-mozilla-tts-on-ubuntu-20
+See if we can get any TTS first, then go to the Deepspeech model to ingest the data better.  
+Fix text in metadata.csv if we want.  
+
+
+Can we make a pipeline to add incoming to voice recognition STT, and then also to TTS engine.  
+Have two custom engines.  
+STT needs context probably.  At least pace of speech etc.  
+
+Anyway for now just try to get both into pipeline and generate custom models.  
+
+python3 ./TTS/bin/compute_statistics.py --config_path /mnt/c/devinpiano/music/server/tts/mozilla/config.json --out_path /mnt/c/devinpiano/music/server/tts/scale_stats.npy
+
+-->Here
+python3 ./TTS/bin/train_tacotron.py --config_path /mnt/c/devinpiano/music/server/tts/mozilla/config.json
