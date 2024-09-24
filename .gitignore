@@ -8,3 +8,4 @@
 server/transcription/output/*
 server/tts/coqui/*
 output/*
+server/tts/ljspeech
