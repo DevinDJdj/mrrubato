@@ -40,3 +40,47 @@ Should we have LastNote per device?
 
 **web/public/analyze.html
 Add notes immediately to graphic.  
+
+Perhaps need different modes.  
+Speaking the words should reverberate the keys.  
+And perhaps using the keys should reverberate the words (TTS for now).  
+
+Try to teach the words as we use them.  
+Constantly display the most likely next words.  
+How to display multiple paths, not just table filters.  
+
+Why is the primary filter blank when we have no data?  
+What do we want here?  
+
+Switch language, and play tennis finally.  
+
+if command is recognized via midi, we should generate this.  
+If there is a word or identifier combined with the command, how do we handle?  
+Would like to translate to midi, but maybe not practical.  
+
+
+**language learning
+Need a phoenetic association graph like this.  
+https://github.com/PrashantSaikia/word-association-graph
+I guess visualize what exists in word2vec
+
+We need to understand the semantic graph as well as the phoenetic graph.  
+How do we calculate phoenetic similarity?  
+https://github.com/gsi-upm/sematch
+
+
+https://github.com/AlexandreH13/word_similarity_visualization
+
+
+
+
+**web/public/analyze.html
+We have midi -> word
+now we need to do word -> midi
+Test just use of pedal for verbal commands.  
+If the word or command is recognized, do we want to translate it to midi and save?  
+I think yes.  
+Save the commands and still need to display the result immediately.  
+
+
+
