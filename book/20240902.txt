@@ -56,3 +56,46 @@ python3 ./TTS/bin/compute_statistics.py --config_path /mnt/c/devinpiano/music/se
 
 -->Here
 python3 ./TTS/bin/train_tacotron.py --config_path /mnt/c/devinpiano/music/server/tts/mozilla/config.json
+
+pip install protobuf==3.20.*
+pip install numpy==1.19.*
+
+OK, ljspeech wav files were not saving correctly.  
+Need to fix this.  
+Also after training runs ok, check why cant we use these generated wav files for training?  
+Could have been the japanese text.  
+    "batch_size": 16,       // Batch size for training. Lower values than 32 might cause hard to learn attention. It is overwritten by 'gradual_training'.
+    "eval_batch_size":4,
+
+
+
+TTS is not working well.  
+Lets try this:
+https://github.com/CorentinJ/Real-Time-Voice-Cloning
+
+sudo apt update
+sudo apt install ffmpeg
+pip install torch
+pip install -r requirements.txt
+
+python3 ./demo_cli.py
+RequestsDependencyWarning: urllib3 (1.26.7) or chardet (3.0.4) doesn't match a supported version!
+pip install -U urllib3 requests
+
+python3 ./demo_cli.py
+/mnt/c/devinpiano/music/server/tts/ljspeech/LJSpeech-1.1/zDetmYS9-5E_589.wav
+Real-Time-Voice-Cloning\demo_output_00.wav
+OK, so this package works.  
+Lets just use this for now.  
+Audio input quality is quite poor.  
+
+Maybe we can create the model and then utilize it with another Box.  
+
+Can we adjust to train with a larger amount of data?  
+
+**server/tts/download_wavs.py
+I guess we can just generate the wav files as needed.  
+Just pull videos and generate wavs.  
+For now this will not be in pipeline.  
+Boo...
+

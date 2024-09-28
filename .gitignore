@@ -9,3 +9,5 @@ server/transcription/output/*
 server/tts/coqui/*
 output/*
 server/tts/ljspeech
+server/tts/Real-Time-Voice-Cloning
+server/tts/Models
