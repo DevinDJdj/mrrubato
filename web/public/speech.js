@@ -330,6 +330,18 @@ function Chat(transcript, callback=null, pending=false){
             executed=false;
         }
     }
+    else if (transcript.toLowerCase().startsWith("jump")){
+        //skip to next event?  
+        tokens = transcript.split(" ");
+        //logic check is in prior function
+        if (tokens.length > 1 && tokens[1] !=""){
+            jump = parseFloat(tokens[1]);
+            jumpVideo(jump);
+        }
+        else{
+            executed=false;
+        }
+    }
     else if (transcript.toLowerCase() == "back"){
         //skip to previous event?
     }

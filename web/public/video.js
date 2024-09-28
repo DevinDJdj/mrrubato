@@ -195,6 +195,23 @@ function setVideoVolume(volume){
       }
   }
 
+  function jumpVideo(eventnum, v=""){
+    ct = 0;
+      if (useyoutube || watch){
+          ct = player.getCurrentTime();
+      }
+      else{
+          ct = player2.currentTime;
+      }
+      et = findEvent(eventnum, ct);
+      if (useyoutube || watch){
+        player.seekTo(player.getCurrentTime() + et);
+      }
+      else{
+          player2.currentTime = player2.currentTime + et;
+      }
+  }
+
   function seekVideo(secs, v=""){
     if (v == ""){
         v = video;

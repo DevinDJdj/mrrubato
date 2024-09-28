@@ -532,6 +532,7 @@ if __name__ == '__main__':
                 reftr = reftranscript.get()
                 if reftr is None:
                     #http://192.168.1.120/transcribe/?videoid=ZshYVeNHkOM
+                    #LAk9aL9uBcg, gMlt5CRj6-0, RKRHigZ-PUM, why is transcribe_whisper failing again?  
                     #need to use http or https as necessary
                     localserver = config.cfg['localserver']['host'] + ":" + str(config.cfg['localserver']['port'])
                     #should be able to use both https or http, too annoying to address now.  

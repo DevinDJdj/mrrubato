@@ -83,12 +83,13 @@ def downloadtranscript(transcriptfile, videoid, st, et):
             #baseaudioconfig uses 22050, 1 channel.  
             command = "ffmpeg -i \'" + latest_file + "\' -ss " + str(start) + " -to " + str(end) + " -ar 22050 -ac 1 " + myhome + "/TTS/recipes/ljspeech/LJSpeech-1.1/" + videoid + "_" + str(start) + ".wav"
             print(command)
-            subprocess.call(command, shell=True)
+            #subprocess.call(command, shell=True)
             entry = videoid + "_" + str(i) + "|" + text[i] + "|" + text[i].lower()
             #add this to metadata file.  
             with open(myhome + "/TTS/recipes/ljspeech/LJSpeech-1.1/metadata.csv", 'a') as cf:
                 cf.write(entry + "\n")
 
+    print(transcriptfile)
     return transcriptfile
 
 def transcribe_fromyoutube(videoid="ZshYVeNHkOM", model=None, mediafile=None, st=None, et=None):
@@ -125,7 +126,9 @@ def transcribe_fromyoutube(videoid="ZshYVeNHkOM", model=None, mediafile=None, st
     print(latest_file)
     
     try:
+        print("transcribe_whisper")
         text, times = transcribe_whisper(latest_file, model)
+        print("transcribe_whisper_complete")
 
 
         f = open(OUTPUT_DIR + videoid + ".txt", "w")
@@ -194,7 +197,17 @@ def transcribe_fromyoutube(videoid="ZshYVeNHkOM", model=None, mediafile=None, st
 
 def transcribe_whisper(filename = "C:\\devinpiano\\test\\openai-whisper\\test.mp4", model=None):
 
+#    audio = whisper.load_audio(filename)
+#    print("audio Loaded " + filename)
+#    mel = whisper.log_mel_spectrogram(audio).to(model.device)
+#    _, probs = model.detect_language(mel)
+#    print(f"Detected language: {max(probs, key=probs.get)}")
+#    options = whisper.DecodingOptions(language="en", fp16 = False)
+#    result = whisper.decode(model, mel, options)
+#    print(result.text)
+
     result = model.transcribe(filename)
+    
 #    print(result["text"])
 
     print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))

@@ -1344,6 +1344,62 @@ function seekAll(lang, word, index=0){
     }
 }
 
+function findEvent(eventnum, ct, lang="", word=""){
+    //use the filter set in the table.  
+    //just get those times.  
+    
+    wordtimes[key][v3]
+    //all languages and words is default.  
+    //0 takes you to the next event, yes this is fine.  
+    startindex = -1;
+    if (lang == ""){
+        for (const [lang, value] of Object.entries(wordtimes)) {
+            for (const [word, times] of Object.entries(value)) {                
+                //create event array and sort by time.  {word, lang, time}
+                //combine these arrays.  
+                //then find it.  
+                //should have this stored and updated dynamically really.  
+                //so many things.  
+                for (let i=0; i<times.length; i++){
+                    if (times[i].time > ct){
+                        startindex = i;
+                    }
+                    if (i+eventnum < times.length && i+eventnum >= 0){
+                        return times[i+eventnum].time - ct;
+                    }
+                }
+            }
+        }
+    }
+    else if (word == ""){
+        for (const [word, times] of Object.entries(wordtimes[lang])) {
+            //have to go through this timewise, right now it is not.  
+            //right now it is all times in word.  
+            for (let i=0; i<times.length; i++){
+                if (times[i].time > ct){
+                    startindex = i;
+                    if (i+eventnum < times.length && i+eventnum >= 0){
+                        return times[i+eventnum].time;
+                    }
+                }
+            }
+        }
+    }
+    else{
+        times = wordtimes[lang][word];
+        for (let i=0; i<times.length; i++){
+            if (times[i].time > ct){
+                if (i+eventnum < times.length && i+eventnum >= 0){
+                    return times[i+eventnum].time;
+                }
+            }
+        }
+    }
+ 
+    return 0;
+
+}
+
 function setTimes(lang, word, times, user=0){
 //    table.row( 0 ).data( newData ).draw();
 

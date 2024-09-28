@@ -82,5 +82,115 @@ If the word or command is recognized, do we want to translate it to midi and sav
 I think yes.  
 Save the commands and still need to display the result immediately.  
 
+add getRecent/getSimilar search components.  
+
+Need to add feedback note immediately to UI.  
+Also make sure the feedback portion is live.  
+if someone elses feedback is updated we it should trigger an update.  
+
+Need ability to save keyboard layout/languages.  
+Store configuration command.  
+This should store the sequence defined for language Y to represent the longer sequence in language X.  
+Is this good enough for word definition?  
+What happens when languages change?  
+We need a new version of the word each time.  
+I dont think we can avoid this.  
+We will need to version the words.  
+And pull the version needed when 
+seq -> YYYYmmdd -> word
+
+how does git versioning work?  
+Is there a good API for this already?  
+https://github.com/facebook/react/tree/HEAD@{2019-04-29}
+
+Maybe just use github to manage the language definitions?  
+Can we do word by word?  
+or we can have a date struct for the languages, and if there are no changes in the language it just points back to the previous date where it did change.  
+
+change language X, change date X, command sequence, change language Y, change date prevdate
+// Octokit.js
+// https://github.com/octokit/core.js#readme
 
 
+const octokit = new Octokit({
+  auth: 'YOUR-TOKEN'
+})
+
+await octokit.request('PUT /repos/{owner}/{repo}/contents/{path}', {
+  owner: 'OWNER',
+  repo: 'REPO',
+  path: 'PATH',
+  message: 'my commit message',
+  committer: {
+    name: 'Monalisa Octocat',
+    email: 'octocat@github.com'
+  },
+  content: 'bXkgbmV3IGZpbGUgY29udGVudHM=',
+  headers: {
+    'X-GitHub-Api-Version': '2022-11-28'
+  }
+})
+
+set repo and set access token.  
+add user to repo
+change words with this?  
+
+For now stick with what we have in the JSON DB.  
+We could serve an instance for each day I guess if we want.  
+Lets store the data about changes in words, but dont worry yet about getting the right word.  
+Just get the latest word.  
+We could just have a function change date -> YYYYmmdd, then that sets all the words to that date.  
+If that date was specified before (already set)
+YYYYmmdd -> SEQ/word
+
+For now this should be sufficient.  
+
+
+for keyboard, add languages on top of each other for now.  
+Can this be good enough?  
+Which language gets prioritized?  
+E F# G cant start anything with this in other languages.  
+Or lets change the base language.  
+Make at least two notes.  
+Can just be EE, F#F#, GG
+
+Then need to be a user more.  
+Finally create the tennis language and watch a match.  
+
+**book/20240606.txt
+
+new xxxx
+re-initializes feedback in track X.  
+how do we "are you sure?  "
+
+save
+open
+
+need forward/back key.  This should go back to the previous identifiable word and erase it.  
+
+need next / prev key.  
+erase next /erase prev.  
+
+
+Play the event in midi.  
+This should use current settings for octave.  
+
+
+
+any recognized commands should be converted and stored in midi when written to the transcript.  
+Go back from next second when using MM:SS
+find final event and add here.  
+Usually there will be nothing.  
+Should be a way to expand/zoom on a time.  
+This should reformat the visual aspect of the pianoroll/events.  
+Can we do this currently easily?  
+
+Should we have a recommended or fixed voice for the language?  
+Perhaps this could be interesting.  
+
+When we add feedback immediately then recent calls should show up.  
+
+Ignore midi outside of language area when checking.  
+
+maybe skip transcription if fails multiple times.  
+otherwise it will keep crashing and subsequent will not get transcribed.  

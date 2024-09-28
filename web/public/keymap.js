@@ -109,7 +109,7 @@ class Keymap{
                 "24,23,23,24": "pause",
                 "24,21,23,24": "skip ",
                 "24,22,22,24": "highlight ",
-//                "24,23,21,24": "back ", //just use skip forward or back.  
+                "24,23,21,24": "jump ", //just use skip forward or back.  
                 "0,1,1,0": "set speed ", //set speed of playback.  This will be a number from -12 to 12.  0 is normal speed.
                 "12,6,6,12": "set volume ", //set volume of playback.  This will be a number from 0 to 12.  0 is mute.
                 "0,7,7,0": "where am i", 
@@ -338,6 +338,42 @@ class Keymap{
             return transcript; //add language xxxx 2,3,4
         };
 
+        this.keydict["jump "] = {"1": {"min": -12, "max": 12}}; //number of increments.  from middle C
+
+        this.funcdict["jump "] = function(transcript, midi, keydict, key){
+            let commandlength = null;
+            let commanddict = null;
+            for (const [k, v] of Object.entries(keydict[key])) {
+                if (parseInt(k) <= midi.length){
+                    commandlength = k;
+                    commanddict = v;
+                };
+            }
+            //maybe not for all commands, but here, we set to blank in case we have incorrect params.  
+            transcript = "";
+            let jump = 0;
+            if (commandlength !== null){
+                //we have a command map at least.  
+                if (commandlength == "1"){
+                    jump = midi[0].note - keybot["meta"] - OCTAVE;
+                    if (jump > -OCTAVE-1 && jump < OCTAVE+1){
+                        
+                        transcript = "jump " + jump.toFixed(2);
+                        //for now just jump to 
+                        midi[0].complete = true;
+                        //I think this will work ok.  
+                        //this allows us to move on to next command.  
+                    }
+                    else{
+                        //not sure how I want to handle errors yet.  
+                        return "ERROR skip - incorrect parameters"
+                    }
+                }
+
+            }
+            return transcript; //add language xxxx 2,3,4
+        };
+
         this.keydict["set octave "] = {"1": {"min": -12, "max": 12}, "2":{"relative": 1, "lang": 2}}; //number of increments.  from middle C
 
         this.funcdict["set octave "] = function(transcript, midi, keydict, key){
@@ -494,6 +530,8 @@ class Keymap{
             //default is filter on word
             if (midi.length > 2){
                 //for now this is ok, but must code for continuous speech.  
+                //again here use language
+                //filter clear word, filter clear language, filter clear user
                 let temptr = " ";
                 for (let i=0; i<midi.length-1; i++){
                     if (i>0 && midi[i].note - keybot["meta"] == EOW && midi[i+1].note - keybot["meta"] == EOW){
@@ -528,6 +566,10 @@ class Keymap{
                 //for now this is ok, but must code for continuous speech.  
                 let temptr = " ";
                 for (let i=0; i<midi.length-1; i++){
+                    //pull from transcript.  Should be able to do with just transcript.  
+                    //filter add word xxxx, filter add language xxx, filter add user xxx
+                    //not sure if word should be default.  
+                    //maybe language should be default.
                     if (i>0 && midi[i].note - keybot["meta"] == EOW && midi[i+1].note - keybot["meta"] == EOW){
                         //we have a language
                         //we can add this language to the DB.  
