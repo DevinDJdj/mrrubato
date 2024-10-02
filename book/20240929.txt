@@ -1,0 +1,76 @@
+**web/public/game
+Make voice interactive simple game for reference.  
+
+**server/game
+For a text, create a RAG based on time in the text.  
+not sure best approach.  
+Simple time based 
+Or potentially just use the LLM.js in local browser with these rag dataset. 
+Could use something simple like this
+https://github.com/MattDClarke/Voice-controlled-snake-game
+Really looking for a library which has some intelligence and story ability.  
+Or at least something based on a common Gaming engine.  
+https://github.com/okaybenji/text-engine
+
+https://github.com/Yuan-ManX/ai-game-devtools
+Some curious links from here:
+https://github.com/choosewhatulike/trainable-agents
+https://github.com/kyutai-labs/moshi
+https://github.com/BAAI-Agents/Cradle?tab=readme-ov-file
+https://github.com/TencentARC/SEED-Story
+https://github.com/ali-vilab/VGen
+https://github.com/Vchitect/LaVie
+https://github.com/see2sound/see2sound
+
+
+
+
+
+
+Passing the wav files to the browser should not be hard.  
+Essentially create a Narration based on the book.  
+
+
+##LLM.js
+LLM.js needs to add a RAG functionality.  
+Then this would be much simpler.  
+
+https://blog.streamlit.io/using-time-based-rag-llm-apps-with-timescale-vector/
+
+Basically making DB shards, and querying the ones which are relevant.  
+Yes this makes sense.  
+
+
+**web/public/analyze.html
+have a flag to not load voice interaction.  
+And jump to location.  
+Find similar sequences of midi (words/sentences) and jump to those locations.  
+
+
+
+
+**web/pubic/game/text-engine/
+
+Let's just use something like this and create realistic voice, and narrate a choose-your-own adventure story.  
+Using different character and narrator voice.  
+https://github.com/huggingface/parler-tts
+https://github.com/okaybenji/text-engine
+Combine this with the actual transcript whatever it is.  
+This is a pretty decent little library.  
+Can we make this more dynamic/natural somehow with LLM.js?  
+Make a minimap of discovered area.  
+We can probably just create this.  
+Story component, then minimap, and then graphical component.  
+Let's make a real image.  
+
+
+Best is if we have all in javascript, but we can get the voice for now from another engine for fun.  
+Until TTS customization is built in to browsers.  
+
+Use this simple framework with custom voice generation and then possibly custom image generation.  
+Simple service to serve the voice prompt.  
+For now custom TTS leave it be.  
+Then possibly continue the generation.  
+https://github.com/TencentARC/SEED-Story
+
+Where can we get the original story?  
