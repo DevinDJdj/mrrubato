@@ -71,8 +71,25 @@
       </div>
     </div>
 
+	<!--for speech.js-->
+	<div class="words" contenteditable style="display: none;">
+		<input type="text" id="p" name="p">
+    </div>
+    <!--for midi.js-->
+    <div id="devices">	</div>
+    <div id="out"></div>	
+    
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js'></script>
+    <script src="https://cdn.jsdelivr.net/npm/webmidi@latest/dist/iife/webmidi.iife.js"></script>
+    
+    <script src="../config.js"></script>
+    <script src="../midi.js"></script>
+    <script src="speech.js"></script>
+
     <script type="module">
-        import {LLM} from "./llm.js/llm.js";
+        import {LLM} from "../llm.js/llm.js";
 
         let LLMEngine;
 
@@ -285,6 +302,50 @@
         loadButton.addEventListener("click", load_model);        
         submitButton.addEventListener("click", run_model);
 
+        loadButton.click();
+        setTimeout(()=>{
+            submitButton.click();
+        }, 30000);
+
+
+        function MyChat(transcript) {
+				mychat = transcript; //$('#p').val();
+				if (mychat == "stop"){
+					window.speechSynthesis.cancel();
+					return;
+				}
+				//get prompt
+				myprompt = $('#prompt').val();
+//                addComment(mychat, helpme());
+				//this should be linked to the video being watched loosely perhaps.  
+				$.getJSON(chatdomain + ':8000/api/?query=' + encodeURIComponent(mychat) + '&prompt=' + encodeURIComponent(myprompt),function(data){
+                  
+				  if (typeof(data.answer) != "undefined") {
+					addChatRow(data.query, data.answer, data.sources);
+					ss = new SpeechSynthesisUtterance(data.answer);
+					ss.rate = myrate;
+					ss.pitch = mypitch;
+					window.speechSynthesis.speak(ss);
+
+                    console.log('query ' +  data.query);
+//                    addComment(data.answer, helpme())
+					console.log('response  ' + data.answer);
+					console.log('sources  ' + data.sources);
+					for (j=0; j<data.sources.length; j++) {
+						console.log('content ' + data.sources[j].content );
+                        console.log('metadata ' + data.sources[j].metadata);
+                        vid = getVidFromMetadata(data.sources[j].metadata);
+//                        addSource(data.sources[j]);
+                        
+					}
+				   } 
+				   else {
+					console.log('chat failed');
+                    console.log(data);
+				   }   
+				});
+			
+			}
 
 
     </script>

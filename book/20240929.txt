@@ -74,3 +74,29 @@ Then possibly continue the generation.
 https://github.com/TencentARC/SEED-Story
 
 Where can we get the original story?  
+
+
+Anyway, for now just integrate the LLM.js with text-engine.  
+Talk to can be a random query to the LLM with prompt.  
+Similar prompt regarding character/voice aspect to parler-tts.  
+
+Use LLM to find location, and use dynamically generated story and dynamically generated map.  
+Can we generate an interesting story in this way?  
+
+For now just allow it to not have story line.  
+Generate location, voice, items in the scene.  
+what can you do with this item.  If something comes up in the further story, allow use of this item.  
+Simply if the use makes sense.  
+So all dynamic, but just complete chaotic story.  
+
+Show minimap for known locations within X radius.  
+Generate dynamic distances between a, b for map generation.  
+Perhaps just display the map on the background of the text div?  
+
+**web/public/testllm.html
+        const write_result = (line) => {
+
+        const run_complete = () => {
+
+Use these two functions to speak.  
+
