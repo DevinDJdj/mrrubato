@@ -689,7 +689,7 @@ def printMidi(midilink, title, GroupName, videoid):
 
 def printTranscript(transcriptlink):
     print(transcriptlink)
-    if (transcriptlink == "error"):
+    if (transcriptlink == "erro"): #not sure why this is truncated.  
         return 0
     else:
         r = requests.get(transcriptlink)

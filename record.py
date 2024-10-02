@@ -792,15 +792,16 @@ if __name__ == '__main__':
     tempfile.close()
     
 
-    youtube = get_authenticated_service(args)
-
-
-    videoid = initialize_upload(youtube, args)
-
+    if (config.cfg['youtube']['enabled'] == "true"):
+        print("Authentication with Youtube")
+        youtube = get_authenticated_service(args)
+        videoid = initialize_upload(youtube, args)
+        add_video_to_playlist(videoid, cred.MY_PLAYLIST, args)
+    else:
+        videoid = myid 
 
     addtodb(videoid, args)
 
-    add_video_to_playlist(videoid, cred.MY_PLAYLIST, args)
 
 #upload to peertube (Need Node)
 #default upload both, option to turn off.  

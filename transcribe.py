@@ -135,6 +135,7 @@ def transcribe_me2(description, filename, mediafile, localserver, videoid):
 #                        transcript = requests.get(url, timeout=(30, None)).text
         transcript = requests.get(url, params=params, timeout=(300, None)).text
         if (transcript is not None and transcript !="error"):
+            #why are we having issues with the google blob.  It shows funny if you view it indivuidually with the link.  
             f = io.open(txt_filename, "w", encoding='utf-8')
             f.write(transcript)
             f.close()

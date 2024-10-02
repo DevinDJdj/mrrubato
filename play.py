@@ -81,7 +81,7 @@ if __name__ == '__main__':
     print(mido.get_output_names())
 
     #Portable Grand-1 2
-    outport = mido.open_output(outputs[2])
+    outport = mido.open_output(outputs[len(outputs)-1])
 
 
     mid = MidiFile(get_latest_file())
