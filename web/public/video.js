@@ -95,7 +95,7 @@ function setVideoVolume(volume){
 	minsec = time.split(":");
 	if (minsec == time)
 	    return 0;
-	console.log(+parseInt(minsec[0])*60 + +parseInt(minsec[1]));
+//	console.log(+parseInt(minsec[0])*60 + +parseInt(minsec[1]));
 	return +parseInt(minsec[0])*60 + +parseInt(minsec[1]);
 	
   }

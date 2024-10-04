@@ -89,6 +89,9 @@
     <script src="speech.js"></script>
 
     <script type="module">
+        //for midi.js
+        var currentlanguage = "mistral";
+
         import {LLM} from "../llm.js/llm.js";
 
         let LLMEngine;
@@ -248,6 +251,7 @@
 
         const write_result = (line) => {
             outputElement.textContent  += line + "\n";
+            speak(line);
         }
 
         const run_complete = () => {
@@ -297,6 +301,7 @@
             });
         }
 
+
         // Loader Scripts
         populate_llm_list();
         loadButton.addEventListener("click", load_model);        
@@ -305,7 +310,7 @@
         loadButton.click();
         setTimeout(()=>{
             submitButton.click();
-        }, 30000);
+        }, 15000);
 
 
         function MyChat(transcript) {

@@ -655,6 +655,11 @@ function loadTranscript(snapshot){
 }
 
 
+function updateFeedbackUI(){
+	getFeedbackImage(null, xmultiplier1, ymultiplier1, scene1, engine1, currentmidiuser);
+	getFeedbackImage(null, xmultiplier2, ymultiplier2, scene2, engine2, currentmidiuser);	
+}
+
 function loadPreviousComments(snapshot, uid=0){
 	user=0;
 	currentmidiuser = 0;
@@ -679,8 +684,7 @@ function loadPreviousComments(snapshot, uid=0){
 		}
 		midifeedback = value.midi;
 		loadMidiFeedback(midifeedback);
-		getFeedbackImage(null, xmultiplier1, ymultiplier1, scene1, engine1, currentmidiuser);
-		getFeedbackImage(null, xmultiplier2, ymultiplier2, scene2, engine2, currentmidiuser);	
+		updateFeedbackUI();
 
 		loadDictionaries(currentmidiuser);
 		console.log("MIDI:" + midifeedback);

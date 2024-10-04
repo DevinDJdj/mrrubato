@@ -1,3 +1,7 @@
+var speech = true;
+window.SpeechRecognition = window.SpeechRecognition
+                || window.webkitSpeechRecognition;
+
 const recognition = new SpeechRecognition();
 recognition.interimResults = false;
 const words = document.querySelector('.words');
@@ -10,6 +14,9 @@ recognition.addEventListener('result', e => {
         .join('')
 
     document.getElementById("p").setAttribute('value', transcript);
+
+    runllm(transcript);
+
 //    console.log(transcript + ' (' + (end-start)/1000 + ')');
     //this function could be different for each use-case, right now same function
     //we are interacting via voice here, so we call Chat()
@@ -39,3 +46,26 @@ if (speech == true) {
     recognition.start();
     recognition.addEventListener('end', recognition.start);
 }            
+
+
+function runllm(transcript){
+    document.getElementById("textInput").value = transcript;
+    let submitButton = document.getElementById('submitBtn');
+    submitButton.click();
+}
+
+function removeXML(text){
+    text = text.replaceAll("<|im_end|>", " ");
+    text = text.replaceAll("<|im_start|>user", " ");
+    text = text.replaceAll("<|im_start|>assistant", " ");
+    text = text.replaceAll("<|END|>", " ");
+    return text;
+}
+
+function speak(text){
+    text = removeXML(text);
+    var utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = myrate;
+    utterance.pitch = mypitch;
+    speechSynthesis.speak(utterance);
+}

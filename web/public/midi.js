@@ -269,17 +269,18 @@ function load(data, feedback=false) {
 			midiarray[currentmidiuser][lang] = [];
 		}
 
-		for (i=0; i<smf[trknum].length;i++){
-			if (smf[trknum][i][1] == 107 || smf[trknum][i][1] == 108 || smf[trknum][i][1] == 21){ //notes
+		console.log("Load " + lang + ": " + smf[trknum].length);
+		for (var li=0; li<smf[trknum].length;li++){
+			if (smf[trknum][li][1] == 107 || smf[trknum][li][1] == 108 || smf[trknum][li][1] == 21){ //notes
 				console.log(smf[0][i]);
 				//use this as the timing basis, then just use TT variable here.  
 				//match up with start/end times.  
 				//smf[0][i].tt
 			}
-			if (feedback == true && (smf[trknum][i][0] == 144 || smf[trknum][i][0] == 128)){ //midicommands ON OFF
+			if (feedback == true && (smf[trknum][li][0] == 144 || smf[trknum][li][0] == 128)){ //midicommands ON OFF
 				//add to the right language.  
 				
-				getMIDIMessage(smf[trknum][i], Math.round(smf[trknum][i].tt*10), lang); 
+				getMIDIMessage(smf[trknum][li], Math.round(smf[trknum][li].tt*10), lang); 
 				//*10 because we have 100 ppqn and 60 bpm and we need milliseconds
 			}
 			//0 = 144?  channel 1
@@ -414,13 +415,14 @@ function getMidiFeedback(midiuser=0){
 			//should never occur
 		}
 		else{		
+			console.log("Save " + lang + ": " + midiarray[midiuser][lang].length);
 			for (var mi=0; mi< midiarray[midiuser][lang].length; mi++){
 				tick = Math.round((midiarray[midiuser][lang][mi].time-prevtime)/10);
 			
 				if (tick < 0){ tick = 0;console.log(midiarray[midiuser][lang][mi]);}
 				if (midiarray[midiuser][lang][mi].duration < 0){midiarray[midiuser][lang][mi].duration = 0;console.log(midiarray[midiuser][lang][mi]);}
 				trk = trk.ch(0).program(0x0b).tick(tick).note(midiarray[midiuser][lang][mi].note, midiarray[midiuser][lang][mi].velocity, Math.round(midiarray[midiuser][lang][mi].duration/10));
-				console.log(midiarray[midiuser][lang][mi]);
+//				console.log(midiarray[midiuser][lang][mi]);
 				prevtime = midiarray[midiuser][lang][mi].time;
 				//set to complete.  This is so we dont continually look for commands.  
 				//need to check if functioning as expected.  
@@ -603,6 +605,8 @@ function insertNote(note, lang=""){
 //	}
 //	else{
 		midiarray[currentmidiuser][lang].splice(i+1, 0, note);
+	
+	updateFeedbackUI();
 //	}
 	
 }
