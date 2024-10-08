@@ -617,8 +617,8 @@ window.SpeechRecognition = window.SpeechRecognition
 
 const recognition = new SpeechRecognition();
 recognition.interimResults = false;
-const words = document.querySelector('.words');
-words.appendChild(p);
+const wordp = document.querySelector('.words');
+wordp.appendChild(p);
 
 recognition.addEventListener('result', e => {
     const transcript = Array.from(e.results)

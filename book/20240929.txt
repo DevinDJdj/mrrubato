@@ -218,3 +218,54 @@ remember the var is not local to the function unless explicitly declared.
 Display immediately after update.  
 
 Nice, I think that works.  
+
+**web/public/analyze.html
+getFeedbackImage
+Have to get the actual words, not the midi array.  
+
+
+Check out Llama 3.2 image functionality.  
+>ollama run llama3.2 
+https://github.com/meta-llama/llama-stack
+
+
+Rearrange 
+wordtimes["lang"]["word"][]
+wordtimes[lang][word][user]
+to time based.  
+langindex["lang"]
+
+getWords(start, end, filter)
+timebased array of words (user, lang, word)
+time -> {user, lang, word, ...}
+
+**languages.js
+filterWords()
+finish this.  
+Add start/end time.  
+
+With the feedback, mimic the midi word playback mechanism
+-AAAAAA--EEE
+--BB---
+----CC-
+------D
+for example.  
+200, so perhaps 5 down or 10 down.  
+Depending on setting.  
+Use different color text, perhaps do this by user.  
+Dynamically change the user reference color map?  
+No, keeping colors the same is probably best.  
+
+
+
+
+OK, maybe this is working ok.  
+
+Need to add the simple text to the overlay.  
+
+
+
+**web/public/analyze.html
+bug with 00:00 start time.  
+iterationCalculation for first iteration. 
+

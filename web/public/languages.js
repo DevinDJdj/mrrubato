@@ -976,14 +976,22 @@ function loadDictionaries(user){
 
     //now go through the langstart and langend looking for words.  
     //need a better mechanism but for now just timeout to wait for all loadLanguage calls to complete.  
-    setTimeout(function(){findWordsA(user);
-        //set up to highlight video times
+    setTimeout(function(){
+        
+        findWordsA(user);
+        //update UI to use the words.  
+		updateFeedbackUI();        
+
+        //set up to highlight video times 
         setInterval(function(){
+            //probably no longer need this if we get graphical UI working better.  
             updateVidTimes(user);     
+
             //all languages checkCommands.  
             triggerCheckCommands();
 
         }, 500);
+
     }, 5000);
 
 }
@@ -1061,9 +1069,68 @@ function updateLangRange(lang, user, start, end){
             //break;
         }
     }
-    langstart[lang][user].splce(idx, 0, start);
+    langstart[lang][user].spilce(idx, 0, start);
     langend[lang][user].splice(idx, 0, end);
 }
+
+
+function filterArray(filter, dic){
+    let result = {};
+    for (const [k2, v2] of Object.entries(dic)) {	
+        if (filter.indexOf(k2) > -1){
+            result[k2] = v2;
+        }
+    }
+    return result;
+}
+
+function flattenWords(mywords){
+    //mywords[lang][word][] = time
+    //-> ret[] = {lang, word, time}
+    ret = [];
+    for (const [k2, v2] of Object.entries(mywords)) {	
+        for (const [k3, v3] of Object.entries(mywords[k2])) {	
+            for (let i=0; i<mywords[k2][k3].length; i++){
+                ret.push({"lang": k2, "word": k3, "time": mywords[k2][k3][i]});
+            }
+        }
+    }
+    return ret;
+}
+
+function sortWords(mywords){
+    //sort by time.  
+    mywords.sort(function(a, b) {
+        return a.time - b.time;
+    });
+    return mywords;    
+}
+
+function filterWords(langs=[], words=[], users=[]){
+    ret = {};
+    if (langs.length > 0){
+        ret = filterArray(langs, wordtimes);
+    }
+    else{
+
+        langs = Object.keys(wordtimes);
+        ret = filterArray(langs, wordtimes);
+//        ret = wordtimes; //maybe need to clone.  
+
+    }
+    if (words.length > 0){
+        for (const [k2, v2] of Object.entries(ret)) {	
+            ret[k2] = filterArray(words, ret[k2]);
+        }
+    }
+
+
+    ret = flattenWords(ret);
+    ret = sortWords(ret);
+    return ret;
+
+}
+
 
 
 function findWordsA(user){

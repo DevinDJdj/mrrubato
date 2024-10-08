@@ -656,6 +656,8 @@ function loadTranscript(snapshot){
 
 
 function updateFeedbackUI(){
+	//filterWords();
+
 	getFeedbackImage(null, xmultiplier1, ymultiplier1, scene1, engine1, currentmidiuser);
 	getFeedbackImage(null, xmultiplier2, ymultiplier2, scene2, engine2, currentmidiuser);	
 }
@@ -684,9 +686,8 @@ function loadPreviousComments(snapshot, uid=0){
 		}
 		midifeedback = value.midi;
 		loadMidiFeedback(midifeedback);
-		updateFeedbackUI();
-
 		loadDictionaries(currentmidiuser);
+
 		console.log("MIDI:" + midifeedback);
 	}
 	if (!foundme){
@@ -736,6 +737,70 @@ function getFeedbackImage(source, w, h, myscene,myengine, midiuser=0, flang=""){
 
 	//go through all users/languages
 	//if flang, only use that lang.  
+	words = filterWords();
+	for (var wi=0; wi<words.length; wi++){
+		lang = words[wi].lang;
+		word = words[wi].word;
+		x = i*2;
+		var tempTime = words[wi].time/1000;
+		iter = getIteration(tempTime);
+		if (iter>-1){
+			secs = tempTime - myst[iter];
+		}
+		else{
+			secs = 0;
+			//do we need to include non-playing time?  
+		}
+
+		//funny calculation not sure why maybe we are backwards?  
+		x = Math.round((secs/maxduration) * w); //start at middle of the canvas.  
+		x -= w/2;
+		x = -x;
+//		x = 20;
+
+		ybot = getYOffset(iter, w, h);
+		ytop = getYOffset(iter+1, w, h);
+
+		const myPoints = [
+		new BABYLON.Vector3(x, 0, ytop),
+		new BABYLON.Vector3(x, 0, ybot)
+		]
+
+//		myPoints.push(myPoints[0]);
+
+		const myColors = [
+			new BABYLON.Color4(1, 0, 0, 1),
+			new BABYLON.Color4(0, 1, 0, 1),
+			new BABYLON.Color4(0, 0, 1, 1),
+			new BABYLON.Color4(1, 1, 0, 1)
+		]
+		
+//			const lines = BABYLON.MeshBuilder.CreateLines("lines" + midiuser, {points: myPoints, colors: myColors}, myscene);
+
+		if (flang==""){
+			const options = {
+			points: myPoints, //vec3 array,
+			updatable: true,
+			colors: myColors
+			};
+
+			const lines = BABYLON.MeshBuilder.CreateLines("lines" + lang + midiuser, options, myscene);
+		}
+		else{
+			//update the lines?  
+			//probably just recreate.  for now the same.  
+			const options = {
+			points: myPoints, //vec3 array,
+			updatable: true,
+			colors: myColors
+			};
+
+			const lines = BABYLON.MeshBuilder.CreateLines("lines" + lang + midiuser, options, myscene);
+		}
+		
+	}
+
+/*
     for (const [lang, value] of Object.entries(midiarray[midiuser])) {
 		if (flang !=="" && lang !==flang){
 			continue;
@@ -804,7 +869,7 @@ function getFeedbackImage(source, w, h, myscene,myengine, midiuser=0, flang=""){
 		}
 	}
 	// put the modified pixels back on the canvas
-
+*/
 
 	myscene.onPointerObservable.add((pointerInfo) => {
 		switch (pointerInfo.type) {
