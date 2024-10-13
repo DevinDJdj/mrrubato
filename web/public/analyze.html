@@ -352,6 +352,7 @@ var seek = -1;
 
 var DictionaryID = 0;
 
+var lastjump = 0;
 var player;
 var player2;
 var delay = 10;
@@ -380,6 +381,10 @@ var scene1;
 var scene2;
 var engine1;
 var engine2;
+var ground1;
+var ground2;
+var textureGround1;
+var textureGround2;
 
 var camera1;
 var camera2;
@@ -710,13 +715,18 @@ function getSecsFromXY(x, y, scene, engine){
 	i, secs = getIterationAndSecs();
 	h = engine.getRenderHeight();
 	w = engine.getRenderWidth();
+
+	currx = Math.round((secs/maxduration) * w); //start at middle of the canvas.  
+	currx -= w/2;
+	currx = -currx;
+	console.log("curriter:" + i + " secs:" + secs + " x:" + x + " y:" + y + " currx:" + currx);
 	xm = 20;
 	if (h < 200){
 		xm = 2;
 	}
-	console.log("X: " + x + " Y: " + y);
 	iter = Math.floor(((y / h) * numiterations));
 	secs = secs + (x - w/2) / xm;
+	console.log("iter:" + iter + " secs:" + secs + " x:" + x + " y:" + y);
 	return myst[iter] + secs;
 }
 
@@ -785,6 +795,19 @@ function getFeedbackImage(source, w, h, myscene,myengine, midiuser=0, flang=""){
 			};
 
 			const lines = BABYLON.MeshBuilder.CreateLines("lines" + lang + midiuser, options, myscene);
+			//myDynamicTexture.drawText(text, x, y, font, color, canvas color, invertY, update);
+			font = "12px Arial";
+
+			var ytemp = ybot + h/2+20;
+			var xtemp = -x + w/2 + 2;
+			if (w == xmultiplier1){
+				console.log("Drawing on ground1 " + word + " " + xtemp + " " + ytemp + " " + w + " " + h);
+				textureGround1.drawText(word, xtemp, ytemp, font, "white", null, true, true);
+			}
+			else{
+				console.log("Drawing on ground2 " + word + " " + xtemp + " " + ytemp + " " + w + " " + h);
+				textureGround2.drawText(word, xtemp, ytemp, font, "white", null, true, true);
+			}
 		}
 		else{
 			//update the lines?  
@@ -874,12 +897,18 @@ function getFeedbackImage(source, w, h, myscene,myengine, midiuser=0, flang=""){
 	myscene.onPointerObservable.add((pointerInfo) => {
 		switch (pointerInfo.type) {
 			case BABYLON.PointerEventTypes.POINTERTAP:
-			console.log("POINTER TAP" + pointerInfo.event.x + " " + pointerInfo.event.y);
+				if (pointerInfo.event.x == lastjump){
+					return;
+				}
+				else{
+					lastjump = pointerInfo.event.x;
+				}
+				console.log("POINTER TAP" + pointerInfo.event.x + " " + pointerInfo.event.y);
 
-//			console.log("JUMP TO " + getSecsFromXY(pointerInfo.event.x, pointerInfo.event.y, myscene, myengine));
-			console.log("JUMP TO " + getSecsFromXY(myscene.pointerX, myscene.pointerY, myscene, myengine));
-			seekVideo(getSecsFromXY(myscene.pointerX, myscene.pointerY, myscene, myengine));
-			break;
+	//			console.log("JUMP TO " + getSecsFromXY(pointerInfo.event.x, pointerInfo.event.y, myscene, myengine));
+				console.log("JUMP TO " + getSecsFromXY(myscene.pointerX, myscene.pointerY, myscene, myengine));
+				seekVideo(getSecsFromXY(myscene.pointerX, myscene.pointerY, myscene, myengine));
+				break;
 			case BABYLON.PointerEventTypes.POINTERDOUBLETAP:
 			console.log("POINTER DOUBLE-TAP");
 			break;
@@ -1440,23 +1469,60 @@ function loadCanvas(id, pianoimg, mini="") {
 
 
 		var prollMat = new BABYLON.StandardMaterial("pianorollground" + mini, scene);
-		if (pianoimg !=""){
-			$.get(pianoimg)
+
+
+
+		if (mini == ""){
+			textureGround1 = new BABYLON.DynamicTexture("dynamic texture", {width:(xmultiplier), height:(ymultiplier)}, scene); 
+			prollMat.diffuseTexture = textureGround1;
+//			var font = "bold 44px monospace";
+//			textureGround1.drawText("Grass", xmultiplier-100, 135, font, "green", "white", true, true);
+
+			prollMat.alpha = 0.8;	
+			ground.material = prollMat;
+			ground1 = ground;
+			//ground1.material.diffuseTexture.drawText("Grass", 75, 135, font, "green", "white", true, true);
+		}
+		else{
+			textureGround2 = new BABYLON.DynamicTexture("dynamic texture", {width:(xmultiplier), height:(ymultiplier)}, scene); 
+			prollMat.diffuseTexture = textureGround2;
+			prollMat.alpha = 0.8;	
+			ground.material = prollMat;
+			ground2 = ground;
+		}		
+
+			
+		var materialPlane = new BABYLON.StandardMaterial("pianorollplane" + mini, scene);
+		var plane = BABYLON.MeshBuilder.CreatePlane("plane", {height:(ymultiplier), width: (xmultiplier)}, scene);
+		$.get(pianoimg)
 			.done(function() { 
 				// Do something now you know the image exists.
-				prollMat.diffuseTexture = new BABYLON.Texture(pianoimg, scene);
+				
+				var ptexture = new BABYLON.Texture(pianoimg, scene);
+				materialPlane.diffuseTexture = ptexture;
+				materialPlane.alpha = 0.4;
+//				plane.rotation.x = Math.PI / 2;
+				plane.material = materialPlane;
+				plane.rotation.x = Math.PI /2;
+				plane.rotation.y = Math.PI;
+//				ground.material=materialPlane;
+//				plane.position.y = -5;
+				
+//				prollMat.diffuseTexture = ptexture;
+
+				//ok this works.  Can we put the piano roll in this dynamic texture?  
+				//need to do meaningful text here.  
+
 
 			}).fail(function() { 
 				// Image doesn't exist - do something else.
 				console.log("Piano roll load error " + pianoimg);
 			})
-		}
+			
 
 
-		prollMat.alpha = 0.5;	
-		ground.material = prollMat;
 
-//		getFeedbackImage(pianoimg, xmultiplier, ymultiplier);
+		//		getFeedbackImage(pianoimg, xmultiplier, ymultiplier);
 
 //		mix.alpha = 0.5;
 //		ground.material = mix;

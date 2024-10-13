@@ -269,3 +269,26 @@ Need to add the simple text to the overlay.
 bug with 00:00 start time.  
 iterationCalculation for first iteration. 
 
+
+**web/public/languages.js
+loadLanguage(..)
+Need to test a language with Kanji.  
+Should make sure this works earlier than later.  
+
+Change base language to use 2 note messages.  
+
+Ugh getSecsFromXY fail.  
+Hmm some issue where we get multiple pointer events for babylon.js.  
+Just ignore if it is the same X.  
+Not sure origin of this issue.  
+
+Print text.  
+loadCanvas(..)
+Continue...
+
+Ugh, finally got this working.  
+We now have words and pianoroll.  
+Not perfect.  
+Maybe move this canvas overlay next to video?  
+hmmm...
+
