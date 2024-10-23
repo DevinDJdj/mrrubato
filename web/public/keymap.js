@@ -895,6 +895,7 @@ class Keymap{
 
 
     findCommand(transcript, midi, lang=""){
+
         //return transcript
         //if transcript startswith any of these commands or equals anything in the keydict, prioritize this
         //if we can translate the midi return transcript, otherwise return ""

@@ -1007,6 +1007,7 @@ function triggerCheckCommands(){
             t = checkCommands(langs[li]);
         }
     }    
+    
     [t2, lang] = findCommand(t); //this points to speech.js->findCommand
     //do we need this?  
 

@@ -292,3 +292,223 @@ Not perfect.
 Maybe move this canvas overlay next to video?  
 hmmm...
 
+Word is a color
+Or combination outer/inner color
+Mark color indicates person?  
+Word color adds to word recognition.  
+
+Spotlight needs to move up and down.  
+Also why are some lines disappearing?  
+
+OK, still have language issues.  
+have to use the pedal.  
+Not sure if I like this.  
+If I use the pedal seems to work ok.  
+
+OK, maybe this bug is solved.  
+
+Anyway, see if we can get both languages working with the GUI.  
+
+Need to study some linguistics.  
+See if I get any ideas.  
+
+
+**web/public/analyze.html
+Save to playlist for watch later.  
+Then use youtube API to get from playlist.  
+Can we get this:
+
+WatchLaterPub
+https://www.googleapis.com/youtube/v3/playlistItems?playlistId=PLurfgbaepqV2cAROz72UQ6U-zlXilvhR9&part=snippet,id&maxResults=20
+
+WatchHistoryPub
+PLurfgbaepqV0VfCxt8kw_c6-gk4R8vH1i
+
+Put into bottom right for now, this should be per user.  
+Lets save in the user DB.  
+If not public can we get it?  
+...
+
+
+Save in DB under user.  
+
+Need to probably decide expected installation realm.  
+
+Do we really need the API key?  
+
+**timestep.py
+Ugh, do this to get WatchLaterPub and WatchHistoryPub for displaying.  
+https://www.youtube.com/playlist?list=PLurfgbaepqV0VfCxt8kw_c6-gk4R8vH1i
+
+Then just use this:
+https://img.youtube.com/vi/2EAZDoXp4DU/0.jpg
+No authorization here.  
+
+
+$(document).ready(function() {
+
+    var playlistId = "your_playlist_id",
+        APIKey = "your_api_key",
+        baseURL = "https://www.googleapis.com/youtube/v3/";
+
+    $.get(baseURL + "playlistItems?part=snippet&maxResults=50&playlistId=" + playlistId + "&key=" + APIKey, function(data) {
+        // Do what you want with the data
+    });
+
+});
+
+
+Not an elegant solution because of Youtube sharing issues.  
+Good enough to do?
+
+Once feedback saved, remove from WatchLaterPub and move to WatchHistoryPub.  
+
+
+**language.js
+Norvin W. Richards
+**Mvy5hjAWeZw
+Need some sort of language relationship mapping.  
+I think we need to experiment with the idea of morphemes for the midi word syntax.  
+I still like the general idea of symetrical messaging.  
+Semitic (templatic morphology)
+
+How do we do this exactly?  
+Perhaps any double entry can be extended to indicate certain things.  
+Time or attribution to another element?  
+
+How do we use time?  
+
+
+For now some basic notation.  
+Up is default no notation for single octave up.  
+A->B
+
+Octave up
+_A->A
+
+Double Octave
+Largest jump
+_A->^A
+_A->^B
+
+Double Octave Down
+^A->_A
+
+Down refers to referential grammatical structure.  
+Grammatical structure ideas.  
+A->_G refers to point of reference.  
+
+Can go back up to 5 perhaps in the stack.  
+A->_Ab
+A->_G
+A->_Gb
+Next step can refer to something else like type of grammatical structure?  
+Verb/Adjective/Noun etc.  
+Or could have the order swapped.  
+
+
+Up refers to word meaning.  
+Word meaning is heirarchical.  
+
+ABBA is going to be similar to ABCCBA
+Symetric structure internalized.  
+If we do this though, what is the indication of a new word or new phrase?  
+Just the downward structure?  
+
+Perhaps we need word start indication
+A->_G->A
+And then if there is further structure
+A->_F->A etc.  
+
+
+Or can we use octaves to indicate something? 
+This may be easier to detect than exact Tones.  
+O3 O4 O5 O6
+any sequence started in these octaves have meaning?  
+What can we use to have optional meaning but still use a smaller octave set?  
+For now lets prioritize communication.  
+Octave switch should be doable with some other mechanism for smaller keyboards.  
+So each step variance 11 possibilities can be repeated for each octave to create a word.  
+Want to be playing mostly on higher end.  
+So start perhaps at O2 or O3 usually.  
+Only meta or other uses O0 or O1
+For now:
+Just use A0-C0 for meta control like we already are.  
+C0-C1 is for meta commands.  This is too hard to distinguish anyway.  
+And use C6-C7 for meta commands.  Out of hearing range for some.  
+I think we should have an extra octave or two to be honest, hmm maybe not so useful.  
+I think 24 key octave would be more useful.  
+
+Up to C9, maybe just use a separate keyboard for that for now.  
+
+So we have C1-C6
+Not so much.  
+Any octave start sequence is extended (use time?)
+i.e.
+D1-F1
+D2-G2
+D3-A3
+--
+Start indication needed?  No we are only taking the difference.  
+REFERENCE indicator if applicable.  
+E1-D1-E1
+E1-F1
+E2-A2
+E3-A3
+--
+
+In general step up, step down indicates what?  
+D1...D3A3 
+C1...C3G3
+
+We can use step down, this is just like using the following simplified form.  
+E1-F1-E2-A2 = E1-F1-_A1
+or
+E1-F1-E2-A2-E3-G3 = E1-F1-_A1-G1
+reverse of direction indicates next step in word.  
+In this case we end with same unit or double unit.  
+So
+E1-F1-_A1-G1-E2-E2 perhaps.  
+Or E2-E1 perhaps.  
+Yes simplified version with multiple octaves I think is a nice concept.  
+Do we use MPE in this.  
+Need to understand the MPE messages first of all.  
+But we couldnt capture...back to previous problem.  
+For now skip the MPE featureset except for extension.  
+
+
+Next word must start after Octave.  
+Should it then go E1-A1-A1 to start the next word for instance.  
+This distance should indicate something significant.  
+Either referentiality or part of word class (part of speech)
+
+What are the best classes for words.  
+Why do the ones we have exist.  
+What is the "etymology" of parts of speech?  
+
+
+
+Is this a more favorable word unit?  
+Step down can occur at each level.  
+
+
+
+May be interesting to find harmony in words this way.  
+
+
+
+https://viva.pressbooks.pub/openmusictheory/chapter/aspn/#:~:text=ASPN%20differentiates%20between%20octaves%2C%20from,0%20and%208%20are%20included.
+
+
+
+Where should symetric structure of the word come from?  
+AA what should this mean?  
+Do we only have 12 base structures?  
+and build from there?  
+Or is there no structure except relative structure.  
+I kind of like this better.  
+But needs more notes.  
+
+
+1 up 1 down is standard.  
+2 up 2 down is a modifier.  

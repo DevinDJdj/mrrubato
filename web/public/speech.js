@@ -23,6 +23,7 @@ lastcommandtime = 0;
 function addCommandLog(transcript, command, pending=false){
     //we want to have the time here.  
     let now = Date.now();
+    transcript = transcript.trimStart();
     let intranscript = transcript;
     transcript = "";
     //get previous pending commands if they exist.  //only within 8 seconds.  Otherwise they are popped.  
@@ -68,9 +69,14 @@ function findCommand(transcript, midi, prevtranscript="", lang=""){
         }
     }
     else{
-        [transcript, lang] = keymaps[lang].findCommand(transcript, midi, lang);
-        if (transcript != prevtranscript){
-            return [transcript, lang];
+        if (lang in keymaps){
+            [transcript, lang] = keymaps[lang].findCommand(transcript, midi, lang);
+            if (transcript != prevtranscript){
+                return [transcript, lang];
+            }
+        }
+        else{
+            console.log("Language not found: " + lang);
         }
     }
     return [transcript, lang];
@@ -117,6 +123,7 @@ function checkCommands(lang="meta"){
         pending = cl.pending;
         let done = 1;
         while (done > 0 && midi !=null && midi.length > 0 && executed==false){
+            transcript = transcript.trimStart();
             prevtranscript = transcript;
             //find words in current language.  
 
@@ -289,6 +296,8 @@ function Chat(transcript, callback=null, pending=false){
     }
     */
 
+    //trim the start of the transcript.  
+    transcript = transcript.trim();
     //find and handle command.  
     if (transcript.toLowerCase().startsWith("help")){
 
