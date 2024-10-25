@@ -1,0 +1,14 @@
+**web/public/analyze.html
+Need to add last word to status.  
+Along with add status to history listing.  
+
+
+along with 
+From stats generate some icon.  
+Just timewithoutplaying/timewithplaying
+along with mouseover for transcript.  
+
+
+
+**timestep.py
+Should update stats/wordsrecognized after doing transcript.  

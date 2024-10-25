@@ -14,3 +14,17 @@ Not sure this javascript LLM is good enough to do what I want, but the premise i
 
 continue with this, layout is not nice.  
 but we have voice and map and LLM.  
+
+
+#pick random target location
+#pick random start point (radius parameter)
+#loop (difficulty)
+#hint (generated from LLM about location)
+#move (point feedback)
+#repeat
+#win (moved within goal radius)
+#lose (moved too many times)
+
+Dont think this javascript LLM is sufficient yet.  
+Maybe wait for next release with better model.  
+Maybe a few years.  

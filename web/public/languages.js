@@ -16,6 +16,9 @@ var langend = {};
 var wordtimes = {};
 var midiwords = {};
 
+var filteredwords = {};
+var lastspokenword = "";
+var lastreadword = "";
 
 var currentwtindex = 0;
 var currentvidtime = 0;
@@ -81,6 +84,8 @@ function updateState(transcript="", lang=""){
     if (lastnote !==null){
         mystate += "Last Note: " + lastnote.note + "<br>";
     }
+    mystate += "Last Word: " + lastspokenword + "<br>";
+    mystate += "Last Read: " + lastreadword + "<br>";    
     $('#currentstate').html(mystate);
 
 }
@@ -978,9 +983,8 @@ function loadDictionaries(user){
     //need a better mechanism but for now just timeout to wait for all loadLanguage calls to complete.  
     setTimeout(function(){
         
-        findWordsA(user);
         //update UI to use the words.  
-		updateFeedbackUI();        
+		updateFeedbackUI(user);        
 
         //set up to highlight video times 
         setInterval(function(){
@@ -1000,11 +1004,11 @@ function triggerCheckCommands(){
     //actually execute commands.  
     //if we include the language in the currentmidi.  
     let midi = getMidiRecent();
-    let langs = getLangsFromMidi(midi);
+    let flangs = getLangsFromMidi(midi);
     let t = "";
     if (!pedal){
-        for (let li=0; li<langs.length; li++){
-            t = checkCommands(langs[li]);
+        for (let li=0; li<flangs.length; li++){
+            t = checkCommands(flangs[li]);
         }
     }    
     
@@ -1048,15 +1052,15 @@ function triggerCheckCommands(){
 
 function getLangsFromMidi(midi){
     //right now just return the first.  
-    langs = [];
+    flangs = [];
     if (midi !== null && midi.length > 0){ 
         for (const [key, value] of Object.entries(keybot)) {
             if (midi[0].note >= value && midi[0].note <= value + 24){
-                langs.push(key);
+                flangs.push(key);
             }
         }
     }   
-    return langs;
+    return flangs;
 }
 
 function updateLangRange(lang, user, start, end){
@@ -1107,27 +1111,28 @@ function sortWords(mywords){
     return mywords;    
 }
 
-function filterWords(langs=[], words=[], users=[]){
+function filterWords(flangs=[], fwords=[], fusers=[]){
     ret = {};
-    if (langs.length > 0){
-        ret = filterArray(langs, wordtimes);
+    if (flangs.length > 0){
+        ret = filterArray(flangs, wordtimes);
     }
     else{
 
-        langs = Object.keys(wordtimes);
-        ret = filterArray(langs, wordtimes);
+        flangs = Object.keys(wordtimes);
+        ret = filterArray(flangs, wordtimes);
 //        ret = wordtimes; //maybe need to clone.  
 
     }
-    if (words.length > 0){
+    if (fwords.length > 0){
         for (const [k2, v2] of Object.entries(ret)) {	
-            ret[k2] = filterArray(words, ret[k2]);
+            ret[k2] = filterArray(fwords, ret[k2]);
         }
     }
 
 
     ret = flattenWords(ret);
     ret = sortWords(ret);
+    filteredwords = ret;
     return ret;
 
 }
@@ -1350,6 +1355,21 @@ function updateVidTimes(user=0, trk=0){
         dur = player2.duration*1000;
     }
     currentvidtime = abstime;
+    word = "";
+    lang = "";
+    time = 0;
+
+    lastreadword = "";
+	for (var wi=0; wi<filteredwords.length; wi++){
+        if (wi > 0 && filteredwords[wi].time > currentvidtime){
+            lastreadword = filteredwords[wi-1].word;
+            break;
+        }
+    }
+    if (filteredwords.length > 0 && lastreadword==""){
+        lastreadword = filteredwords[filteredwords.length-1].word;
+    }
+
 
     for (const [lang, value] of Object.entries(midiarray[user])) {
 

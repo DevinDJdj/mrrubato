@@ -660,8 +660,10 @@ function loadTranscript(snapshot){
 }
 
 
-function updateFeedbackUI(){
+function updateFeedbackUI(user=0){
 	//filterWords();
+	findWordsA(user);
+
 
 	getFeedbackImage(null, xmultiplier1, ymultiplier1, scene1, engine1, currentmidiuser);
 	getFeedbackImage(null, xmultiplier2, ymultiplier2, scene2, engine2, currentmidiuser);	
@@ -1234,6 +1236,7 @@ function searchPrevious(videoid){
 			if (videoid == obj.id){
 				aTag.innerText += " <- THIS VIDEO";
 			}
+			aTag.innerText += "(" + obj.status.privacyStatus + ")"
 			console.log(aTag);
 			mydiv.appendChild(aTag);
 			var br = document.createElement("br");

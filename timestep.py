@@ -353,6 +353,31 @@ def updatetranscript(vidid, updated, transcript):
     return blob.public_url
 	
 
+def calctimes(starttimes, endtimes):
+    #calculate from timestamps
+    timewithoutplaying = 0
+    timewithplaying = 0
+    lasttime = 0
+    for s, e in zip(starttimes, endtimes):
+        timewithoutplaying += util.getSecsFromTime(s) - lasttime
+        lasttime = util.getSecsFromTime(e)
+        timewithplaying += lasttime - util.getSecsFromTime(s)
+    return timewithplaying, timewithoutplaying
+    
+def updatestatsdb(videoid, starttimes, endtimes, midisize, numwords):
+#this should already exist from analyze.py 
+#    timeplaying, timewithoutplaying = calctimes(starttimes, endtimes)
+    #insert into DB
+    ref = db.reference(f'/misterrubato/' + videoid + '/stats')
+    #if this exists, return
+    if ref.get() is None:
+        return
+        
+    #really this can all be set at play record.py as well, but this is essentially the same as we run this during record.py
+    #need to test this works.  Seems to work ok.  
+    ref.update({'wordsrecognized': numwords})
+
+
 
 if __name__ == '__main__':
     argparser.add_argument("--admin", help="Add Admin user", default="")
@@ -559,6 +584,8 @@ if __name__ == '__main__':
                             data = {'transcript':transcript}
                             reftranscript.set(data)
                             print(data)
+                            updatestatsdb(videoid, util.st, util.et, 0, len(transcript.split())) #wordcount
+
                         else:
                             print('transcript error' + videoid)
                     except:
