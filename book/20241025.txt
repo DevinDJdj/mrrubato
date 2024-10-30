@@ -2,13 +2,152 @@
 Need to add last word to status.  
 Along with add status to history listing.  
 
-
 along with 
 From stats generate some icon.  
 Just timewithoutplaying/timewithplaying
 along with mouseover for transcript.  
+on mouseover show the image and the transcript.  
+Just use the components we have.  
+Have a hidden transcript box, and just show on mouse-over, mouse-out.  
+Should feel like zooming in and out of time.  
+create a load function so we could just hover and click without reloading the full page.  
+This is a good idea anyway.  
+fullReload, I think I started.  
+loadAll()
+Add possibility to reload user, and just video.  
+So just set the videoID, and then call loadAll...
+So have partial load without video and full load also replacing video.  
+See if this will work first of all.  
+
+Maybe dynamic search/listing area in top left.  
+How do we design this?  
+Generic search across DB, Title Search, Author search.  
+Author -> userID lookup.  
+Allow resizing of components.  
+Top left:
+------Search---- (future)
+video (current)
+-----Word History---- (past)
+dont overwrite this on loadAll.  
+Continue this past on 4th column top?  
+
+Second column
+Video Details (current)
+Video history (past)
+----future word (future)
+
+Third column
+----Current state --- (current)
+future command (future)
+---current video feedback (current/past)
+
+Fourth column
+Transcript (current)
+future command (future) --Maybe move this to the 3rd column?  
+---current video feedback (current/past)
+
+Maybe switch original transcript and key lookup.  
+Put all keylookup on 4th column.  
+
+Then it would be 
+
+FCC(C/F)
+CPFF
+P(C/F)CC
+
+Or maybe 4th column top can be continuation of previously played items?  
+along with the current lookups we have now.  
+yeah I like that.  
+Just the 25 key.  with maybe 3 listings.  
+And on the bottom left we have the full 88-key just two or three listings.  
+
+
+Can we overlay the graphics on the UI components?  
+ok somewhat nicer.  
+Orig transcript and My transcript should progress at the same time.  
+Show the currently played iteration across this area.  
+Same UI component, just smaller viewport.  
+
+Go back to making words.  
+Need to be able to move forward with this.  
+Before that need language construction basic grammar.  
+...
+If we try simple transition, we will end up with an isomorph of a known language perhaps.  
+https://en.wikipedia.org/wiki/Part_of_speech
+https://en.wikipedia.org/wiki/Lojban#Grammar
+Make numerically significant.  
+
+For now part of speech determiner is beginning of word.  
+AB = single step is noun for now.  
+
+All reference is postpositional with regards to order of speech.  
+N M (by default if there is a reference for this part of speech it refers to the )
+N<-M
+
+Why do we have pre-positional and post-positional arguments in most human languages?  
+SVO and SOV are primary word orders, so just use this I guess.  
+
+Word classes distinguishable enough.  
+Subject - AC
+Verb - AD
+Object - AE
+
+For now work on noun definition.  
+
+AC->word content
+word content:
+CD, CE, CF, CG, etc.. 
+each define a class of deterministic words?  
+the combination of these deterministic words defines the noun.  
+Order of use is also significant.  
+can use one or multiple.  
+Can we make ring type relationship?  
+Perhaps we can use a polar coord?  
+CB = 30
+CC = 0
+CDb = -30
+Simple motion graphic?  
+what correlates with octave?  
+Speed correlates to strike?  
+Try out mouse movement with this.  
+Slows as sound fades.  
+Right is clockwise
+
+**analyze/analyze.py
+-printMidiGif()
+play with this idea perhaps generate a new graphic from the midi besides piano roll.  
+Lets generate this in the browser?  
+Once we reach a certain radius, we reflect back into the circle.  
+Or could use essentially a gravity effect.  
+Use line color for octave in this, play a bit.  
+Make a record with lines within the record.  
+This way we get a sense of start/end.  
+Can we generate an animated gif which includes this type of radial outward spiral and volume indicator.  
+Spiral inward, rotate the disc around one time for the song itself?  
+Color indicates timbre, size indicates volume.  
+Generate animated gif.  
+Quantization - .1 seconds I guess.  and .05 seconds?  
+or .05 and .025
+images[0].save('data/dst/pillow_imagedraw.gif',
+               save_all=True, append_images=images[1:], optimize=False, duration=40, loop=0)
+test this.  
+create realtime and half time gif.  
+How big is this for piano roll, is it interesting?  
+Is animated gif the right solution?  
+var image = new Image();
+image.src = "path";
+when you want to use:
+
+nextimg_img.attr('src', image.src);
+Create for each iteration, and start when that iteration starts.  
+
+Add time for each note and test.  
+Also experiment with 24 key circle instead of 12.  
+Maybe this is more interesting.  
 
 
 
 **timestep.py
 Should update stats/wordsrecognized after doing transcript.  
+--done
+

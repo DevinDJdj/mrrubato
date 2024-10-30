@@ -61,6 +61,9 @@ import mymidi
 #pip install qrcode
 import qrcode
 
+from PIL import Image, ImageDraw
+
+
 mappgram = {} #map [ SIGNGRAM ] [PGRAM]
 mapsgram = {} #map [seqngram][pgram]
 
@@ -542,6 +545,68 @@ def testNgramModel():
     predict_word = idx_to_word[predict_label[0].item()]
     print('real word is {}, predict word is {}'.format(label, predict_word))
 
+
+def printMidiGif(t, midilink):
+
+    images = []
+    width = 200
+    center = width // 2
+    color_1 = (0, 0, 0)
+    color_2 = (255, 255, 255)
+
+    print('Track: {}'.format(t.track.name))
+    notes = [Message('note_on', channel=0, note=60, velocity=0, time=0)] * 109
+    pedal = 0
+    starttimes, endtimes = getTrackTimes(t)
+    if len(starttimes) != len(endtimes) or len(starttimes) < 1:
+        print("Incorrect data, please fix" + midilink)
+    else:    
+        for i, st in enumerate(starttimes):
+            w = int((endtimes[i]-starttimes[i])/100)
+            if w > width:
+                width = w +1
+        currentTime = 0
+        prevTime = currentTime
+        i = 0
+        on = 0
+        for mymsg in t.notes:
+            if (on > 0):
+                currentTime += mymsg.msg.time
+                #not very efficient, but good enough for now.  
+                i = getIteration(currentTime, starttimes, endtimes)
+            if (mymsg.msg.type=='note_on'):
+                if (on > 0 and i > -1):  
+                    mymsg.msg.time = currentTime
+                    notes[mymsg.note] = mymsg.msg
+                    #create image here for each note to start.  
+                    im = Image.new('RGB', (width, width), color_1)
+                    draw = ImageDraw.Draw(im)
+                    startangle = (mymsg.note % 12) * 30
+                    oct = mymsg.note // 12
+                    radius = 10
+
+                    vol = mymsg.msg.velocity /10
+                    startpointx = math.round(center + radius*oct * math.cos(math.radians(startangle)) - vol)
+                    startpointy = math.round(center + radius*oct * math.sin(math.radians(startangle)) - vol)
+                    endpointx = math.round(center + radius*oct * math.cos(math.radians(startangle)) + vol)
+                    endpointy = math.round(center + radius*oct * math.sin(math.radians(startangle)) + vol)
+                    draw.ellipse((startpointx, startpointy, endpointx, endpointy), fill=color_2)
+                    images.append(im)
+                    prevTime = currentTime
+                on = isOn(mymsg.note, on)
+                
+#            print(mymsg.msg)
+    print(t.length)
+    print(starttimes)
+    print(endtimes)
+
+
+#    mid = MidiFile(midifile)
+
+    images[0].save('data/dst/pillow_imagedraw.gif',
+                save_all=True, append_images=images[1:], optimize=False, duration=40, loop=0)
+    
+
 def printMidi(midilink, title, GroupName, videoid):
     path = './output/'
     midilink = midilink.replace("\r", "")
@@ -563,10 +628,13 @@ def printMidi(midilink, title, GroupName, videoid):
     with open(path + midiname + ".mid", "wb") as f:
         f.write(r.content)
     mid = MidiFile(path + midiname + ".mid")
+
     #outputMidi(mid)
-    t = enhanceMidi(mid)
+    t = enhanceMidi(mid)    
     if (t is None):
         return
+
+    printMidiGif(t, midilink)
     data, rythmdata = getNgrams(t)
     if (data is None):
         return

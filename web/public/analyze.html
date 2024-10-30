@@ -108,42 +108,27 @@ data-setup="{}"
 </div>
   <div id="iterationsh" style="height: 180px;overflow:auto;"></div>  
 
+  <label for="transcript">Original Transcript:</label>
+  <img src="images/edit.png" height="16px" onClick="toggleTranscript();"/>
+  <br>
+  <textarea id="transcript" style="display:none" rows="10" cols="50"></textarea>
+  <div id="transcriptsh" style="height: 190px;overflow:auto;"></div>
+
 	<table>
 		<tr>
 		<td>
-		<div id="previous" style="width: 100%;height: 180px;overflow:auto;"></div>
+		<div id="previous" style="width: 100%;height: 150px;overflow:auto;"></div>
 		</td>
 	</tr>
 	<tr>
 		<td>
-		<div id="timeline" style="height: 180px;"></div>
+		<div id="timeline" style="height: 150px;"></div>
 		</td>
 	</tr>
 	</table>
   <br>
     <p id="load">Firebase SDK Loading&hellip;</p>
 
-	<div id="auto" style="width: 100%;height: 250px;overflow:auto;">
-		<div id="autodiclabel" class="langlabel">	</div>
-		<table id="autodic" class="display" style="width: 100%;">
-			<thead>
-				<tr>
-					<th>word</th>
-					<th>keys</th>
-					<th>lang</th>
-					<th>meaning</th>
-				</tr>
-			</thead>
-			<tfoot>
-				<tr>
-					<th>word</th>
-					<th>keys</th>
-					<th>lang</th>
-					<th>meaning</th>
-				</tr>
-			</tfoot>
-		</table>	
-	</div>
 <!--    <textarea id="iterations" rows="40" cols="40"></textarea> -->
 </td>
 
@@ -172,7 +157,7 @@ data-setup="{}"
 	</table>
 
 	<label for="currentstate">Current State:</label><br>
-	<div id="currentstate" style="height: 120px;overflow:auto;"></div>
+	<div id="currentstate" style="height: 180px;overflow:auto;"></div>
 <!--	<textarea id="currentstate" rows="5" cols="40"></textarea><br> -->
 	<label for="mycomments">My Transcript:</label>
 	<img src="images/edit.png" height="16px" onClick="toggleMyComments();"/>
@@ -195,14 +180,29 @@ data-setup="{}"
     </div> 
 
 </td><td>
-	<label for="transcript">Original Transcript:</label>
-	<img src="images/edit.png" height="16px" onClick="toggleTranscript();"/>
-	<br>
-    <textarea id="transcript" style="display:none" rows="10" cols="50"></textarea>
-	<div id="transcriptsh" style="height: 190px;overflow:auto;"></div>
 
-	<div id="auto" style="width: 100%;height: 250px;overflow:auto;">
-		meta
+	<div id="auto" style="width: 100%;height: 200px;overflow:auto;">
+		<div id="autodiclabel" class="langlabel">	</div>
+		<table id="autodic" class="display" style="width: 100%;">
+			<thead>
+				<tr>
+					<th>word</th>
+					<th>keys</th>
+					<th>lang</th>
+					<th>meaning</th>
+				</tr>
+			</thead>
+			<tfoot>
+				<tr>
+					<th>word</th>
+					<th>keys</th>
+					<th>lang</th>
+					<th>meaning</th>
+				</tr>
+			</tfoot>
+		</table>	
+	</div>
+	<div id="auto" style="width: 100%;height: 200px;overflow:auto;">
 		<table id="metadic" class="display" style="width: 100%;">
 			<thead>
 				<tr>
@@ -542,6 +542,7 @@ function loadComplete(user){
 			}
 
 }
+
 function loadAll(reload = false){
 	midiarray = [{"base": []}]; //reinitialize necessary?  
 	currentmidiuser = 0;
@@ -800,7 +801,8 @@ function getFeedbackImage(source, w, h, myscene,myengine, midiuser=0, flang=""){
 			//myDynamicTexture.drawText(text, x, y, font, color, canvas color, invertY, update);
 			font = "12px Arial";
 
-			var ytemp = ybot + h/2+20;
+
+			var ytemp = ybot + h/2+(10*(1+(wi%2)));
 			var xtemp = -x + w/2 + 2;
 			if (w == xmultiplier1){
 				console.log("Drawing on ground1 " + word + " " + xtemp + " " + ytemp + " " + w + " " + h);
