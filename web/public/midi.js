@@ -65,6 +65,8 @@ var prevvelocity = 0;
 var start = 0;
 var audioSamples = {'p': [], 'link': [], 'image': [], 'text':[]};
 
+var midimessagecallback = null;
+var midiUIcallback = null;
 
 function loadSample(url){
     return (
@@ -243,8 +245,12 @@ function playTone(freq) {
   }
   
 
-function load(data, feedback=false) {
+function load(data, feedback=false, cb=null) {
+	if (cb == null){
+		cb = midimessagecallback;
+	}
   try {
+
 //	data = data.substring(data.indexOf(',')+1);
     smf = JZZ.MIDI.SMF(data);
 	console.log(smf.dump());
@@ -272,7 +278,10 @@ function load(data, feedback=false) {
 		console.log("Load " + lang + ": " + smf[trknum].length);
 		for (var li=0; li<smf[trknum].length;li++){
 			if (smf[trknum][li][1] == 107 || smf[trknum][li][1] == 108 || smf[trknum][li][1] == 21){ //notes
-				console.log(smf[0][i]);
+//				console.log(smf[0][i]);
+				//pass original as language to not display as feedback, maybe change in the future?  
+				getMIDIMessage(smf[trknum][li], Math.round(smf[trknum][li].tt*10), "iterations", cb); 
+
 				//use this as the timing basis, then just use TT variable here.  
 				//match up with start/end times.  
 				//smf[0][i].tt
@@ -280,8 +289,11 @@ function load(data, feedback=false) {
 			if (feedback == true && (smf[trknum][li][0] == 144 || smf[trknum][li][0] == 128)){ //midicommands ON OFF
 				//add to the right language.  
 				
-				getMIDIMessage(smf[trknum][li], Math.round(smf[trknum][li].tt*10), lang); 
+				getMIDIMessage(smf[trknum][li], Math.round(smf[trknum][li].tt*10), lang, cb); 
 				//*10 because we have 100 ppqn and 60 bpm and we need milliseconds
+			}
+			else if (!feedback && (smf[trknum][li][0] == 144 || smf[trknum][li][0] == 128)){ //midicommands ON OFF
+				getMIDIMessage(smf[trknum][li], Math.round(smf[trknum][li].tt*10), "original", cb); 
 			}
 			//0 = 144?  channel 1
 			//1 = note
@@ -343,7 +355,7 @@ function getWords(b){
 	
 }
 
-function getFile(url){
+function getFile(url, cb1=null, cb2=null){
 	//getting the original midi file for the video
 		var xhr = new XMLHttpRequest();
 		xhr.open('GET', url, true);
@@ -370,6 +382,7 @@ function getFile(url){
 			*/
 			console.log(myBlob);
 			getWords(myBlob);
+			midisetcallbacks(cb1, cb2);
 		  }
 		};
 		xhr.send();
@@ -466,8 +479,17 @@ function getMidiFeedback(midiuser=0){
     return uri;
 }
 
-function getMIDIMessage(message, mytime=0, lang="") {
 
+function midisetcallbacks(midicb=null, UIcb=null){
+	midimessagecallback = midicb;
+	midiUIcallback = UIcb;
+}
+
+function getMIDIMessage(message, mytime=0, lang="", midicb=null) {
+
+	if (midicb == null){	
+		midicb = midimessagecallback;
+	}
 	var tempDiv = $('#devices');
 	var devhtml = "";
 	WebMidi.inputs.forEach((device, index) => {
@@ -477,20 +499,29 @@ function getMIDIMessage(message, mytime=0, lang="") {
 		//device.octaveOffset
 	  });
 
-	if (ispaused==1 && mytime==0){
+	if (ispaused==1 && mytime<=0){
 		midioffset +=1;
 	}
 	if (lang == ""){
 		//load languages.js before midi.js so this exists.  
 		lang = currentlanguage;
 	}
-	else{
-		//set current language.  Should be fine if this remains current language?  
-		//best is if we keep track of the age of the tracks.  too much...
-		//this screws things up.  
-		//we can pass to the right track now.  
+	//set current language.  Should be fine if this remains current language?  
+	//best is if we keep track of the age of the tracks.  too much...
+	//this screws things up.  
+	//we can pass to the right track now.  
 //		currentlanguage = lang;
+
+	if (midicb !== null){	
+		midicb(message, mytime, currentmidiuser, lang);
 	}
+	if (lang=="original" || lang=="iterations"){
+		//just loading original piece here.  
+		//could have a load function to find 
+		return;
+	}
+	//other special language cases.  
+
 	var command = message[0];
 	if (command == 144 || command == 128){
 		devhtml += " LastNote: " + message[1] + " (" + currentlanguage + ")";
@@ -606,7 +637,10 @@ function insertNote(note, lang=""){
 //	else{
 		midiarray[currentmidiuser][lang].splice(i+1, 0, note);
 	
-	updateFeedbackUI();
+	//updateFeedbackUI();
+	if (midiUIcallback !== null){
+		midiUIcallback(currentmidiuser, note);
+	}
 //	}
 	
 }
@@ -616,11 +650,11 @@ function noteOn(note, velocity, abstime, mytime=0, lang=""){ //mytime is the ori
 		lang = currentlanguage;
 	}
 	
-    console.log("Note On " + note + " at " + abstime + " vel " + velocity);
+//    console.log("Note On " + note + " at " + abstime + " vel " + velocity);
 	//make sound here.  
 	osc = null;
 	pnote = null;
-	if (mytime == 0 && playfeedback){ //no feedback sound for existing midi files except in time.  Probably need to rewrite this area to read midi files.  
+	if (mytime <= 0 && playfeedback){ //no feedback sound for existing midi files except in time.  Probably need to rewrite this area to read midi files.  
 		osc = playTone(midiToFreq(note, velocity));
 		pnote = playNote(note, Math.round(velocity/2)); //dont want this to be loud to detract from the ongoing video.  
 	}
@@ -646,7 +680,7 @@ function noteOff(note, abstime, lang=""){
 		obj.pnote.stop();
 	let clone = Object.assign({}, obj);
 	clone.duration = abstime - obj.time;
-	console.log("Note Off " + note + " at " + abstime);
+//	console.log("Note Off " + note + " at " + abstime);
 	//midiarray.push(clone);
 
 	if (lastnote !== null && lastnote.note == obj.note && lastnote.time == obj.time){
@@ -771,13 +805,13 @@ function getMidiRecent(){
 				console.log(input);
 //				input.onmidimessage = (event) => {console.log(event); getMIDIMessage(event.data); };
 				for (var i=2; i<16; i++){
-					input.channels[i].addListener("midimessage", (event) => {console.log(event); getMIDIMessage(event.data); });
+					input.channels[i].addListener("midimessage", (event) => {console.log(event); getMIDIMessage(event.data, -(event.timestamp)); });
 					//ok getting messages, but no idea the meaning.  
 
 				}
 			}
 			else{
-				input.channels[1].addListener("midimessage", (event) => {console.log(event); getMIDIMessage(event.data); });
+				input.channels[1].addListener("midimessage", (event) => {console.log(event); getMIDIMessage(event.data, -(event.timestamp)); });
 			}
 	//		input.channels[1].addListener("midimessage", (event) => {console.log(event); getMIDIMessage(event.data); });
 			

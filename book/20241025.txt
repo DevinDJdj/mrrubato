@@ -145,9 +145,45 @@ Add time for each note and test.
 Also experiment with 24 key circle instead of 12.  
 Maybe this is more interesting.  
 
+**web/public/testdoodle.html
+realtime interaction to draw on canvas or BabylonJS based on midi input.  
+For now 2 note vectors.  Add force vectors essentially.  
+Use circular mapping for now.  
+i.e. C0C1 --> increase speed.  
+C1D1 lifts 
+C1B1 decline
+Leave trail and constantly adjust color to track.  
+Octave is speed
+Anything else is rotational.  
+how to treat different octaves?  
+upper octaves are simply for refinement?  
+Make this with the language construct?  
+keymap functions.  
+Need better reaction time though. 
+Need direct function call once word is recognized.  
+Need to recall this area.  
+
+Really should start using this import mechanism
+https://jakearchibald.com/2017/es-modules-in-browsers/
 
 
 **timestep.py
 Should update stats/wordsrecognized after doing transcript.  
 --done
+
+
+**book.html
+Maybe a visualization of the book portion of this may be interesting.  
+Add visualization of the book part of the code here?  
+
+**server/ollama
+Eventually
+Ingesting this the same way we ingest the transcriptions.  
+
+
+**web/public/analyze.html
+have a bug if pianoroll not loading.  
+I think this is the iteration calc.  
+No spotlight.  
+--maybe fixed.  
 

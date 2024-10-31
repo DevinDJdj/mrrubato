@@ -353,8 +353,8 @@ var seek = -1;
 var DictionaryID = 0;
 
 var lastjump = 0;
-var player;
-var player2;
+//var player; //move to video.js
+//var player2; //move to video.js
 var delay = 10;
 var prevmax = 10;
 var notesarray = [];
@@ -391,7 +391,7 @@ var camera2;
 var light;
 var spotlight1;
 var spotlight2;
-var watch = false;
+//var watch = false; //move to video.js
 
 var myuid = null;
 var myuser = null;
@@ -486,7 +486,9 @@ function loadComplete(user){
 			//firebase.database().ref('/misterrubato/' + video + '/comments').once('value')
 			.then((snapshot) => {
 				if (snapshot.exists()) {							
-					setTimeout(function(){ loadPreviousComments(snapshot, uid); }, 4000);
+					setTimeout(function(){ 
+						loadPreviousComments(snapshot, uid); 
+					}, 4000);
 
 				} else {
 					firebase.database().ref('/watch/' + video + '/comments').orderByChild('updated').limitToLast(20).once('value')
@@ -494,10 +496,13 @@ function loadComplete(user){
 						.then((snapshot) => {
 							if (snapshot.exists()){
 								setTimeout(function(){ 
-									loadPreviousComments(snapshot, uid); }, 5000);
+									loadPreviousComments(snapshot, uid); 	
+								}, 5000);
 							}
 							else{
-							console.log('No comments yet');									
+							console.log('No comments yet');								
+								//dont want all the callbacks during load.  
+	
 									//no comments yet.  
 								loadDictionaries(0);
 	//										initDicFilters();
@@ -539,13 +544,33 @@ function loadComplete(user){
 							}
 						});
 			
+
+
+				setTimeout(function(){ 
+					//dont want these to be called during load.
+					midisetcallbacks(mymidicallback, updateFeedbackUI);
+				}, 5000);
+						
+			}
+			else{
+				//this will be a problem
+				console.log("User not logged in - issues here");
+
 			}
 
 }
 
+function mymidicallback(msg, time, user, lang) {
+  console.log(msg);
+  console.log(time);
+  //draw here.  
+}
+
+
 function loadAll(reload = false){
 	midiarray = [{"base": []}]; //reinitialize necessary?  
 	currentmidiuser = 0;
+
 	reinitLanguages();
 	getFullPiano();
 
@@ -583,7 +608,7 @@ function loadAll(reload = false){
 			console.log(user);
 			
 			//if not set, set the DB uid.  
-			loadComplete(user);
+			loadComplete(user);			
 		});
 	 }
 	 else{
@@ -661,7 +686,7 @@ function loadTranscript(snapshot){
 }
 
 
-function updateFeedbackUI(user=0){
+function updateFeedbackUI(user=0, note=null){
 	//filterWords();
 	findWordsA(user);
 
@@ -698,6 +723,7 @@ function loadPreviousComments(snapshot, uid=0){
 
 		console.log("MIDI:" + midifeedback);
 	}
+
 	if (!foundme){
 		//logged in user has no comments.  
 		//need to load anyway.  
@@ -805,11 +831,11 @@ function getFeedbackImage(source, w, h, myscene,myengine, midiuser=0, flang=""){
 			var ytemp = ybot + h/2+(10*(1+(wi%2)));
 			var xtemp = -x + w/2 + 2;
 			if (w == xmultiplier1){
-				console.log("Drawing on ground1 " + word + " " + xtemp + " " + ytemp + " " + w + " " + h);
+//				console.log("Drawing on ground1 " + word + " " + xtemp + " " + ytemp + " " + w + " " + h);
 				textureGround1.drawText(word, xtemp, ytemp, font, "white", null, true, true);
 			}
 			else{
-				console.log("Drawing on ground2 " + word + " " + xtemp + " " + ytemp + " " + w + " " + h);
+//				console.log("Drawing on ground2 " + word + " " + xtemp + " " + ytemp + " " + w + " " + h);
 				textureGround2.drawText(word, xtemp, ytemp, font, "white", null, true, true);
 			}
 		}
@@ -1132,7 +1158,7 @@ function getIterations(desc, vidtime, isme=false){
 			te = desc.indexOf(")", ts);
 			if (ts > -1)
 				e = getSecsFromTime(desc.substring(ts+(fnd.length)+2, te));
-			if (s > 0 && e > 0 && e > s){
+			if (s > -1 && e > -1 && e > s){
 				st.push(s);
 				et.push(e);
 			}
@@ -1520,6 +1546,26 @@ function loadCanvas(id, pianoimg, mini="") {
 
 
 			}).fail(function() { 
+				/*
+				const canvas = document.createElement('canvas');
+				canvas.width = xmultiplier;
+				canvas.height = ymultiplier;
+				
+				const ctx = canvas.getContext('2d');
+				ctx.fillStyle = 'rgba(255, 255, 255, 0)';
+				ctx.fillRect(0, 0, width, height);
+
+				const img = new Image(width, height);
+				img.src = canvas.toDataURL();
+
+				const texture = new BABYLON.Texture(img, scene);								
+				materialPlane.diffuseTexture = ptexture;
+				materialPlane.alpha = 0.4;
+//				plane.rotation.x = Math.PI / 2;
+				plane.material = materialPlane;
+				plane.rotation.x = Math.PI /2;
+				plane.rotation.y = Math.PI;
+				*/
 				// Image doesn't exist - do something else.
 				console.log("Piano roll load error " + pianoimg);
 			})

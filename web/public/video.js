@@ -1,3 +1,7 @@
+var watch = false;
+var player;
+var player2;
+
 function onYouTubeIframeAPIReady() {
     player = new YT.Player('player', {
       height: '360',
@@ -313,7 +317,7 @@ function setVideoVolume(volume){
 //				hideVideo.get(0).currentTime = 0;
     }
     else{
-		player2 = document.getElementById("my-video");
+      player2 = document.getElementById("my-video");
 
         player2.onplay = (event) => {
             console.log(

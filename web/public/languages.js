@@ -1189,7 +1189,7 @@ function findWordsA(user){
                     //but if we get lots of words, probably want to change this logic to build some sort of array search.  
                     //also really need to search from longest to shortest.  
                     //at the moment leave as is.  
-                    console.log(indexes); // [2, 25, 27, 33]
+//                    console.log(indexes); // [2, 25, 27, 33]
                     if (typeof(wordtimes[key]) === "undefined"){                        
                         wordtimes[key] = {};
                         midiwords[key] = {};
