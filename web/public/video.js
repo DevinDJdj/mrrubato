@@ -1,6 +1,7 @@
 var watch = false;
 var player;
 var player2;
+var currenttranscriptentry = "";
 
 function onYouTubeIframeAPIReady() {
     player = new YT.Player('player', {
@@ -185,6 +186,15 @@ function setVideoVolume(volume){
       ctx.beginPath(); // Start a new path
       ctx.rect(10, 40, 100, 150); // Add a rectangle to the current path
       ctx.fill(); // Render the path
+
+      ctx.fillStyle = 'black';
+
+      // Set the global alpha value (0 = fully transparent, 1 = fully opaque)
+      ctx.globalAlpha = 0.5;
+
+      // Draw the text
+      ctx.fillText(currenttranscriptentry, 50, 10);
+
       requestAnimationFrame(drawVideo);
     }
 

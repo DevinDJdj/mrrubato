@@ -112,7 +112,7 @@ data-setup="{}"
   <img src="images/edit.png" height="16px" onClick="toggleTranscript();"/>
   <br>
   <textarea id="transcript" style="display:none" rows="10" cols="50"></textarea>
-  <div id="transcriptsh" style="height: 190px;overflow:auto;"></div>
+  <div id="transcriptsh" style="height: 190px;overflow:auto; word-break: break-all; word-wrap: break-word;"></div>
 
 	<table>
 		<tr>
@@ -358,6 +358,7 @@ var lastjump = 0;
 var delay = 10;
 var prevmax = 10;
 var notesarray = [];
+var transcriptarray = [];
 var descarray = [];
 var commentsarray = [];
 var starttimes = [];
@@ -649,6 +650,7 @@ function setTranscript(transcript){
 		//we get the updated transcript, but cant edit further.  This removes confusion about if you can edit.  
 	}
 	tempDiv.val(transcript);
+	createTranscriptArray();
 }
 
 function toggleTranscript(){
@@ -1099,6 +1101,18 @@ function updateNotes(){
 	//add clickable link inside here instead.  
 	$('#mycommentsh').html(makeTimeLinks(allnotes));
 	
+}
+
+function createTranscriptArray(){
+//also update the new DIV with links.  
+	alltranscript = $('#transcript').val();
+	transcriptarray = [];
+	const lines = alltranscript.split("\n");
+	for (i = 0; i< lines.length; i++){
+	    transcriptarray[i] = lines[i];
+	}
+	console.log(transcriptarray);
+
 }
 
 function createNotesArray(){
@@ -1690,7 +1704,9 @@ function getTranscript(desc){
 		url = desc.substring(tposition+11);
 	}
 	if (url.trim() !== "error"){
-		tempDiv.load(url);
+		tempDiv.load(url, function(){
+			createTranscriptArray();
+		});
 		tempDiv2.load(url, function(){
 			tempDiv2.html(makeTimeLinks(tempDiv2.html()));
 		});

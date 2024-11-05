@@ -187,3 +187,105 @@ I think this is the iteration calc.
 No spotlight.  
 --maybe fixed.  
 
+Several things, may have introduced bugs.  
+
+
+**languages
+Parts of speech
+Control structure via this type of syntax.  
+Not sure how to do this, need more brainstorming.  
+XXX - no repetition, no larger jump than AE, and no AEXXXEA can be contained.  
+Simple pattern with octaves can still be done.  
+
+A can represent any key, start on whichever preferred.  
+
+Noun - ABXXXBA
+Most nouns will be ABD...DBA
+
+
+Pronoun - Specific case
+prefix ABC can be like memory registers.  
+We can use whatever octaves.  
+What other constraints do we need?  
+ABCDA
+ABCEA
+ABCGA etc.  
+
+
+Adjective
+BAXXXAB
+general structure will be 
+BAG mentioning the one just previous.  
+
+
+
+
+Preposition
+DAXXXAD
+
+
+Verb
+ACXXXCA
+
+
+Adverb
+CAxxxAC
+
+Conjunction
+AEXXXEA
+
+New sentence/Separator
+EAXXXAE
+
+Maybe try this.  
+So syntax/modification is controlled by this structure.  
+
+Do we want any other parts of speech?  
+
+If unidirectional, no need for Closure bracket.  
+Perhaps have closure bracket optional.  
+
+So this is a basic structure, does it actually work.  
+
+Numbers:
+Use chromatic scale here?  
+AB' = 1
+AB = 2
+AC = 3 ..
+
+Syntax is most important.  
+This is not wonderful to represent audially.  
+
+Operators
+Functions
+
+Similar to programmatic structure.  
+
+Todo:
+Study linguistics for programming languages.  
+maybe investigate LISP a bit more.  
+And learn carbon probably useful at some point.  
+
+Can we use this?  
+https://github.com/LIPS-scheme/lips?tab=readme-ov-file
+Is this a good scheme for us?  
+
+https://github.com/carbon-language/carbon-lang
+
+
+**web/public/analyze.html
+Need to put the minimap up top perhaps?  
+Or a copy of one.  
+How do we merge/should we merge feedback?  
+
+use ROLI dynamic messages?  
+This limits user adoption.  
+
+Stop just postulating, just write a few simple mappings.  
+
+The language itself can be the pre-post fix in certain cases.  
+Bracketed word
+LLL WORD LLL
+
+Instead of using META CHANGE lang
+

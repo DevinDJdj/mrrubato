@@ -986,10 +986,16 @@ function loadDictionaries(user){
         //update UI to use the words.  
 		updateFeedbackUI(user);        
 
-        //set up to highlight video times 
         setInterval(function(){
             //probably no longer need this if we get graphical UI working better.  
             updateVidTimes(user);     
+            //this sets currentvidtime.  
+            //get the transcript from here
+            getCurrentTranscript();
+
+        }, 1000);
+        //set up to highlight video times 
+        setInterval(function(){
 
             //all languages checkCommands.  
             triggerCheckCommands();
@@ -997,6 +1003,19 @@ function loadDictionaries(user){
         }, 500);
 
     }, 5000);
+
+}
+
+function getCurrentTranscript(){
+    i = 0;
+    while (i< transcriptarray.length && getTime(transcriptarray[i])+delay < currentvidtime/1000){
+        i++;
+    }
+    if (transcript.length > 0 && i == transcriptarray.length ){
+        i = i-1;
+    }
+    currenttranscriptentry = transcriptarray[i];
+    //  notesarray
 
 }
 

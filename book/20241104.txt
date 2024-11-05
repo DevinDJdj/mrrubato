@@ -1,0 +1,155 @@
+Lets try this again.  
+
+add language tennis (-6,6)
+--start here.  
+Hmmmm... not working great.  
+Also feedback is multiplied by the number of languages.  
+Why is this occurring.  
+
+Dont like the requirement for EOW.  
+But this worked ok.  
+add word hit 66,66,60,60
+Maybe dont require this if we are using the pedal.  
+pedal
+add word hit 66,66
+pass waspedaldown.  Yes this is better.  
+Leave both options, shouldnt require pedal.  
+
+
+analyze.html?video=mj4jpeBvD2o
+change language (-6,6)
+add word hit (6,6)
+how do we have synonyms?  This would get overwritten
+Could have something mimicing back and forth across net.  
+add word backhand (6,1) 
+add word forehand (6,3) 
+add word slice (6,2)
+add word topspin (6,4)
+add word volley (6,8)
+add word drop (6,10)
+add word serve (10,11)
+
+add word fault (10,9)
+add word let (10,8)
+add word out (5,5)
+add word long (5,6)
+add word net (5,4)
+add word bounce (4,4)
+add word applause (3,4)
+add word noise (3,5)
+
+add word score (2,2) (param = 3,4,5,6,7)
+2,8 = minus point, 2,3 = plus point, 2,4 plus game, 2,5 plus set
+2,9 = minus game, 2,10 minus set 
+
+
+
+add word player one (9,8)
+add word player two (9,10)
+9,8 = set player 1
+9,10 = set player 2
+
+2,3,9,8 = player 1 gets point
+
+In general should structure from left to right.  
+So in this case player can be a prefix or a postfix.  
+Structure should contain an element of distance.  
+
+
+**web/public/analyze.html
+Why are we crashing after leaving this up for significant period of time.  
+Must be setTimeout stuff.  
+
+Should we have iterations of feedback?  
+Not sure how useful this is?  
+We could put it into a different track with same language and then load multiple.  
+Not sure I want to add this level of complexity at this point, but may regret not doing it.  
+
+How do we leave a quick location stamp?  
+We had already mentioned 
+Bottom octave = B<->T
+Top octave = L<->R
+
+No need to use 0 here.  should be 1 based perhaps.  
+0,24=BR
+0,12=BL
+12,24=TR
+12,12=TL
+
+TL = Center
+Usually would start at center, and then go down on left hand
+0,12 -> 12,24 BL->TR
+0,24 -> 12,12 BR->TL
+0,12 -> 12,12 BL->TL
+0,24 -> 12,24 BR->TR
+
+Standard Progression
+12,12 -> 7,12 -> upper octave play 7, 15 8, 18... -> Perhaps back to 10,12
+
+This is assuming the grid control methodology.  
+
+Alternative would use time and vector methodology.  
+Angle and distance.  
+Perhaps same.  
+
+Bottom octave = angle
+Top octave = distance (exponential?)
+12,12 = C
+0,12 = C
+0, 24 = 1,0
+0,18 = 1/2,0
+1,24 = sqrt(3)/2, -1/2
+2,24 = 1/2, -sqrt(3)/2
+3,24 = 0, -1
+6,24 = -1,0
+9,24 = 0,1
+12,24 = 1,0
+
+This is advantageous as we can use octave relationship as well then.  
+
+Boxes will be better with the 
+
+How good is eye-tracking technology?  
+Do we want to use this instead?  I dont think so.  
+
+So box = two consecutive in this sequence.  
+Can do in any sequence, but must be 2 upper and 2 lower octave.  
+First upper->first lower pair.  
+So something like this would be common box with BOX numbers.  
+9,20,8,18 for example.  Pick middle-top right area.  
+Bottom octave has smaller.  
+Maybe we should switch octaves.  Nah, already linguistically logical this way.  
+Just not sure how distinct the more common audio patterns will be.  
+0,12 -> 12,24 BL->TR
+0,24 -> 12,12 BR->TL
+0,12 -> 12,12 BL->TL
+0,24 -> 12,24 BR->TR
+
+If we have need for further detail, need 3rd octave.  
+This can drill down within the selected box.  
+In this case need pedal down indicator probably.  
+Eventually can have inference logic, but probably not to start.  
+
+
+
+What is command to change Center location?  
+
+Lang selection function/octave, I like this.  
+Create a langselect language which only searches for language and gives feedback.  
+Essentially a function which is called on that octave.  
+Single octave languages?  We can just overlap and then all second octave will be ignored.  
+For now just use 2 octave selection range, and overlap.  
+
+
+
+**web/public/language.js
+updateVidTimes
+Need to set current caption from transcript to the video.  
+Try overlay as well as separate html div.  
+
+Use text here.  
+**web/public/video.js
+drawVideo
+
+probably change notesarray to not calculate each time?  
+
