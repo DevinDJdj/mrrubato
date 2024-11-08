@@ -153,3 +153,392 @@ drawVideo
 
 probably change notesarray to not calculate each time?  
 
+
+Should we have more integration with the git repository?  
+Maybe lets get the last few commits based on the time of the video, 
+or have the option at least
+this user
+This could be based on the filter of user selection as well.  
+
+We need some sort of word symetry around the re-ordered sets.  
+i.e. ABCD is a set.  
+All patterns
+ACBD, ACDB etc should have some sort of symetry in meaning.  
+This way we can eventually do multi at same time.  
+Can have certain languages that only have SETs and no synchronicity in words.  
+Yes need to distinguish this.  
+As we learn to distinguish the sounds this will be useful.  
+Can we have a sort of geometric similarity which will also be represented in the key structures?  
+
+
+**descartes.js
+Create mapping system.  
+Need 2d and 3d.  
+Use rotational system.  
+Bottom octave can include nuance.  
+2d = one
+3d = two
+
+i.e.
+AB = 0-30 interval
+balance based on key velocity
+xy rotation.  
+
+second interval is 3rd dimension.  
+Same way, balance based on velocity. 
+Only if we use two sequential keys.  
+
+Use multiple dimensions and 
+transcribe this into the word2vec coordinates.  
+too many dimensions for this.  
+How do we reduce this and still have it be meaningful?  
+
+Is each dimension meaningful on its own?  
+In this case we can have multiple maps and just use the dimensions which are meaningful.  
+Or perhaps recreate a more useful mapping?  
+
+
+https://medium.com/@enozeren/word2vec-from-scratch-with-python-1bba88d9f221
+
+
+How many dimensions are we dealing with for word2vec?  
+50-300
+Just use as a test.  
+This is far too many dimensions, this is probably due to the fashion in which 
+it is generated.  
+https://aclanthology.org/I17-2006.pdf
+
+The dimensions themselves appear to be arbitrary and hold no purposeful meaning.  
+Surely they hold meaning.  
+Surely we should divide this into part-of-speech segments?
+
+https://www.misterrubato.com/test/word2vec-demo/index.html
+
+Find word from vector using this?  
+Key functions:
+**web/public/test/word2vec-demo/scripts/main.js 
+->Prepare
+    dataset = getDataPairs(model, textData, windowSize, negSampling, negatives)
+-> TrainModel
+    createModelLogistics()
+    model.fit()
+    This is what is creating the output embeddings.  
+    for this app, negSampling = binaryClassification
+    Not sure if this is standard.  
+
+    for display graph:
+    data = showAllEmbeddings()
+
+
+This is the t-SNE mapping.  
+https://en.wikipedia.org/wiki/T-distributed_stochastic_neighbor_embedding
+    T = new tsnejs.tSNE(opt);
+    T.initDataRaw(data);
+    T.step();
+    costGrad
+    NxN matrix
+    takes sum of diff of all dimensions.  
+    var qu = 1.0 / (1.0 + dsum); // Student t-distribution
+    this.P = d2p(dists, this.perplexity, 1e-4); // attach to object
+  // compute (p_{i|j} + p_{j|i})/(2n)
+
+This is a nice sample in general.  
+
+**web/public/analyze.html
+How can we use this with transcript?
+
+
+**languages
+Basically just proximity and part of speech.  
+And arbitrary sounds which we can make.  
+Proximity (post/pre) develops kind of arbitrarily over time.  
+
+N
+ADJ
+ADV
+V
+INT/CONJ
+DET
+CLASS
+PRE/POST 
+- relative position
+- time position
+- direction/motion position
+- heirarchical position
+despite
+- deciscion motion/direction?
+except/exclude/save of in per with/without
+- set relationship
+
+
+Physical Directional communcation
+use polar coordinate system and maintain symetry.  
+1,24 = sqrt(3)/2, -1/2
+2,24 = 1/2, -sqrt(3)/2
+3,24 = 0, -1
+6,24 = -1,0
+9,24 = 0,1
+12,24 = 1,0
+
+DOWN = 3,24
+LEFT OF = 6,24
+UP = 9,24
+RIGHT OF = 12,24
+
+AB = 0-30 interval
+balance based on key velocity
+xy rotation.  
+
+Does time flow from left to right, yes I think it does.  
+Lets use this same mechanism.  I dont see a problem with it.  Some direction we need to track.  
+And left/right eye motion is 
+Lower octave = less data/less accurately perceived, upper octave gradually contains more data.  
+
+https://en.wikipedia.org/wiki/Eye_movement
+https://en.wikipedia.org/wiki/Eye_movement_in_music_reading
+https://pmc.ncbi.nlm.nih.gov/articles/PMC7725652/
+
+/DOWN/RIGHT OF/LEFT OF
+BELOW
+
+PRONOUN / REGISTERS
+
+These would be first to integrate.  
+PRONOUN and PRE/POST position.  
+
+Spanish is the last classical language I will learn.  
+This does not communicate the thought.  How can I expand on this to communicate the thought.  
+Humans will acquire language at some point in real-time.  
+Then all spoken language learned up to this point will be considered classical language.  
+And all language past that point in time should be given a new name.  
+I believe this point in time will be within the century if we live that long.  
+
+I am not too concerned about the speed at which I acquire Spanish constructs.  
+Other than the implications it has about my relationship with time.  
+
+
+Capcut Time curve adjustment.  
+Just need incremental messages?  
+minimum Time interval perception for sound
+10 microseconds
+
+##https://usaarl.health.mil/assets/docs/hmds/Section-19-Chapter-11-Auditory-Perception-and-Cognitive-Performance.pdf
+<!--
+Music covers larger freq range and sound level.  
+
+Threshold of hearing
+For freq in mid-upper, dB much lower.  
+
+Auditory discrimination
+Weber fraction
+The three basic
+auditory sensations are loudness, pitch, and perceived duration. These sensations are highly correlated with the
+physical properties of sound intensity, sound frequency, and sound duration, respectively, but they are affected by
+the other two physical properties of sound as well
+
+intensity DL
+frequency DL
+
+The DL for sound intensity is typically about 0.5 to 1.0 dB within a wide range of intensities (greater than 20
+dB above the threshold) and across many types of stimuli (Chochole and Krutel, 1968; Letowski and Rakowski,
+1971; Riesz, 1928)
+reaches up to about 3 dB for natural sounds listened to in natural
+environment
+
+We should use 24-key octaves in the middle of the piano.  
+Discretization is a good thing or not.  Depends on the message.  
+
+
+DL for frequency (in Hz) is relatively independent of
+frequency and increases logarithmically with frequency at mid and high frequencies. T
+the frequency DL is dependent on the frequency and intensity of the stimuli being
+compared. It also depends on the duration and complexity of the stimuli. For tonal stimuli with intensity
+exceeding 30 dB SPL, average frequency DLs are about 1 to 2 Hz for frequencies below 500 Hz and 0.1 to 0.4%
+The cent is a logarithmic unit of measure used for musical intervals, often implemented in electronic tuners. Cents are used
+to measure extremely small intervals or to compare the sizes of comparable intervals in different tuning systems.
+Auditory Perception and Cognitive Performance 405
+for frequencies above 1000 Hz (Koestner and Schenfeld, 1946; König, 1957; Letowski, 1982; Shower and
+Biddulph, 1931).4
+ All these values are typical for average sound intensity levels, and they are the same or slightly
+smaller for increases in sound intensity up to about 80 dB SL (Wier, Jesteadt and Green, 1977). S
+
+frequency DLs for narrow band noises centered at 800 Hz
+vary from approximately 3 to 4 Hz for very narrow noises (Δf < 12 Hz) to more than 6 Hz for a noise band that is
+64 Hz
+
+
+####Temporal discrimination####
+
+It refers to the human
+ability to distinguish between acoustic stimuli or silent intervals of different length, to detect a silent gap in an
+otherwise continuous stimulus, to resolve between one or two clicks presented in a succession, and to identify
+
+4
+ At low frequencies, the DL is constant in Hz; at mid and high frequencies, it is constant in percent (%).
+406 Chapter 11
+temporal difference and order in the onsets of two overlapping stimuli. The corresponding temporal
+discrimination measures are called sound duration DL, gap detection threshold, temporal resolution, and
+temporal order discrimination, respectively. 
+
+A different type of auditory temporal resolution can be assessed by measuring the minimum detectable duration
+of a gap in a continuous sound. The gap detection is in the order of 2 to 3 ms for tones at moderate and high sound
+pressure levels (Exner, 1875; Ostroff et al., 2003; Plomp, 1964).
+
+A gap detection threshold
+exceeding 15 ms is considered abnormal (Keith, Young and McCroskey, 1999)
+
+The minimum detectable gap duration in continuous signals is very similar to the gap duration required to hear
+two similar clicks as separate events. Such temporal resolution is about 1.5 to 3 ms (Hirsch, 1959; Wallach,
+Newman and Rosenzweig, 1949), but it may increase to 10 ms for clicks that are greatly dissimilar (Leshowitz,
+1971).
+
+
+Temporal order discrimination requires substantially longer time intervals than temporal resolution or gap
+detection. The time difference required to determine the order of two sound onsets is to the order of
+approximately 30 to 60 ms. 
+ If the sounds overlap in time but have
+different onset times, they are heard as starting at the different points in time if their onset times differ by more
+than about 20 ms (Hirsh, 1959; Hirsch and Sherrick, 1961).
+
+For example, the duration of a short pause (gap) between two stimuli (e.g., 250 ms) is underestimated by
+25% or more if it is preceded by another shorter pause (Suetomi and Nakajama, 1998). This effect is known as
+“time shrinking” and is an important element of music perception. It also has been reported that presentation of
+sound-distracter affects visual time-order perception (Dufour, 1999; McDonald et al., 2005)
+
+Mauk and Buonomano (2004) reported that experts can understand Morse codes at rates of 40 to 80
+words per minute (wpm), which for 40 wpm, results in timed events of 30, 90, 30, and 90 ms, respectively. 
+
+
+The maximum duration of the stimulus through which the temporal summation effect operates is called critical
+duration. According to many studies, the critical duration for pure tone signals is approximately 200 to 300 ms
+
+. The threshold of hearing is higher for durations shorter than the critical duration and decreases
+at a rate of about 3 dB per doubling of duration (Zwislocki, 1960). For example, for 100-μsec square-wave clicks
+presented at the rate of 10 Hz, the threshold of hearing is in the order of 35 dB SPL (Stapells, Picton and Smith,
+1982), while the hearing threshold for continuous white noise is near 0 dB SPL.
+
+
+energetic maskers, which physically affect the audibility of the target sound,
+and informational maskers, which have masking capabilities due to their similarity to the target sound. 
+
+-->
+
+Original question: does the eye move more efficiently up/down or side/side
+##https://pmc.ncbi.nlm.nih.gov/articles/PMC10684582/#:~:text=The%20results%20revealed%20superior%20DVA,of%20DVA%20and%20eye%20movement.
+<!--
+ Dynamic visual acuity (DVA) is crucial for the perception of moving objects.
+ The results revealed superior DVA and eye movement in the horizontal direction compared with the vertical direction (𝑝<0.001). 
+ This highlights the anisotropic characteristics of DVA and eye movement. 
+-->
+
+So approx 3Hz and 3dB.  
+Controlling the velocity on the keyboard is not so easy, so this must be a range description.  
+Yeah we should have far more depth in the key structure around the middle octaves.  
+New format keyboards make an attempt to do this.  
+
+#ROLI 
+This may be more interesting than the current default side/side motion.  
+We could potentially create interesting sequences which chromatic-like patterns at another level.  
+Make it configurable.  
+
+
+I still think we get a lot, even if it is closer to 10ms rather than 5ms.  
+
+Auditory perception just has some advantages over the visual system.  
+Time is built in to the perception naturally.  
+
+
+
+and color adjustment are fine.  
+
+
+
+How was Morse code developed?  
+
+
+When we zoom in and out of time, how do we want the timeline/pianoroll to display?  
+Essentially information density should be a dynamic setting.  
+And regardless of speed this should be propagated.  
+How should this be filtered is a question we currently are not doing very well on.  
+
+Open new tab?  Or single tab app?
+
+
+Lang select octave | location mechanism.  
+Location mechanism should be last searched in 24-key configuration.  
+Draw on screen.  
+Play tennis.  
+
+OK, lets make the physical direction mechanism.  
+
+Can we get a level of time accuracy that is acceptable in the UI?  Eventually..
+
+
+How to make a heirarchical structure in words?  
+This would be most convenient for the input mechanism.  
+Also how do we translate the logical structures?  
+
+Each word potentially translates to a function, but is this too much?  
+I think it's ok.  
+
+https://en.wikipedia.org/wiki/Formal_language
+https://en.wikipedia.org/wiki/Characteristica_universalis
+<!--
+Leibniz said that his goal was an alphabet of human thought, a universal symbolic language (characteristic) for science, mathematics, and metaphysics. 
+-->
+
+Need image entry for each word.  
+If it is not representable in a charset.  
+Actually we prefer the image as this allows for much more in depth understanding.  
+Already preloading the entire language.  
+This may be problematic if we need to load all the images.  
+Only load images if it is actually used in the feedback/rec.  
+
+Allow selection from the video.  
+
+"select image " ...
+
+For temporary solution for adoption, lets name each key on the keyboard.  
+Octaves should have the symetric naming.  
+And the symetry within the octave should be represented in the names.  
+
+
+#https://en.wikipedia.org/wiki/De_Arte_Combinatoria
+<!--
+The main idea behind the text is that of an alphabet of human thought, which is attributed to Descartes. 
+The first examples of use of his ars combinatoria are taken from law, the musical registry of an organ, and the Aristotelian theory of generation of elements from the four primary qualities. 
+-->
+Aqva, Terra, Aer, Ignis
+
+#https://en.wikipedia.org/wiki/Earth,_Wind_%26_Fire
+
+What should the order be?  
+#https://www.math.ucla.edu/~pak/hidden/papers/Quotes/Leibniz-Arte-Combinatoria.pdf
+<!--
+caliditas - hot
+siccitas - dry
+frigiditas
+humiditas
+
+
+the total combination of n terms is 2^n - 1
+the number of permutations of four things taken at a time is 24.  
+-->
+**LS 
+
+2^2 - 1 = 3 = 
+2^3 - 1 = 7  ---- 1,3,3,1  ---- 8 includes the null set.  
+2^4 - 1 = 15
+2^6 - 1 = 63  ---- 1,6,15,20,15,6,1 ---- 64 includes the null set.  
+2^24 - 1 = 16777215
+2^120 - 1 = 
+2^(n!) - 1 
+pattern which can be used?  
+
+is this an insight?  LOL dont think so...
+the relationship between 2^3 and 2^6 (3^2), 2^4 and 2^24 (3 × 7 × 13 × 17 × 241)
+
+All important things.  
+
+#dont fall in.  
+
