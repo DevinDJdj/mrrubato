@@ -586,10 +586,10 @@ def printMidiGif(t, midilink):
                     radius = 10
 
                     vol = mymsg.msg.velocity /10
-                    startpointx = math.round(center + radius*oct * math.cos(math.radians(startangle)) - vol)
-                    startpointy = math.round(center + radius*oct * math.sin(math.radians(startangle)) - vol)
-                    endpointx = math.round(center + radius*oct * math.cos(math.radians(startangle)) + vol)
-                    endpointy = math.round(center + radius*oct * math.sin(math.radians(startangle)) + vol)
+                    startpointx = round(center + radius*oct * math.cos(math.radians(startangle)) - vol)
+                    startpointy = round(center + radius*oct * math.sin(math.radians(startangle)) - vol)
+                    endpointx = round(center + radius*oct * math.cos(math.radians(startangle)) + vol)
+                    endpointy = round(center + radius*oct * math.sin(math.radians(startangle)) + vol)
                     draw.ellipse((startpointx, startpointy, endpointx, endpointy), fill=color_2)
                     images.append(im)
                     prevTime = currentTime
