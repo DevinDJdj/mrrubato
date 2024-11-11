@@ -26,6 +26,9 @@
 	"openai":{
         "APIKEY":OPENAI_KEY
     },
+	"google":{
+		"AISTUDIO": AISTUDIO_KEY
+	},
     "firebase":{
 		"credentialsfile": CREDENTIALS_FILE,
 	    "fbconfig": {  

@@ -207,6 +207,8 @@ function addTag(tag, videoid="", midi=null){
 }
 
 function addWord(word, midi){
+    midi = convertKeys(midi, keybot[currentlanguage]/12); //get keys + keybot
+
     wordref = firebase.database().ref('/dictionary/language/' + currentlanguage + "/" + word);
 	wordref.once('value')
     .then((snap) => {
@@ -228,6 +230,8 @@ function addWord(word, midi){
 
 
 function addLanguage(lang, midi){
+    midi = convertKeys(midi, keybot[currentlanguage]/12); //get keys + keybot
+    
     if (lang==""){
         console.log("Language identifier required");
         return;

@@ -503,7 +503,7 @@ Octaves should have the symetric naming.
 And the symetry within the octave should be represented in the names.  
 
 
-#https://en.wikipedia.org/wiki/De_Arte_Combinatoria
+https://en.wikipedia.org/wiki/De_Arte_Combinatoria
 <!--
 The main idea behind the text is that of an alphabet of human thought, which is attributed to Descartes. 
 The first examples of use of his ars combinatoria are taken from law, the musical registry of an organ, and the Aristotelian theory of generation of elements from the four primary qualities. 
@@ -541,4 +541,100 @@ the relationship between 2^3 and 2^6 (3^2), 2^4 and 2^24 (3 × 7 × 13 × 17 × 
 All important things.  
 
 #dont fall in.  
+
+**web/public/db.js
+put the user ID in the video DB?  
+Will eventually need something like this.  
+
+
+
+Need to add
+
+**web/public/languages.js
+addWord()
+Need to convert the midi.  
+--done
+
+Is there need for an option to have language be fixed keys instead of relative.  
+Dont think so.  
+
+
+**generate/generatefont.py
+Can we add color to charset?  
+Unicode chars.  
+chars='🔵🔴🟠🟡🟢🟣🟤🟦🟥🟧🟨🟩🟪🟫🛑🔶🔷🔸🔹🔺🔻'
+
+onst myFont = new FontFace('MyFont', 'url(path/to/myfont.woff2)');
+
+https://github.com/fonttools/fonttools
+https://github.com/arrowtype/fonttools-intro/blob/main/examples/02-make-trial-font.py
+
+24 key representation should be available.  
+Cant hold sequence, but ...
+Maybe should do this first.  
+
+Wow how is it so annoying to do this?  
+
+
+#http://comptypo.decontextualize.com/fonts-as-data/
+Second step, change to woff2.  
+#https://www.gyford.com/phil/writing/2023/11/06/subset-emoji-font-python/
+
+
+**web/public/testfont.html
+Try using this instead.  
+OK, finally something close.  
+Try to create from scratch and 
+possibly save as woff (better format?)
+
+#opentype.js
+no color support?  
+
+https://photopea.github.io/Typr.js/
+
+#https://robofont.com/
+why no good python library to make this easier to do dynamically?  
+
+
+Using fonts will have some advantages and disadvantages.  
+But I suspect it will be better in the long run.  
+Can we generate from image directly though.  
+
+Babylon.js should be able to specify custom font easily enough.  
+	font = "12px Arial";
+
+
+**timestep.py
+Generate a font for each language with chars based on the images selected to represent the concept.  
+Should we have a separate job for this?  
+Then just load the font.  
+Do we still need to load the data structure for each language on the client?  
+Maybe not...
+
+Lets just map the keys to unicode font IDs.  
+the total combination of n terms is 2^n - 1
+But we can have repetition...
+Hmm, how can we limit this?
+https://en.wikipedia.org/wiki/UTF-32
+UTF-8: 2,097,152 (actually 2,166,912 but due to design details some of them map to the same thing)
+UTF-32: 4,294,967,296 (but restricted to the first 1,114,112)
+The main use of UTF-32 is in internal APIs where the data is single code points or glyphs, rather than strings of characters. 
+
+
+**web/public/analyze.html
+Should be able to select from image/video to generate character/word.  
+
+
+Make the piano roll more visible. 
+How can we do this easily?  
+Put a piano in the middle of the scrolling area.  
+Lets just put it as an image in the background.  
+This should be simple enough.  
+
+Have another dynamic image and change the image based on the word being played.  
+
+
+**web/public/languages.js
+Not happy with the language ingestion still.  
+Midi/speech combination troublesome.  
 

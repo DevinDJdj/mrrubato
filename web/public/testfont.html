@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+    <script src="https://cdn.jsdelivr.net/npm/opentype.js@latest/dist/opentype.min.js"></script>
+
+    <meta charset="utf-8" />
+
+  </head>
+  <body>
+    <canvas id="canvas" width="800" height="400"></canvas>
+    <script src="fonts/sketch.js"></script>
+    <script>
+        var f = opentype.load('fonts/Popcorn_Mountain--Standard.otf', function(err, f) {
+            if (err) {
+            alert('Font could not be loaded: ' + err);
+            } else {
+            var ctx = document.getElementById('canvas').getContext('2d');
+            var fontSize = 72;
+            var text = 'Hello, World!';
+            ctx.font = fontSize + 'px ' + f.names.fullName.en;
+            ctx.fillText(text, 10, 350 + fontSize);
+                setup(f, ctx);            
+            }
+        });
+
+
+    </script>
+  </body>
+</html>

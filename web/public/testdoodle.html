@@ -1,0 +1,113 @@
+<!--
+    generate canvas from midi items.  
+    use midi.js 
+    then load()
+    then generate graphic just use canvas for now.  
+    Or just copy from babylonJS we are using.  
+    Need to get to know this as well.  
+    analyze.html - updateCanvas()
+    this is running on a javascript timer.  
+    Dont use timer, use this:
+    https://playground.babylonjs.com/#YJVTI6#562
+    scene.onBeforeRenderObservable.add(()
+    
+-->
+
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>MIDI Player Test</title>
+<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+<script src="JZZ/JZZ.js"></script>
+<script src="JZZ/JZZ.midi.SMF.js"></script>
+<script src="JZZ/JZZ.synth.Tiny.js"></script>
+<script src="JZZ/JZZ.input.Kbd.js"></script>
+<script src="JZZ/JZZ.gui.Player.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/webmidi@latest/dist/iife/webmidi.iife.js"></script>
+<script src="config.js"></script>
+<script src="languages.js"></script>
+<script src="video.js"></script>
+<script src="midi.js">  </script>
+</head>
+
+<body>
+
+<h1>MIDI Player</h1>
+<div id=player></div>
+<div id=piano0></div>
+
+
+
+<video
+id="my-video"
+class="video-js"
+preload="auto"
+controls
+width="640"
+height="360"
+data-setup="{}"
+>
+
+
+<script>
+player2 = document.getElementById("my-video");
+
+
+JZZ.synth.Tiny.register('Web Audio');
+var piano0 = JZZ.input.Kbd({chan: 0, from: 'C4', to: 'E7', wl: 24, ww: 12, bl: 15, bw: 8});
+var out = JZZ().openMidiOut();
+
+var data;
+//var smf = new JZZ.MIDI.SMF(mozart());
+
+
+function mymidicallback(msg, time, user, lang) {
+  console.log(msg);
+  //draw here.  
+  //occurs on each noteOn or noteOff...
+}
+
+function updateFeedbackUI(user=0, note=null){
+    //occurs on noteOff.  
+}
+
+function fromURL() {
+  var url = 'https://storage.googleapis.com/misterrubato-test.appspot.com/midi/2023-02-25%2018-35-16.mid';
+var request = new XMLHttpRequest();
+request.open('GET', url, true);
+request.responseType = 'blob';
+request.onload = function() {
+    var reader = new FileReader();
+    reader.readAsDataURL(request.response);
+    reader.onload =  function(e){
+        console.log('DataURL:', e.target.result);
+		data = JZZ.lib.fromBase64(e.target.result.split(',')[1]);
+		var smf = new JZZ.MIDI.SMF(data);
+
+		var player1 = new JZZ.gui.Player({at: 'player', midi: false, file: true });
+		player1.connect(piano0);
+		player1.load(smf);
+		out.and(function() { player1.play(); });
+
+        //my load function as well.  
+        setTimeout(function() {
+            load(data, false, null);
+            //set callbacks for any new messages.  For now doodle with this.  
+            midisetcallbacks(mymidicallback, updateFeedbackUI);
+
+        }, 1000);
+    };
+};
+request.send();
+  
+
+}
+
+fromURL();
+</script>
+
+</body>
+</html>
