@@ -638,3 +638,9 @@ Have another dynamic image and change the image based on the word being played.
 Not happy with the language ingestion still.  
 Midi/speech combination troublesome.  
 
+
+**web/public/keymap.js
+Need add definition in function set.  
+
+**web/public/analyze.html
+why do 
