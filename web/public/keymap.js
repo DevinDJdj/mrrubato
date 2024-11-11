@@ -290,7 +290,7 @@ class Keymap{
                         midi[1].complete = true;
                         //I think this will work ok.  
                         //this allows us to move on to next command.  
-                        return transcript;
+                        return transcript + "*";
                     }
                     else{
                         //not sure how I want to handle errors yet.  

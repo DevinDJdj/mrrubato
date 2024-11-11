@@ -207,7 +207,7 @@ function addTag(tag, videoid="", midi=null){
 }
 
 function addWord(word, midi){
-    midi = convertKeys(midi, keybot[currentlanguage]/12); //get keys + keybot
+    midi = convertKeys(midi, -keybot[currentlanguage]/12); //get keys + keybot
 
     wordref = firebase.database().ref('/dictionary/language/' + currentlanguage + "/" + word);
 	wordref.once('value')
@@ -221,7 +221,7 @@ function addWord(word, midi){
         }
         else{
             //probably should include create user and update user etc.  
-            obj = {"midi": midi, "color": 0, "created": now.toISOString().substring(0, 10).replaceAll('-',''), "updated": now.toISOString().substring(0, 10).replaceAll('-','') };
+            obj = {"midi": midi, "color": 0, "definition": word, "created": now.toISOString().substring(0, 10).replaceAll('-',''), "updated": now.toISOString().substring(0, 10).replaceAll('-','') };
             wordref.set(obj);
         }
     });
