@@ -78,4 +78,35 @@ Traceback (most recent call last):
     raise exceptions.from_grpc_error(exc) from exc
 google.api_core.exceptions.ResourceExhausted: 429 Resource has been exhausted (e.g. check quota).
 
-    
+
+
+Switch to wav2vec2? 
+https://pytorch.org/audio/stable/tutorials/speech_recognition_pipeline_tutorial.html
+
+Not any use unless we also have a feedback loop to improve the recognition.  
+
+We need incremental training of the model, is there this type of process?  
+#https://arxiv.org/pdf/2404.18311
+
+Can we use this?  
+#https://medium.com/@kaz.tokyo.tech20/kotoba-recipes-library-5-minutes-to-start-llama-2-continual-learning-5f95c244a566
+
+Maybe just try this to start:
+https://github.com/meta-llama/llama-recipes
+
+https://medium.com/@shitalnandre108/fine-tuning-llama-2-large-language-model-with-custom-datasets-using-google-colab-a-comprehensive-a9d68faf3bc9
+https://www.llama.com/docs/how-to-guides/fine-tuning/
+
+
+
+#https://hyperledger-fabric.readthedocs.io/en/release-2.5/whatis.html
+<!--
+https://github.com/google/leveldb
+https://plyvel.readthedocs.io/en/latest/user.html#getting-started
+Install rust.  
+curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf | sh
+https://www.rust-lang.org/tools/install
+pip install plyvel
+
+-->
+
