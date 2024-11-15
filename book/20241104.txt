@@ -640,7 +640,10 @@ Midi/speech combination troublesome.
 
 
 **web/public/keymap.js
-Need add definition in function set.  
+Need "add definition" in function set.  
 
 **web/public/analyze.html
-why do 
+why do we have 
+
+Need button to turn on/off midi input.  
+ignore input.  
