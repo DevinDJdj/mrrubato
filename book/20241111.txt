@@ -110,3 +110,49 @@ pip install plyvel
 
 -->
 
+
+**server/
+Create an option to just switch chat and transcription to standard AppEngine services.  
+But need https to work with webpages.  
+
+#https://cloud.google.com/speech-to-text/v2/docs/chirp-model
+Can we get timestamps...
+Without this, not as useful.  
+
+https://cloud.google.com/vertex-ai/generative-ai/docs/start/quickstarts/quickstart-multimodal#python
+https://cloud.google.com/appengine/docs/standard/python3/building-app/writing-web-service
+https://cloud.google.com/appengine/docs/standard/securing-custom-domains-with-ssl
+
+
+Review this:
+#https://bdpedigo.github.io/networks-course/landing.html
+<!--
+Lets do some analysis on the existing midi.  
+-->
+
+
+agent -> extensions
+Extensions manifest
+openapi
+
+custom functions
+targetted learning
+in-context  retrieval-based in-context
+fine-tuning is like shards of knowledge
+
+langchain sequences
+
+
+Should have a readtome function in the browser.  
+#https://www.naturalreaders.com/
+nice tool...paywall...
+This is nice but really?  
+Probably could code similar base functionality in about 2 months.  
+
+
+**web/public/testfont.html
+Lets make some font...
+#https://github.com/opentypejs/opentype.js
+
+
+
