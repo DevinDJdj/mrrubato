@@ -1,0 +1,158 @@
+**test/aistudio.py
+Study...
+
+What is search grounding?  
+
+Need to add the **rec.html.  
+Where do we save the data?  
+
+multimodal:
+lyria for music generation
+#https://deepmind.google/discover/blog/transforming-the-future-of-music-creation/
+
+Short video to describe book out of text ingestion.  
+
+RLHF - 
+align model to human preference.  
+Some adjustment via standard thumbs up.  
+Not sufficient.  
+
+
+SFT alternative.  
+reword model.  
+
+Funsearch?  
+https://deepmind.google/discover/blog/funsearch-making-new-discoveries-in-mathematical-sciences-using-large-language-models/
+Select best solutions and ask LLM to improve.  
+
+iteratively check which one is more likely.  
+And then continue down this path...
+
+
+Use the Teacher model (larger model) to tune smaller model?  
+Perhaps use this to create better tiny javascript model.  
+
+Eval of LLMs day 5.  
+
+Tuning:
+compare generated with human generated Ground truth.  
+
+LLM evaluates another LLM 
+
+Youtube Livestream service not too great.  
+hmmm...
+
+Autorating..
+
+why does it do so many steps instead of just answering.  
+
+Chain of thought prompting..
+Let the LLM generate intermediate steps.  
+
+
+Gemini keeps history in the chat and can ask information later.  
+
+
+All of this prompt engineering is essentially creating a huge repository.  
+The ramifications of this are potentially extreme.  
+We must share knowledge acquired through the usage of these models.  
+
+The human race must mature with its social graph structure sufficiently to be able to tolerate this rapid acquisition of knowledge.  
+In order to do this, improvement in multi-level and denser human communication is necessary.  
+
+
+
+C:\devinpiano\music>python ./test/aistudio.py
+Traceback (most recent call last):
+  File "C:\devinpiano\music\test\aistudio.py", line 34, in <module>
+    Markdown(response.text)
+             ^^^^^^^^^^^^^
+  File "C:\Users\devin\AppData\Local\Programs\Python\Python312\Lib\site-packages\google\generativeai\types\generation_types.py", line 489, in text
+    raise ValueError(
+ValueError: Invalid operation: The `response.text` quick accessor requires the response to contain a valid `Part`, but none were returned. The candidate's [finish_reason](https://ai.google.dev/api/generate-content#finishreason) is 4. Meaning that the model was reciting from copyrighted material.
+
+Traceback (most recent call last):
+  File "C:\devinpiano\music\test\aistudio.py", line 71, in <module>
+    response = high_temp_model.generate_content('Pick a random colour... (answer in a single word)')
+  File "C:\Users\devin\AppData\Local\Programs\Python\Python312\Lib\site-packages\google\api_core\grpc_helpers.py", line 78, in error_remapped_callable
+    raise exceptions.from_grpc_error(exc) from exc
+google.api_core.exceptions.ResourceExhausted: 429 Resource has been exhausted (e.g. check quota).
+
+
+
+Switch to wav2vec2? 
+https://pytorch.org/audio/stable/tutorials/speech_recognition_pipeline_tutorial.html
+
+Not any use unless we also have a feedback loop to improve the recognition.  
+
+We need incremental training of the model, is there this type of process?  
+#https://arxiv.org/pdf/2404.18311
+
+Can we use this?  
+#https://medium.com/@kaz.tokyo.tech20/kotoba-recipes-library-5-minutes-to-start-llama-2-continual-learning-5f95c244a566
+
+Maybe just try this to start:
+https://github.com/meta-llama/llama-recipes
+
+https://medium.com/@shitalnandre108/fine-tuning-llama-2-large-language-model-with-custom-datasets-using-google-colab-a-comprehensive-a9d68faf3bc9
+https://www.llama.com/docs/how-to-guides/fine-tuning/
+
+
+
+#https://hyperledger-fabric.readthedocs.io/en/release-2.5/whatis.html
+<!--
+https://github.com/google/leveldb
+https://plyvel.readthedocs.io/en/latest/user.html#getting-started
+Install rust.  
+curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf | sh
+https://www.rust-lang.org/tools/install
+pip install plyvel
+
+-->
+
+
+**server/
+Create an option to just switch chat and transcription to standard AppEngine services.  
+But need https to work with webpages.  
+
+#https://cloud.google.com/speech-to-text/v2/docs/chirp-model
+Can we get timestamps...
+Without this, not as useful.  
+
+https://cloud.google.com/vertex-ai/generative-ai/docs/start/quickstarts/quickstart-multimodal#python
+https://cloud.google.com/appengine/docs/standard/python3/building-app/writing-web-service
+https://cloud.google.com/appengine/docs/standard/securing-custom-domains-with-ssl
+
+
+Review this:
+#https://bdpedigo.github.io/networks-course/landing.html
+<!--
+Lets do some analysis on the existing midi.  
+-->
+
+
+agent -> extensions
+Extensions manifest
+openapi
+
+custom functions
+targetted learning
+in-context  retrieval-based in-context
+fine-tuning is like shards of knowledge
+
+langchain sequences
+
+
+Should have a readtome function in the browser.  
+#https://www.naturalreaders.com/
+nice tool...paywall...
+This is nice but really?  
+Probably could code similar base functionality in about 2 months.  
+
+
+**web/public/testfont.html
+Lets make some font...
+#https://github.com/opentypejs/opentype.js
+
+
+

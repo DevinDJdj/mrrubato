@@ -9,6 +9,7 @@
   </head>
   <body>
     <canvas id="canvas" width="800" height="400"></canvas>
+    <canvas id="canvas2" width="800" height="400">  </canvas>
     <script src="fonts/sketch.js"></script>
     <script>
         var f = opentype.load('fonts/Popcorn_Mountain--Standard.otf', function(err, f) {
@@ -25,6 +26,53 @@
         });
 
 
+      function buildFont(){
+                // this .notdef glyph is required.
+        const notdefGlyph = new opentype.Glyph({
+            name: '.notdef',
+            advanceWidth: 650,
+            path: new opentype.Path()
+        });
+
+        const aPath = new opentype.Path();
+        aPath.moveTo(100, 0);
+        aPath.lineTo(100, 700);
+        // more drawing instructions...
+        const aGlyph = new opentype.Glyph({
+            name: 'A',
+            unicode: 65,
+            advanceWidth: 650,
+            path: aPath
+        });
+
+        const font = new opentype.Font({
+            familyName: 'OpenTypeSans',
+            styleName: 'Medium',
+            unitsPerEm: 1000,
+            ascender: 800,
+            descender: -200,
+            glyphs: [notdefGlyph, aGlyph]});
+
+        return font;
+      }
+
+      function useFont(font, ctx){
+        font.draw(
+            ctx,
+            'A', // Text to render
+            100, // X position
+            200, // Y position
+            100, // Font size
+            {
+                kerning: true // Take kerning into account when rendering font
+            } // Options
+        );        
+      }
+
+      var f = buildFont();
+
+      var ctx = document.getElementById('canvas2').getContext('2d');
+      useFont(f, ctx);
     </script>
   </body>
 </html>

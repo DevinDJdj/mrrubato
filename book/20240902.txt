@@ -99,3 +99,51 @@ Just pull videos and generate wavs.
 For now this will not be in pipeline.  
 Boo...
 
+
+Is this sort of thing an option?  
+https://eduardoleao052.github.io/js-pytorch/site/
+may as well use a service and return the wav file to the browser.  
+Practically having the TTS module on the browser makes more sense.  
+But dont see this component.  
+
+Try this?  
+https://medium.com/@gpj/making-your-ai-sound-like-you-a-guide-to-creating-custom-text-to-speech-8b595d5cf259
+
+Start marking dependencies with something.  
+##tortoise-tts
+not working out-of-the-box.  
+
+
+
+Text -> Mel-scale spectrogram -> wav
+
+
+For now just use this Real-Time-Voice-Cloning
+
+##server/tts/Real-Time-Voice-Cloning/demo_cli.py
+
+# - Directly load from the filepath:
+preprocessed_wav = encoder.preprocess_wav(in_fpath)
+How do we adjust to use longer input, will this even improve the model?  
+How good is this cloning actually?  
+Do we care right now?  
+This could make some voices for a voice-interactive game.  
+
+##server/tts/Real-Time-Voice-Cloning/encoder/audio.py
+preprocess_wav(in_fpath)
+
+Perhaps just try with a few samples.  
+
+**server/tts/train.py
+**server/tts/Real-Time-Voice-Cloning/train.py
+Download and run a python script similar to demo
+
+
+cp /mnt/c/devinpiano/music/server/tts/ljspeech/LJSpeech-1.1/zDetmYS9-5E_589.wav /mnt/c/devinpiano/music/server/tts/Real-Time-Voice-Cloning/wavs/input.wav
+
+
+python3 ./train.py --wav xxxx.wav
+
+Lets say this is good enough for now.  
+Should be able to generate multiple voices for fun usage.  
+
