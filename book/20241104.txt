@@ -647,3 +647,139 @@ why do we have
 
 Need button to turn on/off midi input.  
 ignore input.  
+
+
+**web/public/testfont.html
+OK we have a generated font.  
+Now how to do this reasonably.  
+Color supported?  
+https://github.com/opentypejs/opentype.js/issues/193
+Hmmm...
+how to pass color to path?  
+Can we create different color for each path?  
+
+https://github.com/googlefonts/nanoemoji
+
+
+Trial font:
+Spiral out 12 key cartesian mapping.  
+Line direction = next note.  
+Line length = duration
+Line thickness = velocity.  (pedal indicator)
+Use color?  For now no.  
+How to indicate order?  ...other than color
+How do we combine multiple notes.  
+Potentially different marking for simultaneous notes.  
+
+Need grouping in octaves.  Perhaps use simple vertical location within the font for more than 3 octave separation.  
+Similar to a staff.  
+Create simple markers to indicate graph for all glyphs.  
+Group into two octave segments?  
+Always have at least two simultaneous tracks.  
+Some information in the center of this char?  
+
+Velocity quantize 16
+Duration quantize by combining all within ~1 second? into same glyph.  
+What would be readable font size?  
+Do with font or images first?  
+Font is better, but more annoying.  
+
+This should show patterns via rotation.  
+Maybe hard to detect...
+
+
+
+how do we map to U+xxxx
+This has to be based on the midi.  
+UTF-8 each byte represents the midi representation?  
+....
+We need an image representation as well associated.  
+This is just experimenting.  
+To capture the image, use same sort of midi control.  
+Capture from the video/location at the time of creation.  
+Overwrite, or allow for multiple images.  
+Allow parameter to parse the image.  
+
+
+I think we must dynamically do this as the combinatorics dont allow us to pre-populate the font.  
+Can we dynamically create the font and use it?  
+So we would need a fontfrommidi
+If we have to do this maybe it is better to just generate an image?  
+
+As this time area is played with feedback words, we display the images either overlayed or separately.  
+
+Ability to copy will be good reason for creating font, but how do we distinguish between languages.  
+Unless we use language as a header for each character perhaps.  
+Once we reach this language limit, 
+
+Could use the 4-byte range of Unicode UTF-8.  
+This is the least common range.  
+https://design215.com/toolbox/utf8-4byte-characters.php
+
+**generate/generatefont.py
+Load a language from charset.  
+And auto-correlate with midi characters. 
+Generate the json file to ingest into DB.  
+
+Start with sumerian from this charset.  
+f0928080 ..
+
+After this, can we display this without issue in browser?  
+How do we work with it in the browser?  
+Ugh...
+
+Can we switch between fonts and use text areas?  
+**web/public/testfont.html
+    const glyph = font.charToGlyph('A');
+
+    // Convert the glyph to an SVG path string
+    const path = glyph.getPath();
+    const svgPathString = path.toSVG();
+
+    console.log(svgPathString);
+
+Should display sound glyph along with meaning glyph.  
+Sound glyph should map to U+ID
+Same with meaning glyph.  
+Meaning glyph should have multiple sizes with increasing detail, but I think we should have a font level 36x36 or less?  
+
+
+Try representing everything with location.  
+Need multiple planes and perhaps a primary plane which is always active.  
+
+
+**generate/nouns.py
+JUMP TO PLANE ...
+JUMP TO LOCATION ...
+3D or 2D?  
+Is this possible to visualize language in a spatial structure?  
+Should try..
+This is already what the LLMs are doing.  
+LEFT is past RIGHT is future?  South-facing...
+
+We should see symetry in this graph with opposite/synonym.  
+Perhaps different planes for part of speech, and Plane selection and meta functionality would be with left hand.  
+While word/location selection with right.  
+
+Try to keep symetry across planes with meaning structure.  
+We need a word2vec graph with 3 dimensions. 
+
+So we just need to generate the models the way we want.  
+Create a similarity/locality graph with only keeping certain types of speech.  
+We can probably just use random text.  
+Parse the text, keep only certain part of speech.  
+Then generate word2vec model and analyze the structure of this model.  
+
+Can we create a meaningful graph with 3 dimensions if we limit POS.  
+Or some other factors perhaps.  
+Try with limiting POS and see results.  
+Maybe Verbs is better.  Less data.  
+Either way...
+
+
+--get good dataset and generate word2vec from the nouns in this set in order.  
+--visualize results.  
+
+
+**server/doc/test.py
+

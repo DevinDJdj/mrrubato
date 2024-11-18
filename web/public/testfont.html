@@ -26,6 +26,42 @@
         });
 
 
+      function buildFont2(){
+
+        const font = new opentype.Font({
+            familyName: "Color Example",
+            styleName: "Flags",
+            unitsPerEm: 16,
+            ascender: 8,
+            descender: 0,
+            glyphs: [
+                new opentype.Glyph({ name: '.notdef', path: new opentype.Path(), advanceWidth: 8 }),
+                new opentype.Glyph({ name: '!', unicode: 0x21, path: new opentype.Path(), advanceWidth: 8 }),
+                new opentype.Glyph({ path: Object.assign(new opentype.Path(), { commands: [{ type: 'M', x: 1, y: 2 }, { type: 'L', x: 3, y: 2 }, { type: 'L', x: 3, y: 6 }, { type: 'L', x: 1, y: 6 }] }), name: '.', advanceWidth: 8 }),
+                new opentype.Glyph({ path: Object.assign(new opentype.Path(), { commands: [{ type: 'M', x: 3, y: 2 }, { type: 'L', x: 5, y: 2 }, { type: 'L', x: 5, y: 6 }, { type: 'L', x: 3, y: 6 }] }), name: '.', advanceWidth: 8 }),
+                new opentype.Glyph({ path: Object.assign(new opentype.Path(), { commands: [{ type: 'M', x: 5, y: 2 }, { type: 'L', x: 7, y: 2 }, { type: 'L', x: 7, y: 6 }, { type: 'L', x: 5, y: 6 }] }), name: '.', advanceWidth: 8 }),
+                new opentype.Glyph({ path: Object.assign(new opentype.Path(), { commands: [{ type: 'M', x: 0, y: 1 }, { type: 'L', x: 8, y: 1 }, { type: 'L', x: 8, y: 7 }, { type: 'L', x: 0, y: 7 }] }), name: '.', advanceWidth: 8 }),
+            ],
+            tables: {
+                colr: {
+                    baseGlyphRecords: [
+                        { glyphID: 1, firstLayerIndex: 0, numLayers: 4 } // render glyph[1] as layered glyph[5,2,3,4]
+                    ],
+                    layerRecords: [
+                        { glyphID: 5, paletteIndex: 0xFFFF }, // shall be the current text color
+                        { glyphID: 2, paletteIndex: 0 }, // black
+                        { glyphID: 3, paletteIndex: 1 }, // yellow
+                        { glyphID: 4, paletteIndex: 2 }, // red
+                    ]
+                },
+                cpal: {
+                    colorRecords: [0x000000FF, 0x00FFFFFF, 0x0000FFFF], // BGRA
+                }
+            },
+        });
+        return font;
+    
+    }
       function buildFont(){
                 // this .notdef glyph is required.
         const notdefGlyph = new opentype.Glyph({
@@ -34,9 +70,14 @@
             path: new opentype.Path()
         });
 
+        //pass options here for color.  
+
         const aPath = new opentype.Path();
+            // src/path.mjs
+        aPath.fill = 'rgba(255, 0, 255, 1)'; //not working.  
         aPath.moveTo(100, 0);
         aPath.lineTo(100, 700);
+        aPath.lineTo(200, 700);
         // more drawing instructions...
         const aGlyph = new opentype.Glyph({
             name: 'A',
@@ -56,23 +97,38 @@
         return font;
       }
 
-      function useFont(font, ctx){
+      function useFont(font, ctx, text){
         font.draw(
             ctx,
-            'A', // Text to render
+            text, // Text to render
             100, // X position
             200, // Y position
             100, // Font size
             {
-                kerning: true // Take kerning into account when rendering font
+                kerning: true, // Take kerning into account when rendering font
+                fill: '#FF00FFFF' // Fill color rgba alpha
             } // Options
         );        
+        if (text.length < 1){
+            const glyph = font.charToGlyph(text);
+
+            // Convert the glyph to an SVG path string
+            const path = glyph.getPath();
+            const svgPathString = path.toSVG();
+
+            console.log(svgPathString);
+        }
+
       }
 
       var f = buildFont();
 
       var ctx = document.getElementById('canvas2').getContext('2d');
-      useFont(f, ctx);
+      useFont(f, ctx, 'A');
+
+//      var f2 = buildFont2();
+//      useFont(f2, ctx, '!');
+
     </script>
   </body>
 </html>

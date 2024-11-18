@@ -40,7 +40,7 @@ function setup(f, drawingContext) {
   // set this to what you want the name of the font to be...
   font.names.fontFamily.en = 'Messed up font nice';
   font.draw(drawingContext, "abcdefgABCDEFG", 0, 200, 48);
-  font.download();
+//  font.download();
   
 
 }

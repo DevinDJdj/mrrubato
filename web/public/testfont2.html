@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+    <script src="https://cdn.jsdelivr.net/npm/opentype.js@latest/dist/opentype.min.js"></script>
+
+    <meta charset="utf-8" />
+
+  </head>
+  <body>
+
+
+<style>
+@font-palette-values --zero {font-family: "ColorExample";base-palette: 0;}
+@font-palette-values --one {font-family: "ColorExample";base-palette: 1;}
+@font-palette-values --two {font-family: "ColorExample";base-palette: 2;}
+</style>
+<script>
+function toBGRA(c) { // I hope nobody will take this function seriously
+	if (typeof c == 'number') return c;
+	if (c instanceof Array  ) return new DataView(new Uint8Array([c[2],c[1],c[0],c.length==3?0xFF:c[3]]).buffer).getInt32(0);
+	if (typeof c == 'object') return new DataView(new Uint8Array([c.b, c.g, c.r, 'a' in c ? c.a : 0xFF]).buffer).getInt32(0);
+	if (typeof c == 'string') {
+		let hex = c.replace(/^#/,'');
+		if(hex.length<=4)hex = hex.replace(/(.)/g,'$1$1');// BED => BBEEDD / C0FE => CC00FFEE
+		if(hex.length==6)hex += 'FF'; // implicit full opacity
+		const [r, g, b, a] = hex.match(/[a-fA-F0-9]{2}/g);
+		return Number.parseInt(`${b}${g}${r}${a}`, 16);
+	}
+}
+const ColorPalette0 = (...palettes) => ({
+	colorRecordIndices: palettes.reduce(([res,off],pal)=>[res.concat(off),off+pal.length],[[],0])[0],
+	numPaletteEntries: palettes.length,
+	colorRecords: palettes.flat().map(toBGRA) // the .map part is for "human" input parsing
+});
+const colorswap = ([r, g, b, o]) => Number.parseInt(`${b}${g}${r}${o}`, 16);
+var test = new opentype.Font({
+	familyName: "ColorExample",
+	styleName: "Flags",
+	unitsPerEm: 16,
+	ascender: 8,
+	descender: 0,
+	glyphs: [
+		new opentype.Glyph({ name: '.notdef', path: new opentype.Path(), advanceWidth: 8 }),
+		new opentype.Glyph({ name: '!', unicode: 0x21, path: new opentype.Path(), advanceWidth: 8 }),
+		new opentype.Glyph({ path: Object.assign(new opentype.Path(), { commands: [{ type: 'M', x: 1, y: 2 }, { type: 'L', x: 3, y: 2 }, { type: 'L', x: 3, y: 6 }, { type: 'L', x: 1, y: 6 }] }), name: '.', advanceWidth: 8 }),
+		new opentype.Glyph({ path: Object.assign(new opentype.Path(), { commands: [{ type: 'M', x: 3, y: 2 }, { type: 'L', x: 5, y: 2 }, { type: 'L', x: 5, y: 6 }, { type: 'L', x: 3, y: 6 }] }), name: '.', advanceWidth: 8 }),
+		new opentype.Glyph({ path: Object.assign(new opentype.Path(), { commands: [{ type: 'M', x: 5, y: 2 }, { type: 'L', x: 7, y: 2 }, { type: 'L', x: 7, y: 6 }, { type: 'L', x: 5, y: 6 }] }), name: '.', advanceWidth: 8 }),
+		new opentype.Glyph({ path: Object.assign(new opentype.Path(), { commands: [{ type: 'M', x: 0, y: 1 }, { type: 'L', x: 8, y: 1 }, { type: 'L', x: 8, y: 7 }, { type: 'L', x: 0, y: 7 }] }), name: '.', advanceWidth: 8 }),
+	],
+	tables: {
+		colr: {
+			baseGlyphRecords: [
+				{ glyphID: 1, firstLayerIndex: 0, numLayers: 4 } // render glyph[1] as layered glyph[5,2,3,4]
+			],
+			layerRecords: [
+				{ glyphID: 5, paletteIndex: 0xFFFF }, // shall be the current text color
+				{ glyphID: 2, paletteIndex: 0 }, // black
+				{ glyphID: 3, paletteIndex: 1 }, // yellow
+				{ glyphID: 4, paletteIndex: 2 }, // red
+			]
+		},
+		cpal: ColorPalette0(
+			['#000', 'FF0', 'FF0000'],
+			[[0x00, 0x80, 0x00], 0xFFFFFFFF, [0xFF,0x00,0x00,0xFF]],
+			[{r:255, g:0, b:0}, 0xFFFFFFFF, {r:0, g:0, b:255, a:255}],
+		)
+	},
+});
+(new FontFace(test.names.fontFamily.en, test.toArrayBuffer())).load().then((ff) => document.fonts.add(ff));
+</script>
+<body style="font-size:8em;font-family:ColorExample">
+<span>!</span> default<br>
+<span style=font-palette:--zero>!</span> zero<br>
+<span style=font-palette:--one>!</span> one<br>
+<span style=font-palette:--two>!</span> two<br>
+</body>
+
+</html>
