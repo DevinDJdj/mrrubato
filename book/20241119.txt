@@ -1,0 +1,39 @@
+add language doodle (-9,-3)
+
+analyze.html?video=mj4jpeBvD2o
+change language (-9,-3)
+add word line (-9,-6)
+add word box (-4,-2)
+add word set coordinates (2,4) [5,7 7,9]
+add word polar (5,7)
+add word grid (7,9)
+
+Need function to continue deciphering words even after we have a prefix.  
+This should be default.  
+
+How can we make this function adding completely dynamic?  
+
+For now see if we can use this language after adding words.  
+
+Need to create a map from func -> 
+
+Think we need a MyChat function for each language.  
+This way we pass along whatever language is actually executed.  
+Pass language to Chat(..., lang)
+Then go to the 
+
+test doodle chat line.  
+
+remember previous x, y.  
+add keymap[xxx].vars dict.  
+add keymap[xxx].settings dict.  
+add keymap[xxx].load function.  
+This should be saved and loaded in loadLanguage.  
+load local settings if necessary.  
+
+Keep any state info in vars dict.  
+
+**web/public/analyze.html
+Problem in getFeedbackImage.  
+When updating midiarray in the middle.  
+We have a problem with shifting index numbers.  

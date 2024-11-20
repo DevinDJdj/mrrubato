@@ -32,8 +32,12 @@ class Keymap{
     constructor(lang="meta"){
         this.keys = [];
         this.lang=lang;
+        this.chat = null;
+        this.load = null;
         this.keymap = []; //midinum - 48
         this.langdict = {}; //this should contain "lang": {"keymap": [], "keydict": {}, "funcdict": {}}
+        this.vars = {};
+        this.settings = {};
         this.keydict = {};
         this.keydict[""] = {};
         this.funcdict = {};

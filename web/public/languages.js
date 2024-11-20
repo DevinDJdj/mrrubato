@@ -70,6 +70,9 @@ function changeColor(word, color){
 //should really be able to see the users transcript in words, so when clicking a user, we show his transcript.  
 //list all user icons/names next to your own to be clicked
 function updateState(transcript="", lang=""){
+    if (lang==""){
+        lang = currentlanguage;
+    }
     //function to get the state of the entire transcript up to this point.  
     //this is a bit of a mess.  Need to clean up.
     //get the state info and 
@@ -87,6 +90,9 @@ function updateState(transcript="", lang=""){
     mystate += "Last Word: " + lastspokenword + "<br>";
     mystate += "Last Read: " + lastreadword + "<br>";    
     $('#currentstate').html(mystate);
+
+    //this should be called.  
+    keymaps[lang].funcdict["updateState"](transcript, midiarray[currentmidiuser][lang], keymaps[lang].keydict, lang);
 
 }
 

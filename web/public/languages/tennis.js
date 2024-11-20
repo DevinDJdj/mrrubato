@@ -2,16 +2,7 @@
 keymaps["tennis"].funcdict = {};
 
 keymaps["tennis"].funcdict["updateState"] = function(transcript, midi, keydict, key){
-    mytranscript = $('#mycomments').val();
-    mystate = "";
-    mystate += currentlanguage + ": " + midiarray[currentmidiuser][currentlanguage].length + "<br>";
-    mystate += "meta: " + midiarray[currentmidiuser]["meta"].length + "<br>";
-    mystate += "last entry: " + transcript + "<br>";
-    mystate += "current video time: " + currentvidtime + "<br>";
-    if (lastnote !==null){
-        mystate += "Last Note: " + lastnote.note + "<br>";
-    }
-    $('#currentstate').html(mystate);                                                
+
 }
 
 keymaps["tennis"].funcdict[""] = function(transcript, midi, keydict, key){
