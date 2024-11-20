@@ -194,3 +194,9 @@ Then need function to load locally saved.
 localStorage.setItem('key', 'val')
 localStorage.getItem('key')
 
+
+**web/public/languageeditor.html
+Eventually should be able to edit functions locally.  
+https://github.com/microsoft/monaco-editor
+https://github.com/microsoft/monaco-editor/tree/main/samples
+
