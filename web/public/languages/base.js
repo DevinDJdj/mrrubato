@@ -4,16 +4,6 @@ keymaps["base"].funcdict = {};
 
 
 keymaps["base"].funcdict["updateState"] = function(transcript, midi, keydict, key){
-    mytranscript = $('#mycomments').val();
-    mystate = "";
-    mystate += currentlanguage + ": " + midiarray[currentmidiuser][currentlanguage].length + "<br>";
-    mystate += "meta: " + midiarray[currentmidiuser]["meta"].length + "<br>";
-    mystate += "last entry: " + transcript + "<br>";
-    mystate += "current video time: " + currentvidtime + "<br>";
-    if (lastnote !==null){
-        mystate += "Last Note: " + lastnote.note + "<br>";
-    }
-    $('#currentstate').html(mystate);                                                
 }
 
 keymaps["base"].funcdict[""] = function(transcript, midi, keydict, key){

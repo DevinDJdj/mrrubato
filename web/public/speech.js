@@ -282,7 +282,11 @@ function hasNumber(myString) {
 }
 
 //right now there is no chatting here, we are just using the comments.
-function Chat(transcript, callback=null, pending=false){
+function Chat(transcript, callback=null, pending=false, lang=""){
+    if (lang==""){
+        lang = currentlanguage;
+    }
+    //should we pass language here?  
     let executed = true;
     //this causes problems with the commands.  Dont think we need this anyway
     /*
@@ -583,7 +587,12 @@ function Chat(transcript, callback=null, pending=false){
     }
     
     //if we have any useful info add it.  
-    if (typeof(MyChat) === "function" && executed==false){
+    if (keymaps[lang] != null && keymaps[lang].chat != null && typeof(keymaps[lang].chat) === "function" && executed==false){
+        //this way we can have different chat functions for different languages, and organize better.  
+        keymaps[lang].chat(transcript);
+    }
+    else if (typeof(MyChat) === "function" && executed==false){
+        //really should not be using this.  add chat to keymaps[lang]
         MyChat(transcript);
     }
     else{
