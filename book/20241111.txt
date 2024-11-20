@@ -156,3 +156,41 @@ Lets make some font...
 
 
 
+**generate/generatepodcast.py
+#https://medium.com/google-cloud/building-a-dynamic-podcast-generator-inspired-by-googles-notebooklm-and-illuminate-e585cfcd0af1
+
+#https://github.com/SaschaHeyer/gen-ai-livestream/tree/main/podcast-automation?source=post_page-----e585cfcd0af1--------------------------------
+
+practical application?  
+
+Make this for random audio files.  
+Adjust existing audio files into podcast this way?  
+
+Need to understand prompting with Llama.  
+What other competing Open model is there.  
+
+Self-referencing may be problematic.  
+
+
+**web/public/recent.html 
+Show also recent audio files from previous years.  
+
+**record.py 
+Need to have a flag for voice overlay or not.  
+If voice overlay, then start a pre-determined voice file.  
+Maybe instead just have a function to play with overlay or without overlay on the web site.  
+This is easier, then we just have to have the audio files folder available.  
+Try to stay in sync.  
+Could add audio feedback ON/OFF.  
+This would actually record the voice, and save to MP3.  
+MP3 0.5 MB/min.  
+*60*365=10GB/year for full feedback.  
+Hmmm... shouldnt really be in RTDB, but doable.  
+Default should be OFF.  
+
+**web/public/config.js
+Need to save settings in local browser.  
+Then need function to load locally saved.  
+localStorage.setItem('key', 'val')
+localStorage.getItem('key')
+
