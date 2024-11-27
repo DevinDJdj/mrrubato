@@ -236,7 +236,7 @@ function addWord(word, midi){
 
 
 function addLanguage(lang, midi){
-    midi = convertKeys(midi, keybot[currentlanguage]/12); //get keys + keybot
+//    midi = convertKeys(midi, keybot[currentlanguage]/12); //get keys + keybot
     
     if (lang==""){
         console.log("Language identifier required");

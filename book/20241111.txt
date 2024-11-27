@@ -200,3 +200,30 @@ Eventually should be able to edit functions locally.
 https://github.com/microsoft/monaco-editor
 https://github.com/microsoft/monaco-editor/tree/main/samples
 
+git clone https://github.com/microsoft/monaco-editor.git
+Roaming\npm\node_modules\monaco-editor
+
+Alternative:
+https://codemirror.net/examples/
+
+#https://codemirror.net/examples/bundle/
+Lets try this.  
+
+**web/public/js/codeeditor/editor.mjs
+<!--
+npm i codemirror @codemirror/lang-javascript
+npm i rollup -g @rollup/plugin-node-resolve
+C:\Users\devin\AppData\Roaming\npm\node_modules/node_modules/.bin/rollup editor.mjs -f iife -o editor.bundle.js -p @rollup/plugin-node-resolve
+-->
+
+in the end used codemirror5
+#https://codemirror.net/5/codemirror.zip
+#https://codemirror.net/5/doc/manual.html#usage
+ok its a start.  
+
+Just load and save language modules for now?  
+What should be editable?  
+Separate editable from non-editable.  
+Dont want to break the functionality.  
+
+

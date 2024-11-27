@@ -283,6 +283,8 @@ function hasNumber(myString) {
 
 //right now there is no chatting here, we are just using the comments.
 function Chat(transcript, callback=null, pending=false, lang=""){
+    //check meta commands first, then keymap[lang].chat...
+    
     if (lang==""){
         lang = currentlanguage;
     }

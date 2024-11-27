@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+        <script src="js/codeeditor/codemirror/lib/codemirror.js"></script>
+        <link rel="stylesheet" href="js/codeeditor/codemirror/lib/codemirror.css">
+        <script src="js/codeeditor/codemirror/mode/javascript/javascript.js"></script>
+    </head>
+	<body>
+        <script>
+            var myCodeMirror = CodeMirror(document.body, {
+            value: "function myScript(){return 100;}\n",
+            mode:  "javascript"
+            });
+        </script>
+	</body>
+</html>

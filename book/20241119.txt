@@ -1,5 +1,11 @@
 add language doodle (-9,-3)
 
+--start here..
+0 reference better?  
+Negative just for notation?  
+Use notation shift or store negative?  
+I think middle 0 reference is going to be better.  
+
 analyze.html?video=mj4jpeBvD2o
 change language (-9,-3)
 add word line (-9,-6)
@@ -22,7 +28,9 @@ This way we pass along whatever language is actually executed.
 Pass language to Chat(..., lang)
 Then go to the 
 
+**web/public/languages/doodle.js
 test doodle chat line.  
+                console.log("doodle chat line " + midi);
 
 remember previous x, y.  
 add keymap[xxx].vars dict.  
@@ -37,3 +45,52 @@ Keep any state info in vars dict.
 Problem in getFeedbackImage.  
 When updating midiarray in the middle.  
 We have a problem with shifting index numbers.  
+
+See if we can use generated font here.  
+Each user should have a character representation.  
+So this will go along with the word to indicate speaker.  
+
+
+**web/public/config.js
+Added some user config.  
+
+
+
+**languages
+Study Mirad Language.  
+Has some of the aspects I like.  
+
+#https://www.europalingua.eu/
+#https://en.wikibooks.org/wiki/Mirad_Grammar
+#https://en.wikibooks.org/wiki/Mirad_Thesaurus
+#https://en.wikibooks.org/wiki/Mirad_Lexicon
+Good reference if not more.  
+This may be a good test case.  
+Can basically map one key to each consonant.  
+<!--
+The letters c and q are used only to represent words and names imported into Mirad from other languages
+-->
+So skip these.  
+Then we have a simple mapping.  
+How to distinguish without perfect pitch.  
+We have relative.  
+Need multiple octaves for testing this sort of thing.  
+
+Several of the grammar concepts are nice.  
+#https://en.wikibooks.org/wiki/Mirad_Grammar/Vocabulary_Formation
+This seems one of the most advanced conlangs of interest.  
+
+
+#https://en.wikipedia.org/wiki/Ithkuil
+Check writing system here.  
+<!--
+the writing system is morpho-phonetic, meaning two types of graphemes are used: one to represent different grammatical concepts, such as case, number etc. and the other to represent roots and affixes. 
+
+-->
+
+#https://en.wikipedia.org/wiki/Constructed_language
+a priori languages are of most interest.  
+
+Perhaps to start only augment existing spoken language with punctuation and other markings.  
+
+

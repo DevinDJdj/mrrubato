@@ -845,6 +845,7 @@ function getFeedbackImage(source, w, h, myscene,myengine, midiuser=0, flang=""){
 			var xtemp = -x + w/2 + 2;
 			if (w == xmultiplier1){
 //				console.log("Drawing on ground1 " + word + " " + xtemp + " " + ytemp + " " + w + " " + h);
+				ytemp = ybot + h/2+(10*(1+(hash%8)));
 				textureGround1.drawText(word, xtemp, ytemp, font, "white", null, true, true);
 			}
 			else{
@@ -1060,6 +1061,7 @@ function updateVideo(){
 	//then under here store the videos.  
 	//does the video have to be associated with the channel, I guess not.  
 	
+	
 	var grade = $('#points').val();
 	var transcript = $('#transcript').val();
 	if (uid !==null){
@@ -1100,7 +1102,10 @@ function updateVideo(){
 		}
 	}
 	
-	
+
+	//somewhere else?
+	saveUserConfig();
+
 }
 
 function updateNotes(){
@@ -1836,6 +1841,8 @@ function getVideoJson(videoid){
      }   
     });
 */
+
+	loadUserConfig();
 }
 
 

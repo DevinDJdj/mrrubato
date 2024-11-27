@@ -17,3 +17,29 @@ var myrate = 1.7;
 var mypitch = 1.0;
 
 var vidbuffer = 10;
+
+
+//for now just local storage is fine I think.  Eventually should move this to DB probably.  
+
+function loadUserConfig(){
+    //load user config from local storage.  
+    let userconfig = localStorage.getItem('userconfig');
+    if (userconfig != null){
+        userconfig = JSON.parse(userconfig);
+        if (userconfig.hasOwnProperty('myrate')){
+            myrate = userconfig.myrate;
+        }
+        if (userconfig.hasOwnProperty('mypitch')){
+            mypitch = userconfig.mypitch;
+        }
+        if (userconfig.hasOwnProperty('keybot')){
+            keybot = userconfig.keybot;
+        }
+    }
+}
+
+function saveUserConfig(){
+    let userconfig = {"myrate": myrate, "mypitch": mypitch, "keybot": keybot};
+    localStorage.setItem('userconfig', JSON.stringify(userconfig));
+}
+
