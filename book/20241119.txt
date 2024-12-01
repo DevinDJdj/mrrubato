@@ -91,6 +91,6 @@ the writing system is morpho-phonetic, meaning two types of graphemes are used: 
 #https://en.wikipedia.org/wiki/Constructed_language
 a priori languages are of most interest.  
 
-Perhaps to start only augment existing spoken language with punctuation and other markings.  
+Perhaps to start only augment existing spoken language with punctuation, numerical values and other markings.  
 
 

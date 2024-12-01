@@ -1754,6 +1754,7 @@ function getVideoJson(videoid){
 					  .then((snap) => {
 						//.on('value',(snap)=>{
 	    if (snap.exists()){
+			//probably dont need this.  
 			loadVideo();
 			item = snap.val();
 			console.log(snap.val());

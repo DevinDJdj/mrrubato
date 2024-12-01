@@ -354,7 +354,9 @@ function setVideoVolume(volume){
             ispaused = 1;
 
           };          
-        player2.src = url;
+        if (url != ""){
+          player2.src = url;
+        }
         player2.play();
     }
 
