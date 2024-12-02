@@ -46,6 +46,18 @@ var DIC_CREATED = 5;
 //add definition MIDI my definition of this word.  
 //think we need to allow for stoppage or just keep the transcript pending.  
 
+keymaps = {};
+
+//this is the meta keymap.  
+//Need to load others from /languages/LANG.js LANG.Keymap(), LANG.updateState()
+keymap = new Keymap();
+
+keymaps["meta"] = keymap;
+keymaps["meta"].loadKeys();
+
+keymaps["base"] = new Keymap("base");
+
+
 function reinitLanguages(){
     langs = {};
     langsa = {};
@@ -817,7 +829,7 @@ function getMiniPiano(midikeys){
 }
 
 
-function loadDictionaries(user){
+function loadDictionaries(user=0){
     //find language in midi
     //find language in words "change language base" "change language to base"
     //need to use this more.  Probably more convenient.  
@@ -854,7 +866,12 @@ function loadDictionaries(user){
                 {
                     targets: DIC_USER,
                     render: function (data, type, row, meta) {
-                        return '<img height="40px" src="' + users[ row[DIC_USER] ].pic + '" /><br>' + users[ row[DIC_USER] ].name; 
+                        if (typeof(users[ row[DIC_USER] ]) === "undefined"){
+                            return '';
+                        }
+                        else{
+                            return '<img height="40px" src="' + users[ row[DIC_USER] ].pic + '" /><br>' + users[ row[DIC_USER] ].name; 
+                        }
                     }
                 },
                 {
@@ -1027,6 +1044,34 @@ function getCurrentTranscript(){
     currenttranscriptentry = transcriptarray[i];
     //  notesarray
 
+}
+
+function findCommand(transcript, midi, prevtranscript="", lang=""){
+    if (pedal){
+        //dont search for midi commands if pedal is down.  Just wait for pedal to be released.  
+        return [transcript, lang];
+    }
+    if (lang==""){
+        //could search most likely or in some order.  For now this is ok.
+        for (const [key, value] of Object.entries(keymaps)) {
+            [transcript, lang] = value.findCommand(transcript, midi, key);
+            if (transcript != prevtranscript){
+                return [transcript, lang];
+            }
+        }
+    }
+    else{
+        if (lang in keymaps){
+            [transcript, lang] = keymaps[lang].findCommand(transcript, midi, lang);
+            if (transcript != prevtranscript){
+                return [transcript, lang];
+            }
+        }
+        else{
+            console.log("Language not found: " + lang);
+        }
+    }
+    return [transcript, lang];
 }
 
 function triggerCheckCommands(){
@@ -1573,6 +1618,7 @@ function addDictRow(lang, word, row, user=0, add=0) {
     }
     //very slow if we have many words.  This is problematic.  How do we make this faster?  
 //    if (lang !== "meta"){
+    try{
         dictable.row
             .add([
                 word,
@@ -1585,7 +1631,11 @@ function addDictRow(lang, word, row, user=0, add=0) {
                 lang
             ])
             .draw(false);    
-        
+        }
+        catch(err){
+            console.log(err);
+        }
+
         if (word=="test"){ //initialize the table.  
 //            setTimeout(function(){
                 //$('.select2').val(null).trigger('change');

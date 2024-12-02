@@ -6,6 +6,7 @@ Negative just for notation?
 Use notation shift or store negative?  
 I think middle 0 reference is going to be better.  
 
+0=
 analyze.html?video=mj4jpeBvD2o
 change language (-9,-3)
 add word line (-9,-6)
@@ -92,5 +93,36 @@ the writing system is morpho-phonetic, meaning two types of graphemes are used: 
 a priori languages are of most interest.  
 
 Perhaps to start only augment existing spoken language with punctuation, numerical values and other markings.  
+
+
+**web/public/testdoodle.html
+--continue.  
+
+Physical Directional communcation
+use polar coordinate system and maintain symetry.  
+1,24 = sqrt(3)/2, -1/2
+2,24 = 1/2, -sqrt(3)/2
+3,24 = 0, -1
+6,24 = -1,0
+9,24 = 0,1
+12,24 = 1,0
+
+DOWN = 3,24
+LEFT OF = 6,24
+UP = 9,24
+RIGHT OF = 12,24
+
+I think I like this to start at DOWN
+Seems more logical from a usage perspective.  
+0 = DOWN
+3 = LEFT
+6 = UP
+9 = RIGHT
+
+Is there a real-time collaboration possibility without an extreme amount of work?  
+I guess we can just have the RTDB update for now.  
+Current edit could be updated in RTDB, and then that will be propagated.  
+quasi-realtime.  
+
 
 

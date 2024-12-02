@@ -316,8 +316,8 @@ data-setup="{}"
 
 
 <script src="js/drawkeyboard.js"></script>
-<script src="languages.js"></script>
 <script src="keymap.js"></script>
+<script src="languages.js"></script>
 
 <link href="css/tags.css" rel="stylesheet">
 <script src="tags.js"></script>
@@ -417,9 +417,9 @@ $(document).on('input', '#commentdelay', function() {
 			// User is signed in, see docs for a list of available properties
 			// https://firebase.google.com/docs/reference/js/firebase.User
 			
-			myuid = user.uid;
 			if (user.uid != myuid){
 				addMe(user);
+				myuid = user.uid;
 			}
 			uid = user.uid;
 				// ...

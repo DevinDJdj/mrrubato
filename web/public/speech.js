@@ -4,16 +4,6 @@ pendingCommands = [];
 ss = null;
 //myrate = 0.7;
 //mypitch = 1;
-keymaps = {};
-
-//this is the meta keymap.  
-//Need to load others from /languages/LANG.js LANG.Keymap(), LANG.updateState()
-keymap = new Keymap();
-
-keymaps["meta"] = keymap;
-keymaps["meta"].loadKeys();
-
-keymaps["base"] = new Keymap("base");
 
 
 lastcommand = "";
@@ -54,33 +44,6 @@ function getPendingCommand(){
 }
 
 
-function findCommand(transcript, midi, prevtranscript="", lang=""){
-    if (pedal){
-        //dont search for midi commands if pedal is down.  Just wait for pedal to be released.  
-        return [transcript, lang];
-    }
-    if (lang==""){
-        //could search most likely or in some order.  For now this is ok.
-        for (const [key, value] of Object.entries(keymaps)) {
-            [transcript, lang] = value.findCommand(transcript, midi, key);
-            if (transcript != prevtranscript){
-                return [transcript, lang];
-            }
-        }
-    }
-    else{
-        if (lang in keymaps){
-            [transcript, lang] = keymaps[lang].findCommand(transcript, midi, lang);
-            if (transcript != prevtranscript){
-                return [transcript, lang];
-            }
-        }
-        else{
-            console.log("Language not found: " + lang);
-        }
-    }
-    return [transcript, lang];
-}
 
 
 //called from clock.js every second.  
@@ -284,7 +247,7 @@ function hasNumber(myString) {
 //right now there is no chatting here, we are just using the comments.
 function Chat(transcript, callback=null, pending=false, lang=""){
     //check meta commands first, then keymap[lang].chat...
-    
+
     if (lang==""){
         lang = currentlanguage;
     }

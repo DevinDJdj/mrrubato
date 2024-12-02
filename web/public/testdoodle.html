@@ -47,8 +47,24 @@
 <script src="JZZ/JZZ.input.Kbd.js"></script>
 <script src="JZZ/JZZ.gui.Player.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/webmidi@latest/dist/iife/webmidi.iife.js"></script>
+
+<link href="js/datatables/datatables.min.css" rel="stylesheet">
+ 
+<script src="js/datatables/datatables.min.js"></script>
+<!-- Select2 plugin -->
+<link rel="stylesheet" type="text/css" href="js/datatables/select2.min.css">
+<!-- Select2 plugin -->
+<script src="js/datatables/select2.min.js"></script>
+
+
+
 <script src="config.js"></script>
+<script src="keymap.js"></script>
 <script src="languages.js"></script>
+
+<script src="js/drawkeyboard.js"></script>
+
+
 <script src="video.js"></script>
 <script src="midi.js">  </script>
 </head>
@@ -69,11 +85,121 @@ width="640"
 height="360"
 data-setup="{}"
 >
+</video>
 
 
-<div id=piano0></div>
+
+<br>
+<div class="tags-input" style="width:100%;"> 
+    <ul id="tags"></ul> 
+    <input type="text" id="input-tag" size="45"
+        placeholder="Add a tag" /> 
+</div> 
+
+<link href="css/tags.css" rel="stylesheet">
+<script src="tags.js"></script>
+
+
 <br>
 <p id="load">Firebase SDK Loading&hellip;</p>
+
+
+
+<div id="speak">
+    <!-- status and current command for now just display the string and add any additional midi params-->
+    <label for="mycommand">Building Command:</label><br>
+    <input type="text" id="mycommand" name="mycommand" size="50">
+    <input type="text" id="midicommand" name="midicommand" size="20">
+
+</div>
+
+<table>
+<tr>
+    <td>
+    <div id="auto" style="width: 100%;height: 200px;overflow:auto;">
+    <div id="autodiclabel" class="langlabel">	</div>
+    <table id="autodic" class="display" style="width: 100%;">
+        <thead>
+            <tr>
+                <th>word</th>
+                <th>keys</th>
+                <th>lang</th>
+                <th>meaning</th>
+            </tr>
+        </thead>
+        <tfoot>
+            <tr>
+                <th>word</th>
+                <th>keys</th>
+                <th>lang</th>
+                <th>meaning</th>
+            </tr>
+        </tfoot>
+    </table>	
+</td>
+<td>
+    <div id="dictionary" style="width: 100%;height: 280px;overflow:auto;">
+        <div id="dictablelabel" class="langlabel">	</div>
+        <table id="DictionaryTable" class="display" style="width: 100%">
+            <thead>
+                <tr>
+                    <th>word</th>
+                    <th>playall</th>
+                    <th>keys</th>
+                    <th>user</th>
+                    <th>times</th>
+                    <th>meaning</th>
+                    <th>created</th>
+                    <th>lang</th>
+                </tr>
+            </thead>
+            <tfoot>
+                <tr>
+                    <th>word</th>
+                    <th>playall</th>
+                    <th>keys</th>
+                    <th>user</th>
+                    <th>times</th>
+                    <th>meaning</th>
+                    <th>created</th>
+                    <th>lang</th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+</td>
+<td>
+	<div id="auto" style="width: 100%;height: 200px;overflow:auto;">
+		<table id="metadic" class="display" style="width: 100%;">
+			<thead>
+				<tr>
+					<th>word</th>
+					<th>keys</th>
+					<th>lang</th>
+					<th>meaning</th>
+				</tr>
+			</thead>
+			<tfoot>
+				<tr>
+					<th>word</th>
+					<th>keys</th>
+					<th>lang</th>
+					<th>meaning</th>
+				</tr>
+			</tfoot>
+		</table>	
+	</div>
+
+</td>
+</tr>
+</table>
+
+
+
+<canvas id="pcanvas" width="110" height="22" style="display: none">Your browser does not support the HTML5 canvas tag.</canvas>    
+
+<div id="piano0"></div>
 
 
 
@@ -110,6 +236,7 @@ var data;
 
 function mymidicallback(msg, time, user, lang) {
   console.log(msg);
+  triggerCheckCommands();  
   //draw here.  
   //occurs on each noteOn or noteOff...
 }
@@ -157,18 +284,22 @@ document.addEventListener('DOMContentLoaded', function() {
         // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
         // // The Firebase SDK is initialized and available here!
         //
-         firebase.auth().onAuthStateChanged(user => { 
-		   if (user) {
+        firebase.auth().onAuthStateChanged(user => { 
+		  if (user) {
 			// User is signed in, see docs for a list of available properties
 			// https://firebase.google.com/docs/reference/js/firebase.User
 			
+			if (user.uid != myuid){
+				addMe(user);
+                myuid = user.uid;
+			}
 			uid = user.uid;
 				// ...
-			  } else {
+		  } else {
 				// User is signed out
 				// ...
-			  }
-			});
+		  }
+		});
         // firebase.database().ref('/path/to/ref').on('value', snapshot => { });
         // firebase.firestore().doc('/foo/bar').get().then(() => { });
         // firebase.functions().httpsCallable('yourFunction')().then(() => { });
@@ -226,7 +357,7 @@ document.addEventListener('DOMContentLoaded', function() {
 				// ...
 			  });
 
-		google.charts.load('current', {'packages':['corechart', 'timeline', 'bar']});
+//		google.charts.load('current', {'packages':['corechart', 'timeline', 'bar']});
 		
 		//loadAll();
 
@@ -477,10 +608,18 @@ function loadComplete(user){
 
 function loadAll(reload = false){
 
-	midiarray = [{"base": []}]; //reinitialize necessary?  
+	midiarray = [{"base": [], "doodle": []}]; //reinitialize necessary?  
 	currentmidiuser = 0;
 
 	reinitLanguages();
+    loadDictionaries(currentmidiuser);
+    for (const [lang, value] of Object.entries(midiarray[currentmidiuser])) {
+//        loadLanguage(lang, currentmidiuser);
+//        initLangData(lang, user);
+    }
+    currentlanuage = "doodle";
+
+
 
 	//firebase.auth.Auth.Persistence.LOCAL 'local'
 	firebase.auth().setPersistence('local').then(() => {
