@@ -594,55 +594,56 @@ function addComment(comment, commenttime){
 
 		
 
-var speech = true;
-window.SpeechRecognition = window.SpeechRecognition
-                || window.webkitSpeechRecognition;
 
-const recognition = new SpeechRecognition();
-recognition.interimResults = false;
-const wordp = document.querySelector('.words');
-wordp.appendChild(p);
+if (speech == true){
+    window.SpeechRecognition = window.SpeechRecognition
+                    || window.webkitSpeechRecognition;
 
-recognition.addEventListener('result', e => {
-    const transcript = Array.from(e.results)
-        .map(result => result[0])
-        .map(result => result.transcript)
-        .join('')
+    const recognition = new SpeechRecognition();
+    recognition.interimResults = false;
+    const wordp = document.querySelector('.words');
+    wordp.appendChild(p);
 
-    document.getElementById("p").setAttribute('value', transcript);
-//    console.log(transcript + ' (' + (end-start)/1000 + ')');
-    //this function could be different for each use-case, right now same function
-    //we are interacting via voice here, so we call Chat()
-    //this is blank for analyze.html.  
+    recognition.addEventListener('result', e => {
+        const transcript = Array.from(e.results)
+            .map(result => result[0])
+            .map(result => result.transcript)
+            .join('')
+
+        document.getElementById("p").setAttribute('value', transcript);
+    //    console.log(transcript + ' (' + (end-start)/1000 + ')');
+        //this function could be different for each use-case, right now same function
+        //we are interacting via voice here, so we call Chat()
+        //this is blank for analyze.html.  
 
 
-    mymidicommand = getMidiRecent();
-    if (mymidicommand == null && !pedal){
-        //if not executed immediately, add to pending commands, and wait for midi or further command.  
-        if (Chat(transcript) == false){
+        mymidicommand = getMidiRecent();
+        if (mymidicommand == null && !pedal){
+            //if not executed immediately, add to pending commands, and wait for midi or further command.  
+            if (Chat(transcript) == false){
+                addCommandLog(transcript, null, true);
+            }
+    //        Chat(transcript);
+        }
+        else{
+            //waiting for midi command to complete.  
+            console.log(mymidicommand);
             addCommandLog(transcript, null, true);
         }
-//        Chat(transcript);
-    }
-    else{
-        //waiting for midi command to complete.  
-        console.log(mymidicommand);
-        addCommandLog(transcript, null, true);
-    }
-//    Chat(transcript);
-    //not sure if we should reset this.  
-//    document.getElementById("p").value = ""
+    //    Chat(transcript);
+        //not sure if we should reset this.  
+    //    document.getElementById("p").value = ""
+        
+    });
     
-});
-  
-if (speech == true) {
+
     recognition.start();
     recognition.addEventListener('end', recognition.start);
-}
-$("#p").on('keyup', function (event) {
-  if (event.keyCode === 13) {
-     console.log(document.getElementById("p").value + ' (' + (end-start)/1000 + ')')
-     document.getElementById("p").value = ""
-  }
-});
 
+    $("#p").on('keyup', function (event) {
+    if (event.keyCode === 13) {
+        console.log(document.getElementById("p").value + ' (' + (end-start)/1000 + ')')
+        document.getElementById("p").value = ""
+    }
+    });
+}

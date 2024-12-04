@@ -59,6 +59,10 @@
 
 
 <script src="config.js"></script>
+<script>
+    speech = false;
+</script>
+<script src="speech.js"></script>
 <script src="keymap.js"></script>
 <script src="languages.js"></script>
 
@@ -67,13 +71,32 @@
 
 <script src="video.js"></script>
 <script src="midi.js">  </script>
+
 </head>
 
 <body>
 
-<h1>MIDI Player</h1>
+
+<table>
+    <tr>
+        <td>
+            <h1>MIDI Player</h1>
+
+        </td>
+        <td>
+            <div id="usericon" onclick="loadAll(true);"></div>
+        </td>
+    </tr>
+
+
+</table>
+
 <div id="vidinfo" valign="top"></div>
 <div id=player></div>
+
+<table>
+    <tr>
+        <td>
 
 <canvas id="myvideocanvas" width="640" height="360" style="display: none">Your browser does not support the HTML5 canvas tag.</canvas>
 <video
@@ -86,6 +109,16 @@ height="360"
 data-setup="{}"
 >
 </video>
+<div id="midi">
+	<canvas id="fullpcanvas_labels" width="640" height="24">Your browser does not support the HTML5 canvas tag.</canvas>
+	<br>
+	<canvas id="fullpcanvas" width="640" height="36">Your browser does not support the HTML5 canvas tag.</canvas>    
+ </div>
+
+</td>
+</tr>
+</table>
+
 
 
 

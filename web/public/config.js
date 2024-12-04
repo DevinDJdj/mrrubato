@@ -18,6 +18,7 @@ var mypitch = 1.0;
 
 var vidbuffer = 10;
 
+var speech = true;
 
 //for now just local storage is fine I think.  Eventually should move this to DB probably.  
 

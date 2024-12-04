@@ -2,6 +2,7 @@ var watch = false;
 var player;
 var player2;
 var currenttranscriptentry = "";
+var transcriptarray = [];
 
 function onYouTubeIframeAPIReady() {
     player = new YT.Player('player', {

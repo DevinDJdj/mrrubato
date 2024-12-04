@@ -33,6 +33,11 @@ let pedal = false;
 
 var lastnote = null;
 
+var commandLog = [];
+var pendingCommands = [];
+var lastcommand = "";
+var lastcommandtime = 0;
+
 
 //for notes.  
 var _instr = [
@@ -67,6 +72,185 @@ var audioSamples = {'p': [], 'link': [], 'image': [], 'text':[]};
 
 var midimessagecallback = null;
 var midiUIcallback = null;
+var transcript = "";
+
+
+function getPendingCommand(){
+    if (commandLog.length > 0 && commandLog[commandLog.length-1].pending){
+        return commandLog[commandLog.length-1];
+    }   
+    else{
+        return null;
+    }
+}
+
+//called from clock.js every second.  
+//open-ended definitions must end with midi 60, 60.  
+//add language, add word etc.  But 60, 60 not stored in keymap.  
+//others will be defined in keymap.  
+function checkCommands(lang="meta"){
+    let cl = getPendingCommand();
+    let midi = getMidiRecent();
+    let executed = false;
+    //if most recent is too recent wait some more.  
+    //otherwise we assume this is a completed command.  
+    //also if we have punctuation/end command, we can continue.  
+    if (midi != null){
+        //clear out any midi or pending commands with 0,0,0
+        //why ispaused here?  
+        if (midi.length > 2 && midi[midi.length-1].note -keybot["meta"] == 0 && midi[midi.length-2].note -keybot["meta"] == 0 && midi[midi.length-3].note -keybot["meta"] == 0){
+            for (let i=0; i<midi.length; i++){
+                midi[i].complete = true;
+            }
+            commandLog.pop();
+            cl = null;
+            completeMidi(midi, "meta");
+            return "";
+        }
+
+        completeMidi(midi);
+    }
+    let transcript = "";
+    let pending = false;
+    let callback = null;
+    if (cl != null){
+                //we have a command.  
+            //try to find if we have something to do with the midi.  
+            //recurse to find the transcript needed.  
+            //we will find scroll, then we need those parameters.  
+        console.log(cl);
+        transcript = cl.transcript;
+        let prevtranscript = "";
+        pending = cl.pending;
+        let done = 1;
+        while (done > 0 && midi !=null && midi.length > 0 && executed==false){
+            transcript = transcript.trimStart();
+            prevtranscript = transcript;
+            //find words in current language.  
+
+            [transcript, lang] = findCommand(transcript, midi, prevtranscript, lang);
+            if (transcript != prevtranscript){
+
+                done = completeMidi(midi, lang);
+                //refresh midi with only incomplete commands.  
+                if (transcript.endsWith(" ")){  //use space as indicator of more parameters needed.
+                    //still waiting.  
+                    cl.transcript = transcript;
+                    //we have added to the pending command.  
+                    //can continue the command with more midi
+                    //no use case at the moment for this.  
+                }
+                else{
+                    //attempt to execute complete command.  
+                    executed = Chat(transcript, callback, pending); //add waspendingflag
+
+                    transcript = "";
+                }
+            }
+            else{
+                if (transcript != cl.transcript){
+                    cl.transcript = transcript;
+                    cl.time = Date.now();
+                }
+                done = 0;
+            }
+        }
+        
+        //when does this occur? when we dont have midi.  
+        if ((midi ==null || midi.length == 0) && transcript != ""){
+            executed = Chat(transcript, callback, pending); //add waspendingflag
+//            transcript = "";
+
+        }
+
+        //get rid of executed commands.  
+        if (executed){
+            commandLog.pop();
+            transcript = "";
+        }
+
+        //get rid of incomplete commands.  
+        if (Date.now() - cl.time > recentTime*2){ //recentTime in midi.js
+            //allow for double the time to complete the command.  
+            //pop from the pending commands?  Why keep useless history?  
+            commandLog.pop();
+            transcript = "";
+        }
+
+    }
+    else{
+        if ((midi != null && midi.length > 0)){
+            console.log(midi);
+
+
+            let prevtranscript = "";
+            //get command.  
+            let done = 1;
+            while (done > 0 && midi.length > 0 && executed==false){
+                prevtranscript = transcript;
+                //get parameters.  
+                [transcript, lang] = findCommand(transcript, midi, prevtranscript, lang);
+                //have to set .complete to true.  
+                //we add space to this
+                if (transcript != prevtranscript){
+                    done = completeMidi(midi, lang);
+                    if (transcript.endsWith(" ")){  //use space as indicator of more parameters needed.
+                        //still waiting.  in this case perhaps extend the pendingTime.  
+                    }
+                    else{
+                        executed = Chat(transcript, callback, pending); //add waspendingflag
+                        transcript = "";
+                    }
+                }
+                else {
+                    //we have 4 seconds to add the parameters for this call if .  
+                    //still pending.  Just add pending command.  
+                    //or ignore.  
+                    done = 0;
+                }
+            }
+
+            if (transcript !=""){
+                if (transcript.endsWith(" ")){ //add pending command.  
+                    addCommandLog(transcript, null, true);
+                    //single command.  Must have at least half a second open here or whatever the timer is open time in order to execute this command.  
+                    //add a pending command, and if no more midi comes within half a second, we execute.  
+                    //will need to adjust this timer for the user.  
+                }
+                else{
+                    //should never end up here.  
+                    executed = Chat(transcript, callback, pending); 
+                    transcript = "";
+                }
+            }
+
+        }
+    }
+    
+    return transcript;
+
+}
+
+
+function completeMidi(midi, lang=""){
+    let ret = 0;
+    let reftime = getReferenceTime();
+    while (midi.length > 0 && (midi[0].time < reftime-recentTime || midi[0].complete == true)){
+        //complete midi commands that are too old.  
+        
+        midi[0].complete = true;
+        //why did we have this here?  
+        if (lang != currentlanguage){
+            insertNote(midi[0], lang);
+            removeNote(midi[0], currentlanguage);
+        }
+        midi.shift();
+        ret++;
+    }
+    return ret;
+}
+
+
 
 function loadSample(url){
     return (
