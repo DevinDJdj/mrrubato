@@ -1,0 +1,24 @@
+Libraries to investigate:
+FastAPI
+https://github.com/fastapi/fastapi
+
+hmm what can we externalize?  
+I guess we could rewrite the server portion.  
+https://fastapi.tiangolo.com/tutorial/first-steps/
+Hmm, time, time time...
+
+
+
+Loguru
+Sure why not...
+https://github.com/Delgan/loguru
+
+Pendulum & Poetry
+https://github.com/sdispater/pendulum
+https://github.com/python-poetry/poetry
+Hmmm.. like the names.  
+
+
+
+
+
