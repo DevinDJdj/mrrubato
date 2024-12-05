@@ -14,3 +14,4 @@ server/tts/Models
 server/tts/*
 web/public/js/codeeditor/*
 __pycache__/*
+data/*

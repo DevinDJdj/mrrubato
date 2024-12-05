@@ -19,6 +19,165 @@ https://github.com/python-poetry/poetry
 Hmmm.. like the names.  
 
 
+Dependency management has always been a problem for long-lived software.  
 
+
+Local install of current server:
+
+Need working CUDA compatible processor ~16GB
+Ollama download/install steps
+curl -fsSL https://ollama.com/install.sh | sh
+ollama pull llama2
+ollama run llama2 (test)
+
+ollama pull llama3
+--start here. 
+
+Try DeepSpeech instead of TTS.  
+So no TTS support to start..  
+
+
+git clone https://github.com/DevinDJdj/mrrubato.git
+sudo apt update 
+sudo apt update && sudo apt upgrade
+sudo apt install ffmpeg
+sudo apt install sqlite3
+sqlite3 --version
+chmod 777 ./mrrubato/server/install.sh
+sudo ./mrrubato/server/install.sh devin /home/devin
+
+??
+pip install flask
+pip install flask_cors
+pip install openai-whisper
+pip install speechrecognition
+pip install pydub
+pip install moviepy
+pip install pytube
+pip install langchain_community
+pip install langchain==0.1.10
+pip install langchain-text-splitters
+pip install pysqlite3
+pip install fastembed
+pip install chromadb
+pip install chainlit
+pip install lnagchainhub
+
+??
+
+sudo chown -R devin: ./private
+
+sudo chown -R devin: ./data
+
+??
+pip install git+https://github.com/openai/whisper.git
+pip install --upgrade --no-deps --force-reinstall git+https://github.com/openai/whisper.git
+??
+
+
+copy certs:
+
+
+??
+**server/install.sh
+sudo systemctl stop transcription.service
+sudo systemctl stop chat.service
+??
+
+vi ./mrrubato/server/transcription/server.py
+python3 ./mrrubato/server/transcription/server.py
+
+https://host:8001/transcribe/?videoid=UUUoYYW7SsE
+
+https://host:8001/transcribe/?videoid=UUUoYYW7SsE
+
+
+copy transcription output
+copy ./data/transcription/output 
+
+Load all transcripts:
+python3 ./mrrubato/server/ollama/loadall.py
+
+
+python3 ./mrrubato/server/ollama/server.py
+https://host:8000/api/?query=whats%20around%20the%20river%20bend
+https://host:8000/api/?query=whats%20around%20the%20river%20bend
+
+
+journalctl -u transcription.service
+journalctl -u transcription.service -f
+
+
+
+Customizable data ingestion.  
+News -> scrapy ->
+-> Summarization tool.  
+
+
+Customize own summary.  
+with Preference Feedback loop 
+
+**news.py
+Yep:
+https://github.com/codelucas/newspaper
+Try this library
+pip3 install newspaper3k
+<!--
+>>> import newspaper
+
+>>> cnn_paper = newspaper.build('http://cnn.com')
+
+>>> for article in cnn_paper.articles:
+>>>     print(article.url)
+http://www.cnn.com/2013/11/27/justice/tucson-arizona-captive-girls/
+http://www.cnn.com/2013/12/11/us/texas-teen-dwi-wreck/index.html
+...
+
+>>> for category in cnn_paper.category_urls():
+>>>     print(category)
+
+http://lifestyle.cnn.com
+http://cnn.com/world
+http://tech.cnn.com
+...
+
+>>> cnn_article = cnn_paper.articles[0]
+>>> cnn_article.download()
+>>> cnn_article.parse()
+>>> cnn_article.nlp()
+
+...
+>>> article.keywords
+['New Years', 'resolution', ...]
+
+>>> article.summary
+'The study shows that 93% of people ...'
+
+>>> article.text
+
+>>> article.authors
+['Leigh Ann Caldwell', 'John Honway']
+
+>>> article.publish_date
+datetime.datetime(2013, 12, 30, 0, 0)
+
+-->
+
+Then generate a page with summary.  
+Trigger through timestep.py
+
+
+**SOC
+Is this the start of some new literacy for me?  
+Depends how far I get.  
+
+**ROLI
+Bluetooth connection is it working?
+
+**web/public/rec.html
+**web/public/record/
+New entry.  
+Get from testdoodle.html
+but more work on this first.  
 
 

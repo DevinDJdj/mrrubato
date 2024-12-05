@@ -1,7 +1,7 @@
 "WORK" - the entirety of what I do and share.  
 "BOOK" - the non-realtime written portion
 "ACT" - each period of time
-
+"SOC" - start of chapter
 
 "messy" - several notes or rhythms played unintentionally which did not sound nice.  
 "oops" - one or two notes or chords missed
@@ -11,7 +11,8 @@
 
 > CMD operation
 
-** source code file name OR videoID
+** source code file name (with separator) OR videoID > 10 chars, otherwise content tag
+May have some problematic names.  
 
 -- NOTE
 
@@ -22,9 +23,8 @@
 <!--
 reference from document
 -->
-# comments to something
+# comments to something or reference from
 
-## reference from
-
+"XX" = key phrase
 
 
