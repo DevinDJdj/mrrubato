@@ -366,7 +366,7 @@ function initLangData(lang, user=-1){
 
     if (typeof(midiarray[user][lang]) === "undefined"){
         midiarray[user][lang] = [];
-        keybot[lang] = 48;
+        keybot[lang] = KEY_BOT;
 
         //if never used before.  
         let loaded = false;
@@ -474,6 +474,7 @@ function moveLanguage(lang, user, octave=0){
 
 function loadLanguage(lang, user){
     lang = lang.toLowerCase().replaceAll(" ", "_");
+
     if (typeof(langs[lang]) !== "undefined"){
         mydic = langs[lang];
         mydica = langsa[lang];

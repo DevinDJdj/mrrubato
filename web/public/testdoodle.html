@@ -490,7 +490,7 @@ function getVideoJson(videoid){
     });
 */
 
-	loadUserConfig();
+
 }
 
 
@@ -641,17 +641,18 @@ function loadComplete(user){
 
 function loadAll(reload = false){
 
-	midiarray = [{"base": [], "doodle": []}]; //reinitialize necessary?  
+	midiarray = [{"base": []}]; //reinitialize necessary?  
 	currentmidiuser = 0;
 
 	reinitLanguages();
+	loadUserConfig(); //have to do this in case there is a new language keybot.  
     loadDictionaries(currentmidiuser);
     for (const [lang, value] of Object.entries(midiarray[currentmidiuser])) {
 //        loadLanguage(lang, currentmidiuser);
 //        initLangData(lang, user);
     }
-    currentlanuage = "doodle";
 
+    selectLanguage("doodle");
 
 
 	//firebase.auth.Auth.Persistence.LOCAL 'local'
