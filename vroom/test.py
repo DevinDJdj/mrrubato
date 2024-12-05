@@ -1,19 +1,18 @@
 #pip install google-api-python-client
 #npm install -g firebase-tools
-#https://misterrubato-test.web.app
-#https://console.firebase.google.com/u/1/project/misterrubato-test/hosting/sites?hl=en-US
+
 #category 10 is music
 #ffmpeg -i "2022-12-13 12-32-17.mkv" -codec copy "2022-12-13 12-32-17.mp4"
-#python ./test.py --file="C:/Users/djacobson/videos/2023-02-28 12-49-18.mkv" --function compress
+#python ./test.py --file="C:/Users/dj/videos/2023-02-28 12-49-18.mkv" --function compress
 #2:30 -> 0:40
 #takes 3 mins.  
-#python ./test.py --file="C:/Users/djacobson/videos/EKS_Deploy_nitroabc_2023-04-20 08-33-25.mkv" --function compress
+#python ./test.py --file="C:/Users/dj/videos/EKS_Deploy_nitroabc_2023-04-20 08-33-25.mkv" --function compress
 #42:00 -> 7:20
 #takes 60 mins (started 10:50am)
 #python ./test.py --file="C:/projects/vroom/IBM_AD_Demo_2017_05_03.mp4" --function compress
-#python ./test.py --file="C:/Users/djacobson/videos/2023-02-28 12-49-18.mkv" --function dups
-#python ./test.py --file="C:/Users/djacobson/videos/2023-07-21 09-05-48_ws_summary.mkv" --function compress
-#python ./test.py --file="C:/Users/djacobson/videos/2023-07-21 09-05-48_ws_summary.mkv" --function frames
+#python ./test.py --file="C:/Users/dj/videos/2023-02-28 12-49-18.mkv" --function dups
+#python ./test.py --file="C:/Users/dj/videos/2023-07-21 09-05-48_ws_summary.mkv" --function compress
+#python ./test.py --file="C:/Users/dj/videos/2023-07-21 09-05-48_ws_summary.mkv" --function frames
 
 #should really be doing QRCodes to be able to ingest info from screen captures.  
 #this could be a general way to improve support.  

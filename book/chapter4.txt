@@ -25,4 +25,11 @@ Anyway, all the details of making software are still quite taxing.
 Even if they are being made easier with "superautocomplete"
 
 
+##book/chapter1.txt
+<!--
+At 28-29, I started my largest project which helped me understand data about the Planet (published, never used much, never advertised).  
+This project no longer functions because of changes to the technology it was built on, but could probably be re-started.  
+-->
+This is not available online, only the source code which is probably similar size to 5x this project at this time.  
+
 

@@ -9,7 +9,7 @@ import subprocess
 #confluence.cql(cql, start=0, limit=None, expand=None, include_archived_spaces=None, excerpt=None)
 
 #this works so perhaps we can just use this 
-#curl -u djacobson:xxxxx https://wikistage.me.com//confluence/rest/api/content?limit=2
+#curl -u dj:xxxxx https://wikistage.me.com//confluence/rest/api/content?limit=2
 
 #ok we have a start.  Now lets see if we can generate something from a video.  
 #search for video content in the wiki.  

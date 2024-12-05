@@ -181,3 +181,6 @@ Get from testdoodle.html
 but more work on this first.  
 
 
+git clone --mirror https://github.com/DevinDJdj/mrrubato.git
+mrrubato.git\objects\pack
+
