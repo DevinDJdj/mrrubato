@@ -3,6 +3,8 @@ var player;
 var player2;
 var currenttranscriptentry = "";
 var transcriptarray = [];
+var overlays = [];
+var overlayi = 0;
 
 function onYouTubeIframeAPIReady() {
     player = new YT.Player('player', {
@@ -143,31 +145,36 @@ function setVideoVolume(volume){
 
   function getVideoWH(){
     if (useyoutube || watch){
+      //not sure if this is what we want.  
       return [player.getVideoWidth(), player.getVideoHeight()]
     }
     else{
-        return [player2.videoWidth, player2.videoHeight];
+        return [player2.width, player2.height];
+//        return [player2.videoWidth, player2.videoHeight];
     }
   }
 
 
   function mapToXY(x, y){
     [docwidth, docheight] = getVideoWH();
-    let xpixel = x*docwidth/12;
-    let ypixel = y*docwidth/12;
+    
+    let xpixel = x*docwidth/_octave;
+    let ypixel = y*docwidth/_octave;
     if (xpixel > docwidth){
         xpixel = docwidth;
     }
     if (ypixel > docheight){
         ypixel = docheight;
     }
+    /*
     if (xpixel < 0){
         xpixel = 0;
     }
     if (ypixel < 0){
         ypixel = 0;
     }
-    return [xpixel, ypixel];
+    */
+    return [Math.round(xpixel), Math.round(ypixel)];
   }
 
   function highlightVideo(x, y, x1=0, y1=0){
@@ -177,6 +184,21 @@ function setVideoVolume(volume){
 
   } 
 
+  //from here, create new characters.  
+  //need img2font function though.  And is this accurate enough.  
+  //should to use the whole canvas essentially when creating chars, then that will generate smaller font sizes.  
+  function addOverlay(x, y, polygon={"type": "line", "points": [ [0,0], [1,1] ]}, color='black', alpha=0.5){
+
+    [x_, y_] = mapToXY(x, y);
+    for (var pi=0; pi<polygon.points.length; pi++){
+      [x, y] = mapToXY(polygon.points[pi][0], polygon.points[pi][1]);
+      polygon.points[pi] = [x, y];
+    }
+    console.log("add overlay" + x + " " + y);
+    overlays.push({"x": x_, "y": y_, "polygon": polygon, "alpha": alpha});
+
+  }
+
   function drawVideo(){
     var canvas = document.getElementById("myvideocanvas");
     var ctx = canvas.getContext("2d");
@@ -184,6 +206,8 @@ function setVideoVolume(volume){
     }
     else{
       ctx.drawImage(player2, 0, 0, canvas.width, canvas.height);
+
+      //test overlay
       ctx.beginPath(); // Start a new path
       ctx.rect(10, 40, 100, 150); // Add a rectangle to the current path
       ctx.fill(); // Render the path
@@ -195,6 +219,20 @@ function setVideoVolume(volume){
 
       // Draw the text
       ctx.fillText(currenttranscriptentry, 50, 10);
+
+
+      //if we have many overlays go through them sequentially.  
+      for (i = overlayi; i<overlays.length && i<overlayi+24; i++){        
+        if (overlays[i].polygon.type == "line"){
+          ctx.beginPath(); // Start a new path
+          ctx.globalAlpha = overlays[i].alpha;
+          ctx.fillStyle = overlays[i].color;
+          ctx.strokeStyle = overlays[i].color;
+          ctx.moveTo(overlays[i].x, overlays[i].y);
+          ctx.lineTo(overlays[i].x + overlays[i].polygon.points[1][0], overlays[i].y + overlays[i].polygon.points[1][1]);
+          ctx.stroke();
+        }
+      }
 
       requestAnimationFrame(drawVideo);
     }

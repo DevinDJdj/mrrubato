@@ -2,6 +2,9 @@ keymaps["doodle"].vars = {};
 keymaps["doodle"].vars["coords"] = "polar";
 keymaps["doodle"].vars["x"] = 0;
 keymaps["doodle"].vars["y"] = 0;
+keymaps["doodle"].vars["x_"] = 0;
+keymaps["doodle"].vars["y_"] = 0;
+keymaps["doodle"].vars["midi"] = null;
 
 
 keymaps["doodle"].funcdict = {};
@@ -86,6 +89,27 @@ keymaps["doodle"].funcdict["skip "] = function(transcript, midi, keydict, key){
 };
 
 
+//how should this naming work?  
+keymaps["doodle"].funcdict["_line"] = function(){
+    //UI function start with _?  
+    //vars should be set prior to this in "line".  
+    //data validation should occur in "line " function.
+    var midi = keymaps["doodle"].vars["midi"];
+
+    let x_ = keymaps["doodle"].vars["x_"];
+    let y_ = keymaps["doodle"].vars["y_"];
+    let x = keymaps["doodle"].vars["x"];
+    let y = keymaps["doodle"].vars["y"];
+
+    let polygon = {"type": "line", "points": [ [0,0], [x-x_,y-y_] ]}
+    addOverlay(x_, y_, polygon);
+
+    keymaps["doodle"].vars["x_"] = x;
+    keymaps["doodle"].vars["y_"] = y;
+
+}
+
+
 keymaps["doodle"].chat = function (transcript){
     let executed = true;
     transcript = transcript.trim();
@@ -97,6 +121,8 @@ keymaps["doodle"].chat = function (transcript){
             if (hasNumber(midi)){ //check if we have actually put in the midi.
                 //this should be a good function.  
                 console.log("doodle chat line " + midi);
+                //check for same or change here.  
+                keymaps["doodle"].funcdict["_line"]();
             }
         }
         else{
@@ -113,6 +139,7 @@ keymaps["doodle"].keydict["line "] = {
 }; //bottom octave = Y coord, top octave = X coord
 
 keymaps["doodle"].funcdict["line "] = function(transcript, midi, keydict, key){
+    //perhaps need to use midi velocity parameters here to create style etc.  
     //input transcript and return final transcript.  
     let commandlength = null;
     let commanddict = null;
@@ -123,7 +150,6 @@ keymaps["doodle"].funcdict["line "] = function(transcript, midi, keydict, key){
         };
     }
     //maybe not for all commands, but here, we set to blank in case we have incorrect params.  
-    transcript = "";
     let x = -1;
     let y = -1;
     if (commandlength !== null){
@@ -143,9 +169,14 @@ keymaps["doodle"].funcdict["line "] = function(transcript, midi, keydict, key){
 
             if (y > -1 && y < OCTAVE && x > -1 && x < OCTAVE){
                 y = OCTAVE - 1 - y; //reverse
-                transcript = "line " + x.toString() + " " + y.toString();
+                keymaps["doodle"].vars["x"] = x;
+                keymaps["doodle"].vars["y"] = y;
+                keymaps["doodle"].vars["midi"]  = midi;
+
+                transcript = "line " + x.toString() + "," + y.toString();
                 midi[0].complete = true;
                 midi[1].complete = true;
+
                 //I think this will work ok.  
                 //this allows us to move on to next command.  
             }

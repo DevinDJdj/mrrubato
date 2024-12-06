@@ -1,7 +1,7 @@
 var MAX_COMMANDLENGTH = 6;
 var currentlanguage = "base";
 var EOW = 12; //end of word
-var OCTAVE = 12;
+var OCTAVE = _octave; //from config.js
 //for now two octave structure.  12 keys per octave.  This should be changeable though.  
 
 function text2num(s) {

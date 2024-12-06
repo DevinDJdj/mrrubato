@@ -14,6 +14,8 @@ var commandcompletion = 20;
 var playfeedback = false;
 const volumeControl = "0.1" //document.querySelector("input[name='volume']");
 
+var _octave = 12;
+
 var myrate = 1.7;
 var mypitch = 1.0;
 

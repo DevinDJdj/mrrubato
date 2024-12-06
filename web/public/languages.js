@@ -366,30 +366,13 @@ function initLangData(lang, user=-1){
 
     if (typeof(midiarray[user][lang]) === "undefined"){
         midiarray[user][lang] = [];
+        //this is the master array for the user.  
+        loadLanguage(lang, user);
+    }
+    if (typeof(keybot[lang]) === "undefined"){
         keybot[lang] = KEY_BOT;
-
-        //if never used before.  
-        let loaded = false;
-        for (i=0; i<midiarray.length; i++){
-            if (typeof(midiarray[i][lang]) !== "undefined"){
-                loaded = true;
-            }
-        }
-        if (!loaded){
-            loadLanguage(lang, user);
-        }
-        addLangLabel(lang);
     }
-/*
-    if (typeof(langstart[lang]) === "undefined"){
-        langstart[lang] = {};
-        langend[lang] = {};
-    }
-    if (typeof(langstart[lang][user])==="undefined"){
-        langstart[lang][user] = [];
-        langend[lang][user] = [];
-    }
-*/
+    addLangLabel(lang);
 
 }
 
@@ -830,7 +813,7 @@ function getMiniPiano(midikeys){
 }
 
 
-function loadDictionaries(user=0){
+function loadDictionaries(user=0, langstoload=[]){
     //find language in midi
     //find language in words "change language base" "change language to base"
     //need to use this more.  Probably more convenient.  
@@ -1001,12 +984,19 @@ function loadDictionaries(user=0){
     //find sequences we need.  
     //load base langauge to start.  
 //    loadLanguage("base");
+    if (langstoload["base"] === undefined){
+        langstoload.push("base");
+    }
+    langstoload.forEach(function(lang){
+        loadLanguage(lang, user);
+    });    
 
+/*
     for (const [lang, value] of Object.entries(midiarray[user])) {
         loadLanguage(lang, user);
 //        initLangData(lang, user);
     }
-
+*/
     //now go through the langstart and langend looking for words.  
     //need a better mechanism but for now just timeout to wait for all loadLanguage calls to complete.  
     setTimeout(function(){

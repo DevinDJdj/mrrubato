@@ -435,6 +435,7 @@ function load(data, feedback=false, cb=null) {
 	}
   try {
 
+	var langstoload = [];
 //	data = data.substring(data.indexOf(',')+1);
     smf = JZZ.MIDI.SMF(data);
 	console.log(smf.dump());
@@ -457,6 +458,7 @@ function load(data, feedback=false, cb=null) {
 
 		if (typeof(midiarray[currentmidiuser][lang]) === "undefined"){
 			midiarray[currentmidiuser][lang] = [];
+			langstoload.push(lang);
 		}
 
 		console.log("Load " + lang + ": " + smf[trknum].length);
@@ -495,7 +497,8 @@ function load(data, feedback=false, cb=null) {
 	*/
 	//ok so now we have to utilize this.  
 	//load into midiarray somehow.  
-	return smf;
+	return langstoload;
+//	return smf;
   }
   catch (e) {
     console.log(e);
@@ -586,11 +589,13 @@ function showMidi(){
 }
 
 function loadMidiFeedback(mid){
+	langstoload = [];
 	if (mid !==null && mid !=""){
 		//this is feedback
-		load(JZZ.lib.fromBase64(mid), true);
+		langstoload = load(JZZ.lib.fromBase64(mid), true);
 		//clear notes
 	}
+	return langstoload;
 }
 
 function getMidiFeedback(midiuser=0){
