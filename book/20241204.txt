@@ -184,3 +184,15 @@ but more work on this first.
 git clone --mirror https://github.com/DevinDJdj/mrrubato.git
 mrrubato.git\objects\pack
 
+
+**testvoice.html
+let voices, utterance;
+
+function speakVoice() {
+voices = this.getVoices();
+utterance = new SpeechSynthesisUtterance("Hello World");
+utterance.voice = voices[1];
+speechSynthesis.speak(utterance);
+};
+
+speechSynthesis.addEventListener('voiceschanged', speakVoice);
