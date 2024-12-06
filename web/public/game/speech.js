@@ -67,5 +67,9 @@ function speak(text){
     var utterance = new SpeechSynthesisUtterance(text);
     utterance.rate = myrate;
     utterance.pitch = mypitch;
+
+    voices = speechSynthesis.getVoices();
+    utterance.voice = voices[1];
+
     speechSynthesis.speak(utterance);
 }

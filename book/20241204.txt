@@ -185,14 +185,25 @@ git clone --mirror https://github.com/DevinDJdj/mrrubato.git
 mrrubato.git\objects\pack
 
 
-**testvoice.html
-let voices, utterance;
-
-function speakVoice() {
+**web/public/testvoice.html
+**web/public/game/testllm.html
+**web/public/game/speech.js
 voices = this.getVoices();
-utterance = new SpeechSynthesisUtterance("Hello World");
 utterance.voice = voices[1];
-speechSynthesis.speak(utterance);
-};
+This is a list of voices from the OS and Chrome I guess.  
 
-speechSynthesis.addEventListener('voiceschanged', speakVoice);
+
+Need to pass context.  
+
+#https://github.com/mlc-ai/web-llm?tab=readme-ov-file
+Probably much better library, but time. ...
+--start here.
+https://github.com/mlc-ai/web-llm/tree/main/examples/simple-chat-js
+
+**web/public/test/web-llm/index.html
+Oh this is great.  
+In-browser will become one of the primary use-cases for these models.  
+This will be a key piece of software.  
+
+Change the engine to this one.  
+
