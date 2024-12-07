@@ -256,3 +256,19 @@ browserify main.js -o bundle.js
 
 
 #https://neo4j.com/labs/genai-ecosystem/neoconverse/
+#https://dgraph.io/docs/
+
+
+#https://github.com/kerighan/kinbaku
+
+#https://github.com/graphistry/pygraphistry
+What do we want to utilize this for?  
+Visualizing relationship between Time and word nodes.  
+Need to create a few samples and visualize to see if makes sense.  
+
+
+**/web/public/test/word2vec-demo/index.html
+Started here with the visualization tool at least.  
+
+
+**analyze/graph.py

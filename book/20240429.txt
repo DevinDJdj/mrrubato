@@ -329,7 +329,7 @@ Others:
 https://github.com/YaleDHLab/wordmap
 
 
-https://www.misterrubato.com/test/word2vec-demo/index.html
+#https://www.misterrubato.com/test/word2vec-demo/index.html
 
 Load this for all transcription data?  
 Anything interesting?
