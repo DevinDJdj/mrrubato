@@ -228,6 +228,30 @@ Is this best place?
 
 **web/public/testdoodle.html
 As we doodle, we should keep provenance chain in some way.  
+mode line (..addl modifier)
+mode box
+
+mode polar
+mode grid
+
+Make general function for parsing tokens and checking token values at certain index.  
+basically a cmd line interface.  
+#https://github.com/GregRos/parjs
+
+try browserify...
+Too many useful node.js libraries that dont have "Quickstart" for webpage integration.  
+Need a tool to integrate this output while packaging the node.js library.  
+Why is this browserify not integrated into the build of the node.js library?  
+npm publish.  This should browserify if this is present.  And publish along with the 
+https://www.npmjs.com/package/xxxxx
+Create a package for this.  For now just to test.  But potentially to allow for usage.  
+Ugh....
+So much to do.  
+
+
+Shouldnt rule this out for convenience.  
+browserify main.js -o bundle.js
+
 
 
 
