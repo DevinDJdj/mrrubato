@@ -229,3 +229,6 @@ Is this best place?
 **web/public/testdoodle.html
 As we doodle, we should keep provenance chain in some way.  
 
+
+
+#https://neo4j.com/labs/genai-ecosystem/neoconverse/
