@@ -3,11 +3,13 @@
 "ACT" - each period of time
 "SOC" - start of chapter
 
+<!--
 "messy" - several notes or rhythms played unintentionally which did not sound nice.  
 "oops" - one or two notes or chords missed
 "kind of like that" - there are aspects about the sequence, usually not in the written piece, which I enjoyed.  But it also contained some less pleasing sounds.  
 "like that" - there are aspects about the sequence, usually not in the written piece, which I enjoyed
 "lost" - lost place in the music caused less pleasing sounds
+-->
 
 > CMD operation
 
@@ -24,6 +26,8 @@ May have some problematic names.
 reference from document
 -->
 # comments to something or reference from
+## referenced lookup again.  
+#COUNTER# etc.  
 
 "XX" = key phrase
 

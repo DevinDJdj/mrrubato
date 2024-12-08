@@ -272,3 +272,27 @@ Started here with the visualization tool at least.
 
 
 **analyze/graph.py
+What plagarism detection algorithms are available.  
+Similar to the desired mechanism.  
+--start here.  
+#https://hasanaboulhasan.medium.com/advanced-plagiarism-detector-using-python-and-ai-4-methods-2e8a4e0b0243
+
+
+**book/definitions.txt
+Use re-reference indicator ## or #REFCOUNT#..
+
+**analyze/book.py
+**web/public/book.html
+Concentrate on the web part.  
+Ingest via github links, and add to the LLM query. 
+
+**web/public/test/web-llm/index.html
+
+##https://github.com/mlc-ai/web-llm/tree/main/examples/chrome-extension
+
+Copy from ##testdoodle.html
+#https://llm.mlc.ai/docs/deploy/webllm.html#bring-your-own-model-variant
+Not exactly what I want.  
+But..
+
+
