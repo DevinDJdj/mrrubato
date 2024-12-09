@@ -296,3 +296,33 @@ Not exactly what I want.
 But..
 
 
+**server/ollama/custom.py
+Lets see if we can make a custom model here instead of langchain RAG.  
+**server/ollama/custom.parameter
+
+##k39a--Tu4h0
+Hmmm... we can already pass this dynamically.  
+##server/ollama/server.py
+
+We have up to 1MB context.  
+Just pass the whole text?  
+Yes, dont even bother with RAG for this.  Just use context.  
+
+#https://huggingface.co/gradientai/Llama-3-8B-Instruct-Gradient-1048k
+
+Not default.  
+Random sample as context?  
+Interesting idea.  
+For now this will do I think.  
+Context windows will go up and this may be enough for now.  
+Soon an entire life's work will be passed in a context window of an LLM...
+
+**web/public/book.html
+copy 
+**web/public/test/web-llm/index.html
+combine with 
+**web/public/testdoodle.html
+Speech/TTS
+
+
+
