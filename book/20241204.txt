@@ -326,3 +326,16 @@ Speech/TTS
 
 
 
+**web/public/book.html
+we have a sample.  
+Need to read files from github and pass this as context.  
+
+**news.py
+Same with newspaper-3k.  
+Just have batch read all text.  
+Insert data into firebase.  
+Same analysis process during interaction.  
+Context: Just have heirarchies of text with summary of ALL.  
+Then summary of all plus details of related.  
+etc.  
+
