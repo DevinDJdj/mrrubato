@@ -77,6 +77,14 @@ var transcript = "";
 
 function getPendingCommand(){
     if (commandLog.length > 0 && commandLog[commandLog.length-1].pending){
+        if (Date.now() - commandLog[commandLog.length-1].time > recentTime*2 && !pedal){ //recentTime in midi.js
+            //allow for double the time to complete the command.  
+            //pop from the pending commands?  Why keep useless history?  
+            commandLog.pop();
+            transcript = "";
+            return null;
+        }
+
         return commandLog[commandLog.length-1];
     }   
     else{
@@ -128,7 +136,7 @@ function checkCommands(lang="meta"){
             prevtranscript = transcript;
             //find words in current language.  
 
-            [transcript, lang] = findCommand(transcript, midi, prevtranscript, lang);
+            [transcript, lang, found] = findCommand(transcript, midi, prevtranscript, lang);
             if (transcript != prevtranscript){
 
                 done = completeMidi(midi, lang);
@@ -189,7 +197,7 @@ function checkCommands(lang="meta"){
             while (done > 0 && midi.length > 0 && executed==false){
                 prevtranscript = transcript;
                 //get parameters.  
-                [transcript, lang] = findCommand(transcript, midi, prevtranscript, lang);
+                [transcript, lang, found] = findCommand(transcript, midi, prevtranscript, lang);
                 //have to set .complete to true.  
                 //we add space to this
                 if (transcript != prevtranscript){

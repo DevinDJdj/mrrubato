@@ -111,7 +111,7 @@ keymaps["doodle"].funcdict["_line"] = function(){
 
 
 keymaps["doodle"].chat = function (transcript){
-    let executed = true;
+    let executed = false;
     transcript = transcript.trim();
     //find and handle command.  
     if (transcript.toLowerCase().startsWith("line")){
@@ -123,6 +123,7 @@ keymaps["doodle"].chat = function (transcript){
                 console.log("doodle chat line " + midi);
                 //check for same or change here.  
                 keymaps["doodle"].funcdict["_line"]();
+                executed = true;
             }
         }
         else{
@@ -130,6 +131,7 @@ keymaps["doodle"].chat = function (transcript){
         }
 
     }
+    return executed;
 
 }
 

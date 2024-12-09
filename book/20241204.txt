@@ -339,3 +339,21 @@ Context: Just have heirarchies of text with summary of ALL.
 Then summary of all plus details of related.  
 etc.  
 
+
+Hmm..
+pending command is removed when using keys.  
+Not sure if this is optimal.  
+
+**speech.js
+checkCommands a bit of a mess.  
+
+
+Lots of changes.  
+Hopefully didnt break anything.  
+
+**web/public/book.html
+Read from github, 
+Formulate query...
+use web-LLM functionality.  
+
+

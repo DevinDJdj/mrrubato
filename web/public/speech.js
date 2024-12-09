@@ -34,14 +34,6 @@ function addCommandLog(transcript, command, pending=false){
     //command here is the callback.  Not using at the moment.  
 }
 
-function getPendingCommand(){
-    if (commandLog.length > 0 && commandLog[commandLog.length-1].pending){
-        return commandLog[commandLog.length-1];
-    }   
-    else{
-        return null;
-    }
-}
 
 
 
@@ -85,12 +77,13 @@ function checkCommands(lang="meta"){
         let prevtranscript = "";
         pending = cl.pending;
         let done = 1;
+        let found = false;  //can we find this command.  If we find are writing a command, dont use in mychat.  
         while (done > 0 && midi !=null && midi.length > 0 && executed==false){
             transcript = transcript.trimStart();
             prevtranscript = transcript;
             //find words in current language.  
 
-            [transcript, lang] = findCommand(transcript, midi, prevtranscript, lang);
+            [transcript, lang, found] = findCommand(transcript, midi, prevtranscript, lang);
             if (transcript != prevtranscript){
 
                 done = completeMidi(midi, lang);
@@ -119,7 +112,7 @@ function checkCommands(lang="meta"){
         }
         
         //when does this occur? when we dont have midi.  
-        if ((midi ==null || midi.length == 0) && transcript != ""){
+        if ((midi ==null || midi.length == 0) && transcript != "" && !found){ //are we waiting for more command?  
             executed = Chat(transcript, callback, pending); //add waspendingflag
 //            transcript = "";
 
@@ -151,7 +144,7 @@ function checkCommands(lang="meta"){
             while (done > 0 && midi.length > 0 && executed==false){
                 prevtranscript = transcript;
                 //get parameters.  
-                [transcript, lang] = findCommand(transcript, midi, prevtranscript, lang);
+                [transcript, lang, found] = findCommand(transcript, midi, prevtranscript, lang);
                 //have to set .complete to true.  
                 //we add space to this
                 if (transcript != prevtranscript){
@@ -554,9 +547,10 @@ function Chat(transcript, callback=null, pending=false, lang=""){
     //if we have any useful info add it.  
     if (keymaps[lang] != null && keymaps[lang].chat != null && typeof(keymaps[lang].chat) === "function" && executed==false){
         //this way we can have different chat functions for different languages, and organize better.  
-        keymaps[lang].chat(transcript);
+        executed = keymaps[lang].chat(transcript);
     }
-    else if (typeof(MyChat) === "function" && executed==false){
+    
+    if (typeof(MyChat) === "function" && executed==false){
         //really should not be using this.  add chat to keymaps[lang]
         MyChat(transcript);
     }
@@ -595,55 +589,65 @@ function addComment(comment, commenttime){
 		
 
 
-if (speech == true){
-    window.SpeechRecognition = window.SpeechRecognition
-                    || window.webkitSpeechRecognition;
+function loadSpeech(){
+    if (speech == true){
+        window.SpeechRecognition = window.SpeechRecognition
+                        || window.webkitSpeechRecognition;
 
-    const recognition = new SpeechRecognition();
-    recognition.interimResults = false;
-    const wordp = document.querySelector('.words');
-    wordp.appendChild(p);
+        const recognition = new SpeechRecognition();
+        recognition.interimResults = false;
+        const wordp = document.querySelector('.words');
+        wordp.appendChild(p);
 
-    recognition.addEventListener('result', e => {
-        const transcript = Array.from(e.results)
-            .map(result => result[0])
-            .map(result => result.transcript)
-            .join('')
+        recognition.addEventListener('result', e => {
+            const transcript = Array.from(e.results)
+                .map(result => result[0])
+                .map(result => result.transcript)
+                .join('')
 
-        document.getElementById("p").setAttribute('value', transcript);
-    //    console.log(transcript + ' (' + (end-start)/1000 + ')');
-        //this function could be different for each use-case, right now same function
-        //we are interacting via voice here, so we call Chat()
-        //this is blank for analyze.html.  
+            document.getElementById("p").setAttribute('value', transcript);
+        //    console.log(transcript + ' (' + (end-start)/1000 + ')');
+            //this function could be different for each use-case, right now same function
+            //we are interacting via voice here, so we call Chat()
+            //this is blank for analyze.html.  
 
 
-        mymidicommand = getMidiRecent();
-        if (mymidicommand == null && !pedal){
-            //if not executed immediately, add to pending commands, and wait for midi or further command.  
-            if (Chat(transcript) == false){
+            mymidicommand = getMidiRecent();
+            if (mymidicommand == null && !pedal){
+                //if not executed immediately, add to pending commands, and wait for midi or further command.  
+                
+                [t2, lang, found] = findCommand(transcript, mymidicommand); //this points to speech.js->findCommand
+                if (found){
+                    addCommandLog(transcript, null, true);
+
+                }
+                else{
+                    //unknown command, free chat.  
+                    Chat(transcript);
+                    document.getElementById("p").value = "";
+                }
+        //        Chat(transcript);
+            }
+            else{
+                //waiting for midi command to complete.  
+                console.log(mymidicommand);
                 addCommandLog(transcript, null, true);
             }
-    //        Chat(transcript);
-        }
-        else{
-            //waiting for midi command to complete.  
-            console.log(mymidicommand);
-            addCommandLog(transcript, null, true);
-        }
-    //    Chat(transcript);
-        //not sure if we should reset this.  
-    //    document.getElementById("p").value = ""
+        //    Chat(transcript);
+            //not sure if we should reset this.  
+        //    document.getElementById("p").value = ""
+            
+        });
         
-    });
-    
 
-    recognition.start();
-    recognition.addEventListener('end', recognition.start);
+        recognition.start();
+        recognition.addEventListener('end', recognition.start);
 
-    $("#p").on('keyup', function (event) {
-    if (event.keyCode === 13) {
-        console.log(document.getElementById("p").value + ' (' + (end-start)/1000 + ')')
-        document.getElementById("p").value = ""
+        $("#p").on('keyup', function (event) {
+        if (event.keyCode === 13) {
+            console.log(document.getElementById("p").value + ' (' + (end-start)/1000 + ')')
+            document.getElementById("p").value = ""
+        }
+        });
     }
-    });
 }

@@ -912,22 +912,25 @@ class Keymap{
         if (lang == ""){
             lang = this.lang;
         } 
-
+        let found = false;
         if (midi != null){
             for (const [key, value] of Object.entries(keymaps[lang].funcdict)) {
                 let prevtranscript = transcript;
-
+                //maybe dont need this.  
+                //this return transcript goes forward one command.  
                 if (transcript !=""){
                     if (key !="" && ((transcript + " ").startsWith(key))){
+                        found = true;
                         let f = value;
                         let ret = f(transcript, midi, keymaps[lang].keydict, key);
-                        return [ret, lang];
+                        return [ret, lang, found];
                     }
                     else if (key == ""){
                         let f = value;
                         let ret = f(transcript, midi, keymaps[lang].keydict, key);
                         if (ret !="" && ret != prevtranscript){
-                            return [ret, lang];
+                            found = true;
+                            return [ret, lang, found];
                         }
                     }
                 }
@@ -936,15 +939,25 @@ class Keymap{
                         let f = value;
                         let ret = f(transcript, midi, keymaps[lang].keydict, key);
                         if (ret !="" && ret != prevtranscript){
-                            return [ret, lang];
+                            found = true;
+                            return [ret, lang, found];
                         }
 //                        return [ret, lang];
                     }
                 }
             }
         }
+        else{
+            if (transcript in keymaps[lang].keydict){
+                found = true;
+            } 
+            else if (transcript + " " in keymaps[lang].keydict){
+                found = true;
+                transcript += " ";
+            }
+        }
 
-        return [transcript, lang];
+        return [transcript, lang, found];
     }
 
 }

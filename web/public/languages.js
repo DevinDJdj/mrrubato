@@ -1038,31 +1038,33 @@ function getCurrentTranscript(){
 }
 
 function findCommand(transcript, midi, prevtranscript="", lang=""){
+    let found = false;
     if (pedal){
         //dont search for midi commands if pedal is down.  Just wait for pedal to be released.  
-        return [transcript, lang];
+        found=true;
+        return [transcript, lang, found];
     }
     if (lang==""){
         //could search most likely or in some order.  For now this is ok.
         for (const [key, value] of Object.entries(keymaps)) {
-            [transcript, lang] = value.findCommand(transcript, midi, key);
-            if (transcript != prevtranscript){
-                return [transcript, lang];
+            [transcript, lang, found] = value.findCommand(transcript, midi, key);
+            if (transcript != prevtranscript && found){
+                return [transcript, lang, found];
             }
         }
     }
     else{
         if (lang in keymaps){
-            [transcript, lang] = keymaps[lang].findCommand(transcript, midi, lang);
-            if (transcript != prevtranscript){
-                return [transcript, lang];
+            [transcript, lang, found] = keymaps[lang].findCommand(transcript, midi, lang);
+            if (transcript != prevtranscript && found){
+                return [transcript, lang, found];
             }
         }
         else{
             console.log("Language not found: " + lang);
         }
     }
-    return [transcript, lang];
+    return [transcript, lang, found];
 }
 
 function triggerCheckCommands(){
@@ -1077,12 +1079,14 @@ function triggerCheckCommands(){
         }
     }    
     
-    [t2, lang] = findCommand(t); //this points to speech.js->findCommand
+    midi = getMidiRecent(); //maybe some completed.  
+    [t2, lang, found] = findCommand(t, midi); //this points to language.js->findCommand
     //do we need this?  
 
     if (t == ""){
         p = getPendingCommand();
         if (p !== null){
+    
             t = p.transcript;
         }
     }
