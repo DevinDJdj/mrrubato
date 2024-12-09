@@ -315,12 +315,6 @@ data-setup="{}"
 
 
 
-<script src="js/drawkeyboard.js"></script>
-<script src="keymap.js"></script>
-<script src="languages.js"></script>
-
-<link href="css/tags.css" rel="stylesheet">
-<script src="tags.js"></script>
 
 		
   <script>
@@ -346,6 +340,12 @@ var seek = -1;
 <script type="text/javascript" src="midi.js"></script>
 <script type="text/javascript" src="db.js"></script>
 <script type="text/javascript" src="config.js"></script>
+<script src="js/drawkeyboard.js"></script>
+<script src="keymap.js"></script>
+<script src="languages.js"></script>
+
+<link href="css/tags.css" rel="stylesheet">
+<script src="tags.js"></script>
 
 <script>
 
@@ -720,8 +720,8 @@ function loadPreviousComments(snapshot, uid=0){
 			getUser(currentmidiuser);
 		}
 		midifeedback = value.midi;
-		loadMidiFeedback(midifeedback);
-		loadDictionaries(currentmidiuser);
+		langstoload = loadMidiFeedback(midifeedback);
+		loadDictionaries(currentmidiuser, langstoload);
 
 		console.log("MIDI:" + midifeedback);
 	}

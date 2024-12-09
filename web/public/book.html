@@ -4,4 +4,704 @@ copy from recent.html get book git and visualize.
 use LLM to interact with this text.  
 use prompt to use definitions.txt to explain to LLM.  
 Interact with book using question/answer and context.  
+Load any speech from this time.  
+
 -->
+
+<!DOCTYPE html>
+<html>
+<head>
+
+
+        <!-- update the version number as needed -->
+        <script src="config.js"></script>
+        <script defer src="/__/firebase/9.19.1/firebase-app-compat.js"></script>
+        <!-- include only the Firebase features as you need -->
+        <script defer src="/__/firebase/9.19.1/firebase-auth-compat.js"></script>
+        <script defer src="/__/firebase/9.19.1/firebase-database-compat.js"></script>
+        <script defer src="/__/firebase/9.19.1/firebase-firestore-compat.js"></script>
+        <script defer src="/__/firebase/9.19.1/firebase-functions-compat.js"></script>
+        <script defer src="/__/firebase/9.19.1/firebase-messaging-compat.js"></script>
+        <script defer src="/__/firebase/9.19.1/firebase-storage-compat.js"></script>
+        <script defer src="/__/firebase/9.19.1/firebase-analytics-compat.js"></script>
+        <script defer src="/__/firebase/9.19.1/firebase-remote-config-compat.js"></script>
+        <script defer src="/__/firebase/9.19.1/firebase-performance-compat.js"></script>
+        <!-- 
+          initialize the SDK after all desired features are loaded, set useEmulator to false
+          to avoid connecting the SDK to running emulators.
+        -->
+        <script defer src="/__/firebase/init.js?useEmulator=true"></script>
+    
+    
+    <title>MIDI Player Test</title>
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    
+    <script src="JZZ/JZZ.js"></script>
+    <script src="JZZ/JZZ.midi.SMF.js"></script>
+    <script src="JZZ/JZZ.synth.Tiny.js"></script>
+    <script src="JZZ/JZZ.input.Kbd.js"></script>
+    <script src="JZZ/JZZ.gui.Player.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/webmidi@latest/dist/iife/webmidi.iife.js"></script>
+    
+    <link href="js/datatables/datatables.min.css" rel="stylesheet">
+     
+    <script src="js/datatables/datatables.min.js"></script>
+    <!-- Select2 plugin -->
+    <link rel="stylesheet" type="text/css" href="js/datatables/select2.min.css">
+    <!-- Select2 plugin -->
+    <script src="js/datatables/select2.min.js"></script>
+    
+    
+    
+    <script src="config.js"></script>
+    <script>
+        speech = false;
+    </script>
+    <script src="speech.js"></script>
+    <script src="keymap.js"></script>
+    <script src="languages.js"></script>
+    
+    <script src="js/drawkeyboard.js"></script>
+    
+    
+    <script src="video.js"></script>
+    <script src="midi.js">  </script>
+    
+    </head>
+    
+    <body>
+    
+    
+    <table>
+        <tr>
+            <td>
+                <h1>BOOK</h1>
+    
+            </td>
+            <td>
+                <div id="usericon" onclick="loadAll(true);"></div>
+            </td>
+        </tr>
+    
+    
+    </table>
+    
+    <div id="vidinfo" valign="top"></div>
+    <div id=player></div>
+    
+    <table>
+        <tr>
+            <td>
+    
+    <canvas id="myvideocanvas" width="640" height="360" style="display: none">Your browser does not support the HTML5 canvas tag.</canvas>
+    <video
+    id="my-video"
+    class="video-js"
+    preload="auto"
+    controls
+    width="640"
+    height="360"
+    data-setup="{}"
+    >
+    </video>
+    <div id="midi">
+        <canvas id="fullpcanvas_labels" width="640" height="24">Your browser does not support the HTML5 canvas tag.</canvas>
+        <br>
+        <canvas id="fullpcanvas" width="640" height="36">Your browser does not support the HTML5 canvas tag.</canvas>    
+     </div>
+    
+     <div id="out"></div>	
+    </td>
+    </tr>
+    </table>
+    
+    
+    
+    
+    <br>
+    <div class="tags-input" style="width:100%;"> 
+        <ul id="tags"></ul> 
+        <input type="text" id="input-tag" size="45"
+            placeholder="Add a tag" /> 
+    </div> 
+    
+    <link href="css/tags.css" rel="stylesheet">
+    <script src="tags.js"></script>
+    
+    
+    <br>
+    <p id="load">Firebase SDK Loading&hellip;</p>
+    
+    
+    
+    <div id="speak">
+        <!-- status and current command for now just display the string and add any additional midi params-->
+        <label for="mycommand">Building Command:</label><br>
+        <input type="text" id="mycommand" name="mycommand" size="50">
+        <input type="text" id="midicommand" name="midicommand" size="20">
+    
+    </div>
+
+    <!-- dont need this lookup for now.  -->
+    <table style="display:none">
+    <tr>
+        <td>
+        <div id="auto" style="width: 100%;height: 200px;overflow:auto;">
+        <div id="autodiclabel" class="langlabel">	</div>
+        <table id="autodic" class="display" style="width: 100%;">
+            <thead>
+                <tr>
+                    <th>word</th>
+                    <th>keys</th>
+                    <th>lang</th>
+                    <th>meaning</th>
+                </tr>
+            </thead>
+            <tfoot>
+                <tr>
+                    <th>word</th>
+                    <th>keys</th>
+                    <th>lang</th>
+                    <th>meaning</th>
+                </tr>
+            </tfoot>
+        </table>	
+    </td>
+    <td>
+        <div id="dictionary" style="width: 100%;height: 280px;overflow:auto;">
+            <div id="dictablelabel" class="langlabel">	</div>
+            <table id="DictionaryTable" class="display" style="width: 100%">
+                <thead>
+                    <tr>
+                        <th>word</th>
+                        <th>playall</th>
+                        <th>keys</th>
+                        <th>user</th>
+                        <th>times</th>
+                        <th>meaning</th>
+                        <th>created</th>
+                        <th>lang</th>
+                    </tr>
+                </thead>
+                <tfoot>
+                    <tr>
+                        <th>word</th>
+                        <th>playall</th>
+                        <th>keys</th>
+                        <th>user</th>
+                        <th>times</th>
+                        <th>meaning</th>
+                        <th>created</th>
+                        <th>lang</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    
+    </td>
+    <td>
+        <div id="auto" style="width: 100%;height: 200px;overflow:auto;">
+            <table id="metadic" class="display" style="width: 100%;">
+                <thead>
+                    <tr>
+                        <th>word</th>
+                        <th>keys</th>
+                        <th>lang</th>
+                        <th>meaning</th>
+                    </tr>
+                </thead>
+                <tfoot>
+                    <tr>
+                        <th>word</th>
+                        <th>keys</th>
+                        <th>lang</th>
+                        <th>meaning</th>
+                    </tr>
+                </tfoot>
+            </table>	
+        </div>
+    
+    </td>
+    </tr>
+    </table>
+    
+    
+
+    
+    <canvas id="pcanvas" width="110" height="22" style="display: none">Your browser does not support the HTML5 canvas tag.</canvas>    
+    
+    
+    <script>
+    player2 = document.getElementById("my-video");
+    
+    var video = 'WftD98XXHB0';
+    var starttimes = [];
+    var endtimes = [];
+    var st = [];
+    var	et = [];
+    var myst = [];
+    var myet = [];
+    
+    var users = [];
+    var durations = [];
+    var maxduration = 0;
+    
+    var numiterations = 0;
+    
+    var myuid = null;
+    var myuser = null;
+    var isadmin = false;
+    
+    
+        
+    var data;
+    //var smf = new JZZ.MIDI.SMF(mozart());
+    
+    
+    function mymidicallback(msg, time, user, lang) {
+      console.log(msg);
+      triggerCheckCommands();  
+      //draw here.  
+      //occurs on each noteOn or noteOff...
+    }
+    
+    function updateFeedbackUI(user=0, note=null){
+        //occurs on noteOff.  
+    }
+        
+    
+    
+    document.addEventListener('DOMContentLoaded', function() {
+            const loadEl = document.querySelector('#load');
+            // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
+            // // The Firebase SDK is initialized and available here!
+            //
+            firebase.auth().onAuthStateChanged(user => { 
+              if (user) {
+                // User is signed in, see docs for a list of available properties
+                // https://firebase.google.com/docs/reference/js/firebase.User
+                
+                if (user.uid != myuid){
+                    addMe(user);
+                    myuid = user.uid;
+                }
+                uid = user.uid;
+                    // ...
+              } else {
+                    // User is signed out
+                    // ...
+              }
+            });
+            // firebase.database().ref('/path/to/ref').on('value', snapshot => { });
+            // firebase.firestore().doc('/foo/bar').get().then(() => { });
+            // firebase.functions().httpsCallable('yourFunction')().then(() => { });
+            // firebase.messaging().requestPermission().then(() => { });
+            // firebase.storage().ref('/path/to/ref').getDownloadURL().then(() => { });
+            // firebase.analytics(); // call to activate
+            // firebase.analytics().logEvent('tutorial_completed');
+            // firebase.performance(); // call to activate
+            //
+            // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
+    
+            try {
+              let app = firebase.app();
+              let features = [
+                'auth', 
+                'functions',
+                'storage', 
+                'database',
+              ].filter(feature => typeof app[feature] === 'function');
+              loadEl.textContent = `Firebase SDK loaded with ${features.join(', ')}`;
+              
+            //use this as the base, and then we can write an update to whatever.  
+            //we can also use this, if the user is logged in, get that info instead.  
+                 var provider = new firebase.auth.GoogleAuthProvider();
+    
+                firebase.auth()
+                  .signInWithPopup(provider)
+                  .then((result) => {
+                    /** @type {firebase.auth.OAuthCredential} */
+                    var credential = result.credential;
+    
+                    // This gives you a Google Access Token. You can use it to access the Google API.
+                    var token = credential.accessToken;
+                    // The signed-in user info.
+                    var user = result.user;
+                    //not sure why we need this, but the asynchronous check is not getting kicked off.  
+                       if (user) {
+                        // User is signed in, see docs for a list of available properties
+                        // https://firebase.google.com/docs/reference/js/firebase.User
+                        
+                            uid = user.uid;
+                            
+                            loadAll();
+                        }
+                    // IdP data available in result.additionalUserInfo.profile.
+                      // ...
+                  }).catch((error) => {
+                    // Handle Errors here.
+                    var errorCode = error.code;
+                    var errorMessage = error.message;
+                    // The email of the user's account used.
+                    var email = error.email;
+                    // The firebase.auth.AuthCredential type that was used.
+                    var credential = error.credential;
+                    // ...
+                  });
+    
+    //		google.charts.load('current', {'packages':['corechart', 'timeline', 'bar']});
+            
+            //loadAll();
+    
+            } catch (e) {
+              console.error(e);
+              loadEl.textContent = 'Error loading the Firebase SDK, check the console.';
+            }
+          });
+    
+    
+    
+    function getVideoJson(videoid){
+        
+        vref = firebase.database().ref('/misterrubato/' + videoid);
+        vref.once('value')
+                          .then((snap) => {
+                            //.on('value',(snap)=>{
+            if (snap.exists()){
+                loadVideo();
+                item = snap.val();
+                console.log(snap.val());
+                
+                //get previous iterations of this.  
+                title = snap.val().snippet.description.split('\n')[0];
+                author = snap.val().snippet.channelTitle;
+                authorurl = "https://www.youtube.com/channel/" + snap.val().snippet.channelId;
+                $('#vidinfo').html(title + " (<a href=\"" + authorurl + "\">" + author + "</a>)");
+                console.log(title);
+    
+                //we need to get the iterations here before we do anything else, otherwise the graphic doesnt work.  
+                numiterations = getIterations(item.snippet.description, item.snippet.publishedAt, true);
+    //			searchPrevious(videoid);
+    
+    //			getTranscript(item.snippet.description);
+                getMedia(item.snippet.description);
+    //			getMidi(item.snippet.description);
+            }
+            else{
+                //this is not our video, need to retrieve and allow for commenting.  
+                //this can be for comments.  Then we can retrieve comments from the person.  via API
+                //misterrubato/watch/xxxx
+                //combine this from several people you like.  
+                //Need to record the audio though if we do like this.  
+                //but this is sustainable then.  This is a web server per person.  
+                //when you are following someone, the algorithm would overlay that audio on top of 
+                //whatever you are watching based on your settings.  
+                //we need a master DB though probably, otherwise you have too much unnecessary traffic.  
+                //add this description to our DB using timestep.  
+                //item.snippet.description
+                watch = true;
+                loadVideo();
+                console.log(videoid + " Not in DB.  Retrieving from Youtube API");
+                vref = firebase.database().ref('/watch/' + videoid);
+                vref.on('value',(snap)=>{
+                    if (snap.exists()){
+                    //retrieve previous comments etc.  
+                    }
+                    else{
+                    //		obj = {"comments": mycomments, "sentiment": grade };
+                    //uRef.set(obj);
+                    }
+                });
+                    tempurl = 'https://www.youtube.com/watch?v=' + videoid;
+    
+                    //https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=R4LoM208_Ow
+                    $.getJSON('https://www.youtube.com/oembed?url=' + tempurl, function (data) {
+                        console.log(data.title);
+                        title = data.title;
+                        console.log(data.author_name);
+                        author = data.author_name;
+                        console.log(data.author_url);
+                        authorurl = data.author_url;
+                        console.log(data.thumbnail_url);
+                        $('#vidinfo').html(title + " (<a href=\"" + authorurl + "\">" + author + "</a>)");
+                    });
+                    //input details about this video
+    
+            }
+    
+        });
+    
+    /*	
+     $.getJSON('https://www.googleapis.com/youtube/v3/videos?id=' + videoid + '&key=' + webkey + '&part=snippet&callback=?',function(data){
+        if (typeof(data.items[0]) != "undefined") {
+    //	    videojson = data.items[0];
+            console.log('video exists ' + data.items[0].snippet.title);
+            $('#iterations').val(data.items[0].snippet.description);
+            createNotesArray();
+            //get previous iterations of this.  
+            title = notesarray[0];
+            searchPrevious(videoid);
+            getTranscript(data.items[0].snippet.description);
+            getMidi(data.items[0].snippet.description);
+           } else {
+            console.log('video not exists');
+         }   
+        });
+    */
+    
+    
+    }
+    
+    
+    function getTime(comment){
+        const regExp = /\(([^)]+)\)/g;
+        const matches = [...comment.matchAll(regExp)].flat();
+    //    console.log(matches);
+        if (matches.length > 0){
+            return getSecsFromTime(matches[1]);
+        }
+        else{
+            return 0;
+        }
+    }
+    
+    
+    function getIterations(desc, vidtime, isme=false){
+        st = [];
+        et = [];
+        s = 0;
+    
+        if (desc ==""){
+            //one iteration length of video.  
+            //this is for watch.  
+            e = player.getDuration();
+            st.push(1);
+            et.push(e);
+            maxduration = e-1;
+            numiterations = 1;
+            myst.push(st[0]);
+            myet.push(et[0]);
+        }
+        else{
+            for (i=1; i< 20; i++){
+                s = -1;
+                e = -1;
+                fnd = "TRIAL#" + i;
+                ts = desc.indexOf(fnd);
+                te = desc.indexOf(")", ts);
+                if (ts > -1)
+                    s = getSecsFromTime(desc.substring(ts+(fnd.length)+2, te));
+                    
+                fnd = "END#" + i;
+                ts = desc.indexOf(fnd);
+                te = desc.indexOf(")", ts);
+                if (ts > -1)
+                    e = getSecsFromTime(desc.substring(ts+(fnd.length)+2, te));
+                if (s > -1 && e > -1 && e > s){
+                    st.push(s);
+                    et.push(e);
+                }
+            }
+            console.log(st);
+            console.log(et);
+            //arrays of all iterations
+            mydate = new Date(vidtime);
+    //		if (!isme){
+                for (i=0; i< st.length; i++){
+                    if (et[i] !==null){
+                        tempdate = mydate;
+                        tempdate.setSeconds(tempdate.getSeconds()+st[i]);
+                        starttimes.push(tempdate);
+                        durations.push([tempdate, et[i]-st[i]]);
+                        if (isme){
+                            myst.push(st[i]);
+                            myet.push(et[i]);
+                            if (et[i]-st[i] > maxduration){
+                                maxduration = et[i]-st[i];
+                                
+                            }
+                        }
+                        tempdate.setSeconds(tempdate.getSeconds()+(et[i]-st[i]));
+                        endtimes.push(tempdate);
+                    }
+                }
+            }
+            //from here generate some sort of graphic.  
+    //	}
+        return st.length;
+    }
+    
+    
+    function addMe(user){
+        myuser = user;
+        uid = user.uid;
+        displayname = user.displayName;
+    //	email = user.email;
+    //	phone = user.phoneNumber;
+        pic = user.photoURL;
+    
+        users.push({"uid": uid, "pic": pic, "name": displayname}); //lookup for array location -> uid
+    
+        console.log(displayname + " " + pic);
+    
+        //add user icon
+        document.getElementById("usericon").innerHTML = "";
+        var elem = document.createElement("img");
+          elem.setAttribute("src", user.photoURL);
+          elem.setAttribute("alt", user.displayName);
+          elem.setAttribute("height", "64");
+          elem.setAttribute("width", "64");
+          document.getElementById("usericon").appendChild(elem);	//add to DB.  
+    
+        //do we need this, this doesnt work with Watch:
+        /*
+        uRef2 = firebase.database().ref('/misterrubato/' + video + '/uid');
+        firebase.database().ref('/misterrubato/' + video + '/uid').once('value')
+                          .then((snapshot) => {
+                            if (snapshot.exists()) {
+    
+                            } else {
+                                
+                                obj = {"uid": uid};	
+                                uRef2.set(obj);
+                            }
+                        });
+        */
+    
+        uRef = firebase.database().ref('/users/' + uid);
+        firebase.database().ref('/users/' + uid).once('value')
+                          .then((snapshot) => {
+                            now = new Date();
+                            if (snapshot.exists() && typeof(snapshot.val().numlogins) !="undefined") {
+                                num = snapshot.val().numlogins + 1;
+                                ll = now.toISOString().substring(0, 10).replaceAll('-','');
+                                uRef.update({"numlogins": num, "lastlogin": ll});
+    
+                            } else {
+                                
+                                obj = {"name": displayname, "pic": pic, "firstlogin": now.toISOString().substring(0, 10).replaceAll('-',''), "lastlogin": now.toISOString().substring(0, 10).replaceAll('-',''), "numlogins": 1};	
+                                uRef.set(obj);
+                            }
+                        });
+        
+    }
+    
+    function loadComplete(user){
+                //not sure why we need this, but the asynchronous check is not getting kicked off.  
+                if (user) {
+                
+                    uid = user.uid;
+                    addMe(user);
+                }
+    
+    
+    }
+    
+    
+    function loadAll(reload = false){
+    
+        midiarray = [{"base": []}]; //reinitialize necessary?  
+
+
+        midisetcallbacks(mymidicallback, updateFeedbackUI);  //set callbacks.  
+        currentmidiuser = 0;
+    
+        reinitLanguages();
+        loadUserConfig(); //have to do this in case there is a new language keybot.  
+        loadDictionaries(currentmidiuser);
+        for (const [lang, value] of Object.entries(midiarray[currentmidiuser])) {
+    //        loadLanguage(lang, currentmidiuser);
+    //        initLangData(lang, user);
+        }
+    
+        selectLanguage("doodle");
+        keybot["base"] = 24; //one-key commands cause issues.  
+    
+    
+        //firebase.auth.Auth.Persistence.LOCAL 'local'
+        firebase.auth().setPersistence('local').then(() => {
+    //firebase.auth().setPersistence('session').then(() => {
+        if (reload){
+            user = null;
+        }
+        else{
+            user = firebase.auth().currentUser;
+        }
+        if (!user || user == null){
+            var provider = new firebase.auth.GoogleAuthProvider();
+            firebase.auth().signInWithPopup(provider)
+            .then((result) => {
+                /** @type {firebase.auth.OAuthCredential} */
+                var credential = result.credential;
+    
+                // This gives you a Google Access Token. You can use it to access the Google API.
+                var token = credential.accessToken;
+                // The signed-in user info.
+                user = result.user;
+                this.currentUser = user;
+                user.getIdTokenResult(true).then((result) => {
+                    isadmin = result.claims.admin;
+                    if (isadmin){
+                        console.log("ADMIN USER");
+                    }
+                    else{
+                        console.log("NOT ADMIN USER - send website address to request admin access.  ");
+                    }
+                    //we can check this prior to updating.  
+                });				
+                console.log(user);
+                
+                //if not set, set the DB uid.  
+                loadComplete(user);			
+            });
+         }
+         else{
+            loadComplete(user);
+         }
+    
+            // IdP data available in result.additionalUserInfo.profile.
+            // ...
+        }).catch((error) => {
+            // Handle Errors here.
+            var errorCode = error.code;
+            var errorMessage = error.message;
+            // The email of the user's account used.
+            var email = error.email;
+            // The firebase.auth.AuthCredential type that was used.
+            var credential = error.credential;
+            // ...
+        });
+    
+        getVideoJson(video);
+    }
+    
+    
+    
+
+    </script>
+
+
+<p>Step 1: Initialize WebLLM and Download Model</p>
+<div class="download-container">
+  <select id="model-selection"></select>
+  <button id="download">Download</button>
+</div>
+<p id="download-status" class="hidden"></p>
+
+<p>Step 2: Chat</p>
+<div class="chat-container">
+  <div id="chat-box" class="chat-box"></div>
+  <div id="chat-stats" class="chat-stats hidden"></div>
+  <div class="chat-input-container">
+    <input type="text" id="user-input" placeholder="Type a message..." />
+    <button id="send" disabled>Send</button>
+  </div>
+</div>
+
+
+<script src="test/web-llm/test.js" type="module"></script>
+    
+</body>
+</html>
+    
