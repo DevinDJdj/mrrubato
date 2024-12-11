@@ -1,4 +1,7 @@
-function gitDownload(data, dataTableGit){
+var gitbook = [];
+var gitcommits = [];
+
+function gitDownloadCommits(data, dataTableGit){
     myarray = [];
 	//lets limit the number we display.  
 	totalcnt = 100;
@@ -36,6 +39,7 @@ function gitDownload(data, dataTableGit){
 				//getIterations(vid.snippet.description, vid.snippet.publishedAt) ];
 				console.log(obj);
 				myarray.push(obj);
+                gitcommits.push(obj);
 			}
 		  }
 		});
@@ -46,7 +50,7 @@ function gitDownload(data, dataTableGit){
     return myarray;
 }
 
-async function gitChart(data){
+async function gitChartCommits(data){
 	var container = document.getElementById('gitchart');
 	gitchart = new google.visualization.Timeline(container);
 	chart = gitchart;
@@ -82,7 +86,7 @@ async function gitChart(data){
 //	dataTable.addColumn({ type: 'number', id: 'Duration' });
 	
 //	dataTable.addColumn({ type: 'number', id: 'Iteration#' });
-    myarray = await gitDownload(data, dataTableGit);
+    myarray = await gitDownloadCommits(data, dataTableGit);
 	dataTableGit.addRows(myarray);
 
 	console.log(myarray);
@@ -96,9 +100,40 @@ async function gitChart(data){
 
 }
 
-function getGit(){
+
+function getGitBook(){
+    //get github
+    url = giturl + '/contents/book';
+
+   $.getJSON(url,function(bookdata){
+       console.log(bookdata);       
+       totalcnt = 10;
+       for (j=0; j<bookdata.length && j< totalcnt; j++){
+   //    for (j=vids.length-1; j> -1; j--){
+           page = bookdata[j];
+           console.log(page.download_url);
+   
+   //	   $.getJSON(commit.url,function(commitdata){
+           $.ajax({
+             url: page.download_url,
+             dataType: 'text',
+             async: false,
+             success: function(data) {
+                console.log(data);   
+                gitbook.push({"url": this.url, "content": data});
+             }
+           });
+   
+   
+       }
+   
+   
+    });
+
+}
+function getGitCommits(){
 	//get github
-    url = giturl;
+    url = giturl + '/commits?sha=master';
 
 	if (querydate !=null){
 		url += "&until=" + querydate;
@@ -107,7 +142,7 @@ function getGit(){
 	
    $.getJSON(url,function(data){
        console.log(data);
-	   gitChart(data);
+	   gitChartCommits(data);
 	});
 }
 

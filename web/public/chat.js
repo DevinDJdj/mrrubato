@@ -1,4 +1,12 @@
 var ChatID = 0;
+var lastquery = '';
+var MAX_LOCAL_QUERY_LENGTH = 10000;
+var localprompt = 'please use the following content.  Each page is marked by --PAGETITLE-- and --END PAGETITLE--.  \
+                        Please keep the response to less than 500 words.  If further information is needed, the user will ask another question.  \
+                        You are trying to help explain the content to the user.  \
+                        Use primarily this content to answer the question at the very end of the content marked by "Question:"  \
+                      \
+    '
 
 
 function addChatRow(query, answer, source) {
@@ -47,6 +55,11 @@ function getSourceHTML(sources, rowid){
 function getVidFromMetadata(m){
     vid = m.substring(m.lastIndexOf("/")+1, m.lastIndexOf("."));
     return vid;
+}
+
+function getFileName(m){
+    fn = m.substring(m.lastIndexOf("/")+1, m.lastIndexOf("."));
+    return fn;
 }
 
 

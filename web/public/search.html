@@ -56,6 +56,9 @@
 		<script src='https://apis.google.com/js/platform.js' async defer></script>
 
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
+<script src="git.js"></script>
+
   <script>
   //firebase deploy to deploy this.  
   //usage:
@@ -162,7 +165,7 @@ var title = '';
 			vids = searchRecent(videojson);
 			drawChart(vids);
 			drawDurationChart(vids);
-			getGit();
+			getGitCommits();
 			
 		});
 		  
@@ -419,113 +422,7 @@ function drawDurationChart(vids){
 
 }
 
-function gitDownload(data, dataTableGit){
-    myarray = [];
-	//lets limit the number we display.  
-	totalcnt = 100;
-    for (j=0; j<data.length && j< totalcnt; j++){
-//    for (j=vids.length-1; j> -1; j--){
-		commit = data[j];
-        console.log(commit.url);
 
-//	   $.getJSON(commit.url,function(commitdata){
-		$.ajax({
-		  url: commit.url,
-		  dataType: 'json',
-		  async: false,
-		  success: function(commitdata) {
-		  
-
-		   console.log(commitdata);
-		   console.log(commitdata.stats);
-
-			for (i=0; i< commitdata.files.length; i++){
-				console.log(commitdata.files[i].filename);
-				console.log(commitdata.files[i].changes);
-				console.log(commitdata.commit.committer.date);
-				mydate = new Date(commitdata.commit.committer.date);
-				tempdate = new Date(commitdata.commit.committer.date);
-				tempdate.setMinutes(tempdate.getMinutes()+commitdata.files[i].changes);
-				tag = { v: commitdata.files[i].filename, p: { link: commit.html_url }};
-				var aTag = document.createElement('a');
-				aTag.setAttribute('href',commit.html_url);
-				aTag.innerText = " " + commitdata.files[i].filename;
-				aTag.innerText += " " + commitdata.commit.committer.date;
-
-				console.log(tag);
-				obj = [ tag, commitdata.files[i].filename, mydate, tempdate ];
-				//getIterations(vid.snippet.description, vid.snippet.publishedAt) ];
-				console.log(obj);
-				myarray.push(obj);
-			}
-		  }
-		});
-
-
-    }
-
-    return myarray;
-}
-
-async function gitChart(data){
-	var container = document.getElementById('gitchart');
-	gitchart = new google.visualization.Timeline(container);
-	chart = gitchart;
-	dataTableGit = new google.visualization.DataTable();
-    optionsGit = {
-	     height: 300,
-         title: 'Git',
-         legend: { position: 'labeled' },
-		 tooltip: {isHtml: true},
-         crosshair: { trigger: 'both', orientation: 'both' },
-		 timeline: {
-			rowLabelStyle: {
-				color: '#3399cc'
-			}
-		 },
-         trendlines: {
-           0: {
-             type: 'polynomial',
-             degree: 3,
-             visibleInLegend: true,
-           }
-         }
-       };
-	   
-	   
-	dataTableGit.addColumn({ type: 'string', id: 'Name' });
-//	dataTableGit.addColumn({type: 'string', id: 'Label' });
-	dataTableGit.addColumn({type: 'string', role: 'tooltip', 'p': {'html': true}});
-	dataTableGit.addColumn({ type: 'date', id: 'DatePlayed' });
-	dataTableGit.addColumn({ type: 'date', id: 'DateEnded' });
-	
-//	dataTable.addColumn({ type: 'number', id: 'Iterations' });
-//	dataTable.addColumn({ type: 'number', id: 'Duration' });
-	
-//	dataTable.addColumn({ type: 'number', id: 'Iteration#' });
-    myarray = await gitDownload(data, dataTableGit);
-	dataTableGit.addRows(myarray);
-
-	console.log(myarray);
-
-
-
-
-  google.visualization.events.addListener(chart, 'ready', readyHandlerGit);
-  google.visualization.events.addListener(chart, 'select', selectHandlerGit);
-  chart.draw(dataTableGit, optionsGit);
-
-}
-
-function getGit(){
-	//get github
-    url = giturl;
-	
-   $.getJSON(giturl,function(data){
-       console.log(data);
-	   gitChart(data);
-	});
-}
 
 function drawChart(vids) {
 	var container = document.getElementById('timeline');

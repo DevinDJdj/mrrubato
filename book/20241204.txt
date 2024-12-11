@@ -356,4 +356,53 @@ Read from github,
 Formulate query...
 use web-LLM functionality.  
 
+Should really put the initial firebase functions into a JS file as well.  
+There is more room for shared code.  
+
+Also there must be some speechtotext model we can run the same way.  
+javascript speech to text
+well, just use built-in one, maybe it is good enough for our purposes.  
+It will get better.  
+If not just load a model in the browser:
+##https://www.tensorflow.org/js/guide/save_load
+##web/public/test/word2vec-demo/scripts/main.js
+
+
+
+Commands to adjust time.  
+Need to create video control commands.  
+
+
+**languages/videocontrol.js 
+Already have some of this in "meta"
+but should really organize it better.  
+Should we / can we prioritize longer instructions?  
+We can use pedal, and then prioritize longest instruction first.  
+
+Take what we can out of "meta" language.  
+
+Eventually "add word" or "edit word" should allow for adjusting the "language" js script function via in browser codeeditor.  
+Update in browser instance and then save if accepted.  
+
+
+
+**web/public/book.html
+Read from github, 
+Formulate query...
+use web-LLM functionality.  
+--basic functionality there.  
+
+Why when we lose keyboard focus we lose SpeechSynthesis?  
+Can we get better synthesis?  
+Just use browser for all this stuff.  
+Eventually this is where STT will be.  
+Why is everyone writing all of this backend STT services etc?  
+
+Result is kind of neat.  
+Adjust prompt to be a bit nicer.  
+Need formatting function.  
+Format the text so it is more readable.  
+Replace URLs with HREF links, and pick up just the text used in the HREF in speechSynth.  
+May want to adjust prompt to create a summary at beginning.  
+Maybe only read the summary.  
 

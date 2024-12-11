@@ -713,6 +713,10 @@ Load any speech from this time.
         });
     
         getVideoJson(video);
+        //get book for analysis via LLM.  
+        getGitBook();
+        setTimeout(function(){ document.getElementById("download").click(); }, 5000);
+                //from test.js set context_window_size to sliding.  
     }
     
     
@@ -739,7 +743,15 @@ Load any speech from this time.
 </div>
 
 
-<script src="test/web-llm/test.js" type="module"></script>
+<script type="text/javascript">
+    LLM = {};    
+</script>
+
+<script type="module">
+    import {onMessageSend} from '/test/web-llm/test.js';
+    LLM.sendToLLM = onMessageSend;
+    //window.sendToLLM = onMessageSend;
+</script>
 
 
 
@@ -839,12 +851,54 @@ function createNotesArray(){
     updateNotes();
 }
 
+function ChatLocalDone(answer){
+    //called from //test/web-llm/test.js
+
+    addChatRow(lastquery, answer, []);
+    ss = new SpeechSynthesisUtterance(answer);
+    ss.rate = myrate;
+    ss.pitch = mypitch;
+    window.speechSynthesis.speak(ss);
+
+    console.log('query ' +  lastquery);
+//                    addComment(data.answer, helpme())
+    console.log('response  ' + answer);
+    
+}
+
+function ChatLocal(transcript){
+    lastquery = transcript;
+    transcript = "";
+    for (gi = 0; gi<gitbook.length; gi++){
+        fn = getFileName(gitbook[gi].url);
+        if (fn == "definitions" || transcript.length + gitbook[gi].content.length < MAX_LOCAL_QUERY_LENGTH){
+
+            if (fn == "definitions"){
+                transcript = "--" + fn + "--\n" + gitbook[gi].content + "\n--END " + fn + "--\n" + transcript;
+            }
+            else{
+                transcript += "--" + fn + "--\n" + gitbook[gi].content + "\n--END " + fn + "--\n";
+            }
+        }
+
+    }
+    transcript = localprompt + "\n" + transcript + "\nQuestion: " + lastquery;
+    document.getElementById("user-input").value = transcript;
+    LLM.sendToLLM(); //onMessageSend();//sendToLLM();   //test/web-llm/test.js
+
+    
+}
 			function MyChat(transcript) {
 				mychat = transcript; //$('#p').val();
 				if (mychat == "stop"){
 					window.speechSynthesis.cancel();
 					return;
 				}
+                //use local if available.  check for GPU for local LLM usage as well.  
+                if (ChatLocal !== undefined){
+                    ChatLocal(mychat);
+                    return;
+                }
 				//get prompt
 				myprompt = $('#prompt').val();
 //                addComment(mychat, helpme());

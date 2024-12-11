@@ -11,7 +11,7 @@ const messages = [
 const availableModels = webllm.prebuiltAppConfig.model_list.map(
   (m) => m.model_id,
 );
-let selectedModel = "Llama-3.1-8B-Instruct-q4f32_1-1k";
+let selectedModel = "Llama-3.2-1B-Instruct-q4f16_1-MLC";
 
 // Callback function for initializing progress
 function updateEngineInitProgressCallback(report) {
@@ -29,8 +29,10 @@ async function initializeWebLLMEngine() {
   const config = {
     temperature: 1.0,
     top_p: 1,
+    context_window_size: 32576
   };
   await engine.reload(selectedModel, config);
+
 }
 
 async function streamingGenerating(messages, onUpdate, onFinish, onError) {
@@ -60,7 +62,7 @@ async function streamingGenerating(messages, onUpdate, onFinish, onError) {
 }
 
 /*************** UI logic ***************/
-function onMessageSend() {
+export function onMessageSend() {
   const input = document.getElementById("user-input").value.trim();
   const message = {
     content: input,
@@ -87,6 +89,10 @@ function onMessageSend() {
 
   const onFinishGenerating = (finalMessage, usage) => {
     updateLastMessage(finalMessage);
+    if (ChatLocalDone !== undefined){
+      ChatLocalDone(finalMessage);
+    }
+  
     document.getElementById("send").disabled = false;
     const usageText =
       `prompt_tokens: ${usage.prompt_tokens}, ` +
@@ -130,6 +136,8 @@ function updateLastMessage(content) {
     .querySelectorAll(".message");
   const lastMessageDom = messageDoms[messageDoms.length - 1];
   lastMessageDom.textContent = content;
+
+
 }
 
 /*************** UI binding ***************/

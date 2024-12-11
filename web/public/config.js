@@ -1,5 +1,5 @@
 
-var giturl = 'https://api.github.com/repos/DevinDJdj/mrrubato/commits?sha=master';
+var giturl = 'https://api.github.com/repos/DevinDJdj/mrrubato';
 var dbname = '/misterrubato/';
 var domain = 'https://misterrubato.com';
 var chatdomain = 'https://chat.misterrubato.com';
@@ -20,6 +20,7 @@ var myrate = 1.7;
 var mypitch = 1.0;
 
 var vidbuffer = 10;
+
 
 var speech = true;
 
