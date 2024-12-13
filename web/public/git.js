@@ -120,7 +120,11 @@ function getGitBook(){
              async: false,
              success: function(data) {
                 console.log(data);   
-                gitbook.push({"url": this.url, "content": data});
+                const pathArray = this.url.split("/");
+                const gitbookname = pathArray[pathArray.length - 1];
+                gitbookname = gitbookname.split(".")[0];
+                gitbook.push({"url": this.url, "name": gitbookname, "content": data});
+                //data.sort((a, b) => a.date - b.date);
              }
            });
    

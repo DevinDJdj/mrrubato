@@ -27,7 +27,12 @@ function addChatRow(query, answer, source) {
     }
     r.cells[0].innerHTML = ChatID;
     r.cells[1].innerHTML = query;
-    r.cells[2].innerHTML = answer;
+    if (ChatID%2==0){
+        r.cells[2].innerHTML = '<font color="red">' + answer + '</font>';
+    }
+    else{
+        r.cells[2].innerHTML = '<font color="black">' + answer + '</font>';
+    }
     r.cells[3].innerHTML = getSourceHTML(source, ChatID);
 }
 

@@ -406,3 +406,49 @@ Replace URLs with HREF links, and pick up just the text used in the HREF in spee
 May want to adjust prompt to create a summary at beginning.  
 Maybe only read the summary.  
 
+
+When reading, organize the gitbook in multiple ways.  
+By Code entry **
+Until new **
+Gather all notes on any particular file.  
+Create a graph visual of related files based on proximity in notes/time.  
+
+
+Onload build these data structures.  
+Graph traversal controlled by keys.  
+
+f=sourcefile
+Show relevant notes for this.  Show code correlation graph based on book.  
+
+d=date
+Focus on data around this date.  
+Default is to the latest files.  
+Get commits from this time period as well.  
+And search those with a separate query.  
+
+Query RAG as well.  
+if Video selected, use book context from the date of the video.  
+loadVideo not working still.  
+
+
+Keep memory context in browser for session.  
+Perhaps across sessions just in localStorage.  
+Use context_window.  
+
+Need to start reading immediately instead of waiting for the complete answer.  
+Also need to be able to stop generation.  
+
+**web/public/video.js
+Canvas on video repainted every time is not going to be fast enough.  
+Need to paint on canvas and just overwrite that canvas each time on top of video if necessary.  
+
+
+**web/public/book.html
+Somewhat better.  
+Finish date selection.  
+Chat display row should be nicer.  
+select box - include topic/history.  
+Include book from around the time prior iterations occurred.  
+Alternatively select a source module and be able to query based on notes from times when this was edited and/or mentioned in book.  
+Date selection based on topic/history?  
+Or 

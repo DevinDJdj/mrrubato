@@ -463,7 +463,7 @@ if __name__ == '__main__':
                             #add to playlist
                             if  "stats" in item:
                                 if item["stats"]["wordsrecognized"] > 50:
-                                    plwords = cred.WORDS_PLAYLIST
+                                    plwords = config.cfg["youtube"]["WORDS_PLAYLIST"]                                                                
                                     print("add to words " + plwords)
                                     #add to playlist.  
                                     add_video_to_playlist(videoid, plwords, args)

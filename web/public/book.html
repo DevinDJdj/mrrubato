@@ -35,7 +35,8 @@ Load any speech from this time.
     
     <title>MIDI Player Test</title>
     <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
-    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<!--    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script> -->
+    <script src="https://code.jquery.com/ui/1.14.1/jquery-ui.js"></script>
 
     <!-- google charts -->    
     <script src='https://apis.google.com/js/platform.js' async defer></script>
@@ -88,7 +89,82 @@ Load any speech from this time.
             <td>
                 <div id="usericon" onclick="loadAll(true);"></div>
             </td>
+            <td>
+                <div id="clock" 
+                style=	"display: inline-block;
+                 font-family: monospace;
+                 font-size: 30px;
+                 text-align: right;
+                 color: lightgray; 
+                 border-radius: 10px; 
+                 padding: 10px; 
+                 background-color: rgba(0, 0, 0, 0.75);">
+                </div>
+                <div id="secondselapsed" 
+                    style=	"display: inline-block;
+                    font-family: monospace;
+                    font-size: 30px;
+                    text-align: right;
+                    color: lightgray; 
+                    border-radius: 10px; 
+                    padding: 10px; 
+                    background-color: rgba(0, 0, 0, 0.75);">
+                </div>
+            
+                <script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js'></script>
+                <script src="clock.js"></script>
+                 <!-- for slider function -->
+                <link href="https://code.jquery.com/ui/1.14.1/themes/ui-lightness/jquery-ui.css" rel="stylesheet">
+                <p>
+                    <label for="slider-range-text">Date range:</label>
+                    <input type="text" id="slider-range-text" style="border: 0; color: #f6931f; font-weight: bold;" size="100"/>
+                  </p>
+                   
+                  <div id="slider-range"></div>
+            
+                  <script>
+                    $(function() {
+                        var now = new Date();
+                        now.setDate(now.getDate() + 1); //add a day so we get today as well.  
+            
+                        currdate = now;
+                        if (querydate !== null){
+                            now = new Date(querydate);
+                        }
+                        priordate = new Date(now.getDate() - 30);
+            
+                        $( "#slider-range" ).slider({
+            
+                        range: true,
+                        min: new Date('2020.01.01').getTime() / 1000,
+                        max: new Date('2025.01.01').getTime() / 1000,
+                        step: 86400,
+                        values: [ priordate.getTime() / 1000, currdate.getTime() / 1000 ],
+                        slide: function( event, ui ) {
+                            $( "#slider-range-text" ).val( (new Date(ui.values[ 0 ] *1000).toDateString() ) + " - " + (new Date(ui.values[ 1 ] *1000)).toDateString() );
+                        }
+                        });
+                        $( "#slider-range-text" ).val( (new Date($( "#slider-range" ).slider( "values", 0 )*1000).toDateString()) +
+                        " - " + (new Date($( "#slider-range" ).slider( "values", 1 )*1000)).toDateString());
+                    });
+            
+                  </script>
+            
+            </td>
+            <td>
+                <br>
+                <div class="tags-input" style="width:100%;"> 
+                    <ul id="tags"></ul> 
+                    <input type="text" id="input-tag" size="45"
+                        placeholder="Add a tag" /> 
+                </div> 
+                
+                <link href="css/tags.css" rel="stylesheet">
+                <script src="tags.js"></script>
+            
+            </td>
         </tr>
+
     
     
     </table>
@@ -135,26 +211,21 @@ Load any speech from this time.
         <div id="transcriptsh" style="height: 190px;overflow:auto; word-break: break-all; word-wrap: break-word;"></div>
       
     </td>
+    <td>
+        <label for="prompt">Custom prompt for LLM:</label><br>
+                <textarea id="prompt" name="prompt" rows="15" cols="30"></textarea>
+
+    </td>
     </tr>
     </table>
     
     
     
     
-    <br>
-    <div class="tags-input" style="width:100%;"> 
-        <ul id="tags"></ul> 
-        <input type="text" id="input-tag" size="45"
-            placeholder="Add a tag" /> 
-    </div> 
-    
-    <link href="css/tags.css" rel="stylesheet">
-    <script src="tags.js"></script>
     
     
     <br>
     <p id="load">Firebase SDK Loading&hellip;</p>
-    
     
 
     
@@ -169,7 +240,6 @@ Load any speech from this time.
 		<input type="text" id="p" name="p">
     </div>
 
-    <textarea id="prompt" name="prompt" rows="10" cols="50"></textarea>
 
     <!-- dont need this lookup for now.  -->
     <table style="display:none">
@@ -272,6 +342,8 @@ Load any speech from this time.
     <script>
     player2 = document.getElementById("my-video");
     
+    var querydate = null;
+
     var video = 'WftD98XXHB0';
     var starttimes = [];
     var endtimes = [];
@@ -725,14 +797,14 @@ Load any speech from this time.
     </script>
 
 
-<p>Step 1: Initialize WebLLM and Download Model</p>
+<p style="display:none">Step 1: Initialize WebLLM and Download Model</p>
 <div class="download-container">
   <select id="model-selection"></select>
   <button id="download">Download</button>
 </div>
 <p id="download-status" class="hidden"></p>
 
-<p>Step 2: Chat</p>
+<p style="display:none">Step 2: Chat</p>
 <div class="chat-container">
   <div id="chat-box" class="chat-box"></div>
   <div id="chat-stats" class="chat-stats hidden"></div>
@@ -869,6 +941,9 @@ function ChatLocalDone(answer){
 function ChatLocal(transcript){
     lastquery = transcript;
     transcript = "";
+    gitbook.sort((a, b) => a.name - b.name);
+
+
     for (gi = 0; gi<gitbook.length; gi++){
         fn = getFileName(gitbook[gi].url);
         if (fn == "definitions" || transcript.length + gitbook[gi].content.length < MAX_LOCAL_QUERY_LENGTH){
