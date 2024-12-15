@@ -35,4 +35,6 @@ reference from document
 
 "XX" = key phrase
 
+_var = end state
+var_ = potential state
 

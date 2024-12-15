@@ -480,6 +480,7 @@ Load any speech from this time.
                             //.on('value',(snap)=>{
             if (snap.exists()){
                 loadVideo();
+                seekVideo(0, video, true);
                 item = snap.val();
                 console.log(snap.val());
                 
@@ -935,19 +936,26 @@ function ChatLocalDone(answer){
     console.log('query ' +  lastquery);
 //                    addComment(data.answer, helpme())
     console.log('response  ' + answer);
+    chathistory[chathistory.length-1].answer = answer; //set answer to previous query.  
     
 }
 
-function ChatLocal(transcript){
+function addChatHistory(query, context, files=[]){
+    //localprompt from chat.js
+    chathistory.push({"query": query, "prompt": localprompt, "context": files, "topic": currenttopic, "answer": answer, "sources": [], "timestamp": new Date().toISOString()});
+    //send to firebase.  
+    //dont need to send full content of files?  just the names for now.  Should be able to git files from certain point in time if needed.  
+}
+
+function ChatBuildContext(){
     lastquery = transcript;
     transcript = "";
-    gitbook.sort((a, b) => a.name - b.name);
-
-
+    files = [];
     for (gi = 0; gi<gitbook.length; gi++){
         fn = getFileName(gitbook[gi].url);
         if (fn == "definitions" || transcript.length + gitbook[gi].content.length < MAX_LOCAL_QUERY_LENGTH){
 
+            files.push(gitbook[gi].url);
             if (fn == "definitions"){
                 transcript = "--" + fn + "--\n" + gitbook[gi].content + "\n--END " + fn + "--\n" + transcript;
             }
@@ -957,12 +965,27 @@ function ChatLocal(transcript){
         }
 
     }
-    transcript = localprompt + "\n" + transcript + "\nQuestion: " + lastquery;
-    document.getElementById("user-input").value = transcript;
-    LLM.sendToLLM(); //onMessageSend();//sendToLLM();   //test/web-llm/test.js
+    //will need to add actual source files as well here to context.  
 
+    transcript = localprompt + "\n" + transcript + "\nQuestion: " + lastquery;
+    return transcript, files;
     
 }
+function ChatLocal(transcript){
+    gitbook.sort((a, b) => a.name - b.name);
+    if ($('#prompt').val() == ""){
+        $('#prompt').val(localprompt);
+    }
+    else{
+        localprompt = $('#prompt').val();
+    }
+    transcript, files = buildContext();
+    addChatHistory(lastquery, transcript, files);
+    document.getElementById("user-input").value = transcript;
+    LLM.sendToLLM(); //onMessageSend();//sendToLLM();   //test/web-llm/test.js
+    
+}
+
 			function MyChat(transcript) {
 				mychat = transcript; //$('#p').val();
 				if (mychat == "stop"){

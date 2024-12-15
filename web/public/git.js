@@ -1,6 +1,12 @@
 var gitbook = [];
 var gitcommits = [];
 
+var gitstructs = {"bydate": {}, "bytopic": {}};
+
+var currenttopic = "NONE";
+var chathistory = []; //keep history/transcript.  
+
+
 function gitDownloadCommits(data, dataTableGit){
     myarray = [];
 	//lets limit the number we display.  
@@ -123,18 +129,81 @@ function getGitBook(){
                 const pathArray = this.url.split("/");
                 const gitbookname = pathArray[pathArray.length - 1];
                 gitbookname = gitbookname.split(".")[0];
-                gitbook.push({"url": this.url, "name": gitbookname, "content": data});
+                //this should be a date YYYYmmdd
+                gitbook.push({"url": this.url, "d": gitbookname, "content": data});
                 //data.sort((a, b) => a.date - b.date);
              }
            });
    
    
        }
+       setTimeout(creategitStruct(), 10000);
    
    
     });
 
 }
+
+function parsegitBook(gb){
+//coming in time sequence.  
+  //read all context.  
+  //split by topic.  
+  const gblines = gb.content.split('\n');
+
+  str = "";
+  fullstr = "";
+  gitstruct["bydate"][gb.d] = [];
+  for (i=0; i<gblines.length; i++){
+    str = gblines[i];
+    if (str.startsWith("<!--")){ //start comment (ignore)
+    }
+    else if (str.startsWith("-->")){ //end comment
+
+    }
+    else if (str.startsWith(">")){ //CMD
+    }
+    else if (str.startsWith("##")){ //reference
+    }
+    else if (str.startsWith("@@")){ //Question
+
+    }
+    else if (str.startsWith("--")){ //NOTE
+    }
+    else if (str.startsWith("-")){ //subtask
+    }
+    else if (str.startsWith("**")){ //TOPIC
+      //add to current topic.  
+      content = {"topic": currenttopic, "d": gb.d, "content": fullstr  };
+      if (!(currenttopic in gitstruct["bytopic"])){
+        gitstruct["bytopic"][currenttopic] = [];
+      }
+      gitstruct["bytopic"][currenttopic].push(content); //ordered by date.  
+
+      gitstruct["bydate"][gb.d].push(content);
+      currenttopic = str.slice(2);
+      fullstr = "";
+
+
+    }
+    fullstr += str;
+
+  }
+
+}
+
+function creategitStruct(){
+  gitbook.sort((a, b) => a.name - b.name);
+  //tree by time/topic
+  //also topic/time
+
+    for (j=0; j<gitbook.length; j++){
+        console.log(gitbook[j].name);
+        console.log(gitbook[j].content);
+        parsegitBook(gitbook[j]);
+
+    }
+}
+
 function getGitCommits(){
 	//get github
     url = giturl + '/commits?sha=master';

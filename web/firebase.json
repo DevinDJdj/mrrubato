@@ -8,6 +8,10 @@
       "firebase.json",
       "**/.*",
       "**/node_modules/**"
-    ]
+    ],
+    "github": {
+      "repo": "DevinDJdj/mrrubato",
+      "branch": "master" // or specify your desired branch
+    }
   }
 }

@@ -265,12 +265,12 @@ function setVideoVolume(volume){
       }
   }
 
-  function seekVideo(secs, v=""){
+  function seekVideo(secs, v="", reload=false){
     if (v == ""){
         v = video;
     }
     if (v !=""){
-        if (v == video){
+        if (v == video && reload == false){
             if (useyoutube || watch){
                 player.seekTo(secs);
             }

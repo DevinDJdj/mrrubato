@@ -149,7 +149,7 @@ Maybe this is more interesting.
 realtime interaction to draw on canvas or BabylonJS based on midi input.  
 For now 2 note vectors.  Add force vectors essentially.  
 Use circular mapping for now.  
-i.e. C0C1 --> increase speed.  
+i.e. C0C1 -> increase speed.  
 C1D1 lifts 
 C1B1 decline
 Leave trail and constantly adjust color to track.  

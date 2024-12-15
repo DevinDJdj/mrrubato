@@ -254,9 +254,8 @@ Do this on checkCommands.
 
 Need multiselect combo box for existing DicTable filter.  
 https://live.datatables.net/xehexoye/1/edit
-<!-- Select2 plugin -->
+
 	<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css">
-	<!-- Select2 plugin -->
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js"></script>
 
 Input commands should come in the current language, but if they are identified as meta commands, they should be squished and moved to another track.  
