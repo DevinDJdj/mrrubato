@@ -192,12 +192,12 @@ function parsegitBook(gb){
 }
 
 function creategitStruct(){
-  gitbook.sort((a, b) => a.name - b.name);
+  gitbook.sort((a, b) => a.d - b.d);
   //tree by time/topic
   //also topic/time
 
     for (j=0; j<gitbook.length; j++){
-        console.log(gitbook[j].name);
+        console.log(gitbook[j].d);
         console.log(gitbook[j].content);
         parsegitBook(gitbook[j]);
 
