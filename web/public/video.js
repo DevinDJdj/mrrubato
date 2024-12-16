@@ -311,7 +311,9 @@ function setVideoVolume(volume){
                 firebase.database().ref('/misterrubato/' + video + '/comments/' + uid).once('value')
                 .then((snapshot) => {
                     if (snapshot.exists()) {
-                        loadPreviousComments(snapshot);
+                        if (typeof(loadPreviousComments) !== "undefined"){
+                          loadPreviousComments(snapshot);
+                        }
                     }
                     
                 });
