@@ -1,0 +1,370 @@
+<style>
+    html, body {
+        margin: 0!important;
+        padding: 0!important;
+        text-align: center;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        font-size: 1em;
+    }
+
+    video {
+        width: 30%;
+        border-radius: 5px;
+        border: 1px solid black;
+    }
+</style>
+
+<title>Video+Screen recording using RecordRTC</title>
+
+<body>
+<h1>
+    Video+Screen recording using RecordRTC
+</h1>
+
+<button id="btn-start-recording">Start Recording</button>
+<button id="btn-stop-recording" disabled>Stop Recording</button>
+	
+<video id="myrecordfeedback" controls autoplay playsinline style="width: 40%;"></video>
+<canvas id="capturescreen"></canvas>
+
+    <div class="words" contenteditable>
+		<input type="text" id="p" name="p">
+	</div>
+	
+	
+	<label for="mycomments">My Transcript:</label>
+	<img src="images/edit.png" height="16px" onClick="toggleMyComments();"/>
+	<br>
+    <textarea id="mycomments" style="display:none" rows="10" cols="45"></textarea>
+	<div id="mycommentsh" style="height: 190px;overflow:auto;"></div>
+
+<script src="RecordRTC.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+<script>
+
+const queryString = window.location.search;
+const urlParams = new URLSearchParams(queryString);
+const fname = urlParams.get('f')
+console.log(fname);
+
+if(!navigator.getDisplayMedia && !navigator.mediaDevices.getDisplayMedia) {
+    var error = 'Your browser does NOT supports getDisplayMedia API.';
+    document.querySelector('h1').innerHTML = error;
+
+    document.querySelector('video').style.display = 'none';
+    document.getElementById('btn-start-recording').style.display = 'none';
+    document.getElementById('btn-stop-recording').style.display = 'none';
+    throw new Error(error);
+}
+
+function invokeGetDisplayMedia(success, error) {
+    var displaymediastreamconstraints = {
+        video: {
+            displaySurface: 'monitor', // monitor, window, application, browser
+            logicalSurface: true,
+            cursor: 'always' // never, always, motion
+        }
+    };
+
+    // above constraints are NOT supported YET
+    // that's why overridnig them
+    displaymediastreamconstraints = {
+        video: true
+    };
+
+    if(navigator.mediaDevices.getDisplayMedia) {
+        navigator.mediaDevices.getDisplayMedia(displaymediastreamconstraints).then(success).catch(error);
+    }
+    else {
+        navigator.getDisplayMedia(displaymediastreamconstraints).then(success).catch(error);
+    }
+}
+
+function captureScreen(callback) {
+    invokeGetDisplayMedia(function(screen) {
+        addStreamStopListener(screen, function() {
+            if(window.stopCallback) {
+                window.stopCallback();
+            }
+
+        });
+        callback(screen);
+    }, function(error) {
+        console.error(error);
+        alert('Unable to capture your screen. Please check console logs.\n' + error);
+    });
+}
+
+function captureCamera(cb) {
+    navigator.mediaDevices.getUserMedia({audio: true, video: true}).then(cb);
+}
+
+function keepStreamActive(stream) {
+    var video = document.createElement('video');
+    video.muted = true;
+    video.srcObject = stream;
+    video.style.display = 'none';
+    (document.body || document.documentElement).appendChild(video);
+}
+
+
+//also download transcript after created.  
+function autodownload(b){
+    var a = document.createElement('a');
+	//get parameter
+    a.download = fname;
+    a.href = window.URL.createObjectURL(b);
+    a.textContent = 'Download ready';
+    a.style='display:none';
+    a.click();    
+
+}
+
+var recorder;
+
+captureScreen(function(screen) {
+    keepStreamActive(screen);
+    captureCamera(function(camera) {
+        keepStreamActive(camera);
+
+        screen.width = window.screen.width;
+        screen.height = window.screen.height;
+        screen.fullcanvas = true;
+        
+        camera.width = 320;
+        camera.height = 240;
+        camera.top = screen.height - camera.height;
+        camera.left = screen.width - camera.width;
+        
+        recorder = RecordRTC([screen, camera], {
+            type: 'video',
+            mimeType: 'video/webm',
+            previewStream: function(s) {
+                document.querySelector('video').muted = true;
+                document.querySelector('video').srcObject = s;
+            }
+        });
+
+//        recorder.startRecording();
+
+        window.stopCallback = function() {
+            window.stopCallback = null;
+
+            recorder.stopRecording(function() {
+                var blob = recorder.getBlob();
+                document.querySelector('video').srcObject = null;
+                document.querySelector('video').src = URL.createObjectURL(blob);
+                document.querySelector('video').muted = true;
+				autodownload(blob);
+                [screen, camera].forEach(function(stream) {
+                    stream.getTracks().forEach(function(track) {
+                        track.stop();
+                    });
+                });
+            });
+        };
+
+//        window.timeout = setTimeout(window.stopCallback, 10 * 1000);
+    });
+});
+
+
+document.getElementById('btn-start-recording').onclick = function() {
+    this.disabled = true;
+    recorder.startRecording();
+//	window.timeout = setTimeout(window.stopCallback, 10 * 1000);
+	document.getElementById('btn-stop-recording').disabled = false;
+//	navigator.mediaSession.setActionHandler('pause', function() { console.log('pause detected') });
+}
+
+
+document.getElementById('btn-stop-recording').onclick = function() {
+    this.disabled = true;
+    window.stopCallback();
+};
+
+function addStreamStopListener(stream, callback) {
+    stream.addEventListener('ended', function() {
+        callback();
+        callback = function() {};
+    }, false);
+    stream.addEventListener('inactive', function() {
+        callback();
+        callback = function() {};
+    }, false);
+    stream.getTracks().forEach(function(track) {
+        track.addEventListener('ended', function() {
+            callback();
+            callback = function() {};
+        }, false);
+        track.addEventListener('inactive', function() {
+            callback();
+            callback = function() {};
+        }, false);
+    });
+}
+
+
+var notesarray = [];
+
+
+function toggleMyComments(){
+	if ($('#mycomments').is(':visible')){
+		createNotesArray(); //update values of the data.  
+		$('#mycomments').hide();
+		$('#mycommentsh').show();
+	}
+	else{
+		$('#mycomments').show();
+		$('#mycommentsh').hide();
+	}
+}
+
+function getTime(comment){
+	const regExp = /\(([^)]+)\)/g;
+    const matches = [...comment.matchAll(regExp)].flat();
+//    console.log(matches);
+	if (matches.length > 0){
+	    return getSecsFromTime(matches[1]);
+	}
+	else{
+	    return 0;
+	}
+}
+
+  function getSecsFromTime(time){
+	minsec = time.split(":");
+	if (minsec == time)
+	    return 0;
+	console.log(+parseInt(minsec[0])*60 + +parseInt(minsec[1]));
+	return +parseInt(minsec[0])*60 + +parseInt(minsec[1]);
+	
+  }
+  
+  function getTimeFromSecs(secs){
+	min = Math.floor(secs/60);
+	secs = Math.floor(secs - min*60);
+	ret = "";
+	if (min < 10){
+		ret = "0" + min + ":";
+	}
+	else{
+		ret += min + ":";
+	}
+	if (secs < 10){
+		ret += "0" + secs;
+	}
+	else{
+		ret += secs;
+	}
+	return ret;
+  }
+  
+function makeTimeLinks(desc){
+    desc = desc.replaceAll("\n", "<br>");
+//    desc = desc.replace(")", ")<br>");
+	const regExp = /\(([^)]+)\)/g;
+	regExp2 = /\d+\:\d\d?/g;
+    const matches = [...desc.matchAll(regExp2)].flat();
+	for (i=0; i<matches.length; i++){
+	    secs = getSecsFromTime(matches[i]);
+		if (secs > 0){
+    		desc = desc.replace(matches[i], '<a href="#" onclick="seekTo(' + secs + ');">' + matches[i] + '</a>');
+		}
+
+	}
+//    console.log(matches);
+	return desc;
+}
+
+function updateNotes(){
+    var allnotes = "";
+	for (i=0; i<notesarray.length; i++){
+	    allnotes += notesarray[i] + "\n";
+	}
+    $('#mycomments').val(allnotes);
+	//add clickable link inside here instead.  
+	$('#mycommentsh').html(makeTimeLinks(allnotes));
+	
+}
+
+function createNotesArray(){
+//also update the new DIV with links.  
+	allnotes = $('#mycomments').val();
+	notesarray = [];
+    const lines = allnotes.split("\n");
+	for (i = 0; i< lines.length; i++){
+	    notesarray[i] = lines[i];
+	}
+	console.log(notesarray);
+	//set title
+    updateNotes();
+}
+
+function addComment(comment, commenttime){
+    //find where to splice and then reset the notes
+    //notesarray.splice(i, 0, comment);
+    createNotesArray();
+    i = 0;
+    while (i< notesarray.length && getTime(notesarray[i]) <= getSecsFromTime(commenttime)){
+        i++;
+    }
+//	if (i==0) i=1;
+    notesarray.splice(i, 0, comment + " (" + commenttime + ")");
+    updateNotes();
+//    updateState(comment, commenttime, notesarray);
+    
+}
+
+
+
+function checkCommands(transcript, video){
+	let secs = video.currentTime;
+	let position = transcript.search(/screenshot/i);
+	if (position > -1){
+		//take screenshot
+		const canvas = document.getElementById("capturescreen");
+		const context = canvas.getContext("2d");
+        canvas.width = video.clientWidth;
+        canvas.height = video.clientHeight;
+
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+	}
+}
+
+var speech = true;
+window.SpeechRecognition = window.SpeechRecognition
+                || window.webkitSpeechRecognition;
+
+const recognition = new SpeechRecognition();
+recognition.interimResults = false;
+const words = document.querySelector('.words');
+words.appendChild(p);
+
+recognition.addEventListener('result', e => {
+    const transcript = Array.from(e.results)
+        .map(result => result[0])
+        .map(result => result.transcript)
+        .join('')
+
+    document.getElementById("p").setAttribute('value', transcript);
+	video = document.getElementById("myrecordfeedback");
+	console.log(video.currentTime);
+	addComment(transcript, getTimeFromSecs(video.currentTime));
+	checkCommands(transcript, video);
+
+	
+});
+  
+if (speech == true) {
+    recognition.start();
+    recognition.addEventListener('end', recognition.start);
+}
+
+</script>
+
+<footer style="margin-top: 20px; text-align: left;"><small id="send-message"></small></footer>
+<script src="https://www.webrtc-experiment.com/common.js"></script>
+
+</body>
+</html>
