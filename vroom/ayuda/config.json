@@ -1,0 +1,11 @@
+{
+	"confluence":{		
+		"url": "MY_WIKI_URL",
+		"space": "MY_WIKI_SPACE",
+		"toppage": "MY_TOP_PAGE",
+		"uid": "MY_UID",
+		"pwd": "MY_PWD", 
+		"pat": "MY_PERSONAL_ACCESS_TOKEN"
+		
+	}
+}
