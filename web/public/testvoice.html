@@ -1,4 +1,11 @@
+<html>
+<head>
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    
+</head>
 
+<script>
 
 let voices, utterance;
 
@@ -6,7 +13,14 @@ function speakVoice() {
 voices = this.getVoices();
 utterance = new SpeechSynthesisUtterance("Hello World");
 utterance.voice = voices[1];
-speechSynthesis.speak(utterance);
+window.speechSynthesis.speak(utterance);
 };
 
-speechSynthesis.addEventListener('voiceschanged', speakVoice);
+window.speechSynthesis.addEventListener('voiceschanged', speakVoice);
+
+
+</script>
+
+</html>
+
+
