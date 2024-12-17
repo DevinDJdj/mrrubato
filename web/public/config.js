@@ -12,7 +12,7 @@ var KEY_BOT = 48;
 var keytop = 72;
 var commandcompletion = 20;
 var playfeedback = false;
-const volumeControl = "0.1" //document.querySelector("input[name='volume']");
+var volumeControl = "0.1" //document.querySelector("input[name='volume']");
 
 var _octave = 12;
 

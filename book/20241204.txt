@@ -567,9 +567,17 @@ firebase login:ci
 **web/public/book.html
 -Get syntactically correct request response working with local LLM.  
 -Save interaction steps to firebase.  
+New folder?  
+
+
+Annoying.  Public API limit will not be enough.  
+So need to sign in to github:
+https://firebase.google.com/docs/auth/web/github-auth
+
+
 
 -Get relationship graph between Topics.  Display somehow.  
-For now simple .  
+For now simple distance calc.  
 
 #https://llm.mlc.ai/docs/deploy/webllm.html
 create custom model for this.  

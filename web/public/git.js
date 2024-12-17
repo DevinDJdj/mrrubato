@@ -1,11 +1,52 @@
 var gitbook = [];
 var gitcommits = [];
 
-var gitstructs = {"bydate": {}, "bytopic": {}};
+var gitstruct = {"bydate": {}, "bytopic": {}};
+var gittoken = null;
 
 var currenttopic = "NONE";
 var chathistory = []; //keep history/transcript.  
 
+
+
+function gitSignin(){
+  var gitprovider = new firebase.auth.GithubAuthProvider();
+  gitprovider.addScope('repo');
+  gitprovider.setCustomParameters({
+     'allow_signup': 'false'
+     });
+
+  firebase
+  .auth()
+  .signInWithPopup(gitprovider)
+  .then((result) => {
+      /** @type {firebase.auth.OAuthCredential} */
+      var credential = result.credential;
+
+      // This gives you a GitHub Access Token. You can use it to access the GitHub API.
+      gittoken = credential.accessToken;
+      console.log(gittoken);
+      const { Octokit } = require("@octokit/rest");
+
+      const octokit = new Octokit({
+      auth: gittoken,
+      });
+      // The signed-in user info.
+      var user = result.user;
+      // IdP data available in result.additionalUserInfo.profile.
+      // ...
+  }).catch((error) => {
+      // Handle Errors here.
+      var errorCode = error.code;
+      var errorMessage = error.message;
+      // The email of the user's account used.
+      var email = error.email;
+      // The firebase.auth.AuthCredential type that was used.
+      var credential = error.credential;
+      // ...
+  });
+
+}
 
 function gitDownloadCommits(data, dataTableGit){
     myarray = [];
@@ -123,21 +164,26 @@ function getGitBook(){
            $.ajax({
              url: page.download_url,
              dataType: 'text',
+//             headers: {"Authorization": "Bearer " + gittoken},
              async: false,
              success: function(data) {
-                console.log(data);   
-                const pathArray = this.url.split("/");
-                const gitbookname = pathArray[pathArray.length - 1];
+//                console.log(data);   
+                var pathArray = this.url.split("/");
+                var gitbookname = pathArray[pathArray.length - 1];
                 gitbookname = gitbookname.split(".")[0];
                 //this should be a date YYYYmmdd
                 gitbook.push({"url": this.url, "d": gitbookname, "content": data});
                 //data.sort((a, b) => a.date - b.date);
+                if (gitbook.length == bookdata.length || gitbook.length == totalcnt){
+                  //need better way...
+                  creategitStruct();
+                }
              }
            });
    
    
        }
-       setTimeout(creategitStruct(), 10000);
+//       setTimeout(creategitStruct(), 10000);
    
    
     });
@@ -198,7 +244,7 @@ function creategitStruct(){
 
     for (j=0; j<gitbook.length; j++){
         console.log(gitbook[j].d);
-        console.log(gitbook[j].content);
+//        console.log(gitbook[j].content);
         parsegitBook(gitbook[j]);
 
     }
