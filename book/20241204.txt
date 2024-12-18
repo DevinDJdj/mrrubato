@@ -703,3 +703,25 @@ Need to save video.
 **web/public/storage_upload.html
 Does this work for full recording?  
 
+
+Need visual of previously selected topics.  
+Next to video.  
+Aging Left to right.  
+But need multiple streams.  
+Dynamically pick a oft-used folder.  
+Root folder, book folder and others folder for now.  
+Need small font for this.  
+
+What videos do we load here?  
+Or do we need any?  
+
+Dont like the current scrollbars.  
+
+Only accept voice input if pedal is down.  
+Or just use Comment 12,15,15
+--done for now use this.  
+
+Eventually the code should show suggested changes.  
+For now only one source file at a time.  
+
+
