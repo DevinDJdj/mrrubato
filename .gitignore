@@ -12,7 +12,7 @@ server/tts/ljspeech
 server/tts/Real-Time-Voice-Cloning
 server/tts/Models
 server/tts/*
-web/public/js/codeeditor/*
+
 __pycache__/*
 analyze/__pycache__/*
 analyze/Torch/*
