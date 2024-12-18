@@ -573,11 +573,35 @@ New folder?
 Annoying.  Public API limit will not be enough.  
 So need to sign in to github:
 https://firebase.google.com/docs/auth/web/github-auth
+github.com/settings
+Developer settings
+Add
+
+Add under firebase console.  
+Authentication -> Sign-in method
+
+Account exists with different credentials
+But still able to get token.  
+https://github.com/octokit/octokit.js/?tab=readme-ov-file#octokitjs
+LLM.octokit
+hmmm... not great.  
+Alternative auth method for book.html etc.  
 
 
 
+**web/public/testgraph.html
 -Get relationship graph between Topics.  Display somehow.  
 For now simple distance calc.  
+#https://github.com/levelgraph/levelgraph
+--try this for now.  
+--maybe not, doesnt work out-of-box.  
+Just make a dic which holds this data.  
+
+**web/public/test/word2vec-demo/index.html
+#https://github.com/Planeshifter/node-word2vec
+--can we use this?  
+
+
 
 #https://llm.mlc.ai/docs/deploy/webllm.html
 create custom model for this.  

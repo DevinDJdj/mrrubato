@@ -26,9 +26,8 @@ function gitSignin(){
       // This gives you a GitHub Access Token. You can use it to access the GitHub API.
       gittoken = credential.accessToken;
       console.log(gittoken);
-      const { Octokit } = require("@octokit/rest");
 
-      const octokit = new Octokit({
+      const octokit = new LLM.Octokit({
       auth: gittoken,
       });
       // The signed-in user info.
@@ -43,6 +42,15 @@ function gitSignin(){
       var email = error.email;
       // The firebase.auth.AuthCredential type that was used.
       var credential = error.credential;
+      if (typeof(credential.accessToken) !== "undefined"){
+        gittoken = credential.accessToken;
+        console.log(gittoken);
+
+        const octokit = new LLM.Octokit({
+        auth: gittoken,
+        });
+  
+      }
       // ...
   });
 
@@ -177,6 +185,7 @@ function getGitBook(){
                 if (gitbook.length == bookdata.length || gitbook.length == totalcnt){
                   //need better way...
                   creategitStruct();
+                  console.log(gitstruct);
                 }
              }
            });
@@ -226,7 +235,7 @@ function parsegitBook(gb){
       gitstruct["bytopic"][currenttopic].push(content); //ordered by date.  
 
       gitstruct["bydate"][gb.d].push(content);
-      currenttopic = str.slice(2);
+      currenttopic = str.slice(2).split(" ")[0];
       fullstr = "";
 
 
@@ -248,6 +257,7 @@ function creategitStruct(){
         parsegitBook(gitbook[j]);
 
     }
+
 }
 
 function getGitCommits(){

@@ -38,6 +38,7 @@ Load any speech from this time.
 <!--    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script> -->
     <script src="https://code.jquery.com/ui/1.14.1/jquery-ui.js"></script>
 
+
     <!-- google charts -->    
     <script src='https://apis.google.com/js/platform.js' async defer></script>
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
@@ -822,10 +823,17 @@ Load any speech from this time.
     LLM = {};    
 </script>
 
+
 <script type="module">
     import {onMessageSend} from '/test/web-llm/test.js';
     LLM.sendToLLM = onMessageSend;
     //window.sendToLLM = onMessageSend;
+</script>
+
+<script type="module">
+    import { Octokit, App } from "https://esm.sh/octokit";
+    LLM.Octokit = Octokit;
+    LLM.App = App;
 </script>
 
 
@@ -836,6 +844,8 @@ Load any speech from this time.
 
 <script>
 
+var mycontext = "";
+var files = [];
 
 function setTranscript(transcript){
 	$('#transcriptsh').html(makeTimeLinks(transcript));
@@ -949,28 +959,29 @@ function addChatHistory(query, context, files=[]){
     //dont need to send full content of files?  just the names for now.  Should be able to git files from certain point in time if needed.  
 }
 
-function ChatBuildContext(){
-    lastquery = transcript;
-    transcript = "";
+function ChatBuildContext(context){
+    lastquery = context;
+    mycontext = "";
     files = [];
     for (gi = 0; gi<gitbook.length; gi++){
         fn = getFileName(gitbook[gi].url);
-        if (fn == "definitions" || transcript.length + gitbook[gi].content.length < MAX_LOCAL_QUERY_LENGTH){
+        if (fn == "definitions" || mycontext.length + gitbook[gi].content.length < MAX_LOCAL_QUERY_LENGTH){
 
             files.push(gitbook[gi].url);
             if (fn == "definitions"){
-                transcript = "--" + fn + "--\n" + gitbook[gi].content + "\n--END " + fn + "--\n" + transcript;
+                mycontext = "--" + fn + "--\n" + gitbook[gi].content + "\n--END " + fn + "--\n" + mycontext;
             }
             else{
-                transcript += "--" + fn + "--\n" + gitbook[gi].content + "\n--END " + fn + "--\n";
+                mycontext += "--" + fn + "--\n" + gitbook[gi].content + "\n--END " + fn + "--\n";
             }
         }
 
     }
     //will need to add actual source files as well here to context.  
 
-    transcript = localprompt + "\n" + transcript + "\nQuestion: " + lastquery;
-    return transcript, files;
+    console.log(files);
+    mycontext = localprompt + "\n" + mycontext + "\nQuestion: " + lastquery;
+
     
 }
 function ChatLocal(transcript){
@@ -981,9 +992,11 @@ function ChatLocal(transcript){
     else{
         localprompt = $('#prompt').val();
     }
-    transcript, files = ChatBuildContext();
-    addChatHistory(lastquery, transcript, files);
-    document.getElementById("user-input").value = transcript;
+    ChatBuildContext(transcript);
+
+    addChatHistory(lastquery, mycontext, files);
+    document.getElementById("user-input").value = mycontext;
+    console.log(mycontext);
     LLM.sendToLLM(); //onMessageSend();//sendToLLM();   //test/web-llm/test.js
     
 }
