@@ -1,5 +1,6 @@
 
 var giturl = 'https://api.github.com/repos/DevinDJdj/mrrubato';
+var gitbranch = 'master';
 var dbname = '/misterrubato/';
 var domain = 'https://misterrubato.com';
 var chatdomain = 'https://chat.misterrubato.com';

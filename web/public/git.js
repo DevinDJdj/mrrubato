@@ -171,6 +171,7 @@ function getGitBook(){
    //	   $.getJSON(commit.url,function(commitdata){
            $.ajax({
              url: page.download_url,
+             indexValue: j,
              dataType: 'text',
 //             headers: {"Authorization": "Bearer " + gittoken},
              async: false,
@@ -180,7 +181,7 @@ function getGitBook(){
                 var gitbookname = pathArray[pathArray.length - 1];
                 gitbookname = gitbookname.split(".")[0];
                 //this should be a date YYYYmmdd
-                gitbook.push({"url": this.url, "d": gitbookname, "content": data});
+                gitbook.push({"url": this.url, "gitdata": bookdata[this.indexValue], "d": gitbookname, "content": data});
                 //data.sort((a, b) => a.date - b.date);
                 if (gitbook.length == bookdata.length || gitbook.length == totalcnt){
                   //need better way...
@@ -257,12 +258,57 @@ function creategitStruct(){
         parsegitBook(gitbook[j]);
 
     }
+    //any 
+    loadTopic(gitbook[gitbook.length-1].gitdata["path"]);
+    
+
+}
+
+function loadfromGitBook(top){
+  if (top in gitstruct["bytopic"]){
+    console.log(gitstruct["bytopic"][top]);
+  }
+}
+
+function getGitContents(path){
+  url = giturl + '/contents/' + path + '?ref=' + gitbranch;
+
+
+   $.getJSON(url,function(data){
+      console.log('git contents');
+      console.log(data);
+      console.log(atob(data.content));
+
+      var myCodeMirror = CodeMirror(document.getElementById("edit_code"), {
+        value: "function myScript(){return 100;}\n",
+        mode:  "javascript"
+      });
+
+	});
+  
+}
+
+function loadTopic(top){
+    getGitContents(top);
+    loadfromGitBook(top); //search Git for this string **.... in gitbook and retrieve all.  
+    //look through the latest commit info and if newer than RTDB entry, pull from git.  
+    //Cache result in RTDB.  
+}
+
+function getGitTree(){
+  url = giturl + '/git/trees/' + gitbranch + '?recursive=true';
+
+   $.getJSON(url,function(data){
+      console.log('git tree');
+      console.log(data);
+
+	});
 
 }
 
 function getGitCommits(){
 	//get github
-    url = giturl + '/commits?sha=master';
+    url = giturl + '/commits?sha=' + gitbranch;
 
 	if (querydate !=null){
 		url += "&until=" + querydate;

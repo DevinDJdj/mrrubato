@@ -119,7 +119,7 @@ with Preference Feedback loop
 
 **news.py
 Yep:
-https://github.com/codelucas/newspaper
+#https://github.com/codelucas/newspaper
 Try this library
 pip3 install newspaper3k
 <!--
@@ -582,7 +582,7 @@ Authentication -> Sign-in method
 
 Account exists with different credentials
 But still able to get token.  
-https://github.com/octokit/octokit.js/?tab=readme-ov-file#octokitjs
+#https://github.com/octokit/octokit.js/?tab=readme-ov-file#octokitjs
 LLM.octokit
 hmmm... not great.  
 Alternative auth method for book.html etc.  
@@ -597,10 +597,31 @@ For now simple distance calc.
 --maybe not, doesnt work out-of-box.  
 Just make a dic which holds this data.  
 
-**web/public/test/word2vec-demo/index.html
+**web/public/word2vec-demo/index.html
 #https://github.com/Planeshifter/node-word2vec
 --can we use this?  
+Yeah just set the input text based on TOPIC relationship.  
+$("#trainModel").click
+$("#prepareData").click
+$("#inbut").click
+preProData sets initial data.  
+showAllEmbeddings
+Slight adjustment to:
+drawEmbedding
+Should work for our purposes I think.  
+Just automate with incoming data and display.  
 
+
+
+#https://github.com/karpathy/tsnejs?tab=readme-ov-file
+onclick functionality?  
+
+
+**web/public/book.html
+Get the graphic of the relationships.  
+
+I guess we can do in same page.  
+Can we make this graphic interactive?  
 
 
 #https://llm.mlc.ai/docs/deploy/webllm.html
@@ -609,4 +630,76 @@ Eventually.
 
 
 keep building data struct for query.  
+
+
+Add codeeditor
+**web/public/js/codeeditor/editor.mjs
+**web/public/languageeditor.html
+
+Add this component to 
+**web/public/book.html
+When opening topic, read code into this component.  
+Quick key to go to line no. etc.  
+
+OnloadTopic(top){
+    loadGitSource(top);
+    loadfromGitBook(top); //search Git for this string **.... in gitbook and retrieve all.  
+    //look through the latest commit info and if newer than RTDB entry, pull from git.  
+    //Cache result in RTDB.  
+
+}
+
+
+Need to figure out how to run analysis on git locally.  
+
+
+**news
+Instead of news, do git search first.  
+Analyze git project changes.  
+Anything flagged at first.  
+Anything mentioned like 
+#https://github.com/codelucas/newspaper
+
+
+
+**web/public/languageeditor.html
+Does this component work well with multiple existing languages?  
+Also create a font and test with this.  
+
+Add this to 
+**web/public/testdoodle.html
+**web/public/testfont.html
+Need to be able to create font entries for each concept/word.  
+Font size is going to need to be somewhat larger.  
+This is an important question/constraint.  
+How large do we want the font size?  
+Lets try 32 for now.  ~400x400 area
+
+"Select from timeline" (frommostrecentevent +/- n, user=lastselected)
+show this full feedback transcript, scroll to this in transcript component.  
+
+
+Try this.  
+#https://github.com/PyGithub/PyGithub
+
+#https://pygithub.readthedocs.io/en/stable/examples/Repository.html
+
+#https://github.com/octokit/octokit.js/?tab=readme-ov-file#octokitjs
+Just use this:
+getGitCommits
+
+make branch variable/param.  
+--ok 
+
+/git/trees/branch?recursive=true
+
+
+
+
+**web/public/rec.html
+Need to save video.  
+#https://firebase.google.com/docs/storage/web/start#web_1
+
+**web/public/storage_upload.html
+Does this work for full recording?  
 
