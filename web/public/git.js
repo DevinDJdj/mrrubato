@@ -3,6 +3,9 @@ var gitcommits = [];
 
 var gitstruct = {"bydate": {}, "bytopic": {}};
 var gittoken = null;
+var gitcurrentpath = "";
+var gitcurrentcontents = "";
+var gitcurrentcontentstype = "javascript";
 
 var currenttopic = "NONE";
 var chathistory = []; //keep history/transcript.  
@@ -272,16 +275,19 @@ function loadfromGitBook(top){
 
 function getGitContents(path){
   url = giturl + '/contents/' + path + '?ref=' + gitbranch;
-
+  gitcurrentpath = path;
 
    $.getJSON(url,function(data){
       console.log('git contents');
       console.log(data);
       console.log(atob(data.content));
+      gitcurrentcontents = atob(data.content);
 
+      $('#for_edit_code').text(gitcurrentpath);
       var myCodeMirror = CodeMirror(document.getElementById("edit_code"), {
-        value: "function myScript(){return 100;}\n",
-        mode:  "javascript"
+        value: gitcurrentcontents,
+        mode:  gitcurrentcontentstype, 
+        lineNumbers: true
       });
 
 	});

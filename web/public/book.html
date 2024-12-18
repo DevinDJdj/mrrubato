@@ -11,7 +11,9 @@ Load any speech from this time.
 <!DOCTYPE html>
 <html>
 <head>
-
+    <meta name="viewport"
+          content="width=device-width,
+                   initial-scale=1.0">
 
         <!-- update the version number as needed -->
         <script src="config.js"></script>
@@ -185,7 +187,7 @@ Load any speech from this time.
                 <p id="download-status" class="hidden"></p>
                 
                 <p style="display:none">Step 2: Chat</p>
-                <div class="chat-container">
+                <div class="chat-container" style="display:none">
                   <div id="chat-box" class="chat-box"></div>
                   <div id="chat-stats" class="chat-stats hidden"></div>
                   <div class="chat-input-container">
@@ -230,6 +232,7 @@ Load any speech from this time.
     data-setup="{}"
     >
     </video>
+	<div id="devices">	</div>
     <div id="midi">
         <canvas id="fullpcanvas_labels" width="640" height="24">Your browser does not support the HTML5 canvas tag.</canvas>
         <br>
@@ -252,6 +255,10 @@ Load any speech from this time.
         <textarea id="transcript" style="display:none" rows="10" cols="50"></textarea>
         <div id="transcriptsh" style="height: 190px;overflow:auto; word-break: break-all; word-wrap: break-word;"></div>
       
+    </td>
+    <td>
+        <label for="currentstate">Current State:</label><br>
+        <div id="currentstate" style="height: 180px;overflow:auto;"></div>    
     </td>
     <td>
         <label for="prompt">Custom prompt for LLM:</label><br>
@@ -361,9 +368,9 @@ Load any speech from this time.
     <canvas id="pcanvas" width="110" height="22" style="display: none">Your browser does not support the HTML5 canvas tag.</canvas>    
 
     <div id="code_chat" style="width: 100%;height: 300px;overflow:auto;">
-        <table>
+        <table style="width:100%">
             <tr>
-            <td>
+            <td valign="top" width="40%">
                 <table id="ChatTable">
                 <tr id="templateRow">
                 <td>id</td>
@@ -373,8 +380,9 @@ Load any speech from this time.
                 </tr>
                 </table>
             </td>
-            <td>
-                <div id="edit_code" style="width: 50%;overflow:auto;">
+            <td valign="top">
+                <label id="for_edit_code" for="edit_code">Code Snippet:</label>
+                <div id="edit_code" style="overflow:auto;">
 
                 </div>
             </td>
@@ -757,23 +765,7 @@ Load any speech from this time.
 
         loadSpeech();
     
-        midiarray = [{"base": []}]; //reinitialize necessary?  
-
-
-        midisetcallbacks(mymidicallback, updateFeedbackUI);  //set callbacks.  
-        currentmidiuser = 0;
-    
-        reinitLanguages();
-        loadUserConfig(); //have to do this in case there is a new language keybot.  
-        loadDictionaries(currentmidiuser);
-        for (const [lang, value] of Object.entries(midiarray[currentmidiuser])) {
-    //        loadLanguage(lang, currentmidiuser);
-    //        initLangData(lang, user);
-        }
-    
-        selectLanguage("doodle");
-        keybot["base"] = 24; //one-key commands cause issues.  
-    
+        setupMidi();
     
         //firebase.auth.Auth.Persistence.LOCAL 'local'
         firebase.auth().setPersistence('local').then(() => {
@@ -970,6 +962,8 @@ function ChatLocalDone(answer){
     ss.rate = myrate;
     ss.pitch = mypitch;
     window.speechSynthesis.speak(ss);
+    var myDiv = document.getElementById('code_chat');
+    myDiv.scrollTop = 0;
 
     console.log('query ' +  lastquery);
 //                    addComment(data.answer, helpme())
@@ -1033,6 +1027,13 @@ function ChatLocal(transcript){
 					window.speechSynthesis.cancel();
 					return;
 				}
+                if (lastspokenword !="comment"){ //if we have comment in our command.  
+                    //only chat if we have pedal pressed.  
+                    return;
+                }
+                else{
+                    lastspokenword = ""; //for now just reset so not called again.  
+                }
                 //use local if available.  check for GPU for local LLM usage as well.  
                 if (ChatLocal !== undefined){
                     ChatLocal(mychat);

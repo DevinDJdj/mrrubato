@@ -234,6 +234,9 @@ data-setup="{}"
 
 <div id="piano0"></div>
 
+<div id="devices">	</div>
+
+
 
 
 <script>
@@ -641,20 +644,7 @@ function loadComplete(user){
 
 function loadAll(reload = false){
 	loadSpeech();
-	midiarray = [{"base": []}]; //reinitialize necessary?  
-	currentmidiuser = 0;
-
-	reinitLanguages();
-	loadUserConfig(); //have to do this in case there is a new language keybot.  
-    loadDictionaries(currentmidiuser);
-    for (const [lang, value] of Object.entries(midiarray[currentmidiuser])) {
-//        loadLanguage(lang, currentmidiuser);
-//        initLangData(lang, user);
-    }
-
-    selectLanguage("doodle");
-    keybot["base"] = 24; //one-key commands cause issues.  
-
+	setupMidi();
 
 	//firebase.auth.Auth.Persistence.LOCAL 'local'
 	firebase.auth().setPersistence('local').then(() => {

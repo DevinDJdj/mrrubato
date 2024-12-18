@@ -140,6 +140,7 @@ function checkCommands(lang="meta"){
             if (transcript != prevtranscript){
 
                 done = completeMidi(midi, lang);
+				lastspokenword = transcript.trim();
                 //refresh midi with only incomplete commands.  
                 if (transcript.endsWith(" ")){  //use space as indicator of more parameters needed.
                     //still waiting.  
@@ -202,6 +203,8 @@ function checkCommands(lang="meta"){
                 //we add space to this
                 if (transcript != prevtranscript){
                     done = completeMidi(midi, lang);
+					lastspokenword = transcript.trim();
+					
                     if (transcript.endsWith(" ")){  //use space as indicator of more parameters needed.
                         //still waiting.  in this case perhaps extend the pendingTime.  
                     }
@@ -1025,7 +1028,26 @@ function getMidiRecent(){
 
       }
 
-		  WebMidi
-			.enable()
-			.then(onEnabled)
-			.catch(err => alert(err));
+
+	  function setupMidi(){
+
+			midiarray = [{"base": []}]; //reinitialize necessary?  
+			currentmidiuser = 0;
+
+			reinitLanguages();
+			loadUserConfig(); //have to do this in case there is a new language keybot.  
+			loadDictionaries(currentmidiuser);
+			for (const [lang, value] of Object.entries(midiarray[currentmidiuser])) {
+		//        loadLanguage(lang, currentmidiuser);
+		//        initLangData(lang, user);
+			}
+
+			selectLanguage("doodle");
+			keybot["base"] = 24; //one-key commands cause issues.  
+					
+	  }
+
+	  WebMidi
+	  .enable()
+	  .then(onEnabled)
+	  .catch(err => alert(err));
