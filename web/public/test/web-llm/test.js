@@ -12,6 +12,7 @@ const availableModels = webllm.prebuiltAppConfig.model_list.map(
   (m) => m.model_id,
 );
 let selectedModel = "Llama-3.2-1B-Instruct-q4f16_1-MLC";
+//selectedModel = "TinyLlama-1.1B-Chat-v0.4-q4f16_1-MLC";
 
 // Callback function for initializing progress
 function updateEngineInitProgressCallback(report) {
@@ -128,6 +129,8 @@ function appendMessage(message) {
   container.appendChild(newMessage);
   chatBox.appendChild(container);
   chatBox.scrollTop = chatBox.scrollHeight; // Scroll to the latest message
+
+
 }
 
 function updateLastMessage(content) {
@@ -136,7 +139,14 @@ function updateLastMessage(content) {
     .querySelectorAll(".message");
   const lastMessageDom = messageDoms[messageDoms.length - 1];
   lastMessageDom.textContent = content;
-
+  let statuscontent = content.slice(content.length-50);
+  $("#chat-status").val(statuscontent);
+  if (lastread == 0 && content.length > 200 && ChatLocalUpdate !== undefined){
+    ChatLocalUpdate(content);
+  }
+  else if (lastread !=0 && reading == false && ChatLocalUpdate !== undefined){
+    ChatLocalUpdate(content.slice(lastread, lastread+200));
+  }
 
 }
 

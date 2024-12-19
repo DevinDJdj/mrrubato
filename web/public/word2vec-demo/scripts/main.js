@@ -31,6 +31,7 @@ function initEmbedding() {
 var gs;
 var cs;
 var ts;
+var ls;
 function drawEmbedding() {
 
     gs = svg.selectAll(".b")
@@ -46,8 +47,14 @@ function drawEmbedding() {
         .attr('stroke', 'black')
         .attr('fill', 'rgb(100,100,255)');
 
+
     if (labels.length > 0) {
-        ts = gs.append("text")
+        ls = gs.append("a")
+        .attr("xlink:href", function(d,i){ return "../" + labels[i];})
+        .attr("target", "_top");
+        //here add link to topic.  
+
+        ts = ls.append("text")
             .attr("text-anchor", "top")
             .attr("transform", "translate(5, -5)")
             .attr("font-size", 12)

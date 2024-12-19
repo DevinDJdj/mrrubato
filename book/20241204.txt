@@ -474,7 +474,9 @@ answer questions...
 How much previous question/answer do we want in context?  
 
 Try to use this instead of instruct model:
-TinyLlama-1.1B-Chat-v0.4-q4f16_1-MLC
+TinyLlama-1.1B-Chat-v0.4-q4f16_1-MLC 
+--didnt work.  
+
 This is probably the kind of thing we want to use.  
 
 We need Model and Prompt which makes clear code changes.  
@@ -724,4 +726,14 @@ Or just use Comment 12,15,15
 Eventually the code should show suggested changes.  
 For now only one source file at a time.  
 
+**web/public/book.html
+replace links in response.  
+
+
+**web/public/midi.js
+setupAudioFeedback not working consistently.  
+Basically sound is not enabled on the tab sometimes in chrome.  
+This affects the speechsynthesis and the audioFeedback.  
+--Edge seems to work somewhat better with this.  
+I think there are some bugs in recent versions of Chrome around the sound management.  
 

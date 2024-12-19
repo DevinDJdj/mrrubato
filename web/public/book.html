@@ -165,6 +165,7 @@ Load any speech from this time.
             
             </td>
             <td>
+                <input type="text" id="chat-status" name="chat-status" size="50">
                 <div id="speak">
                     <!-- status and current command for now just display the string and add any additional midi params-->
                     <label for="mycommand">Building Command:</label><br>
@@ -185,7 +186,6 @@ Load any speech from this time.
                   <button id="download">Download</button>
                 </div>
                 <p id="download-status" class="hidden"></p>
-                
                 <p style="display:none">Step 2: Chat</p>
                 <div class="chat-container" style="display:none">
                   <div id="chat-box" class="chat-box"></div>
@@ -825,7 +825,7 @@ Load any speech from this time.
         //get book for analysis via LLM.  
         getGitBook();
 //        getGitContents('web/public/book.html');
-        setTimeout(function(){ document.getElementById("download").click(); }, 5000);
+        setTimeout(function(){ document.getElementById("download").click(); }, 2000);
                 //from test.js set context_window_size to sliding.  
     }
     
@@ -954,13 +954,33 @@ function createNotesArray(){
     updateNotes();
 }
 
-function ChatLocalDone(answer){
-    //called from //test/web-llm/test.js
 
-    addChatRow(lastquery, answer, []);
+function ChatLocalUpdate(answer){
+    lastread = answer.length + lastread; //usually lastread = 0
     ss = new SpeechSynthesisUtterance(answer);
     ss.rate = myrate;
     ss.pitch = mypitch;
+    window.speechSynthesis.cancel();
+    reading = true;
+    ss.onend = function (event) {
+        console.log(event.timeStamp);
+        reading = false;
+    };
+
+    window.speechSynthesis.speak(ss);
+
+}
+
+function ChatLocalDone(answer){
+    //called from //test/web-llm/test.js
+
+    tospeak = addChatRow(lastquery, answer, []);
+    tospeak = tospeak.slice(lastread);
+    lastread = 0;
+    ss = new SpeechSynthesisUtterance(tospeak);
+    ss.rate = myrate;
+    ss.pitch = mypitch;
+    window.speechSynthesis.cancel();
     window.speechSynthesis.speak(ss);
     var myDiv = document.getElementById('code_chat');
     myDiv.scrollTop = 0;
@@ -1050,6 +1070,7 @@ function ChatLocal(transcript){
 					ss = new SpeechSynthesisUtterance(data.answer);
 					ss.rate = myrate;
 					ss.pitch = mypitch;
+                    window.speechSynthesis.cancel();
 					window.speechSynthesis.speak(ss);
 
                     console.log('query ' +  data.query);

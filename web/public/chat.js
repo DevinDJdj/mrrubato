@@ -1,6 +1,8 @@
 var ChatID = 0;
 var lastquery = '';
 var MAX_LOCAL_QUERY_LENGTH = 10000;
+var lastread = 0;
+var reading = false;
 var localprompt = 'please use the following content.  Each page is marked by --PAGETITLE-- and --END PAGETITLE--.  \
                         Please keep the response to less than 500 words.  If further information is needed, the user will ask another question.  \
                         You are trying to help explain the content to the user.  \
@@ -8,9 +10,28 @@ var localprompt = 'please use the following content.  Each page is marked by --P
                       \
     '
 
+function replaceLinksWithLastElement(str) {
+    const linkRegex = /https?:\/\/[^\s"]+/g;
+    return str.replace(linkRegex, (match) => {
+        const urlParts = match.split('/');
+        return urlParts[urlParts.length - 1]; 
+    });
+}
 
+function insertCRs(answer){
+    answer = answer.replace("\n", "<br>");
+    return answer;
+}
+
+function formatAnswer(answer){
+    answer = replaceLinksWithLastElement(answer);
+    answer = insertCRs(answer);
+    return answer;
+
+}
+    
 function addChatRow(query, answer, source) {
-    answer = answer.replaceAll("\n", "<br>");
+    fanswer = formatAnswer(answer);
     var t = document.getElementById("ChatTable");
     var rows = t.getElementsByTagName("tr");
     var r = rows[0];
@@ -28,12 +49,15 @@ function addChatRow(query, answer, source) {
     r.cells[0].innerHTML = ChatID;
     r.cells[1].innerHTML = query;
     if (ChatID%2==0){
-        r.cells[2].innerHTML = '<font color="red">' + answer + '</font>';
+        r.cells[2].innerHTML = '<font color="red">' + fanswer + '</font>';
     }
     else{
-        r.cells[2].innerHTML = '<font color="black">' + answer + '</font>';
+        r.cells[2].innerHTML = '<font color="black">' + fanswer + '</font>';
     }
     r.cells[3].innerHTML = getSourceHTML(source, ChatID);
+
+    //return non-html string
+    return r.cells[2].textContent || r.cells[2].innerText || "";
 }
 
 
