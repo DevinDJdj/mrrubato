@@ -626,6 +626,10 @@ I guess we can do in same page.
 Can we make this graphic interactive?  
 
 
+**server/ollama/custom.py
+Lets see if we can make a custom model here instead of langchain RAG.  
+**server/ollama/custom.parameter
+
 #https://llm.mlc.ai/docs/deploy/webllm.html
 create custom model for this.  
 Eventually.  
@@ -737,3 +741,76 @@ This affects the speechsynthesis and the audioFeedback.
 --Edge seems to work somewhat better with this.  
 I think there are some bugs in recent versions of Chrome around the sound management.  
 
+
+
+**web/public/word2vec-demo
+Add this component before forgetting.  
+Graph of TOPIC relationships.  
+
+**web/public/keymap.js
+Need commands for controlling scrolling of standard screen components.  
+i.e. Select chat row for reading.  select transcript, source code or change
+
+
+
+
+
+**server/ollama/custom.py
+Lets see if we can make a custom model here instead of langchain RAG.  
+**server/ollama/custom.parameter
+
+#https://llm.mlc.ai/docs/deploy/webllm.html
+create custom model for this.  
+Eventually.  
+
+Going to need this customization logic.  
+Hmm.... how important at this point?  
+
+**web/public/test/web-llm/test.js
+initializeWebLLMEngine
+pass parameter for max_sequence.  
+
+
+#https://github.com/mlc-ai/web-llm/blob/main/src/config.ts
+<!--
+export interface ChatConfig {
+  // First three fields affect the entire conversation, i.e. used in `MLCEngine.reload()`
+  tokenizer_files: Array<string>;
+  tokenizer_info?: TokenizerInfo;
+  token_table_postproc_method?: string; // TODO: backward compatibility, remove soon
+  vocab_size: number;
+  conv_config?: Partial<ConvTemplateConfig>;
+  conv_template: ConvTemplateConfig;
+  // KVCache settings
+  context_window_size: number;
+  sliding_window_size: number;
+  attention_sink_size: number;
+  // Fields below can be swapped per-generation via `GenerationConfig`
+  // Fields only used in MLC
+  repetition_penalty: number;
+  // Fields shared by MLC and OpenAI APIs
+  frequency_penalty: number;
+  presence_penalty: number;
+  top_p: number;
+  temperature: number;
+  bos_token_id?: number;
+}
+-->
+
+
+**feedback
+Need to have this be timed as well for the LLM responses.  
+How can we award one part and reduce another part of the same response?  
+First need to record interaction, then rank it to start.  
+
+**Llama-3.2-1B-Instruct-q4f16_1-MLC
+responses are way too long sometimes.  How do I control this easily?  
+
+
+**web/public/word2vec-demo
+Add this component before forgetting.  
+Graph of TOPIC relationships.  
+
+**web/public/testword2vec.html
+Automate generation of graph via function.  
+Then integrate.  
