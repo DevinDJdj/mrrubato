@@ -814,3 +814,70 @@ Graph of TOPIC relationships.
 **web/public/testword2vec.html
 Automate generation of graph via function.  
 Then integrate.  
+
+Right to left for words
+Make long canvas which is 
+words_ _words 
+can even rewrite each few seconds and have
+the cache selection keymaps.  
+When a topic is selected, load appropriately.  
+When starting, show history of selections.  
+Save to local browser storage.  
+This should be saved/updated each selection.  
+This can be our note for the book feedback.  
+Should we map to midi?  
+selection via this UI component, also the generated graph.  
+Have override link as well.  
+Can get the filename from git changes or git contents.  
+2 primary modes.  
+Book content analysis, git change analysis
+Two topic texts with separate word2vec graphs for now.  
+Perhaps just combine this later.  
+
+keymap to bring up key dictionary and scroll dictionary.  
+
+
+So much garbage afterward.  
+
+"gitstruct[alltopics]"
+use to generate relationship graph.  
+
+use "wordcanvas" to display this.  
+
+Need visual of previously selected topics.  
+Next to video.  
+Aging Left to right.  
+But need multiple streams.  
+Dynamically pick a oft-used folder.  
+Root folder, book folder and others folder for now.  
+Need small font for this.  
+10px font?
+Show these folders.  
+Show book and commit history.  
+For now make halfway point now.  
+up to x chars is history and 
+the rest is generated based on the word2vec stats. 
+In this case sequence is important.  
+well, if convenient.  
+
+**web/public/testword2vec.html
+Just use the one we have now in the word2vec.  
+But skew it to the size we want.  
+Auto-load, auto-zoom.  
+Then move to the page we want.  
+Just make UI components hidden.  
+60x620
+$("#trainModel").click
+$("#prepareData").click
+$("#inbut").click
+preProData sets initial data.  
+showAllEmbeddings
+Slight adjustment to:
+drawEmbedding
+
+ok, now how to skew.  
+--ok, somewhat close to what I want.  
+Need key interaction for zoom etc.  
+I guess just use the d3 component.  
+Adjust the links.  
+

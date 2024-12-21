@@ -439,16 +439,6 @@ function getDuration(desc, vidtime){
 }
 
 
-function readyHandlerGit() {
-	var container = document.getElementById('gitchart');
-    var labels = container.getElementsByTagName('text');
-    Array.prototype.forEach.call(labels, function(label) {
-//      if (label.getAttribute('fill') === options.timeline.rowLabelStyle.color) {
-        label.addEventListener('click', clickHandlerGit);
-        label.setAttribute('style', 'cursor: pointer; text-decoration: underline;');
-//      }
-    });
-  }
 
 
 function readyHandler() {

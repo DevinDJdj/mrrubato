@@ -35,7 +35,7 @@ Load any speech from this time.
         <script defer src="/__/firebase/init.js?useEmulator=true"></script>
     
     
-    <title>MIDI Player Test</title>
+    <title>BOOK Test</title>
     <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
 <!--    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script> -->
     <script src="https://code.jquery.com/ui/1.14.1/jquery-ui.js"></script>
@@ -129,7 +129,7 @@ Load any speech from this time.
                  <!-- for slider function -->
                 <link href="https://code.jquery.com/ui/1.14.1/themes/ui-lightness/jquery-ui.css" rel="stylesheet">
                 <p>
-                    <label for="slider-range-text">Date range:</label>
+                    <label for="slider-range-text">Book range:</label>
                     <input type="text" id="slider-range-text" style="border: 0; color: #f6931f; font-weight: bold;" size="100"/>
                   </p>
                    
@@ -137,6 +137,7 @@ Load any speech from this time.
             
                   <script>
                     $(function() {
+
                         var now = new Date();
                         now.setDate(now.getDate() + 1); //add a day so we get today as well.  
             
@@ -154,7 +155,9 @@ Load any speech from this time.
                         step: 86400,
                         values: [ priordate.getTime() / 1000, currdate.getTime() / 1000 ],
                         slide: function( event, ui ) {
-                            $( "#slider-range-text" ).val( (new Date(ui.values[ 0 ] *1000).toDateString() ) + " - " + (new Date(ui.values[ 1 ] *1000)).toDateString() );
+                            str = getgitSelected(ui.values[0], ui.values[1]);
+                            str += " " + (new Date(ui.values[ 0 ] *1000).toDateString() ) + " - " + (new Date(ui.values[ 1 ] *1000)).toDateString() ;
+                            $( "#slider-range-text" ).val( str );
                         }
                         });
                         $( "#slider-range-text" ).val( (new Date($( "#slider-range" ).slider( "values", 0 )*1000).toDateString()) +
@@ -232,39 +235,44 @@ Load any speech from this time.
     data-setup="{}"
     >
     </video>
-	<div id="devices">	</div>
-    <div id="midi">
-        <canvas id="fullpcanvas_labels" width="640" height="24">Your browser does not support the HTML5 canvas tag.</canvas>
-        <br>
-        <canvas id="fullpcanvas" width="640" height="36">Your browser does not support the HTML5 canvas tag.</canvas>    
-     </div>
-    
-     <div id="out"></div>	
     </td>
-    <td>
+    <td valign="top">
+        <label for="transcript">Original Transcript:</label>
+        <img src="images/edit.png" height="16px" onClick="toggleTranscript();"/>
+        <br>
+        <textarea id="transcript" style="display:none" rows="10" cols="50"></textarea>
+        <div id="transcriptsh" style="height: 90px;overflow:auto; word-break: break-all; word-wrap: break-word;"></div>
+        <br>
         <label for="mycomments">My Transcript:</label>
         <img src="images/edit.png" height="16px" onClick="toggleMyComments();"/>
         <br>
         <textarea id="mycomments" style="display:none" rows="10" cols="45"></textarea>
         <div id="mycommentsh" style="height: 190px;overflow:auto;"></div>    
     </td>
-    <td>
-        <label for="transcript">Original Transcript:</label>
-        <img src="images/edit.png" height="16px" onClick="toggleTranscript();"/>
+    <td valign="top">
+        <label for="prompt">Custom prompt for LLM:</label><br>
+        <textarea id="prompt" name="prompt" rows="5" cols="30"></textarea>
         <br>
-        <textarea id="transcript" style="display:none" rows="10" cols="50"></textarea>
-        <div id="transcriptsh" style="height: 190px;overflow:auto; word-break: break-all; word-wrap: break-word;"></div>
-      
-    </td>
-    <td>
         <label for="currentstate">Current State:</label><br>
         <div id="currentstate" style="height: 180px;overflow:auto;"></div>    
     </td>
-    <td>
-        <label for="prompt">Custom prompt for LLM:</label><br>
-                <textarea id="prompt" name="prompt" rows="15" cols="30"></textarea>
+    </tr>
+    <tr>
+        <td>
+            <div id="devices">	</div>
+            <div id="midi">
+                <canvas id="fullpcanvas_labels" width="640" height="24">Your browser does not support the HTML5 canvas tag.</canvas>
+                <br>
+                <canvas id="fullpcanvas" width="640" height="36">Your browser does not support the HTML5 canvas tag.</canvas>    
+             </div>
+            
+             <div id="out"></div>	
+        
+        </td>
+        <td colspan="2">
+            <canvas id="wordcanvas" width="640" height="60" style="display: none">Your browser does not support the HTML5 canvas tag.</canvas>    
 
-    </td>
+        </td>
     </tr>
     </table>
     
@@ -369,9 +377,10 @@ Load any speech from this time.
 
     <div id="code_chat" style="width: 100%;height: 300px;overflow:auto;">
         <table style="width:100%">
-            <tr>
-            <td valign="top" width="40%">
-                <table id="ChatTable">
+            <tr width="100%">
+            <td valign="top"  style="min-width: 400px;">
+                <div id="chat_table" width="400">
+                    <table id="ChatTable">
                 <tr id="templateRow">
                 <td>id</td>
                 <td>query</td>
@@ -379,7 +388,8 @@ Load any speech from this time.
                 <td>Sources</td>
                 </tr>
                 </table>
-            </td>
+            </div>
+                    </td>
             <td valign="top">
                 <label id="for_edit_code" for="edit_code">Code Snippet:</label>
                 <div id="edit_code" style="overflow:auto;">
@@ -389,6 +399,8 @@ Load any speech from this time.
             </tr>
         </table>    
     </div>
+	<div id="gitchart" style="height:200px;"></div>
+
 <script>
     player2 = document.getElementById("my-video");
     
@@ -824,6 +836,8 @@ Load any speech from this time.
         getVideoJson(video);
         //get book for analysis via LLM.  
         getGitBook();
+//        getGitCommits();  //need to pass login token to do this.  Too many requests.  
+
 //        getGitContents('web/public/book.html');
         setTimeout(function(){ document.getElementById("download").click(); }, 2000);
                 //from test.js set context_window_size to sliding.  
@@ -1043,7 +1057,7 @@ function ChatLocal(transcript){
 
 			function MyChat(transcript) {
 				mychat = transcript; //$('#p').val();
-				if (mychat == "stop"){
+				if (mychat.toUpperCase().startsWith("STOP")){
 					window.speechSynthesis.cancel();
 					return;
 				}

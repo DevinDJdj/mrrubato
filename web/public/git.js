@@ -1,7 +1,7 @@
 var gitbook = [];
 var gitcommits = [];
 
-var gitstruct = {"bydate": {}, "bytopic": {}};
+var gitstruct = {"bydate": {}, "bytopic": {}, "alltopics": ""}; //context holds sequential string.  
 var gittoken = null;
 var gitcurrentpath = "";
 var gitcurrentcontents = "";
@@ -71,6 +71,7 @@ function gitDownloadCommits(data, dataTableGit){
 //	   $.getJSON(commit.url,function(commitdata){
 		$.ajax({
 		  url: commit.url,
+      indexValue: j,
 		  dataType: 'json',
 		  async: false,
 		  success: function(commitdata) {
@@ -97,7 +98,8 @@ function gitDownloadCommits(data, dataTableGit){
 				//getIterations(vid.snippet.description, vid.snippet.publishedAt) ];
 				console.log(obj);
 				myarray.push(obj);
-                gitcommits.push(obj);
+        gitcommits.push({"url": data[this.indexValue].html_url, "filename": commitdata.files[i].filename, "changes": commitdata.files[i].changes, "d": mydate, "selected": true});
+
 			}
 		  }
 		});
@@ -159,6 +161,7 @@ async function gitChartCommits(data){
 }
 
 
+  
 function getGitBook(){
     //get github
     url = giturl + '/contents/book';
@@ -184,7 +187,7 @@ function getGitBook(){
                 var gitbookname = pathArray[pathArray.length - 1];
                 gitbookname = gitbookname.split(".")[0];
                 //this should be a date YYYYmmdd
-                gitbook.push({"url": this.url, "gitdata": bookdata[this.indexValue], "d": gitbookname, "content": data});
+                gitbook.push({"url": this.url, "gitdata": bookdata[this.indexValue], "d": gitbookname, "content": data, "selected": true});
                 //data.sort((a, b) => a.date - b.date);
                 if (gitbook.length == bookdata.length || gitbook.length == totalcnt){
                   //need better way...
@@ -232,6 +235,7 @@ function parsegitBook(gb){
     }
     else if (str.startsWith("**")){ //TOPIC
       //add to current topic.  
+      gitstruct["alltopics"] += currenttopic + " ";
       content = {"topic": currenttopic, "d": gb.d, "content": fullstr  };
       if (!(currenttopic in gitstruct["bytopic"])){
         gitstruct["bytopic"][currenttopic] = [];
@@ -241,6 +245,7 @@ function parsegitBook(gb){
       gitstruct["bydate"][gb.d].push(content);
       currenttopic = str.slice(2).split(" ")[0];
       fullstr = "";
+
 
 
     }
@@ -254,6 +259,9 @@ function creategitStruct(){
   gitbook.sort((a, b) => a.d - b.d);
   //tree by time/topic
   //also topic/time
+  //reset struct
+  gitstruct = {"bydate": {}, "bytopic": {}, "alltopics": ""}; //context holds sequential string.  
+
 
     for (j=0; j<gitbook.length; j++){
         console.log(gitbook[j].d);
@@ -263,6 +271,7 @@ function creategitStruct(){
     }
     //any 
     loadTopic(gitbook[gitbook.length-1].gitdata["path"]);
+    loadTopicGraph(gitstruct["alltopics"]);
     
 
 }
@@ -292,6 +301,35 @@ function getGitContents(path){
 
 	});
   
+}
+
+function getgitSelected(start, end){
+  //return books selected as well as commits selected.  
+  console.log(start);
+  console.log(end);
+  var dstart = new Date(start *1000).toISOString().slice(0,10);
+  dstart = dstart.replace('-', '');
+  var dend = new Date(end*1000).toISOString().slice(0,10);
+  dend = dend.replace('-', '');
+  var numselected = 0;
+  for (i=0; i<gitbook.length; i++){
+    if (gitbook[i].d >= dstart && gitbook[i].d <= dend){
+      gitbook[i].selected = true;
+      numselected++;
+    }
+    else{
+      gitbook[i].selected = false;
+    }
+  }
+  return numselected + ' of ' + gitbook.length;
+  //change selected for any book date.  
+
+}
+
+function loadTopicGraph(str){
+  //this is input for word2vec struct.  
+  //also update canvas for this.  
+  prepareData
 }
 
 function loadTopic(top){
@@ -355,3 +393,16 @@ function clickHandlerGit(sender) {
       window.open(link, '_blank');
   
   }
+
+  function readyHandlerGit() {
+    var container = document.getElementById('gitchart');
+      var labels = container.getElementsByTagName('text');
+      Array.prototype.forEach.call(labels, function(label) {
+  //      if (label.getAttribute('fill') === options.timeline.rowLabelStyle.color) {
+          label.addEventListener('click', clickHandlerGit);
+          label.setAttribute('style', 'cursor: pointer; text-decoration: underline;');
+  //      }
+      });
+    }
+  
+  

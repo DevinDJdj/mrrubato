@@ -14,8 +14,10 @@ function updateEmbedding() {
     // move the groups accordingly
     gs.attr("transform", function (d, i) {
         return "translate(" +
-            ((Y[i][0] * 20 * ss + tx) + 300) + "," +
-            ((Y[i][1] * 20 * ss + ty) + 200) + ")";
+//            ((Y[i][0] * 20 * ss + tx) + 300) + "," +
+//            ((Y[i][1] * 20 * ss + ty) + 200) + ")";
+            ((Y[i][0] * 20 * ss*1 + tx) + 300) + "," +
+            ((Y[i][1] * 20 * ss*0.1 + ty) + 30) + ")";
     });
 }
 
@@ -24,8 +26,11 @@ function initEmbedding() {
     $("#embed").empty();
     var div = d3.select("#embed");
     svg = div.append("svg") // svg is global
+//        .attr("width", 600)
+//        .attr("height", 400);
         .attr("width", 600)
-        .attr("height", 400);
+        .attr("height", 60);
+
 }
 
 var gs;
@@ -42,7 +47,7 @@ function drawEmbedding() {
     cs = gs.append("circle")
         .attr("cx", 0)
         .attr("cy", 0)
-        .attr("r", 5)
+        .attr("r", 2)
         .attr('stroke-width', 1)
         .attr('stroke', 'black')
         .attr('fill', 'rgb(100,100,255)');
@@ -63,7 +68,7 @@ function drawEmbedding() {
     }
 
     var zoomListener = d3.behavior.zoom()
-        .scaleExtent([0.1, 10])
+        .scaleExtent([0.1, 5])
         .center([0, 0])
         .on("zoom", zoomHandler);
     zoomListener(svg);
