@@ -881,3 +881,42 @@ Need key interaction for zoom etc.
 I guess just use the d3 component.  
 Adjust the links.  
 
+
+
+#glean.ai
+#https://www.linkedin.com/events/6975146021152579584/comments/
+not very interesting.  But useful.  
+Just Invoice management.  
+
+
+#devrev.ai
+hmmm... not convinced.  
+
+#magic.dev
+#https://magic.dev/blog/100m-token-context-windows
+interesting.
+Can we get this model working in mlc?  
+
+
+#groq.com
+Probably not necessary in the long run.  
+What is the STT they are using though.  
+Yeah I like this.  
+ah not running in browser.  
+nvm....
+Response time really nice though.  
+
+#physical intelligence
+Keep trying...
+
+#tenstorrent
+hmmmm..
+
+#https://llm.mlc.ai/docs/deploy/webllm.html
+#https://github.com/mlc-ai/mlc-llm
+
+
+**web/public/book.html
+Display somewhat better.  
+ok, loadTopicGraph works.  
+Not very nice, but...

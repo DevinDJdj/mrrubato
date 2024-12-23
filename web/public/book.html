@@ -270,8 +270,8 @@ Load any speech from this time.
         
         </td>
         <td colspan="2">
-            <canvas id="wordcanvas" width="640" height="60" style="display: none">Your browser does not support the HTML5 canvas tag.</canvas>    
-
+            <div id="wordcanvas"><svg width="600" height="60"></svg></div>
+<!--            <canvas id="wordcanvas" width="640" height="60" style="display: none">Your browser does not support the HTML5 canvas tag.</canvas>    -->
         </td>
     </tr>
     </table>
@@ -287,7 +287,7 @@ Load any speech from this time.
     
 
 
-    <!-- dont need this lookup for now.  -->
+    <!-- dont need this lookup for now.  hiding the diclabel etc for language.js-->
     <table style="display:none">
     <tr>
         <td>
@@ -375,11 +375,11 @@ Load any speech from this time.
     
     <canvas id="pcanvas" width="110" height="22" style="display: none">Your browser does not support the HTML5 canvas tag.</canvas>    
 
-    <div id="code_chat" style="width: 100%;height: 300px;overflow:auto;">
-        <table style="width:100%">
-            <tr width="100%">
-            <td valign="top"  style="min-width: 400px;">
-                <div id="chat_table" width="400">
+    <div id="code_chat" style="width: 100%;height: 300px;overflow:hidden;">
+        <table style="width:100%;height:300px;">
+            <tr width="100%;">
+            <td valign="top">
+                <div id="chat_table" width="400" style="width: 400px;height:300px;overflow:auto;">
                     <table id="ChatTable">
                 <tr id="templateRow">
                 <td>id</td>
@@ -401,6 +401,259 @@ Load any speech from this time.
     </div>
 	<div id="gitchart" style="height:200px;"></div>
 
+<!-- word2vec display with graph.  maybe keep, alternative just a simple text representation of this same data.  -->
+    <link rel="stylesheet" href="word2vec-demo/css/bootstrap.min.css">
+    <!-- <link href="bootstrap.min.css" rel="stylesheet"> -->
+    <script type="text/javascript" async="" src="word2vec-demo/scripts/ga.js"></script>
+<!--    <script src="word2vec-demo/scripts/jquery-1.11.2.min.js"></script> -->
+    <script src="word2vec-demo/scripts/d3.min.js"></script>
+  
+    <script src="word2vec-demo/scripts/tsne.js"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.14.1"></script> -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.0.0/dist/tf.min.js"></script> -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-tsne"></script> -->
+    <script src="word2vec-demo/scripts/main.js"></script>
+
+    <div class="input-group" style="display: none">
+        <textarea id="textdata" class="form-control" aria-label="With textarea"
+          style="height:100px;">Hey there, Delilah. What's it like in New York city? I'm a thousand miles away. But, girl, tonight you look so pretty. Yes, you do. Times Square can't shine as bright as you. I swear it's true.</textarea>
+      </div>
+  
+
+      <div class="container" style="display:none">
+        <p><b>Specify model and parameters to generate dataset:</b></p>
+        <div class="row">
+          <div class="col-sm-4">
+            <div class="input-group mb-3">
+              <div class="input-group-prepend">
+                <label class="input-group-text" for="model">Model</label>
+              </div>
+              <select class="custom-select" id="model">
+                <option value="0" disabled>NNLM</option>
+                <option value="1" selected="selected">Skip-gram</option>
+                <option value="2">CBOW</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-sm-12">
+            <p class="text-secondary" id="modelDetails">This model trains words to predict their context.</p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-sm-4">
+            <div class="input-group mb-3">
+              <div class="input-group-prepend">
+                <span class="input-group-text" id="inputGroup-sizing-default">Window size</span>
+              </div>
+              <input type="text" id="windowSize" class="form-control" aria-label="Default"
+                aria-describedby="inputGroup-sizing-default" value="3">
+            </div>
+          </div>
+        </div>
+        <div class="form-check" style="margin-bottom: 12px">
+          <input class="form-check-input" type="checkbox" value="subsample" id="negativeSampling">
+          <label class="form-check-label" for="negativeSampling">
+            Negative sampling?
+          </label>
+        </div>
+        <div class="row" id="negativeSamplingRatio">
+        </div>
+        <!-- <div class="row">
+          <div class="col-sm-6">
+            <div class="form-check" style="margin-bottom: 12px">
+              <input class="form-check-input" type="checkbox" value="subsample" id="subsampling" disabled>
+              <label class="form-check-label" for="subsampling">
+                Subsample frequent words?
+              </label>
+            </div>
+          </div>
+        </div> -->
+        <button type="button" id="prepareData" class="btn btn-primary">Generate dataset</button>
+      </div>
+
+      <div class="container" style="display:none">
+        <div class="row">
+          <div class="col-sm-6"><b>Tokens:</b></div>
+          <div class="col-sm-6"><b>Training examples:</b></div>
+        </div>
+        <div class="row">
+          <div class="col-sm-6" style="overflow-y:auto; height:300px;">
+            <table id="tokenTable" class="table table-bordered table-striped mb-0">
+              <thead>
+                <tr>
+                  <th scope="col">No.</th>
+                  <th scope="col">Token</th>
+                  <th scope="col">Freq</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- <tr>
+                  <th scope="row">1</th>
+                  <td>Mark</td>
+                  <td>Otto</td>
+                </tr> -->
+              </tbody>
+            </table>
+          </div>
+          <div class="col-sm-6" style="overflow-y:auto; height:300px;">
+    
+            <table id="trainingTable" class="table table-bordered table-striped mb-0">
+              <thead>
+                <tr>
+                  <th scope="col">No.</th>
+                  <th scope="col" id="col1">Input</th>
+                  <th scope="col" id="col2">Output</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- <tr>
+                  <th scope="row">1</th>
+                  <td>Mark</td>
+                  <td>Otto</td>
+                </tr> -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-sm-6" id="statsVocabSize"></div>
+          <div class="col-sm-6" id="statsNumExamples"></div>
+        </div>
+      </div>
+
+      <div class="container" style="display:none">
+        <p><b>Specify parameters to train model:</b></p>
+        <div class="row">
+          <div class="col-sm-4">
+            <div class="input-group mb-3">
+              <div class="input-group-prepend">
+                <span class="input-group-text" id="inputGroup-sizing-default">Embedding size</span>
+              </div>
+              <input type="text" id="embeddingSize" class="form-control" aria-label="Default"
+                aria-describedby="inputGroup-sizing-default" value="5">
+            </div>
+          </div>
+        </div>
+          <div class="row">
+        <div class="col-sm-4">
+          <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <label class="input-group-text" for="inputGroupSelect01">Optimiser</label>
+            </div>
+            <select class="custom-select" id="inputGroupSelect01">
+              <option value="1">SGD</option>
+              <option value="2">Momentum</option>
+              <option value="3" selected="selected">RMSProp</option>
+              <option value="4">Adam</option>
+            </select>
+          </div>
+        </div>
+        <div class="col-sm-4">
+          <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <span class="input-group-text" id="inputGroup-sizing-default">Learning rate</span>
+            </div>
+            <input type="text" id="learningRate" class="form-control" aria-label="Default"
+              aria-describedby="inputGroup-sizing-default" value="0.03">
+          </div>
+        </div>
+        <div class="col-sm-4">
+          <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <span class="input-group-text" id="inputGroup-sizing-default">Epochs</span>
+            </div>
+            <input type="text" id="epochs" class="form-control" aria-label="Default"
+              aria-describedby="inputGroup-sizing-default" value="10">
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-sm-12">
+          <p id="trainDetails">Model will be trained with categorical cross entropy loss function.</p>
+        </div>
+      </div>
+      <button type="button" id="trainModel" class="btn btn-primary" style="width: 150px;" disabled>Train model</button>
+    </div>
+  
+    <div class="container" style="display:none">
+      <div class="progress">
+        <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-warning"
+          role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 0%"></div>
+      </div>
+    </div>
+  
+    <div class="container" style="display:none">
+      <p><b>Specify parameters to run t-SNE:</b></p>
+      <div class="row">
+        <div class="col-sm-4">
+          <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <span class="input-group-text" id="inputGroup-sizing-default">Learning rate</span>
+            </div>
+            <input type="text" id="lrtxt" class="form-control" aria-label="Default"
+              aria-describedby="inputGroup-sizing-default" value="10">
+          </div>
+        </div>
+        <div class="col-sm-4">
+          <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <span class="input-group-text" id="inputGroup-sizing-default">Perplexity</span>
+            </div>
+            <input type="text" id="perptxt" class="form-control" aria-label="Default"
+              aria-describedby="inputGroup-sizing-default" value="30">
+          </div>
+        </div>
+      </div>
+      <!-- <div class="row"> -->
+      <!-- <div class="col-sm-6">
+          <form action="https://cs.stanford.edu/people/karpathy/tsnejs/csvdemo.html" id="datatypeform">
+            <input type="radio" name="rdata" value="raw" checked=""> Raw NxD data (each row are features)<br>
+            <input type="radio" name="rdata" value="dist"> NxN Distance
+          </form><br>
+        </div> -->
+      <!-- <div class="col-sm-4">
+          <form action="https://cs.stanford.edu/people/karpathy/tsnejs/csvdemo.html">
+          </form>
+        </div> -->
+      <!-- </div> -->
+      <div class="row">
+        <div class="col-sm-12">
+          <button type="button" id="inbut" class="btn btn-primary" style="width:150px;" disabled>Run t-SNE</button>
+          <button type="button" id="stopbut" class="btn btn-danger" style="width:100px;" disabled>Stop</button>
+        </div>
+      </div>
+      <div id="cost" style="text-align:left; font-family: Impact;"></div>
+  <!--    <div id="embed"><svg width="600" height="400"></svg></div> -->
+  <!--    <div id="embed"><svg width="600" height="60"></svg></div>  -->
+    </div>
+  
+    <div class="container" style="display:none">
+      <hr>
+      <div class="row col-sm-12">
+        <p>References:</p>
+        <ul>
+          <li><a href="https://arxiv.org/abs/1301.3781">Efficient Estimation of Word Representations in Vector Space</a></li> by Mikolov et. al
+          <li><a href="https://arxiv.org/abs/1310.4546">Distributed Representations of Words and Phrases and their Compositionality</a> by Mikolov et. al</li>
+          <li><a href="https://www.coursera.org/learn/nlp-sequence-models">Sequence Models in Machine Learning Course by Andrew Ng</a> on Coursera</li>
+          <li>Jay Alammar's <a href="https://jalammar.github.io/illustrated-word2vec/">The Illustrated Word2Vec</a></li>
+        </ul>
+      </div>
+      <div class="row col-sm-12">
+        <p>Adapted from Andrej Karpathy's <a href="https://cs.stanford.edu/people/karpathy/tsnejs/csvdemo.html">t-SNE CSV
+            web demo</a></p>
+      </div>
+      <div class="row col-sm-12">
+        <p>Theme from Bootstrap</p>
+      </div>
+      <div class="row col-sm-12">
+        <p>Maintained by <a href="https://raibosome.github.io">Raimi</a>. See <a href="https://github.com/raibosome/raibosome.github.io/tree/master/word2vec-demo">source code</a>.</p>
+      </div>
+    </div>
+        
+      <!-- end word2vec-->
 <script>
     player2 = document.getElementById("my-video");
     
@@ -766,6 +1019,7 @@ Load any speech from this time.
                 
                     uid = user.uid;
                     addMe(user);
+
                 }
     
     
@@ -870,14 +1124,14 @@ Load any speech from this time.
 
 
 
-<div id="gitchart" style="height:200px;"></div>
-
 <script src="git.js"></script>
 
 <script>
 
 var mycontext = "";
 var files = [];
+
+
 
 function setTranscript(transcript){
 	$('#transcriptsh').html(makeTimeLinks(transcript));

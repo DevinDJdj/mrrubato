@@ -23,8 +23,8 @@ function updateEmbedding() {
 
 var svg;
 function initEmbedding() {
-    $("#embed").empty();
-    var div = d3.select("#embed");
+    $("#wordcanvas").empty();
+    var div = d3.select("#wordcanvas");
     svg = div.append("svg") // svg is global
 //        .attr("width", 600)
 //        .attr("height", 400);

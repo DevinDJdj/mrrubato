@@ -329,7 +329,14 @@ function getgitSelected(start, end){
 function loadTopicGraph(str){
   //this is input for word2vec struct.  
   //also update canvas for this.  
-  prepareData
+    $('#textdata').val(str)
+setTimeout(function(){$("#prepareData").click();}, 1000); 
+  setTimeout(function(){$("#trainModel").click();}, 3000);
+  
+  setTimeout(function(){$("#inbut").click(); }, 6000);
+
+  setTimeout(function(){$("stopbut").click();dotrain=false;}, 10000);
+
 }
 
 function loadTopic(top){

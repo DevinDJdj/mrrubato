@@ -4,9 +4,9 @@ var MAX_LOCAL_QUERY_LENGTH = 10000;
 var lastread = 0;
 var reading = false;
 var localprompt = 'please use the following content.  Each page is marked by --PAGETITLE-- and --END PAGETITLE--.  \
-                        Please keep the response to less than 500 words.  If further information is needed, the user will ask another question.  \
-                        You are trying to help explain the content to the user.  \
-                        Use primarily this content to answer the question at the very end of the content marked by "Question:"  \
+                        Please keep the response short and less than 300 words.  If further information is needed, the user will ask another question.  \
+                        You are trying to help explain the content and context provided to the user.  \
+                        Use primarily this input content in the pages --PAGETITLE-- content to answer the question at the very end marked by "Question:"  \
                       \
     '
 

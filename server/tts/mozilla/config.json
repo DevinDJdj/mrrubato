@@ -61,8 +61,8 @@
     "reinit_layers": [],    // give a list of layer names to restore from the given checkpoint. If not defined, it reloads all heuristically matching layers.
 
     // TRAINING
-    "batch_size": 32,       // Batch size for training. Lower values than 32 might cause hard to learn attention. It is overwritten by 'gradual_training'.
-    "eval_batch_size":16,
+    "batch_size": 8,       // Batch size for training. Lower values than 32 might cause hard to learn attention. It is overwritten by 'gradual_training'.
+    "eval_batch_size":2,
     "r": 7,                 // Number of decoder frames to predict per iteration. Set the initial values if gradual training is enabled.
     "gradual_training": [[0, 7, 64], [1, 5, 64], [50000, 3, 32], [130000, 2, 32], [290000, 1, 32]], //set gradual training steps [first_step, r, batch_size]. If it is null, gradual training is disabled. For Tacotron, you might need to reduce the 'batch_size' as you proceeed.
     "mixed_precision": true,     // level of optimization with NVIDIA's apex feature for automatic mixed FP16/FP32 precision (AMP), NOTE: currently only O1 is supported, and use "O1" to activate.
@@ -126,16 +126,16 @@
     // DATA LOADING
     "text_cleaner": "phoneme_cleaners",
     "enable_eos_bos_chars": false, // enable/disable beginning of sentence and end of sentence chars.
-    "num_loader_workers": 4,        // number of training data loader processes. Don't set it too big. 4-8 are good values.
-    "num_val_loader_workers": 4,    // number of evaluation data loader processes.
-    "batch_group_size": 4,  //Number of batches to shuffle after bucketing.
+    "num_loader_workers": 2,        // number of training data loader processes. Don't set it too big. 4-8 are good values.
+    "num_val_loader_workers": 2,    // number of evaluation data loader processes.
+    "batch_group_size": 2,  //Number of batches to shuffle after bucketing.
     "min_seq_len": 6,       // DATASET-RELATED: minimum text length to use in training
     "max_seq_len": 153,     // DATASET-RELATED: maximum text length
     "compute_input_seq_cache": false,  // if true, text sequences are computed before starting training. If phonemes are enabled, they are also computed at this stage.
     "use_noise_augment": true,
 
     // PATHS
-    "output_path": "/mnt/c/devinpiano/music/server/tts/ljspeech",
+    "output_path": "/mnt/c/devinpiano/music/server/tts/ljspeech/models",
 
     // PHONEMES
     "phoneme_cache_path": "/mnt/c/devinpiano/music/server/tts/Models/phoneme_cache/",  // phoneme computation is slow, therefore, it caches results in the given folder.
