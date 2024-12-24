@@ -1271,7 +1271,7 @@ function findWordsA(user){
                         //get the index of this
                         wordindex = miditostrindex.indexOf(indexes[i]);
                         //value[j] is start of this language.
-                        if (wordtimes[key][v3].indexOf(value[wordindex ].time) < 0){
+                        if (wordindex > -1 && wordtimes[key][v3].indexOf(value[wordindex ].time) < 0){
                             wordtimes[key][v3].push(value[wordindex ].time);
                             //push the whole midi struct.  to use later
                             midiwords[key][v3].push(value[wordindex]);

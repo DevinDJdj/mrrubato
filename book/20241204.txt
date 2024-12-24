@@ -920,3 +920,72 @@ hmmmm..
 Display somewhat better.  
 ok, loadTopicGraph works.  
 Not very nice, but...
+
+**midi
+**web/public/keymap.js
+Not sure if it is good or bad to use repetition in words here.  
+midi devices may not pick up repeated notes very well.  
+
+**ROLI
+This device even moreso.  
+
+
+context selection is key.  
+Need to elaborate on context when this is the topic selected.  
+Use this topic content 
+Use a two variable sphere of content essentially.  
+Most similar content has a longer time window, 
+until you reach a sphere of influence.  
+I think all content from the immediate environment should be used.  
+Then make the short sphere of similarity content search up to X items.  
+for book and commits, just use time as primary search mechanism, and then filter by similarity.  
+Make this parametric of course.  
+So a parameter for building context.  
+Importance on Time of the current video.  
+Importance of Book content.  
+Importance of Git changes.  
+Importance of TOPIC similarity.  
+Importance of Selected TOPIC.  
+Others?
+All of these parameters will adjust the context which is built.  
+
+
+The data structure we have is mostly enough I think.  
+Just need to hash out the details and get similarity from the word2vec structure.  
+Need avg similarity along with a lookup for each "word" to do the TOPIC similarity logic.  
+
+
+**web/public/languages.js
+findWordsA needs to be adjusted when set octave is used.  
+Right now if we adjust octave I think the words are getting saved, but UI not updated.  
+
+
+**web/public/book.html
+for now move the overall struct (wordcanvas) to left side.  
+Fixed location, and perhaps overlap on top of chat.  
+This shows the overall context which is being queried.  
+What is displayed or zoomed on could be correlated with the constructed context.  
+Where wordcanvas is now, make a simple text div which shows 3 or 4 rows of most recent 
+iteration of the selected TOPIC.  
+Also include the book names (dates) in the topic string.  This way we have time context built in.  
+"gitstruct[alltopics]"
+build from this variable, just find the most recent iterations of the TOPIC, and get surrounding topics/comments.  
+first and second row will show last two iterations of where this TOPIC was utilized in selected time context.  
+third/fourth can show comments ## and # along with any other of the defined annotations from definitions.txt.  
+Same context, whatever is close to the selected TOPIC.  
+
+**book/definitions.txt
+This should be constructed better.  
+INI file of sorts.  
+To start just **, ##, #, "", --, >
+
+--OK some good progress.  
+
+"code_edit"
+Right side not scrolling.  
+hmmm..
+
+What do we do with the video?  
+
+
+

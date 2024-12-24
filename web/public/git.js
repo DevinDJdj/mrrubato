@@ -8,8 +8,11 @@ var gitcurrentcontents = "";
 var gitcurrentcontentstype = "javascript";
 
 var currenttopic = "NONE";
+var currenttopicline = 0;
+var currentrefline = 0;
+var currentref = "NONE";
 var chathistory = []; //keep history/transcript.  
-
+var myCodeMirror = null;
 
 
 function gitSignin(){
@@ -215,28 +218,56 @@ function parsegitBook(gb){
   str = "";
   fullstr = "";
   gitstruct["bydate"][gb.d] = [];
+  gitstruct["alltopics"] += gb.d + " "; //add book as well.  onclick add the needed book/d.txt
+  incomment = false;
+  inref = false;
+  refstr = "";
   for (i=0; i<gblines.length; i++){
     str = gblines[i];
     if (str.startsWith("<!--")){ //start comment (ignore)
+      incomment = true;
     }
     else if (str.startsWith("-->")){ //end comment
-
+      incomment = false;
     }
     else if (str.startsWith(">")){ //CMD
+      incomment = false;
     }
-    else if (str.startsWith("##")){ //reference
+    else if (str.startsWith("##") || str.startsWith("#")){ //reference
+      incomment = false;
+      inref = true;
+      gitstruct["allrefs"] += currentref + " ";
+      gitstruct["all"] += currentref + " ";
+      content = {"ref": currentref, "d": gb.d, "line": currentrefline, "content": refstr  };
+      if (!(currentref in gitstruct["byref"])){
+        gitstruct["byref"][currentref] = [];
+      }
+      gitstruct["byref"][currentref].push(content); //ordered by date.  
+
+      currentref = str.slice(1).split(" ")[0];
+      if (currentref.charAt(0) == "#"){
+        currentref = currentref.slice(1);
+      }
+      currentrefline = i;
+      refstr = "";
     }
     else if (str.startsWith("@@")){ //Question
+      incomment = false;
 
     }
     else if (str.startsWith("--")){ //NOTE
+      incomment = false;
     }
     else if (str.startsWith("-")){ //subtask
+      incomment = false;
     }
     else if (str.startsWith("**")){ //TOPIC
       //add to current topic.  
+      incomment = false;
+      inref = false;
       gitstruct["alltopics"] += currenttopic + " ";
-      content = {"topic": currenttopic, "d": gb.d, "content": fullstr  };
+      gitstruct["all"] += currenttopic + " ";
+      content = {"topic": currenttopic, "d": gb.d, "line": currenttopicline, "content": fullstr  };
       if (!(currenttopic in gitstruct["bytopic"])){
         gitstruct["bytopic"][currenttopic] = [];
       }
@@ -244,12 +275,17 @@ function parsegitBook(gb){
 
       gitstruct["bydate"][gb.d].push(content);
       currenttopic = str.slice(2).split(" ")[0];
+      currenttopicline = i;
       fullstr = "";
 
 
-
     }
-    fullstr += str;
+    if (!incomment){
+      fullstr += str;
+    }
+    if (inref){
+      refstr += str;
+    }
 
   }
 
@@ -260,7 +296,7 @@ function creategitStruct(){
   //tree by time/topic
   //also topic/time
   //reset struct
-  gitstruct = {"bydate": {}, "bytopic": {}, "alltopics": ""}; //context holds sequential string.  
+  gitstruct = {"bydate": {}, "bytopic": {}, "byref": {}, "alltopics": "", "allrefs": "", "all": ""}; //context holds sequential string.  
 
 
     for (j=0; j<gitbook.length; j++){
@@ -270,7 +306,7 @@ function creategitStruct(){
 
     }
     //any 
-    loadTopic(gitbook[gitbook.length-1].gitdata["path"]);
+    loadTopic(gitbook[gitbook.length-1].d);
     loadTopicGraph(gitstruct["alltopics"]);
     
 
@@ -280,6 +316,7 @@ function loadfromGitBook(top){
   if (top in gitstruct["bytopic"]){
     console.log(gitstruct["bytopic"][top]);
   }
+
 }
 
 function getGitContents(path){
@@ -293,12 +330,19 @@ function getGitContents(path){
       gitcurrentcontents = atob(data.content);
 
       $('#for_edit_code').text(gitcurrentpath);
-      var myCodeMirror = CodeMirror(document.getElementById("edit_code"), {
-        value: gitcurrentcontents,
-        mode:  gitcurrentcontentstype, 
-        lineNumbers: true
-      });
 
+      if (myCodeMirror == null){
+        myCodeMirror = CodeMirror(document.getElementById("edit_code"), {
+          value: gitcurrentcontents,
+          mode:  gitcurrentcontentstype, 
+          lineNumbers: true
+        });
+      }
+      else{
+        var editor = myCodeMirror;
+        editor.getDoc().setValue(gitcurrentcontents);
+        editor.setOption("mode", gitcurrentcontentstype);
+      }
 	});
   
 }
@@ -335,15 +379,64 @@ setTimeout(function(){$("#prepareData").click();}, 1000);
   
   setTimeout(function(){$("#inbut").click(); }, 6000);
 
-  setTimeout(function(){$("stopbut").click();dotrain=false;}, 10000);
+  setTimeout(function(){$("stopbut").click();dotrain=false;}, 12000);
 
 }
 
+function loadTopicIterations(top){
+  topics = gitstruct["alltopics"].split(" ");
+  index = topics.lastIndexOf(top);
+  topicstr = "";
+  fulltopicstr = "";
+  if (index > -1){
+    t = topics.slice(index-7, index+3);
+    for (j=0; j<t.length; j++){
+      if (t[j] == top){
+        topicstr += "<b>";
+      }
+      topicstr += `<a href="#" onclick="loadTopic('${t[j]}');">${t[j]}</a> `;
+      if (t[j] == top){
+        topicstr += "</b>";
+      }
+    }
+  }
+  fulltopicstr = topicstr;
+  topicstr = "";
+  index = topics.lastIndexOf(top, -(topics.length-index)-1);
+  if (index > -1){
+    t = topics.slice(index-5, index+5);
+    for (j=0; j<t.length; j++){
+      if (t[j] == top){
+        topicstr += "<b>";
+      }
+      topicstr += `<a href="#" onclick="loadTopic('${t[j]}');">${t[j]}</a> `;
+      if (t[j] == top){
+        topicstr += "</b>";
+      }
+    }
+  }
+  fulltopicstr = topicstr + fulltopicstr;
+  $('#recenttopics').html(fulltopicstr);
+
+
+}
+
+function isDate(top){
+  if (top.startsWith("20")){
+    return true;
+  }
+}
 function loadTopic(top){
-    getGitContents(top);
+    if (isDate(top)){
+      getGitContents("book/" + top + ".txt");
+    }
+    else{
+      getGitContents(top);
+    }
     loadfromGitBook(top); //search Git for this string **.... in gitbook and retrieve all.  
     //look through the latest commit info and if newer than RTDB entry, pull from git.  
     //Cache result in RTDB.  
+    loadTopicIterations(top);
 }
 
 function getGitTree(){

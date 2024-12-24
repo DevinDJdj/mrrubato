@@ -16,8 +16,8 @@ function updateEmbedding() {
         return "translate(" +
 //            ((Y[i][0] * 20 * ss + tx) + 300) + "," +
 //            ((Y[i][1] * 20 * ss + ty) + 200) + ")";
-            ((Y[i][0] * 20 * ss*1 + tx) + 300) + "," +
-            ((Y[i][1] * 20 * ss*0.1 + ty) + 30) + ")";
+            ((Y[i][0] * 20 * ss*1 + tx) + 150) + "," +
+            ((Y[i][1] * 20 * ss*1 + ty) + 150) + ")";
     });
 }
 
@@ -28,8 +28,8 @@ function initEmbedding() {
     svg = div.append("svg") // svg is global
 //        .attr("width", 600)
 //        .attr("height", 400);
-        .attr("width", 600)
-        .attr("height", 60);
+        .attr("width", 300)
+        .attr("height", 300);
 
 }
 
@@ -62,13 +62,13 @@ function drawEmbedding() {
         ts = ls.append("text")
             .attr("text-anchor", "top")
             .attr("transform", "translate(5, -5)")
-            .attr("font-size", 12)
+            .attr("font-size", 10)
             .attr("fill", "#333")
             .text(function (d, i) { return labels[i]; });
     }
 
     var zoomListener = d3.behavior.zoom()
-        .scaleExtent([0.1, 5])
+        .scaleExtent([0.5, 5])
         .center([0, 0])
         .on("zoom", zoomHandler);
     zoomListener(svg);
