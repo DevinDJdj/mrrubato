@@ -987,5 +987,36 @@ hmmm..
 
 What do we do with the video?  
 
+**web/public/rec.html
+Overlay original video in top right?  
+
+
+**web/public/book.html
+issue with "wordcanvas" when interacting with UI.  
+translate(NaN,NaN)
+really need to format responses.  
+Continue with date selection.  
+Make some keymap.  
+**web/public/languages/book.js
+
+Use existing formatting of book entries instead of trying to manipulate in the prompt.  
+
+Pass the git authentication 
+--not working.  
+
+
+OK, change the word2vec links to something more logical.  
+Switch my transcript and wordmap?  
+Yeah maybe.  
+#https://llm.mlc.ai/docs/deploy/mlc_chat_config.html
+repetition_penalty: 
+
+--OK, seems to be working now with more data. 
+word2vec graphic clickable.  
+What to do if this doesnt exist in repository?  
+Just search book for this entry...
+Zoom onto selected item. 
+Keep history of shape of thought sequence.  
+Try to find patterns in this.  
 
 

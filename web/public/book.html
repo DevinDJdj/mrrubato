@@ -192,12 +192,12 @@ Load any speech from this time.
                 <p style="display:none">Step 2: Chat</p>
                 <div class="chat-container" style="display:none">
                   <div id="chat-box" class="chat-box"></div>
-                  <div id="chat-stats" class="chat-stats hidden"></div>
                   <div class="chat-input-container">
                     <input type="text" id="user-input" placeholder="Type a message..." />
                     <button id="send" disabled>Send</button>
                   </div>
                 </div>
+                <div id="chat-stats" class="chat-stats hidden"></div>
                 
                 <div class="tags-input" style="width:100%;"> 
 
@@ -376,16 +376,16 @@ Load any speech from this time.
     
     <canvas id="pcanvas" width="110" height="22" style="display: none">Your browser does not support the HTML5 canvas tag.</canvas>    
 
-    <div id="code_chat" style="width: 100%;height: 300px;overflow:hidden;">
-        <table style="width:100%;height:300px;">
+    <div id="code_chat" style="width: 100%;height: 360px;overflow:auto;">
+        <table style="width:100%;height:360px;">
             <tr width="100%;">
             <td valign="top">
-                <div id="wordcanvas" style="width:300px;height:300px;">
+                <div id="wordcanvas" style="width:300px;height:300px;overflow:hidden;">
 
                 </div>
             </td>
             <td valign="top">
-                <div id="chat_table" width="400" style="width: 400px;height:300px;overflow:auto;">
+                <div id="chat_table" width="400" style="width: 400px;height:320px;overflow:auto;">
                     <table id="ChatTable">
                 <tr id="templateRow">
                 <td>id</td>
@@ -398,7 +398,7 @@ Load any speech from this time.
                     </td>
             <td valign="top">
                 <label id="for_edit_code" for="edit_code">Code Snippet:</label>
-                <div id="edit_code" style="overflow:auto;">
+                <div id="edit_code" style="overflow:scroll;">
 
                 </div>
             </td>
@@ -1231,17 +1231,17 @@ function createNotesArray(){
 
 function ChatLocalUpdate(answer){
     lastread = answer.length + lastread; //usually lastread = 0
-    ss = new SpeechSynthesisUtterance(answer);
-    ss.rate = myrate;
-    ss.pitch = mypitch;
+    ssu = new SpeechSynthesisUtterance(answer);
+    ssu.rate = myrate;
+    ssu.pitch = mypitch;
     window.speechSynthesis.cancel();
     reading = true;
-    ss.onend = function (event) {
+    ssu.onend = function (event) {
         console.log(event.timeStamp);
         reading = false;
     };
 
-    window.speechSynthesis.speak(ss);
+    window.speechSynthesis.speak(ssu);
 
 }
 
@@ -1251,11 +1251,11 @@ function ChatLocalDone(answer){
     tospeak = addChatRow(lastquery, answer, []);
     tospeak = tospeak.slice(lastread);
     lastread = 0;
-    ss = new SpeechSynthesisUtterance(tospeak);
-    ss.rate = myrate;
-    ss.pitch = mypitch;
+    ssu = new SpeechSynthesisUtterance(tospeak);
+    ssu.rate = myrate;
+    ssu.pitch = mypitch;
     window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(ss);
+    window.speechSynthesis.speak(ssu);
     var myDiv = document.getElementById('code_chat');
     myDiv.scrollTop = 0;
 
@@ -1283,10 +1283,10 @@ function ChatBuildContext(context){
 
             files.push(gitbook[gi].url);
             if (fn == "definitions"){
-                mycontext = "--" + fn + "--\n" + gitbook[gi].content + "\n--END " + fn + "--\n" + mycontext;
+                mycontext = "**" + fn + "\n" + gitbook[gi].content + "\n\n" + mycontext;
             }
             else{
-                mycontext += "--" + fn + "--\n" + gitbook[gi].content + "\n--END " + fn + "--\n";
+                mycontext += "**" + fn + "\n" + gitbook[gi].content + "\n\n";
             }
         }
 
@@ -1294,7 +1294,7 @@ function ChatBuildContext(context){
     //will need to add actual source files as well here to context.  
 
     console.log(files);
-    mycontext = localprompt + "\n" + mycontext + "\nQuestion: " + lastquery;
+    mycontext = localprompt + "\n" + mycontext + "\n@@Question: " + lastquery;
 
     
 }
@@ -1341,11 +1341,11 @@ function ChatLocal(transcript){
                   
 				  if (typeof(data.answer) != "undefined") {
 					addChatRow(data.query, data.answer, data.sources);
-					ss = new SpeechSynthesisUtterance(data.answer);
-					ss.rate = myrate;
-					ss.pitch = mypitch;
+					ssu = new SpeechSynthesisUtterance(data.answer);
+					ssu.rate = myrate;
+					ssu.pitch = mypitch;
                     window.speechSynthesis.cancel();
-					window.speechSynthesis.speak(ss);
+					window.speechSynthesis.speak(ssu);
 
                     console.log('query ' +  data.query);
 //                    addComment(data.answer, helpme())

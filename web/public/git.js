@@ -16,6 +16,7 @@ var myCodeMirror = null;
 
 
 function gitSignin(){
+  localStorage.removeItem('gittoken');
   var gitprovider = new firebase.auth.GithubAuthProvider();
   gitprovider.addScope('repo');
   gitprovider.setCustomParameters({
@@ -32,6 +33,7 @@ function gitSignin(){
       // This gives you a GitHub Access Token. You can use it to access the GitHub API.
       gittoken = credential.accessToken;
       console.log(gittoken);
+      localStorage.setItem("gittoken", gittoken);
 
       const octokit = new LLM.Octokit({
       auth: gittoken,
@@ -51,6 +53,7 @@ function gitSignin(){
       if (typeof(credential.accessToken) !== "undefined"){
         gittoken = credential.accessToken;
         console.log(gittoken);
+        localStorage.setItem("gittoken", gittoken);
 
         const octokit = new LLM.Octokit({
         auth: gittoken,
@@ -77,6 +80,12 @@ function gitDownloadCommits(data, dataTableGit){
       indexValue: j,
 		  dataType: 'json',
 		  async: false,
+      beforeSend: function(xhr) {
+        gittoken = localStorage.getItem('gittoken'); // Get the token from local storage
+        if (gittoken) {
+          xhr.setRequestHeader('Authorization', 'Bearer ' + gittoken);
+        }
+      },
 		  success: function(commitdata) {
 		  
 
@@ -171,35 +180,42 @@ function getGitBook(){
 
    $.getJSON(url,function(bookdata){
        console.log(bookdata);       
-       totalcnt = 10;
-       for (j=0; j<bookdata.length && j< totalcnt; j++){
+       totalcnt = 40;
+       for (j=0; j<bookdata.length; j++){
    //    for (j=vids.length-1; j> -1; j--){
            page = bookdata[j];
            console.log(page.download_url);
    
-   //	   $.getJSON(commit.url,function(commitdata){
-           $.ajax({
-             url: page.download_url,
-             indexValue: j,
-             dataType: 'text',
-//             headers: {"Authorization": "Bearer " + gittoken},
-             async: false,
-             success: function(data) {
-//                console.log(data);   
-                var pathArray = this.url.split("/");
-                var gitbookname = pathArray[pathArray.length - 1];
-                gitbookname = gitbookname.split(".")[0];
-                //this should be a date YYYYmmdd
-                gitbook.push({"url": this.url, "gitdata": bookdata[this.indexValue], "d": gitbookname, "content": data, "selected": true});
-                //data.sort((a, b) => a.date - b.date);
-                if (gitbook.length == bookdata.length || gitbook.length == totalcnt){
-                  //need better way...
-                  creategitStruct();
-                  console.log(gitstruct);
+           if (j< totalcnt || getFileName(page.download_url) == "definitions"){
+    //	   $.getJSON(commit.url,function(commitdata){
+            $.ajax({
+              url: page.download_url,
+              indexValue: j,
+              dataType: 'text',
+  //             headers: {"Authorization": "Bearer " + gittoken},
+              async: false,
+              beforeSend: function(xhr) {
+                gittoken = localStorage.getItem('gittoken'); // Get the token from local storage
+                if (gittoken) {
+                  xhr.setRequestHeader('Authorization', 'Bearer ' + gittoken);
                 }
-             }
-           });
-   
+              },
+                      success: function(data) {
+  //                console.log(data);   
+                  var pathArray = this.url.split("/");
+                  var gitbookname = pathArray[pathArray.length - 1];
+                  gitbookname = gitbookname.split(".")[0];
+                  //this should be a date YYYYmmdd
+                  gitbook.push({"url": this.url, "gitdata": bookdata[this.indexValue], "d": gitbookname, "content": data, "selected": true});
+                  //data.sort((a, b) => a.date - b.date);
+                  if (gitbook.length == bookdata.length || gitbook.length == totalcnt){
+                    //need better way...
+                    creategitStruct();
+                    console.log(gitstruct);
+                  }
+              }
+            });
+          }   
    
        }
 //       setTimeout(creategitStruct(), 10000);
@@ -373,13 +389,13 @@ function getgitSelected(start, end){
 function loadTopicGraph(str){
   //this is input for word2vec struct.  
   //also update canvas for this.  
-    $('#textdata').val(str)
-setTimeout(function(){$("#prepareData").click();}, 1000); 
-  setTimeout(function(){$("#trainModel").click();}, 3000);
+    $('#textdata').val(str);
+  setTimeout(function(){$("#prepareData").click();}, 2000); 
+  setTimeout(function(){$("#trainModel").click();}, 4000);
   
-  setTimeout(function(){$("#inbut").click(); }, 6000);
+  setTimeout(function(){$("#inbut").click(); }, 12000);
 
-  setTimeout(function(){$("stopbut").click();dotrain=false;}, 12000);
+  setTimeout(function(){$("stopbut").click();dotrain=false;}, 18000);
 
 }
 

@@ -28,9 +28,13 @@ async function initializeWebLLMEngine() {
   document.getElementById("download-status").classList.remove("hidden");
   selectedModel = document.getElementById("model-selection").value;
   const config = {
-    temperature: 1.0,
+    temperature: 0.5,
     top_p: 1,
-    context_window_size: 32576
+    sliding_window_size: 32576, 
+    context_window_size: -1,
+    attention_sink_size: 0, 
+    repetition_penalty: 2.0
+//    max_tokens: 300
   };
   await engine.reload(selectedModel, config);
 

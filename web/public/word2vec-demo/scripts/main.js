@@ -10,14 +10,19 @@ var data;
 function updateEmbedding() {
 
     // get current solution
-    var Y = T.getSolution();
+    var YS = T.getSolution();
     // move the groups accordingly
-    gs.attr("transform", function (d, i) {
+    gs.attr("transform", function (d, si) {
+        xx = ((YS[si][0] * 20 * ss*1 + tx) + 100);
+        yy = ((YS[si][1] * 20 * ss*1 + ty) + 150);
+        if (isNaN(xx) || isNaN(yy)){
+            return "";
+        }
         return "translate(" +
 //            ((Y[i][0] * 20 * ss + tx) + 300) + "," +
 //            ((Y[i][1] * 20 * ss + ty) + 200) + ")";
-            ((Y[i][0] * 20 * ss*1 + tx) + 150) + "," +
-            ((Y[i][1] * 20 * ss*1 + ty) + 150) + ")";
+            xx + "," +
+            yy + ")";
     });
 }
 
@@ -55,13 +60,16 @@ function drawEmbedding() {
 
     if (labels.length > 0) {
         ls = gs.append("a")
-        .attr("xlink:href", function(d,i){ return "../" + labels[i];})
+        .attr("xlink:href", function(d,i){ return "#";})
+        .on("click", function(d, i){ loadTopic(labels[i]);})
         .attr("target", "_top");
+
         //here add link to topic.  
+
 
         ts = ls.append("text")
             .attr("text-anchor", "top")
-            .attr("transform", "translate(5, -5)")
+            .attr("transform", "translate(2, -2)")
             .attr("font-size", 10)
             .attr("fill", "#333")
             .text(function (d, i) { return labels[i]; });
@@ -163,11 +171,16 @@ function createModelLogistic(vocabSize, embeddingSize = 10) {
 }
 
 function getDataPairs(model, str, c, binaryClassification, numNegSamples = 3) {
-    var arr = str.toLowerCase().trim().replace(/\n/g, " ").replace(/[\.,()]/g, "").replace(/  /g, " ").replace(/\?/g, "").replace(/\'/g, "_").split(" ")
+//    var arr = str.toLowerCase().trim().replace(/\n/g, " ").replace(/[\.,()]/g, "").replace(/  /g, " ").replace(/\?/g, "").replace(/\'/g, "_").split(" ")
+    var arr = str.toLowerCase().trim().replace(/\n/g, " ").replace(/  /g, " ").replace(/\?/g, "").replace(/\'/g, "_").split(" ")
     var inputs = []
     var outputs = []
     var bins = []
     tokens = [...new Set(arr)]
+    var indexa = tokens.indexOf("");
+    if (indexa > -1) {
+      tokens.splice(indexa, 1);
+    } //remove blank, not sure how it gets here.  
     parse = (t) => tokens.map((w, i) => t.reduce((a, b) => b === w ? ++a : a, 0))
     var freq = parse(arr)
     var _freq = freq.map((el) => { return Math.pow(el, 3 / 4) });
