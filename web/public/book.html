@@ -84,7 +84,16 @@ Load any speech from this time.
     <script src="chat.js">  </script>
     
     </head>
-    
+    <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-RXPM3QHNJ3"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-RXPM3QHNJ3');
+</script>
+
     <body>
     
     
@@ -237,17 +246,9 @@ Load any speech from this time.
     </video>
     </td>
     <td valign="top">
-        <label for="transcript">Original Transcript:</label>
-        <img src="images/edit.png" height="16px" onClick="toggleTranscript();"/>
-        <br>
-        <textarea id="transcript" style="display:none" rows="10" cols="50"></textarea>
-        <div id="transcriptsh" style="height: 90px;overflow:auto; word-break: break-all; word-wrap: break-word;"></div>
-        <br>
-        <label for="mycomments">My Transcript:</label>
-        <img src="images/edit.png" height="16px" onClick="toggleMyComments();"/>
-        <br>
-        <textarea id="mycomments" style="display:none" rows="10" cols="45"></textarea>
-        <div id="mycommentsh" style="height: 190px;overflow:auto;"></div>    
+        <div id="wordcanvas" style="width:940px;height:360px;overflow:hidden;">
+
+        </div>
     </td>
     <td valign="top">
         <label for="prompt">Custom prompt for LLM:</label><br>
@@ -380,12 +381,20 @@ Load any speech from this time.
         <table style="width:100%;height:360px;">
             <tr width="100%;">
             <td valign="top">
-                <div id="wordcanvas" style="width:300px;height:300px;overflow:hidden;">
-
-                </div>
+                <label for="transcript">Original Transcript:</label>
+                <img src="images/edit.png" height="16px" onClick="toggleTranscript();"/>
+                <br>
+                <textarea id="transcript" style="display:none" rows="10" cols="50"></textarea>
+                <div id="transcriptsh" style="height: 90px;overflow:auto; word-break: break-all; word-wrap: break-word;"></div>
+                <br>
+                <label for="mycomments">My Transcript:</label>
+                <img src="images/edit.png" height="16px" onClick="toggleMyComments();"/>
+                <br>
+                <textarea id="mycomments" style="display:none" rows="10" cols="45"></textarea>
+                <div id="mycommentsh" style="height: 190px;overflow:auto;"></div>    
             </td>
-            <td valign="top">
-                <div id="chat_table" width="400" style="width: 400px;height:320px;overflow:auto;">
+            <td valign="top" width="30%">
+                <div id="chat_table">
                     <table id="ChatTable">
                 <tr id="templateRow">
                 <td>id</td>
@@ -396,10 +405,28 @@ Load any speech from this time.
                 </table>
             </div>
                     </td>
-            <td valign="top">
-                <label id="for_edit_code" for="edit_code">Code Snippet:</label>
-                <div id="edit_code" style="overflow:scroll;">
+            <td valign="top" colspan="2" width="50%">
 
+
+
+                <table width="100%">
+                    <tr width="100%">
+                        <td halign="left">
+                            <label id="for_edit_code" for="edit_code" style="float:left">Code Snippet:</label>
+                    </td>
+                        <td halign="right">
+                        <select id="code_mode" style="float:right;">
+                            <option value="BOOK">BOOK</option>
+                            <option value="GIT" selected>GIT</option>
+                            <option value="AUTO">AUTO</option>
+                        </select>
+                    </td>
+                </tr>
+                </table>
+                <div class="root-wrapper">  
+                <div class="cm-editor" id="edit_code" style="overflow:scroll;">
+
+                </div>
                 </div>
             </td>
             </tr>
@@ -729,7 +756,7 @@ Load any speech from this time.
             // firebase.functions().httpsCallable('yourFunction')().then(() => { });
             // firebase.messaging().requestPermission().then(() => { });
             // firebase.storage().ref('/path/to/ref').getDownloadURL().then(() => { });
-            // firebase.analytics(); // call to activate
+             firebase.analytics(); // call to activate
             // firebase.analytics().logEvent('tutorial_completed');
             // firebase.performance(); // call to activate
             //
@@ -742,6 +769,7 @@ Load any speech from this time.
                 'functions',
                 'storage', 
                 'database',
+                'analytics'
               ].filter(feature => typeof app[feature] === 'function');
               loadEl.textContent = `Firebase SDK loaded with ${features.join(', ')}`;
               

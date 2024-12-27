@@ -1020,3 +1020,71 @@ Keep history of shape of thought sequence.
 Try to find patterns in this.  
 
 
+Build 
+**TOPIC 
+....
+...
+This view should be default in codemirror.  
+Have checkbox to show contents from git, and show suggested edits potentially.  
+
+The long topic names are not great.  
+Eventually we want this to be a heirarchical language though, so perhaps will not be too bad.  
+Kind of working.  
+
+How do we look at commit changes?  
+
+Have a timeline of these changes.  
+How to view GIT changes across time in a browser?  
+
+**web/public/book.html
+Need a better time control.  
+
+#codesandbox.io
+nice.  
+
+
+Just make a timeline chart with entries for the book.  
+Already have samples of this.  
+
+#https://visjs.github.io/vis-timeline/examples/timeline/interaction/limitMoveAndZoom.html
+
+Yeah lets familiarize with this.  
+Looks nice.  
+The sample jquery control is not sufficient for what we want.  
+Time selection is important.  
+First, add entry for each gitstruct entry and display.  
+Then add an interaction control.  
+Display this along with the overall selection.  
+Put custom LLM prompt top right.  
+Current state top left.  
+
+Need folder filter for displays.  
+This along with timeline filter.  
+This should be central above or below "wordcanvas".  
+The filter should affect the LLM pass as well as the listing in visualization.  
+Perhaps make the selected items larger or a different color and adjust z-index.  
+Filtered stuff is visible but not selectable.  
+Perhaps default z-index should be time.  
+And remove filtered items from "recenttopics"
+
+Perhaps adjust "wordcanvas" display for term frequency.  
+term frequency = color adjustment?  
+filtered = visibility alpha adjustment.  
+"opacity" for object.  
+add opacity to 
+fill="rgba(124,240,10,0.5)"
+
+**web/public/word2vec-demo/scripts/main.js
+drawEmbedding
+adjust to use opacity data.  
+Dynamically adjust this data and then edit via:
+$(".u").each(function() {
+
+**analytics
+#https://support.google.com/analytics/answer/9289234?hl=en
+#https://support.google.com/analytics/answer/9304153?hl=en#zippy=%2Cadd-the-google-tag-directly-to-your-web-pages
+
+
+How do we set up model training/tuning?  
+This should be a question we try to answer soon.  
+

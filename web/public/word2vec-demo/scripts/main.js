@@ -13,8 +13,8 @@ function updateEmbedding() {
     var YS = T.getSolution();
     // move the groups accordingly
     gs.attr("transform", function (d, si) {
-        xx = ((YS[si][0] * 20 * ss*1 + tx) + 100);
-        yy = ((YS[si][1] * 20 * ss*1 + ty) + 150);
+        xx = ((YS[si][0] * 20 * ss*1 + tx) + 520);
+        yy = ((YS[si][1] * 20 * ss*1 + ty) + 120);
         if (isNaN(xx) || isNaN(yy)){
             return "";
         }
@@ -33,8 +33,8 @@ function initEmbedding() {
     svg = div.append("svg") // svg is global
 //        .attr("width", 600)
 //        .attr("height", 400);
-        .attr("width", 300)
-        .attr("height", 300);
+        .attr("width", 940)
+        .attr("height", 360);
 
 }
 

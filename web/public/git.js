@@ -8,6 +8,7 @@ var gitcurrentcontents = "";
 var gitcurrentcontentstype = "javascript";
 
 var currenttopic = "NONE";
+var selectedtopic = "NONE";
 var currenttopicline = 0;
 var currentrefline = 0;
 var currentref = "NONE";
@@ -297,10 +298,10 @@ function parsegitBook(gb){
 
     }
     if (!incomment){
-      fullstr += str;
+      fullstr += str + "\n";
     }
     if (inref){
-      refstr += str;
+      refstr += str + "\n";
     }
 
   }
@@ -329,38 +330,65 @@ function creategitStruct(){
 }
 
 function loadfromGitBook(top){
-  if (top in gitstruct["bytopic"]){
-    console.log(gitstruct["bytopic"][top]);
+  if (isDate(top)){
+    var d = parseInt(top);
+    if (d in gitstruct["bydate"]){
+      gitcurrentcontents = "";
+      for (ti=0; ti<gitstruct["bydate"][d].length; ti++){
+        gitcurrentcontents += gitstruct["bydate"][d][ti].content;
+      }
+    }
+    else{
+      getGitContents(top);
+    }
   }
+  else{
+    if (top in gitstruct["bytopic"]){
+      console.log(gitstruct["bytopic"][top]);
+      gitcurrentcontents = "";
+      for (ti=0; ti<gitstruct["bytopic"][top].length; ti++){
+        gitcurrentcontents += "**" + gitstruct["bytopic"][top][ti].d + "\n";
+        gitcurrentcontents += gitstruct["bytopic"][top][ti].content;
+      }
+
+    }
+  }
+  var editor = myCodeMirror;
+  //adjust to pull from book 
+  editor.getDoc().setValue(gitcurrentcontents);
 
 }
 
 function getGitContents(path){
+  if (isDate(path)){
+    getGitContents("book/" + path + ".txt");
+  }
+
   url = giturl + '/contents/' + path + '?ref=' + gitbranch;
   gitcurrentpath = path;
 
-   $.getJSON(url,function(data){
-      console.log('git contents');
-      console.log(data);
-      console.log(atob(data.content));
-      gitcurrentcontents = atob(data.content);
+  $.getJSON(url,function(data){
+        console.log('git contents');
+        console.log(data);
+        console.log(atob(data.content));
+        gitcurrentcontents = atob(data.content);
 
-      $('#for_edit_code').text(gitcurrentpath);
 
-      if (myCodeMirror == null){
-        myCodeMirror = CodeMirror(document.getElementById("edit_code"), {
-          value: gitcurrentcontents,
-          mode:  gitcurrentcontentstype, 
-          lineNumbers: true
-        });
-      }
-      else{
-        var editor = myCodeMirror;
-        editor.getDoc().setValue(gitcurrentcontents);
-        editor.setOption("mode", gitcurrentcontentstype);
-      }
-	});
-  
+        if (myCodeMirror == null){
+          myCodeMirror = CodeMirror(document.getElementById("edit_code"), {
+            value: gitcurrentcontents,
+            mode:  gitcurrentcontentstype, 
+            lineNumbers: true
+          });
+        }
+        else{
+          var editor = myCodeMirror;
+          //adjust to pull from book 
+          editor.getDoc().setValue(gitcurrentcontents);
+          editor.setOption("mode", gitcurrentcontentstype);
+        }
+    });
+
 }
 
 function getgitSelected(start, end){
@@ -395,7 +423,12 @@ function loadTopicGraph(str){
   
   setTimeout(function(){$("#inbut").click(); }, 12000);
 
-  setTimeout(function(){$("stopbut").click();dotrain=false;}, 18000);
+  setTimeout(function(){$("stopbut").click();dotrain=false;
+    $(".u").each(function() {
+      console.log(this);
+      //adjust here.  
+    });
+  }, 18000);
 
 }
 
@@ -443,13 +476,17 @@ function isDate(top){
   }
 }
 function loadTopic(top){
-    if (isDate(top)){
-      getGitContents("book/" + top + ".txt");
-    }
-    else{
+    selectedtopic = top;
+    var currentmode = $('#code_mode').find(":selected").val();
+    if (currentmode == "GIT"){
+
       getGitContents(top);
     }
-    loadfromGitBook(top); //search Git for this string **.... in gitbook and retrieve all.  
+    else if (currentmode=="BOOK"){
+      loadfromGitBook(top); //search Git for this string **.... in gitbook and retrieve all.  
+    }
+
+    $('#for_edit_code').text(top);
     //look through the latest commit info and if newer than RTDB entry, pull from git.  
     //Cache result in RTDB.  
     loadTopicIterations(top);
