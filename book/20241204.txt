@@ -1088,3 +1088,52 @@ $(".u").each(function() {
 How do we set up model training/tuning?  
 This should be a question we try to answer soon.  
 
+#https://sourcegraph.com/
+hmmm... web just using context with claude?  plugin looks better.  
+
+#https://aws.amazon.com/q/developer
+#https://firebase.google.com/docs/gemini-in-firebase
+cant be bothered to look right now.  
+
+
+**web/public/book.html
+"recenttopics"
+Need some space here.  
+The folder names are going to be a problem.  
+Need folder filter for displays.  
+This along with timeline filter.  
+
+Only display folder name if there are multiple of the same name.  
+Work backwards.  This is a simple fix for display.  
+
+"wordcanvas"
+Hmm.. kind of interesting to do but not really seeing much value in this visualization.  
+
+Should cache the contents.  
+
+Use time context and selection history context to query LLM.  
+
+https://github.com/torvalds/linux/commits/master@{date}/Documentation
+
+Need indexes in the displays.  
+This will allow for quicker selection without using mouse.  
+"topicstatus"
+Maybe not the right name as it is a dir listing.  
+Need some selection logic here.  
+
+SVG animation needed for displaying/selecting to replay sequence.  
+
+Can we deploy another git branch under same site?  
+How do we deploy a separate branch?  
+#https://firebase.google.com/docs/hosting/test-preview-deploy
+
+Need to review this, want to eventually be able to deploy from multiple branches.  
+
+Automate:
+Generate branch, deploy, view.  
+
+Too many things.  
+
+
+#https://visjs.github.io/vis-timeline/examples/timeline/interaction/limitMoveAndZoom.html
+add this. 

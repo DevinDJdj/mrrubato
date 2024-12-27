@@ -1,9 +1,10 @@
 var gitbook = [];
 var gitcommits = [];
 
-var gitstruct = {"bydate": {}, "bytopic": {}, "alltopics": ""}; //context holds sequential string.  
+var gitstruct = {"bydate": {}, "bytopic": {}, "alltopics": "", "allcontent": {}}; //context holds sequential string.  
 var gittoken = null;
 var gitcurrentpath = "";
+var gitcurrentfolder = "";
 var gitcurrentcontents = "";
 var gitcurrentcontentstype = "javascript";
 
@@ -13,6 +14,7 @@ var currenttopicline = 0;
 var currentrefline = 0;
 var currentref = "NONE";
 var chathistory = []; //keep history/transcript.  
+var selectionhistory = [];
 var myCodeMirror = null;
 
 
@@ -313,7 +315,7 @@ function creategitStruct(){
   //tree by time/topic
   //also topic/time
   //reset struct
-  gitstruct = {"bydate": {}, "bytopic": {}, "byref": {}, "alltopics": "", "allrefs": "", "all": ""}; //context holds sequential string.  
+  gitstruct = {"bydate": {}, "bytopic": {}, "byref": {}, "alltopics": "", "allrefs": "", "all": "", "allcontent": {}}; //context holds sequential string.  
 
 
     for (j=0; j<gitbook.length; j++){
@@ -330,6 +332,7 @@ function creategitStruct(){
 }
 
 function loadfromGitBook(top){
+  var prevcontents = gitcurrentcontents;
   if (isDate(top)){
     var d = parseInt(top);
     if (d in gitstruct["bydate"]){
@@ -355,40 +358,99 @@ function loadfromGitBook(top){
   }
   var editor = myCodeMirror;
   //adjust to pull from book 
-  editor.getDoc().setValue(gitcurrentcontents);
+  if (prevcontents !=gitcurrentcontents){
+    editor.getDoc().setValue(gitcurrentcontents);
+    $('#for_edit_code').text(top);
+  }
 
 }
 
 function getGitContents(path){
+  var prevcontents = gitcurrentcontents;
   if (isDate(path)){
     getGitContents("book/" + path + ".txt");
+    return;
   }
 
   url = giturl + '/contents/' + path + '?ref=' + gitbranch;
   gitcurrentpath = path;
+  if (gitcurrentpath in gitstruct["allcontent"]){
+    //cache, dont reload for now.  Not sure if we want this.  
+    var editor = myCodeMirror;
+    //adjust to pull from book 
+    if (Array.isArray(gitstruct["allcontent"][gitcurrentpath])){
+      var data = gitstruct["allcontent"][gitcurrentpath];
+      gitcurrentfolder = gitcurrentpath;
+      gitstr = "";
+      for (di=0; di<data.length; di++){
+        gitstr += `<a href="#" onclick="loadTopic('${data[di].path}');">${isFolder(data[di])}${shortenName(data[di].path)}${isFolder(data[di], true)}</a><br> `;
 
-  $.getJSON(url,function(data){
-        console.log('git contents');
-        console.log(data);
-        console.log(atob(data.content));
-        gitcurrentcontents = atob(data.content);
+      }
+      $('#topicstatus').html(path + "<br>" + gitstr);
+      return;
 
+    }
+    else{
+      gitcurrentcontents = gitstruct["allcontent"][gitcurrentpath];
+      if (prevcontents !=gitcurrentcontents){
+        editor.getDoc().setValue(gitcurrentcontents);
+        editor.setOption("mode", gitcurrentcontentstype);
+        $('#for_edit_code').text(gitcurrentpath);
+      }
+    }
+  }
+  else{
+    $.getJSON(url,function(data){
+          console.log('git contents');
+          console.log(data);
+          if (Array.isArray(data)){
+            //this is a folder struct, separate handling.  
+            gitstr = "";
+            gitcurrentfolder = path;
+            for (di=0; di<data.length; di++){
+              gitstr += `<a href="#" onclick="loadTopic('${data[di].path}');">${isFolder(data[di])}${shortenName(data[di].path)}${isFolder(data[di], true)}</a><br> `;
 
-        if (myCodeMirror == null){
-          myCodeMirror = CodeMirror(document.getElementById("edit_code"), {
-            value: gitcurrentcontents,
-            mode:  gitcurrentcontentstype, 
-            lineNumbers: true
-          });
-        }
-        else{
-          var editor = myCodeMirror;
-          //adjust to pull from book 
-          editor.getDoc().setValue(gitcurrentcontents);
-          editor.setOption("mode", gitcurrentcontentstype);
-        }
-    });
+            }
+            $('#topicstatus').html(path + "<br>" + gitstr);
+            gitstruct["allcontent"][gitcurrentpath] = data;
+            return;
+          }
+          console.log(atob(data.content));
+          gitcurrentcontents = atob(data.content);
+          gitstruct["allcontent"][gitcurrentpath] = gitcurrentcontents;
 
+          if (myCodeMirror == null){
+            myCodeMirror = CodeMirror(document.getElementById("edit_code"), {
+              value: gitcurrentcontents,
+              mode:  gitcurrentcontentstype, 
+              lineNumbers: true
+            });
+          }
+          else{
+            if (prevcontents !=gitcurrentcontents){
+              var editor = myCodeMirror;
+              //adjust to pull from book 
+              editor.getDoc().setValue(gitcurrentcontents);
+
+              editor.setOption("mode", gitcurrentcontentstype);
+              $('#for_edit_code').text(path);
+            }
+          }
+
+          var fpath = path.split("/")
+          fpath.pop();
+          if (fpath.join("/") !=gitcurrentfolder){
+            getGitContents(fpath.join("/"));
+            gitcurrentfolder = fpath.join("/");
+          }
+      })
+      .fail(function() { console.log(url + " not found.  "); 
+        $('#topicstatus').append("<br>" + path + " not found.") 
+        $('#topicstatus').animate({
+          scrollTop: $('#topicstatus')[0].scrollHeight}, "slow"
+        );
+      });
+    }
 }
 
 function getgitSelected(start, end){
@@ -432,6 +494,39 @@ function loadTopicGraph(str){
 
 }
 
+function shortenName(top){
+  topics = gitstruct["alltopics"].split(" ");
+  var pathArray = top.split("/");
+  var shortname = pathArray[pathArray.length - 1];
+
+  filteredtopics = topics.filter(str => str.includes(shortname));
+  if (filteredtopics.length > 1){
+    return top;
+  }
+  else{
+    return shortname;
+  }
+}
+
+function isFolder(d,end=false){
+  if (d.type=="dir"){
+    if (end){
+      return "</b>"
+    }
+    else{
+      return "<b>"
+    }
+  }  
+  else{
+    if (end){
+      return "";
+    }
+    else{
+      return "./";
+    }
+  }
+}
+
 function loadTopicIterations(top){
   topics = gitstruct["alltopics"].split(" ");
   index = topics.lastIndexOf(top);
@@ -443,7 +538,7 @@ function loadTopicIterations(top){
       if (t[j] == top){
         topicstr += "<b>";
       }
-      topicstr += `<a href="#" onclick="loadTopic('${t[j]}');">${t[j]}</a> `;
+      topicstr += `<a href="#" onclick="loadTopic('${t[j]}');">${shortenName(t[j])}</a> `;
       if (t[j] == top){
         topicstr += "</b>";
       }
@@ -458,7 +553,7 @@ function loadTopicIterations(top){
       if (t[j] == top){
         topicstr += "<b>";
       }
-      topicstr += `<a href="#" onclick="loadTopic('${t[j]}');">${t[j]}</a> `;
+      topicstr += `<a href="#" onclick="loadTopic('${t[j]}');">${shortenName(t[j])}</a> `;
       if (t[j] == top){
         topicstr += "</b>";
       }
@@ -470,6 +565,21 @@ function loadTopicIterations(top){
 
 }
 
+function loadSelectionHistory(){
+  fullselection = "";
+  for (si =0; si<selectionhistory.length; si++){
+    fullselection += `<a href="#" onclick="loadTopic('${selectionhistory[si]}');">${shortenName(selectionhistory[si])}</a><br> `;
+
+  }
+  $('#selectionhistory').html(fullselection);
+  $('#selectionhistory').animate({
+    scrollTop: $('#selectionhistory')[0].scrollHeight}, "slow"
+  );
+
+//  $('#selectionhistory').scrollTop = $('#selectionhistory')[0].scrollHeight - $('#selectionhistory')[0].clientHeight;
+
+}
+
 function isDate(top){
   if (top.startsWith("20")){
     return true;
@@ -477,6 +587,9 @@ function isDate(top){
 }
 function loadTopic(top){
     selectedtopic = top;
+    selectionhistory.push(top);
+//    selectionhistory.unshift(top);
+    loadSelectionHistory();
     var currentmode = $('#code_mode').find(":selected").val();
     if (currentmode == "GIT"){
 
@@ -484,9 +597,10 @@ function loadTopic(top){
     }
     else if (currentmode=="BOOK"){
       loadfromGitBook(top); //search Git for this string **.... in gitbook and retrieve all.  
+
     }
 
-    $('#for_edit_code').text(top);
+
     //look through the latest commit info and if newer than RTDB entry, pull from git.  
     //Cache result in RTDB.  
     loadTopicIterations(top);

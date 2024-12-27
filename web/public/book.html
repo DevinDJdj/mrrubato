@@ -129,51 +129,19 @@ Load any speech from this time.
                     padding: 10px; 
                     background-color: rgba(0, 0, 0, 0.75);">
                 </div>
-                </td><td>
+                <br>
                 <p id="load">Firebase SDK Loading&hellip;</p>
-                </td></tr>
+                </td>
+                    <td valign="top">
+                        <label for="currentstate">Current State:</label><br>
+                        <div id="currentstate" style="height: 150px;overflow:auto;"></div>    
+                    </td>
+                </tr>
                 </table>
                 <script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js'></script>
                 <script src="clock.js"></script>
                  <!-- for slider function -->
                 <link href="https://code.jquery.com/ui/1.14.1/themes/ui-lightness/jquery-ui.css" rel="stylesheet">
-                <p>
-                    <label for="slider-range-text">Book range:</label>
-                    <input type="text" id="slider-range-text" style="border: 0; color: #f6931f; font-weight: bold;" size="100"/>
-                  </p>
-                   
-                  <div id="slider-range"></div>
-            
-                  <script>
-                    $(function() {
-
-                        var now = new Date();
-                        now.setDate(now.getDate() + 1); //add a day so we get today as well.  
-            
-                        currdate = now;
-                        if (querydate !== null){
-                            now = new Date(querydate);
-                        }
-                        priordate = new Date(now.getDate() - 30);
-            
-                        $( "#slider-range" ).slider({
-            
-                        range: true,
-                        min: new Date('2020.01.01').getTime() / 1000,
-                        max: new Date('2025.01.01').getTime() / 1000,
-                        step: 86400,
-                        values: [ priordate.getTime() / 1000, currdate.getTime() / 1000 ],
-                        slide: function( event, ui ) {
-                            str = getgitSelected(ui.values[0], ui.values[1]);
-                            str += " " + (new Date(ui.values[ 0 ] *1000).toDateString() ) + " - " + (new Date(ui.values[ 1 ] *1000)).toDateString() ;
-                            $( "#slider-range-text" ).val( str );
-                        }
-                        });
-                        $( "#slider-range-text" ).val( (new Date($( "#slider-range" ).slider( "values", 0 )*1000).toDateString()) +
-                        " - " + (new Date($( "#slider-range" ).slider( "values", 1 )*1000)).toDateString());
-                    });
-            
-                  </script>
             
             </td>
             <td>
@@ -219,6 +187,10 @@ Load any speech from this time.
                 <script src="tags.js"></script>
             
             </td>
+            <td>
+                <label for="prompt">Custom prompt for LLM:</label><br>
+                <textarea id="prompt" name="prompt" rows="5" cols="30"></textarea>        
+            </td>
         </tr>
 
     
@@ -246,16 +218,59 @@ Load any speech from this time.
     </video>
     </td>
     <td valign="top">
-        <div id="wordcanvas" style="width:940px;height:360px;overflow:hidden;">
+        <table>
+            <tr>
+                <td>
+                    <p>
+                        <label for="slider-range-text">Book range:</label>
+                        <input type="text" id="slider-range-text" style="border: 0; color: #f6931f; font-weight: bold;" size="100"/>
+                      </p>
+                       
+                      <div id="slider-range"></div>
+                
+                      <script>
+                        $(function() {
+            
+                            var now = new Date();
+                            now.setDate(now.getDate() + 1); //add a day so we get today as well.  
+                
+                            currdate = now;
+                            if (querydate !== null){
+                                now = new Date(querydate);
+                            }
+                            priordate = new Date(now.getDate() - 30);
+                
+                            $( "#slider-range" ).slider({
+                
+                            range: true,
+                            min: new Date('2020.01.01').getTime() / 1000,
+                            max: new Date('2025.01.01').getTime() / 1000,
+                            step: 86400,
+                            values: [ priordate.getTime() / 1000, currdate.getTime() / 1000 ],
+                            slide: function( event, ui ) {
+                                str = getgitSelected(ui.values[0], ui.values[1]);
+                                str += " " + (new Date(ui.values[ 0 ] *1000).toDateString() ) + " - " + (new Date(ui.values[ 1 ] *1000)).toDateString() ;
+                                $( "#slider-range-text" ).val( str );
+                            }
+                            });
+                            $( "#slider-range-text" ).val( (new Date($( "#slider-range" ).slider( "values", 0 )*1000).toDateString()) +
+                            " - " + (new Date($( "#slider-range" ).slider( "values", 1 )*1000)).toDateString());
+                        });
+                
+                      </script>
+            
+                    <div id="wordcanvas" style="width:940px;height:300px;overflow:hidden;">
+            
+                    </div>
+            
+                </td>
+                <td>
+                    <div id="selectionhistory" style="width:250px;height:360px;overflow:auto;">
 
-        </div>
-    </td>
-    <td valign="top">
-        <label for="prompt">Custom prompt for LLM:</label><br>
-        <textarea id="prompt" name="prompt" rows="5" cols="30"></textarea>
-        <br>
-        <label for="currentstate">Current State:</label><br>
-        <div id="currentstate" style="height: 180px;overflow:auto;"></div>    
+                    </div>
+                </td>
+            </tr>
+        </table>
     </td>
     </tr>
     <tr>
@@ -270,10 +285,21 @@ Load any speech from this time.
              <div id="out"></div>	
         
         </td>
-        <td colspan="2">
-                <div id="recenttopics" style="height:90px;width:900px;overflow:auto;"></div>
-<!--            <div id="wordcanvas"><svg width="600" height="60"></svg></div> -->
-<!--            <canvas id="wordcanvas" width="640" height="60" style="display: none">Your browser does not support the HTML5 canvas tag.</canvas>    -->
+        <td>
+            <table>
+                <tr>
+                    <td>
+                        <div id="recenttopics" style="height:90px;width:900px;overflow:auto;"></div>
+                        <!--            <div id="wordcanvas"><svg width="600" height="60"></svg></div> -->
+                        <!--            <canvas id="wordcanvas" width="640" height="60" style="display: none">Your browser does not support the HTML5 canvas tag.</canvas>    -->
+                        
+                    </td>
+                    <td>
+                        <div id="topicstatus" style="height:90px;width:250px;overflow:auto;"></div>
+                    </td>
+                </tr>
+            </table>
+
         </td>
     </tr>
     </table>

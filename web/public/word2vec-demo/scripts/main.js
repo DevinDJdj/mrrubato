@@ -72,7 +72,7 @@ function drawEmbedding() {
             .attr("transform", "translate(2, -2)")
             .attr("font-size", 10)
             .attr("fill", "#333")
-            .text(function (d, i) { return labels[i]; });
+            .text(function (d, i) { return shortenName(labels[i]); });
     }
 
     var zoomListener = d3.behavior.zoom()
