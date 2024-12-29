@@ -66,7 +66,17 @@ Load any speech from this time.
     <link rel="stylesheet" href="js/codeeditor/codemirror/lib/codemirror.css">
     <script src="js/codeeditor/codemirror/mode/javascript/javascript.js"></script>
 
-    
+    <!-- timeline visjs-->
+    <script
+      type="text/javascript"
+    src="https://unpkg.com/vis-timeline@latest/standalone/umd/vis-timeline-graph2d.min.js"
+  ></script>
+  
+  <link href="https://unpkg.com/vis-timeline@latest/styles/vis-timeline-graph2d.min.css" rel="stylesheet" type="text/css" />
+  
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js'></script>
+
+  
     
     <script src="config.js"></script>
     <script>
@@ -221,6 +231,10 @@ Load any speech from this time.
         <table>
             <tr>
                 <td>
+                    <div id="timewindow" width="900px" height="100px"></div>
+                    <script src="timewindow.js"></script>
+
+                    <!--
                     <p>
                         <label for="slider-range-text">Book range:</label>
                         <input type="text" id="slider-range-text" style="border: 0; color: #f6931f; font-weight: bold;" size="100"/>
@@ -258,6 +272,7 @@ Load any speech from this time.
                         });
                 
                       </script>
+                    -->
             
                     <div id="wordcanvas" style="width:940px;height:300px;overflow:hidden;">
             

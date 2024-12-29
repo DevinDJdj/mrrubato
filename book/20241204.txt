@@ -1134,6 +1134,42 @@ Generate branch, deploy, view.
 
 Too many things.  
 
-
+**web/public/testvisjs.html
+--ok
 #https://visjs.github.io/vis-timeline/examples/timeline/interaction/limitMoveAndZoom.html
+#https://visjs.github.io/vis-timeline/examples/timeline/
+#https://visjs.github.io/vis-timeline/examples/timeline/interaction/rollingMode.html
+#https://visjs.github.io/vis-timeline/examples/timeline/items/pointItems.html
+#https://visjs.github.io/vis-timeline/examples/timeline/other/verticalScroll.html
+#https://visjs.github.io/vis-timeline/examples/timeline/items/tooltip.html
+#https://github.com/visjs/vis-network
+#https://github.com/visjs/vis-timeline
 add this. 
+
+**web/public/analyze.html
+Maybe switch pianoroll UI to this?  
+May be easier.  
+Dont actually need full 3d library.  
+
+
+#https://visjs.github.io/vis-timeline/examples/timeline/other/groupsPerformance.html
+add groups.  
+This can be utilized for feedback.  
+We should be able to use this as the visualization instead of ?  
+
+--OK, so adjust background location based on where we are and zoom level.  
+set min/max zoom based on the speed modifier for video.  
+Or just dont zoom the background anymore.  
+Leave at max zoom for background.  
+But still zoom the component.  
+Adjust background and group display based on iteration.  
+
+Fixed height/width.  
+
+Yeah I think this component will be cleaner.  
+side-by-side until replace.  
+
+**web/public/book.html
+First try here.  
+
+
