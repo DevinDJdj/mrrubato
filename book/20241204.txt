@@ -1113,7 +1113,7 @@ Should cache the contents.
 
 Use time context and selection history context to query LLM.  
 
-https://github.com/torvalds/linux/commits/master@{date}/Documentation
+#https://github.com/torvalds/linux/commits/master@{date}/Documentation
 
 Need indexes in the displays.  
 This will allow for quicker selection without using mouse.  
@@ -1171,5 +1171,31 @@ side-by-side until replace.
 
 **web/public/book.html
 First try here.  
+Sample for including only certain folder.  
+https://api.github.com/repos/DevinDJdj/mrrubato/commits?sha=master&until=2024-01-01&path=web/public/analyze.html
+https://api.github.com/repos/DevinDJdj/mrrubato/commits?sha=master&until=2024-01-01&path=web/public
+
+Adjust context.  
+As we use bottom gitchart, add these also to the timeline.  
+
+"recenttopics"
+This is not great.  
+
+OK items being added, but need more real estate.  
+Add tooltip of actual change contents.  
+
+How to use for context selection?  
+
+So a parameter for building context.  
+Importance on Time of the current video.  
+Importance of Book content.  
+Importance of Git changes.  
+Importance of TOPIC similarity.  
+Importance of Selected TOPIC.  
+
+use vidinfo a bit more.  
+
+What can we do about github limitation on requests?  
+Is it even using the token?  
 
 

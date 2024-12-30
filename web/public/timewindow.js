@@ -23,14 +23,39 @@ function changeBackgroundLoc(start, end){
 
 
 var timecounter = 0;
+var idcounter = 0;
+function updateTimeline(gitcommits){
+//    gitcommits.push({"url": data[this.indexValue].html_url, "filename": commitdata.files[i].filename, "changes": commitdata.files[i].changes, "d": mydate, "selected": true});
+    for (gi=0; gi<gitcommits.length; gi++){
 
+        myitem = {
+            id: idcounter,
+            group: 0,
+            content: '<a href="' + gitcommits[gi].url + '" target="_blank">' + gitcommits[gi].filename + '</a>',
+            start: gitcommits[gi].d
+        }
+        timeline.itemsData.add(myitem);
+        idcounter++;
+    }
+
+}
+
+function addItem(group, content, start){
+    timewindowitems.add({
+        id: idcounter,
+        group: group,
+        content: content,
+        start: start
+    });
+    idcounter++;
+}
 
 function logme(i){
-    console.log(items[i]);
+    console.log(timewindowitems[i]);
 }
   var container = document.getElementById('timewindow');
 
-  var items = new vis.DataSet();
+  var timewindowitems = new vis.DataSet();
 
   //#https://visjs.github.io/vis-timeline/examples/timeline/items/htmlContents.html
   var item7 = 'item7<br><a href="https://visjs.org" target="_blank">click here</a>';
@@ -39,11 +64,8 @@ function logme(i){
 var options = {};
 
   for (var i = 10; i >= 0; i--) { 
-    items.add({
-        id: i,
-        content: "item " + i + '<a href="#" onclick="logme(' + i + ')";>item' + i + '</a>',
-        start: new Date(new Date().getTime() + i*100000)
-    });
+    addItem(0, "item " + i + '<a href="#" onclick="logme(' + i + ')";>item' + i + '</a>', new Date(new Date().getTime() + i*100000));
+
   }
 
   // Configuration for the Timeline
@@ -67,10 +89,10 @@ var options = {};
   };
 
   // create a Timeline
-  timeline = new vis.Timeline(container, items, null, options);
+  timeline = new vis.Timeline(container, timewindowitems, null, options);
   timeline.on('select', function (properties) {
     console.log('selected items: ' + properties.items);
-    console.log(items.get(properties.items));
+    console.log(timewindowitems.get(properties.items));
     });
 
     timeline.on("rangechange", function ({start, end}){
@@ -90,4 +112,17 @@ var options = {};
       console.log(start.toString(), end.toString());
         
     });
+
+$('#timewindow').resizable();
+$("#timewindow").resize(function () {
+    var ht = $(this).height();
+    var wd = $(this).width();
+    timeline.setOptions({ height: ht, width: wd });
+    //adjust other div height.  
+    cvheight = 360 - ht;
+    if (cvheight < 10) cvheight = 10;
+    $('#wordcanvas').height(cvheight);
+    $('#wordcanvas').width(wd);
+
+  });
     

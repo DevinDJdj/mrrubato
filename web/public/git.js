@@ -114,14 +114,14 @@ function gitDownloadCommits(data, dataTableGit){
 				console.log(obj);
 				myarray.push(obj);
         gitcommits.push({"url": data[this.indexValue].html_url, "filename": commitdata.files[i].filename, "changes": commitdata.files[i].changes, "d": mydate, "selected": true});
-
+        //timewindow.js
 			}
 		  }
 		});
 
 
     }
-
+    updateTimeline(gitcommits);
     return myarray;
 }
 
@@ -604,6 +604,7 @@ function loadTopic(top){
     //look through the latest commit info and if newer than RTDB entry, pull from git.  
     //Cache result in RTDB.  
     loadTopicIterations(top);
+    getGitCommits(null, top);
 }
 
 function getGitTree(){
@@ -617,14 +618,22 @@ function getGitTree(){
 
 }
 
-function getGitCommits(){
+function getGitCommits(qdate=null, qpath=null){
 	//get github
+  if (isDate(qpath)){
+    getGitCommits(qdate, "book/" + qpath + ".txt");
+    return;
+  }
+
     url = giturl + '/commits?sha=' + gitbranch;
 
-	if (querydate !=null){
-		url += "&until=" + querydate;
+	if (qdate !=null){
+		url += "&until=" + qdate;
 //		url += ""
 	}
+  if (qpath !=null){
+    url += "&path=" + qpath;
+  }
 	
    $.getJSON(url,function(data){
        console.log(data);
