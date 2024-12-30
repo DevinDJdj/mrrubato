@@ -24,18 +24,24 @@ function changeBackgroundLoc(start, end){
 
 var timecounter = 0;
 var idcounter = 0;
-function updateTimeline(gitcommits){
+function updateTimeline(gitcommits, fn=null){
 //    gitcommits.push({"url": data[this.indexValue].html_url, "filename": commitdata.files[i].filename, "changes": commitdata.files[i].changes, "d": mydate, "selected": true});
     for (gi=0; gi<gitcommits.length; gi++){
 
-        myitem = {
-            id: idcounter,
-            group: 0,
-            content: '<a href="' + gitcommits[gi].url + '" target="_blank">' + gitcommits[gi].filename + '</a>',
-            start: gitcommits[gi].d
+        if (fn !==null && gitcommits[gi].filename != fn){
+
         }
-        timeline.itemsData.add(myitem);
-        idcounter++;
+        else{
+            myitem = {
+                id: idcounter,
+                group: 0,
+                content: '<a href="' + gitcommits[gi].url + '" target="_blank">' + gitcommits[gi].filename + '</a>',
+                start: gitcommits[gi].d
+            }
+            timeline.itemsData.add(myitem);
+            idcounter++;
+        }
+
     }
 
 }
@@ -64,7 +70,7 @@ function logme(i){
 var options = {};
 
   for (var i = 10; i >= 0; i--) { 
-    addItem(0, "item " + i + '<a href="#" onclick="logme(' + i + ')";>item' + i + '</a>', new Date(new Date().getTime() + i*100000));
+//    addItem(0, "item " + i + '<a href="#" onclick="logme(' + i + ')";>item' + i + '</a>', new Date(new Date().getTime() + i*100000));
 
   }
 
@@ -73,6 +79,8 @@ var options = {};
   var options = {
     height: "100px", //height and width adjustment
     width: "900px",
+    verticalScroll: true,
+    zoomKey: 'ctrlKey',
     start: new Date(),
     end: new Date(new Date().getTime() + 1000000),
     margin: {

@@ -1,0 +1,97 @@
+**news.py
+Yep:
+#https://github.com/codelucas/newspaper
+
+#https://github.com/mlc-ai/web-llm?tab=readme-ov-file
+
+browserify main.js -o bundle.js
+
+
+**server/ollama/custom.py
+Lets see if we can make a custom model here instead of langchain RAG.  
+**server/ollama/custom.parameter
+
+#https://llm.mlc.ai/docs/deploy/webllm.html
+create custom model for this.  
+Eventually.  
+
+
+
+**timestep.py
+add git commits.  
+
+
+-Set up firebase push on commit.  
+##https://medium.com/@flutterist/deploying-your-website-to-firebase-hosting-from-github-d6bdbf284a82
+
+
+**web/public/languageeditor.html
+Does this component work well with multiple existing languages?  
+Also create a font and test with this.  
+
+**web/public/testfont.html
+Need to be able to create font entries for each concept/word.  
+Font size is going to need to be somewhat larger.  
+This is an important question/constraint.  
+How large do we want the font size?  
+Lets try 32 for now.  ~400x400 area
+
+
+**web/public/rec.html
+Need to save video.  
+#https://firebase.google.com/docs/storage/web/start#web_1
+
+**web/public/storage_upload.html
+Does this work for full recording?  
+
+**web/public/keymap.js
+Need commands for controlling scrolling of standard screen components.  
+i.e. Select chat row for reading.  select transcript, source code or change
+
+
+So a parameter for building context.  
+Importance on Time of the current video.  
+Importance of Book content.  
+Importance of Git changes.  
+Importance of TOPIC similarity.  
+Importance of Selected TOPIC.  
+Others?
+All of these parameters will adjust the context which is built.  
+
+
+**web/public/languages.js
+findWordsA needs to be adjusted when set octave is used.  
+Right now if we adjust octave I think the words are getting saved, but UI not updated.  
+
+
+**web/public/testvisjs.html
+--ok
+
+**web/public/analyze.html
+Maybe switch pianoroll UI to this?  
+May be easier.  
+Dont actually need full 3d library.  
+
+**web/public/book.html
+use vidinfo a bit more.  
+
+
+**timestep.py
+Add the copy of git contents.  
+DB Top-level 
+/git/contents
+/git/commits
+Then same directory structure or hash entries.  
+
+**git/
+git log --since="last month" --pretty=format:'%H,%an,%as,%at,%s' > log.csv
+Maybe this is enough for now?  
+Store this in DB?  
+If exists, skip.  
+Otherwise download all changes etc.  
+
+
+
+
+https://api.github.com/repos/DevinDJdj/mrrubato/git/commits/1a853838418830aa3aa7af1f7fe4240f67ffb026
+https://github.com/DevinDJdj/mrrubato/commit/1a853838418830aa3aa7af1f7fe4240f67ffb02

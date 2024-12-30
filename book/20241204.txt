@@ -1197,5 +1197,46 @@ use vidinfo a bit more.
 
 What can we do about github limitation on requests?  
 Is it even using the token?  
+Need workaround for this.  
 
+**timestep.py
+Add the copy of git contents.  
+DB Top-level 
+/git/contents
+/git/commits
+Then same directory structure or hash entries.  
+
+**web/public/git.js
+pull from DB if available.  
+
+Probably should do this first.  
+
+When file selected, adjust 
+"wordcanvas"
+Add to wordcanvas any of the commit file entries not there.  
+regenerate "gitstruct[alltopics]" with this info in time.  
+Then regenerate "wordcanvas"
+loadTopicGraph(gitstruct[alltopics])
+
+Need to allow for any git repository to work with this.  
+Right now too much logic specific to book/ directory.  
+
+For standard use case, just get recent commits.  
+Also keep git data in repo directory in db
+/git/xxxx/contents
+/git/xxxx/commits
+Kind of waste of energy.  
+
+
+git log --since="last month" --pretty=format:'%H,%an,%as,%at,%s' > log.csv
+Maybe this is enough for now?  
+Store this in DB?  
+If exists, skip.  
+Otherwise download all changes etc.  
+
+
+
+
+https://api.github.com/repos/DevinDJdj/mrrubato/git/commits/1a853838418830aa3aa7af1f7fe4240f67ffb026
+https://github.com/DevinDJdj/mrrubato/commit/1a853838418830aa3aa7af1f7fe4240f67ffb02
 

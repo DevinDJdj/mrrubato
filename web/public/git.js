@@ -121,11 +121,11 @@ function gitDownloadCommits(data, dataTableGit){
 
 
     }
-    updateTimeline(gitcommits);
+
     return myarray;
 }
 
-async function gitChartCommits(data){
+async function gitChartCommits(data, qpath=null){
 	var container = document.getElementById('gitchart');
 	gitchart = new google.visualization.Timeline(container);
 	chart = gitchart;
@@ -161,10 +161,11 @@ async function gitChartCommits(data){
 //	dataTable.addColumn({ type: 'number', id: 'Duration' });
 	
 //	dataTable.addColumn({ type: 'number', id: 'Iteration#' });
-    myarray = await gitDownloadCommits(data, dataTableGit);
+    myarray = await gitDownloadCommits(data, dataTableGit, qpath);
 	dataTableGit.addRows(myarray);
+  updateTimeline(gitcommits, qpath);
 
-	console.log(myarray);
+//	console.log(myarray);
 
 
 
@@ -637,7 +638,7 @@ function getGitCommits(qdate=null, qpath=null){
 	
    $.getJSON(url,function(data){
        console.log(data);
-	   gitChartCommits(data);
+	   gitChartCommits(data, qpath);
 	});
 }
 
