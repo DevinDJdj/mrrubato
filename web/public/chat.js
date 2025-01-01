@@ -3,11 +3,14 @@ var lastquery = '';
 var MAX_LOCAL_QUERY_LENGTH = 60000;
 var lastread = 0;
 var reading = false;
-var localprompt = 'please use ONLY the content provided to answer the @@Question.  Each topic is marked by ** for example **MYTOPIC \n\
-                        Please keep the response short and less than 300 words.  If further information is needed, the user will ask another question.  \n\
-                        You are trying to help explain the content and context provided to the user.  \n\
-                        Use primarily this input content to make a short summary answer to the question at the very end marked by \n\
-                        @@Question:  \n\
+var localprompt = 'I am a software engineer, investigating the source code and notes provided.  \n\
+                   please use ONLY the context provided to answer the @@Question.  \n\
+                   Each topic is marked by ** for example **MYTOPIC \n\
+                   Keep the response short and less than 300 words.  If further information is needed, the user will ask another question.  \n\
+                   You are trying to help summarize and explain the key points of the content provided.  \n\
+                   Explain the key points of the content provided.  Then try to make one suggestion to improve the source code.  \n\
+                   Make a short summary answer to the question \n\
+                   @@Question:  \n\
     '
 
 function replaceLinksWithLastElement(str) {

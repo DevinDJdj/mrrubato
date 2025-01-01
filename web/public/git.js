@@ -68,8 +68,8 @@ function gitSignin(){
 
 }
 
-function gitDownloadCommits(data, dataTableGit){
-    myarray = [];
+function gitDownloadCommits(data, qpath=null){
+   var myarray = [];
 	//lets limit the number we display.  
 	totalcnt = 100;
     for (j=0; j<data.length && j< totalcnt; j++){
@@ -121,11 +121,11 @@ function gitDownloadCommits(data, dataTableGit){
 
 
     }
+    setTimeout(function (){if (myarray.length > 0) {gitChartCommits(myarray, qpath);} }, 5000);
 
-    return myarray;
 }
 
-async function gitChartCommits(data, qpath=null){
+function gitChartCommits(myarray, qpath=null){
 	var container = document.getElementById('gitchart');
 	gitchart = new google.visualization.Timeline(container);
 	chart = gitchart;
@@ -161,7 +161,7 @@ async function gitChartCommits(data, qpath=null){
 //	dataTable.addColumn({ type: 'number', id: 'Duration' });
 	
 //	dataTable.addColumn({ type: 'number', id: 'Iteration#' });
-    myarray = await gitDownloadCommits(data, dataTableGit, qpath);
+//    myarray = await gitDownloadCommits(data);
 	dataTableGit.addRows(myarray);
   updateTimeline(gitcommits, qpath);
 
@@ -328,6 +328,9 @@ function creategitStruct(){
     //any 
     loadTopic(gitbook[gitbook.length-1].d);
     loadTopicGraph(gitstruct["alltopics"]);
+
+    //for now only on load.  
+    updateTimelineBook(gitstruct["bydate"]);
     
 
 }
@@ -366,11 +369,18 @@ function loadfromGitBook(top){
 
 }
 
-function getGitContents(path){
+
+function getGitContents(path, load=true){ //load UI or not, if false, return string representation of info.  
+  var ret = "";
   var prevcontents = gitcurrentcontents;
+  var prevfolder = gitcurrentfolder;
   if (isDate(path)){
-    getGitContents("book/" + path + ".txt");
-    return;
+    return getGitContents("book/" + path + ".txt", load);
+    
+  }
+
+  if (path == "book/20240714.txt"){
+    console.log(path);
   }
 
   url = giturl + '/contents/' + path + '?ref=' + gitbranch;
@@ -384,24 +394,48 @@ function getGitContents(path){
       gitcurrentfolder = gitcurrentpath;
       gitstr = "";
       for (di=0; di<data.length; di++){
-        gitstr += `<a href="#" onclick="loadTopic('${data[di].path}');">${isFolder(data[di])}${shortenName(data[di].path)}${isFolder(data[di], true)}</a><br> `;
+        gitstr += `<a href="#" onclick="loadTopic('${data[di].path}');">${isFolder(data[di].type)}${shortenName(data[di].path)}${isFolder(data[di].type, true)}</a><br> `;
 
       }
-      $('#topicstatus').html(path + "<br>" + gitstr);
-      return;
+      if (load){
+        $('#topicstatus').html(path + "<br>" + gitstr);
+      }
+      else{
+        gitcurrentfolder = prevfolder;
+        gitcurrentcontents = prevcontents;
+      }
+      ret = gitstr;
 
     }
     else{
       gitcurrentcontents = gitstruct["allcontent"][gitcurrentpath];
-      if (prevcontents !=gitcurrentcontents){
+      if (prevcontents !=gitcurrentcontents && load){
         editor.getDoc().setValue(gitcurrentcontents);
         editor.setOption("mode", gitcurrentcontentstype);
         $('#for_edit_code').text(gitcurrentpath);
       }
+      else{
+        ret= gitcurrentcontents;
+        gitcurrentcontents = prevcontents;
+        gitcurrentfolder = prevfolder;
+      }
     }
   }
   else{
-    $.getJSON(url,function(data){
+    $.ajax({
+      url: url,
+      dataType: 'text',
+//             headers: {"Authorization": "Bearer " + gittoken},
+      async: false,
+      beforeSend: function(xhr) {
+        gittoken = localStorage.getItem('gittoken'); // Get the token from local storage
+        if (gittoken) {
+          xhr.setRequestHeader('Authorization', 'Bearer ' + gittoken);
+        }
+      },
+      success: function(data) {
+        data = $.parseJSON(data);
+//    $.getJSON(url,function(data){
           console.log('git contents');
           console.log(data);
           if (Array.isArray(data)){
@@ -409,7 +443,7 @@ function getGitContents(path){
             gitstr = "";
             gitcurrentfolder = path;
             for (di=0; di<data.length; di++){
-              gitstr += `<a href="#" onclick="loadTopic('${data[di].path}');">${isFolder(data[di])}${shortenName(data[di].path)}${isFolder(data[di], true)}</a><br> `;
+              gitstr += `<a href="#" onclick="loadTopic('${data[di].path}');">${isFolder(data[di].type)}${shortenName(data[di].path)}${isFolder(data[di].type, true)}</a><br> `;
 
             }
             $('#topicstatus').html(path + "<br>" + gitstr);
@@ -444,14 +478,17 @@ function getGitContents(path){
             getGitContents(fpath.join("/"));
             gitcurrentfolder = fpath.join("/");
           }
-      })
-      .fail(function() { console.log(url + " not found.  "); 
+      },
+      error: function(xhr, textStatus, errorThrown) { 
+        console.log(url + " not found.  "); 
         $('#topicstatus').append("<br>" + path + " not found.") 
         $('#topicstatus').animate({
           scrollTop: $('#topicstatus')[0].scrollHeight}, "slow"
         );
-      });
-    }
+      }
+    });
+  }
+    return ret;
 }
 
 function getgitSelected(start, end){
@@ -510,7 +547,7 @@ function shortenName(top){
 }
 
 function isFolder(d,end=false){
-  if (d.type=="dir"){
+  if (d=="dir"){
     if (end){
       return "</b>"
     }
@@ -636,9 +673,23 @@ function getGitCommits(qdate=null, qpath=null){
     url += "&path=" + qpath;
   }
 	
-   $.getJSON(url,function(data){
+  $.ajax({
+    url: url,
+    dataType: 'text',
+//             headers: {"Authorization": "Bearer " + gittoken},
+    async: false,
+    beforeSend: function(xhr) {
+      gittoken = localStorage.getItem('gittoken'); // Get the token from local storage
+      if (gittoken) {
+        xhr.setRequestHeader('Authorization', 'Bearer ' + gittoken);
+      }
+    },
+    success: function(data) {
+      data = $.parseJSON(data);
+
        console.log(data);
-	   gitChartCommits(data, qpath);
+       myarray = gitDownloadCommits(data, qpath);
+    }
 	});
 }
 

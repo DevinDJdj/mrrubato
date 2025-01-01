@@ -1,5 +1,6 @@
 import * as webllm from "https://esm.run/@mlc-ai/web-llm";
-
+var stopllm = false;
+export default stopllm;
 /*************** WebLLM logic ***************/
 const messages = [
   {
@@ -30,10 +31,11 @@ async function initializeWebLLMEngine() {
   const config = {
     temperature: 0.5,
     top_p: 1,
-    sliding_window_size: 32576, 
+    sliding_window_size: 1024,  //do we have to use this as 1024 or 2048?  
     context_window_size: -1,
-    attention_sink_size: 0, 
-    repetition_penalty: 2.0
+    attention_sink_size: 4, 
+    repetition_penalty: 1.0
+//    max_new_tokens: 300
 //    max_tokens: 300
   };
   await engine.reload(selectedModel, config);
@@ -47,6 +49,7 @@ async function streamingGenerating(messages, onUpdate, onFinish, onError) {
     const completion = await engine.chat.completions.create({
       stream: true,
       messages,
+      max_tokens: 512,
       stream_options: { include_usage: true },
     });
     for await (const chunk of completion) {
@@ -58,6 +61,13 @@ async function streamingGenerating(messages, onUpdate, onFinish, onError) {
         usage = chunk.usage;
       }
       onUpdate(curMessage);
+      //cancel here if needed.  
+      if (stopllm){
+        stopllm = false;
+        onFinish(curMessage, usage);
+        engine.interruptGenerate();
+        return;
+      }
     }
     const finalMessage = await engine.getMessage();
     onFinish(finalMessage, usage);

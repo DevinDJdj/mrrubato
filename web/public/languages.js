@@ -295,6 +295,19 @@ function setOctave(octave, lang=""){
         lang = currentlanguage;
     }
     keybot[lang] = octave*12;
+
+
+    /*
+    try this.  
+    key = lang;
+        for (const [k2, v2] of Object.entries(langs[key])) {	//k2 = length of midiseq, v2 = array of words
+            for (const [k3, v3] of Object.entries(langs[key][k2])) { //k3 = midi seq, v3 = word
+
+                key2a = convertKeys(langsa[key][v3], keybot[lang]/12);
+                langs[lang][k2][key2a] = v3; //midiseq -> word lookup.  
+            }
+        }
+    */
     /*
     for (const [key, value] of Object.entries(langsa[lang])) {	
         value.midi = convertKeys(value.midi, keybot[lang]/12);

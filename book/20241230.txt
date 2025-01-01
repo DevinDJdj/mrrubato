@@ -83,7 +83,7 @@ DB Top-level
 /git/commits
 Then same directory structure or hash entries.  
 
-**git/
+**git/clone.py
 git log --since="last month" --pretty=format:'%H,%an,%as,%at,%s' > log.csv
 Maybe this is enough for now?  
 Store this in DB?  
@@ -95,3 +95,104 @@ Otherwise download all changes etc.
 
 https://api.github.com/repos/DevinDJdj/mrrubato/git/commits/1a853838418830aa3aa7af1f7fe4240f67ffb026
 https://github.com/DevinDJdj/mrrubato/commit/1a853838418830aa3aa7af1f7fe4240f67ffb02
+
+
+**web/public/git.js
+Need to make the git download asynchronous.  
+gitDownloadCommits -> gitChartCommits
+--OK
+
+visjs need to not create duplicate entries.  
+Make group per file like other chart.  
+make mouseover tooltip with change contents just for that file?  
+
+
+#https://www.electronjs.org/fiddle
+Do we need full UI?  
+#https://github.com/sindresorhus/awesome-electron?tab=readme-ov-file#apps
+#https://github.com/zz85/space-radar
+Maybe start with something simple like this.  
+
+#https://github.com/minbrowser/min
+Could adapt for voice-control?  
+Alternative to plugin?  
+
+
+#https://github.com/wireapp/wire-webapp?tab=readme-ov-file
+reference
+#https://github.com/mifi/lossless-cut
+
+
+
+**server/ollama/custom.py
+really need to go ahead and make the fine-tune process.  
+But am too surprised at the junk responses I get with base model.  
+
+#https://medium.com/@rschaeffer23/how-to-fine-tune-llama-3-1-8b-instruct-bf0a84af7795
+#https://www.datacamp.com/tutorial/fine-tuning-llama-3-2
+
+
+Just create a training dataset which takes the BOOK as input and the next commit in the same file as answers?  
+
+**web/public/book.html
+Should also pass transcript of video to the llm.  
+Sometimes the response is interesting but most of the time it is garbage.  
+Very strange.  
+"stopllm" not working.  
+Why so annoying to utilize modules in JS.  
+
+GIT API testing is annoying.  
+Even with the token, still too many requests.  
+Need to download.  
+
+**git/clone.py
+store in DB, and retrieve from DB.  
+Not content, but all relational info and commit info.  
+
+**web/public/test/web-llm/test.js
+
+  const config = {
+    temperature: 0.5,
+    top_p: 1,
+    sliding_window_size: 1024,  //do we have to use this as 1024 or 2048?  
+    context_window_size: -1,
+    attention_sink_size: 4, 
+    repetition_penalty: 1.0
+//    max_new_tokens: 300
+//    max_tokens: 300
+  };
+
+    const completion = await engine.chat.completions.create({
+      stream: true,
+      messages,
+      max_tokens: 512,
+      stream_options: { include_usage: true },
+    });
+
+
+With these params though, seems to be much better results.  
+
+
+**web/public/book.html
+Need setting for number of previous "selectionhistory" to use in context passed to LLM.  
+Balance "selectionhistory" files / changes?  
+along with "gitbook".  
+For now not enough to find related changes, maybe just get changes from same git push.  
+
+This is a very important dynamic function.  
+Almost should try to read the user intention and then input data.  
+Whoever can figure out this trick of reading user intention...
+
+**web/public/git.js
+"selectionhistory", "gitbook"
+
+
+**web/public/book.html
+Probably need to remove the SVG visualization.  
+It doesnt bring much really.  
+Lets just put these book entries in the timeline instead of what we have now.  
+**web/public/timewindow.js
+"updateTimelineBook"
+--test this.  
+
+

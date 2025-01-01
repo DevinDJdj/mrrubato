@@ -155,6 +155,7 @@ Load any speech from this time.
             
             </td>
             <td>
+                <input type="text" id="current-question" name="current-question" size="50">
                 <input type="text" id="chat-status" name="chat-status" size="50">
                 <div id="speak">
                     <!-- status and current command for now just display the string and add any additional midi params-->
@@ -435,16 +436,18 @@ Load any speech from this time.
                 <div id="mycommentsh" style="height: 190px;overflow:auto;"></div>    
             </td>
             <td valign="top" width="30%">
-                <div id="chat_table">
+                <div class="root-wrapper" style="height:360px;">      
+                    <div id="chat_table"  style="overflow:scroll;">
                     <table id="ChatTable">
-                <tr id="templateRow">
-                <td>id</td>
-                <td>query</td>
-                <td>AI Response</td>
-                <td>Sources</td>
-                </tr>
-                </table>
-            </div>
+                    <tr id="templateRow">
+                    <td>id</td>
+                    <td>query</td>
+                    <td>AI Response</td>
+                    <td>Sources</td>
+                    </tr>
+                    </table>
+                    </div>
+                </div>
                     </td>
             <td valign="top" colspan="2" width="50%">
 
@@ -1165,7 +1168,8 @@ Load any speech from this time.
         getVideoJson(video);
         //get book for analysis via LLM.  
         getGitBook();
-//        getGitCommits();  //need to pass login token to do this.  Too many requests.  
+//        setTimeout(getGitCommits("2024-12-12"), 5000);
+//        getGitCommits("2024-12-12");  //need to pass login token to do this.  Too many requests.  
 
 //        getGitContents('web/public/book.html');
         setTimeout(function(){ document.getElementById("download").click(); }, 2000);
@@ -1188,6 +1192,7 @@ Load any speech from this time.
 <script type="module">
     import {onMessageSend} from '/test/web-llm/test.js';
     LLM.sendToLLM = onMessageSend;
+//    LLM.stopllm = stopllm;
     //window.sendToLLM = onMessageSend;
 </script>
 
@@ -1342,8 +1347,23 @@ function addChatHistory(query, context, files=[]){
     //dont need to send full content of files?  just the names for now.  Should be able to git files from certain point in time if needed.  
 }
 
+
+function GetRecentSelections(){
+    //use last few of selectionhistory in order to create more context.  
+    //make this the last few selected documents.  
+    ctx = "";
+    for (si=0; si<selectionhistory.length; si++){
+        //really we want recent commits here, and not full source.  
+        ctx += "**" + selectionhistory[si] + "\n" + getGitContents(selectionhistory[si], false) + "\n";
+
+    }
+    return ctx;
+}
+
 function ChatBuildContext(context){
+    recentcontext = GetRecentSelections();
     lastquery = context;
+    $('#current-question').val(lastquery);
     mycontext = "";
     files = [];
     for (gi = 0; gi<gitbook.length; gi++){
@@ -1363,7 +1383,7 @@ function ChatBuildContext(context){
     //will need to add actual source files as well here to context.  
 
     console.log(files);
-    mycontext = localprompt + "\n" + mycontext + "\n@@Question: " + lastquery;
+    mycontext = localprompt + "\n" + mycontext + recentcontext + "\n@@Question: " + lastquery;
 
     
 }
@@ -1380,7 +1400,12 @@ function ChatLocal(transcript){
     addChatHistory(lastquery, mycontext, files);
     document.getElementById("user-input").value = mycontext;
     console.log(mycontext);
-    LLM.sendToLLM(); //onMessageSend();//sendToLLM();   //test/web-llm/test.js
+    (async() => {
+  console.log('1')
+  await LLM.sendToLLM(); //onMessageSend();//sendToLLM();   //test/web-llm/test.js
+  console.log('2')
+})()
+
     
 }
 
@@ -1388,6 +1413,7 @@ function ChatLocal(transcript){
 				mychat = transcript; //$('#p').val();
 				if (mychat.toUpperCase().startsWith("STOP")){
 					window.speechSynthesis.cancel();
+                    stopllm = true;
 					return;
 				}
                 if (lastspokenword !="comment"){ //if we have comment in our command.  

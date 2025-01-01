@@ -24,6 +24,26 @@ function changeBackgroundLoc(start, end){
 
 var timecounter = 0;
 var idcounter = 0;
+
+function updateTimelineBook(gs, fn=null){
+    for (const [k2, v2] of Object.entries(gs)) {	//k2 = date  //v2 = array of content entries.  
+
+        for (const [k3, d] of Object.entries(v2)) { //k3 = entry num, d = topic contents.  
+
+            gitstr += `<a href="#" onclick="loadTopic('${d.topic}');">${shortenName(d.topic)}</a><br> `;
+            myitem = {
+                id: idcounter,
+                group: 0,
+                content: gitstr,
+                start: new Date(d.d.substring(0,4) + "-" + d.d.substring(4, 6) + "-" + d.d.substring(6,8))
+            }
+            timeline.itemsData.add(myitem);
+            idcounter++;
+
+        }
+    }
+}
+
 function updateTimeline(gitcommits, fn=null){
 //    gitcommits.push({"url": data[this.indexValue].html_url, "filename": commitdata.files[i].filename, "changes": commitdata.files[i].changes, "d": mydate, "selected": true});
     for (gi=0; gi<gitcommits.length; gi++){
