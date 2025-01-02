@@ -252,18 +252,24 @@ def midiToImage(t, midilink):
     notes = [Message('note_on', channel=0, note=60, velocity=0, time=0)] * 109
     pedal = 0
     height = 88*2
-    width = 1
+    iwidth = 1
     starttimes, endtimes = getTrackTimes(t)
+    print(starttimes)
+    print(endtimes)
     midi_image = None
     if len(starttimes) != len(endtimes) or len(starttimes) < 1:
         print("Incorrect data, please fix" + midilink)
     else:    
         for i, st in enumerate(starttimes):
             w = int((endtimes[i]-starttimes[i])/100)
-            if w > width:
-                width = w +1
+            print(w)
+            if w > iwidth:
+                iwidth = w +1
         height = (i+1)*88*2
-        midi_image = np.ones((height,width,3), np.uint8)
+        if (iwidth > 40000):
+            print("Width too large, skipping " + midilink)
+            return None
+        midi_image = np.ones((height,iwidth,3), np.uint8)
         midi_image = 255*midi_image
         currentTime = 0
         prevTime = currentTime
@@ -549,49 +555,62 @@ def testNgramModel():
 def printMidiGif(t, midilink):
 
     images = []
-    width = 200
-    center = width // 2
-    color_1 = (0, 0, 0)
-    color_2 = (255, 255, 255)
+    prevIt = 0
+    radius = 10
+    gwidth = radius*10*3
+    center = gwidth // 2
+    color_1 = (255, 255, 255)
+    color_2 = (0, 0, 0)
 
     print('Track: {}'.format(t.track.name))
     notes = [Message('note_on', channel=0, note=60, velocity=0, time=0)] * 109
     pedal = 0
-    starttimes, endtimes = getTrackTimes(t)
-    if len(starttimes) != len(endtimes) or len(starttimes) < 1:
+    st, et = getTrackTimes(t)
+    if len(st) != len(et) or len(st) < 1:
         print("Incorrect data, please fix" + midilink)
     else:    
-        for i, st in enumerate(starttimes):
-            w = int((endtimes[i]-starttimes[i])/100)
-            if w > width:
-                width = w +1
         currentTime = 0
         prevTime = currentTime
         i = 0
         on = 0
+        im = Image.new('RGB', (gwidth, gwidth), color_1)
+        images.append(im)
+        draw = ImageDraw.Draw(im)
+        prevmsg = None
         for mymsg in t.notes:
             if (on > 0):
                 currentTime += mymsg.msg.time
                 #not very efficient, but good enough for now.  
-                i = getIteration(currentTime, starttimes, endtimes)
+                i = getIteration(currentTime, st, et)
+                if (i != prevIt):
+                    im = Image.new('RGB', (gwidth, gwidth), color_1)
+                    images.append(im)
+                    draw = ImageDraw.Draw(im)
+                    prevIt = i
+
             if (mymsg.msg.type=='note_on'):
                 if (on > 0 and i > -1):  
                     mymsg.msg.time = currentTime
                     notes[mymsg.note] = mymsg.msg
                     #create image here for each note to start.  
-                    im = Image.new('RGB', (width, width), color_1)
-                    draw = ImageDraw.Draw(im)
                     startangle = (mymsg.note % 12) * 30
                     oct = mymsg.note // 12
-                    radius = 10
-
                     vol = mymsg.msg.velocity /10
-                    startpointx = round(center + radius*oct * math.cos(math.radians(startangle)) - vol)
-                    startpointy = round(center + radius*oct * math.sin(math.radians(startangle)) - vol)
-                    endpointx = round(center + radius*oct * math.cos(math.radians(startangle)) + vol)
-                    endpointy = round(center + radius*oct * math.sin(math.radians(startangle)) + vol)
-                    draw.ellipse((startpointx, startpointy, endpointx, endpointy), fill=color_2)
-                    images.append(im)
+
+
+                    if prevmsg is not None:
+                        startangle1 = (prevmsg.note % 12) * 30
+                        oct1 = prevmsg.note // 12
+                        vol1 = prevmsg.msg.velocity /10
+                        startpointx = round(center + radius*oct1 * math.cos(math.radians(startangle1)))
+                        startpointy = round(center + radius*oct1 * math.sin(math.radians(startangle1)))
+                        endpointx = startpointx + round(math.cos(math.radians(startangle1))*vol1)
+                        endpointy = startpointy + round(math.sin(math.radians(startangle1))*vol1)
+                        color_2 = (255 - round(abs(startangle1-startangle)/2), 0, 255 - round(abs(startangle1-startangle)/2))
+#                        color_2 = (50, 50, 50)
+ #                       draw.line((startpointx, startpointy, endpointx, endpointy), fill=color_2, width=round(vol/2))
+                        draw.ellipse((startpointx, startpointy, endpointx+2, endpointy+2), fill=color_2, width=round(vol/2))
+                    prevmsg = mymsg
                     prevTime = currentTime
                 on = isOn(mymsg.note, on)
                 
@@ -602,8 +621,9 @@ def printMidiGif(t, midilink):
 
 
 #    mid = MidiFile(midifile)
-
-    images[0].save('data/dst/pillow_imagedraw.gif',
+    path = './output/'
+    for i, im in enumerate(images):
+        im.save(path + str(i) + '.png',
                 save_all=True, append_images=images[1:], optimize=False, duration=40, loop=0)
     
 
@@ -634,13 +654,14 @@ def printMidi(midilink, title, GroupName, videoid):
     if (t is None):
         return
 
+ #   printNgrams(t, title, GroupName, videoid, midilink)
+    img = midiToImage(t, midilink)
+
     printMidiGif(t, midilink)
     data, rythmdata = getNgrams(t)
     if (data is None):
         return
         
- #   printNgrams(t, title, GroupName, videoid, midilink)
-    img = midiToImage(t, midilink)
 
     height = 200
     width = 200    
