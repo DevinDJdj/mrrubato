@@ -178,8 +178,8 @@ function gitChartCommits(myarray, qpath=null){
 
 
 function loadGitBook(){
-  reponame = giturl.substring(giturl.find("repos/"+6));
-  gitbookref = firebase.database().ref('/git/' + reponame + '/book');
+  reponame = giturl.substring(giturl.search("repos/")+6);
+  gitbookref = firebase.database().ref('/git/' + reponame + '/' + gitbranch + '/book');
 gitbookref.once('value')
   .then((snap) => {
     if (snap.exists()){
@@ -187,7 +187,8 @@ gitbookref.once('value')
           for (const [key, value] of Object.entries(books)) {
             gitbook.push(value);
               
-          }                    
+          }    
+          creategitStruct();                          
       }
   });
 
@@ -195,8 +196,7 @@ gitbookref.once('value')
 
   
 function getGitBook(){
-  loadGitBook()
-  creategitStruct();
+  loadGitBook();
   return
     //get github
     url = giturl + '/contents/book';
@@ -393,7 +393,7 @@ function getGitContents(path, load=true){ //load UI or not, if false, return str
   var ret = "";
   var prevcontents = gitcurrentcontents;
   var prevfolder = gitcurrentfolder;
-  if (isDate(path)){
+  if (isDate(path) || path=="definitions"){ //workaround for now.  
     return getGitContents("book/" + path + ".txt", load);
     
   }

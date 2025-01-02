@@ -30,10 +30,11 @@ function updateTimelineBook(gs, fn=null){
 
         for (const [k3, d] of Object.entries(v2)) { //k3 = entry num, d = topic contents.  
 
-            gitstr += `<a href="#" onclick="loadTopic('${d.topic}');">${shortenName(d.topic)}</a><br> `;
+            gitstr = `<a href="#" onclick="loadTopic('${d.topic}');">${shortenName(d.topic)}</a><br> `;
             myitem = {
                 id: idcounter,
                 group: 0,
+                topic: d.topic,
                 content: gitstr,
                 start: new Date(d.d.substring(0,4) + "-" + d.d.substring(4, 6) + "-" + d.d.substring(6,8))
             }
@@ -154,3 +155,21 @@ $("#timewindow").resize(function () {
 
   });
     
+// Alternatively register select event
+timeline.on("select", function (selection){
+    // If you set `multiselect: false` or leave it unset then only one item can selected at once.
+    // Therefore you can just use [0] to access the first item in the items array
+    if(selection.items.length > 0){
+      const item = timewindowitems.get(selection.items[0]);  
+      console.log('select event - title:', item.title);
+      loadTopic(item.topic);
+    }
+    
+    // If `multiselect: true` is set in the options then there could be multiple items selected.
+    // The above code is therefore not valid, instead it must loop through the items.
+    // Loop through these items.
+    //   for (let i = 0; i < selection.items.length; i += 1){
+    //     var item = items.get(selection.items[i]);
+    //     console.log('select event - title:', i, item.title);
+    //   }
+  });  
