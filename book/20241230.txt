@@ -195,4 +195,15 @@ Lets just put these book entries in the timeline instead of what we have now.
 "updateTimelineBook"
 --test this.  
 
+**git/clone.py
+for now just do book.  
+That is the primary thing being loaded anyway.  
+https://api.github.com/repos/DevinDJdj/mrrubato
 
+already some code here:
+**timeste.py
+"getCodeHistory"
+
+
+**web/public/git.js
+--test "loadGitBook"

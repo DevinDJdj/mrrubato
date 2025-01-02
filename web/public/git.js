@@ -177,8 +177,27 @@ function gitChartCommits(myarray, qpath=null){
 }
 
 
+function loadGitBook(){
+  reponame = giturl.substring(giturl.find("repos/"+6));
+  gitbookref = firebase.database().ref('/git/' + reponame + '/book');
+gitbookref.once('value')
+  .then((snap) => {
+    if (snap.exists()){
+          let books = snap.val();
+          for (const [key, value] of Object.entries(books)) {
+            gitbook.push(value);
+              
+          }                    
+      }
+  });
+
+}
+
   
 function getGitBook(){
+  loadGitBook()
+  creategitStruct();
+  return
     //get github
     url = giturl + '/contents/book';
 
