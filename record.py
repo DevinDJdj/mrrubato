@@ -60,6 +60,7 @@ from mido import Message, MidiFile, MidiTrack
 
 from mido.ports import MultiPort
 
+import datetime
 
 import config 
 
@@ -332,7 +333,9 @@ def uploadmediafile(file, title):
     Title = title + '.mp4'
     fileName = file + '.mp4'
     bucket = storage.bucket()
-    blob = bucket.blob('videos/' + Title)
+    year = datetime.date.today().year
+#    blob = bucket.blob('videos/' + Title)
+    blob = bucket.blob('videos/' + str(year) + '/' + Title)
     blob.upload_from_filename(fileName)
 
     # Opt : if you want to make public access from the URL
@@ -348,7 +351,9 @@ def uploadtranscript(file, title):
     Title = title + '.txt'
     fileName = file + '.txt'
     bucket = storage.bucket()
-    blob = bucket.blob('words/' + Title)
+    year = datetime.date.today().year
+#    blob = bucket.blob('words/' + Title)
+    blob = bucket.blob('words/' + str(year) + '/' + Title)
     blob.upload_from_filename(fileName)
 
     # Opt : if you want to make public access from the URL
@@ -364,7 +369,9 @@ def uploadmidi(file, title):
     Title = title + '.mid'
     fileName = file + '.mid'
     bucket = storage.bucket()
-    blob = bucket.blob('midi/' + Title)
+    year = datetime.date.today().year
+#    blob = bucket.blob('midi/' + Title)
+    blob = bucket.blob('midi/' + str(year) + '/' + Title)
     blob.upload_from_filename(fileName)
 
     # Opt : if you want to make public access from the URL
@@ -489,6 +496,7 @@ if __name__ == '__main__':
     #start up analyze.py with this title/description.  
 #    os.system('python ./analyze/analyze.py --title "' + args.description + '"')
 #use title here as description contains all info
+    print('analyze start python ./analyze/analyze.py --title "' + args.title + '"')
     subprocess.call('python ./analyze/analyze.py --title "' + args.title + '"')
     print("analyze complete");
     obsp = subprocess.Popen("C:\\Program Files\\obs-studio\\bin\\64bit\\obs64.exe", start_new_session=True, cwd="C:\\Program Files\\obs-studio\\bin\\64bit")
