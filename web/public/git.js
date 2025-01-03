@@ -392,9 +392,9 @@ function loadfromGitBook(top){
   var editor = myCodeMirror;
   //adjust to pull from book 
   if (prevcontents !=gitcurrentcontents){
-    editor.getDoc().setValue(gitcurrentcontents);
-    setContentType("book.txt");
+    gitcurrentcontentstype = setContentType("book.txt");
     editor.setOption("mode", gitcurrentcontentstype);
+    editor.getDoc().setValue(gitcurrentcontents);
 
     $('#for_edit_code').text(top);
   }
@@ -409,6 +409,9 @@ function setContentType(path){
   }
   else if (fileExt == "sh"){
     return "shell";
+  }
+  else if (fileExt == "html"){
+    return "htmlmixed";
   }
   else{
     return "javascript";
@@ -454,10 +457,10 @@ function getGitContents(path, load=true){ //load UI or not, if false, return str
     }
     else{
       gitcurrentcontents = gitstruct["allcontent"][gitcurrentpath];
-      if (prevcontents !=gitcurrentcontents && load){
-        editor.getDoc().setValue(gitcurrentcontents);
-        setContentType(gitcurrentpath);
+      if (prevcontents !=gitcurrentcontents && load && gitcurrentcontents !=null){
+        gitcurrentcontentstype = setContentType(gitcurrentpath);
         editor.setOption("mode", gitcurrentcontentstype);
+        editor.getDoc().setValue(gitcurrentcontents);
         $('#for_edit_code').text(gitcurrentpath);
       }
       else{
@@ -511,9 +514,9 @@ function getGitContents(path, load=true){ //load UI or not, if false, return str
             if (prevcontents !=gitcurrentcontents){
               var editor = myCodeMirror;
               //adjust to pull from book 
-              editor.getDoc().setValue(gitcurrentcontents);
-              setContentType(gitcurrentpath);
+              gitcurrentcontentstype = setContentType(gitcurrentpath);
               editor.setOption("mode", gitcurrentcontentstype);
+              editor.getDoc().setValue(gitcurrentcontents);
               $('#for_edit_code').text(path);
             }
           }
@@ -672,18 +675,22 @@ function isDate(top){
 }
 function loadTopic(top){
     selectedtopic = top;
-    selectionhistory.push(top);
+
 //    selectionhistory.unshift(top);
-    loadSelectionHistory();
     var currentmode = $('#code_mode').find(":selected").val();
     if (currentmode == "GIT"){
 
-      getGitContents(top);
+      cont = getGitContents(top);
+      if (cont !==null){
+        selectionhistory.push(top);
+      }
+
     }
     else if (currentmode=="BOOK"){
       loadfromGitBook(top); //search Git for this string **.... in gitbook and retrieve all.  
-
+      selectionhistory.push(top);
     }
+    loadSelectionHistory();
 
 
     //look through the latest commit info and if newer than RTDB entry, pull from git.  
