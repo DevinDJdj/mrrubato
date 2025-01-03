@@ -393,11 +393,27 @@ function loadfromGitBook(top){
   //adjust to pull from book 
   if (prevcontents !=gitcurrentcontents){
     editor.getDoc().setValue(gitcurrentcontents);
+    setContentType("book.txt");
+    editor.setOption("mode", gitcurrentcontentstype);
+
     $('#for_edit_code').text(top);
   }
 
 }
 
+
+function setContentType(path){
+  var fileExt = path.split('.').pop();
+  if (fileExt == "py"){
+    return "python";
+  }
+  else if (fileExt == "sh"){
+    return "shell";
+  }
+  else{
+    return "javascript";
+  }
+}
 
 function getGitContents(path, load=true){ //load UI or not, if false, return string representation of info.  
   var ret = "";
@@ -440,6 +456,7 @@ function getGitContents(path, load=true){ //load UI or not, if false, return str
       gitcurrentcontents = gitstruct["allcontent"][gitcurrentpath];
       if (prevcontents !=gitcurrentcontents && load){
         editor.getDoc().setValue(gitcurrentcontents);
+        setContentType(gitcurrentpath);
         editor.setOption("mode", gitcurrentcontentstype);
         $('#for_edit_code').text(gitcurrentpath);
       }
@@ -495,7 +512,7 @@ function getGitContents(path, load=true){ //load UI or not, if false, return str
               var editor = myCodeMirror;
               //adjust to pull from book 
               editor.getDoc().setValue(gitcurrentcontents);
-
+              setContentType(gitcurrentpath);
               editor.setOption("mode", gitcurrentcontentstype);
               $('#for_edit_code').text(path);
             }
@@ -510,6 +527,7 @@ function getGitContents(path, load=true){ //load UI or not, if false, return str
       },
       error: function(xhr, textStatus, errorThrown) { 
         console.log(url + " not found.  "); 
+        gitstruct["allcontent"][gitcurrentpath] = null; //dont want to load this again.  
         $('#topicstatus').append("<br>" + path + " not found.") 
         $('#topicstatus').animate({
           scrollTop: $('#topicstatus')[0].scrollHeight}, "slow"

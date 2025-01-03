@@ -286,3 +286,9 @@ This seems to work ok.
 Can we use this on more than monosylable words?  
 Often no detection?  
 
+
+**web/public/book.html
+Switch codemirror between languages.  
+
+Anythin from "selectionhistory" which is not found, dont search again.  
+--maybe fixed.  
