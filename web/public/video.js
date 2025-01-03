@@ -427,7 +427,12 @@ function setVideoVolume(volume){
    // Create a storage reference from our storage service
        var storageRef = storage.ref();
        //why does this URL have space and others are %20?  
+       if (parseInt(lastPart.slice(0,4)) > 2024){
+        loc = "videos/" + lastPart.slice(0,4) + "/" + lastPart.replace("%20", " ");
+       }
+      else{
        loc = "videos/" + lastPart.replace("%20", " ");
+      }
        url = storageRef.child(loc).getDownloadURL()
          .then((url) => {
            console.log(url);

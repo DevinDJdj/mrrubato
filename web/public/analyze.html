@@ -1655,7 +1655,14 @@ function getAnalyze(midiurl){
 	// Create a storage reference from our storage service
 		var storageRef = storage.ref();
 		//why does this URL have space and others are %20?  
-		midiloc = "midi/" + lastPart.replace("%20", " ");
+		if (parseInt(lastPart.slice(0,4)) > 2024){
+			midiloc = "midi/" + lastPart.slice(0,4) + "/" + lastPart.replace("%20", " ");
+
+		}
+		else{
+			midiloc = "midi/" + lastPart.replace("%20", " ");
+		}
+
 		url = storageRef.child(midiloc).getDownloadURL()
 		.then((url) => {
 			console.log("MIDI: " + url);
