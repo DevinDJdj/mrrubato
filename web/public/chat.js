@@ -1,6 +1,7 @@
 var ChatID = 0;
 var lastquery = '';
 var MAX_LOCAL_QUERY_LENGTH = 60000;
+var chatmessages = [];
 var lastread = 0;
 var reading = false;
 var localprompt = 'I am a software engineer, investigating the source code and notes provided.  \n\
@@ -22,7 +23,7 @@ function replaceLinksWithLastElement(str) {
 }
 
 function insertCRs(answer){
-    answer = answer.replace("\n", "<br>");
+    answer = answer.replace(/(\r\n|\n|\r)/g, "<br>");
     return answer;
 }
 
@@ -41,6 +42,7 @@ function formatAnswer(answer){
 }
     
 function addChatRow(query, answer, source) {
+    chatmessages.push({"query": query, "answer": answer});
     fanswer = formatAnswer(answer);
     var t = document.getElementById("ChatTable");
     var rows = t.getElementsByTagName("tr");

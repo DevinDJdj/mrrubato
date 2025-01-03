@@ -207,3 +207,82 @@ already some code here:
 
 **web/public/git.js
 --test "loadGitBook"
+--OK
+
+Still need tooltip for book entries so we can read like a timeline for that topic.  
+Make groups?  
+Dont like this display yet.  
+
+UI freezing on LLM call.  
+How to prevent this?  
+#https://github.com/TensorSpeech/TensorFlowTTS
+Can we use these models in browser?  
+
+#https://github.com/playerony/TensorFlowTTS-ts
+Can we use in browser?  
+**testing/Tensorflow
+sudo apt install nodejs
+npm install --global yarn
+
+#https://github.com/MightyAlex200/tfjs-tts
+git clone https://github.com/MightyAlex200/tfjs-tts.git
+
+**web/public/test/tfjs-tts/index.html
+Does this work?  
+nice.  
+So lets start using this.  
+Why would we go to the server?  
+Hmmm... Need a better GPU perhaps.  
+Running the word2vec and the llm also on the GPU.  
+At the moment dont expect any problems.  
+How to make LLM asynchronous?  
+
+Image of the old SETI distributed search.  
+Current iteration, where each PC/Droid is linked to a master NN.  
+
+
+**web/public/book.html
+Add TTS to this.  
+Optionally enable this instead of 
+ssu = new SpeechSynthesisUtterance(tospeak);
+ssu = new SpeechSynthesisUtterance(data.answer);
+
+How to load different voice model?  
+
+**web/public/test/tfjs-tts/index.js
+const text2mel = tf.loadGraphModel('text2meljstiny/model.json');
+const vocoder = tf.loadGraphModel('vocoderjstiny/model.json');
+
+#https://www.geeksforgeeks.org/how-to-train-a-custom-model-in-ml5js/
+#https://glitch.com/edit/#!/ml5-workshop2-1training?path=script.js%3A64%3A2
+
+**web/public/test/ml5/index.html
+
+Why not just train the voice model in the browser from the video or interaction?  
+Option to train the voice model slowly but surely.  
+Micro-training.  
+Save/load model in user info.  
+
+#https://codelabs.developers.google.com/codelabs/tensorflowjs-audio-codelab/index.html#8
+Probably interesting to do this.  
+We need something similar in this area.  
+
+
+**web/public/test/ml5/load/index.html
+
+
+**web/public/test/tfaudio/index.js
+Use this perhaps for game.  
+Training doesnt really work very well.  
+Need a better probability indicator here
+#https://codelabs.developers.google.com/codelabs/tensorflowjs-audio-codelab/index.html#8
+      const predLabel = probs.argMax(1);
+      await moveSlider(predLabel);
+
+But positive is it is much more realtime than webaudio.  
+
+**web/public/test/tfaudio/speechcommands/train.js
+This seems to work ok.  
+Can we use this on more than monosylable words?  
+Often no detection?  
+

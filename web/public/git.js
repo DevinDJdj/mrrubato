@@ -188,63 +188,73 @@ gitbookref.once('value')
             gitbook.push(value);
               
           }    
-          creategitStruct();                          
+          gitCompareRecent();
+          //workaround, only load once
+          setTimeout(creategitStruct(), 2000);
       }
   });
 
 }
 
+function gitCompareRecent(){
+  gurl = giturl + '/contents/book?ref=' + gitbranch;
+
+  $.getJSON(gurl,function(bookdata){
+      console.log(bookdata);       
+
+      for (j=0; j<bookdata.length; j++){
+          page = bookdata[j];
+          console.log(page.download_url);
+          exists = gitbook.find(x => x.url === page.download_url);
+          if (!exists || exists.gitdata.size !=page.size){
+
+
+  
+//           if (j< totalcnt || getFileName(page.download_url) == "definitions"){
+   //	   $.getJSON(commit.url,function(commitdata){
+           $.ajax({
+             url: page.download_url,
+             indexValue: j,
+             exists: exists,
+             dataType: 'text',
+ //             headers: {"Authorization": "Bearer " + gittoken},
+             async: false,
+             beforeSend: function(xhr) {
+               gittoken = localStorage.getItem('gittoken'); // Get the token from local storage
+               if (gittoken) {
+                 xhr.setRequestHeader('Authorization', 'Bearer ' + gittoken);
+               }
+             },
+                     success: function(data) {
+ //                console.log(data);   
+                 var pathArray = this.url.split("/");
+                 var gitbookname = pathArray[pathArray.length - 1];
+                 gitbookname = gitbookname.split(".")[0];
+                 //this should be a date YYYYmmdd
+                 if (exists){
+                   exists.content = data;
+                   exists.gitdata = bookdata[this.indexValue];
+                 }
+                 else{
+                   gitbook.push({"url": this.url, "gitdata": bookdata[this.indexValue], "d": gitbookname, "content": data, "selected": true});
+                 }
+
+                 //data.sort((a, b) => a.date - b.date);
+             }
+           });
+         }   
+  
+      }
+//       setTimeout(creategitStruct(), 10000);
+  
+  
+   });
+
+}
   
 function getGitBook(){
   loadGitBook();
-  return
     //get github
-    url = giturl + '/contents/book';
-
-   $.getJSON(url,function(bookdata){
-       console.log(bookdata);       
-       totalcnt = 40;
-       for (j=0; j<bookdata.length; j++){
-   //    for (j=vids.length-1; j> -1; j--){
-           page = bookdata[j];
-           console.log(page.download_url);
-   
-           if (j< totalcnt || getFileName(page.download_url) == "definitions"){
-    //	   $.getJSON(commit.url,function(commitdata){
-            $.ajax({
-              url: page.download_url,
-              indexValue: j,
-              dataType: 'text',
-  //             headers: {"Authorization": "Bearer " + gittoken},
-              async: false,
-              beforeSend: function(xhr) {
-                gittoken = localStorage.getItem('gittoken'); // Get the token from local storage
-                if (gittoken) {
-                  xhr.setRequestHeader('Authorization', 'Bearer ' + gittoken);
-                }
-              },
-                      success: function(data) {
-  //                console.log(data);   
-                  var pathArray = this.url.split("/");
-                  var gitbookname = pathArray[pathArray.length - 1];
-                  gitbookname = gitbookname.split(".")[0];
-                  //this should be a date YYYYmmdd
-                  gitbook.push({"url": this.url, "gitdata": bookdata[this.indexValue], "d": gitbookname, "content": data, "selected": true});
-                  //data.sort((a, b) => a.date - b.date);
-                  if (gitbook.length == bookdata.length || gitbook.length == totalcnt){
-                    //need better way...
-                    creategitStruct();
-                    console.log(gitstruct);
-                  }
-              }
-            });
-          }   
-   
-       }
-//       setTimeout(creategitStruct(), 10000);
-   
-   
-    });
 
 }
 

@@ -1360,30 +1360,41 @@ function GetRecentSelections(){
     return ctx;
 }
 
+function GetRecentChat(){
+    ctx = "";
+    for (ci=0; ci<chatmessages.lengh; ci++){
+        ctx += "@@Question: " + chatmessages[ci].query + "\n\n@@Answer: " + chatmessages[ci].answer + "\n\n";
+    }
+    return ctx;
+}
+
 function ChatBuildContext(context){
     recentcontext = GetRecentSelections();
+    recentchatmessages = GetRecentChat();
     lastquery = context;
     $('#current-question').val(lastquery);
     mycontext = "";
+    definitions = "";
     files = [];
-    for (gi = 0; gi<gitbook.length; gi++){
+    for (gi = gitbook.length-1; gi>-1; gi--){
         fn = getFileName(gitbook[gi].url);
         if (fn == "definitions" || mycontext.length + gitbook[gi].content.length < MAX_LOCAL_QUERY_LENGTH){
 
             files.push(gitbook[gi].url);
             if (fn == "definitions"){
-                mycontext = "**" + fn + "\n" + gitbook[gi].content + "\n\n" + mycontext;
+                definitions = "**" + fn + "\n" + gitbook[gi].content + "\n\n";
             }
             else{
-                mycontext += "**" + fn + "\n" + gitbook[gi].content + "\n\n";
+                mycontext = "**" + fn + "\n" + gitbook[gi].content + "\n\n" + mycontext;
             }
         }
-
+        
     }
+    mycontext = definitions + mycontext;
     //will need to add actual source files as well here to context.  
 
     console.log(files);
-    mycontext = localprompt + "\n" + mycontext + recentcontext + "\n@@Question: " + lastquery;
+    mycontext = mycontext + recentcontext + recentchatmessages + "\n@@Question: " + lastquery;
 
     
 }

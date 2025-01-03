@@ -88,6 +88,12 @@ export function onMessageSend() {
   }
   document.getElementById("send").disabled = true;
 
+  const messages = [
+    {
+      content: $('#prompt').val(),
+      role: "system",
+    },
+  ];
   messages.push(message);
   appendMessage(message);
 
