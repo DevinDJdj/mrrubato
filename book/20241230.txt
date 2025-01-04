@@ -292,3 +292,91 @@ Switch codemirror between languages.
 
 Anythin from "selectionhistory" which is not found, dont search again.  
 --maybe fixed.  
+
+**MISSINGTOPICS
+store in DB under content and have a redirect.  
+
+
+**web/public/midi.js
+Need to make sure turn on/off speech and turn on/off midi is working.  
+For now can only have one tab with active speech.  
+Can we have multiple with the other recognition structure.  
+**web/public/speech.js
+ window.SpeechRecognition
+vs 
+**web/public/test/tfaudio/index.js
+#https://github.com/tensorflow/tfjs-models/tree/master/speech-commands
+ recognizer = speechCommands.create('BROWSER_FFT');
+ await recognizer.ensureModelLoaded();
+   return navigator.mediaDevices.getUserMedia({
+    audio: audioTrackConstraints == null ? true : audioTrackConstraints,
+    video: false
+  });
+So we are using the mediaDevices.getUserMedia.  
+Have more control using this for STT.  
+
+Hmm... time, time time
+Prefer to find a library with feedback training embedded in browser UI.  
+Dont find one.  
+Suppose this would be a good start but...
+
+Why is there no feedback training loop within the library usage of these models?  
+Especially for STT.  Just stupid design.  
+Why is training separate from usage?  
+#https://github.com/TensorSpeech/TensorFlowTTS
+#https://github.com/TensorSpeech/TensorFlowASR
+
+
+Suspect this works in multiple.  
+Maybe work directly with audio.  
+
+
+What other possibilities.  
+This will get better as part of browser eventually.  
+But the personal trained model will be valuable.  
+Maybe just make the files for training from videos.  
+
+
+Need multi-tab communication.  
+localStorage and/or BroadcastChannel
+const channel = new BroadcastChannel('app-data');
+channel.postMessage(data);
+const channel = new BroadcastChannel('app-data');
+
+channel.addEventListener ('message', (event) => {
+ console.log(event.data);
+});
+
+This way we can investigate then start other actions.  
+Use this to add to local storage window details.  
+
+Book -> analyze -> rec 
+
+**web/public/rec.html
+Need to add topics to entries/times.  
+Transcript should all go to gitbook?  
+
+Use sequential topic entries as categorical structures.  
+NGRAM structure instead of heirarchical.  
+Potentially use separate functionality for sequential topics without content in between.  
+
+**PARENT
+**CHILD
+Hierrarchical structure comment.  
+
+
+
+**web/public/test/tfaudio/speechcommands/train.js
+Better example now.  
+Like this concept and design.  
+But still a bug in here which is really annoying.  
+
+#https://github.com/tensorflow/tfjs-models/blob/master/speech-commands/src/browser_fft_recognizer.ts
+Line 330
+
+    if (outputShape[1] !== this.words.length) {
+      throw new Error(
+          `Mismatch between the last dimension of model's output shape ` +
+          `(${outputShape[1]}) and number of words ` +
+          `(${this.words.length}).`);
+    }
