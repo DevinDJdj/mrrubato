@@ -668,6 +668,16 @@ function loadSelectionHistory(){
 
 }
 
+function selectFont(top){
+  const result = selectionhistory.find((element) => element === top);
+  if (result){
+    return 16;
+  }
+  else{
+    return 10;
+  }
+
+}
 function isDate(top){
   if (top.startsWith("20")){
     return true;
@@ -692,11 +702,13 @@ function loadTopic(top){
     }
     loadSelectionHistory();
 
+    zoomTopic(top);
 
     //look through the latest commit info and if newer than RTDB entry, pull from git.  
     //Cache result in RTDB.  
     loadTopicIterations(top);
     getGitCommits(null, top);
+
 }
 
 function getGitTree(){

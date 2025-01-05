@@ -32,6 +32,15 @@ async function train(){
 async function listen(){
     //#https://github.com/tensorflow/tfjs-models/blob/master/speech-commands/src/browser_fft_recognizer.ts
     //Error: Mismatch between the last dimension of model's output shape (20) and number of words (5).
+    var words = transferRecognizer.wordLabels();
+    while (words.length < 19){
+        words = transferRecognizer.wordLabels();
+        console.log("generating fake data ... be quiet...");
+        var entry = words.length.toString();
+        await transferRecognizer.collectExample("noise" + entry);
+        await transferRecognizer.collectExample("noise" + entry);        
+    }
+
     await transferRecognizer.listen(result => {
         // - result.scores contains the scores for the new vocabulary, which
         //   can be checked with:
@@ -169,3 +178,4 @@ async function app() {
 }
     
 app();
+

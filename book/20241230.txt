@@ -331,6 +331,12 @@ Suspect this works in multiple.
 Maybe work directly with audio.  
 
 
+#https://developer.mozilla.org/en-US/docs/Web/API/SpeechGrammar
+This is basically the same thing.  
+But This speechrecognition may not be active on the tab.  
+
+
+
 What other possibilities.  
 This will get better as part of browser eventually.  
 But the personal trained model will be valuable.  
@@ -380,3 +386,52 @@ Line 330
           `(${outputShape[1]}) and number of words ` +
           `(${this.words.length}).`);
     }
+
+Can get around this by adding noise, but similar noise also creates a problem.  
+
+Strange limitation to train on groups of 20 words.  
+Might be useful though.  
+We need something like this.  
+To have a sound->string map.  
+Is there no better library?  
+
+
+#https://www.w3.org/TR/jsgf/
+
+**web/public/speech.js
+Probably want to make a custom one of these, or is this just for word lists?  
+const recognition = new SpeechRecognition();
+const speechRecognitionList = new SpeechGrammarList();
+speechRecognitionList.addFromString(grammar, 1);
+recognition.grammars = speechRecognitionList;
+
+So switch grammar based on state.  
+Hmmmm....
+This is good for a game as well.  
+
+#https://support.voicegain.ai/hc/en-us/articles/360048936511-JJSGF-Grammars
+
+What are the grammar rules we are using for STT input?  
+Maybe just define a JSGF for the command input as an alternative method.  
+Maybe a JSGF generator for the speechKit would be useful.  
+Audio -> JSGF phrase
+
+Hmmm...
+Definitely need to change the current handling.  
+
+How do we map this in the most useful manner with the current technology available?  
+
+**book
+Probably should split up book by year now to make it more managable?  
+Maybe not necessary for me. 
+
+
+**web/public/book.html
+Need to create a link to zoom/highlight something on the graphic.  
+on loadTopic highlight this in the graphic.  
+
+**web/public/word2vec-demo/scripts/main.js
+Ugh finally some font size adjustment.  
+svg, not loving the syntax.  
+
+

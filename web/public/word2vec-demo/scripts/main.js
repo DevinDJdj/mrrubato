@@ -42,6 +42,35 @@ var gs;
 var cs;
 var ts;
 var ls;
+
+
+function zoomTopic(top){
+    console.log("selected topic " + top);
+
+    stopic = shortenName(top);
+    if (svg.selectAll(".b")[0].parentNode.childElementCount > 0){
+        //initEmbedding();
+        //drawEmbedding();
+        ts.transition().attr("font-size", function(d,i){ return selectFont(labels[i]);}).duration(600);
+        //.attr("font-size", function(d,i){ return selectFont(labels[i]);});
+    }
+
+    
+    /*
+    if (typeof(gs[0].parentNode.children) !=="undefined"){
+        for (ti=0; ti<gs[0].parentNode.children.length; ti++){
+            if (gs[0].parentNode.children[ti].children[1].children[0].innerHTML == stopic){
+                console.log("found " + top);
+                //just adjust innerhtml?  kind of a hack.  
+                gs[0].parentNode.children[ti].lastElementChild.firstElementChild.setAttribute("font-size", 16);
+                //this freezes the SVG for some reason.  
+            }
+        }
+    }
+    */
+
+}
+
 function drawEmbedding() {
 
     gs = svg.selectAll(".b")
@@ -70,7 +99,7 @@ function drawEmbedding() {
         ts = ls.append("text")
             .attr("text-anchor", "top")
             .attr("transform", "translate(2, -2)")
-            .attr("font-size", 10)
+            .attr("font-size", function(d,i){ return selectFont(labels[i]);})
             .attr("fill", "#333")
             .text(function (d, i) { return shortenName(labels[i]); });
     }
