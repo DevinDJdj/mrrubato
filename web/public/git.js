@@ -7,6 +7,7 @@ var gitcurrentpath = "";
 var gitcurrentfolder = "";
 var gitcurrentcontents = "";
 var gitcurrentcontentstype = "javascript";
+var gitcurrentscrollinfo = null;
 
 var currenttopic = "NONE";
 var selectedtopic = "NONE";
@@ -16,6 +17,8 @@ var currentref = "NONE";
 var chathistory = []; //keep history/transcript.  
 var selectionhistory = [];
 var myCodeMirror = null;
+
+var definitions = {"REF": "##", "REF2": "#", "TOPIC": "**", "STARTCOMMENT": "<!--", "ENDCOMMENT": "-->", "CMD": ">", "QUESTION": "@@", "NOTE": "--", "SUBTASK": "-"};
 
 
 function gitSignin(){
@@ -76,54 +79,55 @@ function gitDownloadCommits(data, qpath=null){
 //    for (j=vids.length-1; j> -1; j--){
 		commit = data[j];
         console.log(commit.url);
-
+        exists = gitcommits.find(x => x.url === commit.url);
 //	   $.getJSON(commit.url,function(commitdata){
-		$.ajax({
-		  url: commit.url,
-      indexValue: j,
-		  dataType: 'json',
-		  async: false,
-      beforeSend: function(xhr) {
-        gittoken = localStorage.getItem('gittoken'); // Get the token from local storage
-        if (gittoken) {
-          xhr.setRequestHeader('Authorization', 'Bearer ' + gittoken);
+      if (!exists){
+      $.ajax({
+        url: commit.url,
+        indexValue: j,
+        dataType: 'json',
+        async: false,
+        beforeSend: function(xhr) {
+          gittoken = localStorage.getItem('gittoken'); // Get the token from local storage
+          if (gittoken) {
+            xhr.setRequestHeader('Authorization', 'Bearer ' + gittoken);
+          }
+        },
+        success: function(commitdata) {
+        
+
+        console.log(commitdata);
+        console.log(commitdata.stats);
+
+        for (i=0; i< commitdata.files.length; i++){
+          console.log(commitdata.files[i].filename);
+          console.log(commitdata.files[i].changes);
+          console.log(commitdata.commit.committer.date);
+          mydate = new Date(commitdata.commit.committer.date);
+          tempdate = new Date(commitdata.commit.committer.date);
+          tempdate.setMinutes(tempdate.getMinutes()+commitdata.files[i].changes);
+          tag = { v: commitdata.files[i].filename, p: { link: commit.html_url }};
+          var aTag = document.createElement('a');
+          aTag.setAttribute('href',commit.html_url);
+          aTag.innerText = " " + commitdata.files[i].filename;
+          aTag.innerText += " " + commitdata.commit.committer.date;
+
+          console.log(tag);
+          obj = [ tag, commitdata.files[i].filename, mydate, tempdate ];
+          //getIterations(vid.snippet.description, vid.snippet.publishedAt) ];
+          console.log(obj);
+          myarray.push(obj);
+          gitcommits.push({"url": data[this.indexValue].html_url, "patch": commitdata.files[i].patch, "filename": commitdata.files[i].filename, "changes": commitdata.files[i].changes, "d": mydate, "selected": true});
+          //timewindow.js
         }
-      },
-		  success: function(commitdata) {
-		  
-
-		   console.log(commitdata);
-		   console.log(commitdata.stats);
-
-			for (i=0; i< commitdata.files.length; i++){
-				console.log(commitdata.files[i].filename);
-				console.log(commitdata.files[i].changes);
-				console.log(commitdata.commit.committer.date);
-				mydate = new Date(commitdata.commit.committer.date);
-				tempdate = new Date(commitdata.commit.committer.date);
-				tempdate.setMinutes(tempdate.getMinutes()+commitdata.files[i].changes);
-				tag = { v: commitdata.files[i].filename, p: { link: commit.html_url }};
-				var aTag = document.createElement('a');
-				aTag.setAttribute('href',commit.html_url);
-				aTag.innerText = " " + commitdata.files[i].filename;
-				aTag.innerText += " " + commitdata.commit.committer.date;
-
-				console.log(tag);
-				obj = [ tag, commitdata.files[i].filename, mydate, tempdate ];
-				//getIterations(vid.snippet.description, vid.snippet.publishedAt) ];
-				console.log(obj);
-				myarray.push(obj);
-        gitcommits.push({"url": data[this.indexValue].html_url, "filename": commitdata.files[i].filename, "changes": commitdata.files[i].changes, "d": mydate, "selected": true});
-        //timewindow.js
-			}
-		  }
-		});
+        }
+      });
 
 
+      }
     }
     setTimeout(function (){if (myarray.length > 0) {gitChartCommits(myarray, qpath);} }, 5000);
-
-}
+  }
 
 function gitChartCommits(myarray, qpath=null){
 	var container = document.getElementById('gitchart');
@@ -271,18 +275,20 @@ function parsegitBook(gb){
   incomment = false;
   inref = false;
   refstr = "";
+  //load from book definitions file eventually.  
   for (i=0; i<gblines.length; i++){
     str = gblines[i];
-    if (str.startsWith("<!--")){ //start comment (ignore)
-      incomment = true;
+    if (str.startsWith(definitions["STARTCOMMENT"])){ 
+      //start comment (ignore)
+        incomment = true;
     }
-    else if (str.startsWith("-->")){ //end comment
+    else if (str.startsWith(definitions["ENDCOMMENT"])){ //end comment
       incomment = false;
     }
-    else if (str.startsWith(">")){ //CMD
+    else if (str.startsWith(definitions["CMD"])){ //CMD
       incomment = false;
     }
-    else if (str.startsWith("##") || str.startsWith("#")){ //reference
+    else if (str.startsWith(definitions["REF"]) || str.startsWith(definitions["REF2"])){ //reference
       incomment = false;
       inref = true;
       gitstruct["allrefs"] += currentref + " ";
@@ -294,23 +300,23 @@ function parsegitBook(gb){
       gitstruct["byref"][currentref].push(content); //ordered by date.  
 
       currentref = str.slice(1).split(" ")[0];
-      if (currentref.charAt(0) == "#"){
+      if (currentref.charAt(0) == definitions["REF2"]){
         currentref = currentref.slice(1);
       }
       currentrefline = i;
       refstr = "";
     }
-    else if (str.startsWith("@@")){ //Question
+    else if (str.startsWith(definitions["QUESTION"])){ //Question
       incomment = false;
 
     }
-    else if (str.startsWith("--")){ //NOTE
+    else if (str.startsWith(definitions["NOTE"])){ //NOTE
       incomment = false;
     }
-    else if (str.startsWith("-")){ //subtask
+    else if (str.startsWith(definitions["SUBTASK"])){ //subtask
       incomment = false;
     }
-    else if (str.startsWith("**")){ //TOPIC
+    else if (str.startsWith(definitions["TOPIC"])){ //TOPIC
       //add to current topic.  
       incomment = false;
       inref = false;
@@ -392,7 +398,7 @@ function loadfromGitBook(top){
   var editor = myCodeMirror;
   //adjust to pull from book 
   if (prevcontents !=gitcurrentcontents){
-    gitcurrentcontentstype = setContentType("book.txt");
+    gitcurrentcontentstype = setContentType("book.txt");    
     editor.setOption("mode", gitcurrentcontentstype);
     editor.getDoc().setValue(gitcurrentcontents);
 
@@ -423,13 +429,10 @@ function getGitContents(path, load=true){ //load UI or not, if false, return str
   var prevcontents = gitcurrentcontents;
   var prevfolder = gitcurrentfolder;
   if (isDate(path) || path=="definitions"){ //workaround for now.  
-    return getGitContents("book/" + path + ".txt", load);
+    return getGitContents(bookfolder + "/" + path + ".txt", load);
     
   }
 
-  if (path == "book/20240714.txt"){
-    console.log(path);
-  }
 
   url = giturl + '/contents/' + path + '?ref=' + gitbranch;
   gitcurrentpath = path;
@@ -668,6 +671,15 @@ function loadSelectionHistory(){
 
 }
 
+function selectOpacity(top){
+  const result = selectionhistory.find((element) => element === top);
+  if (result){
+    return 1;
+  }
+  else{
+    return 0.6;
+  }
+}
 function selectFont(top){
   const result = selectionhistory.find((element) => element === top);
   if (result){
@@ -725,7 +737,7 @@ function getGitTree(){
 function getGitCommits(qdate=null, qpath=null){
 	//get github
   if (isDate(qpath)){
-    getGitCommits(qdate, "book/" + qpath + ".txt");
+    getGitCommits(qdate, bookfolder + "/" + qpath + ".txt");
     return;
   }
 

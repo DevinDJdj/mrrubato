@@ -51,7 +51,8 @@ function zoomTopic(top){
     if (svg.selectAll(".b")[0].parentNode.childElementCount > 0){
         //initEmbedding();
         //drawEmbedding();
-        ts.transition().attr("font-size", function(d,i){ return selectFont(labels[i]);}).duration(600);
+        ts.transition().attr("font-size", function(d,i){ return selectFont(labels[i]);})
+            .attr("opacity", function(d, i){ return selectOpacity(labels[i]);}).duration(500);
         //.attr("font-size", function(d,i){ return selectFont(labels[i]);});
     }
 

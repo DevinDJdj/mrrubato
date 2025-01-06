@@ -1,6 +1,11 @@
 
 var backx = 1544;
 var backy = 0;
+var timewindowitems;
+var timewindowgroups;
+var alphabet = '2ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+
 function changeBackgroundImage() {
 //        let headingID = document.getElementById("GFG");
     let headingID = document.getElementById("timewindow");
@@ -25,18 +30,41 @@ function changeBackgroundLoc(start, end){
 var timecounter = 0;
 var idcounter = 0;
 
+function groupFromName(g){
+    g = g.replace('web/public/', '')
+    var pos = alphabet.indexOf(g.charAt(0).toUpperCase());
+    if (pos > 0){
+        return pos;
+    }
+    else{
+        return alphabet.length-1;
+    }
+}
+
 function updateTimelineBook(gs, fn=null){
     for (const [k2, v2] of Object.entries(gs)) {	//k2 = date  //v2 = array of content entries.  
-
+        topicstrings = {};
         for (const [k3, d] of Object.entries(v2)) { //k3 = entry num, d = topic contents.  
+            if (!(d.topic in topicstrings)){
+                topicstrings[d.topic] = d;
+            }
+            else{
+                topicstrings[d.topic].content += "\n" + d.content;
+            }
 
-            gitstr = `<a href="#" onclick="loadTopic('${d.topic}');">${shortenName(d.topic)}</a><br> `;
+
+        }
+        for (const [k4, d] of Object.entries(topicstrings)){
+            //gitstr = `<a href="#" onclick="loadTopic('${d.topic}');">${shortenName(d.topic)}</a><br> `;
+            gitstr = d.content;
+            g = groupFromName(d.topic);
             myitem = {
                 id: idcounter,
-                group: 0,
-                topic: d.topic,
-                content: gitstr,
-                start: new Date(d.d.substring(0,4) + "-" + d.d.substring(4, 6) + "-" + d.d.substring(6,8))
+                group: g,
+                content: d.topic,
+                title: gitstr,
+                start: new Date(d.d.substring(0,4) + "-" + d.d.substring(4, 6) + "-" + d.d.substring(6,8)), 
+                style: "background-color: rgb(228, 222, 199);"
             }
             timeline.itemsData.add(myitem);
             idcounter++;
@@ -53,11 +81,14 @@ function updateTimeline(gitcommits, fn=null){
 
         }
         else{
+            g = groupFromName(gitcommits[gi].filename);
             myitem = {
                 id: idcounter,
-                group: 0,
-                content: '<a href="' + gitcommits[gi].url + '" target="_blank">' + gitcommits[gi].filename + '</a>',
-                start: gitcommits[gi].d
+                group: g,
+                content: gitcommits[gi].filename,
+                title: gitcommits[gi].url,
+                start: gitcommits[gi].d, 
+                style: "background-color: rgb(125, 230, 139);"
             }
             timeline.itemsData.add(myitem);
             idcounter++;
@@ -82,7 +113,9 @@ function logme(i){
 }
   var container = document.getElementById('timewindow');
 
-  var timewindowitems = new vis.DataSet();
+  timewindowitems = new vis.DataSet();
+
+  timewindowgroups = new vis.DataSet();
 
   //#https://visjs.github.io/vis-timeline/examples/timeline/items/htmlContents.html
   var item7 = 'item7<br><a href="https://visjs.org" target="_blank">click here</a>';
@@ -95,6 +128,10 @@ var options = {};
 
   }
 
+  var vgroups = new vis.DataSet();
+  for (var g = 0; g < alphabet.length; g++) {
+    vgroups.add({id: g, content: alphabet.charAt(g)});
+  }
   // Configuration for the Timeline
   // specify options
   var options = {
@@ -114,11 +151,22 @@ var options = {};
     rollingMode: {
       follow: true,
       offset: 0.5
+    },
+    showTooltips: false,
+    tooltip: {
+        overflowMethod: 'flip',
+        template: function(originalItemData, parsedItemData) {
+            //retrieve changes here and put them in the code window.  
+            var color = originalItemData.title == 'IN_PROGRESS' ? 'red' : 'green';
+            return `<span style="color:${color}">${originalItemData.title}</span>`;
+          }
+    
     }
   };
 
   // create a Timeline
   timeline = new vis.Timeline(container, timewindowitems, null, options);
+  timeline.setGroups(vgroups);
   timeline.on('select', function (properties) {
     console.log('selected items: ' + properties.items);
     console.log(timewindowitems.get(properties.items));
@@ -149,12 +197,64 @@ $("#timewindow").resize(function () {
     timeline.setOptions({ height: ht, width: wd });
     //adjust other div height.  
     cvheight = 360 - ht;
-    if (cvheight < 10) cvheight = 10;
+    if (cvheight < 100) cvheight = 100;
     $('#wordcanvas').height(cvheight);
     $('#wordcanvas').width(wd);
 
   });
     
+  timeline.on("itemover", function (selection){
+    // If you set `multiselect: false` or leave it unset then only one item can selected at once.
+    // Therefore you can just use [0] to access the first item in the items array
+
+    const item = timewindowitems.get(selection.item);  
+    console.log('itemover event - title:', item.title);
+
+    var editor = myCodeMirror;
+    gitcurrentscrollinfo = editor.getScrollInfo();
+    editor.getDoc().setValue(item.title);      //git.js
+    if (item.title.startsWith("http")){ //download if we are sitting on this.  
+        exists = gitcommits.find(x => (x.url === item.title && x.filename == item.content));
+        if (exists && exists.patch !== null){
+            editor.getDoc().setValue(exists.patch);      //git.js                    
+            $('#for_edit_code').text(exists.filename);
+        }
+
+    }
+    else{
+        $('#for_edit_code').text(item.content);
+    }
+
+    
+    // If `multiselect: true` is set in the options then there could be multiple items selected.
+    // The above code is therefore not valid, instead it must loop through the items.
+    // Loop through these items.
+    //   for (let i = 0; i < selection.items.length; i += 1){
+    //     var item = items.get(selection.items[i]);
+    //     console.log('select event - title:', i, item.title);
+    //   }
+  });  
+
+  timeline.on("itemout", function (selection){
+    // If you set `multiselect: false` or leave it unset then only one item can selected at once.
+    // Therefore you can just use [0] to access the first item in the items array
+
+    const item = timewindowitems.get(selection.item);  
+    console.log('itemout event - title:', item.title);
+    var editor = myCodeMirror;
+    editor.getDoc().setValue(gitcurrentcontents);      //git.js
+    editor.scrollTo(gitcurrentscrollinfo.left, gitcurrentscrollinfo.top);
+    $('#for_edit_code').text(selectedtopic);
+    
+    // If `multiselect: true` is set in the options then there could be multiple items selected.
+    // The above code is therefore not valid, instead it must loop through the items.
+    // Loop through these items.
+    //   for (let i = 0; i < selection.items.length; i += 1){
+    //     var item = items.get(selection.items[i]);
+    //     console.log('select event - title:', i, item.title);
+    //   }
+  });  
+  
 // Alternatively register select event
 timeline.on("select", function (selection){
     // If you set `multiselect: false` or leave it unset then only one item can selected at once.
@@ -162,7 +262,9 @@ timeline.on("select", function (selection){
     if(selection.items.length > 0){
       const item = timewindowitems.get(selection.items[0]);  
       console.log('select event - title:', item.title);
-      loadTopic(item.topic);
+      if (selection.event.type=="tap"){
+          loadTopic(item.content);
+      }
     }
     
     // If `multiselect: true` is set in the options then there could be multiple items selected.

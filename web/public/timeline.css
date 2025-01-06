@@ -1,0 +1,10 @@
+.vis.timeline .gitcommit {
+    color: rgb(58, 13, 13);
+    background-color: rgb(125, 230, 139);
+    border-color: lightgray;
+  }
+  .vis.timeline .gitbook {
+    color: black;
+    background-color:rgb(228, 222, 199);
+    border-color: darkgray;
+  }  
