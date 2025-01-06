@@ -126,7 +126,7 @@ function gitDownloadCommits(data, qpath=null){
 
       }
     }
-    setTimeout(function (){if (myarray.length > 0) {gitChartCommits(myarray, qpath);} }, 5000);
+    setTimeout(function (){if (myarray.length > 0) {gitChartCommits(myarray, qpath);updateTimeline(qpath);} }, 5000);
   }
 
 function gitChartCommits(myarray, qpath=null){
@@ -167,7 +167,7 @@ function gitChartCommits(myarray, qpath=null){
 //	dataTable.addColumn({ type: 'number', id: 'Iteration#' });
 //    myarray = await gitDownloadCommits(data);
 	dataTableGit.addRows(myarray);
-  updateTimeline(gitcommits, qpath);
+
 
 //	console.log(myarray);
 

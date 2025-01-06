@@ -57,3 +57,9 @@ Money can buy time if you use it wisely.
 
 CHAPTER1:
 The Start
+
+**book
+notation of this "WORK"
+
+**genbook
+notation of ideas assisted by LLM interaction.  

@@ -691,7 +691,9 @@ function loadTranscript(snapshot){
 
 function updateFeedbackUI(user=0, note=null){
 	//filterWords();
-	findWordsA(user);
+	//use note to search backwards for any new word recognized.  No need to
+
+	findWordsA(user, note);
 
 
 	getFeedbackImage(null, xmultiplier1, ymultiplier1, scene1, engine1, currentmidiuser);

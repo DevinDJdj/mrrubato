@@ -4,7 +4,7 @@ var backy = 0;
 var timewindowitems;
 var timewindowgroups;
 var alphabet = '2ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
+var timelinefn = {};
 
 function changeBackgroundImage() {
 //        let headingID = document.getElementById("GFG");
@@ -73,25 +73,46 @@ function updateTimelineBook(gs, fn=null){
     }
 }
 
-function updateTimeline(gitcommits, fn=null){
+function updateTimeline(fn, hide=false){
 //    gitcommits.push({"url": data[this.indexValue].html_url, "filename": commitdata.files[i].filename, "changes": commitdata.files[i].changes, "d": mydate, "selected": true});
+    
     for (gi=0; gi<gitcommits.length; gi++){
 
         if (fn !==null && gitcommits[gi].filename != fn){
 
         }
         else{
-            g = groupFromName(gitcommits[gi].filename);
-            myitem = {
-                id: idcounter,
-                group: g,
-                content: gitcommits[gi].filename,
-                title: gitcommits[gi].url,
-                start: gitcommits[gi].d, 
-                style: "background-color: rgb(125, 230, 139);"
+            exists = timeline.itemsData.get({
+                filter: function (item) {
+                    //return id from timeline matching id in props.items
+                    return item.content === gitcommits[gi].filename && item.title == gitcommits[gi].url;
+                }
+            });
+            if (!exists || exists.length ==0){
+                g = groupFromName(gitcommits[gi].filename);
+                myitem = {
+                    id: idcounter,
+                    group: g,
+                    content: gitcommits[gi].filename,
+                    title: gitcommits[gi].url,
+                    start: gitcommits[gi].d, 
+                    style: "background-color: rgb(125, 230, 139);"
+                }
+                timeline.itemsData.add(myitem);
+                idcounter++;
             }
-            timeline.itemsData.add(myitem);
-            idcounter++;
+            else{
+                if (hide){
+                    //this is 
+                    exists[0].style='background-color: rgb(125, 230, 139);display: none;'
+                }
+                else{
+                    //show again
+                    exists[0].style='background-color: rgb(125, 230, 139);'
+                }
+                timeline.itemsData.update(exists);
+
+            }
         }
 
     }

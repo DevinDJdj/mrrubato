@@ -503,3 +503,84 @@ timeline.setGroups(groups);
 Need to dynamically size the topic window based on number of topics.  
 
 --somewhat better.  
+
+Probably change name to filename, and just keep the folder as group?  
+
+
+**0606
+Need to do one match in order to have sample data.  
+Did we ever finish creating the language?  
+
+
+**web/public/languages.js
+Dont allow for duplicate entries in languages.  
+--OK maybe.  
+
+Do we need multiple instruments?  
+This would be nice to add an instrument for the word.  
+Where would we add this though?  
+already have color in word.  Maybe this is enough.  
+Based on this use different instrumentation.  Have color -> instrument mapping.  
+Trigger word playback or adjust feedback midi directly to change instrument.  
+The instrument map should be determined by listener.  
+
+How to input this script?  This will be easy enough to load.  
+Should we add parenthesis?  
+
+add language tennis (-6,6)
+--start here.  
+analyze.html?video=mj4jpeBvD2o
+change language (-6,6)
+add word hit (6,6)
+how do we have synonyms?  This would get overwritten
+Could have something mimicing back and forth across net.  
+add word backhand (6,1) 
+add word forehand (6,3) 
+add word slice (6,2)
+add word topspin (6,4)
+add word volley (6,8)
+add word drop (6,10)
+add word serve (10,11)
+
+add word fault (10,9)
+add word let (10,8)
+add word out (5,5)
+add word long (5,6)
+add word net (5,4)
+add word bounce (4,4)
+add word applause (3,4)
+add word noise (3,5)
+
+add word score (2,2) (param = 3,4,5,6,7)
+2,8 = minus point, 2,3 = plus point, 2,4 plus game, 2,5 plus set
+2,9 = minus game, 2,10 minus set 
+
+
+
+add word player one (9,8)
+add word player two (9,10)
+
+
+**web/public/book.html
+**genbook
+Notate @@ and == when using book.html if it spurns you to act in any way.  
+
+
+**web/public/analyze.html
+**web/public/languages.js
+Need to adjust findWordsA
+Cant be loading this every time for a large amount of feedback.  
+Only need to load last few.  
+--maybe ok.  
+Surely search mechanism can still be improved.  
+But performance may be fine for what we need.  
+
+
+**web/public/midi.js
+"completeMidi"
+This is what moves from language to language after "checkCommands"
+Is this what we want?  
+
+**web/public/languages/book.js
+Drive all components on book.html
+--need to test.  

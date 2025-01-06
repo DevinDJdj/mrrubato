@@ -33,6 +33,8 @@ var DIC1_KEYS = 1;
 var DIC1_LANG = 2;
 var DIC1_MEANING = 3;
 
+var MAX_WORD_SIZE = 10;
+
 var DIC_LANG = 7;
 var DIC_WORD = 0;
 var DIC_PLAYALL = 1;
@@ -254,6 +256,10 @@ function addLanguage(lang, midi){
         console.log("Language identifier required");
         return;
     }
+    if (typeof(alllangs[midi]) !== "undefined"){
+        console.log("This language exists " + alllangs[midi]);
+        return;
+    }    
     langref = firebase.database().ref('/dictionary/languages/' + lang);
 	langref.once('value')
     .then((snap) => {
@@ -1221,7 +1227,7 @@ function filterWords(flangs=[], fwords=[], fusers=[]){
 
 
 
-function findWordsA(user){
+function findWordsA(user, note=null){
     console.log('Findwords start ' + Date.now());
     //should load meta array first.  Or we really need to do this logic in time, not order of language?  
     //right now we have no easy way to search time across languages.  
@@ -1250,7 +1256,29 @@ function findWordsA(user){
         key = lang;
         miditostrindex = [];
         tempstr = "";
-        for (mi=0; mi<temp.length; mi++){
+        mi=0;
+        mistart = mi;
+        tocheck = temp.length;
+        if (note){
+            //only find last word.  
+            //do we only need to check currentlanguage?  
+            //find where this note is
+            for (mi=temp.length-1; mi>9; mi--){
+                if (temp[mi].time <= note.time){
+                    break;
+                }
+            }
+            mi = mi - MAX_WORD_SIZE;
+            //only check the last few notes.  
+            if (mi<0){
+                mi = 0;
+            }
+            mistart = mi;
+            tocheck = mistart+MAX_WORD_SIZE*2;
+        }
+
+
+        for (mi; mi<temp.length && mi<tocheck; mi++){
             miditostrindex.push(tempstr.length);
             tempstr += temp[mi].note + ",";
         }
@@ -1284,7 +1312,7 @@ function findWordsA(user){
                         //get the index of this
                         wordindex = miditostrindex.indexOf(indexes[i]);
                         //value[j] is start of this language.
-                        if (wordindex > -1 && wordtimes[key][v3].indexOf(value[wordindex ].time) < 0){
+                        if (wordindex > -1 && wordtimes[key][v3].indexOf(value[wordindex+mistart ].time) < 0){
                             wordtimes[key][v3].push(value[wordindex ].time);
                             //push the whole midi struct.  to use later
                             midiwords[key][v3].push(value[wordindex]);
