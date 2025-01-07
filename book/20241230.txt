@@ -584,3 +584,10 @@ Is this what we want?
 **web/public/languages/book.js
 Drive all components on book.html
 --need to test.  
+
+**web/public/timewindow.js
+Need to trigger refresh after retrieving commits.  
+
+
+**web/public/git.js
+Need to 

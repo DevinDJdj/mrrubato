@@ -111,6 +111,8 @@ function updateTimeline(fn, hide=false){
                     exists[0].style='background-color: rgb(125, 230, 139);'
                 }
                 timeline.itemsData.update(exists);
+                
+                timeline.redraw();
 
             }
         }
@@ -224,27 +226,16 @@ $("#timewindow").resize(function () {
 
   });
     
+
+
+
+
   timeline.on("itemover", function (selection){
     // If you set `multiselect: false` or leave it unset then only one item can selected at once.
     // Therefore you can just use [0] to access the first item in the items array
 
     const item = timewindowitems.get(selection.item);  
-    console.log('itemover event - title:', item.title);
-
-    var editor = myCodeMirror;
-    gitcurrentscrollinfo = editor.getScrollInfo();
-    editor.getDoc().setValue(item.title);      //git.js
-    if (item.title.startsWith("http")){ //download if we are sitting on this.  
-        exists = gitcommits.find(x => (x.url === item.title && x.filename == item.content));
-        if (exists && exists.patch !== null){
-            editor.getDoc().setValue(exists.patch);      //git.js                    
-            $('#for_edit_code').text(exists.filename);
-        }
-
-    }
-    else{
-        $('#for_edit_code').text(item.content);
-    }
+    mouseOverGit(item.title, item.content);
 
     
     // If `multiselect: true` is set in the options then there could be multiple items selected.
@@ -261,11 +252,7 @@ $("#timewindow").resize(function () {
     // Therefore you can just use [0] to access the first item in the items array
 
     const item = timewindowitems.get(selection.item);  
-    console.log('itemout event - title:', item.title);
-    var editor = myCodeMirror;
-    editor.getDoc().setValue(gitcurrentcontents);      //git.js
-    editor.scrollTo(gitcurrentscrollinfo.left, gitcurrentscrollinfo.top);
-    $('#for_edit_code').text(selectedtopic);
+    mouseOutGit(item.title, item.content);
     
     // If `multiselect: true` is set in the options then there could be multiple items selected.
     // The above code is therefore not valid, instead it must loop through the items.

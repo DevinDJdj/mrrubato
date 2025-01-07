@@ -785,6 +785,39 @@ function clickHandlerGit(sender) {
     }
   }
 
+  function mouseOverGit(title, content){
+    console.log('itemover event - title:', title);
+
+    var editor = myCodeMirror;
+    gitcurrentscrollinfo = editor.getScrollInfo();
+    editor.getDoc().setValue(title);      //git.js
+    if (title.startsWith("http")){ //download if we are sitting on this.  
+        exists = gitcommits.find(x => (x.url === title && x.filename == content));
+        if (exists && exists.patch !== null){
+            editor.getDoc().setValue(exists.patch);      //git.js                    
+            $('#for_edit_code').text(exists.filename);
+        }
+
+    }
+    else{
+        $('#for_edit_code').text(content);
+    }
+
+  }
+
+  function mouseOutGit(title, content){
+    console.log('itemout event - title:', title);
+    var editor = myCodeMirror;
+    editor.getDoc().setValue(gitcurrentcontents);      //git.js
+    editor.scrollTo(gitcurrentscrollinfo.left, gitcurrentscrollinfo.top);
+    $('#for_edit_code').text(selectedtopic);
+    
+  }
+
+  function selectGit(){
+
+  }
+
   function selectHandlerGit() {
 	var container = document.getElementById('gitchart');
 	var selection = gitchart.getSelection();
@@ -796,6 +829,7 @@ function clickHandlerGit(sender) {
 		console.log(dataTableGit.getValue(selection[0].row, 1));
       var link = dataTableGit.getProperty(selection[0].row, 0, 'link');
 	  console.log(link);
+      //add mouseover to show the change and 
       window.open(link, '_blank');
   
   }

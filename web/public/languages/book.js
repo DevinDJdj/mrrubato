@@ -48,6 +48,18 @@ keymaps["book"].keydict[ "" ] = {
     }
 };
 
+keymaps["book"].funcdict["_jump"] = function(midi){
+    //UI function start with _?  
+    //vars should be set prior to this in "line".  
+    //data validation should occur in "line " function.
+    //perform UI action on 
+    var editor = myCodeMirror;
+    editor.scrollTo(gitcurrentscrollinfo.left, gitcurrentscrollinfo.top+midi);
+    
+
+}
+
+
 keymaps["book"].keydict["jump "] = {"1": {"min": -12, "max": 12}}; //number of increments.  from middle C
 
 keymaps["book"].funcdict["jump "] = function(transcript, midi, keydict, key){
@@ -134,7 +146,7 @@ keymaps["book"].chat = function (transcript){
                 //this should be a good function.  
                 console.log("book jump line " + midi);
                 //check for same or change here.  
-                keymaps["book"].funcdict["_jump"]();
+                keymaps["book"].funcdict["_jump"](midi);
                 executed = true;
             }
         }
