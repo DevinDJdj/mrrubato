@@ -1313,9 +1313,9 @@ function findWordsA(user, note=null){
                         wordindex = miditostrindex.indexOf(indexes[i]);
                         //value[j] is start of this language.
                         if (wordindex > -1 && wordtimes[key][v3].indexOf(value[wordindex+mistart ].time) < 0){
-                            wordtimes[key][v3].push(value[wordindex ].time);
+                            wordtimes[key][v3].push(value[wordindex+mistart  ].time);
                             //push the whole midi struct.  to use later
-                            midiwords[key][v3].push(value[wordindex]);
+                            midiwords[key][v3].push(value[wordindex+mistart ]);
                             //we should have the user here to filter by.  words[key][v3][i].user
                             //filters are lang, word, user
                             //just get from the datatable and run though by time.  
