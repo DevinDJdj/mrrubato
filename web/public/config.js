@@ -1,8 +1,8 @@
 
 var giturl = 'https://api.github.com/repos/DevinDJdj/mrrubato';
 var gitbranch = 'master';
-var bookfolder = 'book';
-var dbname = '/misterrubato/';
+var bookfolder = 'book'; //change to notes/book folder within the repository.  
+var dbname = '/misterrubato/'; //RTDB folder for contents
 var domain = 'https://misterrubato.com';
 var chatdomain = 'https://chat.misterrubato.com';
 var useyoutube = false;

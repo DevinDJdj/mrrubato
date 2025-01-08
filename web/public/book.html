@@ -289,9 +289,17 @@ Load any speech from this time.
             
                 </td>
                 <td>
-                    <div id="selectionhistory" style="width:250px;height:360px;overflow:auto;">
+                    <div id="selectionhistory" style="width:250px;height:260px;overflow:auto;">
 
                     </div>
+                    <div id="selectionfilter" style="vertical-align:top;width:250px;height:100px;overflow:auto;">
+                      <label for="filterregex">Filter Files:</label><br>
+                      <input type="text" id="filterregex" name="filterregex" size="25">
+
+                      <label for="prompt">TOPIC Filter prompt for LLM:</label><br>
+                      <textarea id="filterprompt" name="filterprompt" rows="4" cols="30"></textarea>
+                    </div>
+
                 </td>
             </tr>
         </table>
@@ -467,10 +475,9 @@ Load any speech from this time.
                             <label id="for_edit_code" for="edit_code" style="float:left">Code Snippet:</label>
                     </td>
                         <td halign="right">
-                        <select id="code_mode" style="float:right;">
+                        <select id="code_mode" onchange="setGitMode();" style="float:right;">
                             <option value="BOOK">BOOK</option>
                             <option value="GIT" selected>GIT</option>
-                            <option value="AUTO">AUTO</option>
                         </select>
                     </td>
                 </tr>
@@ -1362,7 +1369,17 @@ function GetRecentSelections(){
     ctx = "";
     for (si=0; si<selectionhistory.length; si++){
         //really we want recent commits here, and not full source.  
+        //and in order.  ...
+        if (selectionhistory[si] in gitstruct["bytopic"]){
+          ctx += "**" + selectionhistory[si] + "\n" + JSON.stringify(gitstruct["bytopic"][ selectionhistory[si] ]) + "\n";
+          
+        }
+        exists = gitcommits.find(x => x.filename === selectionhistory[si]);
+        if (exists){
+          ctx += "**" + selectionhistory[si] + "\n" + JSON.stringify(exists) + "\n";
+        }
         ctx += "**" + selectionhistory[si] + "\n" + getGitContents(selectionhistory[si], false) + "\n";
+
 
     }
     return ctx;

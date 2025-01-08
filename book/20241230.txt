@@ -591,3 +591,27 @@ Need to trigger refresh after retrieving commits.
 
 **web/public/git.js
 Need to 
+
+
+**web/public/book.html
+Add search bar/filter bar.  
+Essentially just filter and zoom out to nearest in the filter. 
+Keep selected items in the list.  
+And show all which are within the filter.  
+Make basically invisible and not clickable unless in the filter.  
+
+Need to download all transcripts.  
+Essentially just move transcripts to another location.  
+
+**web/public/git.js
+scrolling on new file.  
+Stop scrolling to location on new topic.  
+
+groups
+treeLevel: 1, 2, 3
+--hmmm, maybe this is ok.  
+
+
+**web/public/book.js
+Need to load language and test.  
+

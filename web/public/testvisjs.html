@@ -99,7 +99,7 @@ var options = {};
   for (var i = 10; i >= 0; i--) { 
     items.add({
         id: i,
-        content: "item " + i + '<a href="#" onclick="logme(' + i + ')";>item' + i + '</a>',
+        content: "item " + i, // + '<a href="#" onclick="logme(' + i + ')";>item' + i + '</a>',
         start: new Date(new Date().getTime() + i*100000)
     });
   }
@@ -111,6 +111,7 @@ var options = {};
     width: "1544px",
     start: new Date(),
     end: new Date(new Date().getTime() + 1000000),
+    stack: false,
     rollingMode: {
       follow: true,
       offset: 0.5

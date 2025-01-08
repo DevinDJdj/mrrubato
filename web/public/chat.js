@@ -5,7 +5,7 @@ var chatmessages = [];
 var lastread = 0;
 var reading = false;
 var localprompt = 'I am a software engineer, investigating the source code and notes provided.  \n\
-                   please use ONLY the context provided to answer the @@Question.  \n\
+                   please use ONLY the documentation provided to answer the @@Question.  \n\
                    Each topic is marked by ** for example **MYTOPIC \n\
                    Keep the response short and less than 300 words.  If further information is needed, the user will ask another question.  \n\
                    You are trying to help summarize and explain the key points of the content provided.  \n\

@@ -8,3 +8,7 @@
     background-color:rgb(228, 222, 199);
     border-color: darkgray;
   }  
+
+  .vis-item .vis-item-overflow {
+    overflow: hidden;
+  }

@@ -5,15 +5,17 @@ var timewindowitems;
 var timewindowgroups;
 var alphabet = '2ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 var timelinefn = {};
+var timelinecurrentstart = 0;
+var timelinecurrentend = 0;
+var gcounter = 0;
 
 function changeBackgroundImage() {
 //        let headingID = document.getElementById("GFG");
     let headingID = document.getElementById("timewindow");
-    headingID.style.backgroundImage = 
-"url('test/prolltest.jpg')";
-    headingID.style.backgroundSize = "1544px 352px" //half size
+    headingID.style.backgroundImage = "url('test/prolltest.jpg')";
+    headingID.style.backgroundSize = "1544px 352px"; //half size
     headingID.style.backgroundPosition ="-3000px 100px";
-    headingID.style.backgroundPosition = "0px 0px"
+    headingID.style.backgroundPosition = "0px 0px";
 //        timeline.zoomOut(1);
     }
 function changeBackgroundLoc(start, end){
@@ -31,19 +33,52 @@ var timecounter = 0;
 var idcounter = 0;
 
 function groupFromName(g){
-    g = g.replace('web/public/', '')
+    g = g.replace('web/public/', '');
+    const parts = g.split('/');
+    if (parts.length > 1){
+        const folderPath = parts.slice(0, -1).join('/');
+        g = folderPath;
+    }
+
+    exists = vgroups.get().findIndex(x => (x.content === g));
+    if (exists == -1){
+        parent = vgroups.get().findIndex(x => x.content === g.charAt(0).toUpperCase());
+        //parent = vgroups.findIndex(x => x.content === g.charAt(0).toUpperCase());
+        if (parent == -1){
+            console.log("bad name " + g);
+        }
+        else{
+            if (isDate(g)){
+                return 0;
+            }
+            else{
+                newGroup = gcounter++;
+                vgroups.get(parent).nestedGroups.push(newGroup);
+                vgroups.add({id: newGroup, treeLevel: 2, nestedGroups: [], content: g});
+                return newGroup;
+            }
+        }
+    }
+    else{
+        return exists;
+    }
+    /*
     var pos = alphabet.indexOf(g.charAt(0).toUpperCase());
-    if (pos > 0){
+    if (pos > -1){
         return pos;
     }
     else{
         return alphabet.length-1;
     }
+    */
 }
 
 function updateTimelineBook(gs, fn=null){
+    fullstrings = {};
     for (const [k2, v2] of Object.entries(gs)) {	//k2 = date  //v2 = array of content entries.  
         topicstrings = {};
+        fullstrings[k2] = "";
+
         for (const [k3, d] of Object.entries(v2)) { //k3 = entry num, d = topic contents.  
             if (!(d.topic in topicstrings)){
                 topicstrings[d.topic] = d;
@@ -51,6 +86,7 @@ function updateTimelineBook(gs, fn=null){
             else{
                 topicstrings[d.topic].content += "\n" + d.content;
             }
+            fullstrings[k2] += d.content + "\n";
 
 
         }
@@ -61,6 +97,7 @@ function updateTimelineBook(gs, fn=null){
             myitem = {
                 id: idcounter,
                 group: g,
+                btype: 'book',
                 content: d.topic,
                 title: gitstr,
                 start: new Date(d.d.substring(0,4) + "-" + d.d.substring(4, 6) + "-" + d.d.substring(6,8)), 
@@ -70,7 +107,34 @@ function updateTimelineBook(gs, fn=null){
             idcounter++;
 
         }
+
+
+
     }
+    for (const [k5, d] of Object.entries(fullstrings)){
+        gitstr = d;
+        g = groupFromName(k5);
+        myitem = {
+            id: idcounter,
+            group: g,
+            btype: 'book',
+            content: k5,
+            title: gitstr,
+            start: new Date(k5.substring(0,4) + "-" + k5.substring(4, 6) + "-" + k5.substring(6,8)), 
+            style: "background-color: rgb(228, 222, 199);"
+        }
+        timeline.itemsData.add(myitem);
+        idcounter++;
+    }
+    timeline.setGroups(vgroups);    
+    /*
+    var ONE_DAY_IN_MS = 1000 * 60 * 60 * 24;
+    var now = new Date();
+    var nowInMs = now.getTime();
+    var lastWeek = nowInMs - 10*ONE_DAY_IN_MS;
+    timeline.setWindow(lastWeek, nowInMs);
+    */    
+
 }
 
 function updateTimeline(fn, hide=false){
@@ -94,6 +158,7 @@ function updateTimeline(fn, hide=false){
                     id: idcounter,
                     group: g,
                     content: gitcommits[gi].filename,
+                    btype: 'commit',
                     title: gitcommits[gi].url,
                     start: gitcommits[gi].d, 
                     style: "background-color: rgb(125, 230, 139);"
@@ -111,14 +176,14 @@ function updateTimeline(fn, hide=false){
                     exists[0].style='background-color: rgb(125, 230, 139);'
                 }
                 timeline.itemsData.update(exists);
-                
+
                 timeline.redraw();
 
             }
         }
 
     }
-
+    timeline.setGroups(vgroups);
 }
 
 function addItem(group, content, start){
@@ -153,17 +218,20 @@ var options = {};
 
   var vgroups = new vis.DataSet();
   for (var g = 0; g < alphabet.length; g++) {
-    vgroups.add({id: g, content: alphabet.charAt(g)});
+    vgroups.add({id: g, treeLevel: 1, nestedGroups: [], content: alphabet.charAt(g)});
   }
+  gcounter = g;
   // Configuration for the Timeline
   // specify options
   var options = {
-    height: "100px", //height and width adjustment
+    height: "500px", //height and width adjustment
+    maxHeight: "800px",
     width: "900px",
     verticalScroll: true,
+    stack: true,
     zoomKey: 'ctrlKey',
-    start: new Date(),
-    end: new Date(new Date().getTime() + 1000000),
+    start: new Date(new Date().getTime() - 10*24*60*60*1000),
+    end: new Date(new Date().getTime() + 1*24*60*60*1000),
     margin: {
         axis: 5, 
         item: 5
@@ -173,15 +241,15 @@ var options = {};
     },
     rollingMode: {
       follow: true,
-      offset: 0.5
+      offset: 0.9
     },
-    showTooltips: false,
+    showTooltips: true,
     tooltip: {
         overflowMethod: 'flip',
         template: function(originalItemData, parsedItemData) {
             //retrieve changes here and put them in the code window.  
-            var color = originalItemData.title == 'IN_PROGRESS' ? 'red' : 'green';
-            return `<span style="color:${color}">${originalItemData.title}</span>`;
+            var color = originalItemData.btype == 'commit' ? 'red' : 'black';
+            return `<span style="color:${color}">${originalItemData.content}</span>`;
           }
     
     }
@@ -199,7 +267,7 @@ var options = {};
         //this appears to be a 30 Hz refresh rate.  Probably dont need that much.  
         //depends on the movement rate.  
         if (timecounter%30==0){
-            console.log(start.toString(), end.toString());
+            //console.log(start.toString(), end.toString());
             changeBackgroundLoc(start, end);
         }
         timecounter++;
@@ -207,10 +275,33 @@ var options = {};
     
     
     
-    timeline.on("rangechanged", function({ start, end }) {
+    timeline.on("rangechanged", function({ start, end, byuser }) {
         //pick up both these.  
-      console.log(start.toString(), end.toString());
+      if (byuser){
+        console.log(start.toString(), end.toString());
+
+        currenttimelinestart = start;
+        currenttimelineend = end;
+        /*
+        var itemsView = new vis.DataView(items, { filter: 
+            function(data) { 
+                if ((start < data.end || data.start < end)) {
+                    if ($.inArray(data.group, visibleGroups) == -1) {
+                        visibleGroups.push(data.group);
+                    }
+                    return true;
+                }
+                return false; 
+            }
+        });
         
+        var groupsView = new vis.DataView(groups, { filter: 
+            function(data) {
+                return $.inArray(data.id, visibleGroups) > -1;
+            }
+        });
+        */
+      }        
     });
 
 $('#timewindow').resizable();
@@ -219,10 +310,14 @@ $("#timewindow").resize(function () {
     var wd = $(this).width();
     timeline.setOptions({ height: ht, width: wd });
     //adjust other div height.  
+    $('#selectionhistory').height(ht);
     cvheight = 360 - ht;
     if (cvheight < 100) cvheight = 100;
     $('#wordcanvas').height(cvheight);
     $('#wordcanvas').width(wd);
+
+    $('#selectionfilter').height(cvheight);
+
 
   });
     

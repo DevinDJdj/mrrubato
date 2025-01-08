@@ -6,6 +6,7 @@ var gittoken = null;
 var gitcurrentpath = "";
 var gitcurrentfolder = "";
 var gitcurrentcontents = "";
+var gitcurrentbook = "";
 var gitcurrentcontentstype = "javascript";
 var gitcurrentscrollinfo = null;
 
@@ -183,7 +184,7 @@ function gitChartCommits(myarray, qpath=null){
 
 function loadGitBook(){
   reponame = giturl.substring(giturl.search("repos/")+6);
-  gitbookref = firebase.database().ref('/git/' + reponame + '/' + gitbranch + '/book');
+  gitbookref = firebase.database().ref('/git/' + reponame + '/' + gitbranch + '/' + bookfolder);
 gitbookref.once('value')
   .then((snap) => {
     if (snap.exists()){
@@ -201,7 +202,7 @@ gitbookref.once('value')
 }
 
 function gitCompareRecent(){
-  gurl = giturl + '/contents/book?ref=' + gitbranch;
+  gurl = giturl + '/contents/' + bookfolder + '?ref=' + gitbranch;
 
   $.getJSON(gurl,function(bookdata){
       console.log(bookdata);       
@@ -366,18 +367,18 @@ function creategitStruct(){
 
     //for now only on load.  
     updateTimelineBook(gitstruct["bydate"]);
-    
+
 
 }
 
-function loadfromGitBook(top){
+function loadfromGitBook(top, load=true){
   var prevcontents = gitcurrentcontents;
+  var newcontents = "";
   if (isDate(top)){
     var d = parseInt(top);
     if (d in gitstruct["bydate"]){
-      gitcurrentcontents = "";
       for (ti=0; ti<gitstruct["bydate"][d].length; ti++){
-        gitcurrentcontents += gitstruct["bydate"][d][ti].content;
+        newcontents += gitstruct["bydate"][d][ti].content;
       }
     }
     else{
@@ -387,17 +388,20 @@ function loadfromGitBook(top){
   else{
     if (top in gitstruct["bytopic"]){
       console.log(gitstruct["bytopic"][top]);
-      gitcurrentcontents = "";
       for (ti=0; ti<gitstruct["bytopic"][top].length; ti++){
-        gitcurrentcontents += "**" + gitstruct["bytopic"][top][ti].d + "\n";
-        gitcurrentcontents += gitstruct["bytopic"][top][ti].content;
+        newcontents += "**" + gitstruct["bytopic"][top][ti].d + "\n";
+        newcontents += gitstruct["bytopic"][top][ti].content;
       }
 
     }
   }
+  if (newcontents !==""){
+    gitcurrentbook = newcontents;
+    gitcurrentcontents = newcontents;
+  }
   var editor = myCodeMirror;
   //adjust to pull from book 
-  if (prevcontents !=gitcurrentcontents){
+  if (prevcontents !=gitcurrentcontents && load){
     gitcurrentcontentstype = setContentType("book.txt");    
     editor.setOption("mode", gitcurrentcontentstype);
     editor.getDoc().setValue(gitcurrentcontents);
@@ -695,23 +699,35 @@ function isDate(top){
     return true;
   }
 }
+
+function setGitMode(){
+  m = $('#code_mode').val();
+  currentmode = m;
+  loadTopic(selectedtopic);
+}
 function loadTopic(top){
     selectedtopic = top;
 
 //    selectionhistory.unshift(top);
     var currentmode = $('#code_mode').find(":selected").val();
     if (currentmode == "GIT"){
-
-      cont = getGitContents(top);
-      if (cont !==null){
-        selectionhistory.push(top);
-      }
-
+      loadfromGitBook(top, false); //search Git for this string **.... in gitbook and retrieve all.  
+      cont = getGitContents(top, true);
+  
     }
     else if (currentmode=="BOOK"){
-      loadfromGitBook(top); //search Git for this string **.... in gitbook and retrieve all.  
-      selectionhistory.push(top);
+      cont = getGitContents(top, false);
+      loadfromGitBook(top, true); //search Git for this string **.... in gitbook and retrieve all.  
+  
     }
+
+
+    exists = selectionhistory.indexOf(top);
+    if (exists>-1){
+      selectionhistory.splice(exists, 1);
+    }
+    selectionhistory.push(top);
+
     loadSelectionHistory();
 
     zoomTopic(top);
