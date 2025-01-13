@@ -14,6 +14,7 @@ const availableModels = webllm.prebuiltAppConfig.model_list.map(
 );
 let selectedModel = "Llama-3.2-1B-Instruct-q4f16_1-MLC";
 //selectedModel = "TinyLlama-1.1B-Chat-v0.4-q4f16_1-MLC";
+//selectedModel = "Qwen2.5-Coder-7B-Instruct-q4f32_1-MLC";
 
 // Callback function for initializing progress
 function updateEngineInitProgressCallback(report) {
@@ -51,6 +52,10 @@ async function streamingGenerating(messages, onUpdate, onFinish, onError) {
       messages,
       max_tokens: 512,
       stream_options: { include_usage: true },
+//      response_format: {
+//        type: "json_object",
+//        schema: schema,
+//      } as webllm.ResponseFormat,      
     });
     for await (const chunk of completion) {
       const curDelta = chunk.choices[0]?.delta.content;
@@ -76,6 +81,54 @@ async function streamingGenerating(messages, onUpdate, onFinish, onError) {
   }
 }
 
+
+function createMessages(input){
+  //parse meta language especially @@question ==answer.  
+  //and create the JSON for this.  
+  //find all @@ and ==
+  let qs = [];
+  let as = [];
+  let startIndex = 0;
+
+  while (startIndex < input.length) {
+    let index = input.indexOf("@@", startIndex);
+    if (index === -1) {
+      break;
+    }
+    qs.push(index);
+    startIndex = index + 1;
+  }
+  startIndex = 0;
+  while (startIndex < input.length) {
+    let index = input.indexOf("==", startIndex);
+    if (index === -1) {
+      break;
+    }
+    qs.push(index);
+    startIndex = index + 1;
+  }
+
+  let ms = [];
+  if (qs.length == as.length){
+    for (mi=0; mi<qs.length; mi++){
+      const question = {
+        content: qs[i],
+        role: "user"
+
+      };
+      ms.push(question);
+      const answer = {
+        content: as[mi], 
+        role: "assistant"
+      };
+      ms.push(answer);
+    }
+
+  }
+  return ms;
+
+
+}
 /*************** UI logic ***************/
 export function onMessageSend() {
   const input = document.getElementById("user-input").value.trim();
@@ -94,7 +147,13 @@ export function onMessageSend() {
       role: "system",
     },
   ];
-  messages.push(message);
+  let myms = createMessages(input);
+  if (myms.length > 0){
+    messages.concat(myms);
+  }
+  else{
+    messages.push(message);
+  }
   appendMessage(message);
 
   document.getElementById("user-input").value = "";

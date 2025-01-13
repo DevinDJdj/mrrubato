@@ -1352,6 +1352,11 @@ function ChatLocalDone(answer){
 //                    addComment(data.answer, helpme())
     console.log('response  ' + answer);
     chathistory[chathistory.length-1].answer = answer; //set answer to previous query.  
+
+    //add to message context.  
+    //messages.push({ role: "assistant", content: answer });
+    //further queries dont need to contain all the same info.  
+
     
 }
 
@@ -1388,7 +1393,10 @@ function GetRecentSelections(){
 function GetRecentChat(){
     ctx = "";
     for (ci=0; ci<chatmessages.lengh; ci++){
-        ctx += "@@Question: " + chatmessages[ci].query + "\n\n@@Answer: " + chatmessages[ci].answer + "\n\n";
+        a = chatmessages[ci].answer.replaceAll("**", "__");
+        a = a.replaceAll("@@", "__");
+        a = a.replaceAll("==", "--");
+        ctx += "@@" + chatmessages[ci].query + "\n\n==" + a + "\n\n";
     }
     return ctx;
 }
@@ -1415,11 +1423,17 @@ function ChatBuildContext(context){
         }
         
     }
-    mycontext = definitions + mycontext;
+    mycontext = definitions + mycontext + recentcontext;
     //will need to add actual source files as well here to context.  
 
+    //cant have @@ or == in this content.  
+    mycontext = mycontext.replaceAll("@@", "__");
+    mycontext = mycontext.replaceAll("==", "--");
+    
     console.log(files);
-    mycontext = mycontext + recentcontext + recentchatmessages + "\n@@Question: " + lastquery;
+    mycontext = mycontext + recentchatmessages + "\n@@" + lastquery;
+
+    //add all data from previous question/answers.  
 
     
 }

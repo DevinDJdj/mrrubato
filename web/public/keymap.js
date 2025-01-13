@@ -83,7 +83,7 @@ class Keymap{
 
         this.keydict[ "" ] = { 
             "3": { 
-                "24,23,24": "play",
+                "23,22,23": "play",
                 "0,0,0": "erase", //erase all uncomplete midi.  not sure if this will work ok.  
                 "0,11,0" : "start record", 
                 "12,11,12": "stop record", //after this we should either have a name or keyset in the upper octave.  
@@ -110,10 +110,10 @@ class Keymap{
                 "12,15,15": "comment "
             }, 
             "4": {
-                "24,23,23,24": "pause",
-                "24,21,23,24": "skip ",
-                "24,22,22,24": "highlight ",
-                "24,23,21,24": "jump ", //just use skip forward or back.  
+                "23,22,22,23": "pause",
+                "23,20,22,23": "skip ",
+                "23,21,21,23": "highlight ",
+                "23,20,21,23": "jump ", //just use skip forward or back.  
                 "0,1,1,0": "set speed ", //set speed of playback.  This will be a number from -12 to 12.  0 is normal speed.
                 "12,6,6,12": "set volume ", //set volume of playback.  This will be a number from 0 to 12.  0 is mute.
                 "0,7,7,0": "where am i", 

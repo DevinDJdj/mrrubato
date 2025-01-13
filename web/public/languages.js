@@ -1542,14 +1542,20 @@ function seekAll(lang, word, index=0){
     }
 }
 
+function compareNumbers(a, b) {
+    return a - b;
+  }
+
 function findEvent(eventnum, ct, lang="", word=""){
     //use the filter set in the table.  
     //just get those times.  
     
-    wordtimes[key][v3]
+//    wordtimes[key][v3]
     //all languages and words is default.  
     //0 takes you to the next event, yes this is fine.  
-    startindex = -1;
+    alltimes = [];
+    allwords = new Map();
+
     if (lang == ""){
         for (const [lang, value] of Object.entries(wordtimes)) {
             for (const [word, times] of Object.entries(value)) {                
@@ -1559,42 +1565,47 @@ function findEvent(eventnum, ct, lang="", word=""){
                 //should have this stored and updated dynamically really.  
                 //so many things.  
                 for (let i=0; i<times.length; i++){
-                    if (times[i].time > ct){
-                        startindex = i;
-                    }
-                    if (i+eventnum < times.length && i+eventnum >= 0){
-                        return times[i+eventnum].time - ct;
-                    }
+                    alltimes.push(times[i]);
+                    allwords.set(times[i], word);
                 }
             }
-        }
+        }        
     }
     else if (word == ""){
         for (const [word, times] of Object.entries(wordtimes[lang])) {
             //have to go through this timewise, right now it is not.  
             //right now it is all times in word.  
             for (let i=0; i<times.length; i++){
-                if (times[i].time > ct){
-                    startindex = i;
-                    if (i+eventnum < times.length && i+eventnum >= 0){
-                        return times[i+eventnum].time;
-                    }
-                }
+                alltimes.push(times[i]);
+                allwords.set(times[i], word);
             }
         }
     }
     else{
         times = wordtimes[lang][word];
         for (let i=0; i<times.length; i++){
-            if (times[i].time > ct){
-                if (i+eventnum < times.length && i+eventnum >= 0){
-                    return times[i+eventnum].time;
+            alltimes.push(times[i]);
+            allwords.set(times[i], word);
+        }
+    }
+    alltimes.sort(compareNumbers);
+    for (i=0; i<alltimes.length; i++){
+        if (alltimes[i] > ct){
+            if (i+eventnum >= 0 && i+eventnum < alltimes.length){
+                return [alltimes[i+eventnum], allwords.get( alltimes[i+eventnum] )];
+            }
+            else{
+                if (eventnum > 0){
+                    return [alltimes[alltimes.length-1], allwords.get( alltimes[alltimes.length-1]) ];
+                }
+                else{
+                    return [alltimes[0], allwords.get( alltimes[0] )];
                 }
             }
         }
     }
- 
-    return 0;
+
+    return [0, ""];
 
 }
 

@@ -802,7 +802,7 @@ function clickHandlerGit(sender) {
   }
 
   function mouseOverGit(title, content){
-    console.log('itemover event - title:', title);
+//    console.log('itemover event - title:', title);
 
     var editor = myCodeMirror;
     gitcurrentscrollinfo = editor.getScrollInfo();
@@ -822,7 +822,7 @@ function clickHandlerGit(sender) {
   }
 
   function mouseOutGit(title, content){
-    console.log('itemout event - title:', title);
+//    console.log('itemout event - title:', title);
     var editor = myCodeMirror;
     editor.getDoc().setValue(gitcurrentcontents);      //git.js
     editor.scrollTo(gitcurrentscrollinfo.left, gitcurrentscrollinfo.top);

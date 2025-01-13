@@ -615,3 +615,111 @@ treeLevel: 1, 2, 3
 **web/public/book.js
 Need to load language and test.  
 
+
+Need to load a different repository sooner rather than later.  
+
+Need better way to specify a certain element and not the standard entity that is known in the LLM.  
+
+@@How do we do entity recognition?  
+
+Try a few other models.  Get a feeling for what it means to be a model user.  
+**Qwen2.5-Coder-7B-Instruct-q4f16_1-MLC
+
+@@What is the input history being kept on standard sites?  
+
+This is too slow..frozen?  
+
+webllm really needs some feedback.  
+There is going to be a completely new Front-end.  
+#https://www.sciencedirect.com/science/article/pii/S2666920X24000857
+
+
+
+**web/public/keymap.js
+Need delete word / remove functionality.  
+Select last or list and select.  
+When remove is used, list selections with images from video.  
+Can we get the video frames from the last selections?  
+findWordsA should store these images?  
+list 6 images or so should be possible or possibly 9.  
+Just create a temporary canvas with these images.  
+Or just pause, seek previous word next word.  
+delete...
+play..
+Start here...
+"23,22,23": "play"
+"23,22,22,23": "pause"
+"23,20,21,23": "jump ", //just use move to previous/next word.  
+"0,1,1,0": "set speed"
+
+OK jump maybe working.  
+How do we end up with "set speed good"
+And do we want this?  
+
+#https://docs.llamaindex.ai/en/v0.10.33/getting_started/starter_example_local/
+similar to what exists.  
+
+Do we need a pre-query to train the question.  
+Yes, I think we need better questions, but this will make things slower.  
+
+Sample....
+reformulate question using context markers.  
+
+
+#https://ocw.mit.edu/courses/11-255-negotiation-and-dispute-resolution-in-the-public-sector-spring-2021/resources/mit11_255s21_lec1/
+Should we use other input datasets
+Perhaps just use them from the notes.  
+Automate analysis of the mentioned sites.  
+Then browse from that starting point as a user.  
+
+
+Should the entire book be a prompt eventually?  
+Perhaps that is where we are headed.  
+I suspect yes.  
+
+#https://www.khanmigo.ai/
+#https://www.khanacademy.org/khan-for-educators/khanmigo-for-educators/xb4ad566b4fd3f04a:welcome-to-khanmigo-your-new-ai-teaching-assistant/xb4ad566b4fd3f04a:khanmigo-teacher-focused-ai-activities/v/khanmigo-create-tools
+
+This seems to have a lot of potential.  
+
+So when the entire book is a prompt what will occur?  
+That is an interesting question.  
+I suspect I will see within a few years.  
+
+How we define truth becomes a much more interesting question.  
+
+Thinking about this.  Eventually, I suspect I should at some point spend more time writing words and less writing code.  
+What is that point though.  
+Some people think it is soon.  
+I suspect it may be.  
+
+#https://arxiv.org/abs/2203.14927
+
+#https://michaelmuenzer.medium.com/control-a-raspberry-powered-rc-boat-from-within-the-web-browser-aaab1e84e1a9
+#https://github.com/yannrichet/PiBoat
+
+**PROMPTLANGUAGE
+/*
+Ask the user for their name and say "Hello"
+*/
+
+Use code syntax for code.  
+
+Lets try shorter subsets of comment/code changes.  
+
+Use BOOK -> TOPIC -> Code changes structure.  
+Need to add surrounding code as well.  
+So pull Before and after sample?  
+
+User should select topic, just use last selected.  
+Have two modes - 
+code generation:
+Then we note [BOOK (date) -> TOPIC -> text -> change/commit] -> BOOK (today) -> TOPIC -> last text -> Question -> ...
+
+idea generation:
+[BOOK (date) -> TOPIC -> text] -> BOOK (today) -> TOPIC -> last text -> Question -> ...
+
+Order is important.  
+This will enable better responses I suspect.  
+
+

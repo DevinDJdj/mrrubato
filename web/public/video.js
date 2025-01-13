@@ -256,12 +256,16 @@ function setVideoVolume(volume){
       else{
           ct = player2.currentTime;
       }
-      et = findEvent(eventnum, ct);
-      if (useyoutube || watch){
-        player.seekTo(player.getCurrentTime() + et);
-      }
-      else{
-          player2.currentTime = player2.currentTime + et;
+      [et, w] = findEvent(eventnum, ct*1000);
+      et /= 1000;
+      //should be able to get word from this as well.  
+      if (et !== 0){
+        if (useyoutube || watch){
+          player.seekTo(et);
+        }
+        else{
+            player2.currentTime = et;
+        }
       }
   }
 
