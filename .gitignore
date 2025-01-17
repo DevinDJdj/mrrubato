@@ -17,3 +17,6 @@ __pycache__/*
 analyze/__pycache__/*
 analyze/Torch/*
 data/*
+
+web/public/package-lock.json
+web/public/package.json
