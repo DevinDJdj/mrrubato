@@ -698,12 +698,21 @@ I suspect it may be.
 #https://michaelmuenzer.medium.com/control-a-raspberry-powered-rc-boat-from-within-the-web-browser-aaab1e84e1a9
 #https://github.com/yannrichet/PiBoat
 
+
 **PROMPTLANGUAGE
 /*
 Ask the user for their name and say "Hello"
 */
 
-Use code syntax for code.  
+Use code comment syntax for code generation.  
+base this on filetype.  
+<!-- html -->
+#python
+#python
+/*
+javascript
+*/
+etc.  
 
 Lets try shorter subsets of comment/code changes.  
 
@@ -714,12 +723,262 @@ So pull Before and after sample?
 User should select topic, just use last selected.  
 Have two modes - 
 code generation:
-Then we note [BOOK (date) -> TOPIC -> text -> change/commit] -> BOOK (today) -> TOPIC -> last text -> Question -> ...
+Then we note [BOOK (date) -> TOPIC -> text -> change/commit] -> BOOK (today) -> TOPIC -> code comment -> last text -> Question -> before/current -> ...
 
 idea generation:
 [BOOK (date) -> TOPIC -> text] -> BOOK (today) -> TOPIC -> last text -> Question -> ...
 
 Order is important.  
 This will enable better responses I suspect.  
+Also smaller code snippets.  
+We need a correlation graph.  
+Find the full function that was changed.  
+
+before -> after.  
+
+topic -> change should be detected by time.  
+BOOK change date should be edited based on commit if possible.  
+Just order is fine for the most part.  
+
+Random selection with fine-tune how much to select the specified file vs other files.  
+
+Use changes along with similarity distance from WORD2VEC.  
+Rebuild or build different word2vec with commits.  This shows interdependence.  
+Use BOOK and/or CODE interdependence graph for similarity distance.  
+Pseudo-code:
+Get history of changes to selected TOPIC.  
+Search for changes in files which were committed at same time as selected topic between STARTDATE and ENDDATE/NOW.  
+TOPICSPECTRUM Generate TOPIC weights based on similarity metric with selected and/or mentioned topics.  
+if RAND > TOPICSPECTRUM[x] and RAND < TOPICSPECTRUM[x+1] then use selected TOPIC.  
+
+Done pseudo-code. 
+
+
+**web/public/book.html
+Keep selectionhistory from last session and load last X selection history.  
+
+
+**web/public/speech.js
+Need to have some sort of formula to recognize code.  
+DOT -> . and concatenate.  
+Search within codebase for this name, (and put full path for recognition?).  
+If this is not selected topic, make it same weight.  
+
+#https://github.com/wooorm/franc?tab=readme-ov-file
+
+**web/public/nlp/test.html
+Hmm...
+start here?  
+#https://winkjs.org/wink-nlp/custom-entities.html
+with filenames?  
+
+const patterns = [
+  { name: 'adjectiveAnimalPair', patterns: [ '[ADJ] [cats|dogs]' ], mark: [0, 0] }
+];
+nlp.learnCustomEntities( patterns );
+
+const patterns = [
+  { name: 'sourceName', patterns: [ '[|NOUN] [NOUN | ADJ] [dot] [js | py | html]' ]}
+];
+nlp.learnCustomEntities( patterns );
+
+
+generate all filenames here?  
+const patterns = [
+  { name: 'club', patterns: [ 'manchester united' ] },
+  { name: 'city', patterns: [ 'manchester' ] }
+];
+
+
+#https://github.com/brownhci/WebGazer
+#https://docs.pupil-labs.com/core/
+
+Interesting possibilities here.  
+Dont think people will want to wear this device though.  
+
+Really need essentially a wireless midi pad with high sensitivity.  Powered by keystroke energy.  
+#https://support.roli.com/support/solutions/articles/36000027154-seaboard-rise-adjusting-sensitivity#:~:text=It%20is%20also%20possible%20to,is%20called%20'Expression%20Mode'.
+
+**record.py
+#https://github.com/ajstensland/MIDIator
+Maybe use as sample?  Does this part still work?  
+#https://github.com/ajstensland/MIDIator/blob/master/src/windows/windows_io.py
+#https://github.com/SerpentAI/SerpentAI/blob/dev/serpent/input_controllers/native_win32_input_controller.py
+
+**web/public/keymap.js
+For now just make keymap more useable.  
+finish book.js
+Eventually add to record.py
+How can we share mappings?  
+What are other alternatives?  
+
+
+#https://dev.fitbit.com/build/reference/web-api/intraday/get-heartrate-intraday-by-date-range/
+Use?  
+Analyze across time.  
+
+#https://python-fitbit.readthedocs.io/en/latest/
+#https://github.com/Fitbit/sdk-oauth
+#https://www.npmjs.com/package/passport-fitbit-oauth2
+
+
+At least collect the data.  
+#https://pmc.ncbi.nlm.nih.gov/articles/PMC2515327/
+
+
+**language
+Why was no thought put into naming conventions....
+#https://en.wikipedia.org/wiki/Naming_convention_(programming)
+
+I use camelCase and flatcase with minimal distinction as to why.  
+Dont think I use Hungarian notation. 
+
+Rarely use UpperCamel I think.  
+Much of the code is just the way it is adopted from the origin.  
+
+**web/public/book.html
+#https://github.com/eslint/eslint
+
+Add something from an analysis of the code in the editor.  
+Perhaps have two tabs, general analyzer and then file analyzer (with outside connections)
+
+**web/public/testgraph.html
+#https://docs.esprima.org/en/latest/getting-started.html
+
+Do we want to format the JS?  
+
+#https://github.com/sverweij/dependency-cruiser?tab=readme-ov-file#user-content-fn-3-dc6667bc51bfef5a470665188e5889b2
+$$W
+> npm install --save-dev dependency-cruiser
+> pip install graphviz
+$$U
+> sudo apt install graphviz
+> npx depcruise word2vec-demo --include-only "^word2vec-demo" --output-type dot | dot -T svg > dependency-graph.svg
+> npx depcruise test --include-only "^test" --output-type dot | dot -T svg > dependency-graph.svg
+
+#https://nearley.js.org/docs/using-in-frontend
+#https://gajus.medium.com/parsing-absolutely-anything-in-javascript-using-earley-algorithm-886edcc31e5e
+Hmmm... interesting.  
+#https://humans-who-read-grammars.blogspot.com/2018/04/having-fun-with-phrase-structure.html
+
+#https://nearley.js.org/www/railroad-demo
+#https://hci.stanford.edu/winograd/shrdlu/
+
+#https://github.com/ChalmersGU-AI-course/shrdlite-course-project?tab=readme-ov-file
+#https://chalmersgu-ai-course.github.io/demo/shrdlite.html
+
+#https://github.com/ChalmersGU-AI-course/shrdlite-course-project/blob/master/Grammar.ne
+hmmm.. could be better.  
+Cool project though.  And like nearly.js I think.  
+#https://github.com/kach/nearley
+
+#https://github.com/oguimbal/pgsql-ast-parser/blob/master/src/syntax/base.ne
+This is an interesting implementation maybe to study.  
+Time...
+
+#https://github.com/appology/resp-parser/blob/master/src/grammar.ne
+
+#https://github.com/AntonShan/Celio/blob/develop/src/grammar/common.ne
+
+#https://github.com/calculemuscode/jaco/blob/master/syntax/expression.ne
+
+#https://github.com/justjake/dicetower/blob/master/grammar.ne
+
+#https://github.com/danigb/in-seconds
+#https://github.com/danigb/in-seconds/blob/master/src/parser.ne
+
+
+#https://github.com/andrejewski/solvent
+start with something simple.  
+
+#npm install -g nearley
+//npm install --global rollup
+//rollup test1.js --file bundle1.js --format iife
+
+**web/public/nlp/test1.html
+Not optimal.  
+
+I like that.  
+**web/public/grammar/grammar.ne
+> nearley-railroad grammar/grammar.ne -o grammar/grammar.html
+documentation of self.  
+
+#https://nearley.js.org/docs/using-in-frontend
+--compileGrammar
+not working.  
+
+
+
+
+#https://github.com/ballercat/walt
+
+#https://github.com/acornjs/acorn
+
+
+#https://github.com/calculemuscode/jaco/blob/master/syntax/expression.ne
+#https://github.com/calculemuscode/jaco/blob/master/src/lex.ts
+
+Get comments from JS files.  
+Try to use this syntax in general.  
+See if it is sufficient for now.  
+Good sample I think.  
+Hmmm... 
+
+
+
+> git clone https://github.com/calculemuscode/jaco.git
+> npm install -D ts-node
+> npm install ./jaco
+
+> nearleyc grammar/expression.ne -o grammar/expression.js
+> nearleyc grammar/statement.ne -o grammar/statement.js
+> nearleyc grammar/program.ne -o grammar/program.js
+
+./grammar/
+rollup -c
+rollup --config rollup.config.mjs
+//browserify nlp/test1.js -o nlp/bundle1.js
+
+browserify grammar/python.js -o grammar/python-bundle.js
+Ugh should be using rollup?  
+
+rollup test1.js --file bundle1.js --format iife
+
+> npm install @rollup/plugin-typescript --save-dev
+
+Wow these packaging tools are not nice.  
+
+npm install webpack webpack-cli --save-dev
+npx webpack 
+
+Dont like either of these mechanisms.  
+It makes the code less readable.  
+
+Lets try to use without these packagers.  
+Plain JS.  
+Start with this:
+https://github.com/kach/nearley/blob/master/examples/calculator/arithmetic.ne
+
+**web/public/grammar/arithmetic/index.html
+
+how to combine this with 
+**web/public/nlp/test.js
+After browserify:
+//set the object globally.  
+global.nlp = nlp
+Why does this have to be so annoying...
+The whole method of exporting is poorly done in these packaging tools.  
+I guess it is not easy...
+Guess most people just run under node.js
+
+
+Anyway, play with this combination.  
+Try to create a few syntaxes.  
+-arithmetic
+-simple code parser (python/js)
+-simple language parser (english)
+--integrate with winkjs
+-expand arithmetic
+
 
 

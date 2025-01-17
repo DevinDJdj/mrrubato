@@ -1,0 +1,31 @@
+<html>
+<head>
+
+</head>
+<body>
+<div id="result"></div>
+
+
+<script>
+    var j=0;
+</script>
+
+<script src="bundle.js" charset="utf-8">
+
+</script>
+
+<script>
+// Acquire "its" and "as" helpers from nlp.
+var i = 0;
+const its = nlp.its;
+const as = nlp.as;
+
+const text = `My quarterly profits jumped 76% to $1.13 billion for the three months to December, from $639million of previous year.`;
+const doc = nlp.readDoc( text );
+
+doc.entities().each((e) => e.markup());
+document.getElementById("result").innerHTML = doc.out(its.markedUpText);
+
+</script>
+</body>
+</html>

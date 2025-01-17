@@ -1,5 +1,10 @@
 {
 	"uid": MY_UID,
+	"fitbit":{
+		"CLIENTID": CLIENTID, 
+		"CLIENTSECRET": CLIENTSECRET
+	},
+
 	"git": {
 		"url": "https://api.github.com/repos/DevinDJdj/mrrubato",
 		"branch": "master"

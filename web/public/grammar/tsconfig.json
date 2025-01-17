@@ -1,0 +1,16 @@
+{
+    "compilerOptions": {
+      "target": "es2017"
+//      "module": "commonjs",
+//      "moduleResolution": "node",
+//      "outDir": ".\\Compiled-JS\\Apps\\Client",
+//      "sourceMap": true,
+//      "emitDecoratorMetadata": true,
+//      "experimentalDecorators": true,
+//      "lib": [ "es2015", "dom" ],
+//      "noImplicitAny": true,
+//      "suppressImplicitAnyIndexErrors": true
+    }, 
+//	"include": ["typings/**/*.d.ts", "src", "cli", "browser", "rollup.config.ts", "native"],
+//	"exclude": ["dist", "node_modules", "test/typescript", "browser/dist"]    
+  }

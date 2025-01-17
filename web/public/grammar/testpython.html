@@ -1,0 +1,26 @@
+<html>
+<head>
+
+</head>
+<body>
+<div id="result"></div>
+
+
+<script type="text/javascript">
+    TOP = {};    
+</script>
+
+
+<script type="module">
+    import { pythonFile } from './dist/pythonbundle.js';
+    TOP.pythonFile = pythonFile;
+</script>
+
+<script>
+    console.log(TOP.pythonFile);
+//TOP.lexer.reset('while (10) cows\nmoo')
+
+</script>
+
+</body>
+</html>

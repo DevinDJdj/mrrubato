@@ -25,11 +25,16 @@ May have some problematic names.
 @@ Question
 == Answer
 
-$$ Key phrase
+$$ ENVIRONMENT
+
+- sub task
 
 -- NOTE
 
-- sub task
+--:+ note (even)
+
+-:+ subtask (odd)
+
 
 -> Leads to
 
