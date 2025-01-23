@@ -166,6 +166,7 @@ Load any speech from this time.
                 <input type="text" id="current-question" name="current-question" size="50">
                 <input type="text" id="chat-status" name="chat-status" size="50">
                 <div id="speak">
+                    <select id="voiceSelect"></select><br>
                     <!-- status and current command for now just display the string and add any additional midi params-->
                     <label for="mycommand">Building Command:</label><br>
                     <input type="text" id="mycommand" name="mycommand" size="50">
@@ -1321,6 +1322,8 @@ function createNotesArray(){
 function ChatLocalUpdate(answer){
     lastread = answer.length + lastread; //usually lastread = 0
     ssu = new SpeechSynthesisUtterance(answer);
+    svoice = $("#voiceSelect")[0].selectedIndex;
+    ssu.voice = voices[svoice];
     ssu.rate = myrate;
     ssu.pitch = mypitch;
     window.speechSynthesis.cancel();
@@ -1341,6 +1344,8 @@ function ChatLocalDone(answer){
     tospeak = tospeak.slice(lastread);
     lastread = 0;
     ssu = new SpeechSynthesisUtterance(tospeak);
+    svoice = $("#voiceSelect")[0].selectedIndex;
+    ssu.voice = voices[svoice];
     ssu.rate = myrate;
     ssu.pitch = mypitch;
     window.speechSynthesis.cancel();

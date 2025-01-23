@@ -18,6 +18,7 @@ import config
 #import record
 import util
 
+import subprocess
 
 import pandas as pd
 import requests
@@ -378,6 +379,11 @@ def updatestatsdb(videoid, starttimes, endtimes, midisize, numwords):
     ref.update({'wordsrecognized': numwords})
 
 
+def rungitDownload():
+    print('git download start python ./git/clone.py')
+    subprocess.call('git download start python ./git/clone.py')
+    print("git download complete")
+
 
 if __name__ == '__main__':
     argparser.add_argument("--admin", help="Add Admin user", default="")
@@ -620,6 +626,8 @@ if __name__ == '__main__':
     getWatched()
 
     respondtoComments(args)
+
+    runGitDownload()
     prior = """
     for item in reversed(data["items"]):
     

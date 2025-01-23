@@ -10,7 +10,7 @@
 let voices, utterance;
 
 function speakVoice() {
-voices = this.getVoices();
+voices = window.speechSynthesis.getVoices();
 utterance = new SpeechSynthesisUtterance("Hello World");
 utterance.voice = voices[1];
 window.speechSynthesis.speak(utterance);

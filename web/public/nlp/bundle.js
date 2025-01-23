@@ -6123,8 +6123,7 @@ module.exports = nlp;
 const winkNLP = require( 'wink-nlp' );
 const model = require( 'wink-eng-lite-web-model' );
 const nlp = winkNLP( model )
-//set the object globally.  
-global.nlp = nlp
+global.nlp = module.exports
 // Acquire "its" and "as" helpers from nlp.
 const its = nlp.its;
 const as = nlp.as;

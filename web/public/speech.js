@@ -8,7 +8,8 @@ ss = null;
 
 lastcommand = "";
 lastcommandtime = 0;
-
+currentvoice = 0;
+voices = null;
 
 function addCommandLog(transcript, command, pending=false){
     //we want to have the time here.  
@@ -650,4 +651,31 @@ function loadSpeech(){
         }
         });
     }
+    populateVoiceList();
+    speechSynthesis.onvoiceschanged = populateVoiceList;
 }
+
+
+function populateVoiceList() {
+    if (typeof window.speechSynthesis === "undefined") {
+      return;
+    }
+  
+    voices = window.speechSynthesis.getVoices();
+  
+    for (let i = 0; i < voices.length; i++) {
+      const option = document.createElement("option");
+      option.textContent = `${voices[i].name} (${voices[i].lang})`;
+  
+      if (voices[i].default) {
+        option.textContent += " — DEFAULT";
+      }
+  
+      option.setAttribute("data-lang", voices[i].lang);
+      option.setAttribute("data-name", voices[i].name);
+      document.getElementById("voiceSelect").appendChild(option);
+    }
+    if (voices.length > 2){
+        $("#voiceSelect")[0].selectedIndex = 2; //dont like the default voice.  
+    }
+  }

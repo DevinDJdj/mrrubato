@@ -498,7 +498,7 @@ if __name__ == '__main__':
 #use title here as description contains all info
     print('analyze start python ./analyze/analyze.py --title "' + args.title + '"')
     subprocess.call('python ./analyze/analyze.py --title "' + args.title + '"')
-    print("analyze complete");
+    print("analyze complete")
     obsp = subprocess.Popen("C:\\Program Files\\obs-studio\\bin\\64bit\\obs64.exe", start_new_session=True, cwd="C:\\Program Files\\obs-studio\\bin\\64bit")
     
     time.sleep(3)
