@@ -1,0 +1,22 @@
+<html>
+<head>
+
+</head>
+<body>
+<div id="result"></div>
+
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<script>
+
+    var input = 'const getMessage = () => "Hello World";';
+    var output = Babel.transform(input, { presets: ["env"] }).code;
+    var result = document.getElementById("result");    
+    result.innerHTML = output;
+
+</script>
+
+</body>
+</html>
+
+

@@ -979,6 +979,102 @@ Try to create a few syntaxes.
 -simple language parser (english)
 --integrate with winkjs
 -expand arithmetic
+-book
+
+Then determine how to approach syntax for speech/keymap.  
+
+This is interesting for the Speech parser perhaps and create a grammar for this.  
+But not really what we want for investigating source.  
+
+#https://github.com/fkling/astexplorer
+This is more realistic.  
+
+#https://babeljs.io/docs/babel-standalone
+
+**web/public/grammar/testbabel.html
+Babel.packages.generator
+Babel.packages.parser
+Babel.packages.template
+Babel.packages.traverse
+Babel.packages.types
+
+
+Maybe use for javascript.  
+maybe try...
+#https://github.com/peter-leonov/picojs
+
+Do we want to spend this time?  
+
+Best would be just to use something like astexplorer module, but doesnt appear to be a component.  
+
+Other possibility just use the 
+**web/public/js/codeeditor/codemirror/mode/javascript/javascript.js
+We are already ingesting here.  
+Just modify/extend these files as needed?  
+See if we can pull from here i.e. comments.  
+-tokenComment
+Or write a mode for book.  
+
+
+#https://lezer.codemirror.net/
+
+meh, lets try to use what is there already.  
+CodeMirror V5?  
+
+**web/public/js/codeeditor/codemirror/mode/diff/diff.js
+Can we use some of the other modes?  
+
+**web/public/js/codeeditor/codemirror/mode/shell/shell.js
+Can we figure out how to create a useful token tree?  
+create 
+**web/public/js/codeeditor/codemirror/mode/book/book.js
+
+
+
+>nearleyc arithmetic.ne -o arithmetic.js -e arithmetic
+
+
+**web/public/testparse.html
+for now just search for functions/dependencies.  
+JS:
+function xxx()
+or 
+xxx = function()
+require(yyy)
+import { xxx } from yyy
+
+HTML:
+dependencies.  
+script src=...
+same as JS.  
+const parser = new DOMParser();
+const htmlDoc = parser.parseFromString(txt, 'text/html');
+
+can we get includes here?  
+const scriptTags = doc.getElementsByTagName("script");
+
+
+PY:
+import yyy
+from yyy import xxx
+
+def xxx():
+
+Then search all xxx identifiers.  
+Put in order...
+Same word2vec graph.  
+
+If we have the yyy file, color differently.  
+
+Hmmm... I guess do myself in the end.  
+Dont actually need to parse everything.  
+
+function\s+(?<functionName>\w+)\s*\((?<functionArguments>(?:[^()]+)*)?\s*\)\s*(?<functionBody>{(?:[^{}]+|(?-1))*+})
+
+for now just JS/PY/HTML
+
+**web/public/testacorn.html
+hmmm only JS, but easy to use.  
 
 
 

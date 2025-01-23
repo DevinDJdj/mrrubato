@@ -1,0 +1,36 @@
+<html>
+  <head>
+</head>
+<body>
+
+    <script>
+        //hack to get around browser recognition of script tag in string.  will this work with dynamic content?  
+        //would have to do this.  But probably/definitely better to use existing tooling.  
+const htmlString = `
+<html>
+  <head>
+    <script>
+      console.log("Hello from script 1!");
+    </` + `script>
+  </head>
+  <body>
+    <p>Some text</p>
+    <script>
+      console.log("Hello from script 2!");
+    </` + `script>
+  </body>
+</html>`;
+;
+
+const parser = new DOMParser();
+const doc = parser.parseFromString(htmlString, "text/html");
+
+const scriptTags = doc.getElementsByTagName("script");
+
+for (const scriptTag of scriptTags) {
+  console.log(scriptTag.textContent); // Access the JavaScript code within the tag
+}
+</script>
+</body>
+</html>
+

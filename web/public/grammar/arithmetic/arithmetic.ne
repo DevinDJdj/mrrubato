@@ -26,7 +26,7 @@ E -> P _ "^" _ E    {% function(d) {return Math.pow(d[0], d[4]); } %}
     | P             {% id %}
 
 # Multiplication and division
-MD -> MD _ "*" _ E  {% function(d) {return d[0]*d[4]; } %}
+MD -> MD _ "*" _ E  {% function(d, loc) {console.log(loc); return d[0]*d[4]; } %}
     | MD _ "/" _ E  {% function(d) {return d[0]/d[4]; } %}
     | E             {% id %}
 
