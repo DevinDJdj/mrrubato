@@ -1,0 +1,220 @@
+**news.py
+Yep:
+#https://github.com/codelucas/newspaper
+
+**server/ollama/custom.py
+Lets see if we can make a custom model here instead of langchain RAG.  
+**server/ollama/custom.parameter
+
+#https://llm.mlc.ai/docs/deploy/webllm.html
+create custom model for this.  
+Eventually.  
+
+**timestep.py
+call 
+**git/clone.py
+
+
+**server/ollama/custom.py
+really need to go ahead and make the fine-tune process.  
+But am too surprised at the junk responses I get with base model.  
+
+#https://medium.com/@rschaeffer23/how-to-fine-tune-llama-3-1-8b-instruct-bf0a84af7795
+#https://www.datacamp.com/tutorial/fine-tuning-llama-3-2
+
+
+Just create a training dataset which takes the BOOK as input and the next commit in the same file as answers?  
+
+
+#https://github.com/TensorSpeech/TensorFlowTTS
+Can we use these models in browser?  
+
+#https://github.com/playerony/TensorFlowTTS-ts
+Can we use in browser?  
+
+**web/public/test/tfjs-tts/index.html
+
+
+**MISSINGTOPICS
+store in DB under content and have a redirect.  
+
+**0606
+Need to do one match in order to have sample data.  
+Did we ever finish creating the language?  
+
+
+**web/public/js/codeeditor/codemirror/mode/diff/diff.js
+Can we use some of the other modes?  
+
+**web/public/js/codeeditor/codemirror/mode/shell/shell.js
+Can we figure out how to create a useful token tree?  
+create 
+**web/public/js/codeeditor/codemirror/mode/book/book.js
+
+
+**web/public/testparse.html
+for now just search for functions/dependencies.  
+JS:
+function xxx()
+or 
+xxx = function()
+require(yyy)
+import { xxx } from yyy
+
+HTML:
+dependencies.  
+script src=...
+same as JS.  
+const parser = new DOMParser();
+const htmlDoc = parser.parseFromString(txt, 'text/html');
+
+can we get includes here?  
+const scriptTags = doc.getElementsByTagName("script");
+
+
+PY:
+import yyy
+from yyy import xxx
+
+def xxx():
+
+Then search all xxx identifiers.  
+Put in order...
+Same word2vec graph.  
+
+If we have the yyy file, color differently.  
+
+Hmmm... I guess do myself in the end.  
+Dont actually need to parse everything.  
+
+function\s+(?<functionName>\w+)\s*\((?<functionArguments>(?:[^()]+)*)?\s*\)\s*(?<functionBody>{(?:[^{}]+|(?-1))*+})
+
+for now just JS/PY/HTML
+
+**web/public/test/testacorn.html
+hmmm only JS, but easy to use.  
+
+
+**web/public/test/testdomparser.html
+
+**web/public/test/testfilbert.html
+--OK
+#https://github.com/differentmatt/filbert
+
+for now this should be enough
+JS/PY/HTML
+
+
+practical approach.  
+
+Eventually..
+Still try to use nearley grammar to do something with generation.  
+TEXT -> JS generation.  
+
+nearley-unparse or similar.  
+
+
+**CUSTOMVOICE
+#https://github.com/ccoreilly/vosk-browser
+test this.  
+Seems to be better than built-in browser speechrecognition.  How/why...
+<script type="application/javascript" src="https://cdn.jsdelivr.net/npm/vosk-browser@0.0.5/dist/vosk.js"></script>
+
+
+#https://github.com/alphacep/vosk-api/tree/master/training
+Then we can just correct the data while reviewing.  
+#https://github.com/matteo-convertino/vosk-build-model
+
+#https://github.com/mbasso/awesome-wasm
+
+
+#https://whisper.ggerganov.com/talk/
+
+#https://github.com/ggerganov/whisper.cpp/blob/master/examples/whisper.wasm/index-tmpl.html
+
+Yeah lets use part of this for TTS and then 
+#https://github.com/lxe/wasm-gpt?tab=readme-ov-file
+
+
+
+**web/public/book.html
+Need to change voice.  
+customizing this voice will come eventually.  
+For now just use a different voice.  
+But have the option to use recognition.  
+
+
+
+
+Button to copy the question/response chain, or download.  
+Add 
+@@Question
+and 
+==
+Answer
+
+Formatting for now.  
+
+
+If we customize voice model and STT model, we should be able to correct in real-time while reviewing.  
+Ah yes, we should correct the nearest comment with the browser STT as we watch.  
+
+
+
+**web/public/grammar/book/book.ne
+See if we can get this to work.  For now it has compiled.  
+--here.  
+
+
+**web/public/midi.js
+#https://mimugloves.com/
+yes please
+
+#https://github.com/shanteacontrols/OpenDeck
+
+#https://genkiinstruments.com/products/wave
+
+See if it is useful.  
+
+For now just Translate input to output for keyboard which is master control panel.  
+Set up to pick up new function from this device.  
+
+#https://openeeg.sourceforge.net/doc/
+
+#https://www.brainaccess.ai/hardware/brainaccess-midi/
+
+#https://www.youtube.com/watch?v=LoqCdGppGd8
+
+#https://bionichaos.com/
+
+#https://bionichaos.com/tools/
+
+#https://bionichaos.com/EEG_Music/
+#https://bionichaos.com/GraphIt/
+#https://bionichaos.com/EyeTracker/
+#https://bionichaos.com/GestureGroove/
+
+**web/public/test/sensors/gesture.html
+See if we can get this app to work.  
+Why no github??
+This is kind of nice though.  
+Basically what I started to do in python a long time ago.  
+
+
+**web/public/page.html
+Detailed parsing of one file.  
+For now use new page, maybe eventually just adjust components in book.html
+use book.ne grammar to parse book.  
+Otherwise use code parsing tool to get a meaningful graph of function calls.  
+Should be communication between book and page.  
+particularly selectionhistory and any further context for book interaction.  
+
+do a chat with the transcripts from around the times where there were edits to the page.  
+
+
+
+
+**web/public/book.html
+Need to have multiple open to allow for different context building.  
+When tab becomes active it turns off the mic for all the other tabs.  
+This should be one of the initial things.  

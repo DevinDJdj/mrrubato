@@ -1,0 +1,329 @@
+/* this is ../styles.css */
+/* This is CSS for the entire bionichaos.com */
+/* Styles not covered in styles.css should be included inline within the HTML of each specific page to ensure 
+they remain localized and avoid conflicts with the external CSS. */
+:root {
+    --miradors-1: #0477bf;
+    --miradors-1-75: rgba(4, 119, 191, 0.75);
+    --miradors-1-50: rgba(4, 119, 191, 0.5);
+    --miradors-1-25: rgba(4, 119, 191, 0.25);
+    --miradors-1-10: rgba(4, 119, 191, 0.1);
+  
+    --miradors-2: #04BF68;
+    --miradors-2-75: rgba(4, 191, 104, 0.75);
+    --miradors-2-50: rgba(4, 191, 104, 0.5);
+    --miradors-2-25: rgba(4, 191, 104, 0.25);
+    --miradors-2-10: rgba(4, 191, 104, 0.1);
+  
+    --miradors-3: #F2C641;
+    --miradors-3-75: rgba(242, 198, 65, 0.75);
+    --miradors-3-50: rgba(242, 198, 65, 0.5);
+    --miradors-3-25: rgba(242, 198, 65, 0.25);
+    --miradors-3-10: rgba(242, 198, 65, 0.1);
+  
+    --miradors-4: #F25835;
+    --miradors-4-75: rgba(242, 88, 53, 0.75);
+    --miradors-4-50: rgba(242, 88, 53, 0.5);
+    --miradors-4-25: rgba(242, 88, 53, 0.25);
+    --miradors-4-10: rgba(242, 88, 53, 0.1);
+  
+    --miradors-5: #0D0D0D;
+    --miradors-5-75: rgba(13, 13, 13, 0.75);
+    --miradors-5-50: rgba(13, 13, 13, 0.5);
+    --miradors-5-25: rgba(13, 13, 13, 0.25);
+    --miradors-5-10: rgba(13, 13, 13, 0.1);
+  }
+  
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--miradors-3-10);
+    font-size: 1rem;
+  }
+  
+  .content {
+    padding: 2rem;
+  }
+  
+  .content h2 {
+    border-bottom: 1px solid var(--miradors-5);
+    padding-bottom: 1rem;
+    color: var(--miradors-1);
+    font-size: 1.25rem;
+  }
+  
+  .content ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .content ul li {
+    display: flex;
+    align-items: flex-start;
+    padding: 0.5rem 0;
+    flex-wrap: nowrap;
+  }
+  
+  .content ul li img {
+    width: 150px;
+    height: auto;
+    margin-right: 1rem;
+    flex-shrink: 0;
+  }
+  
+  .content ul li a {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: var(--miradors-1);
+    flex-grow: 1;
+    white-space: normal;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .content ul li a:hover {
+    color: var(--miradors-1-50);
+  }
+  
+  .info {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+  }
+  
+  .title {
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+  
+  .description {
+    color: var(--miradors-5);
+  }
+  
+  html {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .image-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
+    list-style-type: none;
+    align-content: flex-start;
+    align-items: flex-start;
+  }
+  
+  .container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-around;
+    height: 100%;
+    width: 100%;
+    padding: 10px;
+  }
+  
+  header {
+    display: flex;
+    justify-content: space-evenly;
+    padding: 0;
+    flex-wrap: wrap;
+  }
+  
+  header a {
+    width: 50%;
+    color: var(--miradors-1);
+    text-decoration: none;
+    text-transform: uppercase;
+    font-size: 30px;
+    font-weight: bold;
+    display: flex;
+    align-content: center;
+    justify-content: center;
+  }
+  
+  header li {
+    float: left;
+    display: inline;
+    padding: 0 20px;
+  }
+  
+  header #branding {
+    float: left;
+  }
+  
+  p {
+    display: block;
+    margin: 1em;
+  }
+  
+  header #branding h1 {
+    margin: 0;
+  }
+  
+  header .highlight,
+  header .current a {
+    color: var(--miradors-1);
+    font-weight: bold;
+  }
+  
+  header a:hover {
+    color: var(--miradors-4);
+    font-weight: bold;
+  }
+  
+  .flex-container {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-evenly;
+    flex-wrap: wrap;
+  }
+  
+  ul {
+    list-style-type: none;
+    font-family: Arial, sans-serif;
+  }
+  
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    text-align: left;
+    margin: 0 10px;
+  }
+  
+  @media (max-width: 600px) {
+    .image-grid {
+      justify-content: center;
+    }
+  }
+  
+  /* regular images */
+  .imageStyle {
+    max-height: 40vh;
+    max-width: 100vw;
+    object-fit: contain;
+    width: auto;
+    height: auto;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  .text-section {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin: 20px;
+  }
+  
+  .video-wrapper {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+  }
+  
+  .youtubeVideo {
+    position: relative;
+    width: 100%;
+    padding-bottom: 56.25%;
+    height: 0;
+  }
+  
+  .youtubeVideo iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+  
+  li {
+    margin-bottom: 10px;
+  }
+  
+  a {
+    color: #007bff;
+    text-decoration: none;
+  }
+  
+  a:hover {
+    color: #0056b3;
+    text-decoration: underline;
+  }
+  
+  .table-container {
+    margin: 10px;
+    overflow-x: auto;
+    max-width: 100%;
+  }
+  
+  /* Styling for the Navigation Menu with Logo */
+  nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--miradors-5);
+    padding: 0rem 1rem;
+    position: sticky;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
+    overflow: hidden;
+  }
+  
+  /* Logo Styling */
+  .logo {
+    max-width: 150px;
+  }
+  
+  .logo img {
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+    object-fit: contain;
+  }
+  
+  /* Menu Styling */
+  .nav-menu {
+    display: flex;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .nav-menu li {
+    display: inline-block;
+  }
+  
+  .nav-menu a {
+    text-decoration: none;
+    color: var(--miradors-4);
+    font-size: 1rem;
+    transition: color 0.3s, background-color 0.3s ease;
+  }
+  
+  .nav-menu a:hover {
+    color: var(--miradors-3);
+    background-color: var(--miradors-1-10);
+  }
+  
+  /* this is the end of ../styles.css */
+  
+  /* This is the CSS for the entire bionichaos.com */
+  
+  /* each page on the site can have its own styling embedded in the specific HTML file
+  that is relevant to the specific page but not to the whole website */

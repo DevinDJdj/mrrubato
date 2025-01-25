@@ -1,0 +1,38 @@
+<!--
+Detailed parsing of one file.  
+For now use new page, maybe eventually just adjust components in book.html
+use book.ne grammar to parse book.  
+Otherwise use code parsing tool to get a meaningful graph of function calls.  
+Should be communication between book and page.  
+
+BOOK
+parse all elements
+visjs graph for TOPIC/TOPIC/reference relationships.  
+style to display all comment, commands etc.  
+
+CODE
+visjs graph from AST.  
+prominent display of other pages from import/include.  
+if selected, selectionhistory should be updated in book.html
+Same code display as book.  Use token from book.  
+Page dependent on book.html, and should be child page.  
+
+Need multi-tab communication.  
+localStorage and/or BroadcastChannel
+const channel = new BroadcastChannel('app-data');
+channel.postMessage(data);
+const channel = new BroadcastChannel('app-data');
+
+channel.addEventListener ('message', (event) => {
+ console.log(event.data);
+});
+
+Same for
+Book -> analyze -> rec 
+
+
+should be able to query particular page by using selectionhistory number for inquiry.  
+
+
+-->
+
