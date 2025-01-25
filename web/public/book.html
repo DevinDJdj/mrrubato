@@ -100,6 +100,8 @@ Load any speech from this time.
     <script src="video.js"></script>
     <script src="midi.js">  </script>
     <script src="chat.js">  </script>
+
+    <script src="pipe.js"></script>
     
     </head>
     <!-- Google tag (gtag.js) -->
@@ -1126,7 +1128,8 @@ Load any speech from this time.
         loadSpeech();
     
         setupMidi();
-    
+
+        pipeListen();
         //firebase.auth.Auth.Persistence.LOCAL 'local'
         firebase.auth().setPersistence('local').then(() => {
     //firebase.auth().setPersistence('session').then(() => {

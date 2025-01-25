@@ -218,3 +218,25 @@ do a chat with the transcripts from around the times where there were edits to t
 Need to have multiple open to allow for different context building.  
 When tab becomes active it turns off the mic for all the other tabs.  
 This should be one of the initial things.  
+
+
+on open tab - communicate activate mic
+Do we want to log the internal communication?  
+Probably not, at least not yet.  
+
+
+**web/public/pipes.js
+Need multi-tab communication.  
+const channel = new BroadcastChannel('app-data');
+channel.postMessage(data);
+const channel = new BroadcastChannel('app-data');
+
+channel.addEventListener ('message', (event) => {
+ console.log(event.data);
+});
+
+This way we can investigate then start other actions.  
+Use this to add to local storage window details.  
+
+Book -> analyze -> rec 
+
