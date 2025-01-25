@@ -116,10 +116,10 @@ if __name__ == '__main__':
 
         else:
             download = True
-            print("downloading " + page["download_url"])
 
         if download:
             
+            print("downloading " + page["download_url"])
             book = requests.get(page["download_url"])
             #print(book.text)
 

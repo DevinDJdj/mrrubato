@@ -307,7 +307,8 @@ def respondtoComments(args):
             url = f'{localserver}/api/?query={text}&userid={author}'
             print(url)
             try:
-                res = requests.get(url, timeout=(60, None)).text
+                #ease the pain of SSL certificates.  
+                res = requests.get(url, timeout=(120, None), verify = False).text
     #            print(res)
     #            if (res is not None):
                 data = json.loads(res)
@@ -315,8 +316,8 @@ def respondtoComments(args):
                 mycomment = massageComment(data)
                 print(mycomment)
 #                insert_comment(youtube, channel_id, vidid, commentid, mycomment)
-            except:
-                print('error using ollama ' + vidid)
+            except Exception as e:
+                print('error using ollama ' + vidid + ' ' + str(e))
 
 
 def addAdmins(uid):
@@ -550,7 +551,7 @@ if __name__ == '__main__':
                     print(url)
                     try:
 #                        transcript = requests.get(url, timeout=(30, None)).text
-                        transcript = requests.get(url, params=params, timeout=(30, None)).text
+                        transcript = requests.get(url, params=params, timeout=(30, None), verify=False).text
                         if (transcript is not None and transcript !="error"):
                             print("STT training complete")
                         else:
@@ -585,7 +586,7 @@ if __name__ == '__main__':
                     print(url)
                     try:
 #                        transcript = requests.get(url, timeout=(30, None)).text
-                        transcript = requests.get(url, params=params, timeout=(30, None)).text
+                        transcript = requests.get(url, params=params, timeout=(30, None), verify=False).text
                         if (transcript is not None and transcript !="error"):
                             data = {'transcript':transcript}
                             reftranscript.set(data)
