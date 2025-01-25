@@ -8,6 +8,7 @@ var chatdomain = 'https://chat.misterrubato.com';
 var useyoutube = false;
 var channelId = 'UC4dK3RpqBq2JpIkRmQn6HOA'; //@misterrubato doesnt work in URL, probably need to escape the @, but who cares.  
 
+var IPC_NAME = 'pipes';
 //define length of keyboard.  use keybot to define where we start looking.  
 var keybot = {"base": 48, "meta": 48};
 var KEY_BOT = 48;
