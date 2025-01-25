@@ -381,7 +381,7 @@ def updatestatsdb(videoid, starttimes, endtimes, midisize, numwords):
 
 def rungitDownload():
     print('git download start python ./git/clone.py')
-    subprocess.call('git download start python ./git/clone.py')
+    subprocess.call('start python ./git/clone.py')
     print("git download complete")
 
 
@@ -627,7 +627,7 @@ if __name__ == '__main__':
 
     respondtoComments(args)
 
-    runGitDownload()
+    rungitDownload()
     prior = """
     for item in reversed(data["items"]):
     
