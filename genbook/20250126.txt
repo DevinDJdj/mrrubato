@@ -1,0 +1,63 @@
+@@what does news dot py do
+==
+News.py is a Python package that provides a simple way to read and write text data in a news format. Here's a breakdown of what it does:
+
+Initialization
+
+* The package is initialized with a URL to a news website (e.g. CNN).
+* It imports the `newspaper` module, which is a wrapper around the `pynewspaper` library.
+
+Reading and Writing Text Data
+
+* The `newspaper` module provides a `build()` function to create a `newspaper` object from a URL.
+* The `newspaper` object can be used to read and write text data in a news format.
+* The `build()` function returns a `newspaper` object that can be used to read and write text data in a news format.
+
+Example Usage
+
+* The package provides several examples of how to use the `newspaper` module:
++ Reading the URL and printing the text data: `cnn_article = cnn_paper.articles[0]cnn_article.download()cnn_article.parse()cnn_article.nlp()print(cnn_article.keywords)`
++ Writing text data: `cnn_article = cnn_paper.articles[0]cnn_article.download()cnn_article.parse()cnn_article.nlp()`
++ Printing the URL and text data: `cnn_article = cnn_paper.articles[0]print(cnn_article.keywords)print(cnn_article.summary)print(cnn_article.text)print(cnn_article.authors)print(cnn_article.publish_date)`
+
+Features
+
+* The package provides several features that make it easy to work with news data:
++ Aggregation: The package allows you to aggregate text data from multiple articles.
++ Feedback loop: The package provides a feedback loop that allows users to provide feedback on the news data.
++ TTS (Text-to-Speech) capabilities: The package allows you to generate TTS for news articles.
+
+Conclusion
+
+* News.py is a simple and easy-to-use package for working with news data in a Python environment.
+* It provides several features that make it easy to work with news data, including aggregation, feedback loops, and TTS capabilities.
+
+Here's an example of how you might use the `newspaper` module:
+```python
+import newspaper
+
+cnn_paper = newspaper.build('cnn.com')
+cnn_article = cnn_paper.articles[0]
+
+# Read the article
+cnn_article.download()
+cnn_article.parse()
+
+# Print the keywords	
+
+@@what does filbert dot HTML do	
+==
+The `filbert` HTML snippet appears to be a simple, interactive code editor with some basic features. Here's a breakdown of what it does:
+
+1. Selecting a parser: The user can select one of two parsers: `filbert.js` or `filbert_loose.js`. The `filbert` parser is a simple, text-based parser that can parse and execute Python code.
+2. Parsing code: When the user types Python code into the editor, the code is parsed by the `filbert` parser. The parsed code is then displayed in the `astText` textarea.
+3. Executing code: The user can click a button to execute the parsed code. The `compile()` function is called, which attempts to execute the code. If the code is valid, it is executed; otherwise, an error message is displayed.
+4. Updating display: The `compile()` function updates the display by displaying the result of the code execution. If the code is invalid, the display is updated with an error message.
+
+Here are some key features of the `filbert` editor:
+
+* Simple syntax: The editor supports a simple syntax for Python code, which is limited to basic arithmetic, string concatenation, and assignment operations.
+* Interactive: The editor is interactive, meaning that the user can modify the code and see the effects immediately.
+* Error reporting: The editor reports errors in the code, which can help the user identify and fix issues.
+
+Overall, the `filbert` HTML snippet is a basic, interactive code editor that can parse and execute simple Python code.

@@ -1,5 +1,11 @@
 {
 	"uid": MY_UID,
+	"RSS": {
+		"AUTHOR": "MISTERRUBATO", 
+		"EMAIL": "me@misterrubato.com",
+		"WEBSITE": "misterrubato.com/rss",
+		"LOGO": "misterrubato.com/logo.jpg"
+	},
 	"fitbit":{
 		"CLIENTID": CLIENTID, 
 		"CLIENTSECRET": CLIENTSECRET

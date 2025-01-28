@@ -240,3 +240,39 @@ Use this to add to local storage window details.
 
 Book -> analyze -> rec 
 
+
+**web/public/book.html
+Need to be able to traverse Git Tree.  
+put all folders on top and ..
+Or just make a folder view and a file view.  
+--ok
+
+Need to be able to add external content to context.  
+
+**news.py
+#feedparser
+#feedgen
+
+**timestep.py
+Add 
+#https://github.com/lkiesow/python-feedgen
+generate feed each time we run timestep.py
+add feed generation here.  
+All questions/answers to be generated as RSS feed based on existing content.  
+-respondtoComments
+
+Most of this will still be garbage but it will be fun.  
+
+**rss/gen.py
+Need to test.  
+--kind of works.  
+Need to make the perma-link actually work.  
+Also how do we want to manage the data.  
+Do we want in RTDB?  
+
+**timestep.py
+-respondtoComments
+Put into timestep.  
+
+**web/public/rss/view.html
+Need simple reader.  

@@ -101,7 +101,7 @@ Load any speech from this time.
     <script src="midi.js">  </script>
     <script src="chat.js">  </script>
 
-    <script src="pipe.js"></script>
+    <script src="pipes.js"></script>
     
     </head>
     <!-- Google tag (gtag.js) -->
@@ -330,7 +330,10 @@ Load any speech from this time.
                         
                     </td>
                     <td>
-                        <div id="topicstatus" style="height:90px;width:250px;overflow:auto;"></div>
+                        <div id="topicstatus" style="height:90px;width:250px;overflow:auto;"></div>                        
+                    </td>
+                    <td>
+                        <div id="topicdirtree" style="height:90px;width:250px;overflow:auto;"></div>                                              
                     </td>
                 </tr>
             </table>
@@ -1129,7 +1132,8 @@ Load any speech from this time.
     
         setupMidi();
 
-        pipeListen();
+//        pipeListen();
+
         //firebase.auth.Auth.Persistence.LOCAL 'local'
         firebase.auth().setPersistence('local').then(() => {
     //firebase.auth().setPersistence('session').then(() => {

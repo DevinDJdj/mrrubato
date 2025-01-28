@@ -25,6 +25,15 @@ if (urlParams["date"]){
   console.log(querydate);
 }
 
+if (urlParams["query"]){ 
+  myquery = urlParams["query"];
+  console.log(query);
+}
+if (urlParams["prompt"]){
+  myprompt = urlParams["prompt"];
+  console.log(prompt);
+}
+
 
 var output = document.getElementById("clock");
 

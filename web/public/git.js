@@ -448,12 +448,27 @@ function getGitContents(path, load=true){ //load UI or not, if false, return str
       var data = gitstruct["allcontent"][gitcurrentpath];
       gitcurrentfolder = gitcurrentpath;
       gitstr = "";
+      gitdirs = "";
+      var pathArray = gitcurrentfolder.split("/");
+      var parentname = "";
+      var parentname = "";
+      gitdirs += `<a href="#" onclick="loadTopic('');"><b>*ROOT*</b></a><br> `;
+      while (pathArray.length > 1){
+        parentname = pathArray.slice(0, -1).join('/');
+        gitdirs += `<a href="#" onclick="loadTopic('${parentname}');"><b>${parentname}</b></a><br> `;
+        pathArray = pathArray.slice(0,-1);
+      }
+
       for (di=0; di<data.length; di++){
         gitstr += `<a href="#" onclick="loadTopic('${data[di].path}');">${isFolder(data[di].type)}${shortenName(data[di].path)}${isFolder(data[di].type, true)}</a><br> `;
+        if (data[di].type=="dir"){
+          gitdirs += `<a href="#" onclick="loadTopic('${data[di].path}');">${isFolder(data[di].type)}${shortenName(data[di].path)}${isFolder(data[di].type, true)}</a><br> `;
+        }
 
       }
       if (load){
         $('#topicstatus').html(path + "<br>" + gitstr);
+        $('#topicdirtree').html(path + "<br>" + gitdirs);
       }
       else{
         gitcurrentfolder = prevfolder;
@@ -498,11 +513,25 @@ function getGitContents(path, load=true){ //load UI or not, if false, return str
             //this is a folder struct, separate handling.  
             gitstr = "";
             gitcurrentfolder = path;
+            gitdirs = "";
+            var pathArray = gitcurrentfolder.split("/");
+            var parentname = "";
+            gitdirs += `<a href="#" onclick="loadTopic('');"><b>*ROOT*</b></a><br> `;
+            while (pathArray.length > 1){
+              parentname = pathArray.slice(0, -1).join('/');
+              gitdirs += `<a href="#" onclick="loadTopic('${parentname}');"><b>${parentname}</b></a><br> `;
+              pathArray = pathArray.slice(0,-1);
+            }
+
             for (di=0; di<data.length; di++){
               gitstr += `<a href="#" onclick="loadTopic('${data[di].path}');">${isFolder(data[di].type)}${shortenName(data[di].path)}${isFolder(data[di].type, true)}</a><br> `;
+              if (data[di].type=="dir"){
+                gitdirs += `<a href="#" onclick="loadTopic('${data[di].path}');">${isFolder(data[di].type)}${shortenName(data[di].path)}${isFolder(data[di].type, true)}</a><br> `;
+              }
 
             }
             $('#topicstatus').html(path + "<br>" + gitstr);
+            $('#topicdirtree').html(path + "<br>" + gitdirs);
             gitstruct["allcontent"][gitcurrentpath] = data;
             return;
           }

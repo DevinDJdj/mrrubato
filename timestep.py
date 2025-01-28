@@ -291,7 +291,7 @@ def respondtoComments(args):
     #for now just -1 to the port to get ollama.  
     #should be a separate port/server config.  
     localserver = config.cfg['localserver']['host'] + ":" + str(config.cfg['localserver']['port']-1)
-
+    qas = []
     for item in results["items"]:
 #        threadid = item["id"]
         comment = item["snippet"]["topLevelComment"]
@@ -315,9 +315,24 @@ def respondtoComments(args):
                 print(data["answer"])
                 mycomment = massageComment(data)
                 print(mycomment)
+                #dont need anything where we have no comment
+                #for the foreseeable future this may less than optimal garbage.  
+                if ("sources" in data and len(data["sources"]) > 0):
+                    qas.append({"author": author, "authorchannel": authorchannel, "question": text, "answer": mycomment, "prompt": "" })
 #                insert_comment(youtube, channel_id, vidid, commentid, mycomment)
             except Exception as e:
                 print('error using ollama ' + vidid + ' ' + str(e))
+
+    if (len(qas) > 0):
+        today = date. today()
+        today = today. strftime("%Y%m%d")
+        RSS_FOLDER = "rss/data/" #probably should be config.  But is is necessary?  
+        with open(RSS_FOLDER + today + ".json", "w") as f:
+            json.dump(qas, f)
+
+        print('rss gen python ./rss/gen.py --d ' + today)
+        subprocess.call('python ./rss/gen.py --d ' + today)
+        print("rss gen complete")
 
 
 def addAdmins(uid):
