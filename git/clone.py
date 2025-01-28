@@ -109,8 +109,8 @@ if __name__ == '__main__':
         refb = refbook.get()
         if (refb is not None):
             #update contents
-            print("already exists " + page["download_url"])            
-            print(refb["size"])
+            #print("already exists " + page["download_url"])            
+            #print(refb["size"])
             if (refb["size"] !=page["size"]):
                download=True
 

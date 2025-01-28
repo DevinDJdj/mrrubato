@@ -397,7 +397,7 @@ def updatestatsdb(videoid, starttimes, endtimes, midisize, numwords):
 
 def rungitDownload():
     print('git download start python ./git/clone.py')
-    subprocess.call('start python ./git/clone.py')
+    subprocess.call('python ./git/clone.py')
     print("git download complete")
 
 
