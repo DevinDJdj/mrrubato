@@ -1,0 +1,33 @@
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>
+        HTML CSS JavaScript RSS news reader
+    </title>
+    <link rel="stylesheet" 
+          href="style.css">
+</head>
+
+<body>
+    <div id="RSSfeedID"></div>
+    <script src="../config.js"></script>
+    <script src="../clock.js"></script>
+    <script src="../video.js"></script>
+    <script src="./rss.js"></script>
+    <script>
+        date = new Date();
+        d = date.toISOString().slice(0,10).replace(/-/g,"");
+
+        //urlparam date = ...
+        //view.html?date=20250129
+        if (typeof(querydate) !== 'undefined'){
+            d = querydate;
+        }
+        document
+        .addEventListener("DOMContentLoaded", getRSS(d));
+    </script>
+</body>
+
+</html>

@@ -19,6 +19,7 @@ analyze/Torch/*
 data/*
 
 rss/data/*
+web/public/rss/data/*
 
 web/public/package-lock.json
 web/public/package.json

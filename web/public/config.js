@@ -4,6 +4,7 @@ var gitbranch = 'master';
 var bookfolder = 'book'; //change to notes/book folder within the repository.  
 var dbname = '/misterrubato/'; //RTDB folder for contents
 var domain = 'https://misterrubato.com';
+var rssurl = '/rss/data/';
 var chatdomain = 'https://chat.misterrubato.com';
 var useyoutube = false;
 var channelId = 'UC4dK3RpqBq2JpIkRmQn6HOA'; //@misterrubato doesnt work in URL, probably need to escape the @, but who cares.  

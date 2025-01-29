@@ -108,6 +108,15 @@ function setVideoVolume(volume){
 	
   }
 
+  function getTimeFromSecs(time){
+    var mins = Math.floor(time/60);
+    if (mins < 0) mins = 0;
+	  var secs = Math.floor(time - mins*60);
+    if (secs < 0) secs = 0;
+    var finalTime = str_pad_left(mins,'0',2)+':'+str_pad_left(secs,'0',2);
+    return finalTime;
+  }
+
   function makeTimeLinks(desc, vid=""){
     desc = desc.replaceAll("\n", "<br>");
 //    desc = desc.replace(")", ")<br>");

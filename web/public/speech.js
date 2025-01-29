@@ -208,9 +208,6 @@ function completeMidi(midi, lang=""){
 
 
 
-function str_pad_left(string,pad,length) {
-    return (new Array(length+1).join(pad)+string).slice(-length);
-}
 
 function helpme(){
     var temptime = 0;
