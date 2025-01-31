@@ -127,7 +127,7 @@ function gitDownloadCommits(data, qpath=null){
 
       }
     }
-    setTimeout(function (){if (myarray.length > 0) {gitChartCommits(myarray, qpath);updateTimeline(qpath);} }, 5000);
+    setTimeout(function (){if (myarray.length > 0) {gitChartCommits(myarray, qpath);if (typeof(updateTimeline) !=='undefined'){ updateTimeline(qpath); }} }, 5000);
   }
 
 function gitChartCommits(myarray, qpath=null){
@@ -545,6 +545,7 @@ function getGitContents(path, load=true){ //load UI or not, if false, return str
               mode:  gitcurrentcontentstype, 
               lineNumbers: true
             });
+            myCodeMirror.setSize(null, 430);
           }
           else{
             if (prevcontents !=gitcurrentcontents){
@@ -689,11 +690,20 @@ function loadTopicIterations(top){
 
 }
 
+function deleteSelection(top){
+  const result = selectionhistory.indexOf(top);
+  if (result > -1){
+    selectionhistory.splice(result, 1);
+    loadSelectionHistory();
+  }
+
+}
+
 function loadSelectionHistory(){
   fullselection = "";
   for (si =0; si<selectionhistory.length; si++){
-    fullselection += `<a href="#" onclick="loadTopic('${selectionhistory[si]}');">${shortenName(selectionhistory[si])}</a><br> `;
-
+    fullselection += `<a href="#" onclick="loadTopic('${selectionhistory[si]}');">${shortenName(selectionhistory[si])}</a>`;
+    fullselection += `<a href="#" onclick="deleteSelection('${selectionhistory[si]}');"><img src="images/delete.png" /></a><br> `
   }
   $('#selectionhistory').html(fullselection);
   $('#selectionhistory').animate({
@@ -724,7 +734,7 @@ function selectFont(top){
 
 }
 function isDate(top){
-  if (top.startsWith("20")){
+  if (top !==null && top.startsWith("20")){
     return true;
   }
 }
@@ -766,6 +776,8 @@ function loadTopic(top){
     loadTopicIterations(top);
     getGitCommits(null, top);
 
+
+
 }
 
 function getGitTree(){
@@ -775,6 +787,39 @@ function getGitTree(){
       console.log('git tree');
       console.log(data);
 
+	});
+
+}
+
+function getVideos(qdate=null, limit=50){
+	var vRef = firebase.database().ref(dbname);
+	if (typeof(uid) != "undefined" && uid !==null){
+	}
+	//get mydate if exists.  
+	if (qdate ==null){
+		var now = new Date();
+		now.setDate(now.getDate() + 1); //add a day so we get today as well.  
+//			now.setMilliseconds(0);
+		qdate = now.toISOString().substring(0,10);
+//			mydate = now.toISOString().replace(/.000/, "");
+
+	}
+	else{
+		//?date=2021-09-01
+	}
+//		ref.orderByChild('snippet/title').equalTo(title).on("value", function(snapshot) {
+//		vRef.orderByChild('snippet/publishedAt').limitToLast(50).once("value")
+	vRef.orderByChild('snippet/publishedAt').endAt(qdate).limitToLast(limit).once("value")
+	.then((snapshot) => {
+		if (snapshot.exists()) {							
+
+			console.log(snapshot.val());
+			videojson = snapshot.val();
+			vids = getRecent(videojson);
+			drawChart(vids);
+			drawDurationChart(vids);
+			getGitCommits(querydate);
+		}			
 	});
 
 }

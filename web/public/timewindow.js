@@ -311,7 +311,7 @@ $("#timewindow").resize(function () {
     timeline.setOptions({ height: ht, width: wd });
     //adjust other div height.  
     $('#selectionhistory').height(ht);
-    cvheight = 360 - ht;
+    cvheight = 360+350 - ht;
     if (cvheight < 100) cvheight = 100;
     $('#wordcanvas').height(cvheight);
     $('#wordcanvas').width(wd);

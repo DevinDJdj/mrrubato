@@ -61,6 +61,8 @@ Load any speech from this time.
     <!-- Select2 plugin -->
     <script src="js/datatables/select2.min.js"></script>
 
+		<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
     <!-- code editor -->
     <script src="js/codeeditor/codemirror/lib/codemirror.js"></script>
     <link rel="stylesheet" href="js/codeeditor/codemirror/lib/codemirror.css">
@@ -102,6 +104,7 @@ Load any speech from this time.
     <script src="chat.js">  </script>
 
     <script src="pipes.js"></script>
+    <script src="recent.js"></script>
     
     </head>
     <!-- Google tag (gtag.js) -->
@@ -166,6 +169,7 @@ Load any speech from this time.
             </td>
             <td>
                 <input type="text" id="current-question" name="current-question" size="50">
+                <button id="ask-current-question" name="ask-current-question">ASK ME</button>
                 <input type="text" id="chat-status" name="chat-status" size="50">
                 <div id="speak">
                     <select id="voiceSelect"></select><br>
@@ -225,19 +229,40 @@ Load any speech from this time.
     
     <table>
         <tr>
-            <td>
-    
-    <canvas id="myvideocanvas" width="640" height="360" style="display: none">Your browser does not support the HTML5 canvas tag.</canvas>
-    <video
-    id="my-video"
-    class="video-js"
-    preload="auto"
-    controls
-    width="640"
-    height="360"
-    data-setup="{}"
-    >
-    </video>
+            <td valign="top">
+      <table>
+        <tr>
+          <td>
+            <canvas id="myvideocanvas" width="640" height="360" style="display: none">Your browser does not support the HTML5 canvas tag.</canvas>
+            <video
+            id="my-video"
+            class="video-js"
+            preload="auto"
+            controls
+            width="640"
+            height="360"
+            data-setup="{}"
+            >
+            </video>
+        
+          </td>
+        </tr>
+        <tr>
+          <td valign="top">
+            <label for="transcript">Original Transcript:</label>
+            <img src="images/edit.png" height="16px" onClick="toggleTranscript();"/>
+            <br>
+            <textarea id="transcript" style="display:none" rows="10" cols="50"></textarea>
+            <div id="transcriptsh" style="height: 90px;overflow:auto; word-break: break-all; word-wrap: break-word;"></div>
+            <br>
+            <label for="mycomments">My Transcript:</label>
+            <img src="images/edit.png" height="16px" onClick="toggleMyComments();"/>
+            <br>
+            <textarea id="mycomments" style="display:none" rows="10" cols="45"></textarea>
+            <div id="mycommentsh" style="height: 190px;overflow:auto;"></div>    
+        </td>
+        </tr>
+      </table>
     </td>
     <td valign="top">
         <table>
@@ -441,24 +466,46 @@ Load any speech from this time.
     
     <canvas id="pcanvas" width="110" height="22" style="display: none">Your browser does not support the HTML5 canvas tag.</canvas>    
 
-    <div id="code_chat" style="width: 100%;height: 360px;overflow:auto;">
-        <table style="width:100%;height:360px;">
+    <div id="code_chat" style="width: 100%;height: 480px;overflow:auto;">
+        <table style="width:100%;height:480px;">
             <tr width="100%;">
-            <td valign="top">
-                <label for="transcript">Original Transcript:</label>
-                <img src="images/edit.png" height="16px" onClick="toggleTranscript();"/>
-                <br>
-                <textarea id="transcript" style="display:none" rows="10" cols="50"></textarea>
-                <div id="transcriptsh" style="height: 90px;overflow:auto; word-break: break-all; word-wrap: break-word;"></div>
-                <br>
-                <label for="mycomments">My Transcript:</label>
-                <img src="images/edit.png" height="16px" onClick="toggleMyComments();"/>
-                <br>
-                <textarea id="mycomments" style="display:none" rows="10" cols="45"></textarea>
-                <div id="mycommentsh" style="height: 190px;overflow:auto;"></div>    
+              <td width="30%">
+                <table>
+                  <tr>
+                    <td>
+
+                <div id="recent" style="width: 100%;height: 180px;overflow:auto;">
+                  <table id="RecentTable" class="display" style="width: 100%">
+                    <thead>
+                      <tr>
+                        <th>id</th>
+                        <th>date</th>
+                        <th>Title</th>
+                        <th>Status</th>
+                        <th>Desc</th>
+                      </tr>
+                    </thead>
+                    <tfoot>
+                      <tr>
+                        <th>id</th>
+                        <th>date</th>
+                        <th>Title</th>
+                        <th>Status</th>
+                        <th>Desc</th>
+                      </tr>
+                    </tfoot>
+                  </table>	
+              </div>
+              </td></tr>
+              <tr><td width="100%" align="right">
+                <div id="timeline" style="height:300px;"></div>
+              </td></tr>
+
+              </table>
             </td>
+      
             <td valign="top" width="30%">
-                <div class="root-wrapper" style="height:360px;">      
+                <div class="root-wrapper" style="height:480px;">      
                     <div id="chat_table"  style="overflow:scroll;">
                     <table id="ChatTable">
                     <tr id="templateRow">
@@ -471,7 +518,7 @@ Load any speech from this time.
                     </div>
                 </div>
                     </td>
-            <td valign="top" colspan="2" width="50%">
+            <td valign="top" width="40%">
 
 
 
@@ -489,7 +536,7 @@ Load any speech from this time.
                 </tr>
                 </table>
                 <div class="root-wrapper">  
-                <div class="cm-editor" id="edit_code" style="overflow:scroll;">
+                <div class="cm-editor" id="edit_code" style="height:430px">
 
                 </div>
                 </div>
@@ -1129,6 +1176,10 @@ Load any speech from this time.
         gitSignin();
 
         loadSpeech();
+        $("#ask-current-question").click(function(){
+          lastspokenword="comment";  //alternative to using midi.          
+          MyChat($("#current-question").val());
+        });
     
         setupMidi();
 
@@ -1191,6 +1242,9 @@ Load any speech from this time.
         getVideoJson(video);
         //get book for analysis via LLM.  
         getGitBook();
+
+        loadAllRecent(25);
+
 //        setTimeout(getGitCommits("2024-12-12"), 5000);
 //        getGitCommits("2024-12-12");  //need to pass login token to do this.  Too many requests.  
 
@@ -1297,6 +1351,14 @@ function updateNotes(){
     $('#mycomments').val(allnotes);
 	//add clickable link inside here instead.  
 	$('#mycommentsh').html(makeTimeLinks(allnotes));
+
+  $('#mycommentsh').animate({
+          scrollTop: $('#mycommentsh')[0].scrollTop+50}, "slow"
+        );
+  $('#mycomments').animate({
+          scrollTop: $('#mycomments')[0].scrollTop+50}, "slow"
+        );
+
 	
 }
 
@@ -1358,7 +1420,9 @@ function ChatLocalDone(answer){
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(ssu);
     var myDiv = document.getElementById('code_chat');
-    myDiv.scrollTop = 0;
+    $('#code_chat').animate({
+          scrollTop: 0}, "slow"
+        );
 
     console.log('query ' +  lastquery);
 //                    addComment(data.answer, helpme())
@@ -1488,6 +1552,7 @@ function ChatLocal(transcript){
                 //use local if available.  check for GPU for local LLM usage as well.  
                 if (ChatLocal !== undefined){
                     ChatLocal(mychat);
+                    addComment("@@" + transcript, helpme());
                     return;
                 }
 				//get prompt

@@ -10,6 +10,7 @@ lastcommand = "";
 lastcommandtime = 0;
 currentvoice = 0;
 voices = null;
+commentpos = 0;
 
 function addCommandLog(transcript, command, pending=false){
     //we want to have the time here.  
@@ -581,6 +582,7 @@ function addComment(comment, commenttime){
     notesarray.splice(i, 0, comment + " (" + commenttime + ")");
     updateNotes();
     updateState(comment, commenttime, notesarray);
+
     
 }
 
@@ -673,6 +675,11 @@ function populateVoiceList() {
       document.getElementById("voiceSelect").appendChild(option);
     }
     if (voices.length > 2){
-        $("#voiceSelect")[0].selectedIndex = 2; //dont like the default voice.  
+        if (userAgentString.indexOf("Chrome") > -1){
+            $("#voiceSelect")[0].selectedIndex = 2; //dont like the default voice.  
+        }
+        else{
+            $("#voiceSelect")[0].selectedIndex = 1; //dont like the default voice.  
+        }
     }
   }

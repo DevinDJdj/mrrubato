@@ -276,3 +276,107 @@ Put into timestep.
 
 **web/public/rss/view.html
 Need simple reader.  
+
+**GENBOOK
+What is genbook exactly?  
+is it answers I find interesting?  
+Do we need the negative samples?  
+I dont think we really need the negative sample responses, but not sure.  
+Other sample questions we have, but most of them will just be unseen.  
+How to distinguish between unseen and not preferred question/answer.  
+
+**chat.js
+-addChatRow
+
+Do we need to put this in DB?  
+Probably dont want to save except for random sample.  
+Only if de-linked from user.  
+
+Better not to save for now maybe.  
+
+
+**server/ollama/server.py
+@@How can we add a time component which is used to weight more recent contributions?  
+
+lastspokenword="comment";
+MyChat(..)
+
+**web/public/book.html
+Need some sort of loading indicator.  
+
+@@Does a LLM RAG system allow for giving weights to entries?
+
+If we can add weight, just add a weight based on the date.  
+
+
+@@How can I add a document weight to Chroma.from_documents
+
+**server/ollama/load.py
+
+#https://docs.trychroma.com/docs/querying-collections/metadata-filtering
+Need something numeric, not just category-driven.  
+Could use this for tagging though.  
+Probably dont need each individual vectorstore.  
+Cant find good answer.  
+
+
+How to deal with embedded question/answer.  
+Perhaps need to indent any question/answer we find to not confuse.  
+ @@question
+ ==answer
+
+This is to not confuse the parser.  
+So prior to actual question we indent everything?
+
+**web/public/book.html
+-filterprompt
+-filterregex
+not used yet.  
+How to use this?  
+
+Use in selectionhistory and book topics?  
+Also add delete button to all selectionhistory.  
+--ok.  
+
+
+**web/public/recent.html
+Add stats like number of transcribed words and/or summary of transcript.  
+
+Add similar table in book.html.  
+Show videos from most recent selection.  
+After pulling changes, show videos from this timeframe of most recent commit.  
+
+**web/public/recent.js
+Separate for use with other pages.  
+Really should work better on variable naming.  
+We should search for most used variables.  
+And work our way from them.  
+Use acorn for this especially need to do this with JS, because of the way we are doing legacy (global) variable usage.  
+But really we want minimal reuse of names anyway.  This is a simple way to refactor.  
+
+
+**web/public/book.html
+Should have word2vec change size dynamically based on number of lines.  
+
+How do we provide feedback on responses immediately?  
+Maybe lets interact with DB instead of gitbook.  
+Or can have both is fine.  
+UI should interact with DB.  
+Just use "base" language.  
+Need more words.  
+
+Chrome speechSynthesis sometimes fails.  
+Not sure cause.  
+
+Copy the question to -> transcript.  
+Have two links, jump to last response @@question
+or ask again @@question.  
+
+Why is Edge so much slower at loading the model?  
+
+Really need on-load indicator.  
+
+Scroll comment window to bottom each time.  
+
+As video plays, need to scroll through the comments and originaltranscript portion.  
+

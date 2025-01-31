@@ -55,3 +55,13 @@ se();
 function str_pad_left(string,pad,length) {
   return (new Array(length+1).join(pad)+string).slice(-length);
 }
+
+//need JS to share some of this stuff.  
+function getSecsFromTime(time){
+	minsec = time.split(":");
+	if (minsec == time)
+	    return 0;
+//	console.log(+parseInt(minsec[0])*60 + +parseInt(minsec[1]));
+	return +parseInt(minsec[0])*60 + +parseInt(minsec[1]);
+	
+}
