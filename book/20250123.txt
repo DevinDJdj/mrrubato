@@ -374,9 +374,112 @@ or ask again @@question.
 
 Why is Edge so much slower at loading the model?  
 
-Really need on-load indicator.  
+Really need loading indicator.  
 
 Scroll comment window to bottom each time.  
 
 As video plays, need to scroll through the comments and originaltranscript portion.  
+
+Need to start saving settings data in localStorage.  
+Save local transcript by date_time, and list local Transcripts.  
+Allow for naming them as well.  
+For now just in local storage.  
+All actions.  
+Need to list loadTopic in Transcript as well.  
+
+Run transcript and copy responses.  
+What are the recent changes.  
+Can we answer this meaningfully?  
+
+**web/public/rec.js
+saveTranscript/loadTranscripts
+saveLocal/saveRemote
+indicate whether this is private/public.  
+Does this need to be associated with video.  
+I think probably best if we do.  
+This should be optional for now.  
+Just record under 
+
+if recording, save transcript here:
+//misterrubato/date_time
+if not:
+//watch/date_time
+
+how to handle partial occasions?  
+
+--Optional localrecorder.  
+If localrecorder is available, utilize this, to pick up local input.  
+5MB is usual limit.  
+#https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB
+Need to use this.  
+localStorage for any settings and perhaps some cache.  
+IndexedDB for transcripts and recordings.  
+
+
+**web/public/rec.html
+
+
+**web/public/test/testindexeddb.html
+Define local data struct
+Perhaps just use same datastruct.  
+//misterrubato/date_time
+//watch/date_time
+//dictionary/language
+//dictionary/languages
+
+Simplify data structure for video/feedback structure.  
+So when record -> 
+//misterrubato/date_time/transcript/transcript
+should add
+//misterrubato/date_time/transcript/midi
+
+Locally we will have 
+//misterrubato/date_time/data/
+Automatically will be saved locally unless explicitly deleted for "space?"  
+
+This will be used similar to comments/uid/midi onload.  
+//misterrubato/date_time/snippet/description, publishedAt, title, tags
+inside description
+-MEDIAFILE: link to uploaded file.  Everything is local until it is uploaded, and MEDIAFILE in description overwritten?  
+Just have a sync mechanism.  
+with public/local link.  
+
+-MIDI
+//misterrubato/date_time/comments/uid/
+
+
+#https://dexie.org/docs/Tutorial/Hello-World
+#https://github.com/dexie/Dexie.js/tree/master
+
+#https://github.com/localForage/localForage
+
+#https://dexie.org/docs/API-Reference#quick-reference
+
+Guess this will be sufficient.  
+db.version(1).stores({
+  friends: '++id, name, age' // don't index "picture"
+});
+
+db.friends.put({
+  name: 'Camilla',
+  age: 25,
+  picture: await getBlob('camilla.png') // but store it
+});
+
+So see if we can store images/videos 
+
+
+**web/public/rec.html
+Add rec, and change DB to dexie.js.  
+Save local saves to dexie.js
+save remote saves video and addl JSON file to remote upload location and adds mediafile: to description.  
+rec API calls redirect to localDB.  
+Still not public until reviewed.  
+-Public uploads get pushed to Youtube?  
+--here.
+
+
+**web/public/rss/data
+**server/ollama/server.py
+Seems most answers generated are similar, or almost always using the same sources.  
 

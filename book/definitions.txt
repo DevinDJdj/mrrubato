@@ -41,6 +41,7 @@ $$ ENVIRONMENT
 # comments to something or reference from
 ## referenced lookup again.  
 
+// filepath or DB path
 
 "XX" = key phrase
 <!--
