@@ -131,6 +131,9 @@ function gitDownloadCommits(data, qpath=null){
   }
 
 function gitChartCommits(myarray, qpath=null){
+  var img = document.getElementById('thinkinggit');
+  img.style.visibility = "hidden";
+
 	var container = document.getElementById('gitchart');
 	gitchart = new google.visualization.Timeline(container);
 	chart = gitchart;
@@ -606,16 +609,16 @@ function loadTopicGraph(str){
   //also update canvas for this.  
     $('#textdata').val(str);
   setTimeout(function(){$("#prepareData").click();}, 2000); 
-  setTimeout(function(){$("#trainModel").click();}, 4000);
+  setTimeout(function(){$("#trainModel").click();}, 6000);
   
-  setTimeout(function(){$("#inbut").click(); }, 12000);
+  setTimeout(function(){$("#inbut").click(); }, 15000);
 
   setTimeout(function(){$("stopbut").click();dotrain=false;
     $(".u").each(function() {
       console.log(this);
       //adjust here.  
     });
-  }, 18000);
+  }, 22000);
 
 }
 
@@ -745,6 +748,9 @@ function setGitMode(){
   loadTopic(selectedtopic);
 }
 function loadTopic(top){
+    var img = document.getElementById('thinkinggit');
+    img.style.visibility = "visible";
+
     selectedtopic = top;
 
 //    selectionhistory.unshift(top);
@@ -857,6 +863,8 @@ function getGitCommits(qdate=null, qpath=null){
 
        console.log(data);
        myarray = gitDownloadCommits(data, qpath);
+
+   
     }
 	});
 }

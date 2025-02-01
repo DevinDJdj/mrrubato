@@ -62,6 +62,7 @@ def load_llm():
  llm = Ollama(
  model=MY_MODEL,
  verbose=True,
+ temperature=0.9, #high temperature for variety.  
  callback_manager=CallbackManager([StreamingStdOutCallbackHandler()]),
  )
  return llm

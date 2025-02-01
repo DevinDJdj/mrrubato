@@ -312,9 +312,9 @@ $("#timewindow").resize(function () {
     //adjust other div height.  
     $('#selectionhistory').height(ht);
     cvheight = 360+350 - ht;
-    if (cvheight < 100) cvheight = 100;
+    if (cvheight < 200) cvheight = 200;
     $('#wordcanvas').height(cvheight);
-    $('#wordcanvas').width(wd);
+    $('#wordcanvas').width(wd-200);
 
     $('#selectionfilter').height(cvheight);
 

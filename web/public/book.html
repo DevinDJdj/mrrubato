@@ -168,20 +168,31 @@ Load any speech from this time.
             
             </td>
             <td>
-                <input type="text" id="current-question" name="current-question" size="50">
-                <button id="ask-current-question" name="ask-current-question">ASK ME</button>
-                <input type="text" id="chat-status" name="chat-status" size="50">
-                <div id="speak">
-                    <select id="voiceSelect"></select><br>
-                    <!-- status and current command for now just display the string and add any additional midi params-->
-                    <label for="mycommand">Building Command:</label><br>
-                    <input type="text" id="mycommand" name="mycommand" size="50">
-                    <input type="text" id="midicommand" name="midicommand" size="20">
-                
-                </div>
-                <div class="words" contenteditable style="display: none;">
-                    <input type="text" id="p" name="p">
-                </div>
+              <table>
+                <tr>
+                  <td width="70%">
+                    <input type="text" id="current-question" name="current-question" size="50">
+                    <button id="ask-current-question" name="ask-current-question">ASK ME</button>
+                    <input type="text" id="chat-status" name="chat-status" size="50">
+                    <div id="speak">
+                        <select id="voiceSelect"></select><br>
+                        <!-- status and current command for now just display the string and add any additional midi params-->
+                        <label for="mycommand">Building Command:</label><br>
+                        <input type="text" id="mycommand" name="mycommand" size="50"><br>
+                        <input type="text" id="midicommand" name="midicommand" size="20">
+                    
+                    </div>
+                    <div class="words" contenteditable style="display: none;">
+                        <input type="text" id="p" name="p">
+                    </div>
+    
+                  </td>
+                  <td width="30%">
+                    <img id="thinkingchat" src="images/thinking.gif" height="140px" style="visibility:hidden" />
+
+                  </td>
+                </tr>
+              </table>
             
             </td>
             <td>
@@ -230,7 +241,7 @@ Load any speech from this time.
     <table>
         <tr>
             <td valign="top">
-      <table>
+      <table width="640px">
         <tr>
           <td>
             <canvas id="myvideocanvas" width="640" height="360" style="display: none">Your browser does not support the HTML5 canvas tag.</canvas>
@@ -248,7 +259,7 @@ Load any speech from this time.
           </td>
         </tr>
         <tr>
-          <td valign="top">
+          <td valign="top" width="640px">
             <label for="transcript">Original Transcript:</label>
             <img src="images/edit.png" height="16px" onClick="toggleTranscript();"/>
             <br>
@@ -310,10 +321,19 @@ Load any speech from this time.
                 
                       </script>
                     -->
+                      <table>
+                        <tr>
+                          <td>
+                            <img id="thinkinggit" src="images/thinking.gif" height="200px" style="visibility:hidden"/>
+                          </td>
+                          <td>
+
+                            <div id="wordcanvas" style="width:800px;height:300px;overflow:hidden;">
             
-                    <div id="wordcanvas" style="width:940px;height:300px;overflow:hidden;">
-            
-                    </div>
+                            </div>
+                         </td>
+                        </tr>
+                      </table>
             
                 </td>
                 <td>
@@ -1409,6 +1429,9 @@ function ChatLocalUpdate(answer){
 function ChatLocalDone(answer){
     //called from //test/web-llm/test.js
 
+    var img = document.getElementById('thinkingchat');
+    img.style.visibility = "hidden";
+
     tospeak = addChatRow(lastquery, answer, []);
     tospeak = tospeak.slice(lastread);
     lastread = 0;
@@ -1527,6 +1550,9 @@ function ChatLocal(transcript){
     document.getElementById("user-input").value = mycontext;
     console.log(mycontext);
     (async() => {
+      var img = document.getElementById('thinkingchat');
+    img.style.visibility = "visible";
+
   console.log('1')
   await LLM.sendToLLM(); //onMessageSend();//sendToLLM();   //test/web-llm/test.js
   console.log('2')
