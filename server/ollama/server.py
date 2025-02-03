@@ -63,6 +63,7 @@ def load_llm():
  model=MY_MODEL,
  verbose=True,
  temperature=0.9, #high temperature for variety.  
+ repeat_penalty=1.5, #sometimes gets stuck in loop.  
  callback_manager=CallbackManager([StreamingStdOutCallbackHandler()]),
  )
  return llm

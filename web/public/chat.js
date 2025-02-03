@@ -4,14 +4,6 @@ var MAX_LOCAL_QUERY_LENGTH = 60000;
 var chatmessages = [];
 var lastread = 0;
 var reading = false;
-var localprompt = 'You are a software engineer, investigating the source code and notes provided.  \n\
-                   Use the documentation provided to answer the @@Question.  \n\
-                   Each topic is marked by ** for example **MYTOPIC \n\
-                   Keep the response short and less than 300 words.  \n\
-                   You are trying to help summarize and explain the key points of the content provided to answer the @@Question.  \n\
-                   After listing the key points, try to make one suggestion to improve the current source code.  \n\
-                   Be sure to include a short answer to the question using the topics and source code noted by **MYTOPIC \n\
-    '
 
 function replaceLinksWithLastElement(str) {
     const linkRegex = /https?:\/\/[^\s"]+/g;

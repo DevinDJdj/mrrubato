@@ -483,3 +483,10 @@ Still not public until reviewed.
 **server/ollama/server.py
 Seems most answers generated are similar, or almost always using the same sources.  
 
+Should display date from comment in youtube?  
+
+**web/public/db.js
+Use this for DB interaction.  
+
+**web/public/config.js
+loadUserConfig

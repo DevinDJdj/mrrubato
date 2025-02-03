@@ -569,6 +569,7 @@ function mymidicallback(msg, time, user, lang) {
 
 
 function loadAll(reload = false){
+	loadUserConfig();
 	loadSpeech();
 	midiarray = [{"base": []}]; //reinitialize necessary?  
 	currentmidiuser = 0;
@@ -1107,7 +1108,8 @@ function updateVideo(){
 	
 
 	//somewhere else?
-	saveUserConfig();
+	//config.html
+//	saveUserConfig();
 
 }
 
@@ -1853,7 +1855,7 @@ function getVideoJson(videoid){
     });
 */
 
-	loadUserConfig();
+
 }
 
 

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Config me</title>
+
+  <script type="text/javascript" src="config.js"></script>
+  <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+    <!-- code editor -->
+    <script src="js/codeeditor/codemirror/lib/codemirror.js"></script>
+    <link rel="stylesheet" href="js/codeeditor/codemirror/lib/codemirror.css">
+    <script src="js/codeeditor/codemirror/mode/javascript/javascript.js"></script>
+    <script src="js/codeeditor/codemirror/mode/python/python.js"></script>
+    <script src="js/codeeditor/codemirror/mode/shell/shell.js"></script>
+    <script src="js/codeeditor/codemirror/mode/htmlmixed/htmlmixed.js"></script>
+
+</head>
+
+<body>
+    <button id="saveconfig" > Save Config </button>
+    <button id="loadconfig" > Load Config </button>
+
+    <div class="cm-editor" id="edit_code" style="height:430px">
+
+    <script>
+var myCodeMirror = null;
+var gitcurrentcontents = "";
+var gitcurrentcontentstype = "javascript";
+
+    if (myCodeMirror == null){
+        myCodeMirror = CodeMirror(document.getElementById("edit_code"), {
+            value: gitcurrentcontents,
+            mode:  gitcurrentcontentstype, 
+            lineNumbers: true
+        });
+        myCodeMirror.setSize(null, 430);
+    }
+    var cfg = loadUserConfig();
+    myCodeMirror.getDoc().setValue(cfg);
+
+    $("#saveconfig").click(function(){
+        var cfg = myCodeMirror.getDoc().getValue();
+        saveUserConfig(cfg);
+
+    });     
+    $("#loadconfig").click(function(){
+        var cfg = loadUserConfig();
+        myCodeMirror.getDoc().setValue(cfg);
+
+    });     
+        
+    </script>
+</body>
+
+</html>
+
+
