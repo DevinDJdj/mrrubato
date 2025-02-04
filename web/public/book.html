@@ -105,7 +105,11 @@ Load any speech from this time.
 
     <script src="pipes.js"></script>
     <script src="recent.js"></script>
+    <!-- local search -->
+    <script type="text/javascript" src="js/flexsearch/flexsearch.bundle.min.js"></script>
+    <script src="db.js"></script>
     
+
     </head>
     <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-RXPM3QHNJ3"></script>
@@ -1265,6 +1269,7 @@ Load any speech from this time.
 
         loadAllRecent(25);
 
+
 //        setTimeout(getGitCommits("2024-12-12"), 5000);
 //        getGitCommits("2024-12-12");  //need to pass login token to do this.  Too many requests.  
 
@@ -1294,9 +1299,9 @@ Load any speech from this time.
 </script>
 
 <script type="module">
-    import { Octokit, App } from "https://esm.sh/octokit";
-    LLM.Octokit = Octokit;
-    LLM.App = App;
+//    import { Octokit, App } from "https://esm.sh/octokit";
+//    LLM.Octokit = Octokit;
+//    LLM.App = App;
 </script>
 
 

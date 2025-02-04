@@ -1,0 +1,29 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Flex search</title>
+  <script type="text/javascript" src="flexsearch.bundle.min.js"></script>
+
+  </script>
+    <script type="text/javascript">
+
+const index = FlexSearch.Index({
+
+});
+
+index.add("test", "John Doe");
+
+result = index.search("John");
+console.log(result);
+    // array of results
+    //need to find the text within this and highlight further perhaps?  
+
+    //index.addAsync(id, content, function(){
+    // console.log("Task Done");
+    //});
+
+</script>
+
+
+

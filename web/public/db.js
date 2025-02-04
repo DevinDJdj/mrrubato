@@ -13,3 +13,9 @@ function addUser(user){
 	
 }
 
+const ftsindex = FlexSearch.Index({
+
+});
+
+
+

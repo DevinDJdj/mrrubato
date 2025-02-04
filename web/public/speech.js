@@ -675,6 +675,7 @@ function populateVoiceList() {
       document.getElementById("voiceSelect").appendChild(option);
     }
     if (voices.length > 2){
+        userAgentString = navigator.userAgent
         if (userAgentString.indexOf("Chrome") > -1){
             $("#voiceSelect")[0].selectedIndex = 2; //dont like the default voice.  
         }

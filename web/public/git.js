@@ -42,9 +42,9 @@ function gitSignin(){
       console.log(gittoken);
       localStorage.setItem("gittoken", gittoken);
 
-      const octokit = new LLM.Octokit({
-      auth: gittoken,
-      });
+//      const octokit = new LLM.Octokit({
+//      auth: gittoken,
+//      });
       // The signed-in user info.
       var user = result.user;
       // IdP data available in result.additionalUserInfo.profile.
@@ -62,15 +62,53 @@ function gitSignin(){
         console.log(gittoken);
         localStorage.setItem("gittoken", gittoken);
 
-        const octokit = new LLM.Octokit({
-        auth: gittoken,
-        });
+//        const octokit = new LLM.Octokit({
+//        auth: gittoken,
+//        });
   
       }
       // ...
   });
 
 }
+
+function initGitIndex(){
+  for (d in gitstruct["bydate"]){
+    temp = "";
+    for (e of gitstruct["bydate"][d]){
+      temp += e.content + '\n';
+    }
+    ftsindex.add(d, temp);
+  }
+  for (t in gitstruct["bytopic"]){
+    temp = "";
+    for (e of gitstruct["bytopic"][t]){
+      temp += e.content + '\n';
+    }
+    ftsindex.add(t, temp);
+  }
+//	ftsindex.add("test", "John Doe");
+
+	result = ftsindex.search(d);
+	console.log(result);
+
+}
+
+function updateGitIndex(fn=null){
+  for (gi=0; gi<gitcommits.length; gi++){
+
+    if (fn !==null && gitcommits[gi].filename != fn){
+    }
+    else{
+      //match
+      ftsindex.add(gitcommits[gi].filename + "_" + gi, gitcommits[gi].changes);
+      if (fn in gitstruct["allcontent"]){
+        ftsindex.add(fn + "_", gitstruct["allcontent"][fn]);
+      }
+    }
+  }
+}
+
 
 function gitDownloadCommits(data, qpath=null){
    var myarray = [];
@@ -127,7 +165,7 @@ function gitDownloadCommits(data, qpath=null){
 
       }
     }
-    setTimeout(function (){if (myarray.length > 0) {gitChartCommits(myarray, qpath);if (typeof(updateTimeline) !=='undefined'){ updateTimeline(qpath); }} }, 5000);
+    setTimeout(function (){if (myarray.length > 0) {gitChartCommits(myarray, qpath);if (typeof(updateTimeline) !=='undefined'){ updateTimeline(qpath); updateGitIndex(qpath);}} }, 5000);
   }
 
 function gitChartCommits(myarray, qpath=null){
@@ -372,6 +410,8 @@ function creategitStruct(){
     updateTimelineBook(gitstruct["bydate"]);
 
 
+    initGitIndex();
+
 }
 
 function loadfromGitBook(top, load=true){
@@ -615,7 +655,7 @@ function loadTopicGraph(str){
 
   setTimeout(function(){$("stopbut").click();dotrain=false;
     $(".u").each(function() {
-      console.log(this);
+      //console.log(this);
       //adjust here.  
     });
   }, 22000);

@@ -62,8 +62,82 @@ function loadUserConfig(){
         if (userconfigjson.hasOwnProperty('keybot')){
             keybot = userconfigjson.keybot;
         }
+        if ("git" in userconfigjson){
+            if ("giturl" in userconfigjson["git"]){
+                giturl = userconfigjson["git"]["giturl"];
+            }
+            if ("gitbranch" in userconfigjson["git"]){
+                gitbranch = userconfigjson["git"]["gitbranch"];
+            }
+            if ("bookfolder" in userconfigjson["git"]){
+                bookfolder = userconfigjson["git"]["bookfolder"];
+            }
+        }
+        if ("db" in userconfigjson){
+            if ("dbname" in userconfigjson["db"]){
+                dbname = userconfigjson["db"]["dbname"];
+            }
+            if ("domain" in userconfigjson["db"]){
+                domain = userconfigjson["db"]["domain"];
+            }
+            if ("rssurl" in userconfigjson["db"]){
+                rssurl = userconfigjson["db"]["rssurl"];
+            }
+            if ("chatdomain" in userconfigjson["db"]){
+                chatdomain = userconfigjson["db"]["chatdomain"];
+            }
+        }
+        if ("youtube" in userconfigjson){
+            if ("useyoutube" in userconfigjson["youtube"]){
+                useyoutube = userconfigjson["youtube"]["useyoutube"];
+            }
+            if ("channelId" in userconfigjson["youtube"]){
+                channelId = userconfigjson["youtube"]["channelId"];
+            }
+        }
+        if ("keys" in userconfigjson){
+            if ("keybot" in userconfigjson["keys"]){
+                keybot = userconfigjson["keys"]["keybot"];
+            }
+            if ("KEY_BOT" in userconfigjson["keys"]){
+                KEY_BOT = userconfigjson["keys"]["KEY_BOT"];
+            }
+            if ("keytop" in userconfigjson["keys"]){
+                keytop = userconfigjson["keys"]["keytop"];
+            }
+            if ("commandcompletion" in userconfigjson["keys"]){
+                commandcompletion = userconfigjson["keys"]["commandcompletion"];
+            }
+
+            if ("playfeedback" in userconfigjson["keys"]){
+                playfeedback = userconfigjson["keys"]["playfeedback"];
+            }
+            if ("volumeControl" in userconfigjson["keys"]){
+                volumeControl = userconfigjson["keys"]["volumeControl"];
+            }
+            if ("_octave" in userconfigjson["keys"]){
+                _octave = userconfigjson["keys"]["_octave"];
+            }
+
+
+        }
+        if ("video" in userconfigjson){
+            if ("myrate" in userconfigjson["video"]){
+                myrate = userconfigjson["video"]["myrate"];
+            }
+            if ("mypitch" in userconfigjson["video"]){
+                mypitch = userconfigjson["video"]["mypitch"];
+            }
+            if ("vidbuffer" in userconfigjson["video"]){
+                vidbuffer = userconfigjson["video"]["vidbuffer"];
+            }
+        }
+        if ("localprompt" in userconfigjson){
+            localprompt = userconfigjson["localprompt"];
+        }
         console.log(userconfigjson);
     }
+
     getConfig();  //update myconfig.  
     return JSON.stringify(myconfig, null, " ");
 }

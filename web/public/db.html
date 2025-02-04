@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
+  <!--
+  <script src="https://cdn.jsdelivr.net/npm/minisearch@7.1.1/dist/umd/index.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/nextapps-de/flexsearch@0.7.41/dist/flexsearch.bundle.min.js"></script>
+-->
+  <script type="text/javascript" src="config.js"></script>
+  <script>
+
+    var cfg = loadUserConfig();
+    //can potentially have multiple DBs we interact with 
+    //change config.html, then reload.  
+    var db = new Dexie(dbname);
+
+    db.version(1).stores({
+      misterrubato: `
+        &id, 
+        snippet.channelId,
+        snippet.description, 
+        snippet.title, 
+        snippet.publishedAt,
+        status.privacyStatus,
+        transcript.transcript`,
+    });
+
+    // Now add some values.
+    db.misterrubato.bulkPut([
+      { id: "20250203130000", comments: "", 
+        snippet: {channelId: channelId, description: "Test ", publishedAt: "2023-11-07T02:30:09Z", title: "Test"}, 
+        status: {privacyStatus: "private"}, 
+        transcript: {transcript: ""}
+    }
+    ]).then(() => {
+
+      return db.misterrubato.where("id").startsWith("20250203").toArray();
+      /*
+      const sample = db.misterrubato.where(["snippet.channelId", "id"])
+    .between([channelId, "20250203"], [channelId, "20250204"], true, true)
+    .toArray();
+        */
+
+    }).then(vids => {
+
+      console.log("Found vids: " +
+        vids.map(vid => vid.snippet.title));
+
+      return db.misterrubato
+        .orderBy("id")
+        .reverse()
+        .toArray();
+
+    }).catch(err => {
+
+      alert("Ouch... " + err);
+
+    });
+
+  </script>
+</head>
+</html>

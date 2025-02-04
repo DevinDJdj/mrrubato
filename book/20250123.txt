@@ -490,3 +490,38 @@ Use this for DB interaction.
 
 **web/public/config.js
 loadUserConfig
+
+**web/public/config.html
+UI to adjust config
+
+**web/public/db.html
+sample UI for contents.  
+
+#https://github.com/lucaong/minisearch
+
+#https://olivernn.github.io/moonwalkers/
+
+
+#https://github.com/LiamOSullivan/flexsearch-demo#options
+#https://github.com/LiamOSullivan/flexsearch-demo
+
+**web/public/js/flexsearch/test.html
+Need front-end FTS.  
+ok, this seems to work.  
+
+**web/public/book.html
+Ingest all book etc.  
+Need to filter prompt.  
+
+
+Should we do remote CLI access.  
+#https://github.com/getsavvyinc/savvy-cli
+#https://github.com/theonewolf/TermRecord?tab=readme-ov-file
+#https://github.com/elisescu/tty-record
+
+how much more do we get really than 
+> history
+
+Anyway add fts to book.html
+
+
