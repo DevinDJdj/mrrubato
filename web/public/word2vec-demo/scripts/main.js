@@ -394,7 +394,7 @@ function onTrainBegin() {
 
 function onBatchEnd(batch, logs) {
     //    console.log('Accuracy', logs.acc);
-    console.log('Loss', logs.loss);
+//    console.log('Loss', logs.loss);
 }
 
 function onEpochEnd(currEpoch, logs) {
