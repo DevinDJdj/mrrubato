@@ -1,0 +1,6 @@
+#https://genkiinstruments.com/products/softwave
+#https://github.com/genkiinstruments/genki-wave
+> python -m pip install genki-wave
+> pip install pygame
+
+**instruments/testgenki.py
