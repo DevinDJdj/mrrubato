@@ -1183,7 +1183,7 @@ function getIterations(desc, vidtime, isme=false){
 			s = -1;
 			e = -1;
 			fnd = "TRIAL#" + i;
-			ts = desc.indexOf(fnd);
+			let ts = desc.indexOf(fnd);
 			te = desc.indexOf(")", ts);
 			if (ts > -1)
 				s = getSecsFromTime(desc.substring(ts+(fnd.length)+2, te));

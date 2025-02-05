@@ -171,3 +171,9 @@ function getConfig(){
 }
 
 
+export{
+    getConfig, 
+    saveUserConfig, 
+    loadUserConfig, 
+    myconfig    //use this 
+}

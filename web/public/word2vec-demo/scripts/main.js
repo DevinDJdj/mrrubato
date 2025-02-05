@@ -40,7 +40,7 @@ function initEmbedding() {
 
 var gs;
 var cs;
-var ts;
+var topicts;
 var ls;
 
 
@@ -51,7 +51,7 @@ function zoomTopic(top){
     if (svg.selectAll(".b")[0].parentNode.childElementCount > 0){
         //initEmbedding();
         //drawEmbedding();
-        ts.transition().attr("font-size", function(d,i){ return selectFont(labels[i]);})
+        topicts.transition().attr("font-size", function(d,i){ return selectFont(labels[i]);})
             .attr("opacity", function(d, i){ return selectOpacity(labels[i]);}).duration(500);
         //.attr("font-size", function(d,i){ return selectFont(labels[i]);});
     }
@@ -97,7 +97,7 @@ function drawEmbedding() {
         //here add link to topic.  
 
 
-        ts = ls.append("text")
+        topicts = ls.append("text")
             .attr("text-anchor", "top")
             .attr("transform", "translate(2, -2)")
             .attr("font-size", function(d,i){ return selectFont(labels[i]);})

@@ -4,3 +4,23 @@
 > pip install pygame
 
 **instruments/testgenki.py
+
+#https://genkiinstruments.com/products/softwave
+See if we can use 
+Roll/Tilt/click/tap 
+
+Roll -> scroll
+Click -> act on component
+Tilt -> select component.  
+Tap -> select component
+#https://genkiinstrumentshelp.zendesk.com/hc/en-us/articles/360013654978-STEP-2-Connect-WIDI-Master-to-your-instrument
+
+
+#https://github.com/tttapa/Control-Surface
+Maybe create a small device?  
+#https://randomnerdtutorials.com/installing-the-esp32-board-in-arduino-ide-windows-instructions/
+
+#https://tttapa.github.io/Control-Surface/Doxygen/d3/df7/midi-tutorial.html
+
+See what is possible?  
+#https://www.arduino.cc/en/software

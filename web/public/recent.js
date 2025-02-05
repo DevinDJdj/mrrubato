@@ -40,7 +40,7 @@ function getDuration(desc, vidtime){
 	et = [];
 	for (i=1; i< 20; i++){
 	    fnd = "TRIAL#" + i;
-		ts = desc.indexOf(fnd);
+		let ts = desc.indexOf(fnd);
 		te = desc.indexOf(")", ts);
 		if (ts > -1)
 			st.push(getSecsFromTime(desc.substring(ts+(fnd.length)+2, te)));

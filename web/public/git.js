@@ -610,6 +610,9 @@ function getGitContents(path, load=true){ //load UI or not, if false, return str
       },
       error: function(xhr, textStatus, errorThrown) { 
         console.log(url + " not found.  "); 
+        var img = document.getElementById('thinkinggit');
+        img.style.visibility = "hidden";
+      
         gitstruct["allcontent"][gitcurrentpath] = null; //dont want to load this again.  
         $('#topicstatus').append("<br>" + path + " not found.") 
         $('#topicstatus').animate({
@@ -647,8 +650,25 @@ function getgitSelected(start, end){
 function loadTopicGraph(str){
   //this is input for word2vec struct.  
   //also update canvas for this.  
+  $('#windowSize').val(topicWindowSize); //set number of Bag-Of-Words to include 3 is default.  
     $('#textdata').val(str);
-  setTimeout(function(){$("#prepareData").click();}, 2000); 
+
+  
+    prepare();
+    trainModel();
+    $("#inbut").click(); 
+    setTimeout(function(){
+      $("stopbut").click();dotrain=false;
+      $(".u").each(function() {
+      //console.log(this);
+      //adjust here.  
+    });
+    }, 
+    10000)
+      
+
+      /*
+    setTimeout(function(){$("#prepareData").click();}, 2000); 
   setTimeout(function(){$("#trainModel").click();}, 6000);
   
   setTimeout(function(){$("#inbut").click(); }, 15000);
@@ -659,6 +679,7 @@ function loadTopicGraph(str){
       //adjust here.  
     });
   }, 22000);
+  */
 
 }
 

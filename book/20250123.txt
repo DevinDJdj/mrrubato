@@ -525,3 +525,69 @@ how much more do we get really than
 Anyway add fts to book.html
 
 
+**ES6
+#https://github.com/ericdouglas/ES6-Learning
+#https://www.programiz.com/javascript/ES6
+
+really should start using this syntax more.  
+A bit late...
+Some of these things...
+
+Start to use Promise
+let countValue = new Promise(function (resolve, reject) {
+    setTimeout(function () {
+        resolve("Promise resolved!");
+    }, 5000);
+});
+countValue.then(function successValue(result) {
+    console.log(result);
+});
+
+more class 
+class Student extends Person
+
+and import/export
+
+
+for of loop.  
+function(...args)
+use Map() instead of dictionary
+
+let is local.  
+var is global.  
+
+and import/export
+
+end of file:
+export { value1, value2, add };
+to start.  
+
+
+
+**web/public/keymap.js
+Try to just get the comma-delimited IDs and write a nearley parser to change to words.  
+Still how to combine MIDI with speech intelligently.  
+
+
+**web/public/grammar/book/book.ne
+Lets check Book commands against Keymap commands.  
+Does book.ne work?  
+
+
+**web/public/page.html
+Basically book, but with only contents relevant to that page.  
+All dependencies (as detected)
+
+
+**web/public/recent.js
+--PAGE
+In the videos as well as word2vec contents, only show topics which transcripts include the TOPIC names or come up in the FTS or similarity search.  
+
+gitstruct["alltopics"]
+    var windowSize = Number($("#windowSize").val());
+    Adjust this as needed.  
+    This should be visible/setting.  
+        
+What is the search depth 
+
+
