@@ -2,9 +2,23 @@
 <html>
     <head>
         <title>Calculator!</title>
+        <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+        <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
         <script src="../arithmetic/nearley.js"></script>
-        <!--book.js-->
-        <script src="../arithmetic/arithmetic.js"></script>
+        <!--<script src="book.js"></script> -->
+        <script src="booka.js"></script>
+        <script src="csv.js"></script>
+
+    <!-- code editor -->
+    <script src="/js/codeeditor/codemirror/lib/codemirror.js"></script>
+    <link rel="stylesheet" href="/js/codeeditor/codemirror/lib/codemirror.css">
+    <script src="/js/codeeditor/codemirror/mode/javascript/javascript.js"></script>
+    <script src="/js/codeeditor/codemirror/mode/python/python.js"></script>
+    <script src="/js/codeeditor/codemirror/mode/shell/shell.js"></script>
+    <script src="/js/codeeditor/codemirror/mode/htmlmixed/htmlmixed.js"></script>
+
+        
+<!--        <script src="../arithmetic/arithmetic.js"></script> -->
         <style type="text/css">
             html, body {
                 margin: 0; padding: 0;
@@ -16,7 +30,7 @@
                 margin-left: auto;
                 margin-right: auto;
                 max-width: 40em;
-                text-align: center;
+                text-align: left;
                 height: 100%;
                 display: table;
             }
@@ -30,7 +44,7 @@
                 border-bottom: 1px solid gray;
                 font-family: menlo, monaco, monospace;
                 font-size: 14pt;
-                text-align: center;
+                text-align: left;
                 width: 30em;
             }
             input:focus {
@@ -55,34 +69,46 @@
     </head>
     <body>
         <div id="main">
-           <div class="vertically-centered">
-               <input  id="input" autofocus type="text" placeholder="3+4*ln(e+pi^2)"></input><br/>
+            <div class="cm-editor" id="edit_code" style="height:430px">
+
+            <div>
+                <textarea id="input" rows="10" cols="40" autofocus placeholder="**TOPIC\nMy Comment"></textarea>
+                <button id="parseme">Parse Me</button>
+
                <span id="help">Enter an expression and hit &lt;enter&gt;.</span><br/>
                <span id="info">Made with <a href="http://github.com/Hardmath123/nearley">nearley</a>.</span>
            </div>
         </div>
 
+
         <script>
+            var mytopicarray = {};
+            var myrefarray = [];
             window.addEventListener("load", function() {
                 var inp = document.getElementById("input");
                 
                 function evaluate() {
                     inp.style.color = "inherit";
-                    var p = new nearley.Parser(arithmetic.ParserRules, arithmetic.ParserStart, { keepHistory: true })
 //                    var p = new nearley.Parser(book.ParserRules, book.ParserStart, { keepHistory: true })
+                    var p = new nearley.Parser(booka.ParserRules, booka.ParserStart, { keepHistory: true })
+//                        var p = new nearley.Parser(csv.ParserRules, csv.ParserStart, { keepHistory: true })
+//                    var p = new nearley.Parser(book.ParserRules, book.ParserStart, { keepHistory: false })
                     try {
                         p.feed(inp.value);
                         if (!p.results[0]) {
+                            console.log(p);
                             throw new Error();
                         }
-                        if (isNaN(p.results[0]) || p.results[0] === Infinity) {
-                            throw new Error();
-                        }
-                        inp.value = p.results[0].toString();
+//                        inp.value = p.results.toString();
                         console.log(p.table);
+                        console.log(p.results);
+                        console.log(p.results[0]);
+                        console.log(mytopicarray);
+                        console.log(myrefarray);
                     } catch(e) {
-                        inp.value = "[error]";
+//                        inp.value = "[error]";
                         inp.style.color = "red";
+                        console.log(e); // "Error at character 9"
                         inp.select();
                     }
                 }
@@ -92,5 +118,61 @@
                 }, false);
             });
     </script>
-    </body>
+
+
+<!-- 
+simple ES6 module implementation 
+-->
+<script type="module">
+    import * as CFG from '/configm.js';
+    var myCodeMirror = null;
+    var gitcurrentcontents = "";
+    var gitcurrentcontentstype = "javascript";
+
+    if (myCodeMirror == null){
+        myCodeMirror = CodeMirror(document.getElementById("edit_code"), {
+            value: gitcurrentcontents,
+            mode:  gitcurrentcontentstype, 
+            lineNumbers: true
+        });
+        myCodeMirror.setSize(null, 430);
+    }
+
+    var booktext = "**MYTOPIC\nSomething about it\n-subtask\n<!--\ncomments..\n-->\nSomething else\n";
+    myCodeMirror.getDoc().setValue(booktext);
+    var mycfg = CFG.loadUserConfig();
+
+    $("#parseme").click(function(){
+        var inp = document.getElementById("input");
+//        myCodeMirror.getDoc().setValue(inp.value);
+
+        let txt = myCodeMirror.getDoc().getValue();
+        //nearley parser parse.  
+        var p = new nearley.Parser(book.ParserRules, book.ParserStart, { keepHistory: true })
+//                    var p = new nearley.Parser(book.ParserRules, book.ParserStart, { keepHistory: true })
+        var inp = document.getElementById("input");
+
+        try {
+            p.feed(txt);
+            if (!p.results[0]) {
+                throw new Error();
+            }
+            if (isNaN(p.results[0]) || p.results[0] === Infinity) {
+                throw new Error();
+            }
+            inp.value = p.results[0].toString();
+            inp.style.color = "black";
+            console.log(p.table);
+        } catch(e) {
+            inp.style.color = "red";
+            inp.select();
+        }
+
+    });     
+
+
+</script>
+
+</body>
+
 </html>

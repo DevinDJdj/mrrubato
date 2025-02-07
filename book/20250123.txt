@@ -577,6 +577,9 @@ Does book.ne work?
 **web/public/page.html
 Basically book, but with only contents relevant to that page.  
 All dependencies (as detected)
+Do we need a separate page?  
+perhaps just pass topics=... in url.  
+Then auto-loads based on this topic/topics.  
 
 
 **web/public/recent.js
@@ -587,7 +590,75 @@ gitstruct["alltopics"]
     var windowSize = Number($("#windowSize").val());
     Adjust this as needed.  
     This should be visible/setting.  
-        
+
 What is the search depth 
+So find all words next to topic.  
+Use windowSize for this as well?  
+or just use windowSize/2 for this?  
+Correlation through BOW.  
+
+
+
+
+**web/public/grammar/book/book.ne
+?Lets check Book commands against Keymap commands.  
+Does book.ne work?  
+
+Then create 
+**web/public/grammar/midi.ne
+Try simplistic number sequence -> word generation.  
+
+
+Something needs to be adjusted here.  
+All in error at the moment.  
+
+> nearley-test -i "**MYTOPIC\nSome comment" grammar/book/book.js
+Not sure.  
+nearley-unparse is what I think I liked to begin with.  
+This mixed with LLM would be nice.  
+
+--How to pass \n to nearley-test
+
+How do we get the expected form.  I think it will learn form.  
+We are still at very low context string numbers.  
+If this is scalable, we dont need to be too worried about form I think as long as we can 
+send multiple samples of expected form in context window.  
+
+How scalable is this.  
+Seems pretty scalable at the moment.  I think it is more of a model generation style.  
+rolling context window may be ok as well anyway.  
+
+Then we send a set of book/commits.  
+And get structured output, and confirm the form with the parser.  
+If there is an error, fix it if we can, otherwise, add this to the pipeline of queries until we get a useful and parseable response.  
+
+
+**web/public/grammar/book/book.ne
+--This is not so easy to formulate a grammar.  
+
+Seems to work, but is this scalable with keepHistory?  
+
+Why are we getting so much in p.results 
+This is exponential based on the number of lines.  
+grammar recursion problem?  
+Probably cant use this?  
+
+**web/public/grammar/csv.ne
+Test this see if we have same recursion problem.  
+How to fix?  
+Dont give up ...
+
+
+**web/public/grammar/keys/keys.ne
+Try to make a simple interpreter for this.  
+Maybe better suited.  
+How do we limit this recursion in general.  
+
+**web/public/grammar/book/booka.ne
+--Finally a start.  
+We may be able to use.  
+
+Try to add comment logic.  
+Have to be very careful with this, or end up with unwanted recursion/nesting.  
 
 
