@@ -662,3 +662,31 @@ Try to add comment logic.
 Have to be very careful with this, or end up with unwanted recursion/nesting.  
 
 
+**web/public/rss/view.html
+Add Speech
+
+Really should make a complete header module with MIDI, SPEECH and LLM
+Set UI and module combo.  
+Or build UI via javascript?  
+Can test this here.  
+Then change book.  
+Just build context function should be different.  
+This should be unique to each page. 
+And can include queries to LLM eventually.  
+For now just build context string.  
+Try to use ES6.  
+Build login module as well?  
+
+
+**web/public/rss/recent.html
+List recent dates.  
+Use recent.js
+
+**web/public/book.html
+OK finally have some ES6 module code integrated.  
+Still need to fix speech.js for analyze.html
+And maybe broke analyze.html
+But 
+Now use speech.js as module to start with.  
+
+

@@ -92,7 +92,8 @@ Load any speech from this time.
     <script>
 //        speech = false;
     </script>
-    <script src="speech.js"></script>
+    <script type="module" src="speech.js">      
+    </script>
     <script src="keymap.js"></script>
     <script src="languages.js"></script>
     
@@ -930,7 +931,7 @@ Load any speech from this time.
                         
                             uid = user.uid;
                             
-                            loadAll();
+                            FUNCS.loadAll();
                         }
                     // IdP data available in result.additionalUserInfo.profile.
                       // ...
@@ -1195,11 +1196,25 @@ Load any speech from this time.
     
     }
     
-    
-    function loadAll(reload = false){
+</script>
+
+<script>
+  FUNCS = {};
+</script>
+
+<script type="module">
+        import * as SPEECH from "/speech.js"
+  /*
+        import loadSpeech from "/speech.js";
+        import addComment from "/speech.js";
+        import helpme from "/speech.js";
+        import getVoice from "/speech.js";
+        import checkCommands from "/speech.js";
+  */
+    export default function loadAll(reload = false){
         gitSignin();
 
-        loadSpeech();
+        SPEECH.loadSpeech();
         $("#ask-current-question").click(function(){
           lastspokenword="comment";  //alternative to using midi.          
           MyChat($("#current-question").val());
@@ -1257,6 +1272,7 @@ Load any speech from this time.
             var errorCode = error.code;
             var errorMessage = error.message;
             // The email of the user's account used.
+            console.log(errorMessage);
             var email = error.email;
             // The firebase.auth.AuthCredential type that was used.
             var credential = error.credential;
@@ -1278,8 +1294,9 @@ Load any speech from this time.
                 //from test.js set context_window_size to sliding.  
     }
     
-    
-    
+
+    FUNCS.loadAll = loadAll;
+    FUNCS.SPEECH = SPEECH;
 
     </script>
 
@@ -1416,8 +1433,7 @@ function createNotesArray(){
 function ChatLocalUpdate(answer){
     lastread = answer.length + lastread; //usually lastread = 0
     ssu = new SpeechSynthesisUtterance(answer);
-    svoice = $("#voiceSelect")[0].selectedIndex;
-    ssu.voice = voices[svoice];
+    ssu.voice = FUNCS.SPEECH.getVoice();
     ssu.rate = myrate;
     ssu.pitch = mypitch;
     window.speechSynthesis.cancel();
@@ -1441,8 +1457,8 @@ function ChatLocalDone(answer){
     tospeak = tospeak.slice(lastread);
     lastread = 0;
     ssu = new SpeechSynthesisUtterance(tospeak);
-    svoice = $("#voiceSelect")[0].selectedIndex;
-    ssu.voice = voices[svoice];
+
+    ssu.voice = FUNCS.SPEECH.getVoice();
     ssu.rate = myrate;
     ssu.pitch = mypitch;
     window.speechSynthesis.cancel();
@@ -1583,7 +1599,7 @@ function ChatLocal(transcript){
                 //use local if available.  check for GPU for local LLM usage as well.  
                 if (ChatLocal !== undefined){
                     ChatLocal(mychat);
-                    addComment("@@" + transcript, helpme());
+                    FUNCS.SPEECH.addComment("@@" + transcript, FUNCS.SPEECH.helpme());
                     return;
                 }
 				//get prompt

@@ -1,18 +1,18 @@
 
-commandLog = [];
-pendingCommands = [];
-ss = null;
+let commandLog = [];
+let pendingCommands = [];
+let ss = null;
 //myrate = 0.7;
 //mypitch = 1;
 
 
-lastcommand = "";
-lastcommandtime = 0;
-currentvoice = 0;
-voices = null;
-commentpos = 0;
+let lastcommand = "";
+let lastcommandtime = 0;
+let currentvoice = 0;
+let voices = null;
+let commentpos = 0;
 
-function addCommandLog(transcript, command, pending=false){
+export function addCommandLog(transcript, command, pending=false){
     //we want to have the time here.  
     let now = Date.now();
     transcript = transcript.trimStart();
@@ -44,7 +44,8 @@ function addCommandLog(transcript, command, pending=false){
 //open-ended definitions must end with midi 60, 60.  
 //add language, add word etc.  But 60, 60 not stored in keymap.  
 //others will be defined in keymap.  
-function checkCommands(lang="meta"){
+/*
+export function checkCommands(lang="meta"){
     let cl = getPendingCommand();
     let midi = getMidiRecent();
     let executed = false;
@@ -187,8 +188,8 @@ function checkCommands(lang="meta"){
     return transcript;
 
 }
-
-
+*/
+/*
 function completeMidi(midi, lang=""){
     let ret = 0;
     let reftime = getReferenceTime();
@@ -206,11 +207,11 @@ function completeMidi(midi, lang=""){
     }
     return ret;
 }
+*/
 
 
 
-
-function helpme(){
+export function helpme(){
     var temptime = 0;
     if (useyoutube || watch){
         if (!player.getCurrentTime)
@@ -237,7 +238,7 @@ function hasNumber(myString) {
 }
 
 //right now there is no chatting here, we are just using the comments.
-function Chat(transcript, callback=null, pending=false, lang=""){
+export function Chat(transcript, callback=null, pending=false, lang=""){
     //check meta commands first, then keymap[lang].chat...
 
     if (lang==""){
@@ -570,7 +571,7 @@ function Chat(transcript, callback=null, pending=false, lang=""){
 }
 
 
-function addComment(comment, commenttime){
+export function addComment(comment, commenttime){
     //find where to splice and then reset the notes
     //notesarray.splice(i, 0, comment);
     createNotesArray();
@@ -589,7 +590,8 @@ function addComment(comment, commenttime){
 		
 
 
-function loadSpeech(){
+
+export function loadSpeech(){
     if (speech == true){
         window.SpeechRecognition = window.SpeechRecognition
                         || window.webkitSpeechRecognition;
@@ -597,7 +599,7 @@ function loadSpeech(){
         const recognition = new SpeechRecognition();
         recognition.interimResults = false;
         const wordp = document.querySelector('.words');
-        wordp.appendChild(p);
+//        wordp.appendChild(p);
 
         recognition.addEventListener('result', e => {
             const transcript = Array.from(e.results)
@@ -612,7 +614,7 @@ function loadSpeech(){
             //this is blank for analyze.html.  
 
 
-            mymidicommand = getMidiRecent();
+            let mymidicommand = getMidiRecent();
             if (mymidicommand == null && !pedal){
                 //if not executed immediately, add to pending commands, and wait for midi or further command.  
                 
@@ -654,6 +656,10 @@ function loadSpeech(){
     speechSynthesis.onvoiceschanged = populateVoiceList;
 }
 
+export function getVoice(){
+    let svoice = $("#voiceSelect")[0].selectedIndex;
+    return voices[svoice];
+}
 
 function populateVoiceList() {
     if (typeof window.speechSynthesis === "undefined") {
@@ -675,7 +681,7 @@ function populateVoiceList() {
       document.getElementById("voiceSelect").appendChild(option);
     }
     if (voices.length > 2){
-        userAgentString = navigator.userAgent
+        let userAgentString = navigator.userAgent
         if (userAgentString.indexOf("Chrome") > -1){
             $("#voiceSelect")[0].selectedIndex = 2; //dont like the default voice.  
         }

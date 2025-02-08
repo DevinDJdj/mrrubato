@@ -223,7 +223,7 @@ function checkCommands(lang="meta"){
 
             if (transcript !=""){
                 if (transcript.endsWith(" ")){ //add pending command.  
-                    addCommandLog(transcript, null, true);
+                    FUNCS.SPEECH.addCommandLog(transcript, null, true);
                     //single command.  Must have at least half a second open here or whatever the timer is open time in order to execute this command.  
                     //add a pending command, and if no more midi comes within half a second, we execute.  
                     //will need to adjust this timer for the user.  

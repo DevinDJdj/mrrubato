@@ -75,7 +75,7 @@ function loadUserConfig(){
             if ("bookfolder" in userconfigjson["git"]){
                 bookfolder = userconfigjson["git"]["bookfolder"];
             }
-            if ("topicWindowSize" in userconfig["git"]){
+            if ("topicWindowSize" in userconfigjson["git"]){
                 topicWindowSize = userconfigjson["git"]["topicWindowSize"];
             }
         }

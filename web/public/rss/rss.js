@@ -8,7 +8,7 @@ function parseHTML(html){
     var regExp = /\(([^)]+)s\)/g;
     var replaceWith = "<a href=\"https://$1\">$1</a>";
     let formatted = decodedString.replace(regExp, function(match, capture){
-        timeindex = capture.lastIndexOf("=");
+        let timeindex = capture.lastIndexOf("=");
         if (timeindex < 0){
             return match;
         }
@@ -20,19 +20,19 @@ function parseHTML(html){
 }
 
 function getID(str){
-    idstr = str.substring(str.lastIndexOf('?')+1);
+    let idstr = str.substring(str.lastIndexOf('?')+1);
     idstr = idstr.replace(/[^0-9]/g, '');
     return idstr;
 }
 
-function getRSS(d=""){
-    id = -1;
+export default function getRSS(d=""){
+    let id = -1;
     if (urlParams["id"]){
         id = urlParams["id"];
     }
 
     if (d==""){
-        date = new Date();
+        let date = new Date();
         d = date.toISOString().slice(0,10).replace(/-/g,"");
     }
     
@@ -103,3 +103,5 @@ function getRSS(d=""){
 
 
 }        
+
+export { getRSS };

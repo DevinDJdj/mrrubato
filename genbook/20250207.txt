@@ -1,0 +1,14 @@
+@@What are you doing	
+
+==
+It seems like you've provided a lengthy and detailed document, likely from a personal project or a work-in-progress, rather than a traditional article or essay. The content appears to be a mix of notes, ideas, and code snippets related to a project or concept called "Mrrubato."
+
+Here's a rough breakdown of what might be happening:
+
+- The document starts with a discussion about a personal project or a work-in-progress called "Mrrubato." The author mentions that they have been working on this project for a while and are now considering sharing it with others.
+- The next section discusses the importance of sharing creative work, citing examples such as writing, art, and music. The author notes that sharing one's creative work can be a powerful way to connect with others, share ideas, and build communities.
+- The following sections delve into the specifics of what "Mrrubato" entails. These might include notes on the project's goals, scope, and timeline, as well as details on how the author plans to share their work with others.
+- Throughout the document, there are references to various technical and programming details, such as Python code and server-side startup scripts. These might be relevant to the project's technical requirements or the author's development process.
+- Finally, the document includes a section with notes on the author's writing and coding process, which might provide insight into the project's development and the author's creative process.
+
+Overall, this document appears to be a personal and introspective exploration of the project "Mrrubato" and the author's creative journey. While it may not make sense to everyone, it can be a valuable resource for those interested in creative projects and the importance of sharing one's work with others.
