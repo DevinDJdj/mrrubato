@@ -151,7 +151,7 @@ data-setup="{}"
 		</div>
 		</td>
 		<td align="right">
-			<div id="usericon" onclick="loadAll(true);"></div>
+			<div id="usericon" onclick="FUNCS.loadAll(true);"></div>
 			</td>
 		</tr>
 	</table>
@@ -166,12 +166,14 @@ data-setup="{}"
 	<div id="mycommentsh" style="height: 190px;overflow:auto;"></div>
 
 	<div id="speak">
+		<select id="voiceSelect"></select><br>
 		<!-- status and current command for now just display the string and add any additional midi params-->
 		<label for="mycommand">Building Command:</label><br>
-		<input type="text" id="mycommand" name="mycommand" size="50">
+		<input type="text" id="mycommand" name="mycommand" size="50"><br>
 		<input type="text" id="midicommand" name="midicommand" size="20">
-
+	
 	</div>
+
 	<br>
     <div class="tags-input" style="width:100%;"> 
         <ul id="tags"></ul> 
@@ -338,6 +340,7 @@ var seek = -1;
 
 <script type="text/javascript" src="clock.js"></script>
 <script type="text/javascript" src="midi.js"></script>
+<script type="text/javascript" src="js/flexsearch/flexsearch.bundle.min.js"></script>
 <script type="text/javascript" src="db.js"></script>
 <script type="text/javascript" src="config.js"></script>
 <script src="js/drawkeyboard.js"></script>
@@ -399,6 +402,8 @@ var myuser = null;
 var isadmin = false;
 var originaltranscript = null;
 
+var user = null;
+
 //setup https://www.youtube.com/watch?v=3jZ5vnv-LZc
 //then restrict the key if needed to your site and youtube data API.  
 
@@ -449,7 +454,7 @@ $(document).on('input', '#commentdelay', function() {
           ].filter(feature => typeof app[feature] === 'function');
           loadEl.textContent = `Firebase SDK loaded with ${features.join(', ')}`;
 		  
-		  loadAll();
+		  FUNCS.loadAll();
 		//use this as the base, and then we can write an update to whatever.  
 		//we can also use this, if the user is logged in, get that info instead.  
 /*		
@@ -568,74 +573,6 @@ function mymidicallback(msg, time, user, lang) {
 }
 
 
-function loadAll(reload = false){
-	loadUserConfig();
-	loadSpeech();
-	midiarray = [{"base": []}]; //reinitialize necessary?  
-	currentmidiuser = 0;
-
-	reinitLanguages();
-	getFullPiano();
-
-	//firebase.auth.Auth.Persistence.LOCAL 'local'
-	firebase.auth().setPersistence('local').then(() => {
-//firebase.auth().setPersistence('session').then(() => {
-	if (reload){
-		user = null;
-	}
-	else{
-		user = firebase.auth().currentUser;
-	}
-	if (!user || user == null){
-		var provider = new firebase.auth.GoogleAuthProvider();
-		firebase.auth().signInWithPopup(provider)
-		.then((result) => {
-			/** @type {firebase.auth.OAuthCredential} */
-			var credential = result.credential;
-
-			// This gives you a Google Access Token. You can use it to access the Google API.
-			var token = credential.accessToken;
-			// The signed-in user info.
-			user = result.user;
-			this.currentUser = user;
-			user.getIdTokenResult(true).then((result) => {
-				isadmin = result.claims.admin;
-				if (isadmin){
-					console.log("ADMIN USER");
-				}
-				else{
-					console.log("NOT ADMIN USER - send website address to request admin access.  ");
-				}
-				//we can check this prior to updating.  
-			});				
-			console.log(user);
-			
-			//if not set, set the DB uid.  
-			loadComplete(user);			
-		});
-	 }
-	 else{
-		loadComplete(user);
-	 }
-
-		// IdP data available in result.additionalUserInfo.profile.
-		// ...
-	}).catch((error) => {
-		// Handle Errors here.
-		var errorCode = error.code;
-		var errorMessage = error.message;
-		// The email of the user's account used.
-		var email = error.email;
-		// The firebase.auth.AuthCredential type that was used.
-		var credential = error.credential;
-		// ...
-	});
-google.charts.load('current', {'packages':['corechart', 'timeline']});
-
-getVideoJson(video);
-
-
-}
 
 function setTranscript(transcript){
 	$('#transcriptsh').html(makeTimeLinks(transcript));
@@ -1865,7 +1802,84 @@ function getVideoJson(videoid){
   </script>
 
 
-<script type="text/javascript" src="speech.js"></script>
+<script>
+	FUNCS = {};
+  </script>
+  
+<script type="module">
+        import * as SPEECH from "/speech.js"
+
+		function loadAll(reload = false){
+	loadUserConfig();
+	SPEECH.loadSpeech();
+	midiarray = [{"base": []}]; //reinitialize necessary?  
+	currentmidiuser = 0;
+
+	reinitLanguages();
+	getFullPiano();
+
+	//firebase.auth.Auth.Persistence.LOCAL 'local'
+	firebase.auth().setPersistence('local').then(() => {
+//firebase.auth().setPersistence('session').then(() => {
+	if (reload){
+		user = null;
+	}
+	else{
+		user = firebase.auth().currentUser;
+	}
+	if (!user || user == null){
+		var provider = new firebase.auth.GoogleAuthProvider();
+		firebase.auth().signInWithPopup(provider)
+		.then((result) => {
+			/** @type {firebase.auth.OAuthCredential} */
+			var credential = result.credential;
+
+			// This gives you a Google Access Token. You can use it to access the Google API.
+			var token = credential.accessToken;
+			// The signed-in user info.
+			user = result.user;
+			this.currentUser = user;
+			user.getIdTokenResult(true).then((result) => {
+				isadmin = result.claims.admin;
+				if (isadmin){
+					console.log("ADMIN USER");
+				}
+				else{
+					console.log("NOT ADMIN USER - send website address to request admin access.  ");
+				}
+				//we can check this prior to updating.  
+			});				
+			console.log(user);
+			
+			//if not set, set the DB uid.  
+			loadComplete(user);			
+		});
+	 }
+	 else{
+		loadComplete(user);
+	 }
+
+		// IdP data available in result.additionalUserInfo.profile.
+		// ...
+	}).catch((error) => {
+		// Handle Errors here.
+		var errorCode = error.code;
+		var errorMessage = error.message;
+		// The email of the user's account used.
+		var email = error.email;
+		// The firebase.auth.AuthCredential type that was used.
+		var credential = error.credential;
+		// ...
+	});
+google.charts.load('current', {'packages':['corechart', 'timeline']});
+
+getVideoJson(video);
+
+
+}
+		FUNCS.loadAll = loadAll		
+		FUNCS.SPEECH = SPEECH;
+</script> 
 
 	<script type="text/javascript" src="video.js"></script>	
     <script>

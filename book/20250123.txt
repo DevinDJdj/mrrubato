@@ -682,9 +682,12 @@ Build login module as well?
 List recent dates.  
 Use recent.js
 
+**web/public/rss/view.html
+**web/public/speech.js
 **web/public/book.html
 OK finally have some ES6 module code integrated.  
 Still need to fix speech.js for analyze.html
+**web/public/analyze.html
 And maybe broke analyze.html
 But 
 Now use speech.js as module to start with.  

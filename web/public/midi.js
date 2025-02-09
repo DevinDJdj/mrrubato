@@ -151,7 +151,7 @@ function checkCommands(lang="meta"){
                 }
                 else{
                     //attempt to execute complete command.  
-                    executed = Chat(transcript, callback, pending); //add waspendingflag
+                    executed = FUNCS.SPEECH.Chat(transcript, callback, pending); //add waspendingflag
 
                     transcript = "";
                 }
@@ -167,7 +167,7 @@ function checkCommands(lang="meta"){
         
         //when does this occur? when we dont have midi.  
         if ((midi ==null || midi.length == 0) && transcript != ""){
-            executed = Chat(transcript, callback, pending); //add waspendingflag
+            executed = FUNCS.SPEECH.Chat(transcript, callback, pending); //add waspendingflag
 //            transcript = "";
 
         }
@@ -209,7 +209,7 @@ function checkCommands(lang="meta"){
                         //still waiting.  in this case perhaps extend the pendingTime.  
                     }
                     else{
-                        executed = Chat(transcript, callback, pending); //add waspendingflag
+                        executed = FUNCS.SPEECH.Chat(transcript, callback, pending); //add waspendingflag
                         transcript = "";
                     }
                 }
@@ -230,7 +230,7 @@ function checkCommands(lang="meta"){
                 }
                 else{
                     //should never end up here.  
-                    executed = Chat(transcript, callback, pending); 
+                    executed = FUNCS.SPEECH.Chat(transcript, callback, pending); 
                     transcript = "";
                 }
             }
