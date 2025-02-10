@@ -664,7 +664,7 @@ function loadTopicGraph(str){
       //adjust here.  
     });
     }, 
-    10000)
+    20000)
       
 
       /*
@@ -789,12 +789,17 @@ function selectOpacity(top){
 }
 function selectFont(top){
   const result = selectionhistory.find((element) => element === top);
+  let fsize = 8;
+  if (top in gitstruct["bytopic"]){
+    fsize += (gitstruct["bytopic"][top].length);
+  }
   if (result){
-    return 16;
+    fsize += 6;
   }
-  else{
-    return 10;
+  if (fsize > 20){
+    fsize = 20;
   }
+  return fsize;
 
 }
 function isDate(top){

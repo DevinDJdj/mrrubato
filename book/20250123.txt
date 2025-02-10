@@ -693,3 +693,45 @@ But
 Now use speech.js as module to start with.  
 
 
+**web/public/recent.js
+Change the link for the recent.js in book.html
+Load the video in the page.  
+Have separate option to analyze.  
+--OK
+
+
+**web/public/book.html
+--ChatLocalUpdate
+--ChatLocalDone
+adjust the answer for speech purposes.  
+Run through a parser.  
+Maybe make a simple parser for this.  
+**web/public/grammar/book/bookspeech.ne
+code pronunciation etc.  
+
+```javascript
+is this a marker?  
+add responses with this to codemirror window?  
+Dont speak except comments.  
+// -> comment
+{ -> ...
+
+--mouseOverGit(title, content)
+Just use this for now.  
+
+
+
+**web/public/git.js
+--loadTopicGraph
+Need to load GIT struct from DB without actual content just file size.  
+Then base TOPIC font-size on recency and num changes and/or num lines.  
+Some combined calculation
+--selectFont
+--OK, rudimentary calculation done.  
+
+
+**web/public/book.html
+add a different codemirror for mouseover snippets.  
+So we will have code selected/investigating.  
+And then mouseover or other code from chat responses.  
+

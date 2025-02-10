@@ -960,6 +960,7 @@ Load any speech from this time.
     
     function getVideoJson(videoid){
         
+        video = videoid;
         vref = firebase.database().ref('/misterrubato/' + videoid);
         vref.once('value')
                           .then((snap) => {

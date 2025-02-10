@@ -337,7 +337,8 @@ function setVideoVolume(volume){
                                 loadTranscript(snapshot);
                             }
                             else{
-                                console.log('No transcript');									
+                                console.log('No transcript');		
+                                setTranscript('No transcript');							
                                 //should never occur
                             }
                         });
