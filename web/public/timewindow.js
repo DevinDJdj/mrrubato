@@ -230,7 +230,7 @@ var options = {};
     verticalScroll: true,
     stack: true,
     zoomKey: 'ctrlKey',
-    start: new Date(new Date().getTime() - 10*24*60*60*1000),
+    start: new Date(new Date().getTime() - 30*24*60*60*1000),
     end: new Date(new Date().getTime() + 1*24*60*60*1000),
     margin: {
         axis: 5, 

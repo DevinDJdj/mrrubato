@@ -664,7 +664,7 @@ function loadTopicGraph(str){
       //adjust here.  
     });
     }, 
-    20000)
+    30000)
       
 
       /*

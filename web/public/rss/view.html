@@ -21,7 +21,7 @@
     
             </td>
             <td>
-                <div id="usericon" onclick="loadAll(true);"></div>
+                <div id="usericon" onclick="FUNCS.loadAll(true);"></div>
             </td>
             <td>
                 <table>
@@ -190,124 +190,9 @@ chat responses.
     var myuser = null;
     var isadmin = false;
 
-        //Local Chat
-    function ChatLocalUpdate(answer){
-    lastread = answer.length + lastread; //usually lastread = 0
-    ssu = new SpeechSynthesisUtterance(answer);
-    svoice = $("#voiceSelect")[0].selectedIndex;
-    ssu.voice = voices[svoice];
-    ssu.rate = myrate;
-    ssu.pitch = mypitch;
-    window.speechSynthesis.cancel();
-    reading = true;
-    ssu.onend = function (event) {
-        console.log(event.timeStamp);
-        reading = false;
-    };
 
-    window.speechSynthesis.speak(ssu);
-
-}
-
-function ChatLocalDone(answer){
-    //called from //test/web-llm/test.js
-
-    var img = document.getElementById('thinkingchat');
-    img.style.visibility = "hidden";
-
-    tospeak = addChatRow(lastquery, answer, []);
-    tospeak = tospeak.slice(lastread);
-    lastread = 0;
-    ssu = new SpeechSynthesisUtterance(tospeak);
-    svoice = $("#voiceSelect")[0].selectedIndex;
-    ssu.voice = voices[svoice];
-    ssu.rate = myrate;
-    ssu.pitch = mypitch;
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(ssu);
-    var myDiv = document.getElementById('code_chat');
-    $('#code_chat').animate({
-          scrollTop: 0}, "slow"
-        );
-
-    console.log('query ' +  lastquery);
-//                    addComment(data.answer, helpme())
-    console.log('response  ' + answer);
-    chathistory[chathistory.length-1].answer = answer; //set answer to previous query.  
-
-    //add to message context.  
-    //messages.push({ role: "assistant", content: answer });
-    //further queries dont need to contain all the same info.  
-
-    
-}
-
-function addChatHistory(query, context, files=[]){
-    //localprompt from chat.js
-    chathistory.push({"query": query, "prompt": localprompt, "context": files, "topic": currenttopic, "answer": '', "sources": [], "timestamp": new Date().toISOString()});
-    //send to firebase.  
-    //dont need to send full content of files?  just the names for now.  Should be able to git files from certain point in time if needed.  
-}
 
     //loadPage after login
-    function loadAll(reload = false){
-
-        //firebase.auth.Auth.Persistence.LOCAL 'local'
-        firebase.auth().setPersistence('local').then(() => {
-    //firebase.auth().setPersistence('session').then(() => {
-        if (reload){
-            user = null;
-        }
-        else{
-            user = firebase.auth().currentUser;
-        }
-        if (!user || user == null){
-            var provider = new firebase.auth.GoogleAuthProvider();
-            firebase.auth().signInWithPopup(provider)
-            .then((result) => {
-                /** @type {firebase.auth.OAuthCredential} */
-                var credential = result.credential;
-    
-                // This gives you a Google Access Token. You can use it to access the Google API.
-                var token = credential.accessToken;
-                // The signed-in user info.
-                user = result.user;
-                this.currentUser = user;
-                user.getIdTokenResult(true).then((result) => {
-                    isadmin = result.claims.admin;
-                    if (isadmin){
-                        console.log("ADMIN USER");
-                    }
-                    else{
-                        console.log("NOT ADMIN USER - send website address to request admin access.  ");
-                    }
-                    //we can check this prior to updating.  
-                });				
-                console.log(user);
-                
-                //if not set, set the DB uid.  
-                loadComplete(user);			
-            });
-         }
-         else{
-            loadComplete(user);
-         }
-    
-            // IdP data available in result.additionalUserInfo.profile.
-            // ...
-        }).catch((error) => {
-            // Handle Errors here.
-            var errorCode = error.code;
-            var errorMessage = error.message;
-            // The email of the user's account used.
-            var email = error.email;
-            // The firebase.auth.AuthCredential type that was used.
-            var credential = error.credential;
-            // ...
-        });
-    
-
-    }
     
     function loadComplete(user){
                 //not sure why we need this, but the asynchronous check is not getting kicked off.  
@@ -433,7 +318,7 @@ function addChatHistory(query, context, files=[]){
                         
                             uid = user.uid;
                             
-                            loadAll();
+                            FUNCS.loadAll();
                         }
                     // IdP data available in result.additionalUserInfo.profile.
                       // ...
@@ -460,24 +345,88 @@ function addChatHistory(query, context, files=[]){
 
     </script> 
 
-    
+<script>
+    FUNCS = {};
+  </script>
+      
     <script type="module">
-        import getRSS from  "./rss.js";
-        import loadSpeech from "/speech.js";
-        loadSpeech();
+        import * as RSS from  "./rss.js";
+        import * as SPEECH from "/speech.js";
+
+        export default function loadAll(reload = false){
+            SPEECH.loadSpeech();
+            //firebase.auth.Auth.Persistence.LOCAL 'local'
+            firebase.auth().setPersistence('local').then(() => {
+            //firebase.auth().setPersistence('session').then(() => {
+            if (reload){
+                user = null;
+            }
+            else{
+                user = firebase.auth().currentUser;
+            }
+            if (!user || user == null){
+                var provider = new firebase.auth.GoogleAuthProvider();
+                firebase.auth().signInWithPopup(provider)
+                .then((result) => {
+                    /** @type {firebase.auth.OAuthCredential} */
+                    var credential = result.credential;
+
+                    // This gives you a Google Access Token. You can use it to access the Google API.
+                    var token = credential.accessToken;
+                    // The signed-in user info.
+                    user = result.user;
+                    this.currentUser = user;
+                    user.getIdTokenResult(true).then((result) => {
+                        isadmin = result.claims.admin;
+                        if (isadmin){
+                            console.log("ADMIN USER");
+                        }
+                        else{
+                            console.log("NOT ADMIN USER - send website address to request admin access.  ");
+                        }
+                        //we can check this prior to updating.  
+                    });				
+                    console.log(user);
+                    
+                    //if not set, set the DB uid.  
+                    loadComplete(user);			
+                });
+            }
+            else{
+                loadComplete(user);
+            }
+
+                // IdP data available in result.additionalUserInfo.profile.
+                // ...
+            }).catch((error) => {
+                // Handle Errors here.
+                var errorCode = error.code;
+                var errorMessage = error.message;
+                // The email of the user's account used.
+                var email = error.email;
+                // The firebase.auth.AuthCredential type that was used.
+                var credential = error.credential;
+                // ...
+            });
+
+
+            }
+
+        FUNCS.loadAll = loadAll;
+        FUNCS.SPEECH = SPEECH;
+
         let date = new Date();
         let d = date.toISOString().slice(0,10).replace(/-/g,"");
 
         //urlparam date = ...
-        //view.html?date=20250129
+        //view.html?date=20250128
         if (typeof(querydate) !== 'undefined'){
             d = querydate;
         }
         document
-        .addEventListener("DOMContentLoaded", getRSS(d));
+        .addEventListener("DOMContentLoaded", RSS.getRSS(d));
 
-    </script>
-    <script>
+        setTimeout(function (){ SPEECH.readMe(RSS.rssitems[0].textContent);}, 5000);
     </script>
 </body>
 

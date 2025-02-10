@@ -31,7 +31,14 @@ function formatAnswer(answer){
     return answer;
 
 }
-    
+
+function addChatHistory(query, context, files=[]){
+    //localprompt from chat.js
+    chathistory.push({"query": query, "prompt": localprompt, "context": files, "topic": currenttopic, "answer": '', "sources": [], "timestamp": new Date().toISOString()});
+    //send to firebase.  
+    //dont need to send full content of files?  just the names for now.  Should be able to git files from certain point in time if needed.  
+}
+
 function addChatRow(query, answer, source) {
     chatmessages.push({"query": query, "answer": answer});
     fanswer = formatAnswer(answer);

@@ -729,9 +729,29 @@ Some combined calculation
 --selectFont
 --OK, rudimentary calculation done.  
 
-
 **web/public/book.html
 add a different codemirror for mouseover snippets.  
 So we will have code selected/investigating.  
 And then mouseover or other code from chat responses.  
+
+
+Can we use multiple git repositories efficiently.  
+Right now limited by book existence.  
+Lets try without this, and just get change history, or build book from change history and comments.  
+
+If there are some code files/pages which are not found, need to note this, and suggest updating book.  
+And keep track of this so we make sure it is displayed as deprecated.  
+Should have an option to show deprecated, and also should be able to select timeline of words to be displayed.  
+Keep track of where the earliest/latest date they are mentioned.  
+If they do not fall within the timeline, remove from the graph, or make invisible.  
+Can we update this as the timeline zooms in/out?  Or do we want another date selection component?  
+This may be sufficient to essentially make less visible.  
+--selectOpacity
+
+
+
+**web/public/rss/view.html
+Get the speech working.  and LLM summarization. 
+Or perhaps do this on 
+**rss/gen.py
 

@@ -571,6 +571,31 @@ export function Chat(transcript, callback=null, pending=false, lang=""){
 }
 
 
+function removeLinks(text){
+    text = text.replace(/\s*\([^)]*\)/g, "");
+    text = text.replace("<br>", "");
+    return text;
+}
+
+export function readMe(answer){
+    answer = removeLinks(answer);
+    let ssu = new SpeechSynthesisUtterance(answer);
+    let svoice = $("#voiceSelect")[0].selectedIndex;
+    ssu.voice = voices[svoice];
+    ssu.rate = myrate;
+    ssu.pitch = mypitch;
+    window.speechSynthesis.cancel();
+    //chat.js
+    reading = true;
+    ssu.onend = function (event) {
+        console.log(event.timeStamp);
+        reading = false;
+    };
+
+    window.speechSynthesis.speak(ssu);
+
+}
+
 export function addComment(comment, commenttime){
     //find where to splice and then reset the notes
     //notesarray.splice(i, 0, comment);

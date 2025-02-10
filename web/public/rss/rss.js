@@ -1,5 +1,5 @@
 
-
+export var rssitems = [];
 
 function parseHTML(html){
     const tempElement = document.createElement('div');
@@ -25,7 +25,7 @@ function getID(str){
     return idstr;
 }
 
-export default function getRSS(d=""){
+export function getRSS(d=""){
     let id = -1;
     if (urlParams["id"]){
         id = urlParams["id"];
@@ -75,6 +75,7 @@ export default function getRSS(d=""){
                     </div>
                     `;
             });
+            rssitems = items;
 
             // Returns the htmlOutput string
             // in the HTML body element
@@ -104,4 +105,3 @@ export default function getRSS(d=""){
 
 }        
 
-export { getRSS };

@@ -1481,12 +1481,6 @@ function ChatLocalDone(answer){
     
 }
 
-function addChatHistory(query, context, files=[]){
-    //localprompt from chat.js
-    chathistory.push({"query": query, "prompt": localprompt, "context": files, "topic": currenttopic, "answer": '', "sources": [], "timestamp": new Date().toISOString()});
-    //send to firebase.  
-    //dont need to send full content of files?  just the names for now.  Should be able to git files from certain point in time if needed.  
-}
 
 
 function GetRecentSelections(){
@@ -1558,6 +1552,7 @@ function ChatBuildContext(context){
 
     
 }
+
 function ChatLocal(transcript){
     gitbook.sort((a, b) => a.name - b.name);
     if ($('#prompt').val() == ""){
