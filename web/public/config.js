@@ -1,4 +1,12 @@
 //git
+var git = [{url:'https://api.github.com/repos/DevinDJdj/mrrubato', branch: 'master', book: 'book', topicWindowSize: 3, 
+            srcurl: 'https://api.github.com/repos/DevinDJdj/mrrubato', srcbranch: 'master'
+            }, 
+            {url:'https://api.github.com/repos/DevinDJdj/mrrubato', branch: 'master', book: 'book', topicWindowSize: 3, 
+                srcurl: 'https://api.github.com/repos/DevinDJdj/mrrubato', srcbranch: 'master'
+                }, 
+];
+
 var giturl = 'https://api.github.com/repos/DevinDJdj/mrrubato';
 var gitbranch = 'master';
 var bookfolder = 'book'; //change to notes/book folder within the repository.  
@@ -7,6 +15,7 @@ var topicWindowSize = 3;
 
 
 //db
+var db = {dbname: '/misterrubato/', domain:'https://misterrubato.com', rssurl:'/rss/data/', chatdomain:'https://chat.misterrubato.com'};
 var dbname = '/misterrubato/'; //RTDB folder for contents
 var domain = 'https://misterrubato.com';
 var rssurl = '/rss/data/';
@@ -66,6 +75,8 @@ function loadUserConfig(){
             keybot = userconfigjson.keybot;
         }
         if ("git" in userconfigjson){
+            git = userconfigjson["git"];
+            /*
             if ("giturl" in userconfigjson["git"]){
                 giturl = userconfigjson["git"]["giturl"];
             }
@@ -78,6 +89,7 @@ function loadUserConfig(){
             if ("topicWindowSize" in userconfigjson["git"]){
                 topicWindowSize = userconfigjson["git"]["topicWindowSize"];
             }
+            */
         }
         if ("db" in userconfigjson){
             if ("dbname" in userconfigjson["db"]){
@@ -159,7 +171,7 @@ function saveUserConfig(cfg=""){
 
 function getConfig(){
     let userconfig = {"myrate": myrate, "mypitch": mypitch, "keybot": keybot, 
-        "git": { "giturl": giturl, "gitbranch": gitbranch, "bookfolder": bookfolder, "topicWindowSize": topicWindowSize}, 
+        "git": git, //[{ "giturl": giturl, "gitbranch": gitbranch, "bookfolder": bookfolder, "topicWindowSize": topicWindowSize}], 
         "db": {"dbname": dbname, "domain": domain, "rssurl": rssurl, "chatdomain": chatdomain}, 
         "youtube": {"useyoutube": useyoutube, "channelId": channelId}, 
         "keys": {"keybot": keybot, "KEY_BOT": KEY_BOT, "keytop": keytop, "commandcompletion": commandcompletion, "playfeedback": playfeedback, "volumeControl": volumeControl, "_octave": _octave}, 

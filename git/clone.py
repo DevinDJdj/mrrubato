@@ -58,40 +58,24 @@ def getCodeHistory(giturl, gitbranch='master'):
     print(e)
 
 
-if __name__ == '__main__':
-    argparser.add_argument("--url", help="GIT URL", default=config.cfg['git']['url'])
-    argparser.add_argument("--branch", help="GIT BRANCH", default=config.cfg['git']['branch'])
-
-    args = argparser.parse_args()
-
-    databaseURL = config.cfg["firebase"]["fbconfig"]["databaseURL"]
-    # Init firebase with your credentials
-    creda = credentials.Certificate(config.cfg["firebase"]["credentialsfile"])
-    initialize_app(creda, {'storageBucket': config.cfg["firebase"]["fbconfig"]["storageBucket"], 'databaseURL':databaseURL})    
-
-
-    giturl = args.url
-    gitbranch = args.branch
-    
-    #getCodeHistory(giturl, gitbranch)
-
-
-    cmd = 'git log --since="last month" --pretty=format:"%H,%an,%as,%at,%s" > log.csv'
-    print(cmd)
-    subprocess.call('git log --pretty=format:"%H,%an,%as,%at,%s" > log.csv', shell=True)
+def cloneme(giturl, gitbranch, gitbook):
 
     #from here take data we need and store in DB.  
     #also download book.  
     #and store last download.  
-    url = giturl + '/contents/book?ref=' + gitbranch
+    #This API has an upper limit of 1,000 files for a directory. If you need to retrieve more files, use the Git Trees API.
+    url = giturl + '/contents/' + gitbook + '?ref=' + gitbranch
+    print("clone " + url)
     response = requests.get(url)
 
     bookdata = response.json()
-    print(bookdata)
+#    print(bookdata)
     gitbook = []
+    numchecked = 0
+    numdownloaded = 0
     for b in bookdata:
         page = b
-        print(page["download_url"])
+#        print(page["download_url"])
         #add this to DB.  
         #get repo name
         pathArray = page["download_url"].split("/")
@@ -99,14 +83,15 @@ if __name__ == '__main__':
         gitbookname = gitbookname.split(".")[0]
         #this should be a date YYYYmmdd
 
-        print(pathArray)
+#        print(pathArray)
         repopath = '/'.join(pathArray[-(len(pathArray) - pathArray.index("raw.githubusercontent.com")-1):])
         repopath = repopath.replace(".", "_")  #annoying we cant use original format.  
-        print(repopath)
+#        print(repopath)
 
         download = False
         refbook = db.reference(f'/git/' + repopath)
         refb = refbook.get()
+        numchecked += 1
         if (refb is not None):
             #update contents
             #print("already exists " + page["download_url"])            
@@ -118,7 +103,7 @@ if __name__ == '__main__':
             download = True
 
         if download:
-            
+            numdownloaded += 1            
             print("downloading " + page["download_url"])
             book = requests.get(page["download_url"])
             #print(book.text)
@@ -130,6 +115,42 @@ if __name__ == '__main__':
             refbook.set(mybook)
             print("Added to DB " + page["download_url"])
 
+    print("clone " + url + " done")
+    print("checked " + str(numchecked))
+    print("downloaded " + str(numdownloaded))
+
+if __name__ == '__main__':
+    argparser.add_argument("--url", help="GIT URL", default=config.cfg['git'][0]['url'])
+    argparser.add_argument("--branch", help="GIT BRANCH", default=config.cfg['git'][0]['branch'])
+    argparser.add_argument("--book", help="GIT BOOK", default=config.cfg['git'][0]['book'])
+    argparser.add_argument("--all", help="CLONE ALL", default="false")
+    args = argparser.parse_args()
+
+    databaseURL = config.cfg["firebase"]["fbconfig"]["databaseURL"]
+    # Init firebase with your credentials
+    creda = credentials.Certificate(config.cfg["firebase"]["credentialsfile"])
+    initialize_app(creda, {'storageBucket': config.cfg["firebase"]["fbconfig"]["storageBucket"], 'databaseURL':databaseURL})    
+
+
+    giturl = args.url
+    gitbranch = args.branch
+    gitbook = args.book
+    gitall = args.all    
+    #getCodeHistory(giturl, gitbranch)
+
+    #local git log not using yet
+    cmd = 'git log --since="last month" --pretty=format:"%H,%an,%as,%at,%s" > log.csv'
+    print(cmd)
+    subprocess.call('git log --pretty=format:"%H,%an,%as,%at,%s" > log.csv', shell=True)
+
+    #clone all repos in config.  
+    if (gitall == "true"):
+        print("clone all")
+        print(config.cfg['git'])
+        for g in config.cfg['git']:
+            cloneme(g['url'], g['branch'], g['book'])
+    else:
+        cloneme(giturl, gitbranch, gitbook)
     #print(gitbook)
 
 

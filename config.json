@@ -11,10 +11,13 @@
 		"CLIENTSECRET": CLIENTSECRET
 	},
 
-	"git": {
-		"url": "https://api.github.com/repos/DevinDJdj/mrrubato",
-		"branch": "master"
-	},
+	"git": [
+		{
+			"url": "https://api.github.com/repos/DevinDJdj/mrrubato",
+			"branch": "master", 
+			"book": "book"
+		}
+	],
 	"localserver":{
 		"port": 5000, 
 		"host": "http://192.68.1.120"

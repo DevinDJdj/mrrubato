@@ -751,7 +751,112 @@ This may be sufficient to essentially make less visible.
 
 
 **web/public/rss/view.html
-Get the speech working.  and LLM summarization. 
+Get the speech working.  
+Function to read particular entry, or read/skip next.  
+
+
+and LLM summarization. 
 Or perhaps do this on 
 **rss/gen.py
 
+
+
+**SOFTWAVE
+settings:
+Active input
+Widi master
+wave
+MIDI output
+Widi master
+
+--kind of works.  
+Do we want to use this?  
+Simple setup:
+CH10 = up
+CH11 = middle
+CH12 = down
+CH16 = TILT = scroll
+CH17 = PAN = scroll left Right
+CH19 = ROLL = scroll left Right
+
+
+Multiple 
+Use same selection with ROLI keyboard.  
+
+Need to show a way to select items in UI.  
+Also should work without this.  
+
+If word map is selected use ROLL and tilt.  
+Tilt only works if vertically aligned.  
+Use tilt for scroll perhaps.  
+
+Problem is still need this softwave running, which is horrible.  
+Cant get it to work without.  
+See if the use-case is viable, then fix this perhaps.  
+
+
+**web/public/test/sensors/gesture.html
+Probably more meaningful.  
+And much cheaper.  
+
+Yeah lets focus energy here.  
+What are the facial movements we can use.  
+
+Determine baseline...
+
+Initial thoughts:
+Eyebrow raise (long) = zoom out
+Eyebrow lower (long) = zoom in
+Eyebrow raise (short) = scroll
+Eyebrow lower (short) = scroll
+Head nod up/down/left/right (long) = scroll
++wink = select/focus next component
+Head nod up/down/left/right (short) = item selection 
+
+Current component/selection
+Wink = select
+
+Eyes close (short) = read
+Eyes close (long) = "comment"
+
+
+For now dont use hands.  
+Hand wave up/down/left/right = current component control?  Mouse alternative
+
+
+
+#https://en.wikipedia.org/wiki/Microexpression
+
+
+**web/public/book.html
+Each user/group can potentially have their own book (folder).  
+Lets try to adjust this, and use i.e. genbook.  
+Add topics to genbook.  
+Then change the setting to point here.  
+Book doesnt have to be same giturl as source.  
+timewindow can display book or git commits.  
+Be able to freely switch between branches as well.  
+
+What is the second repository to check.  
+
+**genbook
+This is essentially a SFT dataset, but do we need full context?  
+
+
+
+Also try to use the time window.  
+Have this on/off, allow 
+
+
+**extension
+#https://github.com/n4ze3m/page-assist?tab=readme-ov-file
+May be a good reference.  
+
+
+**web/public/test/sensors/gesture.js
+--onFaceResults
+
+Adjust this to recognize 
+Eyebrow raise/lower
+Head nod/NESW
+Eye closure
