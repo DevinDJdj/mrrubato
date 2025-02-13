@@ -15,7 +15,7 @@ Yeah lets use part of this for TTS and then
 
 **web/public/recent.html
 Add stats like number of transcribed words and/or summary of transcript.  
-reorganize table.  
+reorganize table column sizes.  
 
 **web/public/rec.html
 **web/public/rec.js
@@ -29,6 +29,7 @@ indicate whether this is private/public.
 
 **web/public/config.js
 Make a class at least even if not full ES6.  
+Leave original vars.  
 
 **web/public/grammar/midi.ne
 **web/public/grammar/keys/keys.ne
@@ -47,5 +48,22 @@ Eye closure
 **web/public/timewindow.js
 When item is selected, this window jumps to the bottom.  
 Need to fix that. 
+
+
+#https://github.com/google-deepmind/alphageometry
+
+
+**web/public/rec.html
+switch all service calls to indexeddb.  
+--OK, easier than I thought to get this working.  Nice.  
+--can we use FTS?  
+this should be automated to save on stop recording?  
+Or use saveLocal button?  Yes I think this will be fine.  
+
+
+**web/public/db.html
+What do we want to do here.  What should DB be named?  
+use same schema?  
+Does the export actually work with large amount of data?  
 
 

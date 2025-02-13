@@ -14,6 +14,11 @@ var bookfolder = 'book'; //change to notes/book folder within the repository.
 var topicWindowSize = 3;
 
 
+//rec
+var wiki = "https://wikistage.company.com"; 
+var editcolor = "rgb(222, 0, 0)";
+
+
 //db
 var db = {dbname: '/misterrubato/', domain:'https://misterrubato.com', rssurl:'/rss/data/', chatdomain:'https://chat.misterrubato.com'};
 var dbname = '/misterrubato/'; //RTDB folder for contents

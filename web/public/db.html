@@ -2,6 +2,7 @@
 <html>
 <head>
   <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
+  <script src="https://unpkg.com/dexie-export-import/dist/dexie-export-import.js"></script>
   <!--
   <script src="https://cdn.jsdelivr.net/npm/minisearch@7.1.1/dist/umd/index.min.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/nextapps-de/flexsearch@0.7.41/dist/flexsearch.bundle.min.js"></script>
@@ -57,6 +58,38 @@
 
     });
 
+    function progressCallback ({totalRows, completedRows}) {
+      console.log(`Progress: ${completedRows} of ${totalRows} rows completed`);
+    }
+    
+    document.addEventListener('DOMContentLoaded', ()=>{
+      const exportLink = document.getElementById('exportLink');
+
+      async function downloadDatabase(databaseName, filename) {
+  const blob = await exportDatabase(databaseName);
+ 
+}
+      // Configure exportLink
+    exportLink.onclick = async ()=>{
+      try {
+        const blob = await DexieExportImport.exportDB(db);
+        //db.export({prettyJson: true, progressCallback});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `mrrubato-export.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+     } catch (error) {
+        console.error(''+error);
+      }
+    };
+  });
   </script>
 </head>
+<body>
+  <a id="exportLink" href="#">Click here to export the database</a>
+</body>
 </html>
