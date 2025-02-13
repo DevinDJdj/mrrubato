@@ -838,6 +838,9 @@ timewindow can display book or git commits.
 Be able to freely switch between branches as well.  
 
 What is the second repository to check.  
+Maybe try to understand this:
+#https://github.com/google-deepmind/alphageometry
+
 
 **genbook
 This is essentially a SFT dataset, but do we need full context?  
@@ -860,3 +863,13 @@ Adjust this to recognize
 Eyebrow raise/lower
 Head nod/NESW
 Eye closure
+
+
+**web/public/git.js
+--selectFont
+--selectColor 
+seems to work ok.  
+
+**web/public/timewindow.js
+When item is selected, this window jumps to the bottom.  
+Need to fix that. 

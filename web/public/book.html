@@ -332,26 +332,29 @@ Load any speech from this time.
                             <img id="thinkinggit" src="images/thinking.gif" height="200px" style="visibility:hidden"/>
                           </td>
                           <td>
+                            <div id="selectionhistory" style="width:250px;height:200px;overflow:auto;">
 
-                            <div id="wordcanvas" style="width:800px;height:300px;overflow:hidden;">
-            
                             </div>
-                         </td>
+                          </td>
+                          <td>
+                            <div id="selectionfilter" style="vertical-align:top;width:250px;height:200px;overflow:auto;">
+                              <label for="filterregex">Filter Files:</label><br>
+                              <input type="text" id="filterregex" name="filterregex" size="25">
+        
+                              <label for="prompt">TOPIC Filter prompt for LLM:</label><br>
+                              <textarea id="filterprompt" name="filterprompt" rows="4" cols="30"></textarea>
+                            </div>
+        
+                          </td>
                         </tr>
                       </table>
             
                 </td>
                 <td>
-                    <div id="selectionhistory" style="width:250px;height:260px;overflow:auto;">
-
+                    <div id="wordcanvas" style="height:100%;width:100%;overflow:hidden;">
+    
                     </div>
-                    <div id="selectionfilter" style="vertical-align:top;width:250px;height:100px;overflow:auto;">
-                      <label for="filterregex">Filter Files:</label><br>
-                      <input type="text" id="filterregex" name="filterregex" size="25">
 
-                      <label for="prompt">TOPIC Filter prompt for LLM:</label><br>
-                      <textarea id="filterprompt" name="filterprompt" rows="4" cols="30"></textarea>
-                    </div>
 
                 </td>
             </tr>

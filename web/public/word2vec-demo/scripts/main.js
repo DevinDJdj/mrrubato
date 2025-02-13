@@ -33,8 +33,9 @@ function initEmbedding() {
     svg = div.append("svg") // svg is global
 //        .attr("width", 600)
 //        .attr("height", 400);
-        .attr("width", 940)
-        .attr("height", 360);
+        .attr("width", "700")
+        .attr("height", "700")
+//        .attr("height", "auto");
 
 }
 
@@ -52,6 +53,7 @@ function zoomTopic(top){
         //initEmbedding();
         //drawEmbedding();
         topicts.transition().attr("font-size", function(d,i){ return selectFont(labels[i]);})
+            .attr("stroke", function(d,i){ return selectColor(labels[i]);})
             .attr("opacity", function(d, i){ return selectOpacity(labels[i]);}).duration(500);
         //.attr("font-size", function(d,i){ return selectFont(labels[i]);});
     }
@@ -101,6 +103,7 @@ function drawEmbedding() {
             .attr("text-anchor", "top")
             .attr("transform", "translate(2, -2)")
             .attr("font-size", function(d,i){ return selectFont(labels[i]);})
+            .attr("stroke", function(d,i){ return selectColor(labels[i]);})
             .attr("fill", "#333")
             .text(function (d, i) { return shortenName(labels[i]); });
     }

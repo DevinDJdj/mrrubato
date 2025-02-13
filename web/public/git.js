@@ -778,24 +778,50 @@ function loadSelectionHistory(){
 
 }
 
+function inTimeWindow(top){
+  num = 0;
+  if (top in gitstruct["bytopic"]){
+    for (i=0; i<gitstruct["bytopic"][top].length; i++){
+      if (gitstruct["bytopic"][top][i].d >= currenttimelinestart && gitstruct["bytopic"][top][i].d <= currenttimelineend){
+        num++;
+      }
+    }
+  }
+  return num;
+
+}
 function selectOpacity(top){
   const result = selectionhistory.find((element) => element === top);
+  opacity = 0.6;
   if (result){
-    return 1;
+    opacity = 1;
   }
   else{
-    return 0.6;
+
+      if (inTimeWindow(top)){
+        opacity = 0.6;
+      }
+      else{
+        opacity = 0.2;
+      }
+  }
+  return opacity;
+}
+
+function selectColor(top){
+  const result = selectionhistory.find((element) => element === top);
+  if (result){
+    return "#ff0000";
+  }
+  else{
+    return "#333333";
   }
 }
+
 function selectFont(top){
-  const result = selectionhistory.find((element) => element === top);
-  let fsize = 8;
-  if (top in gitstruct["bytopic"]){
-    fsize += (gitstruct["bytopic"][top].length);
-  }
-  if (result){
-    fsize += 6;
-  }
+  let fsize = 12;
+  //maybe slightly different calculation here.  Use max in timewindow perhaps.  
+  fsize += inTimeWindow(top);
   if (fsize > 20){
     fsize = 20;
   }

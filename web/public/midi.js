@@ -1042,7 +1042,7 @@ function getMidiRecent(){
 		//        initLangData(lang, user);
 			}
 
-			selectLanguage("doodle");
+			//selectLanguage("doodle");
 			keybot["base"] = 24; //one-key commands cause issues.  
 					
 	  }

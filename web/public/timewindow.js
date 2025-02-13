@@ -5,8 +5,8 @@ var timewindowitems;
 var timewindowgroups;
 var alphabet = '2ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 var timelinefn = {};
-var timelinecurrentstart = 0;
-var timelinecurrentend = 0;
+var currenttimelinestart = 0;
+var currenttimelineend = 0;
 var gcounter = 0;
 
 function changeBackgroundImage() {
@@ -223,6 +223,11 @@ var options = {};
   gcounter = g;
   // Configuration for the Timeline
   // specify options
+  start = new Date(new Date().getTime() - 30*24*60*60*1000);
+  end = new Date(new Date().getTime() + 1*24*60*60*1000);
+  currenttimelinestart = start.toISOString().substring(0,10).replace(/-/g, '');
+  currenttimelineend = end.toISOString().substring(0,10).replace(/-/g, '');
+
   var options = {
     height: "500px", //height and width adjustment
     maxHeight: "800px",
@@ -230,8 +235,8 @@ var options = {};
     verticalScroll: true,
     stack: true,
     zoomKey: 'ctrlKey',
-    start: new Date(new Date().getTime() - 30*24*60*60*1000),
-    end: new Date(new Date().getTime() + 1*24*60*60*1000),
+    start: start,
+    end: end,
     margin: {
         axis: 5, 
         item: 5
@@ -240,7 +245,7 @@ var options = {};
         axis: "top" //none
     },
     rollingMode: {
-      follow: true,
+      follow: false,
       offset: 0.9
     },
     showTooltips: true,
@@ -277,11 +282,16 @@ var options = {};
     
     timeline.on("rangechanged", function({ start, end, byuser }) {
         //pick up both these.  
-      if (byuser){
+//      if (byuser){
         console.log(start.toString(), end.toString());
 
+        //get start and end YYYYMMDD
+        start = start.toISOString().substring(0,10).replace(/-/g, '');
+        end = end.toISOString().substring(0,10).replace(/-/g, '');
         currenttimelinestart = start;
         currenttimelineend = end;
+        //refresh the word graph opacity and fonts.  
+        zoomTopic(selectedtopic);
         /*
         var itemsView = new vis.DataView(items, { filter: 
             function(data) { 
@@ -301,7 +311,7 @@ var options = {};
             }
         });
         */
-      }        
+//      }        
     });
 
 $('#timewindow').resizable();
@@ -310,13 +320,8 @@ $("#timewindow").resize(function () {
     var wd = $(this).width();
     timeline.setOptions({ height: ht, width: wd });
     //adjust other div height.  
-    $('#selectionhistory').height(ht);
-    cvheight = 360+350 - ht;
-    if (cvheight < 200) cvheight = 200;
-    $('#wordcanvas').height(cvheight);
-    $('#wordcanvas').width(wd-200);
-
-    $('#selectionfilter').height(cvheight);
+    $('#wordcanvas').height(ht);
+    svg.height(ht);
 
 
   });

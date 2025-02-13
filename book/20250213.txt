@@ -1,0 +1,51 @@
+**news.py
+Yep:
+#https://github.com/codelucas/newspaper
+
+**0606
+Need to do one match in order to have sample data.  
+Did we ever finish creating the language?  
+
+
+#https://github.com/ggerganov/whisper.cpp/blob/master/examples/whisper.wasm/index-tmpl.html
+
+Yeah lets use part of this for TTS and then 
+#https://github.com/lxe/wasm-gpt?tab=readme-ov-file
+
+
+**web/public/recent.html
+Add stats like number of transcribed words and/or summary of transcript.  
+reorganize table.  
+
+**web/public/rec.html
+**web/public/rec.js
+saveTranscript/loadTranscripts
+saveLocal/saveRemote
+indicate whether this is private/public.  
+#https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB
+
+**web/public/test/testdexie.html
+**web/public/js/flexsearch/test.html
+
+**web/public/config.js
+Make a class at least even if not full ES6.  
+
+**web/public/grammar/midi.ne
+**web/public/grammar/keys/keys.ne
+Try simplistic number sequence -> word generation.  
+
+**web/public/grammar/book/booka.ne
+
+**web/public/test/sensors/gesture.js
+--onFaceResults
+
+Adjust this to recognize 
+Eyebrow raise/lower
+Head nod/NESW
+Eye closure
+
+**web/public/timewindow.js
+When item is selected, this window jumps to the bottom.  
+Need to fix that. 
+
+
