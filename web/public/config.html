@@ -24,6 +24,7 @@
 <body>
     <button id="saveconfig" > Save Config </button>
     <button id="loadconfig" > Load Config </button>
+    <button id="resetconfig" > Reset Config </button>
 
     <div class="cm-editor" id="edit_code" style="height:430px">
 
@@ -40,8 +41,12 @@ var gitcurrentcontentstype = "javascript";
         });
         myCodeMirror.setSize(null, 430);
     }
-    var cfg = loadUserConfig();
-    myCodeMirror.getDoc().setValue(cfg);
+    try{
+        var cfg = loadUserConfig();
+        myCodeMirror.getDoc().setValue(cfg);
+    } catch (e) {
+        console.log(e);
+    }
 
     $("#saveconfig").click(function(){
         var cfg = myCodeMirror.getDoc().getValue();
@@ -53,7 +58,12 @@ var gitcurrentcontentstype = "javascript";
         myCodeMirror.getDoc().setValue(cfg);
 
     });     
-        
+
+    $("#resetconfig").click(function(){
+        var cfg = getConfig();
+        myCodeMirror.getDoc().setValue(JSON.stringify(cfg));
+
+    });
     </script>
 </body>
 

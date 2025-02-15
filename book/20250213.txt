@@ -66,4 +66,21 @@ What do we want to do here.  What should DB be named?
 use same schema?  
 Does the export actually work with large amount of data?  
 
+Add import..
+Continue switching the service.py
+
+**web/public/git.js
+--selectGitRepo
+--initGitIndex
+ftsindex how to use this local search?  
+
+
+**web/public/book.html
+When we load changes
+Load a graph which shows relationship between files.  
+Switch between this graph and the word2vec SVG.  
+Be able to select the change and keep it in the code editor.  
+More changes at same time = fatter graph edge.  
+Each node should be selectable and show changes correlated to the originally selected file.  
+A separate link should just load the file same as timewindow.  
 

@@ -1,12 +1,14 @@
 //git
-var git = [{url:'https://api.github.com/repos/DevinDJdj/mrrubato', branch: 'master', book: 'book', topicWindowSize: 3, 
+var git = [{name: 'mrrubato', url:'https://api.github.com/repos/DevinDJdj/mrrubato', branch: 'master', book: 'book', topicWindowSize: 3, 
             srcurl: 'https://api.github.com/repos/DevinDJdj/mrrubato', srcbranch: 'master'
             }, 
-            {url:'https://api.github.com/repos/DevinDJdj/mrrubato', branch: 'master', book: 'book', topicWindowSize: 3, 
-                srcurl: 'https://api.github.com/repos/DevinDJdj/mrrubato', srcbranch: 'master'
-                }, 
+            {name: 'alphageometry', url:'https://api.github.com/repos/DevinDJdj/mrrubato', branch: 'master', book: 'books/alphageometry', topicWindowSize: 3, 
+                srcurl: 'https://github.com/google-deepmind/alphageometry', srcbranch: 'main'
+                }
 ];
 
+var gitsrcurl = 'https://api.github.com/repos/DevinDJdj/mrrubato';
+var gitsrcbranch = 'master';
 var giturl = 'https://api.github.com/repos/DevinDJdj/mrrubato';
 var gitbranch = 'master';
 var bookfolder = 'book'; //change to notes/book folder within the repository.  
@@ -172,6 +174,19 @@ function saveUserConfig(cfg=""){
     }
     localStorage.setItem('userconfig', userconfig);
     //if error what do we get?  
+}
+
+function getState(setting){
+    //get setting from user config.  
+    let a = localStorage.getItem(setting);
+    if (a != null){
+        return a;
+    }
+    return 0;
+}
+
+function setState(setting, value){
+    localStorage.setItem(setting, value);
 }
 
 function getConfig(){

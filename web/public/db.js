@@ -14,6 +14,28 @@ function addUser(user){
 }
 
 
+class gitDB{
+	//save any git repo info and cache locally.  
+	//only download if not already in DB, or size doesnt match.  
+	//gitcommits.push({"url": data[this.indexValue].html_url, "patch": commitdata.files[i].patch, "filename": commitdata.files[i].filename, "changes": commitdata.files[i].changes, "d": mydate, "selected": true});
+	//gitbook.push({"url": this.url, "gitdata": bookdata[this.indexValue], "d": gitbookname, "content": data, "selected": true});
+	constructor(){
+		this.db = new Dexie("gitDB");
+		this.db.version(1).stores({
+			gitrepos: "++id,userid,repo,branch", 
+			gitcommits: "++id,url,filename,d", //patch, changes
+			gitbook: "++id,url,d", //gitdata, content
+			gitcontents: "++id,url", //content 
+		});
+	}
+
+	saveRepo(userid, repo, branch){
+		var obj = {"userid": userid, "repo": repo, "branch": branch};
+		this.db.gitrepos.add(obj).then((id) => {
+			console.log("added repo with id " + id);
+		});
+	}
+}
 
 class recDB{
 		constructor(){

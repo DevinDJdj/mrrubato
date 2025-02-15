@@ -1,5 +1,6 @@
 var gitbook = [];
 var gitcommits = [];
+var selectedgitindex = 0; //which repo are we using?  
 
 var gitstruct = {"bydate": {}, "bytopic": {}, "alltopics": "", "allcontent": {}}; //context holds sequential string.  
 var gittoken = null;
@@ -222,6 +223,27 @@ function gitChartCommits(myarray, qpath=null){
 
 }
 
+function populateGitRepos(index=0){
+  for (let i = 0; i < git.length; i++) {
+    const option = document.createElement("option");
+    option.textContent = `${git[i].name} (${git[i].branch})`;
+    option.value = i;
+    document.getElementById("repoSelect").appendChild(option);
+  } 
+  selectGitRepo(index);
+}
+
+function selectGitRepo(index){
+  selectedgitindex = index;
+  setState("selectedgitindex", selectedgitindex);
+  giturl = git[selectedgitindex].url;
+  gitbranch = git[selectedgitindex].branch;
+  bookfolder = git[selectedgitindex].book;
+  gitsrcurl = git[selectedgitindex].srcurl;
+  gitsrcbranch = git[selectedgitindex].srcbranch;
+  //have to reinit everything.  
+  getGitBook();
+}
 
 function loadGitBook(){
   reponame = giturl.substring(giturl.search("repos/")+6);

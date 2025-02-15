@@ -49,7 +49,7 @@ function zoomTopic(top){
     console.log("selected topic " + top);
 
     stopic = shortenName(top);
-    if (svg.selectAll(".b")[0].parentNode.childElementCount > 0){
+    if (typeof(svg) !=='undefined' && svg.selectAll(".b")[0].parentNode.childElementCount > 0){
         //initEmbedding();
         //drawEmbedding();
         topicts.transition().attr("font-size", function(d,i){ return selectFont(labels[i]);})

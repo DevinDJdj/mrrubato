@@ -129,6 +129,8 @@ Load any speech from this time.
         <tr>
             <td>
                 <h1>BOOK</h1>
+                <select id="repoSelect"></select><br>
+
     
             </td>
             <td>
@@ -285,7 +287,6 @@ Load any speech from this time.
             <tr>
                 <td>
                     <div id="timewindow" width="900px" height="100px"></div>
-                    <script src="timewindow.js"></script>
 
                     <!--
                     <p>
@@ -587,6 +588,8 @@ Load any speech from this time.
     <!-- <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.0.0/dist/tf.min.js"></script> -->
     <!-- <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-tsne"></script> -->
     <script src="word2vec-demo/scripts/main.js"></script>
+    <!-- main.js zoomTopic maybe should be somewhere else -->
+    <script src="timewindow.js"></script>
 
     <div class="input-group" style="display: none">
         <textarea id="textdata" class="form-control" aria-label="With textarea"
@@ -1285,7 +1288,8 @@ Load any speech from this time.
     
         getVideoJson(video);
         //get book for analysis via LLM.  
-        getGitBook();
+        populateGitRepos(getState('selectedgitindex')); //select repo to analyze.  
+//        getGitBook();
 
         loadAllRecent(25);
 
