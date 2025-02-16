@@ -318,10 +318,13 @@ $('#timewindow').resizable();
 $("#timewindow").resize(function () {
     var ht = $(this).height();
     var wd = $(this).width();
+    if (ht < 400){
+        ht = 400;
+    }
     timeline.setOptions({ height: ht, width: wd });
     //adjust other div height.  
-    $('#wordcanvas').height(ht);
-    svg.height(ht);
+    $('#wordcanvas').height(ht+180);
+    svg.height(ht+180);
 
 
   });

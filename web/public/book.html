@@ -228,6 +228,7 @@ Load any speech from this time.
                 </div> 
                 
                 <link href="css/tags.css" rel="stylesheet">
+                <link href="css/tabs.css" rel="stylesheet">
                 <script src="tags.js"></script>
             
             </td>
@@ -351,11 +352,21 @@ Load any speech from this time.
                       </table>
             
                 </td>
-                <td>
-                    <div id="wordcanvas" style="height:100%;width:100%;overflow:hidden;">
+                <td valign="top">
+                  <div id="vistabs" class="tab">
+                      <button class="tablinks" onclick="openTab(event, 'gitgraph')">Git Graph</button>
+                      <button class="tablinks" onclick="openTab(event, 'wordcanvas')">Word Canvas</button>
+                      <button class="tablinks" onclick="openTab(event, 'tempcodewindow')">Code Window</button>
+                      <div id="temp_edit_code"> </div>
+
+                  </div>
+                    <div id="wordcanvas" class="tabcontent" style="height:100%;width:100%;overflow:hidden;">
     
                     </div>
-
+                    <div id="gitgraph" class="tabcontent" style="display:none;height:100%;width:100%;overflow:hidden;">
+                      </div>
+                    <div id="tempcodewindow" style="display:none;height:100%;width:800px;overflow:scroll;">
+                      </div>
 
                 </td>
             </tr>
@@ -1639,6 +1650,35 @@ function ChatLocal(transcript){
 			
 			}
 
+      function openTab(evt, tabName) {
+        // Declare all variables
+        var i, tabcontent, tablinks;
+      
+        if (tabName !=="tempcodewindow"){
+          tempcodewindow.setSize(null, 0);
+          usetempcodewindow = false;
+        }
+        else{
+          usetempcodewindow = true;
+        }
+        // Get all elements with class="tabcontent" and hide them
+        tabcontent = document.getElementsByClassName("tabcontent");
+        for (i = 0; i < tabcontent.length; i++) {
+          tabcontent[i].style.display = "none";
+        }
+      
+        // Get all elements with class="tablinks" and remove the class "active"
+        tablinks = document.getElementsByClassName("tablinks");
+        for (i = 0; i < tablinks.length; i++) {
+          tablinks[i].className = tablinks[i].className.replace(" active", "");
+        }
+      
+        // Show the current tab, and add an "active" class to the button that opened the tab
+        document.getElementById(tabName).style.display = "block";
+        evt.currentTarget.className += " active";
+      }    
+      //activate tab
+      
 
 </script>
 </body>

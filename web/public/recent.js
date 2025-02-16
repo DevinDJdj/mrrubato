@@ -73,7 +73,8 @@ function loadRecentTable(){
 		columns: [null, null, null, null, { width: 500 }],
 		createdRow: function (row, data, dataIndex) {
 			this.api()
-				.columns([2,3])
+			//2 causing table to become unbalanced
+				.columns([3])
 				.every(function () {
 					let column = this;
 					

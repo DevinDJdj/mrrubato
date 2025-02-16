@@ -84,3 +84,5 @@ More changes at same time = fatter graph edge.
 Each node should be selectable and show changes correlated to the originally selected file.  
 A separate link should just load the file same as timewindow.  
 
+--gitgraph
+
