@@ -13,6 +13,7 @@ const { FaceLandmarker, FilesetResolver, DrawingUtils } = vision;
 const demosSection = document.getElementById("demos");
 const imageBlendShapes = document.getElementById("image-blend-shapes");
 const videoBlendShapes = document.getElementById("video-blend-shapes");
+const detectedFaceActions = document.getElementById("detected-face-actions");
 let faceLandmarker;
 let runningMode = "IMAGE";
 let enableWebcamButton;
@@ -173,16 +174,82 @@ async function predictWebcam() {
         }
     }
     drawBlendShapes(videoBlendShapes, results.faceBlendshapes);
+    getFaceActions(detectedFaceActions, results.faceBlendshapes);
     // Call this function again to keep predicting when the browser is ready.
     if (webcamRunning === true) {
         window.requestAnimationFrame(predictWebcam);
     }
 }
+
+var actions = [];
+var lastactiontime = Date.now();
+var blinktimes = [];
+var shapemap = {};
+function getFaceActions(el, blendShapes){
+    if (!blendShapes.length) {
+        return;
+    }
+    let action = "";
+    let n = Date.now();
+    if (n - lastactiontime > 200){ //200ms is a good value?  
+        blendShapes[0].categories.map((shape) => {
+            shapemap[shape.categoryName] = shape.score;
+        });
+        if (shapemap["jawOpen"] > 0.3){
+            console.log("jawOpen - zoom out");
+            action = "zoom out";
+        }
+        else if (shapemap["browDownLeft"] > 0.6 && shapemap["browDownRight"] > 0.6){
+            console.log("browDown - scroll up");
+            action = "scroll up";
+        }
+        else if (shapemap["browOuterUpLeft"] > 0.6 || shapemap["browOuterUpRight"] > 0.6){
+            console.log("browOuterUp - scroll down");
+            action = "scroll down";
+        }
+        else if (shapemap["mouthDimpleRight"] > 0.7){
+            console.log("mouthDimpleRight - select item right");
+            action = "select item right";
+        }
+        else if (shapemap["mouthDimpleLeft"] > 0.7){
+            console.log("mouthDimpleLeft - select item left");
+            action = "select item left";
+        }
+        else if (shapemap["mouthRight"] > 0.7){
+            console.log("mouthRight - select component right");
+            action = "select component right";
+        }
+        else if (shapemap["mouthLeft"] > 0.7){
+            console.log("mouthLeft - select component left");
+            action = "select component left";
+        }
+        else if (shapemap["mouthPucker"] > 0.98 && shapemap["jawOpen"] < 0.1){
+            console.log("mouthPucker - zoom in");
+            action = "zoom in";
+        }
+        
+        if (shapemap["eyeBlinkLeft"] > 0.6 || shapemap["eyeBlinkRight"] > 0.6){
+            console.log("eyeBlink");
+            blinktimes.push(n);
+            if (blinktimes.length > 10){
+                blinktimes.shift();
+            }
+
+        }
+        
+        if (action !==""){
+            actions.push(action);
+            el.innerHTML = actions.join("<br>");
+        }
+        lastactiontime = n;
+    }
+}
+
 function drawBlendShapes(el, blendShapes) {
     if (!blendShapes.length) {
         return;
     }
-    console.log(blendShapes[0]);
+    //console.log(blendShapes[0]);
     let htmlMaker = "";
     blendShapes[0].categories.map((shape) => {
         htmlMaker += `
@@ -191,6 +258,7 @@ function drawBlendShapes(el, blendShapes) {
         <span class="blend-shapes-value" style="width: calc(${+shape.score * 100}% - 120px)">${(+shape.score).toFixed(4)}</span>
       </li>
     `;
+
     });
     el.innerHTML = htmlMaker;
 }
