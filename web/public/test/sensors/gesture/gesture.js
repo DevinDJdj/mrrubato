@@ -220,6 +220,8 @@ function onResults(results) {
     }
 }
 
+
+
 // Process results from MediaPipe FaceMesh
 function onFaceResults(results) {
     if (results.multiFaceLandmarks) {

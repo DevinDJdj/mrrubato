@@ -86,3 +86,66 @@ A separate link should just load the file same as timewindow.
 
 --gitgraph
 
+**web/public/timewindow.js
+Continue with filter files.  
+#https://visjs.github.io/vis-timeline/examples/timeline/groups/visibleGroups.html
+#https://visjs.github.io/vis-timeline/examples/timeline/groups/groupsEditable.html
+
+groups.update({
+    id: group.id,
+    visible: false
+});
+
+in our case vgroups
+--groupFromName
+
+Need filter in/out
+For now just use delimited folders.  
+i.e.
+web/public/game;web/public/js;generate;
+
+and in/out flag.  
+Clear filter...
+
+and find files...
+search by name.  
+
+Or use selectedtopics and all correlated.  
+Find includes in the source.  
+Possibly chain includes....
+Maybe this is more practical.  
+--hideGroups
+--hideItems
+--start here.  
+
+end goal?  
+Find all changes in timewindow for selectedtopics and includes...
+
+**web/public/test/sensors/gesture/index.html
+Gesture recognition.  Lets use this for UI manipulation.  
+#https://codepen.io/mediapipe-preview/pen/OJBVQJm
+following works well with this model.  
+browDownLeft/browDownRight - 0.6
+browOuterUpLeft/browOuterUpRight - 0.6
+-scroll up/down
+
+eyeBlink - 0.6 sequential number of blinks within period.  
+-3 or more ?  
+
+jawOpen/mouthFunnel - 0.3/0.5
+-zoom out, 
+mouthPucker - 0.98
+-zoom in
+
+mouthDimpleRight/mouthDimpleLeft - 0.7
+-item selection
+mouthRight/mouthLeft - 0.7
+-component selection
+
+eyeLookOutRight/eyeLookInLeft - maybe dont use
+eyeLookOutLeft/eyeLookInRight - maybe dont use 
+
+Enough to start.  
+
+
+
