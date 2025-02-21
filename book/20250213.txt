@@ -147,5 +147,52 @@ eyeLookOutLeft/eyeLookInRight - maybe dont use
 
 Enough to start.  
 
+**web/public/test/sensors/gesture/index.html
+--getFaceActions
+This seems to work ok.  
 
 
+**web/public/book.html
+Have some performance issues.  
+Need to check why we are getting memory crashes after page is active for long idle period.  
+
+How do we generate a dependency graph for the code?  
+#https://github.com/cytoscape/cytoscape.js?tab=readme-ov-file
+
+already using this
+#https://visjs.github.io/vis-network/examples/
+
+Really want text representation first.  
+#https://visjs.github.io/vis-network/docs/network/#importDot
+hmmm.. DOT representation, dont really like this, but seems to be common.  
+
+Yeah this is probably the way to go to start.  
+#https://visjs.github.io/vis-network/examples/network/data/dotLanguage/dotPlayground.html
+
+**web/public/test/testfilbert.html
+**web/public/test/testacorn.html
+Can we use this struct to generate a DOT graph?  
+
+Yeah, lets do this.  
+Not sure these are best libraries, but should be ok.  
+
+BOOK -> PAGE 
+**web/public/page.html
+generate dot graph from AST and display with visjs.  
+Not sure if it will be very useful or not, but..
+
+Try Full ES6
+Show full code interaction and dependencies.  
+Eventually PAGE dependency graph.  
+But for now just select and open new PAGE.  
+and interact with graph using gestures.  
+
+**web/public/page.html
+Minimal LLM + speech
+Move Chat portion to module.  
+
+**web/public/chat.mjs
+Also need HTML table UI generation in this module ideally.  
+So many annoying things still in coding.  
+
+Need transcript module.  

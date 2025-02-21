@@ -182,6 +182,7 @@ async function predictWebcam() {
 }
 
 var actions = [];
+var actioninterval = 200;
 var lastactiontime = Date.now();
 var blinktimes = [];
 var shapemap = {};
@@ -191,7 +192,7 @@ function getFaceActions(el, blendShapes){
     }
     let action = "";
     let n = Date.now();
-    if (n - lastactiontime > 200){ //200ms is a good value?  
+    if (n - lastactiontime > actioninterval){ //200ms is a good value?  
         blendShapes[0].categories.map((shape) => {
             shapemap[shape.categoryName] = shape.score;
         });

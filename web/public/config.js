@@ -53,7 +53,7 @@ var vidbuffer = 10;
 
 //speech
 var speech = true;
-
+var lastread = 0;
 
 var localprompt = 'You are a software engineer, investigating the source code and notes provided.  \n\
                    Use the documentation provided to answer the @@Question.  \n\
