@@ -227,3 +227,9 @@ continue.
 
 Dexie quite finnicky.  
 
+**web/public/midi.mjs
+Add MIDI controller as ES6 module.  
+#cursor.ai
+I think I need to go ahead and give this a real try.  
+Pretty impressive if this module actually works.  
+
