@@ -56,7 +56,7 @@ class recDB{
 			this.ftsindex.add(obj.id, obj.category + " " + obj.name + " " + obj.mycomments);
 		});
 		this.db.screenshots.each((obj) => {
-			this.ftsindex.add("OCR" + obj.id, obj.ocrtext);
+			this.ftsindex.add(obj.vidid + '_' + obj.id, obj.ocrtext);
 		});
 	}
 
@@ -74,7 +74,7 @@ class recDB{
 	}
 
 	saveScreenshot(id, vidid, timestamp, imgblob, ocrtext, cb=null){
-		var obj = {"id": id, "vidid": vidid, "timestamp": timestamp, "imgblob": imgblob, "ocrtext": ocrtext};
+		var obj = {"id": vidid + "_" + id, "vidid": vidid, "timestamp": timestamp, "imgblob": imgblob, "ocrtext": ocrtext};
 		this.db.screenshots.add(obj).then((id) => {
 			console.log("added screenshot with id " + id);
 			this.ftsindex.add(vidid + "_" + id, obj.ocrtext);
@@ -82,6 +82,27 @@ class recDB{
 				cb(id); //callback to complete.  
 			}
 		});
+	}
+
+	getRecent(name=""){
+		return this.db.vids.where("name").startsWith(name).reverse().sortBy("version");
+
+	}
+	
+	getVideos(vids=[]){
+		return this.db.vids.bulkGet(vids);
+		//how to sort this?  
+	}
+
+	getScreenshots(ssids=[]){
+		return this.db.screenshots.bulkGet(ssids);
+	}
+
+	getSimilar(text="", limit=10){
+		//use FTS index to find similar.  
+		//index.search({tag:"cat"})
+		return this.ftsindex.search(text, {limit: limit});
+
 	}
 }
 

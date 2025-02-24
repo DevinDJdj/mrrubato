@@ -5,6 +5,7 @@ var pipe_ids = {};
 var pipe_channels = {};
 var pipe_transcripts = {};
 var my_pipe_id = "0";
+var active_tab = "0";
 //msg, time, direction (out/in)
 
 function findNow(mytime = -1, pipe_name = IPC_NAME){
@@ -23,6 +24,7 @@ function pipeRecord(datastr, pipe_name = IPC_NAME, mytime = -1, incoming=true){
         mytime = Date.now(); //milliseconds since Jan 1 1970
     }
     myNow = findNow(mytime, pipe_name);
+    //what is the use-case of non-current time?  
 
     mymsg = {"time": mytime, "data": datastr, "incoming": incoming};
     pipe_transcripts[pipe_name].splice(myNow, 0, mymsg);
@@ -66,23 +68,40 @@ function pipeListen(pipe_name = IPC_NAME){
                 //pick a new pipe ID
                 my_pipe_id = randPipe();
                 pipeListen(pipe_name + "_" + randPipe()); //directly to you this page.  
+                //do we need this?  
+                //how do we 
             }
 
 
         }
         else if (event.data.startsWith("ping")){
+            //if this is not our private channel, then send pong.  
             pipeSend("pong " + my_pipe_id, pipe_name);
+        }
+        else if (event.data.startsWith("tab activated")){
+            tokens = event.data.split(" ");
+
+            pid = tokens[2];
+            active_tab = pid;
+            //use this to build LLM context or other stuff.  
+            //send directly to active tab.  If no response, then set active tab to self.  
+            if (pid == my_pipe_id){
+                console.log("active tab is self");
+            }
         }
         pipeRecord(event.data, pipe_name);
         //what do we do with this data?  
         //for now 
-       });
+    });
     window.addEventListener('focus', function() {
         // Code to execute when the tab becomes active
         console.log('Tab activated');
-        pipeSend("tab activated");
+        pipeSend("tab activated " + my_pipe_id, pipe_name);
       });    
-      pipeSend("ping", pipe_name);
+      if (pipe_name == IPC_NAME){
+        //dont want to send this to private channel for self.  
+          pipeSend("ping", pipe_name);
+      }
     
 }
 

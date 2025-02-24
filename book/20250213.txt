@@ -196,3 +196,34 @@ Also need HTML table UI generation in this module ideally.
 So many annoying things still in coding.  
 
 Need transcript module.  
+
+
+Make module for midi.js next.  
+speech, midi, llm set.  
+add this to page.  
+
+Only one LLM loaded in all active pages.  
+Use pipes to check/load if necessary.  
+Have ability to utilize multiple different LLM?  
+
+Also speech output needs to be singleton.  
+
+**web/public/pipes.js
+Need to have ontabactivate function to know which is the latest page
+and use this to build the context.  
+
+eventually perhaps MIDI can indicate which tab to utilize.  
+
+rec should be recording in any case.  
+
+**web/public/rec.html
+Is there a way to create highlight box on the recorded screen instead of the webpage?  
+This would be useful, then the tab doesnt need to be active.  
+
+**web/public/db.js
+--recDB getRecent
+continue.  
+?id=name
+
+Dexie quite finnicky.  
+

@@ -245,8 +245,7 @@ function getSimilar(text = ""){
     //this searches "startswith" at the moment
     //service.py op=recent
 
-	var fd = new FormData();
-    fd.append('op', 'similar');
+
     if (text == ""){
         mysearch = $('#similarsearch').val();
     }
@@ -258,51 +257,65 @@ function getSimilar(text = ""){
         mysearch = lines.slice(0,3).join("\n");
 //        mysearch = text;
     }
-    fd.append('doc', mysearch);
-    fd.append('cat', category);
-    fd.append('pat', accesstoken);
 
-	$.ajax({
-		type: 'POST',
-		url: '/service.py',
-		data: fd,
-		processData: false,
-		contentType: false,
-
-    }).done(function(response) {
-        res = JSON.parse(response);
+    ftrecs = recDB.getSimilar(mysearch);
         sims = [];
-//        ids = response.split(",");
-            full = "";
-            for (i=0; i< res.length; i++){
-                rec_ver = res[i]["id"].replace('\r\n', '').split('_');
-                if (parseInt(res[i]["imgno"]) > -1){
-                    sims.push({"id": rec_ver, "img": res[i]["image"], "ocr": res[i]["ocr"], "imgno": res[i]["imgno"]});
-                }
-                //include image id, and create link to this rec with image id.  
-                //if image_id available, just load this ocr.  and scroll to the same area in ocr text.  
-//                sims.push([]);
-                if (rec_ver.length > 2){
-                    imgno = i;
-//                    sims[imgno] = rec_ver;
-                    full += '<a target="_blank" id="sim' + imgno + '" href="rec.html?cat=' + category + '&id=' + rec_ver[0] + '&ver=' + rec_ver[1] + '&img=' + rec_ver[2] + '">' + res[i]["id"] + '</a><br>';                    
-                }
-                else if (rec_ver.length > 1){
-                    full += '<a href="rec.html?cat=' + category + '&id=' + rec_ver[0] + '&ver=' + rec_ver[1] + '">' + res[i]["id"] + '</a><br>';
-                }
-            }
-            $('#similar').html(full);
-            for (i=0; i<sims.length; i++){
-                sim = document.getElementById('sim' + i);
-                if (sim !==null){
-                    a = sims[i];
-                    
-                    sim.onmouseover = function (){ loadPreview(this);}
-                }
-            }
-		   console.log(response);
-	});	
+        full = "";
+        console.log(ftrecs);
 
+    //order of results here is significant.  
+    //need to reorder based on this.  
+    imgrecs = [];
+    for (i=0; i<ftrecs.length; i++){
+        if (typeof(ftrecs[i]) ==="string"){
+            imgrecs.push(ftrecs.splice(i,1));
+        }
+    }
+
+    if (imgrecs.length > 0){
+        //img recs if they exist.  
+        recDB.getScreenshots(imgrecs).then(recs => {
+
+        full = "";
+        for (i=0; i<recs.length; i++){
+            reccategory = recs[i]["category"];
+            recid= recs[i]["id"];
+            recver = recs[i]["version"];
+
+            full += '<a target="_blank" id="rec' + i + '" href="rec.html?cat=' + reccategory + '&id=' + recid + '&ver=' + recver + '&img=0">' + recs[i]["name"] + ' (' + recs[i]["version"] + ')</a><br>';
+            
+        }
+        $('#similar').html(full);
+        console.log(recs);
+
+        });
+
+    }
+    else{
+        //vid recs
+        recDB.getVideos(recs).then(recs => {
+//            recs.sort((a,b) => b.version - a.version); // b - a for reverse sort
+        full = "";
+        for (i=0; i<recs.length; i++){
+            reccategory = recs[i]["category"];
+            recid= recs[i]["id"];
+            recver = recs[i]["version"];
+
+            full += '<a target="_blank" id="rec' + i + '" href="rec.html?cat=' + reccategory + '&id=' + recid + '&ver=' + recver + '&img=0">' + recs[i]["name"] + ' (' + recs[i]["version"] + ')</a><br>';
+            
+        }
+        $('#similar').html(full);
+        console.log(recs);
+
+        });
+
+
+
+    }
+
+
+
+    
 }
 
 
@@ -310,36 +323,22 @@ function getRecent(){
     //this searches "startswith" at the moment
     //service.py op=recent
 
-	var fd = new FormData();
-    fd.append('op', 'recent');
     mysearch = $('#recentsearch').val();
-    fd.append('id', mysearch);
-    fd.append('pat', accesstoken);
+    recDB.getRecent(mysearch).then(recs => {
+        full = "";
+        for (i=0; i<recs.length; i++){
+            reccategory = recs[i]["category"];
+            recid= recs[i]["id"];
+            recver = recs[i]["version"];
 
-	$.ajax({
-		type: 'POST',
-		url: '/service.py',
-		data: fd,
-		processData: false,
-		contentType: false,
+            full += '<a target="_blank" id="rec' + i + '" href="rec.html?cat=' + reccategory + '&id=' + recid + '&ver=' + recver + '&img=0">' + recs[i]["name"] + ' (' + recs[i]["version"] + ')</a><br>';
+            
+        }
+        $('#recent').html(full);
+        console.log(recs);
 
-    }).done(function(response) {
-           res = JSON.parse(response);
-           
-//            if (imgno < res["images"].length){
-//                imgdata = "data:image/png;base64," + res["images"][imgno]["image"]
-//            ids = res["ids"];
-//            ids = response.split(",");
-            full = "";
-            for (i=0; i< res.length; i++){
-                rec_ver = res[i]["id"].split('_');
-                //pass img to not start voice control.  
-                full += '<a target="_blank" id="rec' + i + '" href="rec.html?cat=' + category + '&id=' + rec_ver[0] + '&ver=' + rec_ver[1] + '&img=0">' + res[i]["id"] + '</a><br>';
+    });
 
-            }
-            $('#recent').html(full);
-		   console.log(response);
-	});	
 
 }
 
