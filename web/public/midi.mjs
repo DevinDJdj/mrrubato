@@ -1,28 +1,4 @@
 // Add at the top of the file
-import WebMidi from 'webmidi';
-import JZZ from 'jzz';
-import $ from 'jquery';
-
-// Import external dependencies
-import { 
-    currentlanguage,
-    keybot,
-    reinitLanguages,
-    loadUserConfig,
-    loadDictionaries,
-    findCommand,
-    triggerCheckCommands
-} from './languages.js';
-
-import {
-    FUNCS,
-    lastspokenword,
-    volumeControl,
-    useyoutube,
-    watch,
-    player,
-    player2
-} from './config.js';
 
 // Constants
 const RECENT_TIME = 4000;
@@ -69,7 +45,7 @@ const INSTRUMENTS = [
 /**
  * Controller class for handling MIDI input/output and audio feedback
  */
-class MidiController {
+export class MidiController {
     /**
      * Creates a new MidiController instance
      */
@@ -195,16 +171,14 @@ class MidiController {
     }
 
     getReferenceTime() {
-        if ((useyoutube || watch) && player.getCurrentTime) {
-            const tempTime = player.getCurrentTime();
-            const absTime = Math.round(tempTime * 1000);
-            return absTime + this.midiOffset;
-        } else if (player2.currentTime) {
-            const tempTime = player2.currentTime;
-            const absTime = Math.round(tempTime * 1000);
-            return absTime + this.midiOffset;
+        //move to video.js get ref time from video player.  
+        const vref = vgetReferenceTime();
+        if (vref < 0){
+            return Date.now() - this.start;
         }
-        return Date.now() - this.start;
+        else{
+            return vref + this.midiOffset;
+        }
     }
 
     getMidiRecent() {
@@ -518,9 +492,9 @@ class MidiController {
         this.midiArray = [{"base": []}];
         this.currentMidiUser = 0;
 
-        reinitLanguages();
-        loadUserConfig();
-        loadDictionaries(this.currentMidiUser);
+//        reinitLanguages();
+//        loadUserConfig();
+//        loadDictionaries(this.currentMidiUser);
 
         keybot["base"] = 24;
     }
@@ -757,5 +731,3 @@ class MidiController {
     }
 }
 
-// Export the class
-export default MidiController; 

@@ -233,3 +233,12 @@ Add MIDI controller as ES6 module.
 I think I need to go ahead and give this a real try.  
 Pretty impressive if this module actually works.  
 
+Lets use side-by-side for now with standard VSCode.  
+
+Hmm, not perfect, but maybe useful.  
+--getReferenceTime
+Should be somewhere else?  
+
+OK, kind of works.  
+Now integrate with keymap and language.  
+Really need to rewrite keymap.  

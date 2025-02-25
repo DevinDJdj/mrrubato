@@ -87,6 +87,13 @@ should be able to query particular page by using selectionhistory number for inq
     </script>
     <script src="keymap.js"></script>
     <script src="languages.js"></script>
+    <script src="video.js"> </script>
+
+    <!-- midi dependencies-->
+    <script src="https://cdn.jsdelivr.net/npm/webmidi@latest/dist/iife/webmidi.iife.js"></script>
+    <script src="JZZ/JZZ.js"></script>
+    <script src="JZZ/JZZ.midi.SMF.js"></script>
+
 
     </head>
     <!-- Google tag (gtag.js) -->
@@ -206,7 +213,8 @@ should be able to query particular page by using selectionhistory number for inq
         </tr>
 
     
-    
+
+      
     </table>
 
     <div id="code_chat" style="width: 100%;height: 480px;overflow:auto;">
@@ -401,12 +409,28 @@ should be able to query particular page by using selectionhistory number for inq
   </script>    
 <script>
   FUNCS = {};
+
+  function mymidicallback(msg, time, user, lang) {
+    console.log(msg);
+    console.log(time);
+    //draw here.  
+  }
+  function updateFeedbackUI(user=0, note=null){
+    console.log(note);
+  }
+
 </script>
 
     <script type="module">
-
+      var midicontroller;
     export function loadAll(reload = false){
         FUNCS.SPEECH.loadSpeech();
+        midicontroller = new FUNCS.MIDI.MidiController();
+
+        midicontroller.setupMidi();
+        midicontroller.midisetcallbacks(mymidicallback, updateFeedbackUI);
+        midicontroller.setupWebMidi();
+
         $("#ask-current-question").click(function(){
           lastspokenword="comment";  //alternative to using midi.          
           MyChat($("#current-question").val());
@@ -491,8 +515,10 @@ should be able to query particular page by using selectionhistory number for inq
 <script type="module">
   import * as SPEECH from "/speech.js"
   import * as CHAT from "/chat.mjs"
+  import * as MIDI from "/midi.mjs"
   FUNCS.SPEECH = SPEECH;
   FUNCS.CHAT = CHAT;
+  FUNCS.MIDI = MIDI;
 </script>
 
 <script>
