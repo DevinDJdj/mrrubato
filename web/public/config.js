@@ -1,4 +1,14 @@
 //git
+var git = [{name: 'mrrubato', url:'https://api.github.com/repos/DevinDJdj/mrrubato', branch: 'master', book: 'book', topicWindowSize: 3, 
+            srcurl: 'https://api.github.com/repos/DevinDJdj/mrrubato', srcbranch: 'master'
+            }, 
+            {name: 'alphageometry', url:'https://api.github.com/repos/DevinDJdj/mrrubato', branch: 'master', book: 'books/alphageometry', topicWindowSize: 3, 
+                srcurl: 'https://github.com/google-deepmind/alphageometry', srcbranch: 'main'
+                }
+];
+
+var gitsrcurl = 'https://api.github.com/repos/DevinDJdj/mrrubato';
+var gitsrcbranch = 'master';
 var giturl = 'https://api.github.com/repos/DevinDJdj/mrrubato';
 var gitbranch = 'master';
 var bookfolder = 'book'; //change to notes/book folder within the repository.  
@@ -6,7 +16,13 @@ var bookfolder = 'book'; //change to notes/book folder within the repository.
 var topicWindowSize = 3;
 
 
+//rec
+var wiki = "https://wikistage.company.com"; 
+var editcolor = "rgb(222, 0, 0)";
+
+
 //db
+var db = {dbname: '/misterrubato/', domain:'https://misterrubato.com', rssurl:'/rss/data/', chatdomain:'https://chat.misterrubato.com'};
 var dbname = '/misterrubato/'; //RTDB folder for contents
 var domain = 'https://misterrubato.com';
 var rssurl = '/rss/data/';
@@ -37,7 +53,7 @@ var vidbuffer = 10;
 
 //speech
 var speech = true;
-
+var lastread = 0;
 
 var localprompt = 'You are a software engineer, investigating the source code and notes provided.  \n\
                    Use the documentation provided to answer the @@Question.  \n\
@@ -66,6 +82,8 @@ function loadUserConfig(){
             keybot = userconfigjson.keybot;
         }
         if ("git" in userconfigjson){
+            git = userconfigjson["git"];
+            /*
             if ("giturl" in userconfigjson["git"]){
                 giturl = userconfigjson["git"]["giturl"];
             }
@@ -78,6 +96,7 @@ function loadUserConfig(){
             if ("topicWindowSize" in userconfigjson["git"]){
                 topicWindowSize = userconfigjson["git"]["topicWindowSize"];
             }
+            */
         }
         if ("db" in userconfigjson){
             if ("dbname" in userconfigjson["db"]){
@@ -157,9 +176,22 @@ function saveUserConfig(cfg=""){
     //if error what do we get?  
 }
 
+function getState(setting){
+    //get setting from user config.  
+    let a = localStorage.getItem(setting);
+    if (a != null){
+        return a;
+    }
+    return 0;
+}
+
+function setState(setting, value){
+    localStorage.setItem(setting, value);
+}
+
 function getConfig(){
     let userconfig = {"myrate": myrate, "mypitch": mypitch, "keybot": keybot, 
-        "git": { "giturl": giturl, "gitbranch": gitbranch, "bookfolder": bookfolder, "topicWindowSize": topicWindowSize}, 
+        "git": git, //[{ "giturl": giturl, "gitbranch": gitbranch, "bookfolder": bookfolder, "topicWindowSize": topicWindowSize}], 
         "db": {"dbname": dbname, "domain": domain, "rssurl": rssurl, "chatdomain": chatdomain}, 
         "youtube": {"useyoutube": useyoutube, "channelId": channelId}, 
         "keys": {"keybot": keybot, "KEY_BOT": KEY_BOT, "keytop": keytop, "commandcompletion": commandcompletion, "playfeedback": playfeedback, "volumeControl": volumeControl, "_octave": _octave}, 

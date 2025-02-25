@@ -1,5 +1,6 @@
 var gitbook = [];
 var gitcommits = [];
+var selectedgitindex = 0; //which repo are we using?  
 
 var gitstruct = {"bydate": {}, "bytopic": {}, "alltopics": "", "allcontent": {}}; //context holds sequential string.  
 var gittoken = null;
@@ -18,7 +19,8 @@ var currentref = "NONE";
 var chathistory = []; //keep history/transcript.  
 var selectionhistory = [];
 var myCodeMirror = null;
-
+var tempcodewindow = null;
+var usetempcodewindow = false;
 var definitions = {"REF": "##", "REF2": "#", "TOPIC": "**", "STARTCOMMENT": "<!--", "ENDCOMMENT": "-->", "CMD": ">", "QUESTION": "@@", "NOTE": "--", "SUBTASK": "-"};
 
 
@@ -222,6 +224,27 @@ function gitChartCommits(myarray, qpath=null){
 
 }
 
+function populateGitRepos(index=0){
+  for (let i = 0; i < git.length; i++) {
+    const option = document.createElement("option");
+    option.textContent = `${git[i].name} (${git[i].branch})`;
+    option.value = i;
+    document.getElementById("repoSelect").appendChild(option);
+  } 
+  selectGitRepo(index);
+}
+
+function selectGitRepo(index){
+  selectedgitindex = index;
+  setState("selectedgitindex", selectedgitindex);
+  giturl = git[selectedgitindex].url;
+  gitbranch = git[selectedgitindex].branch;
+  bookfolder = git[selectedgitindex].book;
+  gitsrcurl = git[selectedgitindex].srcurl;
+  gitsrcbranch = git[selectedgitindex].srcbranch;
+  //have to reinit everything.  
+  getGitBook();
+}
 
 function loadGitBook(){
   reponame = giturl.substring(giturl.search("repos/")+6);
@@ -589,6 +612,12 @@ function getGitContents(path, load=true){ //load UI or not, if false, return str
               lineNumbers: true
             });
             myCodeMirror.setSize(null, 430);
+            tempcodewindow = CodeMirror(document.getElementById("tempcodewindow"), {
+              value: gitcurrentcontents,
+              mode:  gitcurrentcontentstype, 
+              lineNumbers: true
+            });
+            tempcodewindow.setSize(null, 630);
           }
           else{
             if (prevcontents !=gitcurrentcontents){
@@ -657,6 +686,7 @@ function loadTopicGraph(str){
     prepare();
     trainModel();
     $("#inbut").click(); 
+
     setTimeout(function(){
       $("stopbut").click();dotrain=false;
       $(".u").each(function() {
@@ -778,24 +808,50 @@ function loadSelectionHistory(){
 
 }
 
+function inTimeWindow(top){
+  num = 0;
+  if (top in gitstruct["bytopic"]){
+    for (i=0; i<gitstruct["bytopic"][top].length; i++){
+      if (gitstruct["bytopic"][top][i].d >= currenttimelinestart && gitstruct["bytopic"][top][i].d <= currenttimelineend){
+        num++;
+      }
+    }
+  }
+  return num;
+
+}
 function selectOpacity(top){
   const result = selectionhistory.find((element) => element === top);
+  opacity = 0.6;
   if (result){
-    return 1;
+    opacity = 1;
   }
   else{
-    return 0.6;
+
+      if (inTimeWindow(top)){
+        opacity = 0.6;
+      }
+      else{
+        opacity = 0.2;
+      }
+  }
+  return opacity;
+}
+
+function selectColor(top){
+  const result = selectionhistory.find((element) => element === top);
+  if (result){
+    return "#ff0000";
+  }
+  else{
+    return "#333333";
   }
 }
+
 function selectFont(top){
-  const result = selectionhistory.find((element) => element === top);
-  let fsize = 8;
-  if (top in gitstruct["bytopic"]){
-    fsize += (gitstruct["bytopic"][top].length);
-  }
-  if (result){
-    fsize += 6;
-  }
+  let fsize = 12;
+  //maybe slightly different calculation here.  Use max in timewindow perhaps.  
+  fsize += inTimeWindow(top);
   if (fsize > 20){
     fsize = 20;
   }
@@ -952,29 +1008,55 @@ function clickHandlerGit(sender) {
   function mouseOverGit(title, content){
 //    console.log('itemover event - title:', title);
 
-    var editor = myCodeMirror;
-    gitcurrentscrollinfo = editor.getScrollInfo();
-    editor.getDoc().setValue(title);      //git.js
-    if (title.startsWith("http")){ //download if we are sitting on this.  
-        exists = gitcommits.find(x => (x.url === title && x.filename == content));
-        if (exists && exists.patch !== null){
-            editor.getDoc().setValue(exists.patch);      //git.js                    
-            $('#for_edit_code').text(exists.filename);
-        }
+
+    if (usetempcodewindow){
+      var editor = tempcodewindow;
+      editor.setSize(null, 630);
+      editor.getDoc().setValue(title);      //git.js
+      if (title.startsWith("http")){ //download if we are sitting on this.  
+          exists = gitcommits.find(x => (x.url === title && x.filename == content));
+          if (exists && exists.patch !== null){
+              editor.getDoc().setValue(exists.patch);      //git.js                  
+              $('#temp_edit_code').text(exists.filename);  
+          }
+      }
+      else{
+          $('#temp_edit_code').text(content);
+      }
 
     }
     else{
-        $('#for_edit_code').text(content);
-    }
+      var editor = myCodeMirror;
+      gitcurrentscrollinfo = editor.getScrollInfo();
+      editor.getDoc().setValue(title);      //git.js
+      if (title.startsWith("http")){ //download if we are sitting on this.  
+          exists = gitcommits.find(x => (x.url === title && x.filename == content));
+          if (exists && exists.patch !== null){
+              editor.getDoc().setValue(exists.patch);      //git.js                    
+              $('#for_edit_code').text(exists.filename);
+          }
+
+      }
+      else{
+          $('#for_edit_code').text(content);
+      }
+     }
 
   }
 
   function mouseOutGit(title, content){
 //    console.log('itemout event - title:', title);
-    var editor = myCodeMirror;
-    editor.getDoc().setValue(gitcurrentcontents);      //git.js
-    editor.scrollTo(gitcurrentscrollinfo.left, gitcurrentscrollinfo.top);
-    $('#for_edit_code').text(selectedtopic);
+
+    if (usetempcodewindow){
+
+    }
+    else{
+      var editor = myCodeMirror;
+      editor.getDoc().setValue(gitcurrentcontents);      //git.js
+      editor.scrollTo(gitcurrentscrollinfo.left, gitcurrentscrollinfo.top);
+      $('#for_edit_code').text(selectedtopic);
+
+    }
     
   }
 
@@ -1008,5 +1090,6 @@ function clickHandlerGit(sender) {
   //      }
       });
     }
-  
+
+    
   

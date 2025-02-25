@@ -210,7 +210,8 @@ function completeMidi(midi, lang=""){
 */
 
 
-
+//dependent on video.js
+//need to untangle.  
 export function helpme(){
     var temptime = 0;
     if (useyoutube || watch){
@@ -596,6 +597,8 @@ export function readMe(answer){
 
 }
 
+//dependent on transcript functions.  
+//need to untangle.  
 export function addComment(comment, commenttime){
     //find where to splice and then reset the notes
     //notesarray.splice(i, 0, comment);

@@ -129,6 +129,8 @@ Load any speech from this time.
         <tr>
             <td>
                 <h1>BOOK</h1>
+                <select id="repoSelect"></select><br>
+
     
             </td>
             <td>
@@ -226,6 +228,7 @@ Load any speech from this time.
                 </div> 
                 
                 <link href="css/tags.css" rel="stylesheet">
+                <link href="css/tabs.css" rel="stylesheet">
                 <script src="tags.js"></script>
             
             </td>
@@ -285,7 +288,6 @@ Load any speech from this time.
             <tr>
                 <td>
                     <div id="timewindow" width="900px" height="100px"></div>
-                    <script src="timewindow.js"></script>
 
                     <!--
                     <p>
@@ -332,26 +334,39 @@ Load any speech from this time.
                             <img id="thinkinggit" src="images/thinking.gif" height="200px" style="visibility:hidden"/>
                           </td>
                           <td>
+                            <div id="selectionhistory" style="width:250px;height:200px;overflow:auto;">
 
-                            <div id="wordcanvas" style="width:800px;height:300px;overflow:hidden;">
-            
                             </div>
-                         </td>
+                          </td>
+                          <td>
+                            <div id="selectionfilter" style="vertical-align:top;width:250px;height:200px;overflow:auto;">
+                              <label for="filterregex">Filter Files:</label><br>
+                              <input type="text" id="filterregex" name="filterregex" size="25">
+        
+                              <label for="prompt">TOPIC Filter prompt for LLM:</label><br>
+                              <textarea id="filterprompt" name="filterprompt" rows="4" cols="30"></textarea>
+                            </div>
+        
+                          </td>
                         </tr>
                       </table>
             
                 </td>
-                <td>
-                    <div id="selectionhistory" style="width:250px;height:260px;overflow:auto;">
+                <td valign="top">
+                  <div id="vistabs" class="tab">
+                      <button class="tablinks" onclick="openTab(event, 'gitgraph')">Git Graph</button>
+                      <button class="tablinks" onclick="openTab(event, 'wordcanvas')">Word Canvas</button>
+                      <button class="tablinks" onclick="openTab(event, 'tempcodewindow')">Code Window</button>
+                      <div id="temp_edit_code"> </div>
 
+                  </div>
+                    <div id="wordcanvas" class="tabcontent" style="height:100%;width:100%;overflow:hidden;">
+    
                     </div>
-                    <div id="selectionfilter" style="vertical-align:top;width:250px;height:100px;overflow:auto;">
-                      <label for="filterregex">Filter Files:</label><br>
-                      <input type="text" id="filterregex" name="filterregex" size="25">
-
-                      <label for="prompt">TOPIC Filter prompt for LLM:</label><br>
-                      <textarea id="filterprompt" name="filterprompt" rows="4" cols="30"></textarea>
-                    </div>
+                    <div id="gitgraph" class="tabcontent" style="display:none;height:100%;width:100%;overflow:hidden;">
+                      </div>
+                    <div id="tempcodewindow" style="display:none;height:100%;width:800px;overflow:scroll;">
+                      </div>
 
                 </td>
             </tr>
@@ -584,6 +599,8 @@ Load any speech from this time.
     <!-- <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.0.0/dist/tf.min.js"></script> -->
     <!-- <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-tsne"></script> -->
     <script src="word2vec-demo/scripts/main.js"></script>
+    <!-- main.js zoomTopic maybe should be somewhere else -->
+    <script src="timewindow.js"></script>
 
     <div class="input-group" style="display: none">
         <textarea id="textdata" class="form-control" aria-label="With textarea"
@@ -1282,7 +1299,8 @@ Load any speech from this time.
     
         getVideoJson(video);
         //get book for analysis via LLM.  
-        getGitBook();
+        populateGitRepos(getState('selectedgitindex')); //select repo to analyze.  
+//        getGitBook();
 
         loadAllRecent(25);
 
@@ -1632,6 +1650,35 @@ function ChatLocal(transcript){
 			
 			}
 
+      function openTab(evt, tabName) {
+        // Declare all variables
+        var i, tabcontent, tablinks;
+      
+        if (tabName !=="tempcodewindow"){
+          tempcodewindow.setSize(null, 0);
+          usetempcodewindow = false;
+        }
+        else{
+          usetempcodewindow = true;
+        }
+        // Get all elements with class="tabcontent" and hide them
+        tabcontent = document.getElementsByClassName("tabcontent");
+        for (i = 0; i < tabcontent.length; i++) {
+          tabcontent[i].style.display = "none";
+        }
+      
+        // Get all elements with class="tablinks" and remove the class "active"
+        tablinks = document.getElementsByClassName("tablinks");
+        for (i = 0; i < tablinks.length; i++) {
+          tablinks[i].className = tablinks[i].className.replace(" active", "");
+        }
+      
+        // Show the current tab, and add an "active" class to the button that opened the tab
+        document.getElementById(tabName).style.display = "block";
+        evt.currentTarget.className += " active";
+      }    
+      //activate tab
+      
 
 </script>
 </body>

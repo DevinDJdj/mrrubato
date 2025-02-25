@@ -1,0 +1,244 @@
+**news.py
+Yep:
+#https://github.com/codelucas/newspaper
+
+**0606
+Need to do one match in order to have sample data.  
+Did we ever finish creating the language?  
+
+
+#https://github.com/ggerganov/whisper.cpp/blob/master/examples/whisper.wasm/index-tmpl.html
+
+Yeah lets use part of this for TTS and then 
+#https://github.com/lxe/wasm-gpt?tab=readme-ov-file
+
+
+**web/public/recent.html
+Add stats like number of transcribed words and/or summary of transcript.  
+reorganize table column sizes.  
+
+**web/public/rec.html
+**web/public/rec.js
+saveTranscript/loadTranscripts
+saveLocal/saveRemote
+indicate whether this is private/public.  
+#https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB
+
+**web/public/test/testdexie.html
+**web/public/js/flexsearch/test.html
+
+**web/public/config.js
+Make a class at least even if not full ES6.  
+Leave original vars.  
+
+**web/public/grammar/midi.ne
+**web/public/grammar/keys/keys.ne
+Try simplistic number sequence -> word generation.  
+
+**web/public/grammar/book/booka.ne
+
+**web/public/test/sensors/gesture.js
+--onFaceResults
+
+Adjust this to recognize 
+Eyebrow raise/lower
+Head nod/NESW
+Eye closure
+
+**web/public/timewindow.js
+When item is selected, this window jumps to the bottom.  
+Need to fix that. 
+
+
+#https://github.com/google-deepmind/alphageometry
+
+
+**web/public/rec.html
+switch all service calls to indexeddb.  
+--OK, easier than I thought to get this working.  Nice.  
+--can we use FTS?  
+this should be automated to save on stop recording?  
+Or use saveLocal button?  Yes I think this will be fine.  
+
+
+**web/public/db.html
+What do we want to do here.  What should DB be named?  
+use same schema?  
+Does the export actually work with large amount of data?  
+
+Add import..
+Continue switching the service.py
+
+**web/public/git.js
+--selectGitRepo
+--initGitIndex
+ftsindex how to use this local search?  
+
+
+**web/public/book.html
+When we load changes
+Load a graph which shows relationship between files.  
+Switch between this graph and the word2vec SVG.  
+Be able to select the change and keep it in the code editor.  
+More changes at same time = fatter graph edge.  
+Each node should be selectable and show changes correlated to the originally selected file.  
+A separate link should just load the file same as timewindow.  
+
+--gitgraph
+
+**web/public/timewindow.js
+Continue with filter files.  
+#https://visjs.github.io/vis-timeline/examples/timeline/groups/visibleGroups.html
+#https://visjs.github.io/vis-timeline/examples/timeline/groups/groupsEditable.html
+
+groups.update({
+    id: group.id,
+    visible: false
+});
+
+in our case vgroups
+--groupFromName
+
+Need filter in/out
+For now just use delimited folders.  
+i.e.
+web/public/game;web/public/js;generate;
+
+and in/out flag.  
+Clear filter...
+
+and find files...
+search by name.  
+
+Or use selectedtopics and all correlated.  
+Find includes in the source.  
+Possibly chain includes....
+Maybe this is more practical.  
+--hideGroups
+--hideItems
+--start here.  
+
+end goal?  
+Find all changes in timewindow for selectedtopics and includes...
+
+**web/public/test/sensors/gesture/index.html
+Gesture recognition.  Lets use this for UI manipulation.  
+#https://codepen.io/mediapipe-preview/pen/OJBVQJm
+following works well with this model.  
+browDownLeft/browDownRight - 0.6
+browOuterUpLeft/browOuterUpRight - 0.6
+-scroll up/down
+
+eyeBlink - 0.6 sequential number of blinks within period.  
+-3 or more ?  
+
+jawOpen/mouthFunnel - 0.3/0.5
+-zoom out, 
+mouthPucker - 0.98
+-zoom in
+
+mouthDimpleRight/mouthDimpleLeft - 0.7
+-item selection
+mouthRight/mouthLeft - 0.7
+-component selection
+
+eyeLookOutRight/eyeLookInLeft - maybe dont use
+eyeLookOutLeft/eyeLookInRight - maybe dont use 
+
+Enough to start.  
+
+**web/public/test/sensors/gesture/index.html
+--getFaceActions
+This seems to work ok.  
+
+
+**web/public/book.html
+Have some performance issues.  
+Need to check why we are getting memory crashes after page is active for long idle period.  
+
+How do we generate a dependency graph for the code?  
+#https://github.com/cytoscape/cytoscape.js?tab=readme-ov-file
+
+already using this
+#https://visjs.github.io/vis-network/examples/
+
+Really want text representation first.  
+#https://visjs.github.io/vis-network/docs/network/#importDot
+hmmm.. DOT representation, dont really like this, but seems to be common.  
+
+Yeah this is probably the way to go to start.  
+#https://visjs.github.io/vis-network/examples/network/data/dotLanguage/dotPlayground.html
+
+**web/public/test/testfilbert.html
+**web/public/test/testacorn.html
+Can we use this struct to generate a DOT graph?  
+
+Yeah, lets do this.  
+Not sure these are best libraries, but should be ok.  
+
+BOOK -> PAGE 
+**web/public/page.html
+generate dot graph from AST and display with visjs.  
+Not sure if it will be very useful or not, but..
+
+Try Full ES6
+Show full code interaction and dependencies.  
+Eventually PAGE dependency graph.  
+But for now just select and open new PAGE.  
+and interact with graph using gestures.  
+
+**web/public/page.html
+Minimal LLM + speech
+Move Chat portion to module.  
+
+**web/public/chat.mjs
+Also need HTML table UI generation in this module ideally.  
+So many annoying things still in coding.  
+
+Need transcript module.  
+
+
+Make module for midi.js next.  
+speech, midi, llm set.  
+add this to page.  
+
+Only one LLM loaded in all active pages.  
+Use pipes to check/load if necessary.  
+Have ability to utilize multiple different LLM?  
+
+Also speech output needs to be singleton.  
+
+**web/public/pipes.js
+Need to have ontabactivate function to know which is the latest page
+and use this to build the context.  
+
+eventually perhaps MIDI can indicate which tab to utilize.  
+
+rec should be recording in any case.  
+
+**web/public/rec.html
+Is there a way to create highlight box on the recorded screen instead of the webpage?  
+This would be useful, then the tab doesnt need to be active.  
+
+**web/public/db.js
+--recDB getRecent
+continue.  
+?id=name
+
+Dexie quite finnicky.  
+
+**web/public/midi.mjs
+Add MIDI controller as ES6 module.  
+#cursor.ai
+I think I need to go ahead and give this a real try.  
+Pretty impressive if this module actually works.  
+
+Lets use side-by-side for now with standard VSCode.  
+
+Hmm, not perfect, but maybe useful.  
+--getReferenceTime
+Should be somewhere else?  
+
+OK, kind of works.  
+Now integrate with keymap and language.  
+Really need to rewrite keymap.  

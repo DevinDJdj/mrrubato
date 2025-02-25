@@ -455,4 +455,21 @@ function setVideoVolume(volume){
       })
     }
    }
+
+   function vgetReferenceTime() {
+    if (typeof(player) == 'undefined' || player == null){
+        return -1;
+    }
+    if ((useyoutube || watch) && player.getCurrentTime) {
+        const tempTime = player.getCurrentTime();
+        const absTime = Math.round(tempTime * 1000);
+        return absTime;
+    } else if (player2.currentTime) {
+        const tempTime = player2.currentTime;
+        const absTime = Math.round(tempTime * 1000);
+        return absTime;
+    }
+
+}
+
    

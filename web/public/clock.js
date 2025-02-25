@@ -16,22 +16,31 @@ if (urlParams["video"]){
   video = urlParams["video"];
   console.log(video);
 }
+seek = 0;
 if (urlParams["seek"]){
   seek = urlParams["seek"];
   console.log(seek);
 }
+querydate = "";
 if (urlParams["date"]){ 
   querydate = urlParams["date"];
   console.log(querydate);
 }
 
+myquery = "";
 if (urlParams["query"]){ 
   myquery = urlParams["query"];
   console.log(query);
 }
+myprompt = "";
 if (urlParams["prompt"]){
   myprompt = urlParams["prompt"];
   console.log(prompt);
+}
+codefile = "";
+if (urlParams["codefile"]){
+  codefile = urlParams["codefile"];
+  console.log(codefile);
 }
 
 
