@@ -641,8 +641,13 @@ export function loadSpeech(){
             //we are interacting via voice here, so we call Chat()
             //this is blank for analyze.html.  
 
-
-            let mymidicommand = getMidiRecent();
+            let mymidicommand = null;
+            if (typeof(midicontroller) !=='undefined' && midicontroller != null){
+                mymidicommand = midicontroller.getMidiRecent();
+            }
+            else{
+                mymidicommand = getMidiRecent();
+            }
             if (mymidicommand == null && !pedal){
                 //if not executed immediately, add to pending commands, and wait for midi or further command.  
                 

@@ -419,10 +419,11 @@ should be able to query particular page by using selectionhistory number for inq
     console.log(note);
   }
 
+  var midicontroller;
+
 </script>
 
     <script type="module">
-      var midicontroller;
     export function loadAll(reload = false){
         FUNCS.SPEECH.loadSpeech();
         midicontroller = new FUNCS.MIDI.MidiController();
