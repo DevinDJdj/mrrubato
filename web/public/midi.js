@@ -580,7 +580,9 @@ function getFile(url, cb1=null, cb2=null){
 			*/
 			console.log(myBlob);
 			getWords(myBlob);
-			midisetcallbacks(cb1, cb2);
+			if (cb1 !== null || cb2 !== null){
+				midisetcallbacks(cb1, cb2);
+			}
 		  }
 		};
 		xhr.send();

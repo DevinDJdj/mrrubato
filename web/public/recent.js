@@ -109,16 +109,15 @@ function addRecentRow(recentrow) {
 	var aTag = document.createElement('a');
 	aTag.setAttribute('href',domain + '/analyze.html?video=' + recentrow.id);
 
-	var aTag2 = document.createElement('a');
-	aTag2.addEventListener('click', function(event) {
-		event.preventDefault(); // Prevent default link behavior if needed
-		// Function to execute on click
-		console.log('Link clicked!');
-		// Add your desired functionality here
-		getVideoJson(recentrow.id);
-	  });	
-	aTag2.innerText = " " + recentrow.snippet.title;
-
+	if (typeof(getVideoJson) !== "undefined"){
+		aTag.addEventListener('click', function(event) {
+			event.preventDefault(); // Prevent default link behavior if needed
+			// Function to execute on click
+			console.log('Link clicked!');
+			// Add your desired functionality here
+			getVideoJson(recentrow.id);
+		});	
+	}
 	aTag.innerText = " " + recentrow.snippet.title;
 	desc = recentrow.snippet.description;
 	fnd = desc.indexOf("MIDI");
@@ -129,7 +128,7 @@ function addRecentRow(recentrow) {
 
 	recenttable.row
         .add([
-            aTag2,
+            aTag,
 			recentrow.snippet.publishedAt,
 			recentrow.snippet.title,
 			recentrow.status.privacyStatus,
