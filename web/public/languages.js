@@ -22,7 +22,7 @@ var lastreadword = "";
 
 var currentwtindex = 0;
 var currentvidtime = 0;
-var currentlanguage = "base";
+
 var wordplay = -1;
 
 var dictable = null;
@@ -1091,30 +1091,67 @@ function findCommand(transcript, midi, prevtranscript="", lang=""){
     return [transcript, lang, found];
 }
 
+
+//need to get rid of this eventually
+function mymidirecent(){
+    if (typeof(midicontroller) !== 'undefined' && midicontroller !== null){
+        return midicontroller.getMidiRecent();
+
+    }
+    else{
+        return getMidiRecent();
+    }
+
+}
+
+function mypendingcommand(){
+    if (typeof(midicontroller) !== 'undefined' && midicontroller !== null){
+        return midicontroller.getPendingCommand();
+
+    }
+    else{
+        return getPendingCommand();
+    }
+
+
+}
+
+function mycheckcommands(lang=""){
+    if (typeof(midicontroller) !== 'undefined' && midicontroller !== null){
+        return midicontroller.checkCommands(lang);
+
+    }
+    else{
+        return checkCommands(lang);
+    }
+
+
+}
 function triggerCheckCommands(){
     //actually execute commands.  
     //if we include the language in the currentmidi.  
-    let midi = getMidiRecent();
+
+    let midi = mymidirecent();
     let flangs = getLangsFromMidi(midi);
     let t = "";
     if (!pedal){
         for (let li=0; li<flangs.length; li++){
-            t = checkCommands(flangs[li]);
+            t = mycheckcommands(flangs[li]);
         }
     }    
     
-    midi = getMidiRecent(); //maybe some completed.  
+    midi = mymidirecent(); //maybe some completed.  
     [t2, lang, found] = findCommand(t, midi); //this points to language.js->findCommand
     //do we need this?  
 
     if (t == ""){
-        p = getPendingCommand();
+        p = mypendingcommand();
         if (p !== null){
     
             t = p.transcript;
         }
     }
-    midi = getMidiRecent();
+    midi = mymidirecent();
     mtemp = "";
     if (midi != null){
         for (let i=0; i<midi.length; i++){
@@ -1456,19 +1493,10 @@ function getHighlightArray(t, dur, user=0, trk=0){
 function updateVidTimes(user=0, trk=0){
     //update video times for the below link IDs.  
     dur = 0;
-    if ((useyoutube || watch) && player.getCurrentTime){
-        const now = Date.now();
-        var temptime = player.getCurrentTime();
-        abstime = Math.round(temptime * 1000);
-        dur = player.getDuration()*1000;
-    }
-    else{
-        //use the other player time.  
-        const now = Date.now();
-        var temptime = player2.currentTime;
-        abstime = Math.round(temptime * 1000);
-        dur = player2.duration*1000;
-    }
+    abstime = vgetReferenceTime();
+    dur = vgetDuration();
+        
+
     currentvidtime = abstime;
     word = "";
     lang = "";
@@ -1486,23 +1514,25 @@ function updateVidTimes(user=0, trk=0){
     }
 
 
-    for (const [lang, value] of Object.entries(midiarray[user])) {
+    if (dur > 0){
+        for (const [lang, value] of Object.entries(midiarray[user])) {
 
-        starth = getHighlightArrayA(abstime, dur, user, lang);
-        
+            starth = getHighlightArrayA(abstime, dur, user, lang);
+            
 
 
-        for (i=starth; i< value.length; i++){
-            //expect this in order.  
-            //need better search algorithm here.  
-            if (value[i].time > abstime + vidbuffer*1000){
-                break;
-            }
-            //highlight the IDs for this time.  
-            //this is undefined if these are new notes.  
-            var obj = document.getElementById(lang + Math.round(value[i].time));
-            if (typeof(obj) !== "undefined" && obj !== null){
-                obj.style.color = "red";
+            for (i=starth; i< value.length; i++){
+                //expect this in order.  
+                //need better search algorithm here.  
+                if (value[i].time > abstime + vidbuffer*1000){
+                    break;
+                }
+                //highlight the IDs for this time.  
+                //this is undefined if these are new notes.  
+                var obj = document.getElementById(lang + Math.round(value[i].time));
+                if (typeof(obj) !== "undefined" && obj !== null){
+                    obj.style.color = "red";
+                }
             }
         }
     }

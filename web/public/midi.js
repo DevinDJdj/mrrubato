@@ -1,7 +1,4 @@
 //var midiarray = [[]]; //[{}]; //array of [user][language][array of notes]
-var midiarray = [{"base": []}];
-
-var currentmidiuser = 0;
 var notes = [];
 var lastmidirecent = [];
 var ispaused = 0;
@@ -29,9 +26,8 @@ let sustainLevel = 0.8;
 let releaseTime = 0.2;
 
 let recentTime = 4000;
-let pedal = false;
 
-var lastnote = null;
+
 
 var commandLog = [];
 var pendingCommands = [];
@@ -72,8 +68,12 @@ var audioSamples = {'p': [], 'link': [], 'image': [], 'text':[]};
 
 var midimessagecallback = null;
 var midiUIcallback = null;
-var transcript = "";
 
+
+
+function getPedal(){
+	return pedal;
+}
 
 function getPendingCommand(){
     if (commandLog.length > 0 && commandLog[commandLog.length-1].pending){

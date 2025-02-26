@@ -242,3 +242,21 @@ Should be somewhere else?
 OK, kind of works.  
 Now integrate with keymap and language.  
 Really need to rewrite keymap.  
+
+
+**web/public/languages.js
+have to untangle midiarray
+make this and currentmidiuser global?  
+This is easiest.  
+
+**web/public/globals.js
+Lots of changes...
+Maybe this is ok to keep this.  
+Kind of hacky at the moment trying to change to ES6.  
+Feel this is good to do, but causing lots of annoying problems.  
+Still way too much base UI and code needed to use default functionality of midi/speech/LLM.  
+
+**ROLI
+Some problem with recognition of the device, not sure what is causing.  
+
+

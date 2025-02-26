@@ -50,8 +50,6 @@ export class MidiController {
      * Creates a new MidiController instance
      */
     constructor() {
-        this.midiArray = [{"base": []}];
-        this.currentMidiUser = 0;
         this.notes = Array(120).fill().map(() => ({
             note: 0,
             velocity: 0,
@@ -63,8 +61,6 @@ export class MidiController {
         this.isPaused = 0;
         this.midiOffset = 0;
         this.midiEnabled = 0;
-        this.pedal = false;
-        this.lastNote = null;
         this.commandLog = [];
         this.pendingCommands = [];
         this.lastCommand = "";
@@ -80,9 +76,13 @@ export class MidiController {
         };
         this.midiMessageCallback = null;
         this.midiUICallback = null;
-        this.transcript = "";
+
     }
 
+
+    getPedal(){
+        return pedal;
+    }
     /**
      * Loads a MIDI sample from a URL
      * @param {string} url - The URL of the audio sample
@@ -182,7 +182,7 @@ export class MidiController {
     }
 
     getMidiRecent() {
-        const currentLang = this.midiArray[this.currentMidiUser][currentlanguage];
+        const currentLang = midiarray[currentmidiuser][currentlanguage];
         let i = currentLang.length - 1;
         let j = currentLang.length - 1;
         const lastTime = this.getReferenceTime();
@@ -227,7 +227,7 @@ export class MidiController {
             osc,
             pnote: pNote,
             complete: false,
-            user: this.currentMidiUser
+            user: currentmidiuser
         };
 
         if (myTime > 0) {
@@ -250,11 +250,11 @@ export class MidiController {
 
         const clone = { ...obj, duration: absTime - obj.time };
 
-        if (this.lastNote && this.lastNote.note === obj.note && this.lastNote.time === obj.time) {
+        if (lastnote && lastnote.note === obj.note && lastnote.time === obj.time) {
             return;
         }
 
-        this.lastNote = obj;
+        lastnote = obj;
         this.insertNote(clone, lang);
         obj.velocity = 0;
         this.notes[note] = obj;
@@ -262,7 +262,7 @@ export class MidiController {
 
     insertNote(note, lang = "") {
         lang = lang || currentlanguage;
-        const currentLang = this.midiArray[this.currentMidiUser][lang];
+        const currentLang = midiarray[currentmidiuser][lang];
         
         let i = currentLang.length - 1;
         while (i > -1 && note.time < currentLang[i].time) {
@@ -272,13 +272,13 @@ export class MidiController {
         currentLang.splice(i + 1, 0, note);
 
         if (this.midiUICallback) {
-            this.midiUICallback(this.currentMidiUser, note);
+            this.midiUICallback(currentmidiuser, note);
         }
     }
 
     removeNote(note, lang = "") {
         lang = lang || currentlanguage;
-        const currentLang = this.midiArray[this.currentMidiUser][lang];
+        const currentLang = midiarray[currentmidiuser][lang];
         
         let i = currentLang.length - 1;
         while (i > -1 && currentLang[i].time > note.time) {
@@ -302,7 +302,7 @@ export class MidiController {
         lang = lang || currentlanguage;
 
         if (midiCb) {
-            midiCb(message, myTime, this.currentMidiUser, lang);
+            midiCb(message, myTime, currentmidiuser, lang);
         }
 
         if (lang === "original" || lang === "iterations") {
@@ -334,8 +334,8 @@ export class MidiController {
                 break;
 
             case 176: // pedal
-                this.pedal = velocity > 0;
-                if (!this.pedal) {
+                pedal = velocity > 0;
+                if (!pedal) {
                     triggerCheckCommands();
                 }
                 break;
@@ -344,9 +344,9 @@ export class MidiController {
 
     getPendingCommand() {
         if (this.commandLog.length > 0 && this.commandLog[this.commandLog.length - 1].pending) {
-            if (Date.now() - this.commandLog[this.commandLog.length - 1].time > RECENT_TIME * 2 && !this.pedal) {
+            if (Date.now() - this.commandLog[this.commandLog.length - 1].time > RECENT_TIME * 2 && !pedal) {
                 this.commandLog.pop();
-                this.transcript = "";
+                transcript = "";
                 return null;
             }
             return this.commandLog[this.commandLog.length - 1];
@@ -489,14 +489,15 @@ export class MidiController {
     }
 
     setupMidi() {
-        this.midiArray = [{"base": []}];
-        this.currentMidiUser = 0;
+        midiarray = [{"base": [], "meta": []}];
+        keybot["base"] = 48;
+        keybot["meta"] = 48;
+        currentmidiuser = 0;
 
 //        reinitLanguages();
 //        loadUserConfig();
-//        loadDictionaries(this.currentMidiUser);
+//        loadDictionaries(currentmidiuser);
 
-        keybot["base"] = 24;
     }
 
     load(data, feedback = false, cb = null) {
@@ -518,8 +519,8 @@ export class MidiController {
                     lang = "base";
                 }
 
-                if (typeof this.midiArray[this.currentMidiUser][lang] === "undefined") {
-                    this.midiArray[this.currentMidiUser][lang] = [];
+                if (typeof midiarray[currentmidiuser][lang] === "undefined") {
+                    midiarray[currentmidiuser][lang] = [];
                     langsToLoad.push(lang);
                 }
 
@@ -557,7 +558,7 @@ export class MidiController {
         const tracks = {};
 
         // Add tracks for each language
-        for (const [lang, value] of Object.entries(this.midiArray[midiUser])) {
+        for (const [lang, value] of Object.entries(midiarray[midiUser])) {
             tracks[lang] = new JZZ.MIDI.SMF.MTrk();
             smf.push(tracks[lang]);
             
@@ -567,10 +568,10 @@ export class MidiController {
 
             let prevTime = 0;
             
-            if (this.midiArray[midiUser][lang].length > 0) {
-                console.log(`Save ${lang}: ${this.midiArray[midiUser][lang].length}`);
+            if (midiarray[midiUser][lang].length > 0) {
+                console.log(`Save ${lang}: ${midiarray[midiUser][lang].length}`);
                 
-                for (const midiEvent of this.midiArray[midiUser][lang]) {
+                for (const midiEvent of midiarray[midiUser][lang]) {
                     const tick = Math.round((midiEvent.time - prevTime) / 10);
                     
                     if (tick < 0 || midiEvent.duration < 0) {

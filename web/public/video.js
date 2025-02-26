@@ -456,8 +456,19 @@ function setVideoVolume(volume){
     }
    }
 
+   function vgetDuration(){
+      if (typeof(player2) == 'undefined' || player2 == null){
+          return 0;
+      }
+      if ((useyoutube || watch) && player.getCurrentTime) {
+        return player.getDuration()*1000;
+      } else if (player2.currentTime) {
+        return player2.duration*1000;
+      }
+
+   }
    function vgetReferenceTime() {
-    if (typeof(player) == 'undefined' || player == null){
+    if (typeof(player2) == 'undefined' || player2 == null){
         return -1;
     }
     if ((useyoutube || watch) && player.getCurrentTime) {

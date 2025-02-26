@@ -89,6 +89,7 @@ Load any speech from this time.
   
     
     <script src="config.js"></script>
+    <script src="globals.js"></script>
     <script>
 //        speech = false;
     </script>
@@ -1239,6 +1240,9 @@ Load any speech from this time.
         });
     
         setupMidi();
+        reinitLanguages();
+        loadUserConfig();
+        loadDictionaries(0);
 
 //        pipeListen();
 

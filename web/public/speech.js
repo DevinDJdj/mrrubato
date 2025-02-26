@@ -642,16 +642,19 @@ export function loadSpeech(){
             //this is blank for analyze.html.  
 
             let mymidicommand = null;
+            let ped = false;
             if (typeof(midicontroller) !=='undefined' && midicontroller != null){
                 mymidicommand = midicontroller.getMidiRecent();
+                ped = midicontroller.pedal;
             }
             else{
                 mymidicommand = getMidiRecent();
+                ped = getPedal();                //
             }
-            if (mymidicommand == null && !pedal){
+            if (mymidicommand == null && !ped){
                 //if not executed immediately, add to pending commands, and wait for midi or further command.  
                 
-                [t2, lang, found] = findCommand(transcript, mymidicommand); //this points to speech.js->findCommand
+                let [t2, lang, found] = findCommand(transcript, mymidicommand); //this points to speech.js->findCommand
                 if (found){
                     addCommandLog(transcript, null, true);
 
