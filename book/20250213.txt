@@ -256,7 +256,30 @@ Kind of hacky at the moment trying to change to ES6.
 Feel this is good to do, but causing lots of annoying problems.  
 Still way too much base UI and code needed to use default functionality of midi/speech/LLM.  
 
+globals.js added, but CHAT/SPEECH/MIDI changed to MJS.  
+Good enough for now.  
+No need to change others.  
+**web/public/book.html
+**web/public/analyze.html
+Switch book.html and analyze.html to use these eventually.  
+
+
 **ROLI
 Some problem with recognition of the device, not sure what is causing.  
+Seems when it activates Bluetooth, we have an issue.  
+
+
+**web/public/page.html
+Add code analysis.  
+with dot.  
+#https://visjs.github.io/vis-network/examples/network/data/dotLanguage/dotPlayground.html
+
+**web/public/test/testfilbert.html
+**web/public/test/testacorn.html
+
+
+**web/public/netgraph.mjs
+Hmmm, cursor helped some, but not sure how much...
+
 
 

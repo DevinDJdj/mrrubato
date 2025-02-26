@@ -105,6 +105,10 @@ should be able to query particular page by using selectionhistory number for inq
     <script src="js/datatables/select2.min.js"></script>
     <script src="js/drawkeyboard.js"></script>
 
+    <!-- visjs network graph -->
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <link href="https://unpkg.com/vis-network/styles/vis-network.min.css" rel="stylesheet" type="text/css" />
+
 
     </head>
     <!-- Google tag (gtag.js) -->
@@ -343,7 +347,10 @@ should be able to query particular page by using selectionhistory number for inq
                   </table>
                   </div>
               </div>
-                  </td>
+          </td>
+          <td valign="top" width="30%">
+              <div id="mynetwork" style="height:480px; border: 1px solid lightgray;"></div>
+          </td>
           <td valign="top" width="40%">
 
 
@@ -465,6 +472,7 @@ should be able to query particular page by using selectionhistory number for inq
     
     
     
+    
     function addMe(user){
         myuser = user;
         uid = user.uid;
@@ -529,14 +537,22 @@ should be able to query particular page by using selectionhistory number for inq
   }
 
   var midicontroller;
+  var netgraph;
 
 </script>
 
     <script type="module">
     export function loadAll(reload = false){
         FUNCS.SPEECH.loadSpeech();
+        //initialize midi controller
         midicontroller = new FUNCS.MIDI.MidiController();
-
+        //initialize network graph
+        netgraph = new FUNCS.NETGRAPH.NetworkGraph(document.getElementById('mynetwork'));
+        netgraph.simpleGraph();
+        netgraph.setSelectionCallback(function(selection){
+          console.log(selection);
+        });
+        
         midicontroller.setupMidi();
         midicontroller.midisetcallbacks(mymidicallback, updateFeedbackUI);
         midicontroller.setupWebMidi();
@@ -630,9 +646,11 @@ should be able to query particular page by using selectionhistory number for inq
   import * as SPEECH from "/speech.js"
   import * as CHAT from "/chat.mjs"
   import * as MIDI from "/midi.mjs"
+  import * as NETGRAPH from "/netgraph.mjs"
   FUNCS.SPEECH = SPEECH;
   FUNCS.CHAT = CHAT;
   FUNCS.MIDI = MIDI;
+  FUNCS.NETGRAPH = NETGRAPH;
 </script>
 
 <script>
@@ -681,7 +699,7 @@ function ChatLocalDone(answer){
     console.log('query ' +  FUNCS.CHAT.getLastQuery());
 //                    addComment(data.answer, helpme())
     console.log('response  ' + answer);
-    FUNCS.CHAT.chathistory[chathistory.length-1].answer = answer; //set answer to previous query.  
+    FUNCS.CHAT.chathistory[FUNCS.CHAT.chathistory.length-1].answer = answer; //set answer to previous query.  
 
     //add to message context.  
     //messages.push({ role: "assistant", content: answer });
@@ -760,6 +778,7 @@ function ChatLocal(transcript){
       }
 
 </script>
+
 </body>
 </html>
     
