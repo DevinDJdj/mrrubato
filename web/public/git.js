@@ -16,7 +16,7 @@ var selectedtopic = "NONE";
 var currenttopicline = 0;
 var currentrefline = 0;
 var currentref = "NONE";
-var chathistory = []; //keep history/transcript.  
+
 var selectionhistory = [];
 var myCodeMirror = null;
 var tempcodewindow = null;
@@ -25,52 +25,62 @@ var definitions = {"REF": "##", "REF2": "#", "TOPIC": "**", "STARTCOMMENT": "<!-
 
 
 function gitSignin(){
-  localStorage.removeItem('gittoken');
-  var gitprovider = new firebase.auth.GithubAuthProvider();
-  gitprovider.addScope('repo');
-  gitprovider.setCustomParameters({
-     'allow_signup': 'false'
-     });
+  let tdate = localStorage.getItem('gittokendate');
+  if (tdate !== null && new Date(tdate).getTime() > new Date().getTime() - 1000*60*60*8){
+    //no need to sign in again, token should still be valid.  
+  }
+  else{
 
-  firebase
-  .auth()
-  .signInWithPopup(gitprovider)
-  .then((result) => {
-      /** @type {firebase.auth.OAuthCredential} */
-      var credential = result.credential;
 
-      // This gives you a GitHub Access Token. You can use it to access the GitHub API.
-      gittoken = credential.accessToken;
-      console.log(gittoken);
-      localStorage.setItem("gittoken", gittoken);
+    localStorage.removeItem('gittoken');
+    var gitprovider = new firebase.auth.GithubAuthProvider();
+    gitprovider.addScope('repo');
+    gitprovider.setCustomParameters({
+      'allow_signup': 'false'
+      });
 
-//      const octokit = new LLM.Octokit({
-//      auth: gittoken,
-//      });
-      // The signed-in user info.
-      var user = result.user;
-      // IdP data available in result.additionalUserInfo.profile.
-      // ...
-  }).catch((error) => {
-      // Handle Errors here.
-      var errorCode = error.code;
-      var errorMessage = error.message;
-      // The email of the user's account used.
-      var email = error.email;
-      // The firebase.auth.AuthCredential type that was used.
-      var credential = error.credential;
-      if (typeof(credential.accessToken) !== "undefined"){
+    firebase
+    .auth()
+    .signInWithPopup(gitprovider)
+    .then((result) => {
+        /** @type {firebase.auth.OAuthCredential} */
+        var credential = result.credential;
+
+        // This gives you a GitHub Access Token. You can use it to access the GitHub API.
         gittoken = credential.accessToken;
         console.log(gittoken);
         localStorage.setItem("gittoken", gittoken);
+        localStorage.setItem("gittokendate", new Date().toISOString());
 
-//        const octokit = new LLM.Octokit({
-//        auth: gittoken,
-//        });
-  
-      }
-      // ...
-  });
+  //      const octokit = new LLM.Octokit({
+  //      auth: gittoken,
+  //      });
+        // The signed-in user info.
+        var user = result.user;
+        // IdP data available in result.additionalUserInfo.profile.
+        // ...
+    }).catch((error) => {
+        // Handle Errors here.
+        var errorCode = error.code;
+        var errorMessage = error.message;
+        // The email of the user's account used.
+        var email = error.email;
+        // The firebase.auth.AuthCredential type that was used.
+        var credential = error.credential;
+        if (typeof(credential.accessToken) !== "undefined"){
+          gittoken = credential.accessToken;
+          console.log(gittoken);
+          localStorage.setItem("gittoken", gittoken);
+          localStorage.setItem("gittokendate", new Date().toISOString());
+
+  //        const octokit = new LLM.Octokit({
+  //        auth: gittoken,
+  //        });
+    
+        }
+        // ...
+    });
+  }
 
 }
 

@@ -432,6 +432,7 @@ export class MidiController {
 
             while (done > 0 && midi.length > 0 && executed === false) {
                 prevTranscript = transcript;
+                let found = false;
                 [transcript, lang, found] = findCommand(transcript, midi, prevTranscript, lang);
 
                 if (transcript !== prevTranscript) {

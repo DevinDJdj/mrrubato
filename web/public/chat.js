@@ -4,6 +4,7 @@ var MAX_LOCAL_QUERY_LENGTH = 60000;
 var chatmessages = [];
 
 var reading = false;
+var chathistory = []; //keep history/transcript.  
 
 function replaceLinksWithLastElement(str) {
     const linkRegex = /https?:\/\/[^\s"]+/g;

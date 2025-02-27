@@ -109,6 +109,8 @@ should be able to query particular page by using selectionhistory number for inq
     <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <link href="https://unpkg.com/vis-network/styles/vis-network.min.css" rel="stylesheet" type="text/css" />
 
+    <!-- git -->
+     <script src="git.js"></script>
 
     </head>
     <!-- Google tag (gtag.js) -->
@@ -317,17 +319,36 @@ should be able to query particular page by using selectionhistory number for inq
       
       
   
-      
-      <canvas id="pcanvas" width="110" height="22" style="display: none">Your browser does not support the HTML5 canvas tag.</canvas>    
+      <table>
+        <tr>
+            <td>
+                <canvas id="pcanvas" width="110" height="22" style="display: none">Your browser does not support the HTML5 canvas tag.</canvas>    
 
-      <div id="devices">	</div>
-      <div id="midi">
-          <canvas id="fullpcanvas_labels" width="640" height="24">Your browser does not support the HTML5 canvas tag.</canvas>
-          <br>
-          <canvas id="fullpcanvas" width="640" height="36">Your browser does not support the HTML5 canvas tag.</canvas>    
-       </div>
-      
-       <div id="out"></div>	
+                <div id="devices">	</div>
+                <div id="midi">
+                    <canvas id="fullpcanvas_labels" width="640" height="24">Your browser does not support the HTML5 canvas tag.</canvas>
+                    <br>
+                    <canvas id="fullpcanvas" width="640" height="36">Your browser does not support the HTML5 canvas tag.</canvas>    
+                 </div>
+                
+                 <div id="out"></div>	
+          
+            </td>
+            <td>
+                <div id="recenttopics" style="height:90px;width:600px;overflow:auto;"></div>
+                <!--            <div id="wordcanvas"><svg width="600" height="60"></svg></div> -->
+                <!--            <canvas id="wordcanvas" width="640" height="60" style="display: none">Your browser does not support the HTML5 canvas tag.</canvas>    -->
+                
+            </td>
+            <td>
+                <div id="topicstatus" style="height:90px;width:250px;overflow:auto;"></div>                        
+            </td>
+            <td>
+                <div id="topicdirtree" style="height:90px;width:250px;overflow:auto;"></div>                                              
+            </td>
+        </tr>
+    </table>
+
 
 
     <div id="code_chat" style="width: 100%;height: 480px;overflow:auto;">
@@ -543,6 +564,12 @@ should be able to query particular page by using selectionhistory number for inq
 
     <script type="module">
     export function loadAll(reload = false){
+        gitSignin();
+        if (codefile !== ""){
+            //load code file and parse via filbert or acorn.  
+            getGitContents(codefile, false);
+        }
+
         FUNCS.SPEECH.loadSpeech();
         //initialize midi controller
         midicontroller = new FUNCS.MIDI.MidiController();

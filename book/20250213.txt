@@ -282,4 +282,21 @@ with dot.
 Hmmm, cursor helped some, but not sure how much...
 
 
+#claude-sonnet3.7
+try to use in copilot.  
+Hmm, much better integration in cursor.  
+Why...
+
+Need #topicstatus, #topicdirtree in UI. 
+
+**web/public/page.html
+?codefile=/web/public/page.html
+--ok works a bit.  
+Now parse and adjust graph display.  
+manage context, but use function calls as contenxt.  
+
+#cursor.ai
+autocomplete off?? 
+come on...
+
 
