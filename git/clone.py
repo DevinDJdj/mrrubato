@@ -119,6 +119,15 @@ def cloneme(giturl, gitbranch, gitbook):
     print("checked " + str(numchecked))
     print("downloaded " + str(numdownloaded))
 
+
+def clonegit(giturl, gitbranch):
+    
+    #clone project to temp folder and upload each file to firebase.  
+    outdir = 'c:/devinpiano/music/git/output/' + giturl[ giturl.find("repos/")+6 :]  + "_" + gitbranch
+    cmd = 'git clone  ' + giturl + ' --single-branch --branch ' + gitbranch + ' ' + outdir
+    subprocess.call(cmd, shell=True)
+
+
 if __name__ == '__main__':
     argparser.add_argument("--url", help="GIT URL", default=config.cfg['git'][0]['url'])
     argparser.add_argument("--branch", help="GIT BRANCH", default=config.cfg['git'][0]['branch'])
@@ -149,6 +158,7 @@ if __name__ == '__main__':
         print(config.cfg['git'])
         for g in config.cfg['git']:
             cloneme(g['url'], g['branch'], g['book'])
+            clonegit(g['url'], g['branch'])
     else:
         cloneme(giturl, gitbranch, gitbook)
     #print(gitbook)
