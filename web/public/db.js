@@ -14,6 +14,160 @@ function addUser(user){
 }
 
 
+class codeGraphDB {
+	constructor(){
+		this.db = new Dexie("codeGraphDB");
+		this.db.version(1).stores({
+			graph: "++id,qpath,[qpath+qpath2]", //options for node connectivity.  
+			//mimic the DOT structure.  Only want to lookup by connection for now though.  
+			//TOPICNAME.CLASSNAME.FuncName -> TOPICNAME.CLASSNAME.FuncName ...
+
+
+		});
+	}
+
+
+	getGraph(qpath, depth=1){
+		if (depth==1){
+			//get all nodes connected to this qpath.  
+			//return all nodes connected to this qpath.  
+			return this.db.graph.where("qpath").equals(qpath).toArray();
+
+		}
+		if (depth > 1){
+			ret = [];
+			tops = this.getGraph(qpath,1);
+			tops.forEach((top) => {
+				//get all nodes connected to this qpath.  
+				//return all nodes connected to this qpath.  
+				ret.append(this.getGraph(top.qpath2, depth-1));
+			});
+			return ret;
+		}
+		else{
+			return [];
+		}
+
+
+	}
+
+	addGraph(qpath, qpath2){
+		//add a new graph node.  
+		this.db.graph.where("[qpath+qpath2]").equals([qpath,qpath2]).first().then((obj) => {
+			if (obj == null){
+				//add new graph node.  
+				var obj = {"qpath": qpath, "qpath2": qpath2};
+				this.db.graph.add(obj).then((id) => {
+					console.log("added graph with id " + id);
+				});
+			}
+			else{
+				console.log("graph already exists");
+			}
+		}).catch((err) => {
+			console.log("error in addGraph: " + err);
+		});
+
+
+	}
+}
+
+class tagDB{
+	//save all tags and tag info.  
+	//tags are unique, but can have multiple entries.  
+	//tagid is unique, but can be reused.  
+	constructor(){
+		this.db = new Dexie("tagDB");
+		this.db.version(1).stores({
+			tags: "++id,tagname,tagdesc", //tagid, tagname, tagdesc
+			//tagid refers to tags to lookup tagname
+			//tagdb/tagtable/tagcolumn refers to the DB being used.  
+			//topic refers to the field value being tagged.  
+			//tagvalue is blank if the value is same as tagname.  This should be standard if possible.  
+			taginfo: "++id,tagid,tagname,tagdb,tagtable,tagcolumn,[tagdb+tagtable+tagcolumn],[tagdb+tagtable+tagcolumn+tagvalue]", //tagid, userid, tagdesc
+
+		});
+
+	}
+	//these should have default handlers if blank.  
+	//get all tags when loading self DB.  in constructor, or load function.  
+
+	getTags(tagname="", tagdb="", tagtable="", tagcolumn="", tagvalue=""){
+		//get all tags for this DB.  
+		//not most efficient path.  
+		if (tagname =="" && tagdb =="" && tagtable =="" && tagcolumn =="" && tagvalue ==""){
+			//tag table.  
+			return this.db.tags.toArray();
+		}
+		else{
+			//tag info table
+			if (tagvalue !== ""){
+				//tagvalue is not blank.  get tag info for this value.  
+				return this.db.taginfo.where("[tagdb+tagtable+tagcolumn+tagvalue]").equals([tagdb,tagtable,tagcolumn,tagvalue]).toArray();
+			}
+			else{
+				if (tagname !== ""){
+					if (tagdb !== "" && tagtable !== "" && tagcolumn !== ""){
+						//tagname is not blank.  get tag info for this tagname.  
+						//not sure if this is what we want.  
+						return this.db.taginfo.where("[tagdb+tagtable+tagcolumn+tagvalue]").equals([tagdb,tagtable,tagcolumn,tagname]).toArray();
+					}
+					else if (tagcolumn !== ""){	
+						//tagname is not blank.  get tag info for this tagname.  
+						return this.db.taginfo.where("tagcolumn").equals(tagcolumn).toArray();
+					}
+					else if (tagtable !== ""){
+						//tagname is not blank.  get tag info for this tagname.  
+						return this.db.taginfo.where("tagtable").equals(tagtable).toArray();
+					}
+					else if (tagdb !== ""){
+						//tagname is not blank.  get tag info for this tagname.  
+						return this.db.taginfo.where("tagdb").equals(tagdb).toArray();
+					}
+
+					else{
+						//tagname is not blank.  get tag info for this tagname.  
+						//get all tags with this name every reference.  is this a topic?  
+						return this.db.taginfo.where("tagname").equals(tagname).toArray();
+					}
+				}
+
+			}
+
+			return this.db.taginfo.where("tagname").equals(tagname).toArray();
+		}
+	}
+	loadTags(tagdb, tagtable, tagcolumn, tagvalue=""){
+		if (tagvalue ==""){
+			//get all tags for this DB.  
+			return this.db.taginfo.where("[tagdb+tagtable+tagcolumn]").equals([tagdb,tagtable,tagcolumn]).toArray();
+		}
+		else{
+			return this.db.taginfo.where("[tagdb+tagtable+tagcolumn+tagvalue]").equals([tagdb,tagtable,tagcolumn,tagvalue]).toArray();
+		}
+	}
+
+	saveTag(tagname, tagdb, tagtable, tagcolumn, tagvalue=""){
+		//tagid is unique, but can be reused.  
+		if (tagvalue == ""){
+			tagvalue = tagname;
+		}
+		this.db.tags.where("tagname").equals(tagname).first().then((obj) => {
+			var infoobj = {"tagname": tagname, "tagdb": tagdb, "tagtable": tagtable, "tagcolumn": tagcolumn, "tagvalue": tagvalue};
+			this.db.tagsinfo.add(infoobj).then((id) => {
+				console.log("added tag info with id " + id);
+			});
+		}).catch((err) => {
+			console.log("error in saveTag: " + err);
+			//if tagname not found, then add it.
+			this.db.tags.add({"tagname": tagname, "tagdesc": ""}).then((id) => {
+				console.log("added tag with id " + id);				
+			});
+		});
+
+	}
+}
+
 class gitDB{
 	//save any git repo info and cache locally.  
 	//only download if not already in DB, or size doesnt match.  
@@ -22,14 +176,24 @@ class gitDB{
 	constructor(){
 		this.db = new Dexie("gitDB");
 		this.db.version(1).stores({
-			gitrepos: "++id,userid,repo,branch", 
-			gitcommits: "++id,url,filename,d", //patch, changes
-			gitbook: "++id,url,d", //gitdata, content
-			gitcontents: "++id,url", //content 
+			gitrepos: "++id,[repo+branch]", //desc
+			gitcommits: "[repo+branch],url,filename,d", //patch, changes
+			gitbook: "[repo+branch],url,d", //gitdata, content
+			gitcontents: "[repo+branch],url", //content 
 		});
 	}
 
-	saveRepo(userid, repo, branch){
+	loadContents(repo, branch, url=""){
+		if (url == ""){
+			return this.db.gitcontents.where("[repo+branch]").equals([repo,branch]).toArray();
+		}
+		else{
+			//get all contents for this repo and branch.  
+			return this.db.gitcontents.where("url").equals(url).toArray();
+		}
+
+	}
+	saveRepo(repo, branch, userid=0){
 		var obj = {"userid": userid, "repo": repo, "branch": branch};
 		this.db.gitrepos.add(obj).then((id) => {
 			console.log("added repo with id " + id);

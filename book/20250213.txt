@@ -299,4 +299,46 @@ manage context, but use function calls as contenxt.
 autocomplete off?? 
 come on...
 
+Should we try to use the v6 codemirror.  
+So many annoying things to do.  
+
+#https://docs.github.com/en/search-github/searching-on-github/searching-for-repositories
+
+**web/public/git.js
+--getGitContents 
+Need to pull from DB if exists, and put in DB if admin.  
+also with 
+
+
+**git/clone.py
+test this are we cloning repo?  
+Then go through the repo and upload to DB.  
+all flag allows to upload the repo.  
+This updates ALL repos and ALL books (for now only 1).  
+> python ./git/clone.py --all "true"
+
+
+**web/public/db.js
+
+Eventually need to add tags here.  
+Be able to do label like search for tags.  
+Should keep all tags in local DB and have autocomplete?  
+/tags/[tag] 
+Keep this structure.  
+But need to keep under video entries, as well as git entries.  
+
+**web/public/page.html
+Need to add tags to the UI.  
+And finish the backend logic for adding tag.  
+Add to local DB for now.  
+And do all searching on local DB.  
+Eventually search across nodes.  
+
+**web/public/db.js
+--codeGraphDB
+
+**web/public/git.js
+--gitGetReferences()
+continue here.  
+
 

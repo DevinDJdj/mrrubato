@@ -109,8 +109,19 @@ should be able to query particular page by using selectionhistory number for inq
     <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <link href="https://unpkg.com/vis-network/styles/vis-network.min.css" rel="stylesheet" type="text/css" />
 
+    <!-- local DB -->
+    <!-- indexeddb -->
+    <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
+    <!-- local search -->
+    <script type="text/javascript" src="js/flexsearch/flexsearch.bundle.min.js"></script>
+    <script src="db.js"></script>
+     
     <!-- git -->
      <script src="git.js"></script>
+
+     <!--tabs -->
+     <link href="css/tabs.css" rel="stylesheet">
+    <script src="js/tabs.js"></script>
 
     </head>
     <!-- Google tag (gtag.js) -->
@@ -130,6 +141,8 @@ should be able to query particular page by using selectionhistory number for inq
         <tr>
             <td>
                 <h1>PAGE</h1>
+                <select id="repoSelect"></select><br>
+
     
             </td>
             <td>
@@ -351,8 +364,8 @@ should be able to query particular page by using selectionhistory number for inq
 
 
 
-    <div id="code_chat" style="width: 100%;height: 480px;overflow:auto;">
-      <table style="width:100%;height:480px;">
+    <div id="code_chat" style="width: 100%;height: 980px;overflow:none;">
+      <table style="width:100%;height:960px;">
           <tr width="100%;">
     
           <td valign="top" width="30%">
@@ -369,29 +382,86 @@ should be able to query particular page by using selectionhistory number for inq
                   </div>
               </div>
           </td>
-          <td valign="top" width="30%">
-              <div id="mynetwork" style="height:480px; border: 1px solid lightgray;"></div>
+          <td valign="top" width="40%" rowspan="2">
+              <div id="mynetwork" style="height:960px; border: 1px solid lightgray;"></div>
+          </td>
+
+
+          <td width="5%" rowspan="2">
+            <table>
+                <tr>
+                  <td>
+                    <img id="thinkinggit" src="images/thinking.gif" height="200px" style="visibility:hidden"/>
+                  </td>
+                  </tr>
+                  <tr>
+                  <td>
+                    <div id="selectionhistory" style="width:250px;height:200px;overflow:auto;">
+
+                    </div>
+                  </td>
+                  </tr>
+                    <tr>
+                    <tr>
+                  <td>
+                    <div id="selectionfilter" style="vertical-align:top;width:250px;height:200px;overflow:auto;">
+                      <label for="filterregex">Filter Files:</label><br>
+                      <input type="text" id="filterregex" name="filterregex" size="25">
+
+                      <label for="prompt">TOPIC Filter prompt for LLM:</label><br>
+                      <textarea id="filterprompt" name="filterprompt" rows="4" cols="30"></textarea>
+                    </div>
+
+                  </td>
+                </tr>
+              </table>
+
           </td>
           <td valign="top" width="40%">
 
 
 
-              <table width="100%">
-                  <tr width="100%">
-                      <td halign="left">
-                          <label id="for_edit_code" for="edit_code" style="float:left">Code Snippet:</label>
-                  </td>
-              </tr>
-              </table>
-              <div class="root-wrapper">  
-              <div class="cm-editor" id="edit_code" style="height:430px">
+                <div id="vistabs" class="tab">
+                    <!-- use for book here.  -->
+                    <button class="tablinks" onclick="openTab(event, 'tempcodewindow')">Book Window</button> 
+                    <div id="temp_edit_code"> </div>
+        
+                </div>
+                    <div id="tempcodewindow" style="height:100%;width:480px;overflow:scroll;">
+                    </div>
+        
 
               </div>
               </div>
           </td>
           </tr>
+          <tr>
+            <td>
+
+            </td>
+            <td>
+                <table width="100%">
+                    <tr width="100%">
+                        <td halign="left">
+                            <label id="for_edit_code" for="edit_code" style="float:left">Code Snippet:</label>
+                    </td>
+                        <td halign="right">
+                        <select id="code_mode" onchange="setGitMode();" style="float:right;">
+                            <option value="BOOK">BOOK</option>
+                            <option value="GIT" selected>GIT</option>
+                        </select>
+                    </td>
+                </tr>
+                </table>
+                <div class="root-wrapper">  
+                <div class="cm-editor" id="edit_code" style="height:430px">
+  
+            </td>
+          </tr>
       </table>    
   </div>
+
+
   
 
 
@@ -565,10 +635,25 @@ should be able to query particular page by using selectionhistory number for inq
     <script type="module">
     export function loadAll(reload = false){
         gitSignin();
-        if (codefile !== ""){
-            //load code file and parse via filbert or acorn.  
-            getGitContents(codefile, false);
-        }
+        gitSetNature(GIT_CODE | GIT_RELATIONS);
+        populateGitRepos(getState('selectedgitindex')); //select repo to analyze.  
+        //this loads book.  
+
+            setTimeout(function(){ 
+                //load the code file.  
+                //if we have a codefile, we need to load it.  
+                //if we have a book, we need to load it.  
+                if (codefile !== ""){
+                    loadfromGitBook(codefile, true, true); //load and use tempwindow.  
+                    gitGetReferences(codefile);
+                    //load code file and parse via filbert or acorn.  
+                    setTimeout(function(){
+                        getGitContents(codefile, false);
+                    }, 3000);
+
+                }
+            }, 15000);
+
 
         FUNCS.SPEECH.loadSpeech();
         //initialize midi controller

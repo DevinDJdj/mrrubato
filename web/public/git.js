@@ -11,6 +11,14 @@ var gitcurrentbook = "";
 var gitcurrentcontentstype = "javascript";
 var gitcurrentscrollinfo = null;
 
+const GIT_BOOK = 0; //always get book.  Load from DB eventually.  
+const GIT_CODE = 1;
+const GIT_DETAILS = 2;
+const GIT_RELATIONS = 4;
+const GIT_DB = 8;
+
+var gitnature = GIT_CODE | GIT_DETAILS; //do we retrieve history and commits?  
+
 var currenttopic = "NONE";
 var selectedtopic = "NONE";
 var currenttopicline = 0;
@@ -23,6 +31,7 @@ var tempcodewindow = null;
 var usetempcodewindow = false;
 var definitions = {"REF": "##", "REF2": "#", "TOPIC": "**", "STARTCOMMENT": "<!--", "ENDCOMMENT": "-->", "CMD": ">", "QUESTION": "@@", "NOTE": "--", "SUBTASK": "-"};
 
+var mygitDB = new gitDB();
 
 function gitSignin(){
   let tdate = localStorage.getItem('gittokendate');
@@ -437,17 +446,20 @@ function creategitStruct(){
     }
     //any 
     loadTopic(gitbook[gitbook.length-1].d);
-    loadTopicGraph(gitstruct["alltopics"]);
 
-    //for now only on load.  
-    updateTimelineBook(gitstruct["bydate"]);
+    if (gitnature & GIT_DETAILS){ //double use here.  
+      loadTopicGraph(gitstruct["alltopics"]);
+      //for now only on load.  
+      updateTimelineBook(gitstruct["bydate"]);
+    }
 
 
-    initGitIndex();
+
+//    initGitIndex();
 
 }
 
-function loadfromGitBook(top, load=true){
+function loadfromGitBook(top, load=true, useTemp=false){
   var prevcontents = gitcurrentcontents;
   var newcontents = "";
   if (isDate(top)){
@@ -476,6 +488,10 @@ function loadfromGitBook(top, load=true){
     gitcurrentcontents = newcontents;
   }
   var editor = myCodeMirror;
+  if (useTemp && tempcodewindow !==null){
+    editor = tempcodewindow;
+    editor.setSize(null, 480);
+  }
   //adjust to pull from book 
   if (prevcontents !=gitcurrentcontents && load){
     gitcurrentcontentstype = setContentType("book.txt");    
@@ -628,6 +644,7 @@ function getGitContents(path, load=true){ //load UI or not, if false, return str
               lineNumbers: true
             });
             tempcodewindow.setSize(null, 630);
+            $('#for_edit_code').text(path);
           }
           else{
             if (prevcontents !=gitcurrentcontents){
@@ -879,6 +896,10 @@ function setGitMode(){
   currentmode = m;
   loadTopic(selectedtopic);
 }
+
+function gitSetNature(m){
+  gitnature = m;
+}
 function loadTopic(top){
     var img = document.getElementById('thinkinggit');
     img.style.visibility = "visible";
@@ -887,15 +908,19 @@ function loadTopic(top){
 
 //    selectionhistory.unshift(top);
     var currentmode = $('#code_mode').find(":selected").val();
-    if (currentmode == "GIT"){
-      loadfromGitBook(top, false); //search Git for this string **.... in gitbook and retrieve all.  
-      cont = getGitContents(top, true);
-  
-    }
-    else if (currentmode=="BOOK"){
-      cont = getGitContents(top, false);
-      loadfromGitBook(top, true); //search Git for this string **.... in gitbook and retrieve all.  
-  
+
+    //git code
+    if (gitnature & GIT_CODE){
+      if (currentmode == "GIT"){
+        loadfromGitBook(top, false); //search Git for this string **.... in gitbook and retrieve all.  
+        cont = getGitContents(top, true);
+    
+      }
+      else if (currentmode=="BOOK"){
+        cont = getGitContents(top, false);
+        loadfromGitBook(top, true); //search Git for this string **.... in gitbook and retrieve all.  
+    
+      }
     }
 
 
@@ -905,15 +930,26 @@ function loadTopic(top){
     }
     selectionhistory.push(top);
 
+
     loadSelectionHistory();
 
-    zoomTopic(top);
-
-    //look through the latest commit info and if newer than RTDB entry, pull from git.  
-    //Cache result in RTDB.  
     loadTopicIterations(top);
-    getGitCommits(null, top);
 
+    if (gitnature & GIT_DETAILS){
+      zoomTopic(top);
+
+      //look through the latest commit info and if newer than RTDB entry, pull from git.  
+      //Cache result in RTDB.  
+      getGitCommits(null, top);
+    }
+
+    if (gitnature & GIT_RELATIONS){
+      //load searching for "function names across code. "
+      //this will give us the code files which are calling this function.  
+      //so really we want unique naming even if it is in a class.  
+      //complex usage here to find if there is a class name prefix etc.  
+
+    }
 
 
 }
@@ -961,6 +997,59 @@ function getVideos(qdate=null, limit=50){
 	});
 
 }
+
+
+function gitGetReferences(qpath, depth=1){
+
+  //get all function names.  
+  //get all class names.  
+  //DB contain dbgraph.  
+
+	//get github
+  if (isDate(qpath)){
+    //no usecase?  
+//    getGitCommits(qdate, bookfolder + "/" + qpath + ".txt");
+    return;
+  }
+
+  //repo:github-linguist/linguist mysearch
+  //path:*.js ...
+  // get short name.  
+
+  let top = shortenName(qpath);
+  
+  //query local DB if possible.  
+  let topgraph = null;
+  if (gitnature & GIT_DB){ //use DB or not.  
+    topgraph = mycodeGraphDB.getGraph(top);
+  }
+  if (topgraph == null){ //is result old...
+
+    let url = giturl + '/search/code?q=' + top;
+
+    $.ajax({
+      url: url,
+      dataType: 'text',
+  //             headers: {"Authorization": "Bearer " + gittoken},
+      async: false,
+      beforeSend: function(xhr) {
+        gittoken = localStorage.getItem('gittoken'); // Get the token from local storage
+        if (gittoken) {
+          xhr.setRequestHeader('Authorization', 'Bearer ' + gittoken);
+        }
+      },
+      success: function(data) {
+        data = $.parseJSON(data);
+
+        console.log(data);        
+        //create topic graph here.  
+        console.log("Build Code Graph");
+    
+      }
+    });
+  }
+}
+
 
 function getGitCommits(qdate=null, qpath=null){
 	//get github
