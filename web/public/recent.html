@@ -11,6 +11,7 @@
 
     <!-- update the version number as needed -->
 	<script src="config.js"></script>
+	<script src="globals.js"></script>
     <script defer src="/__/firebase/9.19.1/firebase-app-compat.js"></script>
     <!-- include only the Firebase features as you need -->
     <script defer src="/__/firebase/9.19.1/firebase-auth-compat.js"></script>
@@ -115,6 +116,17 @@
 		
 		<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 
+
+		<script src="recent.js"></script>
+		<!-- local DB -->
+		<!-- indexeddb -->
+		<script src="https://unpkg.com/dexie/dist/dexie.js"></script>
+		<!-- local search -->
+		<script type="text/javascript" src="js/flexsearch/flexsearch.bundle.min.js"></script>
+		<script src="db.js"></script>
+	
+	<script src="git.js"></script>
+	
   <script>
   //firebase deploy to deploy this.  
   //usage:
@@ -261,8 +273,8 @@ function getIterations(desc, vidtime){
 
   </script>
 
-<script src="git.js"></script>
-<script src="recent.js"></script>
+
+
 	
 </body>
 </html>

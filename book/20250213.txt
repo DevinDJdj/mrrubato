@@ -341,4 +341,117 @@ Eventually search across nodes.
 --gitGetReferences()
 continue here.  
 
+**git/clone.py
+--Test with all flag.  
+
+**web/public/book.html
+**web/public/page.html
+Move shared functions 
+--getVideoJson
+--getTime
+--getIterations
+--addMe
+--transcript functions.  
+
+
+add video to page.html
+
+**claude-3.5
+Why is there no WASM version of this to use?  
+
+Can we use this
+**web/public/test/web-llm/test.js
+**web/public/models/DeepSeek-R1-Distill-Qwen-1.5B-q4f16_1-MLC-webgpu.wasm
+Large model loads, but too much time and memory, crashes...
+
+How do we annotate feedback for the comment.  
+Well usually this is in the next question.  
+
+So we should rate the subsequent questions whether they are good or not.  
+Can this be automated?  
+Why not with language.  This is what people are doing already.  
+Tell the machine what was less optimal etc.  
+
+So we do need the question response chain.  
+Is that enough?  
+Also we should just use one td.  
+
+Just have the same thing as feedback.  
+We have timing.  Then in the transcript we include the answer as well.  
+We can save the feedback or not.  
+
+This can become quite large.  
+This is a lot of software just to collect the data.  
+Eventually we need to generate the model.  
+Based on this input chain.  
+
+
+**web/public/page.html
+so when we save feedback, put the chathistory in the feedback somewhere along with the rating.  
+need a save feedback button.  
+this time implement feedback save in localDB and remote.  
+
+--From time to time, make sure new user will still work.  
+
+Need search component for topics/videos.  
+Search recent videos with certain topic or tag.  
+
+#https://github.com/googlecreativelab/teachable-machine-v1?tab=readme-ov-file
+#https://github.com/googlecreativelab/teachable-machine-boilerplate
+
+**web/public/test/tfjs/index.html
+--simple classifier.  
+How to integrate this?  
+onload use the feedback to load classifier for word.  
+Right now classify the image, but can also classify the audio.  
+Then show the prediction of the classification for the video being shown.  
+This is essentially what we need for 
+**0606
+
+Then we can use the classifier to identify events which we did not tag in new videos.  
+By using the training from other videos using the same language.  
+Can we detect all the individual keys being pressed in the videos?  
+Maybe try this first.  How close can we get to the actual midi?  
+Show the actual midi sequence next to the prediction sequence.  
+--PianoClassifier
+--FacialClassifier
+
+
+
+**web/public/analyze.html
+
+Save these locally for now, and load on load of analyze.html all classifiers for that TOPIC.  
+Maybe just add the frames sequentially vertically for now and do image classification.  
+10 images or whatever based on FPS.  
+
+Then we would need to classify.  
+
+Lets just do a video capture test.  
+Capture set of sequences of piano area.  
+and classify as good/bad/ok....
+Is this accurate?  
+Can this detect actual preference?  
+Compare actual preference with predicted preference.  
+
+During capture we should save the image and classification.  
+to local DB, then on load, we get these classifications by topic.  
+Will this be useful?  
+
+
+So need ([screenshotXY]  array, size) 
+predicted by either constant or algorithm i.e. ball detection.  
+Should be same size, but maybe not necessary for some use cases.  
+For now just add either vertically or horrizontally, depending on which is larger width/height.  
+i.e. 300x30 aspect ratio or any aspect ratio >1, combine vertically.  
+Otherwise combine horizontally.  
+
+**web/public/video.js
+--VideoSnapper
+test.  
+Will this actually do what we want.  
+Have to add the result to status perhaps for now based on current frame?  
+
+-may have broken some things...
+many changes.  
+
 

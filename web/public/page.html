@@ -427,7 +427,7 @@ should be able to query particular page by using selectionhistory number for inq
                     <div id="temp_edit_code"> </div>
         
                 </div>
-                    <div id="tempcodewindow" style="height:100%;width:480px;overflow:scroll;">
+                    <div id="tempcodewindow" style="height:480px;width:600px;overflow:none;">
                     </div>
         
 
@@ -437,7 +437,40 @@ should be able to query particular page by using selectionhistory number for inq
           </tr>
           <tr>
             <td>
-
+                <table width="640px">
+                    <tr>
+                      <td>
+                        <canvas id="myvideocanvas" width="640" height="360" style="display: none">Your browser does not support the HTML5 canvas tag.</canvas>
+                        <video
+                        id="my-video"
+                        class="video-js"
+                        preload="auto"
+                        controls
+                        width="640"
+                        height="360"
+                        data-setup="{}"
+                        >
+                        </video>
+                    
+                      </td>
+                    </tr>
+                    <tr>
+                      <td valign="top" width="640px">
+                        <label for="transcript">Original Transcript:</label>
+                        <img src="images/edit.png" height="16px" onClick="toggleTranscript();"/>
+                        <br>
+                        <textarea id="transcript" style="display:none" rows="10" cols="50"></textarea>
+                        <div id="transcriptsh" style="height: 90px;overflow:auto; word-break: break-all; word-wrap: break-word;"></div>
+                        <br>
+                        <label for="mycomments">My Transcript:</label>
+                        <img src="images/edit.png" height="16px" onClick="toggleMyComments();"/>
+                        <br>
+                        <textarea id="mycomments" style="display:none" rows="10" cols="45"></textarea>
+                        <div id="mycommentsh" style="height: 190px;overflow:auto;"></div>    
+                    </td>
+                    </tr>
+                  </table>
+            
             </td>
             <td>
                 <table width="100%">
@@ -466,7 +499,28 @@ should be able to query particular page by using selectionhistory number for inq
 
 
 <script>
+    player2 = document.getElementById("my-video");
+    
     var querydate = null;
+
+    var video = 'ogvaelzkoKw';
+    var starttimes = [];
+    var endtimes = [];
+    var st = [];
+    var	et = [];
+    var myst = [];
+    var myet = [];
+    
+    var users = [];
+    var durations = [];
+    var maxduration = 0;
+    
+    var numiterations = 0;
+    var delay = 5;
+    
+    var user = null;    
+    
+var querydate = null;
 //    var codefile = ""; //load from queryparam.  clock.js startup
     var myuid = null;
     var myuser = null;
@@ -634,6 +688,7 @@ should be able to query particular page by using selectionhistory number for inq
 
     <script type="module">
     export function loadAll(reload = false){
+//        getVideoJson(video);
         gitSignin();
         gitSetNature(GIT_CODE | GIT_RELATIONS);
         populateGitRepos(getState('selectedgitindex')); //select repo to analyze.  

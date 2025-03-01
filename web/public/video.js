@@ -1,3 +1,5 @@
+//const { EvalSourceMapDevToolPlugin } = require("webpack");
+
 var watch = false;
 var player;
 var player2;
@@ -480,7 +482,144 @@ function setVideoVolume(volume){
         const absTime = Math.round(tempTime * 1000);
         return absTime;
     }
+    else{
+      return -1;
+    }
 
 }
 
    
+
+
+
+var VideoSnapper = {
+    
+  /**
+   * Capture screen as canvas
+   * @param {HTMLElement} video element 
+   * @param {Object} options = width of screen, height of screen, time to seek
+   * @param {Function} handle function with canvas element in param
+   */
+  constructor() {
+    // Initiate variables
+    this.infoTexts = [];
+    this.training = -1; // -1 when no class is being trained
+    this.videoPlaying = false;
+
+    // Initiate deeplearn.js math and knn classifier objects
+    this.bindPage();
+
+    // Create video element that will contain the webcam image
+    this.video = document.getElementById('myvideocanvas');
+  },
+
+  async bindPage() {
+    this.knn = knnClassifier.create();
+    this.mobilenet = await mobilenetModule.load();
+
+  },
+
+  captureAsCanvas: function(video, options, handle) {
+  
+      // Create canvas and call handle function
+      var callback = function() {
+          // Create canvas
+          var canvas = $('<canvas />').attr({
+              width: options.width,
+              height: options.height
+          })[0];
+          // Get context and draw screen on it
+          canvas.getContext('2d').drawImage(video, options.x, options.y, options.width, options.height);
+          // Seek video back if we have previous position 
+          if (prevPos) {
+              // Unbind seeked event - against loop
+              $(video).unbind('seeked');
+              // Seek video to previous position
+              video.currentTime = prevPos;
+          }
+          // Call handle function (because of event)
+          handle.call(this, canvas);    
+      }
+
+      // If we have time in options 
+      if (options.time && !isNaN(parseInt(options.time))) {
+          // Save previous (current) video position
+          var prevPos = video.currentTime;
+          // Seek to any other time
+          video.currentTime = options.time;
+          // Wait for seeked event
+          $(video).bind('seeked', callback);              
+          return;
+      }
+      
+      // Otherwise callback with video context - just for compatibility with calling in the seeked event
+      return callback.apply(video);
+  },
+
+  //frameXY[{x: 0, y: 0, time: 0, classId/word or wordhash: 0}, ...]
+  //for each word, gets called from findWordsA... or similar.  
+  //parameters will be based on the word.  For now just use case either keys or user or full frame.  
+  getClassifiers: function(frameXY, width, height, video, numframes =1) {
+
+    var combinedcanvas = document.getElementsByName('myvideocanvas');
+    var vertical = true;
+    if (width>height){
+      //vertical addition
+      combinedcanvas.width = width;
+      combinedcanvas.height = frameXY.length*height;
+    }
+    else{
+      //horizontal addition
+      vertical = false;
+      combinedcanvas.width = frameXY.length*width;
+      combinedcanvas.height = height;
+
+    }
+    for (var i = 0; i < frameXY.length; i++) {
+
+      for (var j = 0; j < numframes; j++) {
+        this.captureAsCanvas(video, { x: frameXY["x"], y: frameXY["y"], width: width, height: height, time: frameXY["time"]+j*framerate }, function(canvas) {
+
+          const ctx = combinedcanvas.getContext('2d');
+          if (vertical) {
+            ctx.drawImage(canvas, 0, i*height, width, height);
+          }
+          else{
+            ctx.drawImage(canvas, i*width, 0, width, height);
+          }
+            
+          if (j == numframes - 1){
+            //this is where we have the completed image with all frames.
+            //save to DB or other location.  
+            var img = new Image();
+            img.src = combinedcanvas.toDataURL();
+            
+            addExample(frameXY["classId"]);
+
+          } 
+        });
+      }
+
+
+    }
+  }, 
+
+
+  addExample: function(classId=-1) {
+    const image = tf.fromPixels(this.video);
+
+    let logits;
+    // 'conv_preds' is the logits activation of MobileNet.
+    const infer = () => this.mobilenet.infer(image, 'conv_preds');
+
+    // Train class if one of the buttons is held down
+    if (classId != -1) {
+      logits = infer();
+
+      // Add current image to classifier
+      this.knn.addExample(logits, classId);
+    }
+  }
+
+};
+

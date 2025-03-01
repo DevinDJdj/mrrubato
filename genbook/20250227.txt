@@ -55,3 +55,49 @@ Book/Chapter 8
 You mentioned the challenges of embracing imperfection. You mentioned the need to be patient and persistent, even when things don't go as planned.
 
 Book/Chapter 9
+
+
+@@what are you doing	
+==
+This appears to be a JavaScript code snippet, likely from a Node.js application, that handles video playback functionality. I'll break down what this code does and explain each section.
+
+Initialization
+
+The code initializes several variables:
+
+* `player2`: The video player instance, which is an object representing the current video player instance.
+* `isPaused`: A boolean indicating whether the video player is paused.
+* `midioffset`: A variable used for audio playback, which is an integer representing the audio offset.
+* `tempTime`: A variable used for audio playback, which is an integer representing the current audio time.
+* `absTime`: A variable used for audio playback, which is an integer representing the absolute audio time.
+* `seek`: A variable used for seeking in the audio playback, which is an integer representing the audio seek position.
+
+Loading Video
+
+The code loads a video file from a URL using the `loadVideo` function. This function takes three arguments:
+
+* `url`: The URL of the video file to be loaded.
+* `0`: The initial seek position in milliseconds.
+* `video`: The video file to be loaded.
+
+The `loadVideo` function checks if the video file is supported by the current video player instance. If it's not, it returns a `null` value. If it is, it calls the `load` method on the video file to load the video.
+
+Playing Video
+
+If the video file is loaded successfully, the code calls the `play` method on the video file to start playing the video. This method takes a single argument:
+
+* `video`: The video file to be played.
+
+Getting Duration
+
+The code calculates the duration of the video file in milliseconds using the `getDuration` method on the video file. This method returns the duration of the video file as a floating-point number.
+
+Getting Reference Time
+
+The code calculates the reference time of the video file in milliseconds using the `getDuration` method on the video file and the `getDuration` method on the current video player instance. It returns the reference time as an integer.
+
+Purpose of Code
+
+The purpose of this code appears to be to handle video playback functionality, including loading, playing, and getting reference times of video files. The code is likely used in a Node.js application to handle video playback, which could be used in various contexts such as video streaming, video recording, or video editing.
+
+Please note that the code provided is quite complex and may not be easily understandable without a good understanding

@@ -1,10 +1,10 @@
 
 function loadAllRecent(limit=20){
-	var vRef = firebase.database().ref(dbname);
+	var vrRef = firebase.database().ref(dbname);
 	if (typeof(uid) != "undefined" && uid !==null){
 	}
 	//get mydate if exists.  
-	if (querydate ==null){
+	if (querydate ==null || querydate == ""){ //if no date, get today.
 		var now = new Date();
 		now.setDate(now.getDate() + 1); //add a day so we get today as well.  
 //			now.setMilliseconds(0);
@@ -17,13 +17,13 @@ function loadAllRecent(limit=20){
 	}
 //		ref.orderByChild('snippet/title').equalTo(title).on("value", function(snapshot) {
 //		vRef.orderByChild('snippet/publishedAt').limitToLast(50).once("value")
-	vRef.orderByChild('snippet/publishedAt').endAt(querydate).limitToLast(limit).once("value")
-	.then((snapshot) => {
-		if (snapshot.exists()) {							
+	vrRef.orderByChild('snippet/publishedAt').endAt(querydate).limitToLast(limit).once("value")
+	.then((recentsnapshot) => {
+		if (recentsnapshot.exists()) {							
 
-			console.log(snapshot.val());
-			videojson = snapshot.val();
-			vids = getRecent(videojson);
+			console.log(recentsnapshot.val());
+			recvideojson = recentsnapshot.val();
+			vids = getRecent(recvideojson);
 			recentdrawChart(vids);
 			recentdrawDurationChart(vids);
 		}			
@@ -140,10 +140,10 @@ function addRecentRow(recentrow) {
 }
 
 
-function getRecent(videojson){
+function getRecent(recentvideojson){
 	loadRecentTable();
     vids = [];
-	for (const [key, value] of Object.entries(videojson)) {	
+	for (const [key, value] of Object.entries(recentvideojson)) {	
 	    //sort by date and list in some way.  
 		//right now just like we do, most recent and least recent
 		//need something better than this?  

@@ -34,6 +34,12 @@
 
 <!--<input type="file" id="filereader"/> -->
 
+<!-- video snapper and analysis -->
+<script src="https://unpkg.com/@tensorflow/tfjs"></script>
+<script src="https://unpkg.com/@tensorflow-models/mobilenet@2.0.2"></script>
+<script src="https://unpkg.com/@tensorflow-models/knn-classifier"></script>
+
+
   <table>
   <tr>
   <td>
@@ -76,7 +82,7 @@ data-setup="{}"
 	<div id="submit" valign="top">
 		<label for="points">Score:</label>
 	    <input type="range" id="points" name="points" min="0" max="10" value="1" />
-		<button type="button" onclick="updateVideo()">Update</button>
+		<button type="button" onclick="saveFeedback()">Update</button>
 		<button type="button" onclick="resetFeedback()">Reset Feedback</button>
 	</div>
  <div id="midi">
@@ -352,6 +358,7 @@ var seek = -1;
 <link href="css/tags.css" rel="stylesheet">
 <script src="tags.js"></script>
 
+<script src="feedback.js"></script>
 <script>
 
 
@@ -576,58 +583,6 @@ function mymidicallback(msg, time, user, lang) {
 
 
 
-function setTranscript(transcript){
-	$('#transcriptsh').html(makeTimeLinks(transcript));
-	//right now this is not refreshed on page load.  
-	//this ends up being the original transcript for some reason.  
-	//not sure if we want this or not.  Here we dont keep history about the original transcript.  
-	//is this important?  
-	var tempDiv = $('#transcript');
-	if (isadmin){
-		tempDiv.readOnly = false;
-	}
-	else{
-		tempDiv.readOnly = true;
-		//we get the updated transcript, but cant edit further.  This removes confusion about if you can edit.  
-	}
-	tempDiv.val(transcript);
-	createTranscriptArray();
-}
-
-function toggleTranscript(){
-	if ($('#transcript').is(':visible')){
-		setTranscript($('#transcript').val());
-		$('#transcript').hide();
-		$('#transcriptsh').show();
-	}
-	else{
-		$('#transcript').show();
-		$('#transcriptsh').hide();
-	}
-}
-
-
-function toggleMyComments(){
-	if ($('#mycomments').is(':visible')){
-		createNotesArray(); //update values of the data.  
-		$('#mycomments').hide();
-		$('#mycommentsh').show();
-	}
-	else{
-		$('#mycomments').show();
-		$('#mycommentsh').hide();
-	}
-}
-function loadTranscript(snapshot){
-	console.log(snapshot.val().transcript);
-	if (snapshot.val().transcript !==null){
-		//not sure if we want this or not.  Here we dont keep history about the original transcript.  
-		//is this important?  
-		originaltranscript = snapshot.val().transcript;
-		setTranscript(snapshot.val().transcript);
-	}
-}
-
 
 function updateFeedbackUI(user=0, note=null){
 	//filterWords();
@@ -640,45 +595,6 @@ function updateFeedbackUI(user=0, note=null){
 	getFeedbackImage(null, xmultiplier2, ymultiplier2, scene2, engine2, currentmidiuser);	
 }
 
-function loadPreviousComments(snapshot, uid=0){
-	user=0;
-	currentmidiuser = 0;
-	allcomments = snapshot.val();
-	foundme = false;
-
-	for (const [key, value] of Object.entries(allcomments)){
-		if (key == uid){
-			$('#mycomments').val(value.comments);
-			$('#mycommentsh').html(makeTimeLinks(value.comments));
-			if (value.sentiment !==null){
-				$('#points').val(value.sentiment);
-			}
-			currentmidiuser = 0;
-			foundme = true;
-		}
-		else{
-			midiarray.push({"base": []});
-			users.push({"uid": key, "pic": "", "name": ""}); //lookup for array location -> uid
-			currentmidiuser=midiarray.length-1;
-			getUser(currentmidiuser);
-		}
-		midifeedback = value.midi;
-		langstoload = loadMidiFeedback(midifeedback);
-		loadDictionaries(currentmidiuser, langstoload);
-
-		console.log("MIDI:" + midifeedback);
-	}
-
-	if (!foundme){
-		//logged in user has no comments.  
-		//need to load anyway.  
-		loadDictionaries(0);
-	}
-	//set back to our user.  
-	currentmidiuser = 0;
-//	initDicFilters();
-
-}
 
 function getYOffset(iter, w, h){
 	y = (iter*h/numiterations) - h/2;
@@ -905,266 +821,8 @@ function getFeedbackImage(source, w, h, myscene,myengine, midiuser=0, flang=""){
 }
 
 
-function getUser(userindex){
-
-  //if uid is array
-  //user = users.find((u) => u.uid.includes(uid));
-//  user = users.find((u) => u.uid == (uid));
-//  userindex = users.findIndex((u) => u.uid == (uid));
-	user = users[userindex];
 
 
-	uRef = firebase.database().ref('/users/' + uid);
-	firebase.database().ref('/users/' + uid).once('value')
-					  .then((snapshot) => {
-						if (snapshot.exists()) {
-							//use snapshot.key here because of many subsequent calls uid will change.  
-							if (user.uid == snapshot.key && user.pic == ""){ //initialize this user and add image
-								
-								users[userindex].pic = snapshot.val().pic;
-								users[userindex].name = snapshot.val().name;
-								var elem = document.createElement("img");
-								elem.setAttribute("src", users[userindex].pic);
-								elem.setAttribute("alt", users[userindex].name);
-								elem.setAttribute("height", "32");
-								elem.setAttribute("width", "32");
-								document.getElementById("usericon").appendChild(elem);	//add to DB.  
-
-						} else {
-							console.log("User not found" + snapshot.key);
-						}
-					}
-				});
-
-}
-
-function addMe(user){
-	myuser = user;
-    uid = user.uid;
-	displayname = user.displayName;
-//	email = user.email;
-//	phone = user.phoneNumber;
-	pic = user.photoURL;
-
-	users.push({"uid": uid, "pic": pic, "name": displayname}); //lookup for array location -> uid
-
-	console.log(displayname + " " + pic);
-
-	//add user icon
-	document.getElementById("usericon").innerHTML = "";
-	var elem = document.createElement("img");
-      elem.setAttribute("src", user.photoURL);
-	  elem.setAttribute("alt", user.displayName);
-      elem.setAttribute("height", "64");
-      elem.setAttribute("width", "64");
-      document.getElementById("usericon").appendChild(elem);	//add to DB.  
-
-	//do we need this, this doesnt work with Watch:
-	/*
-	uRef2 = firebase.database().ref('/misterrubato/' + video + '/uid');
-	firebase.database().ref('/misterrubato/' + video + '/uid').once('value')
-					  .then((snapshot) => {
-						if (snapshot.exists()) {
-
-						} else {
-							
-							obj = {"uid": uid};	
-							uRef2.set(obj);
-						}
-					});
-	*/
-
-	uRef = firebase.database().ref('/users/' + uid);
-	firebase.database().ref('/users/' + uid).once('value')
-					  .then((snapshot) => {
-						now = new Date();
-						if (snapshot.exists() && typeof(snapshot.val().numlogins) !="undefined") {
-							num = snapshot.val().numlogins + 1;
-							ll = now.toISOString().substring(0, 10).replaceAll('-','');
-							uRef.update({"numlogins": num, "lastlogin": ll});
-
-						} else {
-							
-							obj = {"name": displayname, "pic": pic, "firstlogin": now.toISOString().substring(0, 10).replaceAll('-',''), "lastlogin": now.toISOString().substring(0, 10).replaceAll('-',''), "numlogins": 1};	
-							uRef.set(obj);
-						}
-					});
-	
-}
-
-
-
-
-//should combine with updateVideo afterward.  
-//not sure if the struct should be uid / comments, or comments /uid
-
-function updateVideo(){
-	//get authuid.  
-	//getref to uid
-	//then under here store the videos.  
-	//does the video have to be associated with the channel, I guess not.  
-	
-	
-	var grade = $('#points').val();
-	var transcript = $('#transcript').val();
-	if (uid !==null){
-		const currentdate = new Date();
-		strdate = currentdate.toISOString().substring(0, 19).replaceAll('-','').replaceAll(':','');
-	    if (watch === false){
-			var uRef = firebase.database().ref('/misterrubato/' + video + '/comments/' + uid);
-	//		videojson.snippet.description = $('#iterations').val();
-	//		videojson = JSON.parse( JSON.stringify(videojson ) );
-			console.log(uid);
-			mycomments = $('#mycomments').val();
-
-	//		sentiment = "test"; //for now
-			midifeedback = getMidiFeedback();
-//			document.getElementById('out').innerHTML = 'New file: <a download=my.mid href=' + midifeedback + '>DOWNLOAD</a> <embed src=' + midifeedback + ' autostart=false>';
-
-
-			obj = {"comments": mycomments, "sentiment": grade, "midi": midifeedback, "updated": strdate };
-			uRef.set(obj);
-
-			//set transcript only if we have actually updated it.  
-			if (isadmin && transcript.trim() !== "" && originaltranscript !== transcript){
-				var tRef = firebase.database().ref('/misterrubato/' + video + '/transcript');
-				obj = {"transcript": transcript, "updated": strdate };
-				tRef.set(obj);
-			}
-		}
-		else{
-			console.log(video + " Not in DB.  Adding watch comments");
-			var uRef = firebase.database().ref('/watch/' + video + '/comments/' + uid);
-			mycomments = $('#mycomments').val();
-
-	//		sentiment = "test"; //for now
-			midifeedback = getMidiFeedback();
-			obj = {"comments": mycomments, "sentiment": grade, "midi": midifeedback, "updated": strdate };
-			uRef.set(obj);
-		
-		}
-	}
-	
-
-	//somewhere else?
-	//config.html
-//	saveUserConfig();
-
-}
-
-function updateNotes(){
-    var allnotes = "";
-	for (i=0; i<notesarray.length; i++){
-	    allnotes += notesarray[i] + "\n";
-	}
-    $('#mycomments').val(allnotes);
-	//add clickable link inside here instead.  
-	$('#mycommentsh').html(makeTimeLinks(allnotes));
-	
-}
-
-function createTranscriptArray(){
-//also update the new DIV with links.  
-	alltranscript = $('#transcript').val();
-	transcriptarray = [];
-	const lines = alltranscript.split("\n");
-	for (i = 0; i< lines.length; i++){
-	    transcriptarray[i] = lines[i];
-	}
-	console.log(transcriptarray);
-
-}
-
-function createNotesArray(){
-//also update the new DIV with links.  
-	allnotes = $('#mycomments').val();
-	notesarray = [];
-    const lines = allnotes.split("\n");
-	for (i = 0; i< lines.length; i++){
-	    notesarray[i] = lines[i];
-	}
-	console.log(notesarray);
-	//set title
-    updateNotes();
-}
-
-function getTime(comment){
-	const regExp = /\(([^)]+)\)/g;
-    const matches = [...comment.matchAll(regExp)].flat();
-//    console.log(matches);
-	if (matches.length > 0){
-	    return getSecsFromTime(matches[1]);
-	}
-	else{
-	    return 0;
-	}
-}
-
-
-function getIterations(desc, vidtime, isme=false){
-	st = [];
-	et = [];
-	s = 0;
-
-	if (desc ==""){
-		//one iteration length of video.  
-		//this is for watch.  
-		e = player.getDuration();
-		st.push(1);
-		et.push(e);
-		maxduration = e-1;
-		numiterations = 1;
-		myst.push(st[0]);
-		myet.push(et[0]);
-	}
-	else{
-		for (i=1; i< 20; i++){
-			s = -1;
-			e = -1;
-			fnd = "TRIAL#" + i;
-			let ts = desc.indexOf(fnd);
-			te = desc.indexOf(")", ts);
-			if (ts > -1)
-				s = getSecsFromTime(desc.substring(ts+(fnd.length)+2, te));
-				
-			fnd = "END#" + i;
-			ts = desc.indexOf(fnd);
-			te = desc.indexOf(")", ts);
-			if (ts > -1)
-				e = getSecsFromTime(desc.substring(ts+(fnd.length)+2, te));
-			if (s > -1 && e > -1 && e > s){
-				st.push(s);
-				et.push(e);
-			}
-		}
-		console.log(st);
-		console.log(et);
-		//arrays of all iterations
-		mydate = new Date(vidtime);
-//		if (!isme){
-			for (i=0; i< st.length; i++){
-				if (et[i] !==null){
-					tempdate = mydate;
-					tempdate.setSeconds(tempdate.getSeconds()+st[i]);
-					starttimes.push(tempdate);
-					durations.push([tempdate, et[i]-st[i]]);
-					if (isme){
-						myst.push(st[i]);
-						myet.push(et[i]);
-						if (et[i]-st[i] > maxduration){
-							maxduration = et[i]-st[i];
-							
-						}
-					}
-					tempdate.setSeconds(tempdate.getSeconds()+(et[i]-st[i]));
-					endtimes.push(tempdate);
-				}
-			}
-		}
-		//from here generate some sort of graphic.  
-//	}
-	return st.length;
-}
 
 function drawChart() {
 	var container = document.getElementById('timeline');
@@ -1288,59 +946,6 @@ function searchPrevious(videoid){
 	
 }
 
-function getMidi(desc){
- var tempDiv = $('#midi');
- //find in notes array the TRANSCRIPT:
- //gsutil cors set cors.json gs://misterrubato-test.appspot.com
- let tposition = desc.indexOf("MIDI:");
- url = "";
- if (tposition > -1){
-    eposition = desc.indexOf('\n', tposition);
-	if (eposition > -1){
-    	url = desc.substring(tposition+5, eposition);
-	}
-	else {
-		url = desc.substring(tposition+5);
-	}
-//	tempDiv.html(url);
-//using up space.  Need this space.  
-	getAnalyze(url);
- }
- else{
-	//initialize blank midi.  
-	getAnalyze(url);
- }
-}
-
-
-
-function getIteration(currentTime){
-    for (j=0; j< myst.length; j++){
-		if (currentTime >= myst[j] && currentTime <= myet[j]){
-			return j;
-		}
-	}
-	return -1;
-}
-
-
-function getIterationAndSecs(){
-	if (useyoutube || watch){
-		if (player.getCurrentTime){
-			var tempTime = player.getCurrentTime();
-			i = getIteration(tempTime);
-			secs = tempTime - myst[i];
-		}
-	}
-	else{
-		if (player2.readyState > 0){
-				var tempTime = player2.currentTime;
-				i = getIteration(tempTime);
-				secs = tempTime - myst[i];
-		}
-	}
-	return i, secs;
-}
 
 function updateCanvas(){
 	i, secs = getIterationAndSecs();
@@ -1562,141 +1167,32 @@ function loadCanvas(id, pianoimg, mini="") {
 	
 }
 	
-function addImage(url, type=0){
-    var mydiv = document.getElementById("images");
-	if (type > 0){
-		mydiv = document.getElementById("pianoroll");
-		loadCanvas("pianorollmini", url, "mini");
-		loadCanvas("pianoroll", url);
-	}
-	else{
-		const img = document.createElement("img");
-		img.src = url;
-		console.log(url);
-		mydiv.appendChild(img);
-	}
-}
-
-function getAnalyze(midiurl){
-    //in case we have \r\n
-
-	removeAllChildren("pianorollmini");
-	removeAllChildren("pianoroll");
-	removeAllChildren("images");
-	if (midiurl == ""){
-		//set up blank image for visualizing feedback anyway.  
-		addImage("", 1);
-	}
-	else{
-
-		midiurl = midiurl.replace("\r", "");
-		var storage = firebase.storage();
-
-		var lastPart = midiurl.split("/").pop();
-
-	//make this more general.  
-	// Create a storage reference from our storage service
-		var storageRef = storage.ref();
-		//why does this URL have space and others are %20?  
-		if (parseInt(lastPart.slice(0,4)) > 2024){
-			midiloc = "midi/" + lastPart.slice(0,4) + "/" + lastPart.replace("%20", " ");
-
-		}
-		else{
-			midiloc = "midi/" + lastPart.replace("%20", " ");
-		}
-
-		url = storageRef.child(midiloc).getDownloadURL()
+function addImage(imageurl, stor, type=0){
+	url = stor.child(imageurl).getDownloadURL()
 		.then((url) => {
-			console.log("MIDI: " + url);
-			getFile(url);
-		})
-		
-
-		pianoroll = "analyze/" + lastPart;
-		pianoroll = pianoroll.replace(".mid", ".jpg");
-		console.log(pianoroll);
-		url = storageRef.child(pianoroll).getDownloadURL()
-		.then((url) => {
-			console.log(url);
-		addImage(url, 1);
+			console.log("SRC url:" + url);
+			var mydiv = document.getElementById("images");
+			if (type > 0){
+				mydiv = document.getElementById("pianoroll");
+				loadCanvas("pianorollmini", url, "mini");
+				loadCanvas("pianoroll", url);
+			}
+			else{
+				const img = document.createElement("img");
+				img.src = url;
+				console.log(url);
+				mydiv.appendChild(img);
+			}			
 		})
 		.catch((error) => {			
 			console.log(error);
-			addImage("", 1);
+			if (imageurl !==""){ //avoid endless loop.  
+				addImage("", 1);	//add a default image.
+			}
+		});	
 
-		})
-	
-		var lastPart = midiurl.split("/").pop();
-		analyzeurl = "analyze/kk_" + lastPart;
-		analyzeurl = analyzeurl.replace(".mid", ".png");
-		console.log(analyzeurl);
-		url = storageRef.child(analyzeurl).getDownloadURL()
-		.then((url) => {
-		addImage(url);
-		})
-
-		var lastPart = midiurl.split("/").pop();
-		analyzeurl = "analyze/ks_" + lastPart;
-		analyzeurl = analyzeurl.replace(".mid", ".png");
-		console.log(analyzeurl);
-		url = storageRef.child(analyzeurl).getDownloadURL()
-		.then((url) => {
-		addImage(url);
-		})
-
-		var lastPart = midiurl.split("/").pop();
-		analyzeurl = "analyze/ks2_" + lastPart;
-		analyzeurl = analyzeurl.replace(".mid", ".png");
-		console.log(analyzeurl);
-		url = storageRef.child(analyzeurl).getDownloadURL()
-		.then((url) => {
-		addImage(url);
-		})
-	}	
 }
 
-function getTranscript(desc){
- var tempDiv = $('#transcript');
- var tempDiv2 = $('#transcriptsh');
- //find in notes array the TRANSCRIPT:
- //gsutil cors set cors.json gs://misterrubato-test.appspot.com
- let tposition = desc.indexOf("TRANSCRIPT:");
- if (tposition > -1){
-    eposition = desc.indexOf('\n', tposition);
-	if (eposition > -1){
-    	url = desc.substring(tposition+11, eposition);
-	}
-	else {
-		url = desc.substring(tposition+11);
-	}
-	if (url.trim() !== "error"){
-		tempDiv.load(url, function(){
-			createTranscriptArray();
-		});
-		tempDiv2.load(url, function(){
-			tempDiv2.html(makeTimeLinks(tempDiv2.html()));
-		});
-	}
- }
-}
-
-function makeTimeLinks(desc){
-    desc = desc.replaceAll("\n", "<br>");
-//    desc = desc.replace(")", ")<br>");
-	const regExp = /\(([^)]+)\)/g;
-	regExp2 = /\d+\:\d\d?/g;
-    const matches = [...desc.matchAll(regExp2)].flat();
-	for (i=0; i<matches.length; i++){
-	    secs = getSecsFromTime(matches[i]);
-		if (secs > 0){
-    		desc = desc.replace(matches[i], '<a href="#" onclick="seekTo(' + secs + ');">' + matches[i] + '</a>');
-		}
-
-	}
-//    console.log(matches);
-	return desc;
-}
 
 function getVideoJson(videoid){
 	

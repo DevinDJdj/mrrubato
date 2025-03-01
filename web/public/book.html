@@ -283,6 +283,13 @@ Load any speech from this time.
             <br>
             <textarea id="mycomments" style="display:none" rows="10" cols="45"></textarea>
             <div id="mycommentsh" style="height: 190px;overflow:auto;"></div>    
+            <div id="submit" valign="top">
+              <label for="points">Score:</label>
+                <input type="range" id="points" name="points" min="0" max="10" value="1" />
+              <button type="button" onclick="saveFeedback()">Update</button>
+              <button type="button" onclick="resetFeedback()">Reset Feedback</button>
+            </div>
+          
         </td>
         </tr>
       </table>
@@ -553,8 +560,8 @@ Load any speech from this time.
                     <div id="chat_table"  style="overflow:scroll;">
                     <table id="ChatTable">
                     <tr id="templateRow">
-                    <td>id</td>
-                    <td>query</td>
+                    <td style="display:none">id</td>
+                    <td style="display:none">query</td>
                     <td>AI Response</td>
                     <td>Sources</td>
                     </tr>
@@ -848,7 +855,6 @@ Load any speech from this time.
 <script>
     player2 = document.getElementById("my-video");
     
-    var querydate = null;
 
     var video = 'WftD98XXHB0';
     var starttimes = [];
@@ -1499,6 +1505,8 @@ function ChatLocalDone(answer){
     console.log('response  ' + answer);
     chathistory[chathistory.length-1].answer = answer; //set answer to previous query.  
 
+    //dont actually want this in the comment.  
+//    FUNCS.SPEECH.addComment("==" + answer, FUNCS.SPEECH.helpme());
     //add to message context.  
     //messages.push({ role: "assistant", content: answer });
     //further queries dont need to contain all the same info.  
