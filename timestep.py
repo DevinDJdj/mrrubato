@@ -292,11 +292,12 @@ def respondtoComments(args):
     #should be a separate port/server config.  
     localserver = config.cfg['localserver']['host'] + ":" + str(config.cfg['localserver']['port']-1)
     qas = []
+    servererrorcnt = 0
     for item in results["items"]:
 #        threadid = item["id"]
         comment = item["snippet"]["topLevelComment"]
         numreplies = item["snippet"]["totalReplyCount"]
-        if numreplies < 1:
+        if numreplies < 1 and servererrorcnt < 3: #dont keep banging on the door when server is down.
             vidid = item["snippet"]["videoId"]
             commentid = comment["id"]
             author = comment["snippet"]["authorDisplayName"] #cant get userID
@@ -322,6 +323,7 @@ def respondtoComments(args):
 #                insert_comment(youtube, channel_id, vidid, commentid, mycomment)
             except Exception as e:
                 print('error using ollama ' + vidid + ' ' + str(e))
+                servererrorcnt += 1
 
     if (len(qas) > 0):
         today = date. today()
@@ -444,6 +446,7 @@ if __name__ == '__main__':
     
     adminuid = config.cfg['youtube']['ADMIN_USERID']
     
+    servererrorcnt = 0
     #need to sort by date.  
     for key, item in ref:
 #    for item in reversed(data["items"]):
@@ -577,7 +580,7 @@ if __name__ == '__main__':
             if (((privacystatus=="unlisted" and transcript_file=="error")) and "transcript" not in item and pDate.date() > mydate):
                 reftranscript = db.reference(f'/misterrubato/' + videoid + '/transcript')
                 reftr = reftranscript.get()
-                if reftr is None:
+                if reftr is None and servererrorcnt < 5: #dont keep banging on the door when server is down.  
                     #http://192.168.1.120/transcribe/?videoid=ZshYVeNHkOM
                     #LAk9aL9uBcg, gMlt5CRj6-0, RKRHigZ-PUM, why is transcribe_whisper failing again?  
                     #need to use http or https as necessary
@@ -612,6 +615,7 @@ if __name__ == '__main__':
                             print('transcript error' + videoid)
                     except:
                         print('error using transcript service' + videoid)
+                        servererrorcnt += 1
 
             if ((privacystatus=="public" or privacystatus=="unlisted") and pDate.date() < mydate ):
                 print(videoid)

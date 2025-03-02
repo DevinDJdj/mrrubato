@@ -455,3 +455,9 @@ Have to add the result to status perhaps for now based on current frame?
 many changes.  
 
 
+**timestep.py
+--Add spin up / spin down of backend.  
+And wait...
+Then we get some transcriptions if there is available hardware at the time of timestep.py
+
+> python ./git/clone.py --all "true"

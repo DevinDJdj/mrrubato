@@ -26,7 +26,10 @@ function saveFeedback(){
 
 
 			//get chat history here.  
-			let chatted = getChatHistory();
+			let chatted = ""
+            if (typeof(getChatHistory) !== "undefined"){
+                chatted = getChatHistory();
+            }
 			obj = {"comments": mycomments, "chatted": chatted, "sentiment": grade, "midi": midifeedback, "updated": strdate };
 			uRef.set(obj);
 
@@ -413,11 +416,13 @@ function getMidi(desc){
    function addImages(ims, storageRef){
     //in case we have \r\n
     removeAllChildren("images");
+
+
     for (i=0; i< ims.length; i++){
         let im = ims[i];
         im = im.replace("\r", "");
         // Create a storage reference from our storage service
-        addImage(im, storageRef, 1);
+        addImage(im, storageRef, (i==0)? 1 : 0);
 
     }
 
@@ -469,7 +474,7 @@ function getMidi(desc){
         ims = [];
 
         im = "analyze/" + lastPart;
-        im = im.replace(".mid", ".png");
+        im = im.replace(".mid", ".jpg");
         ims.push(im);
 
         im = "analyze/kk_" + lastPart;

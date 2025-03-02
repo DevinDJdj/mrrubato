@@ -6,6 +6,20 @@ var chatmessages = [];
 var reading = false;
 var chathistory = []; //keep history/transcript.  
 
+
+function getChatHistory(){
+
+    //string representation of chat history.  
+    let res = "";
+    for (i=0; i<chathistory.length; i++){    
+        res += "===\n";
+        res += chathistory[i].query + "\n";
+        res += chathistory[i].answer + "\n";
+        res += "====\n";
+    }
+    return res;
+}
+
 function replaceLinksWithLastElement(str) {
     const linkRegex = /https?:\/\/[^\s"]+/g;
     return str.replace(linkRegex, (match) => {

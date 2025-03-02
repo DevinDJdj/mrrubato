@@ -1168,9 +1168,10 @@ function loadCanvas(id, pianoimg, mini="") {
 }
 	
 function addImage(imageurl, stor, type=0){
+//	console.log(imageurl);
 	url = stor.child(imageurl).getDownloadURL()
 		.then((url) => {
-			console.log("SRC url:" + url);
+			console.log( type + " SRC url:" + url);
 			var mydiv = document.getElementById("images");
 			if (type > 0){
 				mydiv = document.getElementById("pianoroll");
@@ -1187,7 +1188,7 @@ function addImage(imageurl, stor, type=0){
 		.catch((error) => {			
 			console.log(error);
 			if (imageurl !==""){ //avoid endless loop.  
-				addImage("", 1);	//add a default image.
+				addImage("", stor, type);	//add a default image.
 			}
 		});	
 

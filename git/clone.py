@@ -120,16 +120,20 @@ def cloneme(giturl, gitbranch, gitbook):
     print("downloaded " + str(numdownloaded))
 
 
-def clonegit(giturl, gitbranch):
+def clonegit(gitcloneurl, gitbranch):
     
     #clone project to temp folder and upload each file to firebase.  
-    outdir = 'c:/devinpiano/music/git/output/' + giturl[ giturl.find("repos/")+6 :]  + "_" + gitbranch
-    cmd = 'git clone  ' + giturl + ' --single-branch --branch ' + gitbranch + ' ' + outdir
+    outdir = 'c:/devinpiano/music/git/output/' + gitcloneurl[ gitcloneurl.find("github.com/")+11 :]  + "_" + gitbranch
+    cmd = 'git clone  ' + gitcloneurl + ' --single-branch --branch ' + gitbranch + ' ' + outdir
+    print(cmd)
     subprocess.call(cmd, shell=True)
+    #when completed upload to firebase same check if size different.  
+
 
 
 if __name__ == '__main__':
     argparser.add_argument("--url", help="GIT URL", default=config.cfg['git'][0]['url'])
+    argparser.add_argument("--cloneurl", help="GIT CLONE URL", default=config.cfg['git'][0]['cloneurl'])
     argparser.add_argument("--branch", help="GIT BRANCH", default=config.cfg['git'][0]['branch'])
     argparser.add_argument("--book", help="GIT BOOK", default=config.cfg['git'][0]['book'])
     argparser.add_argument("--all", help="CLONE ALL", default="false")
@@ -158,7 +162,7 @@ if __name__ == '__main__':
         print(config.cfg['git'])
         for g in config.cfg['git']:
             cloneme(g['url'], g['branch'], g['book'])
-            clonegit(g['url'], g['branch'])
+            clonegit(g['cloneurl'], g['branch'])
     else:
         cloneme(giturl, gitbranch, gitbook)
     #print(gitbook)
