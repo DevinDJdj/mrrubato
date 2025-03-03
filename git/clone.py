@@ -17,6 +17,7 @@ import os
 import sys
 import math
 
+import glob
 sys.path.insert(0, 'c:/devinpiano/music/')
 
 import config 
@@ -128,7 +129,44 @@ def clonegit(gitcloneurl, gitbranch):
     print(cmd)
     subprocess.call(cmd, shell=True)
     #when completed upload to firebase same check if size different.  
+    numuploaded = 0
+    numchecked = 0
+    for filename in glob.iglob(outdir + '**/**', recursive=True):
+        numchecked += 1
+        upload = False
+        print(filename)
+        repopath = filename[ filename.find("output/")+7 : ]
+        repopath = repopath.replace("\\", "/")
+        ref = db.reference(f'/git/' + repopath)
+        refg = ref.get()
+        numchecked += 1
+        size = os.path.getsize(filename)
+        if (refg is not None):
+            #update contents
+            #print("already exists " + page["download_url"])            
+            #print(refb["size"])
+            if (refg["size"] !=size):
+               upload=True
 
+        else:
+            upload = True
+
+        if upload:
+            numuploaded += 1            
+            print("uploading " + filename)
+            content = None
+            with open(filename, "r") as file:
+                content = file.read()
+
+            myfile = {"content": content, "size": size}
+
+            #add to DB or update in DB
+            refg.set(myfile)
+            print("Added to DB " + filename)        
+
+    print("clone " + gitcloneurl + " done")
+    print("checked " + str(numchecked)) 
+    print("uploaded " + str(numuploaded))
 
 
 if __name__ == '__main__':
