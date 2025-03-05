@@ -1,6 +1,60 @@
 //should combine with updateVideo afterward.  
 //not sure if the struct should be uid / comments, or comments /uid
 
+var mytitle = '';
+
+function getNetwork(lang){
+    //if KNN for this lang exists, load it.  
+    return null;
+}
+
+function getClassifierDB(lang){
+    //if exists in DB.  
+    classifierDB = new classifierDB(lang);
+    return classifierDB
+}
+
+function saveClassificationImages(video){
+
+    findWordsA(currentmidiuser);
+    for (const [lang, value] of Object.entries(wordtimes)) {
+
+        //should classification network be per language?  
+        //perhaps...
+        let net = getNetwork(lang); //really want to get NN here.  
+        let classDB = getClassifierDB(lang);
+
+        vs = new VideoSnapper(); //associate with language?  
+        const body = document.body;
+        for (const [word, times] of Object.entries(value)) {                
+            //console.log("WORD: " + word + " " + times);
+
+            //prefDB
+
+
+
+            let frames = vs.buildFrames(video, times, word, lang);
+            let classifiers = vs.getClassifiers(frames, video, 10);
+            for (c in classifiers) {
+                //eventually this should be in some DIV which is reviewable and not end of document.  
+                console.log("LANG: " + c['lang'] + ' WORD: ' + c['word']);
+                const headerText = document.createTextNode("LANG: " + c['lang'] + ' WORD: ' + c['word']);
+                body.appendChild(headerText);
+                console.log("Frame: " + c['img']);
+                const img = new Image();
+                img.src = c['img'];
+                //first show in image div.  
+                body.appendChild(img);
+                //add to DB.  with video info, title, lang, word and classification image.  
+//                classDB.saveScreenshot(video, c['lang'], c['word'], currentmidiuser, mytitle, c['time'], c['img']);
+
+            }
+
+        }
+    }        
+
+}
+
 function saveFeedback(){
 	//get authuid.  
 	//getref to uid
@@ -39,6 +93,9 @@ function saveFeedback(){
 				obj = {"transcript": transcript, "updated": strdate };
 				tRef.set(obj);
 			}
+
+            //save words associated with this video.  
+            saveClassificationImages(video);
 		}
 		else{
 			console.log(video + " Not in DB.  Adding watch comments");
@@ -127,6 +184,7 @@ function getIterations(desc, vidtime, isme=false){
 		myet.push(et[0]);
 	}
 	else{
+        mytitle = desc.split('\n')[0];
 		for (i=1; i< 20; i++){
 			s = -1;
 			e = -1;

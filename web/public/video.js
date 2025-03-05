@@ -500,22 +500,33 @@ var VideoSnapper = {
    * @param {Object} options = width of screen, height of screen, time to seek
    * @param {Function} handle function with canvas element in param
    */
-  constructor() {
+  constructor(knn=null) {
     // Initiate variables
     this.infoTexts = [];
     this.training = -1; // -1 when no class is being trained
     this.videoPlaying = false;
+    this.classes = {};
 
     // Initiate deeplearn.js math and knn classifier objects
-    this.bindPage();
+    this.bindPage(knn);
 
     // Create video element that will contain the webcam image
     this.video = document.getElementById('myvideocanvas');
   },
 
-  async bindPage() {
-    this.knn = knnClassifier.create();
-    this.mobilenet = await mobilenetModule.load();
+  async bindPage(knn=null, mobilenet=null) {
+    if (knn == null){
+      this.knn = knnClassifier.create();
+    }
+    else{
+      this.knn = knn;
+    }
+    if (mobilenet == null){
+      this.mobilenet = await mobilenetModule.load();
+    }else{
+      this.mobilenet = mobilenet;
+    }
+
 
   },
 
@@ -556,45 +567,69 @@ var VideoSnapper = {
       return callback.apply(video);
   },
 
+
+  buildFrames: function(video, times, word, lang){
+    var frames = [];
+    let x = 0;
+    let y = 0;
+    let width = video.videoWidth;
+    let height = video.videoHeight;
+
+    if (lang=="base"){ //just taking ~ piano portion of the output.  
+      y = Math.round(height*0.8);
+      height = Math.round(height*0.2);
+    }
+    for (var i = 0; i < times.length; i++){
+      frames.push({x: x, y: y, width: width, height: height, time: times[i], classId: word, lang: lang, word: word});
+    }
+    return frames;
+
+  },
   //frameXY[{x: 0, y: 0, time: 0, classId/word or wordhash: 0}, ...]
   //for each word, gets called from findWordsA... or similar.  
   //parameters will be based on the word.  For now just use case either keys or user or full frame.  
-  getClassifiers: function(frameXY, width, height, video, numframes =1) {
+  getClassifiers: function(frameXY, video, numframes =1) {
 
+    retclassifiers = [];
     var combinedcanvas = document.getElementsByName('myvideocanvas');
     var vertical = true;
-    if (width>height){
+    let framerate = 33; //30 fps.  
+    if (numframes < 1){
+      return null;
+    }
+    if (frameXY[0].width>frameXY[0].height){
       //vertical addition
-      combinedcanvas.width = width;
-      combinedcanvas.height = frameXY.length*height;
+      combinedcanvas.width = frameXY[0].width;
+      combinedcanvas.height = numframes*frameXY[0].height;
     }
     else{
       //horizontal addition
       vertical = false;
-      combinedcanvas.width = frameXY.length*width;
-      combinedcanvas.height = height;
+      combinedcanvas.width = numframes*frameXY[0].width;
+      combinedcanvas.height = frameXY[0].height;
 
     }
     for (var i = 0; i < frameXY.length; i++) {
 
       for (var j = 0; j < numframes; j++) {
-        this.captureAsCanvas(video, { x: frameXY["x"], y: frameXY["y"], width: width, height: height, time: frameXY["time"]+j*framerate }, function(canvas) {
+        this.captureAsCanvas(video, { x: frameXY[i]["x"], y: frameXY[i]["y"], width: frameXY[i]["width"], height: frameXY[i]["height"], time: frameXY[i]["time"]+j*framerate }, function(canvas) {
 
           const ctx = combinedcanvas.getContext('2d');
           if (vertical) {
-            ctx.drawImage(canvas, 0, i*height, width, height);
+            ctx.drawImage(canvas, 0, j*frameXY[i]["height"], frameXY[i]["width"], frameXY[i]["height"]);
           }
           else{
-            ctx.drawImage(canvas, i*width, 0, width, height);
+            ctx.drawImage(canvas, j*frameXY[i]["width"], 0, frameXY[i]["width"], frameXY[i]["height"]);
           }
             
           if (j == numframes - 1){
             //this is where we have the completed image with all frames.
             //save to DB or other location.  
-            var img = new Image();
-            img.src = combinedcanvas.toDataURL();
-            
-            addExample(frameXY["classId"]);
+            var imgURL = combinedcanvas.toDataURL();
+
+            var obj = {img: imgURL, lang: frameXY[i]["lang"], word: frameXY[i]["word"], time: frameXY[i]["time"]};
+            retclassifiers.push(obj);
+            addExample(frameXY[i]["classId"]);
 
           } 
         });
@@ -602,11 +637,24 @@ var VideoSnapper = {
 
 
     }
+    return retclassifiers;
   }, 
 
 
   addExample: function(classId=-1) {
-    const image = tf.fromPixels(this.video);
+    //const image = tf.fromPixels(this.video);
+
+    if (typeof(this.classes[classId]) == 'undefined'){
+      this.classes[classId] = 0;
+    }
+    else{
+      //counting all the classes.  
+      this.classes[classId] += 1;
+    }
+    const canvas = document.getElementById('myvideocanvas');
+    const ctx = canvas.getContext('2d');
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const image = tf.fromPixels(imageData);
 
     let logits;
     // 'conv_preds' is the logits activation of MobileNet.

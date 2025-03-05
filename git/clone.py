@@ -121,6 +121,19 @@ def cloneme(giturl, gitbranch, gitbook):
     print("downloaded " + str(numdownloaded))
 
 
+def is_binary_file(file_path):
+    try:
+        with open(file_path, 'rb') as file:
+            chunk = file.read(1024)
+            if b'\x00' in chunk:
+                return True
+            text_characters = b''.join(
+                bytes([i]) for i in range(32, 127)
+            ) + b'\n\r\t\b'
+            return not all(byte in text_characters for byte in chunk)
+    except Exception:
+        return True
+    
 def clonegit(gitcloneurl, gitbranch):
     
     #clone project to temp folder and upload each file to firebase.  
@@ -132,37 +145,43 @@ def clonegit(gitcloneurl, gitbranch):
     numuploaded = 0
     numchecked = 0
     for filename in glob.iglob(outdir + '**/**', recursive=True):
-        numchecked += 1
-        upload = False
-        print(filename)
-        repopath = filename[ filename.find("output/")+7 : ]
-        repopath = repopath.replace("\\", "/")
-        ref = db.reference(f'/git/' + repopath)
-        refg = ref.get()
-        numchecked += 1
-        size = os.path.getsize(filename)
-        if (refg is not None):
-            #update contents
-            #print("already exists " + page["download_url"])            
-            #print(refb["size"])
-            if (refg["size"] !=size):
-               upload=True
+        if os.path.isfile(filename):
+            numchecked += 1
+            upload = False
+            print(filename)
+            repopath = filename[ filename.find("output/")+7 : ]
+            repopath = repopath.replace("\\", "/")
+            repopath = repopath.replace(".", "_")  #annoying we cant use original format.
+            refgit = db.reference(f'/git/' + repopath)
+            refg = refgit.get()
+            numchecked += 1
+            size = os.path.getsize(filename)
+            if (refg is not None):
+                #update contents
+                #print("already exists " + page["download_url"])            
+                #print(refb["size"])
+                if (refg["size"] !=size):
+                    upload=True
 
-        else:
-            upload = True
+            else:
+                upload = True
 
-        if upload:
-            numuploaded += 1            
-            print("uploading " + filename)
-            content = None
-            with open(filename, "r") as file:
-                content = file.read()
+            if upload:
+                if (is_binary_file(filename)):
+                    #skip zip files
+                    print("skipping binary " + filename)
+                else:
+                    numuploaded += 1            
+                    print("uploading " + filename)
+                    content = None
+                    with open(filename, "r", encoding="utf-8") as file:
+                        content = file.read()
 
-            myfile = {"content": content, "size": size}
+                    myfile = {"content": content, "size": size}
 
-            #add to DB or update in DB
-            refg.set(myfile)
-            print("Added to DB " + filename)        
+                    #add to DB or update in DB
+                    refgit.set(myfile)
+                    print("Added to DB " + filename)        
 
     print("clone " + gitcloneurl + " done")
     print("checked " + str(numchecked)) 

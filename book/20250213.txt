@@ -461,3 +461,47 @@ And wait...
 Then we get some transcriptions if there is available hardware at the time of timestep.py
 
 > python ./git/clone.py --all "true"
+Why did we want to clone this?  
+Easier to search for func names, etc.  
+Then no need to search through git API.  
+Potential for further in-depth analysis.  
+General use of firebase as clone.  
+Use API for commits and history.  
+
+--OK, clone to FB DB seems to work ok.  
+
+Now we can load and search within git.js
+Download to local and then use search from local indexdb.  
+
+Hmmm, cant use "." in the name.  FirebaseDB limitation.  
+Not sure underscore "_" is best substitute.  
+
+
+**web/public/feedback.js
+Kick off the function to save images to DB for ImageClassifier.  
+
+**web/public/video.js
+--VideoSnapper
+
+put into classifierDB
+lang/word -> image data.  
+Do we want separate classifier for each language, I think yes.  
+How do we save/load the model.  
+Then we dont have to store all the images and regenerate the model each time.  
+
+
+Perhaps use the same classifier to make a timeMap.  
+what is the most likely location in the topic iteration based on image.  
+MIDI will be better to detect this, but could play with video first.  
+Can use same 10 key frames etc.  
+
+
+**web/public/page.html
+Allow for traversal through graph.  
+Update Code Window and book window.  
+For now get recent videos as well.  
+
+Depending too much perhaps on indexdb.  
+But it is so convenient...
+
+

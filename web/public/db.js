@@ -14,6 +14,32 @@ function addUser(user){
 }
 
 
+class classifierDB{
+	constructor(lang=""){
+		this.db = new Dexie("classDB");
+		this.lang = lang;
+		this.ftsindex = FlexSearch.Index({});
+
+		this.db.version(1).stores({
+			examples: "++id,lang,word,user,topic,vid,timestamp", //imagedata.  
+
+		});
+	}
+
+	saveScreenshot(vidid, lang, word, user, topic, timestamp, imgblob, cb=null){
+		var obj = {"vid": vidid, "timestamp": timestamp, "imgblob": imgblob, "lang": lang, "word": word, "user": user};
+		this.db.screenshots.add(obj).then((id) => {
+			console.log("added screenshot with id " + id);
+			this.ftsindex.add(vidid + "_" + id, word);
+			if (cb != null){
+				cb(id); //callback to complete.  
+			}
+		});
+	}
+
+
+}
+
 class codeGraphDB {
 	constructor(){
 		this.db = new Dexie("codeGraphDB");
