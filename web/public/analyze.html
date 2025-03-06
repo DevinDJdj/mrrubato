@@ -43,12 +43,16 @@
   <table>
   <tr>
   <td>
-<div id="vidinfo" valign="top"></div>
+	<div id="tempcanvasdiv">
+	<canvas id="tempcanvas" width="640" height="360">Your browser does not support the HTML5 canvas tag.</canvas>
+	</div>
+	<div id="vidinfo" valign="top"></div>
 	<div id="player" valign="top"></div>
 
 <canvas id="myvideocanvas" width="640" height="360" style="display: none">Your browser does not support the HTML5 canvas tag.</canvas>
 <video
 id="my-video"
+crossorigin="anonymous"
 class="video-js"
 preload="auto"
 controls
@@ -293,6 +297,8 @@ data-setup="{}"
 </tr>
 <tr><td>
 <div id="images" style="display: flex;"></div>	
+
+
 </td>
 </tr>
 </table>  
@@ -349,6 +355,10 @@ var seek = -1;
 
 <script type="text/javascript" src="clock.js"></script>
 <script type="text/javascript" src="midi.js"></script>
+
+<!-- indexeddb -->
+<script src="https://unpkg.com/dexie/dist/dexie.js"></script>
+<!-- local search -->
 <script type="text/javascript" src="js/flexsearch/flexsearch.bundle.min.js"></script>
 <script type="text/javascript" src="db.js"></script>
 <script src="js/drawkeyboard.js"></script>

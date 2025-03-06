@@ -504,4 +504,8 @@ For now get recent videos as well.
 Depending too much perhaps on indexdb.  
 But it is so convenient...
 
+**web/public/video.js
+**web/public/feedback.js
+maybe adding of image class is working.  
+
 

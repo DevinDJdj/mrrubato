@@ -488,11 +488,27 @@ function setVideoVolume(volume){
 
 }
 
-   
+
+async function timeoutPromise(delay, val) {
+    try {
+      const promise = new Promise((resolve) => {
+        setTimeout(() => {
+          resolve(val);
+        }, delay);
+      });
+  
+      const value = await promise;
+      console.log(value); // Output: "Promise resolved!"
+      return value;
+    } catch (error) {
+      console.error("Error:", error);
+      throw error;
+    }
+  }
 
 
 
-var VideoSnapper = {
+class VideoSnapper {
     
   /**
    * Capture screen as canvas
@@ -506,94 +522,69 @@ var VideoSnapper = {
     this.training = -1; // -1 when no class is being trained
     this.videoPlaying = false;
     this.classes = {};
+    this.canvases = {};
 
     // Initiate deeplearn.js math and knn classifier objects
     this.bindPage(knn);
 
     // Create video element that will contain the webcam image
-    this.video = document.getElementById('myvideocanvas');
-  },
+    this.player = document.getElementById('my-video');
+  }
 
-  async bindPage(knn=null, mobilenet=null) {
+  async bindPage(knn=null, mnet=null) {
     if (knn == null){
       this.knn = knnClassifier.create();
     }
     else{
       this.knn = knn;
     }
-    if (mobilenet == null){
-      this.mobilenet = await mobilenetModule.load();
+    if (mnet == null){
+      this.mnet = await mobilenet.load();
     }else{
-      this.mobilenet = mobilenet;
+      this.mnet = mnet;
     }
 
 
-  },
-
-  captureAsCanvas: function(video, options, handle) {
-  
-      // Create canvas and call handle function
-      var callback = function() {
-          // Create canvas
-          var canvas = $('<canvas />').attr({
-              width: options.width,
-              height: options.height
-          })[0];
-          // Get context and draw screen on it
-          canvas.getContext('2d').drawImage(video, options.x, options.y, options.width, options.height);
-          // Seek video back if we have previous position 
-          if (prevPos) {
-              // Unbind seeked event - against loop
-              $(video).unbind('seeked');
-              // Seek video to previous position
-              video.currentTime = prevPos;
-          }
-          // Call handle function (because of event)
-          handle.call(this, canvas);    
-      }
-
-      // If we have time in options 
-      if (options.time && !isNaN(parseInt(options.time))) {
-          // Save previous (current) video position
-          var prevPos = video.currentTime;
-          // Seek to any other time
-          video.currentTime = options.time;
-          // Wait for seeked event
-          $(video).bind('seeked', callback);              
-          return;
-      }
-      
-      // Otherwise callback with video context - just for compatibility with calling in the seeked event
-      return callback.apply(video);
-  },
+  }
 
 
-  buildFrames: function(video, times, word, lang){
+  buildFrames(video, times, word, lang){
     var frames = [];
     let x = 0;
     let y = 0;
-    let width = video.videoWidth;
-    let height = video.videoHeight;
+    let width = 640;
+    let height = 360;
+    let wh = [player2.videoWidth, player2.videoHeight];
+    if (wh[0] > 0){
+      width = wh[0];
+    }
+    if (wh[1] > 0){
+      height = wh[1];
+    }
+
+
+
 
     if (lang=="base"){ //just taking ~ piano portion of the output.  
       y = Math.round(height*0.8);
       height = Math.round(height*0.2);
     }
     for (var i = 0; i < times.length; i++){
+      times[i] /= 1000;
       frames.push({x: x, y: y, width: width, height: height, time: times[i], classId: word, lang: lang, word: word});
     }
     return frames;
 
-  },
+  }
   //frameXY[{x: 0, y: 0, time: 0, classId/word or wordhash: 0}, ...]
   //for each word, gets called from findWordsA... or similar.  
   //parameters will be based on the word.  For now just use case either keys or user or full frame.  
-  getClassifiers: function(frameXY, video, numframes =1) {
+  getClassifiers(frameXY, video, numframes =1) {
 
-    retclassifiers = [];
-    var combinedcanvas = document.getElementsByName('myvideocanvas');
+    let retclassifiers = [];
+    var combinedcanvas = document.getElementById('tempcanvas');
     var vertical = true;
-    let framerate = 33; //30 fps.  
+    let framerate = 0.33; //30 fps.  
     if (numframes < 1){
       return null;
     }
@@ -609,39 +600,114 @@ var VideoSnapper = {
       combinedcanvas.height = frameXY[0].height;
 
     }
+
+    var seekcallback = function(options) {
+      // Create canvas
+      seeking = false;
+
+      let canvas = $('<canvas />').attr({
+          id: 'tempcanvas' + options.frameNo,
+          width: options.width,
+          height: options.height
+      })[0];
+
+      
+      // Get context and draw screen on it
+      canvas.getContext('2d').drawImage(player2, options.x, options.y, options.width, options.height, 0, 0, options.width, options.height);
+
+      let idx = options.frameNo;
+      let tempdiv = document.getElementById('tempcanvasdiv');
+      let tempcanvas = canvas;//document.getElementById('tempcanvas' + opts.id);
+      const headerText = document.createTextNode("LANG: " + frameXY[options.id].lang + ' WORD: ' + frameXY[options.id].word + ' TIME: ' + options.time);
+      tempdiv.appendChild(headerText);
+      tempdiv.appendChild(tempcanvas);
+      let cc = document.getElementById('tempcanvas');
+      const ctx = cc.getContext('2d');
+      if (vertical) {
+        ctx.drawImage(tempcanvas, 0, options.frameNo*options.height, options.width, options.height);
+      }
+      else{
+        ctx.drawImage(tempcanvas, options.frameNo*options.width, 0, options.width, options.height);
+      }
+        
+      if (options.frameNo == numframes - 1){
+        //this is where we have the completed image with all frames.
+        //save to DB or other location.  
+        let cc = document.getElementById('tempcanvas');
+        var imgURL = cc.toDataURL();
+
+        var obj = {img: imgURL, lang: frameXY[options.id].lang, word: frameXY[options.id].word, time: options.time};
+        let img = new Image();
+        img.src = imgURL;
+        tempdiv.appendChild(img);
+        retclassifiers.push(obj);
+
+
+      } 
+      
+      // Seek video back if we have previous position 
+  };
+
+    var allops = [];
     for (var i = 0; i < frameXY.length; i++) {
 
       for (var j = 0; j < numframes; j++) {
-        this.captureAsCanvas(video, { x: frameXY[i]["x"], y: frameXY[i]["y"], width: frameXY[i]["width"], height: frameXY[i]["height"], time: frameXY[i]["time"]+j*framerate }, function(canvas) {
+        if (seeking){
+          sleep(2000);
+        }
 
-          const ctx = combinedcanvas.getContext('2d');
-          if (vertical) {
-            ctx.drawImage(canvas, 0, j*frameXY[i]["height"], frameXY[i]["width"], frameXY[i]["height"]);
-          }
-          else{
-            ctx.drawImage(canvas, j*frameXY[i]["width"], 0, frameXY[i]["width"], frameXY[i]["height"]);
-          }
-            
-          if (j == numframes - 1){
-            //this is where we have the completed image with all frames.
-            //save to DB or other location.  
-            var imgURL = combinedcanvas.toDataURL();
 
-            var obj = {img: imgURL, lang: frameXY[i]["lang"], word: frameXY[i]["word"], time: frameXY[i]["time"]};
-            retclassifiers.push(obj);
-            addExample(frameXY[i]["classId"]);
+        
+        seeking = true;
 
-          } 
-        });
+       
+        let ops = { id: i, x: frameXY[i].x, y: frameXY[i].y, width: frameXY[i].width, height: frameXY[i].height, time: frameXY[i].time+j*framerate, frameNo: j };
+
+        allops.push(ops);
+
+
+        //ok this is closer, why do I need to do this?  
+//      player2.currentTime = ops.time;
+
+
       }
 
 
     }
+
+    for (var i = 0; i < allops.length; i++){
+      console.log(allops[i]);
+      let ops = allops[i];
+      setTimeout(() => {
+        player2.onseeked = function() { 
+          console.log(ops);
+          seekcallback(ops);
+        };
+        console.log("seeking to " + ops.time);
+        seekVideo(ops.time);
+      }, i*1000);
+  }
     return retclassifiers;
-  }, 
+  }
 
 
-  addExample: function(classId=-1) {
+  addExampleComplete(image, classId){
+
+    let logits;
+    // 'conv_preds' is the logits activation of MobileNet.
+    const infer = () => this.mnet.infer(image, 'conv_preds');
+
+    // Train class if one of the buttons is held down
+    if (classId != -1) {
+      logits = infer();
+
+      // Add current image to classifier
+      this.knn.addExample(logits, classId);
+    }
+
+  }
+
+  addExample(classId=-1, imgURL="") {
     //const image = tf.fromPixels(this.video);
 
     if (typeof(this.classes[classId]) == 'undefined'){
@@ -651,23 +717,17 @@ var VideoSnapper = {
       //counting all the classes.  
       this.classes[classId] += 1;
     }
-    const canvas = document.getElementById('myvideocanvas');
-    const ctx = canvas.getContext('2d');
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const image = tf.fromPixels(imageData);
-
-    let logits;
-    // 'conv_preds' is the logits activation of MobileNet.
-    const infer = () => this.mobilenet.infer(image, 'conv_preds');
-
-    // Train class if one of the buttons is held down
-    if (classId != -1) {
-      logits = infer();
-
-      // Add current image to classifier
-      this.knn.addExample(logits, classId);
+    let img = new Image();
+    img.src = imgURL;
+    img.onload = function(){
+      const canvas = document.getElementById('tempcanvas');
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const image = tf.fromPixels(imageData);
+      addExampleComplete(image, classId);
     }
   }
 
-};
+}
 

@@ -49,6 +49,7 @@ var output = document.getElementById("clock");
 var secondselapsed = document.getElementById("secondselapsed");
 startc = moment();
 var se;
+var seeking = false;
 setInterval(
 se = function() {
     endc = moment();
@@ -73,4 +74,8 @@ function getSecsFromTime(time){
 //	console.log(+parseInt(minsec[0])*60 + +parseInt(minsec[1]));
 	return +parseInt(minsec[0])*60 + +parseInt(minsec[1]);
 	
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }

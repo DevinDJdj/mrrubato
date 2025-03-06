@@ -10,11 +10,11 @@ function getNetwork(lang){
 
 function getClassifierDB(lang){
     //if exists in DB.  
-    classifierDB = new classifierDB(lang);
-    return classifierDB
+    classDB = new classifierDB(lang);
+    return classDB
 }
 
-function saveClassificationImages(video){
+async function saveClassificationImages(video){
 
     findWordsA(currentmidiuser);
     for (const [lang, value] of Object.entries(wordtimes)) {
@@ -34,21 +34,15 @@ function saveClassificationImages(video){
 
 
             let frames = vs.buildFrames(video, times, word, lang);
-            let classifiers = vs.getClassifiers(frames, video, 10);
-            for (c in classifiers) {
+            let classifiers = await timeoutPromise(times.length*12000, vs.getClassifiers(frames, video, 10));
+            classifiers.forEach(c => {
                 //eventually this should be in some DIV which is reviewable and not end of document.  
-                console.log("LANG: " + c['lang'] + ' WORD: ' + c['word']);
-                const headerText = document.createTextNode("LANG: " + c['lang'] + ' WORD: ' + c['word']);
-                body.appendChild(headerText);
-                console.log("Frame: " + c['img']);
-                const img = new Image();
-                img.src = c['img'];
-                //first show in image div.  
-                body.appendChild(img);
+                console.log("LANG: " + c.lang + ' WORD: ' + c.word);
+				vs.addExample(c.word, c.img);				
                 //add to DB.  with video info, title, lang, word and classification image.  
 //                classDB.saveScreenshot(video, c['lang'], c['word'], currentmidiuser, mytitle, c['time'], c['img']);
 
-            }
+            });
 
         }
     }        
