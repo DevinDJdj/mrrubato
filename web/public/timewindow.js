@@ -73,6 +73,38 @@ function groupFromName(g){
     */
 }
 
+
+//hide groups..
+function hideGroups(){
+    let  allGroupIds = vgroups.getIds();
+    let temp = asSequence(allGroupIds);
+    //custom criteria
+    if(condition1)
+        temp = temp.filter(it => !it.startsWith("Test"));
+    if(condition2) 
+        temp = temp.filter(it => !it.startsWith("ABC"));
+    temp = temp.map(it => vgroups.get(it)).toArray();
+    timeline.setGroups(temp)
+    //timeline.redraw();
+}
+
+//hide items.  
+function hideItems()
+{
+    let  allItemIds = items.getIds();
+
+    let temp = asSequence(allItemIds);
+    //custom criteria
+   if(condition1)
+      temp = temp.filter(it => !it.startsWith("Test"));
+   if(condition2)
+     temp = temp.filter(it => !it.startsWith("ABC"));
+
+    temp = temp.map(it => items.get(it)).toArray();
+    timeline.setItems(temp);
+
+}
+
 function updateTimelineBook(gs, fn=null){
     fullstrings = {};
     for (const [k2, v2] of Object.entries(gs)) {	//k2 = date  //v2 = array of content entries.  
@@ -292,6 +324,7 @@ var options = {};
         currenttimelineend = end;
         //refresh the word graph opacity and fonts.  
         zoomTopic(selectedtopic);
+        getBookRefs(); //git.js
         /*
         var itemsView = new vis.DataView(items, { filter: 
             function(data) { 

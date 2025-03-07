@@ -38,6 +38,10 @@ $$ ENVIRONMENT
 
 -:+ subtask (odd)
 
+Shorthand
+-%d- (cant start subtask with digit.)
+
+
 
 -> Leads to
 

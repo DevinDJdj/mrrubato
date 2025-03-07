@@ -2,7 +2,7 @@
 //not sure if the struct should be uid / comments, or comments /uid
 
 var mytitle = '';
-
+var vs = null;
 function getNetwork(lang){
     //if KNN for this lang exists, load it.  
     return null;
@@ -23,8 +23,8 @@ async function saveClassificationImages(video){
         //perhaps...
         let net = getNetwork(lang); //really want to get NN here.  
         let classDB = getClassifierDB(lang);
+		vs = new VideoSnapper(); //associate with language?  
 
-        vs = new VideoSnapper(); //associate with language?  
         const body = document.body;
         for (const [word, times] of Object.entries(value)) {                
             //console.log("WORD: " + word + " " + times);

@@ -110,6 +110,9 @@ Load any speech from this time.
 
     <script src="pipes.js"></script>
     <script src="recent.js"></script>
+
+    <!-- indexeddb -->
+    <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
     <!-- local search -->
     <script type="text/javascript" src="js/flexsearch/flexsearch.bundle.min.js"></script>
     <script src="db.js"></script>
@@ -368,6 +371,7 @@ Load any speech from this time.
                       <button class="tablinks" onclick="openTab(event, 'gitgraph')">Git Graph</button>
                       <button class="tablinks" onclick="openTab(event, 'wordcanvas')">Word Canvas</button>
                       <button class="tablinks" onclick="openTab(event, 'tempcodewindow')">Code Window</button>
+                      <button class="tablinks" onclick="openTab(event, 'reflinks')">REFs</button>
                       <div id="temp_edit_code"> </div>
 
                   </div>
@@ -375,6 +379,8 @@ Load any speech from this time.
     
                     </div>
                     <div id="gitgraph" class="tabcontent" style="display:none;height:100%;width:100%;overflow:hidden;">
+                      </div>
+                      <div id="reflinks" class="tabcontent" style="display:none;height:100%;width:800px;overflow:scroll;">
                       </div>
                     <div id="tempcodewindow" style="display:none;height:100%;width:800px;overflow:scroll;">
                       </div>

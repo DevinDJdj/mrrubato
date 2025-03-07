@@ -29,7 +29,7 @@ var selectionhistory = [];
 var myCodeMirror = null;
 var tempcodewindow = null;
 var usetempcodewindow = false;
-var definitions = {"REF": "##", "REF2": "#", "TOPIC": "**", "STARTCOMMENT": "<!--", "ENDCOMMENT": "-->", "CMD": ">", "QUESTION": "@@", "NOTE": "--", "SUBTASK": "-"};
+var definitions = {"REF": "#", "REF2": "##", "TOPIC": "**", "STARTCOMMENT": "<!--", "ENDCOMMENT": "-->", "CMD": ">", "QUESTION": "@@", "NOTE": "--", "SUBTASK": "-"};
 
 var mygitDB = new gitDB();
 
@@ -372,23 +372,25 @@ function parsegitBook(gb){
     else if (str.startsWith(definitions["CMD"])){ //CMD
       incomment = false;
     }
-    else if (str.startsWith(definitions["REF"]) || str.startsWith(definitions["REF2"])){ //reference
+    else if (str.startsWith(definitions["REF"])){ //reference
+      //for now just use the one line.  
       incomment = false;
       inref = true;
+      currentref = str.slice(1).split(" ")[0];
+      if (currentref.charAt(0) == definitions["REF"]){
+        //REF2
+        currentref = currentref.slice(1);
+
+      }
+      currentrefline = i;
       gitstruct["allrefs"] += currentref + " ";
       gitstruct["all"] += currentref + " ";
       content = {"ref": currentref, "d": gb.d, "line": currentrefline, "content": refstr  };
-      if (!(currentref in gitstruct["byref"])){
-        gitstruct["byref"][currentref] = [];
+      if (!(gb.d in gitstruct["refbydate"])){
+        gitstruct["refbydate"][gb.d] = [];
       }
-      gitstruct["byref"][currentref].push(content); //ordered by date.  
+      gitstruct["refbydate"][gb.d].push(content); //ordered by date.  
 
-      currentref = str.slice(1).split(" ")[0];
-      if (currentref.charAt(0) == definitions["REF2"]){
-        currentref = currentref.slice(1);
-      }
-      currentrefline = i;
-      refstr = "";
     }
     else if (str.startsWith(definitions["QUESTION"])){ //Question
       incomment = false;
@@ -423,7 +425,7 @@ function parsegitBook(gb){
       fullstr += str + "\n";
     }
     if (inref){
-      refstr += str + "\n";
+      //refstr += str + "\n";
     }
 
   }
@@ -435,7 +437,7 @@ function creategitStruct(){
   //tree by time/topic
   //also topic/time
   //reset struct
-  gitstruct = {"bydate": {}, "bytopic": {}, "byref": {}, "alltopics": "", "allrefs": "", "all": "", "allcontent": {}}; //context holds sequential string.  
+  gitstruct = {"bydate": {}, "bytopic": {}, "refbydate": {}, "byref": {}, "alltopics": "", "allrefs": "", "all": "", "allcontent": {}}; //context holds sequential string.  
 
 
     for (j=0; j<gitbook.length; j++){
@@ -847,6 +849,22 @@ function inTimeWindow(top){
   return num;
 
 }
+
+function getBookRefs(){
+  let ret = "";
+  Object.entries(gitstruct["refbydate"]).forEach(([key, value]) => {
+    if (key >= currenttimelinestart && key <= currenttimelineend){    
+      console.log(key, value);
+      ret += `<b>${key}</b><br>`;
+      for (i=0; i<value.length; i++){
+        ret += `<a href="${value[i].ref}">${value[i].ref}</a><br>`;
+      }
+    }
+  });
+  $('#reflinks').html(ret);  
+  return ret;
+}
+
 function selectOpacity(top){
   const result = selectionhistory.find((element) => element === top);
   opacity = 0.6;

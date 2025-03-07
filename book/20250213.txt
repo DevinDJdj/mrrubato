@@ -508,4 +508,86 @@ But it is so convenient...
 **web/public/feedback.js
 maybe adding of image class is working.  
 
+**FLOW
+--rec
+--analyze
+->
+--book
+--page
+
+In comments, need to have open book, open page...
+Use pipes to communicate actions.  
+onfocus send message.  
+
+REC ~ 400GB/year
+CLASS ~ 100GB/year
+
+Too much for current PC iterations.  
+But fine in a few years.  
+
+Really should use better STT engine for speech.js
+
+
+Need search in book.  
+Need list REF.  
+
+#https://whisper.ggerganov.com/talk/
+
+#https://github.com/ggerganov/whisper.cpp/blob/master/examples/whisper.wasm/index-tmpl.html
+
+Yeah lets use part of this for TTS and then 
+#https://github.com/lxe/wasm-gpt?tab=readme-ov-file
+
+**web/public/test/whisper/testwhisper.html
+
+Perhaps switch speech.js to use this.  
+
+**web/public/models/whisper
+add some old original models.  
+
+Ugh....
+#https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer#security_requirements
+
+        self.send_header('Cross-Origin-Embedder-Policy', 'require-corp')
+        self.send_header('Cross-Origin-Opener-Policy', 'same-origin')
+
+**web/firebase.json
+Add COOP policy.  
+
+#https://stackoverflow.com/questions/79406943/using-whisper-cpp-in-sveltekit
+yep, same.  
+
+Ugh...
+Save for later... hopefully someone answers.
+
+
+
+
+**web/public/video.js
+**web/public/feedback.js
+maybe adding of image class is working.  
+Add UI to select class instance and display.  
+in future, perhaps annotate...
+
+
+**web/public/news.html
+**news.py
+Read BOOK and check for which of the REFs contain RSS feeds.  
+#https://stackoverflow.com/questions/79406943/using-whisper-cpp-in-sveltekit
+would need to go here:
+#https://stackoverflow.com/feeds/question/79406943
+
+If they do, check periodically, or in news.html if these pages have updates until there is a resolved marker in BOOK.  
+
+Need to be able to adjust generation speed for any input/output.  
+Or at least provide feedback regarding preferred speed.  
+
+Or just download content and summarize latest responses from content. 
+Not optimal.  
+
+
+**web/public/analyze.html
+Need to add tabs to this.  
+Tab for reviewing topic images.  
+Lets just review the image when clicking
 

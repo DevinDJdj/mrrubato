@@ -611,7 +611,8 @@ class VideoSnapper {
           height: options.height
       })[0];
 
-      
+      //hide canvas for now.  
+      canvas.style.display='none';
       // Get context and draw screen on it
       canvas.getContext('2d').drawImage(player2, options.x, options.y, options.width, options.height, 0, 0, options.width, options.height);
 
@@ -619,7 +620,8 @@ class VideoSnapper {
       let tempdiv = document.getElementById('tempcanvasdiv');
       let tempcanvas = canvas;//document.getElementById('tempcanvas' + opts.id);
       const headerText = document.createTextNode("LANG: " + frameXY[options.id].lang + ' WORD: ' + frameXY[options.id].word + ' TIME: ' + options.time);
-      tempdiv.appendChild(headerText);
+//      headerText.style.visibility='hidden';
+//      tempdiv.appendChild(headerText);
       tempdiv.appendChild(tempcanvas);
       let cc = document.getElementById('tempcanvas');
       const ctx = cc.getContext('2d');
@@ -639,7 +641,9 @@ class VideoSnapper {
         var obj = {img: imgURL, lang: frameXY[options.id].lang, word: frameXY[options.id].word, time: options.time};
         let img = new Image();
         img.src = imgURL;
-        tempdiv.appendChild(img);
+
+        //tempdiv.appendChild(img);
+
         retclassifiers.push(obj);
 
 
@@ -724,8 +728,8 @@ class VideoSnapper {
       const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0);
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const image = tf.fromPixels(imageData);
-      addExampleComplete(image, classId);
+      const image = tf.browser.fromPixels(imageData);
+      vs.addExampleComplete(image, classId);
     }
   }
 
