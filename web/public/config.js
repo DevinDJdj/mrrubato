@@ -7,6 +7,7 @@ var git = [{name: 'mrrubato', url:'https://api.github.com/repos/DevinDJdj/mrruba
                 }
 ];
 
+
 var gitsrcurl = 'https://api.github.com/repos/DevinDJdj/mrrubato';
 var gitsrcbranch = 'master';
 var giturl = 'https://api.github.com/repos/DevinDJdj/mrrubato';
@@ -54,6 +55,9 @@ var vidbuffer = 10;
 //speech
 var speech = true;
 var lastread = 0;
+
+
+var default_question = "What are you doing?";
 
 var localprompt = 'You are a software engineer, investigating the source code and notes provided.  \n\
                    Use the documentation provided to answer the @@Question.  \n\
@@ -160,6 +164,9 @@ function loadUserConfig(){
         if ("localprompt" in userconfigjson){
             localprompt = userconfigjson["localprompt"];
         }
+        if ("default_question" in userconfigjson){
+            default_question = userconfigjson["default_question"];
+        }
         console.log(userconfigjson);
     }
 
@@ -196,7 +203,8 @@ function getConfig(){
         "youtube": {"useyoutube": useyoutube, "channelId": channelId}, 
         "keys": {"keybot": keybot, "KEY_BOT": KEY_BOT, "keytop": keytop, "commandcompletion": commandcompletion, "playfeedback": playfeedback, "volumeControl": volumeControl, "_octave": _octave}, 
         "video": {"myrate": myrate, "mypitch": mypitch, "vidbuffer": vidbuffer}, 
-        "localprompt": localprompt
+        "localprompt": localprompt, 
+        "default_question": default_question
     };
     myconfig = userconfig;
     return userconfig;

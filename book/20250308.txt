@@ -1,0 +1,56 @@
+**news.py
+Yep:
+#https://github.com/codelucas/newspaper
+
+**0606
+Need to do one match in order to have sample data.  
+Did we ever finish creating the language?  
+
+Yeah lets use part of this for TTS and then 
+#https://github.com/lxe/wasm-gpt?tab=readme-ov-file
+
+**web/public/db.html
+Does the export actually work with large amount of data?  
+
+Add import..
+
+
+**web/public/page.html
+**web/public/test/sensors/gesture/index.html
+add sensor to page.  
+
+**web/public/test/testfilbert.html
+**web/public/test/testacorn.html
+Can we use this struct to generate a DOT graph?  
+
+
+**timestep.py
+--Add spin up / spin down of backend.  
+And wait...
+Then we get some transcriptions if there is available hardware at the time of timestep.py
+
+
+**FLOW
+--rec
+--analyze
+->
+--book
+--page
+
+**web/public/test/whisper/testwhisper.html
+
+Perhaps switch speech.js to use this.  
+#https://stackoverflow.com/questions/79406943/using-whisper-cpp-in-sveltekit
+yep, same.  
+
+
+**web/public/analyze.html
+Need to add tabs to this.  
+Tab for reviewing topic images.  
+Lets just review the image when clicking
+
+If topic not found, load book portion.  
+
+Change the build context to use this last.  
+
+What should default query be?  

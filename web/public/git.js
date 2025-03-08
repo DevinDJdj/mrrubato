@@ -416,6 +416,7 @@ function parsegitBook(gb){
 
       gitstruct["bydate"][gb.d].push(content);
       currenttopic = str.slice(2).split(" ")[0];
+      currenttopic = currenttopic.toLowerCase(); //have to keep lowercase, we are changing this in word2vec as well.  
       currenttopicline = i;
       fullstr = "";
 
@@ -673,7 +674,8 @@ function getGitContents(path, load=true){ //load UI or not, if false, return str
         img.style.visibility = "hidden";
       
         gitstruct["allcontent"][gitcurrentpath] = null; //dont want to load this again.  
-        $('#topicstatus').append("<br>" + path + " not found.") 
+        $('#topicstatus').append("<br>" + path + " not found."); 
+        loadfromGitBook(path, true); //search Git for this string **.... in gitbook and retrieve all.  
         $('#topicstatus').animate({
           scrollTop: $('#topicstatus')[0].scrollHeight}, "slow"
         );
@@ -931,8 +933,8 @@ function loadTopic(top){
     //git code
     if (gitnature & GIT_CODE){
       if (currentmode == "GIT"){
-        loadfromGitBook(top, false); //search Git for this string **.... in gitbook and retrieve all.  
         cont = getGitContents(top, true);
+        loadfromGitBook(top, false); //search Git for this string **.... in gitbook and retrieve all.  
     
       }
       else if (currentmode=="BOOK"){
@@ -963,7 +965,7 @@ function loadTopic(top){
       //also kick off LLM question regarding this topic.  
       setTimeout(function(){
         lastspokenword = "comment";
-        MyChat("what are you doing"); //auto-query the LLM after selection.  
+        MyChat(default_question); //auto-query the LLM after selection.  
       }, 5000);
     }
 

@@ -1537,15 +1537,18 @@ function GetRecentSelections(shortformat=false){
         }
         else{
 
-          if (selectionhistory[si] in gitstruct["bytopic"]){
-            ctx += "**" + selectionhistory[si] + "\n" + JSON.stringify(gitstruct["bytopic"][ selectionhistory[si] ]) + "\n";
-            
-          }
+          ctx += "**" + selectionhistory[si] + "\n" + getGitContents(selectionhistory[si], false) + "\n";
+
           exists = gitcommits.find(x => x.filename === selectionhistory[si]);
           if (exists){
             ctx += "**" + selectionhistory[si] + "\n" + JSON.stringify(exists) + "\n";
           }
-          ctx += "**" + selectionhistory[si] + "\n" + getGitContents(selectionhistory[si], false) + "\n";
+
+          //book last?  not sure the preferred order.  
+          if (selectionhistory[si] in gitstruct["bytopic"]){
+            ctx += "**" + selectionhistory[si] + "\n" + JSON.stringify(gitstruct["bytopic"][ selectionhistory[si] ]) + "\n";
+            
+          }
 
       }
 

@@ -1,0 +1,87 @@
+**web/public/netgraph.mjs
+@@what are you doing
+==
+This appears to be a JavaScript code snippet that uses the Vis.js library to create a visual representation of a graph. Here's a breakdown of what it does:
+
+**Importing and initializing Vis.js**
+
+The code imports the Vis.js library and initializes it with some options. It sets up a container element (`#graphContainer`) where the graph will be rendered.
+
+**Creating a graph**
+
+The code creates a graph by calling the `importDot` method, which takes a DOT language string. The DOT language string is used to create a graph definition in Vis.js.
+
+**Setting up event listeners**
+
+The code sets up event listeners for node and edge selection. It listens for `selectNode` and `selectEdge` events and calls a callback function when an event occurs.
+
+**Handling events**
+
+The code handles various events, such as:
+
+* `selectNode`: When a node is selected, it calls the `handleNodeSelect` function, which updates the graph data and selection callback.
+* `selectEdge`: When an edge is selected, it calls the `handleEdgeSelect` function, which updates the graph data and selection callback.
+* `focusNode`: When a node is focused, it calls the `focusNode` function, which updates the graph data and animation options.
+
+**Getting and clearing graph data**
+
+The code gets the current graph data using the `getData` method and clears it using the `clear` method.
+
+**Creating a simple graph**
+
+The code creates a simple graph by calling the `simpleGraph` method, which:
+
+* Creates a node with ID 1
+* Creates an edge with ID 1 and ID 2
+* Sets up the selection callback
+
+**Importing a DOT file**
+
+The code imports a DOT file using the `importDot` method, which takes a DOT language string. The DOT language string is used to create a graph definition in Vis.js.
+
+Overall, this code snippet creates a Vis.js graph with nodes and edges, sets up event listeners, and handles various events. It also imports a DOT file and creates a simple graph.
+$$
+
+
+**testing/deepspeech
+**es6
+@@What are you doing?
+==
+It looks like you've provided a large amount of code, including:
+
+1. A book excerpt ( likely a book on Deep Learning or AI)
+2. Definitions of various concepts (e.g. "WORK", "BOOK", "ACT", "SOC", "MESSY", "OOPS", " KIND OF LIKE THAT", "LOST")
+3. A series of questions and answers (QA history)
+
+To summarize, you've provided a mix of code snippets, explanations, and questions. Here's a breakdown of what I've gathered:
+
+**Code Snippets**
+
+* You've posted a large amount of code, including:
+	+ A book excerpt
+	+ Definitions of various concepts
+	+ A series of questions and answers (QA history)
+* You've also posted a series of code snippets, including:
+	+ A snippet on using Promise
+	+ A snippet on using the `for of` loop
+	+ A snippet on using the `use Map()` function instead of dictionaries
+	+ A snippet on importing and exporting modules
+
+**Explanations**
+
+* You've posted explanations of various concepts, including:
+	+ Definitions of "WORK", "BOOK", "ACT", "SOC", "MESSY", "OOPS", and "KIND OF LIKE THAT"
+	+ An explanation of the difference between "MESSY" and "OOPS"
+
+**Questions**
+
+* You've posted a series of questions, including:
+	+ "What are you doing?"
+	+ "How do I...?"
+	+ "What is...?"
+
+To summarize, you've provided a mix of code snippets, explanations, and questions. Your code snippets are quite extensive, and I'm not sure what specific topics or concepts you're trying to cover. Your explanations are also quite detailed, and your questions are quite specific.
+
+If you'd like to focus on a specific topic or ask a specific question, I'd be happy to help!
+$$
+

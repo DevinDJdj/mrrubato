@@ -598,3 +598,6 @@ Need to put copy link in the chat table.
 
 On loadTopic, should we automatically kick of LLM question?  
 
+Dont upload models.  
+Too large for git.  
+
