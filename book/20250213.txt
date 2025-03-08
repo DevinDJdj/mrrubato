@@ -591,3 +591,10 @@ Need to add tabs to this.
 Tab for reviewing topic images.  
 Lets just review the image when clicking
 
+
+**web/public/book.html
+
+Need to put copy link in the chat table.  
+
+On loadTopic, should we automatically kick of LLM question?  
+

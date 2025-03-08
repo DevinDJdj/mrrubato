@@ -446,6 +446,7 @@ function creategitStruct(){
         parsegitBook(gitbook[j]);
 
     }
+    getBookRefs();
     //any 
     loadTopic(gitbook[gitbook.length-1].d);
 
@@ -857,7 +858,7 @@ function getBookRefs(){
       console.log(key, value);
       ret += `<b>${key}</b><br>`;
       for (i=0; i<value.length; i++){
-        ret += `<a href="${value[i].ref}">${value[i].ref}</a><br>`;
+        ret += `<a target="_new" href="${value[i].ref}">${value[i].ref}</a><br>`;
       }
     }
   });
@@ -959,6 +960,11 @@ function loadTopic(top){
       //look through the latest commit info and if newer than RTDB entry, pull from git.  
       //Cache result in RTDB.  
       getGitCommits(null, top);
+      //also kick off LLM question regarding this topic.  
+      setTimeout(function(){
+        lastspokenword = "comment";
+        MyChat("what are you doing"); //auto-query the LLM after selection.  
+      }, 5000);
     }
 
     if (gitnature & GIT_RELATIONS){
@@ -968,6 +974,7 @@ function loadTopic(top){
       //complex usage here to find if there is a class name prefix etc.  
 
     }
+
 
 
 }

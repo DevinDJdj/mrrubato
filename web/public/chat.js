@@ -54,8 +54,18 @@ function addChatHistory(query, context, files=[]){
     //dont need to send full content of files?  just the names for now.  Should be able to git files from certain point in time if needed.  
 }
 
-function addChatRow(query, answer, sources) {
-    chatmessages.push({"query": query, "answer": answer});
+function copyChat(idx){
+    //copy chat history to clipboard.  
+    var text = GetRecentSelections(true);
+    text += "@@" + chatmessages[idx].query + "\n";
+    text += "==\n" + chatmessages[idx].answer + "\n";
+    text += "$$\n" + chatmessages[idx].sources.join("\n");
+    navigator.clipboard.writeText(text);
+    return text;
+}
+
+function addChatRow(query, answer, sources=[]) {
+    chatmessages.push({"query": query, "answer": answer, "sources": sources});
     fanswer = formatAnswer(answer);
     var t = document.getElementById("ChatTable");
     var rows = t.getElementsByTagName("tr");
@@ -72,7 +82,7 @@ function addChatRow(query, answer, sources) {
         r.insertCell(i);
     }
     r.cells[0].innerHTML = ChatID;
-    r.cells[1].innerHTML = "@@" + query;
+    r.cells[1].innerHTML = '<a href="#" onclick="copyChat(' + (chatmessages.length-1) + ');">@@</a>' + query;
     if (ChatID%2==0){
         r.cells[2].innerHTML = '<font color="red">==<br>' + fanswer + '</font>';
     }

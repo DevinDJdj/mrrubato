@@ -631,6 +631,8 @@ class VideoSnapper {
       else{
         ctx.drawImage(tempcanvas, options.frameNo*options.width, 0, options.width, options.height);
       }
+      let status = document.getElementById('tempcanvasstatus');
+      status.innerText = "LANG: " + frameXY[options.id].lang + " WORD: " + frameXY[options.id].word + " (" + (options.id+1) + " of " + frameXY.length + ") Frame: " + (options.frameNo+1) + " of " + numframes;
         
       if (options.frameNo == numframes - 1){
         //this is where we have the completed image with all frames.
