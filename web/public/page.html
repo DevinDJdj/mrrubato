@@ -32,7 +32,7 @@ Book -> analyze -> rec
 
 
 should be able to query particular page by using selectionhistory number for inquiry.  
-
+page.html?codefile=web/public/page.html
 
 -->
 
@@ -123,6 +123,20 @@ should be able to query particular page by using selectionhistory number for inq
      <link href="css/tabs.css" rel="stylesheet">
     <script src="js/tabs.js"></script>
 
+
+    <!-- source code analysis components JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/acorn/5.2.1/acorn.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/acorn/5.2.1/walk.js"></script>
+    <!-- python -->
+    <script type='text/javascript' src='../js/filbert.js'></script>
+
+    <!-- code analysis -->
+    <script src="codewindow.js"></script>
+
+    <!-- clock -->
+    <script src="clock.js"></script>
+    <script src="js/ayuda/date.format.js"></script>                
+
     </head>
     <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-RXPM3QHNJ3"></script>
@@ -177,7 +191,6 @@ should be able to query particular page by using selectionhistory number for inq
                 </tr>
                 </table>
                 <script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js'></script>
-                <script src="clock.js"></script>
                  <!-- for slider function -->
                 <link href="https://code.jquery.com/ui/1.14.1/themes/ui-lightness/jquery-ui.css" rel="stylesheet">
             
@@ -705,6 +718,12 @@ var querydate = null;
                     setTimeout(function(){
                         getGitContents(codefile, false);
                     }, 3000);
+
+                    setTimeout(function(){
+
+                        //testing.. codewindow.js
+                        getCodeGraph(codefile, gitcurrentcontents);
+                    }, 6000);
 
                 }
             }, 15000);

@@ -701,6 +701,13 @@ class VideoSnapper {
 
     let logits;
     // 'conv_preds' is the logits activation of MobileNet.
+    if (typeof(this.mnet) == 'undefined' || typeof(this.mnet.infer)== 'undefined'){
+       console.log("No mnet object found.  No GPU available?");
+       console.log("Skipping KNN example creation.");
+       //just add to DB perhaps?  
+       return;
+    }
+
     const infer = () => this.mnet.infer(image, 'conv_preds');
 
     // Train class if one of the buttons is held down
@@ -730,6 +737,7 @@ class VideoSnapper {
       const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0);
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      //add to DB.  
       const image = tf.browser.fromPixels(imageData);
       vs.addExampleComplete(image, classId);
     }

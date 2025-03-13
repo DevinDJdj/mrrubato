@@ -85,3 +85,40 @@ To summarize, you've provided a mix of code snippets, explanations, and question
 If you'd like to focus on a specific topic or ask a specific question, I'd be happy to help!
 $$
 
+**web/public/git.js
+**web/public/test/web-llm/test.js
+**web/public/netgraph.mjs
+**git/clone.py
+**instruments/testgenki.py
+@@What are you doing?
+==
+The provided code snippet appears to be a test script for a MIDI (Musical Instrument Digital Interface) synthesizer. The code is designed to interact with a synth device and generate some MIDI events.
+
+Here's a breakdown of what the code does:
+
+1. The `main` function is called, which:
+   - Prints a message to indicate that the synth device is connected.
+   - Calls the `wave_input_device_info` function to get the device ID and name of the synth device.
+   - If the device is found, it prints a message indicating that the synth device was found and that it can be controlled with keyboard buttons.
+
+2. The `wave_input_device_info` function is called, which:
+   - Calls the `wave` function to get the device ID and name of the synth device.
+   - If the device is found, it prints a message indicating that the synth device was found and that it can be controlled with keyboard buttons.
+
+3. The `post_midi_events` function is called, which:
+   - Checks if there are any MIDI events coming in from the synth device.
+   - If there are, it posts the events to the keyboard.
+
+4. The `post_custom_events` function is called, which:
+   - Checks if the synth device is sending any custom events (e.g. pitch bend, volume control, etc.).
+   - If there are, it posts the events to the keyboard.
+
+5. The `post_midi_events` function is called, which:
+   - Checks if the synth device is sending any MIDI events (e.g. pitch bend, volume control, etc.).
+   - If there are, it posts the events to the keyboard.
+
+6. The `main` function is called, which:
+   - Calls the `wave` function to get the device ID and name of the synth device.
+   - If the device is found, it calls the `wave` function to get the MIDI events coming in from the synth device.
+$$
+

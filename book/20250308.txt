@@ -54,3 +54,17 @@ If topic not found, load book portion.
 Change the build context to use this last.  
 
 What should default query be?  
+
+
+**web/public/codewindow.js
+not great...
+Try to get a sample running.  
+
+
+**web/public/analyze.html
+mobilenet needs GPU.  
+So image analysis will not work otherwise. 
+Still saves data, but no image analysis will occur.  
+
+**web/public/db.js
+Try classifierDB->saveKNN

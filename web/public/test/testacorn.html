@@ -4,36 +4,15 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/acorn/5.2.1/acorn.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/acorn/5.2.1/walk.js"></script>
+<script type="text/javascript" src="../codewindow.js"></script>
+
 </head>
 <body>
 
     <script>
 
-    function getFunctionNames(codeString) {
-        var names = [];
-        acorn.walk.simple(acorn.parse(codeString), {
-            AssignmentExpression: function(node) {
-                if(node.left.type === "Identifier" && (node.right.type === "FunctionExpression" || node.right.type === "ArrowFunctionExpression")) {
-                    names.push(node.left.name);
-                }
-            },
-            VariableDeclaration: function(node) {
-                node.declarations.forEach(function (declaration) {
-                    if(declaration.init && (declaration.init.type === "FunctionExpression" || declaration.init.type === "ArrowFunctionExpression")) {
-                        names.push(declaration.id.name);
-                    }
-                });
-            },
-            Function: function(node) {
-                if(node.id) {
-                    names.push(node.id.name);
-                }
-            }
-        });
-        return names;
-    }
     
-    console.log(getFunctionNames(`
+    console.log(acornGetFunctionNames(`
     
     var sampleFunc = function() {
         return 'hello';

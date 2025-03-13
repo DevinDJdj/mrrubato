@@ -116,7 +116,9 @@ Load any speech from this time.
     <!-- local search -->
     <script type="text/javascript" src="js/flexsearch/flexsearch.bundle.min.js"></script>
     <script src="db.js"></script>
-    
+    <script src="clock.js"></script>
+    <script src="js/ayuda/date.format.js"></script>                
+
 
     </head>
     <!-- Google tag (gtag.js) -->
@@ -176,7 +178,6 @@ Load any speech from this time.
                 </tr>
                 </table>
                 <script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js'></script>
-                <script src="clock.js"></script>
                  <!-- for slider function -->
                 <link href="https://code.jquery.com/ui/1.14.1/themes/ui-lightness/jquery-ui.css" rel="stylesheet">
             
@@ -1616,6 +1617,9 @@ function ChatLocal(transcript){
 
     addChatHistory(lastquery, mycontext, files);
     document.getElementById("user-input").value = mycontext;
+    //reset chat response.  
+    $("#chat-status").val("");
+
     console.log(mycontext);
     (async() => {
       var img = document.getElementById('thinkingchat');

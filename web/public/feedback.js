@@ -3,15 +3,41 @@
 
 var mytitle = '';
 var vs = null;
-function getNetwork(lang){
+function getNetwork(lang, vs){
     //if KNN for this lang exists, load it.  
+	//load from DB.  
+	let classDB = getClassifierDB(lang);
+	classDB.getKNN(lang, currentmidiuser).then((exists) => {
+		if (exists !== null){
+			//load KNN into network.
+
+			vs.knn.setClassifierDataset(exists[0].knnblob); //should be an array returned.  
+
+		}
+	}).catch((error) => {
+		console.error("Error loading classifier: ", error);
+	});
+
     return null;
 }
 
-function getClassifierDB(lang){
-    //if exists in DB.  
+function saveNetwork(lang, knn){
+	//save KNN for this lang.
     classDB = new classifierDB(lang);
-    return classDB
+
+	console.log(knn.getClassiferDataset());
+	let classDB = getClassifierDB(lang);
+	//save classifier to DB.  
+	let now = new Date();
+
+	classDB.saveKNN(lang, currentmidiuser, now.format("yyyymmddHHMMss"), knn.getClassiferDataset());
+}
+
+function getClassifierDB(lang){
+    //if exists in DB, retrieve from DB.  
+    classDB = new classifierDB(lang);
+
+    return classDB;
 }
 
 async function saveClassificationImages(video){
@@ -21,9 +47,9 @@ async function saveClassificationImages(video){
 
         //should classification network be per language?  
         //perhaps...
-        let net = getNetwork(lang); //really want to get NN here.  
-        let classDB = getClassifierDB(lang);
-		vs = new VideoSnapper(); //associate with language?  
+		vs = new VideoSnapper(null); //associate with language?  
+        let net = getNetwork(lang, vs); //really want to get NN here.  
+
 
         const body = document.body;
         for (const [word, times] of Object.entries(value)) {                
@@ -40,9 +66,12 @@ async function saveClassificationImages(video){
                 console.log("LANG: " + c.lang + ' WORD: ' + c.word);
 				vs.addExample(c.word, c.img);				
                 //add to DB.  with video info, title, lang, word and classification image.  
-//                classDB.saveScreenshot(video, c['lang'], c['word'], currentmidiuser, mytitle, c['time'], c['img']);
+                //classDB.saveScreenshot(video, c['lang'], c['word'], currentmidiuser, mytitle, c['time'], c['img']);
+				
 
             });
+
+			saveNetwork(lang, vs.knn);
 
         }
     }        

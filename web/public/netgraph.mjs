@@ -303,7 +303,13 @@ export class NetworkGraph {
         });
     }
 
-    simpleGraph(){
+    simpleGraph(graphstr = `
+            digraph {
+                A -> B;
+                B -> C;
+                C -> A;
+            }
+        `){
         this.addNode({
             id: 1,
             label: 'Node 1',
@@ -317,13 +323,7 @@ export class NetworkGraph {
         this.setSelectionCallback(({ type, selected, data }) => {
             console.log(`Selected ${type}:`, data);
         });
-        this.importDot(`
-            digraph {
-                A -> B;
-                B -> C;
-                C -> A;
-            }
-        `);
+        this.importDot(graphstr);
     }
 }
 
