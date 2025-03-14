@@ -8,10 +8,15 @@ function getNetwork(lang, vs){
 	//load from DB.  
 	let classDB = getClassifierDB(lang);
 	classDB.getKNN(lang, currentmidiuser).then((exists) => {
-		if (exists !== null){
+		if (exists !== null && exists.length > 0){
 			//load KNN into network.
 
-			vs.knn.setClassifierDataset(exists[0].knnblob); //should be an array returned.  
+
+			//vs.knn.setClassifierDataset(exists[0].knnblob); //should be an array returned.  
+			vs[lang].knn.classDatasetMatrices = exists[0].knnblob; //should be an array returned.
+			for (const label in vs.knn.classDatasetMatrices) {
+				vs[lang].knn.classExampleCount[label] = vs[lang].knn.classDatasetMatrices[label].shape[0];
+			  }
 
 		}
 	}).catch((error) => {
@@ -23,14 +28,13 @@ function getNetwork(lang, vs){
 
 function saveNetwork(lang, knn){
 	//save KNN for this lang.
-    classDB = new classifierDB(lang);
+    let classDB = new classifierDB(lang);
 
-	console.log(knn.getClassiferDataset());
-	let classDB = getClassifierDB(lang);
+	console.log(knn.classDatasetMatrices);
 	//save classifier to DB.  
 	let now = new Date();
 
-	classDB.saveKNN(lang, currentmidiuser, now.format("yyyymmddHHMMss"), knn.getClassiferDataset());
+	classDB.saveKNN(lang, currentmidiuser, now.format("yyyymmddHHMMss"), knn.classDatasetMatrices);
 }
 
 function getClassifierDB(lang){
@@ -42,12 +46,13 @@ function getClassifierDB(lang){
 
 async function saveClassificationImages(video){
 
+	vs = {};
     findWordsA(currentmidiuser);
     for (const [lang, value] of Object.entries(wordtimes)) {
 
         //should classification network be per language?  
         //perhaps...
-		vs = new VideoSnapper(null); //associate with language?  
+		vs[lang] = new VideoSnapper(null); //associate with language?  
         let net = getNetwork(lang, vs); //really want to get NN here.  
 
 
@@ -59,19 +64,26 @@ async function saveClassificationImages(video){
 
 
 
-            let frames = vs.buildFrames(video, times, word, lang);
-            let classifiers = await timeoutPromise(times.length*12000, vs.getClassifiers(frames, video, 10));
+            let frames = vs[lang].buildFrames(video, times, word, lang);
+            let classifiers = await timeoutPromise(times.length*12000, vs[lang].getClassifiers(frames, video, 10));
             classifiers.forEach(c => {
                 //eventually this should be in some DIV which is reviewable and not end of document.  
                 console.log("LANG: " + c.lang + ' WORD: ' + c.word);
-				vs.addExample(c.word, c.img);				
+				vs[lang].addExample(lang, c.word, c.img);				
                 //add to DB.  with video info, title, lang, word and classification image.  
                 //classDB.saveScreenshot(video, c['lang'], c['word'], currentmidiuser, mytitle, c['time'], c['img']);
 				
 
             });
 
-			saveNetwork(lang, vs.knn);
+			setTimeout((l) => {
+				//save network after each word?
+				//or save all at once?
+				//need to save each lang separately.  
+				//saveNetwork(lang, vs.knn);
+				saveNetwork(l, vs[l].knn);				
+			}, 10000, lang);
+
 
         }
     }        

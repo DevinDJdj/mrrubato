@@ -24,6 +24,10 @@ class classifierDB{
 			examples: "++id,lang,word,user,topic,vid,timestamp", //imagedata.  
 			knn: "++id,lang,user,[lang+user],timestamp", //knn data.
 		});
+		this.db.version(2).stores({
+			examples: "++id,lang,word,user,topic,vid,timestamp,imgblob", //imagedata.  
+			knn: "++id,lang,user,[lang+user+topic],topic,timestamp", //knn data.
+		});
 	}
 
 	//do we want to save screenshots or just the model.  
@@ -38,25 +42,21 @@ class classifierDB{
 		});
 	}
 
-	getKNN(lang="", user="", timestamp=0){
+	getKNN(lang="", user="", topic="", timestamp=0){
 		//get all knn for this lang and user.  
-		return this.db.knn.where("[lang+user]").equals([lang,user]).toArray();
+		return this.db.knn.where("[lang+user+topic]").equals([lang,user,topic]).toArray();
 	}
-	
+
 	//do we need user here?  
-	saveKNN(lang, user, timestamp, knnblob, cb=null){
-		const exists = this.db.knn.where("[lang+user]").get([lang,user]).toArray();
-		if (exists != null){
+	saveKNN(lang, user, timestamp, knnblob, topic="", cb=null){
+		const exists = this.db.knn.where("[lang+user+topic]").equals([lang,user,topic]).toArray();
+		if (exists != null && exists.length > 0){
 			//already exists.  
-			exists[0].vid = vidid;
 			exists[0].timestamp = timestamp;
 			exists[0].knnblob = knnblob;
-			exists[0].lang = lang;
-			exists[0].word = word;
-			exists[0].user = user;
 			this.db.knn.put(exists[0]).then((id) => {
 				console.log("updated knn with id " + id);
-				this.ftsindex.add(vidid + "_" + id, word);  
+//				this.ftsindex.add(vidid + "_" + id, lang);  
 				if (cb != null){
 					cb(id); //callback to complete.  
 				}
@@ -64,10 +64,10 @@ class classifierDB{
 
 		}
 		else{
-			var obj = {"vid": vidid, "timestamp": timestamp, "knnblob": knnblob, "lang": lang, "word": word, "user": user};
+			var obj = {"timestamp": timestamp, "knnblob": knnblob, "lang": lang, "user": user, "topic": topic};
 			this.db.knn.add(obj).then((id) => {
 				console.log("added knn with id " + id);
-				this.ftsindex.add(vidid + "_" + id, word);  
+//				this.ftsindex.add(vidid + "_" + id, lang);  
 				if (cb != null){
 					cb(id); //callback to complete.  
 				}

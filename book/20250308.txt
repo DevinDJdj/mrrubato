@@ -68,3 +68,32 @@ Still saves data, but no image analysis will occur.
 
 **web/public/db.js
 Try classifierDB->saveKNN
+getKNN
+--here still...
+
+
+How do we snapshot the models?  
+Do we want models to be per topic?  
+Probably both per topic and general.  
+Not sure how large the general will get though.  
+Then combine the results of general language classifier and topic specific language classifier.  
+To find other iterations of the words.  
+
+
+
+
+Also VideoSnapper should have more details in logic based on language.  This should probably be a dynamic function call.  
+
+VideoSnapper.buildFrames
+    if (lang=="base"){ //just taking ~ piano portion of the output.  
+
+
+  setClassifierDataset(classDatasetMatrices: {[label: string]: Tensor2D}) {
+    this.clearTrainDatasetMatrix();
+
+    this.classDatasetMatrices = classDatasetMatrices;
+    for (const label in classDatasetMatrices) {
+      this.classExampleCount[label] = classDatasetMatrices[label].shape[0];
+    }
+  }
+

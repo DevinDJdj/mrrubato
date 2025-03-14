@@ -523,6 +523,17 @@ class VideoSnapper {
     this.videoPlaying = false;
     this.classes = {};
     this.canvases = {};
+    this.funcdict = {};
+    this.funcdict["base"] = function(frame){
+      //possibly dynamic detection etc.  based on word.  
+      if (frame.word=="good"){
+        //etc...
+
+      }
+      frame.y = Math.round(frame.height*0.8);
+      frame.height = Math.round(frame.height*0.2);
+      return frame;
+    }
 
     // Initiate deeplearn.js math and knn classifier objects
     this.bindPage(knn);
@@ -565,13 +576,23 @@ class VideoSnapper {
 
 
 
+    //frame = this.funcdict[lang]()..
+    /*
     if (lang=="base"){ //just taking ~ piano portion of the output.  
       y = Math.round(height*0.8);
       height = Math.round(height*0.2);
     }
+    */
     for (var i = 0; i < times.length; i++){
       times[i] /= 1000;
-      frames.push({x: x, y: y, width: width, height: height, time: times[i], classId: word, lang: lang, word: word});
+      let frame = {x: x, y: y, width: width, height: height, time: times[i], classId: word, lang: lang, word: word}
+      if (typeof(this.funcdict[lang]) !== "undefined"){
+        frame = this.funcdict[lang](frame);
+      }
+      else{
+        console.log("No function defined for " + lang);
+      }
+      frames.push(frame);
     }
     return frames;
 
@@ -720,7 +741,7 @@ class VideoSnapper {
 
   }
 
-  addExample(classId=-1, imgURL="") {
+  addExample(lang="base", classId=-1, imgURL="") {
     //const image = tf.fromPixels(this.video);
 
     if (typeof(this.classes[classId]) == 'undefined'){
@@ -732,15 +753,17 @@ class VideoSnapper {
     }
     let img = new Image();
     img.src = imgURL;
-    img.onload = function(){
+
+    //make lang scope local.  Need to do this more.  
+    img.onload = (function(lang, classId){
       const canvas = document.getElementById('tempcanvas');
       const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0);
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       //add to DB.  
       const image = tf.browser.fromPixels(imageData);
-      vs.addExampleComplete(image, classId);
-    }
+      vs[lang].addExampleComplete(image, classId);
+    })(lang, classId);
   }
 
 }
