@@ -8,8 +8,19 @@ global.nlp = module.exports
 const its = nlp.its;
 const as = nlp.as;
 
-const text = `Its quarterly profits jumped 76% to $1.13 billion for the three months to December, from $639million of previous year.`;
-const doc = nlp.readDoc( text );
+// Define a function to read a document from a text string
+function readDoc(text) {
+    // Parse the document object using the readDoc function
+    const doc = nlp.readDoc(text);
+    
+    // Extract specific information from the document object
+    doc.entities().each((e) => e.markup());
+    
+    // Return the parsed document object
+    return doc.out(its.markedUpText);
+}
+    
+// Test the readDoc function
+teststr = "Its quarterly profits jumped 76% to $1.13 billion for the three months to December, from $639million of previous year.";
+document.getElementById("result").innerHTML = readDoc(teststr);
 
-doc.entities().each((e) => e.markup());
-document.getElementById("result").innerHTML = doc.out(its.markedUpText);

@@ -99,19 +99,19 @@ function initGitIndex(){
     for (e of gitstruct["bydate"][d]){
       temp += e.content + '\n';
     }
-    ftsindex.add(d, temp);
+    mygitDB.ftsindex.add(d, temp);
   }
   for (t in gitstruct["bytopic"]){
     temp = "";
     for (e of gitstruct["bytopic"][t]){
       temp += e.content + '\n';
     }
-    ftsindex.add(t, temp);
+    mygitDB.ftsindex.add(t, temp);
   }
-//	ftsindex.add("test", "John Doe");
+//	mygitDB.ftsindex.add("test", "John Doe");
 
-	result = ftsindex.search(d);
-	console.log(result);
+	result = mygitDB.ftsindex.search(d);
+	console.log("Git Index initialized: " + result);
 
 }
 
@@ -122,9 +122,9 @@ function updateGitIndex(fn=null){
     }
     else{
       //match
-      ftsindex.add(gitcommits[gi].filename + "_" + gi, gitcommits[gi].changes);
+      mygitDB.ftsindex.add(gitcommits[gi].filename + "_" + gi, gitcommits[gi].changes);
       if (fn in gitstruct["allcontent"]){
-        ftsindex.add(fn + "_", gitstruct["allcontent"][fn]);
+        mygitDB.ftsindex.add(fn + "_", gitstruct["allcontent"][fn]);
       }
     }
   }
@@ -459,7 +459,7 @@ function creategitStruct(){
 
 
 
-//    initGitIndex();
+    initGitIndex();
 
 }
 

@@ -44,24 +44,36 @@ if (urlParams["codefile"]){
 }
 
 
-var output = document.getElementById("clock");
+function startClock(){
+  var clockoutput = document.getElementById("clock");
 
-var secondselapsed = document.getElementById("secondselapsed");
-startc = moment();
-var se;
-var seeking = false;
-setInterval(
-se = function() {
-    endc = moment();
-    output.innerText = endc.format(urlParams["format"] || 'DD/MM/YYYY HH:mm:ss');
-    secondselapsed.innerText = (endc - startc)/1000;
-//	$("#secondselapsed").load(" #secondselapsed > *");
-	
-//    output.innerText = moment().format(urlParams["format"] || '');
-}, 1000);
-se();
+  var secondselapsed = document.getElementById("secondselapsed");
+  startc = moment();
+  var se;
+  var seeking = false;
+  setInterval(
+  se = function() {
+      endc = moment();
+      clockoutput.innerText = endc.format(urlParams["format"] || 'DD/MM/YYYY HH:mm:ss');
+      secondselapsed.innerText = (endc - startc)/1000;
+  //	$("#secondselapsed").load(" #secondselapsed > *");
+    
+  //    output.innerText = moment().format(urlParams["format"] || '');
+  }, 1000);
+  se();
+}
 
-
+if (document.getElementById("clock") !==null){
+  startClock();
+}
+else{
+  setTimeout(function(){
+    //wait for page to load.  
+    if (document.getElementById("clock") !==null){
+      startClock();
+    }
+  }, 5000);
+}
 function str_pad_left(string,pad,length) {
   return (new Array(length+1).join(pad)+string).slice(-length);
 }

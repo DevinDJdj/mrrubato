@@ -239,6 +239,7 @@ class gitDB{
 	//gitbook.push({"url": this.url, "gitdata": bookdata[this.indexValue], "d": gitbookname, "content": data, "selected": true});
 	constructor(){
 		this.db = new Dexie("gitDB");
+		this.ftsindex = FlexSearch.Index({});
 		this.db.version(1).stores({
 			gitrepos: "++id,[repo+branch]", //desc
 			gitcommits: "[repo+branch],url,filename,d", //patch, changes

@@ -97,3 +97,73 @@ VideoSnapper.buildFrames
     }
   }
 
+
+**web/public/book.html
+Need find functionality.  
+Search within book and/or code.  
+Add all to flexsearch and then query it.  
+**web/public/git.js
+--initGitIndex
+**web/public/db.js
+gitDB.ftsindex
+
+Keep ftsindex in DB struct.  
+
+**GENBOOK
+add annotations after Q/A.  
+--mynote
+
+inside of answer we may have markup sometimes.  So should ignore ** within ANSWER 
+between == $$
+Not sure this is possible practical.  
+
+
+Interesting way to possibly write a book as well.  
+Significant redundancy though I would expect.  
+There is always a bit of boilerplate to the responses from the LLM.  
+But a small amount of that is good I think.  Very tough to balance.  
+
+
+
+#https://stackoverflow.com/questions/79406943/using-whisper-cpp-in-sveltekit
+
+Lets run in local node.  
+#https://emscripten.org/docs/getting_started/downloads.html#sdk-download-and-install
+#https://github.com/ggerganov/whisper.cpp/tree/master/examples/whisper.wasm
+build and output.  
+
+**web/public/test/whisper/out/index.html
+This seems to work better if built.  
+So go through build process...
+>mkdir build-em && cd build-em
+>emcmake cmake ..
+>make -j
+
+# copy the produced page to your HTTP path
+>cp bin/whisper.wasm/*    /path/to/html/
+>cp bin/libmain.worker.js /path/to/html/
+
+
+OK, that seems to work.  
+So is it/it is worth the trouble to change out all of the webkit.SpeechRecognition.  
+
+Lets try it i.e. in book and see if we speak more.  
+Combine with testwhisper to automate getting audio.  
+Add gesture to start/stop audio, and test to make sure we can get useful transcription and input.  
+Good test case.  
+This can be in addition to using midi device.  
+LEFT WINK = lastspokenword = "comment"
+comment 
+RIGHT WINK = lastspokenword = "..."
+Handle gesture through the same linguistic arrangement.  
+
+**web/public/gesturemap.js
+gesturemap .. same as keymap...
+combine with this.  
+**web/public/test/sensors/gesture/script.js
+**web/public/test/sensors/gesture/index.html
+
+
+
+
+
