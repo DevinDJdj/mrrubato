@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Extract Audio</title>
+</head>
+
+<body>
+<h1>Extract Audio</h1>
+
+<video
+id="my-video"
+class="video-js"
+preload="auto"
+controls
+width="640"
+height="264"
+data-setup="{}"
+>
+<p class="vjs-no-js">
+  To view this video please enable JavaScript, and consider upgrading to a
+  web browser that
+  <a href="https://videojs.com/html5-video-support/" target="_blank"
+    >supports HTML5 video</a
+  >
+</p>
+</video>
+<button id="btn_1">listen</button><br>
+
+<script type="module">
+
+let url = "https://storage.googleapis.com/misterrubato-test.appspot.com/videos/2025/2025-03-15%2012-52-44.mp4"
+
+const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+const audioSrc =
+  "https://davidalbertoadler.com/assets/audio/dope-drum-loop_C_major.wav";
+
+let source = null;  
+//const audioData = await fetchAudio(audioSrc);
+const audioData = await fetchAudio(url);
+audioContext.decodeAudioData(audioData, onDecoded, onDecodeError);
+
+function fetchAudio(url) {
+  return new Promise((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open("GET", url, true);
+    request.responseType = "arraybuffer";
+    request.onload = () => resolve(request.response);
+    request.onerror = (e) => reject(e);
+    request.send();
+  });
+}
+
+function onDecoded(buffer) {
+  // Play the song
+  console.log("Got the decoded buffer now play the song", buffer);
+  source = audioContext.createBufferSource();
+  source.buffer = buffer;
+  source.connect(audioContext.destination);
+  source.loop = true;
+}
+
+function onDecodeError(e) {
+  console.log("Error decoding buffer: " + e.message);
+  console.log(e);
+}
+
+btn_1.onclick = function() {
+    var playing = this.textContent.indexOf('listen') < 0;
+    if (playing) {
+        this.textContent = this.textContent.replace('mute', 'listen');
+    } else {
+        
+        this.textContent = this.textContent.replace('listen', 'mute');
+        if (source){
+            source.start();
+            console.log("starting audio");
+        }
+    }
+}
+
+
+/*
+// Using the <audio> element
+const audio = new Audio(url);
+audio.crossOrigin = "anonymous";
+
+audio.onloadeddata = () => {
+  audio.play();
+};
+
+audio.onerror = (error) => {
+  console.error('Error loading audio:', error);
+};
+*/
+//document.body.appendChild(video);
+/*
+window.AudioContext = window.AudioContext || window.webkitAudioContext;
+
+const video = document.getElementById('my-video');
+video.setAttribute("crossorigin", "anonymous");
+video.setAttribute("src", "https://storage.googleapis.com/misterrubato-test.appspot.com/videos/2024-01-29%2016-47-54.mp4");
+
+video.controls = true;
+video.autoplay = true;
+video.muted = true;
+
+video.addEventListener('loadeddata', function() {
+    // Video is loaded and can be played
+    var audioCtx = new AudioContext();
+    var gainNode = audioCtx.createGain();
+    var v1_src = audioCtx.createMediaElementSource(video);
+
+//    gainNode.connect(audioCtx.destination);
+
+    btn_1.onclick = function() {
+    var playing = this.textContent.indexOf('listen') < 0;
+    if (playing) {
+        v1_src.disconnect();
+        this.textContent = this.textContent.replace('mute', 'listen');
+    } else {
+        const destination = audioCtx.createMediaStreamDestination();
+        v1_src.connect(destination);
+//        v1_src.connect(gainNode);                     // Connect the source to the gain node
+//        gainNode.gain.value = 1;                  // Set the volume
+        const audioStream = new MediaStream(destination.stream.getAudioTracks());
+        console.log(audioStream);
+//        v1_src.connect(gainNode);
+        this.textContent = this.textContent.replace('listen', 'mute');
+    }
+    }}, false);  // Our <video> element will be the audio source.
+*/
+
+</script>
+
+</body>
+</html>

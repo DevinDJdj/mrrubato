@@ -164,6 +164,114 @@ combine with this.
 **web/public/test/sensors/gesture/index.html
 
 
+**web/public/analyze.html
+Just load this and transcribe in page for analyze.html
+Or have a button to do so.  
+If we automate this, then that becomes part of the workflow.  
 
+
+**web/public/recent.html
+List transcription status.  
+which items have not been transcribed.  
+
+**web/public/test/whisper/out/helper.js
+put hand in here.  
+Would have thought it would be easier to get the results.  
+Lot of overhead, but should work.  
+--still need to get audio from video file.  
+
+**web/public/test/testextractaudio.html
+
+var context = new webkitAudioContext();
+var source = context.createMediaElementSource(video);
+
+CORS issues again...
+
+
+
+**GENBOOK
+Need to utilize these answers as input and see what the subsequent generation looks like.  
+Simple COT sequence.  
+
+Need to store and adjust the system prompt.  
+@@What are you doing?
+$$system prompt (make suggestions)
+==...
+
+@@Please propose GIT changes to my source file.  
+$$system prompt (teach me)
+@@Please correct any issues in the following suggested changes.  
+$$system prompt (check)
+
+Accept or deny changes.  
+
+
+That appears to be the standard sequence, in-editor will be interesting to start, but not as important in future.  
+Viewability will be key.  
+
+
+What is a good prompt sequence?  
+
+#https://github.blog/ai-and-ml/generative-ai/prompt-engineering-guide-generative-ai-llms/
+
+#https://code.visualstudio.com/api/get-started/your-first-extension
+Create simple extension to open webpage.  
+Perhaps page.html
+Perhaps book.html call to opentopic.  
+
+**web/public/book.html
+--ChatBuildContext
+Right now need to cut down context.  
+Use book from last 10 selected items.  
+Source from the last 2-3 perhaps.  
+Changes from the last 2-1..
+
+What is 
+#https://www.cursor.com/en/blog/prompt-design
+
+
+create button to run this chain of events, or just continue with this chain of events if not interrupted.  
+
+
+Take Few shot from GENBOOK examples.  
+heavier weight for 
+
+@@What are you doing?
+$$system prompt (make suggestions / brainstorm)
+==...
+
+@@Please propose GIT changes to my source file.  
+$$system prompt (teach me)
+@@Please correct any issues in the following suggested changes.  
+$$system prompt (check)
+@@Update 
+How to save this event chain.  
+In transcript.  
+Export/import transcript.  
+Need topic selection as part of transcript.  
+
+Context doesnt need to be communicated, only event chain.  
+Topic selection
+and user query.  
+No generated responses for the moment.  
+This becomes too bloated.  
+May need to revisit.  
+
+
+**web/public/test/testextractaudio.html
+Not yet what I want but at least getting the audio buffer.  
+Guess we can pull direct from URL.  
+Run 
+--context.decodeAudioData...
+same as 
+**web/public/test/whisper/out/indexa.html
+--context.decodeAudioData...
+Adjust here to get from video and auto press buttons to get transcript.  
+If needed can add minimal UI similarly in analyze.html
+
+
+
+**record.py
+Should really store audio only separately...
 
 
