@@ -99,8 +99,14 @@ data-setup="{}"
 	<div id="submit" valign="top">
 		<label for="points">Score:</label>
 	    <input type="range" id="points" name="points" min="0" max="10" value="1" />
+		<input type="checkbox" id="genCat" name="genCat" />
+		<label for="genCat"> generate Word Images</label>
+		<input type="checkbox" id="genTranscript" name="genTranscript" />
+		<label for="genTranscript"> generate Transcript</label>
+
 		<button type="button" onclick="saveFeedback()">Update</button>
 		<button type="button" onclick="resetFeedback()">Reset Feedback</button>
+
 	</div>
  <div id="midi">
 	<canvas id="fullpcanvas_labels" width="640" height="24">Your browser does not support the HTML5 canvas tag.</canvas>

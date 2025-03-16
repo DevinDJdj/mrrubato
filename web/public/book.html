@@ -1542,12 +1542,15 @@ function GetRecentSelections(shortformat=false){
 
           exists = gitcommits.find(x => x.filename === selectionhistory[si]);
           if (exists){
-            ctx += "**" + selectionhistory[si] + "\n" + JSON.stringify(exists) + "\n";
+            ctx += "**" + selectionhistory[si] + "\n" + exists.patch + "\n";
           }
 
           //book last?  not sure the preferred order.  
           if (selectionhistory[si] in gitstruct["bytopic"]){
-            ctx += "**" + selectionhistory[si] + "\n" + JSON.stringify(gitstruct["bytopic"][ selectionhistory[si] ]) + "\n";
+            ctx += "**" + selectionhistory[si] + "\n";
+            for (let gi=0; gi<gitstruct["bytopic"][ selectionhistory[si] ].length; gi++){
+                ctx += "**" + gitstruct["bytopic"][ selectionhistory[si] ][gi].d + "\n" + gitstruct["bytopic"][ selectionhistory[si] ][gi].content + "\n";
+            }
             
           }
 

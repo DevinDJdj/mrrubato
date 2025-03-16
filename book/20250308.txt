@@ -275,3 +275,27 @@ If needed can add minimal UI similarly in analyze.html
 Should really store audio only separately...
 
 
+#https://firebase.google.com/docs/database/rest/retrieve-data#shallow
+Can we use this on video listings?  
+May want to make a separate transcript tree.  
+Firebase limitation of document-based structure.  
+
+/transcript
+byvideo and byuser.  
+
+/comments
+byvideo and byuser.  
+
+Yeah probably do this before adding transcript data from audio extraction.  
+
+Once transcription working, make default to not transcribe in timestep.py
+
+How to mark recent changes.  
+How to select only most relevant text to pass to LLM?  
+This will be solved in future anyway.  I think the current context window should be ok.  
+We are only around ~100KB.  
+
+
+
+
+
