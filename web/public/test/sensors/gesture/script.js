@@ -35,7 +35,7 @@ async function createFaceLandmarker() {
     });
     demosSection.classList.remove("invisible");
 }
-createFaceLandmarker();
+//createFaceLandmarker();
 /********************************************************************
 // Demo 1: Grab a bunch of images from the page and detection them
 // upon click.
@@ -119,6 +119,7 @@ else {
 function enableCam(event) {
     if (!faceLandmarker) {
         console.log("Wait! faceLandmarker not loaded yet.");
+        createFaceLandmarker();
         return;
     }
     if (webcamRunning === true) {
@@ -208,19 +209,19 @@ function getFaceActions(el, blendShapes){
             console.log("browOuterUp - scroll down");
             action = "scroll down";
         }
-        else if (shapemap["mouthDimpleRight"] > 0.7){
+        else if (shapemap["mouthDimpleRight"] > 0.6){
             console.log("mouthDimpleRight - select item right");
             action = "select item right";
         }
-        else if (shapemap["mouthDimpleLeft"] > 0.7){
+        else if (shapemap["mouthDimpleLeft"] > 0.6){
             console.log("mouthDimpleLeft - select item left");
             action = "select item left";
         }
-        else if (shapemap["mouthRight"] > 0.7){
+        else if (shapemap["mouthRight"] > 0.6){
             console.log("mouthRight - select component right");
             action = "select component right";
         }
-        else if (shapemap["mouthLeft"] > 0.7){
+        else if (shapemap["mouthLeft"] > 0.6){
             console.log("mouthLeft - select component left");
             action = "select component left";
         }
@@ -240,6 +241,7 @@ function getFaceActions(el, blendShapes){
         
         if (action !==""){
             actions.push(action);
+//            el.value += action + "\n";
             el.innerHTML = actions.join("<br>");
         }
         lastactiontime = n;

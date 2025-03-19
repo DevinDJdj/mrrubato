@@ -296,6 +296,197 @@ This will be solved in future anyway.  I think the current context window should
 We are only around ~100KB.  
 
 
+**web/public/keymap.js
+Need to utilize directional concepts within larger construct.  
+Similar to location detection pattern.  
+How to make minimal grid pattern.  
+possible construct:
+1,3,6,8,10 = uppergrid.  
+1 = top LEFT
+3 = mid LEFT
+6 = mid
+8 = mid RIGHT
+10 = top RIGHT
+2,4,7,9,11
+
+This sequence defines the concept.  
+But what could the divisions be.  
+De Arte De Combinatoria
+#Leibniz
+#https://archive.org/details/ita-bnc-mag-00000844-001/page/n18/mode/2up
+
+
+5 = complete selection.  
+
+0 = word start.  
+12 = (extra octave -> Exponential depth?  as opposed to linear correlation) 
+Not sure an example..
+
+
+LANG offset utilize part-of-speech
+LANG offset:
+0 = META (design where primarily utilize RIGHT side)
+2 = BASE
+4 = MODIFIER LANGUAGE (what is this)
+
+Possible time designation.  
+LEFT = past
+0 = META unknown past
+1 = Beginning of time being discussed.  
+2 = Beginning of time being discussed, possibility.  
+3 = During the past action
+4 = possibility during past action
+5 = complete
+6 = now
+7 = potential now
+8 = near future
+9 = potential near future
+10 = far future
+11 = potential far future.  
+
+RIGHT = future
+Lets keep this conceptual structure.  
+
+
+META should begin 0,7..
+
+Possible location:
+Location conceptual designation
+1 = near far
+2 = not near anywhere
+3 = near 
+4 = not near
+5 = complete
+6 = here
+7 = not here
+8 = far known
+9 = far unknown
+10 = unattainably far known
+11 = unattainably far unknown
+
+location physical designation
+...
+1 = left top
+2 = left mid
+3 = left bot
+4 = mid top
+5 = complete
+6 = here
+7 = not here
+8 = right top
+9 = right mid
+10 = right bot
+11 = unknown
+
+
+
+**bXGBOzsxRjY
+#https://quisestlullus.narpan.net/en/ars-brevis
+Ars Brevis
+Figure A represents the nine most fundamental principles of the Art. 
+B: goodness, C: greatness, D: eternity/duration, E: power/authority, F: wisdom/instinct, G: will/appetite, H: virtue, I: truth, K: glory.
+
+B: difference - C: concordance - D: contrariety (green)
+E: beginning - F: middle - G: end (red)
+H: majority - I: equality - K: minority (yellow)
+
+
+
+Questions or Rules. B: Is it?/possibility. C: What is it?/essence. D: From/Of what is it?/matter. E: Why is it?/form. 
+F: How much is it?/quantity. G: Which is it?/quality. I: When is it?/time. H: Where is it?/place. K: How is it?/ mode and With what is it?/instrument.
+Subjects. B: God. C: Angel. D: Heavens. E: Man. F: Imaginative. G: Sensitive. H: Vegetative. I: Elementative. K: Instrumentative.
+Virtues. B: Justice. C: Prudence. D: Fortitude. E: Temperance. F: Faith. G: Hope. H: Charity. I: Patience. K: Piety.
+Vices. B: avarice. C: gluttony. D: lust. E: pride. F: accide. G: envy. H: ire. I: lying. K: inconstancy.
+
+Octave shift reserved for concept shift within the topic.  
+
+
+
+
+
+
+**web/public/test/whisper/out/indexa.html
+OK that kind of works.  
+Now add gesture to capture and transcribe audio on gesture.  
+Also need to get output text.  
+Have to change to 16000 sample rate, but then we get something...
+
+Yeah base is significantly better than tiny.  
+For the moment use this.  
+
+
+Use this textarea formatting perhaps for the transcript window as well.  
+
+Some issue using Gesture and Whisper at the same time.  
+//createFaceLandmarker();
+breaks other model functionality.  
+
+#https://github.com/google-ai-edge/mediapipe/issues/5135
+--yep. same.  
+Ugh...
+
+#https://stackoverflow.com/questions/30152622/changing-the-default-namespace-module-in-emscripten
+emcc -s EXPORT_NAME="'MyEmscriptenModule'"
+Hmm, any easy way to do this?  
+
+
+>mkdir build-em && cd build-em
+>emcmake cmake ..
+>make -j
+
+# copy the produced page to your HTTP path
+>cp bin/whisper.wasm/*    /path/to/html/
+>cp bin/libmain.worker.js /path/to/html/
+
+#https://www.willusher.io/blog/build-ship-debug-wasm/
+
+Need something like this, just not sure what exactly.  
+**CMakeLists.txt
+#set_target_properties(whisper EXPORT_NAME MyModule)
+target_link_options(whisper PRIVATE
+    "-s EXPORT_NAME='MyModuleName'"
+)
+
+>cp bin/whisper.wasm/* ../../../../music/web/public/test/whisper/outa/
+>cp bin/*.js ../../../../music/web/public/test/whisper/outa/
+
+
+**web/public/test/whisper/outa/indexa.html
+    set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -pthread -s TOTAL_STACK=5242880 -s EXPORT_NAME='WHISPERModule'")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -s TOTAL_STACK=5242880 -s EXPORT_NAME='WHISPERModule'")
+>emcmake cmake ..
+>make -j
+>cp bin/whisper.wasm/* ../../../../music/web/public/test/whisper/outa/
+>cp bin/*.js ../../../../music/web/public/test/whisper/outa/
+
+Looks closer maybe.  
+
+
+js: failed to initialize whisper
+
+Seems maybe it works but only if WHISPER loads first for whatever reason.  
+Can use one after the other, but not simultaneously yet.  
+Something still getting overwritten.  
+
+**web/public/test/whisper/outa/main.js
+replace all:
+Module -> WHISPERModule
+OK finally seems to work with both on after this. 
+--Nice
+
+
+Maybe need a better PC.  
+This may overload easily.  
+Seems to work ok.  
+But probably should run speech recognition on GPU.  
+Seems running on CPU still.  
+
+COMMENT 12,15,15
+END COMMENT 15,15,12
+or
+END COMMENT 12,9,9
+Perhaps this symetry is better. 
+Musically the other makes more sense.  
 
 
 

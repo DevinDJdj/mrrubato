@@ -4,7 +4,7 @@
         <title>whisper.cpp : WASM example</title>
 
         <style>
-            .output {
+            #output {
                 width: 100%;
                 height: 100%;
                 margin: 0 auto;
@@ -61,6 +61,8 @@
                 <button id="fetch-whisper-tiny"     onclick="loadWhisper('tiny')">tiny (75 MB)</button>
                 <button id="fetch-whisper-base-en"  onclick="loadWhisper('base.en')">base.en (142 MB)</button>
                 <button id="fetch-whisper-base"     onclick="loadWhisper('base')">base (142 MB)</button>
+                <button id="fetch-whisper-small-en" onclick="loadWhisper('small.en')">small.en (466 MB)</button>
+                <button id="fetch-whisper-small"    onclick="loadWhisper('small')">small (466 MB)</button>
                 <input type="file" id="whisper-file" name="file" onchange="loadFile(event, 'whisper.bin')" />
                 <br><br>
                 Quantized models:<br><br>
@@ -68,6 +70,11 @@
                 <button id="fetch-whisper-tiny-q5_1"      onclick="loadWhisper('tiny-q5_1')">tiny (Q5_1, 31 MB)</button>
                 <button id="fetch-whisper-base-en-q5_1"   onclick="loadWhisper('base-en-q5_1')">base.en (Q5_1, 57 MB)</button>
                 <button id="fetch-whisper-base-q5_1"      onclick="loadWhisper('base-q5_1')">base (Q5_1, 57 MB)</button>
+                <button id="fetch-whisper-small-en-q5_1"  onclick="loadWhisper('small-en-q5_1')">small.en (Q5_1, 182 MB)</button>
+                <button id="fetch-whisper-small-q5_1"     onclick="loadWhisper('small-q5_1')">small (Q5_1, 182 MB)</button><br>
+                <button id="fetch-whisper-medium-en-q5_0" onclick="loadWhisper('medium-en-q5_0')">medium.en (Q5_0, 515 MB)</button>
+                <button id="fetch-whisper-medium-q5_0"    onclick="loadWhisper('medium-q5_0')">medium (Q5_0, 515 MB)</button>
+                <button id="fetch-whisper-large-q5_0"     onclick="loadWhisper('large-q5_0')">large (Q5_0, 1030 MB)</button>
                 <span id="fetch-whisper-progress"></span>
             </div>
 
@@ -193,16 +200,7 @@
             <br>
 
             <!-- textarea with height filling the rest of the page -->
-            <table width="100%">
-                <tr>
-                    <td>
-                        <textarea id="erroutput" class="output" rows="20"></textarea>
-                    </td>
-                    <td>
-                        <textarea id="output" class="output" rows="20"></textarea>
-                    </td>
-                </tr>
-            </table>
+            <textarea id="output" rows="20"></textarea>
 
             <br><br>
 
@@ -247,7 +245,7 @@
             }
 
             var Module = {
-                print: printTextareaResult,
+                print: printTextarea,
                 printErr: printTextarea,
                 setStatus: function(text) {
                     printTextarea('js: ' + text);
@@ -319,13 +317,20 @@
 
                 document.getElementById('fetch-whisper-tiny-en' ).style.display = 'none';
                 document.getElementById('fetch-whisper-base-en' ).style.display = 'none';
+                document.getElementById('fetch-whisper-small-en').style.display = 'none';
                 document.getElementById('fetch-whisper-tiny'    ).style.display = 'none';
                 document.getElementById('fetch-whisper-base'    ).style.display = 'none';
+                document.getElementById('fetch-whisper-small'   ).style.display = 'none';
 
                 document.getElementById('fetch-whisper-tiny-en-q5_1'  ).style.display = 'none';
                 document.getElementById('fetch-whisper-tiny-q5_1'     ).style.display = 'none';
                 document.getElementById('fetch-whisper-base-en-q5_1'  ).style.display = 'none';
                 document.getElementById('fetch-whisper-base-q5_1'     ).style.display = 'none';
+                document.getElementById('fetch-whisper-small-en-q5_1' ).style.display = 'none';
+                document.getElementById('fetch-whisper-small-q5_1'    ).style.display = 'none';
+                document.getElementById('fetch-whisper-medium-en-q5_0').style.display = 'none';
+                document.getElementById('fetch-whisper-medium-q5_0'   ).style.display = 'none';
+                document.getElementById('fetch-whisper-large-q5_0'    ).style.display = 'none';
 
                 document.getElementById('whisper-file'          ).style.display = 'none';
                 document.getElementById('model-whisper-status'  ).innerHTML = 'loaded model: ' + file.name;
@@ -333,15 +338,22 @@
 
             function loadWhisper(model) {
                 let urls = {
-                    'tiny.en': '/models/whisper/ggml-model-whisper-tiny.en.bin',
-                    'base.en': '/models/whisper/ggml-model-whisper-base.en.bin',
-                    'tiny':     '/models/whisper/ggml-model-whisper-tiny.bin',
-                    'base':     '/models/whisper/ggml-model-whisper-base.bin',
+                    'tiny.en':  'https://whisper.ggerganov.com/ggml-model-whisper-tiny.en.bin',
+                    'tiny':     'https://whisper.ggerganov.com/ggml-model-whisper-tiny.bin',
+                    'base.en':  'https://whisper.ggerganov.com/ggml-model-whisper-base.en.bin',
+                    'base':     'https://whisper.ggerganov.com/ggml-model-whisper-base.bin',
+                    'small.en': 'https://whisper.ggerganov.com/ggml-model-whisper-small.en.bin',
+                    'small':    'https://whisper.ggerganov.com/ggml-model-whisper-small.bin',
 
-                    'tiny-en-q5_1':  '/models/whisper/ggml-model-whisper-tiny.en-q5_1.bin',
-                    'tiny-q5_1':     '/models/whisper/ggml-model-whisper-tiny-q5_1.bin',
-                    'base-en-q5_1':  '/models/whisper/ggml-model-whisper-base.en-q5_1.bin',
-                    'base-q5_1':     '/models/whisper/ggml-model-whisper-base-q5_1.bin',
+                    'tiny-en-q5_1':  'https://whisper.ggerganov.com/ggml-model-whisper-tiny.en-q5_1.bin',
+                    'tiny-q5_1':     'https://whisper.ggerganov.com/ggml-model-whisper-tiny-q5_1.bin',
+                    'base-en-q5_1':  'https://whisper.ggerganov.com/ggml-model-whisper-base.en-q5_1.bin',
+                    'base-q5_1':     'https://whisper.ggerganov.com/ggml-model-whisper-base-q5_1.bin',
+                    'small-en-q5_1': 'https://whisper.ggerganov.com/ggml-model-whisper-small.en-q5_1.bin',
+                    'small-q5_1':    'https://whisper.ggerganov.com/ggml-model-whisper-small-q5_1.bin',
+                    'medium-en-q5_0':'https://whisper.ggerganov.com/ggml-model-whisper-medium.en-q5_0.bin',
+                    'medium-q5_0':   'https://whisper.ggerganov.com/ggml-model-whisper-medium-q5_0.bin',
+                    'large-q5_0':    'https://whisper.ggerganov.com/ggml-model-whisper-large-q5_0.bin',
                 };
 
                 let sizes = {
@@ -349,11 +361,18 @@
                     'tiny':     75,
                     'base.en':  142,
                     'base':     142,
+                    'small.en': 466,
+                    'small':    466,
 
                     'tiny-en-q5_1':   31,
                     'tiny-q5_1':      31,
                     'base-en-q5_1':   57,
                     'base-q5_1':      57,
+                    'small-en-q5_1':  182,
+                    'small-q5_1':     182,
+                    'medium-en-q5_0': 515,
+                    'medium-q5_0':    515,
+                    'large-q5_0':     1030,
                 };
 
                 let url     = urls[model];
@@ -364,13 +383,20 @@
 
                 document.getElementById('fetch-whisper-tiny-en' ).style.display = 'none';
                 document.getElementById('fetch-whisper-base-en' ).style.display = 'none';
+                document.getElementById('fetch-whisper-small-en').style.display = 'none';
                 document.getElementById('fetch-whisper-tiny'    ).style.display = 'none';
                 document.getElementById('fetch-whisper-base'    ).style.display = 'none';
+                document.getElementById('fetch-whisper-small'   ).style.display = 'none';
 
                 document.getElementById('fetch-whisper-tiny-en-q5_1'  ).style.display = 'none';
                 document.getElementById('fetch-whisper-tiny-q5_1'     ).style.display = 'none';
                 document.getElementById('fetch-whisper-base-en-q5_1'  ).style.display = 'none';
                 document.getElementById('fetch-whisper-base-q5_1'     ).style.display = 'none';
+                document.getElementById('fetch-whisper-small-en-q5_1' ).style.display = 'none';
+                document.getElementById('fetch-whisper-small-q5_1'    ).style.display = 'none';
+                document.getElementById('fetch-whisper-medium-en-q5_0').style.display = 'none';
+                document.getElementById('fetch-whisper-medium-q5_0'   ).style.display = 'none';
+                document.getElementById('fetch-whisper-large-q5_0'    ).style.display = 'none';
 
                 document.getElementById('whisper-file'        ).style.display = 'none';
                 document.getElementById('model-whisper-status').innerHTML = 'loading model: ' + model;
@@ -385,13 +411,20 @@
 
                     el = document.getElementById('fetch-whisper-tiny-en' ); if (el) el.style.display = 'inline-block';
                     el = document.getElementById('fetch-whisper-base-en' ); if (el) el.style.display = 'inline-block';
+                    el = document.getElementById('fetch-whisper-small-en'); if (el) el.style.display = 'inline-block';
                     el = document.getElementById('fetch-whisper-tiny'    ); if (el) el.style.display = 'inline-block';
                     el = document.getElementById('fetch-whisper-base'    ); if (el) el.style.display = 'inline-block';
+                    el = document.getElementById('fetch-whisper-small'   ); if (el) el.style.display = 'inline-block';
 
                     el = document.getElementById('fetch-whisper-tiny-en-q5_1'  ); if (el) el.style.display = 'inline-block';
                     el = document.getElementById('fetch-whisper-tiny-q5_1'     ); if (el) el.style.display = 'inline-block';
                     el = document.getElementById('fetch-whisper-base-en-q5_1'  ); if (el) el.style.display = 'inline-block';
                     el = document.getElementById('fetch-whisper-base-q5_1'     ); if (el) el.style.display = 'inline-block';
+                    el = document.getElementById('fetch-whisper-small-en-q5_1' ); if (el) el.style.display = 'inline-block';
+                    el = document.getElementById('fetch-whisper-small-q5_1'    ); if (el) el.style.display = 'inline-block';
+                    el = document.getElementById('fetch-whisper-medium-en-q5_0'); if (el) el.style.display = 'inline-block';
+                    el = document.getElementById('fetch-whisper-medium-q5_0'   ); if (el) el.style.display = 'inline-block';
+                    el = document.getElementById('fetch-whisper-large-q5_0'    ); if (el) el.style.display = 'inline-block';
 
                     el = document.getElementById('whisper-file'        ); if (el) el.style.display = 'inline-block';
                     el = document.getElementById('model-whisper-status'); if (el) el.innerHTML = '';
@@ -620,145 +653,6 @@
                 }
             }
         </script>
-
-
-<video
-id="my-video"
-class="video-js"
-preload="auto"
-controls
-width="640"
-height="264"
-data-setup="{}"
->
-<p class="vjs-no-js">
-  To view this video please enable JavaScript, and consider upgrading to a
-  web browser that
-  <a href="https://videojs.com/html5-video-support/" target="_blank"
-    >supports HTML5 video</a
-  >
-</p>
-</video>
-<button id="btn_1">listen</button><br>
-
-<script type="module" id="main">
-
-let url = "https://storage.googleapis.com/misterrubato-test.appspot.com/videos/2025/2025-03-11%2011-45-29.mp4"
-
-
-const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-const audioSrc =
-  "https://davidalbertoadler.com/assets/audio/dope-drum-loop_C_major.wav";
-
-let source = null;  
-//const audioData = await fetchAudio(audioSrc);
-const audioData = await fetchAudio(url);
-audioContext.decodeAudioData(audioData, onDecoded, onDecodeError);
-
-function fetchAudio(url) {
-  return new Promise((resolve, reject) => {
-    const request = new XMLHttpRequest();
-    request.open("GET", url, true);
-    request.responseType = "arraybuffer";
-    request.onload = () => resolve(request.response);
-    request.onerror = (e) => reject(e);
-    request.send();
-  });
-}
-
-function onDecoded(audioBuffer) {
-  // Play the song
-/*  
-  console.log("Got the decoded buffer now play the song", audioBuffer);
-  source = audioContext.createBufferSource();
-  source.buffer = audioBuffer;
-  source.connect(audioContext.destination);
-  source.loop = true;
-*/
-
-
-    //var offlineContext = new OfflineAudioContext(audioBuffer.numberOfChannels, audioBuffer.length, audioBuffer.sampleRate);
-    var offlineContext = new OfflineAudioContext(audioBuffer.numberOfChannels, audioBuffer.duration*kSampleRate, kSampleRate);
-    var source = offlineContext.createBufferSource();
-    source.buffer = audioBuffer;
-    source.connect(offlineContext.destination);
-    source.start(0);
-
-    offlineContext.startRendering().then(function(renderedBuffer) {
-        audio = renderedBuffer.getChannelData(0);
-        printTextarea('js: audio recorded, size: ' + audio.length);
-
-        // truncate to first 30 mins?
-        if (audio.length > kMaxAudio_s*kSampleRate) {
-            audio = audio.slice(0, kMaxAudio_s*kSampleRate);
-            printTextarea('js: truncated audio to first ' + kMaxAudio_s + ' seconds');
-        }
-        setAudio(audio);
-
-    });  
-
-}
-
-function onDecodeError(e) {
-  console.log("Error decoding buffer: " + e.message);
-  console.log(e);
-}
-
-btn_1.onclick = function() {
-    var playing = this.textContent.indexOf('listen') < 0;
-    if (playing) {
-        this.textContent = this.textContent.replace('mute', 'listen');
-    } else {
-        
-        this.textContent = this.textContent.replace('listen', 'mute');
-        if (source){
-            source.start();
-            console.log("starting audio");
-        }
-    }
-}
-
-setTimeout(
-    function(){    
-        //loadWhisper('tiny.en');
-        loadWhisper('base');
-
-    }, 5000
-);
-
-
-//add gesture listener to start/stop.  
-//transcribe on stop.  
-
-        </script>
         <script type="text/javascript" src="main.js"></script>
-
-
-        <section id="demos" class="invisible">        
-            
-        <h2>Demo: Webcam continuous face landmarks detection</h2>
-        <p>Hold your face in front of your webcam to get real-time face landmarker detection.</br>Click <b>enable webcam</b> below and grant access to the webcam if prompted.</p>
-    
-        <div id="liveView" class="videoView">
-          <button id="webcamButton" class="mdc-button mdc-button--raised">
-            <span class="mdc-button__ripple"></span>
-            <span class="mdc-button__label">ENABLE WEBCAM</span>
-          </button>
-          <div style="position: relative;">
-            <video id="webcam" style="position: abso" autoplay playsinline></video>
-            <canvas class="output_canvas" id="output_canvas" style="position: absolute; left: 0px; top: 0px;"></canvas>
-          </div>
-        </div>
-        <div class="blend-shapes">
-          <ul class="blend-shapes-list" id="video-blend-shapes"></ul>
-    
-        </div>
-        <div id="detected-face-actions"></div>
-    </section>
-        <!-- partial -->
-      
-      <script type="module" id="gesturemodule" src="/test/sensors/gesture/script.js"></script>
-      
-
     </body>
 </html>

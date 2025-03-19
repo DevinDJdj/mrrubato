@@ -246,7 +246,7 @@
                 }
             }
 
-            var Module = {
+            var WHISPERModule = {
                 print: printTextareaResult,
                 printErr: printTextarea,
                 setStatus: function(text) {
@@ -263,7 +263,7 @@
             var audio = null;
 
             // the whisper instance
-            var instance = null;
+            var whisper_instance = null;
             var model_whisper = '';
 
             // helper function
@@ -285,12 +285,12 @@
                 // write to WASM file using FS_createDataFile
                 // if the file exists, delete it
                 try {
-                    Module.FS_unlink(fname);
+                    WHISPERModule.FS_unlink(fname);
                 } catch (e) {
                     // ignore
                 }
 
-                Module.FS_createDataFile("/", fname, buf, true, true);
+                WHISPERModule.FS_createDataFile("/", fname, buf, true, true);
 
                 //model_whisper = fname;
 
@@ -586,16 +586,16 @@
             }
 
             function onProcess(translate) {
-                if (!instance) {
-                    instance = Module.init('whisper.bin');
+                if (!whisper_instance) {
+                    whisper_instance = WHISPERModule.init('whisper.bin');
 
-                    if (instance) {
-                        printTextarea("js: whisper initialized, instance: " + instance);
+                    if (whisper_instance) {
+                        printTextarea("js: whisper initialized, instance: " + whisper_instance);
                         document.getElementById('model').innerHTML = 'Model loaded: ' + model_whisper;
                     }
                 }
 
-                if (!instance) {
+                if (!whisper_instance) {
                     printTextarea("js: failed to initialize whisper");
                     return;
                 }
@@ -605,17 +605,18 @@
                     return;
                 }
 
-                if (instance) {
+                if (whisper_instance) {
                     printTextarea('');
                     printTextarea('js: processing - this might take a while ...');
                     printTextarea('');
 
                     setTimeout(function() {
-                        var ret = Module.full_default(instance, audio, document.getElementById('language').value, nthreads, translate);
+                        var ret = WHISPERModule.full_default(whisper_instance, audio, document.getElementById('language').value, nthreads, translate);
                         console.log('js: full_default returned: ' + ret);
                         if (ret) {
                             printTextarea("js: whisper returned: " + ret);
                         }
+                        //whisper_instance = null;
                     }, 100);
                 }
             }
@@ -756,7 +757,12 @@ setTimeout(
         <div id="detected-face-actions"></div>
     </section>
         <!-- partial -->
-      
+
+        
+        <script type="text/javascript">
+            GESTURE = {};    
+        </script>
+        
       <script type="module" id="gesturemodule" src="/test/sensors/gesture/script.js"></script>
       
 
