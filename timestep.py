@@ -158,7 +158,7 @@ def localBackup():
     ref = db.reference(f'/')
 
     # Get the backup path
-    backup_path = "c:/devinpiano/backup/"
+    backup_path = "c:/devinpiano/backup/db/"
 
     # Take the backup
     today = date. today()
