@@ -1,9 +1,30 @@
 // Common Javascript functions used by the examples
 
+let whisperCallback = null;
+
 function convertTypedArray(src, type) {
     var buffer = new ArrayBuffer(src.byteLength);
     var baseView = new src.constructor(buffer).set(src);
     return new type(buffer);
+}
+
+function getWHISPERObj(str){
+    var start = str.indexOf('[');
+    var end = str.indexOf(']');
+    timestr = str.substring(start+1, end);
+    var startend = timestr.split('-->');
+    if (startend.length != 2) {
+        return [0, 0, str];
+    }
+    else{
+        let startt = startend[0].trim();
+        let endt = startend[1].trim();
+        return [getMilliSecsFromTime(startt), getMilliSecsFromTime(endt), str.substring(end+1)];
+    }
+    if (start != -1 && end != -1 && end > start) {
+        return [str.substring(start+1, end), str.substring(end+1)];
+    }
+    return [null, str];
 }
 
 var printTextareaResult = (function() {
@@ -16,6 +37,17 @@ var printTextareaResult = (function() {
             element.value += text + "\n";
             element.scrollTop = element.scrollHeight; // focus on bottom
         }
+        //find timing here, and re-enable camera.  
+        var whisperobj = getWHISPERObj(text);
+        if (whisperobj[1]*1000 > (stopTime - startTime - 2000)){
+
+            //go ahead and enable
+            FUNCS.GESTURE.startWebcam();
+        }
+        if (whisperCallback){
+            whisperCallback(whisperobj);
+        }
+
     };
 })();
 

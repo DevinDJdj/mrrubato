@@ -664,6 +664,8 @@ function hashfromword(word){
 	return hash;
 }
 //for now display one user at a time, then combine users?  
+var debugcounter = 0;
+var prevwords = null;
 function getFeedbackImage(source, w, h, myscene,myengine, midiuser=0, flang=""){
 	//for all notes in midiarray, generate image.  
 	//after this figure out how to add other midifeedback as well.  
@@ -672,12 +674,22 @@ function getFeedbackImage(source, w, h, myscene,myengine, midiuser=0, flang=""){
 	x = 0;
 	ytop = h/2;
 	ybot = -h/2;
-
+	debugcounter = debugcounter + 1;
+	console.log("getFeedbackImage " + debugcounter);
 
 	//go through all users/languages
 	//if flang, only use that lang.  
 	words = filterWords();
-	for (var wi=0; wi<words.length; wi++){
+	let start = 0;
+	if (prevwords > 0){
+		start = prevwords;
+
+	}
+	if (w != xmultiplier1){
+		prevwords = words.length-1;
+		//dont want to update until both drawn.  
+	}
+	for (var wi=start; wi<words.length; wi++){
 		lang = words[wi].lang;
 		word = words[wi].word;
 		x = i*2;

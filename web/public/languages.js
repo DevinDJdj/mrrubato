@@ -1261,7 +1261,7 @@ function filterWords(flangs=[], fwords=[], fusers=[]){
 
 
     ret = flattenWords(ret);
-    ret = sortWords(ret);
+//    ret = sortWords(ret);
     filteredwords = ret;
     return ret;
 

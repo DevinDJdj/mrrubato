@@ -1,0 +1,31 @@
+**history.py
+**web/public/test/sensors/gesture/script.js
+**web/public/codewindow.js
+**web/public/rec.html
+@@What are you doing?
+==
+I'm happy to help you understand what's happening. It seems like you're working on a project that involves building a video recording and sharing platform. You've designed a system that allows users to record videos, upload them to the cloud, and then share them with others.
+
+Here are some key points that might help clarify what's going on:
+
+1. **Service calls are being made to IndexedDB**: You've switched to using IndexedDB instead of Firebase Realtime Database (RTDB). This is a good choice, as IndexedDB is a more modern and flexible database that can handle complex use cases.
+2. **FTS (Full-text Search) is being used**: You've decided to use FTS to index your video content. This is a good choice, as FTS can provide fast and efficient search capabilities for your content.
+3. **SaveLocal button is being used**: You've added a SaveLocal button to your platform, which allows users to save their recorded videos locally. This is a good choice, as it provides a convenient way for users to save their recordings.
+4. **Highlight boxes are being created**: You've implemented a feature that allows users to create highlight boxes on their recorded videos. These highlight boxes can be used to mark important parts of the video, such as transitions or keyframes.
+
+To summarize, you've made the following changes to your platform:
+
+* Switched from Firebase RTDB to IndexedDB
+* Used FTS to index your video content
+* Added a SaveLocal button
+* Implemented a feature to create highlight boxes
+
+These changes should make your platform more robust and user-friendly. However, it's worth noting that you still need to address some of the challenges that you mentioned, such as ensuring public uploads are pushed to YouTube and implementing a way to save on stop recording.
+$$
+
+**grammar
+**web/public/grammar/book/booka.ne
+@@What are you doing?
+==
+I'm not sure what you're referring to. The text appears to be a long, detailed description of a language, including its grammar, syntax, and sound patterns. It also mentions the author's experience with a language learning program and their observations about the language's mechanics. If you could provide more context or clarify what you're looking for, I'd be happy to try and assist you.
+$$

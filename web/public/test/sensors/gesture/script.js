@@ -17,12 +17,35 @@ const detectedFaceActions = document.getElementById("detected-face-actions");
 let faceLandmarker;
 let runningMode = "IMAGE";
 let enableWebcamButton;
+let gestureCallback = null;
+//click to start.  
 let webcamRunning = false;
 const videoWidth = 480;
 // Before we can use HandLandmarker class we must wait for it to finish
 // loading. Machine Learning models can be large and take a moment to
 // get everything needed to run.
-async function createFaceLandmarker() {
+
+export function setGestureCallback(callback) {
+    gestureCallback = callback;
+}
+
+export function isWebCamRunning(){
+    return webcamRunning;
+}
+
+export function startWebcam(){
+    if (enableWebcamButton !== null && isWebCamRunning() === false){
+        enableWebcamButton.click();
+    }    
+}
+
+export function stopWebcam(){
+    if (enableWebcamButton !== null && isWebCamRunning() === true){
+        enableWebcamButton.click();
+    }    
+}
+
+export async function createFaceLandmarker() {
     const filesetResolver = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm");
     faceLandmarker = await FaceLandmarker.createFromOptions(filesetResolver, {
         baseOptions: {
@@ -125,20 +148,23 @@ function enableCam(event) {
     if (webcamRunning === true) {
         webcamRunning = false;
         enableWebcamButton.innerText = "ENABLE PREDICTIONS";
+
     }
     else {
         webcamRunning = true;
         enableWebcamButton.innerText = "DISABLE PREDICTIONS";
+
+        // getUsermedia parameters.
+        const constraints = {
+            video: true
+        };
+        // Activate the webcam stream.
+        navigator.mediaDevices.getUserMedia(constraints).then((stream) => {
+            video.srcObject = stream;
+            video.addEventListener("loadeddata", predictWebcam);
+        });
+
     }
-    // getUsermedia parameters.
-    const constraints = {
-        video: true
-    };
-    // Activate the webcam stream.
-    navigator.mediaDevices.getUserMedia(constraints).then((stream) => {
-        video.srcObject = stream;
-        video.addEventListener("loadeddata", predictWebcam);
-    });
 }
 let lastVideoTime = -1;
 let results = undefined;
@@ -209,11 +235,11 @@ function getFaceActions(el, blendShapes){
             console.log("browOuterUp - scroll down");
             action = "scroll down";
         }
-        else if (shapemap["mouthDimpleRight"] > 0.6){
+        else if (shapemap["mouthDimpleRight"] > 0.7){
             console.log("mouthDimpleRight - select item right");
             action = "select item right";
         }
-        else if (shapemap["mouthDimpleLeft"] > 0.6){
+        else if (shapemap["mouthDimpleLeft"] > 0.7){
             console.log("mouthDimpleLeft - select item left");
             action = "select item left";
         }
@@ -240,9 +266,14 @@ function getFaceActions(el, blendShapes){
         }
         
         if (action !==""){
-            actions.push(action);
+            let obj = {"action": action, "time": Date.now()};
+            actions.push(obj);
+            if (gestureCallback){
+                gestureCallback(action);
+            }
 //            el.value += action + "\n";
-            el.innerHTML = actions.join("<br>");
+            el.innerHTML = actions.map(a => a.action).join('<br>');
+            //el.innerHTML = actions.join("<br>");
         }
         lastactiontime = n;
     }

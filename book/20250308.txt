@@ -469,6 +469,7 @@ Can use one after the other, but not simultaneously yet.
 Something still getting overwritten.  
 
 **web/public/test/whisper/outa/main.js
+-HACK
 replace all:
 Module -> WHISPERModule
 OK finally seems to work with both on after this. 
@@ -488,5 +489,83 @@ END COMMENT 12,9,9
 Perhaps this symetry is better. 
 Musically the other makes more sense.  
 
+
+**web/public/analyze.html
+Introduced bug possibly with feedback.  
+After about 20 words, feedback video freezes.  
+
+Seems babylonjs is taking all of the time.  
+--getFeedbackImage
+Stop rewriting the same locations. 
+Probably this is what is causing the issue.  
+This is a limitation we dont want though.  
+That means feedback is limited to about 
+n * n / 2 = 24*24/2 = 248
+about here is when we have issues with the display.  
+Hmm..
+Count this.  
+annoying...
+
+Try this...
+
+**DEBUGGING
+#https://developers.google.com/speed/docs/insights/v5/get-started
+
+Adjust quota, still get 
+    "code": 429,
+    "message": "Quota exceeded for quota metric 'Queries' and limit 'Queries per day' of service 'pagespeedonline.googleapis.com' for consumer 'project_number:583797351490'.",
+Boo... but poetic.
+
+#https://github.com/All-Hands-AI/OpenHands
+
+Perhaps find an agent to play with.  
+Dont think I want to make this tooling...
+
+#https://github.com/microsoft/ai-agents-for-beginners
+#https://github.com/nanobrowser/nanobrowser
+
+#https://github.com/dot-agent/nextpy
+#https://github.com/n8n-io/self-hosted-ai-starter-kit
+
+Hmmm....
+What to do with this though anyway.  
+Basically should iterate, make code change suggestions.  
+Make actual branches and changes, and run as branch.  
+
+Need to tie firebase to git.  
+https://firebase.google.com/docs/hosting/test-preview-deploy
+
+Or just deploy here:
+>firebase hosting:channel:deploy testtest
+
++  hosting:channel: Channel URL (misterrubato-test): ...
+
+Then use this with AI agent to record and annotate for review.  
+Continue to change/use under branch.  
+Record results for review.  
+
+#https://aleksandarhaber.com/install-and-run-browser-use-ai-agents-locally-using-ollama/#google_vignette
+
+Yeah lets set this up and see.  
+
+
+
+**web/public/test/whisper/outa/indexa.html
+Seems to be demanding too much to use gesture and whisper.  
+Gesture keeps freezing...
+Whole chrome tab frozen.  
+
+Hmmm, seems cant use both at the same time...
+Once we kick off the whisper, we can re-enable the gesture detection.  
+Not sure it is stable enough to use....
+
+--somewhat better.  
+
+**web/public/transcribe.html
+For now put logic necessary in here.  
+Copy and automate the transcription for now as a separate page.  
+
+FUNCS.ACT
+Also on blink turn off speechrecognition engine.  
 
 

@@ -137,7 +137,7 @@ def is_binary_file(file_path):
 def clonegit(gitcloneurl, gitbranch):
     
     #clone project to temp folder and upload each file to firebase.  
-    outdir = 'c:/devinpiano/music/git/output/' + gitcloneurl[ gitcloneurl.find("github.com/")+11 :]  + "_" + gitbranch
+    outdir = 'c:/devinpiano/backup/git/output/' + gitcloneurl[ gitcloneurl.find("github.com/")+11 :]  + "_" + gitbranch
     cmd = 'git clone  ' + gitcloneurl + ' --single-branch --branch ' + gitbranch + ' ' + outdir
     print(cmd)
     subprocess.call(cmd, shell=True)
