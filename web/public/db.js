@@ -47,32 +47,64 @@ class classifierDB{
 		return this.db.knn.where("[lang+user+topic]").equals([lang,user,topic]).toArray();
 	}
 
-	//do we need user here?  
-	saveKNN(lang, user, timestamp, knnblob, topic="", cb=null){
-		const exists = this.db.knn.where("[lang+user+topic]").equals([lang,user,topic]).toArray();
-		if (exists != null && exists.length > 0){
-			//already exists.  
-			exists[0].timestamp = timestamp;
-			exists[0].knnblob = knnblob;
-			this.db.knn.put(exists[0]).then((id) => {
-				console.log("updated knn with id " + id);
-//				this.ftsindex.add(vidid + "_" + id, lang);  
-				if (cb != null){
-					cb(id); //callback to complete.  
-				}
-			});
+	getKNNBlob(knn){
+		/*
+		let dataset = knn.getClassifierDataset();
+		var datasetObj = {};
+		Object.keys(dataset).forEach((key) => {
+		  let data = dataset[key].dataSync();
+		  // use Array.from() so when JSON.stringify() it covert to an array string e.g [0.1,-0.2...] 
+		  // instead of object e.g {0:"0.1", 1:"-0.2"...}
+		  datasetObj[key] = Array.from(data); 
+		});
+		let jsonStr = JSON.stringify(datasetObj)		
+		*/
+		let jsonStr = JSON.stringify( Object.entries(knn.getClassifierDataset()).map(([label, data])=>[label, Array.from(data.dataSync()), data.shape]) );
+		return jsonStr;
+	}
 
-		}
-		else{
-			var obj = {"timestamp": timestamp, "knnblob": knnblob, "lang": lang, "user": user, "topic": topic};
-			this.db.knn.add(obj).then((id) => {
-				console.log("added knn with id " + id);
-//				this.ftsindex.add(vidid + "_" + id, lang);  
-				if (cb != null){
-					cb(id); //callback to complete.  
-				}
-			});
-		}
+	  
+	getKNNFromBlob(knnblob, knn){
+//		let tensorObj = JSON.parse(knnblob);
+		//covert back to tensor
+		let tensorObj = Object.fromEntries( JSON.parse(knnblob).map(([label, data, shape])=>[label, tf.tensor(data, shape)]) )
+//		return Object.fromEntries( tensorObj.map(([label, data, shape])=>[label, tf.tensor(data, shape)]) )
+		return tensorObj;
+
+	}
+
+	//do we need user here?  
+	saveKNN(lang, user, timestamp, knn, topic="", cb=null){
+		let knnblob = this.getKNNBlob(knn);
+		this.getKNN(lang, user, topic, timestamp).then((exists) => {
+			if (exists != null && exists.length > 0){
+				//already exists.  
+				exists[0].timestamp = timestamp;
+				exists[0].knnblob = knnblob;
+				this.db.knn.put(exists[0]).then((id) => {
+					console.log("updated knn with id " + id);
+	//				this.ftsindex.add(vidid + "_" + id, lang);  
+					if (cb != null){
+						cb(id); //callback to complete.  
+					}
+				});
+	
+			}
+			else{
+				var obj = {"timestamp": timestamp, "knnblob": knnblob, "lang": lang, "user": user, "topic": topic};
+				this.db.knn.add(obj).then((id) => {
+					console.log("added knn with id " + id);
+	//				this.ftsindex.add(vidid + "_" + id, lang);  
+					if (cb != null){
+						cb(id); //callback to complete.  
+					}
+				});
+			}
+	
+		}).catch((err) => {
+			console.log("error in getKNN: " + err);
+		});
+
 	}
 
 

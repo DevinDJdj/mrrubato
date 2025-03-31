@@ -524,6 +524,7 @@ class VideoSnapper {
     this.classes = {};
     this.canvases = {};
     this.funcdict = {};
+    this.seeking = false;
     this.funcdict["base"] = function(frame){
       //possibly dynamic detection etc.  based on word.  
       if (frame.word=="good"){
@@ -624,7 +625,7 @@ class VideoSnapper {
 
     var seekcallback = function(options) {
       // Create canvas
-      seeking = false;
+
 
       let canvas = $('<canvas />').attr({
           id: 'tempcanvas' + options.frameNo,
@@ -679,13 +680,13 @@ class VideoSnapper {
     for (var i = 0; i < frameXY.length; i++) {
 
       for (var j = 0; j < numframes; j++) {
-        if (seeking){
+        if (this.seeking){
           sleep(2000);
         }
 
 
         
-        seeking = true;
+        this.seeking = true;
 
        
         let ops = { id: i, x: frameXY[i].x, y: frameXY[i].y, width: frameXY[i].width, height: frameXY[i].height, time: frameXY[i].time+j*framerate, frameNo: j };

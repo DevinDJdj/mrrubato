@@ -1226,7 +1226,7 @@ function flattenWords(mywords){
     for (const [k2, v2] of Object.entries(mywords)) {	
         for (const [k3, v3] of Object.entries(mywords[k2])) {	
             for (let i=0; i<mywords[k2][k3].length; i++){
-                ret.push({"lang": k2, "word": k3, "time": mywords[k2][k3][i]});
+                ret.push({"lang": k2, "word": k3, "time": mywords[k2][k3][i].time, "created": mywords[k2][k3][i].created});
             }
         }
     }
@@ -1235,8 +1235,9 @@ function flattenWords(mywords){
 
 function sortWords(mywords){
     //sort by time.  
+    //sort by created.  
     mywords.sort(function(a, b) {
-        return a.time - b.time;
+        return a.created - b.created;
     });
     return mywords;    
 }
@@ -1244,12 +1245,12 @@ function sortWords(mywords){
 function filterWords(flangs=[], fwords=[], fusers=[]){
     ret = {};
     if (flangs.length > 0){
-        ret = filterArray(flangs, wordtimes);
+        ret = filterArray(flangs, midiwords);
     }
     else{
 
-        flangs = Object.keys(wordtimes);
-        ret = filterArray(flangs, wordtimes);
+        flangs = Object.keys(midiwords);
+        ret = filterArray(flangs, midiwords);
 //        ret = wordtimes; //maybe need to clone.  
 
     }
@@ -1261,7 +1262,7 @@ function filterWords(flangs=[], fwords=[], fusers=[]){
 
 
     ret = flattenWords(ret);
-//    ret = sortWords(ret);
+    ret = sortWords(ret);
     filteredwords = ret;
     return ret;
 

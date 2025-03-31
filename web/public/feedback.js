@@ -7,34 +7,51 @@ function getNetwork(lang, vs){
     //if KNN for this lang exists, load it.  
 	//load from DB.  
 	let classDB = getClassifierDB(lang);
-	classDB.getKNN(lang, currentmidiuser).then((exists) => {
-		if (exists !== null && exists.length > 0){
+	classDB.getKNN(lang, currentmidiuser).then(knnarray => {	
+		myknn = null;
+		if (knnarray != null && knnarray.length > 0){
+			//return knn array.  
+			myknn = classDB.getKNNFromBlob(knnarray[0].knnblob);
+		}
+		else{
+			//no knn found for this lang and user.  
+			myknn = null;
+		}
+
+		if (myknn !== null){
 			//load KNN into network.
-
-
+	
+	
 			//vs.knn.setClassifierDataset(exists[0].knnblob); //should be an array returned.  
-			vs[lang].knn.classDatasetMatrices = exists[0].knnblob; //should be an array returned.
+			vs[lang].knn.setClassifierDataset(myknn);
+			//vs[lang].knn.classDatasetMatrices = exists[0].knnblob; //should be an array returned.
+			/*
 			for (const label in vs.knn.classDatasetMatrices) {
 				vs[lang].knn.classExampleCount[label] = vs[lang].knn.classDatasetMatrices[label].shape[0];
-			  }
-
+				}
+			*/
+	
 		}
-	}).catch((error) => {
-		console.error("Error loading classifier: ", error);
+	
+	}).catch(error => {
+		console.log("Error retrieving KNN: " + error);
+		return null;
 	});
 
     return null;
 }
 
+
 function saveNetwork(lang, knn){
 	//save KNN for this lang.
     let classDB = new classifierDB(lang);
 
-	console.log(knn.classDatasetMatrices);
+	console.log(knn);
 	//save classifier to DB.  
 	let now = new Date();
 
-	classDB.saveKNN(lang, currentmidiuser, now.format("yyyymmddHHMMss"), knn.classDatasetMatrices);
+
+	classDB.saveKNN(lang, currentmidiuser, now.format("yyyymmddHHMMss"), knn);
 }
 
 function getClassifierDB(lang){

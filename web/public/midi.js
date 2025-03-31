@@ -860,7 +860,7 @@ function noteOn(note, velocity, abstime, mytime=0, lang=""){ //mytime is the ori
 		osc = playTone(midiToFreq(note, velocity));
 		pnote = playNote(note, Math.round(velocity/2)); //dont want this to be loud to detract from the ongoing video.  
 	}
-	var obj = {"note": note, "velocity": velocity, "time": abstime, "duration": 0, osc: osc, pnote: pnote, complete: false, user: currentmidiuser};
+	var obj = {"note": note, "velocity": velocity, "time": abstime, "duration": 0, osc: osc, pnote: pnote, complete: false, user: currentmidiuser, created: Date.now()};
 	
 	if (mytime > 0){
 		//this is loaded data.  

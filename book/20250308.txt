@@ -569,3 +569,119 @@ FUNCS.ACT
 Also on blink turn off speechrecognition engine.  
 
 
+**web/public/analyze.html
+**web/public/languages.js
+--flattenWords
+confirm..
+
+**web/public/feedback.js
+still problem loading KNN?  
+--maybe working, check again...
+
+
+Need to generate feedback based on KNNs we have.  
+Create audio spectrogram over time.  
+Create predictor for this as well as midi data.  
+Probably slightly different results.  
+
+Then use these to predict what user would prefer/predict.  
+And correct/compare based on user input.  
+
+Can we use in-browser RAG?  
+#https://blog.kuzudb.com/post/kuzu-wasm-rag/
+#https://github.com/poloclub/mememo
+
+
+#https://github.com/babycommando/entity-db?tab=readme-ov-file
+
+**server/ollama/server.py
+#https://ts.llamaindex.ai/docs/llamaindex/modules/llms/ollama
+
+#https://docs.llamaindex.ai/en/stable/getting_started/starter_example_local/
+
+#https://docs.llamaindex.ai/en/stable/examples/embeddings/ollama_embedding/
+maybe do this...
+
+Have been doing all web-based.  
+This is better, but dont restrict from using non-browser based.  
+Play a bit...
+
+#https://docs.llamaindex.ai/en/stable/examples/data_connectors/GithubRepositoryReaderDemo/
+
+#https://docs.llamaindex.ai/en/stable/examples/data_connectors/WeaviateDemo/
+
+#https://github.com/weaviate/weaviate
+
+#https://docs.llamaindex.ai/en/stable/examples/data_connectors/WebPageDemo/
+#https://docs.llamaindex.ai/en/stable/examples/data_connectors/simple_directory_reader/
+
+
+#https://docs.llamaindex.ai/en/stable/examples/vector_stores/ChromaIndexDemo/
+#https://docs.llamaindex.ai/en/stable/examples/vector_stores/WeaviateIndexDemo/
+#https://docs.llamaindex.ai/en/stable/examples/vector_stores/PineconeIndexDemo/
+
+Try a few.  
+#https://docs.llamaindex.ai/en/stable/examples/cookbooks/llama3_cookbook/
+
+#https://docs.llamaindex.ai/en/stable/examples/agent/multi_document_agents-v1/
+
+#https://docs.llamaindex.ai/en/stable/examples/llm/deepseek/
+
+#https://docs.llamaindex.ai/en/stable/examples/llm/llama_cpp/
+
+#https://ollama.com/library/codellama
+
+
+
+#https://marketplace.visualstudio.com/items?itemName=ms-vscode.vscode-speech
+Lets use this...
+
+Ctrl+I
+
+Hmmm....
+not exactly optimal.  
+Lets make this extension better.  
+
+#https://code.visualstudio.com/api/get-started/your-first-extension
+
+Extension with local server is the way to go probably.  
+This doesnt have to be a web UI, just use that for visualizations and strictly viewing/interrogating.  
+This should be for changing.  
+
+
+#https://code.visualstudio.com/api/extension-guides/chat
+
+#https://github.com/microsoft/vscode-extension-samples/tree/main/chat-sample
+
+For now objective would be to open something from web link.  
+
+vscode://file/c:/devinpiano/music/timestep.py
+
+with cursor position:
+vscode://file/c:/devinpiano/music/timestep.py:5:10
+
+setting for relative path [c:/devinpiano/music]
+Going the other way I'm sure is fairly easy.  
+
+
+This works.  
+So just set relative path, and then open doing this along with the subsequent suggestion.  
+For now this is a start.  
+
+Perhaps adjust chat sample to gather context and open web visualization link.  
+i.e. have simple commands like open book...
+
+#https://code.visualstudio.com/docs/copilot/copilot-extensibility-overview
+#https://code.visualstudio.com/api/extension-guides/chat-tutorial
+@tutor ....
+Perhaps we can just specify a new participant, and then from the extension, get all context and open webpage.  
+**web/public/test/testfromvscode.html
+
+
+
+
+Cant open..
+
+#https://learn.microsoft.com/en-us/microsoft-edge/devtools-guide-chromium/sources/opening-sources-in-vscode
+
+
