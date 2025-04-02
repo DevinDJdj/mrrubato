@@ -685,3 +685,26 @@ Cant open..
 #https://learn.microsoft.com/en-us/microsoft-edge/devtools-guide-chromium/sources/opening-sources-in-vscode
 
 
+
+
+**web/public/feedback.js
+Need classifierDB to be per topic as well.  
+Do we want multiple topics?  
+Is there an efficient way to do this.  
+TOPIC -> LANG -> classifier
+We have this already.  
+**web/public/db.js
+			knn: "++id,lang,user,[lang+user+topic],topic,timestamp", //knn data.
+
+How to organize?  
+
+Also can we find similarity between KNNs.  
+Find preference similarity...
+
+
+Just generate a prompt from the web UI.  
+Then use this prompt on the downloaded git repository.  
+This should be the model which creates code changes.  
+Pull the book and context, and then pass this to the LLM.  
+
+
