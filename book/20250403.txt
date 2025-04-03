@@ -1,0 +1,189 @@
+**news.py
+Yep:
+#https://github.com/codelucas/newspaper
+
+**0606
+Need to do one match in order to have sample data.  
+Did we ever finish creating the language?  
+
+
+**web/public/db.html
+Does the export actually work with large amount of data?  
+
+Add import..
+
+
+**web/public/page.html
+**web/public/test/sensors/gesture/index.html
+add sensor to page.  
+**web/public/test/whisper/outa/indexa.html
+continue here, integrate into PAGE/BOOK
+
+**web/public/test/testfilbert.html
+**web/public/test/testacorn.html
+Can we use this struct to generate a DOT graph?  
+
+
+**timestep.py
+--Add spin up / spin down of backend.  
+And wait...
+Then we get some transcriptions if there is available hardware at the time of timestep.py
+Alternatively move transcriptions (enable/disable) to
+**web/public/analyze.html
+
+
+**FLOW
+--rec
+--analyze
+->
+--book
+--page
+--plugin
+--generate
+--review
+
+
+**GENBOOK
+Need to utilize these answers as input and see what the subsequent generation looks like.  
+Simple COT sequence.  
+
+Need to store and adjust the system prompt.  
+@@What are you doing?
+$$system prompt (make suggestions)
+==...
+
+@@Please propose GIT changes to my source file.  
+$$system prompt (teach me)
+@@Please correct any issues in the following suggested changes.  
+$$system prompt (check)
+
+Accept or deny changes.  
+How to save this event chain.  
+In transcript.  
+Export/import transcript.  
+Need topic selection as part of transcript.  
+
+#https://code.visualstudio.com/api/get-started/your-first-extension
+
+
+**record.py
+Should really store audio only separately...
+
+/transcript
+byvideo and byuser.  
+
+/comments
+byvideo and byuser.  
+
+**book/keys.txt
+5 = complete selection.  
+
+0 = word start.  
+12 = (extra octave -> Exponential depth?  as opposed to linear correlation) 
+Not sure an example..
+
+
+LANG offset utilize part-of-speech
+LANG offset:
+0 = META (design where primarily utilize RIGHT side)
+2 = BASE
+4 = MODIFIER LANGUAGE (what is this)
+
+Possible time designation.  
+LEFT = past
+0 = META unknown past
+1 = Beginning of time being discussed.  
+2 = Beginning of time being discussed, possibility.  
+3 = During the past action
+4 = possibility during past action
+5 = complete
+6 = now
+7 = potential now
+8 = near future
+9 = potential near future
+10 = far future
+11 = potential far future.  
+
+
+
+#https://aleksandarhaber.com/install-and-run-browser-use-ai-agents-locally-using-ollama/#google_vignette
+
+#https://code.visualstudio.com/api/extension-guides/chat
+
+#https://github.com/microsoft/vscode-extension-samples/tree/main/chat-sample
+
+with cursor position:
+vscode://file/c:/devinpiano/music/timestep.py:5:10
+
+setting for relative path [c:/devinpiano/music]
+Going the other way I'm sure is fairly easy.  
+
+**web/public/test/testfromvscode.html
+
+Build VSCode plugin and it should interact with the local installation via cmd line.  
+This is for detailed analysis.  
+Get context from web, paste into plugin... get response.  
+Interaction to update code pages or not....
+Significant amount of interaction here.  
+But perhaps the suggestion is more important.  
+Point to location in code and suggestion.  
+Open code location/paste with link from chat.  
+
+Future possibility to auto-run..
+
+
+**server/gemini/test.py
+#https://github.com/GoogleCloudPlatform/generative-ai/blob/main/gemini/getting-started/intro_gemini_2_5_pro.ipynb
+
+#https://cloud.google.com/docs/authentication/external/set-up-adc
+#https://cloud.google.com/sdk/docs/install
+
+too many issues.  
+Also need local model.  
+
+
+**OLLAMA
+> ollama pull deepseek-coder
+> ollama pull deepseek-coder-v2
+> ollama pull deepseek-r1
+> ollama pull codegemma
+> ollama pull gemma3
+> ollama pull granite-code
+> ollama pull codellama
+
+gemma3:4b 128k context
+
+codegemma: 8192
+
+deepseek-coder-v2: 163840
+
+codellama: 16384
+
+granite-code: 128000
+
+
+
+**git/clone.py
+use files already available here to do generation.  
+devinpiano/backup/git/output/
+Maybe better organization needed..
+
+
+**server/ollama/deepseek.py
+**server/ollama/codegemma.py
+ollama library Pretty easy to use structure.  
+
+
+#https://github.com/ollama/ollama-js
+hmmm...
+
+
+**server/ollama/llava.py
+not bad image description.  
+@@no image generation
+
+
+
+Simple chrome extension just using gesture?  
+
+

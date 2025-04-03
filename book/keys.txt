@@ -1,0 +1,61 @@
+5 = complete selection.  
+
+0 = word start.  
+12 = (extra octave -> Exponential depth?  as opposed to linear correlation) 
+Not sure an example..
+
+
+LANG offset utilize part-of-speech
+LANG offset:
+0 = META (design where primarily utilize RIGHT side)
+2 = BASE
+4 = MODIFIER LANGUAGE (what is this)
+
+Possible time designation.  
+LEFT = past
+0 = META unknown past
+1 = Beginning of time being discussed.  
+2 = Beginning of time being discussed, possibility.  
+3 = During the past action
+4 = possibility during past action
+5 = complete
+6 = now
+7 = potential now
+8 = near future
+9 = potential near future
+10 = far future
+11 = potential far future.  
+
+RIGHT = future
+Lets keep this conceptual structure.  
+
+
+META should begin 0,7..
+
+Possible location:
+Location conceptual designation
+1 = near far
+2 = not near anywhere
+3 = near 
+4 = not near
+5 = complete
+6 = here
+7 = not here
+8 = far known
+9 = far unknown
+10 = unattainably far known
+11 = unattainably far unknown
+
+location physical designation
+...
+1 = left top
+2 = left mid
+3 = left bot
+4 = mid top
+5 = complete
+6 = here
+7 = not here
+8 = right top
+9 = right mid
+10 = right bot
+11 = unknown
