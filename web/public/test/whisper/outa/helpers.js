@@ -42,7 +42,13 @@ var printTextareaResult = (function() {
         if (whisperobj[1]*1000 > (stopTime - startTime - 2000)){
 
             //go ahead and enable
-            FUNCS.GESTURE.startWebcam();
+            setTimeout(
+                function(){    
+//                    whisperStart();
+                    FUNCS.GESTURE.startWebcam();
+
+                }, 2000);
+
         }
         if (whisperCallback){
             whisperCallback(whisperobj);

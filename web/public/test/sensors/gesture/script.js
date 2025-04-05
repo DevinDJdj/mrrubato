@@ -140,6 +140,7 @@ else {
 }
 // Enable the live webcam view and start detection.
 function enableCam(event) {
+    console.log("enableCam called current runningMode: " + runningMode);
     if (!faceLandmarker) {
         console.log("Wait! faceLandmarker not loaded yet.");
         createFaceLandmarker();

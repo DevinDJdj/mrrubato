@@ -187,3 +187,40 @@ not bad image description.
 Simple chrome extension just using gesture?  
 
 
+**timestep.py
+**web/public/analyze.html
+transcribe option in URL.  
+auto-start and save.  
+Instead of using server.  
+**web/public/test/whisper/outa/indexa.html
+Or perhaps just use this page.  
+Check can we record while transcribing
+
+
+Add gesture recognition and transcription to record.html?  
+Lets make gesture sequence perhaps so there are no false positives.  
+For now keep as is.  
+Does this transcription require GPU?  
+
+
+Part of record.py
+
+
+**web/public/test/whisper/outa/indexa.html
+Still some freezing, but if wait until the previous iteration completes, 
+then it seems to work ok.  
+
+Probably not stable enough to actually use.  
+
+
+#https://code.visualstudio.com/api/extension-guides/chat
+
+#https://github.com/microsoft/vscode-extension-samples/tree/main/chat-sample
+
+#https://code.visualstudio.com/api/extension-guides/chat-tutorial
+
+**extensions/vscode/codetutor
+not working out of the box.  
+No response.  
+
+

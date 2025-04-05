@@ -25,3 +25,8 @@ web/public/package-lock.json
 web/public/package.json
 
 web/public/models/*
+*/node_modules/*
+
+extensions/vscode/ayudarse/node_modules/*
+extensions/vscode/helloworld/node_modules/*
+extensions/vscode/codetutor/node_modules/*

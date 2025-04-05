@@ -260,12 +260,12 @@
                     
                     </td>
                     <td>
-                        <div class="blend-shapes">
+                        <div class="blend-shapes" style="height:500px;width:500px;overflow:scroll;">
                             <ul class="blend-shapes-list" id="video-blend-shapes"></ul>
                           </div>                      
                     </td>
                     <td>
-                        <div id="detected-face-actions"></div>
+                        <div id="detected-face-actions" style="height:500px;width:500px;overflow:scroll;"></div>
 
                     </td>
                 </tr>
@@ -575,6 +575,7 @@
                     });
                 }
 
+
                 document.getElementById('start').disabled = true;
                 document.getElementById('stop').disabled = false;
 
@@ -653,12 +654,15 @@
 
                 printTextarea('js: recording ...');
 
+                //get rid of max size, this was causing problems in continuous recording.  
+                /*
                 setTimeout(function() {
                     if (doRecording) {
                         printTextarea('js: recording stopped after ' + kMaxRecording_s + ' seconds');
                         stopRecording();
                     }
                 }, kMaxRecording_s*1000);
+                */
             }
 
             //
@@ -670,18 +674,27 @@
             function changeThreads(value) {
                 nthreads = value;
                 document.getElementById('threads-value').innerHTML = nthreads;
+
             }
 
-            function onProcess(translate) {
-                if (!whisper_instance) {
-                    whisper_instance = WHISPERModule.init('whisper.bin');
 
-                    if (whisper_instance) {
-                        printTextarea("js: whisper initialized, instance: " + whisper_instance);
-                        document.getElementById('model').innerHTML = 'Model loaded: ' + model_whisper;
-                    }
+            function whisperStart(){
+                whisper_instance = WHISPERModule.init('whisper.bin');
+                if (!whisper_instance) {
+                    printTextarea('js: failed to initialize whisper');
+                    return;
+                } else {
+                    console.log('js: initialized whisper instance: ' + whisper_instance);
                 }
 
+            }
+            function onProcess(translate) {
+
+                if (!whisper_instance) {
+                    // try to initialize whisper if it was not initialized yet
+                    whisperStart();
+                }
+                
                 if (!whisper_instance) {
                     printTextarea("js: failed to initialize whisper");
                     return;
@@ -714,6 +727,7 @@
 
 <script type="module" id="main">
 
+
 let url = "https://storage.googleapis.com/misterrubato-test.appspot.com/videos/2025/2025-03-11%2011-45-29.mp4"
 
 
@@ -723,8 +737,12 @@ const audioSrc =
 
 let source = null;  
 //const audioData = await fetchAudio(audioSrc);
-const audioData = await fetchAudio(url);
-audioContext.decodeAudioData(audioData, onDecoded, onDecodeError);
+
+//*********TEST******
+//testing for decoding remote audio file.  
+//const audioData = await fetchAudio(url);
+//audioContext.decodeAudioData(audioData, onDecoded, onDecodeError);
+
 
 function fetchAudio(url) {
   return new Promise((resolve, reject) => {
@@ -830,10 +848,13 @@ setTimeout(
                     stopRecording();
                     
                     FUNCS.GESTURE.stopWebcam();
+
                     //wait for onProcess to start...
                     setTimeout(
                         function(){    
-                            FUNCS.GESTURE.startWebcam();
+//                            whisperStart();
+//                            FUNCS.GESTURE.startWebcam();
+
                         }, (Date.now() - startTime)+5000
                     );
                     
@@ -844,10 +865,23 @@ setTimeout(
                     setTimeout(
                         function(){    
                             onProcess(false);
+                            setTimeout(
+                                function(){
+                                    //start recording immediately again.  
+                                    //if desired...
+                                    startRecording();
+                                    //mark start time to coincide with whatever video is being processed.  
+                                    console.log("restarting audio recording after processing");
+                                }, 1000
+                            );
+
+
                         }, 1000
                     );
                     //onProcess(false);
                     console.log("audio processed");
+
+
 
                 }
             }
