@@ -1,0 +1,14 @@
+[project]
+name = "mcpiano"
+version = "0.1.0"
+description = "Learning and Understanding"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [ "mcp>=1.6.0",]
+
+[build-system]
+requires = [ "hatchling",]
+build-backend = "hatchling.build"
+
+[project.scripts]
+mcpiano = "mcpiano:main"

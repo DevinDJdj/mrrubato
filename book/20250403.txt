@@ -223,4 +223,50 @@ Probably not stable enough to actually use.
 not working out of the box.  
 No response.  
 
+#https://github.com/copilot-extensions/blackbeard-extension
+
+
+> git clone https://github.com/microsoft/vscode-extension-samples.git
+
+
+Hmmm.  
+Not exactly sure why this is so annoying to run.  
+Anyway, how to interact with agent.  
+
+Continue with this:
+#https://github.com/microsoft/vscode-extension-samples/tree/main/uri-handler-sample
+Accept incoming URI to open up files as needed, or kick off chat as needed.  
+
+How do we integrate with this agent mode..
+#https://code.visualstudio.com/docs/copilot/chat/chat-agent-mode
+
+Try to make a simple MCP server.  
+Maybe this is all that is needed instead of making a chat extension...
+
+#https://github.com/modelcontextprotocol/create-python-server
+
+> curl -LsSf https://astral.sh/uv/install.sh | sh
+
+#https://docs.astral.sh/uv/guides/tools/
+
+Then add..
+#https://code.visualstudio.com/docs/copilot/chat/mcp-servers
+
+**server/mcp/mcpiano
+--start here..
+
+#https://github.com/modelcontextprotocol/servers
+
+#vscode://settings/...
+
+#https://modelcontextprotocol.io/introduction
+
+**.vscode/mcp.json
+This will be important.  
+Everyone will be a developer soon...
+Only use local services for now.
+Not working though..
+
+!! 025-04-07 14:28:52.044 [info] Connection state: Error spawn uvx ENOENT
+
 

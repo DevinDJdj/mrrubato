@@ -29,6 +29,7 @@ May have some problematic names.
 
 $$ ENVIRONMENT
 
+!! Log output or error
 
 - sub task
 

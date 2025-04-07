@@ -1,7 +1,7 @@
 {
-  "name": "codetutor",
-  "displayName": "codetutor",
-  "description": "",
+  "name": "mytutor",
+  "displayName": "mytutor",
+  "description": "code tutor is an AI-powered chat participant that helps you learn programming concepts interactively.",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.99.0"
@@ -14,7 +14,7 @@
 "contributes": {
     "chatParticipants": [
       {
-        "id": "chat-tutorial.code-tutor",
+        "id": "codetutor.mytutor",
         "fullName": "Code Tutor",
         "name": "tutor",
         "description": "What can I teach you?",
