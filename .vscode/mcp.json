@@ -19,8 +19,18 @@
         }
       },
       "git": {
-        "command": "uvx",
+        "command": "C:\\Users\\devin\\.local\\bin\\uvx",
         "args": ["mcp-server-git", "--repository", "C:\\devinpiano\\testing\\DeepSpeech"]
       },
+      "mcpiano":{
+        "command": "C:\\Users\\devin\\.local\\bin\\uv",
+        "args": [
+            "--directory",
+            "C:\\devinpiano\\music\\server\\mcp\\mcpiano\\",
+            "run",
+            "main.py"
+                ],
+        "env": {}
+      }
     }
   }

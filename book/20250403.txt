@@ -268,5 +268,13 @@ Only use local services for now.
 Not working though..
 
 !! 025-04-07 14:28:52.044 [info] Connection state: Error spawn uvx ENOENT
+==
+"command": "C:\\Users\\devin\\.local\\bin\\uvx"
 
+ok working, but invoking the tool is not great yet.  
+
+#https://modelcontextprotocol.io/quickstart/server
+This instruction set worked.  
+
+Then add mcp.json settings.  
 

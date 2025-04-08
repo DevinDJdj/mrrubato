@@ -33,3 +33,6 @@ extensions/vscode/codetutor/node_modules/*
 
 server/mcp/mcpiano/.git/*
 server/mcp/mcpiano/.vscode/*
+
+server/blockchain/mydb/*
+mydb/*
