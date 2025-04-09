@@ -59,3 +59,9 @@ location physical designation
 9 = right mid
 10 = right bot
 11 = unknown
+
+
+**vscode
+Ctrl+Enter = Continue
+Ctrl+I = chat
+

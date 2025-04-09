@@ -278,3 +278,58 @@ This instruction set worked.
 
 Then add mcp.json settings.  
 
+Probably chat assistant as well as MCP for something interesting.  
+Have read-aloud 
+
+#https://code.visualstudio.com/api/references/vscode-api
+Some of the useful functions to start with...
+<!--
+executeCommand(...)
+execute registered command in package.json or other...
+
+clipboard
+system clipboard
+
+language
+user language
+
+openExternal(...)
+open web page..
+
+register...Provider
+
+selectChatModel
+vscode.lm.selectChatModels({ family: 'gpt-3.5-turbo' });
+
+executeTask
+
+registerUriHandler
+
+setStatusBarMessage
+
+showQuickPick
+vscode.workspace.fs.readDirectory(someUri)
+vscode.workspace.fs.stat(anotherUri)
+vscode.commands.executeCommand('vscode.openFolder', uriOfWorkspace);
+applyEdit
+
+
+-->
+
+@vscode
+@copilot
+Need read aloud hotkey.  
+Why does this not exist?  
+
+
+**book/keys.txt
+Not sure if this is the place, but lets add important hotkeys.  
+
+**extensions/vscode/codetutor
+Do we want our own LLM function or I guess just use built-in?  
+Built-in is not local, but...
+
+Lets try to work within the framework for now.  
+instead of something like this
+#https://blog.codegpt.co/create-your-own-and-custom-copilot-in-vscode-with-ollama-and-codegpt-736277a60298
+
