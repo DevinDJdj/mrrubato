@@ -147,7 +147,9 @@ function saveFeedback(){
 			}
 
             //save words associated with this video.  
-            saveClassificationImages(video);
+			if ($("#genCat").is(":checked")){
+            	saveClassificationImages(video);	
+			}
 		}
 		else{
 			console.log(video + " Not in DB.  Adding watch comments");

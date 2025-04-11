@@ -18,7 +18,9 @@ import sys
 import math
 
 import glob
-sys.path.insert(0, 'c:/devinpiano/music/')
+sys.path.insert(0, 'c:/devinpiano')
+sys.path.insert(1, 'c:/devinpiano/music')
+
 
 import config 
 import subprocess

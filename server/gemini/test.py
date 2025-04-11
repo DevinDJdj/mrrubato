@@ -16,7 +16,7 @@ from google.genai.types import (
 )
 
 sys.path.insert(0, 'c:/devinpiano/')
-sys.path.insert(1, 'c:/devinpiano/music')
+sys.path.insert(1, 'c:/devinpiano/music/')
 #sys.path.append('../')
 import config  
 

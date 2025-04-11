@@ -333,3 +333,53 @@ Lets try to work within the framework for now.
 instead of something like this
 #https://blog.codegpt.co/create-your-own-and-custom-copilot-in-vscode-with-ollama-and-codegpt-736277a60298
 
+
+
+What is chronicler extension.  
+Extensions to try:
+Prettier
+Better comments
+Console Ninja
+chronicler
+
+#https://marketplace.visualstudio.com/VSCode
+
+Perhaps build interaction with this Chronicler or some of the other tools via mcp.  
+
+Samples:
+Doc update.  
+#https://github.com/microsoft/vscode-extension-samples/tree/main/document-editing-sample
+Terminal interaction.
+#https://github.com/microsoft/vscode-extension-samples/tree/main/extension-terminal-sample
+#https://github.com/microsoft/vscode-extension-samples/tree/main/shell-integration-sample
+#https://github.com/microsoft/vscode-extension-samples/tree/main/terminal-sample
+
+File usage.
+#https://github.com/microsoft/vscode-extension-samples/tree/main/fsconsumer-sample
+
+Separate language (code or otherwise)
+#https://github.com/microsoft/vscode-extension-samples/tree/main/lsp-embedded-language-service
+Wow this is far too long...
+#https://github.com/microsoft/vscode-extension-samples/blob/main/lsp-embedded-language-service/syntaxes/html1.tmLanguage.json
+
+Status bar
+#https://github.com/microsoft/vscode-extension-samples/tree/main/statusbar-sample
+
+Tabs
+#https://github.com/microsoft/vscode-extension-samples/tree/main/tabs-api-sample
+
+
+
+#https://github.com/microsoft/vscode-extension-samples/tree/main/uri-handler-sample
+--start here..
+Open URI and then open files mentioned in query.  
+#https://stackoverflow.com/questions/62313150/vscode-open-file-with-showtextdocument-at-specified-line
+
+> npm install vscode
+
+Finally works.  
+Why do I need to run this manually once...
+>tsc -watch -p ./
+Anyway, have this added.  
+**extensions/vscode/codetutor/src/extension.ts
+

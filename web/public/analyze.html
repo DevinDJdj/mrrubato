@@ -1211,6 +1211,15 @@ function loadCanvas(id, pianoimg, mini="") {
 	
 function addImage(imageurl, stor, type=0){
 //	console.log(imageurl);
+//	console.log(stor)
+	if (imageurl == ""){
+		loadCanvas("pianorollmini", "", "mini");
+		loadCanvas("pianoroll", "");
+		
+
+	}
+	else{
+
 	url = stor.child(imageurl).getDownloadURL()
 		.then((url) => {
 			console.log( type + " SRC url:" + url);
@@ -1233,7 +1242,7 @@ function addImage(imageurl, stor, type=0){
 				addImage("", stor, type);	//add a default image.
 			}
 		});	
-
+	}
 }
 
 

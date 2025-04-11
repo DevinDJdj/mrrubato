@@ -1,5 +1,6 @@
 {
   "name": "mytutor",
+  "publisher": "mrrubato",
   "displayName": "mytutor",
   "description": "code tutor is an AI-powered chat participant that helps you learn programming concepts interactively.",
   "version": "0.0.1",
@@ -12,6 +13,13 @@
   "activationEvents": [],
   "main": "./out/extension.js",
 "contributes": {
+  "commands": [
+    {
+      "command": "mrrubato.mytutor.start",
+      "title": "Start handling Uris"
+    }
+  ],
+
     "chatParticipants": [
       {
         "id": "codetutor.mytutor",
@@ -27,6 +35,7 @@
         ]
       }
     ]
+
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
