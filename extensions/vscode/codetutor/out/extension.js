@@ -6,6 +6,7 @@
 //if not working run this..
 //>cd [extensiondir]
 //>tsc -watch -p ./
+//npm install --save @vscode/prompt-tsx
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
@@ -43,11 +44,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.activate = activate;
 exports.default = deactivate;
 const vscode = __importStar(require("vscode"));
+const prompt_tsx_1 = require("@vscode/prompt-tsx");
 const path_1 = require("path");
+const prompts_1 = require("./prompts");
+const toolParticipant_1 = require("./toolParticipant");
 const BASE_PROMPT = 'You are a helpful code tutor. Your job is to teach the user with simple descriptions and sample code of the concept. Respond with a guided overview of the concept in a series of messages. Do not give the user the answer directly, but guide them to find the answer themselves. If the user asks a non-programming question, politely decline to respond.';
 const EXERCISES_PROMPT = 'You are a helpful tutor. Your job is to teach the user with fun, simple exercises that they can complete in the editor. Your exercises should start simple and get more complex as the user progresses. Move one concept at a time, and do not move on to the next concept until the user provides the correct answer. Give hints in your exercises to help the user learn. If the user is stuck, you can provide the answer and explain why it is the answer. If the user asks a non-programming question, politely decline to respond.';
 // define a chat handler
 function activate(context) {
+    (0, toolParticipant_1.registerToolUserChatParticipant)(context);
     // define a chat handler
     const handler = async (request, context, stream, token) => {
         //vscode.window.showInformationMessage('Hello world!');
@@ -61,6 +66,12 @@ function activate(context) {
             stream.markdown('Reading a book\n');
             //get book snippet.  
             readFile(request, context, stream, token);
+            let myquery = "play with me and use tool #get_alerts"; //calling via # doesnt work.  
+            const { messages } = await (0, prompt_tsx_1.renderPrompt)(prompts_1.PlayPrompt, { userQuery: myquery }, { modelMaxPromptTokens: request.model.maxInputTokens }, request.model);
+            const chatResponse = await request.model.sendRequest(messages, {}, token);
+            for await (const fragment of chatResponse.text) {
+                stream.markdown(fragment);
+            }
             //			stream.markdown('```ls -l\n');
             return;
         }
@@ -109,6 +120,8 @@ function activate(context) {
     context.subscriptions.push(disposable);
     //start listening for external URIs.  
     vscode.commands.executeCommand('mrrubato.mytutor.start');
+    //start the MCP server as well.  
+    //vscode.commands.createMcpServer('mrrubato.mytutor', tutor);
 }
 function readFile(request, context, stream, token) {
     if (!vscode.workspace.workspaceFolders) {

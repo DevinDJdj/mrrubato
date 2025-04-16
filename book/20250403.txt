@@ -511,4 +511,72 @@ Just make mcp command or otherwise to run the model.
 workbench.mcp.listServer
 workbench.mcp.startServer
 
+#https://github.com/punkpeye/awesome-mcp-servers
+<!--
+#https://github.com/microsoft/playwright testing
+
+#https://github.com/Automata-Labs-team/MCP-Server-Playwright
+#https://github.com/microsoft/playwright-mcp
+
+#https://github.com/abhiemj/manim-mcp-server
+#https://github.com/pydantic/pydantic-ai/tree/main/mcp-run-python
+
+#https://github.com/chroma-core/chroma-mcp
+#https://github.com/crystaldba/postgres-mcp
+#https://github.com/gannonh/firebase-mcp
+#https://github.com/LucasHild/mcp-server-bigquery
+#https://github.com/ckreiling/mcp-server-docker
+
+#https://github.com/bright8192/esxi-mcp-server
+#https://github.com/jagan-shanmugam/open-streetmap-mcp
+#https://github.com/andybrandt/mcp-simple-arxiv
+#https://github.com/nguyenvanduocit/jira-mcp
+
+#https://github.com/anaisbetts/mcp-installer
+#https://github.com/KS-GEN-AI/confluence-mcp-server
+#https://github.com/KS-GEN-AI/jira-mcp-server
+#https://github.com/rember/rember-mcp
+
+-->
+
+code --add-mcp "{\"name\":\"my-server\",\"command\": \"uvx\",\"args\": [\"mcp-server-fetch\"]}"
+const link = `code:mcp/install?${encodeURIComponent(JSON.stringify(obj))`;
+
+In the text, we can explicitly call these tools.  
+This #TOOL calls a function.  
+
+#get_alerts CA
+...
+So how do we pass a prompt in the chat.  
+
+> npm install --save @vscode/prompt-tsx
+import { renderPrompt } from '@vscode/prompt-tsx';
+
+                const { messages } = await renderPrompt(
+                    PlayPrompt,
+                    { userQuery: request.prompt },
+                    { modelMaxPromptTokens: request.model.maxInputTokens },
+                    request.model);
+const chatResponse = await request.model.sendRequest(messages, {}, token);
+
+So have some prompt chaining this way.  
+
+tsconfig.json		
+        "jsx": "react",
+		"jsxFactory": "vscpp",
+		"jsxFragmentFactory": "vscppf"
+
+Test that this works...
+Call a tool via this.  
+
+
+
+#https://github.com/microsoft/vscode-prompt-tsx/tree/main/examples
+
+OK, this is what we are using to generate a prompt.  
+
+**extensions/vscode/codetutor/package.json            
+This now has two participants, 
+@tools and 
+@tutor
 
