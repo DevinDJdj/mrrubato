@@ -22,8 +22,8 @@
 
     "chatParticipants": [
       {
-        "id": "codetutor.mytutor",
-        "fullName": "Code Tutor",
+        "id": "mrrubato.mytutor",
+        "fullName": "Mr Rubato",
         "name": "tutor",
         "description": "What can I teach you?",
         "isSticky": true,
@@ -31,6 +31,14 @@
           {
             "name": "exercise",
             "description": "Provide exercises to practice a concept."
+          },
+          {
+            "name": "book",
+            "description": "Read the book."
+          },
+          {
+            "name": "play",
+            "description": "Play a bit."
           }
         ]
       }

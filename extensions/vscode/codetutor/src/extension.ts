@@ -8,6 +8,7 @@
 
 
 import * as vscode from 'vscode';
+import { posix } from 'path';
 
 const BASE_PROMPT =
   'You are a helpful code tutor. Your job is to teach the user with simple descriptions and sample code of the concept. Respond with a guided overview of the concept in a series of messages. Do not give the user the answer directly, but guide them to find the answer themselves. If the user asks a non-programming question, politely decline to respond.';
@@ -25,6 +26,16 @@ export function activate(context: vscode.ExtensionContext) {
 
 		if (request.command === 'exercise') {
 			prompt = EXERCISES_PROMPT;
+		}
+
+		if (request.command === 'book'){
+			//query book only.  
+			stream.markdown('Reading a book\n');
+			//get book snippet.  
+			readFile(request, context, stream, token);
+
+//			stream.markdown('```ls -l\n');
+			return;
 		}
 
 		// initialize the messages array with the prompt
@@ -63,7 +74,7 @@ export function activate(context: vscode.ExtensionContext) {
 	};
 
 	// create participant
-	const tutor = vscode.chat.createChatParticipant("codetutor.mytutor", handler);
+	const tutor = vscode.chat.createChatParticipant("mrrubato.mytutor", handler);
 
 	// add icon to participant
 	tutor.iconPath = vscode.Uri.joinPath(context.extensionUri, 'tutor.jpeg');
@@ -85,11 +96,65 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 	context.subscriptions.push(disposable);
+	//start listening for external URIs.  
+	vscode.commands.executeCommand('mrrubato.mytutor.start');
+	//start the MCP server as well.  
+	vscode.commands.createMcpServer('mrrubato.mytutor', tutor);
+
+
 
 }
 
+function readFile(request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken) {
+	if (!vscode.workspace.workspaceFolders) {
+		return vscode.window.showInformationMessage('No folder or workspace opened');
+	}
+	const folderUri = vscode.workspace.workspaceFolders[0].uri;
+	const fileUri = folderUri.with({ path: posix.join(folderUri.path, 'definitions.txt') });
+	vscode.window.showTextDocument(fileUri);
+	vscode.workspace.openTextDocument(fileUri).then((document) => {
+		let text = document.getText();
+		console.log(text);
+		// Optionally insert the text into the active editor
+//		insertTextIntoActiveEditor(text);
+	  });
+}
+
+/**
+ * Inserts text into the active text editor at the current cursor position
+ * @param text The text to insert
+ * @returns A promise that resolves when the edit is applied
+ */
+function insertTextIntoActiveEditor(text: string): Thenable<boolean> | undefined {
+	const editor = vscode.window.activeTextEditor;
+	
+	if (!editor) {
+		vscode.window.showErrorMessage('No active editor found');
+		return undefined;
+	}
+
+	try {
+		return editor.edit(editBuilder => {
+			// Insert at each selection
+			editor.selections.forEach(selection => {
+				editBuilder.insert(selection.active, text);
+			});
+		}).then(success => {
+			if (success) {
+				vscode.window.showInformationMessage('Text inserted successfully');
+			} else {
+				vscode.window.showErrorMessage('Failed to insert text');
+			}
+			return success;
+		});
+	} catch (error) {
+		vscode.window.showErrorMessage(`Error inserting text: ${error instanceof Error ? error.message : String(error)}`);
+		return Promise.resolve(false);
+	}
+}
+
 // This method is called when your extension is deactivated
-export function deactivate() {}
+export default function deactivate() {}
 
 
 

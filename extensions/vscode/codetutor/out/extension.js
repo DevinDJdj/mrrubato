@@ -41,8 +41,9 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.activate = activate;
-exports.deactivate = deactivate;
+exports.default = deactivate;
 const vscode = __importStar(require("vscode"));
+const path_1 = require("path");
 const BASE_PROMPT = 'You are a helpful code tutor. Your job is to teach the user with simple descriptions and sample code of the concept. Respond with a guided overview of the concept in a series of messages. Do not give the user the answer directly, but guide them to find the answer themselves. If the user asks a non-programming question, politely decline to respond.';
 const EXERCISES_PROMPT = 'You are a helpful tutor. Your job is to teach the user with fun, simple exercises that they can complete in the editor. Your exercises should start simple and get more complex as the user progresses. Move one concept at a time, and do not move on to the next concept until the user provides the correct answer. Give hints in your exercises to help the user learn. If the user is stuck, you can provide the answer and explain why it is the answer. If the user asks a non-programming question, politely decline to respond.';
 // define a chat handler
@@ -54,6 +55,14 @@ function activate(context) {
         let prompt = BASE_PROMPT;
         if (request.command === 'exercise') {
             prompt = EXERCISES_PROMPT;
+        }
+        if (request.command === 'book') {
+            //query book only.  
+            stream.markdown('Reading a book\n');
+            //get book snippet.  
+            readFile(request, context, stream, token);
+            //			stream.markdown('```ls -l\n');
+            return;
         }
         // initialize the messages array with the prompt
         const messages = [
@@ -81,7 +90,7 @@ function activate(context) {
         return;
     };
     // create participant
-    const tutor = vscode.chat.createChatParticipant("codetutor.mytutor", handler);
+    const tutor = vscode.chat.createChatParticipant("mrrubato.mytutor", handler);
     // add icon to participant
     tutor.iconPath = vscode.Uri.joinPath(context.extensionUri, 'tutor.jpeg');
     //uri handler
@@ -98,6 +107,54 @@ function activate(context) {
         console.log(`Starting to handle Uris. Open ${uri} in your browser to test.`);
     });
     context.subscriptions.push(disposable);
+    //start listening for external URIs.  
+    vscode.commands.executeCommand('mrrubato.mytutor.start');
+}
+function readFile(request, context, stream, token) {
+    if (!vscode.workspace.workspaceFolders) {
+        return vscode.window.showInformationMessage('No folder or workspace opened');
+    }
+    const folderUri = vscode.workspace.workspaceFolders[0].uri;
+    const fileUri = folderUri.with({ path: path_1.posix.join(folderUri.path, 'definitions.txt') });
+    vscode.window.showTextDocument(fileUri);
+    vscode.workspace.openTextDocument(fileUri).then((document) => {
+        let text = document.getText();
+        console.log(text);
+        // Optionally insert the text into the active editor
+        //		insertTextIntoActiveEditor(text);
+    });
+}
+/**
+ * Inserts text into the active text editor at the current cursor position
+ * @param text The text to insert
+ * @returns A promise that resolves when the edit is applied
+ */
+function insertTextIntoActiveEditor(text) {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+        vscode.window.showErrorMessage('No active editor found');
+        return undefined;
+    }
+    try {
+        return editor.edit(editBuilder => {
+            // Insert at each selection
+            editor.selections.forEach(selection => {
+                editBuilder.insert(selection.active, text);
+            });
+        }).then(success => {
+            if (success) {
+                vscode.window.showInformationMessage('Text inserted successfully');
+            }
+            else {
+                vscode.window.showErrorMessage('Failed to insert text');
+            }
+            return success;
+        });
+    }
+    catch (error) {
+        vscode.window.showErrorMessage(`Error inserting text: ${error instanceof Error ? error.message : String(error)}`);
+        return Promise.resolve(false);
+    }
 }
 // This method is called when your extension is deactivated
 function deactivate() { }

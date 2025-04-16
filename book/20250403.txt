@@ -408,4 +408,107 @@ Can be run via batch I think dont necessarily need server, just generated vector
 **server/test/testdspy.py
 Switch to use on-disk instead of in-memory
 
+> pip install llama-stack
+> llama download --source meta --model-id Llama-4-Scout-17B-16E  
+
+C:\Users\devin\.llama\checkpoints\Llama-4-Scout-17B-16E
+
+
+**extensions/vscode/codetutor/src/extension.ts
+OK, can read a book page. 
+console.log
+Debug output comes in original VSCode window.  
+
+vscode://mrrubato.mytutor?q=hi
+pass in the query all context.  
+
+
+No particular need to use mcp.  
+Just run commands from extension.  
+
+#https://github.com/google-research/robopianist
+#https://github.com/SakanaAI/AI-Scientist
+
+
+#https://github.com/microsoft/vscode-extension-samples/tree/main/document-editing-sample
+start here.  
+Add something to the page, but where?  
+
+Can we get a good enough response from any model.  
+Improve this file:
+...
+Generic request.  
+Tuned prompt.  
+Scan and add to different branches.  
+
+#https://git-scm.com/docs/merge-strategies
+
+Try this in a completely separate GIT environment to not break.  
+
+#https://github.com/microsoft/vscode-extension-samples/tree/main/github-authentication-sample
+
+Just use vscode.commands.executeCommand
+to pull whatever branch or set whatever branch.  
+commands:
+git.commit +when:!operationInProgress
+git.commitAll
+git.runGitMerge
+git.branchFrom +when:!operationInProgress
+git.branch
+git.deleteBranch
+git.deleteRemoteBranch
+git.cleanAll
+git.merge
+git.openAllChanges
+git.openFile
+git.publish
+git.push
+git.pull
+git.clone
+git.refresh
+git.showOutput
+
+github.copilot.chat.attachFile
+github.copilot.chat.attachFolder
+github.copilot.terminal.attachTerminalSelection
+github.copilot.openLogs
+github.copilot.chat.explain
+github.copilot.collectDiagnostics
+github.copilotChat.signIn
+
+stream.progress('Picking the right topic to teach...');
+stream.markdown()
+
+Then use to prompt or just display...
+
+                const chatResponse = await request.model.sendRequest(messages, {}, token);
+                for await (const fragment of chatResponse.text) {
+                    stream.markdown(fragment);
+                }
+
+
+settings:
+chat.agent.enabled
+github.copilot.chat.agent.runTasks
+chat.editing.autoAcceptDelay
+
+
+Commands:
+cursorMove 
+editor.action.goToLocations
+notebook.execute
+vscode.openFolder
+workbench.action.openLogFile
+github.copilot.acceptCursorPanelSolution
+inlineChat.acceptChanges
+
+
+Need to adjust the model to something local.  
+or call the model via command.  
+Just make mcp command or otherwise to run the model.  
+
+
+workbench.mcp.listServer
+workbench.mcp.startServer
+
 
