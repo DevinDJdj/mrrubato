@@ -7,6 +7,7 @@
 //>cd [extensiondir]
 //>tsc -watch -p ./
 //npm install --save @vscode/prompt-tsx
+//npm install --save ollama
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
@@ -40,6 +41,9 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.activate = activate;
 exports.default = deactivate;
@@ -47,10 +51,52 @@ const vscode = __importStar(require("vscode"));
 const prompt_tsx_1 = require("@vscode/prompt-tsx");
 const path_1 = require("path");
 const prompts_1 = require("./prompts");
+const ollama_1 = __importDefault(require("ollama"));
 const toolParticipant_1 = require("./toolParticipant");
 const BASE_PROMPT = 'You are a helpful code tutor. Your job is to teach the user with simple descriptions and sample code of the concept. Respond with a guided overview of the concept in a series of messages. Do not give the user the answer directly, but guide them to find the answer themselves. If the user asks a non-programming question, politely decline to respond.';
 const EXERCISES_PROMPT = 'You are a helpful tutor. Your job is to teach the user with fun, simple exercises that they can complete in the editor. Your exercises should start simple and get more complex as the user progresses. Move one concept at a time, and do not move on to the next concept until the user provides the correct answer. Give hints in your exercises to help the user learn. If the user is stuck, you can provide the answer and explain why it is the answer. If the user asks a non-programming question, politely decline to respond.';
 // define a chat handler
+function get_current_weather(city) {
+    return `The current weather in ${city} is sunny.`;
+}
+async function getStreamingResponse(request, context, stream, token) {
+    try {
+        const response = await ollama_1.default.chat({
+            model: 'llama3:8b',
+            messages: [{ role: 'user', content: request.prompt }],
+            stream: true,
+            tools: [{
+                    'type': 'function',
+                    'function': {
+                        'name': 'get_current_weather',
+                        'description': 'Get the current weather for a city',
+                        'parameters': {
+                            'type': 'object',
+                            'properties': {
+                                'city': {
+                                    'type': 'string',
+                                    'description': 'The name of the city',
+                                },
+                            },
+                            'required': ['city'],
+                        },
+                    },
+                },
+            ],
+        });
+        for await (const part of response) {
+            process.stdout.write(part.message.content);
+            stream.markdown(part.message.content);
+            if (token.isCancellationRequested) {
+                break;
+            }
+            //		console.log(part.message.tool_calls);
+        }
+    }
+    catch (error) {
+        console.error('Error calling Ollama:', error);
+    }
+}
 function activate(context) {
     (0, toolParticipant_1.registerToolUserChatParticipant)(context);
     // define a chat handler
@@ -60,13 +106,17 @@ function activate(context) {
         let prompt = BASE_PROMPT;
         if (request.command === 'exercise') {
             prompt = EXERCISES_PROMPT;
+            stream.markdown('Starting exercise\n');
+            await getStreamingResponse(request, context, stream, token);
+            return;
         }
         if (request.command === 'book') {
             //query book only.  
             stream.markdown('Reading a book\n');
             //get book snippet.  
             readFile(request, context, stream, token);
-            let myquery = "play with me and use tool #get_alerts"; //calling via # doesnt work.  
+            let myquery = "play with me and use tool #file:definitions.txt"; //calling via # doesnt work.  
+            //call external ollama.  
             const { messages } = await (0, prompt_tsx_1.renderPrompt)(prompts_1.PlayPrompt, { userQuery: myquery }, { modelMaxPromptTokens: request.model.maxInputTokens }, request.model);
             const chatResponse = await request.model.sendRequest(messages, {}, token);
             for await (const fragment of chatResponse.text) {

@@ -69,6 +69,8 @@ var audioSamples = {'p': [], 'link': [], 'image': [], 'text':[]};
 var midimessagecallback = null;
 var midiUIcallback = null;
 
+var mySynthOutputs = null;
+
 
 
 function getPedal(){
@@ -704,6 +706,10 @@ function getMIDIMessage(message, mytime=0, lang="", midicb=null) {
 	if (ispaused==1 && mytime<=0){
 		midioffset +=1;
 	}
+	else{
+		midioffset = 0;
+		//probably should reset here if not paused.  
+	}
 	if (lang == ""){
 		//load languages.js before midi.js so this exists.  
 		lang = currentlanguage;
@@ -951,6 +957,22 @@ function getMidiRecent(){
 	}
 }
 
+//something like this need to test.  
+function sendNote(note, velocity, lang=""){
+	//preprocessor for language?  
+	mySynthOutputs = mySynth.outputs;
+	for (var output of mySynthOutputs.values()) {
+		if (output.name == "Seaboard Block"){	
+			output.playNote("C3", {duration:1000});
+		}
+		else{
+			output.playNote("C3", {duration:1000});
+		}
+	}
+
+}
+
+
       function onEnabled() {
 
 		setupAudioFeedback();
@@ -1021,6 +1043,8 @@ function getMidiRecent(){
 		}
 		
         const mySynth = WebMidi.inputs[1];
+		mySynthOutputs = WebMidi.outputs;
+
         // const mySynth = WebMidi.getInputByName("TYPE NAME HERE!")
 
 //        mySynth.channels[1].addListener("noteon", e => {

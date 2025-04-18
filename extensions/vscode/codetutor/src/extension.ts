@@ -6,12 +6,15 @@
 //>cd [extensiondir]
 //>tsc -watch -p ./
 //npm install --save @vscode/prompt-tsx
+//npm install --save ollama
 
 
 import * as vscode from 'vscode';
 import { renderPrompt } from '@vscode/prompt-tsx';
 import { posix } from 'path';
 import { PlayPrompt } from './prompts';
+
+import ollama from 'ollama';
 
 import { LanguageModelPromptTsxPart, LanguageModelToolInvocationOptions, LanguageModelToolResult } from 'vscode';
 
@@ -26,6 +29,49 @@ const BASE_PROMPT =
 // define a chat handler
 
 
+function get_current_weather(city: string): string {
+	return `The current weather in ${city} is sunny.`;
+}
+
+
+async function getStreamingResponse(request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken) {
+	try {
+	  const response = await ollama.chat({
+		model: 'llama3:8b',
+		messages: [{ role: 'user', content: request.prompt }],
+		stream: true,
+		tools: [{
+			'type': 'function',
+			'function': {
+			  'name': 'get_current_weather',
+			  'description': 'Get the current weather for a city',
+			  'parameters': {
+				'type': 'object',
+				'properties': {
+				  'city': {
+					'type': 'string',
+					'description': 'The name of the city',
+				  },
+				},
+				'required': ['city'],
+			  },
+			},
+		  },
+		],
+	  });
+	  for await (const part of response) {
+		process.stdout.write(part.message.content);
+		stream.markdown(part.message.content);	
+		if (token.isCancellationRequested) {
+		  break;
+		}
+//		console.log(part.message.tool_calls);
+	}
+	} catch (error) {
+	   console.error('Error calling Ollama:', error);
+	}
+  }
+  
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -38,6 +84,9 @@ export function activate(context: vscode.ExtensionContext) {
 
 		if (request.command === 'exercise') {
 			prompt = EXERCISES_PROMPT;
+			stream.markdown('Starting exercise\n');
+			await getStreamingResponse(request, context, stream, token);
+			return;
 		}
 
 		if (request.command === 'book'){
@@ -46,9 +95,9 @@ export function activate(context: vscode.ExtensionContext) {
 			//get book snippet.  
 			readFile(request, context, stream, token);
 
-			let myquery = "play with me and use tool #get_alerts";  //calling via # doesnt work.  
+			let myquery = "play with me and use tool #file:definitions.txt";  //calling via # doesnt work.  
 
-
+			//call external ollama.  
 			const { messages } = await renderPrompt(
 				PlayPrompt,
 				{ userQuery: myquery }, 
@@ -125,6 +174,7 @@ export function activate(context: vscode.ExtensionContext) {
 	vscode.commands.executeCommand('mrrubato.mytutor.start');
 	//start the MCP server as well.  
 	//vscode.commands.createMcpServer('mrrubato.mytutor', tutor);
+
 
 
 

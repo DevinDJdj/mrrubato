@@ -106,7 +106,7 @@ function updateState(transcript="", lang=""){
     $('#currentstate').html(mystate);
 
     //this should be called.  
-    if (typeof(keymaps[lang].funcdict) !=='undefined' && "updateState" in keymaps[lang].funcdict){
+    if (typeof(keymaps[lang]) !=='undefined' && typeof(keymaps[lang].funcdict) !=='undefined' && "updateState" in keymaps[lang].funcdict){
         keymaps[lang].funcdict["updateState"](transcript, midiarray[currentmidiuser][lang], keymaps[lang].keydict, lang);
     }
     else{

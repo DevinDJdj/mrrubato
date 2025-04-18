@@ -855,15 +855,17 @@ function inTimeWindow(top){
 
 function getBookRefs(){
   let ret = "";
-  Object.entries(gitstruct["refbydate"]).forEach(([key, value]) => {
-    if (key >= currenttimelinestart && key <= currenttimelineend){    
-      console.log(key, value);
-      ret += `<b>${key}</b><br>`;
-      for (i=0; i<value.length; i++){
-        ret += `<a target="_new" href="${value[i].ref}">${value[i].ref}</a><br>`;
+  if (typeof(gitstruct["refbydate"]) !== "undefined"){
+    Object.entries(gitstruct["refbydate"]).forEach(([key, value]) => {
+      if (key >= currenttimelinestart && key <= currenttimelineend){    
+        console.log(key, value);
+        ret += `<b>${key}</b><br>`;
+        for (i=0; i<value.length; i++){
+          ret += `<a target="_new" href="${value[i].ref}">${value[i].ref}</a><br>`;
+        }
       }
-    }
-  });
+    });
+  }
   $('#reflinks').html(ret);  
   return ret;
 }

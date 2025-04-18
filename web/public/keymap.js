@@ -42,6 +42,8 @@ class Keymap{
         this.keydict[""] = {};
         this.funcdict = {};
         this.funcdict[""] = function(transcript, midi, keydict, key){ return transcript;};
+        this.currentprefix = "";
+        this.currentsuffix = "";
     }
 
     //add a word to this dictionary for transcript usage.  
@@ -107,7 +109,7 @@ class Keymap{
                 "0,3,0": "page down",
                 "0,2,0": "stop", 
                 "5,17,17": "set octave ",
-                "12,15,15": "comment "
+                "12,15,15": "comment ",
             }, 
             "4": {
                 "23,22,22,23": "pause",
@@ -305,6 +307,7 @@ class Keymap{
             }
             return transcript; //add language xxxx 2,3,4
         };
+
 
         this.keydict["skip "] = {"1": {"min": -12, "max": 12}}; //number of increments.  from middle C
 

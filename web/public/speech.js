@@ -286,6 +286,7 @@ export function Chat(transcript, callback=null, pending=false, lang=""){
             executed=false;
         }
     }
+
     else if (transcript.toLowerCase().startsWith("comment")){
         //make this comment to next event?  
         transcript = transcript.substr(transcript.indexOf(" ") + 1);
@@ -671,15 +672,21 @@ export function loadSpeech(){
                 console.log(mymidicommand);
                 addCommandLog(transcript, null, true);
             }
+
         //    Chat(transcript);
             //not sure if we should reset this.  
         //    document.getElementById("p").value = ""
             
         });
         
+        recognition.addEventListener("start", () => {
+            console.log("Speech recognition service has started");
+          });
 
         recognition.start();
-        recognition.addEventListener('end', recognition.start);
+        recognition.addEventListener('end', () => {
+            recognition.start();
+        });
 
         $("#p").on('keyup', function (event) {
         if (event.keyCode === 13) {

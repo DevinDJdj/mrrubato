@@ -580,3 +580,87 @@ This now has two participants,
 @tools and 
 @tutor
 
+Still need to trigger tool.  
+Do we want to just add midi listener here?  
+#https://github.com/jazz-soft/jazz-midi-vscode
+Maybe try to make it work.  
+But not now...
+
+How do we use a local model with github copilot?  
+#https://docs.github.com/en/enterprise-cloud@latest/copilot/customizing-copilot/creating-a-custom-model-for-github-copilot
+not quite..
+
+Annoying, how to launch an MCP server programatically.  
+
+OK, so anyway, calling local ollama directly here.  
+We should be able to just use this and spit the markdown.  
+So still use the extension.  
+Just cant use these MCP tools.  
+Does it matter?  
+Better if there was better integration...
+hmmmm....
+#https://medium.com/@meirgotroot/ollama-support-for-tool-calling-186bcfeb892f
+Just pass the tools here.  
+The key is integration between the LLM and the tools.  
+I think it will still be ok ignoring the vscode.lm.
+
+#microsoft
+This is really poor.  
+The best IDE and it doesnt support a local model...
+poor...
+
+**extensions/vscode/codetutor/src/extension.ts
+This is using local...
+@tutor /exercise tell me a story
+
+Now pass any tools here...
+
+Not a good solution.  
+Want integration with local model from IDE/copilot.  
+
+
+
+**web/public/transcribe.html
+Have multiple options for transcription for now.  
+End result unclear.  
+Need to annotate in the video if transcription is correct or not.  
+Use same midi language.  
+16 = Incorrect
+18 = good
+19 = correct
+During analyze.html we can create feedback for transcription engine.  
+Whatever the transcription engine process is, it can use this feedback to improve/train.  
+
+**web/public/analyze.html
+**web/public/midi.js
+Need to create language, or create word only?  
+Activate prefix (real-time usage)
+variable to hold prefix.  
+12,13,13
+12,14,14
+
+13 -> content
+14 -> transcription (default)
+
+16 = bad (add prefix to note each time, otherwise cant edit out of real-time)
+18 = good
+19 = poetic
+
+
+**web/public/book.html
+Need to be able to search for topics.  
+> FIND TOPIC ..
+Change colors and select topics.  
+Just have basic Meta command entry.
+Use LLM to find commands / tools from command list.  
+Search commands, if no command found, then continue with inquiry to LLM.  
+Right now just use analyze.html
+But should work with book.html as well.  
+--start here..add find topic logic.  
+
+
+
+**web/public/speech.js
+Some problem occurred here with webkitRecognition.  
+Annoying getting it working again.  
+

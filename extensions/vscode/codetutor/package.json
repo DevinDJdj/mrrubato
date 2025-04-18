@@ -41,23 +41,23 @@
           }
         ]
       },
-			{
-				"id": "chat-tools-sample.tools",
-				"fullName": "Tool User",
-				"name": "tools",
-				"description": "I use tools",
-				"isSticky": true,
-				"commands": [
-					{
-						"name": "list",
-						"description": "List all available tools"
-					},
-					{
-						"name": "all",
-						"description": "Use all registered tools. By default, only this extension's tools are used."
-					}
-				]
-			}      
+      {
+        "id": "chat-tools-sample.tools",
+        "fullName": "Tool User",
+        "name": "tools",
+        "description": "I use tools",
+        "isSticky": true,
+        "commands": [
+          {
+            "name": "list",
+            "description": "List all available tools"
+          },
+          {
+            "name": "all",
+            "description": "Use all registered tools. By default, only this extension's tools are used."
+          }
+        ]
+      }
     ]
   },
   "scripts": {
@@ -80,6 +80,8 @@
     "typescript": "^5.8.2"
   },
   "dependencies": {
-    "@vscode/prompt-tsx": "^0.3.0-alpha.23"
+    "@react-native-community/netinfo": "^11.4.1",
+    "@vscode/prompt-tsx": "^0.3.0-alpha.23",
+    "ollama": "^0.5.15"
   }
 }

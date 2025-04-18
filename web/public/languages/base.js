@@ -1,7 +1,7 @@
 
 keymaps["base"].funcdict = {};
 //this.keydict[ "" ] = {"1": { "4": "error", "6": "ok", "7": "good"} };
-
+//this is loaded from dictionary.  
 
 keymaps["base"].funcdict["updateState"] = function(transcript, midi, keydict, key){
 }
@@ -26,6 +26,11 @@ keymaps["base"].funcdict[""] = function(transcript, midi, keydict, key){
                     for (j=0; j<i; j++){
                         midi[j].complete = true;
                     }
+
+                    //add prefix here if needed.  
+                    if (keymaps["base"].currentprefix != ""){
+                        transcript = keymaps["base"].currentprefix + " " + transcript;
+                    }
                     return transcript;
                 }
             }
@@ -33,6 +38,24 @@ keymaps["base"].funcdict[""] = function(transcript, midi, keydict, key){
     }
     return transcript;
 };
+
+
+//not sure if we want to do this here or from word definitions.  Maybe easier to just specify here.  
+keymaps["base"].keydict[""] ["3"] = {
+    "12,13,13": "content",
+    "12,14,14": "transcription"
+};
+
+keymaps["base"].currentprefix = "";
+
+keymaps["base"].funcdict["content"] = function(transcript, midi, keydict, key){
+    keymaps["base"].currentprefix = "content";
+};
+
+keymaps["base"].funcdict["transcription"] = function(transcript, midi, keydict, key){  
+  keymaps["base"].currentprefix = "transcription";
+}
+
 
 keymaps["base"].keydict[ "" ] ["4"] = {"24,21,23,24": "skip " };
 
@@ -53,7 +76,7 @@ keymaps["base"].funcdict["skip "] = function(transcript, midi, keydict, key){
     if (commandlength !== null){
         //we have a command map at least.  
         if (commandlength == "1"){
-            skip = midi[0].note - keybot["tennis"] - OCTAVE;
+            skip = midi[0].note - keybot["base"] - OCTAVE;
             if (skip > -OCTAVE-1 && skip < OCTAVE+1){
 
                 skip = Math.sign(skip)*Math.pow(3, (Math.abs(skip)));
