@@ -664,3 +664,51 @@ But should work with book.html as well.
 Some problem occurred here with webkitRecognition.  
 Annoying getting it working again.  
 
+#https://deepspeech.readthedocs.io/en/r0.9/TRAINING.html
+use this model to build/deploy WASM for JS recognition.  
+
+#https://github.com/mozilla/deepspeech-playbook/blob/master/DATA_FORMATTING.md
+WAV format, mono-channel, and with a 16kHz sampling rate
+wav_filename,wav_filesize,transcript
+
+Lets collect this data.  
+**web/public/feedback.js
+--saveFeedback
+transcript was updated.  
+This is what triggers a transfer to the training data for custom voice/STT.  
+Add logic here to save the 16kHz audio files for training, if we have reviewed the transcript?  
+Dont really need this to go to the server, just save in RTDB for now, or just do all in python?  
+Hmmm...
+For now just adjust the transcript to only use the corrected items.  
+
+
+
+
+**timestep.py 
+uploads if transcript was updated, then this is tagged.  
+
+**server/transcription/train.py
+Generate csv file needed.  
+WAV format, mono-channel, and with a 16kHz sampling rate
+wav_filename,wav_filesize,transcript
+
+Then Train model based on uploaded files.  
+This can be run locally, pass path.. to files.  
+**web/public/test/whisper/outa/indexa.html
+--onDecoded
+Copy from here
+const kSampleRate = 16000;
+
+Deepspeech for STT and this for TTS.  
+
+#https://github.com/TensorSpeech/TensorFlowTTS
+for TTS.  
+
+Training dataset should be the same.  
+
+**server/transcription/transcribe.py
+--downloadtranscript
+test this.  
+
+
+

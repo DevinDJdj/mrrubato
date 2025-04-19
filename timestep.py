@@ -563,7 +563,8 @@ if __name__ == '__main__':
                     util.getIterations(description)
                     sta = ",".join(str(s) for s in util.st)
                     eta = ",".join(str(e) for e in util.et)
-                    params = [('videoid', videoid),('st',sta),('et',eta),('transcriptfile',new_transcript_file)]
+                    #pass mediafile as well.  
+                    params = [('videoid', videoid),('st',sta),('et',eta),('transcriptfile',new_transcript_file), ('mediafile',mediafile)]
 #                    url = f'{localserver}/transcribe/?videoid={videoid}&mediafile={mediafile}&st={sta}&et={eta}'
                     url = f'{localserver}/transcribe/'
                     print(url)

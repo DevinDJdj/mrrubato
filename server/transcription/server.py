@@ -48,7 +48,7 @@ def transcribe():
             print("loaded model")
             print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         if (transcriptfile != None and transcriptfile != ""):
-            ret = downloadtranscript(transcriptfile, video, st, et)
+            ret = downloadtranscript(transcriptfile, mediafile, video, st, et)
             reviewed = " --topic REVIEWED"
         else:
             ret = transcribe_fromyoutube(video, model, mediafile, st, et)
