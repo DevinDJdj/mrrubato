@@ -84,10 +84,6 @@ data-setup="{}"
 </video>
 
 
-	<!--for speech.js-->
-	<div class="words" contenteditable style="display: none;">
-		<input type="text" id="p" name="p">
-    </div>
 	<div id="delay-params">
 		<label for="commentdelay">Comment Delay:</label>
 		<input type="range" id="commentdelay" name="commentdelay" min="0" max="20" value="10" />
@@ -195,6 +191,11 @@ data-setup="{}"
 	<div id="mycommentsh" style="height: 190px;overflow:auto;"></div>
 
 	<div id="speak">
+		<!--for speech.js-->
+		<div class="words" contenteditable>
+			<input type="text" id="p" name="p">
+		</div>
+
 		<select id="voiceSelect"></select><br>
 		<!-- status and current command for now just display the string and add any additional midi params-->
 		<label for="mycommand">Building Command:</label><br>
@@ -1212,6 +1213,7 @@ function loadCanvas(id, pianoimg, mini="") {
 function addImage(imageurl, stor, type=0){
 //	console.log(imageurl);
 //	console.log(stor)
+/*
 	if (imageurl == ""){
 		loadCanvas("pianorollmini", "", "mini");
 		loadCanvas("pianoroll", "");
@@ -1219,7 +1221,7 @@ function addImage(imageurl, stor, type=0){
 
 	}
 	else{
-
+*/
 	url = stor.child(imageurl).getDownloadURL()
 		.then((url) => {
 			console.log( type + " SRC url:" + url);
@@ -1242,7 +1244,6 @@ function addImage(imageurl, stor, type=0){
 				addImage("", stor, type);	//add a default image.
 			}
 		});	
-	}
 }
 
 

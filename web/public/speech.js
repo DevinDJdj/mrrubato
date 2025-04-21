@@ -12,7 +12,36 @@ let currentvoice = 0;
 let voices = null;
 let commentpos = 0;
 
-export function addCommandLog(transcript, command, pending=false){
+let recentTime = 4000;
+
+//probably should keep this command log.  
+//But it is basically being kept in transcript.  
+export function deletePendingCommand(){
+    //delete the last pending command.  
+    if (commandLog.length > 0 && commandLog[commandLog.length-1].pending){
+        commandLog.pop();
+        transcript = "";
+    }
+}
+
+export function getPendingCommand(pedal=true){ //dont remove by default
+    if (commandLog.length > 0 && commandLog[commandLog.length-1].pending){
+        if (Date.now() - commandLog[commandLog.length-1].time > recentTime*2 && !pedal){ //recentTime in midi.js
+            //allow for double the time to complete the command.  
+            //pop from the pending commands?  Why keep useless history?  
+            commandLog.pop();
+            transcript = "";
+            return null;
+        }
+
+        return commandLog[commandLog.length-1];
+    }   
+    else{
+        return null;
+    }
+}
+
+export function addCommandLog(transcript, command, pending=false, lang="base"){
     //we want to have the time here.  
     let now = Date.now();
     transcript = transcript.trimStart();
@@ -32,7 +61,7 @@ export function addCommandLog(transcript, command, pending=false){
         }
     }
     transcript += " " + intranscript;
-    commandLog.push({time: now, transcript: transcript, command: command, pending: pending});
+    commandLog.push({time: now, transcript: transcript, command: command, pending: pending, lang: lang});
     //command here is the callback.  Not using at the moment.  
 }
 
@@ -242,6 +271,8 @@ function hasNumber(myString) {
 export function Chat(transcript, callback=null, pending=false, lang=""){
     //check meta commands first, then keymap[lang].chat...
 
+    let tokens = "";
+    let midi = "";
     if (lang==""){
         lang = currentlanguage;
     }
@@ -270,16 +301,16 @@ export function Chat(transcript, callback=null, pending=false, lang=""){
         tokens = transcript.split(" ");
         //logic check is in prior function
         if (tokens.length > 4){
-            x = parseFloat(tokens[1]);
-            y = parseFloat(tokens[2]);
-            x1 = parseFloat(tokens[3]);
-            y1 = parseFloat(tokens[4]);
+            let x = parseFloat(tokens[1]);
+            let y = parseFloat(tokens[2]);
+            let x1 = parseFloat(tokens[3]);
+            let y1 = parseFloat(tokens[4]);
             highlightVideo(x, y, x1, y1);
 
         }
         else if (tokens.length > 2){
-            x = parseFloat(tokens[1]);
-            y = parseFloat(tokens[2]);
+            let x = parseFloat(tokens[1]);
+            let y = parseFloat(tokens[2]);
             highlightVideo(x, y);
         }
         else{
@@ -296,7 +327,7 @@ export function Chat(transcript, callback=null, pending=false, lang=""){
         tokens = transcript.split(" ");
         //logic check is in prior function
         if (tokens.length > 1 && tokens[1] !=""){
-            skip = parseFloat(tokens[1]);
+            let skip = parseFloat(tokens[1]);
             skipVideo(skip);
         }
         else{
@@ -308,7 +339,7 @@ export function Chat(transcript, callback=null, pending=false, lang=""){
         tokens = transcript.split(" ");
         //logic check is in prior function
         if (tokens.length > 1 && tokens[1] !=""){
-            jump = parseFloat(tokens[1]);
+            let jump = parseFloat(tokens[1]);
             jumpVideo(jump);
         }
         else{
@@ -335,13 +366,13 @@ export function Chat(transcript, callback=null, pending=false, lang=""){
         //logic check is in prior function
         if (tokens.length > 2 && tokens[2] !=""){
             if (tokens.length > 3 && tokens[3] !=""){
-                octave = parseInt(tokens[2]);
+                let octave = parseInt(tokens[2]);
                 lang = tokens[3];
-                SetOctave(octave, lang);
+                setOctave(octave, lang);
 
             }
             else{
-                octave = parseInt(tokens[2]);
+                let octave = parseInt(tokens[2]);
                 setOctave(octave);
             }
 
@@ -356,7 +387,7 @@ export function Chat(transcript, callback=null, pending=false, lang=""){
         tokens = transcript.split(" ");
         //logic check is in prior function
         if (tokens.length > 2 && tokens[2] !=""){
-            speed = parseFloat(tokens[2]);
+            let speed = parseFloat(tokens[2]);
             setVideoSpeed(speed);
         }
         else{
@@ -368,7 +399,7 @@ export function Chat(transcript, callback=null, pending=false, lang=""){
         tokens = transcript.split(" ");
         //logic check is in prior function
         if (tokens.length > 2 && tokens[2] !=""){
-            volume = parseFloat(tokens[2]);
+            let volume = parseFloat(tokens[2]);
             if (volume == 0.5){
                 //mute piano sounds
                 playfeedback = false;
@@ -391,7 +422,7 @@ export function Chat(transcript, callback=null, pending=false, lang=""){
     else if (transcript.toLowerCase().startsWith("filter clear")){
         tokens = transcript.split(" ");
         if (tokens.length > 2){
-            func = tokens[2];
+            let func = tokens[2];
             if (func == "word"){
                 //clear filter by word                
             }
@@ -411,7 +442,8 @@ export function Chat(transcript, callback=null, pending=false, lang=""){
     else if (transcript.toLowerCase().startsWith("filter add")){
         tokens = transcript.split(" ");
         if (tokens.length > 3){
-            func = tokens[2];
+            let func = tokens[2];
+            let filter = "";
             if (func == "word"){
                 //filter by word
                 filter = tokens.slice(3, tokens.length).join(" ");
@@ -432,7 +464,8 @@ export function Chat(transcript, callback=null, pending=false, lang=""){
     else if (transcript.toLowerCase().startsWith("filter remove")){
         tokens = transcript.split(" ");
         if (tokens.length > 3){
-            func = tokens[2];
+            let func = tokens[2];
+            let filter = "";
             if (func == "word"){
                 //filter by word
                 filter = tokens.slice(3, tokens.length).join(" ");
@@ -494,7 +527,7 @@ export function Chat(transcript, callback=null, pending=false, lang=""){
             midi = tokens[tokens.length-1];
             //for now single word?  I dont think it matters, logic allows for multiple words.  
             //but we do need to time the speech and the midi well if we want to use the 4s timeout.  
-            word = tokens.slice(2, tokens.length-1).join(" ");
+            let word = tokens.slice(2, tokens.length-1).join(" ");
             if (hasNumber(midi)){ //check if we have actually put in the midi.
                 addWord(word.trim(), midi);
             }
@@ -509,7 +542,7 @@ export function Chat(transcript, callback=null, pending=false, lang=""){
             midi = tokens[tokens.length-1];
             //for now single word?  I dont think it matters, logic allows for multiple words.  
             //but we do need to time the speech and the midi well if we want to use the 4s timeout.  
-            tag = tokens.slice(2, tokens.length-1).join(" ");
+            let tag = tokens.slice(2, tokens.length-1).join(" ");
             if (hasNumber(midi)){ //check if we have actually put in the midi.
                 addTag(tag.trim(), "", midi);
             }
@@ -528,7 +561,7 @@ export function Chat(transcript, callback=null, pending=false, lang=""){
             midi = tokens[tokens.length-1];
             //for now single word?  I dont think it matters, logic allows for multiple words.  
             //but we do need to time the speech and the midi well if we want to use the 4s timeout.  
-            tag = tokens.slice(2, tokens.length-1).join(" ");
+            let tag = tokens.slice(2, tokens.length-1).join(" ");
             if (hasNumber(midi)){ //check if we have actually put in the midi.
                 console.log("error removing tag " + tag.trim() + " " + midi); 
                 removeTag(tag.trim(), "", midi);
@@ -657,7 +690,8 @@ export function loadSpeech(){
                 
                 let [t2, lang, found] = findCommand(transcript, mymidicommand); //this points to speech.js->findCommand
                 if (found){
-                    addCommandLog(transcript, null, true);
+                    addCommandLog(transcript, null, true, lang);
+                    //triggerCheckCommands?
 
                 }
                 else{

@@ -724,7 +724,10 @@ function createMetaDic(user){
                         .every(function () {
 
                             let column = this;
-                            if (column.visible()){
+                            var title = this.header().textContent;
+
+                            
+                            if (column.visible() && title !=="word"){ //dont want the filter here.  
                                 // Create select element
                                 let select = document.createElement('select');
                                 select.add(new Option(''));
@@ -1105,6 +1108,8 @@ function mymidirecent(){
 }
 
 function mypendingcommand(){
+    return FUNCS.SPEECH.getPendingCommand();
+    /*
     if (typeof(midicontroller) !== 'undefined' && midicontroller !== null){
         return midicontroller.getPendingCommand();
 
@@ -1112,6 +1117,7 @@ function mypendingcommand(){
     else{
         return getPendingCommand();
     }
+    */
 
 
 }
@@ -1133,10 +1139,18 @@ function triggerCheckCommands(){
 
     let midi = mymidirecent();
     let flangs = getLangsFromMidi(midi);
+    p = mypendingcommand();
     let t = "";
     if (!pedal){
-        for (let li=0; li<flangs.length; li++){
-            t = mycheckcommands(flangs[li]);
+        if (p !== null){
+            //only check the language of the pending command.  
+            t = mycheckcommands(p.lang);            
+        }
+        else{
+            //check all languages.
+            for (let li=0; li<flangs.length; li++){
+                t = mycheckcommands(flangs[li]);
+            }
         }
     }    
     
@@ -1678,12 +1692,21 @@ function setTimes(lang, word, times, user=0){
     dictable.columns.adjust().draw();
 }
 
+function copyWord(lang, word, midi){
+    //copy chat history to clipboard.  
+
+    navigator.clipboard.writeText(lang + ":" + word + ":" + midi);
+    return word;
+}
+
 function addDictRow(lang, word, row, user=0, add=0) {
     //if meta language then add to meta dictionary for reference.
     if (add > 0){
         if (lang == "meta"){
+            //make link to copy 
             metadic.row.add([
-                word,
+                //word,
+                '<a href="#" onclick="copyWord(\'' + lang + '\',\'' + word + '\',\'' + row['midi'] + '\');">' + word + '</a>',
                 row['midi'],
                 lang,
                 row['definition']

@@ -604,7 +604,7 @@ Just pass the tools here.
 The key is integration between the LLM and the tools.  
 I think it will still be ok ignoring the vscode.lm.
 
-#microsoft
+**microsoft
 This is really poor.  
 The best IDE and it doesnt support a local model...
 poor...
@@ -680,6 +680,10 @@ Add logic here to save the 16kHz audio files for training, if we have reviewed t
 Dont really need this to go to the server, just save in RTDB for now, or just do all in python?  
 Hmmm...
 For now just adjust the transcript to only use the corrected items.  
+Or if there is a good flag during a sequence of audio, then this is flagged.  
+Just use something to mark *
+Then during train.py pull those with this mark.  
+If there is a sequence which is up to the appropriate number of seconds.  
 
 
 
@@ -710,5 +714,31 @@ Training dataset should be the same.
 --downloadtranscript
 test this.  
 
+**web/public/analyze.html
+Need copy function for words.  
+
+Need a find word function.  
+**web/public/languages.js
+--addDictRow
+
+meta:change language :12,5,7,12
+meta:change user :12,10,11,12
+meta:activate mic:0,4,7,0
+
+**languages.js
+Dictionary display.  
+keys should become first column if usage tends this way.  
+
+meta:add word :12,9,10,11,12
+incorrect 16 
+correct 18
+well done 19
+
+
+**web/public/midi.js
+Why is this
+set speed error?  
+
+OK, this looks better.  
 
 

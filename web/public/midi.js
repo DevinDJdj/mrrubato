@@ -77,29 +77,15 @@ function getPedal(){
 	return pedal;
 }
 
-function getPendingCommand(){
-    if (commandLog.length > 0 && commandLog[commandLog.length-1].pending){
-        if (Date.now() - commandLog[commandLog.length-1].time > recentTime*2 && !pedal){ //recentTime in midi.js
-            //allow for double the time to complete the command.  
-            //pop from the pending commands?  Why keep useless history?  
-            commandLog.pop();
-            transcript = "";
-            return null;
-        }
-
-        return commandLog[commandLog.length-1];
-    }   
-    else{
-        return null;
-    }
-}
 
 //called from clock.js every second.  
 //open-ended definitions must end with midi 60, 60.  
 //add language, add word etc.  But 60, 60 not stored in keymap.  
 //others will be defined in keymap.  
 function checkCommands(lang="meta"){
-    let cl = getPendingCommand();
+    let cl = FUNCS.SPEECH.getPendingCommand(getPedal());
+
+
     let midi = getMidiRecent();
     let executed = false;
     //if most recent is too recent wait some more.  
@@ -112,7 +98,7 @@ function checkCommands(lang="meta"){
             for (let i=0; i<midi.length; i++){
                 midi[i].complete = true;
             }
-            commandLog.pop();
+            FUNCS.SPEECH.deletePendingCommand();
             cl = null;
             completeMidi(midi, "meta");
             return "";
@@ -225,7 +211,7 @@ function checkCommands(lang="meta"){
 
             if (transcript !=""){
                 if (transcript.endsWith(" ")){ //add pending command.  
-                    FUNCS.SPEECH.addCommandLog(transcript, null, true);
+                    FUNCS.SPEECH.addCommandLog(transcript, null, true, lang);
                     //single command.  Must have at least half a second open here or whatever the timer is open time in order to execute this command.  
                     //add a pending command, and if no more midi comes within half a second, we execute.  
                     //will need to adjust this timer for the user.  
