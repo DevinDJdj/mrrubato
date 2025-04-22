@@ -529,7 +529,12 @@ export function Chat(transcript, callback=null, pending=false, lang=""){
             //but we do need to time the speech and the midi well if we want to use the 4s timeout.  
             let word = tokens.slice(2, tokens.length-1).join(" ");
             if (hasNumber(midi)){ //check if we have actually put in the midi.
-                addWord(word.trim(), midi);
+                let newmidi = addWord(word.trim(), midi);
+                transcript = transcript.replace(midi, newmidi); //replace midi with new midi
+                transcript = currentlanguage + ":" + transcript; //add language to transcript
+            }
+            else{
+                executed = false;
             }
         }
         else{
@@ -677,6 +682,14 @@ export function loadSpeech(){
 
             let mymidicommand = null;
             let ped = false;
+            let cl = getPendingCommand(getPedal());
+            let lang = "";
+            if (cl != null){
+                //we have a pending command, so we will use that.  
+                lang = cl.lang;
+                //for now just add space.  Always end with some midi command.  
+
+            }
             if (typeof(midicontroller) !=='undefined' && midicontroller != null){
                 mymidicommand = midicontroller.getMidiRecent();
                 ped = midicontroller.pedal;
@@ -685,7 +698,7 @@ export function loadSpeech(){
                 mymidicommand = getMidiRecent();
                 ped = getPedal();                //
             }
-            if (mymidicommand == null && !ped){
+            if (mymidicommand == null && !ped && cl == null){
                 //if not executed immediately, add to pending commands, and wait for midi or further command.  
                 
                 let [t2, lang, found] = findCommand(transcript, mymidicommand); //this points to speech.js->findCommand
@@ -704,7 +717,8 @@ export function loadSpeech(){
             else{
                 //waiting for midi command to complete.  
                 console.log(mymidicommand);
-                addCommandLog(transcript, null, true);
+                console.log("Pending Command:" + cl);
+                addCommandLog(transcript, null, true, lang);
             }
 
         //    Chat(transcript);

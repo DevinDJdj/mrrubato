@@ -741,4 +741,27 @@ set speed error?
 
 OK, this looks better.  
 
+meta:change language :12,5,7,12
+
+--playWord
+test..
+OK, somewhat better.  
+Still dont like the need for strict sequence between words and midi.  
+Also some bug..
+meta keys were 24, then 23?  
+Need to display details on these keys as well.  
+
+Use different color for different languages in the UI display.  
+
+
+
+**extension/vscode/codetutor/src/extension.ts
+remember last several contexts and line numbers.  
+And pass the contents of those files to the LLM call.  
+There really should be a model tuned to this usage though.  
+How do we indicate positive or negative.  
+Add to genbook for now via extension with context.  
+
+
+
 

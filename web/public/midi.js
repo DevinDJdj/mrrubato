@@ -689,13 +689,6 @@ function getMIDIMessage(message, mytime=0, lang="", midicb=null) {
 		//device.octaveOffset
 	  });
 
-	if (ispaused==1 && mytime<=0){
-		midioffset +=1;
-	}
-	else{
-		midioffset = 0;
-		//probably should reset here if not paused.  
-	}
 	if (lang == ""){
 		//load languages.js before midi.js so this exists.  
 		lang = currentlanguage;
@@ -733,7 +726,8 @@ function getMIDIMessage(message, mytime=0, lang="", midicb=null) {
 		abstime = mytime;
 	}
 	else{
-		abstime = getReferenceTime();
+		abstime = getReferenceTime(mytime);
+		//we are generating the time, but do we want to 
 	}
 		
 	switch (command) {
@@ -890,8 +884,9 @@ function noteOff(note, abstime, lang=""){
 	
 }
 
-function getReferenceTime(){
-    if ((useyoutube || watch) && player.getCurrentTime){
+function getReferenceTime(mytime=0){
+
+	if ((useyoutube || watch) && player.getCurrentTime){
 		var temptime = player.getCurrentTime();
 	    abstime = Math.round(temptime * 1000);
 	}
@@ -902,10 +897,21 @@ function getReferenceTime(){
 
 	}
 	else{
+		//if we cant get player time, we are getting seconds since page load essentially.  
 		const now = Date.now();
 		return now-start;
 	}
 
+	//need to clean this up maybe.  Think it should work ok.  
+	//concern is when sending messages prior to starting video.  
+	//potential to destroy logical sequences if there is overlap.  
+	if (ispaused==1 && mytime<=0){
+		midioffset +=1;
+	}
+	else{
+		midioffset = 0;
+		//probably should reset here if not paused.  
+	}
 	return abstime+midioffset; //add midioffset for when paused we can still get commands.  
 
 }

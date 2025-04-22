@@ -234,6 +234,9 @@ function addTag(tag, videoid="", midi=null){
 function addWord(word, midi){
     midi = convertKeys(midi, -keybot[currentlanguage]/12); //get keys + keybot
 
+    if (word == ""){
+        return "!No word provided!";
+    }
     wordref = firebase.database().ref('/dictionary/language/' + currentlanguage + "/" + word);
 	wordref.once('value')
     .then((snap) => {
@@ -250,6 +253,7 @@ function addWord(word, midi){
             wordref.set(obj);
         }
     });
+    return midi;
 
 }
 
@@ -666,7 +670,10 @@ function createAutoDic(user){
                         .every(function () {
 
                             let column = this;
-                            if (column.visible()){
+                            var title = this.header().textContent;
+
+                            
+                            if (column.visible() && title !=="word"){ //dont want the filter here.  
                                 // Create select element
                                 let select = document.createElement('select');
                                 select.add(new Option(''));
@@ -1699,6 +1706,22 @@ function copyWord(lang, word, midi){
     return word;
 }
 
+function playWord(lang, word, midi){
+    //play the word in the midi array.
+    //add to midi array.  
+    //getReferenceTime();
+//    const now = Date.now();
+    tokens = midi.split(",");
+    for (let i=0; i<tokens.length; i++){
+        if (tokens[i] !== ""){
+            //play the midi note.  random velocity 17.  
+            noteOn(parseInt(keybot[lang] + tokens[i]), 17, getReferenceTime(), 0, lang); //no velocity, no duration, no channel, no track, no user.  
+            noteOff(parseInt(keybot[lang] + tokens[i]), 17, getReferenceTime(), 0, lang); //no velocity, no duration, no channel, no track, no user.
+        }
+    }
+
+}
+
 function addDictRow(lang, word, row, user=0, add=0) {
     //if meta language then add to meta dictionary for reference.
     if (add > 0){
@@ -1706,7 +1729,9 @@ function addDictRow(lang, word, row, user=0, add=0) {
             //make link to copy 
             metadic.row.add([
                 //word,
-                '<a href="#" onclick="copyWord(\'' + lang + '\',\'' + word + '\',\'' + row['midi'] + '\');">' + word + '</a>',
+                '<a href="#" onclick="playWord(\'' + lang + '\',\'' + word + '\',\'' + row['midi'] + '\');"><img align="left" src="images/play.png" /></a>'
+                + '<a href="#" onclick="copyWord(\'' + lang + '\',\'' + word + '\',\'' + row['midi'] + '\');">' + word + '</a>'
+                ,
                 row['midi'],
                 lang,
                 row['definition']
@@ -1714,7 +1739,9 @@ function addDictRow(lang, word, row, user=0, add=0) {
         }
         else{
             autodic.row.add([
-                    word,
+                '<a href="#" onclick="playWord(\'' + lang + '\',\'' + word + '\',\'' + row['midi'] + '\');"><img align="left" src="images/play.png" /></a>'
+                + '<a href="#" onclick="copyWord(\'' + lang + '\',\'' + word + '\',\'' + row['midi'] + '\');">' + word + '</a>'
+                    ,
                     row['midi'],
                     lang,
                     row['definition']
