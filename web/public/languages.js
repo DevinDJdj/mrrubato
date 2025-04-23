@@ -643,7 +643,6 @@ function filterDicAuto(transcript, lang=""){
         metadic.draw();
     }
     //only update if we have transcript.  
-    updateState(transcript, currentlanguage);
 }
 
 function createAutoDic(user){
@@ -1147,6 +1146,7 @@ function triggerCheckCommands(){
     let midi = mymidirecent();
     let flangs = getLangsFromMidi(midi);
     p = mypendingcommand();
+    let lang = currentlanguage;
     let t = "";
     if (!pedal){
         if (p !== null){
@@ -1182,6 +1182,9 @@ function triggerCheckCommands(){
 
     $('#mycommand').val(t.trim()); //incomplete command.  
     $('#midicommand').val(mtemp.trim()); //incomplete command.
+    
+    updateState(t.trim(), lang);
+
     if (mtemp != ""){
         filterDicAuto(mtemp.trim(), lang);
     }

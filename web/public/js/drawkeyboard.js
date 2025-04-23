@@ -13,13 +13,49 @@
 
 */
 
+var NUM_COLORS = 6;
+
+function getColorFromSequence(seqno){
+    adjust = Math.floor(seqno/NUM_COLORS); 
+    adjust = adjust % (NUM_COLORS/2);
+    r = 0;
+    g = 0;
+    b = 0;
+    if (seqno % NUM_COLORS == 0){
+        r = 255;
+    }
+    else if (seqno % NUM_COLORS == 1){
+        r = 255;
+        g = 127;
+    }
+    if (seqno % NUM_COLORS == 2){
+        r = 255;
+        g = 255;
+    }
+    if (seqno % NUM_COLORS == 3){
+        g = 255;
+    }
+    if (seqno % NUM_COLORS == 4){
+        b = 255;
+    }
+    if (seqno % NUM_COLORS == 5){
+        r = 148;
+        b = 211;
+    }
+    if (adjust > 0){
+        r = Math.floor(r * (1-(adjust/NUM_COLORS)));
+        g = Math.floor(g * (1-(adjust/NUM_COLORS)));
+        b = Math.floor(b * (1-(adjust/NUM_COLORS)));
+    }
+    return "rgb("+r+","+g+","+b+")";
+}
+
 // canvas 		- HTML5 canvas element
 // RedKeyArray  - array of keys to color red (0 = low a, 87 = high c, proceeding chromatically)
 function DrawKeyboard(canvas, RedKeyArray=[], numKeys=88, whiteKeys=52) {
 	
 	// general characteristics of a piano
 
-    var NUM_COLORS = 6;
 	var TOTAL_KEYS = numKeys;
 	var NUM_WHITE_KEYS = whiteKeys;
 //    TOTAL_KEYS = 25;
@@ -41,40 +77,6 @@ function DrawKeyboard(canvas, RedKeyArray=[], numKeys=88, whiteKeys=52) {
 	var BLACK_KEY_HEIGHT = height * .66
 
 
-    function getColorFromSequence(seqno){
-        adjust = Math.floor(seqno/NUM_COLORS); 
-        adjust = adjust % (NUM_COLORS/2);
-        r = 0;
-        g = 0;
-        b = 0;
-        if (seqno % NUM_COLORS == 0){
-            r = 255;
-        }
-        else if (seqno % NUM_COLORS == 1){
-            r = 255;
-            g = 127;
-        }
-        if (seqno % NUM_COLORS == 2){
-            r = 255;
-            g = 255;
-        }
-        if (seqno % NUM_COLORS == 3){
-            g = 255;
-        }
-        if (seqno % NUM_COLORS == 4){
-            b = 255;
-        }
-        if (seqno % NUM_COLORS == 5){
-            r = 148;
-            b = 211;
-        }
-        if (adjust > 0){
-            r = Math.floor(r * (1-(adjust/NUM_COLORS)));
-            g = Math.floor(g * (1-(adjust/NUM_COLORS)));
-            b = Math.floor(b * (1-(adjust/NUM_COLORS)));
-        }
-        return "rgb("+r+","+g+","+b+")";
-    }
 
     function DrawRectNoBorder(X, Y, Width, Height, Color1) {
 		ctx.fillStyle = Color1;

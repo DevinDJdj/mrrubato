@@ -193,7 +193,7 @@ data-setup="{}"
 	<div id="speak">
 		<!--for speech.js-->
 		<div class="words" contenteditable>
-			<input type="text" id="p" name="p">
+			<input type="text" id="p" name="p" size="50">
 		</div>
 
 		<select id="voiceSelect"></select><br>
@@ -664,6 +664,32 @@ function hashfromword(word){
 	}
 	return Math.abs(hash);
 }
+
+/*
+function rgbToHex(rgb) {
+    var rgbRegex = /^rgb\(\s*(-?\d+)(%?)\s*,\s*(-?\d+)(%?)\s*,\s*(-?\d+)(%?)\s*\)$/;
+    var result, r, g, b, hex = "";
+    if ( (result = rgbRegex.exec(rgb)) ) {
+        r = componentFromStr(result[1], result[2]);
+        g = componentFromStr(result[3], result[4]);
+        b = componentFromStr(result[5], result[6]);
+
+        hex = "#" + (0x1000000 + (r << 16) + (g << 8) + b).toString(16).slice(1);
+    }
+    return hex;
+}
+*/
+
+function stringToColor(str) {
+	
+	if (str == ""){
+		return "#FFFFFF"; //default color
+	}
+	let hash = hashfromword(str);    
+	let col = getColorFromSequence(hash);	
+    return col;
+}
+
 //for now display one user at a time, then combine users?  
 var debugcounter = 0;
 var prevwords = null;
@@ -677,6 +703,7 @@ function getFeedbackImage(source, w, h, myscene,myengine, midiuser=0, flang=""){
 	ybot = -h/2;
 	debugcounter = debugcounter + 1;
 	console.log("getFeedbackImage " + debugcounter);
+
 
 	//go through all users/languages
 	//if flang, only use that lang.  
@@ -692,6 +719,8 @@ function getFeedbackImage(source, w, h, myscene,myengine, midiuser=0, flang=""){
 	}
 	for (var wi=start; wi<words.length; wi++){
 		lang = words[wi].lang;
+
+		let color = stringToColor(lang); //maybe this should not be hash but a language setting.  
 		word = words[wi].word;
 		x = i*2;
 		var tempTime = words[wi].time/1000;
@@ -748,11 +777,11 @@ function getFeedbackImage(source, w, h, myscene,myengine, midiuser=0, flang=""){
 			if (w == xmultiplier1){
 //				console.log("Drawing on ground1 " + word + " " + xtemp + " " + ytemp + " " + w + " " + h);
 				ytemp = ybot + h/2+(10*(1+(hash%8)));
-				textureGround1.drawText(word, xtemp, ytemp, font, "white", null, true, true);
+				textureGround1.drawText(word, xtemp, ytemp, font, color, null, true, true);
 			}
 			else{
 //				console.log("Drawing on ground2 " + word + " " + xtemp + " " + ytemp + " " + w + " " + h);
-				textureGround2.drawText(word, xtemp, ytemp, font, "white", null, true, true);
+				textureGround2.drawText(word, xtemp, ytemp, font, color, null, true, true);
 			}
 		}
 		else{

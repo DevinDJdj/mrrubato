@@ -752,6 +752,13 @@ meta keys were 24, then 23?
 Need to display details on these keys as well.  
 
 Use different color for different languages in the UI display.  
+For now just a hash to generate the color.  
+
+**web/public/js/drawkeyboard.js
+--getColorFromSequence
+use this to generate from hash of language.  
+
+
 
 
 
@@ -761,6 +768,8 @@ And pass the contents of those files to the LLM call.
 There really should be a model tuned to this usage though.  
 How do we indicate positive or negative.  
 Add to genbook for now via extension with context.  
+
+
 
 
 
