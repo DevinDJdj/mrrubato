@@ -321,6 +321,7 @@ export function Chat(transcript, callback=null, pending=false, lang=""){
     else if (transcript.toLowerCase().startsWith("comment")){
         //make this comment to next event?  
         transcript = transcript.substr(transcript.indexOf(" ") + 1);
+        transcript = "--" + transcript; //add -- to the start of the comment.
     }
     else if (transcript.toLowerCase().startsWith("skip")){
         //skip to next event?  
@@ -599,7 +600,7 @@ export function Chat(transcript, callback=null, pending=false, lang=""){
             //make sound.  
             audioFeedback(commandcompletion);
 
-            addComment(transcript, helpme());
+            addComment("> " + transcript, helpme()); //not sure if we want the prefix here.  
         }
         else{
             if (pedal){

@@ -47,6 +47,7 @@ Shorthand
 -%d- (cant start subtask with digit.)
 
 
+: alternate line separator
 
 -> Leads to
 

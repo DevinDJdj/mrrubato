@@ -19,7 +19,7 @@ import ollama from 'ollama';
 import { LanguageModelPromptTsxPart, LanguageModelToolInvocationOptions, LanguageModelToolResult } from 'vscode';
 
 
-import { registerToolUserChatParticipant } from './toolParticipant';
+import { registerCompletionTool, registerToolUserChatParticipant } from './toolParticipant';
 
 const BASE_PROMPT =
   'You are a helpful code tutor. Your job is to teach the user with simple descriptions and sample code of the concept. Respond with a guided overview of the concept in a series of messages. Do not give the user the answer directly, but guide them to find the answer themselves. If the user asks a non-programming question, politely decline to respond.';
@@ -73,9 +73,11 @@ async function getStreamingResponse(request: vscode.ChatRequest, context: vscode
   }
   
 
+
 export function activate(context: vscode.ExtensionContext) {
 
     registerToolUserChatParticipant(context);
+	registerCompletionTool(context);
 	// define a chat handler
 	const handler: vscode.ChatRequestHandler = async (request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken) => {
 		//vscode.window.showInformationMessage('Hello world!');
@@ -86,6 +88,8 @@ export function activate(context: vscode.ExtensionContext) {
 			prompt = EXERCISES_PROMPT;
 			stream.markdown('Starting exercise\n');
 			await getStreamingResponse(request, context, stream, token);
+			await getStats(request, context, stream, token);
+			stream.markdown('Exercise complete\n');
 			return;
 		}
 
@@ -180,12 +184,54 @@ export function activate(context: vscode.ExtensionContext) {
 
 }
 
+
+async function getStats(request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken) {
+	if (!vscode.workspace.workspaceFolders) {
+		return vscode.window.showInformationMessage('No folder or workspace opened');
+	}
+
+	async function countAndTotalOfFilesInFolder(folder: vscode.Uri): Promise<{ total: number, count: number }> {
+		let total = 0;
+		let count = 0;
+		for (const [name, type] of await vscode.workspace.fs.readDirectory(folder)) {
+			if (type === vscode.FileType.File) {
+				const filePath = posix.join(folder.path, name);
+				const stat = await vscode.workspace.fs.stat(folder.with({ path: filePath }));
+				total += stat.size;
+				count += 1;
+			}
+		}
+		return { total, count };
+	}
+
+	if (!vscode.window.activeTextEditor) {
+		return vscode.window.showInformationMessage('Open a file first');
+	}
+
+	const fileUri = vscode.window.activeTextEditor.document.uri;
+	const folderPath = posix.dirname(fileUri.path);
+	const folderUri = fileUri.with({ path: folderPath });
+
+	const info = await countAndTotalOfFilesInFolder(folderUri);
+
+	//show this as message.  
+	stream.markdown(`${info.count} files in ${folderUri.toString(true)} with a total of ${info.total} bytes\n`);
+
+//	const doc = await vscode.workspace.openTextDocument({ content: `${info.count} files in ${folderUri.toString(true)} with a total of ${info.total} bytes` });
+//	vscode.window.showTextDocument(doc, { viewColumn: vscode.ViewColumn.Beside });
+	
+}
+
+
 function readFile(request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken) {
 	if (!vscode.workspace.workspaceFolders) {
 		return vscode.window.showInformationMessage('No folder or workspace opened');
 	}
 	const folderUri = vscode.workspace.workspaceFolders[0].uri;
-	const fileUri = folderUri.with({ path: posix.join(folderUri.path, 'definitions.txt') });
+	// this should be a book path.  Use as you would work on the project.  
+	const fileUri = folderUri.with({ path: posix.join(folderUri.path, 'book/definitions.txt') });
+//	const fileUri = folderUri.with({ path: posix.join(folderUri.path, 'definitions.txt') });
+
 	vscode.window.showTextDocument(fileUri);
 	vscode.workspace.openTextDocument(fileUri).then((document) => {
 		let text = document.getText();
@@ -194,6 +240,7 @@ function readFile(request: vscode.ChatRequest, context: vscode.ChatContext, stre
 //		insertTextIntoActiveEditor(text);
 	  });
 }
+
 
 /**
  * Inserts text into the active text editor at the current cursor position
@@ -245,4 +292,6 @@ class MyUriHandler implements vscode.UriHandler {
 		vscode.window.showInformationMessage(message);
 	}
 }
+
+
 

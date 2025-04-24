@@ -99,6 +99,7 @@ async function getStreamingResponse(request, context, stream, token) {
 }
 function activate(context) {
     (0, toolParticipant_1.registerToolUserChatParticipant)(context);
+    (0, toolParticipant_1.registerCompletionTool)(context);
     // define a chat handler
     const handler = async (request, context, stream, token) => {
         //vscode.window.showInformationMessage('Hello world!');
@@ -108,6 +109,8 @@ function activate(context) {
             prompt = EXERCISES_PROMPT;
             stream.markdown('Starting exercise\n');
             await getStreamingResponse(request, context, stream, token);
+            await getStats(request, context, stream, token);
+            stream.markdown('Exercise complete\n');
             return;
         }
         if (request.command === 'book') {
@@ -173,12 +176,43 @@ function activate(context) {
     //start the MCP server as well.  
     //vscode.commands.createMcpServer('mrrubato.mytutor', tutor);
 }
+async function getStats(request, context, stream, token) {
+    if (!vscode.workspace.workspaceFolders) {
+        return vscode.window.showInformationMessage('No folder or workspace opened');
+    }
+    async function countAndTotalOfFilesInFolder(folder) {
+        let total = 0;
+        let count = 0;
+        for (const [name, type] of await vscode.workspace.fs.readDirectory(folder)) {
+            if (type === vscode.FileType.File) {
+                const filePath = path_1.posix.join(folder.path, name);
+                const stat = await vscode.workspace.fs.stat(folder.with({ path: filePath }));
+                total += stat.size;
+                count += 1;
+            }
+        }
+        return { total, count };
+    }
+    if (!vscode.window.activeTextEditor) {
+        return vscode.window.showInformationMessage('Open a file first');
+    }
+    const fileUri = vscode.window.activeTextEditor.document.uri;
+    const folderPath = path_1.posix.dirname(fileUri.path);
+    const folderUri = fileUri.with({ path: folderPath });
+    const info = await countAndTotalOfFilesInFolder(folderUri);
+    //show this as message.  
+    stream.markdown(`${info.count} files in ${folderUri.toString(true)} with a total of ${info.total} bytes\n`);
+    //	const doc = await vscode.workspace.openTextDocument({ content: `${info.count} files in ${folderUri.toString(true)} with a total of ${info.total} bytes` });
+    //	vscode.window.showTextDocument(doc, { viewColumn: vscode.ViewColumn.Beside });
+}
 function readFile(request, context, stream, token) {
     if (!vscode.workspace.workspaceFolders) {
         return vscode.window.showInformationMessage('No folder or workspace opened');
     }
     const folderUri = vscode.workspace.workspaceFolders[0].uri;
-    const fileUri = folderUri.with({ path: path_1.posix.join(folderUri.path, 'definitions.txt') });
+    // this should be a book path.  Use as you would work on the project.  
+    const fileUri = folderUri.with({ path: path_1.posix.join(folderUri.path, 'book/definitions.txt') });
+    //	const fileUri = folderUri.with({ path: posix.join(folderUri.path, 'definitions.txt') });
     vscode.window.showTextDocument(fileUri);
     vscode.workspace.openTextDocument(fileUri).then((document) => {
         let text = document.getText();

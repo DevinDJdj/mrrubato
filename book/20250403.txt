@@ -758,6 +758,7 @@ For now just a hash to generate the color.
 --getColorFromSequence
 use this to generate from hash of language.  
 
+--test add word with voice.  
 
 
 
@@ -769,8 +770,34 @@ There really should be a model tuned to this usage though.
 How do we indicate positive or negative.  
 Add to genbook for now via extension with context.  
 
+--getStats
+test this.  
 
 
+#https://github.com/microsoft/vscode-extension-samples/blob/main/completions-sample/src/extension.ts
+get completions and use this to interact with whatever autocomplete logic has been done.  
 
+Eventually this will be fast enough to interact with LLM.  
+Register completion Item which uses definitions.txt
+and extracts those items from book/*.*
+This is essentially creating a tagging mechanism in a variety of ways.  
+
+Search across codebase for the same topic.  
+Potentially multi-topic sequences.  
+How do we display multi-topic without using so many lines? 
+: separator?  
+
+/find !!Error
+searches in log file locations.  
+
+/find $$environment 
+searches across environment files and setting files.  
+
+/find **Topic
+
+
+does autocomplete work inside of copilot chat?  
+use
+editor.action.triggerSuggest
 
 
