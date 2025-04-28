@@ -1,8 +1,44 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.open = open;
 exports.read = read;
 exports.getBook = getBook;
+exports.closeFileIfOpen = closeFileIfOpen;
+const vscode = __importStar(require("vscode"));
+const path_1 = require("path");
 /*
     * Book.ts - This file is part of the GitBook extension for VSCode.
     * It manages the GitBook structure, repositories, and content retrieval.
@@ -55,7 +91,54 @@ function read(request, context) {
 function getBook() {
     loadBook();
 }
+async function closeFileIfOpen(file) {
+    const tabs = vscode.window.tabGroups.all.map(tg => tg.tabs).flat();
+    const index = tabs.findIndex(tab => tab.input instanceof vscode.TabInputText && tab.input.uri.path === file.path);
+    if (index !== -1) {
+        await vscode.window.tabGroups.close(tabs[index]);
+    }
+}
+async function readFilesInFolder(folder) {
+    let total = 0;
+    let count = 0;
+    for (const [name, type] of await vscode.workspace.fs.readDirectory(folder)) {
+        //what order does this come in?  Is it alphabetical?
+        if (type === vscode.FileType.File) {
+            const fileUri = folder.with({ path: path_1.posix.join(folder.path, name) });
+            vscode.workspace.openTextDocument(fileUri).then((document) => {
+                let text = document.getText();
+                console.log(`${fileUri.path} ... read`);
+                // parse this.  
+                loadPage(text);
+                //                console.log(text);
+                // Optionally insert the text into the active editor
+                //		insertTextIntoActiveEditor(text);
+                closeFileIfOpen(fileUri).then(() => {
+                    console.log(`${fileUri.path} ... closed`);
+                });
+            });
+            let filePath = path_1.posix.dirname(fileUri.path);
+            const stat = await vscode.workspace.fs.stat(folder.with({ path: filePath }));
+            total += stat.size;
+            count += 1;
+        }
+    }
+    return { total, count };
+}
+function loadPage(text) {
+    //get the completions from the text.  
+}
 function loadBook() {
+    if (!vscode.workspace.workspaceFolders) {
+        return vscode.window.showInformationMessage('No folder or workspace opened');
+    }
     //read all files in /book folder and parse them.  
+    const folderUri = vscode.workspace.workspaceFolders[0].uri;
+    // this should be a book path.  Use as you would work on the project.  
+    const bookUri = folderUri.with({ path: path_1.posix.join(folderUri.path, 'book') });
+    const fileUri = folderUri.with({ path: path_1.posix.join(folderUri.path, 'book/definitions.txt') });
+    readFilesInFolder(bookUri).then((result) => {
+        console.log(`Total size: ${result.total} bytes, File count: ${result.count}`);
+    });
 }
 //# sourceMappingURL=book.js.map

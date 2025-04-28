@@ -34,16 +34,52 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.isTsxToolUserMetadata = isTsxToolUserMetadata;
+exports.registerStatusBarTool = registerStatusBarTool;
 exports.registerCompletionTool = registerCompletionTool;
 exports.registerToolUserChatParticipant = registerToolUserChatParticipant;
 const prompt_tsx_1 = require("@vscode/prompt-tsx");
 const vscode = __importStar(require("vscode"));
 const toolsPrompt_1 = require("./toolsPrompt");
+let myStatusBarItem;
 function isTsxToolUserMetadata(obj) {
     // If you change the metadata format, you would have to make this stricter or handle old objects in old ChatRequest metadata
     return !!obj &&
         !!obj.toolCallsMetadata &&
         Array.isArray(obj.toolCallsMetadata.toolCallRounds);
+}
+function registerStatusBarTool(context) {
+    const myCommandId = 'sample.showSelectionCount';
+    context.subscriptions.push(vscode.commands.registerCommand(myCommandId, () => {
+        const n = getNumberOfSelectedLines(vscode.window.activeTextEditor);
+        vscode.window.showInformationMessage(`Yeah, ${n} line(s) selected... Keep going!`);
+    }));
+    // create a new status bar item that we can now manage
+    myStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+    myStatusBarItem.command = myCommandId;
+    context.subscriptions.push(myStatusBarItem);
+    // register some listener that make sure the status bar 
+    // item always up-to-date
+    context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(updateStatusBarItem));
+    context.subscriptions.push(vscode.window.onDidChangeTextEditorSelection(updateStatusBarItem));
+    // update status bar item once at start
+    updateStatusBarItem();
+}
+function updateStatusBarItem() {
+    const n = getNumberOfSelectedLines(vscode.window.activeTextEditor);
+    if (n > 0) {
+        myStatusBarItem.text = `$(megaphone) ${n} line(s) selected`;
+        myStatusBarItem.show();
+    }
+    else {
+        myStatusBarItem.hide();
+    }
+}
+function getNumberOfSelectedLines(editor) {
+    let lines = 0;
+    if (editor) {
+        lines = editor.selections.reduce((prev, curr) => prev + (curr.end.line - curr.start.line), 0);
+    }
+    return lines;
 }
 function registerCompletionTool(context) {
     const provider2 = vscode.languages.registerCompletionItemProvider('plaintext', {
@@ -54,11 +90,22 @@ function registerCompletionTool(context) {
             if (!linePrefix.endsWith('console.')) {
                 return undefined;
             }
-            return [
-                new vscode.CompletionItem('log', vscode.CompletionItemKind.Method),
-                new vscode.CompletionItem('warn', vscode.CompletionItemKind.Method),
-                new vscode.CompletionItem('error', vscode.CompletionItemKind.Method),
-            ];
+            let myarray = [];
+            let ci = new vscode.CompletionItem('log', vscode.CompletionItemKind.Method);
+            myarray.push(ci);
+            ci = new vscode.CompletionItem('warn', vscode.CompletionItemKind.Method);
+            myarray.push(ci);
+            ci = new vscode.CompletionItem('error', vscode.CompletionItemKind.Method);
+            myarray.push(ci);
+            let sortme = true;
+            if (sortme) {
+                for (let i = 0; i < myarray.length; i++) {
+                    myarray[i].sortText = i.toString(16).padStart(4, '0').toUpperCase();
+                }
+            }
+            else {
+            }
+            return myarray;
         }
     }, '.' // triggered whenever a '.' is being typed
     );

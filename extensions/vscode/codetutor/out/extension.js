@@ -106,8 +106,10 @@ async function Chat(request, context, stream, token) {
     }
 }
 function activate(context) {
+    //not being activated until chatted to...
     (0, toolParticipant_1.registerToolUserChatParticipant)(context);
     (0, toolParticipant_1.registerCompletionTool)(context);
+    (0, toolParticipant_1.registerStatusBarTool)(context);
     Book.open(context); //open the book.  
     // define a chat handler
     const handler = async (request, context, stream, token) => {
@@ -208,6 +210,9 @@ async function getStats(request, context, stream, token) {
         return vscode.window.showInformationMessage('Open a file first');
     }
     const fileUri = vscode.window.activeTextEditor.document.uri;
+    if (fileUri.scheme !== 'file') {
+        return vscode.window.showInformationMessage('Open an existing file first');
+    }
     const folderPath = path_1.posix.dirname(fileUri.path);
     const folderUri = fileUri.with({ path: folderPath });
     const info = await countAndTotalOfFilesInFolder(folderUri);

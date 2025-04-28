@@ -2,6 +2,8 @@ import { renderPrompt } from '@vscode/prompt-tsx';
 import * as vscode from 'vscode';
 import { ToolCallRound, ToolResultMetadata, ToolUserPrompt } from './toolsPrompt';
 
+let myStatusBarItem: vscode.StatusBarItem;
+
 export interface TsxToolUserMetadata {
     toolCallsMetadata: ToolCallsMetadata;
 }
@@ -19,6 +21,45 @@ export function isTsxToolUserMetadata(obj: unknown): obj is TsxToolUserMetadata 
 }
 
 
+export function registerStatusBarTool(context: vscode.ExtensionContext) {
+	const myCommandId = 'sample.showSelectionCount';
+	context.subscriptions.push(vscode.commands.registerCommand(myCommandId, () => {
+		const n = getNumberOfSelectedLines(vscode.window.activeTextEditor);
+		vscode.window.showInformationMessage(`Yeah, ${n} line(s) selected... Keep going!`);
+	}));
+
+	// create a new status bar item that we can now manage
+	myStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+	myStatusBarItem.command = myCommandId;
+	context.subscriptions.push(myStatusBarItem);
+
+	// register some listener that make sure the status bar 
+	// item always up-to-date
+	context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(updateStatusBarItem));
+	context.subscriptions.push(vscode.window.onDidChangeTextEditorSelection(updateStatusBarItem));
+
+	// update status bar item once at start
+	updateStatusBarItem();
+}
+
+function updateStatusBarItem(): void {
+	const n = getNumberOfSelectedLines(vscode.window.activeTextEditor);
+	if (n > 0) {
+		myStatusBarItem.text = `$(megaphone) ${n} line(s) selected`;
+		myStatusBarItem.show();
+	} else {
+		myStatusBarItem.hide();
+	}
+}
+
+function getNumberOfSelectedLines(editor: vscode.TextEditor | undefined): number {
+	let lines = 0;
+	if (editor) {
+		lines = editor.selections.reduce((prev, curr) => prev + (curr.end.line - curr.start.line), 0);
+	}
+	return lines;
+}
+
 export function registerCompletionTool(context: vscode.ExtensionContext){
 
     const provider2 = vscode.languages.registerCompletionItemProvider(
@@ -33,11 +74,23 @@ export function registerCompletionTool(context: vscode.ExtensionContext){
                     return undefined;
                 }
 
-                return [
-                    new vscode.CompletionItem('log', vscode.CompletionItemKind.Method),
-                    new vscode.CompletionItem('warn', vscode.CompletionItemKind.Method),
-                    new vscode.CompletionItem('error', vscode.CompletionItemKind.Method),
-                ];
+                let myarray = [];
+                let ci = new vscode.CompletionItem('log', vscode.CompletionItemKind.Method);
+                myarray.push(ci);
+                ci = new vscode.CompletionItem('warn', vscode.CompletionItemKind.Method);
+                myarray.push(ci);
+                ci = new vscode.CompletionItem('error', vscode.CompletionItemKind.Method);
+                myarray.push(ci);
+                let sortme = true;
+                if (sortme){
+                    for (let i = 0; i < myarray.length; i++) {
+                        myarray[i].sortText = i.toString(16).padStart(4, '0').toUpperCase();
+                    }
+                }
+                else{
+
+                }
+                return myarray;
             }
         },
         '.' // triggered whenever a '.' is being typed

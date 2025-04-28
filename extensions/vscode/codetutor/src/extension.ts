@@ -19,7 +19,7 @@ import ollama from 'ollama';
 import { LanguageModelPromptTsxPart, LanguageModelToolInvocationOptions, LanguageModelToolResult } from 'vscode';
 
 
-import { registerCompletionTool, registerToolUserChatParticipant } from './toolParticipant';
+import { registerStatusBarTool, registerCompletionTool, registerToolUserChatParticipant } from './toolParticipant';
 
 const BASE_PROMPT =
   'You are a helpful code tutor. Your job is to teach the user with simple descriptions and sample code of the concept. Respond with a guided overview of the concept in a series of messages. Do not give the user the answer directly, but guide them to find the answer themselves. If the user asks a non-programming question, politely decline to respond.';
@@ -85,9 +85,10 @@ async function Chat(request: vscode.ChatRequest, context: vscode.ChatContext, st
 
 
 export function activate(context: vscode.ExtensionContext) {
-
+	//not being activated until chatted to...
     registerToolUserChatParticipant(context);
 	registerCompletionTool(context);
+	registerStatusBarTool(context);
 	Book.open(context); //open the book.  
 	// define a chat handler
 	const handler: vscode.ChatRequestHandler = async (request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken) => {
@@ -222,6 +223,9 @@ async function getStats(request: vscode.ChatRequest, context: vscode.ChatContext
 	}
 
 	const fileUri = vscode.window.activeTextEditor.document.uri;
+	if (fileUri.scheme !== 'file') {
+		return vscode.window.showInformationMessage('Open an existing file first');
+	}
 	const folderPath = posix.dirname(fileUri.path);
 	const folderUri = fileUri.with({ path: folderPath });
 
