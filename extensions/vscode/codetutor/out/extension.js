@@ -51,6 +51,7 @@ const vscode = __importStar(require("vscode"));
 const prompt_tsx_1 = require("@vscode/prompt-tsx");
 const path_1 = require("path");
 const prompts_1 = require("./prompts");
+const Book = __importStar(require("./book"));
 const ollama_1 = __importDefault(require("ollama"));
 const toolParticipant_1 = require("./toolParticipant");
 const BASE_PROMPT = 'You are a helpful code tutor. Your job is to teach the user with simple descriptions and sample code of the concept. Respond with a guided overview of the concept in a series of messages. Do not give the user the answer directly, but guide them to find the answer themselves. If the user asks a non-programming question, politely decline to respond.';
@@ -59,30 +60,37 @@ const EXERCISES_PROMPT = 'You are a helpful tutor. Your job is to teach the user
 function get_current_weather(city) {
     return `The current weather in ${city} is sunny.`;
 }
-async function getStreamingResponse(request, context, stream, token) {
+async function Chat(request, context, stream, token) {
     try {
+        //connect remote
+        //client = ollama.Client(host='http://192.168.1.154:11434')
+        //response = client.generate(model='llama3.2b', prompt=my_prompt)
+        //actual_response = response['response']
+        Book.read(request, context);
         const response = await ollama_1.default.chat({
-            model: 'llama3:8b',
+            model: 'llama3.1:8b',
             messages: [{ role: 'user', content: request.prompt }],
             stream: true,
-            tools: [{
-                    'type': 'function',
-                    'function': {
-                        'name': 'get_current_weather',
-                        'description': 'Get the current weather for a city',
-                        'parameters': {
+            /*
+                    tools: [{
+                        'type': 'function',
+                        'function': {
+                          'name': 'get_current_weather',
+                          'description': 'Get the current weather for a city',
+                          'parameters': {
                             'type': 'object',
                             'properties': {
-                                'city': {
-                                    'type': 'string',
-                                    'description': 'The name of the city',
-                                },
+                              'city': {
+                                'type': 'string',
+                                'description': 'The name of the city',
+                              },
                             },
                             'required': ['city'],
+                          },
                         },
-                    },
-                },
-            ],
+                      }
+                    ],
+            */
         });
         for await (const part of response) {
             process.stdout.write(part.message.content);
@@ -90,7 +98,7 @@ async function getStreamingResponse(request, context, stream, token) {
             if (token.isCancellationRequested) {
                 break;
             }
-            //		console.log(part.message.tool_calls);
+            console.log(part.message.tool_calls);
         }
     }
     catch (error) {
@@ -100,6 +108,7 @@ async function getStreamingResponse(request, context, stream, token) {
 function activate(context) {
     (0, toolParticipant_1.registerToolUserChatParticipant)(context);
     (0, toolParticipant_1.registerCompletionTool)(context);
+    Book.open(context); //open the book.  
     // define a chat handler
     const handler = async (request, context, stream, token) => {
         //vscode.window.showInformationMessage('Hello world!');
@@ -107,10 +116,12 @@ function activate(context) {
         let prompt = BASE_PROMPT;
         if (request.command === 'exercise') {
             prompt = EXERCISES_PROMPT;
-            stream.markdown('Starting exercise\n');
-            await getStreamingResponse(request, context, stream, token);
+            stream.markdown('**Starting exercise**  \n');
+            stream.markdown('**Answering question**  \n');
+            await Chat(request, context, stream, token);
+            stream.markdown('  \n**Getting Stats**  \n');
             await getStats(request, context, stream, token);
-            stream.markdown('Exercise complete\n');
+            stream.markdown('  \n**Exercise complete**  \n');
             return;
         }
         if (request.command === 'book') {

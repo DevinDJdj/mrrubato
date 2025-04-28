@@ -56,7 +56,7 @@ Shorthand
 
 // filepath or DB path
 
-"XX" = key phrase
+"XX" = key phrase or WORD
 <!--
 "_var" = end state
 "var_" = potential state

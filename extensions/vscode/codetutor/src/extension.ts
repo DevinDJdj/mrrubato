@@ -13,7 +13,7 @@ import * as vscode from 'vscode';
 import { renderPrompt } from '@vscode/prompt-tsx';
 import { posix } from 'path';
 import { PlayPrompt } from './prompts';
-
+import * as Book from './book';
 import ollama from 'ollama';
 
 import { LanguageModelPromptTsxPart, LanguageModelToolInvocationOptions, LanguageModelToolResult } from 'vscode';
@@ -34,12 +34,21 @@ function get_current_weather(city: string): string {
 }
 
 
-async function getStreamingResponse(request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken) {
+async function Chat(request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken) {
 	try {
+
+		//connect remote
+		//client = ollama.Client(host='http://192.168.1.154:11434')
+		//response = client.generate(model='llama3.2b', prompt=my_prompt)
+		//actual_response = response['response']
+
+
+		Book.read(request, context);
 	  const response = await ollama.chat({
-		model: 'llama3:8b',
+		model: 'llama3.1:8b',
 		messages: [{ role: 'user', content: request.prompt }],
 		stream: true,
+/*
 		tools: [{
 			'type': 'function',
 			'function': {
@@ -56,8 +65,9 @@ async function getStreamingResponse(request: vscode.ChatRequest, context: vscode
 				'required': ['city'],
 			  },
 			},
-		  },
+		  }
 		],
+*/
 	  });
 	  for await (const part of response) {
 		process.stdout.write(part.message.content);
@@ -65,7 +75,7 @@ async function getStreamingResponse(request: vscode.ChatRequest, context: vscode
 		if (token.isCancellationRequested) {
 		  break;
 		}
-//		console.log(part.message.tool_calls);
+		console.log(part.message.tool_calls);
 	}
 	} catch (error) {
 	   console.error('Error calling Ollama:', error);
@@ -78,6 +88,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     registerToolUserChatParticipant(context);
 	registerCompletionTool(context);
+	Book.open(context); //open the book.  
 	// define a chat handler
 	const handler: vscode.ChatRequestHandler = async (request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken) => {
 		//vscode.window.showInformationMessage('Hello world!');
@@ -86,10 +97,12 @@ export function activate(context: vscode.ExtensionContext) {
 
 		if (request.command === 'exercise') {
 			prompt = EXERCISES_PROMPT;
-			stream.markdown('Starting exercise\n');
-			await getStreamingResponse(request, context, stream, token);
+			stream.markdown('**Starting exercise**  \n');
+			stream.markdown('**Answering question**  \n');
+			await Chat(request, context, stream, token);
+			stream.markdown('  \n**Getting Stats**  \n');
 			await getStats(request, context, stream, token);
-			stream.markdown('Exercise complete\n');
+			stream.markdown('  \n**Exercise complete**  \n');
 			return;
 		}
 

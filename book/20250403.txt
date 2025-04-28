@@ -801,3 +801,135 @@ use
 editor.action.triggerSuggest
 
 
+
+**web/public/keymap.js
+Need more detail in "jump"/"skip" functionality.  
+currently jump goes to next event.  
+skip goes to 2^n seconds.  
+Add skip to PCT location as well.  
+Jump to iteration should also be there.  
+Use param, first param is xx, then wait for next param, and then jump to iteration yy.  
+Same skip for certain value uses different function.  
+
+Also need microskip.  
+Need to have a micro-view for adjusting commands used while paused or in micro-state.  
+Separate component for editing or deleting words in the immediate vicinity while in micro-state.  
+then jump to next word etc.  
+What component (timeline) and what defines this state?  
+timeline group by lang/word no overlap.  
+Thinking about changing to this anyway.  
+For now use as additional and not replacement.  
+
+**web/public/analyze.html
+Still need to fix issue when multiple instruments or certain instruments used, dont get the correct babylonJS display.  
+
+
+**extensions/vscode/codetutor/src/extension.js
+Investigate auto-complete.  
+First thing should be autocomplete balance recency and frequency.  
+How is it working by default?  
+
+
+Should be able to select and play section of book.  
+
+#https://code.visualstudio.com/api/language-extensions/language-server-extension-guide
+<!--
+-Document Highlights: highlights all 'equal' symbols in a text document.
+-Hover: provides hover information for a symbol selected in a text document.
+Signature Help: provides signature help for a symbol selected in a text document.
+-Goto Definition: provides go to definition support for a symbol selected in a text document.
+-Goto Type Definition: provides go to type/interface definition support for a symbol selected in a text document.
+Goto Implementation: provides go to implementation definition support for a symbol selected in a text document.
+-Find References: finds all project-wide references for a symbol selected in a text document.
+-List Document Symbols: lists all symbols defined in a text document.
+-List Workspace Symbols: lists all project-wide symbols.
+-Code Actions: compute commands to run (typically beautify/refactor) for a given text document and range.
+CodeLens: compute CodeLens statistics for a given text document.
+-Document Formatting: this includes formatting of whole documents, document ranges and formatting on type.
+-Rename: project-wide rename of a symbol.
+Document Links: compute and resolve links inside a document.
+Document Colors: compute and resolve colors inside a document to provide color picker in editor.
+-->
+
+-List Document Symbols: lists all symbols defined in a text document.
+-List Workspace Symbols: lists all project-wide symbols.
+list all topics and refs etc.  
+Perhaps statistics on language inside.  
+
+
+
+Need to do this a bit better.  
+#https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_references
+
+-Code Actions: compute commands to run (typically beautify/refactor) for a given text document and range.
+Can we use this as a trigger for the LLM to adjust code?  
+
+-Document Formatting: this includes formatting of whole documents, document ranges and formatting on type.
+Probably want to use.  
+
+-Find References: finds all project-wide references for a symbol selected in a text document.
+Possibly just jump to web UI to start?  
+Experiment.
+
+-Rename: project-wide rename of a symbol.
+try to use.  
+Perhaps clean up some garbage topics.  
+
+#https://github.com/microsoft/vscode-extension-samples/tree/main/lsp-sample
+
+#https://github.com/microsoft/vscode-extension-samples/blob/main/lsp-sample/client/src/extension.ts
+<!--
+	// Start the client. This will also launch the server
+	client.start();
+-->
+
+Test separately to start?  
+Probably need to do this for the completion logic.  
+
+
+**extensions/vscode/codetutor/src/toolParticipant.ts
+--provideCompletionItems
+This is where the intelligent logic needs to be.  
+recency and time locality and frequency of use should balance to create a list.  
+We are in charge of the order of the array?  
+Or not, this is alphabetical.  
+
+**llama3.1:8b
+tool calling available:
+
+**granite3.3:8b
+
+
+**extensions/vscode/codetutor/src/extension.js
+Definitely some issues with tools still.  
+#https://github.com/ollama/ollama/issues/6980
+
+
+**mcpiano
+What is the actual benefit here.  
+Lets just figure out how to list the MCP servers and get details.  
+Then determine which should be called.  
+Too much work...
+
+
+This functionality is key but
+for the time being, no tool use...
+
+Essentially/eventually from the response we will trigger tools, and this will be what makes an "agent".  
+
+Focus on Completion logic for now.  
+
+
+**server/ollama/train.py
+**server/llmtune/server.py
+Eventaully start on model customization logic.  
+Just very basic using genbook.  
+
+#https://medium.com/@yuxiaojian/fine-tuning-llama3-1-and-deploy-to-ollama-f500a6579090
+
+So this will just be reinforcement learning for good answers.  
+Is it possible to get where we want with just that?  
+...
+
+
+
