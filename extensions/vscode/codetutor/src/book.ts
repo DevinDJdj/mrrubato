@@ -13,6 +13,7 @@ import { posix } from 'path';
 //**/web/public/git.js pulled originally from here.  
 //only need some of this.  
 
+
 var gitbook = [];
 var gitcommits = [];
 var selectedgitindex = 0; //which repo are we using?  
@@ -109,6 +110,8 @@ async function readFilesInFolder(folder: vscode.Uri): Promise<{ total: number, c
 
 function loadPage(text: string){
     //get the completions from the text.  
+    //each topic or comment should be parsed and added to 
+    //completions...
 
 
 }
@@ -117,6 +120,7 @@ function loadBook(){
         return vscode.window.showInformationMessage('No folder or workspace opened');
     }
     //read all files in /book folder and parse them.  
+
     const folderUri = vscode.workspace.workspaceFolders[0].uri;
     // this should be a book path.  Use as you would work on the project.  
     const bookUri = folderUri.with({ path: posix.join(folderUri.path, 'book') });

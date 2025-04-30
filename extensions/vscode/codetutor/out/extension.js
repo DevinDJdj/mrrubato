@@ -57,6 +57,7 @@ const toolParticipant_1 = require("./toolParticipant");
 const BASE_PROMPT = 'You are a helpful code tutor. Your job is to teach the user with simple descriptions and sample code of the concept. Respond with a guided overview of the concept in a series of messages. Do not give the user the answer directly, but guide them to find the answer themselves. If the user asks a non-programming question, politely decline to respond.';
 const EXERCISES_PROMPT = 'You are a helpful tutor. Your job is to teach the user with fun, simple exercises that they can complete in the editor. Your exercises should start simple and get more complex as the user progresses. Move one concept at a time, and do not move on to the next concept until the user provides the correct answer. Give hints in your exercises to help the user learn. If the user is stuck, you can provide the answer and explain why it is the answer. If the user asks a non-programming question, politely decline to respond.';
 // define a chat handler
+let activeEditor = vscode.window.activeTextEditor;
 function get_current_weather(city) {
     return `The current weather in ${city} is sunny.`;
 }
@@ -188,6 +189,42 @@ function activate(context) {
     vscode.commands.executeCommand('mrrubato.mytutor.start');
     //start the MCP server as well.  
     //vscode.commands.createMcpServer('mrrubato.mytutor', tutor);
+    activeEditor = vscode.window.activeTextEditor;
+    vscode.window.onDidChangeActiveTextEditor(editor => {
+        activeEditor = editor;
+        if (editor) {
+            triggerUpdateDecorations();
+            triggerGetBookContext();
+            (0, toolParticipant_1.updateStatusBarItem)();
+        }
+    }, null, context.subscriptions);
+}
+let uitimeout = undefined;
+function updateDecorations() {
+    //
+}
+function triggerUpdateDecorations(throttle = false) {
+    if (throttle) {
+        uitimeout = setTimeout(updateDecorations, 500);
+    }
+    else {
+        updateDecorations();
+    }
+}
+function getBookContext() {
+    //
+    if (!activeEditor) {
+        return vscode.window.showInformationMessage('No active editor found');
+    }
+    console.log(activeEditor.document.uri.toString() + activeEditor.document);
+}
+function triggerGetBookContext(throttle = false) {
+    if (throttle) {
+        uitimeout = setTimeout(getBookContext, 500);
+    }
+    else {
+        getBookContext();
+    }
 }
 async function getStats(request, context, stream, token) {
     if (!vscode.workspace.workspaceFolders) {

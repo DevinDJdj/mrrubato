@@ -127,6 +127,8 @@ async function readFilesInFolder(folder) {
 }
 function loadPage(text) {
     //get the completions from the text.  
+    //each topic or comment should be parsed and added to 
+    //completions...
 }
 function loadBook() {
     if (!vscode.workspace.workspaceFolders) {

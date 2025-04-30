@@ -1,0 +1,153 @@
+**timestep.py
+--Add spin up / spin down of backend.  
+And wait...
+Then we get some transcriptions if there is available hardware at the time of timestep.py
+Alternatively move transcriptions (enable/disable) to
+**web/public/analyze.html
+
+
+**FLOW
+--rec
+--analyze
+->
+--book
+--page
+--plugin
+--generate
+--review
+
+**GENBOOK
+Need to utilize these answers as input and see what the subsequent generation looks like.  
+Simple COT sequence.  
+
+Need to store and adjust the system prompt.  
+@@What are you doing?
+$$system prompt (make suggestions)
+==...
+
+@@Please propose GIT changes to my source file.  
+$$system prompt (teach me)
+@@Please correct any issues in the following suggested changes.  
+$$system prompt (check)
+
+Accept or deny changes.  
+How to save this event chain.  
+In transcript.  
+Export/import transcript.  
+Need topic selection as part of transcript.  
+
+
+
+**timestep.py
+**web/public/analyze.html
+transcribe option in URL.  
+auto-start and save.  
+Instead of using server.  
+
+
+**extensions/vscode/codetutor/src/extension.ts
+continue..
+@tutor /exercise tell me a story
+@tutor /book 
+@tutor /find !!Error
+
+does autocomplete work inside of copilot chat?  
+use
+editor.action.triggerSuggest
+
+
+**news.py
+#https://github.com/unclecode/crawl4ai
+Maybe use.  
+
+
+**server/ollama/train.py
+**server/llmtune/server.py
+Eventaully start on model customization logic.  
+Just very basic using genbook.  
+
+#https://medium.com/@yuxiaojian/fine-tuning-llama3-1-and-deploy-to-ollama-f500a6579090
+
+So this will just be reinforcement learning for good answers.  
+Is it possible to get where we want with just that?  
+...
+this is incomplete...
+
+
+
+
+**0606
+Just use 
+$$BASE lang
+
+
+Wonder what library incompatibility will be the first real annoyance to me.  
+Hopefully I persevere through any that come up...at least the first few...
+vscode extension API may be one of them...
+
+
+**extensions/vscode/codetutor/src/extension.ts
+not being activated until chatted to...
+@@Is this a problem?  
+
+OK, status bar functions ok.  
+Wow this can be so powerful... 
+dont have many complaints yet...
+
+#https://ripeseed.io/blog/fine-tuning-open-source-llm-llama-3-mistral-and-gemma
+try this one...
+
+
+
+> python3.11  -m venv --upgrade /mnt/c/devinpiano/testing/finetuning-venv/
+> source /mnt/c/devinpiano/testing/finetuning-venv/bin/activate
+
+> sudo add-apt-repository ppa:deadsnakes/ppa
+> sudo apt update
+> sudo apt install python3.11
+
+> sudo update-alternatives --install /usr/bin/python python /usr/bin/python3.11 11
+> sudo update-alternatives --config python
+
+...
+
+#https://www.llama.com/docs/how-to-guides/fine-tuning/
+try this...
+> pip install datasets
+> pip install trl
+> python3 ./trla/examples/scripts/sft.py --model_name meta-llama/Llama-2-7b-hf --dataset_name timdettmers/openassistant-guanaco --load_in_4bit --use_peft  --batch_size 4 --gradient_accumulation_steps 2 --log_with wandb
+
+> git clone https://github.com/artidoro/qlora
+> cd qlora
+> pip install -U -r requirements.txt
+> ./scripts/finetune_llama2_guanaco_7b.sh
+
+
+> pip install torchtune
+> tune download meta-llama/Meta-Llama-3-8B-Instruct --output-dir Meta-Llama-3.1-8B-Instruct --hf-token <ACCESS TOKEN>
+> mkdir /tmp/Meta-Llama-3.1-8B-Instruct
+> cp -r Meta-Llama-3.1-8B-Instruct/* /tmp/Meta-Llama-3.1-8B-Instruct
+> tune run lora_finetune_single_device --config llama3_1/8B_lora_single_device
+
+#https://pytorch.org/torchtune/stable/tutorials/e2e_flow.html#e2e-flow
+
+This seems to lock the machine...
+But seems to pass dataset.  
+Now need to figure how to alter the training dataset.  
+too much memory...
+
+
+#https://medium.com/@sntaus/building-a-mini-gpt-like-language-model-from-scratch-27257bf5c145
+Just use for now...no LLM creation/tuning...
+
+
+**extensions/vscode/codetutor/src/extension.ts
+continue..
+@tutor /exercise tell me a story
+@tutor /book 
+@tutor /find !!Error
+
+**testing/vscode/mrrubato/
+
+vscode://mrrubato.mytutor
+

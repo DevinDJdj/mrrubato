@@ -13,9 +13,10 @@ print(torch.cuda.get_device_name(0))
 print("CV2:")
 if cv2.cuda.getCudaEnabledDeviceCount() > 0:
     print('Yes')
+    print(cv2.cuda.printCudaDeviceInfo(0))
 else:
     print('No')
-print(cv2.cuda.printCudaDeviceInfo(0))
+
 
 print("Tensorflow:")
 print(tf.__version__)

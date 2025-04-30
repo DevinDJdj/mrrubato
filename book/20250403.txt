@@ -921,32 +921,3 @@ Essentially/eventually from the response we will trigger tools, and this will be
 Focus on Completion logic for now.  
 
 
-**server/ollama/train.py
-**server/llmtune/server.py
-Eventaully start on model customization logic.  
-Just very basic using genbook.  
-
-#https://medium.com/@yuxiaojian/fine-tuning-llama3-1-and-deploy-to-ollama-f500a6579090
-
-So this will just be reinforcement learning for good answers.  
-Is it possible to get where we want with just that?  
-...
-
-
-
-**0606
-Just use 
-$$BASE lang
-
-
-Wonder what library incompatibility will be the first real annoyance to me.  
-Hopefully I persevere through any that come up...at least the first few...
-
-
-**extensions/vscode/codetutor/src/extension.ts
-not being activated until chatted to...
-@@Is this a problem?  
-
-OK, status bar functions ok.  
-Wow this can be so powerful... 
-
