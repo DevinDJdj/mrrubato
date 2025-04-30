@@ -46,7 +46,17 @@ var myCodeMirror = null;
 var tempcodewindow = null;
 var usetempcodewindow = false;
 var definitions = {"REF": "#", "REF2": "##", "TOPIC": "**", "STARTCOMMENT": "<!--", "ENDCOMMENT": "-->", "CMD": ">", "QUESTION": "@@", "NOTE": "--", "SUBTASK": "-"};
+var defmap = [{"#": "REF",">": "CMD", "-": "SUBTASK"}, 
+    {"##": "REF2", "**": "TOPIC", "@@": "QUESTION", "--": "NOTE", "==": "ANSWER", "$$": "ENV", "!!": "ERROR"}, 
+    {"-->": "ENDCOMMENT"}, 
+    {"<!--": "STARTCOMMENT"}];
 
+
+
+
+export var topicarray: {[key: string] : Array<string> | undefined} = {};
+var refarray = [];
+var currentTopic = "";
 
 //store data as tabs open and close and based on location in the tab.  
 //from this info generate the context when querying the model.  
@@ -90,7 +100,7 @@ async function readFilesInFolder(folder: vscode.Uri): Promise<{ total: number, c
                 let text = document.getText();
                 console.log(`${fileUri.path} ... read`);
                 // parse this.  
-                loadPage(text);
+                loadPage(text, fileUri.path);
 //                console.log(text);
                 // Optionally insert the text into the active editor
         //		insertTextIntoActiveEditor(text);
@@ -108,10 +118,29 @@ async function readFilesInFolder(folder: vscode.Uri): Promise<{ total: number, c
 }
 
 
-function loadPage(text: string){
+function loadPage(text: string, filePath: string) {
     //get the completions from the text.  
     //each topic or comment should be parsed and added to 
     //completions...
+    let strs = text.split("\n");
+    for (let i=0; i<strs.length; i++) {
+        let str = strs[i].trim();
+        keyfind: for (let j=defmap.length-1; j>=0; j--) {
+            for (const [key, val] of Object.entries(defmap[j])) {
+                if (str.startsWith(key)) {
+                    let type = val;
+                    if (type === "TOPIC") {
+                        let tkey = str.slice(j+1);
+                        if (!(tkey in topicarray) || topicarray[tkey] === undefined) {
+                            topicarray[tkey] = [];
+                        }
+                        topicarray[tkey].push(filePath + ":" + i);   
+                        break keyfind;
+                    }
+                }
+            }
+        }
+    }
 
 
 }
@@ -120,15 +149,20 @@ function loadBook(){
         return vscode.window.showInformationMessage('No folder or workspace opened');
     }
     //read all files in /book folder and parse them.  
-
+ 
     const folderUri = vscode.workspace.workspaceFolders[0].uri;
     // this should be a book path.  Use as you would work on the project.  
     const bookUri = folderUri.with({ path: posix.join(folderUri.path, 'book') });
     const fileUri = folderUri.with({ path: posix.join(folderUri.path, 'book/definitions.txt') });
 
+    topicarray = {};   //reset topic array.
     readFilesInFolder(bookUri).then((result) => {
         console.log(`Total size: ${result.total} bytes, File count: ${result.count}`);
+        console.log(topicarray);
+        //add this to our CompletionItemProvider.   
+
     });
+
 
     
 }

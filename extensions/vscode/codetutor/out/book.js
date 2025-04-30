@@ -33,6 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.topicarray = void 0;
 exports.open = open;
 exports.read = read;
 exports.getBook = getBook;
@@ -76,6 +77,13 @@ var myCodeMirror = null;
 var tempcodewindow = null;
 var usetempcodewindow = false;
 var definitions = { "REF": "#", "REF2": "##", "TOPIC": "**", "STARTCOMMENT": "<!--", "ENDCOMMENT": "-->", "CMD": ">", "QUESTION": "@@", "NOTE": "--", "SUBTASK": "-" };
+var defmap = [{ "#": "REF", ">": "CMD", "-": "SUBTASK" },
+    { "##": "REF2", "**": "TOPIC", "@@": "QUESTION", "--": "NOTE", "==": "ANSWER", "$$": "ENV", "!!": "ERROR" },
+    { "-->": "ENDCOMMENT" },
+    { "<!--": "STARTCOMMENT" }];
+exports.topicarray = {};
+var refarray = [];
+var currentTopic = "";
 //store data as tabs open and close and based on location in the tab.  
 //from this info generate the context when querying the model.  
 //right now only front-side loading.  Possibly add RAG processing later?  
@@ -109,7 +117,7 @@ async function readFilesInFolder(folder) {
                 let text = document.getText();
                 console.log(`${fileUri.path} ... read`);
                 // parse this.  
-                loadPage(text);
+                loadPage(text, fileUri.path);
                 //                console.log(text);
                 // Optionally insert the text into the active editor
                 //		insertTextIntoActiveEditor(text);
@@ -125,10 +133,29 @@ async function readFilesInFolder(folder) {
     }
     return { total, count };
 }
-function loadPage(text) {
+function loadPage(text, filePath) {
     //get the completions from the text.  
     //each topic or comment should be parsed and added to 
     //completions...
+    let strs = text.split("\n");
+    for (let i = 0; i < strs.length; i++) {
+        let str = strs[i].trim();
+        keyfind: for (let j = defmap.length - 1; j >= 0; j--) {
+            for (const [key, val] of Object.entries(defmap[j])) {
+                if (str.startsWith(key)) {
+                    let type = val;
+                    if (type === "TOPIC") {
+                        let tkey = str.slice(j + 1);
+                        if (!(tkey in exports.topicarray) || exports.topicarray[tkey] === undefined) {
+                            exports.topicarray[tkey] = [];
+                        }
+                        exports.topicarray[tkey].push(filePath + ":" + i);
+                        break keyfind;
+                    }
+                }
+            }
+        }
+    }
 }
 function loadBook() {
     if (!vscode.workspace.workspaceFolders) {
@@ -139,8 +166,11 @@ function loadBook() {
     // this should be a book path.  Use as you would work on the project.  
     const bookUri = folderUri.with({ path: path_1.posix.join(folderUri.path, 'book') });
     const fileUri = folderUri.with({ path: path_1.posix.join(folderUri.path, 'book/definitions.txt') });
+    exports.topicarray = {}; //reset topic array.
     readFilesInFolder(bookUri).then((result) => {
         console.log(`Total size: ${result.total} bytes, File count: ${result.count}`);
+        console.log(exports.topicarray);
+        //add this to our CompletionItemProvider.   
     });
 }
 //# sourceMappingURL=book.js.map

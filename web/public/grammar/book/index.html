@@ -148,7 +148,7 @@ simple ES6 module implementation
 
         let txt = myCodeMirror.getDoc().getValue();
         //nearley parser parse.  
-        var p = new nearley.Parser(book.ParserRules, book.ParserStart, { keepHistory: true })
+        var p = new nearley.Parser(booka.ParserRules, booka.ParserStart, { keepHistory: true })
 //                    var p = new nearley.Parser(book.ParserRules, book.ParserStart, { keepHistory: true })
         var inp = document.getElementById("input");
 
@@ -157,12 +157,32 @@ simple ES6 module implementation
             if (!p.results[0]) {
                 throw new Error();
             }
+
             if (isNaN(p.results[0]) || p.results[0] === Infinity) {
-                throw new Error();
+            //    throw new Error();
             }
             inp.value = p.results[0].toString();
             inp.style.color = "black";
-            console.log(p.table);
+            console.log(p.results[0]);
+            let topicarray = {};
+            let refarray = [];
+            let currentTopic = "";
+            for (let i=0; i < p.results[0].rows.length; i++) {
+                let item = p.results[0].rows[i];
+                if (item.topic !== undefined) {
+                    if (topicarray[item.topic] === undefined) {
+                        topicarray[item.topic] = [];
+                    }
+                    currentTopic = item.topic;
+                    topicarray[currentTopic].push("");
+                }
+                else{
+                    topicarray[currentTopic][topicarray.length-1] += item + "\n";
+                }
+
+            }
+            console.log(topicarray);
+
         } catch(e) {
             inp.style.color = "red";
             inp.select();

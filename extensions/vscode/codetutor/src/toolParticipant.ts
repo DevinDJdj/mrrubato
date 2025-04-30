@@ -1,5 +1,6 @@
 import { renderPrompt } from '@vscode/prompt-tsx';
 import * as vscode from 'vscode';
+import { topicarray } from './book';
 import { ToolCallRound, ToolResultMetadata, ToolUserPrompt } from './toolsPrompt';
 
 let myStatusBarItem: vscode.StatusBarItem;
@@ -82,6 +83,13 @@ function getNumberOfSelectedLines(editor: vscode.TextEditor | undefined): number
 
 export function registerCompletionTool(context: vscode.ExtensionContext){
 
+    //need multiple providers for "*", "#", ">", "@", "="
+    //# -> refs
+    //> -> commands
+    //@ -> users
+    //@@ -> questions
+    //== -> answers
+    
     const provider2 = vscode.languages.registerCompletionItemProvider(
         'plaintext',
         {
@@ -90,17 +98,28 @@ export function registerCompletionTool(context: vscode.ExtensionContext){
                 // get all text until the `position` and check if it reads `console.`
                 // and if so then complete if `log`, `warn`, and `error`
                 const linePrefix = document.lineAt(position).text.slice(0, position.character);
-                if (!linePrefix.endsWith('console.')) {
+                if (!linePrefix.endsWith('console.') && !linePrefix.endsWith('**')) {
                     return undefined;
                 }
 
                 let myarray = [];
+                console.log(topicarray);
+                for (const [key, value] of Object.entries(topicarray)) {
+                    if (value !== undefined && value.length > 0) {
+                        let ci = new vscode.CompletionItem(key, vscode.CompletionItemKind.Text);
+                        ci.detail = `Topic: ${key}`;
+                        ci.documentation = new vscode.MarkdownString(`${value.join('\n')}`);
+                        myarray.push(ci);
+                    }                    
+                }
+                /*
                 let ci = new vscode.CompletionItem('log', vscode.CompletionItemKind.Method);
                 myarray.push(ci);
                 ci = new vscode.CompletionItem('warn', vscode.CompletionItemKind.Method);
                 myarray.push(ci);
                 ci = new vscode.CompletionItem('error', vscode.CompletionItemKind.Method);
                 myarray.push(ci);
+                */
                 let sortme = true;
                 if (sortme){
                     for (let i = 0; i < myarray.length; i++) {
@@ -113,7 +132,8 @@ export function registerCompletionTool(context: vscode.ExtensionContext){
                 return myarray;
             }
         },
-        '.' // triggered whenever a '.' is being typed
+        '*' // triggered whenever a '.' is being typed
+        //switch from '.' to '**' to trigger on '**' instead
     );
     //add custom completions to the extension 
     context.subscriptions.push(provider2);

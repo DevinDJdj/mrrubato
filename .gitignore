@@ -27,14 +27,17 @@ web/public/package.json
 web/public/models/*
 */node_modules/*
 
+extensions/vscode/codetutor/out/*
+
 extensions/vscode/ayudarse/node_modules/*
 extensions/vscode/helloworld/node_modules/*
 extensions/vscode/codetutor/node_modules/*
 
-extensions/vscode/codetutor/out/*
+
 
 server/mcp/mcpiano/.git/*
 server/mcp/mcpiano/.vscode/*
 
 server/blockchain/mydb/*
 mydb/*
+

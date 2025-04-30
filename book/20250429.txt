@@ -151,3 +151,13 @@ continue..
 
 vscode://mrrubato.mytutor
 
+> npm i vscode-languageclient
+> npm i vscode-languageserver
+> npm i vscode-languageserver-textdocument
+
+
+Ctrl+Space brings up CompletionItem documentation
+--provideCompletionItems
+create multiple.  
+need to sort..
+

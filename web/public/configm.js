@@ -55,7 +55,7 @@ function loadUserConfig(){
     //load user config from local storage.  
     let userconfig = localStorage.getItem('userconfig');
     if (userconfig != null){
-        userconfigjson = JSON.parse(userconfig);
+        let userconfigjson = JSON.parse(userconfig);
         if (userconfigjson.hasOwnProperty('myrate')){
             myrate = userconfigjson.myrate;
         }
