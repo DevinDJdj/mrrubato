@@ -160,4 +160,11 @@ Ctrl+Space brings up CompletionItem documentation
 --provideCompletionItems
 create multiple.  
 need to sort..
+OK, some semblance of this working.  
+
+
+**web/public/git.js
+--parsegitBook
+basic model here.  
+
 

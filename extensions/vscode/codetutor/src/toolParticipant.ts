@@ -89,7 +89,7 @@ export function registerCompletionTool(context: vscode.ExtensionContext){
     //@ -> users
     //@@ -> questions
     //== -> answers
-    
+
     const provider2 = vscode.languages.registerCompletionItemProvider(
         'plaintext',
         {
@@ -108,7 +108,12 @@ export function registerCompletionTool(context: vscode.ExtensionContext){
                     if (value !== undefined && value.length > 0) {
                         let ci = new vscode.CompletionItem(key, vscode.CompletionItemKind.Text);
                         ci.detail = `Topic: ${key}`;
-                        ci.documentation = new vscode.MarkdownString(`${value.join('\n')}`);
+                        let doc = "";
+                        for (let item of value) {
+                            doc += `File: ${item.file}, Line: ${item.line}, Sort: ${item.sortorder}\n`;
+                        }
+                        ci.documentation = new vscode.MarkdownString(`${doc}`);
+                        ci.sortText = value[0].sortorder.toString(16).padStart(4, '0').toUpperCase();
                         myarray.push(ci);
                     }                    
                 }
@@ -120,8 +125,10 @@ export function registerCompletionTool(context: vscode.ExtensionContext){
                 ci = new vscode.CompletionItem('error', vscode.CompletionItemKind.Method);
                 myarray.push(ci);
                 */
+               /*
                 let sortme = true;
                 if (sortme){
+
                     for (let i = 0; i < myarray.length; i++) {
                         myarray[i].sortText = i.toString(16).padStart(4, '0').toUpperCase();
                     }
@@ -129,6 +136,7 @@ export function registerCompletionTool(context: vscode.ExtensionContext){
                 else{
 
                 }
+                */
                 return myarray;
             }
         },
