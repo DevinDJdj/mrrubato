@@ -38,6 +38,7 @@ exports.open = open;
 exports.read = read;
 exports.getBook = getBook;
 exports.closeFileIfOpen = closeFileIfOpen;
+exports.updatePage = updatePage;
 const vscode = __importStar(require("vscode"));
 const path_1 = require("path");
 /*
@@ -200,6 +201,31 @@ function initTopic(topic, data) {
     if (!(topic in exports.topicarray) || exports.topicarray[topic] === undefined) {
         exports.topicarray[topic] = [];
     }
+}
+function updatePage(text, filePath, linefrom = 0, lineto = 0) {
+    //update the current page with the text and filePath.  
+    //this will be used to update the current topic.  
+    const folderUri = vscode.workspace.workspaceFolders[0].uri;
+    // this should be a book path.  Use as you would work on the project.  
+    const fileUri = folderUri.with({ path: path_1.posix.join(folderUri.path, filePath) });
+    vscode.workspace.openTextDocument(fileUri).then((document) => {
+        vscode.window.showTextDocument(document).then((editor) => {
+            /*
+        const editor = vscode.window.visibleTextEditors.find(
+            (editor) => editor.document.uri.fsPath === document.uri.fsPath
+         );
+         */
+            //        let editor = document.editor;
+            editor.edit(editBuilder => {
+                if (lineto === 0 && linefrom === 0) {
+                    var firstLine = editor.document.lineAt(0);
+                    var lastLine = editor.document.lineAt(editor.document.lineCount - 1);
+                    var textRange = new vscode.Range(firstLine.range.start, lastLine.range.end);
+                    editBuilder.replace(textRange, text); //replace the entire document with the new text.
+                }
+            });
+        });
+    });
 }
 function loadPage(text, filePath) {
     //get the completions from the text.  

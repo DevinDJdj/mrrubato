@@ -209,6 +209,34 @@ function initTopic(topic: string, data: string){
     }
 }
 
+export function updatePage(text: string, filePath: string, linefrom: number = 0, lineto: number = 0) {
+    //update the current page with the text and filePath.  
+    //this will be used to update the current topic.  
+    const folderUri = vscode.workspace.workspaceFolders[0].uri;
+    // this should be a book path.  Use as you would work on the project.  
+    const fileUri = folderUri.with({ path: posix.join(folderUri.path, filePath) });
+
+
+    vscode.workspace.openTextDocument(fileUri).then((document) => {
+        vscode.window.showTextDocument(document).then((editor) => {
+            /*
+        const editor = vscode.window.visibleTextEditors.find(
+            (editor) => editor.document.uri.fsPath === document.uri.fsPath
+         );   
+         */     
+//        let editor = document.editor;
+            editor.edit(editBuilder => {
+                if (lineto === 0 && linefrom === 0) {
+                    var firstLine = editor.document.lineAt(0);
+                    var lastLine = editor.document.lineAt(editor.document.lineCount - 1);
+                    var textRange = new vscode.Range(firstLine.range.start, lastLine.range.end);
+                    editBuilder.replace(textRange, text); //replace the entire document with the new text.
+                }
+            });
+        });
+    });
+}
+
 function loadPage(text: string, filePath: string) {
     //get the completions from the text.  
     //each topic or comment should be parsed and added to 

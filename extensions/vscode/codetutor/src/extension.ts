@@ -113,7 +113,7 @@ export function activate(context: vscode.ExtensionContext) {
 			stream.markdown('Reading a book\n');
 			//get book snippet.  
 			readFile(request, context, stream, token);
-
+			Book.updatePage("hello", "book/20230110.txt");
 			let myquery = "play with me and use tool #file:definitions.txt";  //calling via # doesnt work.  
 
 			//call external ollama.  

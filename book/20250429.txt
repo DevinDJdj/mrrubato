@@ -168,3 +168,39 @@ OK, some semblance of this working.
 basic model here.  
 
 
+Dont like the TypeScript strict type checking.  
+**extensions/vscode/codetutor/tsconfig.json
+"strict": false
+Try this..
+
+#https://github.com/microsoft/vscode-extension-samples/tree/main/document-editing-sample
+            vscode.workspace.openTextDocument(fileUri).then((document) => {
+edit here...
+document.getText();
+document.setText
+
+Need to highlight the text 
+#https://github.com/microsoft/vscode-extension-samples/blob/main/code-actions-sample/
+Use this provider to highlight any of the references or topics etc.  
+Compare with master branch and highlight suggestions.  
+
+Generate suggestions in background, if too divergent, then reset copy master.  
+suggestions should be pre-generated, not on-demand.  
+Then we are just accepting full or partial suggestions.  
+Then track the accepted and tune.  
+How do we train the observer though?  
+Just rerun the transcript?  
+
+#https://github.com/openreplay/openreplay
+#https://github.com/rrweb-io/rrweb/blob/master/docs/recipes/record-and-replay.md
+--Try this...
+
+
+
+#https://en.wikipedia.org/wiki/Dyck_language
+#https://en.wikipedia.org/wiki/Catalan_number
+#https://njwildberger.com/
+#https://www.tandfonline.com/doi/full/10.1080/00029890.2025.2460966#d1e160
+
+
+

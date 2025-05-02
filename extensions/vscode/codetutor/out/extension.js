@@ -132,6 +132,7 @@ function activate(context) {
             stream.markdown('Reading a book\n');
             //get book snippet.  
             readFile(request, context, stream, token);
+            Book.updatePage("hello", "book/20230110.txt");
             let myquery = "play with me and use tool #file:definitions.txt"; //calling via # doesnt work.  
             //call external ollama.  
             const { messages } = await (0, prompt_tsx_1.renderPrompt)(prompts_1.PlayPrompt, { userQuery: myquery }, { modelMaxPromptTokens: request.model.maxInputTokens }, request.model);
