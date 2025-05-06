@@ -58,8 +58,55 @@ const BASE_PROMPT = 'You are a helpful code tutor. Your job is to teach the user
 const EXERCISES_PROMPT = 'You are a helpful tutor. Your job is to teach the user with fun, simple exercises that they can complete in the editor. Your exercises should start simple and get more complex as the user progresses. Move one concept at a time, and do not move on to the next concept until the user provides the correct answer. Give hints in your exercises to help the user learn. If the user is stuck, you can provide the answer and explain why it is the answer. If the user asks a non-programming question, politely decline to respond.';
 // define a chat handler
 let activeEditor = vscode.window.activeTextEditor;
+let isWorking = false;
+let workFunc = null;
 function get_current_weather(city) {
     return `The current weather in ${city} is sunny.`;
+}
+async function work(request, context, stream, token) {
+    const mySettings = vscode.workspace.getConfiguration('mrrubato');
+    if (!mySettings.runinbackground) {
+        //not running in background per settings.
+        return;
+    }
+    else {
+        //run the work function here.
+        console.log('Running background agent');
+        //		stream.markdown('**Running background agent**  \n' + mySettings.runinbackground);
+        if (!isWorking) {
+            isWorking = true;
+            workFunc = setInterval(() => {
+                //call the function here.
+                work(request, context, stream, token);
+            }, mySettings.runinterval);
+            //this must be restarted to change runinterval.  
+        }
+    }
+    try {
+        //connect remote
+        //client = ollama.Client(host='http://192.168.1.154:11434')
+        //response = client.generate(model='llama3.2b', prompt=my_prompt)
+        //actual_response = response['response']
+        Book.read(request, context);
+        //get topic to work on.  
+        const response = await ollama_1.default.chat({
+            model: 'llama3.1:8b',
+            //		model: 'deepseek-coder-v2:latest',
+            messages: [{ role: 'user', content: request.prompt }],
+            stream: true,
+        });
+        for await (const part of response) {
+            process.stdout.write(part.message.content);
+            //		stream.markdown(part.message.content);	
+            console.log(part.message.content);
+            if (token.isCancellationRequested) {
+                break;
+            }
+        }
+    }
+    catch (error) {
+        console.error('Error calling Ollama:', error);
+    }
 }
 async function Chat(request, context, stream, token) {
     try {
@@ -69,7 +116,8 @@ async function Chat(request, context, stream, token) {
         //actual_response = response['response']
         Book.read(request, context);
         const response = await ollama_1.default.chat({
-            model: 'llama3.1:8b',
+            //		model: 'llama3.1:8b',
+            model: 'deepseek-coder-v2:latest',
             messages: [{ role: 'user', content: request.prompt }],
             stream: true,
             /*
@@ -117,6 +165,23 @@ function activate(context) {
         //vscode.window.showInformationMessage('Hello world!');
         // initialize the prompt
         let prompt = BASE_PROMPT;
+        console.log(`Chat request: ${request.command} with prompt: ${request.prompt}`);
+        if (request.command === 'start') {
+            //start running in background.
+            const mySettings = vscode.workspace.getConfiguration('mrrubato');
+            mySettings.update('runinbackground', true);
+            stream.markdown('**Starting background agent**  \n ' + mySettings.runinbackground);
+            //start the work function here.
+            work(request, context, stream, token);
+            return;
+        }
+        if (request.command === 'stop') {
+            const mySettings = vscode.workspace.getConfiguration('mrrubato');
+            //stop running in background.
+            mySettings.update('runinbackground', false);
+            stream.markdown('**Stopping background agent**  \n' + mySettings.runinbackground);
+            return;
+        }
         if (request.command === 'exercise') {
             prompt = EXERCISES_PROMPT;
             stream.markdown('**Starting exercise**  \n');
@@ -125,6 +190,7 @@ function activate(context) {
             stream.markdown('  \n**Getting Stats**  \n');
             await getStats(request, context, stream, token);
             stream.markdown('  \n**Exercise complete**  \n');
+            //possibly loop here.  
             return;
         }
         if (request.command === 'book') {

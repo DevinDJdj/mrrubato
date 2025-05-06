@@ -203,4 +203,69 @@ Just rerun the transcript?
 #https://www.tandfonline.com/doi/full/10.1080/00029890.2025.2460966#d1e160
 
 
+**testing/vscode/mrroboto
+> git init
+> git remote add origin https://github.com/DevinDJdj/mrroboto.git
+> git branch -M main
+> git add .
+> git commit -m "first"
+> git push origin main
+> git branch -r 
+
+For now use completely different repo.  
+Only adjust web portion to start?
+
+> git branch -M maina
+> git add .
+> git push origin maina
+
+Two branches.  Compare maina with main, never change origin/main
+Change in maina and update.  
+For now just extend genbook with entries...
+
+
+
+**extensions/vscode/codetutor/src/extension.ts
+continue..
+@tutor /exercise tell me a story
+@tutor /book 
+@tutor /find !!Error
+
+@tutor /code **topic
+--scan all info regarding topic and make edit suggestion.  
+Or edit if settings for automatic edit.  
+weight more recent entries.  
+allow to edit 
+
+@tutor /book **topic
+generate entries for this topic in genbook.  
+
+These commands also adjust priority going forward.  
+
+
+@tutor 
+
+**testing/vscode/mrroboto/
+
+vscode://mrrubato.mytutor
+
+--work
+When do we call work?  
+-generate code
+-generate book
+
+$$mrrubato.workprompt
+Need array of multiple prompts possibly.  
+on stop clear only this prompt.  
+--start here.  workprompt not getting updated.  
+
+
+#https://code.visualstudio.com/api/references/contribution-points#contributes.configuration
+
+#https://code.visualstudio.com/api/references/contribution-points#contributes.grammars
+how to add a grammar?
+#https://code.visualstudio.com/api/references/contribution-points#contributes.languages
+add a language.  
+
+
 

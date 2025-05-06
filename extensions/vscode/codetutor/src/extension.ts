@@ -30,10 +30,67 @@ const BASE_PROMPT =
 
 let activeEditor = vscode.window.activeTextEditor;
 
+let isWorking = false;
+let workFunc = null;
+let workPrompt = "Improve my code";
+
 function get_current_weather(city: string): string {
 	return `The current weather in ${city} is sunny.`;
 }
 
+
+async function work(request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken) {
+	const mySettings = vscode.workspace.getConfiguration('mrrubato');	
+	let workPrompt = mySettings.workprompt;
+	if (!mySettings.runinbackground){
+		//not running in background per settings.
+		return;
+	}
+
+	else{
+		//run the work function here.
+		console.log('Running background agent');
+//		stream.markdown('**Running background agent**  \n' + mySettings.runinbackground);
+		if (!isWorking){
+			isWorking = true;
+			workFunc = setInterval(() => {
+				//call the function here.
+				work(request, context, stream, token);
+			}, mySettings.runinterval); 
+			//this must be restarted to change runinterval.  
+		}
+	}
+
+
+	try {
+
+		//connect remote
+		//client = ollama.Client(host='http://192.168.1.154:11434')
+		//response = client.generate(model='llama3.2b', prompt=my_prompt)
+		//actual_response = response['response']
+
+
+		Book.read(request, context);
+		//get topic to work on.  
+	  const response = await ollama.chat({
+		model: 'llama3.1:8b',
+//		model: 'deepseek-coder-v2:latest',
+		messages: [{ role: 'user', content: workPrompt }],
+		stream: true,
+	  });
+	  for await (const part of response) {
+		process.stdout.write(part.message.content);
+//		stream.markdown(part.message.content);	
+		console.log(part.message.content);
+		if (token.isCancellationRequested) {
+		  break;
+		}
+	}
+	} catch (error) {
+	   console.error('Error calling Ollama:', error);
+	}
+
+}
 
 async function Chat(request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken) {
 	try {
@@ -46,7 +103,8 @@ async function Chat(request: vscode.ChatRequest, context: vscode.ChatContext, st
 
 		Book.read(request, context);
 	  const response = await ollama.chat({
-		model: 'llama3.1:8b',
+//		model: 'llama3.1:8b',
+		model: 'deepseek-coder-v2:latest',
 		messages: [{ role: 'user', content: request.prompt }],
 		stream: true,
 /*
@@ -96,7 +154,39 @@ export function activate(context: vscode.ExtensionContext) {
 		//vscode.window.showInformationMessage('Hello world!');
 		// initialize the prompt
 		let prompt = BASE_PROMPT;
+		console.log(`Chat request: ${request.command} with prompt: ${request.prompt}`);
 
+
+		if (request.command === 'list') {
+			//list the files in the book.  
+			if (request.prompt === "prompts"){
+				stream.markdown('**Listing prompts**  \n');
+
+				const mySettings = vscode.workspace.getConfiguration('mrrubato');	
+				mySettings.update('runinbackground', true);
+				stream.markdown('**My agent prompts**  \n ' + mySettings.workprompts);
+				//not in use yet...
+				return;
+			}
+		}
+		if (request.command === 'start') {
+			//start running in background.
+			const mySettings = vscode.workspace.getConfiguration('mrrubato');	
+			mySettings.update('runinbackground', true);
+			stream.markdown('**Starting background agent**  \n ' + mySettings.runinbackground);
+			//start the work function here.
+			workPrompt = request.prompt;
+			mySettings.update('workprompt', workPrompt);
+			work(request, context, stream, token);
+			return;
+		}
+		if (request.command === 'stop') {
+			const mySettings = vscode.workspace.getConfiguration('mrrubato');	
+			//stop running in background.
+			mySettings.update('runinbackground', false);
+			stream.markdown('**Stopping background agent**  \n' + mySettings.runinbackground);
+			return;
+		}
 		if (request.command === 'exercise') {
 			prompt = EXERCISES_PROMPT;
 			stream.markdown('**Starting exercise**  \n');
@@ -105,6 +195,9 @@ export function activate(context: vscode.ExtensionContext) {
 			stream.markdown('  \n**Getting Stats**  \n');
 			await getStats(request, context, stream, token);
 			stream.markdown('  \n**Exercise complete**  \n');
+			//possibly loop here.  
+
+
 			return;
 		}
 

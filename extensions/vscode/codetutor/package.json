@@ -13,6 +13,46 @@
   "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
+    "configuration": {
+      "title": "mrrubato",
+      "properties": {
+          "mrrubato.runinbackground": {
+              "type": "boolean",
+              "default": "false",
+              "description": "Setting to automatically run and edit code"
+          },
+          "mrrubato.runinterval": {
+              "type": "number",
+              "default": 30000,
+              "description": "Interval to run steps."
+          },
+          "mrrubato.workprompt": {
+            "type": "string",
+            "default": "Improve My Code",
+            "description": "Interval to run steps."
+          },
+          "mrrubato.workprompts": {
+              "type": "array",
+              "items": {
+                  "type": "object",
+                  "title": "inner objects",
+                  "properties": {
+                      "name": {
+                          "type": "string",
+                          "description": "Name of inner object"
+                      },
+                      "size": {
+                          "type": "number",
+                          "description": "Size of inner object"
+                      }
+                  }
+              },
+              "default": [],
+              "description": "my test configurations"
+          
+          }                    
+      }
+    },    
     "commands": [
       {
         "command": "mrrubato.mytutor.start",
@@ -36,9 +76,17 @@
             "description": "Read the book."
           },
           {
-            "name": "play",
-            "description": "Play a bit."
-          }
+            "name": "start",
+            "description": "Start playing in background."
+          },
+          {
+            "name": "stop",
+            "description": "Stop playing."
+          },
+          {
+            "name": "list",
+            "description": "List prompts."
+          }          
         ]
       },
       {
@@ -84,4 +132,5 @@
     "@vscode/prompt-tsx": "^0.3.0-alpha.23",
     "ollama": "^0.5.15"
   }
+
 }

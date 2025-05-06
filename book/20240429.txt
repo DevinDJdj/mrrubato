@@ -141,7 +141,7 @@ https://tv.youtube.com/watch/NgpFsmdsmyE?onboard=1&vp=0gEEEgIwAQ%3D%3D
 https://tv.youtube.com/sw.js
 
 ytcfg.set...
-"INNERTUBE_API_KEY": "AIzaSyD-L7DIyuMgBk-B4DYmjJZ5UG-D6Y-vkMc
+"INNERTUBE_API_KEY": "....
 INNERTUBE_CONTEXT
 "ACCOUNTS"
 YTU_EMBEDDED_DATA
