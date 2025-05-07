@@ -35,6 +35,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.topicarray = void 0;
 exports.open = open;
+exports.gitChanges = gitChanges;
 exports.read = read;
 exports.getBook = getBook;
 exports.closeFileIfOpen = closeFileIfOpen;
@@ -126,6 +127,7 @@ function getRecency(bt, mydate = new Date()) {
 }
 function findTopics(inputString) {
     // Create a regex pattern to match double asterisks and capture the text after them
+    //need to add newline at start.  
     const regex = /\*\*(.*?)\*/g;
     let matches = [];
     // Use the regex to find all instances in the input string
@@ -172,13 +174,22 @@ function pickTopic(selectedtopics) {
     for (let i = 0; i < selectedtopics.length; i++) {
         if (exports.topicarray[selectedtopics[i]] !== undefined) {
             retdata += "**" + selectedtopics[i] + "\n"; //add the topic to the data.
+            retkey = selectedtopics[i]; //set the key to the topic.
             for (let j = 0; j < exports.topicarray[selectedtopics[i]].length; j++) {
                 retdata += exports.topicarray[selectedtopics[i]][j].data + "\n"; //add all data for the topic.
             }
         }
     }
     //for now returning all topic data in book.  
-    return retdata; //return the topic and the data.
+    return [retkey, retdata]; //return the topic and the data.
+}
+function gitChanges(topics) {
+    //get the git changes for the topic.  
+    //this will be used to update the topic in the book.  
+    //for now just return the changes for last topic.  
+    //> git log -p --reverse -- book/20250429.txt
+    let retdata = "";
+    return retdata;
 }
 function read(request, context) {
     //adjust request to include book context needed.  
@@ -194,7 +205,11 @@ function read(request, context) {
     //pick a topic to return.  
     //right now random.  
     //get all context from the topicarray.  
-    return pickTopic(selectedtopics);
+    let [topkey, topics] = pickTopic(selectedtopics); //get the topic from the topicarray.
+    //find last topic and add all git changes.  
+    selectedtopics.unshift(topkey); //add the topic to the list of selected topics.
+    let git = gitChanges(selectedtopics); //get the git changes for the topic.
+    return [topkey, topics];
 }
 function formatDate(date = new Date()) {
     const year = date.getFullYear();
@@ -258,7 +273,7 @@ function initTopic(topic, data) {
         exports.topicarray[topic] = [];
     }
 }
-function updatePage(text, filePath, linefrom = 0, lineto = 0) {
+function updatePage(filePath, text, linefrom = 0, lineto = 0) {
     //update the current page with the text and filePath.  
     //this will be used to update the current topic.  
     const folderUri = vscode.workspace.workspaceFolders[0].uri;

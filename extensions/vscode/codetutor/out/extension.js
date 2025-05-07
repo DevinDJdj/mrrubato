@@ -60,11 +60,28 @@ const EXERCISES_PROMPT = 'You are a helpful tutor. Your job is to teach the user
 let activeEditor = vscode.window.activeTextEditor;
 let isWorking = false;
 let workFunc = null;
+let workPrompt = "Improve my code";
 function get_current_weather(city) {
     return `The current weather in ${city} is sunny.`;
 }
+function validateChange(topkey, change) {
+    //check if the change is valid.
+    return true;
+}
+function roboupdate(topkey, topics, fullMessage) {
+    //update the source code and highlight what chnaged.
+    if (validateChange(topkey, fullMessage)) {
+        //		Book.updatePage(topkey, fullMessage);
+    }
+    //Book.updatePage("book/20230110.txt", "hello");
+    if (activeEditor) {
+        (0, toolParticipant_1.updateStatusBarItem)();
+        //show the change made and switch to this page.  
+    }
+}
 async function work(request, context, stream, token) {
     const mySettings = vscode.workspace.getConfiguration('mrrubato');
+    let workPrompt = mySettings.workprompt;
     if (!mySettings.runinbackground) {
         //not running in background per settings.
         return;
@@ -87,21 +104,25 @@ async function work(request, context, stream, token) {
         //client = ollama.Client(host='http://192.168.1.154:11434')
         //response = client.generate(model='llama3.2b', prompt=my_prompt)
         //actual_response = response['response']
-        Book.read(request, context);
-        //get topic to work on.  
+        let [topkey, topics] = Book.read(request, context);
+        //get topic to work on and context.  
         const response = await ollama_1.default.chat({
             model: 'llama3.1:8b',
             //		model: 'deepseek-coder-v2:latest',
-            messages: [{ role: 'user', content: request.prompt }],
+            messages: [{ role: 'user', content: topics + "\n" + workPrompt }],
             stream: true,
         });
+        let fullMessage = '';
         for await (const part of response) {
             process.stdout.write(part.message.content);
+            fullMessage += part.message.content;
             //		stream.markdown(part.message.content);	
             console.log(part.message.content);
             if (token.isCancellationRequested) {
                 break;
             }
+            //update the source code here.  
+            roboupdate(topkey, topics, fullMessage);
         }
     }
     catch (error) {
@@ -166,12 +187,25 @@ function activate(context) {
         // initialize the prompt
         let prompt = BASE_PROMPT;
         console.log(`Chat request: ${request.command} with prompt: ${request.prompt}`);
+        if (request.command === 'list') {
+            //list the files in the book.  
+            if (request.prompt === "prompts") {
+                stream.markdown('**Listing prompts**  \n');
+                const mySettings = vscode.workspace.getConfiguration('mrrubato');
+                mySettings.update('runinbackground', true);
+                stream.markdown('**My agent prompts**  \n ' + mySettings.workprompts);
+                //not in use yet...
+                return;
+            }
+        }
         if (request.command === 'start') {
             //start running in background.
             const mySettings = vscode.workspace.getConfiguration('mrrubato');
             mySettings.update('runinbackground', true);
             stream.markdown('**Starting background agent**  \n ' + mySettings.runinbackground);
             //start the work function here.
+            //workPrompt = request.prompt;
+            mySettings.update('workprompt', request.prompt);
             work(request, context, stream, token);
             return;
         }
@@ -198,7 +232,7 @@ function activate(context) {
             stream.markdown('Reading a book\n');
             //get book snippet.  
             readFile(request, context, stream, token);
-            Book.updatePage("hello", "book/20230110.txt");
+            Book.updatePage("book/20230110.txt", "hello");
             let myquery = "play with me and use tool #file:definitions.txt"; //calling via # doesnt work.  
             //call external ollama.  
             const { messages } = await (0, prompt_tsx_1.renderPrompt)(prompts_1.PlayPrompt, { userQuery: myquery }, { modelMaxPromptTokens: request.model.maxInputTokens }, request.model);

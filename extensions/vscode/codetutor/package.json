@@ -29,7 +29,7 @@
           "mrrubato.workprompt": {
             "type": "string",
             "default": "Improve My Code",
-            "description": "Interval to run steps."
+            "description": "LLM base prompt."
           },
           "mrrubato.workprompts": {
               "type": "array",

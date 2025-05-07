@@ -118,6 +118,7 @@ function getRecency(bt : Array<BookTopic>, mydate: Date = new Date()) : number {
 
 function findTopics(inputString : string) : string[]{
     // Create a regex pattern to match double asterisks and capture the text after them
+    //need to add newline at start.  
     const regex = /\*\*(.*?)\*/g;
     let matches = [];
     
@@ -145,7 +146,7 @@ function sortTopics(){
 
 }
   
-function pickTopic(selectedtopics : string[]) : string {
+function pickTopic(selectedtopics : string[]) : [string, string] {
     //pick a topic from the topicarray based on the sort order.
     let minsort = 1000000; //set to a large number.
     let retkey = "NONE";
@@ -171,16 +172,28 @@ function pickTopic(selectedtopics : string[]) : string {
     for (let i=0; i<selectedtopics.length; i++) {
         if (topicarray[ selectedtopics[i] ] !== undefined) {
             retdata += "**" + selectedtopics[i] + "\n"; //add the topic to the data.
+            retkey = selectedtopics[i]; //set the key to the topic.
+
             for (let j=0; j<topicarray[ selectedtopics[i] ].length; j++) {
                 retdata += topicarray[ selectedtopics[i] ][j].data + "\n"; //add all data for the topic.
             }
         }
     }
+
     //for now returning all topic data in book.  
-    return retdata; //return the topic and the data.
+    return [retkey, retdata]; //return the topic and the data.
 }
 
-export function read(request: vscode.ChatRequest, context: vscode.ChatContext) : string{
+export function gitChanges(topics: string[]) : string {
+    //get the git changes for the topic.  
+    //this will be used to update the topic in the book.  
+    //for now just return the changes for last topic.  
+    //> git log -p --reverse -- book/20250429.txt
+    let retdata = "";
+    return retdata;
+}
+
+export function read(request: vscode.ChatRequest, context: vscode.ChatContext) : [string, string]{
     //adjust request to include book context needed.  
 //    return getBook();
     //only want pertinent context.  
@@ -196,7 +209,13 @@ export function read(request: vscode.ChatRequest, context: vscode.ChatContext) :
     //pick a topic to return.  
     //right now random.  
     //get all context from the topicarray.  
-    return pickTopic(selectedtopics);
+    let [topkey, topics] = pickTopic(selectedtopics); //get the topic from the topicarray.
+    //find last topic and add all git changes.  
+    
+    selectedtopics.unshift(topkey); //add the topic to the list of selected topics.
+
+    let git = gitChanges(selectedtopics); //get the git changes for the topic.
+    return [topkey, topics];
 
 
 }
@@ -272,7 +291,7 @@ function initTopic(topic: string, data: string){
     }
 }
 
-export function updatePage(text: string, filePath: string, linefrom: number = 0, lineto: number = 0) {
+export function updatePage(filePath: string, text: string, linefrom: number = 0, lineto: number = 0) {
     //update the current page with the text and filePath.  
     //this will be used to update the current topic.  
     const folderUri = vscode.workspace.workspaceFolders[0].uri;

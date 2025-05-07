@@ -258,6 +258,8 @@ $$mrrubato.workprompt
 Need array of multiple prompts possibly.  
 on stop clear only this prompt.  
 --start here.  workprompt not getting updated.  
+OK seems to be ok.  
+
 
 
 #https://code.visualstudio.com/api/references/contribution-points#contributes.configuration
@@ -266,6 +268,76 @@ on stop clear only this prompt.
 how to add a grammar?
 #https://code.visualstudio.com/api/references/contribution-points#contributes.languages
 add a language.  
+
+
+
+$$mrrubato.workprompts
+Maybe need 
+$$PREV
+
+Pseudo-code..
+ingest any selected topics.  
+Last selected topic is the primary focus.  
+
+Determine if this is a source file or not.  
+Use other selected topics as context.  
+
+If source file:
+@@Please propose GIT changes to my source file.  
+$$system prompt (teach me)
+@@Please correct any issues in the following suggested changes.  
+$$system prompt (check)
+@@run and review
+Need previous test run scripts when changing this topic.  
+@@Summarize the changes and add to genbook
+
+
+$$context
+@@Here is a complete source file, given the modifications suggested above:
+--only use complete files for now, or git change.  This will make workflow easier.  
+Or patch text:
+> git log -p --reverse -- book/20250429.txt
+Parse these changes.  And/or send changes in this as context.  
+Just want to continue this chain.  
+Find the new entries in this chain.  
+Speak in git I think should be fine.  
+
+
+> git diff HEAD:book/20250429.txt book/20250429.txt
+@@ -269,3 +271,34 @@
+But need to compare, if file is too different.  
+Only want incremental changes.  
+
+
+
+
+If not source file:
+Determine if it is a coding action or not.  
+If coding action, pick topics at random and find source changes.  
+If not, 
+$$Context
+Given the above context, here are a few considerations regarding what to do next.  
+
+add to genbook any response.  
+Use current date, and topic context.  
+
+Eventually need to be able to accept from UI review.  
+
+
+Should add statistics about co-dependency.  
+Recency weighted as well as any other topic commits which includes selected topic.  
+Based on co-dependence, include recent changes potentially for other topics.  
+Perhaps include function structure and global variables as well for an overview.  
+
+
+This requires a tuned LLM to get best results.  
+
+After changes, use this to check, and discard if we have errors.  
+const allDiagnostics = vscode.languages.getDiagnostics();
+
+When do we pull from github and overwrite mrroboto?
+
+
 
 
 

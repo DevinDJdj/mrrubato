@@ -39,6 +39,24 @@ function get_current_weather(city: string): string {
 }
 
 
+
+function validateChange(topkey: string, change: string): boolean {
+	//check if the change is valid.
+	return true;
+}
+function roboupdate(topkey: string, topics: string, fullMessage: string) {
+	//update the source code and highlight what chnaged.
+	if (validateChange(topkey, fullMessage)){
+//		Book.updatePage(topkey, fullMessage);
+	}
+	//Book.updatePage("book/20230110.txt", "hello");
+	if (activeEditor) {
+
+		updateStatusBarItem();
+		//show the change made and switch to this page.  
+	}
+}
+
 async function work(request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken) {
 	const mySettings = vscode.workspace.getConfiguration('mrrubato');	
 	let workPrompt = mySettings.workprompt;
@@ -70,21 +88,25 @@ async function work(request: vscode.ChatRequest, context: vscode.ChatContext, st
 		//actual_response = response['response']
 
 
-		Book.read(request, context);
-		//get topic to work on.  
+		let [topkey, topics] = Book.read(request, context);
+		//get topic to work on and context.  
 	  const response = await ollama.chat({
 		model: 'llama3.1:8b',
 //		model: 'deepseek-coder-v2:latest',
-		messages: [{ role: 'user', content: workPrompt }],
+		messages: [{ role: 'user', content: topics + "\n" + workPrompt }],
 		stream: true,
 	  });
+	  let fullMessage = '';
 	  for await (const part of response) {
 		process.stdout.write(part.message.content);
+		fullMessage += part.message.content;
 //		stream.markdown(part.message.content);	
 		console.log(part.message.content);
 		if (token.isCancellationRequested) {
 		  break;
 		}
+		//update the source code here.  
+		roboupdate(topkey, topics, fullMessage);
 	}
 	} catch (error) {
 	   console.error('Error calling Ollama:', error);
@@ -175,8 +197,8 @@ export function activate(context: vscode.ExtensionContext) {
 			mySettings.update('runinbackground', true);
 			stream.markdown('**Starting background agent**  \n ' + mySettings.runinbackground);
 			//start the work function here.
-			workPrompt = request.prompt;
-			mySettings.update('workprompt', workPrompt);
+			//workPrompt = request.prompt;
+			mySettings.update('workprompt', request.prompt);
 			work(request, context, stream, token);
 			return;
 		}
@@ -206,7 +228,7 @@ export function activate(context: vscode.ExtensionContext) {
 			stream.markdown('Reading a book\n');
 			//get book snippet.  
 			readFile(request, context, stream, token);
-			Book.updatePage("hello", "book/20230110.txt");
+			Book.updatePage("book/20230110.txt", "hello");
 			let myquery = "play with me and use tool #file:definitions.txt";  //calling via # doesnt work.  
 
 			//call external ollama.  
