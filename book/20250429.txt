@@ -435,6 +435,60 @@ All subsequent queries will use that temporary topic.
 
 
 
+vscode.commands.executeCommand('github.copilot.chat.generate');
+github.copilot.openLogs
+github.copilot.generate
+copilot-chat.focus
+github.copilot.buildLocalWorkspaceIndex
+github.copilot.collectDiagnostics
+github.copilot.completions.disable
+github.copilot.completions.enable
+github.copilot.chat.explain
+github.copilot.terminal.explainTerminalLastCommand
+github.copilot.terminal.explainTerminalSelection
+github.copilot.git.generateCommitMessage
+github.copilot.chat.generateDocs
+github.copilot.chat.generateTests
+github.copilot.openLogs
+github.copilot.chat.debug.showTools
+github.copilot.chat.debug.showElements
+github.copilot.createFile
+github.copilot.openFile
+github.copilot.executeSearch
+
+
+workbench.action.terminal.paste
+workbench.action.terminal.pasteSelection
+workbench.action.terminal.copySelection
+
+
+Book.updatePage
+
+Based on leading text, the shortcut to run should work differently.  
+Basically need command to copy selection and paste in the right location based on leading text.  
+@ -> Chat
+@@ -> Chat
+> -> CMD input
+!! -> search log files
+$$ -> search config files
+# -> open web
+** -> open file / secondary (open web page.html?topic / graph.html?topic / thispage.html)
+- -> ?  
+
+Framing is there, need to fill out the details.  
+For now using current selection should be fine.  
+If no selection, use current line.  
+
+
+OK basic function works.  
+**mrrubato.mytutor.generate
+ctrl+shift+8
+
+
+
+
+
+
 
 
 

@@ -34,6 +34,7 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.topicarray = void 0;
+exports.getCommandType = getCommandType;
 exports.open = open;
 exports.gitChanges = gitChanges;
 exports.write = write;
@@ -93,6 +94,14 @@ let NEXT_TERM_ID = 1;
 //right now only front-side loading.  Possibly add RAG processing later?  
 //need to include some random data in the context to make sure 
 //the logic is not circular.  
+function getCommandType(str) {
+    if (str.length < 2) {
+        return ["", ""];
+    }
+    else {
+        return [str.charAt(0), str.charAt(1)]; //get the first two characters of the string for now.
+    }
+}
 function open(context) {
     return getBook();
 }

@@ -61,3 +61,17 @@ Shorthand
 "_var" = end state
 "var_" = potential state
 -->
+
+<!--
+OPEN:
+&
++
+% = wild?
+^ = generate
+_ = pre-requisite
+/ = function?
+: = line identification
+; = comment?
+? 
+
+-->

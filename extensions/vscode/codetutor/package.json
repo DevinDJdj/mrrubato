@@ -57,8 +57,19 @@
       {
         "command": "mrrubato.mytutor.start",
         "title": "Start handling Uris"
+      },
+      {
+        "command": "mrrubato.mytutor.generate",
+        "title": "Run selected statement"
       }
     ],
+    "keybindings": [
+      {
+          "command": "mrrubato.mytutor.generate",
+          "key": "ctrl+shift+8",
+          "mac": "cmd+shift+8"
+      }
+    ],    
     "chatParticipants": [
       {
         "id": "mrrubato.mytutor",

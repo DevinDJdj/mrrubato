@@ -313,6 +313,80 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(disposable);
 	//start listening for external URIs.  
 	vscode.commands.executeCommand('mrrubato.mytutor.start');
+
+	const gencommand = vscode.commands.registerCommand('mrrubato.mytutor.generate', async (text="") => {
+		if (text === "") {
+			const editor = vscode.window.activeTextEditor;
+			if (editor) {
+				const selection = editor.selection;
+				text = editor.document.getText(selection);
+				if (text === "") {
+					//if no selection, 
+					//get the current line and the text to the cursor.
+					let offset = editor.selection.active;
+					const fileTextToCursor = editor.document.getText(new vscode.Range(offset.line, 0, offset.line, offset.character));
+					text = fileTextToCursor;
+				}
+			}
+		}
+		  	  
+		//run the desired command here.  
+		let cmdtype = Book.getCommandType(text);
+		switch (cmdtype[0]) {
+			case ">":
+				//run the command.
+				break;
+			case "#":
+				//open on web.
+				break;
+			case "!":
+				//find in log files
+				break;
+			case "$":
+				//find env variables
+				break;
+			case "-":
+				//find env variables
+				//add the next "-" lines to book.  
+				//single is single line.  
+				break;
+			case "+":
+				//find env variables
+				break;
+			case "*":
+				//open the topic
+				console.log("Opening topic: " + text);
+				switch (cmdtype[1]) {
+					case "*":
+						//open the file
+						break;
+					case "#":
+						//open references.html?topic=
+						break;
+					case "-":
+						//open book contents topic= 
+						break;
+					case "/":
+						//start thinking about topic
+						break;
+					case "$":
+						//open page.html?topic=
+						break;
+					case "%":
+						//open graph.html?topic=
+						break;
+
+				}
+				break;
+			case "":
+				//failure
+				break;
+
+		}		
+	});
+
+	context.subscriptions.push(disposable);
+	
 	//start the MCP server as well.  
 	//vscode.commands.createMcpServer('mrrubato.mytutor', tutor);
 	activeEditor = vscode.window.activeTextEditor;
@@ -348,7 +422,7 @@ function getBookContext() {
 	if (!activeEditor) {
 		return vscode.window.showInformationMessage('No active editor found');
 	}
-	console.log(activeEditor.document.uri.toString() + activeEditor.document);
+	console.log(activeEditor.document.uri.toString());// + activeEditor.document);
 }
 
 

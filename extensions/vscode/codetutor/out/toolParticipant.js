@@ -60,7 +60,8 @@ function editorRanges(prefix, editor) {
         let visibleRange = editor.visibleRanges[0];
         console.log(`${prefix} visible ${positionToString(visibleRange.start)} ${positionToString(visibleRange.end)}  selectionStart ${positionToString(editor.selection.start)} selectionEnd ${positionToString(editor.selection.end)}`);
         editor.document.getText(visibleRange).split('\n').forEach((line, index) => {
-            console.log(`line ${index + visibleRange.start.line}: ${line}`);
+            //            console.log(`line ${index + visibleRange.start.line}: ${line}`);
+            //add this to context.  
         });
     }
 }
@@ -77,7 +78,9 @@ function registerStatusBarTool(context) {
     context.subscriptions.push(myStatusBarItem);
     // register some listener that make sure the status bar 
     // item always up-to-date
-    context.subscriptions.push(vscode.window.onDidChangeTextEditorSelection(changeEvent => { updateStatusBarItem(); }));
+    context.subscriptions.push(vscode.window.onDidChangeTextEditorSelection(changeEvent => {
+        updateStatusBarItem();
+    }));
     //    vscode.window.onDidChangeTextEditorSelection( changeEvent => { editorRanges('selection changed: ', changeEvent.textEditor); }, null, context.subscriptions);
     //    vscode.window.onDidChangeTextEditorVisibleRanges( changeEvent => { editorRanges('visible ranges changed: ', changeEvent.textEditor); }, null, context.subscriptions);
     // update status bar item once at start

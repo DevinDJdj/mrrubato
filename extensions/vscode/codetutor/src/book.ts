@@ -76,6 +76,15 @@ let NEXT_TERM_ID = 1;
 //need to include some random data in the context to make sure 
 //the logic is not circular.  
 
+export function getCommandType(str: string) : [string, string] {
+    if (str.length < 2){
+        return ["", ""];
+    }
+    else{
+        return [str.charAt(0), str.charAt(1)]; //get the first two characters of the string for now.
+    }
+
+}
 
 export function open(context: vscode.ExtensionContext) {
     return getBook();
