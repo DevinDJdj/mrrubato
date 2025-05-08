@@ -36,6 +36,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.topicarray = void 0;
 exports.open = open;
 exports.gitChanges = gitChanges;
+exports.write = write;
 exports.read = read;
 exports.getBook = getBook;
 exports.closeFileIfOpen = closeFileIfOpen;
@@ -86,6 +87,7 @@ var defmap = [{ "#": "REF", ">": "CMD", "-": "SUBTASK" },
 exports.topicarray = {};
 var refarray = [];
 let mynow = new Date(); //get the current date in YYYYMMDD format.    
+let NEXT_TERM_ID = 1;
 //store data as tabs open and close and based on location in the tab.  
 //from this info generate the context when querying the model.  
 //right now only front-side loading.  Possibly add RAG processing later?  
@@ -187,11 +189,20 @@ function gitChanges(topics) {
     //get the git changes for the topic.  
     //this will be used to update the topic in the book.  
     //for now just return the changes for last topic.  
-    //> git log -p --reverse -- book/20250429.txt
+    //wait for this to complete and retrieve this file.  
+    //> git --no-pager log -p --reverse -- book/20250429.txt > book/20250429.log
+    const mytopicfile = topics[topics.length - 1]; //get the topic file.
+    const mytopiclogfile = mytopicfile + ".log"; //get the topic log file.
+    const terminal = vscode.window.createTerminal(`Ext Terminal #${NEXT_TERM_ID++}`);
+    terminal.sendText("git --no-pager log -p --reverse -- " + mytopicfile + " > " + mytopiclogfile);
     let retdata = "";
     return retdata;
 }
-function read(request, context) {
+//write to the book/source as needed.  
+async function write(request, context) {
+    return ["NONE", "NONE"];
+}
+async function read(request, context) {
     //adjust request to include book context needed.  
     //    return getBook();
     //only want pertinent context.  
@@ -208,7 +219,16 @@ function read(request, context) {
     let [topkey, topics] = pickTopic(selectedtopics); //get the topic from the topicarray.
     //find last topic and add all git changes.  
     selectedtopics.unshift(topkey); //add the topic to the list of selected topics.
-    let git = gitChanges(selectedtopics); //get the git changes for the topic.
+    try {
+        const folderUri = vscode.workspace.workspaceFolders[0].uri;
+        const stat = await vscode.workspace.fs.stat(folderUri.with({ path: topkey }));
+        //assume file exists.  
+        let git = gitChanges(selectedtopics); //get the git changes for the topic.
+        topics += git; //add the git changes to the full context of topics.
+    }
+    catch (error) {
+        console.error(`Error reading file: ${error}`);
+    }
     return [topkey, topics];
 }
 function formatDate(date = new Date()) {

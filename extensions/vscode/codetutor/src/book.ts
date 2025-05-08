@@ -68,6 +68,8 @@ var refarray = [];
 
 let mynow = new Date(); //get the current date in YYYYMMDD format.    
 
+let NEXT_TERM_ID = 1;
+
 //store data as tabs open and close and based on location in the tab.  
 //from this info generate the context when querying the model.  
 //right now only front-side loading.  Possibly add RAG processing later?  
@@ -188,12 +190,27 @@ export function gitChanges(topics: string[]) : string {
     //get the git changes for the topic.  
     //this will be used to update the topic in the book.  
     //for now just return the changes for last topic.  
-    //> git log -p --reverse -- book/20250429.txt
+    //wait for this to complete and retrieve this file.  
+    //> git --no-pager log -p --reverse -- book/20250429.txt > book/20250429.log
+
+    const mytopicfile = topics[topics.length-1]; //get the topic file.
+    const mytopiclogfile = mytopicfile + ".log"; //get the topic log file.
+
+
+    const terminal = vscode.window.createTerminal(`Ext Terminal #${NEXT_TERM_ID++}`);
+    terminal.sendText("git --no-pager log -p --reverse -- " + mytopicfile + " > " + mytopiclogfile);
+
     let retdata = "";
     return retdata;
 }
 
-export function read(request: vscode.ChatRequest, context: vscode.ChatContext) : [string, string]{
+
+//write to the book/source as needed.  
+export async function write(request: vscode.ChatRequest, context: vscode.ChatContext) : Promise<[string, string]>{
+    return ["NONE", "NONE"];    
+}
+
+export async function read(request: vscode.ChatRequest, context: vscode.ChatContext) : Promise<[string, string]>{
     //adjust request to include book context needed.  
 //    return getBook();
     //only want pertinent context.  
@@ -214,7 +231,18 @@ export function read(request: vscode.ChatRequest, context: vscode.ChatContext) :
     
     selectedtopics.unshift(topkey); //add the topic to the list of selected topics.
 
-    let git = gitChanges(selectedtopics); //get the git changes for the topic.
+    try {
+        const folderUri = vscode.workspace.workspaceFolders[0].uri;
+        const stat = await vscode.workspace.fs.stat(folderUri.with({ path: topkey }));
+        //assume file exists.  
+        let git = gitChanges(selectedtopics); //get the git changes for the topic.
+        topics += git;  //add the git changes to the full context of topics.
+    }
+    catch (error) {
+        console.error(`Error reading file: ${error}`);
+    }
+
+
     return [topkey, topics];
 
 

@@ -42,8 +42,15 @@ function get_current_weather(city: string): string {
 
 function validateChange(topkey: string, change: string): boolean {
 	//check if the change is valid.
+	const allDiagnostics = vscode.languages.getDiagnostics();
+	//get diagnostics for all open files.  
+	//if there is some error, prompt to try to fix.  
+	//return the diagnostic info.  
+	console.log(allDiagnostics);
+
 	return true;
 }
+
 function roboupdate(topkey: string, topics: string, fullMessage: string) {
 	//update the source code and highlight what chnaged.
 	if (validateChange(topkey, fullMessage)){
@@ -88,7 +95,7 @@ async function work(request: vscode.ChatRequest, context: vscode.ChatContext, st
 		//actual_response = response['response']
 
 
-		let [topkey, topics] = Book.read(request, context);
+		let [topkey, topics] = await Book.read(request, context);
 		//get topic to work on and context.  
 	  const response = await ollama.chat({
 		model: 'llama3.1:8b',
@@ -123,7 +130,7 @@ async function Chat(request: vscode.ChatRequest, context: vscode.ChatContext, st
 		//actual_response = response['response']
 
 
-		Book.read(request, context);
+		await Book.read(request, context);
 	  const response = await ollama.chat({
 //		model: 'llama3.1:8b',
 		model: 'deepseek-coder-v2:latest',

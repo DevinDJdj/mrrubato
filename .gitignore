@@ -1,6 +1,7 @@
 *.mkv
 *.mid
 *.png
+*.log
 !icon*.png
 !web/public/images/*.png
 *.jpg

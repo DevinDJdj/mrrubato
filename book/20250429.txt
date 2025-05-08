@@ -337,6 +337,103 @@ const allDiagnostics = vscode.languages.getDiagnostics();
 
 When do we pull from github and overwrite mrroboto?
 
+Also can we monitor midi?  
+
+output to file full change log.  
+In the end we want this.  Not sure about context windows now.  
+> git --no-pager log -p --reverse -- book/20250429.txt > book/20250429.log
+
+Information technology will have a new meaning soon.  
+Information ownership and traceability/provenance is going to be an interesting field.  
+
+
+**provenance
+Need provenance chains.  
+#https://www.software.ac.uk/blog/provenance-tool-suite
+#https://pypi.org/project/prov/
+
+#https://github.com/VisualStorytelling/provenance-core
+
+Where are the good tools?  
+
+#https://developers.google.com/chart/interactive/docs/gallery/sankey
+**web/public/graph/sankey.html
+simple example.  
+Use this representation potentially for provenance graphing.  
+Or just use network.  
+
+**web/public/netgraph.mjs
+**web/public/page.html
+Can we represent provenance information about topic(s)?
+
+**vscode
+!!Clicking on timeline entry shouldnt perma-open window.  
+
+
+**extensions/vscode/codetutor/src/extension.ts
+How do we get timeline info.  Looks like not available.  
+git commits enough for now.  
+#https://visjs.github.io/vis-network/docs/network/#importDot
+Can we generate sankey from DOT..
+doesnt look like..
+Should create JS tool/function in visjs to generate sankey.  
+Good sample here.
+#https://github.com/kurkle/chartjs-chart-sankey
+
+
+
+**GITYA
+Need to generate a midi struct / SONG based on commit dates.  
+
+
+**web/public/graph.html
+Make new file with parameters:
+?direction=in/out/both
+?num=12
+?depth=1 -> follow topics within one step of specified topic.  Do same logic and add to provenance chain.  
+This will probably be far too large.  Step 
+<!--
+visnetwork
+vis.DataSet([
+        {
+      id: 1,
+      label: "1",
+      level: 1
+    },
+])
+--level: 1, 2, 3
+-->
+?topics=one,two
+Allow for multiple topics.  
+
+Pseudo-code:
+Parse parameters.
+read book.  
+generate provenance chart for selected topic.  
+TOPIC - 12
+Higher weight for closer to target topic.  
+
+This should be nice.  
+Get git commits for topics in question if exist.  
+And display bottom or right panel file as well as specific commits can be multiple when that provenance input is selected.  
+Each provenance should have one or multiple dates related.  
+Get commits for particular dates.  
+Just use network, not sankey for this.  
+Use DOT representation..
+Basically level is inherent in the data.  
+
+Parameter for provenance info (date, weight)
+Only look for commits in certain date ranges?  
+Too complex..
+
+Query should look something like this.  
+@tutor /start **web/public/netgraph.mjs **web/public/graph.html try to create an implementation of **web/public/graph.html
+Should adjust workprompt as needed.  
+Use temp file in workprompt.  
+generate needed context in there.  
+All subsequent queries will use that temporary topic.  
+
+
 
 
 
