@@ -1242,37 +1242,38 @@ function loadCanvas(id, pianoimg, mini="") {
 function addImage(imageurl, stor, type=0){
 //	console.log(imageurl);
 //	console.log(stor)
-/*
-	if (imageurl == ""){
+
+	if (imageurl == "" && type==0){
 		loadCanvas("pianorollmini", "", "mini");
 		loadCanvas("pianoroll", "");
 		
 
 	}
 	else{
-*/
-	url = stor.child(imageurl).getDownloadURL()
-		.then((url) => {
-			console.log( type + " SRC url:" + url);
-			var mydiv = document.getElementById("images");
-			if (type > 0){
-				mydiv = document.getElementById("pianoroll");
-				loadCanvas("pianorollmini", url, "mini");
-				loadCanvas("pianoroll", url);
-			}
-			else{
-				const img = document.createElement("img");
-				img.src = url;
-				console.log(url);
-				mydiv.appendChild(img);
-			}			
-		})
-		.catch((error) => {			
-			console.log(error);
-			if (imageurl !==""){ //avoid endless loop.  
-				addImage("", stor, type);	//add a default image.
-			}
-		});	
+
+		url = stor.child(imageurl).getDownloadURL()
+			.then((url) => {
+				console.log( type + " SRC url:" + url);
+				var mydiv = document.getElementById("images");
+				if (type > 0){
+					mydiv = document.getElementById("pianoroll");
+					loadCanvas("pianorollmini", url, "mini");
+					loadCanvas("pianoroll", url);
+				}
+				else{
+					const img = document.createElement("img");
+					img.src = url;
+					console.log(url);
+					mydiv.appendChild(img);
+				}			
+			})
+			.catch((error) => {			
+				console.log(error);
+				if (imageurl !==""){ //avoid endless loop.  
+					addImage("", stor, type);	//add a default image.
+				}
+			});	
+	}
 }
 
 

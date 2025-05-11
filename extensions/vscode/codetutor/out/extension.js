@@ -230,6 +230,13 @@ function activate(context) {
             await getStats(request, context, stream, token);
             stream.markdown('  \n**Exercise complete**  \n');
             //possibly loop here.  
+            //test calling another prompt.  
+            //not working, may be a feature added in future...
+            let options = {
+                query: "@tutor /list prompts",
+                isPartialQuery: false
+            };
+            vscode.commands.executeCommand("workbench.action.chat.open", options);
             return;
         }
         if (request.command === 'book') {
@@ -356,9 +363,11 @@ function activate(context) {
                 }
                 break;
             case "":
-                //failure
+                //failure return?  
                 break;
         }
+        //log the command to genbook if valid.  
+        Book.logCommand(text);
     });
     context.subscriptions.push(disposable);
     //start the MCP server as well.  

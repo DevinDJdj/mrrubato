@@ -76,6 +76,18 @@ let NEXT_TERM_ID = 1;
 //need to include some random data in the context to make sure 
 //the logic is not circular.  
 
+export function logCommand(command: string) {
+    //log the command in genbook.  
+    try {
+        let logPath = "genbook/" + formatDate(mynow) + ".txt"; //get the date in YYYYMMDD format.
+        updatePage(logPath, command, -1, -1);
+    }
+    catch (error) {
+        console.error(`Error reading file: ${error}`);
+    }
+
+}
+
 export function getCommandType(str: string) : [string, string] {
     if (str.length < 2){
         return ["", ""];
@@ -292,9 +304,11 @@ async function readFilesInFolder(folder: vscode.Uri): Promise<{ total: number, c
 //                console.log(text);
                 // Optionally insert the text into the active editor
         //		insertTextIntoActiveEditor(text);
+                /*
                 closeFileIfOpen(fileUri).then(() => {
                     console.log(`${fileUri.path} ... closed`);
                 });
+                */
             });
             let filePath = posix.dirname(fileUri.path);
             const stat = await vscode.workspace.fs.stat(folder.with({ path: filePath }));
@@ -328,29 +342,47 @@ function initTopic(topic: string, data: string){
     }
 }
 
-export function updatePage(filePath: string, text: string, linefrom: number = 0, lineto: number = 0) {
+export function updatePage(filePath: string, text: string, linefrom: number = 0, lineto: number = 0, show: boolean = false) {
     //update the current page with the text and filePath.  
     //this will be used to update the current topic.  
     const folderUri = vscode.workspace.workspaceFolders[0].uri;
     // this should be a book path.  Use as you would work on the project.  
     const fileUri = folderUri.with({ path: posix.join(folderUri.path, filePath) });
 
+    const wsEdit = new vscode.WorkspaceEdit();
+    wsEdit.createFile(fileUri, { ignoreIfExists: true });
+    vscode.workspace.applyEdit(wsEdit).then(() => {
 
-    vscode.workspace.openTextDocument(fileUri).then((document) => {
-        vscode.window.showTextDocument(document).then((editor) => {
-            /*
-        const editor = vscode.window.visibleTextEditors.find(
-            (editor) => editor.document.uri.fsPath === document.uri.fsPath
-         );   
-         */     
-//        let editor = document.editor;
-            editor.edit(editBuilder => {
-                if (lineto === 0 && linefrom === 0) {
-                    var firstLine = editor.document.lineAt(0);
-                    var lastLine = editor.document.lineAt(editor.document.lineCount - 1);
-                    var textRange = new vscode.Range(firstLine.range.start, lastLine.range.end);
-                    editBuilder.replace(textRange, text); //replace the entire document with the new text.
-                }
+
+        vscode.workspace.openTextDocument(fileUri).then((document) => {
+
+            vscode.window.showTextDocument(document).then((editor) => {
+                /*
+            const editor = vscode.window.visibleTextEditors.find(
+                (editor) => editor.document.uri.fsPath === document.uri.fsPath
+            );   
+            */     
+    //        let editor = document.editor;
+                editor.edit(editBuilder => {
+                    if (lineto === 0 && linefrom === 0) {
+                        var firstLine = editor.document.lineAt(0);
+                        var lastLine = editor.document.lineAt(editor.document.lineCount - 1);
+                        var textRange = new vscode.Range(firstLine.range.start, lastLine.range.end);
+                        editBuilder.replace(textRange, text); //replace the entire document with the new text.
+                    }
+                    else if (lineto === -1 && linefrom === -1){
+                        //append to the end of the document.
+                        var lastLine = editor.document.lineAt(editor.document.lineCount - 1);
+                        var textRange = new vscode.Range(lastLine.range.end, lastLine.range.end);
+                        editBuilder.insert(textRange.start, "\n" + text); //append the text to the end of the document.
+                    }
+
+                }).then(() => {
+                    // Optionally, you can show a message to indicate the file has been updated
+                    if (!show) {
+                        vscode.commands.executeCommand("workbench.action.openPreviousRecentlyUsedEditor"); 
+                    }
+                });
             });
         });
     });

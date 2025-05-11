@@ -63,7 +63,7 @@ Shorthand
 -->
 
 <!--
-OPEN:
+Leading OPEN:
 &
 +
 % = wild?
@@ -74,4 +74,11 @@ _ = pre-requisite
 ; = comment?
 ? 
 
+Ending ...
+Annotate with leading space or something else?  
+
 -->
+
+ ... Work to do
+ ? Open question
+ 

@@ -74,7 +74,7 @@
       {
         "id": "mrrubato.mytutor",
         "fullName": "Mr Rubato",
-        "name": "tutor",
+        "name": "mr",
         "description": "What can I teach you?",
         "isSticky": true,
         "commands": [

@@ -483,12 +483,75 @@ If no selection, use current line.
 OK basic function works.  
 **mrrubato.mytutor.generate
 ctrl+shift+8
+Keep testing.  
+Add functionality for this.  
+Try this:
+vscode.commands.executeCommand(
+  "workbench.action.chat.open",
+  "@participant /hello friend"
+);
+Not working...
+Do we need the chat actually?  
+Primary function can be done with generate command.  
+
+
+**web/public/analyze.html
+$$vidoe=wqjAg9r2UTE
+!!minimap not clickable when pianoroll images are not there.  
+Never fixed this...
 
 
 
 
+**extensions/vscode/codetutor/src/extension.ts
+If we are not using the chat, just use particular file and open it on certain commands.  
+
+Need shorter name.  
+
+genbook format is ok with @@ == $$?
+**extensions/vscode/codetutor/src/book.ts
+-- test Book.logCommand
+OK, seems to work.  
+Probably go back to the previous location.  
+Just keep it open.  
+
+
+**book/definitions.txt
+Utilize ... ending as potential to-do list.  
+
+$$workbench.action.focusActiveEditorGroup
+Ctrl+Shift+7
+
+$$workbench.panel.chat.view.copilot.focus
+Ctrl+Shift+3
 
 
 
+OK, basic transcript generation should work.  
+3 .., 7 .., 8
+
+
+**GENBOOK
+How to deal with multiple books.  
+
+Read all books, but only write to one.  
+Setting for which book/genbook being used.  
+This could be user genbook/user/xxxxxxxx.txt
+Or book/user/xxxxxxxx.txt
+
+Or just a logical folder.  
+Default to user perhaps if nothing set.  
+Make sure we read all subfolders when loading.  
+
+Rating for any response
+
+--use $$n (n=1-10)
+Simple rating should be used in training.  
+
+auto-complete should work from any file type.  
+finish adding auto-complete for other types.  
+
+**mrrubato.mytutor.generate
+When running generate, add context of current file.  
 
 

@@ -28,6 +28,7 @@ const BASE_PROMPT =
   'You are a helpful tutor. Your job is to teach the user with fun, simple exercises that they can complete in the editor. Your exercises should start simple and get more complex as the user progresses. Move one concept at a time, and do not move on to the next concept until the user provides the correct answer. Give hints in your exercises to help the user learn. If the user is stuck, you can provide the answer and explain why it is the answer. If the user asks a non-programming question, politely decline to respond.';
 // define a chat handler
 
+
 let activeEditor = vscode.window.activeTextEditor;
 
 let isWorking = false;
@@ -225,6 +226,16 @@ export function activate(context: vscode.ExtensionContext) {
 			await getStats(request, context, stream, token);
 			stream.markdown('  \n**Exercise complete**  \n');
 			//possibly loop here.  
+			//test calling another prompt.  
+			//not working, may be a feature added in future...
+			let options = {
+				query: "@tutor /list prompts", 
+				isPartialQuery: false
+			};
+			vscode.commands.executeCommand(
+				"workbench.action.chat.open",
+				options
+			  );
 
 
 			return;
@@ -237,6 +248,7 @@ export function activate(context: vscode.ExtensionContext) {
 			readFile(request, context, stream, token);
 			Book.updatePage("book/20230110.txt", "hello");
 			let myquery = "play with me and use tool #file:definitions.txt";  //calling via # doesnt work.  
+
 
 			//call external ollama.  
 			const { messages } = await renderPrompt(
@@ -379,10 +391,12 @@ export function activate(context: vscode.ExtensionContext) {
 				}
 				break;
 			case "":
-				//failure
+				//failure return?  
 				break;
 
 		}		
+		//log the command to genbook if valid.  
+		Book.logCommand(text);
 	});
 
 	context.subscriptions.push(disposable);

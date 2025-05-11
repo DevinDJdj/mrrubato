@@ -1,0 +1,24 @@
+**deepseek-coder-v2:latest
+@@tell me a story
+==
+Mr Rubato
+Starting exercise
+Answering question
+In the quaint town of Willowbrook, where the streets were lined with cherry blossom trees and the air always smelled faintly of jasmine, lived a young girl named Maya. Maya had an insatiable curiosity about the world around her and spent most of her days exploring the hidden pathways that wound through the heart of the town.
+
+One sunny afternoon, as Maya was wandering through the old cemetery near her home, she stumbled upon an ancient oak tree whose roots seemed to have pushed open a secret entrance into an underground labyrinth. Intrigued by this unexpected discovery, Maya decided to venture inside. As she stepped through the narrow opening, the light from above disappeared, and she found herself in complete darkness.
+
+With only her small flashlight to guide her way, Maya ventured deeper into the labyrinth. The walls seemed to close in around her, but as she walked, she noticed that each section of the maze was filled with unique artifacts and remnants of forgotten civilizations. There were murals on the walls depicting mythical creatures and ancient battles, and at times, strange sounds echoed through the tunnels, sending a shiver down Maya's spine.
+
+As she explored, Maya realized that she wasn't alone in this mysterious place. She encountered various puzzles scattered throughout the labyrinth, which tested her wit and courage. There were riddles to solve, doors to open with hidden mechanisms, and even challenges where she had to prove her worth through acts of bravery or intellect.
+
+With each challenge conquered and every clue solved, Maya slowly pieced together a story about an ancient sorceress who once ruled over the labyrinth. The sorceress had enchanted the maze so that anyone who managed to navigate it would gain great wisdom and power. This legend became Maya's motivation as she continued on her journey through the labyrinth, fueled by her desire to uncover its secrets and become stronger.
+
+As she reached the final chamber of the labyrinth, surrounded by towering stone pillars that cast long shadows, a light suddenly appeared in front of her. It was the legendary Sorceress, now an old woman with wise eyes and a gentle smile. The sorceress told Maya about her life and how she had created the maze as a test for potential heirs to her power.
+
+The sorceress explained that only those who were truly pure of heart and possessed wisdom beyond their years could claim her legacy. And so, upon hearing this, Maya understood that she had not come merely to conquer the labyrinth but also to earn its respect through her character.
+
+Maya passed the test with flying colors, and as a reward for her valor and intelligence, the sorceress bestowed upon her great wisdom and a connection to the magical energies of Willowbrook. From that day on, Maya was known throughout the town not just for her adventurous spirit but also for her newfound powers and unwavering sense of justice.
+
+Maya returned to the surface world with a renewed purpose and vowed to protect and preserve the magic and mystery hidden within the labyrinth and beyond, becoming an influential figure in both her hometown and the wider magical community. The story of Maya's adventures became legendary among the people of Willowbrook, passed down through generations, forever reminding everyone that great power comes with great responsibility—and sometimes, even greater wisdom is found in the unlikeliest places.
+$$
