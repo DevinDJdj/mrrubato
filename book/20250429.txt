@@ -578,6 +578,16 @@ Need to monitor any book folder.
 --startWatchingWorkspace
 test this... ok, working, but not actually doing anything but adding to topic array.  
 Seems one behind, but do we care?  
+OK, looks better.  
 
+Need better sort for most recently used topics etc.  
+These should be automatically displayed.  
+Straight order for last 10-20 topics or so, then by avg day like we are doing.  
+Same with all others.  
+Should probably use double entry for lookup so we dont do this inadvertently.  
+>>
+##
 
+Accept single to execute though.  
+And when scanning for adding entry in history.  
 

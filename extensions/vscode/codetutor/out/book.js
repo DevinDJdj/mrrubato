@@ -321,7 +321,7 @@ function getFileDate(filePath) {
     }
     return 0;
 }
-function initTopic(topic, data) {
+function initTopic(topic) {
     if (!(topic in exports.topicarray) || exports.topicarray[topic] === undefined) {
         exports.topicarray[topic] = [];
     }
@@ -389,7 +389,7 @@ function loadPage(text, filePath) {
                 if (str.startsWith(key)) {
                     let type = val;
                     if (type === "TOPIC") {
-                        initTopic(tkey, str); //if doesnt exist, add.  
+                        initTopic(tkey); //if doesnt exist, add.  
                         exports.topicarray[tkey]?.push(mytopic); //add the previous topic to the array.
                         tkey = str.slice(j + 1);
                         let myorder = 0;
@@ -403,6 +403,7 @@ function loadPage(text, filePath) {
             }
         }
     }
+    initTopic(currenttopic); //if doesnt exist, add.  
     exports.topicarray[currenttopic]?.push(mytopic);
     exports.topicarray[mydate.toString()]?.push(mypage);
 }

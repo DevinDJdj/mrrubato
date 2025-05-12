@@ -350,6 +350,17 @@ export function activate(context: vscode.ExtensionContext) {
 		switch (cmdtype[0]) {
 			case ">":
 				//run the command.
+				switch (cmdtype[1]) {
+					case ">":							
+						vscode.commands.executeCommand('workbench.action.terminal.focus');
+						vscode.commands.executeCommand('workbench.action.terminal.sendSequence', { text: text.substring(2) + "\n" });
+						break;
+					default:
+						vscode.commands.executeCommand('workbench.action.terminal.focus');
+						vscode.commands.executeCommand('workbench.action.terminal.sendSequence', { text: text.substring(1) + "\n" });
+						break;
+				}
+
 				break;
 			case "#":
 				//open on web.
@@ -359,6 +370,18 @@ export function activate(context: vscode.ExtensionContext) {
 				break;
 			case "$":
 				//find env variables
+				switch (cmdtype[1]) {
+					case '$':
+						//add new variable
+						//list variables and values.  
+						//$$
+						//show variable
+						//$$key
+						//set variable
+						//$$key=value
+
+						break;
+				}
 				break;
 			case "-":
 				//find env variables
@@ -386,6 +409,7 @@ export function activate(context: vscode.ExtensionContext) {
 						break;
 					case "$":
 						//open page.html?topic=
+						//show env info.  
 						break;
 					case "%":
 						//open graph.html?topic=

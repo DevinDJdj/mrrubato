@@ -347,7 +347,7 @@ function getFileDate(filePath: string): number {
     return 0;
 }
 
-function initTopic(topic: string, data: string){
+function initTopic(topic: string){
     if (!(topic in topicarray) || topicarray[topic] === undefined) {
         topicarray[topic] = [];
     }
@@ -427,7 +427,7 @@ export function loadPage(text: string, filePath: string) {
                     let type = val;
                     if (type === "TOPIC") {
 
-                        initTopic(tkey, str); //if doesnt exist, add.  
+                        initTopic(tkey); //if doesnt exist, add.  
 
                         topicarray[tkey]?.push(mytopic); //add the previous topic to the array.
                         tkey = str.slice(j+1);
@@ -451,6 +451,7 @@ export function loadPage(text: string, filePath: string) {
 
     }
 
+    initTopic(currenttopic); //if doesnt exist, add.  
     topicarray[currenttopic]?.push(mytopic);
     topicarray[mydate.toString()]?.push(mypage);       
 }
