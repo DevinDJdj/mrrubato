@@ -555,3 +555,29 @@ finish adding auto-complete for other types.
 When running generate, add context of current file.  
 
 
+
+**extensions/vscode/codetutor/src/book.ts
+--loadBook
+Need reload after changing setting for $$mrrubato.bookfolder
+
+--readFilesInFolder
+Maybe this should be freer than per user etc.  
+Per user is one methodology.  
+But should read all subfolders.  
+
+
+Use -- with currently or recently selected topics.  
+Should return any functions in files selected in the popup.  
+Functions should be parsed when we open a page to populate the list same as loadBook.  
+Could use $$ the same way with variable names.  
+
+
+Need to monitor any book folder.  
+
+**extensions/vscode/codetutor/src/toolParticipant.ts
+--startWatchingWorkspace
+test this... ok, working, but not actually doing anything but adding to topic array.  
+Seems one behind, but do we care?  
+
+
+

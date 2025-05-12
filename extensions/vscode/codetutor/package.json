@@ -31,6 +31,17 @@
             "default": "Improve My Code",
             "description": "LLM base prompt."
           },
+          "mrrubato.bookfolder": {
+            "type": "string",
+            "default": "book",
+            "description": "LLM base prompt."
+          },
+          "mrrubato.genbookfolder": {
+            "type": "string",
+            "default": "genbook",
+            "description": "LLM base prompt."
+          },
+
           "mrrubato.workprompts": {
               "type": "array",
               "items": {

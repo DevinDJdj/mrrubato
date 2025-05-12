@@ -43,6 +43,8 @@ exports.read = read;
 exports.getBook = getBook;
 exports.closeFileIfOpen = closeFileIfOpen;
 exports.updatePage = updatePage;
+exports.loadPage = loadPage;
+exports.getBookPath = getBookPath;
 const vscode = __importStar(require("vscode"));
 const path_1 = require("path");
 /*
@@ -98,7 +100,9 @@ let NEXT_TERM_ID = 1;
 function logCommand(command) {
     //log the command in genbook.  
     try {
-        let logPath = "genbook/" + formatDate(mynow) + ".txt"; //get the date in YYYYMMDD format.
+        const mySettings = vscode.workspace.getConfiguration('mrrubato');
+        let genbookFolder = mySettings.genbookfolder;
+        let logPath = genbookFolder + "/" + formatDate(mynow) + ".txt"; //get the date in YYYYMMDD format.
         updatePage(logPath, command, -1, -1);
     }
     catch (error) {
@@ -273,6 +277,13 @@ async function readFilesInFolder(folder) {
     let count = 0;
     for (const [name, type] of await vscode.workspace.fs.readDirectory(folder)) {
         //what order does this come in?  Is it alphabetical?
+        if (type === vscode.FileType.Directory) {
+            const fileUri = folder.with({ path: path_1.posix.join(folder.path, name) });
+            readFilesInFolder(fileUri).then((result) => {
+                total += result.total;
+                count += result.count;
+            });
+        }
         if (type === vscode.FileType.File) {
             const fileUri = folder.with({ path: path_1.posix.join(folder.path, name) });
             vscode.workspace.openTextDocument(fileUri).then((document) => {
@@ -395,15 +406,28 @@ function loadPage(text, filePath) {
     exports.topicarray[currenttopic]?.push(mytopic);
     exports.topicarray[mydate.toString()]?.push(mypage);
 }
+function getBookPath() {
+    const mySettings = vscode.workspace.getConfiguration('mrrubato');
+    let bookFolder = mySettings.bookfolder;
+    return bookFolder;
+}
+function getBookUri() {
+    if (!vscode.workspace.workspaceFolders) {
+        return vscode.Uri.parse("");
+    }
+    // this should be a book path.  Use as you would work on the project.  
+    const folderUri = vscode.workspace.workspaceFolders[0].uri;
+    const bookFolder = getBookPath(); //get the book folder from settings.
+    const bookUri = folderUri.with({ path: path_1.posix.join(folderUri.path, bookFolder) });
+    return bookUri;
+}
 function loadBook() {
     if (!vscode.workspace.workspaceFolders) {
         return vscode.window.showInformationMessage('No folder or workspace opened');
     }
     //read all files in /book folder and parse them.  
-    const folderUri = vscode.workspace.workspaceFolders[0].uri;
-    // this should be a book path.  Use as you would work on the project.  
-    const bookUri = folderUri.with({ path: path_1.posix.join(folderUri.path, 'book') });
-    const fileUri = folderUri.with({ path: path_1.posix.join(folderUri.path, 'book/definitions.txt') });
+    const bookUri = getBookUri(); //get the book uri.
+    const fileUri = bookUri.with({ path: path_1.posix.join(bookUri.path, '/definitions.txt') });
     exports.topicarray = {}; //reset topic array.
     readFilesInFolder(bookUri).then((result) => {
         console.log(`Total size: ${result.total} bytes, File count: ${result.count}`);

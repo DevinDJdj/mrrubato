@@ -1,6 +1,7 @@
 import { renderPrompt } from '@vscode/prompt-tsx';
 import * as vscode from 'vscode';
-import { topicarray } from './book';
+import * as Book from './book';
+
 import { ToolCallRound, ToolResultMetadata, ToolUserPrompt } from './toolsPrompt';
 
 let myStatusBarItem: vscode.StatusBarItem;
@@ -106,8 +107,8 @@ export function registerCompletionTool(context: vscode.ExtensionContext){
                 }
 
                 let myarray = [];
-                console.log(topicarray);
-                for (const [key, value] of Object.entries(topicarray)) {
+                console.log(Book.topicarray);
+                for (const [key, value] of Object.entries(Book.topicarray)) {
                     if (value !== undefined && value.length > 0) {
                         let ci = new vscode.CompletionItem(key, vscode.CompletionItemKind.Text);
                         ci.detail = `Topic: ${key}`;
@@ -149,6 +150,51 @@ export function registerCompletionTool(context: vscode.ExtensionContext){
     //add custom completions to the extension 
     context.subscriptions.push(provider2);
 }
+
+
+function getWorkspaceTestPatterns() {
+	if (!vscode.workspace.workspaceFolders) {
+		return [];
+	}
+
+    let bookPath = Book.getBookPath();
+	return vscode.workspace.workspaceFolders.map(workspaceFolder => ({
+		workspaceFolder,
+		pattern: new vscode.RelativePattern(workspaceFolder.uri.path + "/" + bookPath, '**/*.txt'),
+	}));
+}
+
+
+//this may reload unnecessarily.  
+export function startWatchingWorkspace(context: vscode.ExtensionContext) {
+	return context.subscriptions.push(...getWorkspaceTestPatterns().map(({ pattern }) => {
+		const watcher = vscode.workspace.createFileSystemWatcher(pattern);
+
+		watcher.onDidCreate(fileUri => {
+            vscode.workspace.openTextDocument(fileUri).then((document) => {
+                let text = document.getText();
+                console.log(`${fileUri.path} ... read`);
+                // parse this.  
+                Book.loadPage(text, fileUri.path);
+            });
+
+		});
+		watcher.onDidChange(async fileUri => {
+            vscode.workspace.openTextDocument(fileUri).then((document) => {
+                let text = document.getText();
+                console.log(`${fileUri.path} ... read`);
+                // parse this.  
+                Book.loadPage(text, fileUri.path);
+            });
+
+		});
+
+
+
+		return watcher;
+	}));
+}
+
 
 export function registerToolUserChatParticipant(context: vscode.ExtensionContext) {
     const handler: vscode.ChatRequestHandler = async (request: vscode.ChatRequest, chatContext: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken) => {

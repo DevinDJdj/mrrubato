@@ -185,6 +185,7 @@ function activate(context) {
     (0, toolParticipant_1.registerToolUserChatParticipant)(context);
     (0, toolParticipant_1.registerCompletionTool)(context);
     (0, toolParticipant_1.registerStatusBarTool)(context);
+    (0, toolParticipant_1.startWatchingWorkspace)(context); //watch for changes to book.  
     Book.open(context); //open the book.  
     // define a chat handler
     const handler = async (request, context, stream, token) => {

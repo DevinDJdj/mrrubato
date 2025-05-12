@@ -37,10 +37,11 @@ exports.isTsxToolUserMetadata = isTsxToolUserMetadata;
 exports.registerStatusBarTool = registerStatusBarTool;
 exports.updateStatusBarItem = updateStatusBarItem;
 exports.registerCompletionTool = registerCompletionTool;
+exports.startWatchingWorkspace = startWatchingWorkspace;
 exports.registerToolUserChatParticipant = registerToolUserChatParticipant;
 const prompt_tsx_1 = require("@vscode/prompt-tsx");
 const vscode = __importStar(require("vscode"));
-const book_1 = require("./book");
+const Book = __importStar(require("./book"));
 const toolsPrompt_1 = require("./toolsPrompt");
 let myStatusBarItem;
 function isTsxToolUserMetadata(obj) {
@@ -120,8 +121,8 @@ function registerCompletionTool(context) {
                 return undefined;
             }
             let myarray = [];
-            console.log(book_1.topicarray);
-            for (const [key, value] of Object.entries(book_1.topicarray)) {
+            console.log(Book.topicarray);
+            for (const [key, value] of Object.entries(Book.topicarray)) {
                 if (value !== undefined && value.length > 0) {
                     let ci = new vscode.CompletionItem(key, vscode.CompletionItemKind.Text);
                     ci.detail = `Topic: ${key}`;
@@ -161,6 +162,39 @@ function registerCompletionTool(context) {
     );
     //add custom completions to the extension 
     context.subscriptions.push(provider2);
+}
+function getWorkspaceTestPatterns() {
+    if (!vscode.workspace.workspaceFolders) {
+        return [];
+    }
+    let bookPath = Book.getBookPath();
+    return vscode.workspace.workspaceFolders.map(workspaceFolder => ({
+        workspaceFolder,
+        pattern: new vscode.RelativePattern(workspaceFolder.uri.path + "/" + bookPath, '**/*.txt'),
+    }));
+}
+//this may reload unnecessarily.  
+function startWatchingWorkspace(context) {
+    return context.subscriptions.push(...getWorkspaceTestPatterns().map(({ pattern }) => {
+        const watcher = vscode.workspace.createFileSystemWatcher(pattern);
+        watcher.onDidCreate(fileUri => {
+            vscode.workspace.openTextDocument(fileUri).then((document) => {
+                let text = document.getText();
+                console.log(`${fileUri.path} ... read`);
+                // parse this.  
+                Book.loadPage(text, fileUri.path);
+            });
+        });
+        watcher.onDidChange(async (fileUri) => {
+            vscode.workspace.openTextDocument(fileUri).then((document) => {
+                let text = document.getText();
+                console.log(`${fileUri.path} ... read`);
+                // parse this.  
+                Book.loadPage(text, fileUri.path);
+            });
+        });
+        return watcher;
+    }));
 }
 function registerToolUserChatParticipant(context) {
     const handler = async (request, chatContext, stream, token) => {
