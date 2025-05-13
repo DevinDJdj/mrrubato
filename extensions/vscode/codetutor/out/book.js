@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.topicarray = void 0;
+exports.arrays = exports.commandarray = exports.topicarray = void 0;
 exports.logCommand = logCommand;
 exports.getCommandType = getCommandType;
 exports.open = open;
@@ -88,7 +88,11 @@ var defmap = [{ "#": "REF", ">": "CMD", "-": "SUBTASK" },
     { "##": "REF2", "**": "TOPIC", "@@": "QUESTION", "--": "NOTE", "==": "ANSWER", "$$": "ENV", "!!": "ERROR" },
     { "-->": "ENDCOMMENT" },
     { "<!--": "STARTCOMMENT" }];
+var defstring = "!@#$%^&*<>/-+";
 exports.topicarray = {};
+exports.commandarray = {};
+exports.arrays = {};
+//this will look like arrays[">"]["TOPIC"] = ...
 var refarray = [];
 let mynow = new Date(); //get the current date in YYYYMMDD format.    
 let NEXT_TERM_ID = 1;
@@ -165,12 +169,12 @@ function findTopics(inputString) {
     }
     return matches;
 }
-function sortTopics() {
-    Object.keys(exports.topicarray).forEach((key) => {
-        if (exports.topicarray[key] !== undefined) {
+function sortArray(array) {
+    Object.keys(array).forEach((key) => {
+        if (array[key] !== undefined) {
             //sort the topics by date.  
-            if (exports.topicarray[key].length > 0) {
-                exports.topicarray[key][0].sortorder = getRecency(exports.topicarray[key]); //set the sort order to recency.
+            if (array[key].length > 0) {
+                array[key][0].sortorder = getRecency(array[key]); //set the sort order to recency.
             }
         }
     });
@@ -236,7 +240,7 @@ async function read(request, context) {
     //find the topic in the topicarray if we have passed some
     let selectedtopics = findTopics(request.prompt);
     console.log("Selected topics: ", selectedtopics);
-    sortTopics();
+    sortArray(exports.topicarray);
     //pick a topic to return.  
     //right now random.  
     //get all context from the topicarray.  
@@ -321,9 +325,9 @@ function getFileDate(filePath) {
     }
     return 0;
 }
-function initTopic(topic) {
-    if (!(topic in exports.topicarray) || exports.topicarray[topic] === undefined) {
-        exports.topicarray[topic] = [];
+function initArray(topic, array = exports.topicarray) {
+    if (!(topic in array) || array[topic] === undefined) {
+        array[topic] = [];
     }
 }
 function updatePage(filePath, text, linefrom = 0, lineto = 0, show = false) {
@@ -380,16 +384,23 @@ function loadPage(text, filePath) {
     //adjust sortorder based on order of occurrence for now. 
     let mytopic = { "file": filePath, "line": 0, "topic": currenttopic, "sortorder": 0, "date": mydate, "data": "" };
     let strs = text.split("\n");
-    let tkey = "FILESTART";
+    let tkey = currenttopic;
     for (let i = 0; i < strs.length; i++) {
         let str = strs[i].trim();
         mypage.data += str + "\n"; //add to current page data.
+        mytopic.data += str + "\n"; //add to current topic data.
+        if (!defstring.includes(str.charAt(0))) {
+            //if the first character is not a definition, then it is a comment.  
+            //add to the current topic.  
+            continue;
+        }
         keyfind: for (let j = defmap.length - 1; j >= 0; j--) {
             for (const [key, val] of Object.entries(defmap[j])) {
                 if (str.startsWith(key)) {
                     let type = val;
-                    if (type === "TOPIC") {
-                        initTopic(tkey); //if doesnt exist, add.  
+                    //                    if (type === "TOPIC") {
+                    if (key === "**") {
+                        initArray(tkey, exports.topicarray); //if doesnt exist, add.  
                         exports.topicarray[tkey]?.push(mytopic); //add the previous topic to the array.
                         tkey = str.slice(j + 1);
                         let myorder = 0;
@@ -399,11 +410,21 @@ function loadPage(text, filePath) {
                         currenttopic = tkey;
                         break keyfind;
                     }
+                    else if (key === ">") {
+                        initArray(tkey, exports.arrays[key]); //if doesnt exist, add.  
+                        exports.arrays[key][tkey]?.push(mytopic); //add the previous topic to the array.
+                        tkey = str.slice(j + 1);
+                        let myorder = 0;
+                        myorder = exports.arrays[key][tkey]?.length || 0; //get the current order of the topic.
+                        mytopic = { "file": filePath, "line": i, "topic": tkey, "sortorder": myorder, "date": mydate, "data": "" };
+                        //adjust sortorder based on order of occurrence for now. 
+                        break keyfind;
+                    }
                 }
             }
         }
     }
-    initTopic(currenttopic); //if doesnt exist, add.  
+    initArray(currenttopic, exports.topicarray); //if doesnt exist, add.  
     exports.topicarray[currenttopic]?.push(mytopic);
     exports.topicarray[mydate.toString()]?.push(mypage);
 }
@@ -430,10 +451,18 @@ function loadBook() {
     const bookUri = getBookUri(); //get the book uri.
     const fileUri = bookUri.with({ path: path_1.posix.join(bookUri.path, '/definitions.txt') });
     exports.topicarray = {}; //reset topic array.
+    exports.arrays = {}; //reset definition arrays.  
+    for (let i = 0; i < defmap.length; i++) {
+        for (const [key, val] of Object.entries(defmap[i])) {
+            exports.arrays[key] = {}; //initialize the array for each key.  
+        }
+    }
     readFilesInFolder(bookUri).then((result) => {
         console.log(`Total size: ${result.total} bytes, File count: ${result.count}`);
         console.log(exports.topicarray);
         //add this to our CompletionItemProvider.   
+        sortArray(exports.topicarray); //sort the topic array by date.
+        sortArray(exports.arrays['>']);
     });
 }
 //# sourceMappingURL=book.js.map

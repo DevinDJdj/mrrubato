@@ -591,3 +591,23 @@ Should probably use double entry for lookup so we dont do this inadvertently.
 Accept single to execute though.  
 And when scanning for adding entry in history.  
 
+OK basic functionality works.  
+
+**extensions/vscode/codetutor/.vscode/settings.json
+$$files.associations
+
+
+How do I add link to location where the command is?  
+OK, thats nice..
+Have a shortcut to open this as well.  
+Too much for now.  
+
+Just adjust sort order to something more meaningful.  
+
+Add adjust ENV variables.  
+How do we distinguish what ENV we are talking about?  
+$$> = command env
+$$! = .. env?  
+
+
+

@@ -102,50 +102,50 @@ export function registerCompletionTool(context: vscode.ExtensionContext){
                 // get all text until the `position` and check if it reads `console.`
                 // and if so then complete if `log`, `warn`, and `error`
                 const linePrefix = document.lineAt(position).text.slice(0, position.character);
-                if (!linePrefix.endsWith('console.') && !linePrefix.endsWith('**')) {
-                    return undefined;
-                }
+                if (linePrefix.endsWith('**')) {
 
-                let myarray = [];
-                console.log(Book.topicarray);
-                for (const [key, value] of Object.entries(Book.topicarray)) {
-                    if (value !== undefined && value.length > 0) {
-                        let ci = new vscode.CompletionItem(key, vscode.CompletionItemKind.Text);
-                        ci.detail = `Topic: ${key}`;
-                        let doc = "";
-                        for (let item of value) {
-                            doc += `File: ${item.file}, Line: ${item.line}, Sort: ${item.sortorder}\n`;
-                        }
-                        ci.documentation = new vscode.MarkdownString(`${doc}`);
-                        ci.sortText = value[0].sortorder.toString(16).padStart(4, '0').toUpperCase();
-                        myarray.push(ci);
-                    }                    
-                }
-                /*
-                let ci = new vscode.CompletionItem('log', vscode.CompletionItemKind.Method);
-                myarray.push(ci);
-                ci = new vscode.CompletionItem('warn', vscode.CompletionItemKind.Method);
-                myarray.push(ci);
-                ci = new vscode.CompletionItem('error', vscode.CompletionItemKind.Method);
-                myarray.push(ci);
-                */
-               /*
-                let sortme = true;
-                if (sortme){
-
-                    for (let i = 0; i < myarray.length; i++) {
-                        myarray[i].sortText = i.toString(16).padStart(4, '0').toUpperCase();
+                    let myarray = [];
+                    console.log(Book.topicarray);
+                    for (const [key, value] of Object.entries(Book.topicarray)) {
+                        if (value !== undefined && value.length > 0) {
+                            let ci = new vscode.CompletionItem(key, vscode.CompletionItemKind.Text);
+                            ci.detail = `Topic: ${key}`;
+                            let doc = "";
+                            for (let item of value) {
+                                doc += `File: ${item.file}, Line: ${item.line}, Sort: ${value[0].sortorder}\n`;
+                                doc += `Link: [${item.file}](${item.file}#L${item.line})\n`;
+                            }
+                            ci.documentation = new vscode.MarkdownString(`${doc}`);
+                            ci.sortText = value[0].sortorder.toString(16).padStart(4, '0').toUpperCase();
+                            myarray.push(ci);
+                        }                    
                     }
+                    return myarray;
                 }
-                else{
+                if (linePrefix.endsWith('>')) {
+                    let myarray = [];
+                    console.log(Book.arrays['>']);
+                    for (const [key, value] of Object.entries(Book.arrays['>'])) {
+                        if (value !== undefined && value.length > 0) {
+                            let ci = new vscode.CompletionItem(key, vscode.CompletionItemKind.Text);
+                            ci.detail = `Command: ${key}`;
+                            let doc = "";
+                            for (let item of value) {
+                                doc += `File: ${item.file}, Line: ${item.line}, Sort: ${item.sortorder}\n`;
+                            }
+                            ci.documentation = new vscode.MarkdownString(`${doc}`);
+                            ci.sortText = value[0].sortorder.toString(16).padStart(4, '0').toUpperCase();
+                            myarray.push(ci);
+                        }                    
+                    }
+                    return myarray;
 
                 }
-                */
-                return myarray;
             }
         },
-        '*' // triggered whenever a '.' is being typed
-        //switch from '.' to '**' to trigger on '**' instead
+        '*', //trigger single character
+        '>'
+        //switch from '.' to '**' to trigger on '**' instead 
     );
     //add custom completions to the extension 
     context.subscriptions.push(provider2);
