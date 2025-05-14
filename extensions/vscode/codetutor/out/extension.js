@@ -57,6 +57,7 @@ const toolParticipant_1 = require("./toolParticipant");
 const BASE_PROMPT = 'You are a helpful code tutor. Your job is to teach the user with simple descriptions and sample code of the concept. Respond with a guided overview of the concept in a series of messages. Do not give the user the answer directly, but guide them to find the answer themselves. If the user asks a non-programming question, politely decline to respond.';
 const EXERCISES_PROMPT = 'You are a helpful tutor. Your job is to teach the user with fun, simple exercises that they can complete in the editor. Your exercises should start simple and get more complex as the user progresses. Move one concept at a time, and do not move on to the next concept until the user provides the correct answer. Give hints in your exercises to help the user learn. If the user is stuck, you can provide the answer and explain why it is the answer. If the user asks a non-programming question, politely decline to respond.';
 // define a chat handler
+let max_context_length = 512000; //for now using this max context length.  
 let activeEditor = vscode.window.activeTextEditor;
 let isWorking = false;
 let workFunc = null;
@@ -73,10 +74,58 @@ function validateChange(topkey, change) {
     console.log(allDiagnostics);
     return true;
 }
+function getRandomPrompt() {
+    const mySettings = vscode.workspace.getConfiguration('mrrubato');
+    if (mySettings.workprompts.length > 0) {
+        let rand = Math.floor(Math.random() * mySettings.workprompts.length);
+        let prompt = mySettings.workprompts[rand].prompt;
+        return prompt;
+    }
+    else {
+        return "Just starting help me figure things out.";
+    }
+}
+function updatePrompts(topkey, topics, fullMessage) {
+    //update the prompts here.
+    const mySettings = vscode.workspace.getConfiguration('mrrubato');
+    let addltopics = Book.findTopics(fullMessage);
+    const topicArray = mySettings.defaultprompts.map(obj => obj.topic);
+    let bookdata = Book.pickTopic(addltopics, topicArray, 5);
+    if (mySettings.codingmode === "git") {
+        let git = Book.gitChanges(addltopics); //get the git changes for the topic.
+        bookdata[1] += git; //add the git changes to the full context of topics.
+    }
+    else if (mySettings.codingmode === "book") {
+        //get the book context for the topic.
+        //nothing additional.  
+    }
+    topics = topics + bookdata[1].slice(-max_context_length / 2); //dont want to overwrite the full context.  
+    topics = topics.slice(-max_context_length);
+    //need to determine weight of prompt.  
+    mySettings.roboprompts.push({ 'prompt': fullMessage, 'topics': topics, weight: 0.5 });
+    //random delete a prompt.  
+    if (mySettings.roboprompts.length > mySettings.numworkprompts) {
+        let val = mySettings.roboprompts.shift();
+        val.weight = val.weight * (Math.random());
+        if (val.weight > 0.125) {
+            //iterate around 2-3 times.  
+            //delete the first one.
+            //keep thinking about this or not.  
+            mySettings.roboprompts.push(val);
+        }
+        if (val.weight < 0.0125) {
+            mySettings.roboprompts.push({ 'prompt': getRandomPrompt(), 'topics': topics, weight: 0.5 });
+        }
+    }
+    //for now add this prompt.  
+    //probably need several steps here..
+    //maybe one call to rewrite this.  
+}
 function roboupdate(topkey, topics, fullMessage) {
     //update the source code and highlight what chnaged.
     if (validateChange(topkey, fullMessage)) {
         //		Book.updatePage(topkey, fullMessage);
+        updatePrompts(topkey, topics, fullMessage);
     }
     //Book.updatePage("book/20230110.txt", "hello");
     if (activeEditor) {
@@ -109,42 +158,28 @@ async function work(request, context, stream, token) {
         //client = ollama.Client(host='http://192.168.1.154:11434')
         //response = client.generate(model='llama3.2b', prompt=my_prompt)
         //actual_response = response['response']
-        let [topkey, topics] = await Book.read(request, context);
+        let [topkey, topicdata] = await Book.read(request.prompt, context);
         //get topic to work on and context.  
-        const response = await ollama_1.default.chat({
-            model: 'llama3.1:8b',
-            //		model: 'deepseek-coder-v2:latest',
-            messages: [{ role: 'user', content: topics + "\n" + workPrompt }],
-            stream: true,
-        });
-        let fullMessage = '';
-        for await (const part of response) {
-            process.stdout.write(part.message.content);
-            fullMessage += part.message.content;
-            //		stream.markdown(part.message.content);	
-            console.log(part.message.content);
-            if (token.isCancellationRequested) {
-                break;
-            }
-            //update the source code here.  
-            roboupdate(topkey, topics, fullMessage);
-        }
+        //const topics = "test"
+        let fullMessage = await Chat(topicdata + request.prompt, context, stream, token);
+        roboupdate(topkey, topicdata, fullMessage);
     }
     catch (error) {
         console.error('Error calling Ollama:', error);
     }
 }
-async function Chat(request, context, stream, token) {
+async function Chat(prompt, context, stream, token) {
+    let ret = "";
     try {
         //connect remote
         //client = ollama.Client(host='http://192.168.1.154:11434')
         //response = client.generate(model='llama3.2b', prompt=my_prompt)
         //actual_response = response['response']
-        await Book.read(request, context);
+        await Book.read(prompt, context);
         const response = await ollama_1.default.chat({
-            //		model: 'llama3.1:8b',
-            model: 'deepseek-coder-v2:latest',
-            messages: [{ role: 'user', content: request.prompt }],
+            model: 'llama3.1:8b',
+            //		model: 'deepseek-coder-v2:latest',
+            messages: [{ role: 'user', content: prompt }],
             stream: true,
             /*
                     tools: [{
@@ -170,6 +205,7 @@ async function Chat(request, context, stream, token) {
         for await (const part of response) {
             process.stdout.write(part.message.content);
             stream.markdown(part.message.content);
+            ret += part.message.content;
             if (token.isCancellationRequested) {
                 break;
             }
@@ -179,6 +215,7 @@ async function Chat(request, context, stream, token) {
     catch (error) {
         console.error('Error calling Ollama:', error);
     }
+    return ret;
 }
 function activate(context) {
     //not being activated until chatted to...
@@ -193,13 +230,23 @@ function activate(context) {
         // initialize the prompt
         let prompt = BASE_PROMPT;
         console.log(`Chat request: ${request.command} with prompt: ${request.prompt}`);
+        if (request.command === 'stats') {
+            const mySettings = vscode.workspace.getConfiguration('mrrubato');
+            stream.markdown('**My agent default prompts**  ' + mySettings.defaultprompts.length + '  \n');
+            stream.markdown('**My agent work prompts** ' + mySettings.workprompts.length + '  \n');
+            stream.markdown('**My agent run in background** ' + mySettings.runinbackground + '  \n');
+            stream.markdown('**My agent run interval** ' + mySettings.runinterval + '  \n');
+            stream.markdown('**My agent coding mode** ' + mySettings.codingmode + '  \n');
+            stream.markdown('**My agent work prompt** ' + mySettings.workprompt.slice(-255) + '  \n');
+        }
         if (request.command === 'list') {
             //list the files in the book.  
             if (request.prompt === "prompts") {
                 stream.markdown('**Listing prompts**  \n');
                 const mySettings = vscode.workspace.getConfiguration('mrrubato');
+                //probably dont want this in the future.  
                 mySettings.update('runinbackground', true);
-                stream.markdown('**My agent prompts**  \n ' + mySettings.workprompts);
+                stream.markdown('**My agent default prompts**  \n ' + mySettings.defaultprompts);
                 //not in use yet...
                 return;
             }
@@ -213,6 +260,9 @@ function activate(context) {
             //workPrompt = request.prompt;
             mySettings.update('workprompt', request.prompt);
             work(request, context, stream, token);
+            let [topkey, topics] = await Book.read(request.prompt, context);
+            mySettings.workprompts.push({ 'prompt': workPrompt, 'topics': topics, weight: 1 });
+            mySettings.update('workprompts', mySettings.workprompts);
             return;
         }
         if (request.command === 'stop') {
@@ -226,7 +276,7 @@ function activate(context) {
             prompt = EXERCISES_PROMPT;
             stream.markdown('**Starting exercise**  \n');
             stream.markdown('**Answering question**  \n');
-            await Chat(request, context, stream, token);
+            await Chat(request.prompt, context, stream, token);
             stream.markdown('  \n**Getting Stats**  \n');
             await getStats(request, context, stream, token);
             stream.markdown('  \n**Exercise complete**  \n');
@@ -337,6 +387,7 @@ function activate(context) {
                 break;
             case "!":
                 //find in log files
+                //logdirs
                 break;
             case "$":
                 //find env variables

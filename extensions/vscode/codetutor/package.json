@@ -21,10 +21,25 @@
               "default": "false",
               "description": "Setting to automatically run and edit code"
           },
-          "mrrubato.runinterval": {
+          "mrrubato.robocodemode": {
+            "type": "string",
+            "default": "git",
+            "description": "git, book, test"
+          },
+        "mrrubato.runinterval": {
               "type": "number",
               "default": 30000,
               "description": "Interval to run steps."
+          },
+          "mrrubato.numworktopics": {
+            "type": "number",
+            "default": 10,
+            "description": "Number of prompts to remain while running."
+          },
+          "mrrubato.numworkprompts": {
+              "type": "number",
+              "default": 10,
+              "description": "Number of prompts to remain while running."
           },
           "mrrubato.workprompt": {
             "type": "string",
@@ -34,32 +49,91 @@
           "mrrubato.bookfolder": {
             "type": "string",
             "default": "book",
-            "description": "LLM base prompt."
+            "description": "Relative path for book to read."
           },
           "mrrubato.genbookfolder": {
             "type": "string",
             "default": "genbook",
-            "description": "LLM base prompt."
+            "description": "Relative path for transcript generation."
           },
 
+          "mrrubato.defaultprompts": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "title": "Default prompts and topics to use one or the other can be blank.",
+                "properties": {
+                    "prompt": {
+                      "type": "string",
+                      "description": "Prompt to use"
+                    },
+                  "topic": {
+                    "type": "string",
+                    "description": "Category of prompt"
+                },
+
+                    "weight": {
+                        "type": "number",
+                        "description": "Weight for topic use"
+                    }
+                }
+            },
+            "default": [],
+            "description": "Default topics to use when nothing specified"
+          
+          },
+
+
           "mrrubato.workprompts": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "title": "Prompt",
+                "properties": {
+                    "prompt": {
+                        "type": "string",
+                        "description": "Prompt to use"
+                    },
+                    "topic": {
+                      "type": "string",
+                      "description": "Category of prompt"
+                  },
+
+                    "weight": {
+                        "type": "number",
+                        "description": "Weight for prompt use"
+                    }
+                }
+            },
+            "default": [],
+            "description": "Work prompts to use"
+          
+          },
+      
+
+          "mrrubato.roboprompts": {
               "type": "array",
               "items": {
                   "type": "object",
-                  "title": "inner objects",
+                  "title": "Prompt",
                   "properties": {
-                      "name": {
+                      "prompt": {
                           "type": "string",
-                          "description": "Name of inner object"
+                          "description": "Prompt to use"
                       },
-                      "size": {
+                      "topic": {
+                        "type": "string",
+                        "description": "Category of prompt"
+                    },
+
+                      "weight": {
                           "type": "number",
-                          "description": "Size of inner object"
+                          "description": "Weight for prompt use"
                       }
                   }
               },
               "default": [],
-              "description": "my test configurations"
+              "description": "Work prompts to use"
           
           }                    
       }
@@ -89,6 +163,10 @@
         "description": "What can I teach you?",
         "isSticky": true,
         "commands": [
+          {
+            "name": "stats",
+            "description": "List statistics for extension robot."
+          },
           {
             "name": "exercise",
             "description": "Provide exercises to practice a concept."

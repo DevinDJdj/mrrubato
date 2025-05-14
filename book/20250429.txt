@@ -610,4 +610,38 @@ $$> = command env
 $$! = .. env?  
 
 
+**extensions/vscode/codetutor/src/extension.ts
+--gencommand
+case "#":
+    //open on web.
+How do we do substitution?  
+No time given now to this.  
+
+--workprompts
+vs
+--roboprompts
+How do we utilize this intelligently.  
+Still have no custom model, so not really going to work very well.  
+
+**extensions/vscode/codetutor/.vscode/settings.json
+    "mrrubato.defaultprompts": [
+        {
+            "topic": "book/definitions.txt",
+            "prompt": "You are a helpful assistant. You will be given a task and you will respond with the best possible answer. If you don't know the answer, say 'I don't know'.",
+            "weight": 0.5
+        },
+        {
+            "topic": "timestep.py",
+            "prompt": "You are a coding assistant. You will be given a task and you will respond with the best possible code. If you don't know the answer, say 'I don't know'.",
+            "weight": 0.5
+        }
+    ]
+
+
+Lot of changes.  
+Need to test.
+@mr /start think about coding **timestep.py
+
+!!Error calling Ollama: Error: Response stream has been closed
+This is occurring too much.  
 

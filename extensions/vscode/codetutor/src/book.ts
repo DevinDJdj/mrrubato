@@ -149,7 +149,7 @@ function getRecency(bt : Array<BookTopic>, mydate: Date = new Date()) : number {
     }
 }
 
-function findTopics(inputString : string) : string[]{
+export function findTopics(inputString : string) : string[]{
     // Create a regex pattern to match double asterisks and capture the text after them
     //need to add newline at start.  
     const regex = /\*\*(.*?)\*/g;
@@ -179,15 +179,16 @@ function sortArray(array: {[key: string] : Array<BookTopic> | undefined})  {
 
 }
   
-function pickTopic(selectedtopics : string[]) : [string, string] {
+export function pickTopic(selectedtopics : string[], defaultprompts: string[] = [], numtopics: number = 10) : [string, string] {
     //pick a topic from the topicarray based on the sort order.
+    //still need to improve when we have no selected topics.  
     let minsort = 1000000; //set to a large number.
     let retkey = "NONE";
     Object.keys(topicarray).forEach((key) => {
         if (topicarray[key] !== undefined) {
             //sort the topics by date.  
             if (topicarray[key].length > 0) {
-                if (topicarray[key][0].sortorder < minsort && Math.random() < 0.5) { //pick a random topic with the lowest sort order.
+                if (topicarray[key][0].sortorder < minsort && 0.5 < (Math.random()*minsort)) { //pick a random topic with the lowest sort order.
                     retkey = topicarray[key][0].topic; //set the key to the topic with the lowest sort order.
                     minsort = topicarray[key][0].sortorder; //set the minsort to the sort order of the topic.
                 }
@@ -196,12 +197,16 @@ function pickTopic(selectedtopics : string[]) : [string, string] {
     });
 
     let retdata = "";
+
+    
+    //random recent topic.  
     retdata += "**" + retkey + "\n"; //add the random topic to the data.
     if (topicarray[retkey] !== undefined) {
         for (let i = 0; i < topicarray[retkey].length; i++) {
             retdata += topicarray[retkey][i].data + "\n"; //add all data for the topic.
         }
     }
+
     for (let i=0; i<selectedtopics.length; i++) {
         if (topicarray[ selectedtopics[i] ] !== undefined) {
             retdata += "**" + selectedtopics[i] + "\n"; //add the topic to the data.
@@ -241,7 +246,7 @@ export async function write(request: vscode.ChatRequest, context: vscode.ChatCon
     return ["NONE", "NONE"];    
 }
 
-export async function read(request: vscode.ChatRequest, context: vscode.ChatContext) : Promise<[string, string]>{
+export async function read(prompt: string, context: vscode.ChatContext) : Promise<[string, string]>{
     //adjust request to include book context needed.  
 //    return getBook();
     //only want pertinent context.  
@@ -249,7 +254,7 @@ export async function read(request: vscode.ChatRequest, context: vscode.ChatCont
     //create sort order for toicarray.  
     //then retrieve topic information.  
     //find the topic in the topicarray if we have passed some
-    let selectedtopics = findTopics(request.prompt); 
+    let selectedtopics = findTopics(prompt); 
     console.log("Selected topics: ", selectedtopics);
 
     sortArray(topicarray);

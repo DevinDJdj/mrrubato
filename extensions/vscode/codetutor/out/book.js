@@ -37,6 +37,8 @@ exports.arrays = exports.commandarray = exports.topicarray = void 0;
 exports.logCommand = logCommand;
 exports.getCommandType = getCommandType;
 exports.open = open;
+exports.findTopics = findTopics;
+exports.pickTopic = pickTopic;
 exports.gitChanges = gitChanges;
 exports.write = write;
 exports.read = read;
@@ -179,15 +181,16 @@ function sortArray(array) {
         }
     });
 }
-function pickTopic(selectedtopics) {
+function pickTopic(selectedtopics, defaultprompts = [], numtopics = 10) {
     //pick a topic from the topicarray based on the sort order.
+    //still need to improve when we have no selected topics.  
     let minsort = 1000000; //set to a large number.
     let retkey = "NONE";
     Object.keys(exports.topicarray).forEach((key) => {
         if (exports.topicarray[key] !== undefined) {
             //sort the topics by date.  
             if (exports.topicarray[key].length > 0) {
-                if (exports.topicarray[key][0].sortorder < minsort && Math.random() < 0.5) { //pick a random topic with the lowest sort order.
+                if (exports.topicarray[key][0].sortorder < minsort && 0.5 < (Math.random() * minsort)) { //pick a random topic with the lowest sort order.
                     retkey = exports.topicarray[key][0].topic; //set the key to the topic with the lowest sort order.
                     minsort = exports.topicarray[key][0].sortorder; //set the minsort to the sort order of the topic.
                 }
@@ -195,6 +198,7 @@ function pickTopic(selectedtopics) {
         }
     });
     let retdata = "";
+    //random recent topic.  
     retdata += "**" + retkey + "\n"; //add the random topic to the data.
     if (exports.topicarray[retkey] !== undefined) {
         for (let i = 0; i < exports.topicarray[retkey].length; i++) {
@@ -230,7 +234,7 @@ function gitChanges(topics) {
 async function write(request, context) {
     return ["NONE", "NONE"];
 }
-async function read(request, context) {
+async function read(prompt, context) {
     //adjust request to include book context needed.  
     //    return getBook();
     //only want pertinent context.  
@@ -238,7 +242,7 @@ async function read(request, context) {
     //create sort order for toicarray.  
     //then retrieve topic information.  
     //find the topic in the topicarray if we have passed some
-    let selectedtopics = findTopics(request.prompt);
+    let selectedtopics = findTopics(prompt);
     console.log("Selected topics: ", selectedtopics);
     sortArray(exports.topicarray);
     //pick a topic to return.  
