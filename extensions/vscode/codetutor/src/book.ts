@@ -64,7 +64,12 @@ interface BookTopic {
     sortorder: number;
 }
 
+export var alltopics: string[] = [];
+export var alltopicsa: string[] = [];
 export var topicarray: {[key: string] : Array<BookTopic> | undefined} = {};
+
+export var temptopics: string[] = [];
+export var temptopicarray: {[key: string] : Array<BookTopic> | undefined} = {};
 
 export var commandarray: {[key: string] : Array<BookTopic> | undefined} = {};
 
@@ -166,8 +171,36 @@ export function findTopics(inputString : string) : string[]{
     return matches;
 }
   
+export async function getTempTopicsFromPath(path: string) : Promise<Array<string>> {
+    //get the file name from the path.  
+    //this will be used to get the file name from the path.  
 
-function sortArray(array: {[key: string] : Array<BookTopic> | undefined})  {
+    let topics = await readFileNamesInFolder(path);
+    //create new entries in the topicarray.
+    //these should be relative paths now.  
+    for (let i=0; i<topics.length; i++) {
+        let mytopic = topics[i];
+        const found = temptopics.find((topic) => topic === mytopic);
+        if (!found) {
+            temptopics.push(mytopic); //add the topic to the array.
+        }
+    }
+    return topics;
+}
+export function adjustSort(array: Array<string>) {
+    //go through topicarray
+    //and adjust the sort order based on the date.
+    //and other things.  
+
+}
+
+//do we want to reset all here?  
+//for now the book isnt large enough to worry about this type of performance.  But...
+function sortArray(array: {[key: string] : Array<BookTopic> | undefined}, typekey='')  {
+    if (typekey===''){
+        alltopics = []; //reset all topics.
+    }
+
     Object.keys(array).forEach((key) => {
         if (array[key] !== undefined) {
             //sort the topics by date.  
@@ -175,6 +208,8 @@ function sortArray(array: {[key: string] : Array<BookTopic> | undefined})  {
                 array[key][0].sortorder = getRecency(array[key]); //set the sort order to recency.
             }
         }
+        alltopics.push(key);
+        alltopicsa.push(key.substring(0,1)); //add the first character of the topic to the array.
     });
 
 }
@@ -304,6 +339,27 @@ export async function closeFileIfOpen(file:vscode.Uri) : Promise<void> {
     }
 }
 
+async function readFileNamesInFolder(path: string): Promise<Array<string>> {
+    let topicUri = getUri(path);
+    let total = 0;
+    let count = 0;
+    let retarray = [];
+    for (const [name, type] of await vscode.workspace.fs.readDirectory(topicUri)) {
+        //what order does this come in?  Is it alphabetical?
+        if (type === vscode.FileType.Directory) {
+            const fileUri = topicUri.with({ path: posix.join(topicUri.path, name) });
+            retarray.push(path + name); //add the directory name to the array.
+
+        }
+        if (type === vscode.FileType.File) {
+            const fileUri = topicUri.with({ path: posix.join(topicUri.path, name) });
+            retarray.push(path + name); //add the file name to the array.
+        }
+    }
+    return retarray;
+
+}
+
 async function readFilesInFolder(folder: vscode.Uri): Promise<{ total: number, count: number }> {
     let total = 0;
     let count = 0;
@@ -343,7 +399,7 @@ async function readFilesInFolder(folder: vscode.Uri): Promise<{ total: number, c
 }
 
 
-function getFileName(filePath: string): string {
+export function getFileName(filePath: string): string {
     //get the date of the file.  
     //get the filename without the extension and path.  
     let myName = posix.basename(filePath);
@@ -497,6 +553,16 @@ export function getBookPath() : string{
     let bookFolder = mySettings.bookfolder;
     return bookFolder;
 }
+
+export function getUri(path: string) : vscode.Uri {
+    if (!vscode.workspace.workspaceFolders) {
+        return vscode.Uri.parse("");
+    }
+    const folderUri = vscode.workspace.workspaceFolders[0].uri;
+    const retUri = folderUri.with({ path: posix.join(folderUri.path, path) });
+    return retUri;
+}
+
 function getBookUri() : vscode.Uri {
     if (!vscode.workspace.workspaceFolders) {
         return vscode.Uri.parse("");

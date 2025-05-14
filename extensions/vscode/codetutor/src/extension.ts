@@ -450,6 +450,11 @@ export function activate(context: vscode.ExtensionContext) {
 				}
 
 				break;
+				
+			case "/":
+				//run the command.
+				break;
+
 			case "#":
 				//open on web.
 				break;
@@ -512,7 +517,17 @@ export function activate(context: vscode.ExtensionContext) {
 
 		}		
 		//log the command to genbook if valid.  
+
 		Book.logCommand(text);
+		//copy to the clipboard anyway by default.  
+		//if wanting to use in different environment.  
+		//not sure if this is needed or not.
+		vscode.env.clipboard.writeText(text);
+		/*
+		vscode.env.clipboard.readText().then((text)=>{
+			clipboard_content = text; 
+		});
+		*/
 	});
 
 	context.subscriptions.push(disposable);
@@ -520,6 +535,15 @@ export function activate(context: vscode.ExtensionContext) {
 	//start the MCP server as well.  
 	//vscode.commands.createMcpServer('mrrubato.mytutor', tutor);
 	activeEditor = vscode.window.activeTextEditor;
+
+	vscode.workspace.onDidSaveTextDocument((document) => {
+		if (document.languageId === "plaintext" && document.uri.scheme === "file") {
+			// do work
+			triggerUpdateDecorations();
+			triggerGetBookContext();
+			updateStatusBarItem();
+		}
+	});
 
 	vscode.window.onDidChangeActiveTextEditor(editor => {
 		activeEditor = editor;
@@ -534,9 +558,55 @@ export function activate(context: vscode.ExtensionContext) {
 
 let uitimeout: NodeJS.Timeout | undefined = undefined;
 
+
+//#https://code.visualstudio.com/api/references/vscode-api#DecorationRenderOptions
+
+const smallNumberDecorationType = vscode.window.createTextEditorDecorationType({
+	borderWidth: '1px',
+	borderStyle: 'solid',
+	overviewRulerColor: 'blue',
+	overviewRulerLane: vscode.OverviewRulerLane.Right,
+	light: {
+		// this color will be used in light color themes
+		borderColor: 'darkblue'
+	},
+	dark: {
+		// this color will be used in dark color themes
+		borderColor: 'lightblue'
+	}
+});
+
+// create a decorator type that we use to decorate large numbers
+const largeNumberDecorationType = vscode.window.createTextEditorDecorationType({
+	cursor: 'crosshair',
+	// use a themable color. See package.json for the declaration and default values.
+	backgroundColor: { id: 'myextension.largeNumberBackground' }
+});
+
+
 function updateDecorations() {
-	//
+	if (!activeEditor) {
+		return;
+	}
+	const regEx = /\d+/g;
+	const text = activeEditor.document.getText();
+	const smallNumbers: vscode.DecorationOptions[] = [];
+	const largeNumbers: vscode.DecorationOptions[] = [];
+	let match;
+	while ((match = regEx.exec(text))) {
+		const startPos = activeEditor.document.positionAt(match.index);
+		const endPos = activeEditor.document.positionAt(match.index + match[0].length);
+		const decoration = { range: new vscode.Range(startPos, endPos), hoverMessage: 'Number **' + match[0] + '**' };
+		if (match[0].length < 3) {
+			smallNumbers.push(decoration);
+		} else {
+			largeNumbers.push(decoration);
+		}
+	}
+	activeEditor.setDecorations(smallNumberDecorationType, smallNumbers);
+	activeEditor.setDecorations(largeNumberDecorationType, largeNumbers);
 }
+
 
 function triggerUpdateDecorations(throttle = false) {
 	if (throttle) {
@@ -552,7 +622,7 @@ function getBookContext() {
 	if (!activeEditor) {
 		return vscode.window.showInformationMessage('No active editor found');
 	}
-	console.log(activeEditor.document.uri.toString());// + activeEditor.document);
+	console.log("getBookContext: " + activeEditor.document.uri.toString());// + activeEditor.document);
 }
 
 

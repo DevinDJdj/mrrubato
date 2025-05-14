@@ -645,3 +645,71 @@ Need to test.
 !!Error calling Ollama: Error: Response stream has been closed
 This is occurring too much.  
 
+getting ok responses now.  
+
+But..
+--pickTopic
+still not working properly.  
+start here.  
+
+
+**MARKUP
+What are some models like this:
+#https://github.com/mwouts/jupytext
+Should adopt something from wiki.  
+[[]]
+Allow inline link to document or command search.  
+[[> dir ]]
+Just create a link from this which essentially calls generate with this text.  
+[[=$$VAR]] for substitution?  
+
+
+
+**extensions/vscode/codetutor/src/extension.ts
+$$PIANODIR=c:/devinpiano/music
+@something like this?  
+> cd [[=$$PIANODIR]]/extensions/vscode/codetutor
+
+> cd c:/devinpiano/music/extensions/vscode/codetutor
+> tsc -watch -p ./
+
+
+Need to test the decorations.  
+For now just squiggly line underline.  
+CodeLensProvider 
+this is probably what is needed for onclick actions.  
+
+Should really do this as a language server.  
+But...
+#https://code.visualstudio.com/api/references/vscode-api#DecorationRenderOptions
+
+vscode.env.clipboard.readText
+vscode.env.clipboard.writeText
+
+Think about the language a bit before moving forward.  
+Essentially this is like a shell scripting format.  
+
+
+**web/public/testparse.html
+Still dont have much regarding parser...
+
+
+**extension/vscode/codetutor/src/extension.ts
+
+When typing directory type struct, on slash, we need to understand if we are searching, 
+and adjust the return to include all files/folders in that directory.  
+Add on slash detection.  
+
+Anything changed in current interaction should automatically be added to the top recency category.  
+
+
+**extensions/vscode/codetutor/src/toolParticipant.ts
+
+I think this is ok that we have a delay for the path to load.  
+Perhaps will have too many topics this way, unclear.  
+
+
+
+
+
+

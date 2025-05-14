@@ -33,20 +33,24 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.arrays = exports.commandarray = exports.topicarray = void 0;
+exports.arrays = exports.commandarray = exports.temptopicarray = exports.temptopics = exports.topicarray = exports.alltopicsa = exports.alltopics = void 0;
 exports.logCommand = logCommand;
 exports.getCommandType = getCommandType;
 exports.open = open;
 exports.findTopics = findTopics;
+exports.getTempTopicsFromPath = getTempTopicsFromPath;
+exports.adjustSort = adjustSort;
 exports.pickTopic = pickTopic;
 exports.gitChanges = gitChanges;
 exports.write = write;
 exports.read = read;
 exports.getBook = getBook;
 exports.closeFileIfOpen = closeFileIfOpen;
+exports.getFileName = getFileName;
 exports.updatePage = updatePage;
 exports.loadPage = loadPage;
 exports.getBookPath = getBookPath;
+exports.getUri = getUri;
 const vscode = __importStar(require("vscode"));
 const path_1 = require("path");
 /*
@@ -91,7 +95,11 @@ var defmap = [{ "#": "REF", ">": "CMD", "-": "SUBTASK" },
     { "-->": "ENDCOMMENT" },
     { "<!--": "STARTCOMMENT" }];
 var defstring = "!@#$%^&*<>/-+";
+exports.alltopics = [];
+exports.alltopicsa = [];
 exports.topicarray = {};
+exports.temptopics = [];
+exports.temptopicarray = {};
 exports.commandarray = {};
 exports.arrays = {};
 //this will look like arrays[">"]["TOPIC"] = ...
@@ -171,7 +179,32 @@ function findTopics(inputString) {
     }
     return matches;
 }
-function sortArray(array) {
+async function getTempTopicsFromPath(path) {
+    //get the file name from the path.  
+    //this will be used to get the file name from the path.  
+    let topics = await readFileNamesInFolder(path);
+    //create new entries in the topicarray.
+    //these should be relative paths now.  
+    for (let i = 0; i < topics.length; i++) {
+        let mytopic = topics[i];
+        const found = exports.temptopics.find((topic) => topic === mytopic);
+        if (!found) {
+            exports.temptopics.push(mytopic); //add the topic to the array.
+        }
+    }
+    return topics;
+}
+function adjustSort(array) {
+    //go through topicarray
+    //and adjust the sort order based on the date.
+    //and other things.  
+}
+//do we want to reset all here?  
+//for now the book isnt large enough to worry about this type of performance.  But...
+function sortArray(array, typekey = '') {
+    if (typekey === '') {
+        exports.alltopics = []; //reset all topics.
+    }
     Object.keys(array).forEach((key) => {
         if (array[key] !== undefined) {
             //sort the topics by date.  
@@ -179,6 +212,8 @@ function sortArray(array) {
                 array[key][0].sortorder = getRecency(array[key]); //set the sort order to recency.
             }
         }
+        exports.alltopics.push(key);
+        exports.alltopicsa.push(key.substring(0, 1)); //add the first character of the topic to the array.
     });
 }
 function pickTopic(selectedtopics, defaultprompts = [], numtopics = 10) {
@@ -279,6 +314,24 @@ async function closeFileIfOpen(file) {
     if (index !== -1) {
         await vscode.window.tabGroups.close(tabs[index]);
     }
+}
+async function readFileNamesInFolder(path) {
+    let topicUri = getUri(path);
+    let total = 0;
+    let count = 0;
+    let retarray = [];
+    for (const [name, type] of await vscode.workspace.fs.readDirectory(topicUri)) {
+        //what order does this come in?  Is it alphabetical?
+        if (type === vscode.FileType.Directory) {
+            const fileUri = topicUri.with({ path: path_1.posix.join(topicUri.path, name) });
+            retarray.push(path + name); //add the directory name to the array.
+        }
+        if (type === vscode.FileType.File) {
+            const fileUri = topicUri.with({ path: path_1.posix.join(topicUri.path, name) });
+            retarray.push(path + name); //add the file name to the array.
+        }
+    }
+    return retarray;
 }
 async function readFilesInFolder(folder) {
     let total = 0;
@@ -436,6 +489,14 @@ function getBookPath() {
     const mySettings = vscode.workspace.getConfiguration('mrrubato');
     let bookFolder = mySettings.bookfolder;
     return bookFolder;
+}
+function getUri(path) {
+    if (!vscode.workspace.workspaceFolders) {
+        return vscode.Uri.parse("");
+    }
+    const folderUri = vscode.workspace.workspaceFolders[0].uri;
+    const retUri = folderUri.with({ path: path_1.posix.join(folderUri.path, path) });
+    return retUri;
 }
 function getBookUri() {
     if (!vscode.workspace.workspaceFolders) {

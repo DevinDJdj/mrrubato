@@ -101,10 +101,10 @@ export function registerCompletionTool(context: vscode.ExtensionContext){
 
                 // get all text until the `position` and check if it reads `console.`
                 // and if so then complete if `log`, `warn`, and `error`
+                let myarray = [];
                 const linePrefix = document.lineAt(position).text.slice(0, position.character);
                 if (linePrefix.endsWith('**')) {
 
-                    let myarray = [];
                     console.log(Book.topicarray);
                     for (const [key, value] of Object.entries(Book.topicarray)) {
                         if (value !== undefined && value.length > 0) {
@@ -123,7 +123,6 @@ export function registerCompletionTool(context: vscode.ExtensionContext){
                     return myarray;
                 }
                 if (linePrefix.endsWith('>')) {
-                    let myarray = [];
                     console.log(Book.arrays['>']);
                     for (const [key, value] of Object.entries(Book.arrays['>'])) {
                         if (value !== undefined && value.length > 0) {
@@ -141,10 +140,102 @@ export function registerCompletionTool(context: vscode.ExtensionContext){
                     return myarray;
 
                 }
+                if (linePrefix.endsWith('/') && linePrefix.startsWith('**')){
+                    //include all topics with this.  
+
+
+                    //need sorted keys.  
+//                    console.log(Book.topicarray);
+
+                    //use Book.alltopics to get sorted array.  
+                    let firstchar = linePrefix.substring(2,3);
+                    let retarray = [];
+                    let linePrefixFull = linePrefix.substring(2);
+                    for (let i=0; i<Book.alltopicsa.length; i++) {
+                        let key = Book.alltopicsa[i];
+                        if (Book.alltopicsa[i] === firstchar){
+                            //this is the first one.  
+                            for (let j=i; j<Book.alltopics.length; j++) {
+                                let key2 = Book.alltopics[j];
+                                if (key2.startsWith(linePrefixFull)) {
+                                    retarray.push(key2);
+
+                                }
+                            }
+                        }
+
+                    }
+                    Book.getTempTopicsFromPath(linePrefixFull);
+                    //add what we have found in the temp topic array.  
+                    for (let i=0; i<Book.temptopics.length; i++) {
+
+                        //this needs relative path to work.  
+                        let key = Book.temptopics[i];
+                        if (key.startsWith(linePrefixFull)) {
+                            retarray.push(key);
+                        }
+                    }
+                    Book.adjustSort(retarray);
+                    for (let i=0; i<retarray.length; i++) {
+                        let key = retarray[i];
+                        if ((Book.topicarray[key] !== undefined && Book.topicarray[key].length > 0))  {
+                            let ci = new vscode.CompletionItem(key, vscode.CompletionItemKind.Text);
+                            ci.detail = `Topic: ${key}`;
+                            let doc = "";
+                            for (let item of Book.topicarray[key]) {
+                                doc += `File: ${item.file}, Line: ${item.line}, Sort: ${item.sortorder}\n`;
+                                doc += `Link: [${item.file}](${item.file}#L${item.line})\n`;
+                            }
+                            ci.documentation = new vscode.MarkdownString(`${doc}`);
+                            ci.sortText = Book.topicarray[key][0].sortorder.toString(16).padStart(4, '0').toUpperCase();
+                            myarray.push(ci);
+                        }                    
+                        else{
+                            //temp topic.  
+                            let ci = new vscode.CompletionItem(key, vscode.CompletionItemKind.Text);
+                            ci.detail = `Topic: ${key}`;
+                            //get file path.  
+                            let filename = Book.getUri(key);
+                            let doc = "";
+                            doc += `File: ${key}, Line: 0, Sort: 0\n`;
+                            //dont specify line number.  Open where we were.  
+                            doc += `Link: [${key}](${filename.path})\n`; 
+
+                            ci.documentation = new vscode.MarkdownString(`${doc}`);
+                            //set to end of list.  
+                            let tempsort = 65535;
+                            ci.sortText = tempsort.toString(16).padStart(4, '0').toUpperCase();
+                            myarray.push(ci);
+
+                        }
+                    }
+                    return myarray;
+
+                }
+                else{
+                    for (const [key, value] of Object.entries(Book.topicarray)) {
+                        if (value !== undefined && value.length > 0) {
+                            let ci = new vscode.CompletionItem(key, vscode.CompletionItemKind.Text);
+                            ci.detail = `Topic: ${key}`;
+                            let doc = "";
+                            for (let item of value) {
+                                doc += `File: ${item.file}, Line: ${item.line}, Sort: ${value[0].sortorder}\n`;
+                                doc += `Link: [${item.file}](${item.file}#L${item.line})\n`;
+                            }
+                            ci.documentation = new vscode.MarkdownString(`${doc}`);
+                            ci.sortText = value[0].sortorder.toString(16).padStart(4, '0').toUpperCase();
+                            myarray.push(ci);
+                        }                    
+                    }
+                    return myarray;
+                }
             }
         },
         '*', //trigger single character
-        '>'
+        '>',
+        '/', //trigger on '/'
+
+
         //switch from '.' to '**' to trigger on '**' instead 
     );
     //add custom completions to the extension 
