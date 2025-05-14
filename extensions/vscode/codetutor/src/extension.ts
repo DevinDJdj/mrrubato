@@ -53,16 +53,32 @@ function validateChange(topkey: string, change: string): boolean {
 	return true;
 }
 
-function getRandomPrompt(): string {
+function getRandomPrompt(work : boolean = true): string {
 	const mySettings = vscode.workspace.getConfiguration('mrrubato');	
 
-	if (mySettings.workprompts.length > 0){
-		let rand = Math.floor(Math.random() * mySettings.workprompts.length);
-		let prompt = mySettings.workprompts[rand].prompt;
+	if (work){
+		//get a random work prompt.  
+		if (mySettings.workprompts.length > 0){
+			let rand = Math.floor(Math.random() * mySettings.workprompts.length);
+			let prompt = mySettings.workprompts[rand].prompt;
+			return prompt;
+		}
+		else{
+			//get a random default prompt.  
+			if (mySettings.defaultprompts.length > 0){
+				let rand = Math.floor(Math.random() * mySettings.defaultprompts.length);
+				let prompt = mySettings.defaultprompts[rand].prompt;
+				return prompt;
+			}
+		}
+	}
+	if (mySettings.roboprompts.length > 0){
+		let rand = Math.floor(Math.random() * mySettings.roboprompts.length);
+		let prompt = mySettings.roboprompts[rand].prompt;
 		return prompt;
 	}
 	else{
-		return "Just starting help me figure things out.";
+		return "Just starting, help me figure things out.";
 	}
 }
 
@@ -107,6 +123,7 @@ function updatePrompts(topkey: string, topics: string, fullMessage: string) {
 	//for now add this prompt.  
 	//probably need several steps here..
 	//maybe one call to rewrite this.  
+	mySettings.update('workprompt', getRandomPrompt(false));
 
 
 }
@@ -156,10 +173,10 @@ async function work(request: vscode.ChatRequest, context: vscode.ChatContext, st
 		//actual_response = response['response']
 
 
-		let [topkey, topicdata] = await Book.read(request.prompt, context);
+		let [topkey, topicdata] = await Book.read(workPrompt, context);
 		//get topic to work on and context.  
 		//const topics = "test"
-		let fullMessage = await Chat(topicdata + request.prompt, context, stream, token);
+		let fullMessage = await Chat(topicdata + workPrompt, context, null, token);
 
 		roboupdate(topkey, topicdata, fullMessage);
 
@@ -209,7 +226,9 @@ async function Chat(prompt: string, context: vscode.ChatContext, stream: vscode.
 	  });
 	  for await (const part of response) {
 		process.stdout.write(part.message.content);
-		stream.markdown(part.message.content);	
+		if (stream !==null){
+			stream.markdown(part.message.content);	
+		}
 		ret += part.message.content;
 		if (token.isCancellationRequested) {
 		  break;
