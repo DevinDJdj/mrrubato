@@ -86,92 +86,6 @@ Hopefully I persevere through any that come up...at least the first few...
 vscode extension API may be one of them...
 
 
-**extensions/vscode/codetutor/src/extension.ts
-not being activated until chatted to...
-@@Is this a problem?  
-
-OK, status bar functions ok.  
-Wow this can be so powerful... 
-dont have many complaints yet...
-
-#https://ripeseed.io/blog/fine-tuning-open-source-llm-llama-3-mistral-and-gemma
-try this one...
-
-
-
-> python3.11  -m venv --upgrade /mnt/c/devinpiano/testing/finetuning-venv/
-> source /mnt/c/devinpiano/testing/finetuning-venv/bin/activate
-
-> sudo add-apt-repository ppa:deadsnakes/ppa
-> sudo apt update
-> sudo apt install python3.11
-
-> sudo update-alternatives --install /usr/bin/python python /usr/bin/python3.11 11
-> sudo update-alternatives --config python
-
-...
-
-#https://www.llama.com/docs/how-to-guides/fine-tuning/
-try this...
-> pip install datasets
-> pip install trl
-> python3 ./trla/examples/scripts/sft.py --model_name meta-llama/Llama-2-7b-hf --dataset_name timdettmers/openassistant-guanaco --load_in_4bit --use_peft  --batch_size 4 --gradient_accumulation_steps 2 --log_with wandb
-
-> git clone https://github.com/artidoro/qlora
-> cd qlora
-> pip install -U -r requirements.txt
-> ./scripts/finetune_llama2_guanaco_7b.sh
-
-
-> pip install torchtune
-> tune download meta-llama/Meta-Llama-3-8B-Instruct --output-dir Meta-Llama-3.1-8B-Instruct --hf-token <ACCESS TOKEN>
-> mkdir /tmp/Meta-Llama-3.1-8B-Instruct
-> cp -r Meta-Llama-3.1-8B-Instruct/* /tmp/Meta-Llama-3.1-8B-Instruct
-> tune run lora_finetune_single_device --config llama3_1/8B_lora_single_device
-
-#https://pytorch.org/torchtune/stable/tutorials/e2e_flow.html#e2e-flow
-
-This seems to lock the machine...
-But seems to pass dataset.  
-Now need to figure how to alter the training dataset.  
-too much memory...
-
-
-#https://medium.com/@sntaus/building-a-mini-gpt-like-language-model-from-scratch-27257bf5c145
-Just use for now...no LLM creation/tuning...
-
-
-**extensions/vscode/codetutor/src/extension.ts
-continue..
-@tutor /exercise tell me a story
-@tutor /book 
-@tutor /find !!Error
-
-**testing/vscode/mrrubato/
-
-vscode://mrrubato.mytutor
-
-> npm i vscode-languageclient
-> npm i vscode-languageserver
-> npm i vscode-languageserver-textdocument
-
-
-Ctrl+Space brings up CompletionItem documentation
---provideCompletionItems
-create multiple.  
-need to sort..
-OK, some semblance of this working.  
-
-
-**web/public/git.js
---parsegitBook
-basic model here.  
-
-
-Dont like the TypeScript strict type checking.  
-**extensions/vscode/codetutor/tsconfig.json
-"strict": false
-Try this..
 
 #https://github.com/microsoft/vscode-extension-samples/tree/main/document-editing-sample
             vscode.workspace.openTextDocument(fileUri).then((document) => {
@@ -203,26 +117,6 @@ Just rerun the transcript?
 #https://www.tandfonline.com/doi/full/10.1080/00029890.2025.2460966#d1e160
 
 
-**testing/vscode/mrroboto
-> git init
-> git remote add origin https://github.com/DevinDJdj/mrroboto.git
-> git branch -M main
-> git add .
-> git commit -m "first"
-> git push origin main
-> git branch -r 
-
-For now use completely different repo.  
-Only adjust web portion to start?
-
-> git branch -M maina
-> git add .
-> git push origin maina
-
-Two branches.  Compare maina with main, never change origin/main
-Change in maina and update.  
-For now just extend genbook with entries...
-
 
 
 **extensions/vscode/codetutor/src/extension.ts
@@ -240,40 +134,6 @@ allow to edit
 @tutor /book **topic
 generate entries for this topic in genbook.  
 
-These commands also adjust priority going forward.  
-
-
-@tutor 
-
-**testing/vscode/mrroboto/
-
-vscode://mrrubato.mytutor
-
---work
-When do we call work?  
--generate code
--generate book
-
-$$mrrubato.workprompt
-Need array of multiple prompts possibly.  
-on stop clear only this prompt.  
---start here.  workprompt not getting updated.  
-OK seems to be ok.  
-
-
-
-#https://code.visualstudio.com/api/references/contribution-points#contributes.configuration
-
-#https://code.visualstudio.com/api/references/contribution-points#contributes.grammars
-how to add a grammar?
-#https://code.visualstudio.com/api/references/contribution-points#contributes.languages
-add a language.  
-
-
-
-$$mrrubato.workprompts
-Maybe need 
-$$PREV
 
 Pseudo-code..
 ingest any selected topics.  
@@ -318,9 +178,6 @@ If not,
 $$Context
 Given the above context, here are a few considerations regarding what to do next.  
 
-add to genbook any response.  
-Use current date, and topic context.  
-
 Eventually need to be able to accept from UI review.  
 
 
@@ -329,13 +186,6 @@ Recency weighted as well as any other topic commits which includes selected topi
 Based on co-dependence, include recent changes potentially for other topics.  
 Perhaps include function structure and global variables as well for an overview.  
 
-
-This requires a tuned LLM to get best results.  
-
-After changes, use this to check, and discard if we have errors.  
-const allDiagnostics = vscode.languages.getDiagnostics();
-
-When do we pull from github and overwrite mrroboto?
 
 Also can we monitor midi?  
 
@@ -356,29 +206,9 @@ Need provenance chains.
 
 Where are the good tools?  
 
-#https://developers.google.com/chart/interactive/docs/gallery/sankey
-**web/public/graph/sankey.html
-simple example.  
-Use this representation potentially for provenance graphing.  
-Or just use network.  
-
-**web/public/netgraph.mjs
-**web/public/page.html
-Can we represent provenance information about topic(s)?
-
-**vscode
-!!Clicking on timeline entry shouldnt perma-open window.  
 
 
 **extensions/vscode/codetutor/src/extension.ts
-How do we get timeline info.  Looks like not available.  
-git commits enough for now.  
-#https://visjs.github.io/vis-network/docs/network/#importDot
-Can we generate sankey from DOT..
-doesnt look like..
-Should create JS tool/function in visjs to generate sankey.  
-Good sample here.
-#https://github.com/kurkle/chartjs-chart-sankey
 
 
 
@@ -519,37 +349,11 @@ Just keep it open.
 **book/definitions.txt
 Utilize ... ending as potential to-do list.  
 
-$$workbench.action.focusActiveEditorGroup
-Ctrl+Shift+7
-
-$$workbench.panel.chat.view.copilot.focus
-Ctrl+Shift+3
-
-
 
 OK, basic transcript generation should work.  
 3 .., 7 .., 8
 
 
-**GENBOOK
-How to deal with multiple books.  
-
-Read all books, but only write to one.  
-Setting for which book/genbook being used.  
-This could be user genbook/user/xxxxxxxx.txt
-Or book/user/xxxxxxxx.txt
-
-Or just a logical folder.  
-Default to user perhaps if nothing set.  
-Make sure we read all subfolders when loading.  
-
-Rating for any response
-
---use $$n (n=1-10)
-Simple rating should be used in training.  
-
-auto-complete should work from any file type.  
-finish adding auto-complete for other types.  
 
 **mrrubato.mytutor.generate
 When running generate, add context of current file.  
@@ -566,43 +370,9 @@ Per user is one methodology.
 But should read all subfolders.  
 
 
-Use -- with currently or recently selected topics.  
-Should return any functions in files selected in the popup.  
-Functions should be parsed when we open a page to populate the list same as loadBook.  
-Could use $$ the same way with variable names.  
-
-
-Need to monitor any book folder.  
-
-**extensions/vscode/codetutor/src/toolParticipant.ts
---startWatchingWorkspace
-test this... ok, working, but not actually doing anything but adding to topic array.  
-Seems one behind, but do we care?  
-OK, looks better.  
-
-Need better sort for most recently used topics etc.  
-These should be automatically displayed.  
-Straight order for last 10-20 topics or so, then by avg day like we are doing.  
-Same with all others.  
-Should probably use double entry for lookup so we dont do this inadvertently.  
 >>
 ##
 
-Accept single to execute though.  
-And when scanning for adding entry in history.  
-
-OK basic functionality works.  
-
-**extensions/vscode/codetutor/.vscode/settings.json
-$$files.associations
-
-
-How do I add link to location where the command is?  
-OK, thats nice..
-Have a shortcut to open this as well.  
-Too much for now.  
-
-Just adjust sort order to something more meaningful.  
 
 Add adjust ENV variables.  
 How do we distinguish what ENV we are talking about?  
@@ -711,7 +481,18 @@ Perhaps will have too many topics this way, unclear.
 
 **LISP
 Should learn this I think.  
+(Have to adopt Parentheses from this :)
 
+> sudo apt-get install sbcl
 
+**languages/lisp/test.lisp
+
+> sbcl --script languages/lisp/test.lisp
+> sbcl
+> (sb-ext:quit)
+
+#https://github.com/tirthraj07/Lisp-Tutorial/blob/main/Ls%2008%20Loop%20For.lisp
+
+Hmmm...
 
 
