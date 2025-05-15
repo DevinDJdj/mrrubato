@@ -105,6 +105,16 @@ page.html?codefile=web/public/page.html
     <script src="js/datatables/select2.min.js"></script>
     <script src="js/drawkeyboard.js"></script>
 
+    <!-- timeline visjs-->
+    <script
+      type="text/javascript"
+    src="https://unpkg.com/vis-timeline@latest/standalone/umd/vis-timeline-graph2d.min.js"
+  ></script>
+  
+  <link href="https://unpkg.com/vis-timeline@latest/styles/vis-timeline-graph2d.min.css" rel="stylesheet" type="text/css" />
+  <link href="timeline.css" rel="stylesheet" type="text/css" />
+
+
     <!-- visjs network graph -->
     <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <link href="https://unpkg.com/vis-network/styles/vis-network.min.css" rel="stylesheet" type="text/css" />
@@ -132,6 +142,8 @@ page.html?codefile=web/public/page.html
 
     <!-- code analysis -->
     <script src="codewindow.js"></script>
+    <!-- timeline selection -->
+    <script src="timewindow.js"></script>
 
     <!-- clock -->
     <script src="clock.js"></script>
@@ -437,12 +449,17 @@ page.html?codefile=web/public/page.html
                 <div id="vistabs" class="tab">
                     <!-- use for book here.  -->
                     <button class="tablinks" onclick="openTab(event, 'tempcodewindow')">Book Window</button> 
+                    <button class="tablinks" onclick="openTab(event, 'timewindow')">Time Window</button> 
                     <div id="temp_edit_code"> </div>
         
                 </div>
-                    <div id="tempcodewindow" style="height:480px;width:600px;overflow:none;">
+                <div id="tempcodewindow" style="display:none;height:100%;width:800px;overflow:scroll;">
+
                     </div>
-        
+                    <div id="timewindow" width="600px" height="480px" style="height:480px;width:600px;overflow:none;">
+            
+                    </div>
+    
 
               </div>
               </div>
@@ -705,13 +722,14 @@ var querydate = null;
         gitSignin();
         gitSetNature(GIT_CODE | GIT_RELATIONS);
         populateGitRepos(getState('selectedgitindex')); //select repo to analyze.  
+        selectGitRepo(0); //this loads the repo and gitstruct.  
+
         //this loads book.  
 
             setTimeout(function(){ 
                 //load the code file.  
-                //if we have a codefile, we need to load it.  
-                //if we have a book, we need to load it.  
                 if (codefile !== ""){
+                    //have we initialized the book?  
                     loadfromGitBook(codefile, true, true); //load and use tempwindow.  
                     gitGetReferences(codefile);
                     //load code file and parse via filbert or acorn.  

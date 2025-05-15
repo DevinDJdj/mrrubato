@@ -12,6 +12,10 @@ function getCodeGraph(fileName, codeString){
         console.log(ast);
         graphstr = getDotString(ast);
     }
+    else if (fileName.endsWith(".lisp")) {
+        //languages/lisp/test.lisp
+        graphstr = getDotString(["test1", "test2", "test3", "test4", "test5"], 2);
+    }
     netgraph = new FUNCS.NETGRAPH.NetworkGraph(document.getElementById('mynetwork'));
     netgraph.simpleGraph(graphstr);
     netgraph.setSelectionCallback(function(selection){
@@ -20,12 +24,14 @@ function getCodeGraph(fileName, codeString){
 
 }
 
-function getDotString(input){
+function getDotString(input, depth=1){
     ret = "";
     if (typeof(input) === "Array"){
-        ret = "digraph {\n";
+        ret = "digraph weighted {\n";
         for (var i = 1; i < input.length; i++) {
-            ret += input[i-1] + " -> " + input[i] + "\n";
+            for (var j = 0; j < depth && i+j<input.length; j++) {
+                ret += input[i+j-1] + " -> " + input[i+j] + " [width=" + (depth-j) + "] \n";
+            }
         }
         ret += "}\n";
         return ret;

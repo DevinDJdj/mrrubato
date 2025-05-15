@@ -496,3 +496,54 @@ Should learn this I think.
 Hmmm...
 
 
+Use for graph representation?  
+with topics and perhaps other things.  
+
+(1 (2 6 7 8) 3 (4 (9 12)) (5 10 11))
+
+**timestep.py
+Perhaps have a graph file which represents connections between topics and functions.  
+Just generate this while using/analyzing book.  
+measure directionality based on sequence.  
+Search depth = 12?  or something like this.  
+
+Export dot representation for now.  
+Then we can just load that dot representation and not have to re-analyze book.  
+
+Keeping previous notes at cutover will muddy this data.  
+But probably still interesting.  
+
+#https://diego-molina.medium.com/creating-testing-and-publishing-a-vscode-extension-2981e06ff441
+#portal.azure.com
+service issues...
+publish procedure.  
+'(+ 1 2)
+
+**web/public/grammar/lisp/parse.js
+Basic S-expression parsing.  
+Can use this to generate a dot graph.  
+
+Save each graph as a unit of time.  
+
+Create graph as dot graph representation.  
+How to adjust weight, must be int.  
+Use exponential function.  
+minweight is 2, maxweight is 2^12 (depth)
+Then add up all instance weights, and divide by total number of occurrences of topic.  
+Add recency multiplier as well.  
+Exponential relationship is preferrable.  This way we have mostly low weights.  
+
+digraph {
+  root -> a
+  root -> b [weight=2]
+
+
+#https://visjs.github.io/vis-network/examples/network/data/dotLanguage/dotEdgeStyles.html
+style="dashed", color="green", style="dotted"
+scale down to just a few widths.  
+guess we can just use width=5 (1-12)
+ahs -> normal[width=5,label="normal", arrowhead=normal]; 
+
+
+
+

@@ -250,7 +250,7 @@ function populateGitRepos(index=0){
     option.value = i;
     document.getElementById("repoSelect").appendChild(option);
   } 
-  selectGitRepo(index);
+
 }
 
 function selectGitRepo(index){
@@ -491,6 +491,9 @@ function loadfromGitBook(top, load=true, useTemp=false){
     gitcurrentbook = newcontents;
     gitcurrentcontents = newcontents;
   }
+  if (myCodeMirror == null){
+    initCodeMirror(top);
+  }
   var editor = myCodeMirror;
   if (useTemp && tempcodewindow !==null){
     editor = tempcodewindow;
@@ -522,6 +525,23 @@ function setContentType(path){
   else{
     return "javascript";
   }
+}
+
+function initCodeMirror(path=""){
+  myCodeMirror = CodeMirror(document.getElementById("edit_code"), {
+    value: gitcurrentcontents,
+    mode:  gitcurrentcontentstype, 
+    lineNumbers: true
+  });
+  myCodeMirror.setSize(null, 430);
+  tempcodewindow = CodeMirror(document.getElementById("tempcodewindow"), {
+    value: gitcurrentcontents,
+    mode:  gitcurrentcontentstype, 
+    lineNumbers: true
+  });
+  tempcodewindow.setSize(null, 630);
+  $('#for_edit_code').text(path);
+
 }
 
 function getGitContents(path, load=true){ //load UI or not, if false, return string representation of info.  
@@ -636,19 +656,7 @@ function getGitContents(path, load=true){ //load UI or not, if false, return str
           gitstruct["allcontent"][gitcurrentpath] = gitcurrentcontents;
 
           if (myCodeMirror == null){
-            myCodeMirror = CodeMirror(document.getElementById("edit_code"), {
-              value: gitcurrentcontents,
-              mode:  gitcurrentcontentstype, 
-              lineNumbers: true
-            });
-            myCodeMirror.setSize(null, 430);
-            tempcodewindow = CodeMirror(document.getElementById("tempcodewindow"), {
-              value: gitcurrentcontents,
-              mode:  gitcurrentcontentstype, 
-              lineNumbers: true
-            });
-            tempcodewindow.setSize(null, 630);
-            $('#for_edit_code').text(path);
+            initCodeMirror(path);
           }
           else{
             if (prevcontents !=gitcurrentcontents){
