@@ -8,6 +8,7 @@ function openTab(evt, tabName) {
     }
     else{
       usetempcodewindow = true;
+      tempcodewindow.setSize(null, 480);
     }
     // Get all elements with class="tabcontent" and hide them
     tabcontent = document.getElementsByClassName("tabcontent");

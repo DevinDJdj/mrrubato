@@ -944,7 +944,7 @@ function loadTopic(top){
     if (gitnature & GIT_CODE){
       if (currentmode == "GIT"){
         cont = getGitContents(top, true);
-        loadfromGitBook(top, false); //search Git for this string **.... in gitbook and retrieve all.  
+        loadfromGitBook(top, true, true); //search Git for this string **.... in gitbook and retrieve all.  
     
       }
       else if (currentmode=="BOOK"){

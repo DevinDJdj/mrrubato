@@ -450,19 +450,21 @@ page.html?codefile=web/public/page.html
                     <!-- use for book here.  -->
                     <button class="tablinks" onclick="openTab(event, 'tempcodewindow')">Book Window</button> 
                     <button class="tablinks" onclick="openTab(event, 'timewindow')">Time Window</button> 
+                    <button class="tablinks" onclick="openTab(event, 'reflinks')">REFs</button>
+
                     <div id="temp_edit_code"> </div>
         
                 </div>
-                <div id="tempcodewindow" style="display:none;height:100%;width:800px;overflow:scroll;">
+                    <div id="tempcodewindow"  class="tabcontent" style="display:none;height:100%;width:800px;overflow:scroll;">
 
                     </div>
-                    <div id="timewindow" width="600px" height="480px" style="height:480px;width:600px;overflow:none;">
+                    <div id="timewindow"  class="tabcontent" style="display:none;height:480px;width:600px;overflow:scroll;">
             
                     </div>
-    
+                    <div id="reflinks" class="tabcontent" style="display:none;height:800px;width:800px;overflow:scroll;">
+                    </div>
+  
 
-              </div>
-              </div>
           </td>
           </tr>
           <tr>
@@ -722,7 +724,7 @@ var querydate = null;
         gitSignin();
         gitSetNature(GIT_CODE | GIT_RELATIONS);
         populateGitRepos(getState('selectedgitindex')); //select repo to analyze.  
-        selectGitRepo(0); //this loads the repo and gitstruct.  
+        selectGitRepo(getState('selectedgitindex')); //this loads the repo and gitstruct.  
 
         //this loads book.  
 

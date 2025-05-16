@@ -383,7 +383,7 @@ Load any speech from this time.
                       </div>
                       <div id="reflinks" class="tabcontent" style="display:none;height:800px;width:800px;overflow:scroll;">
                       </div>
-                    <div id="tempcodewindow" style="display:none;height:100%;width:800px;overflow:scroll;">
+                    <div id="tempcodewindow" class="tabcontent" style="display:none;height:100%;width:800px;overflow:scroll;">
                       </div>
 
                 </td>
@@ -1320,7 +1320,7 @@ Load any speech from this time.
         getVideoJson(video);
         //get book for analysis via LLM.  
         populateGitRepos(getState('selectedgitindex')); //select repo to analyze.  
-//        getGitBook();
+        selectGitRepo(getState('selectedgitindex')); //this loads the repo and gitstruct.  
 
         loadAllRecent(25);
 

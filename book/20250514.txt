@@ -545,5 +545,13 @@ guess we can just use width=5 (1-12)
 ahs -> normal[width=5,label="normal", arrowhead=normal]; 
 
 
+**web/public/page.html
+-Fix tabcontent display.  
+!!Somehow tempcodewindow is not keeping content.  
+If leave on Book Window it works, but not when switching tabs.  
+ok, 
+make graph, timewindow and REFs work...
+
+
 
 
