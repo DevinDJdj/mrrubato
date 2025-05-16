@@ -1,8 +1,22 @@
 var ast = "";
 var graphstr = "";
 
+
+function getBookGraph(fileName, codeString){
+    var dotstr = "digraph {\n";
+    let dotlabels = getBookDOTLabels();
+    dotstr += dotlabels + "\n";
+    let dot = getBookDOT(fileName);
+
+    dotstr += dot + "}\n";
+
+    netgraph = new FUNCS.NETGRAPH.NetworkGraph(document.getElementById('booknetwork'));
+    netgraph.simpleGraph(dotstr);
+}
+
 function getCodeGraph(fileName, codeString){
 
+    graphstr = "";
     if (fileName.endsWith(".js") || fileName.endsWith(".mjs")) {
         let n = acornParse(codeString);
         graphstr = getDotString(n);
@@ -16,11 +30,23 @@ function getCodeGraph(fileName, codeString){
         //languages/lisp/test.lisp
         graphstr = getDotString(["test1", "test2", "test3", "test4", "test5"], 2);
     }
-    netgraph = new FUNCS.NETGRAPH.NetworkGraph(document.getElementById('mynetwork'));
-    netgraph.simpleGraph(graphstr);
-    netgraph.setSelectionCallback(function(selection){
-      console.log(selection);
-    });
+    else{
+        //test this with everything else.  Probably want two graphs.  
+        
+    }
+
+    if (graphstr === "") {
+        console.log("ERROR: No graph generated");
+    }
+    else{
+        netgraph = new FUNCS.NETGRAPH.NetworkGraph(document.getElementById('mynetwork'));
+        netgraph.simpleGraph(graphstr);
+        netgraph.setSelectionCallback(function(selection){
+        console.log(selection);
+        });
+    }
+
+    getBookGraph(fileName, codeString);
 
 }
 

@@ -242,6 +242,16 @@ export class NetworkGraph {
                 navigationButtons: true,
                 keyboard: true //not sure if we want this.  
             };
+            this.options.physics = {
+                enabled: true,
+                barnesHut: {
+                    gravitationalConstant: -50000 // This is the default * 25.
+                  },
+                stabilization: {
+                  enabled: true,
+                  iterations: 10
+                }
+              }
     
             // create a network
             this.network = new vis.Network(this.container, data, options);
@@ -310,6 +320,7 @@ export class NetworkGraph {
                 C -> A;
             }
         `){
+        /*            
         this.addNode({
             id: 1,
             label: 'Node 1',
@@ -320,6 +331,7 @@ export class NetworkGraph {
             to: 2,
             label: 'connects to'
         });
+        */
         this.setSelectionCallback(({ type, selected, data }) => {
             console.log(`Selected ${type}:`, data);
         });

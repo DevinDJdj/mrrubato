@@ -363,6 +363,7 @@ async function readFileNamesInFolder(path: string): Promise<Array<string>> {
 async function readFilesInFolder(folder: vscode.Uri): Promise<{ total: number, count: number }> {
     let total = 0;
     let count = 0;
+    let allfiles = [];
     for (const [name, type] of await vscode.workspace.fs.readDirectory(folder)) {
         //what order does this come in?  Is it alphabetical?
         if (type === vscode.FileType.Directory) {
@@ -375,25 +376,33 @@ async function readFilesInFolder(folder: vscode.Uri): Promise<{ total: number, c
         }
         if (type === vscode.FileType.File) {
             const fileUri = folder.with({ path: posix.join(folder.path, name) });
-            vscode.workspace.openTextDocument(fileUri).then((document) => {
-                let text = document.getText();
-                console.log(`${fileUri.path} ... read`);
-                // parse this.  
-                loadPage(text, fileUri.path);
-//                console.log(text);
-                // Optionally insert the text into the active editor
-        //		insertTextIntoActiveEditor(text);
-                /*
-                closeFileIfOpen(fileUri).then(() => {
-                    console.log(`${fileUri.path} ... closed`);
-                });
-                */
-            });
+            allfiles.push(fileUri);
             let filePath = posix.dirname(fileUri.path);
             const stat = await vscode.workspace.fs.stat(folder.with({ path: filePath }));
             total += stat.size;
             count += 1;
         }
+    }
+    //sort reverse by path.
+    //most recent at top.  
+    allfiles.sort((fileA, fileB) => fileB.path.localeCompare(fileA.path));
+    for (let i = 0; i < allfiles.length; i++) {
+        const fileUri = allfiles[i];
+        vscode.workspace.openTextDocument(fileUri).then((document) => {
+            let text = document.getText();
+            console.log(`${fileUri.path} ... read`);
+            // parse this.  
+            loadPage(text, fileUri.path);
+//                console.log(text);
+            // Optionally insert the text into the active editor
+    //		insertTextIntoActiveEditor(text);
+            /*
+            closeFileIfOpen(fileUri).then(() => {
+                console.log(`${fileUri.path} ... closed`);
+            });
+            */
+        });
+
     }
     return { total, count };
 }

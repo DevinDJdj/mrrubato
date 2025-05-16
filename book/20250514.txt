@@ -553,5 +553,26 @@ ok,
 make graph, timewindow and REFs work...
 
 
+**extension/vscode/codetutor/src/extension.ts
+Copy to clipboard not working well.  
+
+**mrroboto
+Need to pull from origin.  
+
+#https://stackoverflow.com/questions/24815952/git-pull-from-another-repository
+
+
+**web/public/page.html
+--bookgraph
+generate DOT.  
+
+
+OK, moderate success..
+
+Layout not optimal, and recursive depth call not working.  
+
+OK, I think this is closer to what I want.  
+Closer...
+
 
 

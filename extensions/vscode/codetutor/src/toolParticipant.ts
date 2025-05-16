@@ -114,6 +114,8 @@ export function registerCompletionTool(context: vscode.ExtensionContext){
                             for (let item of value) {
                                 doc += `File: ${item.file}, Line: ${item.line}, Sort: ${value[0].sortorder}\n`;
                                 doc += `Link: [${item.file}](${item.file}#L${item.line})\n`;
+                                let data = item.data.substring(0, 255);
+                                doc += `Data: ${data}\n`;
                             }
                             ci.documentation = new vscode.MarkdownString(`${doc}`);
                             ci.sortText = value[0].sortorder.toString(16).padStart(4, '0').toUpperCase();
@@ -185,6 +187,9 @@ export function registerCompletionTool(context: vscode.ExtensionContext){
                             for (let item of Book.topicarray[key]) {
                                 doc += `File: ${item.file}, Line: ${item.line}, Sort: ${item.sortorder}\n`;
                                 doc += `Link: [${item.file}](${item.file}#L${item.line})\n`;
+                                let data = item.data.substring(0, 255);
+                                doc += `Data: ${data}\n`;
+
                             }
                             ci.documentation = new vscode.MarkdownString(`${doc}`);
                             ci.sortText = Book.topicarray[key][0].sortorder.toString(16).padStart(4, '0').toUpperCase();

@@ -3,6 +3,10 @@ var gitcommits = [];
 var selectedgitindex = 0; //which repo are we using?  
 
 var gitstruct = {"bydate": {}, "bytopic": {}, "alltopics": "", "allcontent": {}}; //context holds sequential string.  
+var bookgraph = {};
+var gitgraph = {};
+var dotlabels = {};
+
 var gittoken = null;
 var gitcurrentpath = "";
 var gitcurrentfolder = "";
@@ -448,6 +452,9 @@ function creategitStruct(){
 
     }
     getBookRefs();
+    //build full graph for now.  
+    buildTopicGraph(gitbook[0].d, gitbook[gitbook.length-1].d);
+
     //any 
     loadTopic(gitbook[gitbook.length-1].d);
 
@@ -716,6 +723,139 @@ function getgitSelected(start, end){
 
 }
 
+function generateAlphanumericHash(inputString) {
+  let hash = 0;
+  for (let i = 0; i < inputString.length; i++) {
+    const charCode = inputString.charCodeAt(i);
+    hash = (hash << 5) - hash + charCode;
+    hash |= 0; // Convert to 32bit integer
+  }
+  const alphanumeric = (hash >>> 0).toString(36);
+  return alphanumeric;
+}
+
+function genLabel(topic){
+  //create label for graphviz.  
+  //do we want to filter based on topic?  
+  //bookgraph
+  if (!(topic in dotlabels)){
+    dotlabels[topic] = generateAlphanumericHash(topic);
+  }
+  return dotlabels[topic];
+}
+
+function getBookDOTLabels(){
+  dotstr = "";
+  Object.entries(bookgraph).forEach(([key, value]) => {
+    dotstr += `${genLabel(key)} [label="${key}"];\n`;
+  });
+  return dotstr;
+}
+
+function getBookDOT(topic="ALL", depth=2){
+  //create dot file for graphviz.  
+  //do we want to filter based on topic?  
+  //bookgraph
+  let dotstr = "";
+  if (topic=="ALL"){
+    Object.entries(bookgraph).forEach(([key, value]) => {
+    let count = bookgraph[key][key];
+      Object.entries(bookgraph[key]).forEach(([key2, value2]) => {
+        if (key != key2){
+          let label = genLabel(key);
+          let label2 = genLabel(key2);
+          let gwidth = Math.round(value2/count/2);
+          if (isNaN(gwidth)){
+            gwidth = 1;
+          }
+            dotstr += `${label} -> ${label2} [width="${gwidth}"];\n`;
+        }
+
+      });
+    });
+  }
+  else {
+    let count = bookgraph[topic][topic];
+    Object.entries(bookgraph[topic]).forEach(([key2, value2]) => {
+      if (topic != key2){
+        let label = genLabel(topic);
+        let label2 = genLabel(key2);
+        let gwidth = Math.round(value2/count/2);
+        if (!Number.isInteger(gwidth) || gwidth < 1){
+          gwidth = 1;
+        }
+        dotstr += `${label} -> ${label2} [width="${gwidth}"];\n`;
+        if (gwidth > 1 && depth > 1){
+          dotstr += getBookDOT(key2, depth-1);
+        }
+      }
+
+    });
+  }
+  console.log(dotstr);
+  return dotstr;
+}
+
+function getDigraph(topic, templist, depth=12){
+  str = "";
+  if (!(topic in bookgraph)){
+    bookgraph[topic] = {};
+    bookgraph[topic][topic] = 1;
+  }
+  else{
+    bookgraph[topic][topic] += 1; //self is just a counter.  Not for weight calculation.  
+    if (topic == "web/public/page.html"){
+      let j=0;
+    }
+  }
+  for (i=0; i<templist.length; i++){
+    if (!(templist[i] in bookgraph[topic])){
+      bookgraph[topic][templist[i]] = depth-i;
+    }
+    else{
+      if (templist[i] !== topic){
+        bookgraph[topic][templist[i]] += depth-i;
+      }
+    }
+  }
+}
+
+function buildTopicGraph(start, end, depth=6){
+  //create digraph structure.  
+  //calculate weights and structure.  
+  //array[topic][topic] = weight
+  //bookgraph, gitgraph
+  //load by date
+  //bookgraph
+  console.log(start);
+  console.log(end);
+  var dstart = start;
+  var dend = end;
+  bookstr = "";
+  bookgraph = {};
+  let counter = 0;
+  let templist = [];
+  Object.entries(gitstruct["bydate"]).forEach(([key, value]) => {
+    if (key >= dstart && key <= dend){
+      for (j=0; j<value.length; j++){
+        templist.push(value[j].topic);
+        if (templist.length > depth){
+          //create first and shift.  
+          let topic = templist.shift();
+          getDigraph(topic, templist);
+        }
+      }
+    }
+  });
+
+  while (templist.length > 0){
+    let topic = templist.shift();
+    getDigraph(topic, templist);
+  }
+
+
+}
+
 function loadTopicGraph(str){
   //this is input for word2vec struct.  
   //also update canvas for this.  
@@ -945,13 +1085,16 @@ function loadTopic(top){
       if (currentmode == "GIT"){
         cont = getGitContents(top, true);
         loadfromGitBook(top, true, true); //search Git for this string **.... in gitbook and retrieve all.  
-    
       }
       else if (currentmode=="BOOK"){
         cont = getGitContents(top, false);
         loadfromGitBook(top, true); //search Git for this string **.... in gitbook and retrieve all.  
     
       }
+      if (getCodeGraph !==undefined){
+        getCodeGraph(top, cont);
+      }
+
     }
 
 

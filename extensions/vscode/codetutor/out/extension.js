@@ -370,8 +370,35 @@ function activate(context) {
     context.subscriptions.push(disposable);
     //start listening for external URIs.  
     vscode.commands.executeCommand('mrrubato.mytutor.start');
+    const searchcommand = vscode.commands.registerCommand('mrrubato.mytutor.search', async (text = "") => {
+        //what else do we do here?  
+        //
+        if (text === "") {
+            const editor = vscode.window.activeTextEditor;
+            if (editor) {
+                const selection = editor.selection;
+                text = editor.document.getText(selection);
+                if (text === "") {
+                    //if no selection, 
+                    //get the current line and the text to the cursor.
+                    let offset = editor.selection.active;
+                    //					editor.selection = new vscode.Selection(offset.line, 0, offset.line, offset.character);
+                    const fileTextToCursor = editor.document.getText(new vscode.Range(offset.line, 0, offset.line, offset.character));
+                    text = fileTextToCursor;
+                }
+                console.log("searching for: " + text);
+                vscode.commands.executeCommand('workbench.action.findInFiles', {
+                    query: text,
+                    triggerSearch: true,
+                    matchWholeWord: true,
+                    isCaseSensitive: false,
+                });
+            }
+        }
+    });
     const gencommand = vscode.commands.registerCommand('mrrubato.mytutor.generate', async (text = "") => {
         if (text === "") {
+            //probably should remove header and then run ctrl+shift+f.  
             const editor = vscode.window.activeTextEditor;
             if (editor) {
                 const selection = editor.selection;

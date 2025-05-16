@@ -146,6 +146,10 @@
       {
         "command": "mrrubato.mytutor.generate",
         "title": "Run selected statement"
+      },
+      {
+        "command": "mrrubato.mytutor.search",
+        "title": "Search for current line key"
       }
     ],
     "keybindings": [
@@ -153,7 +157,12 @@
           "command": "mrrubato.mytutor.generate",
           "key": "ctrl+shift+8",
           "mac": "cmd+shift+8"
-      }
+      },
+      {
+        "command": "mrrubato.mytutor.search",
+        "key": "ctrl+shift+9",
+        "mac": "cmd+shift+9"
+    }      
     ],    
     "chatParticipants": [
       {
