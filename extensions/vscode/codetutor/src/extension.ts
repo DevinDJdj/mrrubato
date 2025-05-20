@@ -86,7 +86,7 @@ function updatePrompts(topkey: string, topics: string, fullMessage: string) {
 	//update the prompts here.
 	const mySettings = vscode.workspace.getConfiguration('mrrubato');	
 
-	let addltopics = Book.findTopics(fullMessage);
+	let addltopics = Book.findInputTopics(fullMessage);
 
 	const topicArray = mySettings.defaultprompts.map(obj => obj.topic); 
 	let bookdata = Book.pickTopic(addltopics, topicArray, 5);
@@ -117,7 +117,7 @@ function updatePrompts(topkey: string, topics: string, fullMessage: string) {
 			mySettings.roboprompts.push(val);
 		}
 		if (val.weight < 0.0125){
-			mySettings.roboprompts.push({'prompt': getRandomPrompt(), 'topics': topics, weight: 0.5})
+			mySettings.roboprompts.push({'prompt': getRandomPrompt(), 'topics': topics, weight: 0.5});
 		}
 	}
 	//for now add this prompt.  
@@ -243,6 +243,23 @@ async function Chat(prompt: string, context: vscode.ChatContext, stream: vscode.
   
 
 
+function getTextFromCursor(editor: vscode.TextEditor) {
+	const selection = editor.selection;
+	let text = editor.document.getText(selection);
+	if (text === "") {
+
+		let offset = editor.selection.active;
+		//get the text from the cursor to the end of the line.
+		if (offset.character === 0){
+			//select to end of line
+			offset = new vscode.Position(offset.line, editor.document.lineAt(offset.line).text.length);
+		}
+
+	//					editor.selection = new vscode.Selection(offset.line, 0, offset.line, offset.character);
+		text = editor.document.getText(new vscode.Range(offset.line, 0, offset.line, offset.character));
+	}
+	return text;
+}
 export function activate(context: vscode.ExtensionContext) {
 	//not being activated until chatted to...
     registerToolUserChatParticipant(context);
@@ -336,7 +353,8 @@ export function activate(context: vscode.ExtensionContext) {
 			//query book only.  
 			stream.markdown('Reading a book\n');
 			//get book snippet.  
-			readFile(request, context, stream, token);
+
+			readFile();
 			Book.updatePage("book/20230110.txt", "hello");
 			let myquery = "play with me and use tool #file:definitions.txt";  //calling via # doesnt work.  
 
@@ -422,16 +440,12 @@ export function activate(context: vscode.ExtensionContext) {
 		//
 		if (text === "") {
 			const editor = vscode.window.activeTextEditor;
+
 			if (editor) {
-				const selection = editor.selection;
-				text = editor.document.getText(selection);
-				if (text === "") {
-					//if no selection, 
-					//get the current line and the text to the cursor.
-					let offset = editor.selection.active;
-//					editor.selection = new vscode.Selection(offset.line, 0, offset.line, offset.character);
-					const fileTextToCursor = editor.document.getText(new vscode.Range(offset.line, 0, offset.line, offset.character));
-					text = fileTextToCursor;
+				text = getTextFromCursor(editor);
+				if (text.startsWith("**")){
+					text = text.substring(2);
+					Book.select(text, true); //select and open topic
 				}
 				console.log("searching for: " + text);
 				vscode.commands.executeCommand('workbench.action.findInFiles', {
@@ -450,15 +464,7 @@ export function activate(context: vscode.ExtensionContext) {
 			//probably should remove header and then run ctrl+shift+f.  
 			const editor = vscode.window.activeTextEditor;
 			if (editor) {
-				const selection = editor.selection;
-				text = editor.document.getText(selection);
-				if (text === "") {
-					//if no selection, 
-					//get the current line and the text to the cursor.
-					let offset = editor.selection.active;
-					const fileTextToCursor = editor.document.getText(new vscode.Range(offset.line, 0, offset.line, offset.character));
-					text = fileTextToCursor;
-				}
+				text = getTextFromCursor(editor);
 			}
 		}
 		  	  
@@ -490,6 +496,19 @@ export function activate(context: vscode.ExtensionContext) {
 			case "!":
 				//find in log files
 				//logdirs
+				switch (cmdtype[1]) {
+					case "!":
+						text = text.substring(1);
+					default:
+						console.log("searching for: " + text.substring(1));
+						vscode.commands.executeCommand('workbench.action.findInFiles', {
+							query: text,
+							triggerSearch: true,
+							matchWholeWord: true,
+							isCaseSensitive: false,
+						});
+						break;
+				}
 				break;
 			case "$":
 				//find env variables
@@ -519,7 +538,8 @@ export function activate(context: vscode.ExtensionContext) {
 				console.log("Opening topic: " + text);
 				switch (cmdtype[1]) {
 					case "*":
-						//open the file
+						text = text.substring(2);
+						Book.select(text, true); //select and open topic
 						break;
 					case "#":
 						//open references.html?topic=
@@ -706,13 +726,13 @@ async function getStats(request: vscode.ChatRequest, context: vscode.ChatContext
 }
 
 
-function readFile(request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken) {
+function readFile(fname : string = "book/definitions.txt") {
 	if (!vscode.workspace.workspaceFolders) {
 		return vscode.window.showInformationMessage('No folder or workspace opened');
 	}
 	const folderUri = vscode.workspace.workspaceFolders[0].uri;
 	// this should be a book path.  Use as you would work on the project.  
-	const fileUri = folderUri.with({ path: posix.join(folderUri.path, 'book/definitions.txt') });
+	const fileUri = folderUri.with({ path: posix.join(folderUri.path, fname) });
 //	const fileUri = folderUri.with({ path: posix.join(folderUri.path, 'definitions.txt') });
 
 	vscode.window.showTextDocument(fileUri);

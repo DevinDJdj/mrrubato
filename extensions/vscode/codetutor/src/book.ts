@@ -42,7 +42,7 @@ var currenttopicline = 0;
 var currentrefline = 0;
 var currentref = "NONE";
 
-var selectionhistory = [];
+export var selectionhistory = [];
 var myCodeMirror = null;
 var tempcodewindow = null;
 var usetempcodewindow = false;
@@ -81,6 +81,9 @@ var refarray = [];
 let mynow = new Date(); //get the current date in YYYYMMDD format.    
 
 let NEXT_TERM_ID = 1;
+
+let MAX_SELECTION_HISTORY = 10; //max number of topics to keep in history.
+
 
 //store data as tabs open and close and based on location in the tab.  
 //from this info generate the context when querying the model.  
@@ -154,7 +157,100 @@ function getRecency(bt : Array<BookTopic>, mydate: Date = new Date()) : number {
     }
 }
 
-export function findTopics(inputString : string) : string[]{
+export function findTopicsCompletion(str: string = "") : string[]{
+    let myarray = [];
+    if (str === ""){
+        for (const [key, value] of Object.entries(topicarray)) {
+            if (value !== undefined && value.length > 0) {
+                let ci = new vscode.CompletionItem(key, vscode.CompletionItemKind.Text);
+                ci.detail = `Topic: ${key}`;
+                let doc = "";
+                for (let item of value) {
+                    doc += `File: ${item.file}, Line: ${item.line}, Sort: ${value[0].sortorder}  \n`;
+                    doc += `Link: [${item.file}](${item.file}#L${item.line})  \n`;
+                    let data = item.data.substring(0, 255);
+                    doc += `Data: ${data}  \n`;
+                }
+                ci.documentation = new vscode.MarkdownString(`${doc}`);
+                ci.sortText = value[0].sortorder.toString(16).padStart(4, '0').toUpperCase();
+                myarray.push(ci);
+            }                    
+        }
+        return myarray;
+    }
+    else{
+        let firstchar = str.substring(2,3);
+        let retarray = [];
+        let linePrefixFull = str.substring(2);
+        for (let i=0; i<alltopicsa.length; i++) {
+            if (alltopicsa[i] === firstchar){
+                //this is the first one.  
+                for (let j=i; j<alltopics.length; j++) {
+                    let key2 = alltopics[j];
+                    if (key2.startsWith(linePrefixFull) && retarray.find((topic) => topic === key2) === undefined) {
+                        retarray.push(key2);
+
+                    }
+                    else{
+                        break; //stop looking.  We are sorted.
+                    }
+                }
+            }
+
+        }
+        getTempTopicsFromPath(linePrefixFull);
+        //add what we have found in the temp topic array.  
+        for (let i=0; i<temptopics.length; i++) {
+
+            //this needs relative path to work.  
+            let key = temptopics[i];
+            if (key.startsWith(linePrefixFull)) {
+                retarray.push(key);
+            }
+        }
+        adjustSort(retarray);
+        for (let i=0; i<retarray.length; i++) {
+            let key = retarray[i];
+            if ((topicarray[key] !== undefined && topicarray[key].length > 0))  {
+                let ci = new vscode.CompletionItem(key.substring(linePrefixFull.length), vscode.CompletionItemKind.Text);
+                ci.detail = `Topic: ${key}`;
+                let doc = "";
+                for (let item of topicarray[key]) {
+                    doc += `File: ${item.file}, Line: ${item.line}, Sort: ${item.sortorder}  \n`;
+                    doc += `Link: [${item.file}](${item.file}#L${item.line})  \n`;
+                    let data = item.data.substring(0, 255);
+                    doc += `Data: ${data}  \n`;
+
+                }
+                ci.documentation = new vscode.MarkdownString(`${doc}`);
+                ci.sortText = topicarray[key][0].sortorder.toString(16).padStart(4, '0').toUpperCase();
+                myarray.push(ci);
+            }                    
+            else{
+                //temp topic.  
+                let ci = new vscode.CompletionItem(key.substring(linePrefixFull.length), vscode.CompletionItemKind.Text);
+                ci.detail = `Topic: ${key}`;
+                //get file path.  
+                let filename = getUri(key);
+                let doc = "";
+                doc += `File: ${key}, Line: 0, Sort: 0\n`;
+                //dont specify line number.  Open where we were.  
+                doc += `Link: [${key}](${filename.path})\n`; 
+
+                ci.documentation = new vscode.MarkdownString(`${doc}`);
+                //set to end of list.  
+                let tempsort = 65535;
+                ci.sortText = tempsort.toString(16).padStart(4, '0').toUpperCase();
+                myarray.push(ci);
+
+            }
+        }
+
+        return myarray;
+    }
+
+}
+export function findInputTopics(inputString : string) : string[]{
     // Create a regex pattern to match double asterisks and capture the text after them
     //need to add newline at start.  
     const regex = /\*\*(.*?)\*/g;
@@ -199,6 +295,7 @@ export function adjustSort(array: Array<string>) {
 function sortArray(array: {[key: string] : Array<BookTopic> | undefined}, typekey='')  {
     if (typekey===''){
         alltopics = []; //reset all topics.
+        alltopicsa = []; //reset all topics.
     }
 
     Object.keys(array).forEach((key) => {
@@ -213,7 +310,46 @@ function sortArray(array: {[key: string] : Array<BookTopic> | undefined}, typeke
     });
 
 }
-  
+function addToHistory(topic: string){
+    //add the topic to the history.  
+    const found = selectionhistory.find((t) => t === topic);
+    if (!found){
+        selectionhistory.push(topic); //add the topic to the selection history.
+    }
+    selectedtopic = topic; //set the selected topic to the current topic.
+    if (selectionhistory.length > MAX_SELECTION_HISTORY) {
+        selectionhistory.shift(); //remove the first element from the array.
+    }    
+}
+export function select(topic: string, open: boolean = false) : boolean {
+    //select the topic from the topicarray.  
+    //this will be used to get the topic from the array.  
+    let fname = topic.trim();
+    const folderUri = vscode.workspace.workspaceFolders[0].uri;
+    // this should be a book path.  Use as you would work on the project.  
+    const fileUri = folderUri.with({ path: posix.join(folderUri.path, fname) });
+//	const fileUri = folderUri.with({ path: posix.join(folderUri.path, 'definitions.txt') });
+
+    const found = alltopics.find((t) => t === topic);
+
+    vscode.workspace.openTextDocument(fileUri).then(doc => {
+        if (open){
+            vscode.window.showTextDocument(doc);
+        }
+        //keep selectionhistory, dont load twice.  
+        if (!found){
+            addToHistory(topic); //add the topic to the history.
+        }
+    });
+
+    //only add if we have data.  
+    if (found) {
+        addToHistory(topic); //add the topic to the history.
+        return true;
+    }
+    return false;
+
+}
 export function pickTopic(selectedtopics : string[], defaultprompts: string[] = [], numtopics: number = 10) : [string, string] {
     //pick a topic from the topicarray based on the sort order.
     //still need to improve when we have no selected topics.  
@@ -289,7 +425,7 @@ export async function read(prompt: string, context: vscode.ChatContext) : Promis
     //create sort order for toicarray.  
     //then retrieve topic information.  
     //find the topic in the topicarray if we have passed some
-    let selectedtopics = findTopics(prompt); 
+    let selectedtopics = findInputTopics(prompt); 
     console.log("Selected topics: ", selectedtopics);
 
     sortArray(topicarray);
@@ -368,7 +504,7 @@ async function readFilesInFolder(folder: vscode.Uri): Promise<{ total: number, c
         //what order does this come in?  Is it alphabetical?
         if (type === vscode.FileType.Directory) {
             const fileUri = folder.with({ path: posix.join(folder.path, name) });
-            readFilesInFolder(fileUri).then((result) => {
+            await readFilesInFolder(fileUri).then((result) => {
                 total += result.total;
                 count += result.count;
             });
@@ -388,7 +524,7 @@ async function readFilesInFolder(folder: vscode.Uri): Promise<{ total: number, c
     allfiles.sort((fileA, fileB) => fileB.path.localeCompare(fileA.path));
     for (let i = 0; i < allfiles.length; i++) {
         const fileUri = allfiles[i];
-        vscode.workspace.openTextDocument(fileUri).then((document) => {
+        await vscode.workspace.openTextDocument(fileUri).then((document) => {
             let text = document.getText();
             console.log(`${fileUri.path} ... read`);
             // parse this.  
@@ -515,6 +651,9 @@ export function loadPage(text: string, filePath: string) {
 
                         initArray(tkey, topicarray); //if doesnt exist, add.  
 
+                        if (mytopic.data.length < 256 && i+1 < strs.length) {
+                            mytopic.data += strs[i+1] + "\n"; //add the next line to the topic data so we have some reference.     
+                        }
                         topicarray[tkey]?.push(mytopic); //add the previous topic to the array.
                         tkey = str.slice(j+1);
                         let myorder = 0;
@@ -530,20 +669,24 @@ export function loadPage(text: string, filePath: string) {
                         break keyfind;
                     }
                     else if (key === ">") {
-
-                        initArray(tkey, arrays[key]); //if doesnt exist, add.  
-
-                        arrays[key][tkey]?.push(mytopic); //add the previous topic to the array.
-                        tkey = str.slice(j+1);
+/*
+                        let ckey = str.slice(1);
                         let myorder = 0;
-                        myorder = arrays[key][tkey]?.length || 0; //get the current order of the topic.
+                        myorder = arrays[key][ckey]?.length || 0; //get the current order of the topic.
 
 
-                        mytopic = {"file": filePath, "line": i, "topic": tkey, "sortorder": myorder, "date": mydate, "data": ""};
+                        mytopic = {"file": filePath, "line": i, "topic": currenttopic, "sortorder": myorder, "date": mydate, "data": ""};
+
+                        initArray(ckey, arrays[key]); //if doesnt exist, add.  
+
+                        arrays[key][ckey]?.push(mytopic); //add the previous topic to the array.
+
                         //adjust sortorder based on order of occurrence for now. 
 
                         break keyfind;
+                        */
                     }
+
                 }
             }
 
@@ -606,7 +749,7 @@ function loadBook(){
         console.log(topicarray);
         //add this to our CompletionItemProvider.   
         sortArray(topicarray); //sort the topic array by date.
-        sortArray(arrays['>']);
+        sortArray(arrays['>'], '>');
     
     });
 

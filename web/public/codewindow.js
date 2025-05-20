@@ -4,6 +4,10 @@ var graphstr = "";
 
 function getBookGraph(fileName, codeString){
     var dotstr = "digraph {\n";
+    dotstr += 'label="40pt Graph Label"'   + "\n";
+    dotstr += 'fontsize=40' + "\n";
+    dotstr += 'labelloc="t"' + "\n";
+    dotstr += 'labeljust="l"' + "\n";
     let dotlabels = getBookDOTLabels();
     dotstr += dotlabels + "\n";
     let dot = getBookDOT(fileName);

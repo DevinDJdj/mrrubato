@@ -574,5 +574,95 @@ Layout not optimal, and recursive depth call not working.
 OK, I think this is closer to what I want.  
 Closer...
 
+PAGE looking better.  
+Really could use more symbols.  
+**web/public/test/web/public/test/testfont2.html
 
+**extension/vscode/codetutor/src/extension.ts
+...
+
+Use php syntax <?
+closure ?> or ** fallback.  
+What do we include here though?  
+Or can we do with no closure?  
+Once line is unrecognized/unparseable, just close.  
+Close with ?> or ** as well.  
+
+This can be a generate transcript?  or ...
+point to a **genbook 1-2, etc...
+in genbook can group commands after the fact.  
+Add genbook reference
+
+or include the commands inline.  
+
+Need command to 
+start/list/stop thinking about...
+just pick a topic or series of topics.  
+By default it will start on the last entry.  
+And a random recency weighted topic.  
+
+^start 1-n
+^stop 1-n
+^list
++..... (optional 1-n=currentactive)
+add context to thought.  
+Immediately delete line after return?  
+
+This picks the previous topic mentioned.  
+Pascal pointer...
+
+
+
+Too much to do for autonomy.  
+Code change check.  
+Accept/decline logic.  
+
+when regenerating from genbook, 
+Ignore anything after ==
+But annotate some answers.  
+
+<? > xml style also accept.  
+< > different usage.  
+
+#https://en.wikipedia.org/wiki/Charles_Goldfarb
+SGML kind of nice, but too much perhaps.
+
+
+#https://en.wikipedia.org/wiki/Donald_Knuth
+#https://en.wikipedia.org/wiki/TeX
+#https://en.wikipedia.org/wiki/Web_(programming_system)
+
+
+
+Need time element to network graphs.  
+#https://github.com/nostr-protocol/nostr
+
+Current playground appears to be quite useful for single person, but how does this scale with multiple books?  
+
+
+**book/definitions.txt
+All other categories besides topic should be organized by date/topic.  
+With autocomplete listing, should be able to find date/topic or search for the command itself.  
+
+i.e. **> or >** should list topics commands.  
+**# or #** should list topic references.  
+Same by date mechanism.  
+Similar for any combo with topic **~~
+
+By default we should add the next 255 chars to the topic anyway.  
+How do we deal with multi-topic selection?  
+multitopicarray[top1][top2]?  
+Or perhaps just create temp struct by refilter on all topicarray[top] data.  
+
+#https://github.com/google-deepmind/alphafold3?tab=readme-ov-file
+#https://flax.readthedocs.io/en/latest/mnist_tutorial.html
+
+#https://github.com/google-deepmind/tree
+Is there similar javascript/typescript library
+#https://opendsa.cs.vt.edu/ODSA/Books/CS3/html/SequentialRep.html
+--General Tree Sequential representation
+
+**extensions/vscode/codetutor/src/extension.js
+--fix topic link in >
+OK..
 

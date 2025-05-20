@@ -17,7 +17,8 @@ reference from document
 
 > CMD operation
 
-** source code file name (with separator) OR videoID > 10 chars, otherwise content/topic tag
+** topic (source code file name with separator, OR videoID > 10 chars, otherwise content/topic tag)
+
 <!-- 
 May have some problematic names.  
 -->
@@ -56,6 +57,8 @@ Shorthand
 
 // filepath or DB path
 
+~~ suggestion after @@
+
 "XX" = key phrase or WORD
 <!--
 "_var" = end state
@@ -64,21 +67,31 @@ Shorthand
 
 <!--
 Leading OPEN:
-&
+& = and? (Latin)
 +
-% = wild?
-^ = generate
+% = wild? or modulate? 
+^ = generate (Exponentiate)
 _ = pre-requisite
-/ = function?
+/ = path
+\ = macro?  (TEX)
 : = line identification
 ; = comment?
+~~ = suggestion
+| = PIPE OR
+
+< >
+<? ?> = inline macro (PHP)
+[ ] = internal clickable reference?  (markup)
+( )
+{ } 
 ? 
 
 Ending ...
 Annotate with leading space or something else?  
 
+defstring = "!@#$%^&*<>/-+"
 -->
 
  ... Work to do
  ? Open question
- 
+

@@ -104,7 +104,7 @@ function getRandomPrompt(work = true) {
 function updatePrompts(topkey, topics, fullMessage) {
     //update the prompts here.
     const mySettings = vscode.workspace.getConfiguration('mrrubato');
-    let addltopics = Book.findTopics(fullMessage);
+    let addltopics = Book.findInputTopics(fullMessage);
     const topicArray = mySettings.defaultprompts.map(obj => obj.topic);
     let bookdata = Book.pickTopic(addltopics, topicArray, 5);
     if (mySettings.codingmode === "git") {
@@ -236,6 +236,21 @@ async function Chat(prompt, context, stream, token) {
     }
     return ret;
 }
+function getTextFromCursor(editor) {
+    const selection = editor.selection;
+    let text = editor.document.getText(selection);
+    if (text === "") {
+        let offset = editor.selection.active;
+        //get the text from the cursor to the end of the line.
+        if (offset.character === 0) {
+            //select to end of line
+            offset = new vscode.Position(offset.line, editor.document.lineAt(offset.line).text.length);
+        }
+        //					editor.selection = new vscode.Selection(offset.line, 0, offset.line, offset.character);
+        text = editor.document.getText(new vscode.Range(offset.line, 0, offset.line, offset.character));
+    }
+    return text;
+}
 function activate(context) {
     //not being activated until chatted to...
     (0, toolParticipant_1.registerToolUserChatParticipant)(context);
@@ -313,7 +328,7 @@ function activate(context) {
             //query book only.  
             stream.markdown('Reading a book\n');
             //get book snippet.  
-            readFile(request, context, stream, token);
+            readFile();
             Book.updatePage("book/20230110.txt", "hello");
             let myquery = "play with me and use tool #file:definitions.txt"; //calling via # doesnt work.  
             //call external ollama.  
@@ -376,15 +391,10 @@ function activate(context) {
         if (text === "") {
             const editor = vscode.window.activeTextEditor;
             if (editor) {
-                const selection = editor.selection;
-                text = editor.document.getText(selection);
-                if (text === "") {
-                    //if no selection, 
-                    //get the current line and the text to the cursor.
-                    let offset = editor.selection.active;
-                    //					editor.selection = new vscode.Selection(offset.line, 0, offset.line, offset.character);
-                    const fileTextToCursor = editor.document.getText(new vscode.Range(offset.line, 0, offset.line, offset.character));
-                    text = fileTextToCursor;
+                text = getTextFromCursor(editor);
+                if (text.startsWith("**")) {
+                    text = text.substring(2);
+                    Book.select(text, true); //select and open topic
                 }
                 console.log("searching for: " + text);
                 vscode.commands.executeCommand('workbench.action.findInFiles', {
@@ -401,15 +411,7 @@ function activate(context) {
             //probably should remove header and then run ctrl+shift+f.  
             const editor = vscode.window.activeTextEditor;
             if (editor) {
-                const selection = editor.selection;
-                text = editor.document.getText(selection);
-                if (text === "") {
-                    //if no selection, 
-                    //get the current line and the text to the cursor.
-                    let offset = editor.selection.active;
-                    const fileTextToCursor = editor.document.getText(new vscode.Range(offset.line, 0, offset.line, offset.character));
-                    text = fileTextToCursor;
-                }
+                text = getTextFromCursor(editor);
             }
         }
         //run the desired command here.  
@@ -437,6 +439,19 @@ function activate(context) {
             case "!":
                 //find in log files
                 //logdirs
+                switch (cmdtype[1]) {
+                    case "!":
+                        text = text.substring(1);
+                    default:
+                        console.log("searching for: " + text.substring(1));
+                        vscode.commands.executeCommand('workbench.action.findInFiles', {
+                            query: text,
+                            triggerSearch: true,
+                            matchWholeWord: true,
+                            isCaseSensitive: false,
+                        });
+                        break;
+                }
                 break;
             case "$":
                 //find env variables
@@ -465,7 +480,8 @@ function activate(context) {
                 console.log("Opening topic: " + text);
                 switch (cmdtype[1]) {
                     case "*":
-                        //open the file
+                        text = text.substring(2);
+                        Book.select(text, true); //select and open topic
                         break;
                     case "#":
                         //open references.html?topic=
@@ -622,13 +638,13 @@ async function getStats(request, context, stream, token) {
     //	const doc = await vscode.workspace.openTextDocument({ content: `${info.count} files in ${folderUri.toString(true)} with a total of ${info.total} bytes` });
     //	vscode.window.showTextDocument(doc, { viewColumn: vscode.ViewColumn.Beside });
 }
-function readFile(request, context, stream, token) {
+function readFile(fname = "book/definitions.txt") {
     if (!vscode.workspace.workspaceFolders) {
         return vscode.window.showInformationMessage('No folder or workspace opened');
     }
     const folderUri = vscode.workspace.workspaceFolders[0].uri;
     // this should be a book path.  Use as you would work on the project.  
-    const fileUri = folderUri.with({ path: path_1.posix.join(folderUri.path, 'book/definitions.txt') });
+    const fileUri = folderUri.with({ path: path_1.posix.join(folderUri.path, fname) });
     //	const fileUri = folderUri.with({ path: posix.join(folderUri.path, 'definitions.txt') });
     vscode.window.showTextDocument(fileUri);
     vscode.workspace.openTextDocument(fileUri).then((document) => {

@@ -242,10 +242,11 @@ export class NetworkGraph {
                 navigationButtons: true,
                 keyboard: true //not sure if we want this.  
             };
+            //graph settings.  
             this.options.physics = {
                 enabled: true,
                 barnesHut: {
-                    gravitationalConstant: -50000 // This is the default * 25.
+                    gravitationalConstant: -5000 // This is the default * 25.
                   },
                 stabilization: {
                   enabled: true,
