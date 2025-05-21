@@ -82,7 +82,7 @@ let mynow = new Date(); //get the current date in YYYYMMDD format.
 
 let NEXT_TERM_ID = 1;
 
-let MAX_SELECTION_HISTORY = 10; //max number of topics to keep in history.
+export let MAX_SELECTION_HISTORY = 10; //max number of topics to keep in history.
 
 
 //store data as tabs open and close and based on location in the tab.  
@@ -159,20 +159,31 @@ function getRecency(bt : Array<BookTopic>, mydate: Date = new Date()) : number {
 
 export function findTopicsCompletion(str: string = "") : string[]{
     let myarray = [];
+    let sortText = "0000";
     if (str === ""){
         for (const [key, value] of Object.entries(topicarray)) {
             if (value !== undefined && value.length > 0) {
                 let ci = new vscode.CompletionItem(key, vscode.CompletionItemKind.Text);
                 ci.detail = `Topic: ${key}`;
                 let doc = "";
+                sortText = "0000";
                 for (let item of value) {
                     doc += `File: ${item.file}, Line: ${item.line}, Sort: ${value[0].sortorder}  \n`;
                     doc += `Link: [${item.file}](${item.file}#L${item.line})  \n`;
                     let data = item.data.substring(0, 255);
                     doc += `Data: ${data}  \n`;
+                    //set sortText to top if it is in selection history.  
+                    const found = selectionhistory.findIndex((t) => t === item.topic);
+                    if (found > -1){
+                        sortText = (MAX_SELECTION_HISTORY-found).toString(16).padStart(4, '0').toUpperCase();
+                    }
+                    
                 }
                 ci.documentation = new vscode.MarkdownString(`${doc}`);
-                ci.sortText = value[0].sortorder.toString(16).padStart(4, '0').toUpperCase();
+                if (sortText === "0000"){
+                    sortText = value[0].sortorder.toString(16).padStart(4, '0').toUpperCase();
+                }
+                ci.sortText = sortText;
                 myarray.push(ci);
             }                    
         }
@@ -496,9 +507,11 @@ async function readFileNamesInFolder(path: string): Promise<Array<string>> {
 
 }
 
-async function readFilesInFolder(folder: vscode.Uri): Promise<{ total: number, count: number }> {
+async function readFilesInFolder(folder: vscode.Uri): Promise<{ total: number, count: number, page: string }> {
     let total = 0;
     let count = 0;
+    let booknow = 0;
+    let openpage = "";
     let allfiles = [];
     for (const [name, type] of await vscode.workspace.fs.readDirectory(folder)) {
         //what order does this come in?  Is it alphabetical?
@@ -528,7 +541,12 @@ async function readFilesInFolder(folder: vscode.Uri): Promise<{ total: number, c
             let text = document.getText();
             console.log(`${fileUri.path} ... read`);
             // parse this.  
-            loadPage(text, fileUri.path);
+            let d = loadPage(text, fileUri.path);
+            if (d.valueOf() > booknow) {
+                booknow = d.valueOf(); //get the most recent date.
+                openpage = fileUri.path;
+            }
+
 //                console.log(text);
             // Optionally insert the text into the active editor
     //		insertTextIntoActiveEditor(text);
@@ -540,7 +558,7 @@ async function readFilesInFolder(folder: vscode.Uri): Promise<{ total: number, c
         });
 
     }
-    return { total, count };
+    return { total, count, page: getBookPath() + "/" + booknow.toString() };
 }
 
 
@@ -612,7 +630,7 @@ export function updatePage(filePath: string, text: string, linefrom: number = 0,
     });
 }
 
-export function loadPage(text: string, filePath: string) {
+export function loadPage(text: string, filePath: string): Number {
     //get the completions from the text.  
     //each topic or comment should be parsed and added to 
     //completions...
@@ -669,7 +687,7 @@ export function loadPage(text: string, filePath: string) {
                         break keyfind;
                     }
                     else if (key === ">") {
-/*
+
                         let ckey = str.slice(1);
                         let myorder = 0;
                         myorder = arrays[key][ckey]?.length || 0; //get the current order of the topic.
@@ -684,7 +702,6 @@ export function loadPage(text: string, filePath: string) {
                         //adjust sortorder based on order of occurrence for now. 
 
                         break keyfind;
-                        */
                     }
 
                 }
@@ -698,6 +715,7 @@ export function loadPage(text: string, filePath: string) {
     initArray(currenttopic, topicarray); //if doesnt exist, add.  
     topicarray[currenttopic]?.push(mytopic);
     topicarray[mydate.toString()]?.push(mypage);       
+    return mydate;
 }
 
 export function getBookPath() : string{
@@ -750,6 +768,11 @@ function loadBook(){
         //add this to our CompletionItemProvider.   
         sortArray(topicarray); //sort the topic array by date.
         sortArray(arrays['>'], '>');
+
+        //open the most recent file.
+        select(result.page + ".txt", true); //select and open topic
+
+        
     
     });
 

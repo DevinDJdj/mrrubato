@@ -130,6 +130,7 @@ function registerCompletionTool(context) {
                         let ci = new vscode.CompletionItem(key, vscode.CompletionItemKind.Text);
                         ci.detail = `Command: ${key}`;
                         let doc = "";
+                        let sortText = "0000";
                         for (let item of value) {
                             let filename = Book.getUri(item.topic);
                             doc += `File: ${item.file}, Line: ${item.line}, Sort: ${item.sortorder}  \n`;
@@ -137,9 +138,17 @@ function registerCompletionTool(context) {
                             doc += `Link: [${item.file}](${item.file}#L${item.line})  \n`;
                             let data = item.data.substring(0, 255);
                             doc += `Data: ${data}  \n`;
+                            //set sortText to top if it is in selection history.  
+                            const found = Book.selectionhistory.findIndex((t) => t === item.topic);
+                            if (found > -1) {
+                                sortText = (Book.MAX_SELECTION_HISTORY - found).toString(16).padStart(4, '0').toUpperCase();
+                            }
                         }
                         ci.documentation = new vscode.MarkdownString(`${doc}`);
-                        ci.sortText = value[0].sortorder.toString(16).padStart(4, '0').toUpperCase();
+                        if (sortText === "0000") {
+                            sortText = value[0].sortorder.toString(16).padStart(4, '0').toUpperCase();
+                        }
+                        ci.sortText = sortText;
                         myarray.push(ci);
                     }
                 }

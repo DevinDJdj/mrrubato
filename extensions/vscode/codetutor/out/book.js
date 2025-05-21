@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.arrays = exports.commandarray = exports.temptopicarray = exports.temptopics = exports.topicarray = exports.alltopicsa = exports.alltopics = exports.selectionhistory = void 0;
+exports.MAX_SELECTION_HISTORY = exports.arrays = exports.commandarray = exports.temptopicarray = exports.temptopics = exports.topicarray = exports.alltopicsa = exports.alltopics = exports.selectionhistory = void 0;
 exports.logCommand = logCommand;
 exports.getCommandType = getCommandType;
 exports.open = open;
@@ -108,7 +108,7 @@ exports.arrays = {};
 var refarray = [];
 let mynow = new Date(); //get the current date in YYYYMMDD format.    
 let NEXT_TERM_ID = 1;
-let MAX_SELECTION_HISTORY = 10; //max number of topics to keep in history.
+exports.MAX_SELECTION_HISTORY = 10; //max number of topics to keep in history.
 //store data as tabs open and close and based on location in the tab.  
 //from this info generate the context when querying the model.  
 //right now only front-side loading.  Possibly add RAG processing later?  
@@ -170,20 +170,30 @@ function getRecency(bt, mydate = new Date()) {
 }
 function findTopicsCompletion(str = "") {
     let myarray = [];
+    let sortText = "0000";
     if (str === "") {
         for (const [key, value] of Object.entries(exports.topicarray)) {
             if (value !== undefined && value.length > 0) {
                 let ci = new vscode.CompletionItem(key, vscode.CompletionItemKind.Text);
                 ci.detail = `Topic: ${key}`;
                 let doc = "";
+                sortText = "0000";
                 for (let item of value) {
                     doc += `File: ${item.file}, Line: ${item.line}, Sort: ${value[0].sortorder}  \n`;
                     doc += `Link: [${item.file}](${item.file}#L${item.line})  \n`;
                     let data = item.data.substring(0, 255);
                     doc += `Data: ${data}  \n`;
+                    //set sortText to top if it is in selection history.  
+                    const found = exports.selectionhistory.findIndex((t) => t === item.topic);
+                    if (found > -1) {
+                        sortText = (exports.MAX_SELECTION_HISTORY - found).toString(16).padStart(4, '0').toUpperCase();
+                    }
                 }
                 ci.documentation = new vscode.MarkdownString(`${doc}`);
-                ci.sortText = value[0].sortorder.toString(16).padStart(4, '0').toUpperCase();
+                if (sortText === "0000") {
+                    sortText = value[0].sortorder.toString(16).padStart(4, '0').toUpperCase();
+                }
+                ci.sortText = sortText;
                 myarray.push(ci);
             }
         }
@@ -312,7 +322,7 @@ function addToHistory(topic) {
         exports.selectionhistory.push(topic); //add the topic to the selection history.
     }
     selectedtopic = topic; //set the selected topic to the current topic.
-    if (exports.selectionhistory.length > MAX_SELECTION_HISTORY) {
+    if (exports.selectionhistory.length > exports.MAX_SELECTION_HISTORY) {
         exports.selectionhistory.shift(); //remove the first element from the array.
     }
 }
@@ -461,6 +471,8 @@ async function readFileNamesInFolder(path) {
 async function readFilesInFolder(folder) {
     let total = 0;
     let count = 0;
+    let booknow = 0;
+    let openpage = "";
     let allfiles = [];
     for (const [name, type] of await vscode.workspace.fs.readDirectory(folder)) {
         //what order does this come in?  Is it alphabetical?
@@ -489,7 +501,11 @@ async function readFilesInFolder(folder) {
             let text = document.getText();
             console.log(`${fileUri.path} ... read`);
             // parse this.  
-            loadPage(text, fileUri.path);
+            let d = loadPage(text, fileUri.path);
+            if (d.valueOf() > booknow) {
+                booknow = d.valueOf(); //get the most recent date.
+                openpage = fileUri.path;
+            }
             //                console.log(text);
             // Optionally insert the text into the active editor
             //		insertTextIntoActiveEditor(text);
@@ -500,7 +516,7 @@ async function readFilesInFolder(folder) {
             */
         });
     }
-    return { total, count };
+    return { total, count, page: getBookPath() + "/" + booknow.toString() };
 }
 function getFileName(filePath) {
     //get the date of the file.  
@@ -604,22 +620,14 @@ function loadPage(text, filePath) {
                         break keyfind;
                     }
                     else if (key === ">") {
-                        /*
-                                                let ckey = str.slice(1);
-                                                let myorder = 0;
-                                                myorder = arrays[key][ckey]?.length || 0; //get the current order of the topic.
-                        
-                        
-                                                mytopic = {"file": filePath, "line": i, "topic": currenttopic, "sortorder": myorder, "date": mydate, "data": ""};
-                        
-                                                initArray(ckey, arrays[key]); //if doesnt exist, add.
-                        
-                                                arrays[key][ckey]?.push(mytopic); //add the previous topic to the array.
-                        
-                                                //adjust sortorder based on order of occurrence for now.
-                        
-                                                break keyfind;
-                                                */
+                        let ckey = str.slice(1);
+                        let myorder = 0;
+                        myorder = exports.arrays[key][ckey]?.length || 0; //get the current order of the topic.
+                        mytopic = { "file": filePath, "line": i, "topic": currenttopic, "sortorder": myorder, "date": mydate, "data": "" };
+                        initArray(ckey, exports.arrays[key]); //if doesnt exist, add.  
+                        exports.arrays[key][ckey]?.push(mytopic); //add the previous topic to the array.
+                        //adjust sortorder based on order of occurrence for now. 
+                        break keyfind;
                     }
                 }
             }
@@ -628,6 +636,7 @@ function loadPage(text, filePath) {
     initArray(currenttopic, exports.topicarray); //if doesnt exist, add.  
     exports.topicarray[currenttopic]?.push(mytopic);
     exports.topicarray[mydate.toString()]?.push(mypage);
+    return mydate;
 }
 function getBookPath() {
     const mySettings = vscode.workspace.getConfiguration('mrrubato');
@@ -672,6 +681,8 @@ function loadBook() {
         //add this to our CompletionItemProvider.   
         sortArray(exports.topicarray); //sort the topic array by date.
         sortArray(exports.arrays['>'], '>');
+        //open the most recent file.
+        select(result.page + ".txt", true); //select and open topic
     });
 }
 //# sourceMappingURL=book.js.map
