@@ -731,7 +731,45 @@ function generateAlphanumericHash(inputString) {
     hash |= 0; // Convert to 32bit integer
   }
   const alphanumeric = (hash >>> 0).toString(36);
+
+  return "\"" + inputString + "\""
   return alphanumeric;
+}
+
+
+function generateBasicString(inputString){
+  //#*/
+  let map = {
+    '/': '_', 
+    '\\\\': '_',
+    '#': '_',
+    '\\*': '_',
+    '\\.': '_',
+    '\\[': '_',
+    '\\]': '_',
+    '\\"': '_',
+    '-': '_',
+    ':': '_',
+    /*
+    '{': '_',
+    '}': '_',
+    '(': '_',
+    ')': '_',
+    ':': '_',
+    */
+  };
+  const src = '/[#_]/g';
+  const target = '_';
+
+  let outputString = inputString;
+  for (const [key, value] of Object.entries(map)) {
+    outputString = outputString.replace(new RegExp(key, 'g'), value);
+  }
+
+  if (outputString.length < 1){
+    outputString = "_";
+  }
+  return outputString;
 }
 
 function genLabel(topic){
@@ -739,7 +777,8 @@ function genLabel(topic){
   //do we want to filter based on topic?  
   //bookgraph
   if (!(topic in dotlabels)){
-    dotlabels[topic] = generateAlphanumericHash(topic);
+    //dotlabels[topic] = generateAlphanumericHash(topic);
+    dotlabels[topic] = generateBasicString(topic);
   }
   return dotlabels[topic];
 }

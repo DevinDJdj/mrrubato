@@ -1,0 +1,18 @@
+This exploration has led me in a variety of directions.  
+I have had a bit of a realization regarding why so many people find the interaction with computers taxing.  
+I think.  
+@@Is it the constant context switching for input mechanism?  
+~~We really should have a fairly constant input mechanism for communication.  
+Input mechanism in this sense being the way in which we input data for sending.  
+
+We all struggle in our own unique ways to adapt to this fundamental flaw in the communication design which has existed
+since the dawn of the computer age.  
+
+We are on the verge of a variety of things at the moment with computers.  But I believe the communication design will undergo
+a major revolution soon.  
+
+Computer Shell interaction should have included this type of ongoing discussion at a much more fundamental level than code comments.  
+
+
+
+

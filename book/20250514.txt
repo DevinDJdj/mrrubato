@@ -666,3 +666,37 @@ Is there similar javascript/typescript library
 --fix topic link in >
 OK..
 
+
+
+**web/public/codewindow.js
+--getCodeGraph
+Need to get includes, and have an include graph which searches depth 1 or 2.  
+Color functions differently than includes.  
+Show in same graph?  
+
+
+Dont really like that the digraph names are hashes.  
+Should really substitute a more readable name, in case we further use that structure.  
+
+#https://dreampuf.github.io/GraphvizOnline
+
+**extensions/vscode/codetutor/src/extension.js
+Be mindful of not making it too hard to change the meta language.  
+Cant be concerned about this now..
+
+selectionhistory is significant for context aware communication.  
+#https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28
+/repos/{owner}/{repo}/contents/{path}
+
+**web/public/git.js
+--getGitCommits
+Until date is possible.  
+So should be able to retrieve time-aware context.  
+@@github why is there no /repos/{owner}/{repo}/contents/{path}?until=
+
+
+Bookname (pathname) is important.  We should use a better sample value.  
+
+
+
+

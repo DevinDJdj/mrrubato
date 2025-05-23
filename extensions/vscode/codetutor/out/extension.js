@@ -431,7 +431,11 @@ function activate(context) {
                 }
                 break;
             case "/":
-                //run the command.
+                //path search only.  
+                break;
+            case "@":
+                //open web link to interact with this question.  
+                //aggregate question/response.  
                 break;
             case "#":
                 //open on web.
@@ -444,6 +448,7 @@ function activate(context) {
                         text = text.substring(1);
                     default:
                         console.log("searching for: " + text.substring(1));
+                        text = text.substring(1);
                         vscode.commands.executeCommand('workbench.action.findInFiles', {
                             query: text,
                             triggerSearch: true,

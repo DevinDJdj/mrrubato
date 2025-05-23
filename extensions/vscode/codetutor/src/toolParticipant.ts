@@ -109,6 +109,45 @@ export function registerCompletionTool(context: vscode.ExtensionContext){
                     myarray = Book.findTopicsCompletion("");
                     return myarray;
                 }
+
+                keyfind: for (let j=Book.defmap.length-1; j>=0; j--) {
+                    for (const [k, v] of Object.entries(Book.defmap[j])) {
+                        if (linePrefix.endsWith(k)) {
+                            for (const [key, value] of Object.entries(Book.arrays[k])) {
+
+                                if (value !== undefined && value.length > 0) {
+
+                                    let ci = new vscode.CompletionItem(key, vscode.CompletionItemKind.Text);
+                                    ci.detail = `Command: ${key}`;
+                                    let doc = "";
+                                    let sortText = "0000";
+                                    for (let item of value) {
+                                        let filename = Book.getUri(item.topic);
+                                        doc += `File: ${item.file}, Line: ${item.line}, Sort: ${item.sortorder}  \n`;
+                                        doc += `Topic: [${item.topic}](${filename})  \n`;
+                                        doc += `Link: [${item.file}](${item.file}#L${item.line})  \n`;
+                                        let data = item.data.substring(0, 255);
+                                        doc += `Data: ${data}  \n`;
+        
+                                        //set sortText to top if it is in selection history.  
+                                        const found = Book.selectionhistory.findIndex((t) => t === item.topic);
+                                        if (found > -1){
+                                            sortText = (Book.MAX_SELECTION_HISTORY-found).toString(16).padStart(4, '0').toUpperCase();
+                                        }
+        
+                                    }
+                                    ci.documentation = new vscode.MarkdownString(`${doc}`);
+                                    if (sortText === "0000"){
+                                        sortText = value[0].sortorder.toString(16).padStart(4, '0').toUpperCase();
+                                    }
+                                    ci.sortText = sortText;
+                                    myarray.push(ci);
+                                }                    
+                            }
+                            return myarray;
+                        }
+                    }
+                }
                 if (linePrefix.endsWith('>') && linePrefix.startsWith('>')) {
                     console.log(Book.arrays['>']);
                     for (const [key, value] of Object.entries(Book.arrays['>'])) {
@@ -156,6 +195,7 @@ export function registerCompletionTool(context: vscode.ExtensionContext){
 
                 }
                 else{
+                    /*
                     for (const [key, value] of Object.entries(Book.topicarray)) {
                         if (value !== undefined && value.length > 0) {
                             let ci = new vscode.CompletionItem(key, vscode.CompletionItemKind.Text);
@@ -170,6 +210,7 @@ export function registerCompletionTool(context: vscode.ExtensionContext){
                             myarray.push(ci);
                         }                    
                     }
+                    */
                     return myarray;
                 }
             }
@@ -177,6 +218,11 @@ export function registerCompletionTool(context: vscode.ExtensionContext){
         '*', //trigger single character
         '>',
         '/', //trigger on '/'
+        '#', 
+        '@',
+        '!', 
+        '-', 
+        '$'
 
 
         //switch from '.' to '**' to trigger on '**' instead 

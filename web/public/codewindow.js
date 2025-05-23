@@ -2,7 +2,7 @@ var ast = "";
 var graphstr = "";
 
 
-function getBookGraph(fileName, codeString){
+function getBookGraph(fileName, graphString){
     var dotstr = "digraph {\n";
     dotstr += 'label="40pt Graph Label"'   + "\n";
     dotstr += 'fontsize=40' + "\n";
@@ -36,8 +36,11 @@ function getCodeGraph(fileName, codeString){
     }
     else{
         //test this with everything else.  Probably want two graphs.  
+        graphstr = getDotString(["test1", "test2", "test3", "test4", "test5"], 2);
         
     }
+
+    getBookGraph(fileName, graphstr);
 
     if (graphstr === "") {
         console.log("ERROR: No graph generated");
@@ -50,7 +53,7 @@ function getCodeGraph(fileName, codeString){
         });
     }
 
-    getBookGraph(fileName, codeString);
+
 
 }
 
@@ -66,19 +69,43 @@ function getDotString(input, depth=1){
         ret += "}\n";
         return ret;
     }
+    else{
+        ret = "digraph weighted {\n";
+        for (var i = 1; i < input.length; i++) {
+            for (var j = 0; j < depth && i+j<input.length; j++) {
+                ret += input[i+j-1] + " -> " + input[i+j] + " [width=" + (depth-j) + "] \n";
+            }
+        }
+        ret += "}\n";
+        return ret;        
+    }
 }
 function filbertParse(codeString){
     var parseFn = filbert.parse;
     var ranges = false;
     var locations = false;
+    names = [];
     try {
         var code = codeString;
         ast = parseFn(code, { locations: locations, ranges: ranges });
+        for (var i = 0; i < ast.body.length; i++) {
+            if (ast.body[i].type === "FunctionDeclaration") {
+                names.push(ast.body[i].id.name);
+            }
+            else if (ast.body[i].type === "VariableDeclaration") {
+                for (var j = 0; j < ast.body[i].declarations.length; j++) {
+                    if (ast.body[i].declarations[j].init && ast.body[i].declarations[j].init.type === "FunctionExpression") {
+                        ast.body[i].declarations[j].name = ast.body[i].declarations[j].id.name;
+                    }
+                }
+            }
+        }
     }
     catch (e) {
         return "ERROR in filbertParse: " + e.toString();
     }
-    return ast;
+    //for now just returning function names.  
+    return names;
 
 }
 

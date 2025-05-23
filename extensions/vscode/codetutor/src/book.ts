@@ -47,7 +47,7 @@ var myCodeMirror = null;
 var tempcodewindow = null;
 var usetempcodewindow = false;
 var definitions = {"REF": "#", "REF2": "##", "TOPIC": "**", "STARTCOMMENT": "<!--", "ENDCOMMENT": "-->", "CMD": ">", "QUESTION": "@@", "NOTE": "--", "SUBTASK": "-"};
-var defmap = [{"#": "REF",">": "CMD", "-": "SUBTASK"}, 
+export var defmap = [{"#": "REF",">": "CMD", "-": "SUBTASK"}, 
     {"##": "REF2", "**": "TOPIC", "@@": "QUESTION", "--": "NOTE", "==": "ANSWER", "$$": "ENV", "!!": "ERROR"}, 
     {"-->": "ENDCOMMENT"}, 
     {"<!--": "STARTCOMMENT"}];
@@ -84,12 +84,77 @@ let NEXT_TERM_ID = 1;
 
 export let MAX_SELECTION_HISTORY = 10; //max number of topics to keep in history.
 
+var bookgraph = {}; //store topic relationships.  
 
 //store data as tabs open and close and based on location in the tab.  
 //from this info generate the context when querying the model.  
 //right now only front-side loading.  Possibly add RAG processing later?  
 //need to include some random data in the context to make sure 
 //the logic is not circular.  
+
+function getDigraph(topic, templist, depth=12){
+    let str = "";
+    if (!(topic in bookgraph)){
+      bookgraph[topic] = {};
+      bookgraph[topic][topic] = 1;
+    }
+    else{
+      bookgraph[topic][topic] += 1; //self is just a counter.  Not for weight calculation.  
+      if (topic === "web/public/page.html"){
+        let j=0;
+      }
+    }
+    for (let i=0; i<templist.length; i++){
+      if (!(templist[i] in bookgraph[topic])){
+        bookgraph[topic][templist[i]] = depth-i;
+      }
+      else{
+        if (templist[i] !== topic){
+          bookgraph[topic][templist[i]] += depth-i;
+        }
+      }
+    }
+  }
+  
+  function buildTopicGraph(start, end, depth=6){
+    //create digraph structure.  
+    //calculate weights and structure.  
+    //array[topic][topic] = weight
+    //bookgraph, gitgraph
+    //load by date
+    //bookgraph
+    console.log(start);
+    console.log(end);
+    var dstart = parseInt(start);
+    var dend = parseInt(end);
+    let bookstr = "";
+    bookgraph = {};
+    let counter = 0;
+    let templist = [];
+    //not most efficient, but for now this will work.
+    for (const [key, value] of Object.entries(topicarray)) {
+        for (let j=0; j<value.length; j++){
+            if (value[j].date >= dstart && value[j].date <= dend){
+                templist.push(value[j].topic);
+                if (templist.length > depth){
+                    //create first and shift.  
+                    let topic = templist.shift();
+                    getDigraph(topic, templist);
+                }
+            }
+        }
+    }
+  
+    while (templist.length > 0){
+      let topic = templist.shift();
+      getDigraph(topic, templist);
+    }
+  
+  
+  }
+  
+
+
 
 export function logCommand(command: string) {
     //log the command in genbook.  
@@ -537,11 +602,22 @@ async function readFilesInFolder(folder: vscode.Uri): Promise<{ total: number, c
     allfiles.sort((fileA, fileB) => fileB.path.localeCompare(fileA.path));
     for (let i = 0; i < allfiles.length; i++) {
         const fileUri = allfiles[i];
+        let altdate = 0;
+        try{
+            let stats = await vscode.workspace.fs.stat(fileUri);
+            const modifiedDate = new Date(stats.mtime);
+            //alt date in case this is not named correctly.
+            let altdate = modifiedDate.getFullYear()*10000 + modifiedDate.getMonth()*100 + modifiedDate.getDate();
+        } catch (error) {
+            console.error(`Error reading file: ${error}`);
+        }
+
         await vscode.workspace.openTextDocument(fileUri).then((document) => {
             let text = document.getText();
             console.log(`${fileUri.path} ... read`);
             // parse this.  
-            let d = loadPage(text, fileUri.path);
+
+            let d = loadPage(text, fileUri.path, altdate);
             if (d.valueOf() > booknow) {
                 booknow = d.valueOf(); //get the most recent date.
                 openpage = fileUri.path;
@@ -573,6 +649,15 @@ function getFileDate(filePath: string): number {
     filePath = filePath.split(".")[0]; //remove the extension.
     if (!Number.isNaN(filePath)){
         return Number(filePath); //get the date of the file.  
+
+    }
+    else{
+        //get date of the file
+        const folderUri = vscode.workspace.workspaceFolders[0].uri;
+
+//       const stat => await vscode.workspace.fs.stat(folderUri.with({ path: filePath }))
+//        console.log((new Date(stat.mtime)).getFullYear() * 10000); //get the date of the file.
+//       return (new Date(stat.mtime)).getFullYear() * 10000;
 
     }
     return 0;
@@ -630,7 +715,7 @@ export function updatePage(filePath: string, text: string, linefrom: number = 0,
     });
 }
 
-export function loadPage(text: string, filePath: string): Number {
+export function loadPage(text: string, filePath: string, altdate: number=0): Number {
     //get the completions from the text.  
     //each topic or comment should be parsed and added to 
     //completions...
@@ -641,7 +726,10 @@ export function loadPage(text: string, filePath: string): Number {
     if (!(currenttopic in topicarray) || topicarray[currenttopic] === undefined) {
         topicarray[currenttopic] = [];
     }
-    let mydate = getFileDate(filename.split(".")[0]); //get the date of the file.    
+    let mydate = getFileDate(filename); //get the date of the file.    
+    if (mydate === 0 && altdate !== 0){
+        mydate = altdate; //use the alternate date if we have one.
+    }
     let mypage = {"file": filePath, "line": 0, "topic": currenttopic, "sortorder": 0, "date": mydate, "data": ""};
     //adjust sortorder based on order of occurrence for now. 
     let mytopic = {"file": filePath, "line": 0, "topic": currenttopic, "sortorder": 0, "date": mydate, "data": ""};
@@ -686,9 +774,15 @@ export function loadPage(text: string, filePath: string): Number {
 
                         break keyfind;
                     }
-                    else if (key === ">") {
+    /*
+    var defmap = [{"#": "REF",">": "CMD", "-": "SUBTASK"}, 
+        {"##": "REF2", "**": "TOPIC", "@@": "QUESTION", "--": "NOTE", "==": "ANSWER", "$$": "ENV", "!!": "ERROR"}, 
+        {"-->": "ENDCOMMENT"}, 
+        {"<!--": "STARTCOMMENT"}];
+    */
+                    else if (key.length < 3 && key !== "**" && key !== "--"){
 
-                        let ckey = str.slice(1);
+                        let ckey = str.slice(key.length);
                         let myorder = 0;
                         myorder = arrays[key][ckey]?.length || 0; //get the current order of the topic.
 
@@ -771,12 +865,31 @@ function loadBook(){
 
         //open the most recent file.
         select(result.page + ".txt", true); //select and open topic
-
         
+        
+        let YYYYmmdd = result.page.split('/').at(-1); //get the date from the path.
+        let currentdate = createDateFromYYYYmmdd(YYYYmmdd); //get the current date in YYYYMMDD format.
+        let prevdate = new Date(currentdate);
+        prevdate.setFullYear(currentdate.getFullYear() - 1); //get the date one year ago.
+        
+        //see if this logic works.  OK we have a small relationship graph.  
+        buildTopicGraph(prevdate.toISOString().slice(0,10).replace(/-/g,""), currentdate.toISOString().slice(0,10).replace(/-/g,"")); //build the topic graph for last year.  
+        console.log(bookgraph);
+
     
     });
 
 
-    
+    function createDateFromYYYYmmdd(dateString) {
+        try{
+            const year = parseInt(dateString.substring(0, 4));
+            const month = parseInt(dateString.substring(4, 6)) - 1; // Month is 0-indexed
+            const day = parseInt(dateString.substring(6, 8));
+            return new Date(year, month, day);
+        } catch (error) {
+            console.error(`Error parsing date: ${error}`);
+            return new Date(); // Return null or handle the error as needed
+        }
+      }
 }
 

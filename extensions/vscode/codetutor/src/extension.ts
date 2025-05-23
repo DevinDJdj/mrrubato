@@ -478,6 +478,7 @@ export function activate(context: vscode.ExtensionContext) {
 						vscode.commands.executeCommand('workbench.action.terminal.focus');
 						vscode.commands.executeCommand('workbench.action.terminal.sendSequence', { text: text.substring(2) + "\n" });
 						break;
+
 					default:
 						vscode.commands.executeCommand('workbench.action.terminal.focus');
 						vscode.commands.executeCommand('workbench.action.terminal.sendSequence', { text: text.substring(1) + "\n" });
@@ -487,7 +488,11 @@ export function activate(context: vscode.ExtensionContext) {
 				break;
 
 			case "/":
-				//run the command.
+				//path search only.  
+				break;
+			case "@":
+				//open web link to interact with this question.  
+				//aggregate question/response.  
 				break;
 
 			case "#":
@@ -501,6 +506,7 @@ export function activate(context: vscode.ExtensionContext) {
 						text = text.substring(1);
 					default:
 						console.log("searching for: " + text.substring(1));
+						text = text.substring(1);
 						vscode.commands.executeCommand('workbench.action.findInFiles', {
 							query: text,
 							triggerSearch: true,
