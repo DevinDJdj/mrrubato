@@ -102,7 +102,19 @@ export function registerCompletionTool(context: vscode.ExtensionContext){
                 // get all text until the `position` and check if it reads `console.`
                 // and if so then complete if `log`, `warn`, and `error`
                 let myarray = [];
-                const linePrefix = document.lineAt(position).text.slice(0, position.character);
+
+
+                let linePrefix = document.lineAt(position).text.slice(0, position.character);
+                if (position.character === 0) {
+                    //new line, get previous line.  
+                    //if topic, then logCommand.  
+                    linePrefix = document.lineAt(position.line-1).text;
+                    if (linePrefix.startsWith('**')) {
+                        //if it is a topic, then logCommand.  
+                        Book.addToHistory(linePrefix.substring(2));
+                        Book.logCommand(linePrefix);
+                    }
+                }
                 if (linePrefix.endsWith('**')) {
 
                     console.log(Book.topicarray);
@@ -112,39 +124,47 @@ export function registerCompletionTool(context: vscode.ExtensionContext){
 
                 keyfind: for (let j=Book.defmap.length-1; j>=0; j--) {
                     for (const [k, v] of Object.entries(Book.defmap[j])) {
+                        //for now excluding the '-' key.
                         if (linePrefix.endsWith(k)) {
-                            for (const [key, value] of Object.entries(Book.arrays[k])) {
-
-                                if (value !== undefined && value.length > 0) {
-
-                                    let ci = new vscode.CompletionItem(key, vscode.CompletionItemKind.Text);
-                                    ci.detail = `Command: ${key}`;
-                                    let doc = "";
-                                    let sortText = "0000";
-                                    for (let item of value) {
-                                        let filename = Book.getUri(item.topic);
-                                        doc += `File: ${item.file}, Line: ${item.line}, Sort: ${item.sortorder}  \n`;
-                                        doc += `Topic: [${item.topic}](${filename})  \n`;
-                                        doc += `Link: [${item.file}](${item.file}#L${item.line})  \n`;
-                                        let data = item.data.substring(0, 255);
-                                        doc += `Data: ${data}  \n`;
-        
-                                        //set sortText to top if it is in selection history.  
-                                        const found = Book.selectionhistory.findIndex((t) => t === item.topic);
-                                        if (found > -1){
-                                            sortText = (Book.MAX_SELECTION_HISTORY-found).toString(16).padStart(4, '0').toUpperCase();
-                                        }
-        
-                                    }
-                                    ci.documentation = new vscode.MarkdownString(`${doc}`);
-                                    if (sortText === "0000"){
-                                        sortText = value[0].sortorder.toString(16).padStart(4, '0').toUpperCase();
-                                    }
-                                    ci.sortText = sortText;
-                                    myarray.push(ci);
-                                }                    
+                            if (k.length ===1 && !linePrefix.startsWith(k)) {
+                                //cant do autocomplete for single characters.  
+                                //only from two characters to prevent overautocomplete.  
+                                continue;
                             }
-                            return myarray;
+                            else{
+                                for (const [key, value] of Object.entries(Book.arrays[k])) {
+
+                                    if (value !== undefined && value.length > 0) {
+
+                                        let ci = new vscode.CompletionItem(key, vscode.CompletionItemKind.Text);
+                                        ci.detail = `Command: ${key}`;
+                                        let doc = "";
+                                        let sortText = "0000";
+                                        for (let item of value) {
+                                            let filename = Book.getUri(item.topic);
+                                            doc += `File: ${item.file}, Line: ${item.line}, Sort: ${item.sortorder}  \n`;
+                                            doc += `Topic: [${item.topic}](${filename})  \n`;
+                                            doc += `Link: [${item.file}](${item.file}#L${item.line})  \n`;
+                                            let data = item.data.substring(0, 255);
+                                            doc += `Data: ${data}  \n`;
+            
+                                            //set sortText to top if it is in selection history.  
+                                            const found = Book.selectionhistory.findIndex((t) => t === item.topic);
+                                            if (found > -1){
+                                                sortText = (Book.MAX_SELECTION_HISTORY-found).toString(16).padStart(4, '0').toUpperCase();
+                                            }
+            
+                                        }
+                                        ci.documentation = new vscode.MarkdownString(`${doc}`);
+                                        if (sortText === "0000"){
+                                            sortText = value[0].sortorder.toString(16).padStart(4, '0').toUpperCase();
+                                        }
+                                        ci.sortText = sortText;
+                                        myarray.push(ci);
+                                    }                    
+                                }
+                                return myarray;
+                            }
                         }
                     }
                 }
@@ -222,7 +242,9 @@ export function registerCompletionTool(context: vscode.ExtensionContext){
         '@',
         '!', 
         '-', 
-        '$'
+        '$', 
+        '\n', //trigger on newline
+        //not sure this is a good idea.  Seems to work ok.  
 
 
         //switch from '.' to '**' to trigger on '**' instead 

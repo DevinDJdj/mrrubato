@@ -246,6 +246,7 @@ async function Chat(prompt: string, context: vscode.ChatContext, stream: vscode.
 function getTextFromCursor(editor: vscode.TextEditor) {
 	const selection = editor.selection;
 	let text = editor.document.getText(selection);
+	let topic = "";
 	if (text === "") {
 
 		let offset = editor.selection.active;
@@ -255,10 +256,29 @@ function getTextFromCursor(editor: vscode.TextEditor) {
 			offset = new vscode.Position(offset.line, editor.document.lineAt(offset.line).text.length);
 		}
 
-	//					editor.selection = new vscode.Selection(offset.line, 0, offset.line, offset.character);
+		//					editor.selection = new vscode.Selection(offset.line, 0, offset.line, offset.character);
 		text = editor.document.getText(new vscode.Range(offset.line, 0, offset.line, offset.character));
+		if (text.length > 1 && text.charAt(0) === '*' && text.charAt(1) === '*'){
+			//remove the first character.
+			//potential topic.  
+			topic = text.substring(2, text.length);
+		}
+		else{
+			//find last topic.  
+			let topsearch = editor.document.getText(new vscode.Range(0, 0, offset.line, offset.character));			
+			let topsearches = topsearch.split("\n");
+			for (let i = topsearches.length - 1; i >= 0; i--) {
+				if (topsearches[i].startsWith("**")) {
+					//found a topic
+					topic = topsearches[i].substring(2, topsearches[i].length);
+					topic = topic.replace(/[\n\r]+/g, '');
+					break;
+				}
+
+			}
+		}
 	}
-	return text;
+	return [text, topic];
 }
 export function activate(context: vscode.ExtensionContext) {
 	//not being activated until chatted to...
@@ -435,14 +455,14 @@ export function activate(context: vscode.ExtensionContext) {
 	//start listening for external URIs.  
 	vscode.commands.executeCommand('mrrubato.mytutor.start');
 
-	const searchcommand = vscode.commands.registerCommand('mrrubato.mytutor.search', async (text="") => {
+	const searchcommand = vscode.commands.registerCommand('mrrubato.mytutor.search', async (text="", topic="") => {
 		//what else do we do here?  
 		//
 		if (text === "") {
 			const editor = vscode.window.activeTextEditor;
 
 			if (editor) {
-				text = getTextFromCursor(editor);
+				[text, topic] = getTextFromCursor(editor);
 				if (text.startsWith("**")){
 					text = text.substring(2);
 					Book.select(text, true); //select and open topic
@@ -459,17 +479,30 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	});
 
-	const gencommand = vscode.commands.registerCommand('mrrubato.mytutor.generate', async (text="") => {
+	const gencommand = vscode.commands.registerCommand('mrrubato.mytutor.generate', async (text="", topic="") => {
+		let topiccmd = "";
 		if (text === "") {
 			//probably should remove header and then run ctrl+shift+f.  
 			const editor = vscode.window.activeTextEditor;
 			if (editor) {
-				text = getTextFromCursor(editor);
+				[text, topic] = getTextFromCursor(editor);
+				if (topic !== "" && topic !== Book.selectedtopic) {
+					//select the topic.  
+					Book.select(topic, false); //select and open topic
+//					Book.logCommand("**" + topic); //log the command to genbook.
+					topiccmd = "\n**" + topic + "\n";
+				}
+
 			}
 		}
-		  	  
+		const mySettings = vscode.workspace.getConfiguration('mrrubato');	
+
+		let temptext = text;		  	  
 		//run the desired command here.  
 		let cmdtype = Book.getCommandType(text);
+		if (cmdtype[0] !== "*"){
+			//get previous topic.  
+		}
 		switch (cmdtype[0]) {
 			case ">":
 				//run the command.
@@ -493,20 +526,50 @@ export function activate(context: vscode.ExtensionContext) {
 			case "@":
 				//open web link to interact with this question.  
 				//aggregate question/response.  
-				break;
+				switch (cmdtype[1]) {
+					case "@":
+						//general question
+						break;
+					default:
+						//find person.  
+						let query = text.split(" ");
+						let entity = query[0].substring(1);
+
+						let system = entity.split(":")[0];
+						let person = entity.split(":").pop();
+						if (system === person){
+							//no system specified.
+							//find person.  
+							//use copilot query.  
+							vscode.commands.executeCommand('workbench.action.chat.open', text );
+						}
+						else{
+							//find system.  teams, slack, etc.  
+							//i.e. https://learn.microsoft.com/en-us/graph/api/chatmessage-post?view=graph-rest-1.0&tabs=http
+							//i.e. https://github.com/OfficeDev/Microsoft-Teams-Samples/tree/main/samples/incoming-webhook/nodejs
+							//launch implemented program to talk to other system.  Pass temp file input via cmd.  
+							//lookup command to use for system.  
+							//vscode.commands.executeCommand('workbench.action.terminal.focus');
+							//vscode.commands.executeCommand('workbench.action.terminal.sendSequence', { text: "mycommand " + text + "\n" });
+
+						}
+						let question = query.slice(1).join(" ");
+						break;
+				}
 
 			case "#":
 				//open on web.
+				vscode.env.openExternal(vscode.Uri.parse(text.substring(1)));
 				break;
 			case "!":
 				//find in log files
 				//logdirs
 				switch (cmdtype[1]) {
 					case "!":
-						text = text.substring(1);
+						temptext = text.substring(1);
 					default:
-						console.log("searching for: " + text.substring(1));
-						text = text.substring(1);
+						temptext = temptext.substring(1);
+						console.log("searching for: " + temptext.substring(1));
 						vscode.commands.executeCommand('workbench.action.findInFiles', {
 							query: text,
 							triggerSearch: true,
@@ -520,6 +583,17 @@ export function activate(context: vscode.ExtensionContext) {
 				//find env variables
 				switch (cmdtype[1]) {
 					case '$':
+						if (text.length < 3) {
+							//list env variables.  
+							console.log("ENV: " + Book.environmenthistory);
+						}
+						else{
+							Book.addToEnvironment(text.substring(2));
+							console.log("ENV: " + Book.environmenthistory);
+						}
+						//add to book.  
+//						const fileUri = folder.with({ path: posix.join(folder.path, name) });
+//						Book.loadPage(text, fileUri); //load the ENV for completion.  
 						//add new variable
 						//list variables and values.  
 						//$$
@@ -544,8 +618,8 @@ export function activate(context: vscode.ExtensionContext) {
 				console.log("Opening topic: " + text);
 				switch (cmdtype[1]) {
 					case "*":
-						text = text.substring(2);
-						Book.select(text, true); //select and open topic
+						temptext = text.substring(2);
+						Book.select(temptext, true); //select and open topic
 						break;
 					case "#":
 						//open references.html?topic=
@@ -573,11 +647,13 @@ export function activate(context: vscode.ExtensionContext) {
 		}		
 		//log the command to genbook if valid.  
 
-		Book.logCommand(text);
+		Book.logCommand(topiccmd + text);
 		//copy to the clipboard anyway by default.  
 		//if wanting to use in different environment.  
+
 		//not sure if this is needed or not.
-		vscode.env.clipboard.writeText(text);
+//		vscode.env.clipboard.writeText(text);
+
 		/*
 		vscode.env.clipboard.readText().then((text)=>{
 			clipboard_content = text; 

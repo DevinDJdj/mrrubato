@@ -697,6 +697,44 @@ So should be able to retrieve time-aware context.
 
 Bookname (pathname) is important.  We should use a better sample value.  
 
+**extensions/vscode/codetutor/src/extension.js
+What to do with ENV.  
+
+@how to remove environment info?  
+Should we use this?
+$$+
+$$-
+
+
+> firebase hosting:clone SOURCE_SITE_ID:SOURCE_CHANNEL_ID TARGET_SITE_ID:live
+> firebase hosting:channel:create msroboto
+> firebase hosting:channel:deploy msroboto
+> firebase hosting:channel:create mrrubato
+> firebase hosting:channel:deploy mrrubato
+
+After one year or so..
+not sure its worth..
+> gsutil -m rewrite -s coldline gs://{site}.appspot.com/videos/2025
+
+> Manage Trusted Domains
+
+
+> workbench.action.showCommands
+How to distinguish between shell command and env command.  
+
+
+**GENBOOK
+Should be associated with topic.  
+Find current topic, if not selected topic, add topic as well.  
+
+Have to answer the question when selecting a topic are we generating or just annotating.  
+
+Need to select topic when it is generated.  
+
+Think about substitution logic.  
+
+
+
 
 
 

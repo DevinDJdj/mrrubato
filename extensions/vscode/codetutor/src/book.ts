@@ -36,18 +36,21 @@ const GIT_DB = 8;
 
 var gitnature = GIT_CODE | GIT_DETAILS; //do we retrieve history and commits?  
 
-var currenttopic = "NONE";
-var selectedtopic = "NONE";
+export var currenttopic = "NONE";
+export var selectedtopic = "NONE";
 var currenttopicline = 0;
 var currentrefline = 0;
 var currentref = "NONE";
 
 export var selectionhistory = [];
+export var environmenthistory = [];
+
+
 var myCodeMirror = null;
 var tempcodewindow = null;
 var usetempcodewindow = false;
 var definitions = {"REF": "#", "REF2": "##", "TOPIC": "**", "STARTCOMMENT": "<!--", "ENDCOMMENT": "-->", "CMD": ">", "QUESTION": "@@", "NOTE": "--", "SUBTASK": "-"};
-export var defmap = [{"#": "REF",">": "CMD", "-": "SUBTASK"}, 
+export var defmap = [{"#": "REF",">": "CMD", "-": "SUBTASK", "@": "USER"}, 
     {"##": "REF2", "**": "TOPIC", "@@": "QUESTION", "--": "NOTE", "==": "ANSWER", "$$": "ENV", "!!": "ERROR"}, 
     {"-->": "ENDCOMMENT"}, 
     {"<!--": "STARTCOMMENT"}];
@@ -86,6 +89,7 @@ export let MAX_SELECTION_HISTORY = 10; //max number of topics to keep in history
 
 var bookgraph = {}; //store topic relationships.  
 
+let topicchanged = false;
 //store data as tabs open and close and based on location in the tab.  
 //from this info generate the context when querying the model.  
 //right now only front-side loading.  Possibly add RAG processing later?  
@@ -386,13 +390,27 @@ function sortArray(array: {[key: string] : Array<BookTopic> | undefined}, typeke
     });
 
 }
-function addToHistory(topic: string){
+
+export function addToEnvironment(str: string){
+    //add the topic to the environment.  
+    const found = environmenthistory.find((t) => t === str);
+    if (!found){
+        environmenthistory.push(str); //add the topic to the selection history.
+    }
+    if (environmenthistory.length > MAX_SELECTION_HISTORY*2) {
+        environmenthistory.shift(); //remove the first element from the array.
+    }        
+}
+export function addToHistory(topic: string){
     //add the topic to the history.  
     const found = selectionhistory.find((t) => t === topic);
     if (!found){
         selectionhistory.push(topic); //add the topic to the selection history.
     }
-    selectedtopic = topic; //set the selected topic to the current topic.
+    if (selectedtopic !== topic) {
+        selectedtopic = topic; //set the selected topic to the current topic.
+        topicchanged = true; //set the topic changed flag to true.
+    }
     if (selectionhistory.length > MAX_SELECTION_HISTORY) {
         selectionhistory.shift(); //remove the first element from the array.
     }    
@@ -621,6 +639,9 @@ async function readFilesInFolder(folder: vscode.Uri): Promise<{ total: number, c
             if (d.valueOf() > booknow) {
                 booknow = d.valueOf(); //get the most recent date.
                 openpage = fileUri.path;
+
+                selectedtopic = currenttopic; //set selected topic
+                
             }
 
 //                console.log(text);
@@ -780,7 +801,8 @@ export function loadPage(text: string, filePath: string, altdate: number=0): Num
         {"-->": "ENDCOMMENT"}, 
         {"<!--": "STARTCOMMENT"}];
     */
-                    else if (key.length < 3 && key !== "**" && key !== "--"){
+                    //allow for --notes.  
+                    else if (key.length < 3 && key !== "**"){
 
                         let ckey = str.slice(key.length);
                         let myorder = 0;

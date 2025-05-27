@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MAX_SELECTION_HISTORY = exports.arrays = exports.commandarray = exports.temptopicarray = exports.temptopics = exports.topicarray = exports.alltopicsa = exports.alltopics = exports.defmap = exports.selectionhistory = void 0;
+exports.MAX_SELECTION_HISTORY = exports.arrays = exports.commandarray = exports.temptopicarray = exports.temptopics = exports.topicarray = exports.alltopicsa = exports.alltopics = exports.defmap = exports.environmenthistory = exports.selectionhistory = exports.selectedtopic = exports.currenttopic = void 0;
 exports.logCommand = logCommand;
 exports.getCommandType = getCommandType;
 exports.open = open;
@@ -41,6 +41,8 @@ exports.findTopicsCompletion = findTopicsCompletion;
 exports.findInputTopics = findInputTopics;
 exports.getTempTopicsFromPath = getTempTopicsFromPath;
 exports.adjustSort = adjustSort;
+exports.addToEnvironment = addToEnvironment;
+exports.addToHistory = addToHistory;
 exports.select = select;
 exports.pickTopic = pickTopic;
 exports.gitChanges = gitChanges;
@@ -82,17 +84,18 @@ const GIT_DETAILS = 2;
 const GIT_RELATIONS = 4;
 const GIT_DB = 8;
 var gitnature = GIT_CODE | GIT_DETAILS; //do we retrieve history and commits?  
-var currenttopic = "NONE";
-var selectedtopic = "NONE";
+exports.currenttopic = "NONE";
+exports.selectedtopic = "NONE";
 var currenttopicline = 0;
 var currentrefline = 0;
 var currentref = "NONE";
 exports.selectionhistory = [];
+exports.environmenthistory = [];
 var myCodeMirror = null;
 var tempcodewindow = null;
 var usetempcodewindow = false;
 var definitions = { "REF": "#", "REF2": "##", "TOPIC": "**", "STARTCOMMENT": "<!--", "ENDCOMMENT": "-->", "CMD": ">", "QUESTION": "@@", "NOTE": "--", "SUBTASK": "-" };
-exports.defmap = [{ "#": "REF", ">": "CMD", "-": "SUBTASK" },
+exports.defmap = [{ "#": "REF", ">": "CMD", "-": "SUBTASK", "@": "USER" },
     { "##": "REF2", "**": "TOPIC", "@@": "QUESTION", "--": "NOTE", "==": "ANSWER", "$$": "ENV", "!!": "ERROR" },
     { "-->": "ENDCOMMENT" },
     { "<!--": "STARTCOMMENT" }];
@@ -110,6 +113,7 @@ let mynow = new Date(); //get the current date in YYYYMMDD format.
 let NEXT_TERM_ID = 1;
 exports.MAX_SELECTION_HISTORY = 10; //max number of topics to keep in history.
 var bookgraph = {}; //store topic relationships.  
+let topicchanged = false;
 //store data as tabs open and close and based on location in the tab.  
 //from this info generate the context when querying the model.  
 //right now only front-side loading.  Possibly add RAG processing later?  
@@ -372,13 +376,26 @@ function sortArray(array, typekey = '') {
         exports.alltopicsa.push(key.substring(0, 1)); //add the first character of the topic to the array.
     });
 }
+function addToEnvironment(str) {
+    //add the topic to the environment.  
+    const found = exports.environmenthistory.find((t) => t === str);
+    if (!found) {
+        exports.environmenthistory.push(str); //add the topic to the selection history.
+    }
+    if (exports.environmenthistory.length > exports.MAX_SELECTION_HISTORY * 2) {
+        exports.environmenthistory.shift(); //remove the first element from the array.
+    }
+}
 function addToHistory(topic) {
     //add the topic to the history.  
     const found = exports.selectionhistory.find((t) => t === topic);
     if (!found) {
         exports.selectionhistory.push(topic); //add the topic to the selection history.
     }
-    selectedtopic = topic; //set the selected topic to the current topic.
+    if (exports.selectedtopic !== topic) {
+        exports.selectedtopic = topic; //set the selected topic to the current topic.
+        topicchanged = true; //set the topic changed flag to true.
+    }
     if (exports.selectionhistory.length > exports.MAX_SELECTION_HISTORY) {
         exports.selectionhistory.shift(); //remove the first element from the array.
     }
@@ -572,6 +589,7 @@ async function readFilesInFolder(folder) {
             if (d.valueOf() > booknow) {
                 booknow = d.valueOf(); //get the most recent date.
                 openpage = fileUri.path;
+                exports.selectedtopic = exports.currenttopic; //set selected topic
             }
             //                console.log(text);
             // Optionally insert the text into the active editor
@@ -655,19 +673,19 @@ function loadPage(text, filePath, altdate = 0) {
     //each topic or comment should be parsed and added to 
     //completions...
     let filename = getFileName(filePath);
-    currenttopic = filename.split(".")[0]; //default topic is the file name.
-    if (!(currenttopic in exports.topicarray) || exports.topicarray[currenttopic] === undefined) {
-        exports.topicarray[currenttopic] = [];
+    exports.currenttopic = filename.split(".")[0]; //default topic is the file name.
+    if (!(exports.currenttopic in exports.topicarray) || exports.topicarray[exports.currenttopic] === undefined) {
+        exports.topicarray[exports.currenttopic] = [];
     }
     let mydate = getFileDate(filename); //get the date of the file.    
     if (mydate === 0 && altdate !== 0) {
         mydate = altdate; //use the alternate date if we have one.
     }
-    let mypage = { "file": filePath, "line": 0, "topic": currenttopic, "sortorder": 0, "date": mydate, "data": "" };
+    let mypage = { "file": filePath, "line": 0, "topic": exports.currenttopic, "sortorder": 0, "date": mydate, "data": "" };
     //adjust sortorder based on order of occurrence for now. 
-    let mytopic = { "file": filePath, "line": 0, "topic": currenttopic, "sortorder": 0, "date": mydate, "data": "" };
+    let mytopic = { "file": filePath, "line": 0, "topic": exports.currenttopic, "sortorder": 0, "date": mydate, "data": "" };
     let strs = text.split("\n");
-    let tkey = currenttopic;
+    let tkey = exports.currenttopic;
     for (let i = 0; i < strs.length; i++) {
         let str = strs[i].trim();
         mypage.data += str + "\n"; //add to current page data.
@@ -693,7 +711,7 @@ function loadPage(text, filePath, altdate = 0) {
                         myorder = exports.topicarray[tkey]?.length || 0; //get the current order of the topic.
                         mytopic = { "file": filePath, "line": i, "topic": tkey, "sortorder": myorder, "date": mydate, "data": "" };
                         //adjust sortorder based on order of occurrence for now. 
-                        currenttopic = tkey;
+                        exports.currenttopic = tkey;
                         break keyfind;
                     }
                     /*
@@ -702,11 +720,12 @@ function loadPage(text, filePath, altdate = 0) {
                         {"-->": "ENDCOMMENT"},
                         {"<!--": "STARTCOMMENT"}];
                     */
-                    else if (key.length < 3 && key !== "**" && key !== "--") {
+                    //allow for --notes.  
+                    else if (key.length < 3 && key !== "**") {
                         let ckey = str.slice(key.length);
                         let myorder = 0;
                         myorder = exports.arrays[key][ckey]?.length || 0; //get the current order of the topic.
-                        mytopic = { "file": filePath, "line": i, "topic": currenttopic, "sortorder": myorder, "date": mydate, "data": "" };
+                        mytopic = { "file": filePath, "line": i, "topic": exports.currenttopic, "sortorder": myorder, "date": mydate, "data": "" };
                         initArray(ckey, exports.arrays[key]); //if doesnt exist, add.  
                         exports.arrays[key][ckey]?.push(mytopic); //add the previous topic to the array.
                         //adjust sortorder based on order of occurrence for now. 
@@ -716,8 +735,8 @@ function loadPage(text, filePath, altdate = 0) {
             }
         }
     }
-    initArray(currenttopic, exports.topicarray); //if doesnt exist, add.  
-    exports.topicarray[currenttopic]?.push(mytopic);
+    initArray(exports.currenttopic, exports.topicarray); //if doesnt exist, add.  
+    exports.topicarray[exports.currenttopic]?.push(mytopic);
     exports.topicarray[mydate.toString()]?.push(mypage);
     return mydate;
 }
