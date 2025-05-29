@@ -105,7 +105,7 @@ class MyMsg:
       if (self.ngrams[i] - self.ngrams[i-1] > 0):
         temp = temp * 2 - 1
       else:
-        temp = -temp * 2
+        temp = temp * 2
       
       p = getprime(temp)
       words.append(p)

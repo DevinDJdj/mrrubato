@@ -146,7 +146,7 @@ function registerCompletionTool(context) {
                             for (const [key, value] of Object.entries(Book.arrays[k])) {
                                 if (value !== undefined && value.length > 0) {
                                     let ci = new vscode.CompletionItem(key, vscode.CompletionItemKind.Text);
-                                    ci.detail = `Command: ${key}`;
+                                    ci.detail = `${k}: ${key}`;
                                     let doc = "";
                                     let sortText = "0000";
                                     for (let item of value) {

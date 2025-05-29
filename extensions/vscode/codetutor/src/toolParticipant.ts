@@ -137,7 +137,7 @@ export function registerCompletionTool(context: vscode.ExtensionContext){
                                     if (value !== undefined && value.length > 0) {
 
                                         let ci = new vscode.CompletionItem(key, vscode.CompletionItemKind.Text);
-                                        ci.detail = `Command: ${key}`;
+                                        ci.detail = `${k}: ${key}`;
                                         let doc = "";
                                         let sortText = "0000";
                                         for (let item of value) {

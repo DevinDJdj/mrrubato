@@ -734,6 +734,31 @@ Need to select topic when it is generated.
 Think about substitution logic.  
 
 
+**extensions/vscode/codetutor/src/extension.js
+--Chat
+Need to be able to select model with 
+$$model=...
+or some other way.  
+
+
+**analyze/analyze.py
+--getNgrams
+$$mappgram
+continue..
+  mapsgram[ seqgram ] [ pgram ] = { 'time': [], 'iteration': [] }
+  mappgram[ signs ] [ pgram ] = { 'time': [], 'iteration': [] }
+
+Find avg times per iterations.  
+Find if time PCT offsets between iterations matches, we estimate that this is a 
+time anchor and the same location in the piece.  
+How many repetitions do we have, probably not many due to finger errors.  
+First what is the length of these maps.  
+Sort most frequent signs and seqgrams.  
+See if there is anything interesting in these patterns.  
+What does it look like per song and across songs.  
+
+
+
 
 
 
