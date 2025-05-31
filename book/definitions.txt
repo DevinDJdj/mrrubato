@@ -69,7 +69,7 @@ Shorthand
 Leading OPEN:
 & = and? (Latin)
 +
-% = wild? or modulate? 
+% = wild? or modulate/random? 
 ^ = generate (Exponentiate)
 _ = pre-requisite
 / = path
@@ -78,6 +78,9 @@ _ = pre-requisite
 ; = comment?
 ~~ = suggestion
 | = PIPE OR
+.. = time marker? continuation?  
+... = continuation later.  
+
 
 < >
 <? ?> = inline macro (PHP)
@@ -89,9 +92,15 @@ _ = pre-requisite
 Ending ...
 Annotate with leading space or something else?  
 
-defstring = "!@#$%^&*<>/-+"
+defstring = "!@#$%^&*<>/-+=;"
 -->
 
  ... Work to do
  ? Open question
-
+ & trailing and removes from ENV.  
+<!--
+$$+MYVAR
+$$-MYVAR
+$$-**TOPIC removes all topic ENV variables.  
+TOPIC cant start with -
+-->

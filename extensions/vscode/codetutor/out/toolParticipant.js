@@ -59,7 +59,7 @@ function editorRanges(prefix, editor) {
     }
     if (editor.visibleRanges.length === 1) {
         let visibleRange = editor.visibleRanges[0];
-        console.log(`${prefix} visible ${positionToString(visibleRange.start)} ${positionToString(visibleRange.end)}  selectionStart ${positionToString(editor.selection.start)} selectionEnd ${positionToString(editor.selection.end)}`);
+        //        console.log(`${prefix} visible ${positionToString(visibleRange.start)} ${positionToString(visibleRange.end)}  selectionStart ${positionToString(editor.selection.start)} selectionEnd ${positionToString(editor.selection.end)}`);
         editor.document.getText(visibleRange).split('\n').forEach((line, index) => {
             //            console.log(`line ${index + visibleRange.start.line}: ${line}`);
             //add this to context.  

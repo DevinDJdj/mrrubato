@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { posix, basename } from 'path';
-
+import * as tokenizer from './tokenizer'; // Import the Token interface
 
 /*
     * Book.ts - This file is part of the GitBook extension for VSCode.
@@ -69,6 +69,9 @@ interface BookTopic {
 
 export var alltopics: string[] = [];
 export var alltopicsa: string[] = [];
+
+export var envarray: {[key: string] : string} = {}; //environment variables.
+
 export var topicarray: {[key: string] : Array<BookTopic> | undefined} = {};
 
 export var temptopics: string[] = [];
@@ -173,6 +176,11 @@ export function logCommand(command: string) {
         console.error(`Error reading file: ${error}`);
     }
 
+}
+
+export function getTokens(str: string): Array<tokenizer.Token> {
+    return tokenizer.tokenize(str);
+//    return [];
 }
 
 export function getCommandType(str: string) : [string, string] {
@@ -391,21 +399,55 @@ function sortArray(array: {[key: string] : Array<BookTopic> | undefined}, typeke
 
 }
 
-export function addToEnvironment(str: string){
+export function printENV(){
+    for (let i=0; i<environmenthistory.length; i++) {
+        console.log("$$" + environmenthistory[i] + " = " + envarray[environmenthistory[i]]);
+    }
+
+}
+
+export function removeFromEnvironment(str: string) {
+    //remove the topic from the environment.  
+    const found = environmenthistory.findIndex((t) => t === str);
+    if (found > -1){
+        environmenthistory.splice(found, 1); //remove the topic from the selection history.
+    }
+    delete envarray[str]; //remove the value from the environment array.
+}
+
+export function addToEnvironment(str: string, value: string) {
     //add the topic to the environment.  
-    const found = environmenthistory.find((t) => t === str);
-    if (!found){
+    const found = environmenthistory.findIndex((t) => t === str);
+    if (found < 0){
         environmenthistory.push(str); //add the topic to the selection history.
     }
+    else{
+        environmenthistory.splice(found, 1); //remove the topic from the selection history.
+        environmenthistory.push(str); //add the topic to the end of the selection history.
+    }
+    envarray[str] = value; //update the value in the environment array.
     if (environmenthistory.length > MAX_SELECTION_HISTORY*2) {
         environmenthistory.shift(); //remove the first element from the array.
     }        
 }
+
+export function removeFromHistory(topic: string){
+    const found = selectionhistory.findIndex((t) => t === topic);
+    if (found > -1){
+        selectionhistory.splice(found, 1); //remove the topic from the selection history.
+    }
+
+}
+
 export function addToHistory(topic: string){
     //add the topic to the history.  
-    const found = selectionhistory.find((t) => t === topic);
-    if (!found){
+    const found = selectionhistory.findIndex((t) => t === topic);
+    if (found < 0){
         selectionhistory.push(topic); //add the topic to the selection history.
+    }
+    else{
+        selectionhistory.splice(found, 1); //remove the topic from the selection history.
+        selectionhistory.push(topic); //add the topic to the end of the selection history.
     }
     if (selectedtopic !== topic) {
         selectedtopic = topic; //set the selected topic to the current topic.

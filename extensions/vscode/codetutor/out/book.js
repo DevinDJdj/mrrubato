@@ -33,15 +33,19 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MAX_SELECTION_HISTORY = exports.arrays = exports.commandarray = exports.temptopicarray = exports.temptopics = exports.topicarray = exports.alltopicsa = exports.alltopics = exports.defmap = exports.environmenthistory = exports.selectionhistory = exports.selectedtopic = exports.currenttopic = void 0;
+exports.MAX_SELECTION_HISTORY = exports.arrays = exports.commandarray = exports.temptopicarray = exports.temptopics = exports.topicarray = exports.envarray = exports.alltopicsa = exports.alltopics = exports.defmap = exports.environmenthistory = exports.selectionhistory = exports.selectedtopic = exports.currenttopic = void 0;
 exports.logCommand = logCommand;
+exports.getTokens = getTokens;
 exports.getCommandType = getCommandType;
 exports.open = open;
 exports.findTopicsCompletion = findTopicsCompletion;
 exports.findInputTopics = findInputTopics;
 exports.getTempTopicsFromPath = getTempTopicsFromPath;
 exports.adjustSort = adjustSort;
+exports.printENV = printENV;
+exports.removeFromEnvironment = removeFromEnvironment;
 exports.addToEnvironment = addToEnvironment;
+exports.removeFromHistory = removeFromHistory;
 exports.addToHistory = addToHistory;
 exports.select = select;
 exports.pickTopic = pickTopic;
@@ -57,6 +61,7 @@ exports.getBookPath = getBookPath;
 exports.getUri = getUri;
 const vscode = __importStar(require("vscode"));
 const path_1 = require("path");
+const tokenizer = __importStar(require("./tokenizer")); // Import the Token interface
 /*
     * Book.ts - This file is part of the GitBook extension for VSCode.
     * It manages the GitBook structure, repositories, and content retrieval.
@@ -102,6 +107,7 @@ exports.defmap = [{ "#": "REF", ">": "CMD", "-": "SUBTASK", "@": "USER" },
 var defstring = "!@#$%^&*<>/-+";
 exports.alltopics = [];
 exports.alltopicsa = [];
+exports.envarray = {}; //environment variables.
 exports.topicarray = {};
 exports.temptopics = [];
 exports.temptopicarray = {};
@@ -186,6 +192,10 @@ function logCommand(command) {
     catch (error) {
         console.error(`Error reading file: ${error}`);
     }
+}
+function getTokens(str) {
+    return tokenizer.tokenize(str);
+    //    return [];
 }
 function getCommandType(str) {
     if (str.length < 2) {
@@ -376,21 +386,49 @@ function sortArray(array, typekey = '') {
         exports.alltopicsa.push(key.substring(0, 1)); //add the first character of the topic to the array.
     });
 }
-function addToEnvironment(str) {
+function printENV() {
+    for (let i = 0; i < exports.environmenthistory.length; i++) {
+        console.log("$$" + exports.environmenthistory[i] + " = " + exports.envarray[exports.environmenthistory[i]]);
+    }
+}
+function removeFromEnvironment(str) {
+    //remove the topic from the environment.  
+    const found = exports.environmenthistory.findIndex((t) => t === str);
+    if (found > -1) {
+        exports.environmenthistory.splice(found, 1); //remove the topic from the selection history.
+    }
+    delete exports.envarray[str]; //remove the value from the environment array.
+}
+function addToEnvironment(str, value) {
     //add the topic to the environment.  
-    const found = exports.environmenthistory.find((t) => t === str);
-    if (!found) {
+    const found = exports.environmenthistory.findIndex((t) => t === str);
+    if (found < 0) {
         exports.environmenthistory.push(str); //add the topic to the selection history.
     }
+    else {
+        exports.environmenthistory.splice(found, 1); //remove the topic from the selection history.
+        exports.environmenthistory.push(str); //add the topic to the end of the selection history.
+    }
+    exports.envarray[str] = value; //update the value in the environment array.
     if (exports.environmenthistory.length > exports.MAX_SELECTION_HISTORY * 2) {
         exports.environmenthistory.shift(); //remove the first element from the array.
     }
 }
+function removeFromHistory(topic) {
+    const found = exports.selectionhistory.findIndex((t) => t === topic);
+    if (found > -1) {
+        exports.selectionhistory.splice(found, 1); //remove the topic from the selection history.
+    }
+}
 function addToHistory(topic) {
     //add the topic to the history.  
-    const found = exports.selectionhistory.find((t) => t === topic);
-    if (!found) {
+    const found = exports.selectionhistory.findIndex((t) => t === topic);
+    if (found < 0) {
         exports.selectionhistory.push(topic); //add the topic to the selection history.
+    }
+    else {
+        exports.selectionhistory.splice(found, 1); //remove the topic from the selection history.
+        exports.selectionhistory.push(topic); //add the topic to the end of the selection history.
     }
     if (exports.selectedtopic !== topic) {
         exports.selectedtopic = topic; //set the selected topic to the current topic.

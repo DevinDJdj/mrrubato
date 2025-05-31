@@ -2,6 +2,7 @@
 #link, title, GroupName, Published date, Iteration#, PlayedInSeconds, #notesplayed-calculated
 #for now just generate a csv file.  
 #dont download the videos, just get the written description
+#    subprocess.call('python ./analyze/analyze.py --title "' + args.title + '"')
 
 
 #notesplayed
@@ -18,7 +19,7 @@ sys.path.insert(1, 'c:/devinpiano/music')
 import config  
 
 import os
-import cred
+#import cred
 import pandas as pd
 import requests
 import json
@@ -58,7 +59,7 @@ EMBEDDING_DIM = 10
 
 import mymidi
 
-#pip install qrcode
+#> pip install qrcode
 import qrcode
 
 from PIL import Image, ImageDraw
@@ -67,8 +68,10 @@ from PIL import Image, ImageDraw
 mappgram = {} #map [ SIGNGRAM ] [PGRAM]
 mapsgram = {} #map [seqngram][pgram]
 
-channel_id = cred.CHANNELID
-api_key = cred.APIKEY
+#cred.CHANNELID
+channel_id = config.cfg["youtube"]["CHANNELID"] 
+#cred.APIKEY
+api_key = config.cfg["youtube"]["APIKEY"] 
 def get_channel_stat() -> dict:
     url = f'https://www.googleapis.com/youtube/v3/channels?part=statistics&id={channel_id}&key={api_key}'
 
@@ -606,6 +609,15 @@ def printMidiGif(t, midilink):
                         startpointy = round(center + radius*oct1 * math.sin(math.radians(startangle1)))
                         endpointx = startpointx + round(math.cos(math.radians(startangle1))*vol1)
                         endpointy = startpointy + round(math.sin(math.radians(startangle1))*vol1)
+                        if (endpointx < startpointx):
+                            temp = endpointx
+                            endpointx = startpointx
+                            startpointx = temp
+                        if (endpointy < startpointy):
+                            temp = endpointy
+                            endpointy = startpointy
+                            startpointy = temp
+
                         color_2 = (255 - round(abs(startangle1-startangle)/2), 0, 255 - round(abs(startangle1-startangle)/2))
 #                        color_2 = (50, 50, 50)
  #                       draw.line((startpointx, startpointy, endpointx, endpointy), fill=color_2, width=round(vol/2))
@@ -627,14 +639,14 @@ def printMidiGif(t, midilink):
                 save_all=True, append_images=images[1:], optimize=False, duration=40, loop=0)
     
 
-def printMidi(midilink, title, GroupName, videoid):
+def printMidi(midilink, title, GroupName, videoid, force=False):
     path = './output/'
     midilink = midilink.replace("\r", "")
     midiname = os.path.basename(midilink)
     midiname = os.path.splitext(midiname)[0]
     filename = midiname + '.jpg'
     #dont redo this.  Live with the analysis of the time for now.  
-    if (os.path.exists(os.path.join(path , filename))):
+    if (os.path.exists(os.path.join(path , filename)) and not force):
         print("Skipping " + midilink)
         return
     
@@ -850,6 +862,7 @@ if __name__ == '__main__':
     argparser.add_argument("--video", help="Video ID", default="4flRJWtfY9c")
     #for now this is kind of getting annoying.  We can always calculate this later.  
     argparser.add_argument("--skipfinger", help="Skip finger test", default="true")
+    argparser.add_argument("--force", help="Force reanalyze", default="false")
     args = argparser.parse_args()
 
 
@@ -933,7 +946,7 @@ if __name__ == '__main__':
             if (midis > 0):
                 midie = desc.find("\n", midis)
                 midilink = desc[midis+5:midie]
-                midisize = printMidi(midilink, title, GroupName, videoid)
+                midisize = printMidi(midilink, title, GroupName, videoid, args.force=="true")
                 if (videoid==latestvideo):
                     latestmidilink = midilink
                     latestvideoitem = item

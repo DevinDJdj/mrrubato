@@ -748,6 +748,11 @@ continue..
   mapsgram[ seqgram ] [ pgram ] = { 'time': [], 'iteration': [] }
   mappgram[ signs ] [ pgram ] = { 'time': [], 'iteration': [] }
 
+flatten and analyze by pgram as well as by seqgram etc.  
+pgrams that have common factors are similar.  
+And also usually close in number value.   
+
+
 Find avg times per iterations.  
 Find if time PCT offsets between iterations matches, we estimate that this is a 
 time anchor and the same location in the piece.  
@@ -756,6 +761,93 @@ First what is the length of these maps.
 Sort most frequent signs and seqgrams.  
 See if there is anything interesting in these patterns.  
 What does it look like per song and across songs.  
+
+Lets just search across the data.  
+analyze process doesnt need to be in time.  
+> python ./analyze/analyze.py --title  "Evil Ways (Sonny Henry)"
+
+!!File "C:\devinpiano\music\analyze\analyze.py", line 858, in getqrcode
+!!FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Temp\\prevIterationQR.jpg'
+~~> mkdir C:\Temp
+
+**analyze.py
+--printMidi
+@@how to force run
+==>python ./analyze/analyze.py --title  "Evil Ways (Sonny Henry)" --force true
+
+Single line response ok?  
+
+@@non-one line responses.  
+==
+...
+
+$$
+
+
+
+Should environment reset with file?  
+Retain from previous files for now.  
+
+$$ should list environment based on setting.  
+Prev X topics environment.  
+How to remove ENV from topic?  
+
+$$MYVAR shows this value.  
+$$MYVAR=value sets value.  
+$$+MYVAR add this env variable to current topic.  For now not keeping per topic env.  Just env history.  
+$$-MYVAR remove this env variable from current topic.  
+$$-**TOPIC remove TOPIC from selection history, rebuild ENV with selectionhistory.  
+
+$$ should show ENV and also show selectionhistory.  
+
+
+--Seems to work ok.  
+
+Should design new input characters for usage in defmap.  
+Test with DBCS standard characters.  
+Later ...
+
+
+..start here..
+
+How to query state?  
+%%
+queries all workers.  
+%%1
+queries worker 1.  
+%%1=5 sets worker 1 to worker 5
+%%+5 start worker
+%%-5 stop worker
+%%1=MYWORKERFRIEND name worker.  
+%%MYWORKERFRIEND=1 ok if unnamed, if name already exists and is assigned, error please stop or reassign.  
+Same if 1 is assigned to another name.  
+
+
+$$%%MYWORKERFRIEND shows env of this thread.  
+$$-%%MYWORKERFRIEND stops worker.  
+$$+%%MYWORKERFRIEND creates a numbered duplicate thread of this env.  MYWORKERFRIEND_1
+$$%%MYWORKERFRIEND++
+$$%%MYWORKERFRIEND--
+
+
+$$1 queries env from worker 1.  
+!!ENV VAR cant use only numeric values.  
+
+Ugh so much drudgery to code this.  
+Really need to make a better Language parser.  
+
+Build a tokenizer based on defmap.  
+or use something like this.  
+#https://github.com/kevinkhill/ts-tokenizr
+> npm install --save ts-lexer
+> npm install ts-tokenizr
+
+#https://balit.boxxen.org/lexing/basic/
+
+
+
+
+
 
 
 

@@ -585,11 +585,37 @@ export function activate(context: vscode.ExtensionContext) {
 					case '$':
 						if (text.length < 3) {
 							//list env variables.  
-							console.log("ENV: " + Book.environmenthistory);
+							Book.printENV();
 						}
 						else{
-							Book.addToEnvironment(text.substring(2));
-							console.log("ENV: " + Book.environmenthistory);
+							if (text.charAt(2) === "-"){
+								let kv = text.substring(3).split("=");
+								if (kv.length === 1){
+									if (kv[0].substring(0,2) === "**"){
+										Book.removeFromHistory(kv[0].substring(2));
+									}
+									else{
+										Book.removeFromEnvironment(kv[0]);
+									}
+								}
+								Book.printENV();
+							}
+							else if (text.charAt(2) === "+"){
+								let kv = text.substring(3).split("=");
+								if (kv.length === 2) {
+									Book.addToEnvironment(kv[0], kv[1]);
+								}
+								else if (kv.length === 1) {
+									//show variable value
+									if (kv[0].substring(0,2) === "**"){
+										Book.addToHistory(kv[0].substring(2));
+
+									}
+								}
+								Book.printENV();
+
+
+							}
 						}
 						//add to book.  
 //						const fileUri = folder.with({ path: posix.join(folder.path, name) });
