@@ -845,13 +845,14 @@ or use something like this.
 #https://balit.boxxen.org/lexing/basic/
 
 
+**extensions/vscode/codetutor/src/tokenizer.tsx
+For now just making a simple tokenizer.  
+--getTokens
+Should use the same for highlighting logic.  
 
-
-
-
-
-
-
+Is it ok to limit this to a single line language.  
+For now yes.
+Simplicity of this has a lot of advantages.  
 
 
 

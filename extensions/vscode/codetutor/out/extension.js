@@ -443,6 +443,9 @@ function activate(context) {
         const mySettings = vscode.workspace.getConfiguration('mrrubato');
         let temptext = text;
         //run the desired command here.  
+        //export var defstring = "~!@#$%^&*<>/;-+=";
+        let tokens = Book.getTokens(text);
+        Book.executeTokens(tokens);
         let cmdtype = Book.getCommandType(text);
         if (cmdtype[0] !== "*") {
             //get previous topic.  

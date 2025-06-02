@@ -33,9 +33,10 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MAX_SELECTION_HISTORY = exports.arrays = exports.commandarray = exports.temptopicarray = exports.temptopics = exports.topicarray = exports.envarray = exports.alltopicsa = exports.alltopics = exports.defmap = exports.environmenthistory = exports.selectionhistory = exports.selectedtopic = exports.currenttopic = void 0;
+exports.MAX_SELECTION_HISTORY = exports.arrays = exports.commandarray = exports.temptopicarray = exports.temptopics = exports.topicarray = exports.envarray = exports.alltopicsa = exports.alltopics = exports.defstring = exports.fnmap = exports.defmap = exports.environmenthistory = exports.selectionhistory = exports.selectedtopic = exports.currenttopic = void 0;
 exports.logCommand = logCommand;
 exports.getTokens = getTokens;
+exports.executeTokens = executeTokens;
 exports.getCommandType = getCommandType;
 exports.open = open;
 exports.findTopicsCompletion = findTopicsCompletion;
@@ -52,6 +53,7 @@ exports.pickTopic = pickTopic;
 exports.gitChanges = gitChanges;
 exports.write = write;
 exports.read = read;
+exports.formatDate = formatDate;
 exports.getBook = getBook;
 exports.closeFileIfOpen = closeFileIfOpen;
 exports.getFileName = getFileName;
@@ -100,11 +102,30 @@ var myCodeMirror = null;
 var tempcodewindow = null;
 var usetempcodewindow = false;
 var definitions = { "REF": "#", "REF2": "##", "TOPIC": "**", "STARTCOMMENT": "<!--", "ENDCOMMENT": "-->", "CMD": ">", "QUESTION": "@@", "NOTE": "--", "SUBTASK": "-" };
+//have to include >, -> to get to -->
+//have to include -, --, !-- to get to <!--
 exports.defmap = [{ "#": "REF", ">": "CMD", "-": "SUBTASK", "@": "USER" },
-    { "##": "REF2", "**": "TOPIC", "@@": "QUESTION", "--": "NOTE", "==": "ANSWER", "$$": "ENV", "!!": "ERROR" },
-    { "-->": "ENDCOMMENT" },
+    { "##": "REF2", "**": "TOPIC", "@@": "QUESTION", "->": "DGRAPH", "--": "NOTE", "==": "ANSWER", "$$": "ENV", "!!": "ERROR" },
+    { "-->": "ENDCOMMENT", "!--": "ERRORNOTE" },
     { "<!--": "STARTCOMMENT" }];
-var defstring = "!@#$%^&*<>/-+";
+function fnEnv(lines, currentindex) {
+    //this will be used to create a token for the environment variable.  
+    //look at the tokens and take proper action.  
+    if (currentindex === 0) {
+        //parse the command.  
+        //if currentindex+1 is -
+        //if currentindex+1 is +
+        //if currentindex+1 is ID
+        //if currentindex+1 is **
+    }
+    //return completion or error message if misformatted.  
+    return "ENV ";
+}
+function fnTopic(lines, currentindex) {
+}
+exports.fnmap = { "$$": fnEnv };
+//do we want slash?  
+exports.defstring = "~!@#$%^&*<>/:;-+=";
 exports.alltopics = [];
 exports.alltopicsa = [];
 exports.envarray = {}; //environment variables.
@@ -196,6 +217,9 @@ function logCommand(command) {
 function getTokens(str) {
     return tokenizer.tokenize(str);
     //    return [];
+}
+function executeTokens(tokens, topic = "NONE") {
+    return tokenizer.execute(tokens, topic);
 }
 function getCommandType(str) {
     if (str.length < 2) {
@@ -728,7 +752,7 @@ function loadPage(text, filePath, altdate = 0) {
         let str = strs[i].trim();
         mypage.data += str + "\n"; //add to current page data.
         mytopic.data += str + "\n"; //add to current topic data.
-        if (!defstring.includes(str.charAt(0))) {
+        if (!exports.defstring.includes(str.charAt(0))) {
             //if the first character is not a definition, then it is a comment.  
             //add to the current topic.  
             continue;

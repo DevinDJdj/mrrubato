@@ -50,12 +50,33 @@ var myCodeMirror = null;
 var tempcodewindow = null;
 var usetempcodewindow = false;
 var definitions = {"REF": "#", "REF2": "##", "TOPIC": "**", "STARTCOMMENT": "<!--", "ENDCOMMENT": "-->", "CMD": ">", "QUESTION": "@@", "NOTE": "--", "SUBTASK": "-"};
+//have to include >, -> to get to -->
+//have to include -, --, !-- to get to <!--
 export var defmap = [{"#": "REF",">": "CMD", "-": "SUBTASK", "@": "USER"}, 
-    {"##": "REF2", "**": "TOPIC", "@@": "QUESTION", "--": "NOTE", "==": "ANSWER", "$$": "ENV", "!!": "ERROR"}, 
-    {"-->": "ENDCOMMENT"}, 
+    {"##": "REF2", "**": "TOPIC", "@@": "QUESTION", "->": "DGRAPH", "--": "NOTE", "==": "ANSWER", "$$": "ENV", "!!": "ERROR"}, 
+    {"-->": "ENDCOMMENT", "!--": "ERRORNOTE" }, 
     {"<!--": "STARTCOMMENT"}];
 
-var defstring = "!@#$%^&*<>/-+";
+
+function fnEnv(lines : Array<Array<tokenizer.Token>>, currentindex: number)  {
+    //this will be used to create a token for the environment variable.  
+    //look at the tokens and take proper action.  
+    if (currentindex === 0){
+        //parse the command.  
+        //if currentindex+1 is -
+        //if currentindex+1 is +
+        //if currentindex+1 is ID
+        //if currentindex+1 is **
+    }
+    //return completion or error message if misformatted.  
+    return "ENV ";
+}
+function fnTopic(lines : Array<Array<tokenizer.Token>>, currentindex: number)  {
+}
+
+export var fnmap = {"$$": fnEnv};
+//do we want slash?  
+export var defstring = "~!@#$%^&*<>/:;-+=";
 
 
 interface BookTopic {
@@ -178,9 +199,12 @@ export function logCommand(command: string) {
 
 }
 
-export function getTokens(str: string): Array<tokenizer.Token> {
+export function getTokens(str: string): Array<Array<tokenizer.Token>> {
     return tokenizer.tokenize(str);
 //    return [];
+}
+export function executeTokens(tokens: Array<Array<tokenizer.Token>>, topic: string = "NONE"): string {
+    return tokenizer.execute(tokens, topic);
 }
 
 export function getCommandType(str: string) : [string, string] {
@@ -591,7 +615,7 @@ export async function read(prompt: string, context: vscode.ChatContext) : Promis
 
 }
 
-function formatDate(date: Date = new Date()): string {
+export function formatDate(date: Date = new Date()): string {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
     const day = String(date.getDate()).padStart(2, '0');

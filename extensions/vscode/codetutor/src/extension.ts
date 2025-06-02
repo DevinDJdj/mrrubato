@@ -499,6 +499,10 @@ export function activate(context: vscode.ExtensionContext) {
 
 		let temptext = text;		  	  
 		//run the desired command here.  
+		//export var defstring = "~!@#$%^&*<>/;-+=";
+		let tokens = Book.getTokens(text);
+		Book.executeTokens(tokens);
+
 		let cmdtype = Book.getCommandType(text);
 		if (cmdtype[0] !== "*"){
 			//get previous topic.  
