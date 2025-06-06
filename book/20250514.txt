@@ -854,5 +854,28 @@ Is it ok to limit this to a single line language.
 For now yes.
 Simplicity of this has a lot of advantages.  
 
+#https://github.com/tom-wolfe/markov-typescript
+Perhaps train the markov chain as to the likelihood of any particular next ngram.  
+And also within the sets of action types in 
+defmap,defstring.  
+Perhaps we can use this simple model locally to enhance speed.  
+This should be a time/duration/NGRAM -> time/duration/NGRAM
 
+Each NGRAM needs to have a time and duration associated.  
+
+
+**extensions/vscode/codetutor/src/book.ts
+--findTopicsCompletion
+This is too slow with large amount of data.  
+-Try to complete the self-deploy steps.  
+-Make sure site is viewable
+
+
+**web/public/rec.html
+Need to utilize this more.  
+Try to get this to an actual working state.  
+
+
+#https://www.misterrubato.com/page.html?codefile=web/public/page.html#
+..
 

@@ -270,13 +270,14 @@ function findTopicsCompletion(str = "") {
         for (const [key, value] of Object.entries(exports.topicarray)) {
             if (value !== undefined && value.length > 0) {
                 let ci = new vscode.CompletionItem(key, vscode.CompletionItemKind.Text);
-                ci.detail = `Topic: ${key}`;
+                ci.detail = `**${key}`;
                 let doc = "";
                 sortText = "0000";
                 for (let item of value) {
-                    doc += `File: ${item.file}, Line: ${item.line}, Sort: ${value[0].sortorder}  \n`;
+                    doc += `Line: ${item.line}, Sort: ${value[0].sortorder}  \n`;
                     doc += `Link: [${item.file}](${item.file}#L${item.line})  \n`;
                     let data = item.data.substring(0, 255);
+                    //add formatting here for timestamp and OCR if available.  
                     doc += `Data: ${data}  \n`;
                     //set sortText to top if it is in selection history.  
                     const found = exports.selectionhistory.findIndex((t) => t === item.topic);
@@ -326,10 +327,10 @@ function findTopicsCompletion(str = "") {
             let key = retarray[i];
             if ((exports.topicarray[key] !== undefined && exports.topicarray[key].length > 0)) {
                 let ci = new vscode.CompletionItem(key.substring(linePrefixFull.length), vscode.CompletionItemKind.Text);
-                ci.detail = `Topic: ${key}`;
+                ci.detail = `**${key}`;
                 let doc = "";
                 for (let item of exports.topicarray[key]) {
-                    doc += `File: ${item.file}, Line: ${item.line}, Sort: ${item.sortorder}  \n`;
+                    doc += `Line: ${item.line}, Sort: ${item.sortorder}  \n`;
                     doc += `Link: [${item.file}](${item.file}#L${item.line})  \n`;
                     let data = item.data.substring(0, 255);
                     doc += `Data: ${data}  \n`;
@@ -341,7 +342,7 @@ function findTopicsCompletion(str = "") {
             else {
                 //temp topic.  
                 let ci = new vscode.CompletionItem(key.substring(linePrefixFull.length), vscode.CompletionItemKind.Text);
-                ci.detail = `Topic: ${key}`;
+                ci.detail = `**${key}`;
                 //get file path.  
                 let filename = getUri(key);
                 let doc = "";
@@ -746,34 +747,34 @@ function loadPage(text, filePath, altdate = 0) {
     let mypage = { "file": filePath, "line": 0, "topic": exports.currenttopic, "sortorder": 0, "date": mydate, "data": "" };
     //adjust sortorder based on order of occurrence for now. 
     let mytopic = { "file": filePath, "line": 0, "topic": exports.currenttopic, "sortorder": 0, "date": mydate, "data": "" };
+    let subtopic = { "file": filePath, "line": 0, "topic": exports.currenttopic, "sortorder": 0, "date": mydate, "data": "" };
     let strs = text.split("\n");
     let tkey = exports.currenttopic;
+    let topicstart = {};
+    keyfind: for (let j = exports.defmap.length - 1; j >= 0; j--) {
+        for (const [key, val] of Object.entries(exports.defmap[j])) {
+            topicstart[key] = []; //initialize the topic start array.
+        }
+    }
+    mypage.data = text;
     for (let i = 0; i < strs.length; i++) {
         let str = strs[i].trim();
-        mypage.data += str + "\n"; //add to current page data.
         mytopic.data += str + "\n"; //add to current topic data.
+        subtopic.data += str + "\n"; //add to current subtopic data.
         if (!exports.defstring.includes(str.charAt(0))) {
             //if the first character is not a definition, then it is a comment.  
             //add to the current topic.  
             continue;
         }
+        //search from longest key first.  
         keyfind: for (let j = exports.defmap.length - 1; j >= 0; j--) {
             for (const [key, val] of Object.entries(exports.defmap[j])) {
                 if (str.startsWith(key)) {
                     let type = val;
                     //                    if (type === "TOPIC") {
+                    topicstart[key].push(i);
                     if (key === "**") {
-                        initArray(tkey, exports.topicarray); //if doesnt exist, add.  
-                        if (mytopic.data.length < 256 && i + 1 < strs.length) {
-                            mytopic.data += strs[i + 1] + "\n"; //add the next line to the topic data so we have some reference.     
-                        }
-                        exports.topicarray[tkey]?.push(mytopic); //add the previous topic to the array.
-                        tkey = str.slice(j + 1);
-                        let myorder = 0;
-                        myorder = exports.topicarray[tkey]?.length || 0; //get the current order of the topic.
-                        mytopic = { "file": filePath, "line": i, "topic": tkey, "sortorder": myorder, "date": mydate, "data": "" };
-                        //adjust sortorder based on order of occurrence for now. 
-                        exports.currenttopic = tkey;
+                        exports.currenttopic = str.slice(2).trim(); //get the topic key from the line.                        
                         break keyfind;
                     }
                     /*
@@ -784,12 +785,6 @@ function loadPage(text, filePath, altdate = 0) {
                     */
                     //allow for --notes.  
                     else if (key.length < 3 && key !== "**") {
-                        let ckey = str.slice(key.length);
-                        let myorder = 0;
-                        myorder = exports.arrays[key][ckey]?.length || 0; //get the current order of the topic.
-                        mytopic = { "file": filePath, "line": i, "topic": exports.currenttopic, "sortorder": myorder, "date": mydate, "data": "" };
-                        initArray(ckey, exports.arrays[key]); //if doesnt exist, add.  
-                        exports.arrays[key][ckey]?.push(mytopic); //add the previous topic to the array.
                         //adjust sortorder based on order of occurrence for now. 
                         break keyfind;
                     }
@@ -797,8 +792,39 @@ function loadPage(text, filePath, altdate = 0) {
             }
         }
     }
+    //iterate through to populate topic trees.  
+    for (let i = topicstart['**'].length - 1; i > -1; i--) {
+        let startline = strs[topicstart['**'][i]];
+        tkey = startline.slice(2).trim(); //get the topic key from the line.
+        initArray(tkey, exports.topicarray); //if doesnt exist, add.  
+        let myorder = 0;
+        myorder = exports.topicarray[tkey]?.length || 0; //get the current order of the topic.
+        mytopic = { "file": filePath, "line": topicstart['**'][i], "topic": tkey, "sortorder": myorder, "date": mydate, "data": "" };
+        mytopic.data = strs.slice(topicstart['**'][i], (i + 1) < topicstart['**'].length ? topicstart['**'][i + 1] : strs.length).join("\n"); //get the topic data from the lines.
+        exports.topicarray[tkey]?.push(mytopic); //add the previous topic to the array.
+        //adjust sortorder based on order of occurrence for now. 
+        exports.currenttopic = tkey;
+    }
+    for (const [key, val] of Object.entries(topicstart)) {
+        if (key === '**') {
+            //skip the main topic key.
+            continue;
+        }
+        for (let i = topicstart[key].length - 1; i > -1; i--) {
+            let startline = strs[topicstart[key][i]];
+            let ckey = startline.slice(key.length);
+            let myorder = 0;
+            myorder = exports.arrays[key][ckey]?.length || 0; //get the current order of the topic.
+            subtopic = { "file": filePath, "line": topicstart[key][i], "topic": exports.currenttopic, "sortorder": myorder, "date": mydate, "data": "" };
+            //for now just get two lines of data for subtopics.
+            subtopic.data = strs.slice(topicstart[key][i], topicstart[key][i] + 2).join("\n"); //get the subtopic data from the lines.
+            initArray(ckey, exports.arrays[key]); //if doesnt exist, add.  
+            exports.arrays[key][ckey]?.push(subtopic); //add the previous topic to the array.
+        }
+    }
     initArray(exports.currenttopic, exports.topicarray); //if doesnt exist, add.  
     exports.topicarray[exports.currenttopic]?.push(mytopic);
+    //do we want this?  
     exports.topicarray[mydate.toString()]?.push(mypage);
     return mydate;
 }
@@ -844,7 +870,11 @@ function loadBook() {
         console.log(exports.topicarray);
         //add this to our CompletionItemProvider.   
         sortArray(exports.topicarray); //sort the topic array by date.
-        sortArray(exports.arrays['>'], '>');
+        for (let i = 0; i < exports.defmap.length; i++) {
+            for (const [key, val] of Object.entries(exports.defmap[i])) {
+                sortArray(exports.arrays[key], key);
+            }
+        }
         //open the most recent file.
         select(result.page + ".txt", true); //select and open topic
         let YYYYmmdd = result.page.split('/').at(-1); //get the date from the path.
