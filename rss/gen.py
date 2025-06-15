@@ -6,7 +6,7 @@ from datetime import datetime
 from datetime import date
 import json
 import sys
-sys.path.insert(0, 'c:/devinpiano/music/')
+sys.path.insert(0, 'c:/devinpiano/')
 import config 
 import html
 import pathlib
