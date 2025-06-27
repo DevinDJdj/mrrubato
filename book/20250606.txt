@@ -419,5 +419,105 @@ Its not so bad..
 
 
 
+#https://github.com/puppeteer/puppeteer
 
+**test/puppet1.js
+>npm i puppeteer
+>node test/puppet1.js
+
+
+
+**WEBSETUP
+
+**web/firebase.json
+**web/.firebaserc
+change to read only.  
+
+
+Firebase->Realtime Database
+--Copy DB
+
+Firebase->Authentication->Settings
+--Add Authorized domain.  
+
+Firebase->Authentication->Sign Method
+--Add Google/github
+
+#config.html
+Need to switch to robot github URL.  
+
+
+
+
+**timestep.py
+Need flag for git copy/backup to  
+/testing/extensions/vscode/mrroboto
+
+
+
+**extensions/vscode/codetutor/src/tokenizer.tsx
+--tokenize
+
+Keep track of topics selected.  
+Randomly add thinking topics based on current cursor location.  
+Assume current cursor location is the current thought.  
+
+--pickTopic
+getting list of selected topics for query.  
+Need to limit to context window.  
+
+@mr /start **TOPIC
+
+Should have map of topic sets.  
+%%
+
+
+Need to test this again.  
+@mr /start
+@mr /stop
+
+
+work->roboupdate->updatePrompts
+
+order by:
+Time/topic
+Instead of 
+topic/time
+
+Maybe just organize by topic and time.  
+When parsing book, look for %% to initialize worker.  
+Worker limit 10 or so.  
+Record file/location.  
+Take all data until start of next topic.  Or just take this entire topic comment.  
+
+Start and stop a worker, simply by %%
+%%? = list all running worker and file locations
+%%1 = jump to location.  and show info.  
+%%1+ = increase worker time allocation for this thread.  
+%%1- = decrease time allocation for this thread.  
+%%1-- = scratch worker.  
+This will remove the %% in that location so it doesnt start up next time.  
+Add details about how long this worker existed, for now just add date.  
+%%_YYYYMMDD = ended worker.  
+Need an ID for all commits related to this.  
+Lets use topic/date?  
+%%**TOPIC list active worker for this topic.  
+Maybe only one active at a time per topic.  
+
+
+%%++ = this will dynamically add a worker from this location if it doesnt already exist.  
+and remove the ++.  
+
+When initializing and parsing book, get all these threads and start them.  
+
+%%1? = show change summaries with links to details.  
+
+Prompts should be a set of prompt sequences.  
+For now can be single.  
+
+
+Need to separate the search/list from generate function.  
+Need two distinct functions.  
+
+Just go to location and run generate command.  
 

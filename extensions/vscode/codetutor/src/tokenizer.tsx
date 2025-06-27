@@ -30,13 +30,15 @@ export function execute(lines: Array<Array<Token>>, topic: string = "NONE"): str
         let j=0;
         if (lines[i][j].type === -1) {
             //this is an identifier or just text, we need to add it to the line.
-            rettext += lines[i][j].data + " ";
+            rettext += lines[i][j].data + "\n";
         }
         else {
             //this is a function.  
             if (Book.defmap[lines[i][j].data.length] !== undefined && Book.defmap[lines[i][j].data.length][lines[i][j].data] !== undefined) {
                 //this is a function, we need to add it to the line.
                 if (Book.fnmap[lines[i][j].data] !== undefined) {
+                    //this should remove any data in the line which is 
+                    // used in the function and no longer needed.  
                     rettext += (Book.fnmap[lines[i][j].data])(lines[i], j);
                 }
 
@@ -125,7 +127,8 @@ export function tokenize(str: string, topic: string = "NONE") {
                     //check if this is a function.  
 
                     if (Book.defmap[fnsequence.length+1] !== undefined) {
-                        //this is a function.
+                        //lookahead.
+                        //is this a function.
                         let k=j-1;
                         let potentialfn = fnsequence;
                         if (k> -1 && lines[i][k].type !== -1) {
@@ -144,6 +147,10 @@ export function tokenize(str: string, topic: string = "NONE") {
                             k--;
                             
                         }
+                    }
+                    if (Book.defmap[fnsequence.length] !== undefined && Book.defmap[fnsequence.length][fnsequence] !== undefined) {
+                        //this is a function.
+
                     }
                     break;
             }

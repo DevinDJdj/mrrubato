@@ -258,6 +258,13 @@ function populateGitRepos(index=0){
 }
 
 function selectGitRepo(index){
+  //do we have in url?  
+  let repon = parseInt(repo);
+	if (!isNaN(repon)){
+    //override  
+    index = repon;
+  }
+
   selectedgitindex = index;
   setState("selectedgitindex", selectedgitindex);
   giturl = git[selectedgitindex].url;
@@ -1130,7 +1137,7 @@ function loadTopic(top){
         loadfromGitBook(top, true); //search Git for this string **.... in gitbook and retrieve all.  
     
       }
-      if (getCodeGraph !==undefined){
+      if (typeof(getCodeGraph) !=='undefined'){
         getCodeGraph(top, cont);
       }
 

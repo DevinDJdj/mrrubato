@@ -53,10 +53,10 @@ function validateChange(topkey: string, change: string): boolean {
 	return true;
 }
 
-function getRandomPrompt(work : boolean = true): string {
+function getRandomPrompt(promptonly : boolean = true): string {
 	const mySettings = vscode.workspace.getConfiguration('mrrubato');	
 
-	if (work){
+	if (promptonly){
 		//get a random work prompt.  
 		if (mySettings.workprompts.length > 0){
 			let rand = Math.floor(Math.random() * mySettings.workprompts.length);
@@ -72,17 +72,23 @@ function getRandomPrompt(work : boolean = true): string {
 			}
 		}
 	}
-	if (mySettings.roboprompts.length > 0){
-		let rand = Math.floor(Math.random() * mySettings.roboprompts.length);
-		let prompt = mySettings.roboprompts[rand].prompt;
-		return prompt;
-	}
 	else{
-		return "Just starting, help me figure things out.";
+		//return topics with the prompt.  
+		//continue thought.  
+		if (mySettings.roboprompts.length > 0){
+			let rand = Math.floor(Math.random() * mySettings.roboprompts.length);
+			let prompt = mySettings.roboprompts[rand].prompt;
+			let topics = mySettings.roboprompts[rand].topics;
+			return topics + "\n" + prompt;
+		}
+		else{
+			return "Just starting, help me figure things out.";
+		}
 	}
+
 }
 
-function updatePrompts(topkey: string, topics: string, fullMessage: string) {
+async function updatePrompts(topkey: string, topics: string, fullMessage: string) {
 	//update the prompts here.
 	const mySettings = vscode.workspace.getConfiguration('mrrubato');	
 
@@ -91,8 +97,9 @@ function updatePrompts(topkey: string, topics: string, fullMessage: string) {
 	const topicArray = mySettings.defaultprompts.map(obj => obj.topic); 
 	let bookdata = Book.pickTopic(addltopics, topicArray, 5);
 	if (mySettings.codingmode === "git"){
-		let git = Book.gitChanges(addltopics); //get the git changes for the topic.
-		bookdata[1] += git;  //add the git changes to the full context of topics.
+		let git = await Book.gitChanges(addltopics); //get the git changes for the topic.
+//		bookdata[1] += git;  //add the git changes to the full context of topics.
+		bookdata[1] += git.slice(-max_context_length/4);
 	
 	}
 	else if (mySettings.codingmode === "book"){
@@ -117,6 +124,7 @@ function updatePrompts(topkey: string, topics: string, fullMessage: string) {
 			mySettings.roboprompts.push(val);
 		}
 		if (val.weight < 0.0125){
+			//switch prompt
 			mySettings.roboprompts.push({'prompt': getRandomPrompt(), 'topics': topics, weight: 0.5});
 		}
 	}
@@ -176,6 +184,11 @@ async function work(request: vscode.ChatRequest, context: vscode.ChatContext, st
 		let [topkey, topicdata] = await Book.read(workPrompt, context);
 		//get topic to work on and context.  
 		//const topics = "test"
+		workPrompt = workPrompt.slice(-max_context_length/2); //limit the prompt length to max_context_length/4
+
+		topicdata = topicdata.slice(-max_context_length+workPrompt.length); //limit the context length to max_context_length/2
+		//right now getting the recent data only.  
+		//maybe need to be more random.  
 		let fullMessage = await Chat(topicdata + workPrompt, context, null, token);
 
 		roboupdate(topkey, topicdata, fullMessage);
@@ -183,6 +196,7 @@ async function work(request: vscode.ChatRequest, context: vscode.ChatContext, st
 
 	} catch (error) {
 	   console.error('Error calling Ollama:', error);
+
 	}
 
 }
@@ -508,6 +522,13 @@ export function activate(context: vscode.ExtensionContext) {
 			//get previous topic.  
 		}
 		switch (cmdtype[0]) {
+			case "%":
+				switch (cmdtype[1]) {
+					case "%":
+						//work on this topic.  
+						//show work and result if watch=true
+						break;
+				}
 			case ">":
 				//run the command.
 				switch (cmdtype[1]) {

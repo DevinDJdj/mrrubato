@@ -52,10 +52,6 @@ var usetempcodewindow = false;
 var definitions = {"REF": "#", "REF2": "##", "TOPIC": "**", "STARTCOMMENT": "<!--", "ENDCOMMENT": "-->", "CMD": ">", "QUESTION": "@@", "NOTE": "--", "SUBTASK": "-"};
 //have to include >, -> to get to -->
 //have to include -, --, !-- to get to <!--
-export var defmap = [{"#": "REF",">": "CMD", "-": "SUBTASK", "@": "USER"}, 
-    {"##": "REF2", "**": "TOPIC", "@@": "QUESTION", "->": "DGRAPH", "--": "NOTE", "==": "ANSWER", "$$": "ENV", "!!": "ERROR"}, 
-    {"-->": "ENDCOMMENT", "!--": "ERRORNOTE" }, 
-    {"<!--": "STARTCOMMENT"}];
 
 
 function fnEnv(lines : Array<Array<tokenizer.Token>>, currentindex: number)  {
@@ -72,14 +68,34 @@ function fnEnv(lines : Array<Array<tokenizer.Token>>, currentindex: number)  {
     return "ENV ";
 }
 function fnTopic(lines : Array<Array<tokenizer.Token>>, currentindex: number)  {
+    return "TOPIC ";
 }
 
-export var fnmap = {"$$": fnEnv};
+function fnWork(lines : Array<Array<tokenizer.Token>>, currentindex: number)  {
+    //this will be used to create a token for the environment variable.  
+    //look at the tokens and take proper action.  
+    if (currentindex === 0){
+        //parse the command.  
+        //if currentindex+1 is -
+        //if currentindex+1 is +
+        //if currentindex+1 is ID
+        //if currentindex+1 is **
+    }
+    //return completion or error message if misformatted.  
+    return "WORK ";
+}
+
+export var defmap = [{"#": "REF",">": "CMD", "-": "SUBTASK", "@": "USER"}, 
+    {"##": "REF2", "**": "TOPIC", "@@": "QUESTION", "->": "DGRAPH", "--": "NOTE", "==": "ANSWER", "$$": "ENV", "!!": "ERROR", "%%": "WORKER"}, 
+    {"-->": "ENDCOMMENT", "!--": "ERRORNOTE" }, 
+    {"<!--": "STARTCOMMENT"}];
+
+export var fnmap = {"$$": fnEnv, "%%": fnWork, "**": fnTopic};
 //do we want slash?  
 export var defstring = "~!@#$%^&*<>/:;-+=";
 
 
-interface BookTopic {
+export interface BookTopic {
     file: string;
     line: number;
     topic: string;
@@ -87,6 +103,7 @@ interface BookTopic {
     date: number; //date in YYYYMMDD format.
     sortorder: number;
 }
+
 
 export var alltopics: string[] = [];
 export var alltopicsa: string[] = [];
@@ -201,6 +218,7 @@ export function logCommand(command: string) {
 
 export function getTokens(str: string): Array<Array<tokenizer.Token>> {
     return tokenizer.tokenize(str);
+
 //    return [];
 }
 export function executeTokens(tokens: Array<Array<tokenizer.Token>>, topic: string = "NONE"): string {
@@ -516,30 +534,48 @@ export function pickTopic(selectedtopics : string[], defaultprompts: string[] = 
     //still need to improve when we have no selected topics.  
     let minsort = 1000000; //set to a large number.
     let retkey = "NONE";
-    Object.keys(topicarray).forEach((key) => {
-        if (topicarray[key] !== undefined) {
-            //sort the topics by date.  
-            if (topicarray[key].length > 0) {
-                if (topicarray[key][0].sortorder < minsort && 0.5 < (Math.random()*minsort)) { //pick a random topic with the lowest sort order.
-                    retkey = topicarray[key][0].topic; //set the key to the topic with the lowest sort order.
-                    minsort = topicarray[key][0].sortorder; //set the minsort to the sort order of the topic.
+
+    if (selectionhistory.length > 0) {
+        for (let i = selectionhistory.length - 1; i > -1; i--) {
+            if (topicarray[selectionhistory[i]] !== undefined && topicarray[selectionhistory[i]].length > 0) {
+                //sort the topics by date.  
+                selectedtopics.unshift(selectionhistory[i]); //add the topic to the selected topics.
+                if (retkey === "NONE"){
+                    retkey = selectionhistory[i]; //set the key to the topic.
                 }
+
+
             }
         }
-    });
 
+
+    }
+    if (retkey === "NONE"){
+        //usually should have a selection history
+        //for the session.  
+        Object.keys(topicarray).forEach((key) => {
+            if (topicarray[key] !== undefined) {
+                //sort the topics by date.  
+                if (topicarray[key].length > 0) {
+                    if (topicarray[key][0].sortorder < minsort && 0.5 < (Math.random()*minsort)) { //pick a random topic with the lowest sort order.
+                        retkey = topicarray[key][0].topic; //set the key to the topic with the lowest sort order.
+                        minsort = topicarray[key][0].sortorder; //set the minsort to the sort order of the topic.
+                    }
+                }
+            }
+        });
+        selectedtopics.push(retkey); //add the topic to the selected topics.
+    }
     let retdata = "";
 
-    
-    //random recent topic.  
-    retdata += "**" + retkey + "\n"; //add the random topic to the data.
-    if (topicarray[retkey] !== undefined) {
-        for (let i = 0; i < topicarray[retkey].length; i++) {
-            retdata += topicarray[retkey][i].data + "\n"; //add all data for the topic.
-        }
+
+
+    let i=0;
+    if (selectedtopics.length > numtopics) {
+        i = selectedtopics.length - numtopics; //start from the end of the array.
     }
 
-    for (let i=0; i<selectedtopics.length; i++) {
+    for (; i<selectedtopics.length; i++) {
         if (topicarray[ selectedtopics[i] ] !== undefined) {
             retdata += "**" + selectedtopics[i] + "\n"; //add the topic to the data.
             retkey = selectedtopics[i]; //set the key to the topic.
@@ -554,7 +590,7 @@ export function pickTopic(selectedtopics : string[], defaultprompts: string[] = 
     return [retkey, retdata]; //return the topic and the data.
 }
 
-export function gitChanges(topics: string[]) : string {
+export async function gitChanges(topics: string[]) : Promise<string> {
     //get the git changes for the topic.  
     //this will be used to update the topic in the book.  
     //for now just return the changes for last topic.  
@@ -564,12 +600,19 @@ export function gitChanges(topics: string[]) : string {
     const mytopicfile = topics[topics.length-1]; //get the topic file.
     const mytopiclogfile = mytopicfile + ".log"; //get the topic log file.
 
+    //read this log file if exists. 
+    const folderUri = vscode.workspace.workspaceFolders[0].uri;
+    const fileUri = folderUri.with({ path: posix.join(folderUri.path, mytopiclogfile) });    
+    const readData = await vscode.workspace.fs.readFile(fileUri);
+    const readStr = Buffer.from(readData).toString('utf8');
+
 
     const terminal = vscode.window.createTerminal(`Ext Terminal #${NEXT_TERM_ID++}`);
     terminal.sendText("git --no-pager log -p --reverse -- " + mytopicfile + " > " + mytopiclogfile);
+    terminal.sendText("; exit");
+    
 
-    let retdata = "";
-    return retdata;
+    return readStr;
 }
 
 
@@ -594,16 +637,19 @@ export async function read(prompt: string, context: vscode.ChatContext) : Promis
     //pick a topic to return.  
     //right now random.  
     //get all context from the topicarray.  
+    //get from selectionhistory if exists.  
     let [topkey, topics] = pickTopic(selectedtopics); //get the topic from the topicarray.
     //find last topic and add all git changes.  
-    
-    selectedtopics.unshift(topkey); //add the topic to the list of selected topics.
+
+    if (selectedtopics.length > 0 && topkey !== selectedtopics[selectedtopics.length-1]){
+        selectedtopics.push(topkey); //add the topic to the list of selected topics.
+    }
 
     try {
         const folderUri = vscode.workspace.workspaceFolders[0].uri;
         const stat = await vscode.workspace.fs.stat(folderUri.with({ path: topkey }));
-        //assume file exists.  
-        let git = gitChanges(selectedtopics); //get the git changes for the topic.
+        //assume file exists if stats doesnt fail.  
+        let git = await gitChanges(selectedtopics); //get the git changes for the topic.
         topics += git;  //add the git changes to the full context of topics.
     }
     catch (error) {
