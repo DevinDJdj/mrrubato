@@ -14,6 +14,7 @@ import { renderPrompt } from '@vscode/prompt-tsx';
 import { posix } from 'path';
 import { PlayPrompt } from './prompts';
 import * as Book from './book';
+import * as Worker from './worker';
 import ollama from 'ollama';
 
 import { LanguageModelPromptTsxPart, LanguageModelToolInvocationOptions, LanguageModelToolResult } from 'vscode';
@@ -21,6 +22,7 @@ import { LanguageModelPromptTsxPart, LanguageModelToolInvocationOptions, Languag
 
 import { startWatchingWorkspace, updateStatusBarItem, registerStatusBarTool, registerCompletionTool, registerToolUserChatParticipant } from './toolParticipant';
 import { start } from 'repl';
+import { get } from 'http';
 
 const BASE_PROMPT =
   'You are a helpful code tutor. Your job is to teach the user with simple descriptions and sample code of the concept. Respond with a guided overview of the concept in a series of messages. Do not give the user the answer directly, but guide them to find the answer themselves. If the user asks a non-programming question, politely decline to respond.';
@@ -150,11 +152,32 @@ function roboupdate(topkey: string, topics: string, fullMessage: string) {
 	}
 }
 
-async function work(request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken) {
-	const mySettings = vscode.workspace.getConfiguration('mrrubato');	
+async function getWorkPrompt(mySettings: vscode.WorkspaceConfiguration): Promise<string> {
 	let workPrompt = mySettings.workprompt;
+	workPrompt = ""; //reset the work prompt.
+	//iterate through work and see what is next.  
+	if (Worker.worktopics.length > 0) {
+		let worker = await Worker.incrementWorker(); //increment the worker to next step.
+		//found a worker, get the prompt.
+		workPrompt = worker.workflow.prompts[worker.workflow.step];			
+		//use context from worker to formulate query.  
+	}
+
+	if (workPrompt === ""){
+		//no worker found, get a random prompt.
+		workPrompt = getRandomPrompt();
+	}
+
+	return workPrompt;
+
+}
+
+async function work(request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken) {
+	const mySettings = vscode.workspace.getConfiguration('mrrubato');		
+	let workPrompt = await getWorkPrompt(mySettings); //get the work prompt from settings.
 	if (!mySettings.runinbackground){
 		//not running in background per settings.
+		//controlled by /stop
 		return;
 	}
 
@@ -181,7 +204,7 @@ async function work(request: vscode.ChatRequest, context: vscode.ChatContext, st
 		//actual_response = response['response']
 
 
-		let [topkey, topicdata] = await Book.read(workPrompt, context);
+		let [topkey, topicdata] = await Book.read(workPrompt);
 		//get topic to work on and context.  
 		//const topics = "test"
 		workPrompt = workPrompt.slice(-max_context_length/2); //limit the prompt length to max_context_length/4
@@ -201,6 +224,7 @@ async function work(request: vscode.ChatRequest, context: vscode.ChatContext, st
 
 }
 
+//only stream being used here.  
 async function Chat(prompt: string, context: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken) {
 	let ret = "";
 	try {
@@ -211,7 +235,7 @@ async function Chat(prompt: string, context: vscode.ChatContext, stream: vscode.
 		//actual_response = response['response']
 
 
-		await Book.read(prompt, context);
+		await Book.read(prompt);
 	  const response = await ollama.chat({
 		model: 'llama3.1:8b',
 //		model: 'deepseek-coder-v2:latest',
@@ -244,9 +268,9 @@ async function Chat(prompt: string, context: vscode.ChatContext, stream: vscode.
 			stream.markdown(part.message.content);	
 		}
 		ret += part.message.content;
-		if (token.isCancellationRequested) {
-		  break;
-		}
+//		if (token.isCancellationRequested) {
+//		  break;
+//		}
 		console.log(part.message.tool_calls);
 	}
 	} catch (error) {
@@ -257,6 +281,28 @@ async function Chat(prompt: string, context: vscode.ChatContext, stream: vscode.
   
 
 
+function getTopicFromLocation(editor: vscode.TextEditor){
+	//find last topic.  
+	let topic = "";
+	let offset = editor.selection.active;
+	let topsearch = editor.document.getText(new vscode.Range(0, 0, offset.line, offset.character));			
+	let topsearches = topsearch.split("\n");
+	for (let i = topsearches.length - 1; i >= 0; i--) {
+		if (topsearches[i].startsWith("**")) {
+			//found a topic
+			topic = topsearches[i].substring(2, topsearches[i].length);
+			topic = topic.replace(/[\n\r]+/g, '');
+			break;
+		}
+
+	}
+	if (topic === ""){
+		//default here if cant find one.  
+		topic = Book.selectedtopic;
+	}
+	return topic;
+
+}
 function getTextFromCursor(editor: vscode.TextEditor) {
 	const selection = editor.selection;
 	let text = editor.document.getText(selection);
@@ -278,18 +324,7 @@ function getTextFromCursor(editor: vscode.TextEditor) {
 			topic = text.substring(2, text.length);
 		}
 		else{
-			//find last topic.  
-			let topsearch = editor.document.getText(new vscode.Range(0, 0, offset.line, offset.character));			
-			let topsearches = topsearch.split("\n");
-			for (let i = topsearches.length - 1; i >= 0; i--) {
-				if (topsearches[i].startsWith("**")) {
-					//found a topic
-					topic = topsearches[i].substring(2, topsearches[i].length);
-					topic = topic.replace(/[\n\r]+/g, '');
-					break;
-				}
-
-			}
+			topic = getTopicFromLocation(editor);
 		}
 	}
 	return [text, topic];
@@ -302,6 +337,8 @@ export function activate(context: vscode.ExtensionContext) {
 	startWatchingWorkspace(context); //watch for changes to book.  
 
 	Book.open(context); //open the book.  
+
+
 	// define a chat handler
 	const handler: vscode.ChatRequestHandler = async (request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken) => {
 		//vscode.window.showInformationMessage('Hello world!');
@@ -346,7 +383,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 
 			work(request, context, stream, token);
-			let [topkey, topics] = await Book.read(request.prompt, context);
+			let [topkey, topics] = await Book.read(request.prompt);
 			mySettings.workprompts.push({'prompt': workPrompt, 'topics': topics, weight: 1});
 			mySettings.update('workprompts', mySettings.workprompts);
 
@@ -527,6 +564,23 @@ export function activate(context: vscode.ExtensionContext) {
 					case "%":
 						//work on this topic.  
 						//show work and result if watch=true
+						if (topic === ""){
+							const editor = vscode.window.activeTextEditor;
+							if (editor) {
+								topic = getTopicFromLocation(editor);
+							}
+						}
+						if (text.charAt(2) === "-"){
+							//remove worker.  
+							console.log("Removing worker: " + topic);
+							let removed = await Worker.removeWorker(topic);
+						}
+						else if (text.charAt(2) === "+"){
+							//add worker.  
+							console.log("Adding worker: " + topic);	
+							let added = await Worker.addWorker(topic);	
+						}						
+						console.log("Workers: " + JSON.stringify(Worker.workers));
 						break;
 				}
 			case ">":

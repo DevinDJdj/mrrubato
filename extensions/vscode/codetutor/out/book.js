@@ -64,6 +64,7 @@ exports.getUri = getUri;
 const vscode = __importStar(require("vscode"));
 const path_1 = require("path");
 const tokenizer = __importStar(require("./tokenizer")); // Import the Token interface
+const Worker = __importStar(require("./worker")); // Import the Worker class
 /*
     * Book.ts - This file is part of the GitBook extension for VSCode.
     * It manages the GitBook structure, repositories, and content retrieval.
@@ -104,10 +105,6 @@ var usetempcodewindow = false;
 var definitions = { "REF": "#", "REF2": "##", "TOPIC": "**", "STARTCOMMENT": "<!--", "ENDCOMMENT": "-->", "CMD": ">", "QUESTION": "@@", "NOTE": "--", "SUBTASK": "-" };
 //have to include >, -> to get to -->
 //have to include -, --, !-- to get to <!--
-exports.defmap = [{ "#": "REF", ">": "CMD", "-": "SUBTASK", "@": "USER" },
-    { "##": "REF2", "**": "TOPIC", "@@": "QUESTION", "->": "DGRAPH", "--": "NOTE", "==": "ANSWER", "$$": "ENV", "!!": "ERROR" },
-    { "-->": "ENDCOMMENT", "!--": "ERRORNOTE" },
-    { "<!--": "STARTCOMMENT" }];
 function fnEnv(lines, currentindex) {
     //this will be used to create a token for the environment variable.  
     //look at the tokens and take proper action.  
@@ -122,8 +119,26 @@ function fnEnv(lines, currentindex) {
     return "ENV ";
 }
 function fnTopic(lines, currentindex) {
+    return "TOPIC ";
 }
-exports.fnmap = { "$$": fnEnv };
+function fnWork(lines, currentindex) {
+    //this will be used to create a token for the environment variable.  
+    //look at the tokens and take proper action.  
+    if (currentindex === 0) {
+        //parse the command.  
+        //if currentindex+1 is -
+        //if currentindex+1 is +
+        //if currentindex+1 is ID
+        //if currentindex+1 is **
+    }
+    //return completion or error message if misformatted.  
+    return "WORK ";
+}
+exports.defmap = [{ "#": "REF", ">": "CMD", "-": "SUBTASK", "@": "USER" },
+    { "##": "REF2", "**": "TOPIC", "@@": "QUESTION", "->": "DGRAPH", "--": "NOTE", "==": "ANSWER", "$$": "ENV", "!!": "ERROR", "%%": "WORKER" },
+    { "-->": "ENDCOMMENT", "!--": "ERRORNOTE" },
+    { "<!--": "STARTCOMMENT" }];
+exports.fnmap = { "$$": fnEnv, "%%": fnWork, "**": fnTopic };
 //do we want slash?  
 exports.defstring = "~!@#$%^&*<>/:;-+=";
 exports.alltopics = [];
@@ -230,7 +245,7 @@ function getCommandType(str) {
     }
 }
 function open(context) {
-    return getBook();
+    return getBook(context);
 }
 function getDateFromString(dateString) {
     if (dateString.length !== 8) {
@@ -493,26 +508,39 @@ function pickTopic(selectedtopics, defaultprompts = [], numtopics = 10) {
     //still need to improve when we have no selected topics.  
     let minsort = 1000000; //set to a large number.
     let retkey = "NONE";
-    Object.keys(exports.topicarray).forEach((key) => {
-        if (exports.topicarray[key] !== undefined) {
-            //sort the topics by date.  
-            if (exports.topicarray[key].length > 0) {
-                if (exports.topicarray[key][0].sortorder < minsort && 0.5 < (Math.random() * minsort)) { //pick a random topic with the lowest sort order.
-                    retkey = exports.topicarray[key][0].topic; //set the key to the topic with the lowest sort order.
-                    minsort = exports.topicarray[key][0].sortorder; //set the minsort to the sort order of the topic.
+    if (exports.selectionhistory.length > 0) {
+        for (let i = exports.selectionhistory.length - 1; i > -1; i--) {
+            if (exports.topicarray[exports.selectionhistory[i]] !== undefined && exports.topicarray[exports.selectionhistory[i]].length > 0) {
+                //sort the topics by date.  
+                selectedtopics.unshift(exports.selectionhistory[i]); //add the topic to the selected topics.
+                if (retkey === "NONE") {
+                    retkey = exports.selectionhistory[i]; //set the key to the topic.
                 }
             }
         }
-    });
-    let retdata = "";
-    //random recent topic.  
-    retdata += "**" + retkey + "\n"; //add the random topic to the data.
-    if (exports.topicarray[retkey] !== undefined) {
-        for (let i = 0; i < exports.topicarray[retkey].length; i++) {
-            retdata += exports.topicarray[retkey][i].data + "\n"; //add all data for the topic.
-        }
     }
-    for (let i = 0; i < selectedtopics.length; i++) {
+    if (retkey === "NONE") {
+        //usually should have a selection history
+        //for the session.  
+        Object.keys(exports.topicarray).forEach((key) => {
+            if (exports.topicarray[key] !== undefined) {
+                //sort the topics by date.  
+                if (exports.topicarray[key].length > 0) {
+                    if (exports.topicarray[key][0].sortorder < minsort && 0.5 < (Math.random() * minsort)) { //pick a random topic with the lowest sort order.
+                        retkey = exports.topicarray[key][0].topic; //set the key to the topic with the lowest sort order.
+                        minsort = exports.topicarray[key][0].sortorder; //set the minsort to the sort order of the topic.
+                    }
+                }
+            }
+        });
+        selectedtopics.push(retkey); //add the topic to the selected topics.
+    }
+    let retdata = "";
+    let i = 0;
+    if (selectedtopics.length > numtopics) {
+        i = selectedtopics.length - numtopics; //start from the end of the array.
+    }
+    for (; i < selectedtopics.length; i++) {
         if (exports.topicarray[selectedtopics[i]] !== undefined) {
             retdata += "**" + selectedtopics[i] + "\n"; //add the topic to the data.
             retkey = selectedtopics[i]; //set the key to the topic.
@@ -524,7 +552,7 @@ function pickTopic(selectedtopics, defaultprompts = [], numtopics = 10) {
     //for now returning all topic data in book.  
     return [retkey, retdata]; //return the topic and the data.
 }
-function gitChanges(topics) {
+async function gitChanges(topics) {
     //get the git changes for the topic.  
     //this will be used to update the topic in the book.  
     //for now just return the changes for last topic.  
@@ -532,16 +560,21 @@ function gitChanges(topics) {
     //> git --no-pager log -p --reverse -- book/20250429.txt > book/20250429.log
     const mytopicfile = topics[topics.length - 1]; //get the topic file.
     const mytopiclogfile = mytopicfile + ".log"; //get the topic log file.
+    //read this log file if exists. 
+    const folderUri = vscode.workspace.workspaceFolders[0].uri;
+    const fileUri = folderUri.with({ path: path_1.posix.join(folderUri.path, mytopiclogfile) });
+    const readData = await vscode.workspace.fs.readFile(fileUri);
+    const readStr = Buffer.from(readData).toString('utf8');
     const terminal = vscode.window.createTerminal(`Ext Terminal #${NEXT_TERM_ID++}`);
     terminal.sendText("git --no-pager log -p --reverse -- " + mytopicfile + " > " + mytopiclogfile);
-    let retdata = "";
-    return retdata;
+    terminal.sendText("; exit");
+    return readStr;
 }
 //write to the book/source as needed.  
 async function write(request, context) {
     return ["NONE", "NONE"];
 }
-async function read(prompt, context) {
+async function read(prompt) {
     //adjust request to include book context needed.  
     //    return getBook();
     //only want pertinent context.  
@@ -555,14 +588,17 @@ async function read(prompt, context) {
     //pick a topic to return.  
     //right now random.  
     //get all context from the topicarray.  
+    //get from selectionhistory if exists.  
     let [topkey, topics] = pickTopic(selectedtopics); //get the topic from the topicarray.
     //find last topic and add all git changes.  
-    selectedtopics.unshift(topkey); //add the topic to the list of selected topics.
+    if (selectedtopics.length > 0 && topkey !== selectedtopics[selectedtopics.length - 1]) {
+        selectedtopics.push(topkey); //add the topic to the list of selected topics.
+    }
     try {
         const folderUri = vscode.workspace.workspaceFolders[0].uri;
         const stat = await vscode.workspace.fs.stat(folderUri.with({ path: topkey }));
-        //assume file exists.  
-        let git = gitChanges(selectedtopics); //get the git changes for the topic.
+        //assume file exists if stats doesnt fail.  
+        let git = await gitChanges(selectedtopics); //get the git changes for the topic.
         topics += git; //add the git changes to the full context of topics.
     }
     catch (error) {
@@ -577,8 +613,8 @@ function formatDate(date = new Date()) {
     return `${year}${month}${day}`;
 }
 ;
-function getBook() {
-    loadBook();
+function getBook(context = null) {
+    loadBook(context);
 }
 async function closeFileIfOpen(file) {
     const tabs = vscode.window.tabGroups.all.map(tg => tg.tabs).flat();
@@ -793,6 +829,8 @@ function loadPage(text, filePath, altdate = 0) {
         }
     }
     //iterate through to populate topic trees.  
+    //make 0 the most recent entry.  
+    //reverse through file.  
     for (let i = topicstart['**'].length - 1; i > -1; i--) {
         let startline = strs[topicstart['**'][i]];
         tkey = startline.slice(2).trim(); //get the topic key from the line.
@@ -805,13 +843,31 @@ function loadPage(text, filePath, altdate = 0) {
         //adjust sortorder based on order of occurrence for now. 
         exports.currenttopic = tkey;
     }
+    let topicidx = 0;
+    if (topicstart['**'].length > 0) {
+        //set first topic to last entry in file.  
+        exports.currenttopic = strs[topicstart['**'][topicidx++]].slice(2).trim(); //set the current topic to the first topic found.
+    }
+    //add the date to the topic start array in case we 
+    // have some lines without topic.
+    //some confusion from starting at end of array.  
+    //desire is to put most recent at [0] index.
     for (const [key, val] of Object.entries(topicstart)) {
-        if (key === '**') {
-            //skip the main topic key.
-            continue;
-        }
+        topicidx = topicstart["**"].length - 1; //reset topic index for each key.
         for (let i = topicstart[key].length - 1; i > -1; i--) {
             let startline = strs[topicstart[key][i]];
+            //get current topic from line number.  
+            while (startline < topicstart["**"][topicidx] && topicidx > -1) {
+                topicidx--; //increment topic index until we find a topic that is after the startline.
+            }
+            if (topicidx === -1) {
+                //no more topics, use date as topic.
+                exports.currenttopic = mydate.toString(); //set the current topic to the date.
+            }
+            else {
+                exports.currenttopic = strs[topicstart["**"][topicidx]].slice(2).trim(); //set the current topic to the next topic found.
+            }
+            //end get the current topic from the line number.
             let ckey = startline.slice(key.length);
             let myorder = 0;
             myorder = exports.arrays[key][ckey]?.length || 0; //get the current order of the topic.
@@ -851,7 +907,7 @@ function getBookUri() {
     const bookUri = folderUri.with({ path: path_1.posix.join(folderUri.path, bookFolder) });
     return bookUri;
 }
-function loadBook() {
+function loadBook(context) {
     if (!vscode.workspace.workspaceFolders) {
         return vscode.window.showInformationMessage('No folder or workspace opened');
     }
@@ -884,6 +940,8 @@ function loadBook() {
         //see if this logic works.  OK we have a small relationship graph.  
         buildTopicGraph(prevdate.toISOString().slice(0, 10).replace(/-/g, ""), currentdate.toISOString().slice(0, 10).replace(/-/g, "")); //build the topic graph for last year.  
         console.log(bookgraph);
+        //start workers.  
+        Worker.initWorkers(context); //start the workers.
     });
     function createDateFromYYYYmmdd(dateString) {
         try {

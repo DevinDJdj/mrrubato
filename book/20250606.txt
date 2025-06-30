@@ -521,3 +521,16 @@ Need two distinct functions.
 
 Just go to location and run generate command.  
 
+**LEAN4
+#https://adam.math.hhu.de/#/g/leanprover-community/nng4/world/Tutorial/level/2
+#https://github.com/leanprover/vscode-lean4
+
+Really should learn this.  
+
+**languages/lean/test.lean
+#https://github.com/leanprover-community/tutorials4/tree/master
+**testing/lean/tutorials4
+Definitly find LaTex more readable.  
+
+
+Need key combo to bring up topic completion window.  

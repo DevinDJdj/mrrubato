@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { posix, basename } from 'path';
 import * as tokenizer from './tokenizer'; // Import the Token interface
+import * as  Worker from './worker'; // Import the Worker class
 
 /*
     * Book.ts - This file is part of the GitBook extension for VSCode.
@@ -236,7 +237,8 @@ export function getCommandType(str: string) : [string, string] {
 }
 
 export function open(context: vscode.ExtensionContext) {
-    return getBook();
+    return getBook(context);
+
 
 }
 
@@ -621,7 +623,7 @@ export async function write(request: vscode.ChatRequest, context: vscode.ChatCon
     return ["NONE", "NONE"];    
 }
 
-export async function read(prompt: string, context: vscode.ChatContext) : Promise<[string, string]>{
+export async function read(prompt: string) : Promise<[string, string]>{
     //adjust request to include book context needed.  
 //    return getBook();
     //only want pertinent context.  
@@ -670,8 +672,8 @@ export function formatDate(date: Date = new Date()): string {
     return `${year}${month}${day}`;
 };
 
-export function getBook(){
-    loadBook();
+export function getBook(context: vscode.ExtensionContext | null = null) {
+    loadBook(context);
 }
 
 export async function closeFileIfOpen(file:vscode.Uri) : Promise<void> {
@@ -878,7 +880,7 @@ export function loadPage(text: string, filePath: string, altdate: number=0): Num
         }
     }
     mypage.data = text;
-
+  
     for (let i=0; i<strs.length; i++) {
         let str = strs[i].trim();
 
@@ -927,6 +929,8 @@ export function loadPage(text: string, filePath: string, altdate: number=0): Num
     }
 
     //iterate through to populate topic trees.  
+    //make 0 the most recent entry.  
+    //reverse through file.  
     for (let i=topicstart['**'].length-1; i>-1; i--) {
         let startline = strs[topicstart['**'][i] ];
         tkey = startline.slice(2).trim(); //get the topic key from the line.
@@ -943,13 +947,35 @@ export function loadPage(text: string, filePath: string, altdate: number=0): Num
 
         currenttopic = tkey;
     }
+    let topicidx = 0;
+    if (topicstart['**'].length > 0) {
+        //set first topic to last entry in file.  
+        currenttopic = strs[topicstart['**'][topicidx++] ].slice(2).trim(); //set the current topic to the first topic found.
+    }
+
+    //add the date to the topic start array in case we 
+    // have some lines without topic.
+
+    //some confusion from starting at end of array.  
+    //desire is to put most recent at [0] index.
     for (const [key, val] of Object.entries(topicstart)) {
-        if (key === '**'){ 
-            //skip the main topic key.
-            continue; 
-        }
+        topicidx = topicstart["**"].length - 1; //reset topic index for each key.
         for (let i=topicstart[key].length-1; i>-1; i--) {
             let startline = strs[topicstart[key][i] ];
+
+            //get current topic from line number.  
+            while (startline < topicstart["**"][topicidx] && topicidx > -1) {
+                topicidx--; //increment topic index until we find a topic that is after the startline.
+            }
+            if (topicidx === -1) {
+                //no more topics, use date as topic.
+                currenttopic = mydate.toString(); //set the current topic to the date.
+            }
+            else{
+                currenttopic = strs[topicstart["**"][topicidx] ].slice(2).trim(); //set the current topic to the next topic found.
+            }
+            //end get the current topic from the line number.
+
             let ckey = startline.slice(key.length);
             let myorder = 0;
             myorder = arrays[key][ckey]?.length || 0; //get the current order of the topic.
@@ -998,7 +1024,7 @@ function getBookUri() : vscode.Uri {
     return bookUri;
 }
 
-function loadBook(){
+function loadBook(context?: vscode.ExtensionContext) {
     if (!vscode.workspace.workspaceFolders) {
         return vscode.window.showInformationMessage('No folder or workspace opened');
     }
@@ -1038,6 +1064,9 @@ function loadBook(){
         //see if this logic works.  OK we have a small relationship graph.  
         buildTopicGraph(prevdate.toISOString().slice(0,10).replace(/-/g,""), currentdate.toISOString().slice(0,10).replace(/-/g,"")); //build the topic graph for last year.  
         console.log(bookgraph);
+
+        //start workers.  
+        Worker.initWorkers(context); //start the workers.
 
     
     });

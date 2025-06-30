@@ -52,6 +52,7 @@ const prompt_tsx_1 = require("@vscode/prompt-tsx");
 const path_1 = require("path");
 const prompts_1 = require("./prompts");
 const Book = __importStar(require("./book"));
+const Worker = __importStar(require("./worker"));
 const ollama_1 = __importDefault(require("ollama"));
 const toolParticipant_1 = require("./toolParticipant");
 const BASE_PROMPT = 'You are a helpful code tutor. Your job is to teach the user with simple descriptions and sample code of the concept. Respond with a guided overview of the concept in a series of messages. Do not give the user the answer directly, but guide them to find the answer themselves. If the user asks a non-programming question, politely decline to respond.';
@@ -74,9 +75,9 @@ function validateChange(topkey, change) {
     console.log(allDiagnostics);
     return true;
 }
-function getRandomPrompt(work = true) {
+function getRandomPrompt(promptonly = true) {
     const mySettings = vscode.workspace.getConfiguration('mrrubato');
-    if (work) {
+    if (promptonly) {
         //get a random work prompt.  
         if (mySettings.workprompts.length > 0) {
             let rand = Math.floor(Math.random() * mySettings.workprompts.length);
@@ -92,24 +93,30 @@ function getRandomPrompt(work = true) {
             }
         }
     }
-    if (mySettings.roboprompts.length > 0) {
-        let rand = Math.floor(Math.random() * mySettings.roboprompts.length);
-        let prompt = mySettings.roboprompts[rand].prompt;
-        return prompt;
-    }
     else {
-        return "Just starting, help me figure things out.";
+        //return topics with the prompt.  
+        //continue thought.  
+        if (mySettings.roboprompts.length > 0) {
+            let rand = Math.floor(Math.random() * mySettings.roboprompts.length);
+            let prompt = mySettings.roboprompts[rand].prompt;
+            let topics = mySettings.roboprompts[rand].topics;
+            return topics + "\n" + prompt;
+        }
+        else {
+            return "Just starting, help me figure things out.";
+        }
     }
 }
-function updatePrompts(topkey, topics, fullMessage) {
+async function updatePrompts(topkey, topics, fullMessage) {
     //update the prompts here.
     const mySettings = vscode.workspace.getConfiguration('mrrubato');
     let addltopics = Book.findInputTopics(fullMessage);
     const topicArray = mySettings.defaultprompts.map(obj => obj.topic);
     let bookdata = Book.pickTopic(addltopics, topicArray, 5);
     if (mySettings.codingmode === "git") {
-        let git = Book.gitChanges(addltopics); //get the git changes for the topic.
-        bookdata[1] += git; //add the git changes to the full context of topics.
+        let git = await Book.gitChanges(addltopics); //get the git changes for the topic.
+        //		bookdata[1] += git;  //add the git changes to the full context of topics.
+        bookdata[1] += git.slice(-max_context_length / 4);
     }
     else if (mySettings.codingmode === "book") {
         //get the book context for the topic.
@@ -130,6 +137,7 @@ function updatePrompts(topkey, topics, fullMessage) {
             mySettings.roboprompts.push(val);
         }
         if (val.weight < 0.0125) {
+            //switch prompt
             mySettings.roboprompts.push({ 'prompt': getRandomPrompt(), 'topics': topics, weight: 0.5 });
         }
     }
@@ -150,11 +158,28 @@ function roboupdate(topkey, topics, fullMessage) {
         //show the change made and switch to this page.  
     }
 }
+async function getWorkPrompt(mySettings) {
+    let workPrompt = mySettings.workprompt;
+    workPrompt = ""; //reset the work prompt.
+    //iterate through work and see what is next.  
+    if (Worker.worktopics.length > 0) {
+        let worker = await Worker.incrementWorker(); //increment the worker to next step.
+        //found a worker, get the prompt.
+        workPrompt = worker.workflow.prompts[worker.workflow.step];
+        //use context from worker to formulate query.  
+    }
+    if (workPrompt === "") {
+        //no worker found, get a random prompt.
+        workPrompt = getRandomPrompt();
+    }
+    return workPrompt;
+}
 async function work(request, context, stream, token) {
     const mySettings = vscode.workspace.getConfiguration('mrrubato');
-    let workPrompt = mySettings.workprompt;
+    let workPrompt = await getWorkPrompt(mySettings); //get the work prompt from settings.
     if (!mySettings.runinbackground) {
         //not running in background per settings.
+        //controlled by /stop
         return;
     }
     else {
@@ -175,9 +200,13 @@ async function work(request, context, stream, token) {
         //client = ollama.Client(host='http://192.168.1.154:11434')
         //response = client.generate(model='llama3.2b', prompt=my_prompt)
         //actual_response = response['response']
-        let [topkey, topicdata] = await Book.read(workPrompt, context);
+        let [topkey, topicdata] = await Book.read(workPrompt);
         //get topic to work on and context.  
         //const topics = "test"
+        workPrompt = workPrompt.slice(-max_context_length / 2); //limit the prompt length to max_context_length/4
+        topicdata = topicdata.slice(-max_context_length + workPrompt.length); //limit the context length to max_context_length/2
+        //right now getting the recent data only.  
+        //maybe need to be more random.  
         let fullMessage = await Chat(topicdata + workPrompt, context, null, token);
         roboupdate(topkey, topicdata, fullMessage);
     }
@@ -185,6 +214,7 @@ async function work(request, context, stream, token) {
         console.error('Error calling Ollama:', error);
     }
 }
+//only stream being used here.  
 async function Chat(prompt, context, stream, token) {
     let ret = "";
     try {
@@ -192,7 +222,7 @@ async function Chat(prompt, context, stream, token) {
         //client = ollama.Client(host='http://192.168.1.154:11434')
         //response = client.generate(model='llama3.2b', prompt=my_prompt)
         //actual_response = response['response']
-        await Book.read(prompt, context);
+        await Book.read(prompt);
         const response = await ollama_1.default.chat({
             model: 'llama3.1:8b',
             //		model: 'deepseek-coder-v2:latest',
@@ -225,9 +255,9 @@ async function Chat(prompt, context, stream, token) {
                 stream.markdown(part.message.content);
             }
             ret += part.message.content;
-            if (token.isCancellationRequested) {
-                break;
-            }
+            //		if (token.isCancellationRequested) {
+            //		  break;
+            //		}
             console.log(part.message.tool_calls);
         }
     }
@@ -235,6 +265,26 @@ async function Chat(prompt, context, stream, token) {
         console.error('Error calling Ollama:', error);
     }
     return ret;
+}
+function getTopicFromLocation(editor) {
+    //find last topic.  
+    let topic = "";
+    let offset = editor.selection.active;
+    let topsearch = editor.document.getText(new vscode.Range(0, 0, offset.line, offset.character));
+    let topsearches = topsearch.split("\n");
+    for (let i = topsearches.length - 1; i >= 0; i--) {
+        if (topsearches[i].startsWith("**")) {
+            //found a topic
+            topic = topsearches[i].substring(2, topsearches[i].length);
+            topic = topic.replace(/[\n\r]+/g, '');
+            break;
+        }
+    }
+    if (topic === "") {
+        //default here if cant find one.  
+        topic = Book.selectedtopic;
+    }
+    return topic;
 }
 function getTextFromCursor(editor) {
     const selection = editor.selection;
@@ -255,17 +305,7 @@ function getTextFromCursor(editor) {
             topic = text.substring(2, text.length);
         }
         else {
-            //find last topic.  
-            let topsearch = editor.document.getText(new vscode.Range(0, 0, offset.line, offset.character));
-            let topsearches = topsearch.split("\n");
-            for (let i = topsearches.length - 1; i >= 0; i--) {
-                if (topsearches[i].startsWith("**")) {
-                    //found a topic
-                    topic = topsearches[i].substring(2, topsearches[i].length);
-                    topic = topic.replace(/[\n\r]+/g, '');
-                    break;
-                }
-            }
+            topic = getTopicFromLocation(editor);
         }
     }
     return [text, topic];
@@ -313,7 +353,7 @@ function activate(context) {
             //workPrompt = request.prompt;
             mySettings.update('workprompt', request.prompt);
             work(request, context, stream, token);
-            let [topkey, topics] = await Book.read(request.prompt, context);
+            let [topkey, topics] = await Book.read(request.prompt);
             mySettings.workprompts.push({ 'prompt': workPrompt, 'topics': topics, weight: 1 });
             mySettings.update('workprompts', mySettings.workprompts);
             return;
@@ -451,6 +491,30 @@ function activate(context) {
             //get previous topic.  
         }
         switch (cmdtype[0]) {
+            case "%":
+                switch (cmdtype[1]) {
+                    case "%":
+                        //work on this topic.  
+                        //show work and result if watch=true
+                        if (topic === "") {
+                            const editor = vscode.window.activeTextEditor;
+                            if (editor) {
+                                topic = getTopicFromLocation(editor);
+                            }
+                        }
+                        if (text.charAt(2) === "-") {
+                            //remove worker.  
+                            console.log("Removing worker: " + topic);
+                            let removed = await Worker.removeWorker(topic);
+                        }
+                        else if (text.charAt(2) === "+") {
+                            //add worker.  
+                            console.log("Adding worker: " + topic);
+                            let added = await Worker.addWorker(topic);
+                        }
+                        console.log("Workers: " + JSON.stringify(Worker.workers));
+                        break;
+                }
             case ">":
                 //run the command.
                 switch (cmdtype[1]) {

@@ -30,7 +30,7 @@ export function execute(lines: Array<Array<Token>>, topic: string = "NONE"): str
         let j=0;
         if (lines[i][j].type === -1) {
             //this is an identifier or just text, we need to add it to the line.
-            rettext += lines[i][j].data + "\n";
+            rettext += lines[i][j].data + " ";
         }
         else {
             //this is a function.  
@@ -62,7 +62,7 @@ export function tokenize(str: string, topic: string = "NONE") {
     //should be able to read multiple lines.  
     while (currentPosition < str.length) {
       // Process token, increment currentPosition
-        let pos = Book.defstring.search(str[currentPosition]);
+        let pos = Book.defstring.indexOf(str[currentPosition]);
         if (pos >= 0) {
             //for now type is just position in defstring
             if (instr){
