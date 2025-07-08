@@ -533,4 +533,39 @@ Really should learn this.
 Definitly find LaTex more readable.  
 
 
-Need key combo to bring up topic completion window.  
+
+**extensions/vscode/codetutor/src/extension.ts
+
+Need key combo to bring up topic completion/history window.  
+Need to bring up a view or new file with topic info.  
+--Book.select..
+what difference if any.
+Ctrl+shift+9 or Ctrl+shift+8
+
+
+#https://github.com/arciisine/vscode-chronicler
+perhaps should implement this, not sure if it is useful for our scenario.  
+
+Need separate view though for thought history.  
+
+Just create a webview in vscode, or  perhaps for now just open externally when we generate.  
+This will give us the 
+vscode.env.openExternal(Uri.parse("page.html.."));
+
+
+@vscode
+--vscode.env.openExternal
+~~really should allow to create an ID for a window/tab combination and open/reopen.  
+This would be a nice feature.  
+
+
+**web/public/page.html
+Should have a flag to show header or not.  
+Each Graph entity should allow for selection.  
+
+**extensions/vscode/codetutor/src/extension.ts
+--updatePage 
+delay before displaying previous window.  
+OK, not a great solution, but somewhat better.  
+
+

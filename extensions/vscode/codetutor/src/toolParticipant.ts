@@ -108,12 +108,15 @@ export function registerCompletionTool(context: vscode.ExtensionContext){
                 if (position.character === 0) {
                     //new line, get previous line.  
                     //if topic, then logCommand.  
+                    //not a good idea to do this here.  
+                    /*
                     linePrefix = document.lineAt(position.line-1).text;
                     if (linePrefix.startsWith('**')) {
                         //if it is a topic, then logCommand.  
                         Book.addToHistory(linePrefix.substring(2));
                         Book.logCommand(linePrefix);
                     }
+                    */
                 }
                 if (linePrefix.endsWith('**')) {
 
@@ -243,7 +246,7 @@ export function registerCompletionTool(context: vscode.ExtensionContext){
         '!', 
         '-', 
         '$', 
-        '\n', //trigger on newline
+//        '\n', //trigger on newline
         //not sure this is a good idea.  Seems to work ok.  
 
 

@@ -16,6 +16,11 @@
     "configuration": {
       "title": "mrrubato",
       "properties": {
+          "mrrubato.webbookurl": {
+              "type": "string",
+              "default": "https://www.misterrubato.com/page.html?codefile=",
+              "description": "URL for web book/page."
+          },
           "mrrubato.runinbackground": {
               "type": "boolean",
               "default": "false",

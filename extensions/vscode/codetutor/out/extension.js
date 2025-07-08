@@ -453,7 +453,7 @@ function activate(context) {
                 [text, topic] = getTextFromCursor(editor);
                 if (text.startsWith("**")) {
                     text = text.substring(2);
-                    Book.select(text, true); //select and open topic
+                    Book.select(text, Book.BOOK_OPEN_FILE | Book.BOOK_OPEN_WEB); //select and open topic
                 }
                 console.log("searching for: " + text);
                 vscode.commands.executeCommand('workbench.action.findInFiles', {
@@ -474,9 +474,14 @@ function activate(context) {
                 [text, topic] = getTextFromCursor(editor);
                 if (topic !== "" && topic !== Book.selectedtopic) {
                     //select the topic.  
-                    Book.select(topic, false); //select and open topic
+                    Book.select(topic, 0); //select and open topic
                     //					Book.logCommand("**" + topic); //log the command to genbook.
-                    topiccmd = "\n**" + topic + "\n";
+                    if (text.startsWith("**") > 0) {
+                        //we are selecting topic, dont add twice.  
+                    }
+                    else {
+                        topiccmd = "\n**" + topic + "\n";
+                    }
                 }
             }
         }
@@ -646,7 +651,7 @@ function activate(context) {
                 switch (cmdtype[1]) {
                     case "*":
                         temptext = text.substring(2);
-                        Book.select(temptext, true); //select and open topic
+                        Book.select(temptext); //select and open topic
                         break;
                     case "#":
                         //open references.html?topic=

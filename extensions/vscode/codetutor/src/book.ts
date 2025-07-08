@@ -35,6 +35,12 @@ const GIT_DETAILS = 2;
 const GIT_RELATIONS = 4;
 const GIT_DB = 8;
 
+export const BOOK_OPEN_FILE = 1;
+export const BOOK_OPEN_WEB = 2;
+export const BOOK_OPEN_GIT = 4;
+
+var opennature = BOOK_OPEN_FILE; //how do we open the book page?  File, web, git.
+
 var gitnature = GIT_CODE | GIT_DETAILS; //do we retrieve history and commits?  
 
 export var currenttopic = "NONE";
@@ -502,7 +508,41 @@ export function addToHistory(topic: string){
         selectionhistory.shift(); //remove the first element from the array.
     }    
 }
-export function select(topic: string, open: boolean = false) : boolean {
+
+function getWebviewContent(topic: string): string {
+    //get all book content with links to files in the digraph.  
+    //use the digraph we have already built here.  
+
+    return "Web Book for " + topic;    
+}
+
+function webBook(topic: string){
+    //this will be used to get the web book for the topic.  
+    //this will be used to get the web book for the topic.  
+    //for now just return the topic.  
+    //later we will get the web book from the server.  
+      // Create and show panel
+      /*
+      const panel = vscode.window.createWebviewPanel(
+        topic,
+        topic,  // Title of the panel
+        vscode.ViewColumn.One,
+        {}
+      );
+
+      // And set its HTML content
+      panel.webview.html = getWebviewContent(topic);
+      */
+
+      //for now just open externally.  
+      const mySettings = vscode.workspace.getConfiguration('mrrubato');	
+
+      //analyze the topic web external link.  
+      vscode.env.openExternal(vscode.Uri.parse(mySettings.webbookurl + topic)); //open the web book in the browser.
+
+}
+
+export function select(topic: string, open: number = opennature) : boolean {
     //select the topic from the topicarray.  
     //this will be used to get the topic from the array.  
     let fname = topic.trim();
@@ -514,7 +554,7 @@ export function select(topic: string, open: boolean = false) : boolean {
     const found = alltopics.find((t) => t === topic);
 
     vscode.workspace.openTextDocument(fileUri).then(doc => {
-        if (open){
+        if (open & BOOK_OPEN_FILE) {
             vscode.window.showTextDocument(doc);
         }
         //keep selectionhistory, dont load twice.  
@@ -522,6 +562,9 @@ export function select(topic: string, open: boolean = false) : boolean {
             addToHistory(topic); //add the topic to the history.
         }
     });
+    if (open & BOOK_OPEN_WEB) {
+        webBook(topic); //open the web view for the topic.
+    }
 
     //only add if we have data.  
     if (found) {
@@ -843,7 +886,15 @@ export function updatePage(filePath: string, text: string, linefrom: number = 0,
                 }).then(() => {
                     // Optionally, you can show a message to indicate the file has been updated
                     if (!show) {
-                        vscode.commands.executeCommand("workbench.action.openPreviousRecentlyUsedEditor"); 
+//                        vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+                        setTimeout(() => {
+                            vscode.commands.executeCommand("workbench.action.openPreviousRecentlyUsedEditor");                         
+                        }, 400); //wait a second before going back to previous editor.
+
+                    }
+                    else{
+                        //still go back to previous editor?  maybe not just boolean for more possibilities.
+                        vscode.commands.executeCommand("workbench.action.openPreviousRecentlyUsedEditor");                         
                     }
                 });
             });
@@ -1053,7 +1104,7 @@ function loadBook(context?: vscode.ExtensionContext) {
         }
 
         //open the most recent file.
-        select(result.page + ".txt", true); //select and open topic
+        select(result.page + ".txt"); //select and open topic
         
         
         let YYYYmmdd = result.page.split('/').at(-1); //get the date from the path.
