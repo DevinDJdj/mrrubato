@@ -193,6 +193,7 @@
 <script src="config.js"></script>
 
 <!-- indexeddb -->
+ <!-- use local js/dexie.js  if needed -->
 <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
 <!-- local search -->
 <script type="text/javascript" src="js/flexsearch/flexsearch.bundle.min.js"></script>
@@ -327,11 +328,12 @@ function getRecent(){
     recDB.getRecent(mysearch).then(recs => {
         full = "";
         for (i=0; i<recs.length; i++){
-            reccategory = recs[i]["category"];
-            recid= recs[i]["id"];
-            recver = recs[i]["version"];
+            rcategory = recs[i]["category"];
+            rid= recs[i]["id"];
+            rname = recs[i]["name"];
+            rver = recs[i]["version"];
 
-            full += '<a target="_blank" id="rec' + i + '" href="rec.html?cat=' + reccategory + '&id=' + recid + '&ver=' + recver + '&img=0">' + recs[i]["name"] + ' (' + recs[i]["version"] + ')</a><br>';
+            full += '<a target="_blank" id="rec' + i + '" href="rec.html?cat=' + rcategory + '&id=' + rid + '&name=' + rname + '&ver=' + rver + '&img=0">' + recs[i]["name"] + ' (' + recs[i]["version"] + ')</a><br>';
             
         }
         $('#recent').html(full);
@@ -350,7 +352,9 @@ if (typeof(accesstoken) == 'undefined'){
 
 const queryString = window.location.search;
 const urlParams = new URLSearchParams(queryString);
-const fname = urlParams.get('id');
+const fname = urlParams.get('name');
+const recid = urlParams.get('id'); 
+var recname = urlParams.get('name');
 const category = urlParams.get('cat');
 var ver = urlParams.get('ver');
 var img = urlParams.get('img');
@@ -491,6 +495,28 @@ function loadPreview(sim){
 
 function loadVideo(){
     //set src of video and get text from service.  
+    //use recid if passed.  
+    
+//    recDB.loadVideo(null, $('#category').val(), recname, ver).then(
+    recDB.loadVideo(parseInt(recid), $('#category').val(), recname, ver).then(
+        function(res){
+            console.log(res);
+            //set video src.  
+            var video = document.getElementById("myrecordfeedback");
+            s = res["videoblob"];
+            const oldObjectUrl = video.currentSrc;
+            video.src = '';
+            if (oldObjectUrl) {
+                URL.revokeObjectURL(oldObjectUrl);
+            }
+            const newObjectUrl = URL.createObjectURL( s );
+            video.src = newObjectUrl;
+            video.load();
+
+            //get images.  
+        }
+    );
+
 	var fd = new FormData();
     fd.append('op', 'load');
     fd.append('id', fname);
@@ -524,10 +550,6 @@ function loadVideo(){
         //imgElem.setAttribute('src', "data:image/jpg;base64," + baseStr64);
     });	
 
-        //set video src.  
-        s = 'uploads/videos/' + fname + '_' + ver + '.mkv'
-        var video = document.getElementById("myrecordfeedback");
-        video.src = s;
 }
 
 function invokeGetDisplayMedia(success, error) {

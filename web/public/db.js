@@ -302,7 +302,7 @@ class recDB{
 		constructor(){
 		this.db = new Dexie("recDB");
 		this.db.version(1).stores({
-			vids: "++id,userid,category,name,version", //mycomments, videoblob (if local), otherwise remoteurl
+			vids: "++id,[category+name+version],category,name,version,userid", //mycomments, videoblob (if local), otherwise remoteurl
 			screenshots: "id,userid,vidid,timestamp", //imgblob, ocrtext
 		});
 
@@ -332,6 +332,17 @@ class recDB{
 		});
 
 
+	}
+
+	loadVideo(id, category="", name="", version=0){
+		//load video by id, or category, name, version.  
+		if (id != null){
+			return this.db.vids.get(id);
+		}
+		else{
+			
+			return this.db.vids.where("[category+name+version]").equals([category,name,version]).first(); 
+		}
 	}
 
 	saveScreenshot(id, vidid, timestamp, imgblob, ocrtext, cb=null){
