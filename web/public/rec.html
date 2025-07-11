@@ -71,12 +71,51 @@
         <input type="text" id="loadfile">
         </td><td>
         <button id="btn-start-new">---NEW RECORD---</button>
-        </td></tr>
+        </td>   
+        <td>
+            <div id="clock" 
+            style=	"display: inline-block;
+             font-family: monospace;
+             font-size: 10px;
+             text-align: right;
+             color: lightgray; 
+             border-radius: 10px; 
+             padding: 10px; 
+             background-color: rgba(0, 0, 0, 0.75);">
+            </div>
+            <div id="secondselapsed" 
+                style=	"display: inline-block;
+                font-family: monospace;
+                font-size: 10px;
+                text-align: right;
+                color: lightgray; 
+                border-radius: 10px; 
+                padding: 10px; 
+                background-color: rgba(0, 0, 0, 0.75);">
+            </div>
+            <script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js'></script>
+
+        </td>     
+        </tr>
         <tr><td>
         <h1>
             REC - 
         </h1>        
-        </td></tr>
+        </td>
+        <td colspan="3">
+            <canvas id="pcanvas" width="110" height="22" style="display: none">Your browser does not support the HTML5 canvas tag.</canvas>    
+
+            <div id="devices">	</div>
+            <div id="midi">
+                <canvas id="fullpcanvas_labels" width="640" height="24">Your browser does not support the HTML5 canvas tag.</canvas>
+                <br>
+                <canvas id="fullpcanvas" width="640" height="36">Your browser does not support the HTML5 canvas tag.</canvas>    
+             </div>
+            
+             <div id="out"></div>	
+
+        </td>
+    </tr>
     </table>
     <h3>SCREEN RECORDING</h3>
     <video id="myrecordfeedback" controls autoplay playsinline width="960" height="540"></video>
@@ -112,10 +151,41 @@
             <br/>
             <a href="">&lt;-</a> -Page- <a href="">-&gt;</a>
         
-            <div id="similar" style="height: 300px;width: 300px;overflow:auto;">
+            <div id="similar" style="height: 150px;width: 300px;overflow:auto;">
         
             </div>            
-        </td></tr>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <div id="speakable">
+                <table>
+                    <tr>
+                      <td>
+                        <div id="speak">
+                            <select id="voiceSelect" style="display:none"></select><br>
+                            <!-- status and current command for now just display the string and add any additional midi params-->
+                            <label for="mycommand">Building Command:</label><br>
+                            <input type="text" id="mycommand" name="mycommand" size="30"><br>
+                            <input type="text" id="midicommand" name="midicommand" size="20">
+                        
+                        </div>
+                        <div class="words" contenteditable style="display: none;">
+                            <input type="text" id="p" name="p">
+                        </div>
+            
+                      </td>
+                      <td width="30%">
+                        <img id="thinkingchat" src="images/thinking.gif" height="140px" style="visibility:hidden" />
+            
+                      </td>
+                    </tr>
+                  </table>
+            
+            </div>
+            
+        </td>
+    </tr>
     </table>    
 </td>
 <td valign="top">
@@ -152,8 +222,8 @@
 	<div id="mycommentsh" style="height: 300px;overflow:auto;"></div>
 </td>
 <td>
-    <label for="selectedocr">Similar OCR Transcript:</label>
-    <div id="selectedocr" style="height: 300px;width: 300px;overflow:auto;">
+	<label for="currentstate">Current State:</label><br>
+	<div id="currentstate" style="height: 180px;overflow:auto;"></div>
 
 </td>
 
@@ -192,6 +262,60 @@
 <script src="js/ayuda/imageeditor.js"></script>
 <script src="config.js"></script>
 
+        <!-- update the version number as needed -->
+        <script src="globals.js"></script>
+
+        <script defer src="/__/firebase/9.19.1/firebase-app-compat.js"></script>
+        <!-- include only the Firebase features as you need -->
+        <script defer src="/__/firebase/9.19.1/firebase-auth-compat.js"></script>
+        <script defer src="/__/firebase/9.19.1/firebase-database-compat.js"></script>
+        <script defer src="/__/firebase/9.19.1/firebase-firestore-compat.js"></script>
+        <script defer src="/__/firebase/9.19.1/firebase-functions-compat.js"></script>
+        <script defer src="/__/firebase/9.19.1/firebase-messaging-compat.js"></script>
+        <script defer src="/__/firebase/9.19.1/firebase-storage-compat.js"></script>
+        <script defer src="/__/firebase/9.19.1/firebase-analytics-compat.js"></script>
+        <script defer src="/__/firebase/9.19.1/firebase-remote-config-compat.js"></script>
+        <script defer src="/__/firebase/9.19.1/firebase-performance-compat.js"></script>
+        <!-- 
+          initialize the SDK after all desired features are loaded, set useEmulator to false
+          to avoid connecting the SDK to running emulators.
+        -->
+        <script defer src="/__/firebase/init.js?useEmulator=true"></script>
+
+
+        <script src="keymap.js"></script>
+        <script src="languages.js"></script>
+        <script src="video.js"> </script>
+    
+        <!-- midi dependencies-->
+        <script src="https://cdn.jsdelivr.net/npm/webmidi@latest/dist/iife/webmidi.iife.js"></script>
+        <script src="JZZ/JZZ.js"></script>
+        <script src="JZZ/JZZ.midi.SMF.js"></script>
+    
+        <link href="js/datatables/datatables.min.css" rel="stylesheet">
+         
+        <script src="js/datatables/datatables.min.js"></script>
+        <!-- Select2 plugin -->
+        <link rel="stylesheet" type="text/css" href="js/datatables/select2.min.css">
+        <!-- Select2 plugin -->
+        <script src="js/datatables/select2.min.js"></script>
+        <script src="js/drawkeyboard.js"></script>
+
+
+    <!-- clock -->
+    <script src="clock.js"></script>
+
+    </head>
+    <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-RXPM3QHNJ3"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-RXPM3QHNJ3');
+</script>
+        
 <!-- indexeddb -->
  <!-- use local js/dexie.js  if needed -->
 <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
@@ -202,8 +326,6 @@
 <script>
 
 function loadAll(){
-    recDB = new recDB();
-    recDB.loadFTS();
    
 }
 
@@ -351,13 +473,14 @@ if (typeof(accesstoken) == 'undefined'){
 }
 
 const queryString = window.location.search;
-const urlParams = new URLSearchParams(queryString);
-const fname = urlParams.get('name');
-const recid = urlParams.get('id'); 
-var recname = urlParams.get('name');
-const category = urlParams.get('cat');
-var ver = urlParams.get('ver');
-var img = urlParams.get('img');
+//urlParams in clock.js
+const urlaParams = new URLSearchParams(queryString);
+const fname = urlaParams.get('name');
+const recid = urlaParams.get('id'); 
+var recname = urlaParams.get('name');
+const category = urlaParams.get('cat');
+var ver = urlaParams.get('ver');
+var img = urlaParams.get('img');
 var croppedImageUrl = null;
 console.log(fname);
 var now = new Date();
@@ -387,7 +510,7 @@ if (typeof(fname) == 'undefined'){
 
 
 document.title = "REC - " + category + " " + fname
-document.querySelector('h1').innerHTML = "REC - " + category + " " + fname;
+document.querySelector('h1').innerHTML = "REC - " + category + "<br> " + fname;
 $("#loadfile").val(fname);
 $("#category").val(category);
 
@@ -417,7 +540,7 @@ $('#recentsearch').val(fname);
 document.getElementById('btn-recentsearch').onclick = function() {
     getRecent();
 }
-document.getElementById('btn-recentsearch').click();
+
 
 
 
@@ -711,7 +834,7 @@ document.getElementById('btn-screenshot').onclick = function() {
     //start screenshot
 	video = document.getElementById("myrecordfeedback");
 	console.log(video.currentTime);
-	mytranscript = checkCommands("screenshot", video);
+	mytranscript = checkCommandsr("screenshot", video);
     if (mytranscript !=''){
     	addComment(mytranscript, getTimeFromSecs(video.currentTime));
     }
@@ -1019,7 +1142,13 @@ function getHeightFromTime(t, html=false, ocr=false){
     }
 }
 
-function updateNotes(mytime, ocr=false){
+function updateNotes(mytime=0, ocr=false){
+    //if time is 0, then use current video time.
+    if (mytime == 0){
+        video = document.getElementById("myrecordfeedback");
+        mytime = video.currentTime;
+    }
+
     if (ocr){
         var allnotes = "";
         for (i=0; i<ocrarray.length; i++){
@@ -1264,7 +1393,7 @@ function toggleFullScreen(video, fs = true) {
     }
 }
 
-function checkCommands(transcript, video){
+function checkCommandsr(transcript, video){
 	let secs = video.currentTime;
 	let position = transcript.search(/screenshot/i);
 	if (position > -1){
@@ -1298,7 +1427,7 @@ function checkCommands(transcript, video){
 }
 
 
-
+/*
 var speech = true;
 
 
@@ -1341,11 +1470,167 @@ if (speech){
     recognition.start();
     recognition.addEventListener('end', recognition.start);
 }
-
+*/
 </script>
 
+
+<script>
+    FUNCS = {};
+  
+    function mymidicallback(msg, time, user, lang) {
+      console.log(msg);
+      console.log(time);
+      //draw here.  
+    }
+    function updateFeedbackUI(user=0, note=null){
+      console.log(note);
+    }
+  
+    var midicontroller;
+    var netgraph;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        FUNCS.loadAll(); 
+    });
+
+    function MyChat(transcript) {
+        document.getElementById("p").setAttribute('value', transcript);
+        video = document.getElementById("myrecordfeedback");
+        console.log(video.currentTime);
+        //already checkCommands in midi.js, not using, but shouldnt confuse.  
+        mytranscript = checkCommandsr(transcript, video);
+        if (mytranscript !=''){
+            addComment(mytranscript, getTimeFromSecs(video.currentTime));
+        }
+      }
+    
+  </script>
+
+
+<script type="module">
+    export function loadAll(reload = false){
+//        getVideoJson(video);
+//        $("#dictable").load("dictable.html"); //not working..
+
+        recDB = new recDB();
+        recDB.loadFTS();
+        document.getElementById('btn-recentsearch').click();        
+
+
+        FUNCS.SPEECH.loadSpeech();
+        //initialize midi controller
+        midicontroller = new FUNCS.MIDI.MidiController();
+        
+        midicontroller.setupMidi();
+        midicontroller.midisetcallbacks(mymidicallback, updateFeedbackUI);
+        midicontroller.setupWebMidi();
+        reinitLanguages();
+        loadUserConfig();
+        loadDictionaries(0);
+      }
+      FUNCS.loadAll = loadAll;
+    </script>
+
+<script type="module">
+    import * as SPEECH from "/speech.js"
+    import * as CHAT from "/chat.mjs"
+    import * as MIDI from "/midi.mjs"
+    FUNCS.SPEECH = SPEECH;
+    FUNCS.CHAT = CHAT;
+    FUNCS.MIDI = MIDI;
+  </script>
+  
 <footer style="margin-top: 20px; text-align: left;"><small id="send-message"></small></footer>
 <script src="https://www.webrtc-experiment.com/common.js"></script>
+
+<!-- hidden content for now-->
+
+<div id="dictable">
+    <!-- dont need this lookup for now.  hiding the diclabel etc for language.js-->
+    <table style="display:none">
+        <tr>
+            <td>
+            <div id="auto" style="width: 100%;height: 200px;overflow:auto;">
+            <div id="autodiclabel" class="langlabel">	</div>
+            <table id="autodic" class="display" style="width: 100%;">
+                <thead>
+                    <tr>
+                        <th>word</th>
+                        <th>keys</th>
+                        <th>lang</th>
+                        <th>meaning</th>
+                    </tr>
+                </thead>
+                <tfoot>
+                    <tr>
+                        <th>word</th>
+                        <th>keys</th>
+                        <th>lang</th>
+                        <th>meaning</th>
+                    </tr>
+                </tfoot>
+            </table>	
+        </td>
+        <td>
+            <div id="dictionary" style="width: 100%;height: 280px;overflow:auto;">
+                <div id="dictablelabel" class="langlabel">	</div>
+                <table id="DictionaryTable" class="display" style="width: 100%">
+                    <thead>
+                        <tr>
+                            <th>word</th>
+                            <th>playall</th>
+                            <th>keys</th>
+                            <th>user</th>
+                            <th>times</th>
+                            <th>meaning</th>
+                            <th>created</th>
+                            <th>lang</th>
+                        </tr>
+                    </thead>
+                    <tfoot>
+                        <tr>
+                            <th>word</th>
+                            <th>playall</th>
+                            <th>keys</th>
+                            <th>user</th>
+                            <th>times</th>
+                            <th>meaning</th>
+                            <th>created</th>
+                            <th>lang</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        
+        </td>
+        <td>
+            <div id="auto" style="width: 100%;height: 200px;overflow:auto;">
+                <table id="metadic" class="display" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>word</th>
+                            <th>keys</th>
+                            <th>lang</th>
+                            <th>meaning</th>
+                        </tr>
+                    </thead>
+                    <tfoot>
+                        <tr>
+                            <th>word</th>
+                            <th>keys</th>
+                            <th>lang</th>
+                            <th>meaning</th>
+                        </tr>
+                    </tfoot>
+                </table>	
+            </div>
+        
+        </td>
+        </tr>
+        </table>
+
+</div>
+
 
 </body>
 </html>

@@ -683,14 +683,7 @@ export function loadSpeech(){
 
             let mymidicommand = null;
             let ped = false;
-            let cl = getPendingCommand(getPedal());
-            let lang = "";
-            if (cl != null){
-                //we have a pending command, so we will use that.  
-                lang = cl.lang;
-                //for now just add space.  Always end with some midi command.  
 
-            }
             if (typeof(midicontroller) !=='undefined' && midicontroller != null){
                 mymidicommand = midicontroller.getMidiRecent();
                 ped = midicontroller.pedal;
@@ -698,6 +691,15 @@ export function loadSpeech(){
             else{
                 mymidicommand = getMidiRecent();
                 ped = getPedal();                //
+            }
+
+            let cl = getPendingCommand(ped);
+            let lang = "";
+            if (cl != null){
+                //we have a pending command, so we will use that.  
+                lang = cl.lang;
+                //for now just add space.  Always end with some midi command.  
+
             }
             if (mymidicommand == null && !ped && cl == null){
                 //if not executed immediately, add to pending commands, and wait for midi or further command.  

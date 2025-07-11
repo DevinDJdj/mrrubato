@@ -159,11 +159,11 @@ class Keymap{
         }
 
         this.funcdict[""] = function(transcript, midi, keydict, key){
-            for (i=MAX_COMMANDLENGTH; i>0; i--){
+            for (let i=MAX_COMMANDLENGTH; i>0; i--){
                 if (midi != null && midi.length >=i){
                     let keyset = keydict[""][i.toString()];
                     let keys = "";
-                    for (j=0; j<i; j++){
+                    for (let j=0; j<i; j++){
                         keys += (midi[j].note - keybot["meta"]).toString();
 //                        keys += midi[j].note.toString();
                         if (j<i-1){
