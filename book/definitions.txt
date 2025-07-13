@@ -52,7 +52,7 @@ Shorthand
 
 -> Leads to
 
-# comments to something or reference from
+# comments (shell) to something or reference from (link)
 ## referenced lookup again.  
 
 // filepath or DB path

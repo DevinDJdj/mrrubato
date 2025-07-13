@@ -1476,6 +1476,8 @@ if (speech){
 
 <script>
     FUNCS = {};
+    users = [];
+    users.push({id: 0, name: "me", pic: "images/gemini_thinker.png"});
   
     function mymidicallback(msg, time, user, lang) {
       console.log(msg);
@@ -1524,9 +1526,12 @@ if (speech){
         midicontroller.setupMidi();
         midicontroller.midisetcallbacks(mymidicallback, updateFeedbackUI);
         midicontroller.setupWebMidi();
+
+        //need better mechanism.  
+        USE_FIREBASE = false; //dont use firebase for now with rec.html
         reinitLanguages();
         loadUserConfig();
-        loadDictionaries(0);
+        loadDictionaries(0, []); //dont use firebase.  
       }
       FUNCS.loadAll = loadAll;
     </script>

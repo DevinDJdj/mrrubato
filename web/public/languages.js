@@ -59,6 +59,7 @@ keymaps["meta"].loadKeys();
 
 keymaps["base"] = new Keymap("base");
 
+var USE_FIREBASE = true;
 
 function reinitLanguages(){
     langs = {};
@@ -361,17 +362,44 @@ function selectLanguage(lang){
 }
 
 function loadLanguages(){
-    langsref = firebase.database().ref('/dictionary/languages');
-	langsref.once('value')
-    .then((snap) => {
-	    if (snap.exists()){
-            let mylangs = snap.val();
-            for (const [key, value] of Object.entries(mylangs)) {
+    if (USE_FIREBASE){
+
+        langsref = firebase.database().ref('/dictionary/languages');
+        langsref.once('value')
+        .then((snap) => {
+            if (snap.exists()){
+                let mylangs = snap.val();
+                console.log(mylangs);
+                for (const [key, value] of Object.entries(mylangs)) {
+                    alllangs[value.midi] = key;
+                    alllangsa[key] = value; //additional info on the language.  langname -> all values.  
+                }                    
+            }
+        });
+    
+    }
+    else{
+        let scriptEle = document.createElement("script");
+        //hardcoded for now
+        scriptEle.setAttribute("src", "languages/_catalog.js");
+        scriptEle.setAttribute("type", "text/javascript");
+        scriptEle.setAttribute("async", false);
+        document.body.appendChild(scriptEle);
+        
+          // success event 
+          scriptEle.addEventListener("load", () => {
+            console.log("Language catalog loaded ");
+            for (const [key, value] of Object.entries(ALL_LANGS)) {
                 alllangs[value.midi] = key;
                 alllangsa[key] = value; //additional info on the language.  langname -> all values.  
-            }                    
-        }
-    });
+            }
+          });
+           // error event
+          scriptEle.addEventListener("error", (ev) => {
+            console.log("Error loading language catalog ", ev);
+          });
+    
+    }
 
 }
 
@@ -404,7 +432,7 @@ function initLangData(lang, user=-1){
 
 }
 
-function loadLanguageScript(lang){
+function loadLanguageScript(lang, user=0, dicexists=true){
     let scriptEle = document.createElement("script");
     scriptEle.setAttribute("src", "languages/" + lang + ".js");
     scriptEle.setAttribute("type", "text/javascript");
@@ -414,6 +442,9 @@ function loadLanguageScript(lang){
       // success event 
       scriptEle.addEventListener("load", () => {
         console.log("Language loaded " + lang);
+        if (!dicexists){
+            finishKeyLoad(lang, user, keymaps[lang].mydic);
+        }
       });
        // error event
       scriptEle.addEventListener("error", (ev) => {
@@ -483,8 +514,72 @@ function moveLanguage(lang, user, octave=0){
 
 }
 
+function loadLangKeys(lang="base", user=0, mydic={}){
+    add = 0;
+    if (typeof(langs[lang]) === "undefined"){
+        //only add to the lookup dict if it has not been added yet.  
+        add = 1;
+    }       
+    langs[lang] = {};
+    langsa[lang] = {};
+    //set up octaves for language.  
+    //if we do this, we need to save the octave information.  
+    //perhaps we can just allow this to be done each time, and so the full recording will have octave information.  
+    //at start of meta track, save all of these changes if we put into settings.  
+    //not sure if we need user based settings.  
+    octaves[lang] = 0;
+
+    addLangLabel(lang);
+//dynamic functions for this language.  
+    keymaps[lang] = new Keymap(lang);
+
+    loadLanguageScript(lang, user, mydic !==null); //pass dicexists param.  
+
+    if (mydic !== null){
+        finishKeyLoad(lang, user, mydic);
+    }
+
+
+
+}
+function finishKeyLoad(lang="base", user=0, mydic={}){
+    for (const [key, value] of Object.entries(mydic)) {	
+        m = value.midi.split(",");
+        //lang["base"]["length"]["midiseq"] = word
+        if (typeof(langs[lang][m.length]) === "undefined"){
+            langs[lang][m.length] = {};
+        }
+        
+        langsa[lang][key] = value; //full word info.  
+
+        addDictRow(lang, key, value, user, add);
+
+        keymaps[lang].addWord(key, value);
+
+        key2a = convertKeys(value.midi, keybot[lang]/12);
+        langs[lang][m.length][key2a] = key; //midiseq -> word lookup.  
+
+        //convert keys down for now.  Probably get rid of this, converting to 0 based.  
+        //except for lookup.  
+        //shift keys down.  
+
+                    
+    }
+    //populate the filters.  
+    if (typeof(langs[lang][2]) === "undefined"){
+        langs[lang][2] = {};
+    }
+    obj = {"word": "test", "midi": "1,1", "user": user, "times": 0, "definition": "test", "created": "20210101", "lang": lang};
+    langsa[lang]["test"] = obj;
+    addDictRow(lang, "test", obj, user);
+    key2a = convertKeys(obj.midi, keybot[lang]/12);
+    langs[lang][m.length][key2a] = "test"; //midiseq -> word lookup.  
+
+}
+
 function loadLanguage(lang, user){
     lang = lang.toLowerCase().replaceAll(" ", "_");
+
 
     if (typeof(langs[lang]) !== "undefined"){
         mydic = langs[lang];
@@ -503,66 +598,24 @@ function loadLanguage(lang, user){
     }
 
     else{
-        //get lang from DB.  
-        langref = firebase.database().ref('/dictionary/language/' + lang);
-        langref.once('value')
-        .then((snap) => {
-            if (snap.exists()){
-                add = 0;
-                if (typeof(langs[lang]) === "undefined"){
-                    //only add to the lookup dict if it has not been added yet.  
-                    add = 1;
-                }       
-                mydic = snap.val();
-                langs[lang] = {};
-                langsa[lang] = {};
-                //set up octaves for language.  
-                //if we do this, we need to save the octave information.  
-                //perhaps we can just allow this to be done each time, and so the full recording will have octave information.  
-                //at start of meta track, save all of these changes if we put into settings.  
-                //not sure if we need user based settings.  
-                octaves[lang] = 0;
-
-                addLangLabel(lang);
-            //dynamic functions for this language.  
-                keymaps[lang] = new Keymap(lang);
-                loadLanguageScript(lang);
-
-                for (const [key, value] of Object.entries(mydic)) {	
-                    m = value.midi.split(",");
-                    //lang["base"]["length"]["midiseq"] = word
-                    if (typeof(langs[lang][m.length]) === "undefined"){
-                        langs[lang][m.length] = {};
-                    }
-                    
-                    langsa[lang][key] = value; //full word info.  
-
-                    addDictRow(lang, key, value, user, add);
-
-                    keymaps[lang].addWord(key, value);
-
-                    key2a = convertKeys(value.midi, keybot[lang]/12);
-                    langs[lang][m.length][key2a] = key; //midiseq -> word lookup.  
-
-                    //convert keys down for now.  Probably get rid of this, converting to 0 based.  
-                    //except for lookup.  
-                    //shift keys down.  
-
-                                
+        if (USE_FIREBASE){
+            //get lang from DB.  
+            langref = firebase.database().ref('/dictionary/language/' + lang);
+            langref.once('value')
+            .then((snap) => {
+                if (snap.exists()){
+                    mydic = snap.val();
+                    console.log(mydic);
+                    loadLangKeys(lang, user, mydic);
                 }
-                //populate the filters.  
-                if (typeof(langs[lang][2]) === "undefined"){
-                    langs[lang][2] = {};
-                }
-                obj = {"word": "test", "midi": "1,1", "user": user, "times": 0, "definition": "test", "created": "20210101", "lang": lang};
-                langsa[lang]["test"] = obj;
-                addDictRow(lang, "test", obj, user);
-                key2a = convertKeys(obj.midi, keybot[lang]/12);
-                langs[lang][m.length][key2a] = "test"; //midiseq -> word lookup.  
-
-            }
-        });
-
+            });
+        }
+        else{
+            //load from local file.  
+            mydic = null;
+            loadLangKeys(lang, user, mydic);
+            
+        }
     }
 
 }
@@ -883,12 +936,7 @@ function loadDictionaries(user=0, langstoload=[]){
                 {
                     targets: DIC_USER,
                     render: function (data, type, row, meta) {
-                        if (typeof(users[ row[DIC_USER] ]) === "undefined"){
-                            return '';
-                        }
-                        else{
                             return '<img height="40px" src="' + users[ row[DIC_USER] ].pic + '" /><br>' + users[ row[DIC_USER] ].name; 
-                        }
                     }
                 },
                 {

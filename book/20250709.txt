@@ -415,3 +415,76 @@ Minor issue.
 Oh well. 
 
 
+**web/public/rec.html
+
+Try Screenshot XXYY
+This seems most natural.  
+Only 20 grid columns, maybe enough detail and little complexity.  
+Goal is to have some scenarios faster than constant mouse usage.  
+Perhaps can get close with this.  
+No need to reposition mouse is advantageous.  
+Can also perhaps use same for focus.  
+What functions are useful?  
+\Screenshot (XXYY)
+\focus (XY)
+\zoom (XY) default x2
+\add last transcript to screen (XY)
+\delete last transcript ()
+\rewind (N)
+\jump (N)
+\start rec
+\stop rec
+\pause rec
+
+
+Perhaps chain command
+\zoom (XY) \Screenshot (XXYY)
+
+None of this should be saved to midiarray feedback?
+Once executed, should be deleted?  
+For now just use functions as 
+(0,N)
+Can we do with no pre-display for screenshot, 
+just show the generated graphic, and then can delete if needed.  
+
+Retake will often be necessary to start.  
+
+Lets try to load languages without Firebase.  
+Just use i.e. [**web/public/languages/base.js]
+This detanglement may be problematic.  
+--loadLanguages
+--loadLanguage
+I think this is all the detanglement needed really.  
+Still use storage mechanisms.  
+
+
+Also can we draw on the recording monitor as well as the screenshot?  
+
+!!some issue with [**ROLI] particluar key OK (6)
+
+
+
+OK a bit hacky, but now loading without Firebase DB.  
+
+Now generate a language that makes sense for our video control.  
+
+For now try this perhaps.  
+Keep BOX params the same for simplicity.  
+\Screenshot (0,3,6) (XXYY)
+\zoom (0,3,8) (XXYY) #default x2
+\deletescreen (0,3,5) #remove last screenshot
+
+\speak (0,2,6) (XY) #add the last transcript entry to the screen here.  
+\delete (0,2,5) #remove last transcript entry
+
+\rewind (12,11) (N)
+\jump (12,14) (N)
+
+\start rec (0,12,0)
+\stop rec (12,0,12)
+\pause rec (1,13,1)
+\unpause rec (13,1,13)
+
+
+
+
