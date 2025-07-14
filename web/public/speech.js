@@ -248,10 +248,16 @@ export function helpme(){
             return "00:00";
         var temptime = player.getCurrentTime();
     }
-    else{
+    else if (typeof(player2) !== "undefined" && player2 != null){
         temptime = player2.currentTime;
     }
-    temptime -= delay;
+    else if (typeof(myrecordfeedback) !== "undefined" && myrecordfeedback != null){
+        temptime = myrecordfeedback.currentTime;
+    }
+    else{
+        return "00:00";
+    }
+    temptime -= feedbackdelay;
 
     var mins = Math.floor(temptime/60);
     if (mins < 0) mins = 0;
@@ -598,8 +604,12 @@ export function Chat(transcript, callback=null, pending=false, lang=""){
     else{
         if (executed){
             //make sound.  
-            audioFeedback(commandcompletion);
-
+            if (typeof(midicontroller) !=='undefined' && midicontroller != null){
+                midicontroller.audioFeedback(commandcompletion);
+            }
+            else{
+                audioFeedback(commandcompletion);
+            }
             addComment("> " + transcript, helpme()); //not sure if we want the prefix here.  
         }
         else{

@@ -468,6 +468,8 @@ OK a bit hacky, but now loading without Firebase DB.
 
 Now generate a language that makes sense for our video control.  
 
+
+**web/public/languages/videocontrol.js
 For now try this perhaps.  
 Keep BOX params the same for simplicity.  
 \Screenshot (0,3,6) (XXYY)
@@ -486,5 +488,33 @@ Keep BOX params the same for simplicity.
 \unpause rec (13,1,13)
 
 
+\help (1,2,3) #show/hide commands.  
 
+
+Lets use the screenshot location to make the lang words visible here.  
+Need command also to do this.  
+
+
+**test/puppet1.js
+
+After automated code change..
+>node test/puppet1.js
+>firebase deploy
+>node test/puppet1.js
+--compare image to previous
+--hightlight diffs.  
+#https://github.com/dmtrKovalenko/odiff?tab=readme-ov-file
+or similar..
+
+for automated observability.  
+Compare screenshots and what else?  
+What comparisons are necessary?  
+Maybe can use this..
+#https://blog.stackademic.com/automating-google-oauth-login-with-puppeteer-in-javascript-a-step-by-step-guide-814e3e245302
+
+
+
+
+**web/public/rec.html
+--test loading [<videocontrol>]
 

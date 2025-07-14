@@ -212,6 +212,7 @@ export function registerCompletionTool(context: vscode.ExtensionContext){
 
                     //need sorted keys.  
 //                    console.log(Book.topicarray);
+                    //allow to trigger even if we have already completed.  
                     let myarray = Book.findTopicsCompletion(linePrefix);
                         //use Book.alltopics to get sorted array.  
                     return myarray;

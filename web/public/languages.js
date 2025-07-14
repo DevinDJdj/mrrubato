@@ -61,6 +61,8 @@ keymaps["base"] = new Keymap("base");
 
 var USE_FIREBASE = true;
 
+var check_running = false;
+
 function reinitLanguages(){
     langs = {};
     langsa = {};
@@ -1097,7 +1099,12 @@ function loadDictionaries(user=0, langstoload=[]){
         setInterval(function(){
 
             //all languages checkCommands.  
-            triggerCheckCommands();
+            if (!check_running){
+                check_running = true;
+                //dont do this here?  
+                triggerCheckCommands();
+                check_running = false;
+            }
 
         }, 500);
 
@@ -1128,7 +1135,10 @@ function findCommand(transcript, midi, prevtranscript="", lang=""){
     if (lang==""){
         //could search most likely or in some order.  For now this is ok.
         for (const [key, value] of Object.entries(keymaps)) {
-            [transcript, lang, found] = value.findCommand(transcript, midi, key);
+            let [t, l,f] = value.findCommand(transcript, midi, key);
+            transcript = t;
+            lang = l;
+            found = f;
             if (transcript != prevtranscript && found){
                 return [transcript, lang, found];
             }
@@ -1136,7 +1146,10 @@ function findCommand(transcript, midi, prevtranscript="", lang=""){
     }
     else{
         if (lang in keymaps){
-            [transcript, lang, found] = keymaps[lang].findCommand(transcript, midi, lang);
+            let [t, l, f] = keymaps[lang].findCommand(transcript, midi, lang);
+            transcript = t;
+            lang = l;
+            found = f;
             if (transcript != prevtranscript && found){
                 return [transcript, lang, found];
             }
@@ -1199,12 +1212,20 @@ function triggerCheckCommands(){
     if (!pedal){
         if (p !== null){
             //only check the language of the pending command.  
-            t = mycheckcommands(p.lang);            
+            t = mycheckcommands(p.lang);  
+            if (t !== p.transcript){
+                lang = p.lang;
+            }          
         }
         else{
             //check all languages.
             for (let li=0; li<flangs.length; li++){
                 t = mycheckcommands(flangs[li]);
+                //how do we break out of this?  
+                if (t != ""){
+                    lang = flangs[li];
+                    break;
+                }
             }
         }
     }    
@@ -1231,7 +1252,7 @@ function triggerCheckCommands(){
     $('#mycommand').val(t.trim()); //incomplete command.  
     $('#midicommand').val(mtemp.trim()); //incomplete command.
     
-    updateState(t.trim(), lang);
+    updateState(t.trim()); //use current language.  
 
     if (mtemp != ""){
         filterDicAuto(mtemp.trim(), lang);

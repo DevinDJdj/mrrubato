@@ -19,4 +19,10 @@ var ALL_LANGS = {
         "midi": "2,4,6",
         "updated": 20240515
     },
+    "videocontrol": {
+        "created": 20250714,
+        "midi": "1,13,1",
+        "updated": 20250714
+    },
+
 };

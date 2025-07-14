@@ -348,6 +348,7 @@ export function findTopicsCompletion(str: string = "") : string[]{
             }
         }
         adjustSort(retarray);
+
         for (let i=0; i<retarray.length; i++) {
             let key = retarray[i];
             if ((topicarray[key] !== undefined && topicarray[key].length > 0))  {
@@ -410,17 +411,23 @@ export async function getTempTopicsFromPath(path: string) : Promise<Array<string
     //get the file name from the path.  
     //this will be used to get the file name from the path.  
 
-    let topics = await readFileNamesInFolder(path);
-    //create new entries in the topicarray.
-    //these should be relative paths now.  
-    for (let i=0; i<topics.length; i++) {
-        let mytopic = topics[i];
-        const found = temptopics.find((topic) => topic === mytopic);
-        if (!found) {
-            temptopics.push(mytopic); //add the topic to the array.
+    try{
+        let topics = await readFileNamesInFolder(path);
+        //create new entries in the topicarray.
+        //these should be relative paths now.  
+        for (let i=0; i<topics.length; i++) {
+            let mytopic = topics[i];
+            const found = temptopics.find((topic) => topic === mytopic);
+            if (!found) {
+                temptopics.push(mytopic); //add the topic to the array.
+            }
         }
+        return topics;
     }
-    return topics;
+    catch (error) {
+        console.error(`Error reading file: ${error}`);
+        return [];
+    }
 }
 export function adjustSort(array: Array<string>) {
     //go through topicarray
@@ -1027,7 +1034,7 @@ export function loadPage(text: string, filePath: string, altdate: number=0): Num
             }
             //end get the current topic from the line number.
 
-            let ckey = startline.slice(key.length);
+            let ckey = startline.slice(key.length).trim();
             let myorder = 0;
             myorder = arrays[key][ckey]?.length || 0; //get the current order of the topic.
             

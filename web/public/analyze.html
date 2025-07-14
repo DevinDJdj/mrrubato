@@ -398,7 +398,6 @@ var DictionaryID = 0;
 var lastjump = 0;
 //var player; //move to video.js
 //var player2; //move to video.js
-var delay = 10;
 var prevmax = 10;
 var notesarray = [];
 
@@ -448,8 +447,8 @@ var user = null;
 //then restrict the key if needed to your site and youtube data API.  
 
 $(document).on('input', '#commentdelay', function() {
-	delay = $(this).val();
-	console.log("delay set " + delay);
+	feedbackdelay = $(this).val();
+	console.log("delay set " + feedbackdelay);
 });
 
       document.addEventListener('DOMContentLoaded', function() {

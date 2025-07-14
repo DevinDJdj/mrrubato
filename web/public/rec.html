@@ -1531,7 +1531,8 @@ if (speech){
         USE_FIREBASE = false; //dont use firebase for now with rec.html
         reinitLanguages();
         loadUserConfig();
-        loadDictionaries(0, []); //dont use firebase.  
+        //load videocontrol language along with base.  
+        loadDictionaries(0, ["videocontrol"]); //dont use firebase.  
       }
       FUNCS.loadAll = loadAll;
     </script>

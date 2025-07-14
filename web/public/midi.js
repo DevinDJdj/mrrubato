@@ -166,13 +166,6 @@ function checkCommands(lang="meta"){
             transcript = "";
         }
 
-        //get rid of incomplete commands.  
-        if (Date.now() - cl.time > recentTime*2){ //recentTime in midi.js
-            //allow for double the time to complete the command.  
-            //pop from the pending commands?  Why keep useless history?  
-            commandLog.pop();
-            transcript = "";
-        }
 
     }
     else{

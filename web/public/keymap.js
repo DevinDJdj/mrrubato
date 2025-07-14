@@ -925,25 +925,25 @@ class Keymap{
                     if (key !="" && ((transcript + " ").startsWith(key))){
                         found = true;
                         let f = value;
-                        let ret = f(transcript, midi, keymaps[lang].keydict, key);
-                        return [ret, lang, found];
+                        let r = f(transcript, midi, keymaps[lang].keydict, key);
+                        return [r, lang, found];
                     }
                     else if (key == ""){
                         let f = value;
-                        let ret = f(transcript, midi, keymaps[lang].keydict, key);
-                        if (ret !="" && ret != prevtranscript){
+                        let r = f(transcript, midi, keymaps[lang].keydict, key);
+                        if (r !="" && r != prevtranscript){
                             found = true;
-                            return [ret, lang, found];
+                            return [r, lang, found];
                         }
                     }
                 }
                 else{
                     if (key ==""){
                         let f = value;
-                        let ret = f(transcript, midi, keymaps[lang].keydict, key);
-                        if (ret !="" && ret != prevtranscript){
+                        let r = f(transcript, midi, keymaps[lang].keydict, key);
+                        if (r !="" && r != prevtranscript){
                             found = true;
-                            return [ret, lang, found];
+                            return [r, lang, found];
                         }
 //                        return [ret, lang];
                     }

@@ -213,6 +213,7 @@ function registerCompletionTool(context) {
                 //include all topics with this.  
                 //need sorted keys.  
                 //                    console.log(Book.topicarray);
+                //allow to trigger even if we have already completed.  
                 let myarray = Book.findTopicsCompletion(linePrefix);
                 //use Book.alltopics to get sorted array.  
                 return myarray;

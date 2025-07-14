@@ -395,17 +395,23 @@ function findInputTopics(inputString) {
 async function getTempTopicsFromPath(path) {
     //get the file name from the path.  
     //this will be used to get the file name from the path.  
-    let topics = await readFileNamesInFolder(path);
-    //create new entries in the topicarray.
-    //these should be relative paths now.  
-    for (let i = 0; i < topics.length; i++) {
-        let mytopic = topics[i];
-        const found = exports.temptopics.find((topic) => topic === mytopic);
-        if (!found) {
-            exports.temptopics.push(mytopic); //add the topic to the array.
+    try {
+        let topics = await readFileNamesInFolder(path);
+        //create new entries in the topicarray.
+        //these should be relative paths now.  
+        for (let i = 0; i < topics.length; i++) {
+            let mytopic = topics[i];
+            const found = exports.temptopics.find((topic) => topic === mytopic);
+            if (!found) {
+                exports.temptopics.push(mytopic); //add the topic to the array.
+            }
         }
+        return topics;
     }
-    return topics;
+    catch (error) {
+        console.error(`Error reading file: ${error}`);
+        return [];
+    }
 }
 function adjustSort(array) {
     //go through topicarray
@@ -909,7 +915,7 @@ function loadPage(text, filePath, altdate = 0) {
                 exports.currenttopic = strs[topicstart["**"][topicidx]].slice(2).trim(); //set the current topic to the next topic found.
             }
             //end get the current topic from the line number.
-            let ckey = startline.slice(key.length);
+            let ckey = startline.slice(key.length).trim();
             let myorder = 0;
             myorder = exports.arrays[key][ckey]?.length || 0; //get the current order of the topic.
             subtopic = { "file": filePath, "line": topicstart[key][i], "topic": exports.currenttopic, "sortorder": myorder, "date": mydate, "data": "" };

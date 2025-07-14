@@ -331,6 +331,10 @@ export class MidiController {
             case 134: case 135: case 136: case 137: case 138:
             case 139: case 140: case 141: case 142: case 143:
                 this.noteOff(note, absTime, lang);
+                if (note%12 === 0){
+                    //check commands here.  
+//                    triggerCheckCommands();
+                }
                 break;
 
             case 176: // pedal
@@ -355,7 +359,7 @@ export class MidiController {
     }
 
     checkCommands(lang = "meta") {
-        let cl = this.getPendingCommand();
+        let cl = FUNCS.SPEECH.getPendingCommand(this.getPedal());
         let midi = this.getMidiRecent();
         let executed = false;
 
@@ -417,14 +421,10 @@ export class MidiController {
             }
 
             if (executed) {
-                this.commandLog.pop();
+                FUNCS.SPEECH.deletePendingCommand();
                 transcript = "";
             }
 
-            if (Date.now() - cl.time > RECENT_TIME * 2) {
-                this.commandLog.pop();
-                transcript = "";
-            }
         } else if (midi != null && midi.length > 0) {
             console.log(midi);
             let prevTranscript = "";
@@ -444,6 +444,7 @@ export class MidiController {
                     } else {
                         executed = FUNCS.SPEECH.Chat(transcript, callback, pending);
                         transcript = "";
+                        
                     }
                 } else {
                     done = 0;
@@ -452,7 +453,7 @@ export class MidiController {
 
             if (transcript !== "") {
                 if (transcript.endsWith(" ")) {
-                    FUNCS.SPEECH.addCommandLog(transcript, null, true);
+                    FUNCS.SPEECH.addCommandLog(transcript, null, true, lang);
                 } else {
                     executed = FUNCS.SPEECH.Chat(transcript, callback, pending);
                     transcript = "";

@@ -17,6 +17,12 @@ await page.locator('aria/Search').fill('automate beyond recorder');
 // Wait and click on first result.
 await page.locator('.devsite-result-item-link').click();
 
+//take screenshot
+await page.screenshot({ path: 'puppet1.png', fullPage: true });
+
+//get full html
+const html = await page.content();
+
 // Locate the full title with a unique string.
 const textSelector = await page
   .locator('text/Customize and automate')
