@@ -19,7 +19,20 @@
 
 
 \help (1,2,3) #show/hide commands.  
+
 */
+
+
+keymaps["videocontrol"].vars = {};
+keymaps["videocontrol"].vars["coords"] = "grid";
+keymaps["videocontrol"].vars["x1"] = 0;
+keymaps["videocontrol"].vars["y1"] = 0;
+keymaps["videocontrol"].vars["x2"] = 0;
+keymaps["videocontrol"].vars["y2"] = 0;
+keymaps["videocontrol"].vars["midi"] = null;
+
+
+
 function VCGenerateDic(){
     ret = {};
     let dic = {"screenshot": {"midi": "0,3,6"},
@@ -214,3 +227,45 @@ keymaps["videocontrol"].funcdict["jump "] = function(transcript, midi, keydict, 
     }
     return transcript; //add language xxxx 2,3,4
 };
+
+
+keymaps["videocontrol"].funcdict["_screenshot"] = function(){
+
+}
+
+
+keymaps["videocontrol"].funcdict["_help"] = function(){
+    showHelp();
+}
+
+
+keymaps["videocontrol"].chat = function (transcript){
+    let executed = false;
+    transcript = transcript.trim();
+    //find and handle command.  
+    if (transcript.toLowerCase().startsWith("help")){
+        keymaps["videocontrol"].funcdict["_help"]();
+        executed = true;
+
+    }
+    else if (transcript.toLowerCase().startsWith("screenshot")){
+        tokens = transcript.split(" ");
+        if (tokens.length == 2){
+            let coords = tokens[1].split(",");
+            if (coords.length == 4){
+                //parse coordinates
+                keymaps["videocontrol"].vars["x1"] = parseInt(coords[0]);
+                keymaps["videocontrol"].vars["x2"] = parseInt(coords[1]);
+                keymaps["videocontrol"].vars["y1"] = parseInt(coords[2]);
+                keymaps["videocontrol"].vars["y2"] = parseInt(coords[3]);
+                //use these coords later if needed.  
+
+                //take screenshot
+                executed = true;
+                //call screenshot function here
+            }
+        }
+    }
+    return executed;
+
+}

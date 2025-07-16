@@ -1787,8 +1787,15 @@ function playWord(lang, word, midi){
     for (let i=0; i<tokens.length; i++){
         if (tokens[i] !== ""){
             //play the midi note.  random velocity 17.  
-            noteOn(parseInt(keybot[lang] + tokens[i]), 17, getReferenceTime(), 0, lang); //no velocity, no duration, no channel, no track, no user.  
-            noteOff(parseInt(keybot[lang] + tokens[i]), 17, getReferenceTime(), 0, lang); //no velocity, no duration, no channel, no track, no user.
+            if (typeof(midicontroller) !== 'undefined' && midicontroller !== null){
+                midicontroller.noteOn(keybot[lang] + parseInt(tokens[i]), 17, midicontroller.getReferenceTime(), 0, lang); //no velocity, no duration, no channel, no track, no user.  
+                midicontroller.noteOff(keybot[lang] + parseInt(tokens[i]), midicontroller.getReferenceTime(), lang); //no velocity, no duration, no channel, no track, no user.
+            }
+            else{
+                noteOn(keybot[lang] + parseInt(tokens[i]), 17, getReferenceTime(), 0, lang); //no velocity, no duration, no channel, no track, no user.  
+                noteOff(keybot[lang] + parseInt(tokens[i]), getReferenceTime(), lang); //no velocity, no duration, no channel, no track, no user.
+    
+            }
         }
     }
 

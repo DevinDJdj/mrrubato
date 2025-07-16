@@ -1,0 +1,69 @@
+**PAUSELOGIC
+
+var lastPause = 0;
+var pauseTime = 0;
+
+var recorder
+
+
+recorder = recordRTC
+
+function getPauseTime(){
+    if (recorder ===null){
+        return pauseTime;
+    }
+    if (recorder.state === "paused") {
+        return pauseTime + Date.now()-lastPause;
+    }
+    else{
+        return pauseTime;
+    }
+}
+
+document.getElementById('btn-pause-recording').onclick = function() {
+
+
+ if (recorder.state === "recording") {
+
+     recorder.pauseRecording();
+     lastPause = Date.now();
+     $(this).html('Resume Recording');
+   //  Console.log(recorder.state);
+     // recording paused
+ } else if (recorder.state === "paused") {
+     $(this).html('Pause Recording');
+     recorder.resumeRecording();
+     pauseTime += Date.now() - lastPause;
+     // resume recording
+ }
+ return false;
+
+}
+
+  function getTimeFromSecs(secs){
+    //remove pause time.  
+    secs = Math.floor(secs - getPauseTime() / 1000);
+
+
+
+**web/public/rec.html
+
+on <videocontrol>help, make "dictable" div visible.  and hide "capturescreen"
+
+**web/public/languages.js
+--playWord 
+not working as expected.  
+OK, fixed.  
+
+
+Continue, see if <videocontrol>help works.  
+Also why are played commands not showing in dictable?  
+
+
+**web/public/languages/*
+Lot of this is not aesthetic code, but..
+We can work on aesthetics on the second iteration perhaps if there is still energy to do so.  
+
+
+
+

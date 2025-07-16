@@ -123,6 +123,7 @@
 <h3>SCREEN RECORDING control</h3>
 <button id="btn-start-recording">Record</button>
 <button id="btn-stop-recording" disabled>Stop Recording</button>
+<button id="btn-pause-recording" disabled>Pause Recording</button>
 <button id="btn-save-local">Save Local</button>
 <button id="btn-save-remote">Save Remote</button>
 <button id="btn-load-remote" disabled>Load Remote</button>
@@ -201,7 +202,98 @@
         <textarea id="ocr-processing" style="height:50px;" rows="10"></textarea>
     
       </div>
-    <canvas id="capturescreen" style='position:relative;' ></canvas>
+    <canvas id="capturescreen" style='position:relative;display:none'></canvas>
+
+<!-- hidden content for now-->
+
+<div id="dictable">
+    <!-- dont need this lookup for now.  hiding the diclabel etc for language.js-->
+    <table>
+        <tr>
+            <td>
+            <div id="auto" style="width: 100%;height: 200px;overflow:auto;">
+            <div id="autodiclabel" class="langlabel">	</div>
+            <table id="autodic" class="display" style="width: 100%;">
+                <thead>
+                    <tr>
+                        <th>word</th>
+                        <th>keys</th>
+                        <th>lang</th>
+                        <th>meaning</th>
+                    </tr>
+                </thead>
+                <tfoot>
+                    <tr>
+                        <th>word</th>
+                        <th>keys</th>
+                        <th>lang</th>
+                        <th>meaning</th>
+                    </tr>
+                </tfoot>
+            </table>	
+        </td>
+        <td>
+            <div id="auto" style="width: 100%;height: 200px;overflow:auto;">
+                <table id="metadic" class="display" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>word</th>
+                            <th>keys</th>
+                            <th>lang</th>
+                            <th>meaning</th>
+                        </tr>
+                    </thead>
+                    <tfoot>
+                        <tr>
+                            <th>word</th>
+                            <th>keys</th>
+                            <th>lang</th>
+                            <th>meaning</th>
+                        </tr>
+                    </tfoot>
+                </table>	
+            </div>
+        
+        </td>
+        </tr>
+        <tr>
+        <td colspan="2">
+            <div id="dictionary" style="width: 100%;height: 280px;overflow:auto;">
+                <div id="dictablelabel" class="langlabel">	</div>
+                <table id="DictionaryTable" class="display" style="width: 100%">
+                    <thead>
+                        <tr>
+                            <th>word</th>
+                            <th>playall</th>
+                            <th>keys</th>
+                            <th>user</th>
+                            <th>times</th>
+                            <th>meaning</th>
+                            <th>created</th>
+                            <th>lang</th>
+                        </tr>
+                    </thead>
+                    <tfoot>
+                        <tr>
+                            <th>word</th>
+                            <th>playall</th>
+                            <th>keys</th>
+                            <th>user</th>
+                            <th>times</th>
+                            <th>meaning</th>
+                            <th>created</th>
+                            <th>lang</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        
+        </td>
+        </tr>
+    </table>
+
+</div>
+
 </td>
 
 </tr>
@@ -490,6 +582,10 @@ var imageid = 0;
 var imageselected = -1;
 var username = "";
 
+var lastPause = 0;
+var pauseTime = 0;
+
+
 var sims = [];
 
 if (typeof(img) == 'undefined' || img==null){
@@ -560,6 +656,14 @@ if(!navigator.getDisplayMedia && !navigator.mediaDevices.getDisplayMedia) {
 }
 
 
+function showHelp(){
+    //show the dictionary table.  
+    const canvas = document.getElementById("capturescreen");
+    canvas.style.display = 'none';
+    const dictable = document.getElementById("dictable");
+    dictable.style.display = 'block'; //show the dictionary table for now.
+}
+
 function loadPreview(sim){
 
     console.log(sim);
@@ -572,7 +676,12 @@ function loadPreview(sim){
     $('#selectedocr').html(ocrtext);
     imgdata = "data:image/png;base64," + mysim["img"];
 
+
+    const dictable = document.getElementById("dictable");
+    dictable.style.display = 'none'; //hide the dictionary table for now.
+
     const canvas = document.getElementById("capturescreen");
+    canvas.style.display = 'block';
     const context = canvas.getContext("2d");
     var img = new Image();
     img.onload = function() {
@@ -754,8 +863,42 @@ function autodownload(b){
     anchor.click();
 }
 
-var recorder;
+var recorder = null;
 
+
+
+function getPauseTime(){
+    if (recorder ===null){
+        return pauseTime;
+    }
+    if (recorder.state === "paused") {
+        return pauseTime + Date.now()-lastPause;
+    }
+    else{
+        return pauseTime;
+    }
+}
+
+
+document.getElementById('btn-pause-recording').onclick = function() {
+
+
+if (recorder.state === "recording") {
+
+    recorder.pauseRecording();
+    lastPause = Date.now();
+    $(this).html('Resume Recording');
+  //  Console.log(recorder.state);
+    // recording paused
+} else if (recorder.state === "paused") {
+    $(this).html('Pause Recording');
+    recorder.resumeRecording();
+    pauseTime += Date.now() - lastPause;
+    // resume recording
+}
+return false;
+
+}
 
 
 
@@ -1036,6 +1179,7 @@ function getTime(comment, prevtime=0){
   }
 
   function getTimeFromSecs(secs){
+    secs = Math.floor(secs - getPauseTime() / 1000);
 	min = Math.floor(secs/60);
 	secs = Math.floor(secs - min*60);
 	ret = "";
@@ -1549,93 +1693,6 @@ if (speech){
 <footer style="margin-top: 20px; text-align: left;"><small id="send-message"></small></footer>
 <script src="https://www.webrtc-experiment.com/common.js"></script>
 
-<!-- hidden content for now-->
-
-<div id="dictable">
-    <!-- dont need this lookup for now.  hiding the diclabel etc for language.js-->
-    <table style="display:none">
-        <tr>
-            <td>
-            <div id="auto" style="width: 100%;height: 200px;overflow:auto;">
-            <div id="autodiclabel" class="langlabel">	</div>
-            <table id="autodic" class="display" style="width: 100%;">
-                <thead>
-                    <tr>
-                        <th>word</th>
-                        <th>keys</th>
-                        <th>lang</th>
-                        <th>meaning</th>
-                    </tr>
-                </thead>
-                <tfoot>
-                    <tr>
-                        <th>word</th>
-                        <th>keys</th>
-                        <th>lang</th>
-                        <th>meaning</th>
-                    </tr>
-                </tfoot>
-            </table>	
-        </td>
-        <td>
-            <div id="dictionary" style="width: 100%;height: 280px;overflow:auto;">
-                <div id="dictablelabel" class="langlabel">	</div>
-                <table id="DictionaryTable" class="display" style="width: 100%">
-                    <thead>
-                        <tr>
-                            <th>word</th>
-                            <th>playall</th>
-                            <th>keys</th>
-                            <th>user</th>
-                            <th>times</th>
-                            <th>meaning</th>
-                            <th>created</th>
-                            <th>lang</th>
-                        </tr>
-                    </thead>
-                    <tfoot>
-                        <tr>
-                            <th>word</th>
-                            <th>playall</th>
-                            <th>keys</th>
-                            <th>user</th>
-                            <th>times</th>
-                            <th>meaning</th>
-                            <th>created</th>
-                            <th>lang</th>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-        
-        </td>
-        <td>
-            <div id="auto" style="width: 100%;height: 200px;overflow:auto;">
-                <table id="metadic" class="display" style="width: 100%;">
-                    <thead>
-                        <tr>
-                            <th>word</th>
-                            <th>keys</th>
-                            <th>lang</th>
-                            <th>meaning</th>
-                        </tr>
-                    </thead>
-                    <tfoot>
-                        <tr>
-                            <th>word</th>
-                            <th>keys</th>
-                            <th>lang</th>
-                            <th>meaning</th>
-                        </tr>
-                    </tfoot>
-                </table>	
-            </div>
-        
-        </td>
-        </tr>
-        </table>
-
-</div>
 
 
 </body>
