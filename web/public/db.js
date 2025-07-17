@@ -13,6 +13,15 @@ function addUser(user){
 	
 }
 
+async function checkStorage(){
+	const quota = await navigator.storage.estimate();
+	const totalSpace = quota.quota;
+	const usedSpace = quota.usage;
+	console.log('Approx total allocated space:', totalSpace);
+	console.log('Approx used space:', usedSpace);	
+	console.log('PCT Used: ', ((usedSpace/totalSpace)*100).toFixed(2) + '%');
+}
+
 
 class classifierDB{
 	constructor(lang=""){
@@ -303,7 +312,7 @@ class recDB{
 		this.db = new Dexie("recDB");
 		this.db.version(1).stores({
 			vids: "++id,[category+name+version],category,name,version,userid", //mycomments, videoblob (if local), otherwise remoteurl
-			screenshots: "id,userid,vidid,timestamp", //imgblob, ocrtext
+			screenshots: "id,imid,userid,vidid,timestamp", //imgblob, ocrtext
 		});
 
 		this.ftsindex = FlexSearch.Index({});
@@ -317,7 +326,7 @@ class recDB{
 			this.ftsindex.add(obj.id, obj.category + " " + obj.name + " " + obj.mycomments);
 		});
 		this.db.screenshots.each((obj) => {
-			this.ftsindex.add(obj.vidid + '_' + obj.id, obj.ocrtext);
+			this.ftsindex.add(obj.id, obj.ocrtext);
 		});
 	}
 
@@ -345,16 +354,17 @@ class recDB{
 		}
 	}
 
-	saveScreenshot(id, vidid, timestamp, imgblob, ocrtext, cb=null){
-		var obj = {"id": vidid + "_" + id, "vidid": vidid, "timestamp": timestamp, "imgblob": imgblob, "ocrtext": ocrtext};
-		this.db.screenshots.add(obj).then((id) => {
-			console.log("added screenshot with id " + id);
+	saveScreenshot(id, vidid, secs, imgblob, ocrtext, cb=null){
+		var obj = {"id": vidid + "_" + id, "imid": id, "vidid": vidid, "secs": secs, "imgblob": imgblob, "ocr": ocrtext};
+		this.db.screenshots.add(obj).then((ida) => {
+			console.log("added screenshot with id " + ida);
 			this.ftsindex.add(vidid + "_" + id, obj.ocrtext);
 			if (cb != null){
-				cb(id); //callback to complete.  
+				cb(ida); //callback to complete.  
 			}
 		});
 	}
+
 
 	getRecent(name=""){
 		return this.db.vids.where("name").startsWith(name).reverse().sortBy("version");
@@ -366,8 +376,16 @@ class recDB{
 		//how to sort this?  
 	}
 
-	getScreenshots(ssids=[]){
-		return this.db.screenshots.bulkGet(ssids);
+	
+	getScreenshots(vidid){
+		return this.db.screenshots.where("vidid").equals(vidid).sortBy("imid");
+	}
+
+	getScreenshotsA(imgrecs=[]){
+		//get all screenshots for these video ids.  
+		return this.db.screenshots.bulkGet(imgrecs);
+
+
 	}
 
 	getSimilar(text="", limit=10){

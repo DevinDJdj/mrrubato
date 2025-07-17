@@ -468,8 +468,8 @@ function getSimilar(text = ""){
         //only get the first X words?  
         //from screenshot hopefully is what we want.  
         var lines = text.split("\n"); 
-        //take the first 3 lines for now
-        mysearch = lines.slice(0,3).join("\n");
+        //get all lines.  
+        mysearch = lines.join("\n");
 //        mysearch = text;
     }
 
@@ -481,15 +481,19 @@ function getSimilar(text = ""){
     //order of results here is significant.  
     //need to reorder based on this.  
     imgrecs = [];
+    vidrecs = [];
     for (i=0; i<ftrecs.length; i++){
         if (typeof(ftrecs[i]) ==="string"){
             imgrecs.push(ftrecs.splice(i,1));
+        }
+        else{
+            vidrecs.push(ftrecs[i]);
         }
     }
 
     if (imgrecs.length > 0){
         //img recs if they exist.  
-        recDB.getScreenshots(imgrecs).then(recs => {
+        recDB.getScreenshotsA(imgrecs).then(recs => {
 
         full = "";
         for (i=0; i<recs.length; i++){
@@ -506,9 +510,9 @@ function getSimilar(text = ""){
         });
 
     }
-    else{
+    if (vidrecs.length > 0){
         //vid recs
-        recDB.getVideos(recs).then(recs => {
+        recDB.getVideos(vidrecs).then(recs => {
 //            recs.sort((a,b) => b.version - a.version); // b - a for reverse sort
         full = "";
         for (i=0; i<recs.length; i++){
@@ -523,7 +527,9 @@ function getSimilar(text = ""){
         console.log(recs);
 
         });
-
+    }
+    else{
+        //vid recs
 
 
     }
@@ -611,13 +617,6 @@ $("#loadfile").val(fname);
 $("#category").val(category);
 
 
-if (typeof(ver) == 'undefined' || ver==null){
-    ver = version;
-}
-else{
-    //load local video.  
-    loadVideo();
-}
 
 getUser(accesstoken);
 
@@ -661,9 +660,19 @@ function showHelp(){
     const canvas = document.getElementById("capturescreen");
     canvas.style.display = 'none';
     const dictable = document.getElementById("dictable");
+
     dictable.style.display = 'block'; //show the dictionary table for now.
+    return dictable;
 }
 
+function showScreenshot(){
+    const dictable = document.getElementById("dictable");
+    dictable.style.display = 'none'; //hide the dictionary table for now.
+
+    const canvas = document.getElementById("capturescreen");
+    canvas.style.display = 'block';
+    return canvas;
+}
 function loadPreview(sim){
 
     console.log(sim);
@@ -674,14 +683,9 @@ function loadPreview(sim){
 
     ocrtext = mysim["ocr"];
     $('#selectedocr').html(ocrtext);
-    imgdata = "data:image/png;base64," + mysim["img"];
+    imgdata = mysim["img"];
 
-
-    const dictable = document.getElementById("dictable");
-    dictable.style.display = 'none'; //hide the dictionary table for now.
-
-    const canvas = document.getElementById("capturescreen");
-    canvas.style.display = 'block';
+    canvas = showScreenshot();
     const context = canvas.getContext("2d");
     var img = new Image();
     img.onload = function() {
@@ -746,41 +750,53 @@ function loadVideo(){
             video.load();
 
             //get images.  
-        }
-    );
+            images = [];
+            fullocr = "";
+            recDB.getScreenshots(res["id"]).then(recs => {
+                console.log(recs);
+                full = "";
+                for (i=0; i<recs.length; i++){
+                    //vidid_imgid
+                    tempid = recs[i]["id"];
+                    if (tempid.indexOf("_") > -1){
+                        tempid = tempid.split("_");
+                        tempid = parseInt(tempid[1]);
+                    }
 
-	var fd = new FormData();
-    fd.append('op', 'load');
-    fd.append('id', fname);
-    fd.append('ver', ver);
-	$.ajax({
-		type: 'POST',
-		url: '/service.py',
-		data: fd,
-		processData: false,
-		contentType: false,
+                    myimg = {img: recs[i]["imgblob"], id: tempid, scrollpos: 0,
+                        ocr: recs[i]["ocr"], secs: recs[i]["secs"]};
+                    images.push(myimg);
+                    full += '<a target="_blank" id="sim' + i + '" href="rec.html?cat=' + category + '&id=' + res["id"] + '&ver=' + ver + '&img=' + tempid + '">OCR' + tempid + '</a><br>';                    
+                    secs = myimg.secs;
+                    text = myimg.ocr;
+                    ocrtext = "--OCR" + tempid + "-- (" + getTimeFromSecs(secs) + ")\n" + text;
+                    addOCRComment(text, getTimeFromSecs(secs), imageid);
 
-    }).done(function(response) {
-		   console.log(response);
-           res = JSON.parse(response);
-            $('#mycomments').val(res["transcript"]);
-            $('#mycommentsh').html(makeOCRLinks(makeTimeLinks(res["transcript"])));
+                }
+                console.log(images);
+                $('#similar').html(full);
+                sims = images;
+                for (i=0; i<sims.length; i++){
+                    sim = document.getElementById('sim' + i);
+                    if (sim !==null){
+                        sim.onmouseover = function (){ loadPreview(this);}
+                    }
+                }
 
+                createNotesArray(true); //have to populate the notes array with the comments.
+            });
 
-            $('#ocrtranscript').val(res["ocr"]);
-            $('#ocrtranscriptsh').html(makeOCRLinks(makeTimeLinks(res["ocr"])));
+            $('#mycomments').val(res["mycomments"]);
+            $('#mycommentsh').html(makeOCRLinks(makeTimeLinks(res["mycomments"])));
+            createNotesArray(); //have to populate the notes array with the comments.
 
-            for (let i=0; i< res["images"].length; i++){
-                myimg = {img: "data:image/png;base64," + res["images"][i]["image"], id: parseInt(res["images"][i]["id"])}
-                images.push(myimg);
-            }
-            console.log(images);
             if (imageselected > -1){
                 loadOCR(imageselected);
             }
-        //load images.  
-        //imgElem.setAttribute('src', "data:image/jpg;base64," + baseStr64);
-    });	
+
+        }
+    );
+
 
 }
 
@@ -1499,7 +1515,7 @@ function finishScreenshot(){
 
 function takeScreenshot(video){
 
-    const canvas = document.getElementById("capturescreen");
+    const canvas = showScreenshot();
 		const context = canvas.getContext("2d");
     //    canvas.visible = false;
         canvas.width = video.clientWidth*2;
@@ -1647,7 +1663,9 @@ if (speech){
         mytranscript = checkCommandsr(transcript, video);
         if (mytranscript !=''){
             addComment(mytranscript, getTimeFromSecs(video.currentTime));
+            return true;
         }
+        return false;
       }
     
   </script>
@@ -1657,12 +1675,20 @@ if (speech){
     export function loadAll(reload = false){
 //        getVideoJson(video);
 //        $("#dictable").load("dictable.html"); //not working..
-
+        checkStorage();
         recDB = new recDB();
+
         recDB.loadFTS();
+        if (typeof(ver) == 'undefined' || ver==null){
+            ver = version;
+        }
+        else{
+            //load local video.  
+            loadVideo();
+        }
+
+
         document.getElementById('btn-recentsearch').click();        
-
-
         FUNCS.SPEECH.loadSpeech();
         //initialize midi controller
         midicontroller = new FUNCS.MIDI.MidiController();

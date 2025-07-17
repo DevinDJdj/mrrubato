@@ -299,10 +299,7 @@ export function Chat(transcript, callback=null, pending=false, lang=""){
     //trim the start of the transcript.  
     transcript = transcript.trim();
     //find and handle command.  
-    if (transcript.toLowerCase().startsWith("help")){
-
-    }
-    else if (transcript.toLowerCase().startsWith("highlight")){
+    if (transcript.toLowerCase().startsWith("highlight")){
         //skip to next event?  
         tokens = transcript.split(" ");
         //logic check is in prior function
@@ -599,7 +596,7 @@ export function Chat(transcript, callback=null, pending=false, lang=""){
     
     if (typeof(MyChat) === "function" && executed==false){
         //really should not be using this.  add chat to keymaps[lang]
-        MyChat(transcript);
+        executed = MyChat(transcript);
     }
     else{
         if (executed){

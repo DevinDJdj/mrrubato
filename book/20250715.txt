@@ -49,6 +49,7 @@ document.getElementById('btn-pause-recording').onclick = function() {
 **web/public/rec.html
 
 on <videocontrol>help, make "dictable" div visible.  and hide "capturescreen"
+Works ok..
 
 **web/public/languages.js
 --playWord 
@@ -63,6 +64,20 @@ Also why are played commands not showing in dictable?
 **web/public/languages/*
 Lot of this is not aesthetic code, but..
 We can work on aesthetics on the second iteration perhaps if there is still energy to do so.  
+
+
+**web/public/db.html
+Need function to delete older videos possibly or offload.  
+View and Download or delete.  
+Just have offline indicator.  
+Save Remote ->
+**web/public/storage_upload.html
+update video record to point to external...
+
+
+Delete ->
+remove video record.  
+Save screenshots.  
 
 
 
