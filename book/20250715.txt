@@ -73,12 +73,144 @@ Just have offline indicator.
 Save Remote ->
 **web/public/storage_upload.html
 update video record to point to external...
+Option to keep locally as well.  
+Need management interface.  
+Display details.  
+Need upload/download functionality.  
+Just store as a simple JSON record perhaps?  
+
+Several alternatives to dexie.js, but too much time to evaluate them...
+For now just try to make a mapping.  
+100M words over lifetime.  
+Just download all and index locally.  
+Not sure if this is practical or optimal, but dont want to add complexity.  
+For now do all client side.  
+Server is just dumb storage except for already done language sharing.  
+If this is the case, we can just send files.  
+Then if we want to build shared DB later, we just ingest all those files and build a searchable service.  
+???
+Or just ingest into a model???
+
+#https://github.com/kingjulio8238/Memary
+#https://github.com/mem0ai/mem0
+#https://www.falkordb.com/
+#https://en.wikipedia.org/wiki/Cypher_(query_language)
+#https://neo4j.com/blog/cypher-and-gql/cypher-gql-world/
+#https://neo4j.com/
+#https://cloud.google.com/products/spanner/graph?hl=en
+Hmmm...
+#https://github.com/GoogleCloudPlatform/generative-ai/blob/main/gemini/use-cases/graphrag/graph_rag_spanner_sdk_adk.ipynb
+#https://cloud.google.com/spanner/docs/graph/set-up
+
+#https://cloud.google.com/run/docs/tutorials/function-sends-query-to-spanner-database
+
+#https://stackoverflow.com/questions/52233949/passing-variables-to-google-cloud-functions
+
+
+To use or not to use..
+Need to do simple server side at some point anyway..
+
+#https://firebase.google.com/docs/functions/get-started?gen=2nd
+
+
+> firebase init functions
+#https://www.oracle.com/java/technologies/downloads/#jdk24-windows
+
+> firebase emulators:start
+
+#http://127.0.0.1:4000/functions 
+#http://localhost:5001/MY_PROJECT/us-central1/addMessage?text=uppercaseme
+
+> firebase deploy --only functions
+#https://cloud.google.com/artifact-registry/docs/repositories/cleanup-policy#console
+Annoying...
+Why cant I configure this..
+
+https://us-central1-MY_PROJECT.cloudfunctions.net/addmessage?text=uppercaseme
+
+ok, not perfect, but ..
+Redo with python..  
+Easier to interact with other tooling.  
+#https://firebase.google.com/docs/storage/extend-with-functions?gen=2nd
+--onObjectFinalized
+
+
+#https://github.com/adhazel/graphrag_demo/blob/main/Use%20Case%20A%20Research%20Assistant.ipynb
+
+#https://sandeep14.medium.com/running-graphrag-locally-with-neo4j-and-ollama-text-format-371bf88b14b7
+really want all in browser if possible.  
+
+
+#https://neo4j.com/docs/neo4j-graphrag-python/current/user_guide_rag.html#using-another-llm-model
+
+#https://github.com/kuzudb/kuzu
+#https://github.com/kuzudb/wasm-linkedin-example
+Not exactly.. this is just loading the linkedin DB info, and using the LLM to translate.  
+
+
+**web/public/chat.html
+#https://github.com/pubkey/javascript-vector-database
+#https://rxdb.info/articles/javascript-vector-database.html
+Not Graph, but this is close to what we want..
+Can we get a version of this working..
+Ingest transcripts, then use WebLLM combined with this vectordb similarity search.  
+
+Lot of excess data when pulling the transcript in each record, about 2x what is necessary.  
+10kb per record should be more than fine..
+Means we pull about 10mb or even 100mb who cares.  
+
+We will have this vectordb search for some time, until we have extremely long context windows.  
+But even then, this is excess computing power wasted by passing the long context window for the most part.  
+#https://github.com/pubkey/rxdb
+
+#https://github.com/pubkey/rxdb-quickstart?tab=readme-ov-file
+
+!!firebase RTDB limitation have to get entire document, cant get only specific children..
+Really annoying.
+So would have to create a subtree
+transcriptions -> vid -> transcription..
+Started this
+/transcript/byuser
+/transcript/byvideo
+This is the kind of limitation that makes you want to change DB.  
+~~This cant be that difficult to code
+
+> cd testing
+> git clone https://github.com/pubkey/javascript-vector-database.git
+>npm install
+> npm run dev
+
+Hmmm.. unfortunately the actual results are quite poor.  
+Not sure I want to use..
+Try different model..
+$$Xenova/paraphrase-multilingual-mpnet-base-v2
+This didnt work well at all.  
+
+$$Supabase/gte-small
+This works quite well.  
+OK, lets try to deploy this.  
+
+
+**web/public/test/javascript-vector-database/docs/index.html
+OK, this seems to work.  
+> npx webpack
+> npm run dev
+Just had to change file input location.  
+Now need to load app specific data, and adjust display mechanisms.  
+For now just generate the transcript JSON data with batch so dont need to bother loading.  
+[{"id": xxx, "body": ""}, ..]
+Adjust if we feel necessary.  
+
+**web/public/test/javascript-vector-database/src/index.ts
+--submit
+--textToHtml
+Adjust here to our liking.  
+
+
 
 
 Delete ->
 remove video record.  
 Save screenshots.  
-
-
 
 
