@@ -206,11 +206,32 @@ Adjust if we feel necessary.
 --textToHtml
 Adjust here to our liking.  
 
+OK, so we are loading dynamically.  
+--resetTranscripts
+Need a reload function.
+
+Also need to create links for video and add description info.  
+bulkInsert doesnt update existing entries.  
+
 
 
 
 Delete ->
 remove video record.  
 Save screenshots.  
+
+
+**timestep.py
+add logic to generate transcripts for use in client-side vector DB for LLM chat.  
+
+OK
+**data/transcription/trans.json
+See if we can use this with the vector database in any meaningful way.  
+Then add to or replace [**web/public/chat.html]
+
+**web/public/chata.html
+Try to use this alternative to original server RAG.  
+Perhaps just import the bundle and files
+
 
 

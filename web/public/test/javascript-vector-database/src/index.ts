@@ -25,6 +25,7 @@ async function run() {
     const $queryInput: HTMLInputElement = ensureNotFalsy(document.getElementById('query-input')) as any;
     const $queryButton = ensureNotFalsy(document.getElementById('query-button'));
     const $queryString = ensureNotFalsy(document.getElementById('query-string'));
+    const $buttonImportResetAll: HTMLButtonElement = ensureNotFalsy(document.getElementById('button-import-resetAll')) as any;
     const $buttonImportPlain: HTMLButtonElement = ensureNotFalsy(document.getElementById('button-import-plain')) as any;
     const $buttonImportEmbeddings: HTMLButtonElement = ensureNotFalsy(document.getElementById('button-import-embeddings')) as any;
     const $list = ensureNotFalsy(document.getElementById('list'));
@@ -33,10 +34,18 @@ async function run() {
         submit(searchString);
     }
 
+    $buttonImportEmbeddings.disabled = true;
     if (state.importDone) {
-        $buttonImportEmbeddings.disabled = true;
-        $buttonImportPlain.disabled = true;
+        //always allow import.  
+//        $buttonImportPlain.disabled = true;
     }
+    $buttonImportResetAll.onclick = () => {
+        $buttonImportPlain.disabled = true;
+        importData(false, true);
+        $buttonImportPlain.disabled = false;
+        run();
+    }
+
     $buttonImportPlain.onclick = () => {
         $buttonImportEmbeddings.disabled = true;
         $buttonImportPlain.disabled = true;
@@ -99,14 +108,23 @@ async function run() {
         //     resultLimitDocReads: resultLimit.docReads,
         //     resultLimitTime
         // });
-
+/*
         const sourceDocs = await db.items.findByIds(results.result.map((r: any) => r.doc.primary)).exec();
         $list.innerHTML = results.result.map((r: any, idx) => {
             const doc = getFromMapOrThrow(sourceDocs, r.doc.primary);
             const textHtml = textToHtml(doc.body, idx + 1);
             return textHtml;
         }).join('');
+*/
+        const sourceDocs = await db.transcripts.findByIds(results.result.map((r: any) => r.doc.primary)).exec();
+        $list.innerHTML = '<table><tr><th width="30%">REC DETAILS</th><th>TRANSCRIPT</th></tr>' + results.result.map((r: any, idx) => {
+            const doc = getFromMapOrThrow(sourceDocs, r.doc.primary);
+            const textHtml = textToHtmlTrans(doc, doc.transcript, idx + 1);
+            return textHtml;
+        }).join('') + '</table>';
+
     }
+
 }
 run();
 
@@ -116,4 +134,11 @@ function textToHtml(text: string, nr: number) {
     const title = text.split('Title:')[1].split('Content:')[0].trim();
     const content = text.split('Content:')[1].trim();
     return '<h3><b>' + nr + '.</b> ' + title + '</h3><p>' + content + '</p><hr />';
+}
+
+function formatText(text: string) {
+    return text.replace(/\n/g, '<br />');
+}
+function textToHtmlTrans(doc: any, text: string, nr: number) {
+    return '<tr valign="top"><td>' + formatText(doc.description) + '</td>' + '<td>' + formatText(text) + '</td></tr>';
 }

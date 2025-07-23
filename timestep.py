@@ -46,6 +46,11 @@ from firebase_admin import firestore
 from firebase_admin import credentials
 from firebase_admin import initialize_app, storage, auth
 
+
+#from transcribe import transcribe_fromyoutube
+#import whisper
+
+
 CLIENT_SECRETS_FILE = config.cfg['youtube']['CLIENT_SECRETS_FILE']
 
 # This OAuth 2.0 access scope allows an application to upload files to the
@@ -403,6 +408,16 @@ def rungitDownload():
     print("git download complete")
 
 
+
+def writeTranscripts(alltranscripts):
+    #this should be a separate function.  
+    #append to the existing transcript file.  
+
+    f = open('./data/transcription/trans.json', "w", encoding='utf-8')
+    f.write(json.dumps(alltranscripts, ensure_ascii=False, indent=4))
+
+
+
 if __name__ == '__main__':
     argparser.add_argument("--admin", help="Add Admin user", default="")
     args = argparser.parse_args()
@@ -436,6 +451,9 @@ if __name__ == '__main__':
     totalidx = 0
     #take local backup of full DB.  
     ref = localBackup()
+
+    alltranscripts = []
+    model = None
     #ok this looks ok.  Now use the retrieved DB and update any info in the DB.  
     #then get each video individually from the DB info.  
     #no need to search.  
@@ -539,10 +557,20 @@ if __name__ == '__main__':
                 
             transcript_file = util.getTranscriptFile(description)
             #dont repeat if not error.  
+            #update "transcript" to use in chat.  
+            reftranscript = db.reference(f'/misterrubato/' + videoid + '/transcript')
+            reftr = reftranscript.get()
+            if (reftr is not None and "transcript" in reftr):
+                mytranscript = {"id": videoid, "description": description, "transcript": reftr["transcript"]}
+                if ("updated" in reftr):
+                    mytranscript["updated"] = reftr["updated"][0:8] #just the date
+                else:
+                    mytranscript["updated"] = publishedDate.replace('-', '')[0:8] #just the date
+                alltranscripts.append(mytranscript)
+
             #update "transcript" from webUI if we have a transcript.  
+
             if (((privacystatus=="public")) and pDate.date() > mydate):
-                reftranscript = db.reference(f'/misterrubato/' + videoid + '/transcript')
-                reftr = reftranscript.get()
                 #only loading once.  
                 if reftr is not None and "updated" in reftr and "loaded" not in reftr:
                     print("STT training ready")
@@ -579,9 +607,7 @@ if __name__ == '__main__':
                         print('error using transcript service' + videoid)
 
             if (((privacystatus=="unlisted" and transcript_file=="error")) and "transcript" not in item and pDate.date() > mydate):
-                reftranscript = db.reference(f'/misterrubato/' + videoid + '/transcript')
-                reftr = reftranscript.get()
-                if reftr is None and servererrorcnt < 5: #dont keep banging on the door when server is down.  
+                if reftr is None and servererrorcnt < 3: #dont keep banging on the door when server is down.  
                     #http://192.168.1.120/transcribe/?videoid=ZshYVeNHkOM
                     #LAk9aL9uBcg, gMlt5CRj6-0, RKRHigZ-PUM, why is transcribe_whisper failing again?  
                     #need to use http or https as necessary
@@ -605,6 +631,16 @@ if __name__ == '__main__':
                     print(url)
                     try:
 #                        transcript = requests.get(url, timeout=(30, None)).text
+                        #set OUTPUT_DIR
+                        #just call server/transcription/transcribe.py --transcribe_fromyoutube
+                        """
+                        if (model is None):
+                            print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                            model = whisper.load_model("base")
+                            print("loaded model")
+                            print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+#                        transcript = transcribe_fromyoutube(videoid, model, mediafile, sta, eta)
+                        """
                         transcript = requests.get(url, params=params, timeout=(30, None), verify=False).text
                         if (transcript is not None and transcript !="error"):
                             data = {'transcript':transcript}
@@ -641,6 +677,9 @@ if __name__ == '__main__':
                 except:
                     print('error updating video' + videoid)
 
+
+    #    #write the transcripts to a file.
+    writeTranscripts(alltranscripts)
 
     getCodeHistory()
     

@@ -1,0 +1,440 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content=
+		"width=device-width, initial-scale=1.0">
+<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js'></script>
+<script src="https://cdn.jsdelivr.net/npm/webmidi@latest/dist/iife/webmidi.iife.js"></script>
+<link href="css/app-dictaphone.css" rel="stylesheet" type="text/css">
+	<title>Speech to Text</title>
+	<style>
+		table {
+		  border-collapse: collapse;
+		  width: 100%;
+		}
+		
+		tr {
+		  border-bottom: 1px solid #ddd;
+		}
+		</style>	
+</head>
+    <!-- Google tag (gtag.js) -->
+	<script async src="https://www.googletagmanager.com/gtag/js?id=G-RXPM3QHNJ3"></script>
+	<script>
+	  window.dataLayer = window.dataLayer || [];
+	  function gtag(){dataLayer.push(arguments);}
+	  gtag('js', new Date());
+	
+	  gtag('config', 'G-RXPM3QHNJ3');
+	</script>
+	
+    <!-- update the version number as needed -->
+	
+    <script defer src="/__/firebase/9.19.1/firebase-app-compat.js"></script>
+    <!-- include only the Firebase features as you need -->
+    <script defer src="/__/firebase/9.19.1/firebase-auth-compat.js"></script>
+    <script defer src="/__/firebase/9.19.1/firebase-database-compat.js"></script>
+    <script defer src="/__/firebase/9.19.1/firebase-firestore-compat.js"></script>
+    <script defer src="/__/firebase/9.19.1/firebase-functions-compat.js"></script>
+    <script defer src="/__/firebase/9.19.1/firebase-messaging-compat.js"></script>
+    <script defer src="/__/firebase/9.19.1/firebase-storage-compat.js"></script>
+    <script defer src="/__/firebase/9.19.1/firebase-analytics-compat.js"></script>
+    <script defer src="/__/firebase/9.19.1/firebase-remote-config-compat.js"></script>
+    <script defer src="/__/firebase/9.19.1/firebase-performance-compat.js"></script>
+    <!-- 
+      initialize the SDK after all desired features are loaded, set useEmulator to false
+      to avoid connecting the SDK to running emulators.
+    -->
+    <script defer src="/__/firebase/init.js?useEmulator=true"></script>
+
+
+	<script src="config.js"></script>
+	<script src="keymap.js"></script>
+	<script src="languages.js"></script>
+	<script src="chat.js"></script>
+	<script src="video.js">	</script>
+
+<body>
+	<table><tr><td>
+    <div class="words" contenteditable>
+		<input type="text" id="p" name="p">
+		<button type="button" onclick="Chat()">Update</button>
+	</div>
+</td><td>
+   <textarea id="prompt" name="prompt" rows="10" cols="50"></textarea>
+</td></tr></table>
+<table>
+		<tr valign="top">
+		<td>
+		
+			<div id="player" valign="top"></div>
+			<video
+			id="my-video"
+			class="video-js"
+			preload="auto"
+			controls
+			width="640"
+			height="360"
+			data-setup="{}"
+			>
+			<p class="vjs-no-js">
+				To view this video please enable JavaScript, and consider upgrading to a
+				web browser that
+				<a href="https://videojs.com/html5-video-support/" target="_blank"
+				  >supports HTML5 video</a
+				>
+			  </p>
+			  <source src="https://storage.googleapis.com/misterrubato-test.appspot.com/videos/2024-01-29%2016-47-54.mp4" type="video/mp4"></source>
+			</video>
+				  
+		  <div id="submit" valign="top">
+			  <input type="range" id="points" name="points" min="0" max="10" value="1" />
+			  <button type="button" onclick="rateResponse()">Update</button>
+		  </div>
+	   <div id="midi"></div>
+	  <!--    <button type="button" onclick="saveMidiFeedback();">Save Midi Feedback</button> -->
+		  <div id="out"></div>	
+	  
+	  </td>
+	  
+	  <td>
+	  
+		<div id="clock" 
+			 style=	"display: inline-block;
+			  font-family: monospace;
+			  font-size: 30px;
+			  text-align: right;
+			  color: lightgray; 
+			  border-radius: 10px; 
+			  padding: 10px; 
+			  background-color: rgba(0, 0, 0, 0.75);">
+		</div>
+		<div id="secondselapsed" 
+			 style=	"display: inline-block;
+			  font-family: monospace;
+			  font-size: 30px;
+			  text-align: right;
+			  color: lightgray; 
+			  border-radius: 10px; 
+			  padding: 10px; 
+			  background-color: rgba(0, 0, 0, 0.75);">
+		</div>
+		
+		<br>
+		  <p id="load">Firebase SDK Loading&hellip;</p>
+		  <div id="iterationsh" style="height: 390px;overflow:auto;"></div>
+	  <!--    <textarea id="iterations" rows="40" cols="40"></textarea> -->
+	  </td><td>
+		<div id="mycommentsh"></div>
+		<textarea id="mycomments" rows="20" cols="40"></textarea>
+	
+		  <div id="mychatsh"></div>
+		  <textarea hidden id="mychat" rows="20" cols="10"></textarea>
+	  </td><td>
+		<div id="transcriptsh" style="height: 390px;overflow:auto;"></div>
+        <div id="sourcessh"></div>
+        <textarea hidden id="sources" rows="20" cols="10"></textarea>
+	  </td>
+	  </tr>
+	  </table>
+	  
+	  <table id="ChatTable">
+		<tr id="templateRow">
+		<td>id</td>
+		<td>query</td>
+		<td>AI Response</td>
+		<td width="50%">Sources</td>
+		</tr>
+		</table>
+
+		<script>
+			var myprompt = "";
+			var myquery = "";
+		</script>
+
+      <script type="text/javascript" src="clock.js"></script>
+      <script type="text/javascript" src="midi.js"></script>
+	  <script type="text/javascript" src="db.js"></script>
+	  <script src="JZZ/JZZ.js"></script>
+	  <script src="JZZ/JZZ.midi.SMF.js"></script>
+	  
+
+    <script>
+
+        var video = 'T7aCHEAGCsU';
+        var videojson = null;
+        var channelId = 'UC4dK3RpqBq2JpIkRmQn6HOA'; //@misterrubato doesnt work in URL, probably need to escape the @, but who cares.  
+        var title = '';
+        var seek = -1;
+        var sources = [];
+		var uid = null;
+		
+		var ss = null;
+		var watch = false;
+		
+		document.addEventListener('DOMContentLoaded', function() {
+        const loadEl = document.querySelector('#load');
+        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
+        // // The Firebase SDK is initialized and available here!
+        //
+         firebase.auth().onAuthStateChanged(user => { 
+		   if (user) {
+			// User is signed in, see docs for a list of available properties
+			// https://firebase.google.com/docs/reference/js/firebase.User
+			
+			uid = user.uid;
+				// ...
+			  } else {
+				// User is signed out
+				// ...
+			  }
+			});
+        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
+
+        try {
+          let app = firebase.app();
+          let features = [
+            'auth', 
+            'functions',
+            'storage', 
+			'database',
+          ].filter(feature => typeof app[feature] === 'function');
+          loadEl.textContent = `Firebase SDK loaded with ${features.join(', ')}`;
+		  
+		//use this as the base, and then we can write an update to whatever.  
+		//we can also use this, if the user is logged in, get that info instead.  
+			 var provider = new firebase.auth.GoogleAuthProvider();
+
+			firebase.auth()
+			  .signInWithPopup(provider)
+			  .then((result) => {
+				/** @type {firebase.auth.OAuthCredential} */
+				var credential = result.credential;
+
+				// This gives you a Google Access Token. You can use it to access the Google API.
+				var token = credential.accessToken;
+				// The signed-in user info.
+				var user = result.user;
+				//not sure why we need this, but the asynchronous check is not getting kicked off.  
+				   if (user) {
+					// User is signed in, see docs for a list of available properties
+					// https://firebase.google.com/docs/reference/js/firebase.User
+					
+					uid = user.uid;
+					addUser(user);
+					}
+
+					if (myprompt !=""){
+						$('#prompt').val(myprompt);
+					}
+					else{
+						$('#prompt').val('[INST]<<SYS>>Use the following pieces of context to answer the question at the end. Please follow the following rules: \
+										1. If you dont know the answer, try to find sources which include **coherent thoughts** relevant to the question. \
+										2. If you find the answer, and give some surrounding information, but write the answer in a concise way, less than two paragraphs.  \
+										<</SYS>> \
+										{context} \
+										Question: {question} \
+										Helpful Answer: \
+										[/INST]	\
+						');
+					}
+					if (myquery !=""){
+						setTimeout(function(){ 
+							MyChat(myquery); 
+						}, 4000);
+					}
+					// IdP data available in result.additionalUserInfo.profile.
+				  // ...
+			  }).catch((error) => {
+				// Handle Errors here.
+				var errorCode = error.code;
+				var errorMessage = error.message;
+				// The email of the user's account used.
+				var email = error.email;
+				// The firebase.auth.AuthCredential type that was used.
+				var credential = error.credential;
+				// ...
+			  });
+
+			//google.charts.load('current', {'packages':['corechart', 'timeline']});
+        			
+        } catch (e) {
+          console.error(e);
+          loadEl.textContent = 'Error loading the Firebase SDK, check the console.';
+        }
+      });
+
+
+			function loadTranscript(snapshot){
+				console.log(snapshot.val().transcript);
+				if (snapshot.val().transcript !==null){
+					$('#transcriptsh').html(makeTimeLinks(snapshot.val().transcript));
+				}
+			}
+
+			function loadPreviousComments(snapshot){
+				console.log(snapshot.val().comments);
+				if (snapshot.val().comments !==null){
+					$('#mycomments').val(snapshot.val().comments);
+					$('#mycommentsh').html(makeTimeLinks(snapshot.val().comments));
+				}
+				else{
+					$('#mycomments').val('');
+					$('#mycommentsh').html('');
+
+				}
+				
+				if (snapshot.val().sentiment !==null){
+					$('#points').val(snapshot.val().sentiment);
+				}
+				//load midi.  
+				//this causing some problems for sure.  
+				//need to check again in analyze as well.  
+				midifeedback = snapshot.val().midi;
+				try{
+					loadMidiFeedback(midifeedback);
+				}	
+				catch(err){
+					console.log(err);
+				}
+
+				
+				console.log("MIDI:" + midifeedback);
+			//							document.getElementById('out').innerHTML = 'New file: <a download=my.mid href=' + midifeedback + '>DOWNLOAD</a> <embed src=' + midifeedback + ' autostart=false>';
+
+			}
+
+
+
+			
+			function updateNotes(){
+				var allnotes = "";
+                var allnoteshtml = "";
+				for (var i=0; i<notesarray.length; i++){
+					allnotes += notesarray[i] + "\n";
+                    allnoteshtml += makeTimeLinks(notesarray[i]) + "<br>";
+				}
+				$('#mychat').val(allnotes);
+				$('#mychatsh').html(allnoteshtml);
+				
+			}
+			
+			function updateSources(){
+                allsources = '';
+				for (i=0; i<sources.length; i++){
+					vid = getVidFromMetadata(sources[i].metadata);
+					//get vid details
+					allsources += '<br><br>';
+					if (i%2==0){
+						allsources += '<font color="red">';
+					}
+					allsources += makeTimeLinks(sources[i].content, vid);
+					if (i%2==0){
+						allsources += '</font>';
+					}
+				}
+				return allsources;
+				
+			}
+
+            function createNotesArray(){
+			//also update the new DIV with links.  
+				allnotes = $('#mychat').val();
+				notesarray = [];
+				const lines = allnotes.split("\n");
+				for (i = 0; i< lines.length; i++){
+					notesarray[i] = lines[i];
+				}
+				console.log(notesarray);
+				//set title
+				updateNotes();
+			}
+			
+
+            function getTime(comment){
+				const regExp = /\(([^)]+)\)/g;
+				const matches = [...comment.matchAll(regExp)].flat();
+			//    console.log(matches);
+				if (matches.length > 0){
+					return getSecsFromTime(matches[1]);
+				}
+				else{
+					return 0;
+				}
+			}
+			
+			
+			function addSource(source){
+                sources.splice(0, 0, source);
+                s = updateSources();
+				$('#sourcessh').html(s);
+			}
+
+
+            //openssl req -x509 -newkey rsa:4096 -nodes -out cert.pem -keyout key.pem -days 365
+            //app.run(ssl_context=('cert.pem', 'key.pem'))
+
+
+			function MyChat(transcript) {
+				mychat = transcript; //$('#p').val();
+				if (mychat == "stop"){
+					window.speechSynthesis.cancel();
+					return;
+				}
+				//get prompt
+				myprompt = $('#prompt').val();
+//                addComment(mychat, helpme());
+				//this should be linked to the video being watched loosely perhaps.  
+				$.getJSON(chatdomain + ':8000/api/?query=' + encodeURIComponent(mychat) + '&prompt=' + encodeURIComponent(myprompt),function(data){
+                  
+				  if (typeof(data.answer) != "undefined") {
+					addChatRow(data.query, data.answer, data.sources);
+					ss = new SpeechSynthesisUtterance(data.answer);
+					ss.rate = myrate;
+					ss.pitch = mypitch;
+					window.speechSynthesis.speak(ss);
+
+                    console.log('query ' +  data.query);
+//                    addComment(data.answer, helpme())
+					console.log('response  ' + data.answer);
+					console.log('sources  ' + data.sources);
+					for (j=0; j<data.sources.length; j++) {
+						console.log('content ' + data.sources[j].content );
+                        console.log('metadata ' + data.sources[j].metadata);
+                        vid = getVidFromMetadata(data.sources[j].metadata);
+//                        addSource(data.sources[j]);
+                        
+					}
+				   } 
+				   else {
+					console.log('chat failed');
+                    console.log(data);
+				   }   
+				});
+			
+			}
+			
+
+			function rateResponse(){
+
+			}
+			</script>
+
+
+
+<script type="text/javascript" src="speech.js"></script>
+
+            <script>
+				loadVideo();
+				loadSpeech();
+              </script>
+
+</body>
+
+
+</html>

@@ -68,6 +68,32 @@ export async function getDatabase() {
                     ]
                 }
             },
+            transcripts:{
+                schema: {
+                    "version": 0,
+                    "primaryKey": "id",
+                    "type": "object",
+                    "properties": {
+                        "id": {
+                            "type": "string",
+                            "maxLength": 100
+                        },
+                        "description": {
+                            "type": "string"
+                        },
+                        "transcript": {
+                            "type": "string"
+                        },
+                        "updated": {
+                            "type": "string",
+                        }
+                    },
+                    "required": [
+                        "id",
+                        "transcript"
+                    ]
+                }
+            },
             vectors: {
                 schema: {
                     "version": 0,
@@ -132,15 +158,22 @@ export async function getState() {
 
 }
 
-export async function importData(importWithEmbeddings: boolean) {
+export async function importData(importWithEmbeddings: boolean, resetAll: boolean = false) {
     const $importLoading = ensureNotFalsy(document.getElementById('import-loading'));
     $importLoading.style.display = 'block';
 
     console.log('importData(' + importWithEmbeddings + ') START');
     const db = await getDatabase();
+    if (resetAll) {
+        await db.items.remove();
+        await db.transcripts.remove();
+        await db.vectors.remove();
+        return;
+    }
     const state = await getState();
     console.log('importData(' + importWithEmbeddings + ') START 1');
     const itemCount = await db.items.count().exec();
+
     console.log('importData(' + importWithEmbeddings + ') START 1.5');
     const vectorCount = await db.vectors.count().exec();
     console.log('importData(' + importWithEmbeddings + ') START 2');
@@ -157,22 +190,27 @@ export async function importData(importWithEmbeddings: boolean) {
             items
         );
     } else {
-        if (itemCount < 10000) {
+//        if (itemCount < 10000) {
             console.log('IMPORTING DATA START');
             const response = await fetch('../files/items.json');
             const items = await response.json();
+            const responseTrans = await fetch('../files/trans.json');
+            const itemsTrans = await responseTrans.json();
             const startTime = performance.now();
             const insertResult = await db.items.bulkInsert(
                 items
             );
+            const insertTransResult = await db.transcripts.bulkInsert(
+                itemsTrans
+            );  
             console.dir(insertResult);
             const time = performance.now() - startTime;
             console.log('IMPORTING DATA DONE ' + time);
             console.log('IMPORTING DATA wait for pipeline START');
             await Promise.all(Array.from(db.vectors.awaitBeforeReads).map(fn => fn()));
             console.log('IMPORTING DATA wait for pipeline DONE');
-        }
-
+//        }
+/*
         const pipeline = await db.items.addPipeline({
             identifier: 'my-embeddings-pipeline',
             destination: db.vectors,
@@ -204,9 +242,45 @@ export async function importData(importWithEmbeddings: boolean) {
                 console.log('batch(' + docs.length + ') processed in ' + time);
             }
         });
+*/
+        const pipelineTrans = await db.transcripts.addPipeline({
+            identifier: 'my-embeddings-pipeline-trans',
+            destination: db.vectors,
+            batchSize: navigator.hardwareConcurrency,
+            // batchSize: 10,
+            handler: async (docs: RxDocument<any>[]) => {
+                console.log('pipeline handler called with ' + docs.length + ' docs');
+                const startTime = performance.now();
+                const findById = await db.vectors.storageInstance.findDocumentsById(docs.map(d => d.primary), false);
+                const vectorsAlreadyThere = new Set();
+                findById.forEach(d => vectorsAlreadyThere.add(d.id));
+                console.log('pipeline handler called with ' + docs.length + ' docs 1');
+                await Promise.all(docs.map(async (doc, i) => {
+                    if (vectorsAlreadyThere.has(doc.primary)) {
+                        console.log('skip');
+                        return;
+                    }
+                    const embedding = await getVectorFromTextWithWorker(doc.transcript);
+                    const docData: any = { id: doc.primary, embedding };
+                    new Array(5).fill(0).map((_, idx) => {
+                        const indexValue = euclideanDistance(INDEX_VECTORS[idx], embedding);
+                        docData['idx' + idx] = indexNrToString(indexValue);
+                    });
+                    console.log('pipeline handler called with ' + docs.length + ' docs 2');
+                    await db.vectors.upsert(docData);
+                    console.log('pipeline handler called with ' + docs.length + ' docs 3');
+                }));
+                const time = performance.now() - startTime;
+                console.log('batch(' + docs.length + ') processed in ' + time);
+            }
+        });
+        
         console.log('await pipeline idle START');
-        await pipeline.awaitIdle();
+//        await pipeline.awaitIdle();
         console.log('await pipeline idle DONE');
+        console.log('await pipelinetrans idle START');
+        await pipelineTrans.awaitIdle();
+        console.log('await pipelinetrans idle DONE');
     }
     console.log('importData(' + importWithEmbeddings + ') DONE');
     await state.set('importDone', () => true);

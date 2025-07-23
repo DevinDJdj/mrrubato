@@ -16,6 +16,7 @@ export async function vectorSearchFullScan(vectorCollection: RxCollection, searc
     };
 };
 
+var NUM_RESULTS = 20;
 export async function vectorSearchIndexRange(vectorCollection: RxCollection, searchEmbedding: number[]) {
     const indexDistance = 0.003;
     const candidates = new Set<RxDocument>();
@@ -48,7 +49,7 @@ export async function vectorSearchIndexRange(vectorCollection: RxCollection, sea
     });
     const sorted = docsWithDistance.sort(sortByObjectNumberProperty('distance')).reverse();
     return {
-        result: sorted.slice(0, 10),
+        result: sorted.slice(0, NUM_RESULTS),
         docReads
     };
 };
