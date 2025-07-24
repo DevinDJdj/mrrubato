@@ -56,6 +56,11 @@
             "default": "book",
             "description": "Relative path for book to read."
           },
+          "mrrubato.bookvectorfolder": {
+            "type": "string",
+            "default": "vecbook",
+            "description": "Relative path for book to read."
+          },
           "mrrubato.genbookfolder": {
             "type": "string",
             "default": "genbook",

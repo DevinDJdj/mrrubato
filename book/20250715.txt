@@ -235,3 +235,84 @@ Perhaps just import the bundle and files
 
 
 
+**web/public/rec.html
+Same functionality here.  
+Allow this to be interchanged for another better solution if available. 
+3 tables for vectors for transcript, screens, and additional reference files.  
+Weight transcripts most then screens, then files.  
+
+--drag-drop adding of files.  
+#https://developer.mozilla.org/en-US/docs/Web/API/HTML_Drag_and_Drop_API/File_drag_and_drop
+
+chunk into smaller sections, just use Page for PDF or maybe around 40 lines or 4000 chars for text.  
+Look for logical partition location.  Or use fixed 30 lines for simplicity.  
+
+#https://github.com/mozilla/pdf.js
+
+Keep date, and weight more recent files, or selected time period.  
+How do we do that with vector search?  
+Perhaps shard each year for now.  
+
+What is local file key?  
+
+Sync to shared DB and then interact with shared DB.  
+Shared DB is managed by the host.  
+And 
+
+#https://firebase.google.com/docs/hosting/cloud-run
+For now focus local.  
+But we already have the vectors, so we dont actually need the GPU on the server side..
+Just a dumb vector similarity search.  All the encoding can be done on client.  
+
+
+**batoru
+Need local version vector DB for this.  
+Perhaps..
+#https://github.com/milvus-io/milvus
+
+Maybe just use this as well?  
+
+#https://rxdb.info/fulltext-search.html
+
+
+Maybe try this for local implementation?  
+#https://github.com/Stevenic/vectra
+I like the API and structure simplicity.  
+
+> npm install vectra
+> ollama pull nomic-embed-text
+
+**extensions/vscode/codetutor/src/book.ts
+Seems to work with added vectra DB of nomic-embed-text
+Not sure how we will use this yet..
+There are some issues with malformed topics, i.e. ending in ** etc.  
+But seems to work.  
+vecbook = 200MB vs 
+book = 600 KB 
+seems a bit much..
+x300
+
+Some duplication, maybe x5?, but the primary issue is vectors are all stored in text/JSON which is not ideal.  
+This is a x25, x10 expansion or so just with the vectors.  
+This becomes unworkable in a few years possibly.  
+Not sure, may be close to linear.  
+perhaps dont do each individual entry, do the topic in 1KB segments.  
+Later..
+
+@@vectra
+--LocalIndex.upsertItem has some issues.  
+It creates some duplication.  Unclear to me at this point what duplication is occurring.  
+OK, using 
+--LocalIndex.listItemsByMetadata
+This clears this problem for the most part.  
+Still increasing 20KB or so each time it is run, not sure where this leak is.  
+But tolerable for now.  
+
+
+#https://docs.weaviate.io/weaviate/quickstart
+Prefer simplicity of just interacting with a file.  
+hmmm...
+
+What has typescript interaction, but just local file/folder?
+
+

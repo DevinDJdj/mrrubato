@@ -32,8 +32,11 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MAX_SELECTION_HISTORY = exports.arrays = exports.commandarray = exports.temptopicarray = exports.temptopics = exports.topicarray = exports.envarray = exports.alltopicsa = exports.alltopics = exports.defstring = exports.fnmap = exports.defmap = exports.environmenthistory = exports.selectionhistory = exports.selectedtopic = exports.currenttopic = exports.BOOK_OPEN_GIT = exports.BOOK_OPEN_WEB = exports.BOOK_OPEN_FILE = void 0;
+exports.MAX_SELECTION_HISTORY = exports.arrays = exports.commandarray = exports.temptopicarray = exports.temptopics = exports.topicvectorarray = exports.topicarray = exports.envarray = exports.alltopicsa = exports.alltopics = exports.defstring = exports.fnmap = exports.defmap = exports.environmenthistory = exports.selectionhistory = exports.selectedtopic = exports.currenttopic = exports.BOOK_OPEN_GIT = exports.BOOK_OPEN_WEB = exports.BOOK_OPEN_FILE = void 0;
 exports.logCommand = logCommand;
 exports.getTokens = getTokens;
 exports.executeTokens = executeTokens;
@@ -60,11 +63,15 @@ exports.getFileName = getFileName;
 exports.updatePage = updatePage;
 exports.loadPage = loadPage;
 exports.getBookPath = getBookPath;
+exports.getBookVectorPath = getBookVectorPath;
 exports.getUri = getUri;
 const vscode = __importStar(require("vscode"));
 const path_1 = require("path");
 const tokenizer = __importStar(require("./tokenizer")); // Import the Token interface
 const Worker = __importStar(require("./worker")); // Import the Worker class
+const vectra_1 = require("vectra");
+const ollama_1 = __importDefault(require("ollama"));
+const fs = __importStar(require("fs"));
 /*
     * Book.ts - This file is part of the GitBook extension for VSCode.
     * It manages the GitBook structure, repositories, and content retrieval.
@@ -149,6 +156,9 @@ exports.alltopics = [];
 exports.alltopicsa = [];
 exports.envarray = {}; //environment variables.
 exports.topicarray = {};
+var bookvectorFolder = "vecbook"; //this will be used to store the book vector folder.
+//no sharding for now, but perhaps shard per time period.  
+exports.topicvectorarray = {};
 exports.temptopics = [];
 exports.temptopicarray = {};
 exports.commandarray = {};
@@ -814,6 +824,121 @@ function updatePage(filePath, text, linefrom = 0, lineto = 0, show = false) {
         });
     });
 }
+async function getVector(text, model = 'nomic-embed-text') {
+    //get vector from text.  
+    //>ollama pull nomic-embed-text
+    let embedding = await ollama_1.default.embed({ model: model, input: text });
+    return embedding["embeddings"][0]; //return the embedding vector.
+}
+async function addVectorData(topic) {
+    //check if we have a vector index for this topic.
+    //if not, create one.
+    let pathParts = topic.topic.split("/");
+    let bvFolder = getUri(bookvectorFolder);
+    if (exports.topicvectorarray[topic.topic] === undefined) {
+        //get name from topic.  
+        //maybe want to create an index by first subfolder or second etc.  
+        if (pathParts.length > 1) {
+            const folderUri = bvFolder.with({ path: path_1.posix.join(bvFolder.path, pathParts.slice(0, -1).join('/')) });
+            console.log(`Creating folder: ${folderUri.path}`);
+            try {
+                //why are we getting a leading slash?  posix.join should not do this.
+                fs.mkdirSync(folderUri.path.slice(1), { recursive: true });
+            }
+            catch (err) {
+                console.error(`Error creating directory: ${err.message}`); //create the folder if it does not exist.
+            }
+            try {
+                exports.topicvectorarray[topic.topic] = new vectra_1.LocalIndex(path_1.posix.join(bvFolder.path.slice(1), topic.topic)); //create a new index for the topic.
+                if (!await exports.topicvectorarray[topic.topic].isIndexCreated()) {
+                    //if the index does not exist, create it.
+                    await exports.topicvectorarray[topic.topic].createIndex();
+                }
+            }
+            catch (err) {
+                console.error(`Error creating index for topic ${topic.topic}: ${err.message}`); //create the folder if it does not exist.
+            }
+            //create index for each subfolder, lets start at two entries? 
+            //some unnecessary duplication here, but maybe worth?  
+            //So we have #folders worth of indexes along with #topics.  
+            for (let i = 1; i < pathParts.length - 1; i++) {
+                let sub1 = pathParts.slice(0, i).join('/');
+                if (!(sub1 in exports.topicvectorarray)) {
+                    //this will fail if we have a topic with the name index.json perhaps
+                    try {
+                        exports.topicvectorarray[sub1] = new vectra_1.LocalIndex(path_1.posix.join(bvFolder.path.slice(1), sub1)); //create a new index for the subfolder.
+                        if (!await exports.topicvectorarray[sub1].isIndexCreated()) {
+                            //if the index does not exist, create it.
+                            await exports.topicvectorarray[sub1].createIndex();
+                        }
+                    }
+                    catch (err) {
+                        console.error(`Error creating index for subfolder ${sub1}: ${err.message}`); //create the folder if it does not exist.
+                    }
+                }
+            }
+        }
+        else {
+            try {
+                exports.topicvectorarray[topic.topic] = new vectra_1.LocalIndex(path_1.posix.join(bvFolder.path.slice(1), topic.topic)); //create a new index for the topic.
+                if (!await exports.topicvectorarray[topic.topic].isIndexCreated()) {
+                    //if the index does not exist, create it.
+                    await exports.topicvectorarray[topic.topic].createIndex();
+                }
+            }
+            catch (err) {
+                console.error(`Error creating index for topic ${topic.topic}: ${err.message}`); //create the folder if it does not exist.
+            }
+        }
+    }
+    let checkexisting = await exports.topicvectorarray[topic.topic].listItemsByMetadata({
+        str: topic.data, date: topic.date, file: topic.file, line: topic.line, topic: topic.topic
+        //this should get the last occurrence of this data when vector file is created.  
+    });
+    let timelag = new Date();
+    timelag.setDate(timelag.getDate() - 270); //set the time lag to 9 months ago.
+    let checkdate = timelag.getFullYear() * 10000 + timelag.getMonth() * 100 + timelag.getDate();
+    console.log(`Checking existing items for topic ${topic.topic}:`, checkexisting);
+    if (checkexisting.length > 0) {
+        //assume it is already there.  Duplicate data.  No need to add again.  
+        //randomly upsert if the topic is older than 9 months.  
+        //this may be problematic not sure how well this upsert is working.  
+        //not sure if this works or not...
+        //too much trouble to check now.  
+        //dont think I need this, if we are checking the date as well.  
+        /*
+                let upsert = true;
+                for (let i=0; i<checkexisting.length; i++) {
+                    let tempdate = parseInt(String(checkexisting[0].metadata.date)); //get the date from the existing item.
+                    if (tempdate > checkdate) {
+                        upsert = false;
+                    }
+                }
+                if (upsert){
+                    let timelag = new Date();
+                    checkdate = timelag.getFullYear()*10000 + timelag.getMonth()*100 + timelag.getDate();
+                    //only upsert every 9 months or so.
+                    topicvectorarray[topic.topic].upsertItem({
+                        vector: await getVector(topic.data),
+                        metadata: {str: topic.data, date: checkdate, file: topic.file, line: topic.line, topic: topic.topic},
+                    }); //insert the item into the index.
+                }
+        */
+    }
+    else {
+        exports.topicvectorarray[topic.topic].upsertItem({
+            vector: await getVector(topic.data),
+            metadata: { str: topic.data, date: topic.date, file: topic.file, line: topic.line, topic: topic.topic },
+        }); //insert the item into the index.
+        for (let i = 1; i < pathParts.length - 1; i++) {
+            let sub1 = pathParts.slice(0, i).join('/');
+            await exports.topicvectorarray[sub1].upsertItem({
+                vector: await getVector(topic.data),
+                metadata: { str: topic.data, date: topic.date, file: topic.file, line: topic.line, topic: topic.topic },
+            }); //insert the item into the index.
+        }
+    }
+}
 function loadPage(text, filePath, altdate = 0) {
     //get the completions from the text.  
     //each topic or comment should be parsed and added to 
@@ -886,6 +1011,9 @@ function loadPage(text, filePath, altdate = 0) {
         myorder = exports.topicarray[tkey]?.length || 0; //get the current order of the topic.
         mytopic = { "file": filePath, "line": topicstart['**'][i], "topic": tkey, "sortorder": myorder, "date": mydate, "data": "" };
         mytopic.data = strs.slice(topicstart['**'][i], (i + 1) < topicstart['**'].length ? topicstart['**'][i + 1] : strs.length).join("\n"); //get the topic data from the lines.
+        //add to vectra (vector DB) this data for later similarity search?  
+        //complete index as well as topic based index.  
+        addVectorData(mytopic); //add the topic to the vector DB.
         exports.topicarray[tkey]?.push(mytopic); //add the previous topic to the array.
         //adjust sortorder based on order of occurrence for now. 
         exports.currenttopic = tkey;
@@ -936,6 +1064,11 @@ function getBookPath() {
     let bookFolder = mySettings.bookfolder;
     return bookFolder;
 }
+function getBookVectorPath() {
+    const mySettings = vscode.workspace.getConfiguration('mrrubato');
+    let bookvectorFolder = mySettings.bookvectorfolder;
+    return bookvectorFolder;
+}
 function getUri(path) {
     if (!vscode.workspace.workspaceFolders) {
         return vscode.Uri.parse("");
@@ -951,6 +1084,7 @@ function getBookUri() {
     // this should be a book path.  Use as you would work on the project.  
     const folderUri = vscode.workspace.workspaceFolders[0].uri;
     const bookFolder = getBookPath(); //get the book folder from settings.
+    bookvectorFolder = getBookVectorPath(); //get the book vector folder from settings.
     const bookUri = folderUri.with({ path: path_1.posix.join(folderUri.path, bookFolder) });
     return bookUri;
 }
