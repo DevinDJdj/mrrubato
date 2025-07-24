@@ -44,8 +44,10 @@ mydb/*
 
 server/transcription/asmcli
 *.db
-web/log.csv
+**/log.csv
 web/public/test/javascript-vector-database/
 
 *.pyc
 *.sqlite3
+*.model
+**/package-lock.json
