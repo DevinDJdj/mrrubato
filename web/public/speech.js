@@ -588,6 +588,8 @@ export function Chat(transcript, callback=null, pending=false, lang=""){
         executed = false;
     }
     
+    //cant steal overwrite any of the above commands.  
+    //dont like this function, but time..
     //if we have any useful info add it.  
     if (keymaps[lang] != null && keymaps[lang].chat != null && typeof(keymaps[lang].chat) === "function" && executed==false){
         //this way we can have different chat functions for different languages, and organize better.  
@@ -601,11 +603,17 @@ export function Chat(transcript, callback=null, pending=false, lang=""){
     else{
         if (executed){
             //make sound.  
+
             if (typeof(midicontroller) !=='undefined' && midicontroller != null){
                 midicontroller.audioFeedback(commandcompletion);
             }
             else{
                 audioFeedback(commandcompletion);
+            }
+            //utilize meta language forcefully.  
+            if (transcript.startsWith("--")){
+                //call MyChat with comment.  
+                MyChat(transcript.substr(2).trim(), helpme());
             }
             addComment("> " + transcript, helpme()); //not sure if we want the prefix here.  
         }

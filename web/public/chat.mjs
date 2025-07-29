@@ -1,6 +1,6 @@
 var ChatID = 0;
 var lastquery = '';
-var MAX_LOCAL_QUERY_LENGTH = 60000;
+
 var chatmessages = [];
 var lastread = 0;
 var reading = false;
@@ -60,7 +60,7 @@ function getVidFromMetadata(m){
     return vid;
 }
 
-function getFileName(m){
+export function getFileName(m){
     let fn = m.substring(m.lastIndexOf("/")+1, m.lastIndexOf("."));
     return fn;
 }
@@ -103,7 +103,7 @@ export function addChatRow(query, answer, prompt="", topic="", sources=[]) {
         r.insertCell(i);
     }
     r.cells[0].innerHTML = ChatID;
-    r.cells[1].innerHTML = "@@" + query;
+    r.cells[1].innerHTML = '<a href="#" onclick="copyChat(' + (chatmessages.length-1) + ');">@@</a>' + query;
     if (ChatID%2==0){
 
         r.cells[2].innerHTML = "@@" + query + '<br><font color="red">==<br>' + fanswer + '</font>';
@@ -118,13 +118,13 @@ export function addChatRow(query, answer, prompt="", topic="", sources=[]) {
 }
 
 
-export function GetRecentChat(){
+export function GetRecentChat(n=5){
     let ctx = "";
-    for (let ci=0; ci<chatmessages.lengh; ci++){
+    for (let ci=chatmessages.length-1; ci>-1 && ci> chatmessages.lengh-n; ci--){
         let a = chatmessages[ci].answer.replaceAll("**", "__");
         a = a.replaceAll("@@", "__");
         a = a.replaceAll("==", "--");
-        ctx += "@@" + chatmessages[ci].query + "\n\n==" + a + "\n\n";
+        ctx = "@@" + chatmessages[ci].query + "\n\n==" + a + "\n\n" + ctx;
     }
     return ctx;
 }

@@ -104,3 +104,18 @@ $$-MYVAR
 $$-**TOPIC removes all topic ENV variables.  
 TOPIC cant start with -
 -->
+
+
+**KEYS/vscode
+Ctrl+Enter = Continue
+Ctrl+I = voice chat
+
+0->11 = past->future
+
+
+
+**MAP
+<!--
+**->TOPIC->NEWTOPIC
+-->
+

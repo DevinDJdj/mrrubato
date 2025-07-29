@@ -222,8 +222,8 @@ page.html?codefile=web/public/page.html
                         <input type="text" id="midicommand" name="midicommand" size="20">
                     
                     </div>
-                    <div class="words" contenteditable style="display: none;">
-                        <input type="text" id="p" name="p">
+                    <div class="words" contenteditable >
+                        <input type="text" id="p" name="p" size="50">
                     </div>
     
                   </td>
@@ -912,24 +912,78 @@ function ChatLocalDone(answer){
 }
 
 
+function GetRecentSelections(shortformat=false, maxlength=MAX_LOCAL_QUERY_LENGTH){
+    //use last few of selectionhistory in order to create more context.  
+    //make this the last few selected documents.  
+    ctx = "";
+    for (si=0; si<selectionhistory.length; si++){
+        //really we want recent commits here, and not full source.  
+        //and in order.  ...
+        if (shortformat){
+          if (si > 0){  //dont want first entry always loading definitions.  
+            ctx += "**" + selectionhistory[si] + "\n";
+          }
+        }
+        else{
+
+            //really want recent git changes here, not full source I think..
+          ctx += "**" + selectionhistory[si] + "\n" + getGitContents(selectionhistory[si], false) + "\n";
+
+          exists = gitcommits.find(x => x.filename === selectionhistory[si]);
+          if (exists){
+            ctx += "**" + selectionhistory[si] + "\n" + exists.patch + "\n";
+          }
+
+          //book last?  not sure the preferred order.  
+          if (selectionhistory[si] in gitstruct["bytopic"]){
+            ctx += "**" + selectionhistory[si] + "\n";
+            ctx += getTopicContext(selectionhistory[si]) + "\n";
+            
+          }
+
+      }
+
+    }
+    return ctx;
+}
+
 
 function ChatBuildContext(context){
-    recentcontext = "";
-    recentchatmessages = FUNCS.CHAT.GetRecentChat();
+    recentcontext = GetRecentSelections(false, MAX_LOCAL_QUERY_LENGTH/2);
+    recentchatmessages = FUNCS.CHAT.GetRecentChat(4); //only get this number of recent chat to include in context.  
+    //gradually this will increase.  
     FUNCS.CHAT.setLastQuery(context);
     $('#current-question').val(FUNCS.CHAT.getLastQuery());
     mycontext = "";
     definitions = "";
 
+
+    files = [];
+    for (gi = gitbook.length-1; gi>-1; gi--){
+        fn = FUNCS.CHAT.getFileName(gitbook[gi].url);
+        if (fn == "definitions" || mycontext.length + gitbook[gi].content.length < MAX_LOCAL_QUERY_LENGTH/2){
+
+            files.push(gitbook[gi].url);
+            if (fn == "definitions"){
+                definitions = "**" + fn + "\n" + gitbook[gi].content + "\n\n";
+            }
+            else{
+                mycontext = "**" + fn + "\n" + gitbook[gi].content + "\n\n" + mycontext;
+            }
+        }
+        
+    }
+
     mycontext = definitions + mycontext + recentcontext;
     //will need to add actual source files as well here to context.  
 
     //cant have @@ or == in this content.  
-    mycontext = mycontext.replaceAll("@@", "__");
-    mycontext = mycontext.replaceAll("==", "--");
+//    mycontext = mycontext.replaceAll("@@", "__");
+//    mycontext = mycontext.replaceAll("==", "--");
     
     mycontext = mycontext + recentchatmessages + "\n@@" + FUNCS.CHAT.getLastQuery();
 
+    //this will be > MAX_QUERY_LENGTH, but should be good enough for now.  
     //add all data from previous question/answers.  
 
     
@@ -979,6 +1033,53 @@ function ChatLocal(transcript){
                     return;
                 }
       }
+
+
+      function getTime(comment){
+        const regExp = /\(([^)]+)\)/g;
+        const matches = [...comment.matchAll(regExp)].flat();
+    //    console.log(matches);
+        if (matches.length > 0){
+            return getSecsFromTime(matches[1]);
+        }
+        else{
+            return 0;
+        }
+    }
+
+    function createNotesArray(){
+        //also update the new DIV with links.  
+        allnotes = $('#mycomments').val();
+        notesarray = [];
+        const lines = allnotes.split("\n");
+        for (i = 0; i< lines.length; i++){
+            notesarray[i] = lines[i];
+        }
+        console.log(notesarray);
+        //set title
+        updateNotes();
+
+    }
+
+    function updateNotes(){
+        var allnotes = "";
+        for (i=0; i<notesarray.length; i++){
+            allnotes += notesarray[i] + "\n";
+        }
+        $('#mycomments').val(allnotes);
+        //add clickable link inside here instead.  
+        $('#mycommentsh').html(makeTimeLinks(allnotes));
+
+    $('#mycommentsh').animate({
+            scrollTop: $('#mycommentsh')[0].scrollTop+50}, "slow"
+            );
+    $('#mycomments').animate({
+            scrollTop: $('#mycomments')[0].scrollTop+50}, "slow"
+            );
+
+        
+    }
+
 
 </script>
 

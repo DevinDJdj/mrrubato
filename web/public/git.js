@@ -276,6 +276,8 @@ function selectGitRepo(index){
   getGitBook();
 }
 
+
+
 function loadGitBook(){
   reponame = giturl.substring(giturl.search("repos/")+6);
   gitbookref = firebase.database().ref('/git/' + reponame + '/' + gitbranch + '/' + bookfolder);
@@ -1117,6 +1119,42 @@ function setGitMode(){
 function gitSetNature(m){
   gitnature = m;
 }
+
+
+function getTopicContext(top, weight=1, maxlength=1000){
+    //get context for this topic.
+  var cont = "";
+  if (weight > 1){
+    weight = 1; //max weight is 1.
+  }
+  if (weight < 0.01){
+    weight = 0.01; //min weight is 0.01.
+  }
+  if (top in gitstruct["bytopic"]){
+    //calculate probability to include this topic entry.  
+    //start with most recent and go backwards.
+    for (i=gitstruct["bytopic"][top].length-1; i>-1; i--){
+      if (gitstruct["bytopic"][top][i].d >= currenttimelinestart && gitstruct["bytopic"][top][i].d <= currenttimelineend){
+        //only include if in time window.
+        if (Math.random() < weight){
+          cont = "$$" + gitstruct["bytopic"][ selectionhistory[si] ][gi].d + "\n" + gitstruct["bytopic"][top][i].content + "\n" + cont;
+          weight *= weight; //reduce exponentially.  
+        }
+        if (weight < 0.000001 || cont.length > maxlength){
+          //stop if weight is too low or content is too long.  
+          break;
+
+        }
+      }
+    }
+    return cont; //return context for this topic.
+  }
+  else{
+    return "";  //no context for this topic.
+  }
+
+}
+
 function loadTopic(top){
     var img = document.getElementById('thinkinggit');
     img.style.visibility = "visible";
