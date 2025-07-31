@@ -425,4 +425,20 @@ chat.js maybe.
 OK, need a link to be able to copy context quickly.  
 How to manipulate context.  
 
+**.bookignore
+Need a file like this to prevent loading of map.txt or other such information.  
+Some mechanism to know which files are useful and which not so much.  
+
+Too many things...
+
+
+**git/clone.py
+Needed to adjust dates, no logic to add date to non-date-named files.  
+
+
+**web/public/codewindow.js
+filbert Parse is pretty much useless with real files.  
+JS parsing actually returns something, not sure it is what we want.  
+Also have to click twice still in order for codeGraph to display.  
+acorn parsing is at least occurring.  
 

@@ -322,8 +322,12 @@ var options = {};
         end = end.toISOString().substring(0,10).replace(/-/g, '');
         currenttimelinestart = start;
         currenttimelineend = end;
+
         //refresh the word graph opacity and fonts.  
-        zoomTopic(selectedtopic);
+        //book.html
+        if (typeof zoomTopic === 'function'){
+            zoomTopic(selectedtopic);
+        }
         getBookRefs(); //git.js
         /*
         var itemsView = new vis.DataView(items, { filter: 

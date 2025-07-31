@@ -103,7 +103,7 @@ export function addChatRow(query, answer, prompt="", topic="", sources=[]) {
         r.insertCell(i);
     }
     r.cells[0].innerHTML = ChatID;
-    r.cells[1].innerHTML = '<a href="#" onclick="copyChat(' + (chatmessages.length-1) + ');">@@</a>' + query;
+    r.cells[1].innerHTML = '<a href="#" onclick="FUNCS.CHAT.copyChat(' + (chatmessages.length-1) + ');">@@</a>' + query;
     if (ChatID%2==0){
 
         r.cells[2].innerHTML = "@@" + query + '<br><font color="red">==<br>' + fanswer + '</font>';

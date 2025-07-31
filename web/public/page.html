@@ -143,7 +143,7 @@ page.html?codefile=web/public/page.html
     <!-- code analysis -->
     <script src="codewindow.js"></script>
     <!-- timeline selection -->
-    <script src="timewindow.js"></script>
+    <script defer src="timewindow.js"></script>
 
     <!-- clock -->
     <script src="clock.js"></script>
@@ -746,6 +746,9 @@ var querydate = null;
                         //testing.. codewindow.js
                         getCodeGraph(codefile, gitcurrentcontents);
 
+                        //load the topic so we have in selection history.  
+                        loadTopic(codefile);
+
                     }, 6000);
 
                 }
@@ -937,7 +940,7 @@ function GetRecentSelections(shortformat=false, maxlength=MAX_LOCAL_QUERY_LENGTH
           //book last?  not sure the preferred order.  
           if (selectionhistory[si] in gitstruct["bytopic"]){
             ctx += "**" + selectionhistory[si] + "\n";
-            ctx += getTopicContext(selectionhistory[si]) + "\n";
+            ctx += getTopicContext(selectionhistory[si], maxlength/selectionhistory.length) + "\n";
             
           }
 

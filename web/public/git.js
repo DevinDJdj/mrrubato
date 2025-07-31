@@ -497,7 +497,7 @@ function loadfromGitBook(top, load=true, useTemp=false){
     if (top in gitstruct["bytopic"]){
       console.log(gitstruct["bytopic"][top]);
       for (ti=0; ti<gitstruct["bytopic"][top].length; ti++){
-        newcontents += "**" + gitstruct["bytopic"][top][ti].d + "\n";
+        newcontents += "$$" + gitstruct["bytopic"][top][ti].d + "\n";
         newcontents += gitstruct["bytopic"][top][ti].content;
       }
 
@@ -616,6 +616,8 @@ function getGitContents(path, load=true){ //load UI or not, if false, return str
         editor.setOption("mode", gitcurrentcontentstype);
         editor.getDoc().setValue(gitcurrentcontents);
         $('#for_edit_code').text(gitcurrentpath);
+        //not sure if this causes other problems.  Added for [**web/public/page.html] to get code graph.  
+        ret = gitcurrentcontents; 
       }
       else{
         ret= gitcurrentcontents;
@@ -675,13 +677,18 @@ function getGitContents(path, load=true){ //load UI or not, if false, return str
             initCodeMirror(path);
           }
           else{
-            if (prevcontents !=gitcurrentcontents){
+            if (prevcontents !=gitcurrentcontents && load && gitcurrentcontents !=null){
               var editor = myCodeMirror;
               //adjust to pull from book 
               gitcurrentcontentstype = setContentType(gitcurrentpath);
               editor.setOption("mode", gitcurrentcontentstype);
               editor.getDoc().setValue(gitcurrentcontents);
               $('#for_edit_code').text(path);
+              //not sure if we want this.  Added for [**web/public/page.html] to get code graph.
+              if (typeof(getCodeGraph) !=='undefined'){
+                getCodeGraph(gitcurrentpath, gitcurrentcontents);
+              }
+        
             }
           }
 
@@ -823,6 +830,9 @@ function getBookDOT(topic="ALL", depth=2){
     });
   }
   else {
+    if (!(topic in bookgraph)){
+      return dotstr;
+    }
     let count = bookgraph[topic][topic];
     Object.entries(bookgraph[topic]).forEach(([key2, value2]) => {
       if (topic != key2){
@@ -868,7 +878,7 @@ function getDigraph(topic, templist, depth=12){
   }
 }
 
-function buildTopicGraph(start, end, depth=6){
+function buildTopicGraph(start, end, depth=4){
   //create digraph structure.  
   //calculate weights and structure.  
   //array[topic][topic] = weight
@@ -1121,7 +1131,7 @@ function gitSetNature(m){
 }
 
 
-function getTopicContext(top, weight=1, maxlength=1000){
+function getTopicContext(top, weight=1, maxlength=1000){ //weight 0.99 ~ 1000, 0.9 ~ 100, 0.8 ~ 50, 0.6 ~ 20, 0.4 ~ 10, 0.2 ~ 5
     //get context for this topic.
   var cont = "";
   if (weight > 1){
@@ -1137,10 +1147,10 @@ function getTopicContext(top, weight=1, maxlength=1000){
       if (gitstruct["bytopic"][top][i].d >= currenttimelinestart && gitstruct["bytopic"][top][i].d <= currenttimelineend){
         //only include if in time window.
         if (Math.random() < weight){
-          cont = "$$" + gitstruct["bytopic"][ selectionhistory[si] ][gi].d + "\n" + gitstruct["bytopic"][top][i].content + "\n" + cont;
+          cont = "$$" + gitstruct["bytopic"][ top ][i].d + "\n" + gitstruct["bytopic"][top][i].content + "\n" + cont;
           weight *= weight; //reduce exponentially.  
         }
-        if (weight < 0.000001 || cont.length > maxlength){
+        if (weight < 0.00001 || cont.length > maxlength){
           //stop if weight is too low or content is too long.  
           break;
 
