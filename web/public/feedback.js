@@ -2,7 +2,9 @@
 //not sure if the struct should be uid / comments, or comments /uid
 
 var mytitle = '';
-var vs = null;
+var vs = null; //VideoSnapper
+var as = null; //AudioSnapper
+
 function getNetwork(lang, vs){
     //if KNN for this lang exists, load it.  
 	//load from DB.  
@@ -105,6 +107,16 @@ async function saveClassificationImages(video){
         }
     }        
 
+}
+
+
+function initAudioFeedback(){
+	//load audio control language.  
+	//initialize AudioSnapper
+	as = {};
+	as["base"] = new AudioSnapper();
+
+	
 }
 
 function saveFeedback(){

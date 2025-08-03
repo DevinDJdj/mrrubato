@@ -57,8 +57,18 @@
   <td>
 	<div id="tempcanvasdiv">
 	<div id="tempcanvasstatus"></div>
-	<canvas id="tempcanvas" width="640" height="360">Your browser does not support the HTML5 canvas tag.</canvas>
+	<canvas id="tempcanvas" style="display:none" width="640" height="360">Your browser does not support the HTML5 canvas tag.</canvas>
 	</div>
+
+	<section class="audio-main-controls">
+        <canvas class="audio-visualizer" height="60px"></canvas>
+        <div id="audio-buttons">
+          <button class="audio-record">Record</button>
+          <button class="audio-stop">Stop</button>
+        </div>
+		<audio id="my-audio" controls>
+	</section>
+
 	<div id="vidinfo" valign="top"></div>
 	<div id="player" valign="top"></div>
 
@@ -1455,6 +1465,7 @@ google.charts.load('current', {'packages':['corechart', 'timeline']});
 
 getVideoJson(video);
 
+initAudioFeedback();
 
 }
 		FUNCS.loadAll = loadAll		
@@ -1462,6 +1473,7 @@ getVideoJson(video);
 </script> 
 
 	<script type="text/javascript" src="video.js"></script>	
+	<script type="text/javascript" src="audio.js"></script>
     <script>
 //		loadVideo();
 		// 3. This function creates an <iframe> (and YouTube player)

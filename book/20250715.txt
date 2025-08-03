@@ -501,3 +501,45 @@ Already have this.
 
 **web/public/languages/audiocontrol.js
 use same "start" "stop" "pause" "unpause"
+
+**web/public/languages/_meta.js
+OK, moved meta language to a separate file which is loaded dynamically.  
+I think I need order of call.  
+
+This is just for organizational purposes, not sure if I want to call all languages.  
+Only overwriting transcript with meta at the moment.  
+If others overwrite, we need to be aware of order of languages.  
+
+
+**web/public/js/app-dictaphone.js
+Use this as sample to save audio clips during feedback session.  
+**web/public/analyze.html
+For now just add as feedback in RTDB?  
+Kick off with (12,15,15)
+Stop with (15,15,12)
+Or something simpler.  Any key perhaps..
+
+**web/public/rec.html
+Same process, but add in local DB.  
+
+**web/public/audio.js
+Finish this logic to allow for single audio clip to load/play.  
+Load all audio clips and then just play when we get there.  
+visualize the incoming audio.  
+
+**web/public/feedback.js
+--initAudioFeedback
+
+
+
+OK, its a start.  
+Need to fix the transcript of non-commands again.  
+Save this data in time, and playback in time.  
+Or maybe generate one audio context with same length as the video.  
+
+
+Need multiple audio elements one for each user/lang.  
+load and play when time occurs.  
+stop all with stop command.  
+
+

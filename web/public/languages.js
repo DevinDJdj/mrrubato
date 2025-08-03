@@ -508,6 +508,9 @@ function loadMetaLanguage(lang="meta", user=0){
     console.log('Load Meta Language end ' + Date.now());
     metadic.draw();
 
+    //load meta language script.  
+    loadLanguageScript("_meta"); 
+
 }
 
 

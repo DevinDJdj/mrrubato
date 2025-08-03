@@ -283,7 +283,7 @@ export function Chat(transcript, callback=null, pending=false, lang=""){
         lang = currentlanguage;
     }
     //should we pass language here?  
-    let executed = true;
+    let executed = false;
     //this causes problems with the commands.  Dont think we need this anyway
     /*
     if (lastcommand !=transcript || Date.now() - lastcommandtime > recentTime){
@@ -295,7 +295,7 @@ export function Chat(transcript, callback=null, pending=false, lang=""){
         return;
     }
     */
-
+/*
     //trim the start of the transcript.  
     transcript = transcript.trim();
     //find and handle command.  
@@ -587,22 +587,29 @@ export function Chat(transcript, callback=null, pending=false, lang=""){
     else{
         executed = false;
     }
-    
+*/    
     //cant steal overwrite any of the above commands.  
     //dont like this function, but time..
     //if we have any useful info add it.  
-    
+
     //dont think we need to check executed here.  
     //we will just run it no matter what.  
 //    if (executed==false){
-        
+
+        //keymap is only in one language, but we execute for all languages being used if function exists.
+        //not sure this is the best way to do this, but it works for now.
         for (const [k, v] of Object.entries(keymaps)) {
             //execute for all languages.  
             if (v !=null && v.chat !==null && typeof(v.chat) === "function"){
                 let e = v.chat(transcript);
-                if (e){
+                if (typeof(e) === "boolean" && e == true){
                     executed = true;
-                }   
+                }
+                //only allow for _ languages to overwrite transcript.  
+                else if ((k == "meta") && typeof(e) === "string" && e != ""){
+                    transcript = e;
+                    executed = true;
+                }
             }
 
 //        if (keymaps[lang] != null && keymaps[lang].chat != null && typeof(keymaps[lang].chat) === "function"){
