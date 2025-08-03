@@ -442,3 +442,62 @@ JS parsing actually returns something, not sure it is what we want.
 Also have to click twice still in order for codeGraph to display.  
 acorn parsing is at least occurring.  
 
+**web/public/js/dilbert.js
+Just write a new function for Python parse.  
+Shouldnt be too hard to just find function names and function -> function graph.  
+Not sure, acornParse also returning quite a few errors.  
+Dont really want to write a full parser though.  
+Would have thought acorn would be better..
+
+!!Uncaught SyntaxError: 'import' and 'export' may appear only with 'sourceType: module'
+~~acorn.parse(code, options = {ecmaVersion: 2020, sourceType: "module"})
+
+$$.JS
+$$.MJS
+
+OK, nice, we have some results.  
+This is kind of what we want.  
+So this is a usable graph, still need to click twice to get results...
+
+
+
+**web/public/analyze.html
+**web/public/video.js
+--seekcallback
+Instead of adding all these images, lets see if we can just create one image using 
+alpha and just get the combined image data.  
+Perhaps use decreasing alpha as we go so we can see all images.  
+alpha 1, 0.9, 0.8, etc.  
+Or perhaps 1, 0.5, 0.45, etc.  
+This may get enough of what we want and be simpler.  
+
+
+**extensions/vscode/codetutor/src/extension.ts
+
+
+**analyze/analyze.py
+Need to continue find patterns.  
+--getNgrams
+$$mappgram
+continue..
+  mapsgram[ seqgram ] [ pgram ] = { 'time': [], 'iteration': [] }
+  mappgram[ signs ] [ pgram ] = { 'time': [], 'iteration': [] }
+
+>python ./analyze/analyze.py --title  "Evil Ways (Sonny Henry)" --force true
+
+
+
+#https://x.company/projects/aida/
+#https://lablab.ai/tech/google/codey
+#https://x.company/projects/wing/
+
+
+**web/public/analyze.html
+Need additional control other than comment which records audio and/or video and comments inline.  
+For now just audio.  
+
+--highlightVideo
+Already have this.  
+
+**web/public/languages/audiocontrol.js
+use same "start" "stop" "pause" "unpause"

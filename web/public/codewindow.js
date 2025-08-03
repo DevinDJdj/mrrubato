@@ -21,8 +21,12 @@ function getBookGraph(fileName, graphString){
 function getCodeGraph(fileName, codeString){
 
     graphstr = "";
-    if (fileName.endsWith(".js") || fileName.endsWith(".mjs")) {
-        let n = acornParse(codeString);
+    if (fileName.endsWith(".js")){
+        let n = acornParse(codeString, {ecmaVersion: 2020});
+        graphstr = getDotString(n);
+    }
+    else if (fileName.endsWith(".mjs")){
+        let n = acornParse(codeString, {ecmaVersion: 2020, sourceType: "module"});
         graphstr = getDotString(n);
     }
     else if (fileName.endsWith(".py")) {
@@ -57,27 +61,51 @@ function getCodeGraph(fileName, codeString){
 
 }
 
+function getDOTLabels(input){
+    dotstr = "";
+    Object.entries(input).forEach(([key, value]) => {
+        dotstr += `${genLabel(key)} [label="${key}"];\n`;
+    });
+    return dotstr;
+      
+}
+
 function getDotString(input, depth=1){
-    ret = "";
+
+    var dotstr = "digraph {\n";
+    dotstr += 'label="40pt Graph Label"'   + "\n";
+    dotstr += 'fontsize=40' + "\n";
+    dotstr += 'labelloc="t"' + "\n";
+    dotstr += 'labeljust="l"' + "\n";
+
+    dotstr += getDOTLabels(input) + "\n";
+
     if (typeof(input) === "Array"){
-        ret = "digraph weighted {\n";
         for (var i = 1; i < input.length; i++) {
             for (var j = 0; j < depth && i+j<input.length; j++) {
-                ret += input[i+j-1] + " -> " + input[i+j] + " [width=" + (depth-j) + "] \n";
+                dotstr += input[i+j-1] + " -> " + input[i+j] + " [width=" + (depth-j) + "] \n";
             }
         }
-        ret += "}\n";
-        return ret;
+        dotstr += "}\n";
+        return dotstr;
     }
     else{
-        ret = "digraph weighted {\n";
-        for (var i = 1; i < input.length; i++) {
-            for (var j = 0; j < depth && i+j<input.length; j++) {
-                ret += input[i+j-1] + " -> " + input[i+j] + " [width=" + (depth-j) + "] \n";
+        //should be a map of string to array of strings.  
+        Object.entries(input).forEach(([key, value]) => {
+            for (var i = 0; i < value.length; i++) {
+                //we can have either straight strings or objects with label and weight.
+                let weight = value[i].weight || 1; //default weight to 1 if not specified
+                //maybe need weight if we have multiple calls?  
+                let label = value[i].label || value[i]; //default label to value if not specified
+                dotstr += genLabel(key) + " -> " + genLabel(label) + " [width=" + weight + "] \n";
             }
-        }
-        ret += "}\n";
-        return ret;        
+
+//            console.log(`${key}: ${value}`);
+          });
+          dotstr += "}\n";
+          return dotstr;        
+
+
     }
 }
 function filbertParse(codeString){
@@ -110,29 +138,52 @@ function filbertParse(codeString){
 }
 
 
-function acornParse(codeString){
-    names = acornGetFunctionNames(codeString);
+function acornParse(codeString, options={ecmaVersion: 2020, sourceType: "script"}){
+    names = acornGetFunctionNames(codeString, options);
     return names;
 }
 
-function acornGetFunctionNames(codeString) {
+
+function acornGetCalls(ast, options={ecmaVersion: 2020, sourceType: "script"}){
     var names = [];
-    acorn.walk.simple(acorn.parse(codeString), {
+    try {
+        acorn.walk.simple(ast, {
+            CallExpression(node) {
+                if (node.callee.type === 'Identifier') {
+                    names.push(node.callee.name);
+                }
+            }
+        });
+    } catch (e) {
+        return ["ERROR in acornGetCalls: " + e.toString()];
+    }
+    return names;
+}
+
+function acornGetFunctionNames(codeString, options={ecmaVersion: 2020, sourceType: "script"}){ 
+//    var names = [];
+    var names = {};
+    acorn.walk.simple(acorn.parse(codeString, options), {
         AssignmentExpression: function(node) {
             if(node.left.type === "Identifier" && (node.right.type === "FunctionExpression" || node.right.type === "ArrowFunctionExpression")) {
-                names.push(node.left.name);
+                names[node.left.name] = acornGetCalls(node.right.body, options);
+//                names.push(node.left.name);
             }
         },
+        //is this what is being used or not?  
         VariableDeclaration: function(node) {
             node.declarations.forEach(function (declaration) {
                 if(declaration.init && (declaration.init.type === "FunctionExpression" || declaration.init.type === "ArrowFunctionExpression")) {
-                    names.push(declaration.id.name);
+                    names[declaration.id.name] = acornGetCalls(declaration.init.body, options);
+//                    names.push(declaration.id.name);
                 }
             });
         },
+        
         Function: function(node) {
             if(node.id) {
-                names.push(node.id.name);
+                names[node.id.name] = acornGetCalls(node.body, options);
+//                names.push(node.id.name);
             }
         }
     });

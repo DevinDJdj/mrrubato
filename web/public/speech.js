@@ -591,10 +591,28 @@ export function Chat(transcript, callback=null, pending=false, lang=""){
     //cant steal overwrite any of the above commands.  
     //dont like this function, but time..
     //if we have any useful info add it.  
-    if (keymaps[lang] != null && keymaps[lang].chat != null && typeof(keymaps[lang].chat) === "function" && executed==false){
+    
+    //dont think we need to check executed here.  
+    //we will just run it no matter what.  
+//    if (executed==false){
+        
+        for (const [k, v] of Object.entries(keymaps)) {
+            //execute for all languages.  
+            if (v !=null && v.chat !==null && typeof(v.chat) === "function"){
+                let e = v.chat(transcript);
+                if (e){
+                    executed = true;
+                }   
+            }
+
+//        if (keymaps[lang] != null && keymaps[lang].chat != null && typeof(keymaps[lang].chat) === "function"){
+
+        }
         //this way we can have different chat functions for different languages, and organize better.  
-        executed = keymaps[lang].chat(transcript);
-    }
+//        executed = keymaps[lang].chat(transcript);
+        //do we need to do all languages?  
+
+//    }
     
     if (typeof(MyChat) === "function" && executed==false){
         //really should not be using this.  add chat to keymaps[lang]
@@ -613,7 +631,9 @@ export function Chat(transcript, callback=null, pending=false, lang=""){
             //utilize meta language forcefully.  
             if (transcript.startsWith("--")){
                 //call MyChat with comment.  
-                MyChat(transcript.substr(2).trim(), helpme());
+                if (typeof(MyChat) === "function"){
+                    MyChat(transcript.substr(2).trim(), helpme());
+                }
             }
             addComment("> " + transcript, helpme()); //not sure if we want the prefix here.  
         }

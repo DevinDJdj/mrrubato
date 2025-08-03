@@ -766,6 +766,11 @@ function generateBasicString(inputString){
     '\\"': '_',
     '-': '_',
     ':': '_',
+    '>': '_',
+    '<': '_',
+    '\\(': '_',
+    '\\)': '_',
+
     /*
     '{': '_',
     '}': '_',
@@ -802,6 +807,8 @@ function genLabel(topic){
 function getBookDOTLabels(){
   dotstr = "";
   Object.entries(bookgraph).forEach(([key, value]) => {
+    let lakey = key;
+
     dotstr += `${genLabel(key)} [label="${key}"];\n`;
   });
   return dotstr;
