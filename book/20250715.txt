@@ -542,4 +542,18 @@ Need multiple audio elements one for each user/lang.
 load and play when time occurs.  
 stop all with stop command.  
 
+Should just detect audio level.  
+
+#https://blog.addpipe.com/understanding-audio-frequency-analysis-in-javascript-a-guide-to-using-analysernode-and-getbytefrequencydata/
+Human speech typically ranges from 80 Hz to 255 Hz, 
+frequencyPerBin = 44100 / 2 * 1024 = 44100 / 2048 ≈ 21.53 Hz per bin
+Go a little wider
+startIndex = startFrequency / frequencyPerBin = 80 / 21.53 ≈  4 
+endIndex = endFrequency / frequencyPerBin = 255 / 21.53 ≈  12
+
+Seems to detect end of recording ok.  
+Maybe this is enough.  
+Also have a specific end of recording command.  
+
+
 

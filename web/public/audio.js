@@ -46,7 +46,10 @@ class AudioSnapper {
     constructor(lang="base") {
       // Initiate variables
       this.audioarray = [{lang: []}]; //audioarray[user][lang][entrynum] = {"audio": audio, "time": time, "lang": lang}
-      this.audioPlaying = false;
+
+      this.volumearray = []; //just time and volume level, or just take the past X entities.  
+      this.volumeSampleTime = 0;
+      this.audioRecording = false;
   
       this.record = document.querySelector('.audio-record');
       this.stop = document.querySelector('.audio-stop');
@@ -74,6 +77,7 @@ class AudioSnapper {
           console.log("recorder started");
           as[myaslang].record.style.background = "red";
     
+          as[myaslang].audioRecording = true;
           as[myaslang].stop.disabled = false;
           as[myaslang].record.disabled = true;
         }
@@ -86,6 +90,8 @@ class AudioSnapper {
           as[myaslang].record.style.color = "";
           // mediaRecorder.requestData();
     
+          as[myaslang].audioRecording = false;
+          as[myaslang].volumearray = []; //reset volume array
           as[myaslang].stop.disabled = true;
           as[myaslang].record.disabled = false;
         }
@@ -126,6 +132,67 @@ class AudioSnapper {
       }
       
   
+      detectedVolume(level){
+        //try to detect silence.  
+        //this will depend on environment.  
+        if (level < 9) { //not sure what is the appropriate level.  
+            //considered silent
+            return true;
+        }
+        else{
+            //not silent
+            return false;
+        }
+      }
+
+      checkVolume(analyser, dataArray){
+
+        let sum = 0;
+        analyser.getByteFrequencyData(dataArray); // Get the frequency data
+        let startFrequency = 80; //80Hz detecting human voice vs silence
+        let endFrequency = 300;
+        let frequencyPerBin = as[myaslang].audioCtx.sampleRate / analyser.fftSize; //frequency per bin
+        let startBin = Math.round(startFrequency /frequencyPerBin);
+        let endBin = Math.round(endFrequency / frequencyPerBin); //end frequency for human voice
+        for (let i = startBin; i < dataArray.length && i<endBin; i++) {
+            const value = dataArray[i]; // Center the values around zero
+            sum += value;
+        }
+        const rms = Math.sqrt(sum / (endBin - startBin)); // Calculate the RMS value
+        // rms will be a value representing the average amplitude
+        let silent = as[myaslang].detectedVolume(rms);
+        as[myaslang].volumearray.push({"time": now, "level": rms, "silent": silent}); //add a new sample
+
+        if (as[myaslang].volumearray.length > 10){
+            as[myaslang].volumearray.shift(); //remove oldest sample
+        }
+        //see what is the silent level in the past few.  Seems to work ok.  
+        //not perfect, but good enough for now.
+        let silentcount = 0;
+        for (let i = as[myaslang].volumearray.length-1; i > 0 ; i--){
+
+            if (as[myaslang].volumearray[i].silent){
+                //we have a silent sample.  
+                silentcount+=2;
+            }
+            if (as[myaslang].volumearray[i].level > as[myaslang].volumearray[i-1].level){
+                silentcount-=2; //not silent, getting louder.  
+            }
+            else if (as[myaslang].volumearray[i].level < as[myaslang].volumearray[i-1].level){
+                silentcount++; //not silent, but getting quieter.
+                //this works because of the way the samples work.  
+            }
+             if (silentcount > 6){
+                //3, or 3/4 or 4/6  etc seconds of silence out of the last 10.  
+                //basically above 1/2 silence.  
+                //just stop the recording.
+                console.log("stopping audio recording due to prolonged silence");
+                as[myaslang].stop.click();
+                break;
+            }
+        }
+      }
+
       visualize(stream) {
         if(!as[myaslang].audioCtx) {
             as[myaslang].audioCtx = new AudioContext();
@@ -140,14 +207,20 @@ class AudioSnapper {
       
         source.connect(analyser);
         //analyser.connect(audioCtx.destination);
-      
         ASdraw();
       
         function ASdraw() {
             const canvasCtx = as[myaslang].canvas.getContext("2d");
             const WIDTH = as[myaslang].canvas.width
             const HEIGHT = as[myaslang].canvas.height;
-        
+
+            //timer in draw function, probably bad practice, but time..
+            let now = Date.now();
+            if (as[myaslang].audioRecording && (now - as[myaslang].volumeSampleTime > 1000)){
+                as[myaslang].volumeSampleTime = now;
+                as[myaslang].checkVolume(analyser, dataArray);
+            }
+    
             requestAnimationFrame(ASdraw);
         
             analyser.getByteTimeDomainData(dataArray);
