@@ -1107,6 +1107,7 @@ function loadDictionaries(user=0, langstoload=[]){
                 //dont do this here?  
                 triggerCheckCommands();
                 check_running = false;
+                triggerRunAudio();
             }
 
         }, 500);
@@ -1203,6 +1204,16 @@ function mycheckcommands(lang=""){
 
 
 }
+
+function triggerRunAudio(lang=""){
+    if (lang==""){
+        lang = currentlanguage;
+    }
+    if (as[lang] !== undefined){
+        as[lang].runAudio(vgetReferenceTime()); //video.js
+    }
+}
+
 function triggerCheckCommands(){
     //actually execute commands.  
     //if we include the language in the currentmidi.  

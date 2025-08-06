@@ -35,7 +35,7 @@ function blobToBase64(blob) {
   }
 
 
-class AudioSnapper {
+class AudioSnapper { //use to just read as well.  
     
     /**
      * Capture audio feedback from the user.
@@ -43,18 +43,42 @@ class AudioSnapper {
      * @param {Object} options = width of screen, height of screen, time to seek
      * @param {Function} handle function with canvas element in param
      */
-    constructor(lang="base") {
+    constructor(lang="base", concurrency=1) {
       // Initiate variables
-      this.audioarray = [{lang: []}]; //audioarray[user][lang][entrynum] = {"audio": audio, "time": time, "lang": lang}
+      this.audioarray = [[], []]; //audioarray[user][entrynum] = {"audio": audio, "time": time, "lang": lang}
 
       this.volumearray = []; //just time and volume level, or just take the past X entities.  
       this.volumeSampleTime = 0;
       this.audioRecording = false;
+      this.audioLastPlayed = 0;
+      this.audioNextPlay = 0; //reset to 0 if we stop all audio etc.  
   
+      this.concurrency = concurrency;
+
+
       this.record = document.querySelector('.audio-record');
       this.stop = document.querySelector('.audio-stop');
       this.canvas = document.querySelector('.audio-visualizer');
       this.audioCtx = null;
+      //probably need multiple players for simultaneous audio.  
+      //not sure if mixing all together or not.  
+
+      //create concurrency # players.  0 = self, 1 = user 1, etc.  
+      //then have dynamic user selection.  
+
+
+      this.openplayer = 0;
+      this.players = [];
+      for (let i = 0; i < concurrency; i++){
+        this.players[i] = document.createElement('audio');
+        this.players[i].controls = true; //add controls to the audio player
+        this.players[i].id = 'my-audio-' + i; //give it an id
+        this.players[i].classList.add('my-audio');
+        let div = document.getElementById('audio-div');
+        if (div != null){
+          div.appendChild(this.players[i]); //append to the audio-div
+        }
+      }
       this.player = document.getElementById('my-audio');
       this.player.volume = 0.5; //default volume
       this.chunks = [];
@@ -80,6 +104,19 @@ class AudioSnapper {
           as[myaslang].audioRecording = true;
           as[myaslang].stop.disabled = false;
           as[myaslang].record.disabled = true;
+          //get video time when recording starts.  update this with the blob and time when recording stops.
+          let mytime = vgetReferenceTime(); //video.js milliseconds?
+
+          //push to self audioarray.  time here is relative video time.  
+          //find insert location for this time.  
+          let aa = as[myaslang].audioarray[0];
+          //find the right place to insert this audio
+          let i = aa.length - 1; //start from the end
+          while (i > -1 && aa[i].time > mytime){
+            i--; //find the closest audio before this time.  
+          }
+          aa.splice(i+1, 0, {"audio": null, "time": mytime, "started": new Date(), "lang": myaslang, "audiolength": 0, "lastplayed": 0}); //insert at the right place
+
         }
     
         as[myaslang].stop.onclick = function() {
@@ -112,6 +149,18 @@ class AudioSnapper {
           .then(base64Data => {
             console.log("Base64 data:", base64Data);
             //save this to the audioarray
+            //eventually this will be passed through feedback and replayed. 
+            let aa = as[myaslang].audioarray[0];
+            let i = aa.length - 1; //start from the end
+            while (i > -1){
+              if (aa[i].audio == null){
+                aa[i].audio = base64Data; //set the audio for the last entry
+                aa[i].audiolength = new Date() - aa[i].started; //set the length of the audio in milliseconds
+                break; //found
+              }
+              i--; //find the closest audio before this time.  
+            }
+
             //get video time when recording starts.  update this with the blob and time when recording stops.
             //need blob header probably so we can load into audiocontext.  
 //            as[myaslang].audioarray[0][myaslang].push({"audio": base64Data, "time": Date.now(), "lang": myaslang});
@@ -145,6 +194,116 @@ class AudioSnapper {
         }
       }
 
+      getLeastRemainingAudioPlayer(){
+        let leastTime = 1000000000;
+        let leastIndex = 0;
+        let now = Date.now();
+        for (let i = 0; i < this.concurrency; i++){
+            let remainingTime = this.players[i].duration
+            if (remainingTime < leastTime){
+                leastTime = remainingTime;
+                leastIndex = i;
+            }
+        }
+        return [i, leastTime*1000]; //return index and remaining time in milliseconds
+      }
+
+      runAudio(t=-1){
+        let mintime = 1000000000;
+        let now = Date.now();
+        if (t < 0){
+            t = vgetReferenceTime(); //video.js milliseconds?
+        }
+//        let myvtime = 
+        //this can keep track of simultaneous audio playing as well.  
+        //just reset this when the next of concurrent audio will end.  
+
+        //different pause needed, allow audio to run while video is paused.  
+        //ispaused from midi.js
+        if (now < as[myaslang].audioNextPlay || ispaused){
+            return;
+        }
+        //eventually iterate over all users.  
+        //check for higher rank users.  
+        //self comments will always be first.  
+        //not sure if this is the right way to do it, but for now this is ok.
+        //can probably improve this search algorithm later.  
+        for (j=0; j< as[myaslang].audioarray.length; j++){
+            if (as[myaslang].audioarray[j] == null || as[myaslang].audioarray[j].length == 0){
+                continue; //no audio for this user
+            }
+            //iterate over all audios for this user.
+            let i = 0;
+            let d = vgetDuration(); //video.js duration
+            let aa = as[myaslang].audioarray[j]; //this is the user 0 = self.
+            i = Math.floor((t/d) * aa.length); //find the index of the audio for this time
+            while (i < aa.length && i > -1){
+                if (aa[i].time < t-5000){
+                    //this is a past audio, skip it.
+                    //get to t-5000
+                    i++;
+                }
+                else {
+                    //this is a future audio, stop searching
+                    while (i > 0 && aa[i-1].time > t - 5000){
+                      i--; //find the closest audio before this time.  
+                    }
+                    break;
+                }
+            }
+            if (i < 0 || i >= aa.length){
+                //no audio found for this user at this time, continue to next user
+            }
+            else{
+
+              for (i; i< aa.length && Math.abs(aa[i].time - t) < 5000; i++){
+
+                  //find closest past the time.  
+                  //checking every few seconds.  
+                  //hopefully random enough to not play the same audio if there are overlapping audios at certain time.  
+                  //otherwise have to adjust the algorithm a bit.  
+                  //and dont play the same stuff over and over.  
+
+                  
+                  //give 10 second window to trigger audio if we have something available.  
+                  if (aa[i].lastplayed - now < 0){ //dont play again for 5 seconds at least.  
+                      mintime = Math.abs(aa[i].time - t);
+                      //set last played time to now + length of audio so we dont replay it immediately.
+                      aa[i].lastplayed = Date.now() + 10000+aa[i].audiolength; //add 10 seconds.  add speed calculation later. 
+                      //eventually see if we have several other audios playing.  
+                      //for now one at a time I guess.  
+                      if (aa[i].audio != null){
+                          //play this audio
+                          as[myaslang].players[ as[myaslang].openplayer].src = "data:audio/ogg;base64," + aa[i].audio;
+                          as[myaslang].players[ as[myaslang].openplayer].play();
+                          
+                          if (as[myaslang].concurrency > 1){
+                              //this should always be open.  
+                            //find an open player.
+                          
+                            
+                            let [idx, rem] = as[myaslang].getLeastRemainingAudioPlayer();
+                            as[myaslang].openplayer = idx; //set the open player to this index
+                            as[myaslang].audioNextPlay = now + rem; //set next play time
+                         }
+                         else{
+                           as[myaslang].audioNextPlay = Date.now() + aa[i].audiolength; //set next play time
+                         }
+                          as[myaslang].audioLastPlayed = Date.now();
+
+
+                          //as[myaslang].player.src = "data:audio/ogg;base64," + aa[i].audio;
+                          //as[myaslang].player.play();
+
+                          //set to null so we dont play it again.  
+      //                    as[myaslang].audioarray[0][myaslang][i].audio = null;
+                          break; //only play one at a time.  
+                      }
+                  }
+              }
+            }
+          }
+      }
       checkVolume(analyser, dataArray){
 
         let sum = 0;

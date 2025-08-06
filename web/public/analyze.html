@@ -66,7 +66,13 @@
           <button class="audio-record">Record</button>
           <button class="audio-stop">Stop</button>
         </div>
-		<audio id="my-audio" controls>
+		<div id="audio-div">
+			<label for="my-audio">Recorder:</label>
+			<audio id="my-audio" controls>
+			<hr>
+			<h4>Feedback:</h4>
+
+		</div>
 	</section>
 
 	<div id="vidinfo" valign="top"></div>
@@ -1476,8 +1482,16 @@ initAudioFeedback();
 	<script type="text/javascript" src="audio.js"></script>
     <script>
 //		loadVideo();
-		// 3. This function creates an <iframe> (and YouTube player)
-		//    after the API code downloads.
+		function MyChat(transcript) {
+			document.getElementById("p").setAttribute('value', transcript);
+			console.log(video.currentTime);
+			if (transcript !=''){
+				FUNCS.SPEECH.addComment(transcript, getTimeFromSecs(vgetReferenceTime()/1000));
+				return true;
+			}
+			return false;
+		}
+
 	  </script>
   </body>
 </html>

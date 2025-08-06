@@ -555,5 +555,49 @@ Seems to detect end of recording ok.
 Maybe this is enough.  
 Also have a specific end of recording command.  
 
+#https://github.com/TalAter/annyang
+I think I already do most of this.  
+Albeit perhaps in a more roundabout way..
+
+
+#https://alemangui.github.io/pizzicato/
+
+#https://github.com/goldfire/howler.js#documentation
+
+hmmm... use this perhaps.  
+Some functions like 
+    const sound = new Howl({
+      src: ['data:audio/mp3;base64,SUQzBAAAAAAA...'], // Replace with your actual Base64 data URI
+      format: ['mp3'] // Specify the format if the data URI doesn't clearly indicate it
+    });
+
+fadeOut: function(sound) {
+    while (sound.volume > 0) {
+      setTimeout(function() {
+        sound.volume - 0.1;
+      }, 1000);
+    }
+  }
+
+What do we gain if we use this?  
+Maybe later..
+
+
+OK, playing audio single stream combined with video.  
+Need command to control audio stream volume.  
+Each audio stream needs a separate component.  
+So loop through users and generate these graphical components.  
+
+
+
+**web/public/analyze.html
+--updateFeedbackUI
+OK, so should annotate the graphic with voice icon.  
+Playing voice icon and 
+Just some icon to represent.  
+
+And change icon if played already or not.  
+So have option to filter played data.  
+
 
 

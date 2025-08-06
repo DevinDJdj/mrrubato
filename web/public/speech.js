@@ -628,6 +628,7 @@ export function Chat(transcript, callback=null, pending=false, lang=""){
     else{
         if (executed){
             //make sound.  
+            cmdprefix = "";
 
             if (typeof(midicontroller) !=='undefined' && midicontroller != null){
                 midicontroller.audioFeedback(commandcompletion);
@@ -642,7 +643,10 @@ export function Chat(transcript, callback=null, pending=false, lang=""){
                     MyChat(transcript.substr(2).trim(), helpme());
                 }
             }
-            addComment("> " + transcript, helpme()); //not sure if we want the prefix here.  
+            else{
+                cmdprefix = "> ";
+            }
+            addComment(cmdprefix + transcript, helpme()); //not sure if we want the prefix here.  
         }
         else{
             if (pedal){
