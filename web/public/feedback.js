@@ -119,6 +119,33 @@ function initAudioFeedback(){
 	
 }
 
+function saveAudioFeedback(useridx=0){
+
+	if (useridx > 0 || (!isadmin)){
+		//not sure if we will do this ever.  This is overwriting another users audio feedback.  
+		feedbackid = users[useridx].uid;
+		return;
+	}
+
+	//save audio feedback for this lang.  
+	for (const [lang, value] of Object.entries(as)){
+		
+		//this shouldnt be that much data, so we can save one by one.  
+		let aa = as[lang].audioarray[useridx];
+		for (let i=0; i< aa.length; i++){
+			console.log("Audio " + lang + " " + i + " " + aa[i]);
+			var uRef;
+			if (watch === false){
+				uRef = firebase.database().ref('/misterrubato/' + video + '/comments/' + uid + '/audio/' + lang + '/' + i);
+			}
+			else{
+				uRef = firebase.database().ref('/watch/' + video + '/comments/' + uid + '/audio/' + lang + '/' + i);
+			}
+			uRef.set(aa[i]);
+		}
+	}
+}
+
 function saveFeedback(){
 	//get authuid.  
 	//getref to uid
@@ -157,6 +184,8 @@ function saveFeedback(){
 				obj = {"transcript": transcript, "updated": strdate };
 				tRef.set(obj);
 			}
+
+			saveAudioFeedback(); //save audio feedback for this user.
 
             //save words associated with this video.  
 			if ($("#genCat").is(":checked")){
@@ -440,7 +469,7 @@ function loadTranscript(snapshot){
 	}
 }
 
-
+//loadFeedback
 function loadPreviousComments(snapshot, uid=0){
 	user=0;
 	currentmidiuser = 0;
@@ -466,6 +495,16 @@ function loadPreviousComments(snapshot, uid=0){
 		midifeedback = value.midi;
 		langstoload = loadMidiFeedback(midifeedback);
 		loadDictionaries(currentmidiuser, langstoload);
+
+		if ("audio" in value){
+			for (const [alang, avalue] of Object.entries(value.audio)){
+				if (!(alang in as)){
+					as[alang] = new AudioSnapper();
+				}
+				as[alang].loadAudioFeedback(avalue, currentmidiuser);
+			}
+		}
+
 
 		console.log("MIDI:" + midifeedback);
 	}

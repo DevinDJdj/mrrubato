@@ -43,7 +43,7 @@ class AudioSnapper { //use to just read as well.
      * @param {Object} options = width of screen, height of screen, time to seek
      * @param {Function} handle function with canvas element in param
      */
-    constructor(lang="base", concurrency=1) {
+    constructor(lang="base", concurrency=2) {
       // Initiate variables
       this.audioarray = [[], []]; //audioarray[user][entrynum] = {"audio": audio, "time": time, "lang": lang}
 
@@ -69,14 +69,28 @@ class AudioSnapper { //use to just read as well.
 
       this.openplayer = 0;
       this.players = [];
+      this.playeraudio = [];
       for (let i = 0; i < concurrency; i++){
+        this.playeraudio.push(null);
         this.players[i] = document.createElement('audio');
         this.players[i].controls = true; //add controls to the audio player
         this.players[i].id = 'my-audio-' + i; //give it an id
         this.players[i].classList.add('my-audio');
-        let div = document.getElementById('audio-div');
+        let div = document.getElementById('audio-div-table');
         if (div != null){
-          div.appendChild(this.players[i]); //append to the audio-div
+          var row = document.createElement("tr");
+          var cell1 = document.createElement("td");
+          var cell2 = document.createElement("td");
+          cell1.appendChild(this.players[i]); //append to the audio-div
+          let mylabel = div.appendChild(document.createElement('label'));
+          mylabel.id = 'my-audio-label-' + i; //give it an id
+          mylabel.textContent = "User " + i; //add label
+          mylabel.htmlFor = 'my-audio-' + i; //link label to audio player
+          cell2.appendChild(mylabel); //add label
+          row.appendChild(cell1);
+          row.appendChild(cell2);
+          div.appendChild(row); //append to the audio-div
+//          div.appendChild(this.players[i]); //append to the audio-div
         }
       }
       this.player = document.getElementById('my-audio');
@@ -86,6 +100,31 @@ class AudioSnapper { //use to just read as well.
 
       const constraints = { audio: true };
       navigator.mediaDevices.getUserMedia(constraints).then(this.onSuccess, this.onError);
+
+    }
+
+
+    //0kvXEzw3GSI
+
+    loadAudioFeedback(value, useridx){
+      let tempidx = this.audioarray.length;
+      //init audioarray for user.  
+      while (tempidx <= useridx){
+        this.audioarray.push([]); //add empty array for this user
+        tempidx++;
+      }
+
+      //temparray = [];
+      //not sure if this comes in order or not.  
+      for (const [aidx, avalue] of Object.entries(value)){
+        //add audio to the array
+        this.audioarray[useridx].push(avalue);
+      }
+      //sort by time.  
+      this.audioarray[useridx].sort((a, b) => a.time - b.time); //sort by time
+      for (let i = 0; i < this.audioarray[useridx].length; i++){
+        this.audioarray[useridx][i].lastplayed = 0; //reset last played time
+      }
 
     }
 
@@ -115,7 +154,7 @@ class AudioSnapper { //use to just read as well.
           while (i > -1 && aa[i].time > mytime){
             i--; //find the closest audio before this time.  
           }
-          aa.splice(i+1, 0, {"audio": null, "time": mytime, "started": new Date(), "lang": myaslang, "audiolength": 0, "lastplayed": 0}); //insert at the right place
+          aa.splice(i+1, 0, {"audio": null, "time": mytime, "started": Date.now(), "lang": myaslang, "audiolength": 0, "lastplayed": 0}); //insert at the right place
 
         }
     
@@ -155,7 +194,7 @@ class AudioSnapper { //use to just read as well.
             while (i > -1){
               if (aa[i].audio == null){
                 aa[i].audio = base64Data; //set the audio for the last entry
-                aa[i].audiolength = new Date() - aa[i].started; //set the length of the audio in milliseconds
+                aa[i].audiolength = Date.now() - aa[i].started; //set the length of the audio in milliseconds
                 break; //found
               }
               i--; //find the closest audio before this time.  
@@ -195,17 +234,22 @@ class AudioSnapper { //use to just read as well.
       }
 
       getLeastRemainingAudioPlayer(){
-        let leastTime = 1000000000;
-        let leastIndex = 0;
         let now = Date.now();
+        let leastTime = now + 500000; //set to a long time in the future
+        let leastIndex = 0;
         for (let i = 0; i < this.concurrency; i++){
-            let remainingTime = this.players[i].duration
-            if (remainingTime < leastTime){
-                leastTime = remainingTime;
+            if (this.playeraudio[i] == null){
+                //this player is open
+                return [i, 0]; //return this index and 0 remaining time
+            }
+            else if (this.playeraudio[i].lastplayed < leastTime){
+                //not playing anything, return this index
+                leastTime = this.playeraudio[i].lastplayed;
                 leastIndex = i;
             }
         }
-        return [i, leastTime*1000]; //return index and remaining time in milliseconds
+
+        return [leastIndex, leastTime]; //return index and remaining time in milliseconds
       }
 
       runAudio(t=-1){
@@ -274,22 +318,33 @@ class AudioSnapper { //use to just read as well.
                       //for now one at a time I guess.  
                       if (aa[i].audio != null){
                           //play this audio
+                          as[myaslang].playeraudio[as[myaslang].openplayer] = aa[i];
                           as[myaslang].players[ as[myaslang].openplayer].src = "data:audio/ogg;base64," + aa[i].audio;
                           as[myaslang].players[ as[myaslang].openplayer].play();
-                          
-                          if (as[myaslang].concurrency > 1){
+
+                          if (as[myaslang].concurrency >= 1){
                               //this should always be open.  
                             //find an open player.
                           
                             
                             let [idx, rem] = as[myaslang].getLeastRemainingAudioPlayer();
                             as[myaslang].openplayer = idx; //set the open player to this index
-                            as[myaslang].audioNextPlay = now + rem; //set next play time
+                            as[myaslang].audioNextPlay = rem; //set next play time
+                            //user is j.  
+
+                            console.log("Playing audio from user " + j + " on player " + idx + " with remaining time " + rem);
+                            let label = document.getElementById('my-audio-label-' + idx);
+                            if (label != null){
+                              label.textContent = "User " + j + " Audio " + i; //update label
+                            }
+
+                    
                          }
                          else{
                            as[myaslang].audioNextPlay = Date.now() + aa[i].audiolength; //set next play time
                          }
                           as[myaslang].audioLastPlayed = Date.now();
+
 
 
                           //as[myaslang].player.src = "data:audio/ogg;base64," + aa[i].audio;

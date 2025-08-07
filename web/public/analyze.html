@@ -60,19 +60,37 @@
 	<canvas id="tempcanvas" style="display:none" width="640" height="360">Your browser does not support the HTML5 canvas tag.</canvas>
 	</div>
 
+	<!--	audio recording controls.  -->
 	<section class="audio-main-controls">
+		<table>
+			<tr><td>
         <canvas class="audio-visualizer" height="60px"></canvas>
         <div id="audio-buttons">
           <button class="audio-record">Record</button>
           <button class="audio-stop">Stop</button>
         </div>
-		<div id="audio-div">
-			<label for="my-audio">Recorder:</label>
-			<audio id="my-audio" controls>
-			<hr>
-			<h4>Feedback:</h4>
+		<table id="audio-div-table">
+			<tr>
+				<td>
+					<audio id="my-audio" controls>
+				</td>
+				<td>
+					My Feedback
+				</td>
+			</tr>
 
-		</div>
+		</table>
+		</td>
+		<td>
+			<table>
+				<tr><td>
+				<div id="audio-users">
+
+				</div>
+				</td></tr>
+			</table>
+	</td></tr>
+	</table>
 	</section>
 
 	<div id="vidinfo" valign="top"></div>
@@ -426,7 +444,7 @@ var	et = [];
 var myst = [];
 var myet = [];
 
-var users = [];
+
 var durations = [];
 var maxduration = 0;
 

@@ -601,3 +601,34 @@ So have option to filter played data.
 
 
 
+How do we order users?  
+For now just keep a tab of likes for users, and prioritize by this?  
+Running tally of 
+LIKES / (total speaking time)
+Local DB for this.  
+Show user info when loading audio.  
+Need some indicator of what user.  
+
+
+**web/public/feedback.js
+--saveAudioFeedback
+Test here..
+
+**timestep.py
+Retrieve playlists including favorites / to watch
+
+Maybe this is ok?  
+Call Page to add videoid to watch later list.  
+Added at.., get video info during [**timestep.py]
+Then we have a list to work with.  
+#https://github.com/prakhartiwari0/copyYTvideoId
+
+
+**WrNMxdcfyUk
+OK, we have simultaneous entries.  
+
+12 seconds of audio.  
+~250kB.  
+20kB/s far too much.  
+
+

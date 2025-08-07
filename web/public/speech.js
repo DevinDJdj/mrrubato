@@ -628,7 +628,7 @@ export function Chat(transcript, callback=null, pending=false, lang=""){
     else{
         if (executed){
             //make sound.  
-            cmdprefix = "";
+            let cmdprefix = "";
 
             if (typeof(midicontroller) !=='undefined' && midicontroller != null){
                 midicontroller.audioFeedback(commandcompletion);

@@ -1,5 +1,6 @@
 //too much trouble to change these.  
 var midiarray = [{"base": []}];
+var users = [];
 
 MAX_LOCAL_QUERY_LENGTH = 8000; //maximum length of local query.  This is the maximum length of the context that will be sent to the LLM.
 var currentmidiuser = 0;
