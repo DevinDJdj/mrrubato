@@ -386,7 +386,8 @@ Anyway when moving files, what to do?
 Just creation of symbolic link for all subfolders will be sufficient perhaps.  
 So we only need the symbolic link data.  
 Just save some sort of 
-**book/map.txt which exists in each book.  
+**book/map.txt 
+which exists in each book.  
 This just holds folder redirect mapping.  
 
 This should be generated in some automated fashion when folders are copied.  
@@ -630,5 +631,54 @@ OK, we have simultaneous entries.
 12 seconds of audio.  
 ~250kB.  
 20kB/s far too much.  
+
+
+**extensions/vscode/codetutor/src/extension.ts
+--getVector
+
+**timestep.py
+Same logic to generate all embeddings so no need in front-end.  
+Front-end vector generation is too slow at the moment.  
+But if we are only generating what doesnt exist, not so bad.  
+We have file/line/data/vector.  
+
+**web/public/chata.html
+Add FT combined with vector search. 
+Then do same in [**web/public/book.html]
+
+
+
+Should really do voice clone.  This way we dont need to store the audio.  
+We have the audio for training this way.  
+Just have an indicator whether the last was correct or not.  
+(18) or (19)
+Wish we could do inline training.  
+Keep some of the STT sample set on the local DB.  
+Delete older data, no need for user to be aware of this really.  
+
+
+
+#https://github.com/boson-ai/higgs-audio
+#https://github.com/mozilla/deepspeech-playbook
+
+#https://devblog.pytorchlightning.ai/fine-tuning-wav2vec-for-speech-recognition-with-lightning-flash-bf4b75cad99a
+
+
+Once the user custom model is trained, discard the data.  
+No javascript custom voice recognition model training yet.  
+
+#https://github.com/syl22-00/pocketsphinx.js/
+
+This is closer to what we want perhaps.  
+See if we can use this?  
+#https://github.com/cmusphinx/pocketsphinx
+
+Dont think it will be better than general webkit though.  
+Wait for better front-end solution.  
+
+**codetutor
+**extensions/vscode/codetutor/src/tokenizer.tsx
+Could implement here.  
+Need to finish tokenizer.  
 
 

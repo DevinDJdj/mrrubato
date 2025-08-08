@@ -32,7 +32,7 @@ May have some problematic names.
 === QA history start.  
 ==== QA history end.  
 
-$$ ENVIRONMENT
+$$ ENVIRONMENT (can also be direct link to topic)
 
 !! Log output or error
 
