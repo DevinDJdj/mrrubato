@@ -358,6 +358,28 @@ export function activate(context: vscode.ExtensionContext) {
 			stream.markdown('**My agent work prompt** ' + mySettings.workprompt.slice(-255) + '  \n');
 
 		}
+		if (request.command === 'similar'){
+			//find similar topics.  
+			//do we have a topic?  
+			//do same on Ctrl+Shift+9
+
+			let topics = await Book.similar(request.prompt);
+			stream.markdown('**Similar topics to: ' + request.prompt + '**  \n');
+			let doc = "";
+			for (let item of topics){
+				let filename = Book.getUri(item.topic);
+				doc += `File: ${item.file}, Line: ${item.line}, Sort: ${item.sortorder}  \n`;
+				doc += `Topic: [${item.topic}](${filename})  \n`;
+				doc += `Link: [${item.file}](${item.file}#L${item.line})  \n`;
+				let data = item.data.substring(0, 255);
+				doc += `Data: ${data}  \n`;
+				
+			}
+			stream.markdown(doc);
+
+
+			return;
+		}
 		if (request.command === 'list') {
 			//list the files in the book.  
 			if (request.prompt === "prompts"){

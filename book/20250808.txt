@@ -83,6 +83,9 @@ But we already have the vectors, so we dont actually need the GPU on the server 
 Just a dumb vector similarity search.  All the encoding can be done on client.  
 
 
+**vecbook
+> ~vecbook$ rm * -rf 
+
 **batoru
 Need local version vector DB for this.  
 #https://github.com/Stevenic/vectra
@@ -232,6 +235,8 @@ Just some icon to represent.
 And change icon if played already or not.  
 So have option to filter played data.  
 
+Just use existing voices from SS, and assign voice name to the user.  
+#https://support.microsoft.com/en-us/topic/download-languages-and-voices-for-immersive-reader-read-mode-and-read-aloud-4c83a8d8-7486-42f7-8e46-2b0fdf753130
 
 
 How do we order users?  
@@ -284,11 +289,70 @@ Should really do voice clone.  This way we dont need to store the audio.
 We have the audio for training this way.  
 Just have an indicator whether the last was correct or not.  
 (18) or (19)
-Wish we could do inline training.  
+Wish we could do inline training.  Probably in another couple years.  
+STT and TTS are stupidly huge revenue generators.  
+~~MS should just offer something in the OS.  
+This will all be client side in another couple years.  
+#https://github.com/Hagsten/Talkify?tab=readme-ov-file
+Nice, but lot of overhead just for something we already can do with webkitAudio.  
+I like the highlighting.  
+This seems easier.  
+
+    let text = document.getElementById("text");
+    let originalText = text.innerText;
+    let utterance = new SpeechSynthesisUtterance(originalText);
+    utterance.addEventListener("boundary", (event) => {
+      const { charIndex, charLength } = event;
+      text.innerHTML = highlight(
+        originalText,
+        charIndex,
+        charIndex + charLength
+      );
+    });
+    synth.speak(utterance);
+
+
 
 **codetutor
 **extensions/vscode/codetutor/src/tokenizer.tsx
 Could implement some sort of custom STT or TTS here much easier.  
 Need to finish tokenizer.  
+
+Just save to local DB and then have an option to run STT model improvement from there.  
+Then use that model for [**codetutor]
+Best we could do at this point?  
+
+
+**extensions/vscode/codetutor/src/book.ts
+--similar
+Added similar functionality.  
+This should be more seemless.  
+Also need to check if topic selection is working.  
+@mr /similar **web/public/book.html what are you doing
+or
+Ctrl+Shift+9
+Add chat to find functionality.  
+vscode.commands.executeCommand('workbench.action.chat.open', text );
+
+Then we can just add chat participants as needed.  
+
+--summarize **web/public/book.html
+
+Just break up into smaller texts?  
+Combine each two sequential.  
+For each of these combined texts, just iteratively repeat with resulting texts.  
+
+--meta functionality
+Search command from textual similarity.  
+Hinderance or nice for usability?  
+Lets try it.  
+Just basic command search (like MCP), but much smaller scale.  
+For each command create a variety of ways to phrase the calling.  
+Then use each command sentence as an acceptable match if above X%.  
+What is this threshold, and will this actually work acceptably?  
+
+Start summarize functionality.  
+
+
 
 

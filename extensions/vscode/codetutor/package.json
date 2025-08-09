@@ -183,6 +183,10 @@
         "isSticky": true,
         "commands": [
           {
+            "name": "similar",
+            "description": "Find Similar text entries via vector search."
+          },
+          {
             "name": "stats",
             "description": "List statistics for extension robot."
           },

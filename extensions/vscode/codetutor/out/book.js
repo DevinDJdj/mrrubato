@@ -61,6 +61,7 @@ exports.getBook = getBook;
 exports.closeFileIfOpen = closeFileIfOpen;
 exports.getFileName = getFileName;
 exports.updatePage = updatePage;
+exports.similar = similar;
 exports.loadPage = loadPage;
 exports.getBookPath = getBookPath;
 exports.getBookVectorPath = getBookVectorPath;
@@ -824,6 +825,49 @@ function updatePage(filePath, text, linefrom = 0, lineto = 0, show = false) {
         });
     });
 }
+async function similar(prompt) {
+    //this will be used to find similar topics in the book.  
+    //for now just return the topics in the book.
+    let selectedtopics = findInputTopics(prompt);
+    console.log("Selected topics: ", selectedtopics);
+    let bvFolder = getUri(bookvectorFolder);
+    let pathParts = [];
+    if (selectedtopics.length === 0) {
+        //if no topics selected, return all topics.
+    }
+    else {
+        for (let i = 0; i < selectedtopics.length; i++) {
+            if (exports.topicvectorarray[selectedtopics[i]] !== undefined) {
+                //for now use first defined topic vector array.
+                pathParts = selectedtopics[i].split("/");
+            }
+        }
+    }
+    if (pathParts.length === 0) {
+        //if no path parts, use global index.
+        pathParts = [""];
+    }
+    let model = 'nomic-embed-text'; //default model to use for embedding.
+    let vec = await getVector(prompt, model);
+    let ret = [];
+    for (let i = 0; i < pathParts.length; i++) {
+        let sub1 = pathParts.slice(0, i).join('/');
+        //what is teh second parameter here?  
+        //looks like we are doing some form of FT search not sure how to enable..
+        //wink-bm25-text-search
+        let res = await exports.topicvectorarray[sub1].queryItems(vec, prompt, 3);
+        if (res.length > 0) {
+            for (const result of res) {
+                ret.push(result.item.metadata); //should be BookTopic type.
+                console.log(`[${result.score}] ${result.item.metadata.data}`);
+            }
+        }
+        else {
+            console.log(`No results found.`);
+        }
+    }
+    return ret;
+}
 async function getVector(text, model = 'nomic-embed-text') {
     //get vector from text.  
     //>ollama pull nomic-embed-text
@@ -836,6 +880,22 @@ async function addVectorData(topic) {
     let pathParts = topic.topic.split("/");
     let bvFolder = getUri(bookvectorFolder);
     if (exports.topicvectorarray[topic.topic] === undefined) {
+        //init global index
+        try {
+            //create a global index for all topics.
+            if ("" in exports.topicvectorarray) {
+            }
+            else {
+                exports.topicvectorarray[""] = new vectra_1.LocalIndex(path_1.posix.join(bvFolder.path.slice(1), "")); //create a new index for global use.  
+                if (!await exports.topicvectorarray[""].isIndexCreated()) {
+                    //if the index does not exist, create it.
+                    await exports.topicvectorarray[""].createIndex();
+                }
+            }
+        }
+        catch (err) {
+            console.error(`Error creating global index: ${err.message}`); //create the folder if it does not exist.
+        }
         //get name from topic.  
         //maybe want to create an index by first subfolder or second etc.  
         if (pathParts.length > 1) {
@@ -892,7 +952,7 @@ async function addVectorData(topic) {
         }
     }
     let checkexisting = await exports.topicvectorarray[topic.topic].listItemsByMetadata({
-        str: topic.data, date: topic.date, file: topic.file, line: topic.line, topic: topic.topic
+        data: topic.data, date: topic.date, file: topic.file, line: topic.line, topic: topic.topic
         //this should get the last occurrence of this data when vector file is created.  
     });
     let timelag = new Date();
@@ -928,13 +988,19 @@ async function addVectorData(topic) {
     else {
         exports.topicvectorarray[topic.topic].upsertItem({
             vector: await getVector(topic.data),
-            metadata: { str: topic.data, date: topic.date, file: topic.file, line: topic.line, topic: topic.topic },
+            //sort order not used.  
+            metadata: { data: topic.data, date: topic.date, file: topic.file, line: topic.line, topic: topic.topic, sortorder: topic.sortorder },
+        }); //insert the item into the index.
+        //update global index as well.  
+        await exports.topicvectorarray[""].upsertItem({
+            vector: await getVector(topic.data),
+            metadata: { data: topic.data, date: topic.date, file: topic.file, line: topic.line, topic: topic.topic, sortorder: topic.sortorder },
         }); //insert the item into the index.
         for (let i = 1; i < pathParts.length - 1; i++) {
             let sub1 = pathParts.slice(0, i).join('/');
             await exports.topicvectorarray[sub1].upsertItem({
                 vector: await getVector(topic.data),
-                metadata: { str: topic.data, date: topic.date, file: topic.file, line: topic.line, topic: topic.topic },
+                metadata: { data: topic.data, date: topic.date, file: topic.file, line: topic.line, topic: topic.topic, sortorder: topic.sortorder },
             }); //insert the item into the index.
         }
     }
