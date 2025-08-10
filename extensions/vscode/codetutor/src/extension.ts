@@ -204,7 +204,7 @@ async function work(request: vscode.ChatRequest, context: vscode.ChatContext, st
 		//actual_response = response['response']
 
 
-		let [topkey, topicdata] = await Book.read(workPrompt);
+		let [topkey, topicdata] = await Book.read(workPrompt, Book.GIT_CODE);
 		//get topic to work on and context.  
 		//const topics = "test"
 		workPrompt = workPrompt.slice(-max_context_length/2); //limit the prompt length to max_context_length/4
@@ -358,6 +358,20 @@ export function activate(context: vscode.ExtensionContext) {
 			stream.markdown('**My agent work prompt** ' + mySettings.workprompt.slice(-255) + '  \n');
 
 		}
+		if (request.command === 'summarize' || request.command=== 'summary'){
+			//find similar topics.  
+			//do we have a topic?  
+			//do same on Ctrl+Shift+9
+
+			let summary = await Book.summary(request.prompt);
+
+			//replace topics.  
+			stream.markdown(await Book.markdown(summary));
+
+
+			return;
+		}
+
 		if (request.command === 'similar'){
 			//find similar topics.  
 			//do we have a topic?  
@@ -368,11 +382,11 @@ export function activate(context: vscode.ExtensionContext) {
 			let doc = "";
 			for (let item of topics){
 				let filename = Book.getUri(item.topic);
-				doc += `File: ${item.file}, Line: ${item.line}, Sort: ${item.sortorder}  \n`;
+//				doc += `File: ${item.file}, Line: ${item.line}, Sort: ${item.sortorder}  \n`;
 				doc += `Topic: [${item.topic}](${filename})  \n`;
 				doc += `Link: [${item.file}](${item.file}#L${item.line})  \n`;
-				let data = item.data.substring(0, 255);
-				doc += `Data: ${data}  \n`;
+				let data = item.data.substring(item.topic.length+2, 300);
+				doc += `Data: **${data} ** \n`;
 				
 			}
 			stream.markdown(doc);
@@ -772,6 +786,53 @@ export function activate(context: vscode.ExtensionContext) {
 
 				}
 				break;
+			case ":":
+				//summarize this topic. 
+				switch (cmdtype[1]) {
+					case ":":
+						//summarize this topic.
+						if (text.length < 3 || Book.findInputTopics(text).length === 0){
+							//summarize current topic.  
+							const editor = vscode.window.activeTextEditor;
+							if (editor) {
+								topic = getTopicFromLocation(editor);
+								text = "**" + topic + " " + text;
+							}
+						}
+						else{
+							//pass topic and chat.  does this work?  Dont remember.  
+							vscode.commands.executeCommand('workbench.action.chat.open', "@mr /summary " + text );
+							
+						}
+						break;
+
+					default:
+						//summarize this topic with a different prompt.
+						//no single char handler.  
+						break;
+				}
+				case "~":
+					//summarize this topic. 
+					switch (cmdtype[1]) {
+						case "~":
+							//summarize this topic.
+							if (text.length < 3 || Book.findInputTopics(text).length === 0){
+								//summarize current topic.  
+								const editor = vscode.window.activeTextEditor;
+								if (editor) {
+									topic = getTopicFromLocation(editor);
+									text = "**" + topic + " " + text;
+								}
+							}
+							//pass topic and chat.  does this work?  Dont remember.  
+							vscode.commands.executeCommand('workbench.action.chat.open', "@mr /similar " + text );
+							break;
+	
+						default:
+							//no single char handler.  
+							break;
+					}
+					
 			case "":
 				//failure return?  
 				break;

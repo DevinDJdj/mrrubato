@@ -76,10 +76,11 @@ _ = pre-requisite
 \ = macro?  (TEX)
 : = line identification
 ; = comment?
-~~ = suggestion
+~~ = suggestion or similarity check
 | = PIPE OR
 .. = time marker? continuation?  
 ... = continuation later.  
+``` = code snippet?  
 
 
 < >

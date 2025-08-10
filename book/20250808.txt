@@ -352,6 +352,53 @@ Then use each command sentence as an acceptable match if above X%.
 What is this threshold, and will this actually work acceptably?  
 
 Start summarize functionality.  
+Need new definition for summary and similar.  
+
+For now:
+~~similarity check
+::summarize
+
+Do we need a line extension character?  
+I guess we could have a line extension character, or just prefix subsequent lines with the same.  
+
+
+**vecbook
+**extensions/vscode/codetutor/src/book.ts
+--addVectorData
+Constantly needing to delete the vectra indexes.  
+
+Something is corrupting the vectra indexes.  
+
+```
+var a = b;
+let c = d;
+```
+
+@@vectra
+!!Unexpected non-whitespace character after JSON at position 4489804 (line 1 column 4489805)
+You have an error in the code somewhere when using the upsert, at the end of the file there are remnants.  
+
+
+**extensions/vscode/codetutor/src/book.ts
+--fixVectraError
+This fixes some issue in this library with remnants at the end of json files after using
+--vectra.LocalIndex.upsertItem
+#https://github.com/Stevenic/vectra/blob/main/src/LocalIndex.ts
+
+OK, so basic similarity search works now.  
+Now do the summarize aspect.  
+
+--pickTopic
+
+
+**web/public/analyze.html
+**web/public/language.js
+Change current video time to something more readable.  
+
+**extensions/vscode/codetutor/src/book.ts
+Some progress.  
+Seems like we are getting a summary.  Probably need to use a different model.  
+Really need to train model with this type of content.  
 
 
 

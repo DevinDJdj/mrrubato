@@ -206,16 +206,24 @@ export function registerCompletionTool(context: vscode.ExtensionContext){
                     return myarray;
 
                 }
-                if (linePrefix.endsWith('/') && linePrefix.startsWith('**')){
+                if (linePrefix.endsWith('/')){
                     //include all topics with this.  
 
 
                     //need sorted keys.  
 //                    console.log(Book.topicarray);
                     //allow to trigger even if we have already completed.  
+                    if (linePrefix.startsWith('**')){
+
+                    }
+                    else if (linePrefix.substring(linePrefix.lastIndexOf(' ')+1).startsWith('**')){
+                        //adjust linePrefix to be just the topic.
+                        linePrefix = linePrefix.substring(linePrefix.lastIndexOf(' ')+1);
+                    }
                     let myarray = Book.findTopicsCompletion(linePrefix);
                         //use Book.alltopics to get sorted array.  
                     return myarray;
+
 
                 }
                 else{

@@ -100,7 +100,7 @@ function updateState(transcript="", lang=""){
     mystate += currentlanguage + ": " + midiarray[currentmidiuser][currentlanguage].length + "<br>";
     mystate += "meta: " + midiarray[currentmidiuser]["meta"].length + "<br>";
     mystate += "last entry: " + transcript + "<br>";
-    mystate += "current video time: " + currentvidtime + "<br>";
+    mystate += "current video time: " + getTimeFromSecs(currentvidtime/1000) + "<br>"; //video.js
     if (lastnote !==null){
         mystate += "Last Note: " + lastnote.note + "<br>";
     }

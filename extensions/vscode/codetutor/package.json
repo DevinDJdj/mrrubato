@@ -183,6 +183,14 @@
         "isSticky": true,
         "commands": [
           {
+            "name": "summary",
+            "description": "Create summary of topic(s)."
+          },
+          {
+            "name": "summarize",
+            "description": "Create summary of topic(s)."
+          },
+          {
             "name": "similar",
             "description": "Find Similar text entries via vector search."
           },

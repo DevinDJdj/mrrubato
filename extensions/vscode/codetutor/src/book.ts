@@ -32,11 +32,11 @@ var gitcurrentbook = "";
 var gitcurrentcontentstype = "javascript";
 var gitcurrentscrollinfo = null;
 
-const GIT_BOOK = 0; //always get book.  Load from DB eventually.  
-const GIT_CODE = 1;
-const GIT_DETAILS = 2;
-const GIT_RELATIONS = 4;
-const GIT_DB = 8;
+export const GIT_BOOK = 0; //always get book.  Load from DB eventually.  
+export const GIT_CODE = 1;
+export const GIT_DETAILS = 2;
+export const GIT_RELATIONS = 4;
+export const GIT_DB = 8;
 
 export const BOOK_OPEN_FILE = 1;
 export const BOOK_OPEN_WEB = 2;
@@ -114,6 +114,8 @@ export interface BookTopic {
     sortorder: number;
 }
 
+
+export var vectrafixes: {[key: string] : boolean } = {};
 
 export var alltopics: string[] = [];
 export var alltopicsa: string[] = [];
@@ -400,18 +402,20 @@ export function findTopicsCompletion(str: string = "") : string[]{
 export function findInputTopics(inputString : string) : string[]{
     // Create a regex pattern to match double asterisks and capture the text after them
     //need to add newline at start.  
-    const regex = /\*\*(.*?)\*/g;
-    let matches = [];
-    
-    // Use the regex to find all instances in the input string
-    let match;
-    while ((match = regex.exec(inputString)) !== null) {
-      if (match[1]) {
-        matches.push(match[1].trim());
-      }
+    const matches = inputString.matchAll(/\*\*/g);
+    let ret = [];
+    for (const match of matches) {
+        if (match.index !== undefined && match.index > 0) {
+            let end = inputString.indexOf(' ', match.index);
+            if (end === -1) {
+                end = inputString.length; // If no space found, take the rest of the string
+            }
+            ret.push(inputString.substring(match.index+2, end));
+        
+        }
     }
     
-    return matches;
+    return ret;
 }
   
 export async function getTempTopicsFromPath(path: string) : Promise<Array<string>> {
@@ -681,8 +685,8 @@ export async function write(request: vscode.ChatRequest, context: vscode.ChatCon
 }
 
 
-
-export async function read(prompt: string) : Promise<[string, string]>{
+//default GIT_BOOK
+export async function read(prompt: string, mode: number = GIT_BOOK) : Promise<[string, string]>{
     //adjust request to include book context needed.  
 //    return getBook();
     //only want pertinent context.  
@@ -706,17 +710,18 @@ export async function read(prompt: string) : Promise<[string, string]>{
         selectedtopics.push(topkey); //add the topic to the list of selected topics.
     }
 
-    try {
-        const folderUri = vscode.workspace.workspaceFolders[0].uri;
-        const stat = await vscode.workspace.fs.stat(folderUri.with({ path: topkey }));
-        //assume file exists if stats doesnt fail.  
-        let git = await gitChanges(selectedtopics); //get the git changes for the topic.
-        topics += git;  //add the git changes to the full context of topics.
+    if (mode & GIT_CODE){
+        try {
+            const folderUri = vscode.workspace.workspaceFolders[0].uri;
+            const stat = await vscode.workspace.fs.stat(folderUri.with({ path: topkey }));
+            //assume file exists if stats doesnt fail.  
+            let git = await gitChanges(selectedtopics); //get the git changes for the topic.
+            topics += git;  //add the git changes to the full context of topics.
+        }
+        catch (error) {
+            console.error(`Error reading file: ${error}`);
+        }
     }
-    catch (error) {
-        console.error(`Error reading file: ${error}`);
-    }
-
 
     return [topkey, topics];
 
@@ -919,6 +924,146 @@ export function updatePage(filePath: string, text: string, linefrom: number = 0,
 }
 
 
+async function fixVectraError(filePath: vscode.Uri){
+    if (filePath.path in vectrafixes){
+        //already tried to fix this file.  
+    }
+    else{
+        vectrafixes[filePath.path] = true; //mark this file as fixed.
+        try {
+            const fileContentBytes = await vscode.workspace.fs.readFile(filePath);
+            // If it's a text file, convert to string
+            const fileContentString = Buffer.from(fileContentBytes).toString('utf8');
+            // Remove the last characters until we find a valid JSON structure
+            const jsonEndIndex = fileContentString.indexOf('}]}');
+            if (jsonEndIndex !== fileContentString.length - 3) {
+                // If the end of the JSON structure is not at the end of the file, truncate it
+                const fixedContent = fileContentString.substring(0, jsonEndIndex + 3);
+                // Write the fixed content back to the file
+                await vscode.workspace.fs.writeFile(filePath, Buffer.from(fixedContent, 'utf8'));
+                console.log(`Fixed vectra error in file: ${filePath.path}`);
+                
+            }
+        } catch (error) {
+            vscode.window.showErrorMessage(`Error reading file: ${error.message}`);
+        }
+    }
+}
+
+export async function getSummary(input : string, CTX_WND: number = 5000) : Promise<string> {
+    //get the summary of the chunks.  
+    //this will be used to summarize the book.
+    let chunks = await getChunks(input); //get the chunks from the book.
+
+    let summary = "";
+    let sumchunk = [];
+    for (let i=0; i<chunks.length-1; i++) {
+        //send this chunk to the summarization model.  
+        let summary = await ollama.chat({
+            model: 'llama3.1:8b',
+            messages: [
+                { role: 'system', content: `You are a rearranging large pieces of text 
+                    and creating abridged versions.  ::FULL VERSION::  Indicates the full text which is being abridged.  
+                    ::ABRIDGED VERSION::  The abridged versions are only slightly shorter than the original text. Roughly half the size.  ` },
+                { role: 'user', content: `::FULL VERSION:: \n
+                    ${chunks[i]}
+                    ${chunks[i+1]} \n 
+                    After analyzing the above, 
+                    here is a shortened version of the same content.  \n
+                    ::ABRIDGED VERSION::\n` }
+            ]
+        });
+        sumchunk.push(summary["message"]["content"]); //add the summary to the array.
+        console.log(`Summary for chunk ${i/CTX_WND}: ${summary}`);
+    }
+    if (sumchunk.length > 1) {
+        //recursively join the summaries together.
+        //will this be good or just a mess?  
+        //we are n*(n+1)/2 here.  Time is the constraint.  
+        //dependent on how long the summaries are.  
+        console.log(`Summarizing ${sumchunk.length} summaries...`);
+        summary = sumchunk.join("\n\n"); //join the summaries together.
+        return getSummary(summary, CTX_WND); //recursively summarize the summaries.
+    }
+    else{
+        summary = chunks[0]; //just return the first chunk.
+    }
+    return summary;
+}
+
+//option to get in date order or topic order.  
+export async function getChunks(text: string, CTX_WND: number = 5000) : Promise<Array<string>> {
+    //summarize piece by piece.  
+    let numchunks = Math.ceil(text.length / CTX_WND); //number of chunks to summarize.
+    let chunks = [];
+    let i = 0;
+    for (i=0; i<text.length; i+=CTX_WND) {
+        let end = text.indexOf('\n', (i+1)*CTX_WND);
+        //maybe \n** is a better end of chunk.
+        if (end === -1) {
+            if (text.length < (i+2)*CTX_WND) {
+                end = text.length-CTX_WND; //if no newline found, take the rest of the string
+            }
+            else{
+                end = end - (i+1)*CTX_WND; //if no newline found, take the rest of the string
+            }
+
+        }
+        //adjust chunk to lines, or perhaps next topic, not sure.  
+        let chunk = text.substring(i, i + CTX_WND + end);
+        chunks.push(chunk); //add the chunk to the array.
+    }
+    if (i < text.length) {
+        //add the last chunk if there is any remaining text.
+        chunks.push(text.substring(i));
+    }
+    return chunks;
+}    
+
+export async function markdown(prompt: string) : Promise<string> {
+    //this just adjustst the base string to include links to markdown files.  
+    //replace **topic with [topic](topic.md)
+    //replace #link with [link](link)
+
+    const folderUri = vscode.workspace.workspaceFolders[0].uri;
+    let marked = prompt.replace(/(\*\*|\#)(\S+)/g, (match, p1, p2) => {
+        // p1 is either ** or #
+        // p2 is the topic or link 
+        let fname = p2;
+        let fileUri = folderUri.with({ path: posix.join(folderUri.path, fname) });
+       // this should be a book path.  Use as you would work on the project.  
+        if (p1 === "#"){
+                fileUri = p2;
+                return `[${p1}${p2}](${fileUri})`; //return the markdown link.
+        }
+        else{
+            return `[${p1}${p2}](${fileUri.path})`; //return the markdown link.
+
+        }
+    });
+    return marked;
+
+}
+
+export async function summary(prompt: string) : Promise<string> {
+    //this will be used to find similar topics in the book.  
+    //for now just return the topics in the book.
+    //should have just topice really expecting.  
+    let sim = await similar(prompt); //get the similar topics from the book.
+    for (let i=0; i<sim.length; i++) {
+        let topic = sim[i].topic;
+        prompt = "**" + topic + " \n" + prompt; //add the topic to the prompt.
+    }
+
+    //read the prompt and similar topics.  
+    let b = await read(prompt, GIT_BOOK);
+
+    let summary = await getSummary(b[1]); //get the summary of the chunks.
+    console.log(`Summary: ${summary}`);
+
+    return summary;
+}
+
 
 export async function similar(prompt: string) : Promise<Array<BookTopic>> {
     //this will be used to find similar topics in the book.  
@@ -934,7 +1079,7 @@ export async function similar(prompt: string) : Promise<Array<BookTopic>> {
         for (let i=0; i<selectedtopics.length; i++) {
             if (topicvectorarray[selectedtopics[i]] !== undefined) {
                 //for now use first defined topic vector array.
-                pathParts = selectedtopics[i].split("/");
+                pathParts.push(selectedtopics[i].split("/"));
 
             }
         }
@@ -942,25 +1087,51 @@ export async function similar(prompt: string) : Promise<Array<BookTopic>> {
     }
     if (pathParts.length === 0) {
         //if no path parts, use global index.
-        pathParts = [""];
+        pathParts.push([""]);
     }
     let model = 'nomic-embed-text'; //default model to use for embedding.
     let vec = await getVector(prompt, model);
 
     let ret = [];
-    for (let i=0; i<pathParts.length; i++) {
-        let sub1 = pathParts.slice(0, i).join('/');
-        //what is teh second parameter here?  
-        //looks like we are doing some form of FT search not sure how to enable..
-        //wink-bm25-text-search
-        let res = await topicvectorarray[sub1].queryItems(vec, prompt, 3);
-        if (res.length > 0) {
-            for (const result of res) {
-                ret.push(result.item.metadata); //should be BookTopic type.
-                console.log(`[${result.score}] ${result.item.metadata.data}`);
+    for (let j=0; j<pathParts.length; j++){
+        for (let i=0; i<pathParts[j].length+1; i++) {
+            let sub1 = pathParts[j].slice(0, i).join('/');
+            //what is teh second parameter here?  
+            //looks like we are doing some form of FT search not sure how to enable..
+            //wink-bm25-text-search
+            try {
+                if (sub1 in topicvectorarray) {
+                    //get more results from closer path or less?  
+                    let res = await topicvectorarray[sub1].queryItems(vec, prompt, pathParts[j].length -i+2); 
+                    if (res.length > 0) {
+                        for (const result of res) {
+                            ret.push(result.item.metadata); //should be BookTopic type.
+                            console.log(`[${result.score}] ${result.item.metadata.data}`);
+                        }
+                    } else {
+                        console.log(`No results found.`);
+                    }
+                }
             }
-        } else {
-            console.log(`No results found.`);
+            catch (err) {
+                console.error(`Error querying index for topic ${sub1}: ${err.message}`); //create the folder if it does not exist.
+                //check for vectra error at end of file and fix.  
+
+                console.log(`${topicvectorarray[sub1].folderPath} does not exist, creating new index.`);
+                //remove up to }]}
+                fixVectraError(vscode.Uri.file(posix.join(bvFolder.path.slice(1), sub1, "index.json")));
+            }
+        }
+    }
+    //deduplicate ret array.  
+
+    for (let i=0; i<ret.length; i++) {
+        for (let j=i+1; j<ret.length; j++) {
+            //same file and line number. no need to duplicate.  
+            if (ret[i].file === ret[j].file && ret[i].line === ret[j].line) {
+                ret.splice(j, 1);
+                j--;
+            }
         }
     }
     return ret;
@@ -968,11 +1139,13 @@ export async function similar(prompt: string) : Promise<Array<BookTopic>> {
 }
 
 
+
+
 async function getVector(text: string, model: string = 'nomic-embed-text') {
     //get vector from text.  
     //>ollama pull nomic-embed-text
 
-    let embedding = await ollama.embed({ model: model, input: text })
+    let embedding = await ollama.embed({ model: model, input: text });
     return embedding["embeddings"][0]; //return the embedding vector.
 
 }
@@ -1029,7 +1202,7 @@ async function addVectorData(topic: BookTopic) {
             //create index for each subfolder, lets start at two entries? 
             //some unnecessary duplication here, but maybe worth?  
             //So we have #folders worth of indexes along with #topics.  
-            for (let i=1; i<pathParts.length-1; i++) {
+            for (let i=1; i<pathParts.length; i++) {
                 let sub1 = pathParts.slice(0, i).join('/');
                 if (!(sub1 in topicvectorarray)) {
                     //this will fail if we have a topic with the name index.json perhaps
@@ -1104,22 +1277,22 @@ async function addVectorData(topic: BookTopic) {
         topicvectorarray[topic.topic].upsertItem({
             vector: await getVector(topic.data),
             //sort order not used.  
-            metadata: {data: topic.data, date: topic.date, file: topic.file, line: topic.line, topic: topic.topic, sortorder: topic.sortorder},
+            metadata: {data: topic.data, date: topic.date, file: topic.file, line: topic.line, topic: topic.topic},
         }); //insert the item into the index.
 
 
         //update global index as well.  
         await topicvectorarray[""].upsertItem({
             vector: await getVector(topic.data), 
-            metadata: {data: topic.data, date: topic.date, file: topic.file, line: topic.line, topic: topic.topic, sortorder: topic.sortorder},
+            metadata: {data: topic.data, date: topic.date, file: topic.file, line: topic.line, topic: topic.topic},
         }); //insert the item into the index.
 
 
-        for (let i=1; i<pathParts.length-1; i++) {
+        for (let i=1; i<pathParts.length; i++) {
             let sub1 = pathParts.slice(0, i).join('/');
             await topicvectorarray[sub1].upsertItem({
                         vector: await getVector(topic.data), 
-                        metadata: {data: topic.data, date: topic.date, file: topic.file, line: topic.line, topic: topic.topic, sortorder: topic.sortorder},
+                        metadata: {data: topic.data, date: topic.date, file: topic.file, line: topic.line, topic: topic.topic},
                     }); //insert the item into the index.
 
         }
