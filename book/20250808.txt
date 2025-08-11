@@ -401,5 +401,31 @@ Seems like we are getting a summary.  Probably need to use a different model.
 Really need to train model with this type of content.  
 
 
+> curl -fsSL https://ollama.com/install.sh | sh
+> ollama pull gemma3n:latest
+
+Some issue running this model.  
+
+
+**web/public/page.html
+List videos from around times when there was a commit to this page.  
+Make that default filter for videos.  
+
+**gemma3n
+Seems to take a long time to query.  
+The summary from llama3 is tolerable for now.  
+Will try other models for code generation.  
+
+**GENBOOK
+Should start to save these files.  
+I think it will be interesting.  
+Add [**GENBOOK] back to original to track.  
+~~Should have started saving from the beginning..
+
+Yeah just save to git.  
+
+
+
+
 
 

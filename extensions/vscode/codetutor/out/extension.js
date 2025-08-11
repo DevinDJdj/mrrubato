@@ -224,8 +224,13 @@ async function Chat(prompt, context, stream, token) {
         //actual_response = response['response']
         await Book.read(prompt);
         const response = await ollama_1.default.chat({
-            model: 'llama3.1:8b',
-            //		model: 'deepseek-coder-v2:latest',
+            //		model: 'llama3.1:8b',
+            model: 'deepseek-coder-v2:latest',
+            //deepseek-r1:latest 
+            //granite-code:latest
+            //codegemma:latest 
+            //gemma3n:latest
+            //granite3.3:8b
             messages: [{ role: 'user', content: prompt }],
             stream: true,
             /*

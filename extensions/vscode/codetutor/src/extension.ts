@@ -237,8 +237,13 @@ async function Chat(prompt: string, context: vscode.ChatContext, stream: vscode.
 
 		await Book.read(prompt);
 	  const response = await ollama.chat({
-		model: 'llama3.1:8b',
-//		model: 'deepseek-coder-v2:latest',
+//		model: 'llama3.1:8b',
+		model: 'deepseek-coder-v2:latest',
+		//deepseek-r1:latest 
+		//granite-code:latest
+		//codegemma:latest 
+		//gemma3n:latest
+		//granite3.3:8b
 		messages: [{ role: 'user', content: prompt }],
 		stream: true,
 /*

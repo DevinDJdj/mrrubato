@@ -953,7 +953,7 @@ async function fixVectraError(filePath: vscode.Uri){
 export async function getSummary(input : string, CTX_WND: number = 5000) : Promise<string> {
     //get the summary of the chunks.  
     //this will be used to summarize the book.
-    let chunks = await getChunks(input); //get the chunks from the book.
+    let chunks = await getChunks(input, CTX_WND); //get the chunks from the book.
 
     let summary = "";
     let sumchunk = [];
@@ -961,10 +961,18 @@ export async function getSummary(input : string, CTX_WND: number = 5000) : Promi
         //send this chunk to the summarization model.  
         let summary = await ollama.chat({
             model: 'llama3.1:8b',
+//            model: 'deepseek-coder-v2:latest',
+            //deepseek-r1:latest 
+            //granite-code:latest
+            //codegemma:latest 
+            //model: 'gemma3n:latest',
+//            model: 'granite3.3:8b',
+    
             messages: [
                 { role: 'system', content: `You are a rearranging large pieces of text 
                     and creating abridged versions.  ::FULL VERSION::  Indicates the full text which is being abridged.  
-                    ::ABRIDGED VERSION::  The abridged versions are only slightly shorter than the original text. Roughly half the size.  ` },
+                    ::ABRIDGED VERSION::  The abridged versions are only slightly shorter than the original text. Roughly half the size.  
+                    When creating the abridged version, the same writing style and syntax as the original is used.  ` },
                 { role: 'user', content: `::FULL VERSION:: \n
                     ${chunks[i]}
                     ${chunks[i+1]} \n 
@@ -1058,7 +1066,8 @@ export async function summary(prompt: string) : Promise<string> {
     //read the prompt and similar topics.  
     let b = await read(prompt, GIT_BOOK);
 
-    let summary = await getSummary(b[1]); //get the summary of the chunks.
+    //large context window.  testing gemma3n:latest
+    let summary = await getSummary(b[1], 5000); //get the summary of the chunks.
     console.log(`Summary: ${summary}`);
 
     return summary;
