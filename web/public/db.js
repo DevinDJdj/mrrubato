@@ -311,8 +311,11 @@ class recDB{
 		constructor(){
 		this.db = new Dexie("recDB");
 		this.db.version(1).stores({
+			//mycomments is the original transcript for video owner.  
 			vids: "++id,[category+name+version],category,name,version,userid", //mycomments, videoblob (if local), otherwise remoteurl
 			screenshots: "id,imid,userid,vidid,timestamp", //imgblob, ocrtext
+			//files and/or links relevant to activity.  For now just text.  
+			files: "++id,[category+name+version],category,name,version,size,path,userid", //text, fileblob?, or remoteurl
 		});
 
 		this.ftsindex = FlexSearch.Index({});
@@ -323,11 +326,35 @@ class recDB{
 
 	loadFTS(){
 		this.db.vids.each((obj) => {
-			this.ftsindex.add(obj.id, obj.category + " " + obj.name + " " + obj.mycomments);
+			this.ftsindex.update(obj.id, obj.category + " " + obj.name + " " + obj.mycomments);
 		});
 		this.db.screenshots.each((obj) => {
-			this.ftsindex.add(obj.id, obj.ocrtext);
+			this.ftsindex.update(obj.id, obj.ocrtext);
 		});
+		this.db.files.each((obj) => {
+			//use path here as id.  
+			this.ftsindex.update(obj.path, obj.category + " " + obj.name);
+		});
+	}
+
+	saveFile(userid, category, name, version, mycomments, text, path, size=0, remoteurl=null, cb=null){
+		if (size==0){
+			size = text.length;
+		}
+		//key here is path.  Not sure how we will generate this for uploaded files.  
+		//try to save original if possible.  
+		//yeah just overwrite if we get the same again.  
+		var obj = {"userid": userid, "category": category, "name": name, "version": version, "mycomments": mycomments, "text": text, "size": size, "path": path, "remoteurl": remoteurl};
+		this.db.files.put(path, obj).then((id) => {
+			console.log("added file with id " + id);
+			this.ftsindex.update(obj.path, obj.category + " " + obj.name + " " + obj.mycomments);
+			if (cb != null){
+				cb(id); //callback to add file.  
+				//indicate we have completed action.  
+			}
+		});
+
+
 	}
 
 	saveVideo(userid, category, name, version, mycomments, videoblob, remoteurl=null, cb=null){

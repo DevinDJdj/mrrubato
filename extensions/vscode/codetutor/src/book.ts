@@ -627,28 +627,61 @@ export function pickTopic(selectedtopics : string[], defaultprompts: string[] = 
                 }
             }
         });
-        selectedtopics.push(retkey); //add the topic to the selected topics.
+
     }
     let retdata = "";
 
 
-
+    //deduplicate selectedtopics
+    selectedtopics = Array.from(new Set(selectedtopics)); //remove duplicates from the array.
+    if (retkey !== "NONE"){
+        let found = selectedtopics.indexOf(retkey);
+        if (found > -1) {
+            selectedtopics.splice(found, 1); //remove the topic from the selected topics.
+        }
+        selectedtopics.push(retkey); //add the key to the selected topics.
+    }
     let i=0;
     if (selectedtopics.length > numtopics) {
         i = selectedtopics.length - numtopics; //start from the end of the array.
     }
 
+
+    //what date do we want to search from?  
+    //just add all.  
+    let mylist = [];
     for (; i<selectedtopics.length; i++) {
         if (topicarray[ selectedtopics[i] ] !== undefined) {
             retdata += "**" + selectedtopics[i] + "\n"; //add the topic to the data.
             retkey = selectedtopics[i]; //set the key to the topic.
 
             for (let j=0; j<topicarray[ selectedtopics[i] ].length; j++) {
-                retdata += topicarray[ selectedtopics[i] ][j].data + "\n"; //add all data for the topic.
+                //add date here.  
+                let item = topicarray[ selectedtopics[i] ][j];
+//                let filename = getUri(item.topic);
+//				doc += `File: ${item.file}, Line: ${item.line}, Sort: ${item.sortorder}  \n`;
+//                retdata += `Topic: [${item.topic}](${filename})  \n`;
+//                retdata += `**${item.file}:${item.line}\n`;
+//                retdata += `[${item.file}](${item.file}#L${item.line})  \n`;
+                
+//                retdata += item.data + "\n"; //add all data for the topic.
+                mylist.push(item);
             }
         }
     }
 
+    //sort the mylist by date.
+    mylist.sort((a, b) => {
+        return a.date - b.date; //sort by date.
+    });
+
+    for (let i=0; i<mylist.length; i++) {
+        //add the date to the data.  
+        let item = mylist[i];
+//        retdata += `**${item.topic}\n`;
+        retdata += `**${item.file}:${item.line}  \n`;
+        retdata += item.data + "  \n"; //add all data for the topic.
+    }
     //for now returning all topic data in book.  
     return [retkey, retdata]; //return the topic and the data.
 }
@@ -971,9 +1004,9 @@ export async function getSummary(input : string, CTX_WND: number = 5000) : Promi
             messages: [
                 { role: 'system', content: `You are a rearranging large pieces of text 
                     and creating abridged versions.  ::FULL VERSION::  Indicates the full text which is being abridged.  
-                    ::ABRIDGED VERSION::  The abridged versions are only slightly shorter than the original text. Roughly half the size.  
+                    ::ABRIDGED VERSION::  The abridged version is only slightly shorter than the original text. Roughly half the size.  
                     When creating the abridged version, the same writing style and syntax as the original is used.  ` },
-                { role: 'user', content: `::FULL VERSION:: \n
+                { role: 'user', content: `::FULL VERSION::  \n
                     ${chunks[i]}
                     ${chunks[i+1]} \n 
                     After analyzing the above, 
@@ -990,7 +1023,7 @@ export async function getSummary(input : string, CTX_WND: number = 5000) : Promi
         //we are n*(n+1)/2 here.  Time is the constraint.  
         //dependent on how long the summaries are.  
         console.log(`Summarizing ${sumchunk.length} summaries...`);
-        summary = sumchunk.join("\n\n"); //join the summaries together.
+        summary = sumchunk.join("  \n"); //join the summaries together.
         return getSummary(summary, CTX_WND); //recursively summarize the summaries.
     }
     else{
@@ -1045,6 +1078,17 @@ export async function markdown(prompt: string) : Promise<string> {
                 return `[${p1}${p2}](${fileUri})`; //return the markdown link.
         }
         else{
+            let colon = p2.lastIndexOf(":");
+            if (colon !== -1) {
+                //this is a file:line reference.  
+
+                let fname = p2.slice(0, colon); //get the file name.
+                let line = p2.slice(colon + 1); //get the line number. 
+                //remove folder from file name.  
+                p2 = p2.replace(folderUri.path + "/", ""); //remove the folder path from the file name for display purposes.  
+                return `[${p1}${p2}](${fname}#L${line})`; //return the markdown link.
+            }
+            p2 = p2.replace(folderUri.path + "/", ""); //remove the folder path from the file name for display purposes.  
             return `[${p1}${p2}](${fileUri.path})`; //return the markdown link.
 
         }

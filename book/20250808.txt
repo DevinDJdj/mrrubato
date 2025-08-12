@@ -426,6 +426,42 @@ Yeah just save to git.
 
 
 
+Need to allow for topic selection
+i.e. inline change of [**-1] to previous topic.  
+
+If we have a significant amount of data, the summary gets rid of all links etc.  
+Maybe do a reverse RAG and add links after summary?  
+Seems a bit random.  
+Maybe just add random entries which have similarity after the section of the summary?  
+First lets keep time sequence, instead of topic sequence.  
+
+OK, somewhat better results.  
+Deduplication is important.  
+Also 
+
+Can we use a markdown link to trigger a chat?  
+Should probably try to do this.  
+i.e. :: or ~~ want to trigger this as it is written.  
+
+For code changes, maybe for now add comments.  
 
 
+**TROUBLESHOOTING
+Add Troubleshooting QR component.  
+Where to integrate this?  
+
+**web/public/rec.html
+Allow adding text.  
+
+
+**web/public/db.js
+Add text ingestion.  
+
+--drag-drop adding of files.  
+#https://developer.mozilla.org/en-US/docs/Web/API/HTML_Drag_and_Drop_API/File_drag_and_drop
+
+**web/public/js/filedrop.js
+OK, basic DB struct is there.  
+drop_zone is there.  
+Just need to adjust handlers.  
 

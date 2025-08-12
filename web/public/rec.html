@@ -332,6 +332,10 @@
   <p><label>Language: <select id="id_language">
         <option>ENG</option>
       </select></label></p>
+ 
+    <div id="drop_zone">
+        <p>Drag one or more files to index.</p>
+      </div>
   <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png,.gif" style="display: none;" />
 <!--  <div class="dropzone" id="dropzone">
     Drag and drop a PDF, JPG, PNG, or GIF file here or click to select a file
@@ -396,6 +400,11 @@
 
     <!-- clock -->
     <script src="clock.js"></script>
+
+    <!-- feedback helper funcs -->
+    <script src="feedback.js"></script>
+
+
 
     </head>
     <!-- Google tag (gtag.js) -->
@@ -1703,6 +1712,10 @@ if (speech){
         loadUserConfig();
         //load videocontrol language along with base.  
         loadDictionaries(0, ["videocontrol"]); //dont use firebase.  
+
+        //load the filedrop component.  
+        FUNCS.FILEDROP.loadFileDrop();
+
       }
       FUNCS.loadAll = loadAll;
     </script>
@@ -1711,9 +1724,11 @@ if (speech){
     import * as SPEECH from "/speech.js"
     import * as CHAT from "/chat.mjs"
     import * as MIDI from "/midi.mjs"
+    import * as FILEDROP from "/js/filedrop.js"
     FUNCS.SPEECH = SPEECH;
     FUNCS.CHAT = CHAT;
     FUNCS.MIDI = MIDI;
+    FUNCS.FILEDROP = FILEDROP;
   </script>
   
 <footer style="margin-top: 20px; text-align: left;"><small id="send-message"></small></footer>

@@ -328,6 +328,7 @@ function activate(context) {
         // initialize the prompt
         let prompt = BASE_PROMPT;
         console.log(`Chat request: ${request.command} with prompt: ${request.prompt}`);
+        const wsUri = vscode.workspace.workspaceFolders[0].uri;
         if (request.command === 'stats') {
             const mySettings = vscode.workspace.getConfiguration('mrrubato');
             stream.markdown('**My agent default prompts**  ' + mySettings.defaultprompts.length + '  \n');
@@ -351,15 +352,16 @@ function activate(context) {
             //do we have a topic?  
             //do same on Ctrl+Shift+9
             let topics = await Book.similar(request.prompt);
-            stream.markdown('**Similar topics to: ' + request.prompt + '**  \n');
+            stream.markdown('Similar topics to:  \n' + request.prompt + '  \n');
             let doc = "";
             for (let item of topics) {
                 let filename = Book.getUri(item.topic);
                 //				doc += `File: ${item.file}, Line: ${item.line}, Sort: ${item.sortorder}  \n`;
-                doc += `Topic: [${item.topic}](${filename})  \n`;
-                doc += `Link: [${item.file}](${item.file}#L${item.line})  \n`;
+                doc += `[${item.topic}](${filename})  \n`;
+                let fname = item.file.replace(wsUri.path, '');
+                doc += `[${fname}:${item.line}](${item.file}#L${item.line})  \n`;
                 let data = item.data.substring(item.topic.length + 2, 300);
-                doc += `Data: **${data} ** \n`;
+                doc += `${data} $$  \n`;
             }
             stream.markdown(doc);
             return;
@@ -528,6 +530,45 @@ function activate(context) {
             //get previous topic.  
         }
         switch (cmdtype[0]) {
+            case "^":
+                //generate code.  
+                switch (cmdtype[1]) {
+                    case "^":
+                        //generate code from prompt.
+                        if (topic === "") {
+                            const editor = vscode.window.activeTextEditor;
+                            if (editor) {
+                                topic = getTopicFromLocation(editor);
+                            }
+                        }
+                        if (text.length < 2) {
+                            //generate code for topic.  
+                        }
+                        else {
+                            if (text.charAt(2) === "#") { //generate comments.  
+                                //create code comments.  
+                                //summarize this topic.
+                                if (text.length < 3 || Book.findInputTopics(text).length === 0) {
+                                    //summarize current topic.  
+                                    text = "**" + topic + " " + text;
+                                }
+                                //pass topic and chat.  does this work?  Dont remember.  
+                                vscode.commands.executeCommand('workbench.action.chat.open', "@mr /similar " + text);
+                                break;
+                            }
+                            else if (text.charAt(2) === "+") {
+                                //create code suggestions.  
+                            }
+                            else if (text.charAt(2) === "-") {
+                                //remove code suggestions.  
+                                //remove code suggestions for topic.  
+                            }
+                        }
+                        break;
+                    default:
+                    //generate code suggestions in chat.  
+                }
+                break;
             case "%":
                 switch (cmdtype[1]) {
                     case "%":
