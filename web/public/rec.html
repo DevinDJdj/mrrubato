@@ -14,6 +14,7 @@
 
     .dropzone {
       box-sizing: border-box;
+      background-image: url('images/dragdrop.png');
       width: 100%;
       height: 10em;
       border: 2px dashed #ccc;
@@ -327,25 +328,28 @@
 	<div id="ocrtranscriptsh" style="height: 300px;overflow:auto;"></div>
 </td>
 </tr>
+<tr>
+    <td>
+        <p><label>Language: <select id="id_language">
+            <option>ENG</option>
+          </select></label></p>
+     
+        <div id="drop_zone" class="dropzone">
+            <p>Drag one or more files to index.</p>
+          </div>
+      <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png,.gif" style="display: none;" />
+    <!--  <div class="dropzone" id="dropzone">
+        Drag and drop a PDF, JPG, PNG, or GIF file here or click to select a file
+      </div>
+      -->
+    </td>
+    <td colspan="2">
+        <textarea class="full-document" id="fullDocument" rows="10" columns="80"></textarea>
+        
+    </td>
+</tr>
 </table>
 
-  <p><label>Language: <select id="id_language">
-        <option>ENG</option>
-      </select></label></p>
- 
-    <div id="drop_zone">
-        <p>Drag one or more files to index.</p>
-      </div>
-  <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png,.gif" style="display: none;" />
-<!--  <div class="dropzone" id="dropzone">
-    Drag and drop a PDF, JPG, PNG, or GIF file here or click to select a file
-  </div>
-  -->
-  <div class="full-document-section" id="fullDocumentSection">
-    <h2>Full document</h2>
-    <textarea class="full-document" id="fullDocument"></textarea>
-    <h2>Pages</h2>
-  </div>
 
 
 
@@ -630,10 +634,10 @@ $("#category").val(category);
 getUser(accesstoken);
 
 document.getElementById('btn-start-new').onclick = function() {
-    id = $("#loadfile").val();
+    name = $("#loadfile").val();
     cat = $("#category").val();
     var a = document.createElement('a');
-    a.href = 'rec.html?cat=' + cat + '&id=' + id;
+    a.href = 'rec.html?cat=' + cat + '&name=' + name;
     a.style='display:none';
     a.click();    
 }
@@ -1072,7 +1076,7 @@ document.getElementById('btn-save-remote').onclick = function() {
 	fd.append('mycomments', $('#mycomments').val());
     fd.append('ocrtranscript', $('#ocrtranscript').val());
 
-    recDB.saveVideo(null, $('#category').val(), fname, version, $('#mycomments').val(), blob, null, 
+    recDB.saveVideo(0, $('#category').val(), fname, version, $('#mycomments').val(), blob, null, 
         function(res){
             console.log(res);
             $('#statusmessage').html('saved! ' + fname + ' ' + version + '<br/>');

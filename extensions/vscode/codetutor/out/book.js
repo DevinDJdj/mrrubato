@@ -905,6 +905,7 @@ async function getSummary(input, CTX_WND = 5000) {
             //granite-code:latest
             //codegemma:latest 
             //model: 'gemma3n:latest',
+            //model: 'gemma3:4b',
             //            model: 'granite3.3:8b',
             messages: [
                 { role: 'system', content: `You are a rearranging large pieces of text 

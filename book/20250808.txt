@@ -464,4 +464,39 @@ Add text ingestion.
 OK, basic DB struct is there.  
 drop_zone is there.  
 Just need to adjust handlers.  
+Cant get local path name.  So this is a problem.  
+Need a tree explorer.  
+
+**web/public/git.js
+--loadBook
+When reading book, we should generate the directory tree.  
+
+
+
+**web/public/rec.html
+__Seems to work with name with slashes /
+
+**web/public/chata.html
+Implement the vectordb here first.  
+Make sure we have components to initialize and query.  
+
+#https://github.com/deftio/quikchat
+Should we use a chat UI component?  
+Yeah probably.  
+But just UI, not data management.  
+
+#https://github.com/SillyTavern/SillyTavern
+Try this maybe.  
+
+#https://github.com/brianpetro/obsidian-smart-connections
+
+
+**web/public/chata.html
+Keep time sequence, find similar vector to the text, and then find the next entries in that topic.  
+Also just query, and then do rag vector similarity.  
+Just adopting from page.html as this is closer to what we want.  
+Add vectordb here.  
+
+Files in chat are added permanently?  
+I guess this is ok.  
 

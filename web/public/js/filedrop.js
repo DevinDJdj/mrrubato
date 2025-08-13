@@ -35,9 +35,51 @@ export function handleFileSelect(event) {
     }
 }
 
-export function processFile(file) {
+export async function processFile(file) {
     // Example processing function, e.g., read the file or upload it.
     console.log("Processing file: " + file.name);
+    //save to db.  
+    //only in rec.html for now.  
+    if (typeof(recDB) === 'undefined'){
+        console.error("No recDB defined");
+        return;
+    }
+    //fname
+    //get date from filename.  
+    //get text from file.  
+    let text = "";
+    
+    //need better check here.  
+    if (file && (file.type.startsWith("text/") || file.type.endsWith("/json"))){
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          document.getElementById('fullDocument').value = e.target.result;
+          text = e.target.result;
+          //use JSON possibly for other things.  
+          if (file.type.endsWith("/json")){
+            try {
+                let json = JSON.parse(text);
+                console.log("Parsed JSON:", json);
+            } catch (error) {
+                console.error("Error parsing JSON:", error);
+            }
+          }
+
+        };
+        reader.readAsText(file);
+    }    
+    else{
+        text = await processFileOCR(file);
+        document.getElementById('fullDocument').value = text;
+    }
+    recDB.saveFile(0, $('#category').val(), recname, version, file.name, $('#mycomments').val(), text, 0, null, 
+        function(res){
+            console.log(res);
+            $('#statusmessage').html('saved! ' + recname + ' ' + version + ' ' + file.name + '<br/>');
+        }
+    );
+    return text;
+
     // You can add your file processing logic here.
     // For example, you could read the file content or upload it to a server.
 }

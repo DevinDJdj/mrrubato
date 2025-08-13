@@ -1209,7 +1209,7 @@ function triggerRunAudio(lang=""){
     if (lang==""){
         lang = currentlanguage;
     }
-    if (typeof(as) !== undefined && as !==null && as[lang] !== undefined){
+    if ((typeof(as) !== 'undefined') && as !==null && as[lang] !== 'undefined'){
         as[lang].runAudio(vgetReferenceTime()); //video.js
     }
 }

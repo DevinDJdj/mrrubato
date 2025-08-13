@@ -999,6 +999,7 @@ export async function getSummary(input : string, CTX_WND: number = 5000) : Promi
             //granite-code:latest
             //codegemma:latest 
             //model: 'gemma3n:latest',
+            //model: 'gemma3:4b',
 //            model: 'granite3.3:8b',
     
             messages: [
