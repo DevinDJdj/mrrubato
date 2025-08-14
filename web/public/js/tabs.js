@@ -1,4 +1,4 @@
-function openTab(evt, tabName) {
+function openTab(evt, tabName, sizemultiplier=1) {
     // Declare all variables
     var i, tabcontent, tablinks;
   
@@ -8,7 +8,7 @@ function openTab(evt, tabName) {
     }
     else{
       usetempcodewindow = true;
-      tempcodewindow.setSize(null, 480);
+      tempcodewindow.setSize(null, 480*sizemultiplier);
     }
     // Get all elements with class="tabcontent" and hide them
     tabcontent = document.getElementsByClassName("tabcontent");

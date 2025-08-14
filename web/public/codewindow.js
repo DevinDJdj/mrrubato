@@ -2,14 +2,51 @@ var ast = "";
 var graphstr = "";
 
 
+
+function getDOTLabelsString(dotlabels){
+    dotlabels.sort((a, b) => a.key.localeCompare(b.key) || a.depth - b.depth);
+    let dotstr = "";
+    for (let i = 0; i < dotlabels.length-1; i++) {
+        let dl = dotlabels[i];
+        let dl2 = dotlabels[i+1];
+        if (dl.key == dl2.key){
+            //splice them together
+            dl2.width += dl.width;
+            dotlabels.splice(i, 1);
+            i--;
+        }
+    }
+    for (let i = 0; i < dotlabels.length; i++) {
+        let dl = dotlabels[i];
+//        dotstr += dotlabels[i] + "\n";
+
+        let size = dl.width || 1; //default size to 1 if not specified
+        if (size < 1){
+            size = 1; //minimum size
+        }
+        else if (size > 8){
+            size = 8; //maximum size
+        }
+        size = size*5;
+        size += dl.depth*5; //add depth to size
+        let color = getColorFromSequence(dl.depth, "hex"); //drawkeyboard.js
+        dotstr += `${dl.lakey} [label="${dl.key}", fillcolor="${color}", fontsize=${size}];\n`;      // [fontsize=${size}]
+    }
+    return dotstr;
+
+}
+
 function getBookGraph(fileName, graphString){
     var dotstr = "digraph {\n";
     dotstr += 'label="40pt Graph Label"'   + "\n";
     dotstr += 'fontsize=40' + "\n";
     dotstr += 'labelloc="t"' + "\n";
     dotstr += 'labeljust="l"' + "\n";
-    let dotlabels = getBookDOTLabels();
-    dotstr += dotlabels + "\n";
+    let dotlabels = getBookDOTLabels(fileName);
+    //not sure what else we can sort by..
+    dotstr += getDOTLabelsString(dotlabels) + "\n";
+//    dotstr += dotlabels + "\n";
+    
     let dot = getBookDOT(fileName);
 
     dotstr += dot + "}\n";

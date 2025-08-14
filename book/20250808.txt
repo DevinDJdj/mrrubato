@@ -500,3 +500,27 @@ Add vectordb here.
 Files in chat are added permanently?  
 I guess this is ok.  
 
+
+Just get embedding from this
+
+embedding = engine.embeddings.create(input=text_to_embed) # Illustrative, actual method may vary
+
+
+#https://github.com/mlc-ai/web-llm/blob/main/examples/embeddings/src/embeddings.ts
+Perhaps just do this.  
+
+#https://github.com/mlc-ai/web-llm/issues/683
+
+
+**web/public/page.html
+**web/public/chata.html
+**web/public/git.js
+**web/public/codewindow.js
+Need to make selected page larger in visjs components.  
+Somewhat better.  
+
+Still need some sort of click handling.  
+**web/public/netgraph.mjs
+--importDot
+
+

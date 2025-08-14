@@ -804,14 +804,52 @@ function genLabel(topic){
   return dotlabels[topic];
 }
 
-function getBookDOTLabels(){
-  dotstr = "";
-  Object.entries(bookgraph).forEach(([key, value]) => {
-    let lakey = key;
+function getBookDOTLabels(topic="ALL", depth=2){
 
-    dotstr += `${genLabel(key)} [label="${key}"];\n`;
-  });
-  return dotstr;
+
+
+  let retarray = [];
+  if (topic=="ALL"){
+    Object.entries(bookgraph).forEach(([key, value]) => {
+    let count = bookgraph[key][key];
+
+    retarray.push({lakey: genLabel(key), key: key, depth: depth, width: 1});
+    });
+  }
+  else {
+    retarray.push({lakey: genLabel(topic), key: topic, depth: depth+1, width: (depth+1)});    
+    if (!(topic in bookgraph)){
+    }
+    else{
+
+      let count = bookgraph[topic][topic];
+      Object.entries(bookgraph[topic]).forEach(([key2, value2]) => {
+        if (topic != key2){
+          let gwidth = Math.round(value2/count/2);
+          if (!Number.isInteger(gwidth) || gwidth < 1){
+            gwidth = 1;
+          }
+          retarray.push({lakey: genLabel(key2), key: key2, depth: depth, width: gwidth});
+          if (gwidth > 1 && depth > 1){
+
+            retarray.push(...(getBookDOTLabels(key2, depth-1)));
+          }
+        }
+      
+      });
+    }
+  }
+  if (retarray.length > 0){
+  }
+  else{
+    Object.entries(bookgraph).forEach(([key, value]) => {
+      let lakey = key;
+
+//      dotstr += `${genLabel(key)} [label="${key}"];\n`;
+      retarray.push({lakey: genLabel(key), key: key, depth: depth, width: 1    });
+    });
+  }
+  return retarray;
 }
 
 function getBookDOT(topic="ALL", depth=2){
