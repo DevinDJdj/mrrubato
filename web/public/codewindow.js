@@ -58,42 +58,47 @@ function getBookGraph(fileName, graphString){
 function getCodeGraph(fileName, codeString){
 
     graphstr = "";
-    if (fileName.endsWith(".js")){
-        let n = acornParse(codeString, {ecmaVersion: 2020});
-        graphstr = getDotString(n);
-    }
-    else if (fileName.endsWith(".mjs")){
-        let n = acornParse(codeString, {ecmaVersion: 2020, sourceType: "module"});
-        graphstr = getDotString(n);
-    }
-    else if (fileName.endsWith(".py")) {
-        ast = filbertParse(codeString);
-        console.log(ast);
-        graphstr = getDotString(ast);
-    }
-    else if (fileName.endsWith(".lisp")) {
-        //languages/lisp/test.lisp
-        graphstr = getDotString(["test1", "test2", "test3", "test4", "test5"], 2);
-    }
-    else{
-        //test this with everything else.  Probably want two graphs.  
-        graphstr = getDotString(["test1", "test2", "test3", "test4", "test5"], 2);
-        
-    }
+    try{
+        if (fileName.endsWith(".js")){
+            let n = acornParse(codeString, {ecmaVersion: 2020});
+            graphstr = getDotString(n);
+        }
+        else if (fileName.endsWith(".mjs")){
+            let n = acornParse(codeString, {ecmaVersion: 2020, sourceType: "module"});
+            graphstr = getDotString(n);
+        }
+        else if (fileName.endsWith(".py")) {
+            ast = filbertParse(codeString);
+            console.log(ast);
+            graphstr = getDotString(ast);
+        }
+        else if (fileName.endsWith(".lisp")) {
+            //languages/lisp/test.lisp
+            graphstr = getDotString(["test1", "test2", "test3", "test4", "test5"], 2);
+        }
+        else{
+            //test this with everything else.  Probably want two graphs.  
+            graphstr = getDotString(["test1", "test2", "test3", "test4", "test5"], 2);
+            
+        }
 
-    getBookGraph(fileName, graphstr);
+        getBookGraph(fileName, graphstr);
 
-    if (graphstr === "") {
-        console.log("ERROR: No graph generated");
+        if (graphstr === "") {
+            console.log("ERROR: No graph generated");
+        }
+        else{
+            netgraph = new FUNCS.NETGRAPH.NetworkGraph(document.getElementById('mynetwork'));
+            netgraph.simpleGraph(graphstr);
+            netgraph.setSelectionCallback(function(selection){
+            console.log(selection);
+            });
+        }
     }
-    else{
-        netgraph = new FUNCS.NETGRAPH.NetworkGraph(document.getElementById('mynetwork'));
-        netgraph.simpleGraph(graphstr);
-        netgraph.setSelectionCallback(function(selection){
-        console.log(selection);
-        });
+    catch (e) {
+        console.log("ERROR: " + e.toString());
+        graphstr = "ERROR: " + e.toString();
     }
-
 
 
 }

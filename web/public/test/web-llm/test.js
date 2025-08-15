@@ -12,14 +12,6 @@ const messages = [
 const availableModels = webllm.prebuiltAppConfig.model_list.map(
   (m) => m.model_id,
 );
-let selectedModel = "Llama-3.2-1B-Instruct-q4f16_1-MLC";
-//selectedModel = "DeepSeek-R1-Distill-Qwen-7B-q4f16_1-MLC";
-//selectedModel = "DeepSeek-R1-Distill-Qwen-1.5B-q4f16_1-MLC"; //this will be faster/better.  
-//selectedModel = "TinyLlama-1.1B-Chat-v0.4-q4f16_1-MLC";
-//selectedModel = "Qwen2.5-Coder-7B-Instruct-q4f32_1-MLC";
-selectedModel = "gemma-2-2b-it-q4f32_1-MLC"; //See if we can use this?  
-
-let embedModel = "snowflake-arctic-embed-m-q0f32-MLC-b4";
 // Callback function for initializing progress
 function updateEngineInitProgressCallback(report) {
   console.log("initialize", report.progress);

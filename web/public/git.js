@@ -23,8 +23,6 @@ const GIT_DB = 8;
 
 var gitnature = GIT_CODE | GIT_DETAILS; //do we retrieve history and commits?  
 
-var currenttopic = "NONE";
-var selectedtopic = "NONE";
 var currenttopicline = 0;
 var currentrefline = 0;
 var currentref = "NONE";
@@ -171,13 +169,15 @@ function gitDownloadCommits(data, qpath=null){
           tempdate = new Date(commitdata.commit.committer.date);
           tempdate.setMinutes(tempdate.getMinutes()+commitdata.files[i].changes);
           tag = { v: commitdata.files[i].filename, p: { link: commit.html_url }};
+//          committag = {v: commitdata.files[i].patch, p: {link: commit.html_url}};
           var aTag = document.createElement('a');
           aTag.setAttribute('href',commit.html_url);
           aTag.innerText = " " + commitdata.files[i].filename;
           aTag.innerText += " " + commitdata.commit.committer.date;
 
           console.log(tag);
-          obj = [ tag, commitdata.files[i].filename, mydate, tempdate ];
+          //strings need to come before other?  
+          obj = [ tag, commitdata.files[i].filename, commitdata.files[i].patch, mydate, tempdate ];
           //getIterations(vid.snippet.description, vid.snippet.publishedAt) ];
           console.log(obj);
           myarray.push(obj);
@@ -225,6 +225,7 @@ function gitChartCommits(myarray, qpath=null){
 	dataTableGit.addColumn({ type: 'string', id: 'Name' });
 //	dataTableGit.addColumn({type: 'string', id: 'Label' });
 	dataTableGit.addColumn({type: 'string', role: 'tooltip', 'p': {'html': true}});
+	dataTableGit.addColumn({ type: 'string', id: 'content' });
 	dataTableGit.addColumn({ type: 'date', id: 'DatePlayed' });
 	dataTableGit.addColumn({ type: 'date', id: 'DateEnded' });
 	
@@ -243,6 +244,24 @@ function gitChartCommits(myarray, qpath=null){
 
   google.visualization.events.addListener(chart, 'ready', readyHandlerGit);
   google.visualization.events.addListener(chart, 'select', selectHandlerGit);
+  google.visualization.events.addListener(chart, 'onmouseover', function(event) {
+    if (event.row !== undefined) {
+        var rowData = dataTableGit.getRowProperties(event.row);
+        var content = dataTableGit.getValue(event.row, 2);
+        var name = dataTableGit.getValue(event.row, 1);
+//        var link = dataTableGit.getValue(event.row, 2);
+        console.log('Mouseover on:', name, 'with: ', content);
+        mouseOverGit(content, name);
+
+        // You can add custom tooltip or visual effects here
+    }
+});
+  google.visualization.events.addListener(chart, 'onmouseout', function(event) {
+    if (event.row !== undefined) {
+      mouseOutGit("", "");
+    }
+  });
+
   chart.draw(dataTableGit, optionsGit);
 
 }
@@ -468,7 +487,7 @@ function creategitStruct(){
     loadTopic(gitbook[gitbook.length-1].d);
 
     if (gitnature & GIT_DETAILS){ //double use here.  
-      loadTopicGraph(gitstruct["alltopics"]);
+      loadTopicGraph(gitstruct["alltopics"], gitnature & GIT_RELATIONS ? "page" : "book");
       //for now only on load.  
       updateTimelineBook(gitstruct["bydate"]);
     }
@@ -959,15 +978,15 @@ function buildTopicGraph(start, end, depth=4){
 
 }
 
-function loadTopicGraph(str){
+function loadTopicGraph(str, graphtype="book"){
   //this is input for word2vec struct.  
   //also update canvas for this.  
-  $('#windowSize').val(topicWindowSize); //set number of Bag-Of-Words to include 3 is default.  
+  if (graphtype == "book"){
+    $('#windowSize').val(topicWindowSize); //set number of Bag-Of-Words to include 3 is default.  
     $('#textdata').val(str);
 
-  
-    prepare();
-    trainModel();
+      prepare();
+      trainModel();
     $("#inbut").click(); 
 
     setTimeout(function(){
@@ -979,6 +998,10 @@ function loadTopicGraph(str){
     }, 
     30000)
       
+  }
+  else if (graphtype == "page"){
+    //using visjs for now.
+  }
 
       /*
     setTimeout(function(){$("#prepareData").click();}, 2000); 
@@ -1258,7 +1281,7 @@ function loadTopic(top){
       setTimeout(function(){
         lastspokenword = "comment";
         MyChat(default_question); //auto-query the LLM after selection.  
-      }, 5000);
+      }, 10000);
     }
 
     if (gitnature & GIT_RELATIONS){
@@ -1424,6 +1447,8 @@ function clickHandlerGit(sender) {
   }
 
   function mouseOverGit(title, content){
+    //this is actually more like title = content and content = url.  
+    //should fix this to match.  
 //    console.log('itemover event - title:', title);
 
 

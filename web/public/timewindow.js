@@ -292,6 +292,7 @@ var options = {};
     }
   };
 
+  options.height = $('#timewindow').height();
   // create a Timeline
   timeline = new vis.Timeline(container, timewindowitems, null, options);
   timeline.setGroups(vgroups);

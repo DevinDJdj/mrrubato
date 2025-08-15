@@ -523,4 +523,34 @@ Still need some sort of click handling.
 **web/public/netgraph.mjs
 --importDot
 
+**web/public/git.js
+--buildTopicGraph
+--creategitStruct
 
+Already have time here.  
+So just need to enable the timewindow, and set default, and then adjust when the window is adjusted.  
+This functionality exists for Book, I believe.  
+Do we want to recreate the git struct, I think that is fine.  
+Just buildTopicGraph.  
+Once we 
+
+**web/public/timewindow.js
+--updateTimelineBook
+
+Stop/start keys.  
+(23,22,n,23) for video playback
+(11,10,n,11) for audio playback
+n=track
+
+**web/public/git.js
+--gitChartCommits
+Need to have mouseover functionality.  
+
+
+change bookRefs?  
+should only include for this page and related?  
+Just use the digraph hrefs?  
+not sure if it is worth.  
+
+Somewhat better.  
+Still some improvement to be done for window activation etc.  

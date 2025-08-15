@@ -34,6 +34,19 @@ function formatAnswer(answer){
 
 }
 
+export function copyChat(idx){
+    //copy chat history to clipboard.  
+    var text = GetRecentSelections(true);
+    text += "@@" + chatmessages[idx].query + "\n";
+    text += "==\n" + chatmessages[idx].answer + "\n";
+    if ("sources" in chatmessages[idx]){
+        text += "$$\n" + chatmessages[idx].sources.join("\n");
+    }
+    text += "$$\n\n";
+    navigator.clipboard.writeText(text);
+    return text;
+}
+
 
 function getSourceHTML(sources, rowid){
     let allsources = '<table><tr>';

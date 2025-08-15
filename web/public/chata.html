@@ -72,6 +72,9 @@ page.html?codefile=web/public/page.html
     <script src="https://code.jquery.com/ui/1.14.1/jquery-ui.js"></script>
 
 
+    <!-- google charts -->    
+    <script src='https://apis.google.com/js/platform.js' async defer></script>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 
     <!-- code editor -->
     <script src="js/codeeditor/codemirror/lib/codemirror.js"></script>
@@ -423,13 +426,13 @@ page.html?codefile=web/public/page.html
                 <div id="temp_edit_code"> </div>
     
             </div>
-                <div id="tempcodewindow"  class="tabcontent" style="display:none;height:960px;width:800px;overflow:scroll;">
+                <div id="tempcodewindow"  class="tabcontent" style="display:none;height:960px;overflow:scroll;">
 
                 </div>
-                <div id="timewindow"  class="tabcontent" style="display:none;height:960px;width:800px;overflow:scroll;">
+                <div id="timewindow"  class="tabcontent" style="display:none;height:960px;overflow:scroll;">
         
                 </div>
-                <div id="reflinks" class="tabcontent" style="display:none;height:960px;width:800px;overflow:scroll;">
+                <div id="reflinks" class="tabcontent" style="display:none;height:960px;overflow:scroll;">
                 </div>
                 <div id="booknetwork" class="tabcontent" style="height:960px; border: 1px solid lightgray;overflow:scroll"></div>
                 <div id="mynetwork" class="tabcontent" style="display:none;height:960px; border: 1px solid lightgray;overflow:scroll"></div>
@@ -526,9 +529,13 @@ page.html?codefile=web/public/page.html
   
             </td>
           </tr>
+		  <tr>
+			<td colspan="2">
+			<div valign="bottom" id="gitchart" style="height:300px;"></div>
+			</td>
+		  </tr>
       </table>    
   </div>
-
 
   
 
@@ -642,6 +649,7 @@ var querydate = null;
                     // ...
                   });
 
+				  google.charts.load('current', {'packages':['corechart', 'timeline', 'bar']});
     
             } catch (e) {
               console.error(e);
@@ -725,7 +733,7 @@ var querydate = null;
     export function loadAll(reload = false){
 //        getVideoJson(video);
         gitSignin();
-        gitSetNature(GIT_CODE | GIT_RELATIONS);
+        gitSetNature(GIT_CODE | GIT_DETAILS | GIT_RELATIONS);
         populateGitRepos(getState('selectedgitindex')); //select repo to analyze.  
         selectGitRepo(getState('selectedgitindex')); //this loads the repo and gitstruct.  
 
@@ -836,6 +844,9 @@ var querydate = null;
         
         //download LLM.  
         setTimeout(function(){ document.getElementById("download").click(); }, 2000);
+		//initializing these UI components.  
+		setTimeout(function(){openTab(event, 'tempcodewindow', 2); }, 3000);
+		setTimeout(function(){openTab(event, 'timewindow'); }, 4000);
 
       }
       FUNCS.loadAll = loadAll;
@@ -1090,6 +1101,11 @@ function ChatLocal(transcript){
         
     }
 
+
+	function zoomTopic(top){
+		//highlight this topic in the components.  Use the background coloring.  
+
+	}
 
 </script>
 
