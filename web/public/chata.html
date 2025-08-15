@@ -906,6 +906,7 @@ function ChatLocalDone(answer){
     var img = document.getElementById('thinkingchat');
     img.style.visibility = "hidden";
 
+	//add date variables here.  
     tospeak = FUNCS.CHAT.addChatRow(FUNCS.CHAT.getLastQuery(), answer, localprompt, codefile, []);
     tospeak = tospeak.slice(lastread);
     lastread = 0;
@@ -980,16 +981,26 @@ function ChatBuildContext(context){
 
 
     files = [];
+	getgitSelected(currenttimelinestart, currenttimelineend); //get selected git files.  this will be used to get the context.);
     for (gi = gitbook.length-1; gi>-1; gi--){
         fn = FUNCS.CHAT.getFileName(gitbook[gi].url);
-        if (fn == "definitions" || mycontext.length + gitbook[gi].content.length < MAX_LOCAL_QUERY_LENGTH/2){
+
+        if (fn == "definitions" || (gitbook[gi].selected)){
 
             files.push(gitbook[gi].url);
             if (fn == "definitions"){
                 definitions = "**" + fn + "\n" + gitbook[gi].content + "\n\n";
             }
             else{
-                mycontext = "**" + fn + "\n" + gitbook[gi].content + "\n\n" + mycontext;
+
+				//length calc
+				let maxlength = MAX_LOCAL_QUERY_LENGTH/2 - mycontext.length + Math.random()*1000; //leave some space for other content.  
+				if (maxlength < 0){
+					//cant break here, in case we didnt get definitions yet.  
+				}
+				else{
+	                mycontext = "**" + fn + "\n" + getTopicDate(gitbook[gi].d, maxlength) + "\n\n" + mycontext;
+				}
             }
         }
         

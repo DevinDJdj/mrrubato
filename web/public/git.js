@@ -189,6 +189,19 @@ function gitDownloadCommits(data, qpath=null){
 
 
       }
+      else{
+        console.log("Already exists: " + exists);
+        //update the date and changes.  
+        //create a myarray entries.  
+        for (e of exists){
+          tag = { v: e.filename, p: { link: e.url }};
+          tempdate = new Date(e.d);
+          tempdate.setMinutes(tempdate.getMinutes()+e.changes);
+
+          myarray.push([tag, e.filename, e.patch, e.d, tempdate]);
+        }
+      }
+
     }
     setTimeout(function (){if (myarray.length > 0) {gitChartCommits(myarray, qpath);if (typeof(updateTimeline) !=='undefined'){ updateTimeline(qpath); updateGitIndex(qpath);}} }, 5000);
   }
@@ -445,6 +458,7 @@ function parsegitBook(gb){
         gitstruct["bytopic"][currenttopic] = [];
       }
       gitstruct["bytopic"][currenttopic].push(content); //ordered by date.  
+
 
       gitstruct["bydate"][gb.d].push(content);
       currenttopic = str.slice(2).split(" ")[0];
@@ -739,13 +753,13 @@ function getgitSelected(start, end){
   //return books selected as well as commits selected.  
   console.log(start);
   console.log(end);
-  var dstart = new Date(start *1000).toISOString().slice(0,10);
-  dstart = dstart.replace('-', '');
-  var dend = new Date(end*1000).toISOString().slice(0,10);
-  dend = dend.replace('-', '');
+//  var dstart = new Date(start *1000).toISOString().slice(0,10);
+//  dstart = dstart.replace('-', '');
+//  var dend = new Date(end*1000).toISOString().slice(0,10);
+//  dend = dend.replace('-', '');
   var numselected = 0;
   for (i=0; i<gitbook.length; i++){
-    if (gitbook[i].d >= dstart && gitbook[i].d <= dend){
+    if (gitbook[i].d >= start && gitbook[i].d <= end){
       gitbook[i].selected = true;
       numselected++;
     }
@@ -1198,6 +1212,42 @@ function gitSetNature(m){
   gitnature = m;
 }
 
+function getTopicDate(d, weight=1, maxlength=1000){
+  var cont = "";
+  if (weight > 1){
+    weight = 1; //max weight is 1.
+  }
+  if (weight < 0.01){
+    weight = 0.01; //min weight is 0.01.
+  }
+  if (d > currenttimelineend || d < currenttimelinestart){
+    return ""; //not in time window.
+  }    
+
+  if (d in gitstruct["bydate"]){
+    //calculate probability to include this topic entry.  
+    //start with most recent and go backwards.
+    for (i=gitstruct["bydate"][d].length-1; i>-1; i--){
+      if (gitstruct["bydate"][d][i].d >= currenttimelinestart && gitstruct["bydate"][d][i].d <= currenttimelineend){
+        //only include if in time window.
+        if (Math.random() < weight){
+          cont = "$$" + gitstruct["bydate"][ d ][i].d + "\n" + gitstruct["bydate"][d][i].content + "\n" + cont;
+          weight *= weight; //reduce exponentially.  
+        }
+        if (weight < 0.00001 || cont.length > maxlength){
+          //stop if weight is too low or content is too long.  
+          break;
+
+        }
+      }
+    }
+    return cont; //return context for this topic.
+  }
+  else{
+    return "";  //no context for this topic.
+  }
+
+}
 
 function getTopicContext(top, weight=1, maxlength=1000){ //weight 0.99 ~ 1000, 0.9 ~ 100, 0.8 ~ 50, 0.6 ~ 20, 0.4 ~ 10, 0.2 ~ 5
     //get context for this topic.

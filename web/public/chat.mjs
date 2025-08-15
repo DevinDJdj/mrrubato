@@ -37,6 +37,8 @@ function formatAnswer(answer){
 export function copyChat(idx){
     //copy chat history to clipboard.  
     var text = GetRecentSelections(true);
+    text += "$$" + chatmessages[idx].start + "\n";
+    text += "$$" + chatmessages[idx].end + "\n";
     text += "@@" + chatmessages[idx].query + "\n";
     text += "==\n" + chatmessages[idx].answer + "\n";
     if ("sources" in chatmessages[idx]){
@@ -99,7 +101,8 @@ export function addChatHistory(query, context, prompt="", topic="", sources=[]){
 }
 
 export function addChatRow(query, answer, prompt="", topic="", sources=[]) {
-    chatmessages.push({"query": query, "answer": answer});
+    //currenttimelinestart and currenttimelineend from timewindow.js
+    chatmessages.push({"query": query, "answer": answer, "start": currenttimelinestart, "end": currenttimelineend});
     let fanswer = formatAnswer(answer);
     var t = document.getElementById("ChatTable");
     var rows = t.getElementsByTagName("tr");
@@ -117,6 +120,8 @@ export function addChatRow(query, answer, prompt="", topic="", sources=[]) {
     }
     r.cells[0].innerHTML = ChatID;
     r.cells[1].innerHTML = '<a href="#" onclick="FUNCS.CHAT.copyChat(' + (chatmessages.length-1) + ');">@@</a>' + query;
+    r.cells[1].innerHTML += '<br><font color="blue">**' + selectedtopic + '</font>';
+    r.cells[1].innerHTML += '<br><font color="green">$$' + currenttimelinestart + '-' + currenttimelineend + '</font>';
     if (ChatID%2==0){
 
         r.cells[2].innerHTML = "@@" + query + '<br><font color="red">==<br>' + fanswer + '</font>';

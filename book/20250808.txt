@@ -554,3 +554,11 @@ not sure if it is worth.
 
 Somewhat better.  
 Still some improvement to be done for window activation etc.  
+
+Probably want most recent comments up top.  
+Also the git/book mode not working.  
+
+**web/public/chata.html
+--ChatBuildContext
+Need to add date selection, and if it is over context length, just take part of the file.  
+
