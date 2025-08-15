@@ -562,3 +562,33 @@ Also the git/book mode not working.
 --ChatBuildContext
 Need to add date selection, and if it is over context length, just take part of the file.  
 
+...
+
+Need to pay more attention to folder structure.  
+
+**book/glossary.txt
+A = Analyze / Analytics
+B = Backup / Book
+C = Config / Chat / codewindow
+D = DB / Debug / Data
+E = extension
+F = Feedback 
+G = generate / Git / Grammar / Game
+H = History
+I = install
+J = JS tools
+K = Keymap
+L = Language
+M = Music / Midi / Mic / Meta
+N = News / netgraph
+O = ollama
+P = Play / Page 
+R = Record / Recent 
+S = Stats / Search / Server / Speech
+T = Timestep / Test / Tags / TTS
+U = users
+V = Visualize / Video
+
+
+
+**gitcontrol.js

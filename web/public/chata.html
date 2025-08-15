@@ -771,9 +771,14 @@ var querydate = null;
         midicontroller.setupMidi();
         midicontroller.midisetcallbacks(mymidicallback, updateFeedbackUI);
         midicontroller.setupWebMidi();
-        reinitLanguages();
+
+		//need better mechanism.  
+		USE_FIREBASE = false; //dont use firebase for now with chata.html
+
+		reinitLanguages();
         loadUserConfig();
-        loadDictionaries(0);
+		//load audiocontrol and gitcontrol dictionaries.  
+        loadDictionaries(0, ["audiocontrol", "gitcontrol"]);
 
 
         $("#ask-current-question").click(function(){

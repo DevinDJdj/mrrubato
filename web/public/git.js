@@ -14,6 +14,8 @@ var gitcurrentcontents = "";
 var gitcurrentbook = "";
 var gitcurrentcontentstype = "javascript";
 var gitcurrentscrollinfo = null;
+var gitcurrentcommitidx = 0; //which commit are we looking at?
+var commitTableGit = null;
 
 const GIT_BOOK = 0; //always get book.  Load from DB eventually.  
 const GIT_CODE = 1;
@@ -134,7 +136,9 @@ function updateGitIndex(fn=null){
 
 
 function gitDownloadCommits(data, qpath=null){
-   var myarray = [];
+   uicommitsarray = []; //for now resetting, but can go ahead and combine commit arrays.  
+   //probably will get messy, and dont have the UI Space anyway.  
+
 	//lets limit the number we display.  
 	totalcnt = 100;
     for (j=0; j<data.length && j< totalcnt; j++){
@@ -180,7 +184,7 @@ function gitDownloadCommits(data, qpath=null){
           obj = [ tag, commitdata.files[i].filename, commitdata.files[i].patch, mydate, tempdate ];
           //getIterations(vid.snippet.description, vid.snippet.publishedAt) ];
           console.log(obj);
-          myarray.push(obj);
+          uicommitsarray.push(obj);
           gitcommits.push({"url": data[this.indexValue].html_url, "patch": commitdata.files[i].patch, "filename": commitdata.files[i].filename, "changes": commitdata.files[i].changes, "d": mydate, "selected": true});
           //timewindow.js
         }
@@ -192,28 +196,41 @@ function gitDownloadCommits(data, qpath=null){
       else{
         console.log("Already exists: " + exists);
         //update the date and changes.  
-        //create a myarray entries.  
+        //create a uicommitsarray entries.  
         for (e of exists){
           tag = { v: e.filename, p: { link: e.url }};
           tempdate = new Date(e.d);
           tempdate.setMinutes(tempdate.getMinutes()+e.changes);
 
-          myarray.push([tag, e.filename, e.patch, e.d, tempdate]);
+          uicommitsarray.push([tag, e.filename, e.patch, e.d, tempdate]);
         }
       }
 
     }
-    setTimeout(function (){if (myarray.length > 0) {gitChartCommits(myarray, qpath);if (typeof(updateTimeline) !=='undefined'){ updateTimeline(qpath); updateGitIndex(qpath);}} }, 5000);
+    setTimeout(function (){if (uicommitsarray.length > 0) {gitChartCommits(uicommitsarray, qpath);if (typeof(updateTimeline) !=='undefined'){ updateTimeline(qpath); updateGitIndex(qpath);}} }, 5000);
   }
 
-function gitChartCommits(myarray, qpath=null){
+  function uiCommit(commitidx){
+    console.log(commitidx);    
+    gitcurrentcommitidx = commitidx;
+    var content = commitTableGit.getValue(commitidx, 2);
+    var name = commitTableGit.getValue(commitidx, 1);
+//        var link = dataTableGit.getValue(event.row, 2);
+    console.log('Mouseover on:', name, 'with: ', content);
+    mouseOverGit(content, name);
+  } 
+
+
+function gitChartCommits(qpath=null){
   var img = document.getElementById('thinkinggit');
   img.style.visibility = "hidden";
 
+  //we can reinitialize and keep the old data from uicommitsarray.  
+  //should be fine, not too many entries.  
 	var container = document.getElementById('gitchart');
 	gitchart = new google.visualization.Timeline(container);
 	chart = gitchart;
-	dataTableGit = new google.visualization.DataTable();
+	commitTableGit = new google.visualization.DataTable();
     optionsGit = {
 	     height: 300,
          title: 'Git',
@@ -235,22 +252,22 @@ function gitChartCommits(myarray, qpath=null){
        };
 	   
 	   
-	dataTableGit.addColumn({ type: 'string', id: 'Name' });
+	commitTableGit.addColumn({ type: 'string', id: 'Name' });
 //	dataTableGit.addColumn({type: 'string', id: 'Label' });
-	dataTableGit.addColumn({type: 'string', role: 'tooltip', 'p': {'html': true}});
-	dataTableGit.addColumn({ type: 'string', id: 'content' });
-	dataTableGit.addColumn({ type: 'date', id: 'DatePlayed' });
-	dataTableGit.addColumn({ type: 'date', id: 'DateEnded' });
+	commitTableGit.addColumn({type: 'string', role: 'tooltip', 'p': {'html': true}});
+	commitTableGit.addColumn({ type: 'string', id: 'content' });
+	commitTableGit.addColumn({ type: 'date', id: 'DatePlayed' });
+	commitTableGit.addColumn({ type: 'date', id: 'DateEnded' });
 	
 //	dataTable.addColumn({ type: 'number', id: 'Iterations' });
 //	dataTable.addColumn({ type: 'number', id: 'Duration' });
 	
 //	dataTable.addColumn({ type: 'number', id: 'Iteration#' });
 //    myarray = await gitDownloadCommits(data);
-	dataTableGit.addRows(myarray);
+	commitTableGit.addRows(uicommitsarray);
 
 
-//	console.log(myarray);
+//	console.log(uicommitsarray);
 
 
 
@@ -259,23 +276,19 @@ function gitChartCommits(myarray, qpath=null){
   google.visualization.events.addListener(chart, 'select', selectHandlerGit);
   google.visualization.events.addListener(chart, 'onmouseover', function(event) {
     if (event.row !== undefined) {
-        var rowData = dataTableGit.getRowProperties(event.row);
-        var content = dataTableGit.getValue(event.row, 2);
-        var name = dataTableGit.getValue(event.row, 1);
-//        var link = dataTableGit.getValue(event.row, 2);
-        console.log('Mouseover on:', name, 'with: ', content);
-        mouseOverGit(content, name);
+        uiCommit(event.row);
 
         // You can add custom tooltip or visual effects here
     }
 });
   google.visualization.events.addListener(chart, 'onmouseout', function(event) {
     if (event.row !== undefined) {
-      mouseOutGit("", "");
+      //mouseOutGit("", "");
+      //UI doesnt allow for easy contro..  
     }
   });
 
-  chart.draw(dataTableGit, optionsGit);
+  chart.draw(commitTableGit, optionsGit);
 
 }
 
@@ -1485,12 +1498,12 @@ function getGitCommits(qdate=null, qpath=null){
 
 function clickHandlerGit(sender) {
     var rowLabel = sender.target.textContent;
-    var dataRows = dataTableGit.getFilteredRows([{
+    var dataRows = commitTableGit.getFilteredRows([{
       column: 0,
       value: rowLabel
     }]);
     if (dataRows.length > 0) {
-      var link = dataTableGit.getProperty(dataRows[0], 0, 'link');
+      var link = commitTableGit.getProperty(dataRows[0], 0, 'link');
 	  console.log(link);
       window.open(link, '_blank');
     }
@@ -1565,8 +1578,8 @@ function clickHandlerGit(sender) {
 //		var item = selection[i];
 		console.log("Selection");
 		console.log(selection);
-		console.log(dataTableGit.getValue(selection[0].row, 1));
-      var link = dataTableGit.getProperty(selection[0].row, 0, 'link');
+		console.log(commitTableGit.getValue(selection[0].row, 1));
+      var link = commitTableGit.getProperty(selection[0].row, 0, 'link');
 	  console.log(link);
       //add mouseover to show the change and 
       window.open(link, '_blank');

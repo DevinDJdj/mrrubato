@@ -24,5 +24,15 @@ var ALL_LANGS = {
         "midi": "1,13,1",
         "updated": 20250714
     },
+    "audiocontrol": {
+        "created": 20250815,
+        "midi": "13,1,13",
+        "updated": 20250714
+    },
+    "gitcontrol": {
+        "created": 20250815,
+        "midi": "1,4,7",
+        "updated": 20250714
+    },
 
 };

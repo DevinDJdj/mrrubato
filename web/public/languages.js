@@ -1074,7 +1074,9 @@ function loadDictionaries(user=0, langstoload=[]){
         langstoload.push("base");
     }
     langstoload.forEach(function(lang){
-        loadLanguage(lang, user);
+        //I think we need this instead.  
+        initLangData(lang, user);        
+//        loadLanguage(lang, user);
     });    
 
 /*
