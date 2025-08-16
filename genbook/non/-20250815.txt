@@ -1,0 +1,50 @@
+**git/clone.py
+$$20250716
+$$20250816
+@@What are you doing?
+==
+**definitions**:
+* Defines the terms "WORK" and "BOOK" to describe the entirety of what the developer does and shares.
+* Defines the terms "ACT" and "MAP" to describe the different types of sections in the code.
+
+**ACT**:
+* Describes the different types of periods of time (e.g. day, week, month) to describe the different types of sections in the code.
+* Suggests that the developer should pay attention to the sequence of events in the code.
+
+**MAP**:
+* Describes the different types of sections in the code (e.g. top, new, etc.).
+* Suggests that the developer should pay attention to the mapping between the top and new sections.
+
+**Definitions**:
+* Defines the terms "KEYS" and "v/scode" to describe the environment and the developer's tools.
+* Defines the terms "TOPIC" and "MAP" to describe the different types of sections in the code.
+
+**Definitions**:
+* Defines the terms "KEYS" and "v/scode" to describe the environment and the developer's tools.
+* Defines the terms "TOPIC" and "MAP" to describe the different types of sections in the code.
+
+**Definitions**:
+* Defines the terms "KEYS" and "v/scode" to describe the environment and the developer's tools.
+* Defines the terms "TOPIC" and "MAP" to describe the different types of sections in the code.
+
+**Definitions**:
+* Defines the terms "KEYS" and "v/scode" to describe the environment and the developer's tools.
+* Defines the terms "TOPIC" and "MAP" to describe the different types of sections in the code.
+
+**Definitions**:
+* Defines the terms "KEYS" and "v/scode" to describe the environment and the developer's tools.
+* Defines the terms "TOPIC" and "MAP" to describe the different types of sections in the code.
+
+**Definitions**:
+* Defines the terms "KEYS" and "v/scode" to describe the environment and the developer's tools.
+* Defines the terms "TOPIC" and "MAP" to describe the different types of sections in the code.
+
+**Definitions**:
+* Defines the terms "KEYS" and "v/scode" to describe the environment and the developer's tools.
+* Defines the terms "TOPIC" and "MAP" to describe the different types of sections in the code.
+
+**Definitions**:
+* Defines
+$$
+
+

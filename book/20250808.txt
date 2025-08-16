@@ -592,3 +592,39 @@ V = Visualize / Video
 
 
 **gitcontrol.js
+Basic language for browsing through git commits.  
+
+**web/public/chata.html
+!!Several times GPU is crashing.  Not sure what initiated.  
+
+Have added basic <gitcontrol> and <audiocontrol>.  
+
+**web/public/languages.js
+--getFullPiano
+--labelDicRedraw
+
+
+**web/public/chata.html
+Finish vector ingestion for transcripts.  
+Load videos from timewindow period.  
+When this changes, update the videos.  
+Or perhaps just when an object is selected.  
+Find videos from the time periods of the commits.  
+
+
+
+
+**web/public/rec.html
+Need to allow for selection and positioning and alpha overlay of cameras.  
+When rec is done, run the local transcription.  
+
+Also add QR code to the recording screen and adjust this as time goes..
+
+Can we have a hotkey to zoom the browser.  
+
+document.body.style.zoom = "80%";
+
+
+#https://blog.qr4.nl/page/QR-Code-Data-Capacity.aspx
+
+

@@ -821,9 +821,10 @@ function populateVoiceList() {
       document.getElementById("voiceSelect").appendChild(option);
     }
     if (voices.length > 2){
+        //this should be a setting.  
         let userAgentString = navigator.userAgent
         if (userAgentString.indexOf("Chrome") > -1){
-            $("#voiceSelect")[0].selectedIndex = 2; //dont like the default voice.  
+            $("#voiceSelect")[0].selectedIndex = 3; //dont like the default voice.  
         }
         else{
             $("#voiceSelect")[0].selectedIndex = 1; //dont like the default voice.  

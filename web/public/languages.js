@@ -846,19 +846,35 @@ function labelDicRedraw(){
     var context = fullpcanvas_labels.getContext("2d");
     context.clearRect(0, 0, fullpcanvas_labels.width, fullpcanvas_labels.height);
     //pull all languages used.  
-    labelDic(currentlanguage);
-    labelDic("meta");
+    botcounter = {};
+
+    for (const [key, value] of Object.entries(keybot)) {
+        if (typeof(botcounter[value]) === "undefined"){
+            botcounter[value] = 0;
+        }
+        else{
+            botcounter[value] += 1;
+        }
+        labelDic(key, botcounter[value]); //anything we have a keybot for.  
+    }
+//    labelDic(currentlanguage);
+//    labelDic("meta");
 }
 
-function labelDic(lang){
+function labelDic(lang, idx=0){
     let fullpcanvas_labels = document.getElementById("fullpcanvas_labels");    
     var context = fullpcanvas_labels.getContext("2d");
     context.fillStyle = "red";
     context.font = "bold 12px Arial";
     context.textAlign = 'left';
     x = keybot[lang];
-    y = 16;
-    context.fillText("     " + lang, ((x+3)/88)*fullpcanvas_labels.width, y);
+    y = 12;
+    filltext = "";
+    for (i=0; i<Math.floor(idx/2)*2+idx%2; i++){
+        filltext += "        ";
+
+    }
+    context.fillText(filltext + lang, ((x+3)/88)*fullpcanvas_labels.width, y+(idx%2)*8);
     context.strokeStyle = "red";
     context.lineWidth = 2;
     context.beginPath();
@@ -881,8 +897,8 @@ function getFullPiano(midikeys=null, midikeys2=null){
     }
     DrawKeyboard(fullpcanvas, RedKeys);
 
-    labelDic("meta");
-    labelDic(currentlanguage);
+    labelDicRedraw();
+
 
 //    const img    = pcanvas.toDataURL('image/png');
 //    document.getElementById("generatedkeys4").src = img4;

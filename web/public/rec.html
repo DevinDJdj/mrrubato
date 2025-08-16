@@ -118,7 +118,18 @@
         </td>
     </tr>
     </table>
-    <h3>SCREEN RECORDING</h3>
+    <table>
+        <tr>
+            <td>
+                <h3>SCREEN RECORDING</h3>
+
+            </td>
+            <td>
+                <div id="qrgenerator"></div>
+            </td>
+        </tr>
+
+    </table>
     <video id="myrecordfeedback" controls autoplay playsinline width="960" height="540"></video>
 <br>
 <h3>SCREEN RECORDING control</h3>
@@ -402,6 +413,9 @@
         <script src="js/drawkeyboard.js"></script>
 
 
+        <!-- QR  -->
+        <script src="js/qrcode.js"></script>
+        <script src="qr.js"></script>
     <!-- clock -->
     <script src="clock.js"></script>
 
@@ -936,19 +950,30 @@ document.getElementById('btn-start-recording').onclick = function() {
 
 captureScreen(function(screen) {
     keepStreamActive(screen);
+    //set up qr code on screen.  
     captureCamera(function(camera) {
         keepStreamActive(camera);
+        var myqr = getQR(category + ":" + fname + ":" + version);
+
+        var qrscreen = myqr.captureStream(30);
+        keepStreamActive(qrscreen);
 
         screen.width = window.screen.width;
         screen.height = window.screen.height;
         screen.fullcanvas = true;
         
         camera.width = 160;
-        camera.height = 120;
+        camera.height = 128;
         camera.top = screen.height - camera.height - 100;
         camera.left = screen.width - camera.width;
+
+        qrscreen.top = screen.height - camera.height - 250;
+        qrscreen.left = screen.width - camera.width;
+        qrscreen.width = myqr.width*2;
+        qrscreen.height = qrscreen.width;
+
         
-        recorder = RecordRTC([screen, camera], {
+        recorder = RecordRTC([screen, camera, qrscreen], {
             type: 'video',
             mimeType: 'video/webm',
             previewStream: function(s) {
@@ -969,7 +994,7 @@ captureScreen(function(screen) {
 				video.srcObject = null;
 				video.src = URL.createObjectURL(blob);
 				video.muted = true;
-                [screen, camera].forEach(function(stream) {
+                [screen, camera, qrscreen].forEach(function(stream) {
                     stream.getTracks().forEach(function(track) {
                         track.stop();
                     });
