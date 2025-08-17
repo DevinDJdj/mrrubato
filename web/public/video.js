@@ -211,14 +211,20 @@ function setVideoVolume(volume){
   }
 
   function drawVideo(){
-    var canvas = document.getElementById("myvideocanvas");
-    var ctx = canvas.getContext("2d");
+    let canvas = document.getElementById("myvideocanvas");
+    let ctx = canvas.getContext("2d");
     if (useyoutube || watch){
     }
     else{
-      ctx.drawImage(player2, 0, 0, canvas.width, canvas.height);
+      player = player2;
+      if (typeof(player) === 'undefined'){
+        //hack for feedback video. rec.html
+        player = document.getElementById("myrecordfeedback");
+      }
+      ctx.drawImage(player, 0, 0, canvas.width, canvas.height);
 
       //test overlay
+      ctx.globalAlpha = 0.5;
       ctx.beginPath(); // Start a new path
       ctx.rect(10, 40, 100, 150); // Add a rectangle to the current path
       ctx.fill(); // Render the path
@@ -226,7 +232,6 @@ function setVideoVolume(volume){
       ctx.fillStyle = 'black';
 
       // Set the global alpha value (0 = fully transparent, 1 = fully opaque)
-      ctx.globalAlpha = 0.5;
 
       // Draw the text
       ctx.fillText(currenttranscriptentry, 50, 10);
@@ -245,6 +250,14 @@ function setVideoVolume(volume){
         }
       }
 
+      let hcanvas = document.getElementById("myhiddencanvas");
+      if (hcanvas == null){
+      }
+      else{
+        let hctx = hcanvas.getContext("2d");
+        hctx.globalAlpha = 0.4;
+        hctx.drawImage(canvas, 0, 0, hcanvas.width, hcanvas.height);
+      }
       requestAnimationFrame(drawVideo);
     }
 

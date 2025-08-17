@@ -125,14 +125,20 @@
 
             </td>
             <td>
-                <div id="qrgenerator"></div>
-            </td>
+                <canvas id="qrscreen"></div>
+
+                </td>
         </tr>
 
     </table>
+    <label style="color:red" id="statusmessage"></label>
+    <canvas id="myhiddencanvas" width="960" height="540" style="display: none">Your browser does not support the HTML5 canvas tag.</canvas>
+    <canvas id="myvideocanvas" width="960" height="540" style="display: none">Your browser does not support the HTML5 canvas tag.</canvas>
+
     <video id="myrecordfeedback" controls autoplay playsinline width="960" height="540"></video>
+    
 <br>
-<h3>SCREEN RECORDING control</h3>
+<h3>RECORDING Control</h3>
 <button id="btn-start-recording">Record</button>
 <button id="btn-stop-recording" disabled>Stop Recording</button>
 <button id="btn-pause-recording" disabled>Pause Recording</button>
@@ -142,7 +148,6 @@
 <button id="btn-set-pat" onclick="setAccessToken()">Set Access Token</button>
 <a href="https://wikistage.company.com/plugins/personalaccesstokens/usertokens.action" target="_new"><img src="images/edit.png" height="16px"/></a>
 <br>
-<label style="color:red" id="statusmessage"></label>
 
 </td>
 <td valign="top">
@@ -952,33 +957,76 @@ captureScreen(function(screen) {
     keepStreamActive(screen);
     //set up qr code on screen.  
     captureCamera(function(camera) {
-        keepStreamActive(camera);
-        var myqr = getQR(category + ":" + fname + ":" + version);
-
-        var qrscreen = myqr.captureStream(30);
-        keepStreamActive(qrscreen);
-
         screen.width = window.screen.width;
         screen.height = window.screen.height;
+//        screen.top = 0;
+//        screen.left = 0;
         screen.fullcanvas = true;
-        
+
         camera.width = 160;
         camera.height = 128;
         camera.top = screen.height - camera.height - 100;
         camera.left = screen.width - camera.width;
 
-        qrscreen.top = screen.height - camera.height - 250;
-        qrscreen.left = screen.width - camera.width;
-        qrscreen.width = myqr.width*2;
-        qrscreen.height = qrscreen.width;
-
+        keepStreamActive(camera);
+        let canvas = document.getElementById("myvideocanvas");
+        canvas.style.display = 'block';
+        canvas.style.position = 'absolute';
+        requestAnimationFrame(drawVideo);
         
-        recorder = RecordRTC([screen, camera, qrscreen], {
+
+        let mf = document.getElementById("myrecordfeedback");
+
+        const rect = mf.getBoundingClientRect();
+//        mf.style.display = 'none';
+        canvas.style.top = 0;
+        canvas.style.left = 0;
+        canvas.width = screen.width; //adjust to fit screen well.  
+        canvas.height = screen.height;
+
+        let hiddencanvas = document.getElementById("myhiddencanvas");
+        hiddencanvas.width = screen.width;
+        hiddencanvas.height = screen.height;
+        var myscreen = hiddencanvas.captureStream(30);
+        keepStreamActive(myscreen);
+        myscreen.top = 0;
+        myscreen.left = 0;
+//        myscreen.fullcanvas = true;
+        //infinity mirror.  
+
+        myscreen.width = screen.width;
+        myscreen.height = screen.height;
+
+        var combinedStream = new MediaStream();
+
+        // "getTracks" is RecordRTC's built-in function
+        getTracks(myscreen, 'video').forEach(function(videoTrack) {
+            combinedStream.addTrack(videoTrack);
+        });
+
+        getTracks(screen, 'video').forEach(function(videoTrack) {
+            combinedStream.addTrack(videoTrack);
+        });
+//        combinedStream.width = screen.width;
+//        combinedStream.height = screen.height;
+
+//        myscreen.top = 0;
+//        myscreen.left = 0;
+
+        //could just hide and restore the myrecordfeedback video element.
+        mf.style.display = 'none'; //hide the video element.
+        mf.srcObject = combinedStream; //set the srcObject to the combined stream.
+        myscreen.getVideoTracks()[0].enabled = true; //enable the track.
+
+        recorder = RecordRTC([combinedStream,screen,camera], {
             type: 'video',
             mimeType: 'video/webm',
             previewStream: function(s) {
-                document.querySelector('video').muted = true;
-                document.querySelector('video').srcObject = s;
+                if (s.fullcanvas) { //this is original recording.  
+                    document.querySelector('video').muted = true;
+
+                    document.querySelector('video').srcObject = combinedStream;;
+                }
             }
         });
 
@@ -994,7 +1042,7 @@ captureScreen(function(screen) {
 				video.srcObject = null;
 				video.src = URL.createObjectURL(blob);
 				video.muted = true;
-                [screen, camera, qrscreen].forEach(function(stream) {
+                [combinedStream, screen,camera].forEach(function(stream) {
                     stream.getTracks().forEach(function(track) {
                         track.stop();
                     });
@@ -1075,6 +1123,8 @@ document.getElementById('btn-draw-text').onclick = function() {
 
 document.getElementById('btn-stop-recording').onclick = function() {
     this.disabled = true;
+    var canvas = document.getElementById("myvideocanvas");
+    canvas.style.display = 'none';
     window.stopCallback();
 };
 

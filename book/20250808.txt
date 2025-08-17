@@ -627,4 +627,49 @@ document.body.style.zoom = "80%";
 
 #https://blog.qr4.nl/page/QR-Code-Data-Capacity.aspx
 
+How to add the QR to the video.  
+
+Try again using this.  
+#https://github.com/muaz-khan/RecordRTC/blob/master/simple-demos/video-mirror-recording.html
+
+--captureScreen
+We shouldnt be previewing.  
+This is a mess now, but closer to what we want.  
+Actually overlaying on the screen if possible.  
+This may be difficult, may need complexity of plugin or something.  
+I think the experience would be more natural though.  
+This may be a good tool anyway.  
+Also still not getting any opacity.  
+Could just do a small python background task.  
+
+**extensions/trey/trey.py
+Adding task bar icon, ugh messy...
+Yeah this may be important enough that we need something to draw directly.  
+Then we can draw the QR code with the info.  
+Take some previous transcripts.  As well as ENV information.  
+
+Get hotkey here to activate capture.  
+This would need to be triggered to draw on screen.  
+Open window and keep session open.  
+Then close with separate hotkey.  
+
+OK finally something close to what we want.  
+Need to move to other monitor.  
+
+See where this leads..
+
+MIDI -> Can we use to open/close?  
+trey < MIDI > QR2
+web < MIDI > QR1
+
+$$MIDITYPE ROLI | NORMAL
+$$MODE  TREY_QR | TREY_MIDI | TREY_MOUSE
+
+Detect and use generated QR to show screenshot.  
+QR as General Comm
+
+Still need to work on KEY ingestion pipeline.  
+Not great.  
+
+
 
