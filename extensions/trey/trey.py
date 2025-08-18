@@ -3,6 +3,7 @@ from PIL import Image, ImageDraw
 #pip install pystray Pillow mss PyQt5
 #pip install pynput
 #pip install qrcode
+#pip install mido python-rtmidi
 import mss
 import logging
 
@@ -10,6 +11,12 @@ from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QLabel
 from PyQt5.QtGui import QPixmap
 import sys
 import qrcode
+from pynput import keyboard
+import threading
+
+
+sys.path.insert(0, 'c:/devinpiano/') #config.json path
+sys.path.insert(1, 'c:/devinpiano/music/') #config.py path Base project path
 
 
 logger = logging.getLogger(__name__)
@@ -27,7 +34,11 @@ def create_image(width, height, color1, color2):
 
 def on_quit_action(icon, item):
     """Callback function for the 'Quit' menu item."""
+    logger.info('Stopping icon')
     icon.stop()
+    logger.info('Stopping MIDI thread')
+    midi_stop_event.set()  # Signal the MIDI thread to stop
+    logger.info('Quitting application')
     qapp.quit()
 
 def on_show_message(icon, item):
@@ -77,7 +88,6 @@ def on_activate_overlay():
     logger.info('Hotkey activated!')
 
 def setup_hotkey_listener():
-    from pynput import keyboard
 
     # Define the hotkey combination and the function to call
     # The format for hotkeys uses angle brackets for special keys (e.g., <ctrl>, <alt>)
@@ -182,6 +192,44 @@ class MyWindow(QMainWindow):
 
 
 
+def start_midi(midi_stop_event):
+    logger.info('Starting MIDI input/output')
+    import mido
+    import config 
+    import mykeys
+    inputs = mido.get_input_names()
+    print(mido.get_input_names())
+    logger.info(f'Available MIDI inputs: {inputs}')
+    outputs = mido.get_output_names()
+    print(mido.get_output_names())
+    logger.info(f'Available MIDI outputs: {outputs}')
+
+    #Portable Grand-1 2
+    #should really have some config selection here.  
+    output = mido.open_output(outputs[1]) #open first output for now.  
+    mk = mykeys.MyKeys(config.cfg)
+    cont = keyboard.Controller()    
+    with mido.open_input(inputs[0]) as inport:
+        for msg in inport:
+            if (midi_stop_event.is_set()):
+                logger.info('Stopping MIDI thread')
+                break
+            if msg.type == 'note_on' or msg.type == 'note_off':
+                print(msg)
+                logger.info(f'Received MIDI message: {msg}')
+                if hasattr(msg, 'note'):
+                    note = msg.note
+                    if hasattr(msg, 'velocity'):
+                        velocity = msg.velocity
+                    else:
+                        velocity = 0
+                    #add key to sequence and check for any actions.  
+                    mk.key(note, msg)
+                else:
+                    print("Message does not have a note attribute")
+
+
+
 # Create an icon image
 icon_image = create_image(64, 64, 'blue', 'yellow')
 
@@ -221,10 +269,18 @@ logger.info('Running icon')
 #icon.run()
 icon.run_detached()
 
+
+# Create a Thread object to listedn for MIDI messages
+# Create an event
+midi_stop_event = threading.Event()
+midi_thread = threading.Thread(target=start_midi, args=(midi_stop_event,))
+midi_thread.start()
+
 logger.info('Executing application')
-qapp.exec_()
+window.hideme()
+sys.exit(qapp.exec_())
 #hiding window as we only want it on hotkey
 #window.hide()
-window.hideme()
+
 
 

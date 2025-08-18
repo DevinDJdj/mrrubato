@@ -671,5 +671,26 @@ QR as General Comm
 Still need to work on KEY ingestion pipeline.  
 Not great.  
 
+@@How much interaction with desktop PyQt5 do?  
+
+Add mido to trey.  
+
+@@Can we send messages through midi.  
+
+**mykeys.py
+Midi handler for python, started a long time ago.  
+See if we can make it cleaner than the JS implementation..
+
+Maybe we should use frequencies instead of arbitrary MIDI ids.  
+Well either one should allow for calculation.  
+
+Need to add _meta keys.  
+
+**languages/mousemovement1.py
+**config.json
+**mykeys.py
+OK, some progress with python keymap.  
+
+
 
 
