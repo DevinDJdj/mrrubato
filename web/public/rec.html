@@ -970,8 +970,8 @@ captureScreen(function(screen) {
 
         keepStreamActive(camera);
         let canvas = document.getElementById("myvideocanvas");
-        canvas.style.display = 'block';
-        canvas.style.position = 'absolute';
+//        canvas.style.display = 'block';
+//        canvas.style.position = 'absolute';
         requestAnimationFrame(drawVideo);
         
 
@@ -981,21 +981,21 @@ captureScreen(function(screen) {
 //        mf.style.display = 'none';
         canvas.style.top = 0;
         canvas.style.left = 0;
-        canvas.width = screen.width; //adjust to fit screen well.  
-        canvas.height = screen.height;
+        canvas.width = screen.width*0.8; //adjust to fit screen well.  
+        canvas.height = screen.height*0.8;
 
         let hiddencanvas = document.getElementById("myhiddencanvas");
         hiddencanvas.width = screen.width;
         hiddencanvas.height = screen.height;
         var myscreen = hiddencanvas.captureStream(30);
         keepStreamActive(myscreen);
-        myscreen.top = 0;
-        myscreen.left = 0;
+//        myscreen.top = 0;
+//        myscreen.left = 0;
 //        myscreen.fullcanvas = true;
         //infinity mirror.  
 
-        myscreen.width = screen.width;
-        myscreen.height = screen.height;
+//        myscreen.width = screen.width;
+//        myscreen.height = screen.height;
 
         var combinedStream = new MediaStream();
 
@@ -1025,7 +1025,7 @@ captureScreen(function(screen) {
                 if (s.fullcanvas) { //this is original recording.  
                     document.querySelector('video').muted = true;
 
-                    document.querySelector('video').srcObject = combinedStream;;
+                    document.querySelector('video').srcObject = combinedStream;
                 }
             }
         });
@@ -1125,6 +1125,7 @@ document.getElementById('btn-stop-recording').onclick = function() {
     this.disabled = true;
     var canvas = document.getElementById("myvideocanvas");
     canvas.style.display = 'none';
+    document.getElementById("myrecordfeedback").style.display = 'block';
     window.stopCallback();
 };
 

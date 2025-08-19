@@ -691,6 +691,112 @@ Need to add _meta keys.
 **mykeys.py
 OK, some progress with python keymap.  
 
+**extenstions/trey/trey.py
+Some problems stopping CMD line.  
+Override "languages"
+If we override, have to override all.  
+
+It is in the midi somewhere.  
+If we dont start midi, it works ok.  
+
+OK, this is fixed.  
+
+Still need to flesh out all the commands.  
+
+<settingscontrol>
+/SetTextSize [SIZE] = default font size
+
+<tagcontrol>
+/AddTag [NEXT/PREV] 
+/RemoveTag [NEXT/PREV]
+
+
+**web/public/languages/videocontrol.js
+<videocontrol>
+/Quick Screenshot = Activate panel and use Mouse for drawing.  
+/Screenshot [X1,X2,Y1,Y2]
+/AddText [NEXT/PREV,X1,Y1] = Use last transcript entry.  
+
+/Start recording
+/Stop recording
+/Save recording
+/Set Speed [T]
+/Skip [T]
+
+
+
+
+Also can we detect QR code?  
+
+Need to show NEXT and PREV transcript entries more prominently.  
+
+Create QR on web side for text and detect/display.  
+
+
+
+#https://en.wikipedia.org/wiki/Chord_notation
+
+main chord qualities are major, minor, augmented, diminished, half-diminished, and dominant
+Cmaj = 0,4,7
+Cmin = 0,3,7
+Caug = 0,4,8
+Cdim = 0,3,6
+
+Slash chords
+Cmin0 = 0,3,7
+Cmin1 = 0,4,9
+Cmin2 = 0,5,8
+maj0 = 0,4,7
+maj1 = 0,3,8
+maj2 = 0,5,9
+aug = 0,4,8
+dim = 0,3,6
+
+
+    "0,3,6": Cdim
+    "0,3,7": Cmin
+    "0,3,8": Abmaj1
+    "0,3,5": ?
+    "0,3,4": ?
+    "0,2,6": "speak", //add the last transcript entry to
+    "0,2,5": "delete", //remove last transcript entry    
+    "0,12,0": OCT
+    "12,0,12": OCT
+    "1,13,1": OCT
+    "13,1,13": OCT
+    "1,2,3": CHROMATIC
+
+
+**g3D63CoYXVE
+
+@Guido of Arezzo
+#https://en.wikipedia.org/wiki/Guido_of_Arezzo
+
+#https://musicnotation.org/systems/
+#https://musicnotation.org/system/chromatonnetz-by-joe-austin/
+~~Notes should have direction.  
+pointing toward another note and time.  
+Only forward in time though I think..
+Directionality and size representing volume.  
+
+**analyze/analyze.py
+
+Need to create a midi visualization with these aspects.  
+Keep staff lines though.  
+Default would be line to most similar volume within the next set of notes?
+
+This would be what is used instead of the staff.  
+--midiToImage
+--ngramToImage
+
+> python ./analyze/analyze.py --title  "Evil Ways (Sonny Henry)" --force true
+
+Still need to fix ngramToImage.  
+Create a better visualization.  
+Size and directionality.  
+
+How do we extract which notes are pointing to others.  
+
 
 
 

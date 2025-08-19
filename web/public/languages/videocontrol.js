@@ -106,9 +106,11 @@ keymaps["videocontrol"].funcdict[""] = function(transcript, midi, keydict, key){
 
 //not sure if we want to do this here or from word definitions.  Maybe easier to just specify here.  
 keymaps["videocontrol"].keydict[""] ["3"] = {
-    "0,3,6": "screenshot", //take screenshot
-    "0,3,8": "zoom", //zoom in
+    "0,3,6": "screenshot", //take screenshot quick location only 
+    "0,3,7": "zoomshot", //take screenshot zoomed in
+    "0,3,8": "zoom", //zoom in or out    
     "0,3,5": "deletescreen", //remove last screenshot
+    "0,3,4": "deletescreen", //remove last screenshot
     "0,2,6": "speak", //add the last transcript entry to
     "0,2,5": "delete", //remove last transcript entry    
     "0,12,0": "start", //start recording

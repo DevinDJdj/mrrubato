@@ -13,16 +13,22 @@ import sys
 import qrcode
 from pynput import keyboard
 import threading
-
+import mido
+import os
+import time
 
 sys.path.insert(0, 'c:/devinpiano/') #config.json path
 sys.path.insert(1, 'c:/devinpiano/music/') #config.py path Base project path
 
+import config 
+import mykeys
 
 logger = logging.getLogger(__name__)
 global window
 
 global qapp
+global midiout
+global midiin
 
 def create_image(width, height, color1, color2):
     """Generates a simple image for the icon."""
@@ -37,9 +43,10 @@ def on_quit_action(icon, item):
     logger.info('Stopping icon')
     icon.stop()
     logger.info('Stopping MIDI thread')
-    midi_stop_event.set()  # Signal the MIDI thread to stop
+    stop_midi()
     logger.info('Quitting application')
     qapp.quit()
+
 
 def on_show_message(icon, item):
     """Callback function to display a notification."""
@@ -192,11 +199,17 @@ class MyWindow(QMainWindow):
 
 
 
+def stop_midi():
+    midi_stop_event.set()  # Signal the MIDI thread to stop
+    midi_thread.join()  # Wait for the MIDI thread to finish
+#    time.sleep(10)  # Give some time for the thread to exit
+    midiin.close()  # Close the MIDI input port
+    midiout.close()  # Close the MIDI output port
+
+
 def start_midi(midi_stop_event):
+    global midiout, midiin
     logger.info('Starting MIDI input/output')
-    import mido
-    import config 
-    import mykeys
     inputs = mido.get_input_names()
     print(mido.get_input_names())
     logger.info(f'Available MIDI inputs: {inputs}')
@@ -206,27 +219,27 @@ def start_midi(midi_stop_event):
 
     #Portable Grand-1 2
     #should really have some config selection here.  
-    output = mido.open_output(outputs[1]) #open first output for now.  
+    midiout = mido.open_output(outputs[1]) #open first output for now.  
     mk = mykeys.MyKeys(config.cfg)
     cont = keyboard.Controller()    
-    with mido.open_input(inputs[0]) as inport:
-        for msg in inport:
-            if (midi_stop_event.is_set()):
-                logger.info('Stopping MIDI thread')
-                break
-            if msg.type == 'note_on' or msg.type == 'note_off':
-                print(msg)
-                logger.info(f'Received MIDI message: {msg}')
-                if hasattr(msg, 'note'):
-                    note = msg.note
-                    if hasattr(msg, 'velocity'):
-                        velocity = msg.velocity
+    midiin = mido.open_input(inputs[0]) #open first input for now.
+    with midiin as inport:
+        while (not midi_stop_event.is_set()):
+            for msg in inport.iter_pending():
+                if msg.type == 'note_on' or msg.type == 'note_off':
+                    print(msg)
+                    logger.info(f'Received MIDI message: {msg}')
+                    if hasattr(msg, 'note'):
+                        note = msg.note
+                        if hasattr(msg, 'velocity'):
+                            velocity = msg.velocity
+                        else:
+                            velocity = 0
+                        #add key to sequence and check for any actions.  
+                        a = mk.key(note, msg, callback=None)
                     else:
-                        velocity = 0
-                    #add key to sequence and check for any actions.  
-                    mk.key(note, msg)
-                else:
-                    print("Message does not have a note attribute")
+                        print("Message does not have a note attribute")
+        logger.info('Stopping MIDI thread')
 
 
 

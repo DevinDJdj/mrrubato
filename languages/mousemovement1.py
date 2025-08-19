@@ -10,6 +10,7 @@ class mousemovement1:
     self.config = config
     self.name = "mousemovement1"
     self.mouse = mouse.Controller()
+    self.callback = None
   
   def act(self, cmd, sequence=[]):
     """ACT based on command and sequence."""
@@ -32,9 +33,7 @@ class mousemovement1:
   def load(self):
     #load language specific data
      #config overrides load_data by default.  
-    if (self.__class__.__name__ in self.config['languages']):
-      logger.info(f'Loading language data for {self.__class__.__name__}')
-    elif hasattr(self, 'load_data'):
+    if hasattr(self, 'load_data'):
       self.load_data()
     else:
       print("No Data defined for " + self.__class__.__name__)  
@@ -43,16 +42,25 @@ class mousemovement1:
   def load_data(self):
 
     #load language specific data into the config.  
-    self.config['languages']['mousemovement1'] = {
-      "1": {
-        "Left Click": [49],
-        "Right Click": [50],
+    default = {
+      "2": {
+        "Left Click": [59,58],
+        "Right Click": [62,63],
       }
     }
+    if (self.name in self.config['languages']):
+      logger.info(f'Merging existing {self.name} config')
+      default.update(self.config['languages'][self.name])
+    else:
+      logger.info(f'No existing {self.name} config found, creating new one')
+
+    self.config['languages'][self.name] = default
+
     self.funcdict = {
       "Left Click": "left_click",
       "Right Click": "right_click",
     }
+    self.config['languages'][self.name] = default
     return 0
   
   def left_click(self):

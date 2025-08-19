@@ -35,6 +35,7 @@ class MyMsg:
   def __init__(self, msg, prev, pedal):
     self.msg = msg
     self.note = msg.note
+    self.time = msg.time
     self.currentTime = 0
     self.startmsg = None
     self.prevmsg = prev

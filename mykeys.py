@@ -84,6 +84,8 @@ class MyKeys:
     self.lastnotetime = 0
     self.currentcmd = None
     self.notes = np.zeros(config['keymap']['global']['top'] - config['keymap']['global']['bottom'], dtype=int)
+
+
     for key, value in config['keymap']['languages'].items():
       #load files
       try:
@@ -98,12 +100,24 @@ class MyKeys:
           #just use this language config.  
           self.languages[key] = la(config)  # Create instance of class
           self.languages[key].load()
+          self.languages[key].callback = self.callback
           self.langkey.append(value)
           self.langna.append(key)
           print("language added " + key)
       except:
         print("language doesnt exist " + key)
   
+
+  def callback(self, cmd):
+    """Callback function for languages."""
+    if cmd in self.funcmaps["global"]:
+      func = self.funcmaps[cmd]
+      if func in self.languages[self.currentlangna].funcdict: #is there override?  
+        getattr(self.languages[self.currentlangna], self.languages[self.currentlangna].funcdict[func])()
+      else:
+        getattr(self, func)()
+
+
   def reset_sequence(self):
     self.fullsequence.extend(self.sequence)
     self.sequence = []
@@ -111,7 +125,7 @@ class MyKeys:
     self.startseqno = -16
     self.lastnotetime = 0
     
-  def key(self, note, msg):
+  def key(self, note, msg, callback=None):
     #add this key to the notes map
     #if hasattr(msg, 'type') and msg.type=='note_on' and 
     #adjust message channel for anything but base channel
@@ -145,49 +159,23 @@ class MyKeys:
       if (self.currentcmd is None):
         for i in range(r1, 0, -1):
           found = False
-          if (str(i) in self.config['keymap']['global']):
-            for k,v in self.config['keymap']['global'][str(i)].items():
-              #check global first.  
-              if (self.sequence[-i:] == v):
-                #can compare directly.  if strings, we do ','.join(self.sequence[-i:]) == v
-                found = True
-                cmd = self.config['keymap']['global'][str(i)][k]
-                self.currentcmd = cmd
-                self.startseqno = self.currentseqno
-                print("Command found: " + cmd)
-                logger.info(f'Command found: {cmd}')
-                print(cmd + " ing")
-                action = None
-                if (self.languages[self.currentlangna] is not None and hasattr(self.languages[self.currentlangna], "act")):
-                  action = self.languages[self.currentlangna].act(self.currentcmd)
-                  if (action == -1):
-                    #reset action
-                    logger.info(f'!! > <{self.currentlangna}>{self.currentcmd}')
-                    self.currentcmd = None
-                    self.reset_sequence()
-                  elif (action == 0):
-                    #action was successful, reset command
-                    logger.info(f'> {self.currentcmd}')
-                    self.currentcmd = None
-                    self.reset_sequence()
-                  else:
-                    self.currentcmd = self.currentcmd
+          #check all languages.  Not using global for now.  
+          for (l,la) in self.languages.items():
+            #really should create a keys -> word map for each language.
+            word = la.word(self.sequence[-i:])
+            if word != "":
+              #found a word in the language
+              found = True
+              self.currentcmd = word
+              self.currentlangna = l
+              self.currentlang = la
+              self.startseqno = self.currentseqno
+              print("Word found: " + self.currentcmd + " in " + l)
+              logger.info(f'Word found: {self.currentcmd} in {l}')
 
-          #check for any languages that can handle this sequence.
-          if not found:
-            for (l,la) in self.languages.items():
-              #really should create a keys -> word map for each language.
-              word = la.word(self.sequence[-i:])
-              if word != "":
-                #found a word in the language
-                found = True
-                self.currentcmd = word
-                self.currentlangna = l
-                self.currentlang = la
-                self.startseqno = self.currentseqno
-                print("Word found: " + self.currentcmd + " in " + l)
-                logger.info(f'Word found: {self.currentcmd} in {l}')
-                break
+              break
+          if found:
+            break
                 
 
 
@@ -208,15 +196,16 @@ class MyKeys:
           self.currentcmd = None
         elif (action == 0):
           #action was successful, reset command
-          logger.info(f'> {self.currentcmd} {self.sequence[self.startseqno:]}')
+          logger.info(f'> <{self.currentlangna}>{self.currentcmd} {self.sequence[self.startseqno:]}')
+          if callback is not None:
+            callback(self.currentcmd + " " + str(self.sequence[self.startseqno:]))
           self.reset_sequence()
           self.currentcmd = None
         else:
           self.currentcmd = self.currentcmd
+          return action
           #still waiting?  
 #          logger.info(f'_ {self.currentcmd} {self.sequence[self.startseqno:]}')
-        
-
 
 
   def getLangs(self):
