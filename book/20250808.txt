@@ -798,5 +798,29 @@ Size and directionality.
 How do we extract which notes are pointing to others.  
 
 
+**extension/vscode/codetutor/src/extension.ts
+Should allow for quick copy of text to clipboard.  
+Also command sequences should have enough information to be meaningful.  
+Or keep this in mind when designing.  
+--Try to keep command MIDI meaningful.  
+
+Need to retain previous popup on topic search, or put in chat perhaps if clicked.  
+
+Maybe just detect onopen, we add the last few comments of text from that topic.  
+Yeah.  
+When reloading a file, topics are regenerated, and so we get duplicates.  
+Is this good or bad?  
+Yeah lets not duplicate these.  
+If we have new ones, they get added at the end.  
+Not sure if this is good or not.  
+Probably depends on preference.  
+Leave for now.  
+
+
+
+**mykeys.py
+I like this midi handling better than [**web/public/keymap.js]
+I should really write more about my code preferences.  
+This would be useful information for the future.  
 
 

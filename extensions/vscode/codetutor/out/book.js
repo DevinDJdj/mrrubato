@@ -1289,8 +1289,12 @@ function loadPage(text, filePath, altdate = 0) {
         mytopic.data = strs.slice(topicstart['**'][i], (i + 1) < topicstart['**'].length ? topicstart['**'][i + 1] : strs.length).join("\n"); //get the topic data from the lines.
         //add to vectra (vector DB) this data for later similarity search?  
         //complete index as well as topic based index.  
-        addVectorData(mytopic); //add the topic to the vector DB.
-        exports.topicarray[tkey]?.push(mytopic); //add the previous topic to the array.
+        //check if exists already.  
+        const found = exports.topicarray[tkey]?.find(element => element.file === mytopic.file && element.line === mytopic.line);
+        if (found === undefined) {
+            exports.topicarray[tkey]?.push(mytopic); //add the previous topic to the array.
+            addVectorData(mytopic); //add the topic to the vector DB.
+        }
         //adjust sortorder based on order of occurrence for now. 
         exports.currenttopic = tkey;
     }
@@ -1326,11 +1330,18 @@ function loadPage(text, filePath, altdate = 0) {
             //for now just get two lines of data for subtopics.
             subtopic.data = strs.slice(topicstart[key][i], topicstart[key][i] + 2).join("\n"); //get the subtopic data from the lines.
             initArray(ckey, exports.arrays[key]); //if doesnt exist, add.  
-            exports.arrays[key][ckey]?.push(subtopic); //add the previous topic to the array.
+            const found = exports.arrays[key][ckey]?.find(element => element.file === subtopic.file && element.line === subtopic.line);
+            if (found === undefined) {
+                exports.arrays[key][ckey]?.push(subtopic); //add the previous topic to the array.
+            }
         }
     }
     initArray(exports.currenttopic, exports.topicarray); //if doesnt exist, add.  
-    exports.topicarray[exports.currenttopic]?.push(mytopic);
+    const found = exports.topicarray[exports.currenttopic]?.find(element => element.file === mytopic.file && element.line === mytopic.line);
+    if (found === undefined) {
+        exports.topicarray[exports.currenttopic]?.push(mytopic); //add the previous topic to the array.
+        addVectorData(mytopic); //add the topic to the vector DB.
+    }
     //do we want this?  
     exports.topicarray[mydate.toString()]?.push(mypage);
     return mydate;

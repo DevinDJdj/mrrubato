@@ -1447,10 +1447,13 @@ export function loadPage(text: string, filePath: string, altdate: number=0): Num
         //add to vectra (vector DB) this data for later similarity search?  
         //complete index as well as topic based index.  
 
-        addVectorData(mytopic); //add the topic to the vector DB.
 
-        topicarray[tkey]?.push(mytopic); //add the previous topic to the array.
-
+        //check if exists already.  
+        const found = topicarray[tkey]?.find(element => element.file === mytopic.file && element.line === mytopic.line);
+        if (found === undefined) {
+            topicarray[tkey]?.push(mytopic); //add the previous topic to the array.
+            addVectorData(mytopic); //add the topic to the vector DB.
+        }
 
         //adjust sortorder based on order of occurrence for now. 
 
@@ -1496,12 +1499,20 @@ export function loadPage(text: string, filePath: string, altdate: number=0): Num
 
             initArray(ckey, arrays[key]); //if doesnt exist, add.  
 
-            arrays[key][ckey]?.push(subtopic); //add the previous topic to the array.
+            const found = arrays[key][ckey]?.find(element => element.file === subtopic.file && element.line === subtopic.line);
+            if (found === undefined) {
+                arrays[key][ckey]?.push(subtopic); //add the previous topic to the array.
+            }
         }
     }
     initArray(currenttopic, topicarray); //if doesnt exist, add.  
-    topicarray[currenttopic]?.push(mytopic);
-    //do we want this?  
+
+    const found = topicarray[currenttopic]?.find(element => element.file === mytopic.file && element.line === mytopic.line);
+    if (found === undefined) {
+        topicarray[currenttopic]?.push(mytopic); //add the previous topic to the array.
+        addVectorData(mytopic); //add the topic to the vector DB.
+    }
+//do we want this?  
     topicarray[mydate.toString()]?.push(mypage);       
     return mydate;
 }

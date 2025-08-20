@@ -1,27 +1,38 @@
-import pystray
-from PIL import Image, ImageDraw
 #pip install pystray Pillow mss PyQt5
 #pip install pynput
 #pip install qrcode
 #pip install mido python-rtmidi
-import mss
-import logging
 
-from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QLabel
-from PyQt5.QtGui import QPixmap
-import sys
-import qrcode
-from pynput import keyboard
-import threading
-import mido
+#standard libraries
+import logging
 import os
 import time
+import sys
+import threading
 
+#Screen capture, QR code generation
+import mss
+import qrcode
+from pynput import keyboard
+
+#MIDI libraries
+import mido
+
+
+#UI components
+import pystray
+from PIL import Image, ImageDraw
+from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QLabel
+from PyQt5.QtGui import QPixmap, QPainter, QPen, QBrush
+from PyQt5.QtCore import Qt
+
+
+#Local imports
 sys.path.insert(0, 'c:/devinpiano/') #config.json path
 sys.path.insert(1, 'c:/devinpiano/music/') #config.py path Base project path
-
 import config 
 import mykeys
+
 
 logger = logging.getLogger(__name__)
 global window
@@ -72,10 +83,25 @@ def get_screen():
 def draw_overlay():
 
     #creating the main window
-    logger.info('Creating main window')
-    window.showQR("https://missesroboto.com")
+    logger.info('Opening main window')
     window.show()
+    window.showQR("https://missesroboto.com")
+#    time.sleep(2)
+#    t = threading.Timer(3, _hide, args=["Hello from Timer!"])
+#    t.start()  # Start the timer in a new thread
+    draw_screen_box()
 
+def draw_screen_box():
+    """Draws a box around the screen."""
+    logger.info('Drawing screen box')
+    geometry = window.geometry()
+    painter = QPainter(window)
+    pen = QPen(Qt.red, 5, Qt.SolidLine)
+    painter.setPen(pen)
+    painter.drawRect(100, 100, 200, 200)
+#    painter.drawRect(geometry.x()+100, geometry.y()+100, geometry.width()-100, geometry.height()-100)
+    painter.end()
+    logger.info('Screen box drawn')
 
 
 def on_deactivate_overlay():
@@ -136,6 +162,11 @@ def create_qr_code(data):
     logger.info('QR code created and saved as qrcode.png')
     return img
 
+def _hide(data):
+    """Function to hide the window after a delay."""
+    logger.info('Hiding window after delay')
+    window.hideme()
+    
 class MyWindow(QMainWindow):
 
 
@@ -180,6 +211,10 @@ class MyWindow(QMainWindow):
         # show all the widgets
         self.show()
         self.showQR("Starting Trey Overlay")
+        #hide after a few seconds
+        #workaround, something wrong with the PyQt if we hide this immediately
+        t = threading.Timer(3, _hide, args=["Hello from Timer!"])
+        t.start()  # Start the timer in a new thread
         logger.info('Window created')
 
     def hideme(self):
@@ -290,7 +325,7 @@ midi_thread = threading.Thread(target=start_midi, args=(midi_stop_event,))
 midi_thread.start()
 
 logger.info('Executing application')
-window.hideme()
+
 sys.exit(qapp.exec_())
 #hiding window as we only want it on hotkey
 #window.hide()
