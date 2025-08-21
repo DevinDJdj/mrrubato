@@ -85,22 +85,19 @@ def draw_overlay():
     #creating the main window
     logger.info('Opening main window')
     window.show()
+    #add environment info needed.  
     window.showQR("https://missesroboto.com")
-#    time.sleep(2)
-#    t = threading.Timer(3, _hide, args=["Hello from Timer!"])
-#    t.start()  # Start the timer in a new thread
+
     draw_screen_box()
 
 def draw_screen_box():
     """Draws a box around the screen."""
-    logger.info('Drawing screen box')
     geometry = window.geometry()
-    painter = QPainter(window)
-    pen = QPen(Qt.red, 5, Qt.SolidLine)
-    painter.setPen(pen)
-    painter.drawRect(100, 100, 200, 200)
-#    painter.drawRect(geometry.x()+100, geometry.y()+100, geometry.width()-100, geometry.height()-100)
-    painter.end()
+    #get geometry of the highlight rectangle.  
+    window.highlighton = True
+    #set details here.  
+    window.highlightrect = {'x': geometry.x()+100, 'y': geometry.y()+100, 'width': geometry.width()-100, 'height': geometry.height()-100}
+    window.update()  # Trigger a repaint to show the box
     logger.info('Screen box drawn')
 
 
@@ -172,7 +169,8 @@ class MyWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-
+        self.highlightrect = {'x': 100, 'y': 100, 'width': 200, 'height': 200}
+        self.highlighton = False
 
         # set the title
         self.setWindowTitle("Python")
@@ -206,7 +204,7 @@ class MyWindow(QMainWindow):
         self.label_2 = QLabel(self)
         #move to bottom right corner
         self.label_2.setStyleSheet("background-color: rgba(255, 255, 255, 1);")
-        self.label_2.move(self.width() - 300, self.height() - 300)
+        self.label_2.move(self.width() - 400, self.height() - 300)
 
         # show all the widgets
         self.show()
@@ -232,7 +230,18 @@ class MyWindow(QMainWindow):
         self.label_2.adjustSize()
         logger.info('QR code displayed')
 
-
+    def paintEvent(self, event):
+        if (self.highlighton):
+            painter = QPainter(self) # Create a QPainter instance, passing 'self' (the widget) as the paint device.
+            pen = QPen(Qt.red, 5, Qt.SolidLine)
+            painter.setPen(pen)
+            painter.drawRect(100, 100, 200, 200)
+        #    painter.drawRect(geometry.x()+100, geometry.y()+100, geometry.width()-100, geometry.height()-100)
+    #        painter.setFont(painter.font()) # Use default font or set a custom one
+    #        painter.drawText(50, 200, "Hello QPainter!")
+            painter.end()
+        
+        # You can also draw text, ellipses, images, etc.
 
 def stop_midi():
     midi_stop_event.set()  # Signal the MIDI thread to stop

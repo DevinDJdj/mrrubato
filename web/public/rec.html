@@ -125,7 +125,9 @@
 
             </td>
             <td>
-                <canvas id="qrscreen"></div>
+                <canvas id="qrscreen" style="display:none"></canvas>
+                <label for="qrincoming">QR Incoming:</label>
+                <div id="qrincoming"></div>
 
                 </td>
         </tr>
@@ -421,6 +423,8 @@
         <!-- QR  -->
         <script src="js/qrcode.js"></script>
         <script src="qr.js"></script>
+        <script src="QR/jsQR.js"></script>
+
     <!-- clock -->
     <script src="clock.js"></script>
 
@@ -612,6 +616,8 @@ const category = urlaParams.get('cat');
 var ver = urlaParams.get('ver');
 var img = urlaParams.get('img');
 var croppedImageUrl = null;
+var combinedStream = null;
+
 console.log(fname);
 var now = new Date();
 
@@ -997,7 +1003,7 @@ captureScreen(function(screen) {
 //        myscreen.width = screen.width;
 //        myscreen.height = screen.height;
 
-        var combinedStream = new MediaStream();
+        combinedStream = new MediaStream();
 
         // "getTracks" is RecordRTC's built-in function
         getTracks(myscreen, 'video').forEach(function(videoTrack) {
@@ -1026,6 +1032,7 @@ captureScreen(function(screen) {
                     document.querySelector('video').muted = true;
 
                     document.querySelector('video').srcObject = combinedStream;
+
                 }
             }
         });
@@ -1796,6 +1803,8 @@ if (speech){
         //load the filedrop component.  
         FUNCS.FILEDROP.loadFileDrop();
 
+//        loadQRScanner();
+
       }
       FUNCS.loadAll = loadAll;
     </script>
@@ -1805,11 +1814,15 @@ if (speech){
     import * as CHAT from "/chat.mjs"
     import * as MIDI from "/midi.mjs"
     import * as FILEDROP from "/js/filedrop.js"
+//    import QrScanner from '/QR/qr-scanner.min.js';
+    
     FUNCS.SPEECH = SPEECH;
     FUNCS.CHAT = CHAT;
     FUNCS.MIDI = MIDI;
     FUNCS.FILEDROP = FILEDROP;
+//    FUNCS.QrScanner = QrScanner;
   </script>
+
   
 <footer style="margin-top: 20px; text-align: left;"><small id="send-message"></small></footer>
 <script src="https://www.webrtc-experiment.com/common.js"></script>

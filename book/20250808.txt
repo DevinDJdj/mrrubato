@@ -823,4 +823,29 @@ I like this midi handling better than [**web/public/keymap.js]
 I should really write more about my code preferences.  
 This would be useful information for the future.  
 
+**extensions/trey/trey.py
+QPainter sample code not painting
+OK..
+
+#https://github.com/nimiq/qr-scanner
+Lets try this one.  
+import('path/to/qr-scanner.min.js').then((module) => {
+    const QrScanner = module.default;
+    // do something with QrScanner
+});
+
+**web/public/rec.html
+**web/public/video.js
+OK finally got the hiddencontext to work close to the way I want.  
+--drawVideo
+
+Havent kept in mind the ability to re-transcribe.  
+Perhaps should consider this more when deciding how to create.  
+
+
+OK, finally have some incoming QR.  
+
+Need to create a QR transcript.  
+Or combine with OCR transcript.  
+
 
