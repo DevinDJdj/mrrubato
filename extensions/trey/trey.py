@@ -1,7 +1,10 @@
 #pip install pystray Pillow mss PyQt5
 #pip install pynput
+
 #pip install qrcode
 #pip install mido python-rtmidi
+#pip install pywin32
+
 
 #standard libraries
 import logging
@@ -9,11 +12,13 @@ import os
 import time
 import sys
 import threading
+import psutil
 
 #Screen capture, QR code generation
 import mss
 import qrcode
-from pynput import keyboard
+from pynput import keyboard, mouse
+
 
 #MIDI libraries
 import mido
@@ -25,7 +30,8 @@ from PIL import Image, ImageDraw
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QLabel
 from PyQt5.QtGui import QPixmap, QPainter, QPen, QBrush
 from PyQt5.QtCore import Qt
-
+import win32gui
+import win32process
 
 #Local imports
 sys.path.insert(0, 'c:/devinpiano/') #config.json path
@@ -35,11 +41,139 @@ import mykeys
 
 
 logger = logging.getLogger(__name__)
-global window
-
+global mywindow
+global active_window
 global qapp
 global midiout
 global midiin
+active_window = None  # Global variable to store the active window handle
+
+global windows
+windows = {}
+
+global trey_data
+trey_data = {}
+
+mouse_listener = None
+global myactions
+myactions = []  # Global list to store sequential actions
+
+def on_click(x, y, button, pressed):
+
+    if pressed:
+        temp = win32gui.WindowFromPoint((x, y))
+        if (in_trey((x,y))): #only capture second monitor clicks
+            action = {'button': str(button), 'x': x, 'y': y, 'hwnd': temp, 'act': 'click'}
+    #        action = f'Mouse clicked at ({x}, {y}) with {button}'
+            update_actions(temp, action)
+
+def stop_mouse_listener():
+    """Stop the mouse listener."""
+    global mouse_listener
+    if mouse_listener is not None:
+        mouse_listener.stop()
+        mouse_listener = None
+        logger.info('Mouse listener stopped')
+    else:
+        logger.info('Mouse listener was not running')
+
+def start_mouse_listener():
+    """Get mouse actions by listening to mouse clicks."""
+    global mouse_listener
+    if mouse_listener is not None:
+        mouse_listener.stop()
+    mouse_listener = mouse.Listener(on_click=on_click)
+    if not mouse_listener.running:
+        logger.info('Starting mouse listener')
+        mouse_listener.start()
+
+def update_actions(hwnd, action):
+    global myactions
+    global windows
+    """Update the actions for the given window handle."""
+    threadid, procid = win32process.GetWindowThreadProcessId(hwnd)
+    action['threadid'] = threadid
+    action['procid'] = procid
+    if (procid in windows):
+        if 'actions' not in windows[procid]:
+            windows[procid]['actions'] = []
+        windows[procid]['actions'].append(action)
+        if (len(windows[procid]['actions']) > 100):
+            logger.info('Removing oldest action from ' + procid + ' actions list')
+            windows[procid]['actions'].pop(0)
+
+    logger.info(f'{action}')
+    myactions.append(action)  # Append to global actions list
+    #remove if too many actions
+    if len(myactions) > 100:
+        logger.info('Removing oldest action from global actions list')
+        myactions.pop(0)
+
+
+
+def update_window_data(procid, title, rect, other=None):
+
+    if (procid not in windows):
+        windows[procid] = {}
+
+
+    windows[procid]['title'] = title
+    windows[procid]['rect'] = rect
+    if (other is None):
+        other = {}
+    else:
+        windows[procid]['other'] = other
+
+
+def in_trey(rect):
+    """Check if the rectangle is within the trey window."""
+    if ('rect' in trey_data):
+        trect = trey_data['rect']
+        logger.debug(f"Checking if {rect} is in {trey_data['rect']}")
+#        print(f"Checking if {rect} is in {trey_data['rect']}")
+        if (len(rect) == 4 and len(trect) == 4):
+            return (rect[0] >= trect[0] and rect[1] >= trect[1] and rect[2] <= trect[2] and rect[3] <= trect[3])
+        elif (len(rect) == 2 and len(trect) == 4): #allow for point check
+            return (rect[0] >= trect[0] and rect[1] >= trect[1] and rect[0] <= trect[2] and rect[1] <= trect[3])
+    return False
+
+def window_list_callback(hwnd, extra):
+
+    if win32gui.IsWindowVisible(hwnd) and win32gui.GetWindowText(hwnd) != "":
+        # Get window title
+        title = win32gui.GetWindowText(hwnd)
+        # Get window position and size (left, top, right, bottom)
+        rect = win32gui.GetWindowRect(hwnd)
+        if (title.startswith("Trey - ")):
+            #get the rect we need to be aware of.  
+            #expand rect some windows have odd borders.  
+            print(f"Found Trey window: {title} at {rect}")
+            x, y, right, bottom = rect
+            x -= 8  # Adjust for window borders
+            y -= 8
+            right += 8
+            bottom += 8
+            rect = (x, y, right, bottom)
+            trey_data['rect'] = rect
+            trey_data['hwnd'] = hwnd
+            trey_data['title'] = title
+
+        trect = (0,0,0,0)
+        if ('rect' in trey_data):
+            trect = trey_data['rect']
+#            trect[0] += 50 #some margin for overlapping windows.  
+
+        # Check if the window is fully within the trey window
+        if (in_trey(rect)):
+            threadid, procid = win32process.GetWindowThreadProcessId(hwnd)
+            update_window_data(procid, title, rect, {'threadid': threadid, 'hwnd': hwnd})
+            x, y, right, bottom = rect
+            width = right - x
+            height = bottom - y
+            action = {'title': title, 'rect': rect, 'hwnd': hwnd, 'procid': procid, 'threadid': threadid, 'act': 'init'}
+            update_actions(hwnd, action)
+
+    return True # Continue enumeration    
 
 def create_image(width, height, color1, color2):
     """Generates a simple image for the icon."""
@@ -80,24 +214,76 @@ def get_screen():
         screenshot = s.grabWindow( 0 ) # 0 is the main window, you can specify another window id if needed
         screenshot.save('shot' + str(i) + '.jpg', 'jpg')
 
+def get_screen_qrinfo():
+    """Capture the screen and generate a QR code with the information."""
+    # Generate a QR code with the screenshot information
+    qr_image = create_qr_code("Screenshot captured: screenshot.png")
+    qr_image.show()
+
+def create_qr_text(text, hwnd):
+    """Create a QR code with the given text."""
+    threadid, procid = win32process.GetWindowThreadProcessId(hwnd)
+    name = psutil.Process(procid).name()
+    ret = ""
+    if 'Path' in os.environ:
+        ret += "$$Path=" + os.environ['Path'] + "\n"
+    if 'HOME' in os.environ:
+        ret += "$$HOME=" + os.environ['HOME'] + "\n"
+    ret += "$$PID=" + str(procid) + "\n"
+    ret += "$$ThreadID=" + str(threadid) + "\n"
+    ret += "$$ProcessName=" + name + "\n"
+    ret += text
+    return ret
+
 def draw_overlay():
+    global active_window
 
     #creating the main window
     logger.info('Opening main window')
-    window.show()
+    mywindow.show()
     #add environment info needed.  
-    window.showQR("https://missesroboto.com")
+    logger.info('Getting Screen info')
+    #need to initialize trey_data first.
+    if ('rect' not in trey_data):
+        win32gui.EnumWindows(window_list_callback, None)    
 
+    win32gui.EnumWindows(window_list_callback, None)    
+
+
+    temp = win32gui.GetForegroundWindow()
+    rect = win32gui.GetWindowRect(temp)
+    qrdata = ""
+    if (in_trey(rect)):
+        active_window = temp
+
+    if (active_window is not None):
+        title = win32gui.GetWindowText(active_window)
+        logger.info(f'Active window: {title} at {rect}')
+        logger.info('Showing QR code')
+        qrdata = f'$$BBOX={rect}\n$$TITLE={title}'
+        qrdata = create_qr_text(qrdata, active_window)
+        mywindow.showQR(qrdata)
+
+    mywindow.activateWindow() # Bring to front
     draw_screen_box()
+
+    #hiding in 3 seconds
+    logger.info('Hiding window after 3 seconds')
+    t = threading.Timer(3, _hide, args=["Hello from Timer!"])
+    t.start()  # Start the timer in a new thread
+
+    start_mouse_listener()  # Start the mouse listener
+
+
 
 def draw_screen_box():
     """Draws a box around the screen."""
-    geometry = window.geometry()
+    geometry = mywindow.geometry()
     #get geometry of the highlight rectangle.  
-    window.highlighton = True
+    mywindow.highlighton = True
     #set details here.  
-    window.highlightrect = {'x': geometry.x()+100, 'y': geometry.y()+100, 'width': geometry.width()-100, 'height': geometry.height()-100}
-    window.update()  # Trigger a repaint to show the box
+    mywindow.highlightrect = {'x': geometry.x()+100, 'y': geometry.y()+100, 'width': geometry.width()-100, 'height': geometry.height()-100}
+    mywindow.update()  # Trigger a repaint to show the box
     logger.info('Screen box drawn')
 
 
@@ -105,7 +291,8 @@ def on_deactivate_overlay():
     """Function to be executed when the hotkey is pressed."""
 
     logger.info('Deactivating overlay')
-    window.hideme()
+    mywindow.hideme()
+    stop_mouse_listener()  # Stop the mouse listener
     
     print("Hotkey deactivated!")
     # Here you can implement logic to hide or deactivate the overlay
@@ -161,8 +348,8 @@ def create_qr_code(data):
 
 def _hide(data):
     """Function to hide the window after a delay."""
-    logger.info('Hiding window after delay')
-    window.hideme()
+    logger.info('Hiding mywindow after delay')
+    mywindow.hideme()
     
 class MyWindow(QMainWindow):
 
@@ -173,9 +360,9 @@ class MyWindow(QMainWindow):
         self.highlighton = False
 
         # set the title
-        self.setWindowTitle("Python")
 
-        self.setWindowOpacity(0.5)
+        self.setWindowOpacity(0.4)
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
         screens = qapp.screens()
         logger.info('Listing available screens')
         primary_screen = qapp.primaryScreen()
@@ -191,6 +378,7 @@ class MyWindow(QMainWindow):
                 # setting  the geometry of window
                 #add window to second monitor if available
                 self.setGeometry(geometry.x(), geometry.y(), geometry.width(), geometry.height())
+                self.setWindowTitle("Trey - " + s.name())
 
 #        self.setGeometry(60, 60, 600, 400)
 
@@ -204,7 +392,8 @@ class MyWindow(QMainWindow):
         self.label_2 = QLabel(self)
         #move to bottom right corner
         self.label_2.setStyleSheet("background-color: rgba(255, 255, 255, 1);")
-        self.label_2.move(self.width() - 400, self.height() - 300)
+        #not sure best size.  
+        self.label_2.move(self.width() - 500, self.height() - 400)
 
         # show all the widgets
         self.show()
@@ -320,7 +509,7 @@ logger.info('Creating Qapplication object')
 qapp = QApplication(sys.argv)
 logger.info('Creating application window')
 # Create the main application window
-window = MyWindow()
+mywindow = MyWindow()
 
 logger.info('Running icon')
 #icon.run()

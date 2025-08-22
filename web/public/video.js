@@ -221,10 +221,11 @@ function setVideoVolume(volume){
     //eventually change this to visible false.  
     //canvas.style.display = 'none';
     const myimg = context.getImageData(0, 0, 500, 500);
-    const code = jsQR(myimg.data, myimg.width, myimg.height);
+    mycode = jsQR(myimg.data, myimg.width, myimg.height);
+    
 
-    if (code) {
-      updateQRResult(code);
+    if (mycode) {
+      updateQRResult(mycode);
 //      console.log("Found QR code", code);
     }
     else{
@@ -233,18 +234,32 @@ function setVideoVolume(volume){
     }
  }    
 
+function displayBook(text, id='qrincoming'){
+    //display the book in the book div.  
+
+    document.getElementById(id).innerHTML = text.replaceAll("\n", "<br>");
+
+}
+  
 function updateQRResult(result, id='qrincoming') {
           //maybe want to keep more than one result.  
     if (result && result.data){
       if (result.data !== lastqrresult){
         lastqrresult = result.data;
         console.log("QR Result: " + result.data);
+        //need parseBook here.  
+        //add to this structure?  Use?  
+
+//        parsegitBook({"d": result.data); //git.js
+//make a separate structure for this perhaps.  Just pull the structure and parsing out of git.js perhaps.  
+
         //do something with the QR result, like displaying it or processing it
-        document.getElementById(id).innerHTML = 'QR Code: ' + result.data;
+        displayBook(result.data)
+
       }
     }
     else{
-        document.getElementById(id).innerHTML = 'No QR Code found';
+        displayBook("", id)
         lastqrresult = "";
     }
   }
@@ -317,19 +332,19 @@ function updateQRResult(result, id='qrincoming') {
           const imageCapture = new ImageCapture(combinedStream.getVideoTracks()[1]);
           imageCapture.grabFrame().then(imageData => {
             let canvas = document.getElementById('qrscreen');
-            canvas.width = 500;
-            canvas.height = 500;
+            canvas.width = 800;
+            canvas.height = 800;
             const context = canvas.getContext('2d');
-            context.drawImage(imageData, imageData.width-500, imageData.height-500, 500, 500, 0, 0, 500, 500);
+            context.drawImage(imageData, imageData.width-800, imageData.height-800, 800, 800, 0, 0, 800, 800);
             scanQR();
           });
         }
         else if (player != null && player.readyState > 0) {
           let canvas = document.getElementById('qrscreen');
-          canvas.width = 500;
-          canvas.height = 500;
+          canvas.width = 800;
+          canvas.height = 800;
           const context = canvas.getContext('2d');
-          context.drawImage(player, player.videoWidth-500, player.videoHeight-500, 500, 500, 0, 0, 500, 500);
+          context.drawImage(player, player.videoWidth-800, player.videoHeight-800, 800, 800, 0, 0, 800, 800);
           scanQR();
         }
 

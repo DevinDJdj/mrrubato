@@ -848,4 +848,32 @@ OK, finally have some incoming QR.
 Need to create a QR transcript.  
 Or combine with OCR transcript.  
 
+**extensions/trey/trey.py
+What actions can we detect that make sense?  
+
+
+Mouse-click on window.  
+key input, probably dont want to collect this.  
+Midi control to save key input.  
+Only when this occurs.  
+Key input resets each time the active_window changes. 
+What other ENV info.  
+
+**web/public/git.js
+--parsegitBook
+
+Lets write a new one.  
+
+//        parsegitBook({"d": result.data); //git.js
+//make a separate structure for this perhaps.  Just pull the structure and parsing out of git.js perhaps.  
+This removes some of the dependence.  
+
+Some thought needed for QR location.  
+Bottom right is least used I think..
+
+**extensions/trey/trey.py
+Need some config for this.  
+
+
+
 
