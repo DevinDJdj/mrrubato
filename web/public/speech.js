@@ -248,10 +248,16 @@ export function helpme(){
             return "00:00";
         var temptime = player.getCurrentTime();
     }
-    else{
+    else if (typeof(player2) !== "undefined" && player2 != null){
         temptime = player2.currentTime;
     }
-    temptime -= delay;
+    else if (typeof(myrecordfeedback) !== "undefined" && myrecordfeedback != null){
+        temptime = myrecordfeedback.currentTime;
+    }
+    else{
+        return "00:00";
+    }
+    temptime -= feedbackdelay;
 
     var mins = Math.floor(temptime/60);
     if (mins < 0) mins = 0;
@@ -277,7 +283,7 @@ export function Chat(transcript, callback=null, pending=false, lang=""){
         lang = currentlanguage;
     }
     //should we pass language here?  
-    let executed = true;
+    let executed = false;
     //this causes problems with the commands.  Dont think we need this anyway
     /*
     if (lastcommand !=transcript || Date.now() - lastcommandtime > recentTime){
@@ -289,14 +295,11 @@ export function Chat(transcript, callback=null, pending=false, lang=""){
         return;
     }
     */
-
+/*
     //trim the start of the transcript.  
     transcript = transcript.trim();
     //find and handle command.  
-    if (transcript.toLowerCase().startsWith("help")){
-
-    }
-    else if (transcript.toLowerCase().startsWith("highlight")){
+    if (transcript.toLowerCase().startsWith("highlight")){
         //skip to next event?  
         tokens = transcript.split(" ");
         //logic check is in prior function
@@ -584,23 +587,66 @@ export function Chat(transcript, callback=null, pending=false, lang=""){
     else{
         executed = false;
     }
-    
+*/    
+    //cant steal overwrite any of the above commands.  
+    //dont like this function, but time..
     //if we have any useful info add it.  
-    if (keymaps[lang] != null && keymaps[lang].chat != null && typeof(keymaps[lang].chat) === "function" && executed==false){
+
+    //dont think we need to check executed here.  
+    //we will just run it no matter what.  
+//    if (executed==false){
+
+        //keymap is only in one language, but we execute for all languages being used if function exists.
+        //not sure this is the best way to do this, but it works for now.
+        for (const [k, v] of Object.entries(keymaps)) {
+            //execute for all languages.  
+            if (v !=null && v.chat !==null && typeof(v.chat) === "function"){
+                let e = v.chat(transcript);
+                if (typeof(e) === "boolean" && e == true){
+                    executed = true;
+                }
+                //only allow for _ languages to overwrite transcript.  
+                else if ((k == "meta") && typeof(e) === "string" && e != ""){
+                    transcript = e;
+                    executed = true;
+                }
+            }
+
+//        if (keymaps[lang] != null && keymaps[lang].chat != null && typeof(keymaps[lang].chat) === "function"){
+
+        }
         //this way we can have different chat functions for different languages, and organize better.  
-        executed = keymaps[lang].chat(transcript);
-    }
+//        executed = keymaps[lang].chat(transcript);
+        //do we need to do all languages?  
+
+//    }
     
     if (typeof(MyChat) === "function" && executed==false){
         //really should not be using this.  add chat to keymaps[lang]
-        MyChat(transcript);
+        executed = MyChat(transcript);
     }
     else{
         if (executed){
             //make sound.  
-            audioFeedback(commandcompletion);
+            let cmdprefix = "";
 
-            addComment("> " + transcript, helpme()); //not sure if we want the prefix here.  
+            if (typeof(midicontroller) !=='undefined' && midicontroller != null){
+                midicontroller.audioFeedback(commandcompletion);
+            }
+            else{
+                audioFeedback(commandcompletion);
+            }
+            //utilize meta language forcefully.  
+            if (transcript.startsWith("--")){
+                //call MyChat with comment.  
+                if (typeof(MyChat) === "function"){
+                    MyChat(transcript.substr(2).trim(), helpme());
+                }
+            }
+            else{
+                cmdprefix = "> ";
+            }
+            addComment(cmdprefix + transcript, helpme()); //not sure if we want the prefix here.  
         }
         else{
             if (pedal){
@@ -683,14 +729,7 @@ export function loadSpeech(){
 
             let mymidicommand = null;
             let ped = false;
-            let cl = getPendingCommand(getPedal());
-            let lang = "";
-            if (cl != null){
-                //we have a pending command, so we will use that.  
-                lang = cl.lang;
-                //for now just add space.  Always end with some midi command.  
 
-            }
             if (typeof(midicontroller) !=='undefined' && midicontroller != null){
                 mymidicommand = midicontroller.getMidiRecent();
                 ped = midicontroller.pedal;
@@ -698,6 +737,15 @@ export function loadSpeech(){
             else{
                 mymidicommand = getMidiRecent();
                 ped = getPedal();                //
+            }
+
+            let cl = getPendingCommand(ped);
+            let lang = "";
+            if (cl != null){
+                //we have a pending command, so we will use that.  
+                lang = cl.lang;
+                //for now just add space.  Always end with some midi command.  
+
             }
             if (mymidicommand == null && !ped && cl == null){
                 //if not executed immediately, add to pending commands, and wait for midi or further command.  
@@ -773,9 +821,10 @@ function populateVoiceList() {
       document.getElementById("voiceSelect").appendChild(option);
     }
     if (voices.length > 2){
+        //this should be a setting.  
         let userAgentString = navigator.userAgent
         if (userAgentString.indexOf("Chrome") > -1){
-            $("#voiceSelect")[0].selectedIndex = 2; //dont like the default voice.  
+            $("#voiceSelect")[0].selectedIndex = 3; //dont like the default voice.  
         }
         else{
             $("#voiceSelect")[0].selectedIndex = 1; //dont like the default voice.  

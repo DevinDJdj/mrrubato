@@ -159,11 +159,11 @@ class Keymap{
         }
 
         this.funcdict[""] = function(transcript, midi, keydict, key){
-            for (i=MAX_COMMANDLENGTH; i>0; i--){
+            for (let i=MAX_COMMANDLENGTH; i>0; i--){
                 if (midi != null && midi.length >=i){
                     let keyset = keydict[""][i.toString()];
                     let keys = "";
-                    for (j=0; j<i; j++){
+                    for (let j=0; j<i; j++){
                         keys += (midi[j].note - keybot["meta"]).toString();
 //                        keys += midi[j].note.toString();
                         if (j<i-1){
@@ -925,25 +925,25 @@ class Keymap{
                     if (key !="" && ((transcript + " ").startsWith(key))){
                         found = true;
                         let f = value;
-                        let ret = f(transcript, midi, keymaps[lang].keydict, key);
-                        return [ret, lang, found];
+                        let r = f(transcript, midi, keymaps[lang].keydict, key);
+                        return [r, lang, found];
                     }
                     else if (key == ""){
                         let f = value;
-                        let ret = f(transcript, midi, keymaps[lang].keydict, key);
-                        if (ret !="" && ret != prevtranscript){
+                        let r = f(transcript, midi, keymaps[lang].keydict, key);
+                        if (r !="" && r != prevtranscript){
                             found = true;
-                            return [ret, lang, found];
+                            return [r, lang, found];
                         }
                     }
                 }
                 else{
                     if (key ==""){
                         let f = value;
-                        let ret = f(transcript, midi, keymaps[lang].keydict, key);
-                        if (ret !="" && ret != prevtranscript){
+                        let r = f(transcript, midi, keymaps[lang].keydict, key);
+                        if (r !="" && r != prevtranscript){
                             found = true;
-                            return [ret, lang, found];
+                            return [r, lang, found];
                         }
 //                        return [ret, lang];
                     }

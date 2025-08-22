@@ -1,6 +1,6 @@
 var ChatID = 0;
 var lastquery = '';
-var MAX_LOCAL_QUERY_LENGTH = 60000;
+
 var chatmessages = [];
 
 var reading = false;

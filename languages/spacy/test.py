@@ -1,5 +1,6 @@
 #pip install spacy
 #python -m spacy download en_core_web_md
+#python -m spacy download ja_core_news_md
 #pip install sentence-transformers
 #python -m spacy init fill-config base_config.cfg config.cfg
 #python -m spacy init fill-config gpu_config.cfg config.cfg
@@ -65,6 +66,38 @@ print(compute_cosine_similarity(text_embeddings_dict[dog_text_1],
 
 
 
+
+
+# Load your Japanese spaCy model (e.g., a model with word vectors)
+nlp = spacy.load("ja_core_news_md") # Or a model you've trained/installed
+
+
+patterns = [{"label": "COMPONENT", "pattern": "ABCD"}, 
+            {"label": "COMPONENT", "pattern": "DEFG"},
+            {"label": "COMPONENT", "pattern": "HIJK"},
+            {"label": "COMPONENT", "pattern": "KLMN"},
+]
+
+ruler = nlp.add_pipe("entity_ruler")
+
+ruler.add_patterns(patterns)
+
+nlp.add_pipe("merge_entities")
+
+
+jpdoc1 = nlp("これは日本語の文書です。ABCDはコンポーネントの一部です。DEFGはHIJの一部です。")
+jpdoc2 = nlp("これは日本のテキストです。HIJ")
+
+for (ent) in jpdoc1.ents:
+    print(f"Entity: {ent.text}, Label: {ent.label_}")
+for (ent) in jpdoc2.ents:
+    print(f"Entity: {ent.text}, Label: {ent.label_}")
+
+similarity_score = jpdoc1.similarity(jpdoc2)
+print(f"JP Similarity score: {similarity_score}")
+
+
+nlp = spacy.load("en_core_web_md")
 
 about_text = (
     "Gus Proto is a Python developer currently"

@@ -43,6 +43,13 @@ if (urlParams["codefile"]){
   console.log(codefile);
 }
 
+repo = "";
+if (urlParams["repo"]){
+  repo = urlParams["repo"];
+  console.log(repo);
+}
+
+
 
 function startClock(){
   var clockoutput = document.getElementById("clock");

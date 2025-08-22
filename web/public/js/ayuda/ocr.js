@@ -1,5 +1,5 @@
     const desiredWidth = 1000;
-    const dropzone = document.getElementById('dropzone');
+    const dropzone = document.getElementById('drop_zone');
     const fileInput = document.getElementById('fileInput');
     const imageContainer = document.querySelector('.image-container');
     const fullDocumentTextarea = document.getElementById('fullDocument');
@@ -150,10 +150,10 @@
       ta.style.height = (ta.scrollHeight + 5) + 'px';
     }
 
-    dropzone.addEventListener('dragover', handleDragOver);
-    dropzone.addEventListener('dragleave', handleDragLeave);
-    dropzone.addEventListener('drop', handleDrop);
-    dropzone.addEventListener('click', handleClick);
+//    dropzone.addEventListener('dragover', handleDragOver);
+//    dropzone.addEventListener('dragleave', handleDragLeave);
+//    dropzone.addEventListener('drop', handleDrop);
+//    dropzone.addEventListener('click', handleClick);
 
     async function handleDragOver(event) {
       event.preventDefault();
@@ -175,7 +175,7 @@
         dropzone.classList.remove('drag-over');
         const file = event.dataTransfer.files[0];
         fileInput.files = event.dataTransfer.files;
-        processFile(file);
+        processFileOCR(file);
       }
     }
 
@@ -187,7 +187,7 @@
 
     fileInput.addEventListener('change', (event) => {
       const file = event.target.files[0];
-      processFile(file);
+      processFileOCR(file);
     });
 
     async function processImage(imageURL){
@@ -203,7 +203,7 @@
 
     }
 
-    async function processFile(file) {
+    async function processFileOCR(file) {
       const worker = await Tesseract.createWorker(languageSelect.value);
       fullDocumentTextarea.value = '';
       fullDocumentSection.style.display = 'none';
@@ -212,7 +212,7 @@
       dropzone.innerText = 'Processing file...';
       dropzone.classList.add('disabled');
       fileSelectionAllowed = false;
-
+      let ret = "";
       if (file.type === 'application/pdf') {
         const { numPages, imageIterator } = await convertPDFToImages(file);
         let done = 0;
@@ -220,6 +220,7 @@
         for await (const { imageURL } of imageIterator) {
           const ta = await displayImage(imageURL);
           const { text } = await ocrImage(worker, imageURL);
+          ret += text + "\n\n";
           setTextarea(ta, text);
           showFullDocument();
           done += 1;
@@ -230,6 +231,7 @@
         const ta = await displayImage(imageURL);
         const { text } = await ocrImage(worker, imageURL);
         setTextarea(ta, text);
+        ret = text;
         showFullDocument();
       }
 
@@ -237,6 +239,7 @@
       dropzone.innerText = originalText;
       dropzone.classList.remove('disabled');
       fileSelectionAllowed = true;
+      return ret;
     }
 
     async function displayTextArea(imageURL){
@@ -297,7 +300,7 @@
       const items = (event.clipboardData || event.originalEvent.clipboardData).items;
       const images = Array.from(items).filter(item => item.type.indexOf('image') !== -1);
       if (images.length) {
-        processFile(images[0].getAsFile());
+        processFileOCR(images[0].getAsFile());
       }
     });
 

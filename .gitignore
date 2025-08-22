@@ -26,7 +26,7 @@ web/public/package-lock.json
 web/public/package.json
 
 web/public/models/*
-*/node_modules/*
+**/node_modules/**
 
 extensions/vscode/codetutor/out/*
 
@@ -42,3 +42,12 @@ server/mcp/mcpiano/.vscode/*
 server/blockchain/mydb/*
 mydb/*
 
+server/transcription/asmcli
+*.db
+**/log.csv
+web/public/test/javascript-vector-database/
+
+*.pyc
+*.sqlite3
+*.model
+**/package-lock.json

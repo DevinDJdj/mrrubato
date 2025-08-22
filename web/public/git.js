@@ -14,6 +14,8 @@ var gitcurrentcontents = "";
 var gitcurrentbook = "";
 var gitcurrentcontentstype = "javascript";
 var gitcurrentscrollinfo = null;
+var gitcurrentcommitidx = 0; //which commit are we looking at?
+var commitTableGit = null;
 
 const GIT_BOOK = 0; //always get book.  Load from DB eventually.  
 const GIT_CODE = 1;
@@ -23,8 +25,6 @@ const GIT_DB = 8;
 
 var gitnature = GIT_CODE | GIT_DETAILS; //do we retrieve history and commits?  
 
-var currenttopic = "NONE";
-var selectedtopic = "NONE";
 var currenttopicline = 0;
 var currentrefline = 0;
 var currentref = "NONE";
@@ -136,7 +136,9 @@ function updateGitIndex(fn=null){
 
 
 function gitDownloadCommits(data, qpath=null){
-   var myarray = [];
+   uicommitsarray = []; //for now resetting, but can go ahead and combine commit arrays.  
+   //probably will get messy, and dont have the UI Space anyway.  
+
 	//lets limit the number we display.  
 	totalcnt = 100;
     for (j=0; j<data.length && j< totalcnt; j++){
@@ -171,16 +173,18 @@ function gitDownloadCommits(data, qpath=null){
           tempdate = new Date(commitdata.commit.committer.date);
           tempdate.setMinutes(tempdate.getMinutes()+commitdata.files[i].changes);
           tag = { v: commitdata.files[i].filename, p: { link: commit.html_url }};
+//          committag = {v: commitdata.files[i].patch, p: {link: commit.html_url}};
           var aTag = document.createElement('a');
           aTag.setAttribute('href',commit.html_url);
           aTag.innerText = " " + commitdata.files[i].filename;
           aTag.innerText += " " + commitdata.commit.committer.date;
 
           console.log(tag);
-          obj = [ tag, commitdata.files[i].filename, mydate, tempdate ];
+          //strings need to come before other?  
+          obj = [ tag, commitdata.files[i].filename, commitdata.files[i].patch, mydate, tempdate ];
           //getIterations(vid.snippet.description, vid.snippet.publishedAt) ];
           console.log(obj);
-          myarray.push(obj);
+          uicommitsarray.push(obj);
           gitcommits.push({"url": data[this.indexValue].html_url, "patch": commitdata.files[i].patch, "filename": commitdata.files[i].filename, "changes": commitdata.files[i].changes, "d": mydate, "selected": true});
           //timewindow.js
         }
@@ -189,18 +193,44 @@ function gitDownloadCommits(data, qpath=null){
 
 
       }
+      else{
+        console.log("Already exists: " + exists);
+        //update the date and changes.  
+        //create a uicommitsarray entries.  
+        for (e of exists){
+          tag = { v: e.filename, p: { link: e.url }};
+          tempdate = new Date(e.d);
+          tempdate.setMinutes(tempdate.getMinutes()+e.changes);
+
+          uicommitsarray.push([tag, e.filename, e.patch, e.d, tempdate]);
+        }
+      }
+
     }
-    setTimeout(function (){if (myarray.length > 0) {gitChartCommits(myarray, qpath);if (typeof(updateTimeline) !=='undefined'){ updateTimeline(qpath); updateGitIndex(qpath);}} }, 5000);
+    setTimeout(function (){if (uicommitsarray.length > 0) {gitChartCommits(uicommitsarray, qpath);if (typeof(updateTimeline) !=='undefined'){ updateTimeline(qpath); updateGitIndex(qpath);}} }, 5000);
   }
 
-function gitChartCommits(myarray, qpath=null){
+  function uiCommit(commitidx){
+    console.log(commitidx);    
+    gitcurrentcommitidx = commitidx;
+    var content = commitTableGit.getValue(commitidx, 2);
+    var name = commitTableGit.getValue(commitidx, 1);
+//        var link = dataTableGit.getValue(event.row, 2);
+    console.log('Mouseover on:', name, 'with: ', content);
+    mouseOverGit(content, name);
+  } 
+
+
+function gitChartCommits(qpath=null){
   var img = document.getElementById('thinkinggit');
   img.style.visibility = "hidden";
 
+  //we can reinitialize and keep the old data from uicommitsarray.  
+  //should be fine, not too many entries.  
 	var container = document.getElementById('gitchart');
 	gitchart = new google.visualization.Timeline(container);
 	chart = gitchart;
-	dataTableGit = new google.visualization.DataTable();
+	commitTableGit = new google.visualization.DataTable();
     optionsGit = {
 	     height: 300,
          title: 'Git',
@@ -222,28 +252,43 @@ function gitChartCommits(myarray, qpath=null){
        };
 	   
 	   
-	dataTableGit.addColumn({ type: 'string', id: 'Name' });
+	commitTableGit.addColumn({ type: 'string', id: 'Name' });
 //	dataTableGit.addColumn({type: 'string', id: 'Label' });
-	dataTableGit.addColumn({type: 'string', role: 'tooltip', 'p': {'html': true}});
-	dataTableGit.addColumn({ type: 'date', id: 'DatePlayed' });
-	dataTableGit.addColumn({ type: 'date', id: 'DateEnded' });
+	commitTableGit.addColumn({type: 'string', role: 'tooltip', 'p': {'html': true}});
+	commitTableGit.addColumn({ type: 'string', id: 'content' });
+	commitTableGit.addColumn({ type: 'date', id: 'DatePlayed' });
+	commitTableGit.addColumn({ type: 'date', id: 'DateEnded' });
 	
 //	dataTable.addColumn({ type: 'number', id: 'Iterations' });
 //	dataTable.addColumn({ type: 'number', id: 'Duration' });
 	
 //	dataTable.addColumn({ type: 'number', id: 'Iteration#' });
 //    myarray = await gitDownloadCommits(data);
-	dataTableGit.addRows(myarray);
+	commitTableGit.addRows(uicommitsarray);
 
 
-//	console.log(myarray);
+//	console.log(uicommitsarray);
 
 
 
 
   google.visualization.events.addListener(chart, 'ready', readyHandlerGit);
   google.visualization.events.addListener(chart, 'select', selectHandlerGit);
-  chart.draw(dataTableGit, optionsGit);
+  google.visualization.events.addListener(chart, 'onmouseover', function(event) {
+    if (event.row !== undefined) {
+        uiCommit(event.row);
+
+        // You can add custom tooltip or visual effects here
+    }
+});
+  google.visualization.events.addListener(chart, 'onmouseout', function(event) {
+    if (event.row !== undefined) {
+      //mouseOutGit("", "");
+      //UI doesnt allow for easy contro..  
+    }
+  });
+
+  chart.draw(commitTableGit, optionsGit);
 
 }
 
@@ -258,6 +303,13 @@ function populateGitRepos(index=0){
 }
 
 function selectGitRepo(index){
+  //do we have in url?  
+  let repon = parseInt(repo);
+	if (!isNaN(repon)){
+    //override  
+    index = repon;
+  }
+
   selectedgitindex = index;
   setState("selectedgitindex", selectedgitindex);
   giturl = git[selectedgitindex].url;
@@ -268,6 +320,8 @@ function selectGitRepo(index){
   //have to reinit everything.  
   getGitBook();
 }
+
+
 
 function loadGitBook(){
   reponame = giturl.substring(giturl.search("repos/")+6);
@@ -418,6 +472,7 @@ function parsegitBook(gb){
       }
       gitstruct["bytopic"][currenttopic].push(content); //ordered by date.  
 
+
       gitstruct["bydate"][gb.d].push(content);
       currenttopic = str.slice(2).split(" ")[0];
       currenttopic = currenttopic.toLowerCase(); //have to keep lowercase, we are changing this in word2vec as well.  
@@ -459,7 +514,7 @@ function creategitStruct(){
     loadTopic(gitbook[gitbook.length-1].d);
 
     if (gitnature & GIT_DETAILS){ //double use here.  
-      loadTopicGraph(gitstruct["alltopics"]);
+      loadTopicGraph(gitstruct["alltopics"], gitnature & GIT_RELATIONS ? "page" : "book");
       //for now only on load.  
       updateTimelineBook(gitstruct["bydate"]);
     }
@@ -488,7 +543,7 @@ function loadfromGitBook(top, load=true, useTemp=false){
     if (top in gitstruct["bytopic"]){
       console.log(gitstruct["bytopic"][top]);
       for (ti=0; ti<gitstruct["bytopic"][top].length; ti++){
-        newcontents += "**" + gitstruct["bytopic"][top][ti].d + "\n";
+        newcontents += "$$" + gitstruct["bytopic"][top][ti].d + "\n";
         newcontents += gitstruct["bytopic"][top][ti].content;
       }
 
@@ -607,6 +662,8 @@ function getGitContents(path, load=true){ //load UI or not, if false, return str
         editor.setOption("mode", gitcurrentcontentstype);
         editor.getDoc().setValue(gitcurrentcontents);
         $('#for_edit_code').text(gitcurrentpath);
+        //not sure if this causes other problems.  Added for [**web/public/page.html] to get code graph.  
+        ret = gitcurrentcontents; 
       }
       else{
         ret= gitcurrentcontents;
@@ -666,13 +723,18 @@ function getGitContents(path, load=true){ //load UI or not, if false, return str
             initCodeMirror(path);
           }
           else{
-            if (prevcontents !=gitcurrentcontents){
+            if (prevcontents !=gitcurrentcontents && load && gitcurrentcontents !=null){
               var editor = myCodeMirror;
               //adjust to pull from book 
               gitcurrentcontentstype = setContentType(gitcurrentpath);
               editor.setOption("mode", gitcurrentcontentstype);
               editor.getDoc().setValue(gitcurrentcontents);
               $('#for_edit_code').text(path);
+              //not sure if we want this.  Added for [**web/public/page.html] to get code graph.
+              if (typeof(getCodeGraph) !=='undefined'){
+                getCodeGraph(gitcurrentpath, gitcurrentcontents);
+              }
+        
             }
           }
 
@@ -704,13 +766,13 @@ function getgitSelected(start, end){
   //return books selected as well as commits selected.  
   console.log(start);
   console.log(end);
-  var dstart = new Date(start *1000).toISOString().slice(0,10);
-  dstart = dstart.replace('-', '');
-  var dend = new Date(end*1000).toISOString().slice(0,10);
-  dend = dend.replace('-', '');
+//  var dstart = new Date(start *1000).toISOString().slice(0,10);
+//  dstart = dstart.replace('-', '');
+//  var dend = new Date(end*1000).toISOString().slice(0,10);
+//  dend = dend.replace('-', '');
   var numselected = 0;
   for (i=0; i<gitbook.length; i++){
-    if (gitbook[i].d >= dstart && gitbook[i].d <= dend){
+    if (gitbook[i].d >= start && gitbook[i].d <= end){
       gitbook[i].selected = true;
       numselected++;
     }
@@ -750,6 +812,11 @@ function generateBasicString(inputString){
     '\\"': '_',
     '-': '_',
     ':': '_',
+    '>': '_',
+    '<': '_',
+    '\\(': '_',
+    '\\)': '_',
+
     /*
     '{': '_',
     '}': '_',
@@ -783,12 +850,52 @@ function genLabel(topic){
   return dotlabels[topic];
 }
 
-function getBookDOTLabels(){
-  dotstr = "";
-  Object.entries(bookgraph).forEach(([key, value]) => {
-    dotstr += `${genLabel(key)} [label="${key}"];\n`;
-  });
-  return dotstr;
+function getBookDOTLabels(topic="ALL", depth=2){
+
+
+
+  let retarray = [];
+  if (topic=="ALL"){
+    Object.entries(bookgraph).forEach(([key, value]) => {
+    let count = bookgraph[key][key];
+
+    retarray.push({lakey: genLabel(key), key: key, depth: depth, width: 1});
+    });
+  }
+  else {
+    retarray.push({lakey: genLabel(topic), key: topic, depth: depth+1, width: (depth+1)});    
+    if (!(topic in bookgraph)){
+    }
+    else{
+
+      let count = bookgraph[topic][topic];
+      Object.entries(bookgraph[topic]).forEach(([key2, value2]) => {
+        if (topic != key2){
+          let gwidth = Math.round(value2/count/2);
+          if (!Number.isInteger(gwidth) || gwidth < 1){
+            gwidth = 1;
+          }
+          retarray.push({lakey: genLabel(key2), key: key2, depth: depth, width: gwidth});
+          if (gwidth > 1 && depth > 1){
+
+            retarray.push(...(getBookDOTLabels(key2, depth-1)));
+          }
+        }
+      
+      });
+    }
+  }
+  if (retarray.length > 0){
+  }
+  else{
+    Object.entries(bookgraph).forEach(([key, value]) => {
+      let lakey = key;
+
+//      dotstr += `${genLabel(key)} [label="${key}"];\n`;
+      retarray.push({lakey: genLabel(key), key: key, depth: depth, width: 1    });
+    });
+  }
+  return retarray;
 }
 
 function getBookDOT(topic="ALL", depth=2){
@@ -814,6 +921,9 @@ function getBookDOT(topic="ALL", depth=2){
     });
   }
   else {
+    if (!(topic in bookgraph)){
+      return dotstr;
+    }
     let count = bookgraph[topic][topic];
     Object.entries(bookgraph[topic]).forEach(([key2, value2]) => {
       if (topic != key2){
@@ -859,7 +969,7 @@ function getDigraph(topic, templist, depth=12){
   }
 }
 
-function buildTopicGraph(start, end, depth=6){
+function buildTopicGraph(start, end, depth=4){
   //create digraph structure.  
   //calculate weights and structure.  
   //array[topic][topic] = weight
@@ -895,15 +1005,15 @@ function buildTopicGraph(start, end, depth=6){
 
 }
 
-function loadTopicGraph(str){
+function loadTopicGraph(str, graphtype="book"){
   //this is input for word2vec struct.  
   //also update canvas for this.  
-  $('#windowSize').val(topicWindowSize); //set number of Bag-Of-Words to include 3 is default.  
+  if (graphtype == "book"){
+    $('#windowSize').val(topicWindowSize); //set number of Bag-Of-Words to include 3 is default.  
     $('#textdata').val(str);
 
-  
-    prepare();
-    trainModel();
+      prepare();
+      trainModel();
     $("#inbut").click(); 
 
     setTimeout(function(){
@@ -915,6 +1025,10 @@ function loadTopicGraph(str){
     }, 
     30000)
       
+  }
+  else if (graphtype == "page"){
+    //using visjs for now.
+  }
 
       /*
     setTimeout(function(){$("#prepareData").click();}, 2000); 
@@ -1110,6 +1224,78 @@ function setGitMode(){
 function gitSetNature(m){
   gitnature = m;
 }
+
+function getTopicDate(d, weight=1, maxlength=1000){
+  var cont = "";
+  if (weight > 1){
+    weight = 1; //max weight is 1.
+  }
+  if (weight < 0.01){
+    weight = 0.01; //min weight is 0.01.
+  }
+  if (d > currenttimelineend || d < currenttimelinestart){
+    return ""; //not in time window.
+  }    
+
+  if (d in gitstruct["bydate"]){
+    //calculate probability to include this topic entry.  
+    //start with most recent and go backwards.
+    for (i=gitstruct["bydate"][d].length-1; i>-1; i--){
+      if (gitstruct["bydate"][d][i].d >= currenttimelinestart && gitstruct["bydate"][d][i].d <= currenttimelineend){
+        //only include if in time window.
+        if (Math.random() < weight){
+          cont = "$$" + gitstruct["bydate"][ d ][i].d + "\n" + gitstruct["bydate"][d][i].content + "\n" + cont;
+          weight *= weight; //reduce exponentially.  
+        }
+        if (weight < 0.00001 || cont.length > maxlength){
+          //stop if weight is too low or content is too long.  
+          break;
+
+        }
+      }
+    }
+    return cont; //return context for this topic.
+  }
+  else{
+    return "";  //no context for this topic.
+  }
+
+}
+
+function getTopicContext(top, weight=1, maxlength=1000){ //weight 0.99 ~ 1000, 0.9 ~ 100, 0.8 ~ 50, 0.6 ~ 20, 0.4 ~ 10, 0.2 ~ 5
+    //get context for this topic.
+  var cont = "";
+  if (weight > 1){
+    weight = 1; //max weight is 1.
+  }
+  if (weight < 0.01){
+    weight = 0.01; //min weight is 0.01.
+  }
+  if (top in gitstruct["bytopic"]){
+    //calculate probability to include this topic entry.  
+    //start with most recent and go backwards.
+    for (i=gitstruct["bytopic"][top].length-1; i>-1; i--){
+      if (gitstruct["bytopic"][top][i].d >= currenttimelinestart && gitstruct["bytopic"][top][i].d <= currenttimelineend){
+        //only include if in time window.
+        if (Math.random() < weight){
+          cont = "$$" + gitstruct["bytopic"][ top ][i].d + "\n" + gitstruct["bytopic"][top][i].content + "\n" + cont;
+          weight *= weight; //reduce exponentially.  
+        }
+        if (weight < 0.00001 || cont.length > maxlength){
+          //stop if weight is too low or content is too long.  
+          break;
+
+        }
+      }
+    }
+    return cont; //return context for this topic.
+  }
+  else{
+    return "";  //no context for this topic.
+  }
+
+}
+
 function loadTopic(top){
     var img = document.getElementById('thinkinggit');
     img.style.visibility = "visible";
@@ -1130,7 +1316,7 @@ function loadTopic(top){
         loadfromGitBook(top, true); //search Git for this string **.... in gitbook and retrieve all.  
     
       }
-      if (getCodeGraph !==undefined){
+      if (typeof(getCodeGraph) !=='undefined'){
         getCodeGraph(top, cont);
       }
 
@@ -1158,7 +1344,7 @@ function loadTopic(top){
       setTimeout(function(){
         lastspokenword = "comment";
         MyChat(default_question); //auto-query the LLM after selection.  
-      }, 5000);
+      }, 10000);
     }
 
     if (gitnature & GIT_RELATIONS){
@@ -1312,18 +1498,20 @@ function getGitCommits(qdate=null, qpath=null){
 
 function clickHandlerGit(sender) {
     var rowLabel = sender.target.textContent;
-    var dataRows = dataTableGit.getFilteredRows([{
+    var dataRows = commitTableGit.getFilteredRows([{
       column: 0,
       value: rowLabel
     }]);
     if (dataRows.length > 0) {
-      var link = dataTableGit.getProperty(dataRows[0], 0, 'link');
+      var link = commitTableGit.getProperty(dataRows[0], 0, 'link');
 	  console.log(link);
       window.open(link, '_blank');
     }
   }
 
   function mouseOverGit(title, content){
+    //this is actually more like title = content and content = url.  
+    //should fix this to match.  
 //    console.log('itemover event - title:', title);
 
 
@@ -1390,8 +1578,8 @@ function clickHandlerGit(sender) {
 //		var item = selection[i];
 		console.log("Selection");
 		console.log(selection);
-		console.log(dataTableGit.getValue(selection[0].row, 1));
-      var link = dataTableGit.getProperty(selection[0].row, 0, 'link');
+		console.log(commitTableGit.getValue(selection[0].row, 1));
+      var link = commitTableGit.getProperty(selection[0].row, 0, 'link');
 	  console.log(link);
       //add mouseover to show the change and 
       window.open(link, '_blank');

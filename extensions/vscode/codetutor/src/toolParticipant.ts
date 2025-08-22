@@ -108,12 +108,15 @@ export function registerCompletionTool(context: vscode.ExtensionContext){
                 if (position.character === 0) {
                     //new line, get previous line.  
                     //if topic, then logCommand.  
+                    //not a good idea to do this here.  
+                    /*
                     linePrefix = document.lineAt(position.line-1).text;
                     if (linePrefix.startsWith('**')) {
                         //if it is a topic, then logCommand.  
                         Book.addToHistory(linePrefix.substring(2));
                         Book.logCommand(linePrefix);
                     }
+                    */
                 }
                 if (linePrefix.endsWith('**')) {
 
@@ -203,15 +206,24 @@ export function registerCompletionTool(context: vscode.ExtensionContext){
                     return myarray;
 
                 }
-                if (linePrefix.endsWith('/') && linePrefix.startsWith('**')){
+                if (linePrefix.endsWith('/')){
                     //include all topics with this.  
 
 
                     //need sorted keys.  
 //                    console.log(Book.topicarray);
+                    //allow to trigger even if we have already completed.  
+                    if (linePrefix.startsWith('**')){
+
+                    }
+                    else if (linePrefix.substring(linePrefix.lastIndexOf(' ')+1).startsWith('**')){
+                        //adjust linePrefix to be just the topic.
+                        linePrefix = linePrefix.substring(linePrefix.lastIndexOf(' ')+1);
+                    }
                     let myarray = Book.findTopicsCompletion(linePrefix);
                         //use Book.alltopics to get sorted array.  
                     return myarray;
+
 
                 }
                 else{
@@ -243,7 +255,7 @@ export function registerCompletionTool(context: vscode.ExtensionContext){
         '!', 
         '-', 
         '$', 
-        '\n', //trigger on newline
+//        '\n', //trigger on newline
         //not sure this is a good idea.  Seems to work ok.  
 
 

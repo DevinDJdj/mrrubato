@@ -57,8 +57,42 @@
   <td>
 	<div id="tempcanvasdiv">
 	<div id="tempcanvasstatus"></div>
-	<canvas id="tempcanvas" width="640" height="360">Your browser does not support the HTML5 canvas tag.</canvas>
+	<canvas id="tempcanvas" style="display:none" width="640" height="360">Your browser does not support the HTML5 canvas tag.</canvas>
 	</div>
+
+	<!--	audio recording controls.  -->
+	<section class="audio-main-controls">
+		<table>
+			<tr><td>
+        <canvas class="audio-visualizer" height="60px"></canvas>
+        <div id="audio-buttons">
+          <button class="audio-record">Record</button>
+          <button class="audio-stop">Stop</button>
+        </div>
+		<table id="audio-div-table">
+			<tr>
+				<td>
+					<audio id="my-audio" controls>
+				</td>
+				<td>
+					My Feedback
+				</td>
+			</tr>
+
+		</table>
+		</td>
+		<td>
+			<table>
+				<tr><td>
+				<div id="audio-users">
+
+				</div>
+				</td></tr>
+			</table>
+	</td></tr>
+	</table>
+	</section>
+
 	<div id="vidinfo" valign="top"></div>
 	<div id="player" valign="top"></div>
 
@@ -398,7 +432,6 @@ var DictionaryID = 0;
 var lastjump = 0;
 //var player; //move to video.js
 //var player2; //move to video.js
-var delay = 10;
 var prevmax = 10;
 var notesarray = [];
 
@@ -411,7 +444,7 @@ var	et = [];
 var myst = [];
 var myet = [];
 
-var users = [];
+
 var durations = [];
 var maxduration = 0;
 
@@ -448,8 +481,8 @@ var user = null;
 //then restrict the key if needed to your site and youtube data API.  
 
 $(document).on('input', '#commentdelay', function() {
-	delay = $(this).val();
-	console.log("delay set " + delay);
+	feedbackdelay = $(this).val();
+	console.log("delay set " + feedbackdelay);
 });
 
       document.addEventListener('DOMContentLoaded', function() {
@@ -1456,6 +1489,7 @@ google.charts.load('current', {'packages':['corechart', 'timeline']});
 
 getVideoJson(video);
 
+initAudioFeedback();
 
 }
 		FUNCS.loadAll = loadAll		
@@ -1463,10 +1497,19 @@ getVideoJson(video);
 </script> 
 
 	<script type="text/javascript" src="video.js"></script>	
+	<script type="text/javascript" src="audio.js"></script>
     <script>
 //		loadVideo();
-		// 3. This function creates an <iframe> (and YouTube player)
-		//    after the API code downloads.
+		function MyChat(transcript) {
+			document.getElementById("p").setAttribute('value', transcript);
+			console.log(video.currentTime);
+			if (transcript !=''){
+				FUNCS.SPEECH.addComment(transcript, getTimeFromSecs(vgetReferenceTime()/1000));
+				return true;
+			}
+			return false;
+		}
+
 	  </script>
   </body>
 </html>

@@ -14,6 +14,7 @@
 
     .dropzone {
       box-sizing: border-box;
+      background-image: url('images/dragdrop.png');
       width: 100%;
       height: 10em;
       border: 2px dashed #ccc;
@@ -71,26 +72,84 @@
         <input type="text" id="loadfile">
         </td><td>
         <button id="btn-start-new">---NEW RECORD---</button>
-        </td></tr>
+        </td>   
+        <td>
+            <div id="clock" 
+            style=	"display: inline-block;
+             font-family: monospace;
+             font-size: 10px;
+             text-align: right;
+             color: lightgray; 
+             border-radius: 10px; 
+             padding: 10px; 
+             background-color: rgba(0, 0, 0, 0.75);">
+            </div>
+            <div id="secondselapsed" 
+                style=	"display: inline-block;
+                font-family: monospace;
+                font-size: 10px;
+                text-align: right;
+                color: lightgray; 
+                border-radius: 10px; 
+                padding: 10px; 
+                background-color: rgba(0, 0, 0, 0.75);">
+            </div>
+            <script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js'></script>
+
+        </td>     
+        </tr>
         <tr><td>
         <h1>
             REC - 
         </h1>        
-        </td></tr>
+        </td>
+        <td colspan="3">
+            <canvas id="pcanvas" width="110" height="22" style="display: none">Your browser does not support the HTML5 canvas tag.</canvas>    
+
+            <div id="devices">	</div>
+            <div id="midi">
+                <canvas id="fullpcanvas_labels" width="640" height="24">Your browser does not support the HTML5 canvas tag.</canvas>
+                <br>
+                <canvas id="fullpcanvas" width="640" height="36">Your browser does not support the HTML5 canvas tag.</canvas>    
+             </div>
+            
+             <div id="out"></div>	
+
+        </td>
+    </tr>
     </table>
-    <h3>SCREEN RECORDING</h3>
+    <table>
+        <tr>
+            <td>
+                <h3>SCREEN RECORDING</h3>
+
+            </td>
+            <td>
+                <canvas id="qrscreen" style="display:none"></canvas>
+                <label for="qrincoming">QR Incoming:</label>
+                <div id="qrincoming"></div>
+
+                </td>
+        </tr>
+
+    </table>
+    <label style="color:red" id="statusmessage"></label>
+    <canvas id="myhiddencanvas" width="960" height="540" style="display: none">Your browser does not support the HTML5 canvas tag.</canvas>
+    <canvas id="myvideocanvas" width="960" height="540" style="display: none">Your browser does not support the HTML5 canvas tag.</canvas>
+
     <video id="myrecordfeedback" controls autoplay playsinline width="960" height="540"></video>
+    
 <br>
-<h3>SCREEN RECORDING control</h3>
+<h3>RECORDING Control</h3>
 <button id="btn-start-recording">Record</button>
 <button id="btn-stop-recording" disabled>Stop Recording</button>
+<button id="btn-pause-recording" disabled>Pause Recording</button>
 <button id="btn-save-local">Save Local</button>
 <button id="btn-save-remote">Save Remote</button>
 <button id="btn-load-remote" disabled>Load Remote</button>
 <button id="btn-set-pat" onclick="setAccessToken()">Set Access Token</button>
 <a href="https://wikistage.company.com/plugins/personalaccesstokens/usertokens.action" target="_new"><img src="images/edit.png" height="16px"/></a>
 <br>
-<label style="color:red" id="statusmessage"></label>
 
 </td>
 <td valign="top">
@@ -112,10 +171,41 @@
             <br/>
             <a href="">&lt;-</a> -Page- <a href="">-&gt;</a>
         
-            <div id="similar" style="height: 300px;width: 300px;overflow:auto;">
+            <div id="similar" style="height: 150px;width: 300px;overflow:auto;">
         
             </div>            
-        </td></tr>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <div id="speakable">
+                <table>
+                    <tr>
+                      <td>
+                        <div id="speak">
+                            <select id="voiceSelect" style="display:none"></select><br>
+                            <!-- status and current command for now just display the string and add any additional midi params-->
+                            <label for="mycommand">Building Command:</label><br>
+                            <input type="text" id="mycommand" name="mycommand" size="30"><br>
+                            <input type="text" id="midicommand" name="midicommand" size="20">
+                        
+                        </div>
+                        <div class="words" contenteditable style="display: none;">
+                            <input type="text" id="p" name="p">
+                        </div>
+            
+                      </td>
+                      <td width="30%">
+                        <img id="thinkingchat" src="images/thinking.gif" height="140px" style="visibility:hidden" />
+            
+                      </td>
+                    </tr>
+                  </table>
+            
+            </div>
+            
+        </td>
+    </tr>
     </table>    
 </td>
 <td valign="top">
@@ -131,7 +221,98 @@
         <textarea id="ocr-processing" style="height:50px;" rows="10"></textarea>
     
       </div>
-    <canvas id="capturescreen" style='position:relative;' ></canvas>
+    <canvas id="capturescreen" style='position:relative;display:none'></canvas>
+
+<!-- hidden content for now-->
+
+<div id="dictable">
+    <!-- dont need this lookup for now.  hiding the diclabel etc for language.js-->
+    <table>
+        <tr>
+            <td>
+            <div id="auto" style="width: 100%;height: 200px;overflow:auto;">
+            <div id="autodiclabel" class="langlabel">	</div>
+            <table id="autodic" class="display" style="width: 100%;">
+                <thead>
+                    <tr>
+                        <th>word</th>
+                        <th>keys</th>
+                        <th>lang</th>
+                        <th>meaning</th>
+                    </tr>
+                </thead>
+                <tfoot>
+                    <tr>
+                        <th>word</th>
+                        <th>keys</th>
+                        <th>lang</th>
+                        <th>meaning</th>
+                    </tr>
+                </tfoot>
+            </table>	
+        </td>
+        <td>
+            <div id="auto" style="width: 100%;height: 200px;overflow:auto;">
+                <table id="metadic" class="display" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>word</th>
+                            <th>keys</th>
+                            <th>lang</th>
+                            <th>meaning</th>
+                        </tr>
+                    </thead>
+                    <tfoot>
+                        <tr>
+                            <th>word</th>
+                            <th>keys</th>
+                            <th>lang</th>
+                            <th>meaning</th>
+                        </tr>
+                    </tfoot>
+                </table>	
+            </div>
+        
+        </td>
+        </tr>
+        <tr>
+        <td colspan="2">
+            <div id="dictionary" style="width: 100%;height: 280px;overflow:auto;">
+                <div id="dictablelabel" class="langlabel">	</div>
+                <table id="DictionaryTable" class="display" style="width: 100%">
+                    <thead>
+                        <tr>
+                            <th>word</th>
+                            <th>playall</th>
+                            <th>keys</th>
+                            <th>user</th>
+                            <th>times</th>
+                            <th>meaning</th>
+                            <th>created</th>
+                            <th>lang</th>
+                        </tr>
+                    </thead>
+                    <tfoot>
+                        <tr>
+                            <th>word</th>
+                            <th>playall</th>
+                            <th>keys</th>
+                            <th>user</th>
+                            <th>times</th>
+                            <th>meaning</th>
+                            <th>created</th>
+                            <th>lang</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        
+        </td>
+        </tr>
+    </table>
+
+</div>
+
 </td>
 
 </tr>
@@ -152,8 +333,8 @@
 	<div id="mycommentsh" style="height: 300px;overflow:auto;"></div>
 </td>
 <td>
-    <label for="selectedocr">Similar OCR Transcript:</label>
-    <div id="selectedocr" style="height: 300px;width: 300px;overflow:auto;">
+	<label for="currentstate">Current State:</label><br>
+	<div id="currentstate" style="height: 180px;overflow:auto;"></div>
 
 </td>
 
@@ -165,21 +346,28 @@
 	<div id="ocrtranscriptsh" style="height: 300px;overflow:auto;"></div>
 </td>
 </tr>
+<tr>
+    <td>
+        <p><label>Language: <select id="id_language">
+            <option>ENG</option>
+          </select></label></p>
+     
+        <div id="drop_zone" class="dropzone">
+            <p>Drag one or more files to index.</p>
+          </div>
+      <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png,.gif" style="display: none;" />
+    <!--  <div class="dropzone" id="dropzone">
+        Drag and drop a PDF, JPG, PNG, or GIF file here or click to select a file
+      </div>
+      -->
+    </td>
+    <td colspan="2">
+        <textarea class="full-document" id="fullDocument" rows="10" columns="80"></textarea>
+        
+    </td>
+</tr>
 </table>
 
-  <p><label>Language: <select id="id_language">
-        <option>ENG</option>
-      </select></label></p>
-  <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png,.gif" style="display: none;" />
-<!--  <div class="dropzone" id="dropzone">
-    Drag and drop a PDF, JPG, PNG, or GIF file here or click to select a file
-  </div>
-  -->
-  <div class="full-document-section" id="fullDocumentSection">
-    <h2>Full document</h2>
-    <textarea class="full-document" id="fullDocument"></textarea>
-    <h2>Pages</h2>
-  </div>
 
 
 
@@ -192,7 +380,72 @@
 <script src="js/ayuda/imageeditor.js"></script>
 <script src="config.js"></script>
 
+        <!-- update the version number as needed -->
+        <script src="globals.js"></script>
+
+        <script defer src="/__/firebase/9.19.1/firebase-app-compat.js"></script>
+        <!-- include only the Firebase features as you need -->
+        <script defer src="/__/firebase/9.19.1/firebase-auth-compat.js"></script>
+        <script defer src="/__/firebase/9.19.1/firebase-database-compat.js"></script>
+        <script defer src="/__/firebase/9.19.1/firebase-firestore-compat.js"></script>
+        <script defer src="/__/firebase/9.19.1/firebase-functions-compat.js"></script>
+        <script defer src="/__/firebase/9.19.1/firebase-messaging-compat.js"></script>
+        <script defer src="/__/firebase/9.19.1/firebase-storage-compat.js"></script>
+        <script defer src="/__/firebase/9.19.1/firebase-analytics-compat.js"></script>
+        <script defer src="/__/firebase/9.19.1/firebase-remote-config-compat.js"></script>
+        <script defer src="/__/firebase/9.19.1/firebase-performance-compat.js"></script>
+        <!-- 
+          initialize the SDK after all desired features are loaded, set useEmulator to false
+          to avoid connecting the SDK to running emulators.
+        -->
+        <script defer src="/__/firebase/init.js?useEmulator=true"></script>
+
+
+        <script src="keymap.js"></script>
+        <script src="languages.js"></script>
+        <script src="video.js"> </script>
+    
+        <!-- midi dependencies-->
+        <script src="https://cdn.jsdelivr.net/npm/webmidi@latest/dist/iife/webmidi.iife.js"></script>
+        <script src="JZZ/JZZ.js"></script>
+        <script src="JZZ/JZZ.midi.SMF.js"></script>
+    
+        <link href="js/datatables/datatables.min.css" rel="stylesheet">
+         
+        <script src="js/datatables/datatables.min.js"></script>
+        <!-- Select2 plugin -->
+        <link rel="stylesheet" type="text/css" href="js/datatables/select2.min.css">
+        <!-- Select2 plugin -->
+        <script src="js/datatables/select2.min.js"></script>
+        <script src="js/drawkeyboard.js"></script>
+
+
+        <!-- QR  -->
+        <script src="js/qrcode.js"></script>
+        <script src="qr.js"></script>
+        <script src="QR/jsQR.js"></script>
+
+    <!-- clock -->
+    <script src="clock.js"></script>
+
+    <!-- feedback helper funcs -->
+    <script src="feedback.js"></script>
+
+
+
+    </head>
+    <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-RXPM3QHNJ3"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-RXPM3QHNJ3');
+</script>
+        
 <!-- indexeddb -->
+ <!-- use local js/dexie.js  if needed -->
 <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
 <!-- local search -->
 <script type="text/javascript" src="js/flexsearch/flexsearch.bundle.min.js"></script>
@@ -201,8 +454,6 @@
 <script>
 
 function loadAll(){
-    recDB = new recDB();
-    recDB.loadFTS();
    
 }
 
@@ -253,8 +504,8 @@ function getSimilar(text = ""){
         //only get the first X words?  
         //from screenshot hopefully is what we want.  
         var lines = text.split("\n"); 
-        //take the first 3 lines for now
-        mysearch = lines.slice(0,3).join("\n");
+        //get all lines.  
+        mysearch = lines.join("\n");
 //        mysearch = text;
     }
 
@@ -266,15 +517,19 @@ function getSimilar(text = ""){
     //order of results here is significant.  
     //need to reorder based on this.  
     imgrecs = [];
+    vidrecs = [];
     for (i=0; i<ftrecs.length; i++){
         if (typeof(ftrecs[i]) ==="string"){
             imgrecs.push(ftrecs.splice(i,1));
+        }
+        else{
+            vidrecs.push(ftrecs[i]);
         }
     }
 
     if (imgrecs.length > 0){
         //img recs if they exist.  
-        recDB.getScreenshots(imgrecs).then(recs => {
+        recDB.getScreenshotsA(imgrecs).then(recs => {
 
         full = "";
         for (i=0; i<recs.length; i++){
@@ -291,9 +546,9 @@ function getSimilar(text = ""){
         });
 
     }
-    else{
+    if (vidrecs.length > 0){
         //vid recs
-        recDB.getVideos(recs).then(recs => {
+        recDB.getVideos(vidrecs).then(recs => {
 //            recs.sort((a,b) => b.version - a.version); // b - a for reverse sort
         full = "";
         for (i=0; i<recs.length; i++){
@@ -308,7 +563,9 @@ function getSimilar(text = ""){
         console.log(recs);
 
         });
-
+    }
+    else{
+        //vid recs
 
 
     }
@@ -327,11 +584,12 @@ function getRecent(){
     recDB.getRecent(mysearch).then(recs => {
         full = "";
         for (i=0; i<recs.length; i++){
-            reccategory = recs[i]["category"];
-            recid= recs[i]["id"];
-            recver = recs[i]["version"];
+            rcategory = recs[i]["category"];
+            rid= recs[i]["id"];
+            rname = recs[i]["name"];
+            rver = recs[i]["version"];
 
-            full += '<a target="_blank" id="rec' + i + '" href="rec.html?cat=' + reccategory + '&id=' + recid + '&ver=' + recver + '&img=0">' + recs[i]["name"] + ' (' + recs[i]["version"] + ')</a><br>';
+            full += '<a target="_blank" id="rec' + i + '" href="rec.html?cat=' + rcategory + '&id=' + rid + '&name=' + rname + '&ver=' + rver + '&img=0">' + recs[i]["name"] + ' (' + recs[i]["version"] + ')</a><br>';
             
         }
         $('#recent').html(full);
@@ -349,12 +607,17 @@ if (typeof(accesstoken) == 'undefined'){
 }
 
 const queryString = window.location.search;
-const urlParams = new URLSearchParams(queryString);
-const fname = urlParams.get('id');
-const category = urlParams.get('cat');
-var ver = urlParams.get('ver');
-var img = urlParams.get('img');
+//urlParams in clock.js
+const urlaParams = new URLSearchParams(queryString);
+const fname = urlaParams.get('name');
+const recid = urlaParams.get('id'); 
+var recname = urlaParams.get('name');
+const category = urlaParams.get('cat');
+var ver = urlaParams.get('ver');
+var img = urlaParams.get('img');
 var croppedImageUrl = null;
+var combinedStream = null;
+
 console.log(fname);
 var now = new Date();
 
@@ -362,6 +625,10 @@ var images = [];
 var imageid = 0;
 var imageselected = -1;
 var username = "";
+
+var lastPause = 0;
+var pauseTime = 0;
+
 
 var sims = [];
 
@@ -383,26 +650,19 @@ if (typeof(fname) == 'undefined'){
 
 
 document.title = "REC - " + category + " " + fname
-document.querySelector('h1').innerHTML = "REC - " + category + " " + fname;
+document.querySelector('h1').innerHTML = "REC - " + category + "<br> " + fname;
 $("#loadfile").val(fname);
 $("#category").val(category);
 
 
-if (typeof(ver) == 'undefined' || ver==null){
-    ver = version;
-}
-else{
-    //load local video.  
-    loadVideo();
-}
 
 getUser(accesstoken);
 
 document.getElementById('btn-start-new').onclick = function() {
-    id = $("#loadfile").val();
+    name = $("#loadfile").val();
     cat = $("#category").val();
     var a = document.createElement('a');
-    a.href = 'rec.html?cat=' + cat + '&id=' + id;
+    a.href = 'rec.html?cat=' + cat + '&name=' + name;
     a.style='display:none';
     a.click();    
 }
@@ -413,7 +673,7 @@ $('#recentsearch').val(fname);
 document.getElementById('btn-recentsearch').onclick = function() {
     getRecent();
 }
-document.getElementById('btn-recentsearch').click();
+
 
 
 
@@ -433,6 +693,24 @@ if(!navigator.getDisplayMedia && !navigator.mediaDevices.getDisplayMedia) {
 }
 
 
+function showHelp(){
+    //show the dictionary table.  
+    const canvas = document.getElementById("capturescreen");
+    canvas.style.display = 'none';
+    const dictable = document.getElementById("dictable");
+
+    dictable.style.display = 'block'; //show the dictionary table for now.
+    return dictable;
+}
+
+function showScreenshot(){
+    const dictable = document.getElementById("dictable");
+    dictable.style.display = 'none'; //hide the dictionary table for now.
+
+    const canvas = document.getElementById("capturescreen");
+    canvas.style.display = 'block';
+    return canvas;
+}
 function loadPreview(sim){
 
     console.log(sim);
@@ -443,9 +721,9 @@ function loadPreview(sim){
 
     ocrtext = mysim["ocr"];
     $('#selectedocr').html(ocrtext);
-    imgdata = "data:image/png;base64," + mysim["img"];
+    imgdata = mysim["img"];
 
-    const canvas = document.getElementById("capturescreen");
+    canvas = showScreenshot();
     const context = canvas.getContext("2d");
     var img = new Image();
     img.onload = function() {
@@ -491,43 +769,73 @@ function loadPreview(sim){
 
 function loadVideo(){
     //set src of video and get text from service.  
-	var fd = new FormData();
-    fd.append('op', 'load');
-    fd.append('id', fname);
-    fd.append('ver', ver);
-	$.ajax({
-		type: 'POST',
-		url: '/service.py',
-		data: fd,
-		processData: false,
-		contentType: false,
-
-    }).done(function(response) {
-		   console.log(response);
-           res = JSON.parse(response);
-            $('#mycomments').val(res["transcript"]);
-            $('#mycommentsh').html(makeOCRLinks(makeTimeLinks(res["transcript"])));
-
-
-            $('#ocrtranscript').val(res["ocr"]);
-            $('#ocrtranscriptsh').html(makeOCRLinks(makeTimeLinks(res["ocr"])));
-
-            for (let i=0; i< res["images"].length; i++){
-                myimg = {img: "data:image/png;base64," + res["images"][i]["image"], id: parseInt(res["images"][i]["id"])}
-                images.push(myimg);
+    //use recid if passed.  
+    
+//    recDB.loadVideo(null, $('#category').val(), recname, ver).then(
+    recDB.loadVideo(parseInt(recid), $('#category').val(), recname, ver).then(
+        function(res){
+            console.log(res);
+            //set video src.  
+            var video = document.getElementById("myrecordfeedback");
+            s = res["videoblob"];
+            const oldObjectUrl = video.currentSrc;
+            video.src = '';
+            if (oldObjectUrl) {
+                URL.revokeObjectURL(oldObjectUrl);
             }
-            console.log(images);
+            const newObjectUrl = URL.createObjectURL( s );
+            video.src = newObjectUrl;
+            video.load();
+
+            //get images.  
+            images = [];
+            fullocr = "";
+            recDB.getScreenshots(res["id"]).then(recs => {
+                console.log(recs);
+                full = "";
+                for (i=0; i<recs.length; i++){
+                    //vidid_imgid
+                    tempid = recs[i]["id"];
+                    if (tempid.indexOf("_") > -1){
+                        tempid = tempid.split("_");
+                        tempid = parseInt(tempid[1]);
+                    }
+
+                    myimg = {img: recs[i]["imgblob"], id: tempid, scrollpos: 0,
+                        ocr: recs[i]["ocr"], secs: recs[i]["secs"]};
+                    images.push(myimg);
+                    full += '<a target="_blank" id="sim' + i + '" href="rec.html?cat=' + category + '&id=' + res["id"] + '&ver=' + ver + '&img=' + tempid + '">OCR' + tempid + '</a><br>';                    
+                    secs = myimg.secs;
+                    text = myimg.ocr;
+                    ocrtext = "--OCR" + tempid + "-- (" + getTimeFromSecs(secs) + ")\n" + text;
+                    addOCRComment(text, getTimeFromSecs(secs), imageid);
+
+                }
+                console.log(images);
+                $('#similar').html(full);
+                sims = images;
+                for (i=0; i<sims.length; i++){
+                    sim = document.getElementById('sim' + i);
+                    if (sim !==null){
+                        sim.onmouseover = function (){ loadPreview(this);}
+                    }
+                }
+
+                createNotesArray(true); //have to populate the notes array with the comments.
+            });
+
+            $('#mycomments').val(res["mycomments"]);
+            $('#mycommentsh').html(makeOCRLinks(makeTimeLinks(res["mycomments"])));
+            createNotesArray(); //have to populate the notes array with the comments.
+
             if (imageselected > -1){
                 loadOCR(imageselected);
             }
-        //load images.  
-        //imgElem.setAttribute('src', "data:image/jpg;base64," + baseStr64);
-    });	
 
-        //set video src.  
-        s = 'uploads/videos/' + fname + '_' + ver + '.mkv'
-        var video = document.getElementById("myrecordfeedback");
-        video.src = s;
+        }
+    );
+
+
 }
 
 function invokeGetDisplayMedia(success, error) {
@@ -609,8 +917,42 @@ function autodownload(b){
     anchor.click();
 }
 
-var recorder;
+var recorder = null;
 
+
+
+function getPauseTime(){
+    if (recorder ===null){
+        return pauseTime;
+    }
+    if (recorder.state === "paused") {
+        return pauseTime + Date.now()-lastPause;
+    }
+    else{
+        return pauseTime;
+    }
+}
+
+
+document.getElementById('btn-pause-recording').onclick = function() {
+
+
+if (recorder.state === "recording") {
+
+    recorder.pauseRecording();
+    lastPause = Date.now();
+    $(this).html('Resume Recording');
+  //  Console.log(recorder.state);
+    // recording paused
+} else if (recorder.state === "paused") {
+    $(this).html('Pause Recording');
+    recorder.resumeRecording();
+    pauseTime += Date.now() - lastPause;
+    // resume recording
+}
+return false;
+
+}
 
 
 
@@ -619,24 +961,79 @@ document.getElementById('btn-start-recording').onclick = function() {
 
 captureScreen(function(screen) {
     keepStreamActive(screen);
+    //set up qr code on screen.  
     captureCamera(function(camera) {
-        keepStreamActive(camera);
-
         screen.width = window.screen.width;
         screen.height = window.screen.height;
+//        screen.top = 0;
+//        screen.left = 0;
         screen.fullcanvas = true;
-        
+
         camera.width = 160;
-        camera.height = 120;
+        camera.height = 128;
         camera.top = screen.height - camera.height - 100;
         camera.left = screen.width - camera.width;
+
+        keepStreamActive(camera);
+        let canvas = document.getElementById("myvideocanvas");
+//        canvas.style.display = 'block';
+//        canvas.style.position = 'absolute';
+        requestAnimationFrame(drawVideo);
         
-        recorder = RecordRTC([screen, camera], {
+
+        let mf = document.getElementById("myrecordfeedback");
+
+        const rect = mf.getBoundingClientRect();
+//        mf.style.display = 'none';
+        canvas.style.top = 0;
+        canvas.style.left = 0;
+        canvas.width = screen.width*0.8; //adjust to fit screen well.  
+        canvas.height = screen.height*0.8;
+
+        let hiddencanvas = document.getElementById("myhiddencanvas");
+        hiddencanvas.width = screen.width;
+        hiddencanvas.height = screen.height;
+        var myscreen = hiddencanvas.captureStream(30);
+        keepStreamActive(myscreen);
+//        myscreen.top = 0;
+//        myscreen.left = 0;
+//        myscreen.fullcanvas = true;
+        //infinity mirror.  
+
+//        myscreen.width = screen.width;
+//        myscreen.height = screen.height;
+
+        combinedStream = new MediaStream();
+
+        // "getTracks" is RecordRTC's built-in function
+        getTracks(myscreen, 'video').forEach(function(videoTrack) {
+            combinedStream.addTrack(videoTrack);
+        });
+
+        getTracks(screen, 'video').forEach(function(videoTrack) {
+            combinedStream.addTrack(videoTrack);
+        });
+//        combinedStream.width = screen.width;
+//        combinedStream.height = screen.height;
+
+//        myscreen.top = 0;
+//        myscreen.left = 0;
+
+        //could just hide and restore the myrecordfeedback video element.
+        mf.style.display = 'none'; //hide the video element.
+        mf.srcObject = combinedStream; //set the srcObject to the combined stream.
+        myscreen.getVideoTracks()[0].enabled = true; //enable the track.
+
+        recorder = RecordRTC([combinedStream,screen,camera], {
             type: 'video',
             mimeType: 'video/webm',
             previewStream: function(s) {
-                document.querySelector('video').muted = true;
-                document.querySelector('video').srcObject = s;
+                if (s.fullcanvas) { //this is original recording.  
+                    document.querySelector('video').muted = true;
+
+                    document.querySelector('video').srcObject = combinedStream;
+
+                }
             }
         });
 
@@ -652,7 +1049,7 @@ captureScreen(function(screen) {
 				video.srcObject = null;
 				video.src = URL.createObjectURL(blob);
 				video.muted = true;
-                [screen, camera].forEach(function(stream) {
+                [combinedStream, screen,camera].forEach(function(stream) {
                     stream.getTracks().forEach(function(track) {
                         track.stop();
                     });
@@ -689,7 +1086,7 @@ document.getElementById('btn-screenshot').onclick = function() {
     //start screenshot
 	video = document.getElementById("myrecordfeedback");
 	console.log(video.currentTime);
-	mytranscript = checkCommands("screenshot", video);
+	mytranscript = checkCommandsr("screenshot", video);
     if (mytranscript !=''){
     	addComment(mytranscript, getTimeFromSecs(video.currentTime));
     }
@@ -733,6 +1130,9 @@ document.getElementById('btn-draw-text').onclick = function() {
 
 document.getElementById('btn-stop-recording').onclick = function() {
     this.disabled = true;
+    var canvas = document.getElementById("myvideocanvas");
+    canvas.style.display = 'none';
+    document.getElementById("myrecordfeedback").style.display = 'block';
     window.stopCallback();
 };
 
@@ -759,7 +1159,7 @@ document.getElementById('btn-save-remote').onclick = function() {
 	fd.append('mycomments', $('#mycomments').val());
     fd.append('ocrtranscript', $('#ocrtranscript').val());
 
-    recDB.saveVideo(null, $('#category').val(), fname, version, $('#mycomments').val(), blob, null, 
+    recDB.saveVideo(0, $('#category').val(), fname, version, $('#mycomments').val(), blob, null, 
         function(res){
             console.log(res);
             $('#statusmessage').html('saved! ' + fname + ' ' + version + '<br/>');
@@ -891,6 +1291,7 @@ function getTime(comment, prevtime=0){
   }
 
   function getTimeFromSecs(secs){
+    secs = Math.floor(secs - getPauseTime() / 1000);
 	min = Math.floor(secs/60);
 	secs = Math.floor(secs - min*60);
 	ret = "";
@@ -997,7 +1398,13 @@ function getHeightFromTime(t, html=false, ocr=false){
     }
 }
 
-function updateNotes(mytime, ocr=false){
+function updateNotes(mytime=0, ocr=false){
+    //if time is 0, then use current video time.
+    if (mytime == 0){
+        video = document.getElementById("myrecordfeedback");
+        mytime = video.currentTime;
+    }
+
     if (ocr){
         var allnotes = "";
         for (i=0; i<ocrarray.length; i++){
@@ -1204,7 +1611,7 @@ function finishScreenshot(){
 
 function takeScreenshot(video){
 
-    const canvas = document.getElementById("capturescreen");
+    const canvas = showScreenshot();
 		const context = canvas.getContext("2d");
     //    canvas.visible = false;
         canvas.width = video.clientWidth*2;
@@ -1242,7 +1649,7 @@ function toggleFullScreen(video, fs = true) {
     }
 }
 
-function checkCommands(transcript, video){
+function checkCommandsr(transcript, video){
 	let secs = video.currentTime;
 	let position = transcript.search(/screenshot/i);
 	if (position > -1){
@@ -1276,7 +1683,7 @@ function checkCommands(transcript, video){
 }
 
 
-
+/*
 var speech = true;
 
 
@@ -1319,11 +1726,108 @@ if (speech){
     recognition.start();
     recognition.addEventListener('end', recognition.start);
 }
-
+*/
 </script>
 
+
+<script>
+    FUNCS = {};
+    users = [];
+    users.push({id: 0, name: "me", pic: "images/gemini_thinker.png"});
+  
+    function mymidicallback(msg, time, user, lang) {
+      console.log(msg);
+      console.log(time);
+      //draw here.  
+    }
+    function updateFeedbackUI(user=0, note=null){
+      console.log(note);
+    }
+  
+    var midicontroller;
+    var netgraph;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        FUNCS.loadAll(); 
+    });
+
+    function MyChat(transcript) {
+        document.getElementById("p").setAttribute('value', transcript);
+        video = document.getElementById("myrecordfeedback");
+        console.log(video.currentTime);
+        //already checkCommands in midi.js, not using, but shouldnt confuse.  
+        mytranscript = checkCommandsr(transcript, video);
+        if (mytranscript !=''){
+            addComment(mytranscript, getTimeFromSecs(video.currentTime));
+            return true;
+        }
+        return false;
+      }
+    
+  </script>
+
+
+<script type="module">
+    export function loadAll(reload = false){
+//        getVideoJson(video);
+//        $("#dictable").load("dictable.html"); //not working..
+        checkStorage();
+        recDB = new recDB();
+
+        recDB.loadFTS();
+        if (typeof(ver) == 'undefined' || ver==null){
+            ver = version;
+        }
+        else{
+            //load local video.  
+            loadVideo();
+        }
+
+
+        document.getElementById('btn-recentsearch').click();        
+        FUNCS.SPEECH.loadSpeech();
+        //initialize midi controller
+        midicontroller = new FUNCS.MIDI.MidiController();
+        
+        midicontroller.setupMidi();
+        midicontroller.midisetcallbacks(mymidicallback, updateFeedbackUI);
+        midicontroller.setupWebMidi();
+
+        //need better mechanism.  
+        USE_FIREBASE = false; //dont use firebase for now with rec.html
+        reinitLanguages();
+        loadUserConfig();
+        //load videocontrol language along with base.  
+        loadDictionaries(0, ["videocontrol"]); //dont use firebase.  
+
+        //load the filedrop component.  
+        FUNCS.FILEDROP.loadFileDrop();
+
+//        loadQRScanner();
+
+      }
+      FUNCS.loadAll = loadAll;
+    </script>
+
+<script type="module">
+    import * as SPEECH from "/speech.js"
+    import * as CHAT from "/chat.mjs"
+    import * as MIDI from "/midi.mjs"
+    import * as FILEDROP from "/js/filedrop.js"
+//    import QrScanner from '/QR/qr-scanner.min.js';
+    
+    FUNCS.SPEECH = SPEECH;
+    FUNCS.CHAT = CHAT;
+    FUNCS.MIDI = MIDI;
+    FUNCS.FILEDROP = FILEDROP;
+//    FUNCS.QrScanner = QrScanner;
+  </script>
+
+  
 <footer style="margin-top: 20px; text-align: left;"><small id="send-message"></small></footer>
 <script src="https://www.webrtc-experiment.com/common.js"></script>
+
+
 
 </body>
 </html>

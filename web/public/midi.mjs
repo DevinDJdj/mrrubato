@@ -208,27 +208,20 @@ export class MidiController {
         return retArray;
     }
 
-    noteOn(note, velocity, absTime, myTime = 0, lang = "") {
-        lang = lang || currentlanguage;
-        
+    noteOn(note, velocity, abstime, myTime = 0, lang = "") {
+        if (lang==""){
+            lang = currentlanguage;
+        }
+            
         let osc = null;
-        let pNote = null;
+        let pnote = null;
         
         if (myTime <= 0 && playfeedback) {
             osc = this.playTone(this.midiToFreq(note, velocity));
-            pNote = this.playNote(note, Math.round(velocity / 2));
+            pnote = this.playNote(note, Math.round(velocity / 2));
         }
 
-        const obj = {
-            note,
-            velocity,
-            time: absTime,
-            duration: 0,
-            osc,
-            pnote: pNote,
-            complete: false,
-            user: currentmidiuser
-        };
+        var obj = {"note": note, "velocity": velocity, "time": abstime, "duration": 0, osc: osc, pnote: pnote, complete: false, user: currentmidiuser, created: Date.now()};
 
         if (myTime > 0) {
             obj.complete = true;
@@ -237,9 +230,11 @@ export class MidiController {
         this.notes[note] = obj;
     }
 
-    noteOff(note, absTime, lang = "") {
-        lang = lang || currentlanguage;
-
+    noteOff(note, abstime, lang = "") {
+        if (lang==""){
+            lang = currentlanguage;
+        }
+    
         const obj = this.notes[note];
         if (obj.osc) {
             obj.osc.stop();
@@ -248,28 +243,32 @@ export class MidiController {
             obj.pnote.stop();
         }
 
-        const clone = { ...obj, duration: absTime - obj.time };
-
+        let clone = Object.assign({}, obj);
+        clone.duration = abstime - obj.time;
+    
         if (lastnote && lastnote.note === obj.note && lastnote.time === obj.time) {
-            return;
+        }
+        else{
+            lastnote = obj;
+            this.insertNote(clone, lang);
+            obj.velocity = 0;
+            this.notes[note] = obj;
+    
         }
 
-        lastnote = obj;
-        this.insertNote(clone, lang);
-        obj.velocity = 0;
-        this.notes[note] = obj;
     }
 
     insertNote(note, lang = "") {
-        lang = lang || currentlanguage;
-        const currentLang = midiarray[currentmidiuser][lang];
-        
-        let i = currentLang.length - 1;
-        while (i > -1 && note.time < currentLang[i].time) {
+        if (lang == ""){
+            lang = currentlanguage;	
+        }
+        let i=midiarray[currentmidiuser][lang].length-1;
+
+        while (i >-1 && note.time < midiarray[currentmidiuser][lang][i].time){		
             i--;
         }
-
-        currentLang.splice(i + 1, 0, note);
+    
+		midiarray[currentmidiuser][lang].splice(i+1, 0, note);
 
         if (this.midiUICallback) {
             this.midiUICallback(currentmidiuser, note);
@@ -331,6 +330,10 @@ export class MidiController {
             case 134: case 135: case 136: case 137: case 138:
             case 139: case 140: case 141: case 142: case 143:
                 this.noteOff(note, absTime, lang);
+                if (note%12 === 0){
+                    //check commands here.  
+//                    triggerCheckCommands();
+                }
                 break;
 
             case 176: // pedal
@@ -355,7 +358,7 @@ export class MidiController {
     }
 
     checkCommands(lang = "meta") {
-        let cl = this.getPendingCommand();
+        let cl = FUNCS.SPEECH.getPendingCommand(this.getPedal());
         let midi = this.getMidiRecent();
         let executed = false;
 
@@ -412,19 +415,15 @@ export class MidiController {
                 }
             }
 
-            if ((midi == null || midi.length === 0) && transcript !== "") {
+            if ((midi == null || midi.length === 0) && transcript !== ""  && !transcript.endsWith(" ")) {
                 executed = FUNCS.SPEECH.Chat(transcript, callback, pending);
             }
 
             if (executed) {
-                this.commandLog.pop();
+                FUNCS.SPEECH.deletePendingCommand();
                 transcript = "";
             }
 
-            if (Date.now() - cl.time > RECENT_TIME * 2) {
-                this.commandLog.pop();
-                transcript = "";
-            }
         } else if (midi != null && midi.length > 0) {
             console.log(midi);
             let prevTranscript = "";
@@ -444,6 +443,7 @@ export class MidiController {
                     } else {
                         executed = FUNCS.SPEECH.Chat(transcript, callback, pending);
                         transcript = "";
+                        
                     }
                 } else {
                     done = 0;
@@ -452,7 +452,7 @@ export class MidiController {
 
             if (transcript !== "") {
                 if (transcript.endsWith(" ")) {
-                    FUNCS.SPEECH.addCommandLog(transcript, null, true);
+                    FUNCS.SPEECH.addCommandLog(transcript, null, true, lang);
                 } else {
                     executed = FUNCS.SPEECH.Chat(transcript, callback, pending);
                     transcript = "";

@@ -1,0 +1,1130 @@
+<!--
+Detailed parsing of one file.  
+For now use new page, maybe eventually just adjust components in book.html
+use book.ne grammar to parse book.  
+Otherwise use code parsing tool to get a meaningful graph of function calls.  
+Should be communication between book and page.  
+
+BOOK
+parse all elements
+visjs graph for TOPIC/TOPIC/reference relationships.  
+style to display all comment, commands etc.  
+
+PAGE
+visjs graph from AST.  
+prominent display of other pages from import/include.  
+if selected, selectionhistory should be updated in book.html
+Same code display as book.  Use token from book.  
+Page dependent on book.html, and should be child page.  
+
+Need multi-tab communication.  
+localStorage and/or BroadcastChannel
+const channel = new BroadcastChannel('app-data');
+channel.postMessage(data);
+const channel = new BroadcastChannel('app-data');
+
+channel.addEventListener ('message', (event) => {
+ console.log(event.data);
+});
+
+Same for
+Book -> analyze -> rec 
+
+
+should be able to query particular page by using selectionhistory number for inquiry.  
+page.html?codefile=web/public/page.html
+
+-->
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport"
+          content="width=device-width,
+                   initial-scale=1.0">
+
+        <!-- update the version number as needed -->
+        <script src="config.js"></script>
+        <script src="globals.js"></script>
+
+        <script defer src="/__/firebase/9.19.1/firebase-app-compat.js"></script>
+        <!-- include only the Firebase features as you need -->
+        <script defer src="/__/firebase/9.19.1/firebase-auth-compat.js"></script>
+        <script defer src="/__/firebase/9.19.1/firebase-database-compat.js"></script>
+        <script defer src="/__/firebase/9.19.1/firebase-firestore-compat.js"></script>
+        <script defer src="/__/firebase/9.19.1/firebase-functions-compat.js"></script>
+        <script defer src="/__/firebase/9.19.1/firebase-messaging-compat.js"></script>
+        <script defer src="/__/firebase/9.19.1/firebase-storage-compat.js"></script>
+        <script defer src="/__/firebase/9.19.1/firebase-analytics-compat.js"></script>
+        <script defer src="/__/firebase/9.19.1/firebase-remote-config-compat.js"></script>
+        <script defer src="/__/firebase/9.19.1/firebase-performance-compat.js"></script>
+        <!-- 
+          initialize the SDK after all desired features are loaded, set useEmulator to false
+          to avoid connecting the SDK to running emulators.
+        -->
+        <script defer src="/__/firebase/init.js?useEmulator=true"></script>
+    
+    
+    <title>PAGE Test</title>
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+<!--    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script> -->
+    <script src="https://code.jquery.com/ui/1.14.1/jquery-ui.js"></script>
+
+
+    <!-- google charts -->    
+    <script src='https://apis.google.com/js/platform.js' async defer></script>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
+    <!-- code editor -->
+    <script src="js/codeeditor/codemirror/lib/codemirror.js"></script>
+    <link rel="stylesheet" href="js/codeeditor/codemirror/lib/codemirror.css">
+    <script src="js/codeeditor/codemirror/mode/javascript/javascript.js"></script>
+    <script src="js/codeeditor/codemirror/mode/python/python.js"></script>
+    <script src="js/codeeditor/codemirror/mode/shell/shell.js"></script>
+    <script src="js/codeeditor/codemirror/mode/htmlmixed/htmlmixed.js"></script>
+    <!-- 
+    #https://github.com/codemirror/codemirror5/tree/master/mode 
+    would be better if this were dynamic 
+    -->
+
+    <script type="module" src="speech.js">      
+    </script>
+    <script src="keymap.js"></script>
+    <script src="languages.js"></script>
+    <script src="video.js"> </script>
+
+    <!-- midi dependencies-->
+    <script src="https://cdn.jsdelivr.net/npm/webmidi@latest/dist/iife/webmidi.iife.js"></script>
+    <script src="JZZ/JZZ.js"></script>
+    <script src="JZZ/JZZ.midi.SMF.js"></script>
+
+    <link href="js/datatables/datatables.min.css" rel="stylesheet">
+     
+    <script src="js/datatables/datatables.min.js"></script>
+    <!-- Select2 plugin -->
+    <link rel="stylesheet" type="text/css" href="js/datatables/select2.min.css">
+    <!-- Select2 plugin -->
+    <script src="js/datatables/select2.min.js"></script>
+    <script src="js/drawkeyboard.js"></script>
+
+    <!-- timeline visjs-->
+    <script
+      type="text/javascript"
+    src="https://unpkg.com/vis-timeline@latest/standalone/umd/vis-timeline-graph2d.min.js"
+  ></script>
+  
+  <link href="https://unpkg.com/vis-timeline@latest/styles/vis-timeline-graph2d.min.css" rel="stylesheet" type="text/css" />
+  <link href="timeline.css" rel="stylesheet" type="text/css" />
+
+
+    <!-- visjs network graph -->
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <link href="https://unpkg.com/vis-network/styles/vis-network.min.css" rel="stylesheet" type="text/css" />
+
+    <!-- local DB -->
+    <!-- indexeddb -->
+    <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
+    <!-- local search -->
+    <script type="text/javascript" src="js/flexsearch/flexsearch.bundle.min.js"></script>
+    <script src="db.js"></script>
+     
+    <!-- git -->
+     <script src="git.js"></script>
+
+     <!--tabs -->
+     <link href="css/tabs.css" rel="stylesheet">
+    <script src="js/tabs.js"></script>
+
+
+    <!-- source code analysis components JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/acorn/5.2.1/acorn.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/acorn/5.2.1/walk.js"></script>
+    <!-- python -->
+    <script type='text/javascript' src='../js/filbert.js'></script>
+
+    <!-- code analysis -->
+    <script src="codewindow.js"></script>
+    <!-- timeline selection -->
+    <script defer src="timewindow.js"></script>
+
+    <!-- clock -->
+    <script src="clock.js"></script>
+    <script src="js/ayuda/date.format.js"></script>                
+
+    </head>
+    <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-RXPM3QHNJ3"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-RXPM3QHNJ3');
+</script>
+
+    <body>
+    
+    
+    <table>
+        <tr>
+            <td>
+                <h1>PAGE</h1>
+                <select id="repoSelect"></select><br>
+
+    
+            </td>
+            <td>
+                <div id="usericon" onclick="FUNCS.loadAll(true);"></div>
+            </td>
+            <td>
+                <table>
+                    <tr><td>
+                <div id="clock" 
+                style=	"display: inline-block;
+                 font-family: monospace;
+                 font-size: 20px;
+                 text-align: right;
+                 color: lightgray; 
+                 border-radius: 10px; 
+                 padding: 10px; 
+                 background-color: rgba(0, 0, 0, 0.75);">
+                </div>
+                <div id="secondselapsed" 
+                    style=	"display: inline-block;
+                    font-family: monospace;
+                    font-size: 20px;
+                    text-align: right;
+                    color: lightgray; 
+                    border-radius: 10px; 
+                    padding: 10px; 
+                    background-color: rgba(0, 0, 0, 0.75);">
+                </div>
+                <br>
+                <p id="load">Firebase SDK Loading&hellip;</p>
+                </td>
+                </tr>
+                </table>
+                <script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js'></script>
+                 <!-- for slider function -->
+                <link href="https://code.jquery.com/ui/1.14.1/themes/ui-lightness/jquery-ui.css" rel="stylesheet">
+            
+            </td>
+            <td>
+              <table>
+                <tr>
+                  <td width="70%">
+                    <input type="text" id="current-question" name="current-question" size="50">
+                    <button id="ask-current-question" name="ask-current-question">ASK ME</button>
+					<button id="stop-speaking" name="stop-speaking">STOP</button>
+                    <input type="text" id="chat-status" name="chat-status" size="50">
+                    <div id="speak">
+                        <select id="voiceSelect"></select><br>
+                        <!-- status and current command for now just display the string and add any additional midi params-->
+                        <label for="mycommand">Building Command:</label><br>
+                        <input type="text" id="mycommand" name="mycommand" size="50"><br>
+                        <input type="text" id="midicommand" name="midicommand" size="20">
+                    
+                    </div>
+                    <div class="words" contenteditable >
+                        <input type="text" id="p" name="p" size="50">
+                    </div>
+    
+                  </td>
+                  <td width="30%">
+                    <img id="thinkingchat" src="images/thinking.gif" height="140px" style="visibility:hidden" />
+
+                  </td>
+                </tr>
+              </table>
+            
+            </td>
+
+            <td>
+                <!-- Load LLM UI -->
+                <p style="display:none">Step 1: Initialize WebLLM and Download Model</p>
+                <div class="download-container">
+                  <select id="model-selection"></select>
+                  <button id="download">Download</button>
+                </div>
+                <p id="download-status" class="hidden"></p>
+                <p style="display:none">Step 2: Chat</p>
+                <div class="chat-container" style="display:none">
+                  <div id="chat-box" class="chat-box"></div>
+                  <div class="chat-input-container">
+                    <input type="text" id="user-input" placeholder="Type a message..." />
+                    <button id="send" disabled>Send</button>
+                  </div>
+                </div>
+                <div id="chat-stats" class="chat-stats hidden"></div>
+                
+            
+            </td>
+            <td width="30%">
+              <img id="thinkingchat" src="images/thinking.gif" height="140px" style="visibility:hidden" />
+
+            </td>
+
+            <td>
+                <label for="prompt">Custom prompt for LLM:</label><br>
+                <textarea id="prompt" name="prompt" rows="5" cols="30"></textarea>        
+            </td>
+        </tr>
+
+    
+
+        
+    </table>
+
+    <!-- dont need this lookup for now.  hiding the diclabel etc for language.js-->
+    <table style="display:none">
+      <tr>
+          <td>
+          <div id="auto" style="width: 100%;height: 200px;overflow:auto;">
+          <div id="autodiclabel" class="langlabel">	</div>
+          <table id="autodic" class="display" style="width: 100%;">
+              <thead>
+                  <tr>
+                      <th>word</th>
+                      <th>keys</th>
+                      <th>lang</th>
+                      <th>meaning</th>
+                  </tr>
+              </thead>
+              <tfoot>
+                  <tr>
+                      <th>word</th>
+                      <th>keys</th>
+                      <th>lang</th>
+                      <th>meaning</th>
+                  </tr>
+              </tfoot>
+          </table>	
+      </td>
+      <td>
+          <div id="dictionary" style="width: 100%;height: 280px;overflow:auto;">
+              <div id="dictablelabel" class="langlabel">	</div>
+              <table id="DictionaryTable" class="display" style="width: 100%">
+                  <thead>
+                      <tr>
+                          <th>word</th>
+                          <th>playall</th>
+                          <th>keys</th>
+                          <th>user</th>
+                          <th>times</th>
+                          <th>meaning</th>
+                          <th>created</th>
+                          <th>lang</th>
+                      </tr>
+                  </thead>
+                  <tfoot>
+                      <tr>
+                          <th>word</th>
+                          <th>playall</th>
+                          <th>keys</th>
+                          <th>user</th>
+                          <th>times</th>
+                          <th>meaning</th>
+                          <th>created</th>
+                          <th>lang</th>
+                      </tr>
+                  </tfoot>
+              </table>
+          </div>
+      
+      </td>
+      <td>
+          <div id="auto" style="width: 100%;height: 200px;overflow:auto;">
+              <table id="metadic" class="display" style="width: 100%;">
+                  <thead>
+                      <tr>
+                          <th>word</th>
+                          <th>keys</th>
+                          <th>lang</th>
+                          <th>meaning</th>
+                      </tr>
+                  </thead>
+                  <tfoot>
+                      <tr>
+                          <th>word</th>
+                          <th>keys</th>
+                          <th>lang</th>
+                          <th>meaning</th>
+                      </tr>
+                  </tfoot>
+              </table>	
+          </div>
+      
+      </td>
+      </tr>
+      </table>
+      
+      
+  
+      <table>
+        <tr>
+            <td>
+                <canvas id="pcanvas" width="110" height="22" style="display: none">Your browser does not support the HTML5 canvas tag.</canvas>    
+
+                <div id="devices">	</div>
+                <div id="midi">
+                    <canvas id="fullpcanvas_labels" width="640" height="24">Your browser does not support the HTML5 canvas tag.</canvas>
+                    <br>
+                    <canvas id="fullpcanvas" width="640" height="36">Your browser does not support the HTML5 canvas tag.</canvas>    
+                 </div>
+                
+                 <div id="out"></div>	
+          
+            </td>
+            <td>
+                <div id="recenttopics" style="height:90px;width:600px;overflow:auto;"></div>
+                <!--            <div id="wordcanvas"><svg width="600" height="60"></svg></div> -->
+                <!--            <canvas id="wordcanvas" width="640" height="60" style="display: none">Your browser does not support the HTML5 canvas tag.</canvas>    -->
+                
+            </td>
+            <td>
+                <div id="topicstatus" style="height:90px;width:250px;overflow:auto;"></div>                        
+            </td>
+            <td>
+                <div id="topicdirtree" style="height:90px;width:250px;overflow:auto;"></div>                                              
+            </td>
+        </tr>
+    </table>
+
+
+
+    <div id="code_chat" style="width: 100%;height: 980px;overflow:none;">
+      <table style="width:100%;height:960px;">
+          <tr width="100%;">
+    
+          <td valign="top" width="30%">
+              <div class="root-wrapper" style="height: 960px;overflow:scroll;">      
+                  <div id="chat_table"  style="overflow:scroll;">
+                  <table id="ChatTable" width="100%">
+                  <tr id="templateRow">
+                  <td>id</td>
+                  <td>query</td>
+                  <td>AI Response</td>
+                  <td>Sources</td>
+                  </tr>
+                  </table>
+                  </div>
+              </div>
+          </td>
+          <td valign="top" width="40%">
+
+
+
+            <div id="vistabs" class="tab">
+                <!-- use for book here.  make codewindow bigger -->
+                <button class="tablinks" onclick="openTab(event, 'tempcodewindow', 2)">Book Window</button> 
+                <button class="tablinks" onclick="openTab(event, 'timewindow')">Time Window</button> 
+                <button class="tablinks" onclick="openTab(event, 'reflinks')">REFs</button>
+                <button class="tablinks" onclick="openTab(event, 'booknetwork')">Book Network</button>
+                <button class="tablinks" onclick="openTab(event, 'mynetwork')">Code Network</button>
+
+                <div id="temp_edit_code"> </div>
+    
+            </div>
+                <div id="tempcodewindow"  class="tabcontent" style="display:none;height:960px;overflow:scroll;">
+
+                </div>
+                <div id="timewindow"  class="tabcontent" style="display:none;height:960px;overflow:scroll;">
+        
+                </div>
+                <div id="reflinks" class="tabcontent" style="display:none;height:960px;overflow:scroll;">
+                </div>
+                <div id="booknetwork" class="tabcontent" style="height:960px; border: 1px solid lightgray;overflow:scroll"></div>
+                <div id="mynetwork" class="tabcontent" style="display:none;height:960px; border: 1px solid lightgray;overflow:scroll"></div>
+
+
+      </td>
+
+
+
+          <td width="5%">
+            <table>
+                <tr>
+                  <td>
+                    <img id="thinkinggit" src="images/thinking.gif" height="200px" style="visibility:hidden"/>
+                  </td>
+                  </tr>
+                  <tr>
+                  <td>
+                    <div id="selectionhistory" style="width:250px;height:200px;overflow:auto;">
+
+                    </div>
+                  </td>
+                  </tr>
+                    <tr>
+                    <tr>
+                  <td>
+                    <div id="selectionfilter" style="vertical-align:top;width:250px;height:200px;overflow:auto;">
+                      <label for="filterregex">Filter Files:</label><br>
+                      <input type="text" id="filterregex" name="filterregex" size="25">
+
+                      <label for="prompt">TOPIC Filter prompt for LLM:</label><br>
+                      <textarea id="filterprompt" name="filterprompt" rows="4" cols="30"></textarea>
+                    </div>
+
+                  </td>
+                </tr>
+              </table>
+
+          </td>
+          </tr>
+          <tr>
+            <td>
+                <table width="640px">
+                    <tr>
+                      <td>
+                        <canvas id="myvideocanvas" width="640" height="360" style="display: none">Your browser does not support the HTML5 canvas tag.</canvas>
+                        <video
+                        id="my-video"
+                        class="video-js"
+                        preload="auto"
+                        controls
+                        width="640"
+                        height="360"
+                        data-setup="{}"
+                        >
+                        </video>
+                    
+                      </td>
+                    </tr>
+                    <tr>
+                      <td valign="top" width="640px">
+                        <label for="transcript">Original Transcript:</label>
+                        <img src="images/edit.png" height="16px" onClick="toggleTranscript();"/>
+                        <br>
+                        <textarea id="transcript" style="display:none" rows="10" cols="50"></textarea>
+                        <div id="transcriptsh" style="height: 90px;overflow:auto; word-break: break-all; word-wrap: break-word;"></div>
+                        <br>
+                        <label for="mycomments">My Transcript:</label>
+                        <img src="images/edit.png" height="16px" onClick="toggleMyComments();"/>
+                        <br>
+                        <textarea id="mycomments" style="display:none" rows="10" cols="45"></textarea>
+                        <div id="mycommentsh" style="height: 190px;overflow:auto;"></div>    
+                    </td>
+                    </tr>
+                  </table>
+            
+            </td>
+            <td>
+                <table width="100%">
+                    <tr width="100%">
+                        <td halign="left">
+                            <label id="for_edit_code" for="edit_code" style="float:left">Code Snippet:</label>
+                    </td>
+                        <td halign="right">
+                        <select id="code_mode" onchange="setGitMode();" style="float:right;">
+                            <option value="BOOK">BOOK</option>
+                            <option value="GIT" selected>GIT</option>
+                        </select>
+                    </td>
+                </tr>
+                </table>
+                <div class="root-wrapper">  
+                <div class="cm-editor" id="edit_code" style="height:430px">
+  
+            </td>
+          </tr>
+		  <tr>
+			<td colspan="2">
+			<div valign="bottom" id="gitchart" style="height:300px;"></div>
+			</td>
+		  </tr>
+      </table>    
+  </div>
+
+  
+
+
+<script>
+    player2 = document.getElementById("my-video");
+    
+    var querydate = null;
+
+    var video = 'ogvaelzkoKw';
+    var starttimes = [];
+    var endtimes = [];
+    var st = [];
+    var	et = [];
+    var myst = [];
+    var myet = [];
+    
+    var users = [];
+    var durations = [];
+    var maxduration = 0;
+    
+    var numiterations = 0;
+    
+    
+    var user = null;    
+    
+var querydate = null;
+//    var codefile = ""; //load from queryparam.  clock.js startup
+    var myuid = null;
+    var myuser = null;
+    var isadmin = false;
+    var users = [];            
+    
+    
+    document.addEventListener('DOMContentLoaded', function() {
+            const loadEl = document.querySelector('#load');
+            // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
+            // // The Firebase SDK is initialized and available here!
+            //
+            firebase.auth().onAuthStateChanged(user => { 
+              if (user) {
+                // User is signed in, see docs for a list of available properties
+                // https://firebase.google.com/docs/reference/js/firebase.User
+                
+                if (user.uid != myuid){
+                    addMe(user);
+                    myuid = user.uid;
+                }
+                uid = user.uid;
+                    // ...
+              } else {
+                    // User is signed out
+                    // ...
+              }
+            });
+            // firebase.database().ref('/path/to/ref').on('value', snapshot => { });
+            // firebase.firestore().doc('/foo/bar').get().then(() => { });
+            // firebase.functions().httpsCallable('yourFunction')().then(() => { });
+            // firebase.messaging().requestPermission().then(() => { });
+            // firebase.storage().ref('/path/to/ref').getDownloadURL().then(() => { });
+             firebase.analytics(); // call to activate
+            // firebase.analytics().logEvent('tutorial_completed');
+            // firebase.performance(); // call to activate
+            //
+            // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
+    
+            try {
+              let app = firebase.app();
+              let features = [
+                'auth', 
+                'functions',
+                'storage', 
+                'database',
+                'analytics'
+              ].filter(feature => typeof app[feature] === 'function');
+              loadEl.textContent = `Firebase SDK loaded with ${features.join(', ')}`;
+              
+            //use this as the base, and then we can write an update to whatever.  
+            //we can also use this, if the user is logged in, get that info instead.  
+                 var provider = new firebase.auth.GoogleAuthProvider();
+    
+                firebase.auth()
+                  .signInWithPopup(provider)
+                  .then((result) => {
+                    /** @type {firebase.auth.OAuthCredential} */
+                    var credential = result.credential;
+    
+                    // This gives you a Google Access Token. You can use it to access the Google API.
+                    var token = credential.accessToken;
+                    // The signed-in user info.
+                    var user = result.user;
+                    //not sure why we need this, but the asynchronous check is not getting kicked off.  
+                       if (user) {
+                        // User is signed in, see docs for a list of available properties
+                        // https://firebase.google.com/docs/reference/js/firebase.User
+                        
+                            uid = user.uid;
+                            
+                            FUNCS.loadAll();
+                        }
+                    // IdP data available in result.additionalUserInfo.profile.
+                      // ...
+                  }).catch((error) => {
+                    // Handle Errors here.
+                    var errorCode = error.code;
+                    var errorMessage = error.message;
+                    // The email of the user's account used.
+                    var email = error.email;
+                    // The firebase.auth.AuthCredential type that was used.
+                    var credential = error.credential;
+                    // ...
+                  });
+
+				  google.charts.load('current', {'packages':['corechart', 'timeline', 'bar']});
+    
+            } catch (e) {
+              console.error(e);
+              loadEl.textContent = 'Error loading the Firebase SDK, check the console.';
+            }
+          });
+    
+    
+    
+    
+    
+    function addMe(user){
+        myuser = user;
+        uid = user.uid;
+        displayname = user.displayName;
+    //	email = user.email;
+    //	phone = user.phoneNumber;
+        pic = user.photoURL;
+    
+        users.push({"uid": uid, "pic": pic, "name": displayname}); //lookup for array location -> uid
+    
+        console.log(displayname + " " + pic);
+    
+        //add user icon
+        document.getElementById("usericon").innerHTML = "";
+        var elem = document.createElement("img");
+          elem.setAttribute("src", user.photoURL);
+          elem.setAttribute("alt", user.displayName);
+          elem.setAttribute("height", "64");
+          elem.setAttribute("width", "64");
+          document.getElementById("usericon").appendChild(elem);	//add to DB.  
+    
+    
+        uRef = firebase.database().ref('/users/' + uid);
+        firebase.database().ref('/users/' + uid).once('value')
+                          .then((snapshot) => {
+                            now = new Date();
+                            if (snapshot.exists() && typeof(snapshot.val().numlogins) !="undefined") {
+                                num = snapshot.val().numlogins + 1;
+                                ll = now.toISOString().substring(0, 10).replaceAll('-','');
+                                uRef.update({"numlogins": num, "lastlogin": ll});
+    
+                            } else {
+                                
+                                obj = {"name": displayname, "pic": pic, "firstlogin": now.toISOString().substring(0, 10).replaceAll('-',''), "lastlogin": now.toISOString().substring(0, 10).replaceAll('-',''), "numlogins": 1};	
+                                uRef.set(obj);
+                            }
+                        });
+        
+    }
+    
+    function loadComplete(user){
+                //not sure why we need this, but the asynchronous check is not getting kicked off.  
+                if (user) {
+                
+                    uid = user.uid;
+                    addMe(user);
+
+                }
+    }
+    
+  </script>    
+<script>
+  FUNCS = {};
+
+  function mymidicallback(msg, time, user, lang) {
+    console.log(msg);
+    console.log(time);
+    //draw here.  
+  }
+  function updateFeedbackUI(user=0, note=null){
+    console.log(note);
+  }
+
+  var midicontroller;
+  var netgraph;
+
+</script>
+
+    <script type="module">
+    export function loadAll(reload = false){
+//        getVideoJson(video);
+        gitSignin();
+        gitSetNature(GIT_CODE | GIT_DETAILS | GIT_RELATIONS);
+        populateGitRepos(getState('selectedgitindex')); //select repo to analyze.  
+        selectGitRepo(getState('selectedgitindex')); //this loads the repo and gitstruct.  
+
+        //this loads book.  
+
+            setTimeout(function(){ 
+                //load the code file.  
+                if (codefile !== ""){
+                    //have we initialized the book?  
+                    loadfromGitBook(codefile, true, true); //load and use tempwindow.  
+                    gitGetReferences(codefile);
+                    //load code file and parse via filbert or acorn.  
+                    setTimeout(function(){
+                        getGitContents(codefile, false);
+                    }, 3000);
+
+                    setTimeout(function(){
+
+                        //testing.. codewindow.js
+//                        getCodeGraph(codefile, gitcurrentcontents);
+
+                        //load the topic so we have in selection history.  
+                        loadTopic(codefile);
+
+                    }, 6000);
+
+                }
+            }, 15000);
+
+
+        FUNCS.SPEECH.loadSpeech();
+        //initialize midi controller
+        midicontroller = new FUNCS.MIDI.MidiController();
+        
+        midicontroller.setupMidi();
+        midicontroller.midisetcallbacks(mymidicallback, updateFeedbackUI);
+        midicontroller.setupWebMidi();
+
+		//need better mechanism.  
+		USE_FIREBASE = false; //dont use firebase for now with chata.html
+
+		reinitLanguages();
+        loadUserConfig();
+		//load audiocontrol and gitcontrol dictionaries.  
+        loadDictionaries(0, ["audiocontrol", "gitcontrol"]);
+
+
+        $("#ask-current-question").click(function(){
+          lastspokenword="comment";  //alternative to using midi.          
+          MyChat($("#current-question").val());
+        });
+
+		$("#stop-speaking").click(function(){
+		  window.speechSynthesis.cancel();
+		  reading = false;
+		  LLM.stopllm = true;
+		});
+    
+
+        //firebase.auth.Auth.Persistence.LOCAL 'local'
+        firebase.auth().setPersistence('local').then(() => {
+    //firebase.auth().setPersistence('session').then(() => {
+        if (reload){
+            user = null;
+        }
+        else{
+            user = firebase.auth().currentUser;
+        }
+        if (!user || user == null){
+            var provider = new firebase.auth.GoogleAuthProvider();
+            firebase.auth().signInWithPopup(provider)
+            .then((result) => {
+                /** @type {firebase.auth.OAuthCredential} */
+                var credential = result.credential;
+    
+                // This gives you a Google Access Token. You can use it to access the Google API.
+                var token = credential.accessToken;
+                // The signed-in user info.
+                user = result.user;
+                this.currentUser = user;
+                user.getIdTokenResult(true).then((result) => {
+                    isadmin = result.claims.admin;
+                    if (isadmin){
+                        console.log("ADMIN USER");
+                    }
+                    else{
+                        console.log("NOT ADMIN USER - send website address to request admin access.  ");
+                    }
+                    //we can check this prior to updating.  
+                });				
+                console.log(user);
+                
+                //if not set, set the DB uid.  
+                loadComplete(user);			
+            });
+         }
+         else{
+            loadComplete(user);
+         }
+    
+            // IdP data available in result.additionalUserInfo.profile.
+            // ...
+        }).catch((error) => {
+            // Handle Errors here.
+            var errorCode = error.code;
+            var errorMessage = error.message;
+            // The email of the user's account used.
+            var email = error.email;
+            // The firebase.auth.AuthCredential type that was used.
+            var credential = error.credential;
+            // ...
+        });
+        
+        //download LLM.  
+        setTimeout(function(){ document.getElementById("download").click(); }, 2000);
+		//initializing these UI components.  
+		setTimeout(function(){openTab(event, 'tempcodewindow', 2); }, 3000);
+		setTimeout(function(){openTab(event, 'timewindow'); }, 4000);
+
+      }
+      FUNCS.loadAll = loadAll;
+    </script>
+
+
+
+
+<script type="text/javascript">
+    LLM = {};    
+</script>
+
+
+<script type="module">
+    import {onMessageSend} from '/test/web-llm/test.js';
+    LLM.sendToLLM = onMessageSend;
+</script>
+
+
+<script type="module">
+  import * as SPEECH from "/speech.js"
+  import * as CHAT from "/chat.mjs"
+  import * as MIDI from "/midi.mjs"
+  import * as NETGRAPH from "/netgraph.mjs"
+  FUNCS.SPEECH = SPEECH;
+  FUNCS.CHAT = CHAT;
+  FUNCS.MIDI = MIDI;
+  FUNCS.NETGRAPH = NETGRAPH;
+</script>
+
+<script>
+
+var mycontext = "";
+var files = [];
+
+
+function ChatLocalUpdate(answer){
+    lastread = answer.length + lastread; //usually lastread = 0
+    ssu = new SpeechSynthesisUtterance(answer);
+    ssu.voice = FUNCS.SPEECH.getVoice();
+    ssu.rate = myrate;
+    ssu.pitch = mypitch;
+    window.speechSynthesis.cancel();
+    reading = true;
+    ssu.onend = function (event) {
+        console.log(event.timeStamp);
+        reading = false;
+    };
+
+    window.speechSynthesis.speak(ssu);
+
+}
+
+function ChatLocalDone(answer){
+    //called from //test/web-llm/test.js
+
+    var img = document.getElementById('thinkingchat');
+    img.style.visibility = "hidden";
+
+	//add date variables here.  
+    tospeak = FUNCS.CHAT.addChatRow(FUNCS.CHAT.getLastQuery(), answer, localprompt, codefile, []);
+    tospeak = tospeak.slice(lastread);
+    lastread = 0;
+    ssu = new SpeechSynthesisUtterance(tospeak);
+    ssu.voice = FUNCS.SPEECH.getVoice();
+    ssu.rate = myrate;
+    ssu.pitch = mypitch;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(ssu);
+    var myDiv = document.getElementById('code_chat');
+    $('#code_chat').animate({
+          scrollTop: 0}, "slow"
+        );
+
+    console.log('query ' +  FUNCS.CHAT.getLastQuery());
+//                    addComment(data.answer, helpme())
+    console.log('response  ' + answer);
+    FUNCS.CHAT.chathistory[FUNCS.CHAT.chathistory.length-1].answer = answer; //set answer to previous query.  
+
+    //add to message context.  
+    //messages.push({ role: "assistant", content: answer });
+    //further queries dont need to contain all the same info.  
+
+    
+}
+
+
+function GetRecentSelections(shortformat=false, maxlength=MAX_LOCAL_QUERY_LENGTH){
+    //use last few of selectionhistory in order to create more context.  
+    //make this the last few selected documents.  
+    ctx = "";
+    for (si=0; si<selectionhistory.length; si++){
+        //really we want recent commits here, and not full source.  
+        //and in order.  ...
+        if (shortformat){
+          if (si > 0){  //dont want first entry always loading definitions.  
+            ctx += "**" + selectionhistory[si] + "\n";
+          }
+        }
+        else{
+
+            //really want recent git changes here, not full source I think..
+          ctx += "**" + selectionhistory[si] + "\n" + getGitContents(selectionhistory[si], false) + "\n";
+
+          exists = gitcommits.find(x => x.filename === selectionhistory[si]);
+          if (exists){
+            ctx += "**" + selectionhistory[si] + "\n" + exists.patch + "\n";
+          }
+
+          //book last?  not sure the preferred order.  
+          if (selectionhistory[si] in gitstruct["bytopic"]){
+            ctx += "**" + selectionhistory[si] + "\n";
+            ctx += getTopicContext(selectionhistory[si], maxlength/selectionhistory.length) + "\n";
+            
+          }
+
+      }
+
+    }
+    return ctx;
+}
+
+
+function ChatBuildContext(context){
+    recentcontext = GetRecentSelections(false, MAX_LOCAL_QUERY_LENGTH/2);
+    recentchatmessages = FUNCS.CHAT.GetRecentChat(4); //only get this number of recent chat to include in context.  
+    //gradually this will increase.  
+    FUNCS.CHAT.setLastQuery(context);
+    $('#current-question').val(FUNCS.CHAT.getLastQuery());
+    mycontext = "";
+    definitions = "";
+
+
+    files = [];
+	getgitSelected(currenttimelinestart, currenttimelineend); //get selected git files.  this will be used to get the context.);
+    for (gi = gitbook.length-1; gi>-1; gi--){
+        fn = FUNCS.CHAT.getFileName(gitbook[gi].url);
+
+        if (fn == "definitions" || (gitbook[gi].selected)){
+
+            files.push(gitbook[gi].url);
+            if (fn == "definitions"){
+                definitions = "**" + fn + "\n" + gitbook[gi].content + "\n\n";
+            }
+            else{
+
+				//length calc
+				let maxlength = MAX_LOCAL_QUERY_LENGTH/2 - mycontext.length + Math.random()*1000; //leave some space for other content.  
+				if (maxlength < 0){
+					//cant break here, in case we didnt get definitions yet.  
+				}
+				else{
+	                mycontext = "**" + fn + "\n" + getTopicDate(gitbook[gi].d, maxlength) + "\n\n" + mycontext;
+				}
+            }
+        }
+        
+    }
+
+    mycontext = definitions + mycontext + recentcontext;
+    //will need to add actual source files as well here to context.  
+
+    //cant have @@ or == in this content.  
+//    mycontext = mycontext.replaceAll("@@", "__");
+//    mycontext = mycontext.replaceAll("==", "--");
+    
+    mycontext = mycontext + recentchatmessages + "\n@@" + FUNCS.CHAT.getLastQuery();
+
+    //this will be > MAX_QUERY_LENGTH, but should be good enough for now.  
+    //add all data from previous question/answers.  
+
+    
+}
+function ChatLocal(transcript){
+    if ($('#prompt').val() == ""){
+        $('#prompt').val(localprompt);
+    }
+    else{
+        localprompt = $('#prompt').val();
+    }
+    ChatBuildContext(transcript);
+
+    FUNCS.CHAT.addChatHistory(FUNCS.CHAT.getLastQuery(), mycontext, files);
+    document.getElementById("user-input").value = mycontext;
+    console.log(mycontext);
+    (async() => {
+      var img = document.getElementById('thinkingchat');
+    img.style.visibility = "visible";
+
+  console.log('1');
+  await LLM.sendToLLM(); //onMessageSend();//sendToLLM();   //test/web-llm/test.js
+  console.log('2');
+})()
+
+    
+}
+
+			function MyChat(transcript) {
+				mychat = transcript; //$('#p').val();
+				if (mychat.toUpperCase().startsWith("STOP")){
+					window.speechSynthesis.cancel();
+                    stopllm = true;
+					return;
+				}
+                if (lastspokenword !="comment"){ //if we have comment in our command.  
+                    //only chat if we have pedal pressed.  
+                    return;
+                }
+                else{
+                    lastspokenword = ""; //for now just reset so not called again.  
+                }
+                //use local if available.  check for GPU for local LLM usage as well.  
+                if (ChatLocal !== undefined){
+                    ChatLocal(mychat);
+//                    FUNCS.SPEECH.addComment("@@" + transcript, "");
+                    return;
+                }
+      }
+
+
+      function getTime(comment){
+        const regExp = /\(([^)]+)\)/g;
+        const matches = [...comment.matchAll(regExp)].flat();
+    //    console.log(matches);
+        if (matches.length > 0){
+            return getSecsFromTime(matches[1]);
+        }
+        else{
+            return 0;
+        }
+    }
+
+    function createNotesArray(){
+        //also update the new DIV with links.  
+        allnotes = $('#mycomments').val();
+        notesarray = [];
+        const lines = allnotes.split("\n");
+        for (i = 0; i< lines.length; i++){
+            notesarray[i] = lines[i];
+        }
+        console.log(notesarray);
+        //set title
+        updateNotes();
+
+    }
+
+    function updateNotes(){
+        var allnotes = "";
+        for (i=0; i<notesarray.length; i++){
+            allnotes += notesarray[i] + "\n";
+        }
+        $('#mycomments').val(allnotes);
+        //add clickable link inside here instead.  
+        $('#mycommentsh').html(makeTimeLinks(allnotes));
+
+    $('#mycommentsh').animate({
+            scrollTop: $('#mycommentsh')[0].scrollTop+50}, "slow"
+            );
+    $('#mycomments').animate({
+            scrollTop: $('#mycomments')[0].scrollTop+50}, "slow"
+            );
+
+        
+    }
+
+
+	function zoomTopic(top){
+		//highlight this topic in the components.  Use the background coloring.  
+
+	}
+
+</script>
+
+</body>
+</html>
+    

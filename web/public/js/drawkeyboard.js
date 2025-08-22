@@ -15,7 +15,7 @@
 
 var NUM_COLORS = 6;
 
-function getColorFromSequence(seqno){
+function getColorFromSequence(seqno, format="rgb"){
     adjust = Math.floor(seqno/NUM_COLORS); 
     adjust = adjust % (NUM_COLORS/2);
     r = 0;
@@ -47,7 +47,14 @@ function getColorFromSequence(seqno){
         g = Math.floor(g * (1-(adjust/NUM_COLORS)));
         b = Math.floor(b * (1-(adjust/NUM_COLORS)));
     }
-    return "rgb("+r+","+g+","+b+")";
+    if (format=="hex"){
+        const toHex = (c) => c.toString(16).padStart(2, '0');
+        return "#" + toHex(r) + toHex(g) + toHex(b);
+//        return ("#" + (r << 16) + (g << 8) + b).toString(16).slice(1);
+    }
+    else{
+        return "rgb("+r+","+g+","+b+")";
+    }
 }
 
 // canvas 		- HTML5 canvas element

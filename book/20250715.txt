@@ -1,0 +1,684 @@
+**PAUSELOGIC
+
+var lastPause = 0;
+var pauseTime = 0;
+
+var recorder
+
+
+recorder = recordRTC
+
+function getPauseTime(){
+    if (recorder ===null){
+        return pauseTime;
+    }
+    if (recorder.state === "paused") {
+        return pauseTime + Date.now()-lastPause;
+    }
+    else{
+        return pauseTime;
+    }
+}
+
+document.getElementById('btn-pause-recording').onclick = function() {
+
+
+ if (recorder.state === "recording") {
+
+     recorder.pauseRecording();
+     lastPause = Date.now();
+     $(this).html('Resume Recording');
+   //  Console.log(recorder.state);
+     // recording paused
+ } else if (recorder.state === "paused") {
+     $(this).html('Pause Recording');
+     recorder.resumeRecording();
+     pauseTime += Date.now() - lastPause;
+     // resume recording
+ }
+ return false;
+
+}
+
+  function getTimeFromSecs(secs){
+    //remove pause time.  
+    secs = Math.floor(secs - getPauseTime() / 1000);
+
+
+
+**web/public/rec.html
+
+on <videocontrol>help, make "dictable" div visible.  and hide "capturescreen"
+Works ok..
+
+**web/public/languages.js
+--playWord 
+not working as expected.  
+OK, fixed.  
+
+
+Continue, see if <videocontrol>help works.  
+Also why are played commands not showing in dictable?  
+
+
+**web/public/languages/*
+Lot of this is not aesthetic code, but..
+We can work on aesthetics on the second iteration perhaps if there is still energy to do so.  
+
+
+**web/public/db.html
+Need function to delete older videos possibly or offload.  
+View and Download or delete.  
+Just have offline indicator.  
+Save Remote ->
+**web/public/storage_upload.html
+update video record to point to external...
+Option to keep locally as well.  
+Need management interface.  
+Display details.  
+Need upload/download functionality.  
+Just store as a simple JSON record perhaps?  
+
+Several alternatives to dexie.js, but too much time to evaluate them...
+For now just try to make a mapping.  
+100M words over lifetime.  
+Just download all and index locally.  
+Not sure if this is practical or optimal, but dont want to add complexity.  
+For now do all client side.  
+Server is just dumb storage except for already done language sharing.  
+If this is the case, we can just send files.  
+Then if we want to build shared DB later, we just ingest all those files and build a searchable service.  
+???
+Or just ingest into a model???
+
+#https://github.com/kingjulio8238/Memary
+#https://github.com/mem0ai/mem0
+#https://www.falkordb.com/
+#https://en.wikipedia.org/wiki/Cypher_(query_language)
+#https://neo4j.com/blog/cypher-and-gql/cypher-gql-world/
+#https://neo4j.com/
+#https://cloud.google.com/products/spanner/graph?hl=en
+Hmmm...
+#https://github.com/GoogleCloudPlatform/generative-ai/blob/main/gemini/use-cases/graphrag/graph_rag_spanner_sdk_adk.ipynb
+#https://cloud.google.com/spanner/docs/graph/set-up
+
+#https://cloud.google.com/run/docs/tutorials/function-sends-query-to-spanner-database
+
+#https://stackoverflow.com/questions/52233949/passing-variables-to-google-cloud-functions
+
+
+To use or not to use..
+Need to do simple server side at some point anyway..
+
+#https://firebase.google.com/docs/functions/get-started?gen=2nd
+
+
+> firebase init functions
+#https://www.oracle.com/java/technologies/downloads/#jdk24-windows
+
+> firebase emulators:start
+
+#http://127.0.0.1:4000/functions 
+#http://localhost:5001/MY_PROJECT/us-central1/addMessage?text=uppercaseme
+
+> firebase deploy --only functions
+#https://cloud.google.com/artifact-registry/docs/repositories/cleanup-policy#console
+Annoying...
+Why cant I configure this..
+
+https://us-central1-MY_PROJECT.cloudfunctions.net/addmessage?text=uppercaseme
+
+ok, not perfect, but ..
+Redo with python..  
+Easier to interact with other tooling.  
+#https://firebase.google.com/docs/storage/extend-with-functions?gen=2nd
+--onObjectFinalized
+
+
+#https://github.com/adhazel/graphrag_demo/blob/main/Use%20Case%20A%20Research%20Assistant.ipynb
+
+#https://sandeep14.medium.com/running-graphrag-locally-with-neo4j-and-ollama-text-format-371bf88b14b7
+really want all in browser if possible.  
+
+
+#https://neo4j.com/docs/neo4j-graphrag-python/current/user_guide_rag.html#using-another-llm-model
+
+#https://github.com/kuzudb/kuzu
+#https://github.com/kuzudb/wasm-linkedin-example
+Not exactly.. this is just loading the linkedin DB info, and using the LLM to translate.  
+
+
+**web/public/chat.html
+#https://github.com/pubkey/javascript-vector-database
+#https://rxdb.info/articles/javascript-vector-database.html
+Not Graph, but this is close to what we want..
+Can we get a version of this working..
+Ingest transcripts, then use WebLLM combined with this vectordb similarity search.  
+
+Lot of excess data when pulling the transcript in each record, about 2x what is necessary.  
+10kb per record should be more than fine..
+Means we pull about 10mb or even 100mb who cares.  
+
+We will have this vectordb search for some time, until we have extremely long context windows.  
+But even then, this is excess computing power wasted by passing the long context window for the most part.  
+#https://github.com/pubkey/rxdb
+
+#https://github.com/pubkey/rxdb-quickstart?tab=readme-ov-file
+
+!!firebase RTDB limitation have to get entire document, cant get only specific children..
+Really annoying.
+So would have to create a subtree
+transcriptions -> vid -> transcription..
+Started this
+/transcript/byuser
+/transcript/byvideo
+This is the kind of limitation that makes you want to change DB.  
+~~This cant be that difficult to code
+
+> cd testing
+> git clone https://github.com/pubkey/javascript-vector-database.git
+>npm install
+> npm run dev
+
+Hmmm.. unfortunately the actual results are quite poor.  
+Not sure I want to use..
+Try different model..
+$$Xenova/paraphrase-multilingual-mpnet-base-v2
+This didnt work well at all.  
+
+$$Supabase/gte-small
+This works quite well.  
+OK, lets try to deploy this.  
+
+
+**web/public/test/javascript-vector-database/docs/index.html
+OK, this seems to work.  
+> npx webpack
+> npm run dev
+Just had to change file input location.  
+Now need to load app specific data, and adjust display mechanisms.  
+For now just generate the transcript JSON data with batch so dont need to bother loading.  
+[{"id": xxx, "body": ""}, ..]
+Adjust if we feel necessary.  
+
+**web/public/test/javascript-vector-database/src/index.ts
+--submit
+--textToHtml
+Adjust here to our liking.  
+
+OK, so we are loading dynamically.  
+--resetTranscripts
+Need a reload function.
+
+Also need to create links for video and add description info.  
+bulkInsert doesnt update existing entries.  
+
+
+
+
+Delete ->
+remove video record.  
+Save screenshots.  
+
+
+**timestep.py
+add logic to generate transcripts for use in client-side vector DB for LLM chat.  
+
+OK
+**data/transcription/trans.json
+See if we can use this with the vector database in any meaningful way.  
+Then add to or replace [**web/public/chat.html]
+
+**web/public/chata.html
+Try to use this alternative to original server RAG.  
+Perhaps just import the bundle and files
+
+
+
+**web/public/rec.html
+Same functionality here.  
+Allow this to be interchanged for another better solution if available. 
+3 tables for vectors for transcript, screens, and additional reference files.  
+Weight transcripts most then screens, then files.  
+
+--drag-drop adding of files.  
+#https://developer.mozilla.org/en-US/docs/Web/API/HTML_Drag_and_Drop_API/File_drag_and_drop
+
+chunk into smaller sections, just use Page for PDF or maybe around 40 lines or 4000 chars for text.  
+Look for logical partition location.  Or use fixed 30 lines for simplicity.  
+
+#https://github.com/mozilla/pdf.js
+
+Keep date, and weight more recent files, or selected time period.  
+How do we do that with vector search?  
+Perhaps shard each year for now.  
+
+What is local file key?  
+
+Sync to shared DB and then interact with shared DB.  
+Shared DB is managed by the host.  
+And 
+
+#https://firebase.google.com/docs/hosting/cloud-run
+For now focus local.  
+But we already have the vectors, so we dont actually need the GPU on the server side..
+Just a dumb vector similarity search.  All the encoding can be done on client.  
+
+
+**batoru
+Need local version vector DB for this.  
+Perhaps..
+#https://github.com/milvus-io/milvus
+
+Maybe just use this as well?  
+
+#https://rxdb.info/fulltext-search.html
+
+
+Maybe try this for local implementation?  
+#https://github.com/Stevenic/vectra
+I like the API and structure simplicity.  
+
+> npm install vectra
+> ollama pull nomic-embed-text
+
+**extensions/vscode/codetutor/src/book.ts
+Seems to work with added vectra DB of nomic-embed-text
+Not sure how we will use this yet..
+There are some issues with malformed topics, i.e. ending in ** etc.  
+But seems to work.  
+vecbook = 200MB vs 
+book = 600 KB 
+seems a bit much..
+x300
+
+Some duplication, maybe x5?, but the primary issue is vectors are all stored in text/JSON which is not ideal.  
+This is a x25, x10 expansion or so just with the vectors.  
+This becomes unworkable in a few years possibly.  
+Not sure, may be close to linear.  
+perhaps dont do each individual entry, do the topic in 1KB segments.  
+Later..
+
+@@vectra
+--LocalIndex.upsertItem has some issues.  
+It creates some duplication.  Unclear to me at this point what duplication is occurring.  
+OK, using 
+--LocalIndex.listItemsByMetadata
+This clears this problem for the most part.  
+Still increasing 20KB or so each time it is run, not sure where this leak is.  
+But tolerable for now.  
+
+
+#https://docs.weaviate.io/weaviate/quickstart
+Prefer simplicity of just interacting with a file.  
+hmmm...
+
+What has typescript interaction, but just local file/folder?
+
+
+> git rm --cached functions/package-lock.json
+> git rm --cached web/public/nlp/package-lock.json
+> git rm --cached extensions/vscode/codetutor/package-lock.json
+> git rm --cached extensions/vscode/helloworld/package-lock.json
+> git rm --cached package-lock.json
+
+
+
+Make query -> vector
+and just look for similar vectors and show those areas and following areas of text.  
+
+Then make the augmented query using the content.  
+Some sort of system prompt
+Use both..
+
+Start with simple strategy like calling the LLM itself to expand the query.  
+
+#https://medium.com/@sahin.samia/building-an-enhanced-rag-system-with-query-expansion-and-reranking-in-python-c95fa9a0a3e8
+So just use query expansion in some way.  
+Seems just using an LLM query to expand the query.  
+
+def expand_query(query):
+    prompt = [
+        {"role": "system", "content": "You're an expert in query expansion. Expand the given technical query with synonyms and alternate phrasings."},
+        {"role": "user", "content": f"Expand this query for better search: {query}"}
+    ]
+    expanded = llm.invoke(query)
+    return [q.strip() for q in expanded.split("\n") if q.strip()]
+
+
+#https://hongleizhuang.github.io/files/GenIR2023_Rolf.pdf
+
+Do similarity search with expanded query as well.  
+
+
+
+**web/public/book.html
+Query generation:
+GIT - Topic text and git changes sequences.  
+BOOK - Topic text and related topic sequences.  
+
+Question/answer:
+same as BOOK
+possibly use GENBOOK in some way?  
+
+
+Pseudo-Relevance Feedback (PRF) is a classic query expansion method that modifies the original query in an attempt to
+address the mismatch between the query intent and the query representation [6, 61]. A typical PRF setting uses the
+top-ranked passages from a retrieval system as the relevant signal to select query terms to add to the original query or
+to set the weights for the query terms. 
+
+Need to think about the movement of files/folders.  
+Logical categorization of elements (folder structure)
+Should this be shared or personalized?  
+For now it is easier not to personalize, but still need to think about the restructuring
+when it takes place.  
+The old markers should remain, but link to the "MOVED" location.  
+symlink
+/web/public/[DATE]/book.html can be logical link.  
+All of these could allow for viewing of the site in the state of that day.  
+This would be kind of interesting, not sure how practical or useful.  
+Anyway the syntax and usage on linux:
+> ln -s /web/public/book.html /web/public/[DATE]/book.html
+
+Not sure this is worth the time, but interesting thought.  
+Anyway when moving files, what to do?
+-no file changes.  
+Just creation of symbolic link for all subfolders will be sufficient perhaps.  
+So we only need the symbolic link data.  
+Just save some sort of 
+**book/map.txt 
+which exists in each book.  
+This just holds folder redirect mapping.  
+
+This should be generated in some automated fashion when folders are copied.  
+Not thought through user use-case, but we need something like this.  
+In any case, lets start the mapping.  
+Take the easy way to generate, just use git renames
+
+> git mv TOPIC NEWTOPIC
+
+> git log --diff-filter=R --name-status
+Do we have an easy way to generate this?  
+Lets generate a map from this.  
+Not sure what happens when reverting to original name occurs..
+But a [**map.txt] will be much easier to read.  
+
+**timestep.py
+Just do this during timestep.py
+Unless dontgenmap flag is set.  
+We need a bunch of flags for timestep.py.  
+
+**web/public/page.html
+This is too slow.  
+Also why arent we loading the Code Network
+Nothing but REFs and Book Network work.  
+
+
+Need buttons to start/pause/stop any reading.  
+This also via "KEYS"
+
+--ChatBuildContext
+Need to add page context.  
+Just get some of the git from connected pages.  
+Need to move these subfunctions somewhere 
+chat.js maybe.  
+
+OK, need a link to be able to copy context quickly.  
+How to manipulate context.  
+
+**.bookignore
+Need a file like this to prevent loading of map.txt or other such information.  
+Some mechanism to know which files are useful and which not so much.  
+
+Too many things...
+
+
+**git/clone.py
+Needed to adjust dates, no logic to add date to non-date-named files.  
+
+
+**web/public/codewindow.js
+filbert Parse is pretty much useless with real files.  
+JS parsing actually returns something, not sure it is what we want.  
+Also have to click twice still in order for codeGraph to display.  
+acorn parsing is at least occurring.  
+
+**web/public/js/dilbert.js
+Just write a new function for Python parse.  
+Shouldnt be too hard to just find function names and function -> function graph.  
+Not sure, acornParse also returning quite a few errors.  
+Dont really want to write a full parser though.  
+Would have thought acorn would be better..
+
+!!Uncaught SyntaxError: 'import' and 'export' may appear only with 'sourceType: module'
+~~acorn.parse(code, options = {ecmaVersion: 2020, sourceType: "module"})
+
+$$.JS
+$$.MJS
+
+OK, nice, we have some results.  
+This is kind of what we want.  
+So this is a usable graph, still need to click twice to get results...
+
+
+
+**web/public/analyze.html
+**web/public/video.js
+--seekcallback
+Instead of adding all these images, lets see if we can just create one image using 
+alpha and just get the combined image data.  
+Perhaps use decreasing alpha as we go so we can see all images.  
+alpha 1, 0.9, 0.8, etc.  
+Or perhaps 1, 0.5, 0.45, etc.  
+This may get enough of what we want and be simpler.  
+
+
+**extensions/vscode/codetutor/src/extension.ts
+
+
+**analyze/analyze.py
+Need to continue find patterns.  
+--getNgrams
+$$mappgram
+continue..
+  mapsgram[ seqgram ] [ pgram ] = { 'time': [], 'iteration': [] }
+  mappgram[ signs ] [ pgram ] = { 'time': [], 'iteration': [] }
+
+>python ./analyze/analyze.py --title  "Evil Ways (Sonny Henry)" --force true
+
+
+
+#https://x.company/projects/aida/
+#https://lablab.ai/tech/google/codey
+#https://x.company/projects/wing/
+
+
+**web/public/analyze.html
+Need additional control other than comment which records audio and/or video and comments inline.  
+For now just audio.  
+
+--highlightVideo
+Already have this.  
+
+**web/public/languages/audiocontrol.js
+use same "start" "stop" "pause" "unpause"
+
+**web/public/languages/_meta.js
+OK, moved meta language to a separate file which is loaded dynamically.  
+I think I need order of call.  
+
+This is just for organizational purposes, not sure if I want to call all languages.  
+Only overwriting transcript with meta at the moment.  
+If others overwrite, we need to be aware of order of languages.  
+
+
+**web/public/js/app-dictaphone.js
+Use this as sample to save audio clips during feedback session.  
+**web/public/analyze.html
+For now just add as feedback in RTDB?  
+Kick off with (12,15,15)
+Stop with (15,15,12)
+Or something simpler.  Any key perhaps..
+
+**web/public/rec.html
+Same process, but add in local DB.  
+
+**web/public/audio.js
+Finish this logic to allow for single audio clip to load/play.  
+Load all audio clips and then just play when we get there.  
+visualize the incoming audio.  
+
+**web/public/feedback.js
+--initAudioFeedback
+
+
+
+OK, its a start.  
+Need to fix the transcript of non-commands again.  
+Save this data in time, and playback in time.  
+Or maybe generate one audio context with same length as the video.  
+
+
+Need multiple audio elements one for each user/lang.  
+load and play when time occurs.  
+stop all with stop command.  
+
+Should just detect audio level.  
+
+#https://blog.addpipe.com/understanding-audio-frequency-analysis-in-javascript-a-guide-to-using-analysernode-and-getbytefrequencydata/
+Human speech typically ranges from 80 Hz to 255 Hz, 
+frequencyPerBin = 44100 / 2 * 1024 = 44100 / 2048 ≈ 21.53 Hz per bin
+Go a little wider
+startIndex = startFrequency / frequencyPerBin = 80 / 21.53 ≈  4 
+endIndex = endFrequency / frequencyPerBin = 255 / 21.53 ≈  12
+
+Seems to detect end of recording ok.  
+Maybe this is enough.  
+Also have a specific end of recording command.  
+
+#https://github.com/TalAter/annyang
+I think I already do most of this.  
+Albeit perhaps in a more roundabout way..
+
+
+#https://alemangui.github.io/pizzicato/
+
+#https://github.com/goldfire/howler.js#documentation
+
+hmmm... use this perhaps.  
+Some functions like 
+    const sound = new Howl({
+      src: ['data:audio/mp3;base64,SUQzBAAAAAAA...'], // Replace with your actual Base64 data URI
+      format: ['mp3'] // Specify the format if the data URI doesn't clearly indicate it
+    });
+
+fadeOut: function(sound) {
+    while (sound.volume > 0) {
+      setTimeout(function() {
+        sound.volume - 0.1;
+      }, 1000);
+    }
+  }
+
+What do we gain if we use this?  
+Maybe later..
+
+
+OK, playing audio single stream combined with video.  
+Need command to control audio stream volume.  
+Each audio stream needs a separate component.  
+So loop through users and generate these graphical components.  
+
+
+
+**web/public/analyze.html
+--updateFeedbackUI
+OK, so should annotate the graphic with voice icon.  
+Playing voice icon and 
+Just some icon to represent.  
+
+And change icon if played already or not.  
+So have option to filter played data.  
+
+
+
+How do we order users?  
+For now just keep a tab of likes for users, and prioritize by this?  
+Running tally of 
+LIKES / (total speaking time)
+Local DB for this.  
+Show user info when loading audio.  
+Need some indicator of what user.  
+
+
+**web/public/feedback.js
+--saveAudioFeedback
+Test here..
+
+**timestep.py
+Retrieve playlists including favorites / to watch
+
+Maybe this is ok?  
+Call Page to add videoid to watch later list.  
+Added at.., get video info during [**timestep.py]
+Then we have a list to work with.  
+#https://github.com/prakhartiwari0/copyYTvideoId
+
+
+**WrNMxdcfyUk
+OK, we have simultaneous entries.  
+
+12 seconds of audio.  
+~250kB.  
+20kB/s far too much.  
+
+
+**extensions/vscode/codetutor/src/extension.ts
+--getVector
+
+**timestep.py
+Same logic to generate all embeddings so no need in front-end.  
+Front-end vector generation is too slow at the moment.  
+But if we are only generating what doesnt exist, not so bad.  
+We have file/line/data/vector.  
+
+**web/public/chata.html
+Add FT combined with vector search. 
+Then do same in [**web/public/book.html]
+
+
+
+Should really do voice clone.  This way we dont need to store the audio.  
+We have the audio for training this way.  
+Just have an indicator whether the last was correct or not.  
+(18) or (19)
+Wish we could do inline training.  
+Keep some of the STT sample set on the local DB.  
+Delete older data, no need for user to be aware of this really.  
+
+
+
+#https://github.com/boson-ai/higgs-audio
+#https://github.com/mozilla/deepspeech-playbook
+
+#https://devblog.pytorchlightning.ai/fine-tuning-wav2vec-for-speech-recognition-with-lightning-flash-bf4b75cad99a
+
+
+Once the user custom model is trained, discard the data.  
+No javascript custom voice recognition model training yet.  
+
+#https://github.com/syl22-00/pocketsphinx.js/
+
+This is closer to what we want perhaps.  
+See if we can use this?  
+#https://github.com/cmusphinx/pocketsphinx
+
+Dont think it will be better than general webkit though.  
+Wait for better front-end solution.  
+
+**codetutor
+**extensions/vscode/codetutor/src/tokenizer.tsx
+Could implement here.  
+Need to finish tokenizer.  
+
+

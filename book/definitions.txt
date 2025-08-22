@@ -32,7 +32,7 @@ May have some problematic names.
 === QA history start.  
 ==== QA history end.  
 
-$$ ENVIRONMENT
+$$ ENVIRONMENT (can also be direct link to topic)
 
 !! Log output or error
 
@@ -52,7 +52,7 @@ Shorthand
 
 -> Leads to
 
-# comments to something or reference from
+# comments (shell) to something or reference from (link)
 ## referenced lookup again.  
 
 // filepath or DB path
@@ -76,17 +76,19 @@ _ = pre-requisite
 \ = macro?  (TEX)
 : = line identification
 ; = comment?
-~~ = suggestion
+~~ = suggestion or similarity check
 | = PIPE OR
 .. = time marker? continuation?  
 ... = continuation later.  
+``` = code snippet?  
 
-
-< >
+QUOTESETS:
+< > = language?  
 <? ?> = inline macro (PHP)
 [ ] = internal clickable reference?  (markup)
 ( )
 { } 
+"" = key phrase
 ? 
 
 Ending ...
@@ -104,3 +106,18 @@ $$-MYVAR
 $$-**TOPIC removes all topic ENV variables.  
 TOPIC cant start with -
 -->
+
+
+**KEYS/vscode
+Ctrl+Enter = Continue
+Ctrl+I = voice chat
+
+0->11 = past->future
+
+
+
+**MAP
+<!--
+**->TOPIC->NEWTOPIC
+-->
+

@@ -1,0 +1,571 @@
+**timestep.py
+--Add spin up / spin down of backend.  
+And wait...
+Then we get some transcriptions if there is available hardware at the time of timestep.py
+Alternatively move transcriptions (enable/disable) to
+
+**server/transcription/server.py
+!!too many failures from whisper.  
+~~Memory issue?  
+
+
+
+
+**web/public/analyze.html
+
+
+**FLOW
+--rec
+--analyze
+->
+--book
+--page
+--plugin
+--generate
+--review
+
+**GENBOOK
+Need to utilize these answers as input and see what the subsequent generation looks like.  
+Simple COT sequence.  
+
+Need to store and adjust the system prompt.  
+@@What are you doing?
+$$system prompt (make suggestions)
+==...
+
+@@Please propose GIT changes to my source file.  
+$$system prompt (teach me)
+@@Please correct any issues in the following suggested changes.  
+$$system prompt (check)
+
+Accept or deny changes.  
+How to save this event chain.  
+In transcript.  
+Export/import transcript.  
+Need topic selection as part of transcript.  
+
+
+
+**timestep.py
+**web/public/analyze.html
+**web/public/transcribe.html
+transcribe option in URL.  
+auto-start and save.  
+Instead of using server.  
+
+
+**extensions/vscode/codetutor/src/extension.ts
+continue..
+> editor.action.triggerSuggest
+
+
+**news.py
+#https://github.com/unclecode/crawl4ai
+Maybe use.  
+
+
+**0606
+Just use 
+$$BASE lang
+
+
+**extension/vscode/codetutor/src/extension.ts
+--updateDecorations
+Continue..
+Need to have some character which triggers autocomplete popup for topic without needing to retype
+
+
+@tutor /code **topic
+--scan all info regarding topic and make edit suggestion.  
+Or edit if settings for automatic edit.  
+weight more recent entries.  
+allow to edit 
+
+@tutor /book **topic
+generate entries for this topic in genbook.  
+
+
+Pseudo-code..
+ingest any selected topics.  
+Last selected topic is the primary focus.  
+
+Determine if this is a source file or not.  
+Use other selected topics as context.  
+
+If source file:
+@@Please propose GIT changes to my source file.  
+$$system prompt (teach me)
+@@Please correct any issues in the following suggested changes.  
+$$system prompt (check)
+@@run and review
+Need previous test run scripts when changing this topic.  
+@@Summarize the changes and add to genbook
+
+
+
+Eventually need to be able to accept from UI review.  
+
+
+Also can we monitor midi?  
+
+output to file full change log.  
+In the end we want this.  Not sure about context windows now.  
+> git --no-pager log -p --reverse -- book/20250429.txt > book/20250429.log
+
+
+**provenance
+Need provenance chains.  
+#https://www.software.ac.uk/blog/provenance-tool-suite
+#https://pypi.org/project/prov/
+
+#https://github.com/VisualStorytelling/provenance-core
+
+Where are the good tools?  
+
+
+**GITYA
+Need to generate a midi struct / SONG based on commit dates.  
+
+
+
+
+vscode.commands.executeCommand('github.copilot.chat.generate');
+> github.copilot.openLogs
+> github.copilot.generate
+> copilot-chat.focus
+> github.copilot.git.generateCommitMessage
+> github.copilot.openLogs
+> github.copilot.chat.debug.showTools
+> github.copilot.chat.debug.showElements
+> github.copilot.createFile
+> github.copilot.openFile
+> github.copilot.executeSearch
+
+
+> workbench.action.terminal.paste
+> workbench.action.terminal.pasteSelection
+> workbench.action.terminal.copySelection
+
+
+> mrrubato.mytutor.generate
+ctrl+shift+8
+Keep testing..  
+
+**web/public/analyze.html
+$$vidoe=wqjAg9r2UTE
+!!minimap not clickable when pianoroll images are not there.  
+Never fixed this...
+
+
+OK, basic transcript generation should work.  
+3 .., 7 .., 8
+
+
+
+**mrrubato.mytutor.generate
+When running generate, add context of current file.  
+
+
+Add adjust ENV variables.  
+How do we distinguish what ENV we are talking about?  
+$$> = command env
+$$! = .. env?  
+
+
+
+--workprompts
+vs
+--roboprompts
+How do we utilize this intelligently.  
+Still have no custom model, so not really going to work very well.  
+
+@mr /start think about coding **timestep.py
+
+--pickTopic
+still not working properly.  
+start here..  
+
+
+**MARKUP
+What are some models like this:
+#https://github.com/mwouts/jupytext
+Should adopt something from wiki.  
+[[]]
+Allow inline link to document or command search.  
+[[> dir ]]
+Just create a link from this which essentially calls generate with this text.  
+[[=$$VAR]] for substitution?  
+
+
+
+**extensions/vscode/codetutor/src/extension.ts
+$$PIANODIR=c:/devinpiano/music
+@something like this?  
+> cd [[=$$PIANODIR]]/extensions/vscode/codetutor
+
+> cd c:/devinpiano/music/extensions/vscode/codetutor
+> tsc -watch -p ./
+
+
+Should really do this as a language server.  
+But...
+#https://code.visualstudio.com/api/references/vscode-api#DecorationRenderOptions
+
+> vscode.env.clipboard.readText
+> vscode.env.clipboard.writeText
+
+Use for graph representation?  
+with topics and perhaps other things.  
+
+(1 (2 6 7 8) 3 (4 (9 12)) (5 10 11))
+
+**timestep.py
+**generate/graph.py
+Perhaps have a graph file which represents connections between topics and functions.  
+Export dot representation for now.  
+
+#https://diego-molina.medium.com/creating-testing-and-publishing-a-vscode-extension-2981e06ff441
+#portal.azure.com
+service issues...
+publish procedure.  
+
+
+
+**mrroboto
+Need to pull from origin and send to msroboto.  
+
+#https://stackoverflow.com/questions/24815952/git-pull-from-another-repository
+
+
+**extension/vscode/codetutor/src/extension.ts
+...
+
+Need command to 
+start/list/stop thinking about...
+just pick a topic or series of topics.  
+By default it will start on the last entry.  
+And a random recency weighted topic.  
+
+^start 1-n
+^stop 1-n
+^list
++..... (optional 1-n=currentactive)
+add context to thought.  
+Immediately delete line after return?  
+
+This picks the previous topic mentioned.  
+Pascal pointer...
+
+
+
+Current playground appears to be quite useful for single person, but how does this scale with multiple books?  
+
+
+
+**web/public/git.js
+--getGitCommits
+Until date is possible.  
+So should be able to retrieve time-aware context.  
+@@github why is there no /repos/{owner}/{repo}/contents/{path}?until=
+
+
+@how to remove environment info?  
+Should we use this?
+$$+
+$$-
+
+
+> firebase hosting:clone SOURCE_SITE_ID:SOURCE_CHANNEL_ID TARGET_SITE_ID:live
+> firebase hosting:channel:create msroboto
+> firebase hosting:channel:deploy msroboto
+> firebase hosting:channel:create mrrubato
+> firebase hosting:channel:deploy mrrubato
+
+After one year or so..
+not sure its worth..
+> gsutil -m rewrite -s coldline gs://{site}.appspot.com/videos/2025
+
+> Manage Trusted Domains
+
+
+> workbench.action.showCommands
+How to distinguish between shell command and env command.  
+
+
+**extensions/vscode/codetutor/src/extension.js
+--Chat
+Need to be able to select model with 
+$$model=...
+or some other way.  
+
+
+**analyze/analyze.py
+--getNgrams
+$$mappgram
+continue..
+  mapsgram[ seqgram ] [ pgram ] = { 'time': [], 'iteration': [] }
+  mappgram[ signs ] [ pgram ] = { 'time': [], 'iteration': [] }
+
+flatten and analyze by pgram as well as by seqgram etc.  
+pgrams that have common factors are similar.  
+And also usually close in number value.   
+
+
+Find avg times per iterations.  
+Find if time PCT offsets between iterations matches, we estimate that this is a 
+time anchor and the same location in the piece.  
+How many repetitions do we have, probably not many due to finger errors.  
+First what is the length of these maps.  
+Sort most frequent signs and seqgrams.  
+See if there is anything interesting in these patterns.  
+What does it look like per song and across songs.  
+
+Lets just search across the data.  
+analyze process doesnt need to be in time.  
+
+>python ./analyze/analyze.py --title  "Evil Ways (Sonny Henry)" --force true
+
+$$MYVAR shows this value.  
+$$MYVAR=value sets value.  
+$$+MYVAR add this env variable to current topic.  For now not keeping per topic env.  Just env history.  
+$$-MYVAR remove this env variable from current topic.  
+$$-**TOPIC remove TOPIC from selection history, rebuild ENV with selectionhistory.  
+
+
+Should design new input characters for usage in defmap.  
+Test with DBCS standard characters.  
+Later ...
+
+How to query state?  
+%%
+queries all workers.  
+%%1
+queries worker 1.  
+%%1=5 sets worker 1 to worker 5
+%%+5 start worker
+%%-5 stop worker
+%%1=MYWORKERFRIEND name worker.  
+%%MYWORKERFRIEND=1 ok if unnamed, if name already exists and is assigned, error please stop or reassign.  
+Same if 1 is assigned to another name.  
+
+
+$$%%MYWORKERFRIEND shows env of this thread.  
+$$-%%MYWORKERFRIEND stops worker.  
+$$+%%MYWORKERFRIEND creates a numbered duplicate thread of this env.  MYWORKERFRIEND_1
+$$%%MYWORKERFRIEND++
+$$%%MYWORKERFRIEND--
+
+
+$$1 queries env from worker 1.  
+
+**extensions/vscode/codetutor/src/tokenizer.tsx
+For now just making a simple tokenizer.  
+--getTokens
+Should use the same for highlighting logic.  
+
+#https://github.com/tom-wolfe/markov-typescript
+Perhaps train the markov chain as to the likelihood of any particular next ngram.  
+And also within the sets of action types in 
+defmap,defstring.  
+Perhaps we can use this simple model locally to enhance speed.  
+This should be a time/duration/NGRAM -> time/duration/NGRAM
+
+Each NGRAM needs to have a time and duration associated.  
+
+
+**extensions/vscode/codetutor/src/book.ts
+--findTopicsCompletion
+This is too slow with large amount of data.  
+-Try to complete the self-deploy steps.  
+-Make sure site is viewable
+
+
+**web/public/rec.html
+Need to utilize this more.  
+Try to get this to an actual working state.  
+
+
+#https://www.misterrubato.com/page.html?codefile=web/public/page.html#
+..
+
+
+**web/public/game/minispec/minispec.html
+#https://cienzorama.freecluster.eu/?i=1
+#https://github.com/gianlucatruda/orbital
+Lets try to adapt this..
+
+**ESBuild
+Really need to switch to module structure.  
+Adjusting everything is annoying.  
+
+
+> npm init
+> npm i firebase
+> npm i webpack webpack-cli -D
+
+#https://webpack.js.org/guides/getting-started/
+> npm install --save lodash
+> npx webpack
+
+Wow I hate this..
+
+Its not so bad..
+
+#https://github.com/DevinDJdj/wspecgame
+
+#https://www.kurims.kyoto-u.ac.jp/~motizuki/Inter-universal%20Teichmuller%20Theory%20I.pdf
+
+
+
+
+
+#https://github.com/puppeteer/puppeteer
+
+**test/puppet1.js
+>npm i puppeteer
+>node test/puppet1.js
+
+
+
+**WEBSETUP
+
+**web/firebase.json
+**web/.firebaserc
+change to read only.  
+
+
+Firebase->Realtime Database
+--Copy DB
+
+Firebase->Authentication->Settings
+--Add Authorized domain.  
+
+Firebase->Authentication->Sign Method
+--Add Google/github
+
+#config.html
+Need to switch to robot github URL.  
+
+
+
+
+**timestep.py
+Need flag for git copy/backup to  
+/testing/extensions/vscode/mrroboto
+
+
+
+**extensions/vscode/codetutor/src/tokenizer.tsx
+--tokenize
+
+Keep track of topics selected.  
+Randomly add thinking topics based on current cursor location.  
+Assume current cursor location is the current thought.  
+
+--pickTopic
+getting list of selected topics for query.  
+Need to limit to context window.  
+
+@mr /start **TOPIC
+
+Should have map of topic sets.  
+%%
+
+
+Need to test this again.  
+@mr /start
+@mr /stop
+
+
+work->roboupdate->updatePrompts
+
+order by:
+Time/topic
+Instead of 
+topic/time
+
+Maybe just organize by topic and time.  
+When parsing book, look for %% to initialize worker.  
+Worker limit 10 or so.  
+Record file/location.  
+Take all data until start of next topic.  Or just take this entire topic comment.  
+
+Start and stop a worker, simply by %%
+%%? = list all running worker and file locations
+%%1 = jump to location.  and show info.  
+%%1+ = increase worker time allocation for this thread.  
+%%1- = decrease time allocation for this thread.  
+%%1-- = scratch worker.  
+This will remove the %% in that location so it doesnt start up next time.  
+Add details about how long this worker existed, for now just add date.  
+%%_YYYYMMDD = ended worker.  
+Need an ID for all commits related to this.  
+Lets use topic/date?  
+%%**TOPIC list active worker for this topic.  
+Maybe only one active at a time per topic.  
+
+
+%%++ = this will dynamically add a worker from this location if it doesnt already exist.  
+and remove the ++.  
+
+When initializing and parsing book, get all these threads and start them.  
+
+%%1? = show change summaries with links to details.  
+
+Prompts should be a set of prompt sequences.  
+For now can be single.  
+
+
+Need to separate the search/list from generate function.  
+Need two distinct functions.  
+
+Just go to location and run generate command.  
+
+**LEAN4
+#https://adam.math.hhu.de/#/g/leanprover-community/nng4/world/Tutorial/level/2
+#https://github.com/leanprover/vscode-lean4
+
+Really should learn this.  
+
+**languages/lean/test.lean
+#https://github.com/leanprover-community/tutorials4/tree/master
+**testing/lean/tutorials4
+Definitly find LaTex more readable.  
+
+
+
+**extensions/vscode/codetutor/src/extension.ts
+
+Need key combo to bring up topic completion/history window.  
+Need to bring up a view or new file with topic info.  
+--Book.select..
+what difference if any.
+Ctrl+shift+9 or Ctrl+shift+8
+
+
+#https://github.com/arciisine/vscode-chronicler
+perhaps should implement this, not sure if it is useful for our scenario.  
+
+Need separate view though for thought history.  
+
+Just create a webview in vscode, or  perhaps for now just open externally when we generate.  
+This will give us the 
+vscode.env.openExternal(Uri.parse("page.html.."));
+
+
+@vscode
+--vscode.env.openExternal
+~~really should allow to create an ID for a window/tab combination and open/reopen.  
+This would be a nice feature.  
+
+
+**web/public/page.html
+Should have a flag to show header or not.  
+Each Graph entity should allow for selection.  
+
+**extensions/vscode/codetutor/src/extension.ts
+--updatePage 
+delay before displaying previous window.  
+OK, not a great solution, but somewhat better.  
+
+

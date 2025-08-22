@@ -1,0 +1,520 @@
+**timestep.py
+--Add spin up / spin down of backend.  
+And wait...
+Then we get some transcriptions if there is available hardware at the time of timestep.py
+Alternatively move transcriptions (enable/disable) to
+
+**server/transcription/server.py
+!!too many failures from whisper.  
+~~Memory issue?  
+
+
+
+
+**web/public/analyze.html
+
+
+**FLOW
+--rec
+--analyze
+->
+--book
+--page
+--plugin
+--generate
+--review
+
+
+
+**0606
+Just use 
+$$BASE lang
+
+
+**extension/vscode/codetutor/src/extension.ts
+--updateDecorations
+Continue..
+Need to have some character which triggers autocomplete popup for topic without needing to retype
+
+
+@mr /code **topic
+real-time observable coding
+
+@mr /book **topic
+generate entries for this topic in genbook.  
+
+
+output to file full change log.  
+In the end we want this.  Not sure about context windows now.  
+> git --no-pager log -p --reverse -- book/20250429.txt > book/20250429.log
+
+
+
+**web/public/analyze.html
+$$vidoe=wqjAg9r2UTE
+!!minimap not clickable when pianoroll images are not there.  
+Never fixed this...
+
+
+OK, basic transcript generation should work.  
+3 .., 7 .., 8
+
+
+
+@mr /start think about coding **timestep.py
+
+
+**MARKUP
+Allow inline link to document or command search.  
+[[> dir ]]
+Just create a link from this which essentially calls generate with this text.  
+[[=$$VAR]] for substitution?  
+
+
+
+**extensions/vscode/codetutor/src/extension.ts
+$$PIANODIR=c:/devinpiano/music
+@something like this?  
+> cd [[=$$PIANODIR]]/extensions/vscode/codetutor
+
+> cd c:/devinpiano/music/extensions/vscode/codetutor
+> tsc -watch -p ./
+
+
+
+**mrroboto
+Need to pull from origin and send to msroboto.  
+
+#https://stackoverflow.com/questions/24815952/git-pull-from-another-repository
+
+
+**extension/vscode/codetutor/src/extension.ts
+
+Current playground appears to be quite useful for single person, but how does this scale with multiple books?  
+
+
+
+> workbench.action.showCommands
+How to distinguish between shell command and env command.  
+
+
+**extensions/vscode/codetutor/src/extension.js
+--Chat
+Need to be able to select model with 
+$$model=...
+or some other way.  
+
+
+**analyze/analyze.py
+--getNgrams
+$$mappgram
+continue..
+  mapsgram[ seqgram ] [ pgram ] = { 'time': [], 'iteration': [] }
+  mappgram[ signs ] [ pgram ] = { 'time': [], 'iteration': [] }
+
+flatten and analyze by pgram as well as by seqgram etc.  
+pgrams that have common factors are similar.  
+And also usually close in number value.   
+
+
+Find avg times per iterations.  
+Find if time PCT offsets between iterations matches, we estimate that this is a 
+time anchor and the same location in the piece.  
+How many repetitions do we have, probably not many due to finger errors.  
+First what is the length of these maps.  
+Sort most frequent signs and seqgrams.  
+See if there is anything interesting in these patterns.  
+What does it look like per song and across songs.  
+
+Lets just search across the data.  
+analyze process doesnt need to be in time.  
+
+>python ./analyze/analyze.py --title  "Evil Ways (Sonny Henry)" --force true
+
+
+**extensions/vscode/codetutor/src/extension.js
+
+How to query state?  
+%%
+queries all workers.  
+%%1
+queries worker 1.  
+%%1=5 sets worker 1 to worker 5
+%%+5 start worker
+%%-5 stop worker
+%%1=MYWORKERFRIEND name worker.  
+%%MYWORKERFRIEND=1 ok if unnamed, if name already exists and is assigned, error please stop or reassign.  
+Same if 1 is assigned to another name.  
+
+
+$$%%MYWORKERFRIEND shows env of this thread.  
+$$-%%MYWORKERFRIEND stops worker.  
+$$+%%MYWORKERFRIEND creates a numbered duplicate thread of this env.  MYWORKERFRIEND_1
+$$%%MYWORKERFRIEND++
+$$%%MYWORKERFRIEND--
+
+
+$$1 queries env from worker 1.  
+
+**extensions/vscode/codetutor/src/tokenizer.tsx
+For now just making a simple tokenizer.  
+--getTokens
+Should use the same for highlighting logic.  
+
+#https://github.com/tom-wolfe/markov-typescript
+Perhaps train the markov chain as to the likelihood of any particular next ngram.  
+And also within the sets of action types in 
+defmap,defstring.  
+Perhaps we can use this simple model locally to enhance speed.  
+This should be a time/duration/NGRAM -> time/duration/NGRAM
+
+Each NGRAM needs to have a time and duration associated.  
+
+
+**extensions/vscode/codetutor/src/book.ts
+--findTopicsCompletion
+This is too slow with large amount of data.  
+-Try to complete the self-deploy steps.  
+-Make sure site is viewable
+
+
+**web/public/rec.html
+Need to utilize this more.  
+Try to get this to an actual working state.  
+
+
+#https://www.misterrubato.com/page.html?codefile=web/public/page.html#
+..
+
+
+**web/public/game/minispec/minispec.html
+#https://cienzorama.freecluster.eu/?i=1
+#https://github.com/gianlucatruda/orbital
+Lets try to adapt this..
+
+
+#https://github.com/puppeteer/puppeteer
+
+**test/puppet1.js
+>npm i puppeteer
+>node test/puppet1.js
+
+
+
+**WEBSETUP
+
+**web/firebase.json
+**web/.firebaserc
+change to read only.  
+
+
+Firebase->Realtime Database
+--Copy DB
+
+Firebase->Authentication->Settings
+--Add Authorized domain.  
+
+Firebase->Authentication->Sign Method
+--Add Google/github
+
+#config.html
+Need to switch to robot github URL.  
+
+
+
+
+**timestep.py
+Need flag for git copy/backup to  
+/testing/extensions/vscode/mrroboto
+
+
+
+**extensions/vscode/codetutor/src/tokenizer.tsx
+--tokenize
+
+Keep track of topics selected.  
+Randomly add thinking topics based on current cursor location.  
+Assume current cursor location is the current thought.  
+
+--pickTopic
+getting list of selected topics for query.  
+Need to limit to context window.  
+
+@mr /start **TOPIC
+
+Should have map of topic sets.  
+%%
+
+
+Need to test this again.  
+@mr /start
+@mr /stop
+
+
+work->roboupdate->updatePrompts
+
+
+**extensions/vscode/codetutor/src/extension.ts
+
+Need key combo to bring up topic completion/history window.  
+Need to bring up a view or new file with topic info.  
+--Book.select..
+what difference if any.
+Ctrl+shift+9 or Ctrl+shift+8
+
+
+
+**web/public/page.html
+Should have a flag to show header or not.  
+Each Graph entity should allow for selection.  
+
+**extensions/vscode/codetutor/src/extension.ts
+--updatePage 
+delay before displaying previous window.  
+OK, not a great solution, but somewhat better.  
+
+
+
+**web/public/rec.html
+Need to utilize this more.  
+Try to get this to an actual working state.  
+
+Shift monitors.  
+%%1 = vintage
+$$ROLI
+$$MIC
+
+%%2 = extension
+$$ROLI
+$$MIC
+
+%%3 = rec
+$$CAMERA
+$$MIC
+$$MIDI
+
+Need complete workflow for this.  
+--rec
+while recording utilize midi annotations for transcription.  
+correct/incorrect and then utilize for transcription model or voice model.  
+Try to annotate while recording.  
+Also utilize meta pause/unpause for publishing purposes.  
+MIDI Make sure we are checking longer words first.  
+Add midi time minimap to bottom of video.  
+For now simple color representation of certain words.  
+Just to allow for quick selection when consuming.  
+
+
+--analyze
+same local file.  
+for now only download/analyze/publish durations between pause/unpause.  
+Flag to automatically skip and/or take just these portions.  
+Can/should we trigger [**analyze/analyze.py] from web?  
+Download and analyze
+perhaps talk to vscode extension which runs batch.  
+
+
+
+--record
+still via [**record.py] if desired.  
+Add flag to ingest video.  
+Generate minimap from midi here?  
+Similarly utilize small previous video instance for **topic
+Distinguish between vintage and other recording with description text.  
+
+
+What to record?  
+external usage/feedback?  
+Or intrinsic?  
+Thinking vintage analysis discussion.  
+Just any topic we feel for now.  
+See if we actually use.  
+
+
+OK local record loading now.  
+Need to add MIDI functionality.  
+All of this dexie.js stuff is kind of messy.  
+Dont really like this library, but better than manually doing the IndexedDB calls.  
+
+
+**web/public/storage_upload.html
+How much can/should we do in browser?  
+Probably not worth the trouble to do all [**record.py] in browser.  
+If we do all, there are advantages.  
+Perhaps just use transcript as an indicator of useful data?  
+Or use a combination of gesture/midi/transcript?  
+gesture -> midi -> separate transcript for this language.  
+From video and transcript, create animated gif?  
+#https://github.com/antimatter15/jsgif
+
+Maybe not worth just snip the video.  
+#https://bgrins.github.io/videoconverter.js/demo/
+
+
+**web/public/rec.html
+For now lets not do this on client side.  
+Just upload video and midi.  
+Paste on video the text and any cropping/highlighting from the midi commands.  
+Pause and highlight using midi.  
+Different functionality if paused.  
+Delete highlight removes that from midiarray.  
+We need midi deletion capacity anyway.  
+
+Use code we already have in [**web/public/video.js --drawVideo]
+
+Lets focus on just creating the highlight functionality within midi input.  
+
+on batch process optionally add MIDI INFO image to all frames of video.  
+
+Started this already in [**web/public/testdoodle.html] [**web/public/languages/doodle.js]
+
+Default duration of 5 secs or so.  
+For now just draw each time there is a midi at the video time and leave for 5 secs.  
+read midiarray from now - 5 secs.  
+Also have midi command to adjust the currenttranscript location.  [--currenttranscriptentry]
+Keep this throughout until the next change in location.  
+Redo same logic from [**web/public/analyze.html] essentially in [**web/public/rec.html]
+
+
+
+**extensions/vscode/codetutor/src/extension.ts
+add [**autocomplete] functionality should be different?  
+not sure perhaps we should search for [**topic] and add to digraph as well.  
+
+
+**web/public/midi.js
+**web/public/languages.js
+**web/public/keymap.js
+Wish this was cleaner and more reusable.  
+Ugh...
+Will AI be able to untangle this mess?   
+Not sure.. I suspect so eventually.
+
+
+**web/public/rec.html
+OK, most includes are there.  
+Add firebase login.. so we can get languages from rtdb.  
+
+See if speech transcription is working..
+OK, basic transcription working.
+OK, midi messages coming through.  
+
+Need tree explorer of some sort for all local records.  
+
+All this getting pretty messy.  
+
+Do we want to remove the firebase dependency, or just keep it for convenience?  
+Could just have full language definition in just JS files instead of all the DB calls to load/edit.  
+This would be cleaner..
+What do we lose?  
+
+
+**ROLI 
+no sustain pedal input...
+Minor issue.  
+Oh well. 
+
+
+**web/public/rec.html
+
+Try Screenshot XXYY
+This seems most natural.  
+Only 20 grid columns, maybe enough detail and little complexity.  
+Goal is to have some scenarios faster than constant mouse usage.  
+Perhaps can get close with this.  
+No need to reposition mouse is advantageous.  
+Can also perhaps use same for focus.  
+What functions are useful?  
+\Screenshot (XXYY)
+\focus (XY)
+\zoom (XY) default x2
+\add last transcript to screen (XY)
+\delete last transcript ()
+\rewind (N)
+\jump (N)
+\start rec
+\stop rec
+\pause rec
+
+
+Perhaps chain command
+\zoom (XY) \Screenshot (XXYY)
+
+None of this should be saved to midiarray feedback?
+Once executed, should be deleted?  
+For now just use functions as 
+(0,N)
+Can we do with no pre-display for screenshot, 
+just show the generated graphic, and then can delete if needed.  
+
+Retake will often be necessary to start.  
+
+Lets try to load languages without Firebase.  
+Just use i.e. [**web/public/languages/base.js]
+This detanglement may be problematic.  
+--loadLanguages
+--loadLanguage
+I think this is all the detanglement needed really.  
+Still use storage mechanisms.  
+
+
+Also can we draw on the recording monitor as well as the screenshot?  
+
+!!some issue with [**ROLI] particluar key OK (6)
+
+
+
+OK a bit hacky, but now loading without Firebase DB.  
+
+Now generate a language that makes sense for our video control.  
+
+
+**web/public/languages/videocontrol.js
+For now try this perhaps.  
+Keep BOX params the same for simplicity.  
+\Screenshot (0,3,6) (XXYY)
+\zoom (0,3,8) (XXYY) #default x2
+\deletescreen (0,3,5) #remove last screenshot
+
+\speak (0,2,6) (XY) #add the last transcript entry to the screen here.  
+\delete (0,2,5) #remove last transcript entry
+
+\rewind (12,11) (N)
+\jump (12,14) (N)
+
+\start rec (0,12,0)
+\stop rec (12,0,12)
+\pause rec (1,13,1)
+\unpause rec (13,1,13)
+
+
+\help (1,2,3) #show/hide commands.  
+
+
+Lets use the screenshot location to make the lang words visible here.  
+Need command also to do this.  
+
+
+**test/puppet1.js
+
+After automated code change..
+>node test/puppet1.js
+>firebase deploy
+>node test/puppet1.js
+--compare image to previous
+--hightlight diffs.  
+#https://github.com/dmtrKovalenko/odiff?tab=readme-ov-file
+or similar..
+
+for automated observability.  
+Compare screenshots and what else?  
+What comparisons are necessary?  
+Maybe can use this..
+#https://blog.stackademic.com/automating-google-oauth-login-with-puppeteer-in-javascript-a-step-by-step-guide-814e3e245302
+
+
+
+
+**web/public/rec.html
+--test loading [<videocontrol>]
+

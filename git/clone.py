@@ -16,7 +16,7 @@
 import os
 import sys
 import math
-
+from datetime import datetime
 import glob
 sys.path.insert(0, 'c:/devinpiano')
 sys.path.insert(1, 'c:/devinpiano/music')
@@ -85,7 +85,11 @@ def cloneme(giturl, gitbranch, gitbook):
         gitbookname = pathArray[len(pathArray) - 1]
         gitbookname = gitbookname.split(".")[0]
         #this should be a date YYYYmmdd
-
+        if (gitbookname.isdigit() and len(gitbookname) == 8):
+            gitbookname = gitbookname
+        else:
+            today = datetime.today()
+            gitbookname = today.strftime("%Y%m%d")  #default date today if not a date
 #        print(pathArray)
         repopath = '/'.join(pathArray[-(len(pathArray) - pathArray.index("raw.githubusercontent.com")-1):])
         repopath = repopath.replace(".", "_")  #annoying we cant use original format.  

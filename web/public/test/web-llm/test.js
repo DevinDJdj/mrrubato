@@ -12,12 +12,6 @@ const messages = [
 const availableModels = webllm.prebuiltAppConfig.model_list.map(
   (m) => m.model_id,
 );
-let selectedModel = "Llama-3.2-1B-Instruct-q4f16_1-MLC";
-//selectedModel = "DeepSeek-R1-Distill-Qwen-7B-q4f16_1-MLC";
-//selectedModel = "DeepSeek-R1-Distill-Qwen-1.5B-q4f16_1-MLC"; //this will be faster/better.  
-//selectedModel = "TinyLlama-1.1B-Chat-v0.4-q4f16_1-MLC";
-//selectedModel = "Qwen2.5-Coder-7B-Instruct-q4f32_1-MLC";
-
 // Callback function for initializing progress
 function updateEngineInitProgressCallback(report) {
   console.log("initialize", report.progress);
@@ -26,6 +20,7 @@ function updateEngineInitProgressCallback(report) {
 
 // Create engine instance
 const engine = new webllm.MLCEngine();
+const embedengine = new webllm.MLCEngine();
 engine.setInitProgressCallback(updateEngineInitProgressCallback);
 
 async function initializeWebLLMEngine() {
@@ -42,6 +37,7 @@ async function initializeWebLLMEngine() {
 //    max_tokens: 300
   };
   await engine.reload(selectedModel, config);
+  await embedengine.reload(embedModel, {});
 
 }
 
@@ -132,13 +128,19 @@ function createMessages(input){
 
 }
 /*************** UI logic ***************/
-export function onMessageSend() {
-  const input = document.getElementById("user-input").value.trim();
+export async function onMessageSend() {
+  const myinput = document.getElementById("user-input").value.trim();
+  //generate embedding here.  
+  let embedding = await embedengine.embeddings.create({input: myinput, model: embedModel});
+  console.log("Embedding generated:", embedding);
+  //use this for RAG search.  
+  //find similar documents.  
+
   const message = {
-    content: input,
+    content: myinput,
     role: "user",
   };
-  if (input.length === 0) {
+  if (myinput.length === 0) {
     return;
   }
   document.getElementById("send").disabled = true;
@@ -149,7 +151,7 @@ export function onMessageSend() {
       role: "system",
     },
   ];
-  let myms = createMessages(input);
+  let myms = createMessages(myinput);
   if (myms.length > 0){
     messages.concat(myms);
   }

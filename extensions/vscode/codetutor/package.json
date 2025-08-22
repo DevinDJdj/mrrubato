@@ -16,6 +16,11 @@
     "configuration": {
       "title": "mrrubato",
       "properties": {
+          "mrrubato.webbookurl": {
+              "type": "string",
+              "default": "https://www.misterrubato.com/page.html?codefile=",
+              "description": "URL for web book/page."
+          },
           "mrrubato.runinbackground": {
               "type": "boolean",
               "default": "false",
@@ -49,6 +54,11 @@
           "mrrubato.bookfolder": {
             "type": "string",
             "default": "book",
+            "description": "Relative path for book to read."
+          },
+          "mrrubato.bookvectorfolder": {
+            "type": "string",
+            "default": "vecbook",
             "description": "Relative path for book to read."
           },
           "mrrubato.genbookfolder": {
@@ -172,6 +182,18 @@
         "description": "What can I teach you?",
         "isSticky": true,
         "commands": [
+          {
+            "name": "summary",
+            "description": "Create summary of topic(s)."
+          },
+          {
+            "name": "summarize",
+            "description": "Create summary of topic(s)."
+          },
+          {
+            "name": "similar",
+            "description": "Find Similar text entries via vector search."
+          },
           {
             "name": "stats",
             "description": "List statistics for extension robot."

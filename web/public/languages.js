@@ -59,6 +59,9 @@ keymaps["meta"].loadKeys();
 
 keymaps["base"] = new Keymap("base");
 
+var USE_FIREBASE = true;
+
+var check_running = false;
 
 function reinitLanguages(){
     langs = {};
@@ -97,7 +100,7 @@ function updateState(transcript="", lang=""){
     mystate += currentlanguage + ": " + midiarray[currentmidiuser][currentlanguage].length + "<br>";
     mystate += "meta: " + midiarray[currentmidiuser]["meta"].length + "<br>";
     mystate += "last entry: " + transcript + "<br>";
-    mystate += "current video time: " + currentvidtime + "<br>";
+    mystate += "current video time: " + getTimeFromSecs(currentvidtime/1000) + "<br>"; //video.js
     if (lastnote !==null){
         mystate += "Last Note: " + lastnote.note + "<br>";
     }
@@ -361,17 +364,44 @@ function selectLanguage(lang){
 }
 
 function loadLanguages(){
-    langsref = firebase.database().ref('/dictionary/languages');
-	langsref.once('value')
-    .then((snap) => {
-	    if (snap.exists()){
-            let mylangs = snap.val();
-            for (const [key, value] of Object.entries(mylangs)) {
+    if (USE_FIREBASE){
+
+        langsref = firebase.database().ref('/dictionary/languages');
+        langsref.once('value')
+        .then((snap) => {
+            if (snap.exists()){
+                let mylangs = snap.val();
+                console.log(mylangs);
+                for (const [key, value] of Object.entries(mylangs)) {
+                    alllangs[value.midi] = key;
+                    alllangsa[key] = value; //additional info on the language.  langname -> all values.  
+                }                    
+            }
+        });
+    
+    }
+    else{
+        let scriptEle = document.createElement("script");
+        //hardcoded for now
+        scriptEle.setAttribute("src", "languages/_catalog.js");
+        scriptEle.setAttribute("type", "text/javascript");
+        scriptEle.setAttribute("async", false);
+        document.body.appendChild(scriptEle);
+        
+          // success event 
+          scriptEle.addEventListener("load", () => {
+            console.log("Language catalog loaded ");
+            for (const [key, value] of Object.entries(ALL_LANGS)) {
                 alllangs[value.midi] = key;
                 alllangsa[key] = value; //additional info on the language.  langname -> all values.  
-            }                    
-        }
-    });
+            }
+          });
+           // error event
+          scriptEle.addEventListener("error", (ev) => {
+            console.log("Error loading language catalog ", ev);
+          });
+    
+    }
 
 }
 
@@ -404,7 +434,7 @@ function initLangData(lang, user=-1){
 
 }
 
-function loadLanguageScript(lang){
+function loadLanguageScript(lang, user=0, dicexists=true){
     let scriptEle = document.createElement("script");
     scriptEle.setAttribute("src", "languages/" + lang + ".js");
     scriptEle.setAttribute("type", "text/javascript");
@@ -414,6 +444,9 @@ function loadLanguageScript(lang){
       // success event 
       scriptEle.addEventListener("load", () => {
         console.log("Language loaded " + lang);
+        if (!dicexists){
+            finishKeyLoad(lang, user, keymaps[lang].mydic);
+        }
       });
        // error event
       scriptEle.addEventListener("error", (ev) => {
@@ -475,6 +508,9 @@ function loadMetaLanguage(lang="meta", user=0){
     console.log('Load Meta Language end ' + Date.now());
     metadic.draw();
 
+    //load meta language script.  
+    loadLanguageScript("_meta"); 
+
 }
 
 
@@ -483,8 +519,72 @@ function moveLanguage(lang, user, octave=0){
 
 }
 
+function loadLangKeys(lang="base", user=0, mydic={}){
+    add = 0;
+    if (typeof(langs[lang]) === "undefined"){
+        //only add to the lookup dict if it has not been added yet.  
+        add = 1;
+    }       
+    langs[lang] = {};
+    langsa[lang] = {};
+    //set up octaves for language.  
+    //if we do this, we need to save the octave information.  
+    //perhaps we can just allow this to be done each time, and so the full recording will have octave information.  
+    //at start of meta track, save all of these changes if we put into settings.  
+    //not sure if we need user based settings.  
+    octaves[lang] = 0;
+
+    addLangLabel(lang);
+//dynamic functions for this language.  
+    keymaps[lang] = new Keymap(lang);
+
+    loadLanguageScript(lang, user, mydic !==null); //pass dicexists param.  
+
+    if (mydic !== null){
+        finishKeyLoad(lang, user, mydic);
+    }
+
+
+
+}
+function finishKeyLoad(lang="base", user=0, mydic={}){
+    for (const [key, value] of Object.entries(mydic)) {	
+        m = value.midi.split(",");
+        //lang["base"]["length"]["midiseq"] = word
+        if (typeof(langs[lang][m.length]) === "undefined"){
+            langs[lang][m.length] = {};
+        }
+        
+        langsa[lang][key] = value; //full word info.  
+
+        addDictRow(lang, key, value, user, add);
+
+        keymaps[lang].addWord(key, value);
+
+        key2a = convertKeys(value.midi, keybot[lang]/12);
+        langs[lang][m.length][key2a] = key; //midiseq -> word lookup.  
+
+        //convert keys down for now.  Probably get rid of this, converting to 0 based.  
+        //except for lookup.  
+        //shift keys down.  
+
+                    
+    }
+    //populate the filters.  
+    if (typeof(langs[lang][2]) === "undefined"){
+        langs[lang][2] = {};
+    }
+    obj = {"word": "test", "midi": "1,1", "user": user, "times": 0, "definition": "test", "created": "20210101", "lang": lang};
+    langsa[lang]["test"] = obj;
+    addDictRow(lang, "test", obj, user);
+    key2a = convertKeys(obj.midi, keybot[lang]/12);
+    langs[lang][m.length][key2a] = "test"; //midiseq -> word lookup.  
+
+}
+
 function loadLanguage(lang, user){
     lang = lang.toLowerCase().replaceAll(" ", "_");
+
 
     if (typeof(langs[lang]) !== "undefined"){
         mydic = langs[lang];
@@ -503,66 +603,24 @@ function loadLanguage(lang, user){
     }
 
     else{
-        //get lang from DB.  
-        langref = firebase.database().ref('/dictionary/language/' + lang);
-        langref.once('value')
-        .then((snap) => {
-            if (snap.exists()){
-                add = 0;
-                if (typeof(langs[lang]) === "undefined"){
-                    //only add to the lookup dict if it has not been added yet.  
-                    add = 1;
-                }       
-                mydic = snap.val();
-                langs[lang] = {};
-                langsa[lang] = {};
-                //set up octaves for language.  
-                //if we do this, we need to save the octave information.  
-                //perhaps we can just allow this to be done each time, and so the full recording will have octave information.  
-                //at start of meta track, save all of these changes if we put into settings.  
-                //not sure if we need user based settings.  
-                octaves[lang] = 0;
-
-                addLangLabel(lang);
-            //dynamic functions for this language.  
-                keymaps[lang] = new Keymap(lang);
-                loadLanguageScript(lang);
-
-                for (const [key, value] of Object.entries(mydic)) {	
-                    m = value.midi.split(",");
-                    //lang["base"]["length"]["midiseq"] = word
-                    if (typeof(langs[lang][m.length]) === "undefined"){
-                        langs[lang][m.length] = {};
-                    }
-                    
-                    langsa[lang][key] = value; //full word info.  
-
-                    addDictRow(lang, key, value, user, add);
-
-                    keymaps[lang].addWord(key, value);
-
-                    key2a = convertKeys(value.midi, keybot[lang]/12);
-                    langs[lang][m.length][key2a] = key; //midiseq -> word lookup.  
-
-                    //convert keys down for now.  Probably get rid of this, converting to 0 based.  
-                    //except for lookup.  
-                    //shift keys down.  
-
-                                
+        if (USE_FIREBASE){
+            //get lang from DB.  
+            langref = firebase.database().ref('/dictionary/language/' + lang);
+            langref.once('value')
+            .then((snap) => {
+                if (snap.exists()){
+                    mydic = snap.val();
+                    console.log(mydic);
+                    loadLangKeys(lang, user, mydic);
                 }
-                //populate the filters.  
-                if (typeof(langs[lang][2]) === "undefined"){
-                    langs[lang][2] = {};
-                }
-                obj = {"word": "test", "midi": "1,1", "user": user, "times": 0, "definition": "test", "created": "20210101", "lang": lang};
-                langsa[lang]["test"] = obj;
-                addDictRow(lang, "test", obj, user);
-                key2a = convertKeys(obj.midi, keybot[lang]/12);
-                langs[lang][m.length][key2a] = "test"; //midiseq -> word lookup.  
-
-            }
-        });
-
+            });
+        }
+        else{
+            //load from local file.  
+            mydic = null;
+            loadLangKeys(lang, user, mydic);
+            
+        }
     }
 
 }
@@ -788,19 +846,35 @@ function labelDicRedraw(){
     var context = fullpcanvas_labels.getContext("2d");
     context.clearRect(0, 0, fullpcanvas_labels.width, fullpcanvas_labels.height);
     //pull all languages used.  
-    labelDic(currentlanguage);
-    labelDic("meta");
+    botcounter = {};
+
+    for (const [key, value] of Object.entries(keybot)) {
+        if (typeof(botcounter[value]) === "undefined"){
+            botcounter[value] = 0;
+        }
+        else{
+            botcounter[value] += 1;
+        }
+        labelDic(key, botcounter[value]); //anything we have a keybot for.  
+    }
+//    labelDic(currentlanguage);
+//    labelDic("meta");
 }
 
-function labelDic(lang){
+function labelDic(lang, idx=0){
     let fullpcanvas_labels = document.getElementById("fullpcanvas_labels");    
     var context = fullpcanvas_labels.getContext("2d");
     context.fillStyle = "red";
     context.font = "bold 12px Arial";
     context.textAlign = 'left';
     x = keybot[lang];
-    y = 16;
-    context.fillText("     " + lang, ((x+3)/88)*fullpcanvas_labels.width, y);
+    y = 12;
+    filltext = "";
+    for (i=0; i<Math.floor(idx/2)*2+idx%2; i++){
+        filltext += "        ";
+
+    }
+    context.fillText(filltext + lang, ((x+3)/88)*fullpcanvas_labels.width, y+(idx%2)*8);
     context.strokeStyle = "red";
     context.lineWidth = 2;
     context.beginPath();
@@ -823,8 +897,8 @@ function getFullPiano(midikeys=null, midikeys2=null){
     }
     DrawKeyboard(fullpcanvas, RedKeys);
 
-    labelDic("meta");
-    labelDic(currentlanguage);
+    labelDicRedraw();
+
 
 //    const img    = pcanvas.toDataURL('image/png');
 //    document.getElementById("generatedkeys4").src = img4;
@@ -883,12 +957,7 @@ function loadDictionaries(user=0, langstoload=[]){
                 {
                     targets: DIC_USER,
                     render: function (data, type, row, meta) {
-                        if (typeof(users[ row[DIC_USER] ]) === "undefined"){
-                            return '';
-                        }
-                        else{
                             return '<img height="40px" src="' + users[ row[DIC_USER] ].pic + '" /><br>' + users[ row[DIC_USER] ].name; 
-                        }
                     }
                 },
                 {
@@ -1021,7 +1090,9 @@ function loadDictionaries(user=0, langstoload=[]){
         langstoload.push("base");
     }
     langstoload.forEach(function(lang){
-        loadLanguage(lang, user);
+        //I think we need this instead.  
+        initLangData(lang, user);        
+//        loadLanguage(lang, user);
     });    
 
 /*
@@ -1049,7 +1120,13 @@ function loadDictionaries(user=0, langstoload=[]){
         setInterval(function(){
 
             //all languages checkCommands.  
-            triggerCheckCommands();
+            if (!check_running){
+                check_running = true;
+                //dont do this here?  
+                triggerCheckCommands();
+                check_running = false;
+                triggerRunAudio();
+            }
 
         }, 500);
 
@@ -1080,7 +1157,10 @@ function findCommand(transcript, midi, prevtranscript="", lang=""){
     if (lang==""){
         //could search most likely or in some order.  For now this is ok.
         for (const [key, value] of Object.entries(keymaps)) {
-            [transcript, lang, found] = value.findCommand(transcript, midi, key);
+            let [t, l,f] = value.findCommand(transcript, midi, key);
+            transcript = t;
+            lang = l;
+            found = f;
             if (transcript != prevtranscript && found){
                 return [transcript, lang, found];
             }
@@ -1088,7 +1168,10 @@ function findCommand(transcript, midi, prevtranscript="", lang=""){
     }
     else{
         if (lang in keymaps){
-            [transcript, lang, found] = keymaps[lang].findCommand(transcript, midi, lang);
+            let [t, l, f] = keymaps[lang].findCommand(transcript, midi, lang);
+            transcript = t;
+            lang = l;
+            found = f;
             if (transcript != prevtranscript && found){
                 return [transcript, lang, found];
             }
@@ -1139,6 +1222,16 @@ function mycheckcommands(lang=""){
 
 
 }
+
+function triggerRunAudio(lang=""){
+    if (lang==""){
+        lang = currentlanguage;
+    }
+    if ((typeof(as) !== 'undefined') && as !==null && as[lang] !== 'undefined'){
+        as[lang].runAudio(vgetReferenceTime()); //video.js
+    }
+}
+
 function triggerCheckCommands(){
     //actually execute commands.  
     //if we include the language in the currentmidi.  
@@ -1151,12 +1244,20 @@ function triggerCheckCommands(){
     if (!pedal){
         if (p !== null){
             //only check the language of the pending command.  
-            t = mycheckcommands(p.lang);            
+            t = mycheckcommands(p.lang);  
+            if (t !== p.transcript){
+                lang = p.lang;
+            }          
         }
         else{
             //check all languages.
             for (let li=0; li<flangs.length; li++){
                 t = mycheckcommands(flangs[li]);
+                //how do we break out of this?  
+                if (t != ""){
+                    lang = flangs[li];
+                    break;
+                }
             }
         }
     }    
@@ -1183,7 +1284,7 @@ function triggerCheckCommands(){
     $('#mycommand').val(t.trim()); //incomplete command.  
     $('#midicommand').val(mtemp.trim()); //incomplete command.
     
-    updateState(t.trim(), lang);
+    updateState(t.trim()); //use current language.  
 
     if (mtemp != ""){
         filterDicAuto(mtemp.trim(), lang);
@@ -1718,8 +1819,15 @@ function playWord(lang, word, midi){
     for (let i=0; i<tokens.length; i++){
         if (tokens[i] !== ""){
             //play the midi note.  random velocity 17.  
-            noteOn(parseInt(keybot[lang] + tokens[i]), 17, getReferenceTime(), 0, lang); //no velocity, no duration, no channel, no track, no user.  
-            noteOff(parseInt(keybot[lang] + tokens[i]), 17, getReferenceTime(), 0, lang); //no velocity, no duration, no channel, no track, no user.
+            if (typeof(midicontroller) !== 'undefined' && midicontroller !== null){
+                midicontroller.noteOn(keybot[lang] + parseInt(tokens[i]), 17, midicontroller.getReferenceTime(), 0, lang); //no velocity, no duration, no channel, no track, no user.  
+                midicontroller.noteOff(keybot[lang] + parseInt(tokens[i]), midicontroller.getReferenceTime(), lang); //no velocity, no duration, no channel, no track, no user.
+            }
+            else{
+                noteOn(keybot[lang] + parseInt(tokens[i]), 17, getReferenceTime(), 0, lang); //no velocity, no duration, no channel, no track, no user.  
+                noteOff(keybot[lang] + parseInt(tokens[i]), getReferenceTime(), lang); //no velocity, no duration, no channel, no track, no user.
+    
+            }
         }
     }
 

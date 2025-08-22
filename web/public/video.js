@@ -7,6 +7,8 @@ var currenttranscriptentry = "";
 var transcriptarray = [];
 var overlays = [];
 var overlayi = 0;
+var lastbarcodecheck = 0;
+var lastqrresult = "";
 
 function onYouTubeIframeAPIReady() {
     player = new YT.Player('player', {
@@ -210,15 +212,59 @@ function setVideoVolume(volume){
 
   }
 
-  function drawVideo(){
-    var canvas = document.getElementById("myvideocanvas");
-    var ctx = canvas.getContext("2d");
+  function scanQR(id='qrscreen'){
+
+    const canvas = document.getElementById(id);
+    const context = canvas.getContext('2d');
+//    const myimg = context.getImageData(imageData.width-500, imageData.height-500, 500, 500);
+//    context.drawImage(myimg, 0, 0, 500, 500);
+    //eventually change this to visible false.  
+    //canvas.style.display = 'none';
+    const myimg = context.getImageData(0, 0, 500, 500);
+    const code = jsQR(myimg.data, myimg.width, myimg.height);
+
+    if (code) {
+      updateQRResult(code);
+//      console.log("Found QR code", code);
+    }
+    else{
+//      console.log("No QR code found");
+      updateQRResult(null);
+    }
+ }    
+
+function updateQRResult(result, id='qrincoming') {
+          //maybe want to keep more than one result.  
+    if (result && result.data){
+      if (result.data !== lastqrresult){
+        lastqrresult = result.data;
+        console.log("QR Result: " + result.data);
+        //do something with the QR result, like displaying it or processing it
+        document.getElementById(id).innerHTML = 'QR Code: ' + result.data;
+      }
+    }
+    else{
+        document.getElementById(id).innerHTML = 'No QR Code found';
+        lastqrresult = "";
+    }
+  }
+
+
+ function drawVideo(){
+    let canvas = document.getElementById("myvideocanvas");
+    let ctx = canvas.getContext("2d");
     if (useyoutube || watch){
     }
     else{
-      ctx.drawImage(player2, 0, 0, canvas.width, canvas.height);
+      player = player2;
+      if (typeof(player) === 'undefined'){
+        //hack for feedback video. rec.html
+        player = document.getElementById("myrecordfeedback");
+      }
+      ctx.drawImage(player, 0, 0, canvas.width, canvas.height);
 
       //test overlay
+      ctx.globalAlpha = 0.5;
       ctx.beginPath(); // Start a new path
       ctx.rect(10, 40, 100, 150); // Add a rectangle to the current path
       ctx.fill(); // Render the path
@@ -226,7 +272,6 @@ function setVideoVolume(volume){
       ctx.fillStyle = 'black';
 
       // Set the global alpha value (0 = fully transparent, 1 = fully opaque)
-      ctx.globalAlpha = 0.5;
 
       // Draw the text
       ctx.fillText(currenttranscriptentry, 50, 10);
@@ -245,10 +290,56 @@ function setVideoVolume(volume){
         }
       }
 
-      requestAnimationFrame(drawVideo);
-    }
+      let hcanvas = document.getElementById("myhiddencanvas");
+      if (hcanvas == null){
+      }
+      else{
+        let hctx = hcanvas.getContext("2d");
+        hctx.globalAlpha = 0.4;
+//        hctx.drawImage(canvas, 0, 0, hcanvas.width, hcanvas.height);
+        hctx.globalAlpha = 0.5;
+        hctx.beginPath(); // Start a new path
+        hctx.rect(10, 40, 100, 150); // Add a rectangle to the current path
+        hctx.fill(); // Render the path
 
-  }
+        hctx.fillStyle = 'black';
+
+        // Set the global alpha value (0 = fully transparent, 1 = fully opaque)
+
+        // Draw the text
+        hctx.fillText(currenttranscriptentry, 50, 10);
+      }
+
+      //see if we have a barcode in the canvas.  
+      if (lastbarcodecheck + 1000 < Date.now()) {
+        if (combinedStream != null && combinedStream.active) {
+
+          const imageCapture = new ImageCapture(combinedStream.getVideoTracks()[1]);
+          imageCapture.grabFrame().then(imageData => {
+            let canvas = document.getElementById('qrscreen');
+            canvas.width = 500;
+            canvas.height = 500;
+            const context = canvas.getContext('2d');
+            context.drawImage(imageData, imageData.width-500, imageData.height-500, 500, 500, 0, 0, 500, 500);
+            scanQR();
+          });
+        }
+        else if (player != null && player.readyState > 0) {
+          let canvas = document.getElementById('qrscreen');
+          canvas.width = 500;
+          canvas.height = 500;
+          const context = canvas.getContext('2d');
+          context.drawImage(player, player.videoWidth-500, player.videoHeight-500, 500, 500, 0, 0, 500, 500);
+          scanQR();
+        }
+
+        lastbarcodecheck = Date.now();
+      }  
+
+      requestAnimationFrame(drawVideo);
+
+    }
+}
 
   function skipVideo(secs, v=""){
       if (useyoutube || watch){

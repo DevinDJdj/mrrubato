@@ -56,7 +56,7 @@ export class NetworkGraph {
         this.network.on('selectNode', this.handleNodeSelect.bind(this));
         this.network.on('selectEdge', this.handleEdgeSelect.bind(this));
         
-        this.selectedCallback = null;
+//        this.selectedCallback = null;
     }
 
     /**
@@ -259,6 +259,29 @@ export class NetworkGraph {
 
             this.network.on('selectNode', this.handleNodeSelect.bind(this));
             this.network.on('selectEdge', this.handleEdgeSelect.bind(this));
+            
+            this.network.on('click', function (properties) {
+                var clickedNodes = properties.nodes;
+                var clickedEdges = properties.edges;
+        
+                if (clickedNodes.length > 0) {
+                    // A node was clicked
+                    var nodeId = clickedNodes[0];
+//                    var nodeData = nodes.get(nodeId); // Access node data from your nodes DataSet
+                    console.log('Clicked node:', nodeId);
+                    // Perform actions based on the clicked node
+                } else if (clickedEdges.length > 0) {
+                    // An edge was clicked
+                    var edgeId = clickedEdges[0];
+//                    var edgeData = edges.get(edgeId); // Access edge data from your edges DataSet
+                    console.log('Clicked edge:', edgeId);
+                    // Perform actions based on the clicked edge
+                } else {
+                    // Background was clicked
+                    console.log('Clicked background');
+                    // Perform actions for background clicks
+                }
+            });
             
             this.selectedCallback = null; //callback for selection.  
 

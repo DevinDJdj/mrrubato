@@ -13,6 +13,15 @@ function addUser(user){
 	
 }
 
+async function checkStorage(){
+	const quota = await navigator.storage.estimate();
+	const totalSpace = quota.quota;
+	const usedSpace = quota.usage;
+	console.log('Approx total allocated space:', totalSpace);
+	console.log('Approx used space:', usedSpace);	
+	console.log('PCT Used: ', ((usedSpace/totalSpace)*100).toFixed(2) + '%');
+}
+
 
 class classifierDB{
 	constructor(lang=""){
@@ -302,8 +311,11 @@ class recDB{
 		constructor(){
 		this.db = new Dexie("recDB");
 		this.db.version(1).stores({
-			vids: "++id,userid,category,name,version", //mycomments, videoblob (if local), otherwise remoteurl
-			screenshots: "id,userid,vidid,timestamp", //imgblob, ocrtext
+			//mycomments is the original transcript for video owner.  
+			vids: "++id,[category+name+version],category,name,version,userid", //mycomments, videoblob (if local), otherwise remoteurl
+			screenshots: "id,imid,userid,vidid,timestamp", //imgblob, ocrtext
+			//files and/or links relevant to activity.  For now just text.  
+			files: "++id,[category+name+version],category,name,version,fname,size,path,userid", //text, fileblob?, or remoteurl
 		});
 
 		this.ftsindex = FlexSearch.Index({});
@@ -314,11 +326,36 @@ class recDB{
 
 	loadFTS(){
 		this.db.vids.each((obj) => {
-			this.ftsindex.add(obj.id, obj.category + " " + obj.name + " " + obj.mycomments);
+			this.ftsindex.update(obj.id, obj.category + " " + obj.name + " " + obj.mycomments);
 		});
 		this.db.screenshots.each((obj) => {
-			this.ftsindex.add(obj.vidid + '_' + obj.id, obj.ocrtext);
+			this.ftsindex.update(obj.id, obj.ocrtext);
 		});
+		this.db.files.each((obj) => {
+			//use path here as id.  
+			this.ftsindex.update(obj.path, obj.category + " " + obj.name);
+		});
+	}
+
+	saveFile(userid, category, name, version, filename, mycomments, text, size=0, remoteurl=null, cb=null){
+		if (size==0){
+			size = text.length;
+		}
+		//key here is path.  Not sure how we will generate this for uploaded files.  
+		//try to save original if possible.  
+		//yeah just overwrite if we get the same again.  
+		let path = category + "/" + name + "/" + filename;
+		var obj = {"userid": userid, "category": category, "name": name, "version": version, "filename": filename, "mycomments": mycomments, "text": text, "size": size, "path": path, "remoteurl": remoteurl};
+		this.db.files.put(path, obj).then((id) => {
+			console.log("added file with id " + id);
+			this.ftsindex.update(obj.path, obj.category + " " + obj.name + " " + obj.mycomments);
+			if (cb != null){
+				cb(id); //callback to add file.  
+				//indicate we have completed action.  
+			}
+		});
+
+
 	}
 
 	saveVideo(userid, category, name, version, mycomments, videoblob, remoteurl=null, cb=null){
@@ -334,16 +371,28 @@ class recDB{
 
 	}
 
-	saveScreenshot(id, vidid, timestamp, imgblob, ocrtext, cb=null){
-		var obj = {"id": vidid + "_" + id, "vidid": vidid, "timestamp": timestamp, "imgblob": imgblob, "ocrtext": ocrtext};
-		this.db.screenshots.add(obj).then((id) => {
-			console.log("added screenshot with id " + id);
+	loadVideo(id, category="", name="", version=0){
+		//load video by id, or category, name, version.  
+		if (id != null){
+			return this.db.vids.get(id);
+		}
+		else{
+			
+			return this.db.vids.where("[category+name+version]").equals([category,name,version]).first(); 
+		}
+	}
+
+	saveScreenshot(id, vidid, secs, imgblob, ocrtext, cb=null){
+		var obj = {"id": vidid + "_" + id, "imid": id, "vidid": vidid, "secs": secs, "imgblob": imgblob, "ocr": ocrtext};
+		this.db.screenshots.add(obj).then((ida) => {
+			console.log("added screenshot with id " + ida);
 			this.ftsindex.add(vidid + "_" + id, obj.ocrtext);
 			if (cb != null){
-				cb(id); //callback to complete.  
+				cb(ida); //callback to complete.  
 			}
 		});
 	}
+
 
 	getRecent(name=""){
 		return this.db.vids.where("name").startsWith(name).reverse().sortBy("version");
@@ -355,8 +404,16 @@ class recDB{
 		//how to sort this?  
 	}
 
-	getScreenshots(ssids=[]){
-		return this.db.screenshots.bulkGet(ssids);
+	
+	getScreenshots(vidid){
+		return this.db.screenshots.where("vidid").equals(vidid).sortBy("imid");
+	}
+
+	getScreenshotsA(imgrecs=[]){
+		//get all screenshots for these video ids.  
+		return this.db.screenshots.bulkGet(imgrecs);
+
+
 	}
 
 	getSimilar(text="", limit=10){

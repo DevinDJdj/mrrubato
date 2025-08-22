@@ -121,12 +121,15 @@ function registerCompletionTool(context) {
             if (position.character === 0) {
                 //new line, get previous line.  
                 //if topic, then logCommand.  
-                linePrefix = document.lineAt(position.line - 1).text;
+                //not a good idea to do this here.  
+                /*
+                linePrefix = document.lineAt(position.line-1).text;
                 if (linePrefix.startsWith('**')) {
-                    //if it is a topic, then logCommand.  
+                    //if it is a topic, then logCommand.
                     Book.addToHistory(linePrefix.substring(2));
                     Book.logCommand(linePrefix);
                 }
+                */
             }
             if (linePrefix.endsWith('**')) {
                 console.log(Book.topicarray);
@@ -206,10 +209,17 @@ function registerCompletionTool(context) {
                 }
                 return myarray;
             }
-            if (linePrefix.endsWith('/') && linePrefix.startsWith('**')) {
+            if (linePrefix.endsWith('/')) {
                 //include all topics with this.  
                 //need sorted keys.  
                 //                    console.log(Book.topicarray);
+                //allow to trigger even if we have already completed.  
+                if (linePrefix.startsWith('**')) {
+                }
+                else if (linePrefix.substring(linePrefix.lastIndexOf(' ') + 1).startsWith('**')) {
+                    //adjust linePrefix to be just the topic.
+                    linePrefix = linePrefix.substring(linePrefix.lastIndexOf(' ') + 1);
+                }
                 let myarray = Book.findTopicsCompletion(linePrefix);
                 //use Book.alltopics to get sorted array.  
                 return myarray;
@@ -236,7 +246,7 @@ function registerCompletionTool(context) {
         }
     }, '*', //trigger single character
     '>', '/', //trigger on '/'
-    '#', '@', '!', '-', '$', '\n');
+    '#', '@', '!', '-', '$');
     //add custom completions to the extension 
     context.subscriptions.push(provider2);
 }

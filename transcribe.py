@@ -3,7 +3,9 @@
 #pip install vosk
 #pip install ffmpeg
 #choco install ffmpeg
+#sudo apt install ffmpeg
 #pip install moviepy
+#pip install moviepy==1.0.3
 #pip install pydub
 #pip install speechrecognition
 #pip install pytube
@@ -12,8 +14,8 @@
 import wave
 import json
 import moviepy.editor as mp
-from vosk import Model, KaldiRecognizer, SetLogLevel
-import Word as custom_Word
+#from vosk import Model, KaldiRecognizer, SetLogLevel
+#import Word as custom_Word
 from pydub import AudioSegment
 from os import path
 import subprocess
@@ -21,67 +23,231 @@ import glob
 import os
 import speech_recognition as sr
 import math
-import requests
-import util
-import io
+import whisper
+import pandas as pd
+from datetime import datetime
+import urllib.request
 
+from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
 
-def get_timestamp(s):
+myhome = "."
+OUTPUT_DIR = myhome + "/data/transcription/output/"
+SPEECH_DIR = "/data/speech/" #"/TTS/recipes/ljspeech/LJSpeech-1.1/"
+
+def get_timestamp(s, tenths=False):
     mins = math.floor(s/60)
     secs = math.floor(s - mins*60)
     filler = ""
     if secs < 10:
         filler = "0"
+    #do we want tenths?  probably breaks other areas so leave for now.  
+    #secs = (s - mins*60)
+    #'{0:.2f}'.format(secs)
     return str(mins) + ":" + filler + str(secs)
-    
 
-def transcribe_fromyoutube(videoid="ZshYVeNHkOM"):
+def getIteration(currentTime, starttimes, endtimes):
+    i = 0
+    for i, st in enumerate(starttimes):
+        if (i < len(endtimes) and starttimes[i] <= currentTime and currentTime <= endtimes[i]):
+            return i
+    return -1
 
-    from pytube import YouTube
-    youtube_video_url = "https://www.youtube.com/watch?v=" + videoid
-    youtube_video_content = YouTube(youtube_video_url)
+def parseTranscript(filename):
+    with open(filename, 'r') as file:
+        data = file.read()
+        lines = data.split('\n')
+        text = []
+        times = []
+        for line in lines:
+            if (line != ""):
+                parts = line.split(' (')
+                text.append(parts[0])
+                times.append(parts[1][0:-1])
+        return text, times
 
-    for stream in youtube_video_content.streams:
-        print(stream)
+def downloadtranscript(transcriptfile, mediafile, videoid, st, et):
+    transcriptfile = transcriptfile.replace(" ", "%20")
 
-    audio_streams = youtube_video_content.streams.filter(only_audio = True)
-    for stream in audio_streams:
-        print(stream)
+    #download the media.      
+    latest_file = getfile(mediafile, videoid)
 
-    audio_stream = audio_streams[1]
-    print(audio_stream)
+    urllib.request.urlretrieve(transcriptfile, OUTPUT_DIR + videoid + ".txt")
 
-    audio_stream.download("output/" + videoid)
-    list_of_files = glob.glob('c:/devinpiano/music/output/' + videoid + '/*') # * means all if need specific format then *.csv
+
+
+    text, times = parseTranscript(OUTPUT_DIR + videoid + ".txt")
+    for i in range(len(times)-1):
+        starta = times[i].split(":")
+        start = int(starta[0])*60 + int(starta[1])
+        enda = times[i+1].split(":")
+        end = int(enda[0])*60 + int(enda[1])
+
+        #for now only take data from outside of iterations
+        if (getIteration(times[i], st, et) == -1 and end - start > 3 and end-start < 12):
+            #only use nice short segments which are mostly continuous.  
+            #ffmpeg_extract_subclip(latest_file, start, end, targetname="../tts/coqui/TSS/recipes/ljspeech/LJSpeech-1.1/" + videoid + "_" + str(i) + ".wav")
+            #need this outside of project, too many files.  
+            #baseaudioconfig uses 22050, 1 channel.  
+            audiorate = "22050"
+            audiorate = "16000" #for Deepspeech and TensorflowTTS I think.  
+            command = "ffmpeg -i \'" + latest_file + "\' -ss " + str(start) + " -to " + str(end) + " -ar " + audiorate + " -ac 1 " + myhome + SPEECH_DIR + videoid + "_" + str(start) + ".wav"
+            print(command)
+            #subprocess.call(command, shell=True)
+            entry = videoid + "_" + str(start) + "|" + text[i] + "|" + text[i].lower()
+            #add this to metadata file.  
+            with open(myhome + SPEECH_DIR + "metadata.csv", 'a') as cf:
+                cf.write(entry + "\n")
+            fsize = os.path.getsize(myhome + SPEECH_DIR + videoid + "_" + str(start) + ".wav")
+            entry = videoid + "_" + str(start) + "," + str(fsize) + "," + text[i].lower()
+            with open(myhome + SPEECH_DIR + "tts_train.csv", 'a') as cf:
+                cf.write(entry + "\n")
+
+    #remove the latest file, and the directory.
+    removefile(latest_file, videoid)
+
+    print(transcriptfile)
+    return transcriptfile
+
+
+def removefile(latest_file, videoid):
+    os.remove(latest_file)
+    os.rmdir(OUTPUT_DIR + videoid)
+
+#get from mediafile if exists, otherwise download from youtube.
+def getfile(mediafile, videoid):
+    if not os.path.exists(OUTPUT_DIR + videoid):
+        os.makedirs(OUTPUT_DIR + videoid)
+    if mediafile != None and mediafile != "":
+        #should work with this.  
+        #see if transcribe is working still after update.  
+        #this is not working.  
+        print(mediafile)
+        mediafile = mediafile.replace(" ", "%20")
+        if not os.path.exists(OUTPUT_DIR + videoid):
+            os.makedirs(OUTPUT_DIR + videoid)
+        urllib.request.urlretrieve(mediafile, OUTPUT_DIR + videoid + "/" + videoid + ".mp4")
+    else:
+        youtube_video_url = "https://www.youtube.com/watch?v=" + videoid
+        youtube_video_content = YouTube(youtube_video_url)
+        print("here")
+
+        for stream in youtube_video_content.streams:
+            print(stream)
+
+        audio_streams = youtube_video_content.streams.filter(only_audio = True)
+        for stream in audio_streams:
+            print(stream)
+
+        audio_stream = audio_streams[1]
+        print(audio_stream)
+
+        audio_stream.download(OUTPUT_DIR + videoid)
+
+    list_of_files = glob.glob(OUTPUT_DIR + videoid + '/*') # * means all if need specific format then *.csv
     latest_file = max(list_of_files, key=os.path.getctime)
     print(latest_file)
-    text, times = transcribe_whisper(latest_file)
-    f = open("output/" + videoid + ".txt", "w")
-    for i in range(len(text)):
-        print(times[i])
-        print(text[i]) 
-#        f.write(times[i] + '\n')
-        f.write(text[i] + ' (' + times[i] + ')\n')
-    f.close()
-    with open("output/" + videoid + ".txt", 'r') as file:
+    return latest_file
+
+import os
+def transcribe_fromyoutube(videoid="ZshYVeNHkOM", model=None, mediafile=None, st=None, et=None):
+    #download from mediafile
+    from pytube import YouTube
+
+    latest_file = getfile(mediafile, videoid)
+    trainingcount = 0
+    totalcount = 0
+    try:
+        print("transcribe_whisper")
+        text, times, endtimes = transcribe_whisper(latest_file, model)
+        print("transcribe_whisper_complete")
+
+
+        f = open(OUTPUT_DIR + videoid + ".txt", "w")
+
+        prev = ""
+        ignore = {}
+        for i in range(len(text)):
+    #        print(times[i])
+    #        print(text[i]) 
+    #        f.write(times[i] + '\n')
+            if (ignore.get(i) == None):
+                indices = [j for j in range(i, len(text)) if text[j] == text[i] ]
+                print(indices)
+                if (len(indices) > 2):
+                    diffs = [x - indices[j - 1] for j, x in enumerate(indices)][1:]
+                    print(diffs)
+                    if (len(diffs) > 1):
+                        diff2 = [x - diffs[j - 1] for j, x in enumerate(diffs)][1:]
+                        if (diff2[0] == 0):
+                            for j in indices:
+                                ignore[j] = True
+            if text[i] != prev and ignore.get(i) == None:
+                prev = text[i]
+                istraining = ""
+                totalcount += 1
+                if (endtimes[i] - times[i] > 8 and endtimes[i] - times[i] < 16):
+                    #this is good for training.  Indicate in the text itself.  
+                    istraining = "*"
+                    trainingcount += 1
+                f.write(istraining + text[i] + ' (' + times[i] + ')\n')
+                #so we only need to use this.  
+        f.close()
+        print("transcribe_fromyoutube complete")
+        print("trainingcount / totalsegments: " + str(trainingcount) + " / " + str(totalcount))
+    except Exception as e:
+        os.remove(latest_file)
+        os.rmdir(OUTPUT_DIR + videoid)
+        print(e)
+        return "error"
+    #get wav files before deleting.  
+    #this is not working with stability.  
+    #want this in separate function anyway, after reviewed.  
+    getwave = """
+    if (st !=None and et !=None):
+        for i in range(len(times)-1):
+            starta = times[i].split(":")
+            start = int(starta[0])*60 + int(starta[1])
+            enda = times[i+1].split(":")
+            end = int(enda[0])*60 + int(enda[1])
+
+            #for now only take data from outside of iterations
+            if (getIteration(times[i], st, et) == -1 and ignore.get(i) == None and end - start > 3 and end-start < 12):
+                #only use nice short segments which are mostly continuous.  
+                #ffmpeg_extract_subclip(latest_file, start, end, targetname="../tts/coqui/TSS/recipes/ljspeech/LJSpeech-1.1/" + videoid + "_" + str(i) + ".wav")
+                #need this outside of project, too many files.  
+                #baseaudioconfig uses 22050, 1 channel.  
+                command = "ffmpeg -i \'" + latest_file + "\' -ss " + str(start) + " -to " + str(end) + " -ar 22050 -ac 1 " + myhome + "/TTS/recipes/ljspeech/LJSpeech-1.1/" + videoid + "_" + str(start) + ".wav"
+                print(command)
+                subprocess.call(command, shell=True)
+                entry = videoid + "_" + str(i) + "|" + text[i] + "|" + text[i].lower()
+                #add this to metadata file.  
+                with open(myhome + "/TTS/recipes/ljspeech/LJSpeech-1.1/metadata.csv", 'a') as cf:
+                    cf.write(entry + "\n")
+                
+    """
+
+    removefile(latest_file, videoid)
+
+    with open(OUTPUT_DIR + videoid + ".txt", 'r') as file:
         data = file.read()
         return data
 
 
 
-def transcribe_whisper(filename = "C:\\devinpiano\\test\\openai-whisper\\test.mp4"):
-    import whisper
-    import pandas as pd
-    from datetime import datetime
+def transcribe_whisper(filename = "C:\\devinpiano\\test\\openai-whisper\\test.mp4", model=None):
 
-    print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-
-    model = whisper.load_model("medium")
-
-    print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+#    audio = whisper.load_audio(filename)
+#    print("audio Loaded " + filename)
+#    mel = whisper.log_mel_spectrogram(audio).to(model.device)
+#    _, probs = model.detect_language(mel)
+#    print(f"Detected language: {max(probs, key=probs.get)}")
+#    options = whisper.DecodingOptions(language="en", fp16 = False)
+#    result = whisper.decode(model, mel, options)
+#    print(result.text)
 
     result = model.transcribe(filename)
-    print(result["text"])
+    
+#    print(result["text"])
 
     print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
@@ -92,13 +258,15 @@ def transcribe_whisper(filename = "C:\\devinpiano\\test\\openai-whisper\\test.mp
 
     text = []
     times = []
+    endtimes = []
     for ind in speech.index:
-        print(speech['text'][ind])
-        print(speech['start'][ind])
+#        print(speech['text'][ind])
+#        print(speech['start'][ind])
         text.append(speech['text'][ind]) 
         times.append(get_timestamp(speech['start'][ind])) 
+        endtimes.append(get_timestamp(speech['end'][ind]))
 
-    return text, times
+    return text, times, endtimes
 #    audio = whisper.load_audio("C:/devinpiano/testing/openai-whisper/content/harvard.wav")
 #    audio = whisper.pad_or_trim(audio)
 
@@ -108,52 +276,6 @@ def transcribe_whisper(filename = "C:\\devinpiano\\test\\openai-whisper\\test.mp
     #_, probs = model.detect_language(mel)
     #probs
     #print(f"Detected language: {max(probs, key=probs.get)}")
-
-
-def transcribe_me2(description, filename, mediafile, localserver, videoid):
-    fn = filename.split('.')
-    txt_filename = fn[0] + ".txt"
-
-    #should be able to use both https or http, too annoying to address now.  
-    #why does this video fail?  jRpisYQZmjU now set to null.  
-
-    #add start and end times here for what we want to use for speech generation.  
-    #use mediafile to download if this is not stored on youtube.  
-    util.getIterations(description)
-    #pass st and et to allow for creating wav files for voice generation.  
-    #need a userid as well so that we can generate multiple voices.  
-    #this userid should be added to the description when recording.  
-    print(util.st)
-    print(util.et)
-    sta = ",".join(str(s) for s in util.st)
-    eta = ",".join(str(e) for e in util.et)
-    params = [('videoid', videoid),('st',sta),('et',eta),('mediafile',mediafile)]
-#                    url = f'{localserver}/transcribe/?videoid={videoid}&mediafile={mediafile}&st={sta}&et={eta}'
-    url = f'{localserver}/transcribe/'
-    print(url)
-    try:
-#                        transcript = requests.get(url, timeout=(30, None)).text
-        transcript = requests.get(url, params=params, timeout=(300, None)).text
-        if (transcript is not None and transcript !="error"):
-            #why are we having issues with the google blob.  It shows funny if you view it indivuidually with the link.  
-            f = io.open(txt_filename, "w", encoding='utf-8')
-            f.write(transcript)
-            f.close()
-#            f = open(txt_filename, "w")
-#            f.write(transcript)
-#            f.close()
-            print('transcript for ' + videoid + ' written to ' + txt_filename)
-            return txt_filename
-        else:
-            print('transcript error' + videoid)
-            print(url)
-            print(params)
-            return None
-    except requests.exceptions.RequestException as e:
-        print('error using transcript service' + videoid)
-        print(e)
-        return None
-
 
 
 def transcribe_me(filename):
@@ -187,6 +309,7 @@ def transcribe_me(filename):
     audior = []
     text = []
     times = []
+    endtimes = []
     testing = False
     if testing==False:
         for i in range(number_of_iterations):
@@ -201,7 +324,7 @@ def transcribe_me(filename):
             except Exception as e:
                 print(e)
     else:
-         text, times = transcribe_whisper(audio_filename)           
+         text, times, endtimes = transcribe_whisper(audio_filename)           
 
     f = open(txt_filename, "w")
     for i in range(len(text)):
