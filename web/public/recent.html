@@ -126,12 +126,16 @@
 		<td valign="top">
 			<div id="vistabs" class="tab">
 				<button class="tablinks" onclick="openTab(event, 'gitgraph')">Git Graph</button>
+                <button class="tablinks" onclick="openTab(event, 'timewindow')">Time Window</button> 
 				<button class="tablinks" onclick="openTab(event, 'wordcanvas')">Word Canvas</button>
 				<button class="tablinks" onclick="openTab(event, 'tempcodewindow')">Code Window</button>
 				<button class="tablinks" onclick="openTab(event, 'reflinks')">REFs</button>
 				<div id="temp_edit_code"> </div>
 		
 			</div>
+				<div id="timewindow"  class="tabcontent" style="display:none;height:480px;width:600px;overflow:scroll;">
+
+
 			  <div id="wordcanvas" class="tabcontent" style="height:100%;width:100%;overflow:hidden;">
 		
 			  </div>
@@ -301,6 +305,7 @@ var querydate = null;
 
 function loadAll(reload = false){
 	loadUserConfig();
+	gitSetNature(GIT_CODE | GIT_RELATIONS);
 	populateGitRepos(getState('selectedgitindex')); //select repo to analyze.  
 	//get from url params
 	selectGitRepo(getState('selectedgitindex'));
@@ -335,6 +340,10 @@ function getIterations(desc, vidtime){
 }
 
 
+	function zoomTopic(top){
+		//no handler needed.  
+
+	}
 
   </script>
 

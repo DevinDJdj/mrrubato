@@ -51,3 +51,5 @@ web/public/test/javascript-vector-database/
 *.sqlite3
 *.model
 **/package-lock.json
+
+vecbook/*

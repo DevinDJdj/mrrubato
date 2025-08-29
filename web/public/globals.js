@@ -13,6 +13,7 @@ var transcript = "";
 var currenttopic = "NONE";
 var selectedtopic = "NONE";
 
+//var delay = 1000;
 //MLC Engine models to use.  
 let selectedModel = "Llama-3.2-1B-Instruct-q4f16_1-MLC";
 //selectedModel = "DeepSeek-R1-Distill-Qwen-7B-q4f16_1-MLC";

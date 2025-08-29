@@ -32,7 +32,8 @@ May have some problematic names.
 === QA history start.  
 ==== QA history end.  
 
-$$ ENVIRONMENT (can also be direct link to topic)
+$$ ENVIRONMENT (can also be direct link to topic) also math symbol if also ending in same.  
+$$ E=mc^2 $$
 
 !! Log output or error
 
@@ -67,15 +68,15 @@ Shorthand
 
 <!--
 Leading OPEN:
-& = and? (Latin)
+& = and? (Latin) or inline sign (&int; &sum; &prod; &radic;)
 +
 % = wild? or modulate/random? 
 ^ = generate (Exponentiate)
 _ = pre-requisite
 / = path
-\ = macro?  (TEX)
+\ = macro?  (TEX i.e. \being{itemize}..) 
 : = line identification
-; = comment?
+; = comment? or term identifier perhaps.  
 ~~ = suggestion or similarity check
 | = PIPE OR
 .. = time marker? continuation?  

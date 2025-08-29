@@ -99,7 +99,7 @@ def update_actions(hwnd, action):
             windows[procid]['actions'] = []
         windows[procid]['actions'].append(action)
         if (len(windows[procid]['actions']) > 100):
-            logger.info('Removing oldest action from ' + procid + ' actions list')
+            logger.info('Removing oldest action from {procid} actions list')
             windows[procid]['actions'].pop(0)
 
     logger.info(f'{action}')

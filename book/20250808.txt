@@ -873,7 +873,105 @@ Bottom right is least used I think..
 
 **extensions/trey/trey.py
 Need some config for this.  
+Also how to communicate with applications.  
+Just QR for now I guess.  
 
 
 
+**web/public/global.js
+embedModel
+selectedModel
+
+**web/public/test/web-llm/test.js
+What to do with the embedding?  
+
+@@What are the types of similarity search?  
+
+#https://www.pinecone.io/learn/vector-similarity/
+
+
+export function euclideanDistance(A: number[], B: number[]): number {
+    return Math.sqrt(A.reduce((sum, a, i) => sum + Math.pow(a - B[i], 2), 0));
+}
+
+
+**web/public/db.js
+--cosineSimilarity
+--euclideanDistance
+Not sure this belongs here..
+--vecDB
+How should we use topics here?  
+
+#https://en.wikipedia.org/wiki/Jaccard_index
+Seems better for classification
+But this helps..
+Scale-Invariance: Jaccard Similarity is not affected by the size of the sets being compared. This makes it robust for comparing sets of varying sizes.
+I think the calculation time is overbearing.  
+So it is probably not practical.  
+
+**MANHATTAN DISTANCE
+**HAMMING DISTANCE
+#https://milvus.io/ai-quick-reference/are-there-cases-where-manhattan-distance-or-hamming-distance-are-useful-for-vector-search-and-how-do-these-metrics-differ-in-computational-cost-or-index-support-compared-to-euclideancosine
+#https://en.wikipedia.org/wiki/Hamming_distance
+This may be good for the music analysis.  
+Randomly Jump from location to location based on Hamming Distance or some other distance metric..  
+
+
+onDropDocument add to this vecDB in pages with topic info.  
+Currenttopic and filename?  
+
+**web/public/js/filedrop.js
+--processFile
+-test if we get results in vecDB.  
+
+What should the data be associated with and what is the lifecycle of this temporary data.  
+
+
+
+**web/public/book.html
+Havent used in a while.  
+--wordcanvas
+not working.  
+--timewindow
+working but not in right place.  
+OK, better, needs more startup time it seems.  
+60 seconds??
+~~Maybe limit the time window to 1 year..
+
+
+
+
+
+#https://github.com/hediet/vscode-debug-visualizer
+Maybe use a tool someone built for the code visualization in extension..  
+Maybe use a tool someone built for the code visualization in extension..  
+#https://github.com/scottrogowski/code2flow
+#https://github.com/whyboris/TypeScript-Call-Graph
+
+
+#https://code.visualstudio.com/api/language-extensions/language-server-extension-guide
+#https://github.com/microsoft/vscode-extension-samples/blob/main/lsp-sample/server/src/server.ts
+#https://github.com/microsoft/vscode-extension-samples/tree/main/lsp-user-input-sample
+#https://github.com/microsoft/vscode-extension-samples/tree/main/lsp-web-extension-sample
+
+Yeah need to go ahead and do this I think.  
+For now just do for book files.  
+Then get rid of the old completion if fast enough.  
+
+Viewing this as markdown is not horrible, but need ending asterisk I think.  
+
+#https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/writing-mathematical-expressions
+
+Essentially create a book+markdown+latex reader.  
+
+
+Go back to test filedrop first..
+
+**DRONES
+#https://github.com/PX4/PX4-Autopilot
+#https://github.com/ArduPilot/ardupilot
+#https://github.com/dronekit/dronekit-python
+
+
+Need to reorg.  
 

@@ -207,7 +207,15 @@ function gitDownloadCommits(data, qpath=null){
       }
 
     }
-    setTimeout(function (){if (uicommitsarray.length > 0) {gitChartCommits(uicommitsarray, qpath);if (typeof(updateTimeline) !=='undefined'){ updateTimeline(qpath); updateGitIndex(qpath);}} }, 5000);
+    setTimeout(function (){
+      if (uicommitsarray.length > 0) {
+        gitChartCommits(uicommitsarray, qpath);
+        updateGitIndex(qpath);
+        if (typeof(updateTimeline) !=='undefined'){
+           updateTimeline(qpath); 
+          }
+      } 
+    }, 5000);
   }
 
   function uiCommit(commitidx){
@@ -1010,10 +1018,18 @@ function loadTopicGraph(str, graphtype="book"){
   //also update canvas for this.  
   if (graphtype == "book"){
     $('#windowSize').val(topicWindowSize); //set number of Bag-Of-Words to include 3 is default.  
+    /*
+    if (str.length > 5000){
+      cut = str.indexOf(" ", -5000)
+      str = str.slice(cut);
+    }
+      */
     $('#textdata').val(str);
 
       prepare();
+//    setTimeout(function(){$("#trainModel").click();}, 6000);
       trainModel();
+//      setTimeout(function(){$("#inbut").click(); }, 15000);
     $("#inbut").click(); 
 
     setTimeout(function(){
@@ -1023,7 +1039,7 @@ function loadTopicGraph(str, graphtype="book"){
       //adjust here.  
     });
     }, 
-    30000)
+    60000)
       
   }
   else if (graphtype == "page"){
@@ -1132,11 +1148,14 @@ function loadSelectionHistory(){
     fullselection += `<a href="#" onclick="loadTopic('${selectionhistory[si]}');">${shortenName(selectionhistory[si])}</a>`;
     fullselection += `<a href="#" onclick="deleteSelection('${selectionhistory[si]}');"><img src="images/delete.png" /></a><br> `
   }
-  $('#selectionhistory').html(fullselection);
-  $('#selectionhistory').animate({
-    scrollTop: $('#selectionhistory')[0].scrollHeight}, "slow"
-  );
 
+  if ($('#selectionhistory').length){
+
+    $('#selectionhistory').html(fullselection);
+    $('#selectionhistory').animate({
+      scrollTop: $('#selectionhistory')[0].scrollHeight}, "slow"
+    );
+  }
 //  $('#selectionhistory').scrollTop = $('#selectionhistory')[0].scrollHeight - $('#selectionhistory')[0].clientHeight;
 
 }

@@ -1808,12 +1808,27 @@ if (speech){
 
         //load the filedrop component.  
         FUNCS.FILEDROP.loadFileDrop();
+        //initialize file ingestion embedding engine.
+        LLM.initializeEmbedEngine();
 
 //        loadQRScanner();
 
       }
       FUNCS.loadAll = loadAll;
     </script>
+
+
+<script type="text/javascript">
+    LLM = {};    
+</script>
+
+
+<script type="module">
+    //just using embedding for now.
+    import {getEmbedding, initializeEmbedEngine} from '/test/web-llm/test.js';
+    LLM.getEmbedding = getEmbedding;
+    LLM.initializeEmbedEngine = initializeEmbedEngine;
+</script>
 
 <script type="module">
     import * as SPEECH from "/speech.js"

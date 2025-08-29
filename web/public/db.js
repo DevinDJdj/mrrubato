@@ -425,3 +425,175 @@ class recDB{
 }
 
 
+
+class vecDB{
+	//save all vectors and vector info.
+	//text should be unique key here.  
+
+	constructor(){
+		
+		this.db = new Dexie("vecDB");
+		this.db.version(1).stores({
+			vec: "&text,user, topic", //vector, jaccardtext
+		});
+	}
+
+	//pass array of topics to filter.
+	getSimilar(vec, topic=[], user=0, limit=10, method="cosine"){
+		//get all vectors and find similar.
+//		return this.db.vec.where("user").equals(user).toArray().then((allvecs) => {
+		if (topic.length > 0){
+			return this.db.vec.where("topic").equals(topic).toArray().then((allvecs) => {
+				let sims = [];
+				allvecs.forEach((v) => {
+					let sim = 0;
+					if (method == "cosine"){
+						sim = cosineSimilarity(vec, v.vector);
+					}
+					else if (method == "euclidean"){
+						sim = euclideanDistance(vec, v.vector);
+					}
+					else if (method == "jaccard"){
+						sim = calculateJaccardSimilarity(vec, v.jaccardtext);
+					}
+					sims.push({"id": v.id, "vector": v.vector, "text": v.text, "topic": v.topic, "sim": sim});
+				});
+				//sort by sim desc
+				sims.sort((a, b) => b.sim - a.sim);	
+				return sims.slice(0, limit);
+			});
+		}
+		else{
+			return this.db.vec.toArray().then((allvecs) => {
+				let sims = [];
+				allvecs.forEach((v) => {
+					let sim = 0;
+					if (method == "cosine"){
+						sim = cosineSimilarity(vec, v.vector);
+					}
+					else if (method == "euclidean"){
+						sim = euclideanDistance(vec, v.vector);
+					}
+					else if (method == "jaccard"){
+						sim = calculateJaccardSimilarity(vec, v.jaccardtext);
+					}
+					sims.push({"id": v.id, "vector": v.vector, "text": v.text, "topic": v.topic, "sim": sim});
+				});
+				//sort by sim desc
+				sims.sort((a, b) => b.sim - a.sim);	
+				return sims.slice(0, limit);
+			}
+			);
+		}
+	}
+		
+	getVec(text, userid=0){
+		return this.db.vec.where("text").equals(text).first();
+
+	}
+
+	saveVec(text, vector, topic, userid=0, cb=null){
+		const arrayOfWords = text.split(' ').map(word => word.trim()).filter(word => word !== '');
+		const jaccardtext = Array.from(new Set(arrayOfWords)); //unique words only.
+
+
+		this.getVec(text, userid).then((exists) => {
+			var obj = {"userid": userid, "text": text, "vector": vector, "topic": topic, "jaccardtext": jaccardtext};
+			if (typeof(exists) !=="undefined" && exists != null && exists.length > 0){
+				//already exists.  
+				exists[0].vector = vector;
+				exists[0].jaccardtext = jaccardtext;
+				exists[0].topic = topic;
+				this.db.vec.put(exists[0]).then((id) => {
+					console.log("updated VEC with id " + id);
+	//				this.ftsindex.add(vidid + "_" + id, lang);  
+					if (cb != null){
+						cb(id); //callback to complete.  
+					}
+				});
+	
+			}
+			else{
+				this.db.vec.add(obj).then((id) => {
+					console.log("added VEC with id " + id);
+	//				this.ftsindex.add(vidid + "_" + id, lang);  
+					if (cb != null){
+						cb(id); //callback to complete.  
+					}
+				});
+			}
+	
+		}).catch((err) => {
+			console.log("error in getVec: " + err);
+		});
+
+	}
+
+}
+
+
+
+function cosineSimilarity(vectorA, vectorB) {
+	if (vectorA.length !== vectorB.length) {
+	  throw new Error("Vectors must have the same length.");
+	}
+  
+	let dotProduct = 0;
+	let magnitudeA = 0;
+	let magnitudeB = 0;
+  
+	for (let i = 0; i < vectorA.length; i++) {
+	  dotProduct += vectorA[i] * vectorB[i];
+	  magnitudeA += vectorA[i] * vectorA[i];
+	  magnitudeB += vectorB[i] * vectorB[i];
+	}
+  
+	magnitudeA = Math.sqrt(magnitudeA);
+	magnitudeB = Math.sqrt(magnitudeB);
+  
+	const magnitudeProduct = magnitudeA * magnitudeB;
+  
+	if (magnitudeProduct === 0) {
+	  return 0; // Handle cases where one or both vectors are zero vectors
+	}
+  
+	return dotProduct / magnitudeProduct;
+  }
+
+  function euclideanDistance(vector1, vector2) {
+	if (vector1.length !== vector2.length) {
+	  throw new Error("Vectors must have the same dimension.");
+	}
+  
+	let sumOfSquaredDifferences = 0;
+	for (let i = 0; i < vector1.length; i++) {
+	  const difference = vector1[i] - vector2[i];
+	  sumOfSquaredDifferences += difference * difference;
+	}
+  
+	return Math.sqrt(sumOfSquaredDifferences);
+  }
+  
+  function calculateJaccardSimilarity(arr1, arr2) {
+	// Convert arrays to Sets for efficient set operations
+	const set1 = new Set(arr1);
+	const set2 = new Set(arr2);
+  
+	// Calculate the intersection of the two sets
+	// Filter elements of set1 that are also present in set2
+	const intersection = new Set([...set1].filter(x => set2.has(x)));
+  
+	// Calculate the union of the two sets
+	// Combine all unique elements from both sets
+	const union = new Set([...set1, ...set2]);
+  
+	// Handle the case where the union is empty to avoid division by zero
+	if (union.size === 0) {
+	  return 0; // Or handle as an error, depending on requirements
+	}
+  
+	// Calculate Jaccard similarity
+	const similarity = intersection.size / union.size;
+  
+	return similarity;
+  }  

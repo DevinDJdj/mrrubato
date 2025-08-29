@@ -327,7 +327,7 @@ function updateQRResult(result, id='qrincoming') {
 
       //see if we have a barcode in the canvas.  
       if (lastbarcodecheck + 1000 < Date.now()) {
-        if (combinedStream != null && combinedStream.active) {
+        if (typeof(combinedStream) !== "undefined" && combinedStream != null && combinedStream.active) {
 
           const imageCapture = new ImageCapture(combinedStream.getVideoTracks()[1]);
           imageCapture.grabFrame().then(imageData => {
@@ -340,12 +340,14 @@ function updateQRResult(result, id='qrincoming') {
           });
         }
         else if (player != null && player.readyState > 0) {
-          let canvas = document.getElementById('qrscreen');
-          canvas.width = 800;
-          canvas.height = 800;
-          const context = canvas.getContext('2d');
-          context.drawImage(player, player.videoWidth-800, player.videoHeight-800, 800, 800, 0, 0, 800, 800);
-          scanQR();
+          if ($('#qrscreen').length){
+            let canvas = document.getElementById('qrscreen');
+            canvas.width = 800;
+            canvas.height = 800;
+            const context = canvas.getContext('2d');
+            context.drawImage(player, player.videoWidth-800, player.videoHeight-800, 800, 800, 0, 0, 800, 800);
+            scanQR();
+          }
         }
 
         lastbarcodecheck = Date.now();

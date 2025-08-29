@@ -23,6 +23,11 @@ const engine = new webllm.MLCEngine();
 const embedengine = new webllm.MLCEngine();
 engine.setInitProgressCallback(updateEngineInitProgressCallback);
 
+
+export async function initializeEmbedEngine(){
+  await embedengine.reload(embedModel, {});
+}
+
 async function initializeWebLLMEngine() {
   document.getElementById("download-status").classList.remove("hidden");
   selectedModel = document.getElementById("model-selection").value;
@@ -37,7 +42,7 @@ async function initializeWebLLMEngine() {
 //    max_tokens: 300
   };
   await engine.reload(selectedModel, config);
-  await embedengine.reload(embedModel, {});
+  initializeEmbedEngine();
 
 }
 
@@ -127,12 +132,22 @@ function createMessages(input){
 
 
 }
+
+export async function getEmbedding(text=""){
+  if (text == ""){
+    text = document.getElementById("user-input").value.trim();
+  }
+  //generate embedding here.  
+  let embedding = await embedengine.embeddings.create({input: text, model: embedModel});
+  console.log("Embedding generated:", embedding);
+  return embedding;
+}
 /*************** UI logic ***************/
 export async function onMessageSend() {
   const myinput = document.getElementById("user-input").value.trim();
   //generate embedding here.  
-  let embedding = await embedengine.embeddings.create({input: myinput, model: embedModel});
-  console.log("Embedding generated:", embedding);
+//  let embedding = await embedengine.embeddings.create({input: myinput, model: embedModel});
+//  console.log("Embedding generated:", embedding);
   //use this for RAG search.  
   //find similar documents.  
 

@@ -425,6 +425,8 @@ function initLangData(lang, user=-1){
     if (typeof(midiarray[user][lang]) === "undefined"){
         midiarray[user][lang] = [];
         //this is the master array for the user.  
+    }
+    if (typeof(langs[lang]) === "undefined"){
         loadLanguage(lang, user);
     }
     if (typeof(keybot[lang]) === "undefined"){
@@ -1136,7 +1138,7 @@ function loadDictionaries(user=0, langstoload=[]){
 
 function getCurrentTranscript(){
     i = 0;
-    while (i< transcriptarray.length && getTime(transcriptarray[i])+delay < currentvidtime/1000){
+    while (i< transcriptarray.length && getTime(transcriptarray[i])+feedbackdelay < currentvidtime/1000){
         i++;
     }
     if (transcript.length > 0 && i == transcriptarray.length ){

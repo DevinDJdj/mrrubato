@@ -734,8 +734,10 @@ var querydate = null;
 //        getVideoJson(video);
         gitSignin();
         gitSetNature(GIT_CODE | GIT_DETAILS | GIT_RELATIONS);
+        vecDB = new vecDB();
         populateGitRepos(getState('selectedgitindex')); //select repo to analyze.  
         selectGitRepo(getState('selectedgitindex')); //this loads the repo and gitstruct.  
+
 
         //this loads book.  
 
@@ -866,8 +868,9 @@ var querydate = null;
 
 
 <script type="module">
-    import {onMessageSend} from '/test/web-llm/test.js';
+    import {onMessageSend, getEmbedding} from '/test/web-llm/test.js';
     LLM.sendToLLM = onMessageSend;
+    LLM.getEmbedding = getEmbedding;
 </script>
 
 
@@ -905,11 +908,19 @@ function ChatLocalUpdate(answer){
 
 }
 
-function ChatLocalDone(answer){
+async function ChatLocalDone(answer){
     //called from //test/web-llm/test.js
 
     var img = document.getElementById('thinkingchat');
     img.style.visibility = "hidden";
+
+    vec = await LLM.getEmbedding(answer);
+    simvecs = vecDB.getSimilar(vec);    
+    for (i=0; i<simvecs.length; i++){
+        //get topic.  Use this topic?  
+        //how to display similar results?  
+    }
+
 
 	//add date variables here.  
     tospeak = FUNCS.CHAT.addChatRow(FUNCS.CHAT.getLastQuery(), answer, localprompt, codefile, []);
@@ -1034,12 +1045,21 @@ function ChatLocal(transcript){
     }
     ChatBuildContext(transcript);
 
-    FUNCS.CHAT.addChatHistory(FUNCS.CHAT.getLastQuery(), mycontext, files);
-    document.getElementById("user-input").value = mycontext;
-    console.log(mycontext);
     (async() => {
       var img = document.getElementById('thinkingchat');
     img.style.visibility = "visible";
+
+    vec = await LLM.getEmbedding(transcript);
+    simvecs = vecDB.getSimilar(vec);    
+    for (i=0; i<simvecs.length; i++){
+        //get topic.  Use this topic?  
+        //just display?  
+    }
+
+    FUNCS.CHAT.addChatHistory(FUNCS.CHAT.getLastQuery(), mycontext, files);
+    document.getElementById("user-input").value = mycontext;
+    console.log(mycontext);
+
 
   console.log('1');
   await LLM.sendToLLM(); //onMessageSend();//sendToLLM();   //test/web-llm/test.js
