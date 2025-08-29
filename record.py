@@ -62,6 +62,9 @@ from mido.ports import MultiPort
 
 import datetime
 
+sys.path.insert(0, 'c:/devinpiano/')
+sys.path.insert(1, 'c:/devinpiano/music')
+
 import config 
 
 #pip install pynput
@@ -70,14 +73,13 @@ from pynput.keyboard import Key, Controller
 
 import subprocess
 import sys
-sys.path.insert(0, 'c:/devinpiano/')
  
  
-import cred
+#import cred
 
 
-channel_id = cred.CHANNELID
-api_key = cred.APIKEY
+channel_id = config.cfg["youtube"]["CHANNELID"]
+api_key = config.cfg["youtube"]["APIKEY"]
 
 
 
@@ -485,7 +487,7 @@ if __name__ == '__main__':
             print("Authentication with Youtube")
             youtube = get_authenticated_service(args)
             videoid = initialize_upload(youtube, args)    
-            add_video_to_playlist(videoid, cred.MY_PLAYLIST, args)
+            add_video_to_playlist(videoid, config.cfg["youtube"]["MY_PLAYLIST"], args)
         else:
             videoid = myid 
         addtodb(videoid, args)
@@ -555,7 +557,7 @@ if __name__ == '__main__':
     print(mido.get_output_names())
 
     #Portable Grand-1 2
-    output = mido.open_output(outputs[2])
+    output = mido.open_output(outputs[2]) 
     mk = mykeys.MyKeys(config.cfg)
     keyboard = Controller()    
     with mido.open_input(inputs[1]) as inport:
@@ -804,7 +806,7 @@ if __name__ == '__main__':
         print("Authentication with Youtube")
         youtube = get_authenticated_service(args)
         videoid = initialize_upload(youtube, args)
-        add_video_to_playlist(videoid, cred.MY_PLAYLIST, args)
+        add_video_to_playlist(videoid, config.cfg["youtube"]["MY_PLAYLIST"], args)
     else:
         videoid = myid 
 
