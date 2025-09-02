@@ -66,6 +66,40 @@ function splitTextIntoChunks(text, recommendedLength=800, emptyLinesThreshold=3)
     return chunks;
 }
 
+
+export async function ingestText(text, filename, filetype="text/plain", category="book", comments="") {
+    document.getElementById('fullDocument').value = text;
+
+
+    recDB.saveFile(0, category, recname, version, filename, comments, text, 0, null, 
+    function(res){
+        console.log(res);
+        $('#statusmessage').html('saved! ' + recname + ' ' + version + ' ' + filename + '<br/>');
+    });
+
+    let chunks = splitTextIntoChunks(text);
+    for (let i=0; i<chunks.length; i++){
+          LLM.getEmbedding(chunks[i]).then((vector) => {
+              console.log("Embedding vector:", vector);
+              vecDB.saveVec(chunks[i], vector, category, 0, function(res){
+                  console.log("Vector saved:", res);
+                  $('#statusmessage').text(' Vector ' + i + ' saved!<br/>');
+              });
+          });
+    }  
+    //use JSON possibly for other things.  
+    if (filetype.endsWith("/json")){
+      try {
+          let json = JSON.parse(text);
+          console.log("Parsed JSON:", json);
+      } catch (error) {
+          console.error("Error parsing JSON:", error);
+      }
+    }
+
+}
+
+
 export async function processFile(file) {
     // Example processing function, e.g., read the file or upload it.
     console.log("Processing file: " + file.name);
@@ -84,47 +118,14 @@ export async function processFile(file) {
     if (file && (file.type.startsWith("text/") || file.type.endsWith("/json"))){
         const reader = new FileReader();
         reader.onload = function(e) {
-          document.getElementById('fullDocument').value = e.target.result;
-          text = e.target.result;
-
-          recDB.saveFile(0, $('#category').val(), recname, version, file.name, $('#mycomments').val(), text, 0, null, 
-          function(res){
-              console.log(res);
-              $('#statusmessage').html('saved! ' + recname + ' ' + version + ' ' + file.name + '<br/>');
-          });
-
-          chunks = splitTextIntoChunks(text);
-          for (let i=0; i<chunks.length; i++){
-                vecDB.getEmbedding(chunks[i]).then((vector) => {
-                    console.log("Embedding vector:", vector);
-                    vecDB.saveVec(chunks[i], vector, $('#category').val(), 0, function(res){
-                        console.log("Vector saved:", res);
-                        $('#statusmessage').append(' Vector saved!<br/>');
-                    });
-                });
-          }  
-          //use JSON possibly for other things.  
-          if (file.type.endsWith("/json")){
-            try {
-                let json = JSON.parse(text);
-                console.log("Parsed JSON:", json);
-            } catch (error) {
-                console.error("Error parsing JSON:", error);
-            }
-          }
-
+          ingestText(e.target.result, file.name, file.type, $('#category').val(), $('#mycomments').val());
+            text = e.target.result;
         }
         reader.readAsText(file);
     }    
     else{
         text = await processFileOCR(file);
-        document.getElementById('fullDocument').value = text;
-        recDB.saveFile(0, $('#category').val(), recname, version, file.name, $('#mycomments').val(), text, 0, null, 
-        function(res){
-            console.log(res);
-            $('#statusmessage').html('saved! ' + recname + ' ' + version + ' ' + file.name + '<br/>');
-        }
-        );
+        ingestText(text, file.name, "text/plain", $('#category').val(), $('#mycomments').val());
     }
     return text;
 

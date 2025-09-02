@@ -200,6 +200,43 @@
             
                       </td>
                     </tr>
+                    <tr>
+                        <td>
+                            <!-- Load LLM UI -->
+                            <p style="display:none">Step 1: Initialize WebLLM and Download Model</p>
+                            <div class="download-container">
+                              <select id="model-selection"></select>
+                              <button id="download">Download</button>
+                            </div>
+                            <p id="download-status" class="hidden"></p>
+                            <p style="display:none">Step 2: Chat</p>
+                            <div class="chat-container" style="display:none">
+                              <div id="chat-box" class="chat-box"></div>
+                              <div class="chat-input-container">
+                                <input type="text" id="user-input" placeholder="Type a message..." />
+                                <button id="send" disabled>Send</button>
+                              </div>
+                            </div>
+                            <div id="chat-stats" class="chat-stats hidden"></div>
+                            
+                            <div class="tags-input" style="width:100%;"> 
+            
+                                <ul id="tags"></ul> 
+                                <input type="text" id="input-tag" size="30"
+                                    placeholder="Add a tag" /> 
+                            </div> 
+                            
+                            <link href="css/tags.css" rel="stylesheet">
+                            <link href="css/tabs.css" rel="stylesheet">
+                            <script src="tags.js"></script>
+                        
+                        </td>
+                        <td>
+                            <label for="prompt">Custom prompt for LLM:</label><br>
+                            <textarea id="prompt" name="prompt" rows="5" cols="30"></textarea>        
+                        </td>
+            
+                    </tr>
                   </table>
             
             </div>
@@ -1773,12 +1810,25 @@ if (speech){
   </script>
 
 
+<script type="text/javascript">
+    LLM = {};    
+</script>
+
+
+<script type="module">
+    //just using embedding for now.
+    import {getEmbedding, initializeEmbedEngine} from '/test/web-llm/test.js';
+    LLM.getEmbedding = getEmbedding;
+    LLM.initializeEmbedEngine = initializeEmbedEngine;
+</script>
+
 <script type="module">
     export function loadAll(reload = false){
 //        getVideoJson(video);
 //        $("#dictable").load("dictable.html"); //not working..
         checkStorage();
         recDB = new recDB();
+        vecDB = new vecDB();
 
         recDB.loadFTS();
         if (typeof(ver) == 'undefined' || ver==null){
@@ -1818,17 +1868,6 @@ if (speech){
     </script>
 
 
-<script type="text/javascript">
-    LLM = {};    
-</script>
-
-
-<script type="module">
-    //just using embedding for now.
-    import {getEmbedding, initializeEmbedEngine} from '/test/web-llm/test.js';
-    LLM.getEmbedding = getEmbedding;
-    LLM.initializeEmbedEngine = initializeEmbedEngine;
-</script>
 
 <script type="module">
     import * as SPEECH from "/speech.js"

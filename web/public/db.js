@@ -315,7 +315,7 @@ class recDB{
 			vids: "++id,[category+name+version],category,name,version,userid", //mycomments, videoblob (if local), otherwise remoteurl
 			screenshots: "id,imid,userid,vidid,timestamp", //imgblob, ocrtext
 			//files and/or links relevant to activity.  For now just text.  
-			files: "++id,[category+name+version],category,name,version,fname,size,path,userid", //text, fileblob?, or remoteurl
+			files: "&path,[category+name+version],category,name,version,fname,size,userid", //text, fileblob?, or remoteurl
 		});
 
 		this.ftsindex = FlexSearch.Index({});
@@ -346,7 +346,7 @@ class recDB{
 		//yeah just overwrite if we get the same again.  
 		let path = category + "/" + name + "/" + filename;
 		var obj = {"userid": userid, "category": category, "name": name, "version": version, "filename": filename, "mycomments": mycomments, "text": text, "size": size, "path": path, "remoteurl": remoteurl};
-		this.db.files.put(path, obj).then((id) => {
+		this.db.files.put(obj).then((id) => {
 			console.log("added file with id " + id);
 			this.ftsindex.update(obj.path, obj.category + " " + obj.name + " " + obj.mycomments);
 			if (cb != null){
@@ -434,7 +434,7 @@ class vecDB{
 		
 		this.db = new Dexie("vecDB");
 		this.db.version(1).stores({
-			vec: "&text,user, topic", //vector, jaccardtext
+			vec: "&text,user, topic, version", //vector, jaccardtext
 		});
 	}
 
@@ -498,12 +498,15 @@ class vecDB{
 
 
 		this.getVec(text, userid).then((exists) => {
-			var obj = {"userid": userid, "text": text, "vector": vector, "topic": topic, "jaccardtext": jaccardtext};
+			var obj = {"userid": userid, "text": text, "vector": vector, "version": version, "topic": topic, "jaccardtext": jaccardtext};
 			if (typeof(exists) !=="undefined" && exists != null && exists.length > 0){
 				//already exists.  
 				exists[0].vector = vector;
 				exists[0].jaccardtext = jaccardtext;
 				exists[0].topic = topic;
+				if (version > exists[0].version){
+					exists[0].version = version;
+				}
 				this.db.vec.put(exists[0]).then((id) => {
 					console.log("updated VEC with id " + id);
 	//				this.ftsindex.add(vidid + "_" + id, lang);  

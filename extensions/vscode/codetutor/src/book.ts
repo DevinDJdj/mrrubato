@@ -410,7 +410,14 @@ export function findInputTopics(inputString : string) : string[]{
             if (end === -1) {
                 end = inputString.length; // If no space found, take the rest of the string
             }
-            ret.push(inputString.substring(match.index+2, end));
+            let key = inputString.substring(match.index + 2, end).trim();
+            //deduplicate ret array.  Keep only first instance
+            const index = ret.indexOf(key, 0);
+            if (index > -1) {
+            }
+            else{
+                ret.push(key);
+            }
         
         }
     }
@@ -1084,13 +1091,22 @@ export async function markdown(prompt: string) : Promise<string> {
                 //this is a file:line reference.  
 
                 let fname = p2.slice(0, colon); //get the file name.
+                //check if file exists.  
+
+        
                 let line = p2.slice(colon + 1); //get the line number. 
                 //remove folder from file name.  
                 p2 = p2.replace(folderUri.path + "/", ""); //remove the folder path from the file name for display purposes.  
                 return `[${p1}${p2}](${fname}#L${line})`; //return the markdown link.
             }
-            p2 = p2.replace(folderUri.path + "/", ""); //remove the folder path from the file name for display purposes.  
-            return `[${p1}${p2}](${fileUri.path})`; //return the markdown link.
+            //try to detect generated markdown unrelated to file.  
+            //check for a topic that exists.  
+            //maybe make a smart search for a topics that exists or similar vectors and their files.  
+            if (p2 in topicarray) {
+                p2 = p2.replace(folderUri.path + "/", ""); //remove the folder path from the file name for display purposes.  
+                return `[${p1}${p2}](${fileUri.path})`; //return the markdown link.
+            }
+            return match; //return the original match if file does not exist.
 
         }
     });

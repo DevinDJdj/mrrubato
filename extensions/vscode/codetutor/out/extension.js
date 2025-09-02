@@ -271,13 +271,14 @@ async function Chat(prompt, context, stream, token) {
     }
     return ret;
 }
-function getTopicFromLocation(editor) {
+function getTopicFromLocation(editor, fulltext = { text: "" }) {
     //find last topic.  
     let topic = "";
     let offset = editor.selection.active;
     let topsearch = editor.document.getText(new vscode.Range(0, 0, offset.line, offset.character));
     let topsearches = topsearch.split("\n");
     for (let i = topsearches.length - 1; i >= 0; i--) {
+        fulltext.text = topsearches[i] + "\n" + fulltext.text;
         if (topsearches[i].startsWith("**")) {
             //found a topic
             topic = topsearches[i].substring(2, topsearches[i].length);
@@ -615,6 +616,25 @@ function activate(context) {
                 switch (cmdtype[1]) {
                     case "@":
                         //general question
+                        //summarize this topic.
+                        if (text.length < 3 || Book.findInputTopics(text).length === 0) {
+                            //summarize current topic.  
+                            const editor = vscode.window.activeTextEditor;
+                            if (editor) {
+                                let fulltext = { text: "" };
+                                topic = getTopicFromLocation(editor, fulltext);
+                                if (text.length < 3) {
+                                    text = fulltext.text;
+                                }
+                                else {
+                                    text = "**" + topic + " " + text;
+                                }
+                            }
+                        }
+                        else {
+                        }
+                        //pass topic and chat.  for now just /similar
+                        vscode.commands.executeCommand('workbench.action.chat.open', "@mr /similar " + text);
                         break;
                     default:
                         //find person.  
@@ -757,10 +777,8 @@ function activate(context) {
                                 text = "**" + topic + " " + text;
                             }
                         }
-                        else {
-                            //pass topic and chat.  does this work?  Dont remember.  
-                            vscode.commands.executeCommand('workbench.action.chat.open', "@mr /summary " + text);
-                        }
+                        //pass topic and chat.  does this work?  Dont remember.  
+                        vscode.commands.executeCommand('workbench.action.chat.open', "@mr /summary " + text);
                         break;
                     default:
                         //summarize this topic with a different prompt.

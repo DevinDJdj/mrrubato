@@ -500,6 +500,19 @@ function parsegitBook(gb){
 
 }
 
+function getLatestBookDate(){
+  for (j=gitbook.length-1; j>=0; j--){
+    if (gitbook[j].gitdata.name == String(gitbook[j].d) + ".txt"){
+      return String(gitbook[j].d);
+    }
+  }
+  //should never get here, unless book contains no date-named files.
+  const today = new Date();
+  const isoString = today.toISOString();
+  const formattedDate = isoString.substring(0, 10).replace(/-/g, '');
+  return formattedDate;
+}
+
 function creategitStruct(){
   gitbook.sort((a, b) => a.d - b.d);
   //tree by time/topic
@@ -519,7 +532,7 @@ function creategitStruct(){
     buildTopicGraph(gitbook[0].d, gitbook[gitbook.length-1].d);
 
     //any 
-    loadTopic(gitbook[gitbook.length-1].d);
+    loadTopic(getLatestBookDate());
 
     if (gitnature & GIT_DETAILS){ //double use here.  
       loadTopicGraph(gitstruct["alltopics"], gitnature & GIT_RELATIONS ? "page" : "book");

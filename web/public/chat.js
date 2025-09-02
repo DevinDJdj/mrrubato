@@ -84,7 +84,7 @@ function addChatRow(query, answer, sources=[]) {
     r.cells[0].innerHTML = ChatID;
     r.cells[1].innerHTML = '<a href="#" onclick="copyChat(' + (chatmessages.length-1) + ');">@@</a>' + query;
     if (ChatID%2==0){
-        r.cells[2].innerHTML = '<font color="red">==<br>' + fanswer + '</font>';
+        r.cells[2].innerHTML = '<font color="yellow">==<br>' + fanswer + '</font>';
     }
     else{
         r.cells[2].innerHTML = '<font color="black">==<br>' + fanswer + '</font>';

@@ -966,6 +966,7 @@ Essentially create a book+markdown+latex reader.
 
 
 Go back to test filedrop first..
+OK, seems to work ok.  
 
 **DRONES
 #https://github.com/PX4/PX4-Autopilot
@@ -974,4 +975,57 @@ Go back to test filedrop first..
 
 
 Need to reorg.  
+
+
+**web/public/book.html
+Need a nice tree view UI for files.  
+Only view on web.  
+#https://github.com/vakata/jstree
+Hmm..
+Maybe just use instead of filter files.  
+
+use [**map.txt] to update names when reading book.  
+
+Lets add background colors to the components what we imagine being used first/etc.  
+LLM UI -> red
+Current question -> Orange
+Transcript -> Yellow
+Selection History -> Green
+AI Responses -> Blue
+Code -> Indigo
+
+Are we loading MIDI feedback?  
+
+$$/testing/vscode/vscode-extension-samples/lsp-sample>
+> npm install
+
+!!error TS2552: Cannot find name 'HTMLElement'
+== 
+#https://code.visualstudio.com/api/language-extensions/language-server-extension-guide
+> npm install
+> npm compile
+
+**codetutor
+
+
+**extensions/vscode/codetutor/src/book.ts
+!!Fetch failed
+~~ > sudo systemctl restart ollama
+
+Maybe dont take too much general info on commands.  
+:: **web/public/js/filedrop.js
+Responses should be more specific to the selected topics.  
+
+Summary working a bit better now after removing duplication in topics.  
+Similar not working as well as I would like.  
+
+Maybe do some query expansion on ~~
+
+Default markdown reading has too many folder paths.  
+How to turn this off?  
+
+
+--summary
+Try to do some smart search for relevant topics and create some direct links to that information.  
+Perhaps as simple source links.  
 
