@@ -468,5 +468,54 @@ Automatically ingest /book folder into vectors if they dont exist.
 Need datestamp in vecDB.  
 Order by date in RAG query.  
 
+Delete all file entries before reingest?  
+
+OK, so entries are added.  
+Not sure if we need to make them same size or not.  
+For now just keeping as is.  
+
+**web/public/git.js
+--initGitIndex
+Basic generation of vectors done.  
+Not exactly, but close enough for now..
+When we have a query, get similar vectors, and use the text from these similar vectors in context. 
+Original query should not have topic
+How long does this take.  
+--updateGitIndex
+Is this what we want, just a temporary index recreated every time?  
+Need to save sequence of interactions, but this should be sufficient?  
+Sequence of steps need to segregate from actual current data.  
+
+
+
+**web/public/js/ayuda/date.format.js
+**web/public/clock.js
+Unwanted dependency here.  
+
+
+**web/public/chata.html
+Finish RAG here.  
+Order in time.  
+Create expanded query, and retrieve further context if needed.  
+
+**web/public/data/transcripts.json
+Should also load transcripts.
+For now just load static transcripts.json
+If not existing in vecDB add it for chat responses.  
+
+Simultaneously list videos from around those times.  
+
+--loadTranscripts
+OK, buggy but chata.html loads git and transcripts.  
+
+auto-play certain areas after return similar.  
+
+Load <videocontrol> to use prev/next.  
+
+Need to delete [**web/public/test/javascript-vector-database/files/embeddings.json]
+This is an unused 80MB file in the repo.  
+
+> git rm --cached ./web/public/test/javascript-vector-database/files/embeddings.json
+
 
 

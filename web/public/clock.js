@@ -1,4 +1,7 @@
 var urlParams;
+var now = new Date();
+const version = now.format("yyyymmddHHMMss");
+
 (function () {
     var match,
         pl     = /\+/g,  // Regex for replacing addition symbol with a space

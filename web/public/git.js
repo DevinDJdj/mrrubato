@@ -97,7 +97,9 @@ function gitSignin(){
 
 }
 
-function initGitIndex(){
+async function initGitIndex(){
+  let istart = Date.now();
+	console.log("Git Index initializing: " + istart);
   for (d in gitstruct["bydate"]){
     temp = "";
     for (e of gitstruct["bydate"][d]){
@@ -109,13 +111,35 @@ function initGitIndex(){
     temp = "";
     for (e of gitstruct["bytopic"][t]){
       temp += e.content + '\n';
+
+      //load all data into vecDB as well..
+      if (typeof(vecDB) !== "undefined" && typeof(LLM) !== "undefined" && e.content.length > 1){
+        let exists = await vecDB.getVec(e.content); 
+        if (typeof(exists) !== "undefined" && exists !== null){     
+        }
+        else{
+          LLM.getEmbedding(e.content, t).then(tv => {
+          console.log("Embedding vector:", tv[0]);
+            vecDB.saveVec(tv[0], tv[1], tv[2], "book", 0, function(res){
+                console.log("Vector saved:", res);
+                $('#statusmessage').text(' Vector ' + i + ' saved!<br/>');
+            });
+          });
+        }
+      }
+
     }
     mygitDB.ftsindex.add(t, temp);
+  //add contents to vecDB as well.  
+    
+  
   }
 //	mygitDB.ftsindex.add("test", "John Doe");
 
 	result = mygitDB.ftsindex.search(d);
-	console.log("Git Index initialized: " + result);
+  //seems to be about 1 second if no new entries.  
+	console.log("Git Index initialized: " + istart + "-" + Date.now());
+
 
 }
 
@@ -541,8 +565,11 @@ function creategitStruct(){
     }
 
 
+    setTimeout(function(){
 
-    initGitIndex();
+      //wait for LLM to load..
+      initGitIndex(); 
+    }, 20000);
 
 }
 

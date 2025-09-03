@@ -416,6 +416,9 @@ def writeTranscripts(alltranscripts):
     f = open('./data/transcription/trans.json', "w", encoding='utf-8')
     f.write(json.dumps(alltranscripts, ensure_ascii=False, indent=4))
 
+    f1 = open('./web/public/data/trans.json', "w", encoding='utf-8')
+    f1.write(json.dumps(alltranscripts, ensure_ascii=False, indent=4))
+
 
 
 if __name__ == '__main__':

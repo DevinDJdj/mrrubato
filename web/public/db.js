@@ -434,7 +434,7 @@ class vecDB{
 		
 		this.db = new Dexie("vecDB");
 		this.db.version(1).stores({
-			vec: "&text,user, topic, version", //vector, jaccardtext
+			vec: "&text,user, topic, version, type", //vector, jaccardtext
 		});
 	}
 
@@ -443,7 +443,8 @@ class vecDB{
 		//get all vectors and find similar.
 //		return this.db.vec.where("user").equals(user).toArray().then((allvecs) => {
 		if (topic.length > 0){
-			return this.db.vec.where("topic").equals(topic).toArray().then((allvecs) => {
+			//.startsWithAnyOfIgnoreCase for multivalue with wildcard.  
+			return this.db.vec.where("topic").anyOf(topic).toArray().then((allvecs) => {
 				let sims = [];
 				allvecs.forEach((v) => {
 					let sim = 0;
@@ -492,18 +493,19 @@ class vecDB{
 
 	}
 
-	saveVec(text, vector, topic, userid=0, cb=null){
+	saveVec(text, vector, topic, type="book", userid=0, cb=null){
 		const arrayOfWords = text.split(' ').map(word => word.trim()).filter(word => word !== '');
 		const jaccardtext = Array.from(new Set(arrayOfWords)); //unique words only.
 
 
 		this.getVec(text, userid).then((exists) => {
-			var obj = {"userid": userid, "text": text, "vector": vector, "version": version, "topic": topic, "jaccardtext": jaccardtext};
+			var obj = {"userid": userid, "text": text, "vector": vector, "type": type, "version": version, "topic": topic, "jaccardtext": jaccardtext};
 			if (typeof(exists) !=="undefined" && exists != null && exists.length > 0){
 				//already exists.  
-				exists[0].vector = vector;
+//				exists[0].vector = vector;
 				exists[0].jaccardtext = jaccardtext;
 				exists[0].topic = topic;
+				exists[0].type = type;
 				if (version > exists[0].version){
 					exists[0].version = version;
 				}

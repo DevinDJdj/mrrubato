@@ -149,8 +149,8 @@ page.html?codefile=web/public/page.html
     <script defer src="timewindow.js"></script>
 
     <!-- clock -->
-    <script src="clock.js"></script>
     <script src="js/ayuda/date.format.js"></script>                
+    <script src="clock.js"></script>
 
     </head>
     <!-- Google tag (gtag.js) -->
@@ -211,7 +211,7 @@ page.html?codefile=web/public/page.html
             
             </td>
             <td>
-              <table>
+              <table style="background-color: #FF9922;">
                 <tr>
                   <td width="70%">
                     <input type="text" id="current-question" name="current-question" size="50">
@@ -240,7 +240,7 @@ page.html?codefile=web/public/page.html
             
             </td>
 
-            <td>
+            <td style="background-color: #FF2222;">
                 <!-- Load LLM UI -->
                 <p style="display:none">Step 1: Initialize WebLLM and Download Model</p>
                 <div class="download-container">
@@ -397,7 +397,7 @@ page.html?codefile=web/public/page.html
       <table style="width:100%;height:960px;">
           <tr width="100%;">
     
-          <td valign="top" width="30%">
+          <td valign="top" width="30%"  style="background-color: #2277ff;">
               <div class="root-wrapper" style="height: 960px;overflow:scroll;">      
                   <div id="chat_table"  style="overflow:scroll;">
                   <table id="ChatTable" width="100%">
@@ -443,7 +443,7 @@ page.html?codefile=web/public/page.html
 
 
           <td width="5%">
-            <table>
+            <table  style="background-color: #22FF22;">
                 <tr>
                   <td>
                     <img id="thinkinggit" src="images/thinking.gif" height="200px" style="visibility:hidden"/>
@@ -493,7 +493,7 @@ page.html?codefile=web/public/page.html
                       </td>
                     </tr>
                     <tr>
-                      <td valign="top" width="640px">
+                      <td valign="top" width="640px" style="background-color: #FFFF44;">
                         <label for="transcript">Original Transcript:</label>
                         <img src="images/edit.png" height="16px" onClick="toggleTranscript();"/>
                         <br>
@@ -727,6 +727,45 @@ var querydate = null;
   var midicontroller;
   var netgraph;
 
+
+  async function loadTranscriptsHelp(transdata){
+    for (var i=0; i<transdata.length; i++){
+        if (transdata[i].transcript){
+
+            let exists = await vecDB.getVec(transdata[i].transcript); 
+            if (typeof(exists) !== "undefined" && exists !== null){     
+            }
+            else{
+                let tv = await LLM.getEmbedding(transdata[i].transcript, transdata[i].id);
+                console.log("Embedding vector:", tv[0]);
+                vecDB.saveVec(tv[0], tv[1], tv[2], "transcript", 0, function(res){
+                    console.log("Transcript Vector saved:", res);
+                    $('#statusmessage').text('Transcript Vector ' + i + ' saved!<br/>');
+                });
+            }
+        }
+
+    }
+}
+
+  async function loadTranscripts(url){
+        console.log("Loading transcript json");
+            $.ajax({
+            url: url,
+            dataType: 'text',
+            success: function(transdata) {
+                transdata = $.parseJSON(transdata);
+                loadTranscriptsHelp(transdata);
+
+            },
+            error: function(xhr, textStatus, errorThrown) { 
+                console.log('error loading transcript json' + errorThrown);
+            }
+
+        });
+
+    }
+
 </script>
 
     <script type="module">
@@ -737,6 +776,14 @@ var querydate = null;
         vecDB = new vecDB();
         populateGitRepos(getState('selectedgitindex')); //select repo to analyze.  
         selectGitRepo(getState('selectedgitindex')); //this loads the repo and gitstruct.  
+        //go through all files in repo and add to vecDB.  
+        //add the transcripts to vecDB.  
+        var url = "./data/trans.json";
+        setTimeout(function(){
+            loadTranscripts(url);
+
+        }, 30000); //wait until model is loaded.  
+
 
 
         //this loads book.  
@@ -886,7 +933,7 @@ var querydate = null;
   FUNCS.MIDI = MIDI;
   FUNCS.NETGRAPH = NETGRAPH;
   FUNCS.FILEDROP = FILEDROP;
-  
+
 </script>
 
 <script>

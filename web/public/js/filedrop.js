@@ -36,7 +36,7 @@ export function handleFileSelect(event) {
 }
 
 
-function splitTextIntoChunks(text, recommendedLength=800, emptyLinesThreshold=3) {
+function splitTextIntoChunks(text, category, recommendedLength=800, emptyLinesThreshold=3) {
     const lines = text.split(/\r?\n/);
     const chunks = [];
     let currentChunk = [];
@@ -57,7 +57,8 @@ function splitTextIntoChunks(text, recommendedLength=800, emptyLinesThreshold=3)
   
       if (consecutiveEmptyLines >= emptyLinesThreshold || totalLength > recommendedLength || i === lines.length - 1) {
         // If threshold met or end of text, add currentChunk to chunks
-        chunks.push(currentChunk.join("\n")); // Join lines back with newlines
+        //adding topic to chunks.  
+        chunks.push("**" + category + "\n" + currentChunk.join("\n")); // Join lines back with newlines
         currentChunk = []; // Start a new chunk
         totalLength = 0; // Reset length for new chunk
         consecutiveEmptyLines = 0; // Reset for next chunk
@@ -77,11 +78,12 @@ export async function ingestText(text, filename, filetype="text/plain", category
         $('#statusmessage').html('saved! ' + recname + ' ' + version + ' ' + filename + '<br/>');
     });
 
-    let chunks = splitTextIntoChunks(text);
+    let chunks = splitTextIntoChunks(text, category);
     for (let i=0; i<chunks.length; i++){
-          LLM.getEmbedding(chunks[i]).then((vector) => {
-              console.log("Embedding vector:", vector);
-              vecDB.saveVec(chunks[i], vector, category, 0, function(res){
+        //not sure if category is the right thing to pass here..
+          LLM.getEmbedding(chunks[i], category).then(tv => {
+              console.log("Embedding vector:", tv[0]);
+              vecDB.saveVec(tv[0], tv[1], tv[2], 0, function(res){
                   console.log("Vector saved:", res);
                   $('#statusmessage').text(' Vector ' + i + ' saved!<br/>');
               });

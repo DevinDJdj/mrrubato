@@ -133,14 +133,14 @@ function createMessages(input){
 
 }
 
-export async function getEmbedding(text=""){
+export async function getEmbedding(text="", topic=""){
   if (text == ""){
     text = document.getElementById("user-input").value.trim();
   }
   //generate embedding here.  
   let embedding = await embedengine.embeddings.create({input: text, model: embedModel});
   console.log("Embedding generated:", embedding);
-  return embedding;
+  return [text, embedding, topic];
 }
 /*************** UI logic ***************/
 export async function onMessageSend() {
