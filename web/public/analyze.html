@@ -1310,104 +1310,6 @@ function addImage(imageurl, stor, type=0){
 }
 
 
-function getVideoJson(videoid){
-	
-    vref = firebase.database().ref('/misterrubato/' + videoid);
-	vref.once('value')
-					  .then((snap) => {
-						//.on('value',(snap)=>{
-	    if (snap.exists()){
-			//probably dont need this.  
-			loadVideo();
-			item = snap.val();
-			console.log(snap.val());
-			$('#iterationsh').html(makeTimeLinks(snap.val().snippet.description))
-	//		$('#iterations').val(snap.val().snippet.description);
-			
-			//<a href="#" onclick="seekTo(120);">02:00</a>
-			
-			createNotesArray();
-			//all of these comments as well should have this.  
-			
-			//get previous iterations of this.  
-			title = snap.val().snippet.description.split('\n')[0];
-			author = snap.val().snippet.channelTitle;
-			authorurl = "https://www.youtube.com/channel/" + snap.val().snippet.channelId;
-			$('#vidinfo').html(title + " (<a href=\"" + authorurl + "\">" + author + "</a>)");
-			console.log(title);
-
-			//we need to get the iterations here before we do anything else, otherwise the graphic doesnt work.  
-			numiterations = getIterations(item.snippet.description, item.snippet.publishedAt, true);
-			searchPrevious(videoid);
-
-			getTranscript(item.snippet.description);
-			getMedia(item.snippet.description);
-			getMidi(item.snippet.description);
-		}
-		else{
-			//this is not our video, need to retrieve and allow for commenting.  
-			//this can be for comments.  Then we can retrieve comments from the person.  via API
-			//misterrubato/watch/xxxx
-			//combine this from several people you like.  
-			//Need to record the audio though if we do like this.  
-			//but this is sustainable then.  This is a web server per person.  
-			//when you are following someone, the algorithm would overlay that audio on top of 
-			//whatever you are watching based on your settings.  
-			//we need a master DB though probably, otherwise you have too much unnecessary traffic.  
-			//add this description to our DB using timestep.  
-			//item.snippet.description
-			watch = true;
-			loadVideo();
-			console.log(videoid + " Not in DB.  Retrieving from Youtube API");
-			vref = firebase.database().ref('/watch/' + videoid);
-			vref.on('value',(snap)=>{
-				if (snap.exists()){
-				//retrieve previous comments etc.  
-				}
-				else{
-				//		obj = {"comments": mycomments, "sentiment": grade };
-				//uRef.set(obj);
-				}
-			});
-				tempurl = 'https://www.youtube.com/watch?v=' + videoid;
-
-				//https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=R4LoM208_Ow
-				$.getJSON('https://www.youtube.com/oembed?url=' + tempurl, function (data) {
-					console.log(data.title);
-					title = data.title;
-					console.log(data.author_name);
-					author = data.author_name;
-					console.log(data.author_url);
-					authorurl = data.author_url;
-					console.log(data.thumbnail_url);
-					$('#vidinfo').html(title + " (<a href=\"" + authorurl + "\">" + author + "</a>)");
-				});
-				//input details about this video
-
-		}
-
-	});
-
-/*	
- $.getJSON('https://www.googleapis.com/youtube/v3/videos?id=' + videoid + '&key=' + webkey + '&part=snippet&callback=?',function(data){
-    if (typeof(data.items[0]) != "undefined") {
-//	    videojson = data.items[0];
-        console.log('video exists ' + data.items[0].snippet.title);
-		$('#iterations').val(data.items[0].snippet.description);
-	    createNotesArray();
-		//get previous iterations of this.  
-		title = notesarray[0];
-		searchPrevious(videoid);
-		getTranscript(data.items[0].snippet.description);
-		getMidi(data.items[0].snippet.description);
-       } else {
-        console.log('video not exists');
-     }   
-    });
-*/
-
-
-}
 
 
 
@@ -1487,7 +1389,7 @@ function getVideoJson(videoid){
 	});
 google.charts.load('current', {'packages':['corechart', 'timeline']});
 
-getVideoJson(video);
+getVideoJson(video, VID_DETAILS);
 
 initAudioFeedback();
 

@@ -93,6 +93,7 @@ page.html?codefile=web/public/page.html
     <script src="keymap.js"></script>
     <script src="languages.js"></script>
     <script src="video.js"> </script>
+    <script src="recent.js"></script>    
 
     <!-- midi dependencies-->
     <script src="https://cdn.jsdelivr.net/npm/webmidi@latest/dist/iife/webmidi.iife.js"></script>
@@ -131,6 +132,8 @@ page.html?codefile=web/public/page.html
      
     <!-- git -->
      <script src="git.js"></script>
+     <script src="transcript.js"></script>
+
 
      <!--tabs -->
      <link href="css/tabs.css" rel="stylesheet">
@@ -398,7 +401,7 @@ page.html?codefile=web/public/page.html
           <tr width="100%;">
     
           <td valign="top" width="30%"  style="background-color: #2277ff;">
-              <div class="root-wrapper" style="height: 960px;overflow:scroll;">      
+              <div class="root-wrapper" style="height: 640px;overflow:scroll;">      
                   <div id="chat_table"  style="overflow:scroll;">
                   <table id="ChatTable" width="100%">
                   <tr id="templateRow">
@@ -410,6 +413,29 @@ page.html?codefile=web/public/page.html
                   </table>
                   </div>
               </div>
+              <div id="recent" style="width: 100%;height: 320px;overflow:auto;">
+                <table id="RecentTable" class="display" style="width: 100%">
+                  <thead>
+                    <tr>
+                      <th>id</th>
+                      <th>date</th>
+                      <th>Title</th>
+                      <th>Status</th>
+                      <th>Desc</th>
+                    </tr>
+                  </thead>
+                  <tfoot>
+                    <tr>
+                      <th>id</th>
+                      <th>date</th>
+                      <th>Title</th>
+                      <th>Status</th>
+                      <th>Desc</th>
+                    </tr>
+                  </tfoot>
+                </table>	
+            </div>
+    
           </td>
           <td valign="top" width="40%">
 
@@ -543,7 +569,6 @@ page.html?codefile=web/public/page.html
 <script>
     player2 = document.getElementById("my-video");
     
-    var querydate = null;
 
     var video = 'ogvaelzkoKw';
     var starttimes = [];
@@ -562,7 +587,6 @@ page.html?codefile=web/public/page.html
     
     var user = null;    
     
-var querydate = null;
 //    var codefile = ""; //load from queryparam.  clock.js startup
     var myuid = null;
     var myuser = null;
@@ -828,6 +852,8 @@ var querydate = null;
         loadUserConfig();
 		//load audiocontrol and gitcontrol dictionaries.  
         loadDictionaries(0, ["audiocontrol", "gitcontrol"]);
+        loadRecentTable();
+
 
 
         $("#ask-current-question").click(function(){
@@ -1001,6 +1027,86 @@ async function ChatLocalDone(answer){
 }
 
 
+    
+function getTime(comment){
+        const regExp = /\(([^)]+)\)/g;
+        const matches = [...comment.matchAll(regExp)].flat();
+    //    console.log(matches);
+        if (matches.length > 0){
+            return getSecsFromTime(matches[1]);
+        }
+        else{
+            return 0;
+        }
+    }
+    
+    
+    function getIterations(desc, vidtime, isme=false){
+        st = [];
+        et = [];
+        s = 0;
+    
+        if (desc ==""){
+            //one iteration length of video.  
+            //this is for watch.  
+            e = player.getDuration();
+            st.push(1);
+            et.push(e);
+            maxduration = e-1;
+            numiterations = 1;
+            myst.push(st[0]);
+            myet.push(et[0]);
+        }
+        else{
+            for (i=1; i< 20; i++){
+                s = -1;
+                e = -1;
+                fnd = "TRIAL#" + i;
+                let ts = desc.indexOf(fnd);
+                te = desc.indexOf(")", ts);
+                if (ts > -1)
+                    s = getSecsFromTime(desc.substring(ts+(fnd.length)+2, te));
+                    
+                fnd = "END#" + i;
+                ts = desc.indexOf(fnd);
+                te = desc.indexOf(")", ts);
+                if (ts > -1)
+                    e = getSecsFromTime(desc.substring(ts+(fnd.length)+2, te));
+                if (s > -1 && e > -1 && e > s){
+                    st.push(s);
+                    et.push(e);
+                }
+            }
+            console.log(st);
+            console.log(et);
+            //arrays of all iterations
+            mydate = new Date(vidtime);
+    //		if (!isme){
+                for (i=0; i< st.length; i++){
+                    if (et[i] !==null){
+                        tempdate = mydate;
+                        tempdate.setSeconds(tempdate.getSeconds()+st[i]);
+                        starttimes.push(tempdate);
+                        durations.push([tempdate, et[i]-st[i]]);
+                        if (isme){
+                            myst.push(st[i]);
+                            myet.push(et[i]);
+                            if (et[i]-st[i] > maxduration){
+                                maxduration = et[i]-st[i];
+                                
+                            }
+                        }
+                        tempdate.setSeconds(tempdate.getSeconds()+(et[i]-st[i]));
+                        endtimes.push(tempdate);
+                    }
+                }
+            }
+            //from here generate some sort of graphic.  
+    //	}
+        return st.length;
+    }
+
+
 function GetRecentSelections(shortformat=false, maxlength=MAX_LOCAL_QUERY_LENGTH){
     //use last few of selectionhistory in order to create more context.  
     //make this the last few selected documents.  
@@ -1018,15 +1124,39 @@ function GetRecentSelections(shortformat=false, maxlength=MAX_LOCAL_QUERY_LENGTH
             //really want recent git changes here, not full source I think..
           ctx += "**" + selectionhistory[si] + "\n" + getGitContents(selectionhistory[si], false) + "\n";
 
-          exists = gitcommits.find(x => x.filename === selectionhistory[si]);
+          let exists = gitcommits.filter(x => x.filename === selectionhistory[si]);
+
+          let alldates = [];
           if (exists){
-            ctx += "**" + selectionhistory[si] + "\n" + exists.patch + "\n";
+            for (let i=0; i<exists.length; i++){
+              ctx += "$$" + exists[i].d.format("yyyymmdd") + "\n";
+              ctx += "\n" + exists[i].patch + "\n";
+
+              //getVideos from this time period.  
+              const oneDayInMilliseconds = 24 * 60 * 60 * 1000;
+              let pdate = new Date(exists[i].d.getTime() + oneDayInMilliseconds);
+                alldates.push(pdate.format("yyyy-mm-dd"));
+            }
+//            ctx += "**" + selectionhistory[si] + "\n" + exists.patch + "\n";
           }
+
+          alldates = [...new Set(alldates)]; //unique dates only.
+          alldates.sort();
+          ogdate = querydate;
+          for (let di=0; di<alldates.length; di++){
+            let pdate = alldates[di];
+            querydate = pdate;
+            loadAllRecent(10);
+            //pick random video from this date.
+            //getVideoJson(video); //get videos for this date.
+
+          }
+          querydate = ogdate;
 
           //book last?  not sure the preferred order.  
           if (selectionhistory[si] in gitstruct["bytopic"]){
             ctx += "**" + selectionhistory[si] + "\n";
-            ctx += getTopicContext(selectionhistory[si], maxlength/selectionhistory.length) + "\n";
+            ctx += getTopicContext(selectionhistory[si], 1/selectionhistory.length) + "\n";
             
           }
 

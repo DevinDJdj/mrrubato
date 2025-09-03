@@ -29,6 +29,11 @@ if (urlParams["date"]){
   querydate = urlParams["date"];
   console.log(querydate);
 }
+else{
+  var now = new Date();
+  now.setDate(now.getDate() + 1); //add a day so we get today as well.  
+  querydate = now.toISOString().substring(0,10);
+}
 
 myquery = "";
 if (urlParams["query"]){ 

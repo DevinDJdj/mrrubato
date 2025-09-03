@@ -8,7 +8,11 @@ var transcriptarray = [];
 var overlays = [];
 var overlayi = 0;
 var lastbarcodecheck = 0;
+
 var lastqrresult = "";
+var VID_VIEW = 1;
+var VID_EDIT = 2;
+var VID_DETAILS = 4;
 
 function onYouTubeIframeAPIReady() {
     player = new YT.Player('player', {
@@ -877,3 +881,94 @@ class VideoSnapper {
 
 }
 
+
+function getVideoJson(videoid, mode=VID_VIEW){
+        
+  video = videoid;
+  vref = firebase.database().ref('/misterrubato/' + videoid);
+  vref.once('value')
+                    .then((snap) => {
+                      //.on('value',(snap)=>{
+      if (snap.exists()){
+          loadVideo();
+          seekVideo(0, video, true);
+          item = snap.val();
+          console.log(snap.val());
+
+          if (mode & VID_DETAILS){
+            $('#iterationsh').html(makeTimeLinks(snap.val().snippet.description))
+            createNotesArray();
+          } 
+          
+          //get previous iterations of this.  
+          title = snap.val().snippet.description.split('\n')[0];
+          author = snap.val().snippet.channelTitle;
+          authorurl = "https://www.youtube.com/channel/" + snap.val().snippet.channelId;
+          $('#vidinfo').html(title + " (<a href=\"" + authorurl + "\">" + author + "</a>)");
+          console.log(title);
+
+          //we need to get the iterations here before we do anything else, otherwise the graphic doesnt work.  
+          numiterations = getIterations(item.snippet.description, item.snippet.publishedAt, true);
+//			searchPrevious(videoid);
+
+          if (mode & VID_DETAILS){
+            searchPrevious(videoid);
+
+            getTranscript(item.snippet.description);
+            getMedia(item.snippet.description);
+            getMidi(item.snippet.description);
+      
+          }
+          else{
+  //			getTranscript(item.snippet.description);
+            getMedia(item.snippet.description);
+  //			getMidi(item.snippet.description);
+          }
+      }
+      else{
+          //this is not our video, need to retrieve and allow for commenting.  
+          //this can be for comments.  Then we can retrieve comments from the person.  via API
+          //misterrubato/watch/xxxx
+          //combine this from several people you like.  
+          //Need to record the audio though if we do like this.  
+          //but this is sustainable then.  This is a web server per person.  
+          //when you are following someone, the algorithm would overlay that audio on top of 
+          //whatever you are watching based on your settings.  
+          //we need a master DB though probably, otherwise you have too much unnecessary traffic.  
+          //add this description to our DB using timestep.  
+          //item.snippet.description
+          watch = true;
+          loadVideo();
+          console.log(videoid + " Not in DB.  Retrieving from Youtube API");
+          vref = firebase.database().ref('/watch/' + videoid);
+          vref.on('value',(snap)=>{
+              if (snap.exists()){
+              //retrieve previous comments etc.  
+              }
+              else{
+              //		obj = {"comments": mycomments, "sentiment": grade };
+              //uRef.set(obj);
+              }
+          });
+              tempurl = 'https://www.youtube.com/watch?v=' + videoid;
+
+              //https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=R4LoM208_Ow
+              $.getJSON('https://www.youtube.com/oembed?url=' + tempurl, function (data) {
+                  console.log(data.title);
+                  title = data.title;
+                  console.log(data.author_name);
+                  author = data.author_name;
+                  console.log(data.author_url);
+                  authorurl = data.author_url;
+                  console.log(data.thumbnail_url);
+                  $('#vidinfo').html(title + " (<a href=\"" + authorurl + "\">" + author + "</a>)");
+              });
+              //input details about this video
+
+      }
+
+  });
+
+
+
+}

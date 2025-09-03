@@ -1079,7 +1079,7 @@ function loadTopicGraph(str, graphtype="book"){
       //adjust here.  
     });
     }, 
-    60000)
+    70000)
       
   }
   else if (graphtype == "page"){
@@ -1592,6 +1592,9 @@ function clickHandlerGit(sender) {
     }
     else{
       var editor = myCodeMirror;
+      if (editor == null){
+        return;
+      }
       gitcurrentscrollinfo = editor.getScrollInfo();
       editor.getDoc().setValue(title);      //git.js
       if (title.startsWith("http")){ //download if we are sitting on this.  

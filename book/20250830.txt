@@ -519,3 +519,17 @@ This is an unused 80MB file in the repo.
 
 
 
+
+**web/public/chata.html
+--ChatBuildContext
+Need to not pass so much.  
+Or just wait for context window for [**WEBLLM] to improve I guess?  
+
+**web/public/recent.js
+--loadAllRecent
+allow to pass date.  
+When we get git, need to search around the date/time of changes to the selected topic.  
+Just retrieve 20 or so from that date, change date.  
+
++/- 2 days.  
+

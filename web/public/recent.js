@@ -1,3 +1,4 @@
+vids = [];
 
 function loadAllRecent(limit=20){
 	var vrRef = firebase.database().ref(dbname);
@@ -23,7 +24,9 @@ function loadAllRecent(limit=20){
 
 			console.log(recentsnapshot.val());
 			recvideojson = recentsnapshot.val();
-			vids = getRecent(recvideojson);
+
+			getRecent(recvideojson); //add to vids array.
+			showRecent(limit);
 			recentdrawChart(vids);
 			recentdrawDurationChart(vids);
 		}			
@@ -140,35 +143,17 @@ function addRecentRow(recentrow) {
 }
 
 
-function getRecent(recentvideojson){
-	loadRecentTable();
-    vids = [];
-	for (const [key, value] of Object.entries(recentvideojson)) {	
-	    //sort by date and list in some way.  
-		//right now just like we do, most recent and least recent
-		//need something better than this?  
-		if (key !="users" && key !="watch"){
-			vids.push(value);
-		}
-		
-	}
-
-	vids.sort(function(a, b) {
-	   datea = new Date(a.snippet.publishedAt);
-	   dateb = new Date(b.snippet.publishedAt);
-	   
-	  return dateb - datea;
-	});		
-	//now display the recent videos which are not published and which are published etc.  
-
+function showRecent(limit=20){
 	var mydiv = document.getElementById("recent");
 	/*
 	while (mydiv.firstChild) {
       mydiv.removeChild(mydiv.lastChild);
     }
 	*/
-	maxcnt = 100;
-	for (it=0; it< vids.length && it < maxcnt; it++){
+	maxcnt = 1000;
+	it = vids.length - limit;
+	if (it < 0) it = 0;
+	for (it; it< vids.length && it < maxcnt; it++){
 		var obj = vids[it];
 		addRecentRow(obj);
 		/*
@@ -189,7 +174,32 @@ function getRecent(recentvideojson){
 		*/
 	}
 	return vids;
-	
+
+}
+
+function getRecent(recentvideojson){
+
+	for (const [key, value] of Object.entries(recentvideojson)) {	
+	    //sort by date and list in some way.  
+		//right now just like we do, most recent and least recent
+		//need something better than this?  
+		if (key !="users" && key !="watch"){
+			vids.push(value);
+		}
+		
+	}
+
+	/*
+	vids.sort(function(a, b) {
+	   datea = new Date(a.snippet.publishedAt);
+	   dateb = new Date(b.snippet.publishedAt);
+	   
+	  return dateb - datea;
+	});		
+	*/
+	//now display the recent videos which are not published and which are published etc.  
+
+	return vids;	
     
 }
 
@@ -241,6 +251,10 @@ function recentreadyHandler() {
 
   function recentdrawChart(vids) {
 	var container = document.getElementById('timeline');
+	if (container == null){
+		console.log("No timeline container");
+		return;
+	}
 	var chart = new google.visualization.Timeline(container);
 	vidchart = chart;
 	dataTable = new google.visualization.DataTable();
@@ -307,6 +321,11 @@ function recentreadyHandler() {
 }
 
 function recentdrawDurationChart(vids){
+	var container = document.getElementById('durationchart');
+	if (container == null){
+		console.log("No durationchart container");
+		return;
+	}
 	dataTableDur = new google.visualization.DataTable();
     options = {
 	     height: 500,
@@ -354,7 +373,6 @@ function recentdrawDurationChart(vids){
     }
 	dataTableDur.addRows(myarray);
 
-	var container = document.getElementById('durationchart');
 	var chart = new google.visualization.SteppedAreaChart(container);
 	chart.draw(dataTableDur);
 

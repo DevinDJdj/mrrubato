@@ -311,7 +311,9 @@ function loadAll(reload = false){
 	//get from url params
 	selectGitRepo(getState('selectedgitindex'));
 
+	loadRecentTable();
 	loadAllRecent(25);
+	
 	getGitCommits(querydate);
 }
 
