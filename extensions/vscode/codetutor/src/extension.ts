@@ -630,25 +630,30 @@ export function activate(context: vscode.ExtensionContext) {
 							//generate code for topic.  
 						}
 						else{
+							let cmd = "/genbook ";
 							if (text.charAt(2) === "#"){  //generate comments.  
 								//create code comments.  
-								//summarize this topic.
-								if (text.length < 3 || Book.findInputTopics(text).length === 0){
-									//summarize current topic.  
-									text = "**" + topic + " " + text;
-								}
-								//pass topic and chat.  does this work?  Dont remember.  
-								vscode.commands.executeCommand('workbench.action.chat.open', "@mr /similar " + text );
-								break;
+								cmd = "/gencomments ";
 
 							}
 							else if (text.charAt(2) === "+"){
 								//create code suggestions.  
+								cmd = "/gencode ";
 							}						
 							else if (text.charAt(2) === "-"){
 								//remove code suggestions.  
 								//remove code suggestions for topic.  
 							}
+							else if (text.charAt(2) === "&"){
+								//Make book suggestions.  
+								cmd = "/genbook ";
+							}
+							if (text.length < 3 || Book.findInputTopics(text).length === 0){
+								//summarize current topic.  
+								text = "**" + topic + " " + text;
+							}
+							vscode.commands.executeCommand('workbench.action.chat.open', "@mr " + cmd + text );
+
 	
 						}
 						break;

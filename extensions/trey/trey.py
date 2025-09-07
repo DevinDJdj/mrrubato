@@ -476,57 +476,68 @@ def start_midi(midi_stop_event):
 
 
 
-# Create an icon image
-icon_image = create_image(64, 64, 'blue', 'yellow')
+def main():
+    global qapp
+    global mywindow
+    global active_window
+    global midi_thread
+    global midiout, midiin
+    global midi_stop_event
+    # Create an icon image
+    icon_image = create_image(64, 64, 'blue', 'yellow')
 
-# Define the menu for the icon
-menu = (
-    pystray.MenuItem('Capture Screen', on_get_screen),
-    pystray.MenuItem('Show Message', on_show_message),
-    pystray.MenuItem('Quit', on_quit_action)
-)
+    # Define the menu for the icon
+    menu = (
+        pystray.MenuItem('Capture Screen', on_get_screen),
+        pystray.MenuItem('Show Message', on_show_message),
+        pystray.MenuItem('Quit', on_quit_action)
+    )
 
-# Create the pystray Icon instance
-icon = pystray.Icon(
-    'my_trey_icon',  # Name of the icon
-    icon=icon_image,  # The icon image
-    title='Trey',  # Title displayed on hover
-    menu=menu  # The menu associated with the icon
-)
+    # Create the pystray Icon instance
+    icon = pystray.Icon(
+        'my_trey_icon',  # Name of the icon
+        icon=icon_image,  # The icon image
+        title='Trey',  # Title displayed on hover
+        menu=menu  # The menu associated with the icon
+    )
 
-# Run the icon (this call is blocking)
-logging.basicConfig(filename='trey.log', 
-    format='%(asctime)s %(levelname)-8s %(message)s',
-    level=logging.INFO,
-    datefmt='%Y-%m-%d %H:%M:%S')
-logger.info('Started')
-logger.info('Setting up hotkey listener')
-hotkey_listener = setup_hotkey_listener()
-logger.info('Hotkey listener set up')
+    # Run the icon (this call is blocking)
+    logging.basicConfig(filename='trey.log', 
+        format='%(asctime)s %(levelname)-8s %(message)s',
+        level=logging.INFO,
+        datefmt='%Y-%m-%d %H:%M:%S')
+    logger.info('Started')
+    logger.info('Setting up hotkey listener')
+    hotkey_listener = setup_hotkey_listener()
+    logger.info('Hotkey listener set up')
 
-logger.info('Creating Qapplication object')
-# Create the application object
-qapp = QApplication(sys.argv)
-logger.info('Creating application window')
-# Create the main application window
-mywindow = MyWindow()
+    logger.info('Creating Qapplication object')
+    # Create the application object
+    qapp = QApplication(sys.argv)
+    logger.info('Creating application window')
+    # Create the main application window
+    mywindow = MyWindow()
 
-logger.info('Running icon')
-#icon.run()
-icon.run_detached()
-
-
-# Create a Thread object to listedn for MIDI messages
-# Create an event
-midi_stop_event = threading.Event()
-midi_thread = threading.Thread(target=start_midi, args=(midi_stop_event,))
-midi_thread.start()
-
-logger.info('Executing application')
-
-sys.exit(qapp.exec_())
-#hiding window as we only want it on hotkey
-#window.hide()
+    logger.info('Running icon')
+    #icon.run()
+    icon.run_detached()
 
 
+    # Create a Thread object to listedn for MIDI messages
+    # Create an event
+    midi_stop_event = threading.Event()
+    midi_thread = threading.Thread(target=start_midi, args=(midi_stop_event,))
+    midi_thread.start()
 
+    logger.info('Executing application')
+
+    sys.exit(qapp.exec_())
+    #hiding window as we only want it on hotkey
+    #window.hide()
+
+
+
+
+
+if __name__ == "__main__":
+    main()

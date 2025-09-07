@@ -183,6 +183,18 @@
         "isSticky": true,
         "commands": [
           {
+            "name": "genbook",
+            "description": "Generate next steps in BOOK."
+          },
+          {
+            "name": "gencomments",
+            "description": "Generate comments for topic(s)."
+          },
+          {
+            "name": "gencode",
+            "description": "Generate code for topic(s)."
+          },
+          {
             "name": "summary",
             "description": "Create summary of topic(s)."
           },

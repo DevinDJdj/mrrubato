@@ -121,6 +121,9 @@ class MyKeys:
   def reset_sequence(self):
     self.fullsequence.extend(self.sequence)
     self.sequence = []
+    self.currentcmd = None
+    self.currentlang = None
+    self.currentlangna = ""
     self.currentseqno = 0
     self.startseqno = -16
     self.lastnotetime = 0
@@ -149,6 +152,7 @@ class MyKeys:
       #try fixed length?  try to read messages.  If just garbage, check for any known word.  
       if (self.sequence[-3:] == self.config['keymap']['global']['Reset']):
         self.reset_sequence()
+        print("Resetting sequence due to Reset key")
         return
 
       r1 = 4 #max length of sequence to check

@@ -14,6 +14,14 @@ class mousemovement1:
   
   def act(self, cmd, sequence=[]):
     """ACT based on command and sequence."""
+    if cmd in self.funcdict:
+      func = self.funcdict[cmd]
+      if hasattr(self, func):
+        return getattr(self, func)(sequence)
+      else:
+        logger.error(f"Function {func} not found in {self.__class__.__name__}")
+    else:
+      print(f"Command {cmd} not found in function maps")
     return -1
 
   def word(self, sequence=[]):
@@ -22,6 +30,8 @@ class mousemovement1:
     cmd = ""
     sl = str(len(sequence))
     if (sl in self.config['languages'][self.name]):
+      logger.info(f'Looking up sequence {sequence} in hotkeys')
+      logger.info(self.config['languages'][self.name][sl])
       for k,v in self.config['languages'][self.name][sl].items():
         #check global first.  
         if (sequence == v):
@@ -63,11 +73,14 @@ class mousemovement1:
     self.config['languages'][self.name] = default
     return 0
   
-  def left_click(self):
-
-    mouse.click(mouse.Button.left)
+  def left_click(self, sequence=[]):
+    mymouse = self.mouse
+    mymouse.press(mouse.Button.left)
+    mymouse.release(mouse.Button.left)
     return 0
   
-  def right_click(self):
-    mouse.click(mouse.Button.right)
+  def right_click(self, sequence=[]):
+    mymouse = self.mouse
+    mymouse.press(mouse.Button.right)
+    mymouse.release(mouse.Button.right)
     return 0

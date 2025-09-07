@@ -1,0 +1,24 @@
+**web/public/test/whisper/outa/main.js
+@@What are you doing?
+==
+This appears to be a conversation with a language creator or researcher, likely someone interested in designing a new language. They've shared their language, which they've dubbed "Whisper", and have discussed various aspects of it, such as:
+
+* Sound and phonology: They've discussed the use of polar coordinates and the symmetry of the language.
+* Writing system: They've mentioned the use of a morpho-phonetic system, where two types of graphemes are used to represent different grammatical concepts.
+* Grammar and syntax: They've discussed various grammar and syntax concepts, such as case, number, and verb conjugation.
+* Semantics: They've mentioned the use of numerical values and other markings to represent roots and affixes.
+* Mechanics: They've discussed the use of a hierarchical structure and the use of "tags" to represent different concepts.
+
+The creator has also mentioned their interest in creating a language that is symmetrical, with a focus on musicality and harmony. They've discussed the use of a pitch-class representation, where notes are represented as combinations of pitch class and duration.
+
+Additionally, they've mentioned the use of a "Whisper" module, which seems to be a central core of their language. They've discussed the possibilities of using a speech recognition module on a GPU to improve the performance of their language.
+
+Some of the specific points they've discussed include:
+
+* The use of a "softwave" module, which seems to be a combination of multiple audio streams.
+* The use of a "whisper" module, which is a central core of their language.
+* The use of a "hacking" module, which is a way of modifying and extending the language.
+* The use of a "module" system, which is a way of organizing and structuring the language.
+
+Overall, this conversation has provided a wealth of information about Whisper, a new language being designed. It's clear that the creator is passionate about creating a language that is both functional and aesthetically pleasing.
+$$

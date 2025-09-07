@@ -42,8 +42,8 @@ class hotkeys:
     #load language specific data into the config.  
     default = {
       "2": {
-        "Start": [55,56],
-        "Stop": [56,55],
+        "Start": [53,54],
+        "Stop": [53,52],
       }
     }
     if (self.name in self.config['languages']):
@@ -56,6 +56,7 @@ class hotkeys:
     self.config['languages'][self.name] = default
     self.funcdict = {
       "Stop": "stop_me",
+      "Start": "start_me",
 
     }
 
@@ -73,7 +74,18 @@ class hotkeys:
       print(f"Command {cmd} not found in function maps")
     return -1
   
+
+  def start_me(self, sequence=[]):
+    #Pass parameter for which topic to start.  
+    #for now just -N entries.  
+    """Start MIDI input/output."""
+    if (len(sequence) > 2):
+      logger.info(f'> Start ME {sequence}')
+      return 0
+    else:
+      return 1 # not enough keys.
+  
   def stop_me(self, sequence=[]):
     """Stop MIDI input/output."""
-    logger.info(f'> Stop ME')
+    logger.info(f'> Stop ME {sequence}')
     return 0

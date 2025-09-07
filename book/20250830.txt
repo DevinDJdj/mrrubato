@@ -533,3 +533,108 @@ Just retrieve 20 or so from that date, change date.
 
 +/- 2 days.  
 
+**BATORU
+Need to get full feedback loop.  
+Currently there is no training of model being used.  
+Just takes so much energy.  
+For now just do this with local ollama.  
+Need to start at least a fine-tune loop.  
+
+
+**extensions/vscode/codetutor/src/extension.ts
+Use 
+^^# to generate comments.  
+^^+ to generate suggestions to add.  
+^^- to generate suggestions to remove.  
+^^& to generate book.  
+Continue here..
+Need book
+Make a command for each of these?  
+I guess.  
+\gencomments - same as gencode, But dont include commits with no comments.  
+\gencode - Get FULL Topics, Order ALL GIT changes include book changes as well.  
+\gendelete - This is tricky but important.  Maybe try a code coverage plugin.  
+\genbook - Get FULL Topics, Get GIT changes to book in sequence.  
+
+
+So by reading the book into the topic struct, dont actually need the code.   
+Need to create statistical info on each topic.  
+i.e. What commands are part of each topic and how many times.  
+Create Structure for this info.  
+Focus more on sequence of events directionality.  
+
+copy from [**web/public/git.js] perhaps..
+Try to use this:
+#https://github.com/octokit/octokit.js
+Or lets just use local cmd line.  
+
+#https://github.com/isomorphic-git/isomorphic-git
+#https://github.com/steveukx/git-js
+
+Save current branch.  
+> git branch --show-current
+$$BRANCHNAME
+> git branch $$BRANCHNAME
+> git switch $$BRANCHNAME
+..
+> git switch $$ORIGBRANCH
+> git merge
+
+
+Create a branch each time we run the improvement process.  
+Or keep branch for each topic.  
+
+^^+ to generate.  
+Find launchable page which includes this topic.  
+All launchable pages should be tried if possible.  
+Start recording..
+Launch [**PAGE]
+Use [**PAGE]
+
+Switch back to extension.
+Make updates..
+Show updates for time..
+
+Redeploy
+Use [**PAGE]
+Make observations and compare with previous iterations.
+add to [**GENBOOK]
+
+Launch other operations.. from [**GENBOOK]
+
+Accept/decline changes based on results and check prompts.  
+
+Make summary information about changes.
+Add to [**GENBOOK]
+
+Merge branch..
+
+
+List launched operations from [**GENBOOK]
+
+Only one branch at a time for any topic?  
+For now on failure just delete and start over?  
+Track how much failure.  
+
+Repeat process.
+
+
+**extensions/trey/trey.py
+Need commands to show past recordings, perhaps default show X years ago at some point.  
+
+**extensions/trey/playwrighty.py
+Lets just interact with the UI using this.  
+#https://github.com/microsoft/playwright-python
+
+$$music
+> playwright codegen --target=python -o ./languages/words/test/my_test.py https://google.com
+
+**languages/words/test
+How to be a robot without being a robot.
+
+
+**languages/hotkeys.py
+Need to pass params.  
+Test start me.  
+
+
