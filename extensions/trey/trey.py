@@ -14,6 +14,8 @@ import sys
 import threading
 import psutil
 
+from queue import Queue
+
 #Screen capture, QR code generation
 import mss
 import qrcode
@@ -40,12 +42,33 @@ import config
 import mykeys
 
 
+#from kokoro import KPipeline
+#from IPython.display import display, Audio
+#import soundfile as sf
+#import torch
+
+#pip install playsound
+from playsound3 import playsound
+from pydub import AudioSegment
+from pydub.playback import play
+
+import simpleaudio as sa
+import pygame
+import edge_tts
+
+
 logger = logging.getLogger(__name__)
 global mywindow
 global active_window
 global qapp
 global midiout
 global midiin
+global speech_pipe
+audio_stop_events = []  # List to hold stop events for audio threads
+audio_skip_events = []  # List to hold skip events for audio threads
+audio_skip_queue = []
+
+speech_pipe = None
 active_window = None  # Global variable to store the active window handle
 
 global windows
@@ -202,9 +225,128 @@ def on_get_screen(icon, item):
     """Callback function to capture the screen."""
     get_screen()
 
+
+def play_in_background(text, stop_event=None, skip_event=None, q=None):
+    sound_file = "0.mp3"
+    VOICE = "en-US-AriaNeural"
+#    tts_file = "TTS.txt"
+#    with open(tts_file, "w") as f:
+#        f.write(text)
+#    communicate = edge_tts.Communicate(text, VOICE)
+#    communicate.save(sound_file)
+#    os.system(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --text \"{text}\" --rate=\"-10%\"")
+
+    lines = text.split('\n')
+    skip = 0
+    for idx, l in enumerate(lines):
+        if (stop_event.is_set()):
+            logger.info('Audio stop event set, stopping playback')
+            print('Audio stop event set, stopping playback')
+            break
+        if (skip_event.is_set()):
+            logger.info('Audio skip event set, skipping this line')
+            print('Audio skip event set, skipping next several lines')
+            lines_to_skip = q.get()
+            skip += lines_to_skip    #skip next 3 lines
+            skip_event.clear()
+
+        if (skip > 0):
+            skip -= 1
+            continue
+
+        print(f'Line: {l}')
+        sound_file = f"./temp/{idx}.mp3"
+        if (len(l) > 5):
+            try:
+    #            communicate = edge_tts.Communicate(text, VOICE)
+    #            await communicate.save(sound_file)
+                os.system(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --text \"{l}\" --rate=\"-10%\"")
+                playsound(sound_file, block=True) # Ensure this thread blocks for its sound
+#                time.sleep(0.5) #short pause between lines
+            except Exception as e:
+                logger.error(f'Error in TTS playback: {e}')
+                print(f'Error in TTS playback: {e}')
+                continue
+#    os.system(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --file \"{tts_file}\" --rate=\"-10%\"")
+#    time.sleep(2) #wait for file to be written
+#    seg = AudioSegment.from_mp3(sound_file)
+
+    # Export as WAV
+#    wav_file =  "1.wav" 
+#    seg.export(wav_file, format="wav")
+
+#    playsound(sound_file)
+    sys.exit() # Exit the thread when done
+
+#    pygame.mixer.init() 
+
+    # Replace 'your_audio_file.wav' with the actual path to your audio file
+#    sound = pygame.mixer.Sound(wav_file)
+#    sound.play() 
+#    pygame.mixer.music.load(sound_file)
+#    pygame.mixer.music.play()
+
+
+#    wave_obj = sa.WaveObject.from_wave_file(sound_file)
+#    play_obj = wave_obj.play()
+#    play_obj.wait_done()
+
+#    playsound(sound_file, block=True) # Ensure this thread blocks for its sound
+#    time.sleep(1) # Wait for a short duration
+#    os.remove(sound_file) # Clean up the sound file
+#    sys.exit() # Exit the thread when done
+
+def speak(text):
+    global audio_stop_events
+    """Speak the given text using the speech pipeline."""
+    print(f'Speaking: {text}')
+
+    audio_stop_event = threading.Event()  # Event to signal stopping
+    audio_stop_events.append(audio_stop_event)  # Store the event in the global list
+    audio_skip_event = threading.Event()  # Event to signal skipping
+    audio_skip_events.append(audio_skip_event)  # Store the event in the skip list as well
+    q = Queue()
+    audio_skip_queue.append(q)
+    print(audio_stop_events)
+    audio_thread = threading.Thread(target=play_in_background, args=(f'{text}',audio_stop_event, audio_skip_event, q))
+    audio_thread.start()
+
+"""
+def speak(text):
+    global speech_pipe
+    print(f'Speaking: {text}')
+    if (speech_pipe is not None):
+        generator = speech_pipe(text, voice='af_heart')
+        for i, (gs, ps, audio) in enumerate(generator):
+            print(i, gs, ps)
+#            display(Audio(data=audio, rate=24000, autoplay=i==0))
+            with sf.SoundFile(f'{i}.wav', mode='w', samplerate=24000, channels=1, subtype='PCM_16') as f:
+                f.write(audio)
+                f.close()
+                pass
+#            sf.write(f'{i}.wav', audio, 24000)
+#            song = AudioSegment.from_wav(f'{i}.wav')
+#            play(song)
+
+            thread1 = threading.Thread(target=play_in_background, args=(f'{i}.wav',))
+            thread1.start()
+
+
+    else:
+        logger.error('Speech pipeline is not initialized.')
+
+"""
+
 def get_screen():
 
+
     logger.info('Getting Screen')
+    text = '''
+    [Kokoro](/kˈOkəɹO/) is an open-weight TTS model with 82 million parameters. Despite its lightweight architecture, it delivers comparable quality to larger models while being significantly faster and more cost-efficient. With Apache-licensed weights, [Kokoro](/kˈOkəɹO/) can be deployed anywhere from production environments to personal projects.
+    '''
+    text = "This is a test of text to speech using edge-tts on Windows."
+    speak(text)
+
     screen = qapp.primaryScreen()
     screens = qapp.screens()
     for i, s in enumerate(screens):
@@ -348,8 +490,12 @@ def create_qr_code(data):
 
 def _hide(data):
     """Function to hide the window after a delay."""
+#    global speech_pipe
+#    logger.info('Initializing speech pipeline')
+#    speech_pipe = KPipeline(lang_code='a')
     logger.info('Hiding mywindow after delay')
     mywindow.hideme()
+
     
 class MyWindow(QMainWindow):
 
@@ -404,6 +550,7 @@ class MyWindow(QMainWindow):
         t.start()  # Start the timer in a new thread
         logger.info('Window created')
 
+
     def hideme(self):
         """Method to close the window."""
         self.hide()
@@ -432,6 +579,25 @@ class MyWindow(QMainWindow):
         
         # You can also draw text, ellipses, images, etc.
 
+def stop_audio():
+    #called from hotkeys to stop all audio threads.
+    global audio_stop_events
+    print('Stopping all audio threads')
+    print(audio_stop_events)
+    for audio_stop_event in audio_stop_events:
+        print('Stopping audio thread')
+        audio_stop_event.set()  # Signal the audio thread to stop
+
+def skip_lines(n):
+    #called from hotkeys to skip n lines of audio.
+    global audio_skip_events
+    print(f'Skipping {n*3} lines of audio')
+    for i, audio_skip_event in enumerate(audio_skip_events):
+        print('Skipping lines in audio thread')
+        audio_skip_queue[i].put(n*3)
+        audio_skip_event.set()
+
+
 def stop_midi():
     midi_stop_event.set()  # Signal the MIDI thread to stop
     midi_thread.join()  # Wait for the MIDI thread to finish
@@ -453,7 +619,7 @@ def start_midi(midi_stop_event):
     #Portable Grand-1 2
     #should really have some config selection here.  
     midiout = mido.open_output(outputs[1]) #open first output for now.  
-    mk = mykeys.MyKeys(config.cfg)
+    mk = mykeys.MyKeys(config.cfg, qapp)
     cont = keyboard.Controller()    
     midiin = mido.open_input(inputs[0]) #open first input for now.
     with midiin as inport:
@@ -483,6 +649,8 @@ def main():
     global midi_thread
     global midiout, midiin
     global midi_stop_event
+    global speech_pipe
+
     # Create an icon image
     icon_image = create_image(64, 64, 'blue', 'yellow')
 
@@ -528,6 +696,8 @@ def main():
     midi_stop_event = threading.Event()
     midi_thread = threading.Thread(target=start_midi, args=(midi_stop_event,))
     midi_thread.start()
+
+
 
     logger.info('Executing application')
 

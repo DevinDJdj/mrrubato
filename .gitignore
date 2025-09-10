@@ -53,3 +53,8 @@ web/public/test/javascript-vector-database/
 **/package-lock.json
 
 vecbook/*
+
+analyze/datasets/*
+analyze/runs/*
+
+temp/*

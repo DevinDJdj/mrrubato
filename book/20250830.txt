@@ -636,5 +636,125 @@ How to be a robot without being a robot.
 **languages/hotkeys.py
 Need to pass params.  
 Test start me.  
+OK works I guess..
+
+Maybe need a start listening and stop listening for each language.  
+Or setting to start on load or not.  
+Or perhaps have a start sequence which just runs through mykeys.  
+Still need turn on/off words.  
+
+
+**languages/words/test/my_test.py
+element_locator = page.locator("#myElement")
+bounding_box = await element_locator.boundingBox()
+
+What is sender/receiver?  
+
+**languages/words/_meta/speak.py
+From screen -> text -> voice
+#https://huggingface.co/hexgrad/Kokoro-82M
+#https://github.com/hexgrad/kokoro
+
+Create word/location map based on this.  
+Need interrupt command.  
+Try to identify interactable objects.  
+#https://github.com/srebroa/awesome-yolo?tab=readme-ov-file
+
+#https://neptune.ai/blog/object-detection-with-yolo-hands-on-tutorial
+
+!!ImportError: numpy.core.multiarray failed to import
+~~>pip install --upgrade opencv-python, numpy
+
+OK, so how do we get a yolo model for screen?  
+Or just move the mouse around the screen and detect the link cursor changing.  
+
+Seems like fun, but maybe dont need this complexity.  
+Just detect mouse change to try to detect boundaries of interactive objects.  
+
+mouse.position
+
+mouse.move_relative
+
+**analyze/ocr.py
+Get info on text position throughout.  
+Put mouse on any text that is available and see if it is interactive.  
+
+Then summarize the text, how to do this in a meaningful way?  
+Annotate results and areas.  
+
+#https://github.com/UB-Mannheim/tesseract/wiki
+
+$$PATH += C:\Program Files\Tesseract-OCR
+
+Add this to [**extensions/trey]
+
+Just use the ocr info for now.  
+Not picking up formatting, but have enough info here to do some interesting things.  
+With simple pages.  
+Put the Page text into LLM and grade response on grammatical correctness.  
+If most things look grammatically correct, then use, otherwise notify the user that result quality is not ideal. 
+
+Also get a summary of the page contents.  
+And areas we can click (hand icon detection)
+
+**languages/hotkeys.py
+Try to read screen.  
+53, 50
+..
+
+
+#https://github.com/hexgrad/kokoro/tree/main/kokoro.js
+
+Try this as default TTS.  
+For now use with [**extensions/trey/trey.py]
+
+Adjust config here.
+mykeys.languages[..].config = ...
+
+Generate sound for CRLF
+
+**generate/generatetts.py
+> espeak-ng.msi
+
+Works, but far too slow..
+#https://github.com/nateshmbhat/pyttsx3
+
+More like what we need, really should get better voice.  
+Maybe use this one for real-time, and generate with good voice if want to read whole page.  
+
+**extensions/trey/trey.py
+OK finally have some speech.  
+Why do I have to use pygame, not sure, but the others playsound and simpleaudio caused problems.  
+
+Most usage will be browser anyway.  
+
+FUNCTIONS:
+Launch browser tab or window (optional search string)
+Detect scrollbar of active window.  
+Indicate page layout and location in page with sound.  
+Selected portion of page just use chromatic percentage.  
+Page up, page down
+Start reading immediately
+Summarize full page
+Read full page
+
+All asynchronous as this will take time.  
+
+!!playsound never releases file
+~~pip install playsound3
+
+#https://github.com/rany2/edge-tts
+Much faster to just use built-in.  
+
+!!edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+This occurs when input is too short.  
+Also why do we have to pass line by line?  
+
+Need an interrupt.  
+Scan page, and 
+Match locations of text with location of links
+
+OK, so skip lines works.  
+Queue management, not great I think, but we can pass info.  
 
 

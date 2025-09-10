@@ -62,8 +62,9 @@ class MyLang:
   
 
 class MyKeys:
-  def __init__(self, config):
+  def __init__(self, config, qapp=None):
     self.config = config
+    self.qapp = qapp
     self.sequence = []
     self.fullsequence = []
     self.languages = {} #language modules.  
@@ -98,7 +99,7 @@ class MyKeys:
 
           self.langused.append(key)
           #just use this language config.  
-          self.languages[key] = la(config)  # Create instance of class
+          self.languages[key] = la(config, self.qapp)  # Create instance of class pass qapp for any UI stuff
           self.languages[key].load()
           self.languages[key].callback = self.callback
           self.langkey.append(value)
