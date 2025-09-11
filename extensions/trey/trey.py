@@ -34,6 +34,7 @@ from PyQt5.QtGui import QPixmap, QPainter, QPen, QBrush
 from PyQt5.QtCore import Qt
 import win32gui
 import win32process
+import winsound
 
 #Local imports
 sys.path.insert(0, 'c:/devinpiano/') #config.json path
@@ -636,6 +637,9 @@ def start_midi(midi_stop_event):
                             velocity = 0
                         #add key to sequence and check for any actions.  
                         a = mk.key(note, msg, callback=None)
+                        if (a == -1):
+                            #error or reset
+                            winsound.Beep(2000, 500) # Beep at 2000 Hz for 500 ms
                     else:
                         print("Message does not have a note attribute")
         logger.info('Stopping MIDI thread')

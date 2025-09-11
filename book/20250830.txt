@@ -728,15 +728,7 @@ Why do I have to use pygame, not sure, but the others playsound and simpleaudio 
 
 Most usage will be browser anyway.  
 
-FUNCTIONS:
-Launch browser tab or window (optional search string)
-Detect scrollbar of active window.  
-Indicate page layout and location in page with sound.  
-Selected portion of page just use chromatic percentage.  
-Page up, page down
-Start reading immediately
-Summarize full page
-Read full page
+
 
 All asynchronous as this will take time.  
 
@@ -758,3 +750,72 @@ OK, so skip lines works.
 Queue management, not great I think, but we can pass info.  
 
 
+**KEYMAP
+
+primarily 3-key
+Start letter controls language/function:
+48 -> Meta function
+49
+50
+51
+52 -> error
+53 -> Screen control navigation
+54 -> ok
+55 -> good
+56
+57
+58
+59 -> Lang control
+60 -> Meta function
+61
+62
+63
+64 -> error
+65 -> Screen control input/selection
+66 -> ok
+67 -> good
+68
+69
+70
+71 -> lang control
+72 -> meta (none)
+
+53 and 65 start key.  
+
+$$(-21,-108) = 88 keys
+$$(-20,+20) = relative change.  
+greater than 20 diff is not part of same sequence?  
+$$(+21,+108) = 88 keys
+$$109+ = ?  
+
+
+**KKEYS
+ALL SQUARES
+1,4,9,16
+25, 36, 49, 64, 81, 100
+28, 31, 56, 60, 90
+
+
+
+Once we detect no word exists, reset?  
+Create a structure of combination of first set of 2 and 3 letters.  
+Simple Tree structure
+KK[108][108] = null
+Then set to data if exists.  
+
+
+
+
+**CCONTROL
+Launch browser tab or window (optional search string)
+Detect scrollbar of active window.  
+Indicate page layout and location in page with sound.  
+Selected portion of page just use chromatic percentage.  
+Page up, page down
+Start reading immediately
+Summarize full page
+Read full page
+
+
+--check mykeys.key
+Read from beginning of word only.  

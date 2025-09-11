@@ -65,6 +65,7 @@ class MyKeys:
   def __init__(self, config, qapp=None):
     self.config = config
     self.qapp = qapp
+    self.maxseq = 10
     self.sequence = []
     self.fullsequence = []
     self.languages = {} #language modules.  
@@ -102,6 +103,9 @@ class MyKeys:
           self.languages[key] = la(config, self.qapp)  # Create instance of class pass qapp for any UI stuff
           self.languages[key].load()
           self.languages[key].callback = self.callback
+          if (self.languages[key].maxseq > self.config['keymap']['settings']['MAX_WORD']):
+            self.maxseq = self.languages[key].maxseq
+
           self.langkey.append(value)
           self.langna.append(key)
           print("language added " + key)
@@ -146,6 +150,13 @@ class MyKeys:
 
 #        print("Resetting sequence due to long time since last note")
 
+
+      if (self.currentseqno > self.maxseq):
+        #trim sequence to max length.  
+        self.reset_sequence()
+        print("Resetting sequence due to max sequence length")
+        return -1 #too long sequence notify error.  
+        
       self.sequence.append(note)
       self.currentseqno += 1
       self.lastnotetime = msg.time
@@ -154,20 +165,23 @@ class MyKeys:
       if (self.sequence[-3:] == self.config['keymap']['global']['Reset']):
         self.reset_sequence()
         print("Resetting sequence due to Reset key")
-        return
+        return -1 #reset sequence notify error.
 
-      r1 = 4 #max length of sequence to check
-      if (self.currentseqno <4):
+
+      r1 = self.maxseq #max length of sequence to check
+      if (self.currentseqno <self.maxseq):
         r1 = self.currentseqno
+
 
       found = False
       if (self.currentcmd is None):
-        for i in range(r1, 0, -1):
+#        for i in range(r1, 0, -1):
           found = False
           #check all languages.  Not using global for now.  
           for (l,la) in self.languages.items():
             #really should create a keys -> word map for each language.
-            word = la.word(self.sequence[-i:])
+#            word = la.word(self.sequence[-i:])
+            word = la.word(self.sequence)
             if word != "":
               #found a word in the language
               found = True
@@ -179,8 +193,8 @@ class MyKeys:
               logger.info(f'Word found: {self.currentcmd} in {l}')
 
               break
-          if found:
-            break
+#          if found:
+#            break
                 
 
 
@@ -211,7 +225,7 @@ class MyKeys:
           return action
           #still waiting?  
 #          logger.info(f'_ {self.currentcmd} {self.sequence[self.startseqno:]}')
-
+    return 0
 
   def getLangs(self):
     return ','.join(self.langused)

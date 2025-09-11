@@ -339,6 +339,9 @@ function activate(context) {
             stream.markdown('**My agent coding mode** ' + mySettings.codingmode + '  \n');
             stream.markdown('**My agent work prompt** ' + mySettings.workprompt.slice(-255) + '  \n');
         }
+        if (request.command === 'genbook' || request.command === 'gencomments' || request.command === 'gencode') {
+            //generate context for this topic.  
+        }
         if (request.command === 'summarize' || request.command === 'summary') {
             //find similar topics.  
             //do we have a topic?  

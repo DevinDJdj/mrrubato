@@ -370,6 +370,11 @@ export function activate(context: vscode.ExtensionContext) {
 			stream.markdown('**My agent work prompt** ' + mySettings.workprompt.slice(-255) + '  \n');
 
 		}
+
+		if (request.command === 'genbook' || request.command === 'gencomments' || request.command === 'gencode'){
+			//generate context for this topic.  
+		}
+
 		if (request.command === 'summarize' || request.command=== 'summary'){
 			//find similar topics.  
 			//do we have a topic?  

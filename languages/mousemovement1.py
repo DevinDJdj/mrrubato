@@ -13,6 +13,7 @@ class mousemovement1:
     self.config = config
     self.qapp = qapp
     self.name = "mousemovement1"
+    self.maxseq = 10 #includes parameters
     self.mouse = mouse.Controller()
     self.callback = None
   

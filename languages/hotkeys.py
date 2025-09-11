@@ -12,6 +12,7 @@ class hotkeys:
     self.config = config
     self.qapp = qapp
     self.name = "hotkeys"
+    self.maxseq = 10 #includes parameters
     self.callback = None
     self.funcdict = {}
 
