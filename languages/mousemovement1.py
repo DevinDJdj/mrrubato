@@ -9,9 +9,11 @@ logger = logging.getLogger(__name__)
 
 class mousemovement1:
   #define action for some sequences.  
-  def __init__(self, config, qapp=None):
+  def __init__(self, config, qapp=None, startx=0):
     self.config = config
     self.qapp = qapp
+    self.startx = startx
+
     self.name = "mousemovement1"
     self.maxseq = 10 #includes parameters
     self.mouse = mouse.Controller()
@@ -76,8 +78,8 @@ class mousemovement1:
     self.funcdict = {
       "Left Click": "left_click",
       "Right Click": "right_click",
-      "Mouse Move X": "mouse_move_x",
-      "Mouse Move Y": "mouse_move_y",
+      "Mouse Move": "mouse_move",
+
     }
     self.config['languages'][self.name] = default
     return 0
@@ -95,44 +97,38 @@ class mousemovement1:
     return 0
   
 
-  def mouse_move_x(self, sequence=[]):
+  def mouse_move(self, sequence=[], absolute=False):
     mymouse = self.mouse
     #move right and down
-    if (len(sequence) < 1):
+    if (len(sequence) < 2):
       return 1 #need more data
     else:
       #get direction and amount from last 2 keys.
-      move_x = sequence[-1]
-      mymouse.move(move_x, 0,  absolute=False)
-      return 0
-
-  def mouse_move_y(self, sequence=[]):
-    mymouse = self.mouse
-    #move right and down
-    if (len(sequence) < 1):
-      return 1 #need more data
-    else:
-      #get direction and amount from last 2 keys.
+      move_x = sequence[-2]
       move_y = sequence[-1]
-      mymouse.move(0, move_y, absolute=False)
+      if (absolute):
+        mymouse.position = (move_x+self.startx, move_y)
+      else:
+        mymouse.move(move_x+self.startx, move_y)
       return 0
 
-  def get_current_cursor_type():
+
+  def get_current_cursor_type(self):
       cursor_info = win32gui.GetCursorInfo()
       # cursor_info returns (flags, handle, (x, y))
       # The 'handle' is what we need to identify the cursor type
       cursor_handle = cursor_info[1]
+      print(f'Startx: {self.startx}')
+      print(f'Cursor info: {cursor_info}')
 
       # You can then compare this handle with known system cursor handles
       # For example:
-      if cursor_handle == win32gui.LoadCursor(0, win32con.IDC_ARROW):
+      hand = win32gui.LoadCursor(0, win32con.IDC_HAND)
+      arrow = win32gui.LoadCursor(0, win32con.IDC_ARROW)
+      if cursor_handle == arrow:
           return win32con.IDC_ARROW
-      elif cursor_handle == win32gui.LoadCursor(0, win32con.IDC_HAND):
+      elif cursor_handle == hand:
           return win32con.IDC_HAND
-      elif cursor_handle == win32gui.LoadCursor(0, win32con.IDC_IBEAM):
-          return win32con.IDC_IBEAM
-      elif cursor_handle == win32gui.LoadCursor(0, win32con.IDC_WAIT):
-          return win32con.IDC_WAIT
       # Add more comparisons for other cursor types as needed
       else:
           return -1

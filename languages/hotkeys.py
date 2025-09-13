@@ -3,15 +3,20 @@ from pynput import *
 import pytesseract
 from PIL import Image
 from io import BytesIO
+import win32con
+import time
 
 logger = logging.getLogger(__name__)
 
 class hotkeys:
   #define action for some sequences.  
-  def __init__(self, config, qapp=None):
+  def __init__(self, config, qapp=None, startx=0):
+
     self.config = config
     self.qapp = qapp
+    self.startx = startx
     self.name = "hotkeys"
+    self.links = []
     self.maxseq = 10 #includes parameters
     self.callback = None
     self.funcdict = {}
@@ -47,12 +52,14 @@ class hotkeys:
     #load language specific data into the config.  
     default = {
       "2": {
-        "Start": [53,54],
+        "Start": [53,67],
         "Stop": [53,52],
         "Read Screen": [53,50],
+#        "Page": [53,57],
       },
       "3": {
         "Skip Lines": [53,55, 57],
+        "Page": [53,55, 59], #also read screen
       }
     }
     if (self.name in self.config['languages']):
@@ -68,6 +75,7 @@ class hotkeys:
       "Start": "start_me",
       "Read Screen": "read_screen",
       "Skip Lines": "skip_lines",
+      "Page": "page",
 
     }
 
@@ -85,6 +93,15 @@ class hotkeys:
       print(f"Command {cmd} not found in function maps")
     return -1
   
+
+  def page(self, sequence=[]):
+    if (len(sequence) < 1):
+      return 1
+    else:
+      logger.info(f'> Skip Lines {sequence}')
+      from extensions.trey.trey import page
+      page(sequence[-1]-59)
+
 
   def skip_lines(self, sequence=[]):
     if (len(sequence) < 1):
@@ -141,8 +158,9 @@ class hotkeys:
       #use last screen for now.
       img = Image.open('shot' + str(i) + '.jpg')
 #      img = Image.open(buffer)
-      lines = self.ocr_image(img)
-
+      lines, links = self.ocr_image(img)
+      self.links = links
+      print(f'OCR found {len(lines)} lines and {len(links)} links')
       #group by paragraph.
       par = ""
       all = ""
@@ -174,6 +192,9 @@ class hotkeys:
   
   def ocr_image(self, img):
     # Get detailed OCR data
+    from languages.mousemovement1 import mousemovement1
+    mm = mousemovement1(self.config)
+    mm.startx = self.startx
     data = pytesseract.image_to_data(img, output_type=pytesseract.Output.DICT)
 
     # Loop through the detected words and print their positions
@@ -183,6 +204,7 @@ class hotkeys:
     prevconf = 0
     currentline = ""
     alllines = []
+    alllinks = [] #get all interactive words.  
     for i in range(n_boxes):
         if int(data['conf'][i]) > 60 or prevconf > 60:  # Filter by confidence
             prevconf = int(data['conf'][i])
@@ -195,6 +217,19 @@ class hotkeys:
             x, y, w, h = data['left'][i], data['top'][i], data['width'][i], data['height'][i]
 #            print(f"Text: '{text}', Position: (x={x}, y={y}, w={w}, h={h}, block_num={data['block_num'][i]}, par_num={data['par_num'][i]}, line_num={data['line_num'][i]}, word_num={data['word_num'][i]}, conf={data['conf'][i]})")
 #            print(currentbox)
+            #check if this is clickable.  
+            #move mouse to it and see if it changes.
+
+            
+            mm.mouse_move([x+10,y+5], True)
+            time.sleep(0.05) #give it a moment to change
+            cursor_type = mm.get_current_cursor_type()
+            print(f'Cursor type at ({x+10},{y+5}) is {cursor_type}')
+            if (cursor_type == win32con.IDC_HAND): #32512 is arrow, 32649
+                alllinks.append({"text":text, "x":x, "y":y, "w":w, "h":h, "block_num":data['block_num'][i], "par_num":data['par_num'][i], "line_num":data['line_num'][i], "word_num":data['word_num'][i], "conf":data['conf'][i]})
+                print(f"LINK: '{text}', Position: (x={x}, y={y}, w={w}, h={h}, block_num={data['block_num'][i]}, par_num={data['par_num'][i]}, line_num={data['line_num'][i]}, word_num={data['word_num'][i]}, conf={data['conf'][i]})")
+
+
             
             if (currentbox["line_num"] == data['line_num'][i] and currentbox["par_num"] == data['par_num'][i] and currentbox["block_num"] == data['block_num'][i]):
                 #same line
@@ -216,4 +251,4 @@ class hotkeys:
         print("LINE: " + currentline)
         currentbox["text"] = currentline
         alllines.append(currentbox)
-    return alllines
+    return alllines, alllinks

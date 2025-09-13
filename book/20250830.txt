@@ -819,3 +819,102 @@ Read full page
 
 --check mykeys.key
 Read from beginning of word only.  
+
+Help should be same:
+Octave?  
+48,60,48 = help 
+53,65,53 = help 
+etc.
+
+
+21 -> Start
+22 -> End
+107 -> Pause
+108 -> Unpause
+
+
+**web/public/languages/audiocontrol.js
+**web/public/languages/videocontrol.js
+**web/public/languages/book.js
+**web/public/gitcontrol.js
+Each of these needs to be retooled to use relative offset.  
+Just use keybot["lang"]
+
+OFFSET:
+_meta = 0
+videocontrol = 1
+book = 2
+gitcontrol = 3
+error = 4
+screencontrol = 5 (53)
+ok = 6
+good = 7
+generate = 8
+find = 9
+auto-generate? = 10
+lang = 11
+
+
+
+RELATIVE STRUCT:
+0,1 = help
+0,1,12 = list commands
+0,1,2 = 0,2 commands
+0,1,3 = 0,3 commands etc.  
+
+0,2 = 
+
+What to do for octave spanning commands?  
+For now octave spanning just calculate which octave, but only use %12 value
+
+
+
+for now..
+Probably need to combine some..
+(53,55,59) Page
+Test..
+
+@@How to do continuation?  
+Cant find a good strategy for this..
+Octave jump?
+Previous note?
+Maybe time??
+configurable slight delay OR octave jump?  
+Maybe try both
+
+So if we are waiting return in SEQ.  
+From there we can recall the lookup.  
+
+And redo search..
+
+
+
+*STT
+Try this for STT
+#https://github.com/speechbrain/speechbrain
+
+from speechbrain.inference import EncoderDecoderASR
+
+asr_model = EncoderDecoderASR.from_hparams(source="speechbrain/asr-conformer-transformerlm-librispeech", savedir="pretrained_models/asr-transformer-transformerlm-librispeech")
+asr_model.transcribe_file("speechbrain/asr-conformer-transformerlm-librispeech/example.wav")
+
+Training..
+#https://speechbrain.readthedocs.io/en/latest/tutorials/tasks/speech-recognition-from-scratch.html
+
+
+**mykeys.py
+See if this still works.  
+OK, there is some lag in the cursor change.  
+Also need to try to determine if the link is the same as the previous link.  
+Really want the DOM I think.  
+Maybe can hack by prevword has link etc.  
+
+Wikipedia seems to work ok.  Still some mixing of data together.  
+Need to try to detect X gaps, and change the block etc.  
+#https://pyimagesearch.com/2021/11/15/tesseract-page-segmentation-modes-psms-explained-how-to-improve-your-ocr-accuracy/
+
+hmmm...
+not much help.  
+Try to get wikipedia to work well to start.  
+
+

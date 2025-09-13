@@ -496,6 +496,7 @@ def _hide(data):
 #    speech_pipe = KPipeline(lang_code='a')
     logger.info('Hiding mywindow after delay')
     mywindow.hideme()
+    mk.set_startx(mywindow.startx)
 
     
 class MyWindow(QMainWindow):
@@ -505,6 +506,7 @@ class MyWindow(QMainWindow):
         super().__init__()
         self.highlightrect = {'x': 100, 'y': 100, 'width': 200, 'height': 200}
         self.highlighton = False
+        self.startx = 0
 
         # set the title
 
@@ -525,6 +527,8 @@ class MyWindow(QMainWindow):
                 # setting  the geometry of window
                 #add window to second monitor if available
                 self.setGeometry(geometry.x(), geometry.y(), geometry.width(), geometry.height())
+                self.startx = geometry.x()
+                print(f'Setting window to second monitor at {geometry.x()},{geometry.y()} size {geometry.width()}x{geometry.height()}')
                 self.setWindowTitle("Trey - " + s.name())
 
 #        self.setGeometry(60, 60, 600, 400)
@@ -598,6 +602,23 @@ def skip_lines(n):
         audio_skip_queue[i].put(n*3)
         audio_skip_event.set()
 
+def page(n):
+    #called from hotkeys to skip n lines of audio.
+    #stop audio, or just page down, and start reading from there.  
+    stop_audio()
+    
+    if (n > 0):
+        print(f'Page Down {n}')
+        i = 0
+        for i in range(n):
+            keyboard.Controller().press(keyboard.Key.page_down)
+        
+    else:
+        print(f'Page Up {-n}')
+        for i in range(-n):
+            keyboard.Controller().press(keyboard.Key.page_up)
+
+
 
 def stop_midi():
     midi_stop_event.set()  # Signal the MIDI thread to stop
@@ -609,6 +630,7 @@ def stop_midi():
 
 def start_midi(midi_stop_event):
     global midiout, midiin
+    global mk
     logger.info('Starting MIDI input/output')
     inputs = mido.get_input_names()
     print(mido.get_input_names())
@@ -620,7 +642,7 @@ def start_midi(midi_stop_event):
     #Portable Grand-1 2
     #should really have some config selection here.  
     midiout = mido.open_output(outputs[1]) #open first output for now.  
-    mk = mykeys.MyKeys(config.cfg, qapp)
+    mk = mykeys.MyKeys(config.cfg, qapp, mywindow.startx)
     cont = keyboard.Controller()    
     midiin = mido.open_input(inputs[0]) #open first input for now.
     with midiin as inport:

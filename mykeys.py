@@ -62,9 +62,10 @@ class MyLang:
   
 
 class MyKeys:
-  def __init__(self, config, qapp=None):
+  def __init__(self, config, qapp=None, startx=0):
     self.config = config
     self.qapp = qapp
+    self.startx = startx
     self.maxseq = 10
     self.sequence = []
     self.fullsequence = []
@@ -100,7 +101,7 @@ class MyKeys:
 
           self.langused.append(key)
           #just use this language config.  
-          self.languages[key] = la(config, self.qapp)  # Create instance of class pass qapp for any UI stuff
+          self.languages[key] = la(config, self.qapp, self.startx)  # Create instance of class pass qapp for any UI stuff
           self.languages[key].load()
           self.languages[key].callback = self.callback
           if (self.languages[key].maxseq > self.config['keymap']['settings']['MAX_WORD']):
@@ -111,7 +112,14 @@ class MyKeys:
           print("language added " + key)
       except:
         print("language doesnt exist " + key)
-  
+
+
+  def set_startx(self, startx):
+    print(f'Setting startx for languages to {startx}')
+    self.startx = startx
+    for (l,la) in self.languages.items():
+      la.startx = startx
+
 
   def callback(self, cmd):
     """Callback function for languages."""
@@ -133,6 +141,45 @@ class MyKeys:
     self.startseqno = -16
     self.lastnotetime = 0
     
+  def findword(self, sequence=[]):
+    """Find word in all languages."""
+    for (l,la) in self.languages.items():
+      word = la.word(self.sequence)
+      if word != "":
+        return word, l, la
+    return "", "", None
+      
+  def takeaction(self, cmd, l, ss, callback=None):
+    #take action based on action returned from language.  
+    action = self.languages[l].act(cmd, ss)
+    if (action == -1):
+      #reset action
+      logger.info(f'!! > <{l}>{cmd} {ss}')
+      #reset command
+      self.reset_sequence()
+      self.currentcmd = None
+    elif (action == 0):
+      #action was successful, reset command
+      logger.info(f'> <{l}>{cmd} {ss}')
+      if callback is not None:
+        callback(cmd + " " + str(ss))
+
+      #last command succeeds.  retrigger without this sequence.  
+      #remove ss from end of sequence instead of resetting everything.  
+      self.sequence = self.sequence[-len(ss):]
+#      self.reset_sequence()
+#      self.currentcmd = None
+    else:
+      self.currentcmd = self.currentcmd
+      #search for word again?            
+      #if isinstance(action, list):
+        #nword, nl, nla = self.findword(action)
+        #if (nword != ""):
+          #change return action to new value.  
+      #a = self.languages[]
+      return action #return 
+    return action
+  
   def key(self, note, msg, callback=None):
     #add this key to the notes map
     #if hasattr(msg, 'type') and msg.type=='note_on' and 
@@ -175,6 +222,17 @@ class MyKeys:
 
       found = False
       if (self.currentcmd is None):
+        word, l, la = self.findword(self.sequence)
+        if (word != ""):
+          found = True
+          self.currentcmd = word
+          self.currentlangna = l
+          self.currentlang = la
+          self.startseqno = self.currentseqno
+          print("Word found: " + self.currentcmd + " in " + l)
+          logger.info(f'Word found: {self.currentcmd} in {l}')
+      """
+      if (self.currentcmd is None):
 #        for i in range(r1, 0, -1):
           found = False
           #check all languages.  Not using global for now.  
@@ -195,7 +253,7 @@ class MyKeys:
               break
 #          if found:
 #            break
-                
+    """                
 
 
   #      if (self.sequence[-4:] == self.config['keymap']['global']['LangSelect']):
@@ -206,25 +264,58 @@ class MyKeys:
       if (self.currentcmd is not None):
 #        print("> " + self.currentcmd + " " + str(self.sequence[self.startseqno:]))
         #check for any languages that can handle this sequence. we did not find a command.  
-        action = self.languages[self.currentlangna].act(self.currentcmd, self.sequence[self.startseqno:])
-        if (action == -1):
-          #reset action
-          logger.info(f'!! > <{self.currentlangna}>{self.currentcmd} {self.sequence[self.startseqno:]}')
-          #reset command
-          self.reset_sequence()
-          self.currentcmd = None
-        elif (action == 0):
-          #action was successful, reset command
-          logger.info(f'> <{self.currentlangna}>{self.currentcmd} {self.sequence[self.startseqno:]}')
-          if callback is not None:
-            callback(self.currentcmd + " " + str(self.sequence[self.startseqno:]))
-          self.reset_sequence()
-          self.currentcmd = None
-        else:
-          self.currentcmd = self.currentcmd
-          return action
+        scmd = self.currentcmd
+        ss = self.sequence[self.startseqno:]
+        slangna = self.currentlangna
+        #pass for determining action.  
+        #if action is still expected, return [sequence]
+
+        a = ss
+        while (isinstance(a, list) and a != []):
+          a = self.takeaction(scmd, slangna, ss, callback)
+          ss = a
           #still waiting?  
 #          logger.info(f'_ {self.currentcmd} {self.sequence[self.startseqno:]}')
+
+        #loop complete, did we do anything?  
+        #so completing the loop requires a closure of the same number of commands in order to actually be executed.  
+        #yeah I think thats nice.  But not sure if it will work logically.  
+        print(f'Action returned {a} for {self.currentcmd} {self.sequence[self.startseqno:]}')
+        if (isinstance(a, int)): #should always be true
+          if (a == -1):
+            #reset action
+            logger.info(f'!! > <{self.currentlangna}>{self.currentcmd} {self.sequence[self.startseqno:]}')
+            #reset command
+            self.reset_sequence()
+            self.currentcmd = None
+          elif (a == 0):
+            #action was successful, reset command
+            logger.info(f'> <{self.currentlangna}>{self.currentcmd} {self.sequence[self.startseqno:]}')
+            if callback is not None:
+              callback(self.currentcmd + " " + str(self.sequence[self.startseqno:]))
+
+            if (self.currentcmd == scmd):
+              self.reset_sequence()
+              #command completed.  
+            #last command succeeds.  retrigger without this sequence.  
+            #remove ss from end of sequence instead of resetting everything.  
+            if (len(self.sequence) > 0):
+              #rerun command
+              self.key(self.sequence[-1], msg, callback)
+              #this is closure of command.  So we know if we were waiting, it has completed.  
+              #so act if seq[-1] == seq[-2] then we are done.
+              #if there is nothing in expected variable, then take default.  
+              #all actions expected variables must have default value.  
+
+#            else:
+#              self.reset_sequence()
+        #      self.reset_sequence()
+#              self.currentcmd = None
+        else:
+          print("Error: action not int") #action not intended ..
+          print(a)
+#          self.reset_sequence()
+
     return 0
 
   def getLangs(self):
