@@ -918,3 +918,16 @@ not much help.
 Try to get wikipedia to work well to start.  
 
 
+~~Lets make a browser version as well, or playwright-based instead of OCR.  
+
+#https://github.com/scrapy/scrapy
+
+**extensions/trey/playwright.py
+> pip3 install playwright-stealth
+still not working with google, but I guess we can use another search engine..
+
+
+-search_web
+test..
+
+

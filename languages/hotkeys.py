@@ -6,6 +6,9 @@ from io import BytesIO
 import win32con
 import time
 
+import extensions.trey.playwrighty as playwrighty
+
+
 logger = logging.getLogger(__name__)
 
 class hotkeys:
@@ -16,6 +19,7 @@ class hotkeys:
     self.qapp = qapp
     self.startx = startx
     self.name = "hotkeys"
+    self.keybot = 53 #
     self.links = []
     self.maxseq = 10 #includes parameters
     self.callback = None
@@ -52,14 +56,16 @@ class hotkeys:
     #load language specific data into the config.  
     default = {
       "2": {
-        "Start": [53,67],
+        "Start": [53,54], #read from this cache page current point.  
         "Stop": [53,52],
-        "Read Screen": [53,50],
+        "Read Screen": [53,50],        
 #        "Page": [53,57],
       },
       "3": {
         "Skip Lines": [53,55, 57],
         "Page": [53,55, 59], #also read screen
+        "Click Link": [53,55, 60], #also read screen
+        "Search Web": [53,55, 61], #also read screen
       }
     }
     if (self.name in self.config['languages']):
@@ -76,6 +82,8 @@ class hotkeys:
       "Read Screen": "read_screen",
       "Skip Lines": "skip_lines",
       "Page": "page",
+      "Click Link": "click_link",
+      "Search Web": "search_web",
 
     }
 
@@ -94,14 +102,55 @@ class hotkeys:
     return -1
   
 
+  def search_web(self, sequence=[]):
+    if (len(sequence) < 1):
+      return 1
+    else:
+      logger.info(f'> Search Web {sequence}')
+      query = "What is the capital of France?"
+      from extensions.trey.trey import speak
+      speak(f'Searching the web for: {query}')
+      body_text, link_data, page, cacheno = playwrighty.search_web(query)
+      print(body_text)
+      q2, stop_event = speak(body_text, link_data)
+      playwrighty.set_reader_queue(q2, stop_event, cacheno)
+      return 0
+    
+  def click_link(self, sequence=[]):
+    if (len(sequence) < 1):
+      return 1
+    else:
+      logger.info(f'> Click Link {sequence}')
+
+      #find the current link from our reading.  
+      if (playwrighty.mybrowser is not None):
+        total_read = 0
+        current_cache = playwrighty.current_cache
+        if (current_cache >= 0 and current_cache < len(playwrighty.page_cache)):
+          #get queue for reading.
+          q = playwrighty.page_cache[current_cache]['reader_queue']
+          while (q is not None and not q.empty()):
+            total_read = q.get() #get current link number.  
+
+
+        a = playwrighty.click_link(-1, total_read, sequence[-1]-7-self.keybot)
+        if (isinstance(a, tuple)):
+          body_text, link_data, page, cacheno = a
+          print(body_text)
+          q2, stop_event = self.speak(body_text, link_data)
+          playwrighty.set_reader_queue(q2, stop_event, cacheno)
+        else:
+          print(f'Clicked link, no new page returned {a}')
+
+
+
   def page(self, sequence=[]):
     if (len(sequence) < 1):
       return 1
     else:
       logger.info(f'> Skip Lines {sequence}')
       from extensions.trey.trey import page
-      page(sequence[-1]-59)
-
+      page(sequence[-1]-7-self.keybot)
 
   def skip_lines(self, sequence=[]):
     if (len(sequence) < 1):
@@ -109,7 +158,7 @@ class hotkeys:
     else:
       logger.info(f'> Skip Lines {sequence}')
       from extensions.trey.trey import skip_lines
-      skip_lines(sequence[-1]-55)
+      skip_lines(sequence[-1]-7-self.keybot)
 
   def start_me(self, sequence=[]):
     #Pass parameter for which topic to start.  
@@ -136,59 +185,68 @@ class hotkeys:
     else:
       logger.info(f'> Read Screen {sequence}')
 
-      buffer = None
-      if (self.qapp is None):
-        logger.error('No QApplication instance provided, cannot read screen.')
-        return 0
+      if (playwrighty.mybrowser is not None): #we have started a browser session with playwright.
+        logger.info('Getting page from Playwright')
+        text, links = playwrighty.get_page_details(playwrighty.get_ppage(playwrighty.current_cache))
+        self.links = links
+        print(f'Playwright found {len(text)} characters and {len(links)} links  on the page') 
+        q2, stop_event = self.speak(text, links)
+        playwrighty.set_reader_queue(q2, stop_event, playwrighty.current_cache)
+            
       else:
-        screens = self.qapp.screens()
-        for i, s in enumerate(screens):
-            logger.info(f'Screen {i}: {s.name()} - Size: {s.size()}')
-            logger.info('Capturing Screen')
-
-            screenshot = s.grabWindow( 0 ) # 0 is the main window, you can specify another window id if needed
-            screenshot.save('shot' + str(i) + '.jpg', 'jpg')
-                # Convert QImage to bytes
-#            buffer = BytesIO()
-#            screenshot.save(buffer, "PNG") # Or other suitable format like "BMP"
-#            buffer.seek(0)
-
-
-      #call OCR function here.
-      #use last screen for now.
-      img = Image.open('shot' + str(i) + '.jpg')
-#      img = Image.open(buffer)
-      lines, links = self.ocr_image(img)
-      self.links = links
-      print(f'OCR found {len(lines)} lines and {len(links)} links')
-      #group by paragraph.
-      par = ""
-      all = ""
-      for i in range(len(lines)):
-        line = lines[i]['text']
-        if (i > 0 and lines[i]['par_num'] == lines[i-1]['par_num']):
-          par += "\n" + line
+        #use PyQt to read screen.
+        buffer = None
+        if (self.qapp is None):
+          logger.error('No QApplication instance provided, cannot read screen.')
+          return 0
         else:
-          if (par != ""):
-            print("PAR: " + par)
-            #do something with paragraph here.  
-            all += par + "\n\n"
-          par = line
+          screens = self.qapp.screens()
+          for i, s in enumerate(screens):
+              logger.info(f'Screen {i}: {s.name()} - Size: {s.size()}')
+              logger.info('Capturing Screen')
 
-      if (par != ""):
-        print("PAR: " + par)
-        all += par + "\n\n"
+              screenshot = s.grabWindow( 0 ) # 0 is the main window, you can specify another window id if needed
+              screenshot.save('shot' + str(i) + '.jpg', 'jpg')
+                  # Convert QImage to bytes
+  #            buffer = BytesIO()
+  #            screenshot.save(buffer, "PNG") # Or other suitable format like "BMP"
+  #            buffer.seek(0)
 
-      self.speak(all)
+
+        #call OCR function here.
+        #use last screen for now.
+        img = Image.open('shot' + str(i) + '.jpg')
+  #      img = Image.open(buffer)
+        lines, links = self.ocr_image(img)
+        self.links = links
+        print(f'OCR found {len(lines)} lines and {len(links)} links')
+        #group by paragraph.
+        par = ""
+        all = ""
+        for i in range(len(lines)):
+          line = lines[i]['text']
+          if (i > 0 and lines[i]['par_num'] == lines[i-1]['par_num']):
+            par += "\n" + line
+          else:
+            if (par != ""):
+              print("PAR: " + par)
+              #do something with paragraph here.  
+              all += par + "\n\n"
+            par = line
+
+        if (par != ""):
+          print("PAR: " + par)
+          all += par + "\n\n"
+
+        self.speak(all)
         
       return 0
 
-  def speak(self, text):
+  def speak(self, text, links=[]):
     from extensions.trey.trey import speak
 #    print(f'Speaking: {text}')
-    speak(text)
+    return speak(text, links)
 
-    return 0
   
   def ocr_image(self, img):
     # Get detailed OCR data

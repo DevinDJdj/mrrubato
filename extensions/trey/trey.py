@@ -68,6 +68,7 @@ global speech_pipe
 audio_stop_events = []  # List to hold stop events for audio threads
 audio_skip_events = []  # List to hold skip events for audio threads
 audio_skip_queue = []
+audio_location_queue = []
 
 speech_pipe = None
 active_window = None  # Global variable to store the active window handle
@@ -227,7 +228,7 @@ def on_get_screen(icon, item):
     get_screen()
 
 
-def play_in_background(text, stop_event=None, skip_event=None, q=None):
+def play_in_background(text, links=[], stop_event=None, skip_event=None, q=None, q2=None):
     sound_file = "0.mp3"
     VOICE = "en-US-AriaNeural"
 #    tts_file = "TTS.txt"
@@ -239,6 +240,13 @@ def play_in_background(text, stop_event=None, skip_event=None, q=None):
 
     lines = text.split('\n')
     skip = 0
+
+    total_read = 0
+    link_loc = 0
+    while (link_loc < len(links) and 'offset' in links[link_loc] and links[link_loc]['offset'] == -1):
+        link_loc += 1
+        #skip all links with no offset
+
     for idx, l in enumerate(lines):
         if (stop_event.is_set()):
             logger.info('Audio stop event set, stopping playback')
@@ -253,6 +261,7 @@ def play_in_background(text, stop_event=None, skip_event=None, q=None):
 
         if (skip > 0):
             skip -= 1
+            total_read += len(l) + 1 #include newline
             continue
 
         print(f'Line: {l}')
@@ -268,6 +277,21 @@ def play_in_background(text, stop_event=None, skip_event=None, q=None):
                 logger.error(f'Error in TTS playback: {e}')
                 print(f'Error in TTS playback: {e}')
                 continue
+
+        total_read += len(l) + 1 #include newline
+        for i in range(0, len(l)+1, 5): #check every 5 characters
+            #not sure if we want to beep for skipped lines or not.  
+            #maybe problematic.  
+            if (link_loc < len(links) and 'offset' in links[link_loc] and links[link_loc]['offset'] != -1 and links[link_loc]['offset'] <= total_read):
+                print(f'At link: {links[link_loc]}')
+                winsound.Beep(1000, 100) #short beep to indicate link
+                link_loc += 1
+            
+            time.sleep(0.4) #simulate reading time. 0.4 seconds per 5 characters estimate.  
+            #shouldnt have to be too exact.  
+
+        if (q2 is not None):
+            q2.put(total_read)
 #    os.system(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --file \"{tts_file}\" --rate=\"-10%\"")
 #    time.sleep(2) #wait for file to be written
 #    seg = AudioSegment.from_mp3(sound_file)
@@ -297,7 +321,7 @@ def play_in_background(text, stop_event=None, skip_event=None, q=None):
 #    os.remove(sound_file) # Clean up the sound file
 #    sys.exit() # Exit the thread when done
 
-def speak(text):
+def speak(text, links = []):
     global audio_stop_events
     """Speak the given text using the speech pipeline."""
     print(f'Speaking: {text}')
@@ -308,9 +332,12 @@ def speak(text):
     audio_skip_events.append(audio_skip_event)  # Store the event in the skip list as well
     q = Queue()
     audio_skip_queue.append(q)
+    q2 = Queue()
+    audio_location_queue.append(q2)
     print(audio_stop_events)
-    audio_thread = threading.Thread(target=play_in_background, args=(f'{text}',audio_stop_event, audio_skip_event, q))
+    audio_thread = threading.Thread(target=play_in_background, args=(f'{text}',links, audio_stop_event, audio_skip_event, q, q2))
     audio_thread.start()
+    return q2, audio_stop_event #communicate how much we have read.  
 
 """
 def speak(text):
