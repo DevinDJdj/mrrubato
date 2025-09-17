@@ -58,3 +58,5 @@ analyze/datasets/*
 analyze/runs/*
 
 temp/*
+pretrained**/*
+models/*

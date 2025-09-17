@@ -931,3 +931,43 @@ still not working with google, but I guess we can use another search engine..
 test..
 
 
+**extensions/trey/testspeechbrain.py
+#https://github.com/speechbrain/speechbrain
+
+OK, so basic transcription works ok..
+Maybe try to train custom model for transcription as well as TTS.  
+Run transcription with this perhaps locally.  
+
+#https://speechbrain.readthedocs.io/en/latest/tutorials/tasks/speech-recognition-from-scratch.html
+#https://github.com/speechbrain/speechbrain/blob/develop/templates/speech_recognition/mini_librispeech_prepare.py
+Generate from transcript data we have.  
+
+#https://medium.com/@marko.briesemann/fine-tuning-and-deployment-of-open-source-asr-models-with-pytorch-d3264fd1b160
+go through first example.  
+
+**testing/speechbrain
+> git clone https://github.com/speechbrain/speechbrain/
+
+**testing/speechbrain/templates/speech_recognition/mini_librispeech_prepare.py
+
++data_folder = './mini_librispeech'
++prepare_mini_librispeech(data_folder, 'train.json', 'valid.json', 'test.json')
+
+> python ./mini_librispeech_prepare.py
+
+**extensions/trey/hotkeys.py
+Possibly just create samples by using.  
+i.e. search_web
+if correct, just send message and save as training data.  
+
+
+**extensions/trey/testspeechbrain.py
+Nice this kind of works.  
+STT and TTS
+Now need to customize the models.  
+
+
+**models/hyperparams.yaml
+
+-train_model
+test ..
