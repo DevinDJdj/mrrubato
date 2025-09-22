@@ -247,6 +247,25 @@ def play_in_background(text, links=[], stop_event=None, skip_event=None, q=None,
         link_loc += 1
         #skip all links with no offset
 
+
+    #pre-read
+    link_density_map = []
+    for idx, l in enumerate(lines):
+        total_read += len(l) + 1 #include newline
+        numlinks = 0
+        while (link_loc < len(links) and 'offset' in links[link_loc] and links[link_loc]['offset'] != -1 and links[link_loc]['offset'] <= total_read):
+            numlinks += 1
+            link_loc += 1
+        link_density_map.append(numlinks/(len(l)+1))
+
+    print(f'Density map: {link_density_map}')
+    #find menus and content and treat differently.  
+
+    link_loc = 0 #reset for real reading
+    total_read = 0
+    while (link_loc < len(links) and 'offset' in links[link_loc] and links[link_loc]['offset'] == -1):
+        link_loc += 1
+
     for idx, l in enumerate(lines):
         if (stop_event.is_set()):
             logger.info('Audio stop event set, stopping playback')
@@ -265,13 +284,14 @@ def play_in_background(text, links=[], stop_event=None, skip_event=None, q=None,
             continue
 
         print(f'Line: {l}')
+        print(f'Link density: {link_density_map[idx]}')
         sound_file = f"./temp/{idx}.mp3"
         if (len(l) > 5):
             try:
     #            communicate = edge_tts.Communicate(text, VOICE)
     #            await communicate.save(sound_file)
                 os.system(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --text \"{l}\" --rate=\"-10%\"")
-                playsound(sound_file, block=True) # Ensure this thread blocks for its sound
+                playsound(sound_file, block=False) # Ensure this thread blocks for its sound
 #                time.sleep(0.5) #short pause between lines
             except Exception as e:
                 logger.error(f'Error in TTS playback: {e}')
@@ -279,6 +299,8 @@ def play_in_background(text, links=[], stop_event=None, skip_event=None, q=None,
                 continue
 
         total_read += len(l) + 1 #include newline
+        print(f'Total read: {total_read}')
+        waited = 0
         for i in range(0, len(l)+1, 5): #check every 5 characters
             #not sure if we want to beep for skipped lines or not.  
             #maybe problematic.  
@@ -287,8 +309,10 @@ def play_in_background(text, links=[], stop_event=None, skip_event=None, q=None,
                 winsound.Beep(1000, 100) #short beep to indicate link
                 link_loc += 1
             
+            waited += 0.4
             time.sleep(0.4) #simulate reading time. 0.4 seconds per 5 characters estimate.  
             #shouldnt have to be too exact.  
+        print(f'Total waited: {waited}')
 
         if (q2 is not None):
             q2.put(total_read)
@@ -692,6 +716,8 @@ def start_midi(midi_stop_event):
                     else:
                         print("Message does not have a note attribute")
         logger.info('Stopping MIDI thread')
+        mk.unload()
+        logger.info('MIDI thread stopped')
 
 
 

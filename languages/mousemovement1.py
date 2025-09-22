@@ -18,8 +18,12 @@ class mousemovement1:
     self.maxseq = 10 #includes parameters
     self.mouse = mouse.Controller()
     self.callback = None
-  
-  def act(self, cmd, sequence=[]):
+
+  def unload(self):
+    #unload language specific data
+    return 0
+
+  def act(self, cmd, words=[], sequence=[]):
     """ACT based on command and sequence."""
     if cmd in self.funcdict:
       func = self.funcdict[cmd]

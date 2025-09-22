@@ -971,3 +971,102 @@ Now need to customize the models.
 
 -train_model
 test ..
+!!Entry Not Found for url: https://huggingface.co/speechbrain/asr-crdnn-rnnlm-librispeech/resolve/main/hyperparams_develop.yaml.
+==use hyperparams.yaml
+$$
+
+Actual data saved here:
+$$models/pretrained_ASR
+$$HF=Users/[user]/.cache/huggingface/hub/models--speechbrain--asr-conformer-transformerlm-librispeech/blobs
+
+So speech tuning can be done here I think..
+Is it enough to tune the base model, and how important is the base model?  
+
+#https://speechbrain.readthedocs.io/en/latest/tutorials/advanced/pre-trained-models-and-fine-tuning-with-huggingface.html
+$$6 
+This was fairly smooth
+
+
+OK, so just use this for now with 
+
+**extensions/trey/speech.py
+basic functionality, use trainable Speech model.  
+
+Multi-set backward looking takes precedence over the word dictionary.  
+Only look at repetition for now.  But leave open for further check.  
+Essentially a logic branch detector.  
+Or do we just use the same word dictionary?  
+So shorter words could be used within supplemental sequences.  
+So continually check for words within supplemental sequences.  
+Switch to the last command found when checking for completion.  
+Do not search 1 char entries perhaps.  
+
+Just use length check for now.  
+If chance for details to come, wait for details.  
+
+
+How to determine end of word.  
+Use start of word identifier.  
+If len(sequence) == 1 and sequence[-1] = self.keybot
+or
+if len(sequence) > 1 and sequence[-2:] == [self.keybot, self.keybot]
+EOW = SOW*2
+Is this a good mechanism?  
+Try with hotkeys.  
+
+
+**extensions/trey/hotkeys.py
+-read_screen
+test..
+
+rebase after mykeys working..
+
+Seems still working
+-search_web
+test..
+
+
+Start reading, but also create summary and read summary.  
+How to tune what is read?  
+
+Listen and transcribe before search..
+After transcribe just get LLM base response.  
+Simultaneously do search, once this is available read this.  
+Each page do summary in different voice, and start reading the page.  
+Summary should be somewhat louder?  
+only have stop for summary not skip.. 
+Turn on/off.  
+Loop through voices.  More recent should be louder?  
+Or based on some analysis of formatting?  
+Or link in different voice..
+
+How to do volume management.  
+
+Search for link density.  
+If high link density assume a menu.  
+Have different function to read menu vs content.  
+
+edge-tts is using wss://api.msedgeservices.com/tts/cognitiveservices/websocket/v1
+Boo..
+
+Need to escape some things in the call as well..
+
+Message not fully removed.  
+
+
+**extensions/trey/speech.py
+-generate_audio
+See if we can use the speechbrain TTS.  
+
+
+Need notifier of what line and how many lines.  
+Also go through link density map to try to find content.  
+avg link density > 0.05 = menu
+avg link density > 0.02 = titles
+avg link density > 0 = blurb
+link density == 0 = content
+
+Just go through the lines and generate beeps/sounds representing data type per line.  
+Each 10/20 lines make a recognizable beat of some kind to indicate where we are.  
+
+

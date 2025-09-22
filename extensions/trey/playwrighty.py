@@ -36,7 +36,7 @@ current_cache = -1 #current cache page we are on.
 
 #text_offset is how far into the text we are.  link_offset is which link to click relative to that we want to click.
 #usually this will be 0 or -1 to go back one link.
-async def click_link(cacheno, text_offset, link_offset=0, open_new_tab=False):
+def click_link(cacheno, text_offset, link_offset=0, open_new_tab=False):
 
     global current_cache
     if (cacheno < 0):
@@ -61,7 +61,7 @@ async def click_link(cacheno, text_offset, link_offset=0, open_new_tab=False):
             link = links[linkno]
             href = link['href']
             if href:
-                logging.info(f'Clicking link: {href}')
+                logging.info(f'Clicking link: {link['text']} {href}')
                 if open_new_tab:
                     page = page.context.new_page()
                     page.goto(href)
@@ -69,6 +69,7 @@ async def click_link(cacheno, text_offset, link_offset=0, open_new_tab=False):
                 else:
                     if ('reader_stop_event' in page_info and page_info['reader_stop_event'] is not None):
                         page_info['reader_stop_event'].set() #stop any reading.
+                    logger.info(f'Using existing tab to go to {href}')
                     return read_page(href, cacheno) #use same tab
                 return True
             else:
@@ -80,15 +81,26 @@ async def click_link(cacheno, text_offset, link_offset=0, open_new_tab=False):
     return False
 
 
-def go_back():
+def go_back(num=1, cacheno=-1):
     """Go back to the previous page in the current cache."""
     global current_cache
-    if current_cache >= 0 and current_cache < len(page_cache):
-        page = get_ppage(current_cache)
-        page.go_back()
+    if (cacheno < 0):
+        cacheno = current_cache
+    if (num == 0):  #go back one for default case.  
+        num = 1
+    if cacheno >= 0 and cacheno < len(page_cache):
+        page = get_ppage(cacheno)
+        for _ in range(num):
+            page.go_back()
+
         logging.info(f'Went back to previous page in cache {current_cache}')
-        get_page_details(page)
-        return True
+        body_text, link_data = get_page_details(page)
+    #        await page.close()
+    #        await browser.close()
+        cacheno = cache_page(page.url, page, body_text, link_data, cacheno)
+        current_cache = cacheno
+
+        return body_text, link_data, page, cacheno
     else:
         logging.warning(f'No valid current cache to go back in')
         return False
@@ -105,6 +117,14 @@ def open_browser():
 #            browser_type = p.chromium
 #            mybrowser = await browser_type.launch(headless=False, args=args)  
     return mybrowser
+
+def close_browser():
+    global mybrowser
+    global myplaywright
+    if mybrowser is not None:
+        mybrowser.close()
+        mybrowser = None
+    return 0
 
 def set_reader_queue(q, stop_event, cacheno=-1):
     global current_cache
@@ -134,9 +154,14 @@ def get_page_details(page):
         link_data.append({'href': href, 'text': text_content})        
 
     print(link_data)
+    body_text = ""
     body = page.locator('body')
-    body_text = body.inner_text()
-    print(body_text)
+    for i in range(body.count()):
+        body_element = body.nth(i)
+
+        body_text += body.inner_text()
+        print(body_text)
+
     #iterate through and add offset for the link content
     for link in link_data:
         if link['text'] and link['href']:
@@ -161,12 +186,27 @@ def cache_page(url, page, body_text, link_data, cacheno=-1):
 def read_page(url, cacheno=-1):
     global current_cache
     """Search the web for a query using Playwright."""
-    logging.info(f'Getting: {url}')
+    #fix relative URLs.  
     # Implement the web search logic here
     # This is a placeholder implementation
 
     page = get_ppage(cacheno)
+
+    logging.info(f'Getting: {url}')
+
+    base = page.url
+    if (base.startswith('http')):
+        parsed_base = base.split('/')
+        base = parsed_base[0] + '//' + parsed_base[2]
+
+    if url.startswith('/') and base is not None:
+        url = base + url
     
+    if (not url.startswith('http')): #for now only http/https
+        #bad URL
+        logging.warning(f'Bad URL: {url}')
+        return "", [], page, cacheno
+
     page.goto(url, wait_until="domcontentloaded")
     body_text, link_data = get_page_details(page)
 #        await page.close()

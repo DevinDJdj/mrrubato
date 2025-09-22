@@ -66,8 +66,9 @@ class MyKeys:
     self.config = config
     self.qapp = qapp
     self.startx = startx
-    self.maxseq = 10
+    self.maxseq = 20 #can we chain together anything meaningful?  
     self.sequence = []
+    self.words = [] #this can be passed from microphone input as well.  
     self.fullsequence = []
     self.languages = {} #language modules.  
     self.langkey = []
@@ -83,7 +84,7 @@ class MyKeys:
     self.currentchannel = 0
     self.transcripts = {} #transcripts for each language
     self.currentseqno = 0
-    self.startseqno = -16  #start of word/phrase.  #no phrases longer than 16 keys.  
+    self.startseqno = 0  #start of word/phrase.  #no phrases longer than 16 keys.  
     self.lastnotetime = 0
     self.currentcmd = None
     self.notes = np.zeros(config['keymap']['global']['top'] - config['keymap']['global']['bottom'], dtype=int)
@@ -114,6 +115,12 @@ class MyKeys:
         print("language doesnt exist " + key)
 
 
+  def unload(self):
+    #unload language specific data
+    for (l,la) in self.languages.items():
+      la.unload()
+    return 0
+  
   def set_startx(self, startx):
     print(f'Setting startx for languages to {startx}')
     self.startx = startx
@@ -134,11 +141,12 @@ class MyKeys:
   def reset_sequence(self):
     self.fullsequence.extend(self.sequence)
     self.sequence = []
+    self.words = []
     self.currentcmd = None
     self.currentlang = None
     self.currentlangna = ""
     self.currentseqno = 0
-    self.startseqno = -16
+    self.startseqno = 0
     self.lastnotetime = 0
     
   def findword(self, sequence=[]):
@@ -151,7 +159,9 @@ class MyKeys:
       
   def takeaction(self, cmd, l, ss, callback=None):
     #take action based on action returned from language.  
-    action = self.languages[l].act(cmd, ss)
+    #pass words as well.  
+    logger.info(f'Checking action {cmd} in {l} for {ss}')
+    action = self.languages[l].act(cmd, self.words, ss)
     if (action == -1):
       #reset action
       logger.info(f'!! > <{l}>{cmd} {ss}')
@@ -166,7 +176,15 @@ class MyKeys:
 
       #last command succeeds.  retrigger without this sequence.  
       #remove ss from end of sequence instead of resetting everything.  
-      self.sequence = self.sequence[-len(ss):]
+      self.sequence = self.sequence[-len(ss):] #remove length of sequence.  
+      self.sequence = self.sequence[-len(self.words[-1]['sequence']):] #remove length of last word.      
+      self.words = self.words[:-1 ] #remove last word as it executed.  
+      self.currentlangna = self.words[-1]['langna'] if len(self.words) > 0 else ""
+      self.currentlang = self.words[-1]['lang'] if len(self.words) > 0 else ""
+      self.currentcmd = self.words[-1]['word'] if len(self.words) > 0 else None
+      self.currentseqno = len(self.sequence)
+
+      return self.sequence
 #      self.reset_sequence()
 #      self.currentcmd = None
     else:
@@ -221,16 +239,23 @@ class MyKeys:
 
 
       found = False
+      word = ""
+      l = ""
+      la = None
       if (self.currentcmd is None):
         word, l, la = self.findword(self.sequence)
-        if (word != ""):
-          found = True
-          self.currentcmd = word
-          self.currentlangna = l
-          self.currentlang = la
-          self.startseqno = self.currentseqno
-          print("Word found: " + self.currentcmd + " in " + l)
-          logger.info(f'Word found: {self.currentcmd} in {l}')
+      else:
+        word, l, la = self.findword(self.sequence[self.startseqno:])
+      if (word != ""):
+        found = True
+        print("Second Word found: " + word + " in " + l)
+        logger.info(f'Second Word found: {word} in {l}')
+        self.words.append({"word": word, "lang": la, "langna": l, "sequence": self.sequence[self.startseqno:]})
+        self.startseqno = self.currentseqno
+        self.currentcmd = word
+        self.currentlang = la
+        self.currentlangna = l
+        
       """
       if (self.currentcmd is None):
 #        for i in range(r1, 0, -1):
@@ -270,10 +295,20 @@ class MyKeys:
         #pass for determining action.  
         #if action is still expected, return [sequence]
 
+
+
         a = ss
         while (isinstance(a, list) and a != []):
+          #potential to unwind entire stack here.  
+          if (slangna == ""):
+            print(f'Error: {scmd} no language for action' + str(a))
+            break
           a = self.takeaction(scmd, slangna, ss, callback)
-          ss = a
+          scmd = self.currentcmd
+          slangna = self.currentlangna
+          #keep ss the same?
+#          ss = self.sequence[self.startseqno:]
+#          ss = a
           #still waiting?  
 #          logger.info(f'_ {self.currentcmd} {self.sequence[self.startseqno:]}')
 

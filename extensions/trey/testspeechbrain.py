@@ -9,6 +9,7 @@ import scipy.io.wavfile as wav
 import json
 #from parse_data import parse_to_json
 
+asr_model = None
 
 def parse_to_json(basedir="../testing/speechbrain/templates/speech_recognition/mini_librispeech/LibriSpeech/", type="dev-clean-2", out='data.json'):
     #parse a directory of audio files and create a json file for training.  
@@ -60,6 +61,10 @@ def parse_to_json(basedir="../testing/speechbrain/templates/speech_recognition/m
 
 def train_model():
     #set up JSON files for training.  
+    global asr_model
+
+    asr_model = EncoderDecoderASR.from_hparams(source="./models/pretrained_ASR", savedir="./models/pretrained_ASR", hparams_file="hyperparams.yaml")    
+#    asr_model = EncoderDecoderASR.from_hparams(source="speechbrain/asr-crdnn-rnnlm-librispeech", savedir="./models/pretrained_ASR", hparams_file="hyperparams.yaml")
     fname = parse_to_json()
     from speechbrain.dataio.dataset import DynamicItemDataset
     dataset = DynamicItemDataset.from_json(fname)
@@ -69,7 +74,6 @@ def train_model():
     dataset.set_output_keys(["id", "signal", "words", "tokens_list", "tokens_bos", "tokens_eos", "tokens"])
     print(dataset[0])
 
-    asr_model = EncoderDecoderASR.from_hparams(source="speechbrain/asr-crdnn-rnnlm-librispeech", savedir="./models/pretrained_ASR", hparams_file="./models/hyperparams_develop.yaml")
 
     
 
@@ -95,7 +99,8 @@ def train_model():
 
 def transcribe_audio(fname):
 
-    asr_model = EncoderDecoderASR.from_hparams(source="speechbrain/asr-conformer-transformerlm-librispeech", savedir="./models/pretrained_models/asr-transformer-transformerlm-librispeech")
+    asr_model = EncoderDecoderASR.from_hparams(source="./models/pretrained_ASR")
+#    asr_model = EncoderDecoderASR.from_hparams(source="speechbrain/asr-conformer-transformerlm-librispeech", savedir="./models/pretrained_models/asr-transformer-transformerlm-librispeech")
     result = asr_model.transcribe_file("example2.wav")
     #result = asr_model.transcribe_file("speechbrain/asr-conformer-transformerlm-librispeech/example.wav")
     print(result)
@@ -131,6 +136,7 @@ def generate_audio(text="Mary had a little lamb."):
 @sb.utils.data_pipeline.provides(
         "words", "tokens_list", "tokens_bos", "tokens_eos", "tokens")
 def text_pipeline(words):
+      global asr_model
       yield words
       tokens_list = asr_model.tokenizer.encode_as_ids(words)
       yield tokens_list
