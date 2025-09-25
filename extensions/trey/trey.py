@@ -12,6 +12,7 @@ import os
 import time
 import sys
 import threading
+import multiprocessing
 import psutil
 
 from queue import Queue
@@ -228,6 +229,97 @@ def on_get_screen(icon, item):
     get_screen()
 
 
+def gen_audio(ldmap, stop_event=None):
+    """Generate audio from text using the speech pipeline."""
+    from extensions.trey.speech import generate_audio
+    logger.info('Starting audio generation thread')
+    print('Generating audio for link density map')
+    print(ldmap)
+    for idx, l in enumerate(ldmap):
+        if (stop_event is not None and stop_event.is_set()):
+            logger.info('Audio generation stop event set, stopping audio generation')
+            print('Audio generation stop event set, stopping audio generation')
+            break
+        print(f'Generating audio for line {idx}: {l["text"]}')
+        if (len(l['text']) > 5):
+            generate_audio(l['text'], fname=l['audio'], fast=True)
+
+def build_map(lines, links):
+
+    """Build a map of the link density."""
+    #for now just return the text with link counts.  
+
+    total_read = 0
+    link_loc = 0
+    while (link_loc < len(links) and 'offset' in links[link_loc] and links[link_loc]['offset'] == -1):
+        link_loc += 1
+        #skip all links with no offset
+
+    link_density_map = []
+    for idx, l in enumerate(lines):
+        total_read += len(l) + 1 #include newline
+        numlinks = 0
+        while (link_loc < len(links) and 'offset' in links[link_loc] and links[link_loc]['offset'] != -1 and links[link_loc]['offset'] <= total_read):
+            numlinks += 1
+            link_loc += 1
+        link_density_map.append({"text": l, "length": len(l), "numlinks": numlinks, "audio": f"./temp/{idx}.wav", "density": numlinks/(len(l)+1)})
+        
+
+    return link_density_map
+
+def remove_temp_audio(dir):
+    #remove temp files first.  
+    for filename in os.listdir(dir):
+        file_path = os.path.join(dir, filename)
+        if os.path.isfile(file_path):
+            try:
+                os.remove(file_path)
+            except OSError as e:
+                print(f"Error removing file {file_path}: {e}")
+
+
+
+
+def play_l(l):
+
+    c = 261.63 * 4 #high C
+    c *= 2 ** ((l['numlinks'] - 1) / 12) #each link increases pitch by a semitone
+    type = "content"
+    if (l['density'] > 0.05):
+        type="menu"
+    elif (l['density'] > 0.02):
+        type="title"
+    elif (l['density'] > 0.00):
+        type="blurb"
+    else:
+        type="content"
+    if (type == "menu"):
+        winsound.Beep(round(c), 50) #short beep to indicate menu
+    elif (type == "title"):
+        winsound.Beep(round(c/2), 50) #short beep to indicate title
+    elif (type == "blurb"):
+        winsound.Beep(round(c/2), 100) #short beep to indicate blurb
+    else:
+        winsound.Beep(round(c/4), 200) #short beep to indicate content
+
+def play_ldmap(ldmap):
+    """Play audio for the given link density map."""
+    for idx, l in enumerate(ldmap):
+        print(f'Playing audio for line {idx}: {l["text"]} with {l["numlinks"]} links')
+        play_l(l)
+
+def is_type(l, type):
+    """Check if the line is of the given type."""
+    if (type == 1 and l['density'] > 0.05): #menu
+        return True
+    elif (type == 2 and l['density'] > 0.02 and l['density'] <= 0.05): #title
+        return True
+    elif (type == 3 and l['density'] > 0.00 and l['density'] <= 0.02): #blurb
+        return True
+    elif (type == 4 and l['density'] <= 0.00): #content
+        return True
+    return False
+
 def play_in_background(text, links=[], stop_event=None, skip_event=None, q=None, q2=None):
     sound_file = "0.mp3"
     VOICE = "en-US-AriaNeural"
@@ -241,6 +333,23 @@ def play_in_background(text, links=[], stop_event=None, skip_event=None, q=None,
     lines = text.split('\n')
     skip = 0
 
+    remove_temp_audio("./temp/")
+
+    #pre-read
+    link_density_map = build_map(lines, links)
+    #start audio generation thread then
+    play_ldmap(link_density_map)
+    mp_stop = multiprocessing.Event()
+#    audio_gen_thread = multiprocessing.Process(target=gen_audio, args=(link_density_map, mp_stop))
+#    logger.info('Starting audio generation thread')
+#    print("Starting audio generation thread")
+#    audio_gen_thread.start()
+
+#    time.sleep(5) #wait a bit for some audio to be generated.
+
+#    print(f'Density map: {link_density_map}')
+    #find menus and content and treat differently.  
+
     total_read = 0
     link_loc = 0
     while (link_loc < len(links) and 'offset' in links[link_loc] and links[link_loc]['offset'] == -1):
@@ -248,50 +357,87 @@ def play_in_background(text, links=[], stop_event=None, skip_event=None, q=None,
         #skip all links with no offset
 
 
-    #pre-read
-    link_density_map = []
-    for idx, l in enumerate(lines):
-        total_read += len(l) + 1 #include newline
-        numlinks = 0
-        while (link_loc < len(links) and 'offset' in links[link_loc] and links[link_loc]['offset'] != -1 and links[link_loc]['offset'] <= total_read):
-            numlinks += 1
-            link_loc += 1
-        link_density_map.append(numlinks/(len(l)+1))
-
-    print(f'Density map: {link_density_map}')
-    #find menus and content and treat differently.  
-
-    link_loc = 0 #reset for real reading
-    total_read = 0
-    while (link_loc < len(links) and 'offset' in links[link_loc] and links[link_loc]['offset'] == -1):
-        link_loc += 1
-
     for idx, l in enumerate(lines):
         if (stop_event.is_set()):
             logger.info('Audio stop event set, stopping playback')
             print('Audio stop event set, stopping playback')
+            mp_stop.set() #stop audio generation as well
             break
         if (skip_event.is_set()):
             logger.info('Audio skip event set, skipping this line')
             print('Audio skip event set, skipping next several lines')
             lines_to_skip = q.get()
-            skip += lines_to_skip    #skip next 3 lines
-            skip_event.clear()
+            if (lines_to_skip > -1000):
+                skip += lines_to_skip    #skip next 3 lines
+                skip_event.clear()
+            elif (lines_to_skip > -100000):
+                #skip to the next type of line.  
+                lines_to_skip = -lines_to_skip
+                type = round(lines_to_skip / 20000)
+                num = lines_to_skip % 20000
+                if (num > 10000):
+                    num = 20000 - num
+                print(f'Skipping to next type {type} num {num}')
+                ldm_read = 0
+                if (num > 0):
+                    for l, idx in enumerate(link_density_map):
+                        
+                        if (ldm_read < total_read):
+                            ldm_read += len(link_density_map[l]['text']) + 1
+                            continue
+                        skip += 1
+                        if (num ==0):
+                            break
+                        if (is_type(link_density_map[l], type)):
+                            num -= 1
+                else:
+                    ldm_read = len(text)
+                    for l in range(len(link_density_map)-1, -1, -1):
+                        if (ldm_read > total_read):
+                            ldm_read -= len(link_density_map[l]['text']) + 1
+                            continue
+                        skip -= 1
+                        if (num ==0):
+                            break
+                        if (is_type(link_density_map[l], type)):
+                            num += 1
+
+
+            else:
+                #this is go to next type or previous type event.  
+                lines_to_skip = 0 #unknown event
 
         if (skip > 0):
             skip -= 1
             total_read += len(l) + 1 #include newline
             continue
 
+        if (skip < 0):
+            skip += 1
+            total_read -= len(l) + 1 #include newline
+            continue
         print(f'Line: {l}')
-        print(f'Link density: {link_density_map[idx]}')
-        sound_file = f"./temp/{idx}.mp3"
+        print(f'Link density: {link_density_map[idx]['density']}')
+        sound_file = link_density_map[idx]['audio']
         if (len(l) > 5):
             try:
     #            communicate = edge_tts.Communicate(text, VOICE)
     #            await communicate.save(sound_file)
-                os.system(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --text \"{l}\" --rate=\"-10%\"")
-                playsound(sound_file, block=False) # Ensure this thread blocks for its sound
+                #play the line type info first
+                play_l(link_density_map[idx])
+
+                if (os.path.exists(sound_file)):
+                    print(f'Playing pre-generated audio: {sound_file}')
+                    playsound(sound_file, block=False) # Ensure this thread blocks for its sound
+                else:
+                    print(f'Generating and playing audio: {l}')
+                    sound_file = f"./temp/{idx}.mp3"
+                    os.system(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --text \"{l}\" --rate=\"-10%\"")
+#                    sound_file = f"./temp/{idx}.wav"
+                    #fast not working.. edge-tts much better quality than speechbrain tts.
+#                    cmd = f"python ./extensions/trey/speech.py --text \"{l}\" --fname \"{sound_file}\""
+#                    os.system(cmd)
+                    playsound(sound_file, block=False) # Ensure this thread blocks for its sound
 #                time.sleep(0.5) #short pause between lines
             except Exception as e:
                 logger.error(f'Error in TTS playback: {e}')
@@ -306,11 +452,11 @@ def play_in_background(text, links=[], stop_event=None, skip_event=None, q=None,
             #maybe problematic.  
             if (link_loc < len(links) and 'offset' in links[link_loc] and links[link_loc]['offset'] != -1 and links[link_loc]['offset'] <= total_read):
                 print(f'At link: {links[link_loc]}')
-                winsound.Beep(1000, 100) #short beep to indicate link
+                winsound.Beep(500, 100) #short beep to indicate link
                 link_loc += 1
             
-            waited += 0.4
-            time.sleep(0.4) #simulate reading time. 0.4 seconds per 5 characters estimate.  
+            waited += 0.5
+            time.sleep(0.5) #simulate reading time. 0.4 seconds per 5 characters estimate.  
             #shouldnt have to be too exact.  
         print(f'Total waited: {waited}')
 
@@ -348,7 +494,7 @@ def play_in_background(text, links=[], stop_event=None, skip_event=None, q=None,
 def speak(text, links = []):
     global audio_stop_events
     """Speak the given text using the speech pipeline."""
-    print(f'Speaking: {text}')
+#    print(f'Speaking: {text}')
 
     audio_stop_event = threading.Event()  # Event to signal stopping
     audio_stop_events.append(audio_stop_event)  # Store the event in the global list
@@ -652,6 +798,26 @@ def skip_lines(n):
         print('Skipping lines in audio thread')
         audio_skip_queue[i].put(n*3)
         audio_skip_event.set()
+
+def select_type(n):
+    #called from hotkeys to skip n lines of audio.
+    global audio_skip_events
+    global current_type
+    current_type = n
+    print(f'Select Type {n}')
+
+        
+def next_type(n):
+    #called from hotkeys to skip n lines of audio.
+    global audio_skip_events
+    global current_type
+    print(f'Jump Next {n}')
+    for i, audio_skip_event in enumerate(audio_skip_events):
+        print('Skipping lines in audio thread')
+        if (current_type is not None):
+            audio_skip_queue[i].put(-20000*current_type -n) #signal to go to next type
+            
+            audio_skip_event.set()
 
 def page(n):
     #called from hotkeys to skip n lines of audio.

@@ -24,6 +24,13 @@ import importlib
 import logging
 import time
 
+import mido
+from mido import Message, MidiFile, MidiTrack
+
+from mido.ports import MultiPort
+
+import base64
+import os
 #logging.basicConfig(filename='trey.log', 
 #    format='%(asctime)s %(levelname)-8s %(message)s',
 #    level=logging.INFO,
@@ -64,6 +71,7 @@ class MyLang:
 class MyKeys:
   def __init__(self, config, qapp=None, startx=0):
     self.config = config
+    self.langdir = config['keymap']['settings']['LANG_DIR']
     self.qapp = qapp
     self.startx = startx
     self.maxseq = 20 #can we chain together anything meaningful?  
@@ -395,4 +403,67 @@ class MyKeys:
 
     print("switchLang " + self.currentlangna)
   
+
+  def text2midi(self, text):
+    #convert text to midi keys.  
+    mid = MidiFile()
+#    mid.ticks_per_beat = 1000000
+#    mid.tempo = 60
+    track = MidiTrack()
+    controltrack = MidiTrack()
+#    track.append(MetaMessage('set_tempo', tempo=100000, time=0))
+    mid.tracks.append(track)
+    mytime = 0
+#    text = text.upper()
+    basemsg = Message('note_on', control=basenote, value=127, time=mytime) #all notes off
+    track.append(basemsg)
+
+    words = text.split(' ')
+    b64folder = ""
+    basenote = 112 #E8
+    for w in words:
+      b64word = base64.b64encode(w)
+      b64folder += "/" + str(b64word)
+      for c in text:
+        note1 = basenote + ord(c) // 16
+        note2 = basenote + ord(c) % 16
+        print(f'Note [{note1},{note2}] for char {c}')
+        omsg = Message('note_on', note=note1, velocity=127, time=mytime)
+        track.append(omsg)
+        mytime += 100
+        omsgoff = Message('note_off', note=note1, velocity=0, time=mytime)
+        track.append(omsgoff)
+        omsg2 = Message('note_on', note=note2, velocity=127, time=mytime)
+        track.append(omsg2)
+        mytime += 100
+        omsgoff2 = Message('note_off', note=note2, velocity=0, time=mytime)
+        track.append(omsgoff2)
+
+      baseoff = Message('note_off', control=basenote, value=0, time=mytime)
+      track.append(baseoff)
+      mytime += 300
+      basemsg = Message('note_on', control=basenote, value=127, time=mytime) #all notes off
+      track.append(basemsg)
+      continue
+
+
+
+    if (len(text) > 64):
+      print("Text too long for midi, not saving.")
+      return mid
+    else:
+      if not os.path.exists(self.langdir + "/" + b64folder):
+        #do we want to save this?  to use for what?  
+        os.makedirs(self.langdir + "/" + b64folder)
+        mid.save(self.langdir + "/" + b64folder + "/" + "1" + '.mid')
+
+    return mid
+  
+  def playmidi(self, mid):
+    #play midi file.  
+    with mido.open_output() as outport:
+      for msg in mid.play():
+        print(msg)
+        outport.send(msg)
+    return 0
     

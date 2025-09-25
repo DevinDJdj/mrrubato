@@ -66,6 +66,7 @@ class hotkeys:
         "Stop": [53,52],
         "Read Screen": [53,50],      
         "Go Back": [53,51], 
+        "Next": [53,57], #parameter type
 #        "Page": [53,57],
       },
       "3": {
@@ -74,6 +75,7 @@ class hotkeys:
         "Click Link": [53,55, 60], #also read screen
         "Search Web": [53,55, 61], #also read screen
         "Comment": [53,56, 57], #record comment
+        "Select Type": [53,57, 58], #parameter type default go next.  
       }
     }
     if (self.name in self.config['languages']):
@@ -94,6 +96,8 @@ class hotkeys:
       "Click Link": "click_link",
       "Search Web": "search_web",
       "Comment": "comment",
+      "Select Type": "select_type",
+      "Next": "next",
 
     }
 
@@ -137,7 +141,7 @@ class hotkeys:
     from extensions.trey.trey import speak
     speak(f'Searching the web for: {query}')
     body_text, link_data, page, cacheno = playwrighty.search_web(query)
-    print(body_text)
+#    print(body_text)
     q2, stop_event = speak(body_text, link_data)
     playwrighty.set_reader_queue(q2, stop_event, cacheno)
     return 0
@@ -205,6 +209,20 @@ class hotkeys:
     logger.info(f'> Skip Lines {sequence}')
     from extensions.trey.trey import skip_lines
     skip_lines(sequence[-1]-self.keybot)
+
+  def select_type(self, sequence=[]):
+    if (len(sequence) < 1):
+      sequence = [54] #default to content type
+    logger.info(f'> Select Type {sequence}')
+    from extensions.trey.trey import select_type
+    select_type(sequence[-1]-self.keybot)
+
+  def next_type(self, sequence=[]):
+    if (len(sequence) < 1):
+      sequence = [54] #default to next type
+    logger.info(f'> Next {sequence}')
+    from extensions.trey.trey import next_type
+    next_type(sequence[-1]-self.keybot)
 
   def start_me(self, sequence=[]):
     #Pass parameter for which topic to start.  

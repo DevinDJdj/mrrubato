@@ -5,6 +5,7 @@ import sounddevice as sd
 import numpy as np
 import torch
 import scipy.io.wavfile as wav
+import argparse
 
 
 #default 10 seconds for comment
@@ -61,4 +62,15 @@ def generate_audio(text, fname="example_tts.wav", fast=True):
 
     print("Audio saved to '" + fname + "'")
     return fname
+
+if (__name__ == "__main__"):
+    parser = argparse.ArgumentParser(description="A sample Python script with arguments.")
+    parser.add_argument("--text", type=str, help="Your name", default="This is a test of the text to speech system.")
+    parser.add_argument("--fname", type=str, help="Output filename", default="example_tts.wav")
+    parser.add_argument("--fast", action='store_true', help="Use FastSpeech2 model", default=False)
+    #fast not working..
+
+    args = parser.parse_args()    
+    print(f"Text: {args.text}, Filename: {args.fname}, Fast: {args.fast}")
+    generate_audio(args.text, fname=args.fname, fast=args.fast)
 

@@ -151,7 +151,8 @@ def get_page_details(page):
         link_element = links_locator.nth(i)
         href = link_element.get_attribute('href')
         text_content = link_element.text_content()
-        link_data.append({'href': href, 'text': text_content})        
+        bb = link_element.bounding_box()
+        link_data.append({'href': href, 'text': text_content, 'bbox': bb})        
 
     print(link_data)
     body_text = ""
@@ -163,6 +164,7 @@ def get_page_details(page):
         print(body_text)
 
     #iterate through and add offset for the link content
+    #should create multiple links if multiple same text. For now we just get the last offset.  
     for link in link_data:
         if link['text'] and link['href']:
             offset = body_text.find(link['text'])

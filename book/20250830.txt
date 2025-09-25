@@ -1063,10 +1063,119 @@ Need notifier of what line and how many lines.
 Also go through link density map to try to find content.  
 avg link density > 0.05 = menu
 avg link density > 0.02 = titles
-avg link density > 0 = blurb
+avg link density > 0 = blurbcd 
 link density == 0 = content
 
 Just go through the lines and generate beeps/sounds representing data type per line.  
 Each 10/20 lines make a recognizable beat of some kind to indicate where we are.  
 
+!!operator torchvision::nms does not exist
+> pip install torch torchvision torchaudio
+~~Why do we need torchvision??
 
+> python ./extensions/trey/speech.py --text "this is a test" --fname "./temp/0.wav"
+
+Need separate command for link type.  
+
+**extensions/trey/trey.py
+-select_type
+-next_type
+test..
+
+
+Create MIDI file representing layout..
+
+Instrument = Type of information
+$$OBOE
+SOL = Start of Line
+SOL (two-note chorrd with gradually increasing interval as we go through page)
+0-10% = C Db
+10-20% = C D
+etc..
+90-100% = C Bb
+
+$$Trumpet
+LINK indicator (pitch = length of link.  )
+
+
+
+**FLOW
+Summary
+content
+
+Generate vectors for lines.  
+
+Reading content lines search for similarity vectors from long links or link blurbs.  
+anything < 0.01% links = content.  
+
+
+Manually read menu options.  
+Setting for this..
+
+Organize [**FLOW] as strategies.  
+For now just this strategy..
+
+Need function to 
+> Search similar (searches similar to n line, or two params, m-n lines relative to location)
+Test one/two param is working.  
+Call search web with this text.  
+
+> Read search text
+If lose awareness of what our context is.  
+
+
+Create simple function to embed text into MIDI
+INPUT
+META Control = [1-20]
+PIANO [21 .. 108]
+Not sure what this means yet.  
+
+TEXT = [109-127]
+[109-127] = encoded characters.  
+so 4-bit chunks.  
+[112-127]
+1110000 in decimal
+[109,110,111] = text control
+LANGID = [109,110] ... [109]
+Can indicate language in midi sequence using 110,111 or just guessed language.  
+[110] = English
+[111] = Chinese
+[110,110] = ..
+[110,111] = ..
+[111,110] = ..
+[111,111] = ..
+up to any number header.  
+Then the [112-127] is text.  
+
+Just embed the entire text string bytes and divide into 4-bit segments.  
+So 1 UTF-8 char = 4 notes.  
+Acceptable..
+
+Milliseconds for now, so only 
+250 chars / second.  
+This seems low.  
+10* what can be read.  
+
+For now just use 256-byte chars.  
+So 2 notes.  
+
+Lets try to start just 50 chars /second.  
+100 10 ms intervals.  
+
+@@Can this be distinguished?
+
+Right now how it sounds doesnt matter.  
+Use two-note chorrd to generate.  
+
+
+Sequence is only thing that is important for now.  
+Timing not used as information.  
+Can we use volume as information, probably not reliably?  
+
+
+Use different voice for reading link/menu/content.  
+
+**mykeys.py
+--text2midi
+test..
+--playmidi
