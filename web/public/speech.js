@@ -621,13 +621,19 @@ export function Chat(transcript, callback=null, pending=false, lang=""){
 
 //    }
     
-    if (typeof(MyChat) === "function" && executed==false){
+    if (lastspokenword == "comment" && executed==false){
+        if (!transcript.startsWith("--")){
+            transcript = "--" + transcript;
+        }
+    }
+    if (typeof(MyChat) === "function" && executed==false && !transcript.startsWith("--")){
         //really should not be using this.  add chat to keymaps[lang]
         executed = MyChat(transcript);
     }
     else{
-        if (executed){
+        if (executed || transcript.startsWith("--")){
             //make sound.  
+            //meta changes comment to --comment
             let cmdprefix = "";
 
             if (typeof(midicontroller) !=='undefined' && midicontroller != null){
@@ -637,16 +643,17 @@ export function Chat(transcript, callback=null, pending=false, lang=""){
                 audioFeedback(commandcompletion);
             }
             //utilize meta language forcefully.  
-            if (transcript.startsWith("--")){
-                //call MyChat with comment.  
-                if (typeof(MyChat) === "function"){
+            if (typeof(MyChat) === "function"){
+                if (transcript.startsWith("--")){
+                    //call MyChat with comment.  
+                    //not sure if we want this always or not?  
                     MyChat(transcript.substr(2).trim(), helpme());
                 }
+                else{
+                    cmdprefix = "> ";
+                }
+                addComment(cmdprefix + transcript, helpme()); //not sure if we want the prefix here.  
             }
-            else{
-                cmdprefix = "> ";
-            }
-            addComment(cmdprefix + transcript, helpme()); //not sure if we want the prefix here.  
         }
         else{
             if (pedal){

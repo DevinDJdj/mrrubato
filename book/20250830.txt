@@ -1178,4 +1178,52 @@ Use different voice for reading link/menu/content.
 **mykeys.py
 --text2midi
 test..
+probably not useful in any near term.  
 --playmidi
+
+
+Need links2midi as well.  
+
+Length of MIDI word needs to have meaning of some kind.  
+
+@@What is MIDI pure sine wave?  
+
+
+> python ./mykeys.py
+
+
+**web/public/analyze.html
+Problem with repeating words again.  
+--comments
+
+
+How do we implement closure on Free commenting?  
+(12,15,15)
+(15,15,12)
+
+Not sure this is what we want.  
+Good enough for now..
+What to do when running command under comment?  
+
+Need a word to select topic.  
+
+
+OFFSET:
+_meta = 0
+videocontrol = 1
+book = 2
+--52,..
+gitcontrol = 3
+error = 4
+screencontrol = 5 (53)
+ok = 6
+good = 7
+generate = 8
+find = 9
+auto-generate? = 10
+lang = 11
+
+
+**web/public/book.html
+--select topic
+see if this works ok..

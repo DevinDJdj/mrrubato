@@ -20,6 +20,7 @@ class hotkeys:
     self.startx = startx
     self.name = "hotkeys"
     self.keybot = 53 #
+    self.keyoffset = 5 #offset within octave mapping
     self.links = []
     self.maxseq = 10 #includes parameters
     self.callback = None

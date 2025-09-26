@@ -23,7 +23,7 @@ from languages import * #maybe we want this to be dynamic, but for now whatever.
 import importlib
 import logging
 import time
-
+import sys
 import mido
 from mido import Message, MidiFile, MidiTrack
 
@@ -411,43 +411,49 @@ class MyKeys:
 #    mid.tempo = 60
     track = MidiTrack()
     controltrack = MidiTrack()
+    track2 = MidiTrack()
 #    track.append(MetaMessage('set_tempo', tempo=100000, time=0))
     mid.tracks.append(track)
-    mytime = 0
+    mid.tracks.append(track2)
+    track.append(Message('program_change', channel=0, program=81, time=0))
+    track2.append(Message('program_change', channel=0, program=81, time=0))
+    shorttime = 50
 #    text = text.upper()
-    basemsg = Message('note_on', control=basenote, value=127, time=mytime) #all notes off
-    track.append(basemsg)
+    basenote = 112 #E8
+
 
     words = text.split(' ')
     b64folder = ""
-    basenote = 112 #E8
+    totaltime = 0
     for w in words:
-      b64word = base64.b64encode(w)
+
+      #such a stupid thing to need to do..
+      b64word = base64.b64encode(w.encode('utf-8')).decode('utf-8')
       b64folder += "/" + str(b64word)
-      for c in text:
+      basemsg = Message('note_on', note=basenote, velocity=32, time=0) #all notes off
+      track.append(basemsg)
+      track2.append(basemsg)
+      for c in w:
         note1 = basenote + ord(c) // 16
         note2 = basenote + ord(c) % 16
         print(f'Note [{note1},{note2}] for char {c}')
-        omsg = Message('note_on', note=note1, velocity=127, time=mytime)
+        omsg = Message('note_on', note=note1, velocity=64)
         track.append(omsg)
-        mytime += 100
-        omsgoff = Message('note_off', note=note1, velocity=0, time=mytime)
+        omsg2 = Message('note_on', note=note2, velocity=100)
+        track2.append(omsg2)
+        omsgoff = Message('note_off', note=note1, velocity=0, time=shorttime)
+        omsgoff2 = Message('note_off', note=note2, velocity=0, time=shorttime)
         track.append(omsgoff)
-        omsg2 = Message('note_on', note=note2, velocity=127, time=mytime)
-        track.append(omsg2)
-        mytime += 100
-        omsgoff2 = Message('note_off', note=note2, velocity=0, time=mytime)
-        track.append(omsgoff2)
+        track2.append(omsgoff2)
+        totaltime += shorttime
 
-      baseoff = Message('note_off', control=basenote, value=0, time=mytime)
+      baseoff = Message('note_off', note=basenote, velocity=0, time=shorttime*4)
+      totaltime += shorttime*4
       track.append(baseoff)
-      mytime += 300
-      basemsg = Message('note_on', control=basenote, value=127, time=mytime) #all notes off
-      track.append(basemsg)
-      continue
+      track2.append(baseoff)
 
 
-
+    
     if (len(text) > 64):
       print("Text too long for midi, not saving.")
       return mid
@@ -456,7 +462,8 @@ class MyKeys:
         #do we want to save this?  to use for what?  
         os.makedirs(self.langdir + "/" + b64folder)
         mid.save(self.langdir + "/" + b64folder + "/" + "1" + '.mid')
-
+    
+    print('total time ' + str(totaltime))
     return mid
   
   def playmidi(self, mid):
@@ -467,3 +474,14 @@ class MyKeys:
         outport.send(msg)
     return 0
     
+if (__name__ == "__main__"):
+  sys.path.insert(0, 'c:/devinpiano/') #config.json path
+  sys.path.insert(1, 'c:/devinpiano/music/') #config.py path Base project path
+  import config 
+
+  mykeys = MyKeys(config.cfg)
+  text = "This is a test of the midi text to key system"
+  print("testing text to midi for: " + text)
+  mid = mykeys.text2midi(text)
+  mykeys.playmidi(mid)
+  print("Done")
