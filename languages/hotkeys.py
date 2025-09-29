@@ -7,7 +7,7 @@ import win32con
 import time
 
 import extensions.trey.playwrighty as playwrighty
-
+import extensions.trey.qdrantz as qdrantz
 
 logger = logging.getLogger(__name__)
 

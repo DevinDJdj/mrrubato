@@ -1227,3 +1227,64 @@ lang = 11
 **web/public/book.html
 --select topic
 see if this works ok..
+
+
+#https://github.com/milvus-io/milvus
+Try this for python local?  
+#https://zilliz.com/about
+
+#https://github.com/cockroachdb/cockroach?tab=readme-ov-file
+
+> pip install pymilvus
+
+All these VectorDBs are RUST and GO looks like.  
+Are these languages worth learning already?  
+#https://en.wikipedia.org/wiki/Rust_(programming_language)
+
+#https://en.wikipedia.org/wiki/Go_(programming_language)
+
+#https://code.visualstudio.com/docs/languages/go
+#https://code.visualstudio.com/docs/languages/rust
+
+#https://github.com/browser-use/browser-use
+Try this instead of playwright before we get too far along..
+#https://github.com/Skyvern-AI/skyvern
+#https://github.com/apify/crawlee
+
+
+
+#https://github.com/AutomaApp/automa
+#https://github.com/nanobrowser/nanobrowser
+
+Try one of these browser extensions..
+
+
+What can I write in GO or RUST..
+
+**extensions/trey/test/milvusme.py
+> pip install pymilvus[milvus_lite]
+
+!!pymilvus.exceptions.ConnectionConfigException: <ConnectionConfigException: (code=1, message=milvus-lite is required for local database connections. Please install it with: pip install pymilvus[milvus_lite])>
+
+==
+Milvus Lite currently supports the following environmnets:
+
+Ubuntu >= 20.04 (x86_64 and arm64)
+MacOS >= 11.0 (Apple Silicon M1/M2 and x86_64)
+$$
+
+$$Ubuntu
+> python3 ./extensions/trey/test/milvusme.py
+
+
+#https://github.com/qdrant/qdrant
+
+> pip install qdrant-client
+
+#https://qdrant.tech/documentation/beginner-tutorials/hybrid-search-fastembed/
+Try this..
+Build 
+
+**extensions/trey/qdrantz.py
+> python ./extensions/trey/qdrantz.py
+> pip install fastembed

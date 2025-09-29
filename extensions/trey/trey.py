@@ -308,6 +308,17 @@ def play_ldmap(ldmap):
         print(f'Playing audio for line {idx}: {l["text"]} with {l["numlinks"]} links')
         play_l(l)
 
+def get_type(l):
+    """Get the type of the line based on link density."""
+    if (l['density'] > 0.05): #menu
+        return 'menu'
+    elif (l['density'] > 0.02 and l['density'] <= 0.05): #title
+        return 'title'
+    elif (l['density'] > 0.01 and l['density'] <= 0.02): #blurb
+        return 'blurb'
+    else: #content
+        return 'content'
+    
 def is_type(l, type):
     """Check if the line is of the given type."""
     if (type == 1 and l['density'] > 0.05): #menu
@@ -323,6 +334,15 @@ def is_type(l, type):
 def play_in_background(text, links=[], stop_event=None, skip_event=None, q=None, q2=None):
     sound_file = "0.mp3"
     VOICE = "en-US-AriaNeural"
+    #en-US-AshleyNeural 
+    #en-US-AvaNeural   
+    #en-US-BrandonNeural 
+    #en-US-BrianNeural 
+    #en-US-CoraNeural  
+    #en-US-DavisNeural 
+    #en-US-ElizabethNeural 
+    #en-US-EmmaNeural  
+    #en-US-EricNeural
 #    tts_file = "TTS.txt"
 #    with open(tts_file, "w") as f:
 #        f.write(text)
