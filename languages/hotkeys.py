@@ -7,7 +7,6 @@ import win32con
 import time
 
 import extensions.trey.playwrighty as playwrighty
-import extensions.trey.qdrantz as qdrantz
 
 logger = logging.getLogger(__name__)
 
@@ -143,8 +142,8 @@ class hotkeys:
     speak(f'Searching the web for: {query}')
     body_text, link_data, page, cacheno = playwrighty.search_web(query)
 #    print(body_text)
-    q2, stop_event = speak(body_text, link_data)
-    playwrighty.set_reader_queue(q2, stop_event, cacheno)
+    q2, q3, stop_event = self.speak(body_text, link_data)
+    playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
     return 0
     
   def click_link(self, sequence=[]):
@@ -158,24 +157,32 @@ class hotkeys:
       current_cache = playwrighty.current_cache
       if (current_cache >= 0 and current_cache < len(playwrighty.page_cache)):
         #get queue for reading.
-        q = playwrighty.page_cache[current_cache]['reader_queue']
-        while (q is not None and not q.empty()):
-          total_read = q.get() #get current link number.  
+        q2 = playwrighty.page_cache[current_cache]['reader_queue']
+        while (q2 is not None and not q2.empty()):
+          total_read = q2.get() #get current link number.  
+        q3 = playwrighty.page_cache[current_cache]['sim_queue']
+        siml = []
+        while (q3 is not None and not q3.empty()):
+          siml.insert(0,q3.get()) #get current similar offset.
 
 
+
+      #Use simlink if we are using future links.  
+      if sequence[-1]-self.keybot > 0 and len(siml) > sequence[-1]-self.keybot-1:
+        total_read = siml[sequence[-1]-self.keybot-1]
       a = playwrighty.click_link(-1, total_read, sequence[-1]-self.keybot)
       if (isinstance(a, tuple)):
         body_text, link_data, page, cacheno = a
         print(body_text)
-        q2, stop_event = self.speak(body_text, link_data)
-        playwrighty.set_reader_queue(q2, stop_event, cacheno)
+        q2, q3, stop_event = self.speak(body_text, link_data)
+        playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
       else:
         print(f'Clicked link, no new page returned {a}')
         link = None
         idx = sequence[-1]-7-self.keybot
         if (idx >= 0 and idx < len(self.links)):
           link = self.links[idx]
-        q2, stop_event = self.speak(f'Clicked link {idx} {link['text']} but nothing new to read.  Go back or restart search')
+        q2, q3, stop_event = self.speak(f'Clicked link {idx} {link['text']} but nothing new to read.  Go back or restart search')
 
 
   def go_back(self, sequence=[]):
@@ -190,8 +197,8 @@ class hotkeys:
       if (isinstance(a, tuple)):
         body_text, link_data, page, cacheno = a
         print(body_text)
-        q2, stop_event = self.speak(body_text, link_data)
-        playwrighty.set_reader_queue(q2, stop_event, cacheno)
+        q2, q3, stop_event = self.speak(body_text, link_data)
+        playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
       else:
         print(f'Clicked back, no new page returned {a}')
         logger.info('No valid page to go back to.')
@@ -248,8 +255,8 @@ class hotkeys:
       text, links = playwrighty.get_page_details(playwrighty.get_ppage(playwrighty.current_cache))
       self.links = links
       print(f'Playwright found {len(text)} characters and {len(links)} links  on the page') 
-      q2, stop_event = self.speak(text, links)
-      playwrighty.set_reader_queue(q2, stop_event, playwrighty.current_cache)
+      q2, q3, stop_event = self.speak(text, links)
+      playwrighty.set_reader_queue(q2, q3, stop_event, playwrighty.current_cache)
           
     else:
       #use PyQt to read screen.

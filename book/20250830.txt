@@ -1288,3 +1288,21 @@ Build
 **extensions/trey/qdrantz.py
 > python ./extensions/trey/qdrantz.py
 > pip install fastembed
+
+maybe need click_suggested_link
+
+@QDRANT
+!!size=qdrantz_client.get_embedding_size(dense_model_name),
+!!ImportError: fastembed is not installed. Please install it to enable fast vector indexing with `pip install fastembed`
+#https://github.com/qdrant/qdrant-client/blob/master/qdrant_client/qdrant_fastembed.py
+
+
+~~this is not the right message.  
+
+==
+> pip uninstall onnxruntime
+> pip install onnxruntime==1.20.1
+$$
+
+**extensions/trey/trey.py
+link density and numlinks not correct..

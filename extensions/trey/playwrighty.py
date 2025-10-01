@@ -126,12 +126,13 @@ def close_browser():
         mybrowser = None
     return 0
 
-def set_reader_queue(q, stop_event, cacheno=-1):
+def set_reader_queue(q2, q3, stop_event, cacheno=-1):
     global current_cache
     if cacheno < 0:
         cacheno = current_cache
     if cacheno >= 0 and cacheno < len(page_cache):
-        page_cache[cacheno]['reader_queue'] = q
+        page_cache[cacheno]['reader_queue'] = q2
+        page_cache[cacheno]['sim_queue'] = q3
         page_cache[cacheno]['reader_stop_event'] = stop_event
         return True
 
@@ -161,7 +162,7 @@ def get_page_details(page):
         body_element = body.nth(i)
 
         body_text += body.inner_text()
-        print(body_text)
+    print(body_text)
 
     #iterate through and add offset for the link content
     #should create multiple links if multiple same text. For now we just get the last offset.  
@@ -172,16 +173,17 @@ def get_page_details(page):
         else:
             print("Link with missing text or href")
             link['offset'] = -1
-    print(link_data)
     #sort by offset.  
     link_data.sort(key=lambda x: x.get('offset'))
+    print(link_data)
+    
     return body_text, link_data
 
 def cache_page(url, page, body_text, link_data, cacheno=-1):
     if cacheno >= 0 and cacheno < len(page_cache):
-        page_cache[cacheno] = {'query': url, 'page': page, 'body': body_text, 'links': link_data, 'title' : page.title(), 'reader_queue': page_cache[cacheno].get('reader_queue', None), 'reader_stop_event': page_cache[cacheno].get('reader_stop_event', None)}            
+        page_cache[cacheno] = {'query': url, 'page': page, 'body': body_text, 'links': link_data, 'title' : page.title(), 'reader_queue': page_cache[cacheno].get('reader_queue', None), 'sim_queue': page_cache[cacheno].get('sim_queue', None), 'reader_stop_event': page_cache[cacheno].get('reader_stop_event', None)}            
     else:
-        page_cache.append({'query': url, 'page': page, 'body': body_text, 'links': link_data, 'title' : page.title(), 'reader_queue': None, 'reader_stop_event': None})
+        page_cache.append({'query': url, 'page': page, 'body': body_text, 'links': link_data, 'title' : page.title(), 'reader_queue': None, 'sim_queue': None, 'reader_stop_event': None})
         cacheno = len(page_cache) - 1
     return cacheno
 

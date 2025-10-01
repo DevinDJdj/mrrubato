@@ -58,6 +58,16 @@ import simpleaudio as sa
 import pygame
 import edge_tts
 
+import extensions.trey.qdrantz as qdrantz
+from fastembed import (
+                SparseTextEmbedding,
+                TextEmbedding,
+                ImageEmbedding,
+                LateInteractionMultimodalEmbedding,
+                LateInteractionTextEmbedding,
+            )
+
+
 
 logger = logging.getLogger(__name__)
 global mywindow
@@ -257,12 +267,12 @@ def build_map(lines, links):
 
     link_density_map = []
     for idx, l in enumerate(lines):
-        total_read += len(l) + 1 #include newline
+        total_read += len(l)  #include newline
         numlinks = 0
         while (link_loc < len(links) and 'offset' in links[link_loc] and links[link_loc]['offset'] != -1 and links[link_loc]['offset'] <= total_read):
             numlinks += 1
             link_loc += 1
-        link_density_map.append({"text": l, "length": len(l), "numlinks": numlinks, "audio": f"./temp/{idx}.wav", "density": numlinks/(len(l)+1)})
+        link_density_map.append({"offset": total_read, "text": l, "length": len(l), "numlinks": numlinks, "audio": f"./temp/{idx}.wav", "density": numlinks/(len(l)+1)})
         
 
     return link_density_map
@@ -331,9 +341,30 @@ def is_type(l, type):
         return True
     return False
 
-def play_in_background(text, links=[], stop_event=None, skip_event=None, q=None, q2=None):
+
+def init_qdrantz(ldmap, topic="websearch"):
+    qdrantz.init_qdrant()
+    qdrantz.get_collection(topic)
+    vectors = [l['text'] for l in ldmap]
+    ids = [i for i in range(len(vectors))]
+    qdrantz.add_vectors(topic, vectors, ids)
+
+
+def get_similar(idx, ldmap, topk=3):
+    qdrantz.init_qdrant()
+    collection = qdrantz.get_collection("websearch")
+    if (collection is not None):
+
+        hybrid_searcher = qdrantz.HybridSearcher(collection_name="websearch", qdrantz_client=collection)
+        results = hybrid_searcher.search(text=ldmap[idx]['text'], top_k=topk)
+        print(f'Similar items to line {idx}: {ldmap[idx]["text"]}')
+        return results
+    return []
+
+def play_in_background(text, links=[], stop_event=None, skip_event=None, q=None, q2=None, q3=None):
     sound_file = "0.mp3"
     VOICE = "en-US-AriaNeural"
+    SIMVOICE = ["en-US-CoraNeural", "en-US-ElizabethNeural"]
     #en-US-AshleyNeural 
     #en-US-AvaNeural   
     #en-US-BrandonNeural 
@@ -376,6 +407,8 @@ def play_in_background(text, links=[], stop_event=None, skip_event=None, q=None,
         link_loc += 1
         #skip all links with no offset
 
+
+    init_qdrantz(link_density_map, topic="websearch")
 
     for idx, l in enumerate(lines):
         if (stop_event.is_set()):
@@ -446,6 +479,7 @@ def play_in_background(text, links=[], stop_event=None, skip_event=None, q=None,
                 #play the line type info first
                 play_l(link_density_map[idx])
 
+
                 if (os.path.exists(sound_file)):
                     print(f'Playing pre-generated audio: {sound_file}')
                     playsound(sound_file, block=False) # Ensure this thread blocks for its sound
@@ -463,6 +497,37 @@ def play_in_background(text, links=[], stop_event=None, skip_event=None, q=None,
                 logger.error(f'Error in TTS playback: {e}')
                 print(f'Error in TTS playback: {e}')
                 continue
+
+            if (len(l) > 50): #only do similar for longer lines
+                r = None
+                r = get_similar(idx, link_density_map) #do a vector search for similar items.
+                #if we have good results here we could read them out.
+    #            print(r)
+                if (r is not None and len(r) > 0):
+                    print(f'Similar items to line {idx}: {link_density_map[idx]["text"]}')
+                    for result,ridx in r:
+                        voice = SIMVOICE[ridx % len(SIMVOICE)]
+                        print(result)
+                        rid = result['id']
+                        if (rid != idx): #dont return self
+                            #read out the similar item.  
+                            siml = link_density_map[rid]['text']
+                            print(link_density_map[rid])
+                            #only get similar when we have a lengthy item, also dont read too long similar items.
+                            #dont read if we are about to read.  
+                            if (len(siml) > 5 and len(siml) < 200 and len(siml) < len(l) and link_density_map[rid]['numlinks'] > 0 and abs(link_density_map[rid]['offset']-total_read) > 100): 
+                                print(f'Reading similar item: {siml}')
+                                try:
+                                    sound_file = f"./temp/sim{rid}.mp3"
+                                    os.system(f"edge-tts --voice \"{voice}\" --write-media \"{sound_file}\" --text \"Similar: {siml}\" --rate=\"-10%\"")
+                                    playsound(sound_file, block=False) # Ensure this thread blocks for its sound
+
+                                except Exception as e:
+                                    logger.error(f'Error in TTS playback of similar item: {e}')
+                                    print(f'Error in TTS playback of similar item: {e}')
+                                    continue
+                            if (q3 is not None):
+                                q3.put(link_density_map[rid]['offset']) #send back the offset of the similar item.
 
         total_read += len(l) + 1 #include newline
         print(f'Total read: {total_read}')
@@ -516,6 +581,7 @@ def speak(text, links = []):
     """Speak the given text using the speech pipeline."""
 #    print(f'Speaking: {text}')
 
+    
     audio_stop_event = threading.Event()  # Event to signal stopping
     audio_stop_events.append(audio_stop_event)  # Store the event in the global list
     audio_skip_event = threading.Event()  # Event to signal skipping
@@ -524,10 +590,12 @@ def speak(text, links = []):
     audio_skip_queue.append(q)
     q2 = Queue()
     audio_location_queue.append(q2)
+    q3 = Queue()
+
     print(audio_stop_events)
-    audio_thread = threading.Thread(target=play_in_background, args=(f'{text}',links, audio_stop_event, audio_skip_event, q, q2))
+    audio_thread = threading.Thread(target=play_in_background, args=(f'{text}',links, audio_stop_event, audio_skip_event, q, q2, q3))
     audio_thread.start()
-    return q2, audio_stop_event #communicate how much we have read.  
+    return q2, q3, audio_stop_event #communicate how much we have read.  
 
 """
 def speak(text):
