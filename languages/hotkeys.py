@@ -140,7 +140,10 @@ class hotkeys:
     query = "What is the capital of France?"
     from extensions.trey.trey import speak
     speak(f'Searching the web for: {query}')
-    body_text, link_data, page, cacheno = playwrighty.search_web(query)
+    engine = 0
+    if (len(sequence) > 1):
+      engine = sequence[-1]-self.keybot
+    body_text, link_data, page, cacheno = playwrighty.search_web(query, engine=engine)
 #    print(body_text)
     q2, q3, stop_event = self.speak(body_text, link_data)
     playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
@@ -168,8 +171,10 @@ class hotkeys:
 
 
       #Use simlink if we are using future links.  
+      #should be the location of the simlink.  
       if sequence[-1]-self.keybot > 0 and len(siml) > sequence[-1]-self.keybot-1:
         total_read = siml[sequence[-1]-self.keybot-1]
+
       a = playwrighty.click_link(-1, total_read, sequence[-1]-self.keybot)
       if (isinstance(a, tuple)):
         body_text, link_data, page, cacheno = a

@@ -38,27 +38,29 @@ def create_collection(topic, dimension=384):
         )
     return qdrantz_client
 
-def add_vectors(topic, vectors, ids=None):
+def add_vectors(topic, texts, ids=None, payloads=None):
     global qdrantz_client
     if not qdrantz_client.collection_exists(topic):
         create_collection(topic)
-    if ids is None:
-        ids = [i for i in range(len(vectors))]
+    if ids is None:        
+        ids = [i for i in range(len(texts))]
     print("Adding vectors to Qdrant collection...")
-    print(len(vectors), len(ids))
+    print(len(texts), len(ids))
+    if payloads is None:
+        payloads = [{"id": ids[i], "text": texts[i]} for i in range(len(texts))]
     qdrantz_client.upsert(
         collection_name=topic,
         points=[
             models.PointStruct(
                 id=ids[i],
                 vector={
-                    dense_vector_name: models.Document(text=vectors[i], model=dense_model_name),
+                    dense_vector_name: models.Document(text=texts[i], model=dense_model_name),
         
-                    sparse_vector_name: models.Document(text=vectors[i], model=sparse_model_name),
+                    sparse_vector_name: models.Document(text=texts[i], model=sparse_model_name),
                 },
-                payload={"text": vectors[i], "id": ids[i]},
+                payload=payloads[i],
             )
-            for i in range(len(vectors))
+            for i in range(len(texts))
         ],
     )
     return True

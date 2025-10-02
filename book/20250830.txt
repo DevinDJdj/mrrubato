@@ -1306,3 +1306,23 @@ $$
 
 **extensions/trey/trey.py
 link density and numlinks not correct..
+Maybe better..
+
+Additional voice good.  
+Need to check that the second SIM queue works ok.  
+
+
+**news.py
+#https://github.com/unclecode/crawl4ai
+
+Create subcommand for [**trey.py]
+
+Also need to measure truth from multiple sources, and create a 
+PCT verified data point.  
+Aggregate the news and create a sourcing chain.  
+Point out similarities and discrepancies.  
+Grade each against the other.  
+
+check other engine for search.  
+
+about 10 mins for just one newspaper download..

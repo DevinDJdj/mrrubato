@@ -27,7 +27,8 @@ import config
 logger = logging.getLogger(__name__)
 
 pages = {}
-page_cache = []
+page_cache = [] # this should include history of pages each time.  
+#array of arrays with {query, page, body, links, title, reader_queue, sim_queue, reader_stop_event}
 
 mybrowser = None
 myplaywright = None
@@ -176,7 +177,7 @@ def get_page_details(page):
     #sort by offset.  
     link_data.sort(key=lambda x: x.get('offset'))
     print(link_data)
-    
+
     return body_text, link_data
 
 def cache_page(url, page, body_text, link_data, cacheno=-1):
@@ -221,12 +222,37 @@ def read_page(url, cacheno=-1):
     return body_text, link_data, page, cacheno
 
 
-def search_web(query, cacheno=-1):
+def search_web(query, engine=0, cacheno=-1):
     """Search the web for a query using Playwright."""
     logging.info(f'Searching the web for: {query}')
     # Implement the web search logic here
     # This is a placeholder implementation
-    url = f"https://www.bing.com/news/search?q={query}"
+    baseurl = "https://www.bing.com/news/search?q="
+    print(f"Using search engine {engine}")
+    if (engine == 1): #wiki
+        baseurl = "https://en.wikipedia.org/w/index.php?search="
+    elif (engine == 2): #yahoo
+        baseurl = "https://search.yahoo.com/search?p="
+    elif (engine == 3):
+        baseurl = "https://duckduckgo.com/?q="
+    elif (engine == 4):
+        baseurl = "https://www.bing.com/search?q="
+    elif (engine == 5):
+        baseurl = "https://www.ecosia.org/search?q="
+    elif (engine == 6):
+        baseurl = "https://www.qwant.com/?q="
+    elif (engine == 7):
+        baseurl = "https://www.startpage.com/do/dsearch?query="
+    elif (engine == 8):
+        baseurl = "https://www.yandex.com/search/?text="
+    elif (engine == 9):
+        baseurl = "https://www.wikipedia.org/wiki/Special:Search?search="
+    elif (engine == 10):
+        baseurl = "https://news.google.com/search?q="
+    elif (engine == 11):
+        baseurl = "https://www.bing.com/news/search?q="
+
+    url = f"{baseurl}{query}"
     body_text, link_data, page, cacheno = read_page(url, cacheno)
 
     return body_text, link_data, page, cacheno

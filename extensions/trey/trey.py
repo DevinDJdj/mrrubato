@@ -59,6 +59,8 @@ import pygame
 import edge_tts
 
 import extensions.trey.qdrantz as qdrantz
+import news as news #get news articles
+
 from fastembed import (
                 SparseTextEmbedding,
                 TextEmbedding,
@@ -345,9 +347,10 @@ def is_type(l, type):
 def init_qdrantz(ldmap, topic="websearch"):
     qdrantz.init_qdrant()
     qdrantz.get_collection(topic)
-    vectors = [l['text'] for l in ldmap]
-    ids = [i for i in range(len(vectors))]
-    qdrantz.add_vectors(topic, vectors, ids)
+    texts = [l['text'] for l in ldmap]
+    ids = [i for i in range(len(texts))]
+    payloads = [{'id': i, 'text': texts[i]} for i in range(len(texts))]
+    qdrantz.add_vectors(topic, texts, ids, payloads)
 
 
 def get_similar(idx, ldmap, topk=3):
