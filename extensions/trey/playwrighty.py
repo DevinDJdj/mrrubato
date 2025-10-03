@@ -32,6 +32,7 @@ page_cache = [] # this should include history of pages each time.
 
 mybrowser = None
 myplaywright = None
+mycontext = None
 
 current_cache = -1 #current cache page we are on.
 
@@ -127,6 +128,12 @@ def close_browser():
         mybrowser = None
     return 0
 
+def get_stop_event(cacheno=-1):
+    global current_cache
+    if cacheno >= 0 and cacheno < len(page_cache):
+        return page_cache[cacheno]['reader_stop_event']
+    
+    return None
 def set_reader_queue(q2, q3, stop_event, cacheno=-1):
     global current_cache
     if cacheno < 0:
@@ -143,7 +150,10 @@ def get_ppage(cacheno=-1): #get playwright page from cacheno
         page = page_cache[cacheno]['page']
     else:
         browser = open_browser()
-        page = browser.new_page()
+        global mycontext
+        if mycontext is None:
+            mycontext = browser.new_context()
+        page = mycontext.new_page()
     return page
 
 def get_page_details(page):

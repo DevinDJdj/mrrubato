@@ -67,6 +67,7 @@ class hotkeys:
         "Read Screen": [53,50],      
         "Go Back": [53,51], 
         "Next": [53,57], #parameter type
+        "List Tabs": [53,58],
 #        "Page": [53,57],
       },
       "3": {
@@ -98,6 +99,7 @@ class hotkeys:
       "Comment": "comment",
       "Select Type": "select_type",
       "Next": "next",
+      "List Tabs": "list_tabs",
 
     }
 
@@ -135,15 +137,36 @@ class hotkeys:
 
     return 0
     
+  def list_tabs(self, sequence=[]):
+    logger.info(f'> List Tabs {sequence}')
+    if (playwrighty.mybrowser is not None):
+      for i, page_info in enumerate(playwrighty.page_cache):
+        print(f'Tab {i}: {page_info["url"]}')
+        self.speak(f'Tab {i}: {page_info["title"]}')
+    else:
+      print('No browser session active.')
+      self.speak('No browser session active.')
+    return 0
+  
   def search_web(self, sequence=[]):
     logger.info(f'> Search Web {sequence}')
     query = "What is the capital of France?"
     from extensions.trey.trey import speak
     speak(f'Searching the web for: {query}')
     engine = 0
-    if (len(sequence) > 1):
+    cacheno = -1
+    print(sequence)
+
+    #one param = engine
+    if (len(sequence) > 0):
       engine = sequence[-1]-self.keybot
-    body_text, link_data, page, cacheno = playwrighty.search_web(query, engine=engine)
+    #two = engine, cacheno
+    if (len(sequence) > 1):
+      engine = sequence[-2]-self.keybot
+      cacheno = sequence[-1]-self.keybot
+
+    
+    body_text, link_data, page, cacheno = playwrighty.search_web(query, engine=engine, cacheno=cacheno)
 #    print(body_text)
     q2, q3, stop_event = self.speak(body_text, link_data)
     playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
@@ -247,7 +270,14 @@ class hotkeys:
     """Stop MIDI input/output."""
     logger.info(f'> Stop ME {sequence}')
     from extensions.trey.trey import stop_audio
-    stop_audio()
+    cacheno = -1
+    if (len(sequence) > 0):
+      cacheno = sequence[-1]-self.keybot
+      stop_event = playwrighty.get_stop_event(cacheno)
+      if (stop_event is not None):
+        stop_event.set()  # Signal the specific audio thread to stop
+    else:
+      stop_audio() #stop all.  
 
     return 0
 

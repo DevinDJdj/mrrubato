@@ -292,10 +292,14 @@ def remove_temp_audio(dir):
 
 
 
-def play_l(l):
+def play_l(l, pctcomplete=0.0):
 
     c = 261.63 * 4 #high C
     c *= 2 ** ((l['numlinks'] - 1) / 12) #each link increases pitch by a semitone
+    length = 50
+    if (c > 10000):
+        #audible range, no need to use upper limits yet..
+        c = 10000
     type = "content"
     if (l['density'] > 0.05):
         type="menu"
@@ -306,6 +310,7 @@ def play_l(l):
     else:
         type="content"
     if (type == "menu"):
+
         winsound.Beep(round(c), 50) #short beep to indicate menu
     elif (type == "title"):
         winsound.Beep(round(c/2), 50) #short beep to indicate title
@@ -313,12 +318,37 @@ def play_l(l):
         winsound.Beep(round(c/2), 100) #short beep to indicate blurb
     else:
         winsound.Beep(round(c/4), 200) #short beep to indicate content
+    
+    if (pctcomplete > 0.0):
+        #play a quick ascending scale to indicate progress through document
+        for i in range(6):
+            if (pctcomplete >= (i-1)/5):
+                winsound.Beep(round(c*2 * (1 + i/12)), 20)
+
 
 def play_ldmap(ldmap):
     """Play audio for the given link density map."""
     for idx, l in enumerate(ldmap):
         print(f'Playing audio for line {idx}: {l["text"]} with {l["numlinks"]} links')
         play_l(l)
+
+def get_first_content_line(ldmap):
+    """Get the index of the first content line in the link density map."""
+    mavgdensity = 0.0
+    mavglength = 0.0
+    currentl = 0
+    mavgcounter = 10
+    for idx, l in enumerate(ldmap):
+        mavglength += l['length']
+        mavgdensity += l['density']
+        currentl += 1
+        print(f'Line {currentl} length {l["length"]} density {l["density"]} : mavg length {mavglength} mavg density {mavgdensity}')
+        if (currentl > 5 and (mavgdensity/mavgcounter < 0.02 and mavglength/mavgcounter > 20)):
+            return currentl - 5 #return a few lines earlier to get context
+        if (currentl > mavgcounter):
+            mavglength -= ldmap[idx - mavgcounter]['length']
+            mavgdensity -= ldmap[idx - mavgcounter]['density']
+    return 0
 
 def get_type(l):
     """Get the type of the line based on link density."""
@@ -351,6 +381,7 @@ def init_qdrantz(ldmap, topic="websearch"):
     ids = [i for i in range(len(texts))]
     payloads = [{'id': i, 'text': texts[i]} for i in range(len(texts))]
     qdrantz.add_vectors(topic, texts, ids, payloads)
+    logging.info(f'Added {len(texts)} texts to Qdrant collection {topic}')
 
 
 def get_similar(idx, ldmap, topk=3):
@@ -391,8 +422,13 @@ def play_in_background(text, links=[], stop_event=None, skip_event=None, q=None,
 
     #pre-read
     link_density_map = build_map(lines, links)
+    print(f'Link density map: {len(link_density_map)} lines')
     #start audio generation thread then
+    #not sure this adds anything.  
     play_ldmap(link_density_map)
+    skip = get_first_content_line(link_density_map)
+    print(f'Detected first content line at {skip}, skipping to there')
+
     mp_stop = multiprocessing.Event()
 #    audio_gen_thread = multiprocessing.Process(target=gen_audio, args=(link_density_map, mp_stop))
 #    logger.info('Starting audio generation thread')
@@ -480,7 +516,7 @@ def play_in_background(text, links=[], stop_event=None, skip_event=None, q=None,
     #            communicate = edge_tts.Communicate(text, VOICE)
     #            await communicate.save(sound_file)
                 #play the line type info first
-                play_l(link_density_map[idx])
+                play_l(link_density_map[idx], idx/len(lines))
 
 
                 if (os.path.exists(sound_file)):
@@ -508,7 +544,7 @@ def play_in_background(text, links=[], stop_event=None, skip_event=None, q=None,
     #            print(r)
                 if (r is not None and len(r) > 0):
                     print(f'Similar items to line {idx}: {link_density_map[idx]["text"]}')
-                    for result,ridx in r:
+                    for ridx,result in enumerate(r):
                         voice = SIMVOICE[ridx % len(SIMVOICE)]
                         print(result)
                         rid = result['id']
@@ -522,7 +558,7 @@ def play_in_background(text, links=[], stop_event=None, skip_event=None, q=None,
                                 print(f'Reading similar item: {siml}')
                                 try:
                                     sound_file = f"./temp/sim{rid}.mp3"
-                                    os.system(f"edge-tts --voice \"{voice}\" --write-media \"{sound_file}\" --text \"Similar: {siml}\" --rate=\"-10%\"")
+                                    os.system(f"edge-tts --voice \"{voice}\" --write-media \"{sound_file}\" --text \"Similar: {siml}\" --rate=\"-10%\" --volume=-30%")
                                     playsound(sound_file, block=False) # Ensure this thread blocks for its sound
 
                                 except Exception as e:
@@ -532,9 +568,9 @@ def play_in_background(text, links=[], stop_event=None, skip_event=None, q=None,
                             if (q3 is not None):
                                 q3.put(link_density_map[rid]['offset']) #send back the offset of the similar item.
 
-        total_read += len(l) + 1 #include newline
         print(f'Total read: {total_read}')
         waited = 0
+        ttotal = total_read
         for i in range(0, len(l)+1, 5): #check every 5 characters
             #not sure if we want to beep for skipped lines or not.  
             #maybe problematic.  
@@ -542,14 +578,24 @@ def play_in_background(text, links=[], stop_event=None, skip_event=None, q=None,
                 print(f'At link: {links[link_loc]}')
                 winsound.Beep(500, 100) #short beep to indicate link
                 link_loc += 1
+                ttotal = links[link_loc]['offset']+1
             
-            waited += 0.5
-            time.sleep(0.5) #simulate reading time. 0.4 seconds per 5 characters estimate.  
+#            ttotal += 5
+            if (q2 is not None and ttotal > total_read):
+                q2.put(ttotal) #communicate how much we have read.
+            waited += 0.4
+            time.sleep(0.4) #simulate reading time. 0.4 seconds per 5 characters estimate.  
             #shouldnt have to be too exact.  
         print(f'Total waited: {waited}')
 
+        total_read += len(l) + 1 #include newline
+
         if (q2 is not None):
-            q2.put(total_read)
+            if (ttotal > total_read):
+                q2.put(ttotal) #communicate how much we have read.
+            else:
+                q2.put(total_read)
+
 #    os.system(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --file \"{tts_file}\" --rate=\"-10%\"")
 #    time.sleep(2) #wait for file to be written
 #    seg = AudioSegment.from_mp3(sound_file)

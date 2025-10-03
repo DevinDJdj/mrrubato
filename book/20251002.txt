@@ -1,0 +1,623 @@
+
+
+**web/public/languages/*
+Lot of this is not aesthetic code, but..
+We can work on aesthetics on the second iteration perhaps if there is still energy to do so.  
+
+
+**web/public/db.html
+Need function to delete older videos possibly or offload.  
+
+**web/public/storage_upload.html
+update video record to point to external...
+Option to keep locally as well.  
+Need management interface.  
+Display details.  
+Need upload/download functionality.  
+Just store as a simple JSON record perhaps?  
+
+
+
+**timestep.py
+add logic to generate client-side vector DB for LLM chat.  
+==
+--writeTranscripts
+$$
+
+**web/public/chata.html
+Need to finish chat interaction using client-side DB and do vector search to generate context.  
+
+
+**web/public/rec.html
+already generating vectors.  
+Weight transcripts most then screens, then files.  
+
+**vecbook
+> ~vecbook$ rm * -rf 
+
+**extensions/vscode/codetutor/src/book.ts
+
+Start with simple strategy like calling the LLM itself to expand the query.  
+
+#https://medium.com/@sahin.samia/building-an-enhanced-rag-system-with-query-expansion-and-reranking-in-python-c95fa9a0a3e8
+So just use query expansion in some way.  
+Seems just using an LLM query to expand the query.  
+
+Do similarity search with expanded query as well.  
+
+
+
+
+**.bookignore
+--no functionality
+
+
+
+
+**analyze/analyze.py
+Need to continue find patterns.  
+--getNgrams
+$$mappgram
+continue..
+  mapsgram[ seqgram ] [ pgram ] = { 'time': [], 'iteration': [] }
+  mappgram[ signs ] [ pgram ] = { 'time': [], 'iteration': [] }
+
+>python ./analyze/analyze.py --title  "Evil Ways (Sonny Henry)" --force true
+
+
+**web/public/analyze.html
+--updateFeedbackUI
+And change icon if played already or not.  
+So have option to filter played data.  
+
+Just use existing voices from SS, and assign voice name to the user.  
+#https://support.microsoft.com/en-us/topic/download-languages-and-voices-for-immersive-reader-read-mode-and-read-aloud-4c83a8d8-7486-42f7-8e46-2b0fdf753130
+
+
+How do we order users?  
+Running tally of 
+LIKES / (total speaking time)
+Local DB for this.  
+Show user info when loading audio.  
+
+
+**WrNMxdcfyUk
+OK, we have simultaneous entries.  
+
+
+**codetutor
+**extensions/vscode/codetutor/src/tokenizer.tsx
+Could implement some sort of custom STT or TTS here much easier.  
+Need to finish tokenizer.  
+
+Just save to local DB and then have an option to run STT model improvement from there.  
+Then use that model for [**codetutor]
+Best we could do at this point?  
+
+Need midi pipe here..
+
+
+
+**extensions/vscode/codetutor/src/book.ts
+
+Need to allow for topic selection
+i.e. inline change of [**-1] to previous topic.  
+List selections and be able to add/remove.  
+
+
+For code changes, maybe for now add comments.  
+
+
+
+**web/public/git.js
+--loadBook
+When reading book, we should generate the directory tree.  
+
+
+
+
+**web/public/timewindow.js
+--updateTimelineBook
+
+Stop/start keys.  
+(23,22,n,23) for video playback
+(11,10,n,11) for audio playback
+n=track
+==
+**VIDEO
+$$OFFSET=1
+change to
+(1,3,4)  = video
+(1,3,5) = audio
+(1,3,4,1)
+(1,3,5,1)
+$$
+
+
+
+**gitcontrol.js
+Basic language for browsing through git commits.  
+Need to finish this..
+
+
+
+**web/public/chata.html
+Finish vector ingestion for transcripts.  
+Load videos from timewindow period.  
+When this changes, update the videos.  
+Or perhaps just when an object is selected.  
+Find videos from the time periods of the commits.  
+
+
+
+
+
+**mykeys.py
+
+<settingscontrol>
+/SetTextSize [SIZE] = default font size
+
+<tagcontrol>
+/AddTag [NEXT/PREV] 
+/RemoveTag [NEXT/PREV]
+
+
+**extension/vscode/codetutor/src/extension.ts
+Should allow for quick copy of text to clipboard.  
+Also command sequences should have enough information to be meaningful.  
+Or keep this in mind when designing.  
+--Try to keep command MIDI meaningful.  
+
+
+**web/public/book.html
+60 seconds??
+~~Maybe limit the time window to 1 year..
+
+
+**web/public/book.html
+Need a nice tree view UI for files.  
+Only view on web.  
+#https://github.com/vakata/jstree
+Hmm..
+Maybe just use instead of filter files.  
+
+use [**map.txt] to update names when reading book.  
+
+
+
+**codetutor
+
+
+**extensions/vscode/codetutor/src/book.ts
+!!Fetch failed
+~~ > sudo systemctl restart ollama
+
+Maybe dont take too much general info on commands.  
+:: **web/public/js/filedrop.js
+Responses should be more specific to the selected topics.  
+
+
+
+**web/public/languages/gitcontrol.js
+Try to use this..
+Prev/next
+
+
+**RECDROID
+Need simple automated sound recording device.  
+This is a good idea, but there is no need for a separate device for this.  
+
+$$FLUTTER
+$$vscode
+
+
+
+**web/public/git.js
+--initGitIndex
+Basic generation of vectors done.  
+--updateGitIndex
+Is this what we want, just a temporary index recreated every time?  
+Need to save sequence of interactions, but this should be sufficient?  
+Sequence of steps need to segregate from actual current data.  
+
+
+
+**web/public/chata.html
+Finish RAG here.  
+Order in time.  
+Create expanded query, and retrieve further context if needed.  
+
+
+**extensions/vscode/codetutor/src/extension.ts
+Use 
+^^# to generate comments.  
+^^+ to generate suggestions to add.  
+^^- to generate suggestions to remove.  
+^^& to generate book.  
+Continue here..
+Need book
+Make a command for each of these?  
+I guess.  
+\gencomments - same as gencode, But dont include commits with no comments.  
+\gencode - Get FULL Topics, Order ALL GIT changes include book changes as well.  
+\gendelete - This is tricky but important.  Maybe try a code coverage plugin.  
+\genbook - Get FULL Topics, Get GIT changes to book in sequence.  
+
+
+Save current branch.  
+> git branch --show-current
+$$BRANCHNAME
+> git branch $$BRANCHNAME
+> git switch $$BRANCHNAME
+..
+> git switch $$ORIGBRANCH
+> git merge
+
+
+Create a branch each time we run the improvement process.  
+Or keep branch for each topic.  
+
+^^+ to generate.  
+Find launchable page which includes this topic.  
+All launchable pages should be tried if possible.  
+Start recording..
+Launch [**PAGE]
+Use [**PAGE]
+
+Switch back to extension.
+Make updates..
+Show updates for time..
+
+Redeploy
+Use [**PAGE]
+Make observations and compare with previous iterations.
+add to [**GENBOOK]
+
+Launch other operations.. from [**GENBOOK]
+
+Accept/decline changes based on results and check prompts.  
+
+Make summary information about changes.
+Add to [**GENBOOK]
+
+Merge branch..
+
+
+List launched operations from [**GENBOOK]
+
+Only one branch at a time for any topic?  
+For now on failure just delete and start over?  
+Track how much failure.  
+
+Repeat process.
+
+
+**extensions/trey/trey.py
+(1,)
+\show iterations
+\play iteration X
+\skip iteration +/- X
+\skip time +/- X
+
+
+
+**languages/hotkeys.py
+Still need turn on/off words.  
+pointer to function is fine.
+
+
+Try to identify interactable objects.  
+#https://github.com/srebroa/awesome-yolo?tab=readme-ov-file
+
+#https://neptune.ai/blog/object-detection-with-yolo-hands-on-tutorial
+
+!!ImportError: numpy.core.multiarray failed to import
+~~>pip install --upgrade opencv-python, numpy
+
+
+**extensions/trey/trey.py
+OK finally have some speech.  
+Why do I have to use pygame, not sure, but the others playsound and simpleaudio caused problems.  
+
+
+
+**KEYMAP
+
+primarily 3-key
+Start letter controls language/function:
+48 -> Meta function
+49
+50
+51
+52 -> error
+53 -> Screen control navigation
+54 -> ok
+55 -> good
+56
+57
+58
+59 -> Lang control
+60 -> Meta function
+61
+62
+63
+64 -> error
+65 -> Screen control input/selection
+66 -> ok
+67 -> good
+68
+69
+70
+71 -> lang control
+72 -> meta (none)
+
+53 and 65 start key.  
+
+$$(-21,-108) = 88 keys
+$$(-20,+20) = relative change.  
+greater than 20 diff is not part of same sequence?  
+$$(+21,+108) = 88 keys
+$$109+ = ?  
+
+
+**KKEYS
+ALL SQUARES
+1,4,9,16
+25, 36, 49, 64, 81, 100
+28, 31, 56, 60, 90
+
+
+
+**CCONTROL
+Launch browser tab or window (optional search string)
+Indicate page layout and location in page with sound.  
+Selected portion of page just use chromatic percentage.  
+Summarize full page
+Read full page
+
+
+Help should be same:
+Octave?  
+48,60,48 = help 
+53,65,53 = help 
+etc.
+
+
+21 -> Start
+22 -> End
+107 -> Pause
+108 -> Unpause
+
+
+**web/public/languages/audiocontrol.js
+**web/public/languages/videocontrol.js
+**web/public/languages/book.js
+**web/public/gitcontrol.js
+Each of these needs to be retooled to use relative offset.  
+Just use keybot["lang"]
+
+OFFSET:
+_meta = 0
+videocontrol = 1
+book = 2
+gitcontrol = 3
+error = 4
+screencontrol = 5 (53)
+ok = 6
+good = 7
+generate = 8
+find = 9
+auto-generate? = 10
+lang = 11
+
+
+
+RELATIVE STRUCT:
+0,1 = help
+0,1,12 = list commands
+0,1,2 = 0,2 commands
+0,1,3 = 0,3 commands etc.  
+
+0,2 = 
+
+What to do for octave spanning commands?  
+For now octave spanning just calculate which octave, but only use %12 value
+
+
+
+
+
+
+**extensions/trey/testspeechbrain.py
+
+**testing/speechbrain/templates/speech_recognition/mini_librispeech_prepare.py
+
++data_folder = './mini_librispeech'
++prepare_mini_librispeech(data_folder, 'train.json', 'valid.json', 'test.json')
+
+> python ./mini_librispeech_prepare.py
+
+**extensions/trey/testspeechbrain.py
+Nice this kind of works.  
+STT and TTS
+Now need to customize the models.  
+
+
+**models/hyperparams.yaml
+
+-train_model
+test ..
+!!Entry Not Found for url: https://huggingface.co/speechbrain/asr-crdnn-rnnlm-librispeech/resolve/main/hyperparams_develop.yaml.
+==use hyperparams.yaml
+$$
+
+Actual data saved here:
+$$models/pretrained_ASR
+$$HF=Users/[user]/.cache/huggingface/hub/models--speechbrain--asr-conformer-transformerlm-librispeech/blobs
+
+So speech tuning can be done here I think..
+Is it enough to tune the base model, and how important is the base model?  
+
+#https://speechbrain.readthedocs.io/en/latest/tutorials/advanced/pre-trained-models-and-fine-tuning-with-huggingface.html
+$$6 
+This was fairly smooth
+
+
+
+**extensions/trey/hotkeys.py
+
+Start reading, but also create summary and read summary.  
+How to tune what is read?  
+
+
+How to do volume management.  
+
+
+**extensions/trey/speech.py
+-generate_audio
+See if we can use the speechbrain TTS.  
+
+
+Instrument = Type of information
+$$OBOE
+SOL = Start of Line
+SOL (two-note chorrd with gradually increasing interval as we go through page)
+0-10% = C Db
+10-20% = C D
+etc..
+90-100% = C Bb
+
+$$Trumpet
+LINK indicator (pitch = length of link.  )
+
+
+
+**FLOW
+Summary
+content
+
+Generate vectors for lines.  
+
+
+Create simple function to embed text into MIDI
+INPUT
+META Control = [1-20]
+PIANO [21 .. 108]
+Not sure what this means yet.  
+
+TEXT = [109-127]
+[109-127] = encoded characters.  
+so 4-bit chunks.  
+[112-127]
+1110000 in decimal
+[109,110,111] = text control
+LANGID = [109,110] ... [109]
+Can indicate language in midi sequence using 110,111 or just guessed language.  
+[110] = English
+[111] = Chinese
+[110,110] = ..
+[110,111] = ..
+[111,110] = ..
+[111,111] = ..
+up to any number header.  
+Then the [112-127] is text.  
+
+
+**mykeys.py
+--playmidi
+> python ./mykeys.py
+
+
+OFFSET:
+_meta = 0
+videocontrol = 1
+book = 2
+--52,..
+gitcontrol = 3
+error = 4
+screencontrol = 5 (53)
+ok = 6
+good = 7
+generate = 8
+find = 9
+auto-generate? = 10
+lang = 11
+
+
+**web/public/book.html
+--select topic
+see if this works ok..
+
+
+**extensions/trey/trey.py
+#https://github.com/browser-use/browser-use
+Try this instead of playwright before we get too far along..
+#https://github.com/Skyvern-AI/skyvern
+#https://github.com/apify/crawlee
+
+
+
+#https://github.com/AutomaApp/automa
+#https://github.com/nanobrowser/nanobrowser
+
+Try one of these browser extensions..
+
+
+#https://github.com/qdrant/qdrant
+
+> pip install qdrant-client
+
+#https://qdrant.tech/documentation/beginner-tutorials/hybrid-search-fastembed/
+Try this..
+Build 
+
+**extensions/trey/qdrantz.py
+> python ./extensions/trey/qdrantz.py
+> pip install fastembed
+
+maybe need click_suggested_link
+
+@QDRANT
+!!size=qdrantz_client.get_embedding_size(dense_model_name),
+!!ImportError: fastembed is not installed. Please install it to enable fast vector indexing with `pip install fastembed`
+#https://github.com/qdrant/qdrant-client/blob/master/qdrant_client/qdrant_fastembed.py
+
+
+~~this is not the right message.  
+
+==
+> pip uninstall onnxruntime
+> pip install onnxruntime==1.20.1
+$$
+
+**extensions/trey/trey.py
+link density and numlinks not correct..
+Maybe better..
+
+Additional voice good.  
+Need to check that the second SIM queue works ok.  
+
+
+**news.py
+#https://github.com/unclecode/crawl4ai
+
+Create subcommand for [**trey.py]
+
+Also need to measure truth from multiple sources, and create a 
+PCT verified data point.  
+Aggregate the news and create a sourcing chain.  
+Point out similarities and discrepancies.  
+Grade each against the other.  
+
+check other engine for search.  
+
+about 10 mins for just one newspaper download..
+
+OK can search multiple sites.  
+Need tab management.  
+When do we open new tab or not.  
+test list_tabs..
+For now limit to 10 tabs..
+
+Check stop_audio..
+for single tab.

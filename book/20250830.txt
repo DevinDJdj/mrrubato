@@ -1326,3 +1326,12 @@ Grade each against the other.
 check other engine for search.  
 
 about 10 mins for just one newspaper download..
+
+OK can search multiple sites.  
+Need tab management.  
+When do we open new tab or not.  
+test list_tabs..
+For now limit to 10 tabs..
+
+Check stop_audio..
+for single tab.
