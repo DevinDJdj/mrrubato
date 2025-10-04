@@ -42,6 +42,7 @@ exports.getTokens = getTokens;
 exports.executeTokens = executeTokens;
 exports.getCommandType = getCommandType;
 exports.open = open;
+exports.close = close;
 exports.findTopicsCompletion = findTopicsCompletion;
 exports.findInputTopics = findInputTopics;
 exports.getTempTopicsFromPath = getTempTopicsFromPath;
@@ -266,6 +267,9 @@ function getCommandType(str) {
 }
 function open(context) {
     return getBook(context);
+}
+function close() {
+    //save the book if needed.
 }
 function getDateFromString(dateString) {
     if (dateString.length !== 8) {

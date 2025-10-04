@@ -39,11 +39,15 @@ exports.updateStatusBarItem = updateStatusBarItem;
 exports.registerCompletionTool = registerCompletionTool;
 exports.startWatchingWorkspace = startWatchingWorkspace;
 exports.registerToolUserChatParticipant = registerToolUserChatParticipant;
+exports.registerPiano = registerPiano;
+exports.unregisterPiano = unregisterPiano;
 const prompt_tsx_1 = require("@vscode/prompt-tsx");
 const vscode = __importStar(require("vscode"));
 const Book = __importStar(require("./book"));
 const toolsPrompt_1 = require("./toolsPrompt");
 let myStatusBarItem;
+const midiin = __importStar(require("./midi/midi-in"));
+const tree = __importStar(require("./midi/tree"));
 function isTsxToolUserMetadata(obj) {
     // If you change the metadata format, you would have to make this stricter or handle old objects in old ChatRequest metadata
     return !!obj &&
@@ -383,5 +387,13 @@ function registerToolUserChatParticipant(context) {
     const toolUser = vscode.chat.createChatParticipant('chat-tools-sample.tools', handler);
     toolUser.iconPath = new vscode.ThemeIcon('tools');
     context.subscriptions.push(toolUser);
+}
+function registerPiano(context) {
+    midiin.activate(context);
+    tree.activate(context);
+}
+function unregisterPiano() {
+    midiin.deactivate();
+    tree.deactivate();
 }
 //# sourceMappingURL=toolParticipant.js.map

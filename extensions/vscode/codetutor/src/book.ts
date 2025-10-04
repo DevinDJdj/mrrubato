@@ -257,6 +257,11 @@ export function open(context: vscode.ExtensionContext) {
 
 }
 
+export function close() {
+    //save the book if needed.
+    
+}
+
 function getDateFromString(dateString: string): Date {
     if (dateString.length !== 8) {
         return new Date();  // Return current date if the string is not in the expected format

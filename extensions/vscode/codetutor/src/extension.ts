@@ -20,7 +20,7 @@ import ollama from 'ollama';
 import { LanguageModelPromptTsxPart, LanguageModelToolInvocationOptions, LanguageModelToolResult } from 'vscode';
 
 
-import { startWatchingWorkspace, updateStatusBarItem, registerStatusBarTool, registerCompletionTool, registerToolUserChatParticipant } from './toolParticipant';
+import { startWatchingWorkspace, updateStatusBarItem, registerStatusBarTool, registerCompletionTool, registerToolUserChatParticipant, registerPiano, unregisterPiano } from './toolParticipant';
 import { start } from 'repl';
 import { get } from 'http';
 
@@ -346,8 +346,10 @@ export function activate(context: vscode.ExtensionContext) {
 	registerStatusBarTool(context);
 	startWatchingWorkspace(context); //watch for changes to book.  
 
+
 	Book.open(context); //open the book.  
 
+	registerPiano(context);
 
 	// define a chat handler
 	const handler: vscode.ChatRequestHandler = async (request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken) => {
@@ -1139,7 +1141,16 @@ function insertTextIntoActiveEditor(text: string): Thenable<boolean> | undefined
 }
 
 // This method is called when your extension is deactivated
-export default function deactivate() {}
+export default function deactivate() {
+	unregisterPiano();
+	Book.close();
+	if (workFunc){
+		clearInterval(workFunc);
+	}
+	isWorking = false;
+	console.log('Deactivating mrrubato.mytutor');
+	
+}
 
 
 

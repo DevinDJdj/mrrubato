@@ -621,3 +621,41 @@ For now limit to 10 tabs..
 
 Check stop_audio..
 for single tab.
+
+**extensions/trey/trey.py
+Still have to add audio ingestion.  
+
+**languages/hotkeys.py
+Need a window to display the language info.  
+Ugh, annoying..
+For now just bring up the language file 
+
+--load_data
+
+
+**extension/vscode/codetutor/src/extension.ts
+Need to add midi ingestion in vscode.  
+
+#https://github.com/jazz-soft/jazz-midi-vscode
+
+
+**/testing/vscode/jazz-midi-vscode-main
+Start with **/ special directory meaning.  
+With / we are outside the project directory.  
+
+
+> npm install jazz-midi-vscode --save
+
+
+> npm install
+
+> npm install jazz-midi-electron --save
+
+**/testing/vscode/jazz-midi-vscode-main/demo/midi-in.js
+
+
+**extensions/vscode/codetutor/src/midi/midi-in.ts
+**extensions/vscode/codetutor/src/midi/tree.ts
+
+OK, converted to TS and seems to work ok..
+

@@ -6,6 +6,16 @@ import { ToolCallRound, ToolResultMetadata, ToolUserPrompt } from './toolsPrompt
 
 let myStatusBarItem: vscode.StatusBarItem;
 
+
+import * as midiin from './midi/midi-in';
+import * as tree from './midi/tree';
+
+//import midiin from './midi/midi-in.js';
+//import tree from './midi/tree.js';
+//
+//const midiin = require('./midi/midi-in');
+//const tree = require('./midi/tree');
+
 export interface TsxToolUserMetadata {
     toolCallsMetadata: ToolCallsMetadata;
 }
@@ -427,4 +437,17 @@ export function registerToolUserChatParticipant(context: vscode.ExtensionContext
     const toolUser = vscode.chat.createChatParticipant('chat-tools-sample.tools', handler);
     toolUser.iconPath = new vscode.ThemeIcon('tools');
     context.subscriptions.push(toolUser);
+}
+
+
+export function registerPiano(context: vscode.ExtensionContext) {
+    midiin.activate(context);
+    tree.activate(context);
+    
+
+}
+
+export function unregisterPiano() {
+    midiin.deactivate();
+    tree.deactivate();
 }

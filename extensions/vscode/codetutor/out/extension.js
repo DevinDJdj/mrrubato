@@ -323,6 +323,7 @@ function activate(context) {
     (0, toolParticipant_1.registerStatusBarTool)(context);
     (0, toolParticipant_1.startWatchingWorkspace)(context); //watch for changes to book.  
     Book.open(context); //open the book.  
+    (0, toolParticipant_1.registerPiano)(context);
     // define a chat handler
     const handler = async (request, context, stream, token) => {
         //vscode.window.showInformationMessage('Hello world!');
@@ -998,7 +999,15 @@ function insertTextIntoActiveEditor(text) {
     }
 }
 // This method is called when your extension is deactivated
-function deactivate() { }
+function deactivate() {
+    (0, toolParticipant_1.unregisterPiano)();
+    Book.close();
+    if (workFunc) {
+        clearInterval(workFunc);
+    }
+    isWorking = false;
+    console.log('Deactivating mrrubato.mytutor');
+}
 class MyUriHandler {
     // This function will get run when something redirects to VS Code
     // with your extension id as the authority.

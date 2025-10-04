@@ -13,141 +13,138 @@
   "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
+    "views": {
+      "explorer": [
+        {
+          "id": "midi-demo.tree",
+          "name": "MIDI"
+        }
+      ]
+    },
     "configuration": {
       "title": "mrrubato",
       "properties": {
-          "mrrubato.webbookurl": {
-              "type": "string",
-              "default": "https://www.misterrubato.com/page.html?codefile=",
-              "description": "URL for web book/page."
-          },
-          "mrrubato.runinbackground": {
-              "type": "boolean",
-              "default": "false",
-              "description": "Setting to automatically run and edit code"
-          },
-          "mrrubato.robocodemode": {
-            "type": "string",
-            "default": "git",
-            "description": "git, book, test"
-          },
+        "mrrubato.webbookurl": {
+          "type": "string",
+          "default": "https://www.misterrubato.com/page.html?codefile=",
+          "description": "URL for web book/page."
+        },
+        "mrrubato.runinbackground": {
+          "type": "boolean",
+          "default": "false",
+          "description": "Setting to automatically run and edit code"
+        },
+        "mrrubato.robocodemode": {
+          "type": "string",
+          "default": "git",
+          "description": "git, book, test"
+        },
         "mrrubato.runinterval": {
-              "type": "number",
-              "default": 30000,
-              "description": "Interval to run steps."
-          },
-          "mrrubato.numworktopics": {
-            "type": "number",
-            "default": 10,
-            "description": "Number of prompts to remain while running."
-          },
-          "mrrubato.numworkprompts": {
-              "type": "number",
-              "default": 10,
-              "description": "Number of prompts to remain while running."
-          },
-          "mrrubato.workprompt": {
-            "type": "string",
-            "default": "Improve My Code",
-            "description": "LLM base prompt."
-          },
-          "mrrubato.bookfolder": {
-            "type": "string",
-            "default": "book",
-            "description": "Relative path for book to read."
-          },
-          "mrrubato.bookvectorfolder": {
-            "type": "string",
-            "default": "vecbook",
-            "description": "Relative path for book to read."
-          },
-          "mrrubato.genbookfolder": {
-            "type": "string",
-            "default": "genbook",
-            "description": "Relative path for transcript generation."
-          },
-
-          "mrrubato.defaultprompts": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "title": "Default prompts and topics to use one or the other can be blank.",
-                "properties": {
-                    "prompt": {
-                      "type": "string",
-                      "description": "Prompt to use"
-                    },
-                  "topic": {
-                    "type": "string",
-                    "description": "Category of prompt"
-                },
-
-                    "weight": {
-                        "type": "number",
-                        "description": "Weight for topic use"
-                    }
-                }
-            },
-            "default": [],
-            "description": "Default topics to use when nothing specified"
-          
-          },
-
-
-          "mrrubato.workprompts": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "title": "Prompt",
-                "properties": {
-                    "prompt": {
-                        "type": "string",
-                        "description": "Prompt to use"
-                    },
-                    "topic": {
-                      "type": "string",
-                      "description": "Category of prompt"
-                  },
-
-                    "weight": {
-                        "type": "number",
-                        "description": "Weight for prompt use"
-                    }
-                }
-            },
-            "default": [],
-            "description": "Work prompts to use"
-          
-          },
-      
-
-          "mrrubato.roboprompts": {
-              "type": "array",
-              "items": {
-                  "type": "object",
-                  "title": "Prompt",
-                  "properties": {
-                      "prompt": {
-                          "type": "string",
-                          "description": "Prompt to use"
-                      },
-                      "topic": {
-                        "type": "string",
-                        "description": "Category of prompt"
-                    },
-
-                      "weight": {
-                          "type": "number",
-                          "description": "Weight for prompt use"
-                      }
-                  }
+          "type": "number",
+          "default": 30000,
+          "description": "Interval to run steps."
+        },
+        "mrrubato.numworktopics": {
+          "type": "number",
+          "default": 10,
+          "description": "Number of prompts to remain while running."
+        },
+        "mrrubato.numworkprompts": {
+          "type": "number",
+          "default": 10,
+          "description": "Number of prompts to remain while running."
+        },
+        "mrrubato.workprompt": {
+          "type": "string",
+          "default": "Improve My Code",
+          "description": "LLM base prompt."
+        },
+        "mrrubato.bookfolder": {
+          "type": "string",
+          "default": "book",
+          "description": "Relative path for book to read."
+        },
+        "mrrubato.bookvectorfolder": {
+          "type": "string",
+          "default": "vecbook",
+          "description": "Relative path for book to read."
+        },
+        "mrrubato.genbookfolder": {
+          "type": "string",
+          "default": "genbook",
+          "description": "Relative path for transcript generation."
+        },
+        "mrrubato.defaultprompts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "title": "Default prompts and topics to use one or the other can be blank.",
+            "properties": {
+              "prompt": {
+                "type": "string",
+                "description": "Prompt to use"
               },
-              "default": [],
-              "description": "Work prompts to use"
-          
-          }                    
+              "topic": {
+                "type": "string",
+                "description": "Category of prompt"
+              },
+              "weight": {
+                "type": "number",
+                "description": "Weight for topic use"
+              }
+            }
+          },
+          "default": [],
+          "description": "Default topics to use when nothing specified"
+        },
+        "mrrubato.workprompts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "title": "Prompt",
+            "properties": {
+              "prompt": {
+                "type": "string",
+                "description": "Prompt to use"
+              },
+              "topic": {
+                "type": "string",
+                "description": "Category of prompt"
+              },
+              "weight": {
+                "type": "number",
+                "description": "Weight for prompt use"
+              }
+            }
+          },
+          "default": [],
+          "description": "Work prompts to use"
+        },
+        "mrrubato.roboprompts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "title": "Prompt",
+            "properties": {
+              "prompt": {
+                "type": "string",
+                "description": "Prompt to use"
+              },
+              "topic": {
+                "type": "string",
+                "description": "Category of prompt"
+              },
+              "weight": {
+                "type": "number",
+                "description": "Weight for prompt use"
+              }
+            }
+          },
+          "default": [],
+          "description": "Work prompts to use"
+        }
       }
-    },    
+    },
     "commands": [
       {
         "command": "mrrubato.mytutor.start",
@@ -164,16 +161,16 @@
     ],
     "keybindings": [
       {
-          "command": "mrrubato.mytutor.generate",
-          "key": "ctrl+shift+8",
-          "mac": "cmd+shift+8"
+        "command": "mrrubato.mytutor.generate",
+        "key": "ctrl+shift+8",
+        "mac": "cmd+shift+8"
       },
       {
         "command": "mrrubato.mytutor.search",
         "key": "ctrl+shift+9",
         "mac": "cmd+shift+9"
-    }      
-    ],    
+      }
+    ],
     "chatParticipants": [
       {
         "id": "mrrubato.mytutor",
@@ -229,7 +226,7 @@
           {
             "name": "list",
             "description": "List prompts."
-          }          
+          }
         ]
       },
       {
@@ -273,7 +270,14 @@
   "dependencies": {
     "@react-native-community/netinfo": "^11.4.1",
     "@vscode/prompt-tsx": "^0.3.0-alpha.23",
+    "jazz-midi-vscode": "^1.0.7",
+    "jzz": "^1.9.2",
+    "jzz-gui-player": "^1.7.7",
+    "jzz-gui-select": "^1.1.7",
+    "jzz-input-kbd": "^1.3.4",
+    "jzz-midi-smf": "^1.9.7",
+    "jzz-midi-ws": "^1.0.0",
+    "jzz-synth-tiny": "^1.4.2",
     "ollama": "^0.5.15"
   }
-
 }
