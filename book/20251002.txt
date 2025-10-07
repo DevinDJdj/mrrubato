@@ -659,3 +659,51 @@ With / we are outside the project directory.
 
 OK, converted to TS and seems to work ok..
 
+Now how do we interact between webview and other components?  
+
+//const vscode = acquireVsCodeApi(); // Get the VS Code API instance
+//vscode.postMessage({command: 'alert', text: 'hello'}); // Send an initial message to the extension if needed
+this method doesnt seem to work at the moment..
+
+#https://github.com/microsoft/vscode-extension-samples/blob/main/webview-view-sample/src/extension.ts
+
+
+Set topic via extension.  
+Take last mentioned topic, or last two mentioned topics.  
+so in this case
+\set topic [**extensions/vscode/codetutor/src/midi/midi-in.ts, **extensions/vscode/codetutor/src/midi/tree.ts]
+
+Parameter for number of previous topics or number of future topics.  
+This adds to shared topic history list.  
+Then we can utilize 
+\set topic [5]  (take from history)
+\set topic [-3] (take last 3 topics from future)
+Can switch later if necessary.  
+
+$$LANG=META
+<_meta>set topic
+
+
+**extensions/vscode/codetutor/src/midi/tsconfig.json
+"resolveJsonModule": true,
+
+
+
+**extensions/vscode/codetutor/src/midi/mykeys.ts
+Continue here..
+this basic noteOn/off..
+
+> npm install standardized-audio-context
+
+#https://github.com/ircam-ismm/node-web-audio-api
+
+> npm install node-web-audio-api
+
+#https://github.com/LadybirdBrowser/ladybird
+
+
+Can enable audio feedback.  
+Need to add language support..
+Adjust web version to this after done..
+Pull from [**web/public/languages.js]
+

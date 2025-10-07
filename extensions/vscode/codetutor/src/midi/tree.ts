@@ -24,6 +24,8 @@ export function activate(context) {
                 ret = [];
                 for (x of info.inputs) {
                     ret.push({ label: x.name, command: { command: 'midi-demo.midi-in', arguments: [ x.name ] } });
+                    //activate the panel on click
+                    vscode.commands.executeCommand('midi-demo.midi-in', x.name);
                 }
                 return ret;
             }
