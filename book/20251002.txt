@@ -707,3 +707,41 @@ Need to add language support..
 Adjust web version to this after done..
 Pull from [**web/public/languages.js]
 
+Just use word, act
+
+What is the use-case for sequential words?  
+
+When we set topic, load relevant info, #, >, @, &..
+
+
+
+
+**extensions/trey/trey.py
+\Launch browser with several tabs #
+\show last n cmds > 
+\summarize topic (s)
+\select cmd..
+\find latest recs with this topic.  
+
+
+
+Dont really need midi for this.  
+But should be able to do most control with just midi if desired.  
+
+
+==** select current.  
+==**-1 current - 1
+==**-2
+==**2 future 2 or absolute value from start using current context?  
+
+==>-1
+==>-2
+..
+
+@@When to write a new book?  
+
+
+
+**web/public/rec.html
+
+Each time topic is selected, add this data to rec.  

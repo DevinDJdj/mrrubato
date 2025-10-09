@@ -30,23 +30,29 @@ export class MyKeys {
     mainGainNode = null;
     midiarray: any;
     keybot: any = {};
+    keymaps: any = {};
     midiUICallback = null;
+
     constructor(config = {}) {
         this.keys = [];
         this.config = config;
-        this.sequence = [];
-        this.words = [];
-        this.languages = {};
+        this.sequence = []; //current sequence of notes
+        this.words = []; //current sequence of words
+        this.languages = {}; //lang: {lang: [keys], module: module}
         this.currentlang = '';
-        this.transcripts = {};
+        this.transcripts = {}; //lang: transcript
         this.currentseqno = 0;
         this.startseqno = 0;
         this.lastnotetime = 0;
         this.lastnote = null;
-        this.currentcmd = '';
+        this.currentcmd = ''; 
         this.currentmidiuser = 0;
-        this.midiarray = [{}]; //user, lang, array of notes
-
+        this.midiarray = [{}]; //user, lang, array of notes with time, note, velocity, duration
+        //module values:
+        //keybot
+        //keyoffset - offset within octave
+        //funcdict
+        //config contains all keydict
 
         this.notes = Array(120).fill({
             note: 0,
@@ -64,13 +70,37 @@ export class MyKeys {
                 //dynamically load languages.  
                 console.log("loading language", lang, val);
                 //web/public/languages/base.js
-                this.languages[lang] = val;
+                this.languages[lang] = {val};
                 this.transcripts[lang] = [];
             }
             this.currentlang = Object.keys(this.languages)[0];
         }
 
     }    
+
+    async importLanguages(){
+        for (const lang of Object.keys(this.languages)) {
+            try{
+                await this.importLanguageModule(lang);
+            } catch (e){
+                console.error("Error loading language", lang, e);
+            }
+        }
+    }
+    async importLanguageModule(lang) {
+        if (this.languages[lang]) {
+            return;
+        }
+        //dynamically load languages.
+        console.log("loading language", lang);
+        const module = await import(`../languages/${lang}.js`);
+        this.languages[lang]["module"] = module.LANG;
+        //initialize language if needed.  
+        if (module.LANG && module.LANG.init) {
+            module.LANG.init(this.config);
+        }
+
+    }
 
     key(msg, myTime = 0, midiCb = null){
         console.log("key", msg);
