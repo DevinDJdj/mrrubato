@@ -7,11 +7,13 @@ import torch
 import scipy.io.wavfile as wav
 import argparse
 
+import os
+import threading
 
 #default 10 seconds for comment
-def listen_audio(duration=10, fname="example2.wav"):
+def record_audio(duration=10, fname="example.wav", stop_event=None):
     samplerate = 16000  # Sample rate (Hz)
-
+    #no easy way to stop early with sounddevice, so just record fixed time for now.
     print("Recording...")
     recording = sd.rec(int(samplerate * duration), samplerate=samplerate, channels=1, dtype='float32')
     sd.wait()  # Wait until recording is finished
@@ -19,6 +21,16 @@ def listen_audio(duration=10, fname="example2.wav"):
     audio_tensor = torch.from_numpy(recording.squeeze()) # Remove channel dimension if mono
     wav.write(fname, samplerate, (recording * 32767).astype(np.int16)) # Save as int16 WAV file
     return fname
+
+def listen_audio(duration=10, fname="example.wav"):
+    if os.path.exists(fname):
+        os.remove(fname)
+    audio_stop_event = threading.Event()  # Event to signal stopping
+
+    audio_thread = threading.Thread(target=record_audio, args=(duration, f'{fname}', audio_stop_event))
+    audio_thread.start()
+
+    return audio_thread
 
 def transcribe_audio(fname="example2.wav"):
 

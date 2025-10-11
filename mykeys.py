@@ -252,7 +252,15 @@ class MyKeys:
       la = None
       if (self.currentcmd is None):
         word, l, la = self.findword(self.sequence)
+        #start of word, take start of word action.  
+        if (word != ""):
+          self.takeaction(word, l, [], callback)
+
       else:
+        #second word check occurs distinguish between parameters and new command.
+        #if we find a new command, we switch to that command.
+        #currently not sure if we are coming out of this loop correctly.  
+        #need more complex command structure before it is meaningful to check this.  
         word, l, la = self.findword(self.sequence[self.startseqno:])
       if (word != ""):
         found = True
@@ -404,6 +412,69 @@ class MyKeys:
     print("switchLang " + self.currentlangna)
   
 
+  def text2seq(self, text):
+    #convert text to sequence.  
+    seq = []
+    for c in text:
+      n = ord(c)
+      if (n >= 0 and n <= 255):
+        c1 = n // 16
+        c2 = n % 16
+        note1 = 112 + c1
+        note2 = 112 + c2
+        seq.append(note1)
+        seq.append(note2)
+      else:
+        print(f'Error: character {c} out of range')
+        logger.error(f'Error: character {c} out of range')
+    
+    return seq
+  def seq2text(self, seq):
+    #convert sequence to text.  
+    text = ""
+    if (len(seq)%2 != 0):
+      print("Error: sequence not even length")
+      logger.error("Error: sequence not even length")
+      return text
+    
+    for idx, m in enumerate(seq):
+      n = seq[idx+1]  
+      if (n >= 112 and n <= 127 and m >=112 and m <=127): #E8 to G9
+        c1 = (n - 112) * 16
+        c2 = (m - 112)
+        c = c1 + c2
+        text += chr(c)
+      else:
+        #ignore non-text notes.
+        c1 = 0
+    
+    return text
+  
+
+  def midi2text(self, mid):
+    #convert midi keys back to text.  
+    text = ""
+    track1 = mid.tracks[0]
+    track2 = mid.tracks[1]
+    if (track1.len() != track2.len()):
+      print("Error: midi tracks not same length")
+      logger.error("Error: midi tracks not same length")
+      return text
+    
+    for msg in track1:
+      msg2 = next(track2) #should be same length
+      if msg.type == 'note_on' and msg.velocity > 0:
+        if (msg.note >= 112 and msg2.note >= 112): #E8
+          c1 = (msg.note - 112) * 16
+          c2 = (msg2.note - 112)
+          c = c1 + c2
+          text += chr(c)
+        else:
+          #ignore non-text notes.
+          c1 = 0
+      
+    return text
+  
   def text2midi(self, text):
     #convert text to midi keys.  
     mid = MidiFile()

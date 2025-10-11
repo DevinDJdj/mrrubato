@@ -328,7 +328,11 @@ def play_l(l, pctcomplete=0.0):
 
 def play_ldmap(ldmap):
     """Play audio for the given link density map."""
+    numlines = len(ldmap)
+    skip = numlines // 50
     for idx, l in enumerate(ldmap):
+        if (skip > 0 and idx % skip != 0):
+            continue
         print(f'Playing audio for line {idx}: {l["text"]} with {l["numlinks"]} links')
         play_l(l)
 
@@ -574,17 +578,20 @@ def play_in_background(text, links=[], stop_event=None, skip_event=None, q=None,
         for i in range(0, len(l)+1, 5): #check every 5 characters
             #not sure if we want to beep for skipped lines or not.  
             #maybe problematic.  
-            if (link_loc < len(links) and 'offset' in links[link_loc] and links[link_loc]['offset'] != -1 and links[link_loc]['offset'] <= total_read):
+            if (link_loc < len(links) and 'offset' in links[link_loc] and links[link_loc]['offset'] <= total_read):
                 print(f'At link: {links[link_loc]}')
                 winsound.Beep(500, 100) #short beep to indicate link
+                if (links[link_loc]['offset'] != -1):
+                    #only move to next link if we are at the offset.  
+                    #some links may be at -1 offset which we skip earlier.
+                    ttotal = links[link_loc]['offset']+1
                 link_loc += 1
-                ttotal = links[link_loc]['offset']+1
             
 #            ttotal += 5
-            if (q2 is not None and ttotal > total_read):
+            if (q2 is not None and ttotal > 0):
                 q2.put(ttotal) #communicate how much we have read.
-            waited += 0.4
-            time.sleep(0.4) #simulate reading time. 0.4 seconds per 5 characters estimate.  
+            waited += 0.3
+            time.sleep(0.3) #simulate reading time. 0.4 seconds per 5 characters estimate.  
             #shouldnt have to be too exact.  
         print(f'Total waited: {waited}')
 

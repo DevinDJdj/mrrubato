@@ -745,3 +745,33 @@ But should be able to do most control with just midi if desired.
 **web/public/rec.html
 
 Each time topic is selected, add this data to rec.  
+
+
+**extensions/trey/languages/hotkeys.py
+See if we get audio input now.  
+
+**extensions/trey/trey.py
+!!problem with quotes when reading..
+
+
+**extensions/trey/qdrantz.py
+--add_vectors
+!!too slow
+
+Should save this usage transcript.  
+LOL
+
+Need to pass parameters though.  
+Just add this as text2mid within the midi?  
+
+@@How do we do this if using DEFAULT [keybot]?  
+--getDefaultMid
+[53,55,61] [text2mid] [53,53]
+
+Just use the two tracks, and msg1,msg2
+
+
+!!File "c:\devinpiano/music\extensions\trey\trey.py", line 553, in play_in_background
+
+Not sure I love the default function mechanism in ACT
+

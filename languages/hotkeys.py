@@ -23,6 +23,7 @@ class hotkeys:
     self.links = []
     self.maxseq = 10 #includes parameters
     self.callback = None
+    self.audio_transcript = ""
     self.funcdict = {}
 
   def word(self, sequence=[]):
@@ -57,12 +58,25 @@ class hotkeys:
       print(f'!! <{self.__class__.__name__}> No Data')  
     return 0
 
+
+  def insert_word(self, func, sequence=[], word=""):
+    """Insert word into sequence.  Word may be sentence."""
+
+    if (func == "search_web"):
+      from mykeys import text2seq
+      seq = text2seq(word)
+      if (len(sequence) == 1): #default case.  Have to add extra keybot
+        sequence = sequence + seq + [self.keybot] #separator
+      else:
+        sequence = sequence + seq
+      return sequence
+    
   def load_data(self):
 
     #load language specific data into the config.  
     default = {
       "2": {
-        "Start": [53,54], #read from this cache page current point.  
+#        "Start": [53,54], #read from this cache page current point.  
         "Stop": [53,52],
         "Read Screen": [53,50],      
         "Go Back": [53,51], 
@@ -76,7 +90,7 @@ class hotkeys:
         "Click Link": [53,55, 60], #also read screen
         "Search Web": [53,55, 61], #also read screen
         "Comment": [53,56, 57], #record comment
-        "Select Type": [53,57, 58], #parameter type default go next.  
+#        "Select Type": [53,57, 58], #parameter type default go next.  
       }
     }
     if (self.name in self.config['languages']):
@@ -100,7 +114,7 @@ class hotkeys:
       "Select Type": "select_type",
       "Next": "next",
       "List Tabs": "list_tabs",
-
+      "_Search Web": "_search_web",
     }
 
     return 0  
@@ -108,9 +122,16 @@ class hotkeys:
   #act differently based on words in sequence.    
   def act(self, cmd, words=[], sequence=[]):
     """ACT based on command and sequence."""
-    if cmd in self.funcdict:
+    if (len(sequence) == 0 and "_" + cmd in self.funcdict):
+      #run prefix command
+      func = self.funcdict["_" + cmd]
+      if hasattr(self, func):
+        return getattr(self, func)(sequence)
+      
+    elif cmd in self.funcdict:
       func = self.funcdict[cmd]
       #all require keybot at end.
+
       if hasattr(self, func):
         if (len(sequence) == 1 and sequence[0] == self.keybot):
           return getattr(self, func)(sequence[:-1])
@@ -147,10 +168,28 @@ class hotkeys:
       print('No browser session active.')
       self.speak('No browser session active.')
     return 0
-  
+
+  def _search_web(self, sequence=[]):  
+    logger.info(f'> _Search Web {sequence}')
+    #get audio input for query.  
+    from extensions.trey.speech import listen_audio
+    at = listen_audio(5, "query.wav")
+    #at.join() #wait for it to finish.
+    #have to just use some keys until this is done.  
+    #need to return 1 to indicate we need more keys.
+    #but this is only called once.  
+    return 1
+
+
   def search_web(self, sequence=[]):
     logger.info(f'> Search Web {sequence}')
     query = "What is the capital of France?"
+    from extensions.trey.speech import transcribe_audio
+    self.audio_transcript = transcribe_audio("query.wav")
+    logger.info('$$Audio_Transcript = ' + self.audio_transcript)
+
+    if (self.audio_transcript != ""):
+      query = self.audio_transcript
     from extensions.trey.trey import speak
     speak(f'Searching the web for: {query}')
     engine = 0
