@@ -88,6 +88,7 @@ class hotkeys:
         "Skip Lines": [53,55, 57],
         "Page": [53,55, 59], #also read screen
         "Click Link": [53,55, 60], #also read screen
+        "Find Last": [53,55, 58], #Jump in screen
         "Search Web": [53,55, 61], #also read screen
         "Comment": [53,56, 57], #record comment
 #        "Select Type": [53,57, 58], #parameter type default go next.  
@@ -109,6 +110,7 @@ class hotkeys:
       "Skip Lines": "skip_lines",
       "Page": "page",
       "Click Link": "click_link",
+      "Find Last": "find_last",
       "Search Web": "search_web",
       "Comment": "comment",
       "Select Type": "select_type",
@@ -207,10 +209,31 @@ class hotkeys:
     
     body_text, link_data, page, cacheno = playwrighty.search_web(query, engine=engine, cacheno=cacheno)
 #    print(body_text)
+    self.links = link_data
+
     q2, q3, stop_event = self.speak(body_text, link_data)
     playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
     return 0
-    
+
+
+
+  def find_last(self, sequence=[]):
+    if (len(sequence) < 1):
+      sequence = [53] #default to first link
+    logger.info(f'> Find Last {sequence}')
+    #find the current link from our reading.  
+    if (playwrighty.mybrowser is not None):
+      current_cache = playwrighty.current_cache
+      if (current_cache >= 0 and current_cache < len(playwrighty.page_cache)):
+        #get queue for reading.
+        q2 = playwrighty.page_cache[current_cache]['reader_queue']
+        while (q2 is not None and not q2.empty()):
+          total_read = q2.get() #get current link number.  
+          #find last link read.  
+        return playwrighty.find_last(sequence[-1]-self.keybot, current_cache, text_offset=total_read)
+
+
+
   def click_link(self, sequence=[]):
     if (len(sequence) < 1):
       sequence = [53] #default to first link
@@ -240,9 +263,11 @@ class hotkeys:
       a = playwrighty.click_link(-1, total_read, sequence[-1]-self.keybot)
       if (isinstance(a, tuple)):
         body_text, link_data, page, cacheno = a
+        self.links = link_data
         print(body_text)
         q2, q3, stop_event = self.speak(body_text, link_data)
         playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
+        return 0
       else:
         print(f'Clicked link, no new page returned {a}')
         link = None
@@ -250,7 +275,7 @@ class hotkeys:
         if (idx >= 0 and idx < len(self.links)):
           link = self.links[idx]
         q2, q3, stop_event = self.speak(f'Clicked link {idx} {link['text']} but nothing new to read.  Go back or restart search')
-
+        return -1
 
   def go_back(self, sequence=[]):
     if (len(sequence) < 1):
@@ -263,9 +288,12 @@ class hotkeys:
       a = playwrighty.go_back(-sequence[-1]+self.keybot)
       if (isinstance(a, tuple)):
         body_text, link_data, page, cacheno = a
+
+        self.links = link_data
         print(body_text)
         q2, q3, stop_event = self.speak(body_text, link_data)
         playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
+        return 0
       else:
         print(f'Clicked back, no new page returned {a}')
         logger.info('No valid page to go back to.')

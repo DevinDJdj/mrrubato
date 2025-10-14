@@ -775,3 +775,22 @@ Just use the two tracks, and msg1,msg2
 
 Not sure I love the default function mechanism in ACT
 
+When going back, have to save the current location being read, and start perhaps 50 chars prior.  
+
+~~Should mass produce this or similar..
+#https://hackaday.com/2021/06/30/mits-knitted-keyboard-is-quite-a-flexible-midi-controller/
+Pants I think is the only realistic option, or pants insertable.  
+Not sure best design..
+
+
+Qdrantz too slow with more than a few hundred items.  
+
+Lets move the browser along with reading..
+Just have function.  
+Find and jump to text.  
+-- test [53,55, 58]
+
+
+
+#https://midi.org/developing-midi-applications-on-android
+

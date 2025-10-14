@@ -26,7 +26,7 @@ import time
 import sys
 import mido
 from mido import Message, MidiFile, MidiTrack
-
+from datetime import datetime
 from mido.ports import MultiPort
 
 import base64
@@ -71,13 +71,19 @@ class MyLang:
 class MyKeys:
   def __init__(self, config, qapp=None, startx=0):
     self.config = config
+    self.now = datetime.now()
+    self.nowstr = self.now.strftime("%Y%m%d%H%M%S")
+    self.mid = self.getmidifile()
     self.langdir = config['keymap']['settings']['LANG_DIR']
+    self.transcriptdir = config['keymap']['settings']['TRANSCRIPT_DIR']
     self.qapp = qapp
     self.startx = startx
     self.maxseq = 20 #can we chain together anything meaningful?  
     self.sequence = []
     self.words = [] #this can be passed from microphone input as well.  
+    self.words_ = [] #this is the full list of executed words.  
     self.fullsequence = []
+    self.stack = []
     self.languages = {} #language modules.  
     self.langkey = []
     self.langna = []
@@ -147,7 +153,17 @@ class MyKeys:
 
 
   def reset_sequence(self):
-    self.fullsequence.extend(self.sequence)
+#    self.fullsequence.extend(self.sequence)
+
+    if (len(self.mid.tracks[self.currentchannel]) >= len(self.sequence)):
+      for s in self.sequence:
+        self.mid.tracks[self.currentchannel].pop() #remove from midi track.
+        #get rid of unused data..
+    else:
+      #should never occur...
+      print("Error: midi track shorter than sequence, cannot reset properly")
+      logger.error("Error: midi track shorter than sequence, cannot reset properly")
+
     self.sequence = []
     self.words = []
     self.currentcmd = None
@@ -184,8 +200,14 @@ class MyKeys:
 
       #last command succeeds.  retrigger without this sequence.  
       #remove ss from end of sequence instead of resetting everything.  
-      self.sequence = self.sequence[-len(ss):] #remove length of sequence.  
-      self.sequence = self.sequence[-len(self.words[-1]['sequence']):] #remove length of last word.      
+
+
+      self.sequence = self.sequence[:-len(ss)] #remove length of sequence.  
+      self.sequence = self.sequence[:-len(self.words[-1]['sequence'])] #remove length of last word.      
+
+      self.words[-1]['ss'] = ss
+      self.words_.append(self.words[-1]) #add to executed words.
+
       self.words = self.words[:-1 ] #remove last word as it executed.  
       self.currentlangna = self.words[-1]['langna'] if len(self.words) > 0 else ""
       self.currentlang = self.words[-1]['lang'] if len(self.words) > 0 else ""
@@ -231,6 +253,9 @@ class MyKeys:
         return -1 #too long sequence notify error.  
         
       self.sequence.append(note)
+      #not using currentchannel at the moment.. all languages using same track..
+      self.mid.tracks[self.currentchannel].append(msg)
+
       self.currentseqno += 1
       self.lastnotetime = msg.time
       print(self.sequence)
@@ -266,7 +291,8 @@ class MyKeys:
         found = True
         print("Second Word found: " + word + " in " + l)
         logger.info(f'Second Word found: {word} in {l}')
-        self.words.append({"word": word, "lang": la, "langna": l, "sequence": self.sequence[self.startseqno:]})
+        #_words words before this one.  
+        self.words.append({"word": word, "lang": la, "langna": l, "sequence": self.sequence[self.startseqno:], "ss": [], "_words": self.words})
         self.startseqno = self.currentseqno
         self.currentcmd = word
         self.currentlang = la
@@ -394,7 +420,7 @@ class MyKeys:
   def addLang(self, d):
     return -1
   
-  #switch current control set.  
+  #switch current control set.  Not used at the moment.
   def switchLang(self, lkey):
     if self.langna[lkey] not in self.langused:
       if len(self.langused) < 8:
@@ -475,6 +501,30 @@ class MyKeys:
       
     return text
   
+  def getmidifile(self):
+    #default 2 tracks and control..
+    mid = MidiFile()
+#    mid.ticks_per_beat = 1000000
+#    mid.tempo = 60
+    track = MidiTrack()
+    track2 = MidiTrack()
+    controltrack = MidiTrack()
+#    track.append(MetaMessage('set_tempo', tempo=100000, time=0))
+    mid.tracks.append(track)
+    mid.tracks.append(track2)
+    mid.tracks.append(controltrack)
+    track.append(Message('program_change', channel=0, program=0, time=0))
+    track2.append(Message('program_change', channel=0, program=0, time=0))
+    controltrack.append(Message('program_change', channel=0, program=0, time=0))
+    return mid
+
+  def savemidi(self, fname=""):
+    if (fname == ""):
+      fname = self.langdir + "/" + self.nowstr + ".mid"
+    self.mid.save(fname)
+    print("Saved midi file to " + fname)
+
+
   def text2midi(self, text):
     #convert text to midi keys.  
     mid = MidiFile()

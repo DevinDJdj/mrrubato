@@ -63,7 +63,9 @@ def click_link(cacheno, text_offset, link_offset=0, open_new_tab=False):
             link = links[linkno]
             href = link['href']
             if href:
-                logging.info(f'Clicking link: {link['text']} {href}')
+                logging.info(f'Clicking link: {link['text']} {link['offset']} \n#{href}')
+                logging.info(f'\n<!-- \noffset {text_offset} \n{page_info['body'][text_offset-50:text_offset+50]} \n-->\n')
+
                 if open_new_tab:
                     page = page.context.new_page()
                     page.goto(href)
@@ -82,6 +84,35 @@ def click_link(cacheno, text_offset, link_offset=0, open_new_tab=False):
         logging.warning(f'Cache number {cacheno} out of range')
     return False
 
+
+def find_last(link_offset=1, cacheno=-1, text_offset=-1):
+    """Go back to the previous page in the current cache."""
+    global current_cache
+    if (cacheno < 0):
+        cacheno = current_cache
+    if (num == 0):  #go back one for default case.  
+        num = 1
+    if cacheno >= 0 and cacheno < len(page_cache):
+        page_info = page_cache[cacheno]       
+        page = page_info['page']
+        links = page_info['links']
+    
+        if (text_offset > 0):
+            #find and jump to this link.  
+            linkno = 0
+            for i, link in enumerate(links):
+                if 'offset' in link and link['offset'] <= text_offset:
+                    linkno = i
+            if (link_offset != 0):
+                linkno += link_offset
+
+            if linkno < len(links) and linkno >= 0:
+                link = links[linkno]
+                #jump to this link in page.  
+                page.locator("text='" + link['text'] + "'").scroll_into_view_if_needed()
+                logging.info(f'Jumping to link: {link['text']} {link['offset']} \n#{link['href']}')
+                return 0
+    return -1
 
 def go_back(num=1, cacheno=-1):
     """Go back to the previous page in the current cache."""
@@ -157,39 +188,45 @@ def get_ppage(cacheno=-1): #get playwright page from cacheno
     return page
 
 def get_page_details(page):
-    links_locator = page.locator('a')
-    link_data = []
-    for i in range(links_locator.count()):
-        link_element = links_locator.nth(i)
-        href = link_element.get_attribute('href')
-        text_content = link_element.text_content()
-        bb = link_element.bounding_box()
-        link_data.append({'href': href, 'text': text_content, 'bbox': bb})        
 
-    print(link_data)
     body_text = ""
-    body = page.locator('body')
-    for i in range(body.count()):
-        body_element = body.nth(i)
+    link_data = []
+    try:
+        links_locator = page.locator('a')
+        for i in range(links_locator.count()):
+            link_element = links_locator.nth(i)
+            href = link_element.get_attribute('href')
+            text_content = link_element.text_content()
+            bb = link_element.bounding_box()
+            link_data.append({'href': href, 'text': text_content, 'bbox': bb})        
 
-        body_text += body.inner_text()
-    print(body_text)
+        print(link_data)
+        body = page.locator('body')
+        for i in range(body.count()):
+            body_element = body.nth(i)
 
-    #iterate through and add offset for the link content
-    #should create multiple links if multiple same text. For now we just get the last offset.  
-    for link in link_data:
-        if link['text'] and link['href']:
-            offset = body_text.find(link['text'])
-            link['offset'] = offset
-        else:
-            print("Link with missing text or href")
-            link['offset'] = -1
-    #sort by offset.  
-    link_data.sort(key=lambda x: x.get('offset'))
-    print(link_data)
+            body_text += body.inner_text()
+        print(body_text)
 
-    return body_text, link_data
+        #iterate through and add offset for the link content
+        #should create multiple links if multiple same text. For now we just get the last offset.  
+        for link in link_data:
+            if link['text'] and link['href']:
+                offset = body_text.find(link['text'])
+                link['offset'] = offset
+            else:
+                print("Link with missing text or href")
+                link['offset'] = -1
+        #sort by offset.  
+        link_data.sort(key=lambda x: x.get('offset'))
+        print(link_data)
 
+        return body_text, link_data
+    except Exception as e:
+
+        logging.error(f'Error getting page details: {e}')
+        return body_text, link_data
+    
 def cache_page(url, page, body_text, link_data, cacheno=-1):
     if cacheno >= 0 and cacheno < len(page_cache):
         page_cache[cacheno] = {'query': url, 'page': page, 'body': body_text, 'links': link_data, 'title' : page.title(), 'reader_queue': page_cache[cacheno].get('reader_queue', None), 'sim_queue': page_cache[cacheno].get('sim_queue', None), 'reader_stop_event': page_cache[cacheno].get('reader_stop_event', None)}            

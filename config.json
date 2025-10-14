@@ -103,28 +103,98 @@
 	
 	"keymap":{
 	    "global":{
-			"top": 108,
-			"bottom": 21,
+			"1":{
+				"Unpause": [108],
+				"Pause": [107],
+				"Start": [21], 
+				"Stop": [22]
+				
+			}, 
+			"2": {
+				
+			}, 
+			"3": {
+				
+			},
+			"4": {
+				"LangSelect": [36,29,31,36]				
+			},
+
 			"Unpause": 108,
 			"Pause": 107,
 			"Start": 21, 
 			"Stop": 22, 
-			"ShowScreen": [105, 105], 
-			"HideScreen": 106, 
-			"LangSelect": [21, 23], #for now just use this and cycle through.  
-
-
+			
+			"Reset": [48,48,48],
+			"ShowScreen": 105, 
+			"HideScreen": 106,
+			"LangSelect": [36,29,31,36],
+			"top": 108,
+			"bottom": 21
+		},
+		"actions":{
+			"screen":{
+				"Click": "Click",
+				"PageDown": "PageDown",
+				"PageUp": "PageUp"
+			},
+			"Unpause": "unpause",
+			"Pause": "pause",
+			"Start": "start",
+			"Stop": "stop",
+			"Reset": "reset",
+			"ShowScreen": "showScreen",
+			"HideScreen": "hideScreen",
+			"LangSelect": "langSelect"
+		},
+		"screen":{
+			"Click": 60,
+			"PageDown": 55,
+			"PageUp": 56
 		},
 		"languages":{
 			"mousemovement1": [60, 61],			
 			"mousemovement2": [62, 63],
 			"hotkeys": [64, 65]			
 			
+		},
+		"settings":{
+			"MAX_WORD": 10, 
+			"LANG_DIR": "C:/devinpiano/languages",
+			"TRANSCRIPT_DIR": "C:/devinpiano/transcripts"
 		}
 	},
 	"languages":{
-		"mousemovement1": {
+	    "hotkeys":{
 			"1":{
+				"Unpause": [108],
+				"Pause": [107],
+				"Start": [21], 
+				"Stop": [22]
+				
+			}, 
+			"2": {
+				"Start": [53,54],
+				"Stop": [53,52], 
+				"Read Screen": [53,50],
+				"Go Back": [53,51]
+						
+			}, 
+			"3": {
+				"Skip Lines": [53,55, 57],
+				"Page": [53,55, 59], 
+				"Click Link": [53,55, 60], 
+				"Search Web": [53,55, 61],
+				"Comment": [53,56, 57]
+
+				},
+			"4": {
+				"LangSelect": [36,29,31,36]				
+			}
+		},
+		"test": {
+			"1":{
+
 			},
 			"2": {
 				"left": [59,57],
@@ -132,21 +202,8 @@
 				"up": [60,61],
 				"down": [61,60]
 			}
-		},
-		"mousemovement2": {
-			"1":{
-			},
-			"2": {
-				"left": [59,57],
-				"right": [62,64],
-				"up": [60,61],
-				"down": [61,60]
-			}
-		},
-		"hotkeys": {
-			"keys": [64, 65],
-			"hotkeys": [64, 65]
 		}
+
 	}
 	
 }
