@@ -268,13 +268,26 @@ def build_map(lines, links):
         #skip all links with no offset
 
     link_density_map = []
+    mavgcounter = 10
+    mavgdensity = 0.0
+    mavglength = 0.0
+    currentl = 0
     for idx, l in enumerate(lines):
-        total_read += len(l)  #include newline
+        total_read += len(l) + 1  #include newline
         numlinks = 0
+
+        currentl += 1
+
+        if (currentl > mavgcounter):
+            mavglength -= link_density_map[idx - mavgcounter]['length']
+            mavgdensity -= link_density_map[idx - mavgcounter]['density']
+
         while (link_loc < len(links) and 'offset' in links[link_loc] and links[link_loc]['offset'] != -1 and links[link_loc]['offset'] <= total_read):
             numlinks += 1
             link_loc += 1
-        link_density_map.append({"offset": total_read, "text": l, "length": len(l), "numlinks": numlinks, "audio": f"./temp/{idx}.wav", "density": numlinks/(len(l)+1)})
+        mavglength += len(l)
+        mavgdensity += numlinks/(len(l)+1)
+        link_density_map.append({"offset": total_read, "text": l, "length": len(l), "mavglength": mavglength, "numlinks": numlinks, "audio": f"./temp/{idx}.wav", "density": numlinks/(len(l)+1)})
         
 
     return link_density_map
@@ -348,7 +361,7 @@ def get_first_content_line(ldmap):
         currentl += 1
         print(f'Line {currentl} length {l["length"]} density {l["density"]} : mavg length {mavglength} mavg density {mavgdensity}')
         if (currentl > 5 and (mavgdensity/mavgcounter < 0.02 and mavglength/mavgcounter > 20)):
-            return currentl - 5 #return a few lines earlier to get context
+            return currentl - 2 #return a few lines earlier to get context
         if (currentl > mavgcounter):
             mavglength -= ldmap[idx - mavgcounter]['length']
             mavgdensity -= ldmap[idx - mavgcounter]['density']
@@ -384,8 +397,7 @@ def init_qdrantz(ldmap, topic="websearch"):
     texts = [l['text'] for l in ldmap]
     ids = [i for i in range(len(texts))]
     payloads = [{'id': i, 'text': texts[i]} for i in range(len(texts))]
-    qdrantz.add_vectors(topic, texts, ids, payloads)
-    logging.info(f'Added {len(texts)} texts to Qdrant collection {topic}')
+    qdrantz.add_vectors(topic, texts)
 
 
 def get_similar(idx, ldmap, topk=3):
@@ -400,6 +412,8 @@ def get_similar(idx, ldmap, topk=3):
     return []
 
 def play_in_background(text, links=[], stop_event=None, skip_event=None, q=None, q2=None, q3=None):
+
+    skipmenu = True
     sound_file = "0.mp3"
     VOICE = "en-US-AriaNeural"
     SIMVOICE = ["en-US-CoraNeural", "en-US-ElizabethNeural"]
@@ -420,6 +434,7 @@ def play_in_background(text, links=[], stop_event=None, skip_event=None, q=None,
 #    os.system(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --text \"{text}\" --rate=\"-10%\"")
 
     lines = text.split('\n')
+#    logger.info(text)
     skip = 0
 
     remove_temp_audio("./temp/")
@@ -431,6 +446,7 @@ def play_in_background(text, links=[], stop_event=None, skip_event=None, q=None,
     #not sure this adds anything.  
     play_ldmap(link_density_map)
     skip = get_first_content_line(link_density_map)
+    mavglen = link_density_map[skip]['mavglength']
     print(f'Detected first content line at {skip}, skipping to there')
 
     mp_stop = multiprocessing.Event()
@@ -503,6 +519,14 @@ def play_in_background(text, links=[], stop_event=None, skip_event=None, q=None,
                 #this is go to next type or previous type event.  
                 lines_to_skip = 0 #unknown event
 
+        #10* for counter..
+        #have flag skipmenu to read menu or not.. 
+        if (skipmenu and idx+5 < len(lines) and skip == 0 and link_density_map[idx+5]['mavglength'] < 200 and link_density_map[idx]['mavglength'] < 200 and link_density_map[idx]['density'] > 0.2):
+            #we are at a point where we have a very long line coming up, and we are currently at a short line.
+            #probably a menu or title section.  skip ahead to the long line.
+            skip = 5
+            print(f'>> Skipmenu [{idx}, {skip}]')
+            winsound.Beep(3000, 100) #beep to start
         if (skip > 0):
             skip -= 1
             total_read += len(l) + 1 #include newline
@@ -539,6 +563,7 @@ def play_in_background(text, links=[], stop_event=None, skip_event=None, q=None,
             except Exception as e:
                 logger.error(f'Error in TTS playback: {e}')
                 print(f'Error in TTS playback: {e}')
+                total_read += len(l) + 1 #include newline
                 continue
 
             if (len(l) > 50): #only do similar for longer lines
@@ -553,6 +578,10 @@ def play_in_background(text, links=[], stop_event=None, skip_event=None, q=None,
                         print(result)
                         rid = result['id']
                         if (rid != idx): #dont return self
+                            if (rid < 0 or rid >= len(link_density_map)):
+                                logger.error(f'Invalid similar item id: {rid} {len(link_density_map)} {len(lines)}')
+                                print(f'Invalid similar item id: {rid} {len(link_density_map)} {len(lines)}')
+                                continue
                             #read out the similar item.  
                             siml = link_density_map[rid]['text']
                             print(link_density_map[rid])
@@ -568,6 +597,7 @@ def play_in_background(text, links=[], stop_event=None, skip_event=None, q=None,
                                 except Exception as e:
                                     logger.error(f'Error in TTS playback of similar item: {e}')
                                     print(f'Error in TTS playback of similar item: {e}')
+                                    
                                     continue
                             if (q3 is not None):
                                 q3.put(link_density_map[rid]['offset']) #send back the offset of the similar item.
@@ -575,12 +605,14 @@ def play_in_background(text, links=[], stop_event=None, skip_event=None, q=None,
         print(f'Total read: {total_read}')
         waited = 0
         ttotal = total_read
+        time.sleep(0.03*len(l)) #wait for initial TTS to start playing.
+
         for i in range(0, len(l)+1, 5): #check every 5 characters
             #not sure if we want to beep for skipped lines or not.  
             #maybe problematic.  
             if (link_loc < len(links) and 'offset' in links[link_loc] and links[link_loc]['offset'] <= total_read):
                 print(f'At link: {links[link_loc]}')
-                winsound.Beep(500, 100) #short beep to indicate link
+                winsound.Beep(500, 300) #short beep to indicate link
                 if (links[link_loc]['offset'] != -1):
                     #only move to next link if we are at the offset.  
                     #some links may be at -1 offset which we skip earlier.
@@ -590,8 +622,8 @@ def play_in_background(text, links=[], stop_event=None, skip_event=None, q=None,
 #            ttotal += 5
             if (q2 is not None and ttotal > 0):
                 q2.put(ttotal) #communicate how much we have read.
-            waited += 0.3
-            time.sleep(0.3) #simulate reading time. 0.4 seconds per 5 characters estimate.  
+            waited += 0.35
+            time.sleep(0.35) #simulate reading time. 0.4 seconds per 5 characters estimate.  
             #shouldnt have to be too exact.  
         print(f'Total waited: {waited}')
 

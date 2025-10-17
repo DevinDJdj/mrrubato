@@ -355,11 +355,14 @@ class hotkeys:
     if (playwrighty.mybrowser is not None): #we have started a browser session with playwright.
       logger.info('Getting page from Playwright')
       text, links = playwrighty.get_page_details(playwrighty.get_ppage(playwrighty.current_cache))
+      text, links, page, cacheno = playwrighty.read_page('', playwrighty.current_cache) #read current page
+
       self.links = links
       print(f'Playwright found {len(text)} characters and {len(links)} links  on the page') 
       q2, q3, stop_event = self.speak(text, links)
       playwrighty.set_reader_queue(q2, q3, stop_event, playwrighty.current_cache)
-          
+      return 0
+    
     else:
       #use PyQt to read screen.
       buffer = None

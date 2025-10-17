@@ -90,8 +90,8 @@ def find_last(link_offset=1, cacheno=-1, text_offset=-1):
     global current_cache
     if (cacheno < 0):
         cacheno = current_cache
-    if (num == 0):  #go back one for default case.  
-        num = 1
+    if (link_offset == 0):  #go back one for default case.  
+        link_offset = -1
     if cacheno >= 0 and cacheno < len(page_cache):
         page_info = page_cache[cacheno]       
         page = page_info['page']
@@ -187,10 +187,43 @@ def get_ppage(cacheno=-1): #get playwright page from cacheno
         page = mycontext.new_page()
     return page
 
+def find_nth_occurrence(main_string, sub_string, n):
+    """
+    Finds the index of the nth occurrence of a substring within a main string.
+
+    Args:
+        main_string (str): The string to search within.
+        sub_string (str): The substring to find.
+        n (int): The desired occurrence number (1 for the first, 2 for the second, etc.).
+
+    Returns:
+        int: The starting index of the nth occurrence of the substring,
+             or -1 if the nth occurrence is not found.
+    """
+    if n <= 0:
+        return -1  # Invalid occurrence number
+
+    start_index = 0
+    occurrence_count = 0
+
+    while occurrence_count < n:
+        index = main_string.find(sub_string, start_index)
+        if index == -1:
+            return -1  # Substring not found enough times
+        
+        occurrence_count += 1
+        if occurrence_count == n:
+            return index
+        
+        start_index = index + len(sub_string) # Start searching after the found occurrence
+
+    return -1 # Should not be reached if n > 0 and occurrence_count is handled correctly
+
 def get_page_details(page):
 
     body_text = ""
     link_data = []
+    last_link = None
     try:
         links_locator = page.locator('a')
         for i in range(links_locator.count()):
@@ -198,7 +231,9 @@ def get_page_details(page):
             href = link_element.get_attribute('href')
             text_content = link_element.text_content()
             bb = link_element.bounding_box()
-            link_data.append({'href': href, 'text': text_content, 'bbox': bb})        
+            if href != last_link and text_content is not None and text_content.strip() != '':
+                link_data.append({'href': href, 'text': text_content, 'bbox': bb})        
+                last_link = href
 
         print(link_data)
         body = page.locator('body')
@@ -210,16 +245,26 @@ def get_page_details(page):
 
         #iterate through and add offset for the link content
         #should create multiple links if multiple same text. For now we just get the last offset.  
+        link_text_count = {}
+        offset_found = 0
         for link in link_data:
             if link['text'] and link['href']:
-                offset = body_text.find(link['text'])
+                nth = link_text_count.get(link['text'], 0) + 1
+                link_text_count[link['text']] = nth
+                offset = find_nth_occurrence(body_text, link['text'], nth)
+                if (offset == -1):
+                    print(f"Could not find link text in body: {link['text']}")
+                else:
+                    offset_found += 1
                 link['offset'] = offset
+
             else:
                 print("Link with missing text or href")
                 link['offset'] = -1
         #sort by offset.  
         link_data.sort(key=lambda x: x.get('offset'))
         print(link_data)
+        logger.info(f'Got page details with {len(body_text)} characters and {len(link_data)} links')
 
         return body_text, link_data
     except Exception as e:
@@ -254,12 +299,13 @@ def read_page(url, cacheno=-1):
     if url.startswith('/') and base is not None:
         url = base + url
     
-    if (not url.startswith('http')): #for now only http/https
+    if (url != '' and not url.startswith('http')): #for now only http/https
         #bad URL
         logging.warning(f'Bad URL: {url}')
         return "", [], page, cacheno
 
-    page.goto(url, wait_until="domcontentloaded")
+    if (url != ''):
+        page.goto(url, wait_until="domcontentloaded")
     body_text, link_data = get_page_details(page)
 #        await page.close()
 #        await browser.close()

@@ -793,4 +793,27 @@ Find and jump to text.
 
 
 #https://midi.org/developing-midi-applications-on-android
+#https://github.com/android/ndk-samples/tree/master/native-midi
+
+
+If too many in a row are short, go ahead and skip several lines.  
+Keep MA for line length.  
+
+**extensions/trey/trey.py
+Maybe add low-volume feedback on key press.  
+
+**extensions/trey/synth.py
+#https://python.plainenglish.io/build-your-own-python-synthesizer-part-2-66396f6dad81
+#https://github.com/18alantom/synth
+#https://github.com/18alantom/synth/blob/main/super_simple_synth.py
+
+Yeah should add this to 
+
+
+Need better link detection mechanism..
+Perhaps read link text via TTS.  
+
+Page down should work, then read page.. 
+only if reached end, or skipped past end.  
+If no extra content detected, then indicate.  
 

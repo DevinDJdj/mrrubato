@@ -1,11 +1,14 @@
 from qdrant_client import QdrantClient, models
 from tqdm import tqdm
 
+import logging
 qdrantz_client = None
 dense_model_name = "sentence-transformers/all-MiniLM-L6-v2"
 sparse_model_name = "prithivida/Splade_PP_en_v1"
 dense_vector_name = "dense"
 sparse_vector_name = "sparse"
+
+logger = logging.getLogger(__name__)
 
 def init_qdrant():
     global qdrantz_client
@@ -42,27 +45,40 @@ def add_vectors(topic, texts, ids=None, payloads=None):
     global qdrantz_client
     if not qdrantz_client.collection_exists(topic):
         create_collection(topic)
-    if ids is None:        
-        ids = [i for i in range(len(texts))]
     print("Adding vectors to Qdrant collection...")
-    print(len(texts), len(ids))
+    print(len(texts), ' total')
+    ids = ids if ids is not None else list(range(len(texts)))
+    lengths = [len(t) for t in texts]
+    sorted_lengths = sorted(lengths)
+    avg_length = sum(lengths) / len(lengths)
+
     if payloads is None:
-        payloads = [{"id": ids[i], "text": texts[i]} for i in range(len(texts))]
+        payloads = []
+
+
+        for i in range(len(texts)):
+            #print(f'Text: {texts[i]}')
+            if (len(texts[i]) > avg_length and len(texts[i]) < avg_length * 3):
+                payloads.append({"id": ids[i], "text": texts[i]})
+
+    print(len(payloads), ' used')
     qdrantz_client.upsert(
         collection_name=topic,
         points=[
             models.PointStruct(
-                id=ids[i],
+                id=payloads[i]['id'],
                 vector={
-                    dense_vector_name: models.Document(text=texts[i], model=dense_model_name),
+                    dense_vector_name: models.Document(text=payloads[i]['text'], model=dense_model_name),
         
-                    sparse_vector_name: models.Document(text=texts[i], model=sparse_model_name),
+                    sparse_vector_name: models.Document(text=payloads[i]['text'], model=sparse_model_name),
                 },
                 payload=payloads[i],
             )
-            for i in range(len(texts))
+            for i in range(len(payloads))
         ],
     )
+    logging.info(f'Added {len(texts)} texts to Qdrant collection {topic}')
+
     return True
 
 
