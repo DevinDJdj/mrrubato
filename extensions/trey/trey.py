@@ -43,7 +43,6 @@ sys.path.insert(1, 'c:/devinpiano/music/') #config.py path Base project path
 import config 
 import mykeys
 
-
 #from kokoro import KPipeline
 #from IPython.display import display, Audio
 #import soundfile as sf
@@ -1035,8 +1034,10 @@ def start_midi(midi_stop_event):
     #Portable Grand-1 2
     #should really have some config selection here.  
     midiout = mido.open_output(outputs[1]) #open first output for now.  
-    mk = mykeys.MyKeys(config.cfg, qapp, mywindow.startx)
+    mk = mykeys.MyKeys(config.cfg, qapp, mywindow.startx, midi_stop_event)
+    mk.start_feedback() #play feedback if enabled.  This takes some time apparently to start thread.  
     cont = keyboard.Controller()    
+
     midiin = mido.open_input(inputs[0]) #open first input for now.
     with midiin as inport:
         while (not midi_stop_event.is_set()):
@@ -1052,6 +1053,7 @@ def start_midi(midi_stop_event):
                             velocity = 0
                         #add key to sequence and check for any actions.  
                         a = mk.key(note, msg, callback=None)
+
                         if (a == -1):
                             #error or reset
                             winsound.Beep(2000, 500) # Beep at 2000 Hz for 500 ms

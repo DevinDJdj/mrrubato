@@ -809,6 +809,8 @@ Maybe add low-volume feedback on key press.
 
 Yeah should add this to 
 
+Basic feedback done, need actual timed feedback.  
+
 
 Need better link detection mechanism..
 Perhaps read link text via TTS.  
@@ -816,4 +818,23 @@ Perhaps read link text via TTS.
 Page down should work, then read page.. 
 only if reached end, or skipped past end.  
 If no extra content detected, then indicate.  
+
+
+**LANG
+Screenshot = [53,49,50] [BBOX] [53,53]
+_Screenshot = initialize with previous BBOX, or full screen.  
+Adjust = [53,49,51] +/- realtime adjust of BBOX
+
+
+**extensions/trey/synth.py
+Wow getting the feedback to not bleat was annoying.  
+        mystep = 1 / last_freq #time for one wave cycle
+        mydur = mystep * 4  #at least 4 wave cycles
+        while (mydur+mystep < 0.1):
+            mydur += mystep
+
+
+
+> git clone https://github.com/DevinDJdj/mrrubato.git .
+
 

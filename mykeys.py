@@ -28,9 +28,12 @@ import mido
 from mido import Message, MidiFile, MidiTrack
 from datetime import datetime
 from mido.ports import MultiPort
+#probably should move..
+import extensions.trey.synth as synth
 
 import base64
 import os
+import threading
 #logging.basicConfig(filename='trey.log', 
 #    format='%(asctime)s %(levelname)-8s %(message)s',
 #    level=logging.INFO,
@@ -69,8 +72,9 @@ class MyLang:
   
 
 class MyKeys:
-  def __init__(self, config, qapp=None, startx=0):
+  def __init__(self, config, qapp=None, startx=0, stop_event=None):
     self.config = config
+    self.stop_event = stop_event
     self.now = datetime.now()
     self.nowstr = self.now.strftime("%Y%m%d%H%M%S")
     self.mid = self.getmidifile()
@@ -102,6 +106,12 @@ class MyKeys:
     self.lastnotetime = 0
     self.currentcmd = None
     self.notes = np.zeros(config['keymap']['global']['top'] - config['keymap']['global']['bottom'], dtype=int)
+    self.play_feedback = False
+
+    if (self.config['keymap']['settings']['PLAY_FEEDBACK']):
+        self.play_feedback = True
+    else:
+        self.play_feedback = False
 
 
     for key, value in config['keymap']['languages'].items():
@@ -128,6 +138,11 @@ class MyKeys:
       except:
         print("language doesnt exist " + key)
 
+
+  def start_feedback(self):
+    if (self.play_feedback):
+      self.play_thread = threading.Thread(target=synth.play_stream, args=(self.stop_event,))
+      self.play_thread.start()
 
   def unload(self):
     #unload language specific data
@@ -236,6 +251,16 @@ class MyKeys:
 
     if (hasattr(msg, 'time') and msg.time <= 0):
       msg.time = int(time.time() * 1000)
+
+    if self.play_feedback:
+      #sound feedback when playing a note.  
+
+      if (msg.type == 'note_on' and hasattr(msg, 'velocity') and msg.velocity > 0):
+          synth.note_on(msg.note, msg.velocity)
+#          synth.play_note(msg.note, 0.3, msg.velocity/127)
+      elif (msg.type == 'note_off' or (msg.type == 'note_on' and hasattr(msg, 'velocity') and msg.velocity == 0)):
+          synth.note_off(msg.note)
+
 
     if hasattr(msg, 'type') and msg.type=='note_on' and hasattr(msg, 'velocity') and msg.velocity > 0:
       #data is stale, start again.  
