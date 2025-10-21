@@ -823,7 +823,15 @@ If no extra content detected, then indicate.
 **LANG
 Screenshot = [53,49,50] [BBOX] [53,53]
 _Screenshot = initialize with previous BBOX, or full screen.  
-Adjust = [53,49,51] +/- realtime adjust of BBOX
+Screenshot_ = adjust realtime.. detect BBOX, after BBOX, adjust in 10 pixel increments.  
+60 = 0
+61 = up 10
+58 = down 10
+
+59 = left 10
+62 = down 10
+
+
 
 
 **extensions/trey/synth.py
@@ -836,5 +844,36 @@ Wow getting the feedback to not bleat was annoying.
 
 
 > git clone https://github.com/DevinDJdj/mrrubato.git .
+
+
+
+**web/public/languages/videocontrol.js
+$$OFFSET=1
+    "0,3,6": "screenshot", //take screenshot quick location only 
+    "0,3,7": "zoomshot", //take screenshot zoomed in
+    "0,3,8": "zoom", //zoom in or out    
+    "0,3,5": "deletescreen", //remove last screenshot
+    "0,3,4": "deletescreen", //remove last screenshot
+    "0,2,6": "speak", //add the last transcript entry to
+    "0,2,5": "delete", //remove last transcript entry    
+    "0,12,0": "start", //start recording
+    "12,0,12": "stop", //stop recording
+    "1,13,1": "pause", //pause recording
+    "13,1,13": "unpause", //unpause recording
+    "1,2,3": "help" //show/hide commands.  
+
+
+Should we add base key to language file?  
+Yes perhaps..
+53_hotkeys
+49_videocontrol
+
+annoying to do..
+
+
+**languages/video.py
+For now just play/pause.  
+Screenshot.. adjust..
+
 
 

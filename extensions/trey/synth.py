@@ -77,9 +77,9 @@ def play(play_count): #default each 0.1 seconds
         # Play any of the notes
         
         mystep = 1 / last_freq #time for one wave cycle
-        mydur = mystep * 4  #at least 4 wave cycles
-        while (mydur+mystep < 0.1):
-            mydur += mystep
+        mydur = mystep * 4  #at least 4 wave cycles incremenets
+        toadd = 0.1 // mydur
+        mydur = toadd * mydur
         
         sample_len = int(mydur*SAMPLE_RATE)  # 0.1 second buffer
         final = np.zeros(sample_len , dtype=np.float32)  

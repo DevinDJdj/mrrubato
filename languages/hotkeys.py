@@ -117,6 +117,7 @@ class hotkeys:
       "Next": "next",
       "List Tabs": "list_tabs",
       "_Search Web": "_search_web",
+      "Search Web_": "search_web_",
     }
 
     return 0  
@@ -134,6 +135,10 @@ class hotkeys:
       func = self.funcdict[cmd]
       #all require keybot at end.
 
+      #this function called every time a key is pressed.
+      if hasattr(self, func + "_"):
+        return getattr(self, func + "_")(sequence)
+      
       if hasattr(self, func):
         if (len(sequence) == 1 and sequence[0] == self.keybot):
           return getattr(self, func)(sequence[:-1])
@@ -180,6 +185,12 @@ class hotkeys:
     #have to just use some keys until this is done.  
     #need to return 1 to indicate we need more keys.
     #but this is only called once.  
+    return 1
+
+  def search_web_(self, sequence=[]):  
+
+    logger.info(f'> Search Web_ {sequence}')
+    #no function, just demo..
     return 1
 
 
