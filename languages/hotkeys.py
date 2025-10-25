@@ -17,6 +17,10 @@ class hotkeys:
     self.config = config
     self.qapp = qapp
     self.startx = startx
+    self.func = None
+    self.qr = "" #info for QR message
+
+    self.geo = None
     self.name = "hotkeys"
     self.keybot = 53 #
     self.keyoffset = 5 #offset within octave mapping
@@ -137,7 +141,8 @@ class hotkeys:
 
       #this function called every time a key is pressed.
       if hasattr(self, func + "_"):
-        return getattr(self, func + "_")(sequence)
+        #no return here..
+        getattr(self, func + "_")(sequence)
       
       if hasattr(self, func):
         if (len(sequence) == 1 and sequence[0] == self.keybot):

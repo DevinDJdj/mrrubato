@@ -875,5 +875,76 @@ annoying to do..
 For now just play/pause.  
 Screenshot.. adjust..
 
+Finish screenshot, 
+add BBOX info to QR along with past several actions.  
+Or perhaps just add screen width height and then midi info.  
+For now single BBOX.  
+--adjust seems to be too many keys.  
+
+Use track for each keybot available.  
+Make the others blank.  
+0-11 for now tracks.  
 
 
+Screenshot -> Draw
+When do we draw?  
+#https://github.com/PySimpleGUI/PySimpleGUI/issues/4927
+Want something like this.  
+#https://doc.qt.io/archives/qt-5.15/qt.html#WidgetAttribute-enum
+Qt::WindowTransparentForInput
+Qt::WA_TransparentForMouseEvents
+Looks like maybe this works..
+
+
+**web/public/rec.html
+ingest data from QR.  
+
+
+#https://github.com/SakanaAI/AI-Scientist
+#https://github.com/LearningCircuit/local-deep-research
+SearXNG
+#https://github.com/searxng/searxng
+
+#https://github.com/TheBlewish/Automated-AI-Web-Researcher-Ollama
+Try this..
+
+
+> git clone https://github.com/TheBlewish/Automated-AI-Web-Researcher-Ollama
+**/testing/Blewish/Automated-AI-Web-Researcher-Ollama
+-> python -m venv venv
+-> .\venv\Scripts\activate.bat
+> pip install -r requirements.txt
+
+#https://github.com/TheBlewish/Automated-AI-Web-Researcher-Ollama/tree/feature/windows-support
+
+**/testing/Blewish/Automated-AI-Web-Researcher-Ollama/llm_config.py
+LLM_CONFIG_OLLAMA
+
+
+> python ./Web-LLM.py
+
+~~Need stats on how much data has been ingested for this query, and from where..
+how much time is used for each step..
+How do we specify amount of time to take..
+
+--_research_loop
+--terminate_research
+Not exactly user friendly..
+
+Hmmm.. probably can just do this without too much difficulty using playwrighty.  
+
+Start search..
+Click links which seem relevant.
+Summarize data.. 
+Verification of answer..
+Provide answer..
+Continue or not..
+Add to query or not..
+Prioritize user query in context, but keep summary of answer..
+Flag to Self-generate addl. queries or not..
+Run in separate thread and separate playwrighty context.  
+Every so often, give option to switch reading context to discovered data.  
+
+
+Need mouse-over
+Cant go back once page read is done..

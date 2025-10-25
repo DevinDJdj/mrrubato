@@ -94,6 +94,10 @@ trey_data = {}
 mouse_listener = None
 global myactions
 myactions = []  # Global list to store sequential actions
+global current_qrdata
+current_qrdata = ""
+global current_bbox
+current_bbox = None
 
 def on_click(x, y, button, pressed):
 
@@ -737,6 +741,8 @@ def get_screen_qrinfo():
 
 def create_qr_text(text, hwnd):
     """Create a QR code with the given text."""
+    if (hwnd is None):
+        return text
     threadid, procid = win32process.GetWindowThreadProcessId(hwnd)
     name = psutil.Process(procid).name()
     ret = ""
@@ -791,13 +797,15 @@ def draw_overlay():
 
 
 
-def draw_screen_box():
+def draw_screen_box(bbox=None):
     """Draws a box around the screen."""
-    geometry = mywindow.geometry()
-    #get geometry of the highlight rectangle.  
     mywindow.highlighton = True
-    #set details here.  
-    mywindow.highlightrect = {'x': geometry.x()+100, 'y': geometry.y()+100, 'width': geometry.width()-100, 'height': geometry.height()-100}
+    #get geometry of the highlight rectangle.  
+    if (bbox is not None): #xxyy
+        mywindow.highlightrect = {'x': bbox[0], 'y': bbox[2], 'width': bbox[1]-bbox[0], 'height': bbox[3]-bbox[2]}
+    else:
+        geometry = mywindow.geometry()
+        mywindow.highlightrect = {'x': geometry.x()+100, 'y': geometry.y()+100, 'width': geometry.width()-100, 'height': geometry.height()-100}
     mywindow.update()  # Trigger a repaint to show the box
     logger.info('Screen box drawn')
 
@@ -869,6 +877,7 @@ def _hide(data):
     logger.info('Hiding mywindow after delay')
     mywindow.hideme()
     mk.set_startx(mywindow.startx)
+    mk.set_geo(mywindow.geo)
 
     
 class MyWindow(QMainWindow):
@@ -879,11 +888,13 @@ class MyWindow(QMainWindow):
         self.highlightrect = {'x': 100, 'y': 100, 'width': 200, 'height': 200}
         self.highlighton = False
         self.startx = 0
+        self.geo = None
 
         # set the title
 
         self.setWindowOpacity(0.4)
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
+        #Qt.WA_TransparentForMouseEvents | Qt.WindowTransparentForInput to make click-through
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool | Qt.WA_TransparentForMouseEvents | Qt.WindowTransparentForInput)
         screens = qapp.screens()
         logger.info('Listing available screens')
         primary_screen = qapp.primaryScreen()
@@ -900,6 +911,8 @@ class MyWindow(QMainWindow):
                 #add window to second monitor if available
                 self.setGeometry(geometry.x(), geometry.y(), geometry.width(), geometry.height())
                 self.startx = geometry.x()
+                self.geo = geometry
+
                 print(f'Setting window to second monitor at {geometry.x()},{geometry.y()} size {geometry.width()}x{geometry.height()}')
                 self.setWindowTitle("Trey - " + s.name())
 
@@ -1053,6 +1066,8 @@ def start_midi(midi_stop_event):
                             velocity = 0
                         #add key to sequence and check for any actions.  
                         a = mk.key(note, msg, callback=None)
+                        #every note adjust the QR code in case something changed.
+                        update_qr_code(mk.get_qr(), mk.get_bbox())
 
                         if (a == -1):
                             #error or reset
@@ -1063,6 +1078,34 @@ def start_midi(midi_stop_event):
         mk.unload()
         logger.info('MIDI thread stopped')
 
+
+def update_qr_code(qrdata="", bbox=None):
+    """Update the QR code displayed in the overlay window."""
+    global current_qrdata
+    global current_bbox
+    global active_window
+    if (qrdata == current_qrdata and bbox == current_bbox):
+        return #no change
+    current_qrdata = qrdata
+    current_bbox = bbox
+    logger.info('Updating QR code in overlay window')
+    if (active_window is not None):
+        title = win32gui.GetWindowText(active_window)
+        rect = win32gui.GetWindowRect(active_window)
+        logger.info(f'Active window: {title} at {rect}')        
+        
+    qr = create_qr_text(qrdata, active_window)
+    mywindow.showQR(qrdata)
+
+    mywindow.activateWindow() # Bring to front
+
+    draw_screen_box(bbox)
+
+    #hiding in 3 seconds
+    logger.info('Hiding window after 3 seconds')
+    t = threading.Timer(3, _hide, args=["Hello from Timer!"])
+    t.start()  # Start the timer in a new thread
+    
 
 
 def main():

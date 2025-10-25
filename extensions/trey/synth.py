@@ -97,6 +97,14 @@ def play(play_count): #default each 0.1 seconds
             value = np.pad(value, (0, max(0, sample_len - len(value))), 'constant')  # Pad or truncate to sample_len
             final += value
 
+        max_duration = 2.0
+        for key in localnotes:
+            note = key
+            total_duration = (time.time() - localnotes[note]['start_time'])
+            if total_duration >= max_duration:
+                note_off(note)
+                break #changed the dict, restart next time.
+
         final = final / len(localnotes)  # Normalize the mixed audio
         samples = final
 

@@ -138,7 +138,19 @@ class MyKeys:
       except:
         print("language doesnt exist " + key)
 
-
+  def get_bbox(self):
+    
+    if (self.currentlangna !="" and hasattr(self.languages[self.currentlangna], 'bbox')):
+      return self.languages[self.currentlangna].bbox
+    return None
+  
+  def get_qr(self):
+    qr = ""
+    for (l,la) in self.languages.items():
+      if (hasattr(la, 'qr')):
+        qr += la.qr + "\n"
+    return qr
+  
   def start_feedback(self):
     if (self.play_feedback):
       self.play_thread = threading.Thread(target=synth.play_stream, args=(self.stop_event,))
@@ -156,6 +168,10 @@ class MyKeys:
     for (l,la) in self.languages.items():
       la.startx = startx
 
+  def set_geo(self, geo):
+    print(f'Setting geometry for languages to {geo}')
+    for (l,la) in self.languages.items():
+        la.geo = geo
 
   def callback(self, cmd):
     """Callback function for languages."""
@@ -279,6 +295,9 @@ class MyKeys:
         
       self.sequence.append(note)
       #not using currentchannel at the moment.. all languages using same track..
+      #self.currentchannel = self.currentlang.keybot - 48 
+      #have to move each word?  dont like this..
+
       self.mid.tracks[self.currentchannel].append(msg)
 
       self.currentseqno += 1
