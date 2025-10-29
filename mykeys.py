@@ -74,7 +74,8 @@ class MyLang:
 class MyKeys:
   def __init__(self, config, qapp=None, startx=0, stop_event=None):
     self.config = config
-    self.stop_event = stop_event
+    self.stop_event = stop_event #stop event for MK
+    self.synth_stop_event = None
     self.now = datetime.now()
     self.nowstr = self.now.strftime("%Y%m%d%H%M%S")
     self.mid = self.getmidifile()
@@ -153,13 +154,20 @@ class MyKeys:
   
   def start_feedback(self):
     if (self.play_feedback):
-      self.play_thread = threading.Thread(target=synth.play_stream, args=(self.stop_event,))
+      self.synth_stop_event = threading.Event()  # Event to signal stopping
+      self.play_thread = threading.Thread(target=synth.play_stream, args=(self.synth_stop_event,))
       self.play_thread.start()
 
   def unload(self):
     #unload language specific data
     for (l,la) in self.languages.items():
       la.unload()
+    if (self.play_feedback):
+      logger.info('Stopping Synth thread')
+      self.synth_stop_event.set()
+      self.play_thread.join()
+      time.sleep(2) #wait for this to end
+      
     return 0
   
   def set_startx(self, startx):
