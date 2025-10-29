@@ -76,6 +76,10 @@ global active_window
 global qapp
 global midiout
 global midiin
+global midi_thread
+global midi_stop_event
+global midi_kill_event
+midi_thread = None
 global speech_pipe
 audio_stop_events = []  # List to hold stop events for audio threads
 audio_skip_events = []  # List to hold skip events for audio threads
@@ -229,10 +233,16 @@ def on_quit_action(icon, item):
     logger.info('Stopping icon')
     icon.stop()
     logger.info('Stopping MIDI thread')
-    stop_midi()
+    stop_midi(True) #kill the midi thread
     logger.info('Quitting application')
     qapp.quit()
-
+    #some cleanup still necessary?  
+    active_threads = threading.enumerate()
+    print("\nCurrently active threads:")
+    for thread in active_threads:
+        print(f"- Name: {thread.name}, Alive: {thread.is_alive()}")    
+    #force exit for now.  Not sure why threads are hanging around.
+    os._exit(1)
 
 def on_show_message(icon, item):
     """Callback function to display a notification."""
@@ -414,7 +424,7 @@ def get_similar(idx, ldmap, topk=3):
         return results
     return []
 
-def play_in_background(text, links=[], stop_event=None, skip_event=None, q=None, q2=None, q3=None):
+def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=None, q=None, q2=None, q3=None):
 
     skipmenu = True
     sound_file = "0.mp3"
@@ -442,15 +452,25 @@ def play_in_background(text, links=[], stop_event=None, skip_event=None, q=None,
 
     remove_temp_audio("./temp/")
 
-    #pre-read
-    link_density_map = build_map(lines, links)
-    print(f'Link density map: {len(link_density_map)} lines')
-    #start audio generation thread then
-    #not sure this adds anything.  
-    play_ldmap(link_density_map)
-    skip = get_first_content_line(link_density_map)
-    mavglen = link_density_map[skip]['mavglength']
-    print(f'Detected first content line at {skip}, skipping to there')
+    if (offset == 0):
+        #pre-read detect good starting point.
+        link_density_map = build_map(lines, links)
+        print(f'Link density map: {len(link_density_map)} lines')
+        #start audio generation thread then
+        #not sure this adds anything.  
+        play_ldmap(link_density_map)
+        skip = get_first_content_line(link_density_map)
+        mavglen = link_density_map[skip]['mavglength']
+        print(f'Detected first content line at {skip}, skipping to there')
+    else:
+        print(f'Offset given: {offset}, finding line to start at')
+        for i in range(len(lines)):
+            if (offset <= 0):
+                break
+            offset -= len(lines[i]) + 1 #include newline
+            skip += 1
+        print(f'Skipping lines {i}')
+        link_density_map = build_map(lines, links)
 
     mp_stop = multiprocessing.Event()
 #    audio_gen_thread = multiprocessing.Process(target=gen_audio, args=(link_density_map, mp_stop))
@@ -471,8 +491,12 @@ def play_in_background(text, links=[], stop_event=None, skip_event=None, q=None,
 
 
     init_qdrantz(link_density_map, topic="websearch")
-
-    for idx, l in enumerate(lines):
+    print('Start Reading:')
+    idx = -1
+    while (idx < len(lines)-1):
+#    for idx in range(len(lines)):
+        idx = idx + 1
+        l = lines[idx]
         if (stop_event.is_set()):
             logger.info('Audio stop event set, stopping playback')
             print('Audio stop event set, stopping playback')
@@ -487,35 +511,12 @@ def play_in_background(text, links=[], stop_event=None, skip_event=None, q=None,
                 skip_event.clear()
             elif (lines_to_skip > -100000):
                 #skip to the next type of line.  
-                lines_to_skip = -lines_to_skip
-                type = round(lines_to_skip / 20000)
-                num = lines_to_skip % 20000
-                if (num > 10000):
-                    num = 20000 - num
-                print(f'Skipping to next type {type} num {num}')
-                ldm_read = 0
-                if (num > 0):
-                    for l, idx in enumerate(link_density_map):
-                        
-                        if (ldm_read < total_read):
-                            ldm_read += len(link_density_map[l]['text']) + 1
-                            continue
-                        skip += 1
-                        if (num ==0):
-                            break
-                        if (is_type(link_density_map[l], type)):
-                            num -= 1
-                else:
-                    ldm_read = len(text)
-                    for l in range(len(link_density_map)-1, -1, -1):
-                        if (ldm_read > total_read):
-                            ldm_read -= len(link_density_map[l]['text']) + 1
-                            continue
-                        skip -= 1
-                        if (num ==0):
-                            break
-                        if (is_type(link_density_map[l], type)):
-                            num += 1
+                if (lines_to_skip == -1001):
+                    #next type
+                    #pause event.  
+                    while skip_event.is_set():
+                        time.sleep(0.5)
+                        #sleep until skip event cleared.
 
 
             else:
@@ -531,14 +532,22 @@ def play_in_background(text, links=[], stop_event=None, skip_event=None, q=None,
             print(f'>> Skipmenu [{idx}, {skip}]')
             winsound.Beep(3000, 100) #beep to start
         if (skip > 0):
-            skip -= 1
-            total_read += len(l) + 1 #include newline
-            continue
+            if (idx + skip >= len(lines)):
+                skip = len(lines) - idx - 2
+            for i in range(skip):
+                total_read += len(lines[idx+i]) + 1 #include newline
+            idx = idx + skip
+            skip = 0
+#            total_read += len(l) + 1 #include newline
 
         if (skip < 0):
-            skip += 1
-            total_read -= len(l) + 1 #include newline
-            continue
+            if (idx + skip < 0):
+                skip = -idx + 1
+            for i in range(-skip):
+                total_read -= len(lines[idx - i -1]) + 1 #include newline
+            idx = idx + skip
+            skip = 0
+
         print(f'Line: {l}')
         print(f'Link density: {link_density_map[idx]['density']}')
         sound_file = link_density_map[idx]['audio']
@@ -615,7 +624,7 @@ def play_in_background(text, links=[], stop_event=None, skip_event=None, q=None,
             #maybe problematic.  
             if (link_loc < len(links) and 'offset' in links[link_loc] and links[link_loc]['offset'] <= total_read):
                 print(f'At link: {links[link_loc]}')
-                winsound.Beep(500, 300) #short beep to indicate link
+                #winsound.Beep(500, 300) #short beep to indicate link
                 if (links[link_loc]['offset'] != -1):
                     #only move to next link if we are at the offset.  
                     #some links may be at -1 offset which we skip earlier.
@@ -667,7 +676,7 @@ def play_in_background(text, links=[], stop_event=None, skip_event=None, q=None,
 #    os.remove(sound_file) # Clean up the sound file
 #    sys.exit() # Exit the thread when done
 
-def speak(text, links = []):
+def speak(text, links = [], offset=0):
     global audio_stop_events
     """Speak the given text using the speech pipeline."""
 #    print(f'Speaking: {text}')
@@ -684,7 +693,7 @@ def speak(text, links = []):
     q3 = Queue()
 
     print(audio_stop_events)
-    audio_thread = threading.Thread(target=play_in_background, args=(f'{text}',links, audio_stop_event, audio_skip_event, q, q2, q3))
+    audio_thread = threading.Thread(target=play_in_background, args=(f'{text}',links, offset, audio_stop_event, audio_skip_event, q, q2, q3))
     audio_thread.start()
     return q2, q3, audio_stop_event #communicate how much we have read.  
 
@@ -835,6 +844,8 @@ def setup_hotkey_listener():
     hotkeys = {
         '<ctrl>+<shift>+h': on_activate_overlay,
         '<ctrl>+<shift>+g': on_deactivate_overlay,
+        '<ctrl>+<shift>+m': start_midi,
+
         # You can add more hotkeys here, e.g.:
         # '<shift>+a': another_function,
     }
@@ -978,6 +989,24 @@ def stop_audio():
         print('Stopping audio thread')
         audio_stop_event.set()  # Signal the audio thread to stop
 
+def pause_reader():
+    #called from hotkeys to pause all audio threads.
+    global audio_stop_events
+    print('Pausing all audio threads')
+    for i, audio_skip_event in enumerate(audio_skip_events):
+        print('Pausing audio thread')
+        audio_skip_queue[i].put(-1001) #signal to pause
+        audio_skip_event.set()
+
+def resume_reader():
+    #called from hotkeys to resume all audio threads.
+    global audio_stop_events
+    print('Resuming all audio threads')
+    for i, audio_skip_event in enumerate(audio_skip_events):
+        print('Resuming audio thread')
+        audio_skip_queue[i].put(0) #signal to skip 0 if something wrong with the event thread..
+        audio_skip_event.clear()
+
 def skip_lines(n):
     #called from hotkeys to skip n lines of audio.
     global audio_skip_events
@@ -1025,33 +1054,50 @@ def page(n):
 
 
 
-def stop_midi():
-    midi_stop_event.set()  # Signal the MIDI thread to stop
-    midi_thread.join()  # Wait for the MIDI thread to finish
-#    time.sleep(10)  # Give some time for the thread to exit
+def stop_midi(kill=False):
+    global midi_stop_event
+    global midi_kill_event
+    global midi_thread
+    global midiin, midiout
+    logger.info('Stopping MIDI thread')
+    if (kill):
+        logger.info('Killing MIDI thread')
+        midi_kill_event.set()
+        midi_stop_event.set()  # Signal the MIDI thread to stop
+        midi_thread.join()  # Wait for the MIDI thread to finish
+        time.sleep(10)  # Give some time for the thread to exit
+    else:
+        midi_stop_event.set()  # Signal the MIDI thread to stop
+
     midiin.close()  # Close the MIDI input port
-    midiout.close()  # Close the MIDI output port
+#    midiout.close()  # Close the MIDI output port
 
 
-def start_midi(midi_stop_event):
+def start_midi():
+    global midi_stop_event
+    global midi_thread
+    global midi_kill_event
+    if (midi_thread is not None and midi_thread.is_alive()):
+        logger.info('MIDI thread already running')
+        stop_midi()
+        #this calls unload..
+        time.sleep(2) #give some time to close down.
+    #set playwrighty context to null
+    midi_stop_event = threading.Event()
+    midi_kill_event = threading.Event()
+    midi_thread = threading.Thread(target=run_midi, args=(midi_stop_event,midi_kill_event))
+    midi_thread.start()
+
+
+def get_midi_ports():
+    inputs = mido.get_input_names()
+    outputs = mido.get_output_names()
+    return inputs, outputs
+
+
+def handle_keys():
     global midiout, midiin
     global mk
-    logger.info('Starting MIDI input/output')
-    inputs = mido.get_input_names()
-    print(mido.get_input_names())
-    logger.info(f'Available MIDI inputs: {inputs}')
-    outputs = mido.get_output_names()
-    print(mido.get_output_names())
-    logger.info(f'Available MIDI outputs: {outputs}')
-
-    #Portable Grand-1 2
-    #should really have some config selection here.  
-    midiout = mido.open_output(outputs[1]) #open first output for now.  
-    mk = mykeys.MyKeys(config.cfg, qapp, mywindow.startx, midi_stop_event)
-    mk.start_feedback() #play feedback if enabled.  This takes some time apparently to start thread.  
-    cont = keyboard.Controller()    
-
-    midiin = mido.open_input(inputs[0]) #open first input for now.
     with midiin as inport:
         while (not midi_stop_event.is_set()):
             for msg in inport.iter_pending():
@@ -1074,9 +1120,37 @@ def start_midi(midi_stop_event):
                             winsound.Beep(2000, 500) # Beep at 2000 Hz for 500 ms
                     else:
                         print("Message does not have a note attribute")
-        logger.info('Stopping MIDI thread')
-        mk.unload()
-        logger.info('MIDI thread stopped')
+
+
+def init_inputs():
+    global midiout, midiin
+    inputs, outputs = get_midi_ports()
+    logger.info(f'Available MIDI inputs: {inputs}')
+    logger.info(f'Available MIDI outputs: {outputs}')
+#    midiout = mido.open_output(outputs[1]) #open first output for now.  
+    midiin = mido.open_input(inputs[0]) #open first input for now.
+
+def run_midi(stop_event, kill_event):
+    global midiout, midiin
+    global mk
+    mk = mykeys.MyKeys(config.cfg, qapp, mywindow.startx, stop_event)
+    logger.info('Starting MIDI input/output')
+    init_inputs()
+    #Portable Grand-1 2
+    #should really have some config selection here.  
+    mk.start_feedback() #play feedback if enabled.  This takes some time apparently to start thread.  
+    cont = keyboard.Controller()    
+
+    while (not stop_event.is_set() and not kill_event.is_set()):
+        handle_keys()
+        init_inputs() #re-init inputs in case something changed.
+        time.sleep(0.1)  # Small delay to prevent high CPU usage
+        stop_event.clear()  # Clear the event for the next iteration
+        mk.start_feedback() #restart feedback if needed.
+
+    logger.info('MIDI thread completed, unloading MK')
+    mk.unload()
+    logger.info('MIDI thread ended')
 
 
 def update_qr_code(qrdata="", bbox=None):
@@ -1112,9 +1186,7 @@ def main():
     global qapp
     global mywindow
     global active_window
-    global midi_thread
     global midiout, midiin
-    global midi_stop_event
     global speech_pipe
 
     # Create an icon image
@@ -1159,9 +1231,7 @@ def main():
 
     # Create a Thread object to listedn for MIDI messages
     # Create an event
-    midi_stop_event = threading.Event()
-    midi_thread = threading.Thread(target=start_midi, args=(midi_stop_event,))
-    midi_thread.start()
+    start_midi()
 
 
 

@@ -948,3 +948,47 @@ Every so often, give option to switch reading context to discovered data.
 
 Need mouse-over
 Cant go back once page read is done..
+
+Midi start after delay 
+Ctrl+Shift+m
+for now..
+Need to call this if we cant detect connection.  
+
+
+on restart playwrighty not working properly..
+
+Some link clicks not working..
+
+Need to read links in separate voice..
+List link relative number..
+Octave separation for link..
+Previous octave is previous paragraph.  
+Combine small texts.  
+
+
+Similar not really useful..
+
+
+Should do this..
+
+#https://medium.com/@savasolar/making-a-25-key-midi-keyboard-with-an-arduino-55f38c98fd37
+
+#https://www.sweetwater.com/store/detail/nanoKEYFDWht--korg-nanokey-foldable-midi-keyboard-white
+#https://www.instructables.com/MegaMUX-32-Channel-Multiplexer-Tutorial/
+
+
+
+OK, thread reset not needed, we can reset midi device and keep playwrighty.  
+
+Test 
+list tabs
+select tab
+
+[53,55,60] => pause reader, then number and read link texts
+await selection..
+
+[> Skip lines] working better.  
+
+Test midi reset..
+
+

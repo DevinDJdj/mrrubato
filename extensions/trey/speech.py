@@ -25,6 +25,7 @@ def record_audio(duration=10, fname="example.wav", stop_event=None):
     print("Recording complete.")
     audio_tensor = torch.from_numpy(recording.squeeze()) # Remove channel dimension if mono
     wav.write(fname, samplerate, (recording * 32767).astype(np.int16)) # Save as int16 WAV file
+    winsound.Beep(1000, 200) #beep to end
     return fname
 
 def listen_audio(duration=10, fname="example.wav"):
