@@ -81,3 +81,11 @@ find = 9
 create = 10
 lang = 11
 
+**FEEDBACK:
+Need to formulate feedback language..
+Feedback            | Duration     | Freq
+Thread Action start | 200ms        | 2000
+Thread Action end   | 200ms        | 1000 (-1 octave)
+Error               | 500ms        | 2000
+Action completed    | 500ms        | 1000
+

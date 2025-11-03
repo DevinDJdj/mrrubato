@@ -28,7 +28,7 @@ class hotkeys:
     self.links = []
     self.maxseq = 10 #includes parameters
     self.callback = None
-    self.audio_transcript = ""
+    self.transcript = ""
     self.funcdict = {}
 
   def word(self, sequence=[]):
@@ -74,9 +74,10 @@ class hotkeys:
       from mykeys import text2seq
       seq = text2seq(word)
       if (len(sequence) == 1): #default case.  Have to add extra keybot
-        sequence = sequence + seq + [self.keybot] #separator
+        #should be using negative index so append to beginning.
+        sequence = seq + sequence + [self.keybot] #separator
       else:
-        sequence = sequence + seq
+        sequence = seq + sequence
       return sequence
     
   def load_data(self):
@@ -234,11 +235,12 @@ class hotkeys:
     logger.info(f'> Search Web {sequence}')
     query = "What is the capital of France?"
     from extensions.trey.speech import transcribe_audio
-    self.audio_transcript = transcribe_audio("query.wav")
-    logger.info('$$Audio_Transcript = ' + self.audio_transcript)
+    self.transcript = transcribe_audio("query.wav")
+    logger.info('$$AUDIO = ' + self.transcript)
+    
 
-    if (self.audio_transcript != ""):
-      query = self.audio_transcript
+    if (self.transcript != ""):
+      query = self.transcript
     from extensions.trey.trey import speak
     speak(f'Searching the web for: {query}')
     engine = 0
@@ -260,6 +262,8 @@ class hotkeys:
 
     q2, q3, stop_event = self.speak(body_text, link_data)
     playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
+
+
     return 0
 
 
@@ -333,10 +337,11 @@ class hotkeys:
         body_text, link_data, page, cacheno = a
 
         self.links = link_data
-        print(body_text)
+#        print(body_text)
         page = playwrighty.page_cache[cacheno]['page']
         if (playwrighty.page_cache[cacheno]['current_offset'] is not None and page.url in playwrighty.page_cache[cacheno]['current_offset']):
             total_read = playwrighty.page_cache[cacheno]['current_offset'][page.url]
+        logger.info('$$Total_Read = ' + str(total_read))
         q2, q3, stop_event = self.speak(body_text, link_data, total_read) #add offset to skip until where we were.  
         playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
         return 0
@@ -463,10 +468,10 @@ class hotkeys:
         
       return 0
 
-  def speak(self, text, links=[]):
+  def speak(self, text, links=[], total_read=0):
     from extensions.trey.trey import speak
 #    print(f'Speaking: {text}')
-    return speak(text, links)
+    return speak(text, links, total_read)
 
   
   def ocr_image(self, img):

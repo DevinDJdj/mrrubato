@@ -229,10 +229,13 @@ def create_image(width, height, color1, color2):
     return image
 
 def on_quit_action(icon, item):
+    global mk
     """Callback function for the 'Quit' menu item."""
     logger.info('Stopping icon')
     icon.stop()
     logger.info('Stopping MIDI thread')
+
+    mk.savemidi() #save current midi file
     stop_midi(True) #kill the midi thread
     logger.info('Quitting application')
     qapp.quit()
@@ -549,7 +552,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
             skip = 0
 
         print(f'Line: {l}')
-        print(f'Link density: {link_density_map[idx]['density']}')
+        print(f'Line offset: {link_density_map[idx]["offset"]}')
         sound_file = link_density_map[idx]['audio']
         if (len(l) > 5):
             try:
@@ -574,6 +577,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
 #                time.sleep(0.5) #short pause between lines
             except Exception as e:
                 logger.error(f'Error in TTS playback: {e}')
+                logger.error(f'{l}')
                 print(f'Error in TTS playback: {e}')
                 total_read += len(l) + 1 #include newline
                 continue
@@ -586,15 +590,13 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
                 if (r is not None and len(r) > 0):
                     print(f'Similar items to line {idx}: {link_density_map[idx]["text"]}')
                     for ridx,result in enumerate(r):
+                        if (abs(result['id'] - idx) < 5):
+                            continue #skip nearby items
                         voice = SIMVOICE[ridx % len(SIMVOICE)]
                         print(result)
                         rid = result['id']
-                        if (rid != idx): #dont return self
-                            if (rid < 0 or rid >= len(link_density_map)):
-                                logger.error(f'Invalid similar item id: {rid} {len(link_density_map)} {len(lines)}')
-                                print(f'Invalid similar item id: {rid} {len(link_density_map)} {len(lines)}')
-                                continue
-                            #read out the similar item.  
+                        #read out the similar item.  
+                        if (rid > 0 and rid < len(link_density_map)):
                             siml = link_density_map[rid]['text']
                             print(link_density_map[rid])
                             #only get similar when we have a lengthy item, also dont read too long similar items.
@@ -603,11 +605,12 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
                                 print(f'Reading similar item: {siml}')
                                 try:
                                     sound_file = f"./temp/sim{rid}.mp3"
-                                    os.system(f"edge-tts --voice \"{voice}\" --write-media \"{sound_file}\" --text \"Similar: {siml}\" --rate=\"-10%\" --volume=-30%")
+                                    os.system(f"edge-tts --voice \"{voice}\" --write-media \"{sound_file}\" --text \"Similar: {siml}\" --rate=\"-10%\" --volume=-40%")
                                     playsound(sound_file, block=False) # Ensure this thread blocks for its sound
 
                                 except Exception as e:
                                     logger.error(f'Error in TTS playback of similar item: {e}')
+                                    logger.error(f'{siml}')
                                     print(f'Error in TTS playback of similar item: {e}')
                                     
                                     continue
@@ -1113,11 +1116,11 @@ def handle_keys():
                         #add key to sequence and check for any actions.  
                         a = mk.key(note, msg, callback=None)
                         #every note adjust the QR code in case something changed.
-                        update_qr_code(mk.get_qr(), mk.get_bbox())
+                        #update_qr_code(mk.get_qr(), mk.get_bbox())
 
-                        if (a == -1):
+#                        if (a == -1):
                             #error or reset
-                            winsound.Beep(2000, 500) # Beep at 2000 Hz for 500 ms
+#                            winsound.Beep(2000, 500) # Beep at 2000 Hz for 500 ms
                     else:
                         print("Message does not have a note attribute")
 
@@ -1141,7 +1144,7 @@ def run_midi(stop_event, kill_event):
     mk.start_feedback() #play feedback if enabled.  This takes some time apparently to start thread.  
     cont = keyboard.Controller()    
 
-    while (not stop_event.is_set() and not kill_event.is_set()):
+    while (not kill_event.is_set()):
         handle_keys()
         init_inputs() #re-init inputs in case something changed.
         time.sleep(0.1)  # Small delay to prevent high CPU usage

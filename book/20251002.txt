@@ -988,7 +988,46 @@ select tab
 await selection..
 
 [> Skip lines] working better.  
+[53,55,57] [48] [53,53] = top or origin
+[53,55,57] [72] [53,53] = bottom 5 lines
+Beep based on lines skipped as a relative to page length.  
 
 Test midi reset..
+
+Need to formulate feedback language..
+Feedback            | Duration     | Freq
+Thread Action start | 200ms        | 2000
+Thread Action end   | 200ms        | 1000 (-1 octave)
+Error               | 500ms        | 2000
+Action completed    | 500ms        | 1000
+
+For now Thread action is audio recording and transcription..
+
+Need to follow text on page.
+
+go_back working better, but not saving location.  
+
+test list tabs, and tab selection..
+
+First recording too slow..
+
+maybe
+[0,12,12,0] = short mode enable.  
+[0,12,0] = short mode disable
+Perhaps further modes.  
+[0,12,12,12,0] etc.
+
+if short mode, separate one/two key dic.  
+
+Number list input..
+Punctuation input..
+
+Check MID recording..
+midi is saved..
+
+
+Go back and link click not working well..
+OK, finally close to what we need..
+Messy..
 
 

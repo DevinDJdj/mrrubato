@@ -58,10 +58,18 @@ def click_link(cacheno, text_offset, link_offset=0, open_new_tab=False):
                 linkno = i
         if (link_offset != 0):
             linkno += link_offset
+
+        while (linkno < len(links)-1 and (links[linkno]['href'].startswith(page_info['url'] + "#") or links[linkno]['href'].startswith('#'))):
+            #for now skip internal links.  
+            #really want to jump to this text location..
+            linkno += 1            
+
         if linkno < len(links) and linkno >= 0:
             link = links[linkno]
             href = link['href']
             if href:
+                #is internal link?
+
                 logging.info(f'Clicking link: {link['text']} {link['offset']} \n#{href}')
                 logging.info(f'\n<!-- \noffset {text_offset} \n{page_info['body'][text_offset-50:text_offset+50]} \n-->\n')
 
@@ -121,9 +129,14 @@ def go_back(num=1, cacheno=-1):
     if (num == 0):  #go back one for default case.  
         num = 1
     if cacheno >= 0 and cacheno < len(page_cache):
+        page_info = page_cache[cacheno]       
         page = get_ppage(cacheno)
         for _ in range(num):
             page.go_back()
+        if ('reader_stop_event' in page_info and page_info['reader_stop_event'] is not None):
+            page_info['reader_stop_event'].set() #stop any reading.
+        logger.info(f'Using existing tab to go to {page.url}')
+        return read_page(page.url, cacheno) #use same tab
 
         logging.info(f'Went back to previous page in cache {current_cache}')
         body_text, link_data = get_page_details(page)
@@ -281,12 +294,14 @@ def get_page_details(page):
         #iterate through and add offset for the link content
         #should create multiple links if multiple same text. For now we just get the last offset.  
         link_text_count = {}
+        link_last_offset = {}
         offset_found = 0
         for link in link_data:
             if link['text'] and link['href']:
                 nth = link_text_count.get(link['text'], 0) + 1
                 link_text_count[link['text']] = nth
                 offset = find_nth_occurrence(body_text, link['text'], nth)
+                link_last_offset[link['text']] = offset
                 if (offset == -1):
                     print(f"Could not find link text in body: {link['text']}")
                 else:
@@ -316,7 +331,7 @@ def update_page_offset(cacheno=-1):
     while (q2 is not None and not q2.empty()):
         total_read = q2.get() #get current link number.  
         #set offset
-        page_cache[current_cache]['current_offset'][page_cache[current_cache]['page'].url] = total_read
+        page_cache[cacheno]['current_offset'][page_cache[current_cache]['page'].url] = total_read
     total_read = page_cache[cacheno]['current_offset'][page_cache[cacheno]['page'].url]
     return total_read
 
@@ -358,8 +373,20 @@ def read_page(url, cacheno=-1):
     body_text, link_data = get_page_details(page)
 #        await page.close()
 #        await browser.close()
+
+    #pull prev offset if exists.  
+    prev_offsets = {url: 0}
+    if (cacheno >=0 and cacheno < len(page_cache) and page_cache[cacheno] is not None and 'current_offset' in page_cache[cacheno]):
+        prev_offsets = page_cache[cacheno]['current_offset']
+
     cacheno = cache_page(url, page, body_text, link_data, cacheno)
     current_cache = cacheno
+    
+    page_cache[cacheno]['current_offset'] = prev_offsets
+
+    if (page.url not in page_cache[cacheno]['current_offset']):
+        page_cache[cacheno]['current_offset'][page.url] = 0
+        
     logging.info(f'Cached page {cacheno} for URL: {url}')
     return body_text, link_data, page, cacheno
 
