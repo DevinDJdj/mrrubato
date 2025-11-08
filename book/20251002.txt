@@ -1031,3 +1031,33 @@ OK, finally close to what we need..
 Messy..
 
 
+#https://cifkao.github.io/html-midi-player/
+use staff visualizer?  
+Hmm, at least reference..
+Just using this..
+
+#https://magenta.github.io/magenta-js/music/demos/visualizer.html
+
+
+**web/public/analyze.html
+Add logic to show iterations as we start/pause/stop..
+Have a small graphic representing iteration length at top of page.  
+As well as number of notes per iteration.  
+Quick stats..
+read midi file and detect current iteration..
+
+**timestep.py
+Generate statistics for iterations
+Same as generating transcript..
+Change transcript logic to be local..
+
+!!FileNotFoundError: [WinError 2] The system cannot find the file specified
+
+#https://www.gyan.dev/ffmpeg/builds/
+
+ok finally working initially, but 
+@@asr-conformer-transformerlm-librispeech
+Why are you finding "DONT" in silence?  
+Really need to do the training for this to improve.  
+
+

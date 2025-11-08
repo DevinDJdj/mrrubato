@@ -46,6 +46,7 @@ from firebase_admin import firestore
 from firebase_admin import credentials
 from firebase_admin import initialize_app, storage, auth
 
+import traceback
 
 #from transcribe import transcribe_fromyoutube
 #import whisper
@@ -493,6 +494,8 @@ if __name__ == '__main__':
             plwords = ""
             #update to public if we have reviewed.  
             #if we dont want to publish, rank as 0.  
+            if (pDate.date() < mydate):
+                continue
                         
             if (privacystatus=="unlisted" and pDate.date() > mydate):
 
@@ -609,7 +612,9 @@ if __name__ == '__main__':
                     except:
                         print('error using transcript service' + videoid)
 
+            #probably want to do public as well...assumed we would have fixed the transcript by then.
             if (((privacystatus=="unlisted" and transcript_file=="error")) and "transcript" not in item and pDate.date() > mydate):
+#            if ("transcript" not in item and pDate.date() > mydate):
                 if reftr is None and servererrorcnt < 3: #dont keep banging on the door when server is down.  
                     #http://192.168.1.120/transcribe/?videoid=ZshYVeNHkOM
                     #LAk9aL9uBcg, gMlt5CRj6-0, RKRHigZ-PUM, why is transcribe_whisper failing again?  
@@ -636,6 +641,10 @@ if __name__ == '__main__':
 #                        transcript = requests.get(url, timeout=(30, None)).text
                         #set OUTPUT_DIR
                         #just call server/transcription/transcribe.py --transcribe_fromyoutube
+                        from extensions.trey.speech import transcribe_audio, listen_audio
+                        transcript = transcribe_audio(mediafile, util.st, util.et, True)
+                        servererrorcnt += 3 #testing..
+
                         """
                         if (model is None):
                             print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
@@ -644,7 +653,9 @@ if __name__ == '__main__':
                             print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 #                        transcript = transcribe_fromyoutube(videoid, model, mediafile, sta, eta)
                         """
+                        """
                         transcript = requests.get(url, params=params, timeout=(30, None), verify=False).text
+                        """
                         if (transcript is not None and transcript !="error"):
                             data = {'transcript':transcript}
                             reftranscript.set(data)
@@ -655,6 +666,7 @@ if __name__ == '__main__':
                             print('transcript error' + videoid)
                     except:
                         print('error using transcript service' + videoid)
+                        traceback.print_exc()
                         servererrorcnt += 1
 
             if ((privacystatus=="public" or privacystatus=="unlisted") and pDate.date() < mydate ):
