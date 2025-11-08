@@ -489,6 +489,7 @@ class vecDB{
 	}
 		
 	getVec(text, userid=0){
+		//get vector for this text.
 		return this.db.vec.where("text").equals(text).first();
 
 	}

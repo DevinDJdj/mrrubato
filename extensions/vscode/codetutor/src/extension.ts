@@ -387,7 +387,11 @@ export function activate(context: vscode.ExtensionContext) {
 
 
 			//replace topics.  
-			stream.markdown(await Book.markdown(summary));
+			let response = await Book.markdown(summary)
+			stream.markdown(response);
+			//workbench.action.chat.readChatResponseAloud
+			vscode.commands.executeCommand('workbench.action.chat.readChatResponseAloud');
+
 
 
 			return;

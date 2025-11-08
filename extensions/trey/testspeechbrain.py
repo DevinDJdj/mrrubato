@@ -59,6 +59,14 @@ def parse_to_json(basedir="../testing/speechbrain/templates/speech_recognition/m
     #filename for json_file
     return dev_clean_root + "/" + out
 
+
+def train_tts():
+    #train text to speech model.  
+#    tts_model = sb.inference.TTS.Tacotron2.from_hparams(source="speechbrain/tts-tacotron2-ljspeech", savedir="./models/pretrained_tts")
+    tts_model = sb.inference.TTS.Tacotron2.from_hparams(source="./models/pretrained_tts", savedir="./models/pretrained_tts")
+    
+
+
 def train_model():
     #set up JSON files for training.  
     global asr_model

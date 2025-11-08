@@ -113,14 +113,14 @@ async function initGitIndex(){
       temp += e.content + '\n';
 
       //load all data into vecDB as well..
-      if (typeof(vecDB) !== "undefined" && typeof(LLM) !== "undefined" && e.content.length > 1){
-        let exists = await vecDB.getVec(e.content); 
+      if (typeof(vDB) !== "undefined" && typeof(LLM) !== "undefined" && e.content.length > 1){
+        let exists = await vDB.getVec(e.content,0); 
         if (typeof(exists) !== "undefined" && exists !== null){     
         }
         else{
           LLM.getEmbedding(e.content, t).then(tv => {
           console.log("Embedding vector:", tv[0]);
-            vecDB.saveVec(tv[0], tv[1], tv[2], "book", 0, function(res){
+            vDB.saveVec(tv[0], tv[1], tv[2], "book", 0, function(res){
                 console.log("Vector saved:", res);
                 $('#statusmessage').text(' Vector ' + i + ' saved!<br/>');
             });

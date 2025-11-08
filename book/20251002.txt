@@ -1060,4 +1060,21 @@ ok finally working initially, but
 Why are you finding "DONT" in silence?  
 Really need to do the training for this to improve.  
 
+**\testing\speechbrain\recipes\LJSpeech\TTS\tacotron2
+
+> python ./speechbrain/recipes/LJSpeech/ljspeech_prepare.py
+
+> pip install tgt
+> pip install unidecode
+
+workbench.action.chat.readChatResponseAloud
+
+**web/public/page.html
+~~Should automatically ask what are you doing..
+
+
+**web/public/chat.mjs
+
+I cant code fast enough..
+
 
