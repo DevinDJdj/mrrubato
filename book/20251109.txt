@@ -1,0 +1,490 @@
+
+
+**web/public/languages/*
+Lot of this is not aesthetic code, but..
+We can work on aesthetics on the second iteration perhaps if there is still energy to do so.  
+
+
+**web/public/db.html
+Need function to delete older videos possibly or offload.  
+
+**web/public/storage_upload.html
+update video record to point to external...
+Option to keep locally as well.  
+Need management interface.  
+Display details.  
+Need upload/download functionality.  
+Just store as a simple JSON record perhaps?  
+
+
+
+**timestep.py
+add logic to generate client-side vector DB for LLM chat.  
+==
+--writeTranscripts
+$$
+
+**web/public/chata.html
+Need to finish chat interaction using client-side DB and do vector search to generate context.  
+
+
+**web/public/rec.html
+already generating vectors.  
+Weight transcripts most then screens, then files.  
+
+**vecbook
+> ~vecbook$ rm * -rf 
+
+**extensions/vscode/codetutor/src/book.ts
+
+Start with simple strategy like calling the LLM itself to expand the query.  
+
+#https://medium.com/@sahin.samia/building-an-enhanced-rag-system-with-query-expansion-and-reranking-in-python-c95fa9a0a3e8
+So just use query expansion in some way.  
+Seems just using an LLM query to expand the query.  
+
+Do similarity search with expanded query as well.  
+
+
+
+**analyze/analyze.py
+Need to continue find patterns.  
+--getNgrams
+$$mappgram
+continue..
+  mapsgram[ seqgram ] [ pgram ] = { 'time': [], 'iteration': [] }
+  mappgram[ signs ] [ pgram ] = { 'time': [], 'iteration': [] }
+
+>python ./analyze/analyze.py --title  "Evil Ways (Sonny Henry)" --force true
+
+
+
+**WrNMxdcfyUk
+OK, we have simultaneous entries.  
+
+
+**extensions/vscode/codetutor/src/book.ts
+
+Need to allow for topic selection
+i.e. inline change of [**-1] to previous topic.  
+List selections and be able to add/remove.  
+
+
+For code changes, maybe for now add comments.  
+
+
+
+**web/public/git.js
+--loadBook
+When reading book, we should generate the directory tree.  
+
+
+
+
+**extension/vscode/codetutor/src/extension.ts
+Should allow for quick copy of text to clipboard.  
+
+
+**web/public/book.html
+60 seconds??
+~~Maybe limit the time window to 1 year..
+
+
+**web/public/book.html
+Need a nice tree view UI for files.  
+Only view on web.  
+#https://github.com/vakata/jstree
+Hmm..
+Maybe just use instead of filter files.  
+
+use [**map.txt] to update names when reading book.  
+
+
+
+**web/public/languages/gitcontrol.js
+Try to use this..
+Prev/next
+
+
+**RECDROID
+Need simple automated sound recording device.  
+This is a good idea, but there is no need for a separate device for this.  
+
+$$FLUTTER
+$$vscode
+
+
+
+**web/public/git.js
+--initGitIndex
+Basic generation of vectors done.  
+--updateGitIndex
+Is this what we want, just a temporary index recreated every time?  
+Need to save sequence of interactions, but this should be sufficient?  
+Sequence of steps need to segregate from actual current data.  
+
+
+
+**web/public/chata.html
+Finish RAG here.  
+Order in time.  
+Create expanded query, and retrieve further context if needed.  
+
+
+
+
+**extensions/vscode/codetutor/src/extension.ts
+Use 
+^^# to generate comments.  
+^^+ to generate suggestions to add.  
+^^- to generate suggestions to remove.  
+^^& to generate book.  
+Continue here..
+Need book
+Make a command for each of these?  
+I guess.  
+\gencomments - same as gencode, But dont include commits with no comments.  
+\gencode - Get FULL Topics, Order ALL GIT changes include book changes as well.  
+\gendelete - This is tricky but important.  Maybe try a code coverage plugin.  
+\genbook - Get FULL Topics, Get GIT changes to book in sequence.  
+
+
+Save current branch.  
+> git branch --show-current
+$$BRANCHNAME
+> git branch $$BRANCHNAME
+> git switch $$BRANCHNAME
+..
+> git switch $$ORIGBRANCH
+> git merge
+
+
+Create a branch each time we run the improvement process.  
+Or keep branch for each topic.  
+
+^^+ to generate.  
+Find launchable page which includes this topic.  
+All launchable pages should be tried if possible.  
+Start recording..
+Launch [**PAGE]
+Use [**PAGE]
+
+Switch back to extension.
+Make updates..
+Show updates for time..
+
+Redeploy
+Use [**PAGE]
+Make observations and compare with previous iterations.
+add to [**GENBOOK]
+
+Launch other operations.. from [**GENBOOK]
+
+Accept/decline changes based on results and check prompts.  
+
+Make summary information about changes.
+Add to [**GENBOOK]
+
+Merge branch..
+
+
+List launched operations from [**GENBOOK]
+
+Only one branch at a time for any topic?  
+For now on failure just delete and start over?  
+Track how much failure.  
+
+Repeat process.
+
+
+
+
+
+**web/public/languages/audiocontrol.js
+**web/public/languages/videocontrol.js
+**web/public/languages/book.js
+**web/public/gitcontrol.js
+Each of these needs to be retooled to use relative offset.  
+Just use keybot["lang"]
+
+OFFSET:
+_meta = 0
+videocontrol = 1
+book = 2
+gitcontrol = 3
+error = 4
+screencontrol = 5 (53)
+ok = 6
+good = 7
+generate = 8
+find = 9
+auto-generate? = 10
+lang = 11
+
+
+
+RELATIVE STRUCT:
+0,1 = help
+0,1,12 = list commands
+0,1,2 = 0,2 commands
+0,1,3 = 0,3 commands etc.  
+
+0,2 = 
+
+
+
+
+**extensions/vscode/codetutor/src/midi/midi-in.ts
+**extensions/vscode/codetutor/src/midi/tree.ts
+
+OK, converted to TS and seems to work ok..
+
+Now how do we interact between webview and other components?  
+
+//const vscode = acquireVsCodeApi(); // Get the VS Code API instance
+//vscode.postMessage({command: 'alert', text: 'hello'}); // Send an initial message to the extension if needed
+this method doesnt seem to work at the moment..
+
+#https://github.com/microsoft/vscode-extension-samples/blob/main/webview-view-sample/src/extension.ts
+
+
+Set topic via extension.  
+Take last mentioned topic, or last two mentioned topics.  
+so in this case
+\set topic [**extensions/vscode/codetutor/src/midi/midi-in.ts, **extensions/vscode/codetutor/src/midi/tree.ts]
+
+Parameter for number of previous topics or number of future topics.  
+This adds to shared topic history list.  
+Then we can utilize 
+\set topic [5]  (take from history)
+\set topic [-3] (take last 3 topics from future)
+Can switch later if necessary.  
+
+$$LANG=META
+<_meta>set topic
+
+
+
+**extensions/trey/trey.py
+\Launch browser with several tabs #
+\show last n cmds > 
+\summarize topic (s)
+\select cmd..
+\find latest recs with this topic.  
+
+
+
+Dont really need midi for this.  
+But should be able to do most control with just midi if desired.  
+
+
+==** select current.  
+==**-1 current - 1
+==**-2
+==**2 future 2 or absolute value from start using current context?  
+
+==>-1
+==>-2
+..
+
+@@When to write a new book?  
+
+
+
+**extensions/trey/trey.py
+!!problem with quotes when reading..
+
+
+#https://midi.org/developing-midi-applications-on-android
+#https://github.com/android/ndk-samples/tree/master/native-midi
+
+
+
+
+**LANG
+Screenshot = [53,49,50] [BBOX] [53,53]
+_Screenshot = initialize with previous BBOX, or full screen.  
+Screenshot_ = adjust realtime.. detect BBOX, after BBOX, adjust in 10 pixel increments.  
+60 = 0
+61 = up 10
+58 = down 10
+
+59 = left 10
+62 = down 10
+
+
+
+**mrroboto
+> git clone https://github.com/DevinDJdj/mrrubato.git .
+
+
+
+
+**languages/video.py
+For now just play/pause.  
+Screenshot.. adjust..
+
+Finish screenshot, 
+add BBOX info to QR along with past several actions.  
+Or perhaps just add screen width height and then midi info.  
+For now single BBOX.  
+--adjust seems to be too many keys.  
+
+Use track for each keybot available.  
+Make the others blank.  
+0-11 for now tracks.  
+
+
+
+**web/public/rec.html
+ingest data from QR.  
+
+
+**webresearcher
+Start search..
+Click links which seem relevant.
+Summarize data.. 
+Verification of answer..
+Provide answer..
+Continue or not..
+Add to query or not..
+Prioritize user query in context, but keep summary of answer..
+Flag to Self-generate addl. queries or not..
+Run in separate thread and separate playwrighty context.  
+Every so often, give option to switch reading context to discovered data.  
+
+
+
+**extensions/trey/playwrighty.py
+Need mouse-over
+Cant go back once page read is done..
+
+Midi start after delay 
+Ctrl+Shift+m
+for now..
+Need to call this if we cant detect connection.  
+
+
+on restart playwrighty not working properly..
+
+
+Similar not really useful..
+
+
+**RECDROID
+Should do this..
+
+#https://medium.com/@savasolar/making-a-25-key-midi-keyboard-with-an-arduino-55f38c98fd37
+
+#https://www.sweetwater.com/store/detail/nanoKEYFDWht--korg-nanokey-foldable-midi-keyboard-white
+#https://www.instructables.com/MegaMUX-32-Channel-Multiplexer-Tutorial/
+
+
+
+
+**extensions/trey/trey.py
+Test 
+list tabs
+select tab
+
+[53,55,60] => pause reader, then number and read link texts
+await selection..
+
+[> Skip lines] working better.  
+[53,55,57] [48] [53,53] = top or origin
+[53,55,57] [72] [53,53] = bottom 5 lines
+Beep based on lines skipped as a relative to page length.  
+
+Test midi reset..
+
+Need to formulate feedback language..
+Feedback            | Duration     | Freq
+Thread Action start | 200ms        | 2000
+Thread Action end   | 200ms        | 1000 (-1 octave)
+Error               | 500ms        | 2000
+Action completed    | 500ms        | 1000
+
+For now Thread action is audio recording and transcription..
+
+Need to follow text on page.
+
+go_back working better, but not saving location.  
+
+test list tabs, and tab selection..
+
+First recording too slow..
+
+maybe
+[0,12,12,0] = short mode enable.  
+[0,12,0] = short mode disable
+Perhaps further modes.  
+[0,12,12,12,0] etc.
+
+if short mode, separate one/two key dic.  
+
+Number list input..
+Punctuation input..
+
+Check MID recording..
+midi is saved..
+
+
+Go back and link click not working well..
+OK, finally close to what we need..
+Messy..
+
+
+#https://cifkao.github.io/html-midi-player/
+use staff visualizer?  
+Hmm, at least reference..
+Just using this..
+
+#https://magenta.github.io/magenta-js/music/demos/visualizer.html
+
+
+**web/public/analyze.html
+Add logic to show iterations as we start/pause/stop..
+Have a small graphic representing iteration length at top of page.  
+As well as number of notes per iteration.  
+Quick stats..
+read midi file and detect current iteration..
+
+**timestep.py
+Generate statistics for iterations
+Same as generating transcript..
+Change transcript logic to be local..
+
+!!FileNotFoundError: [WinError 2] The system cannot find the file specified
+
+#https://www.gyan.dev/ffmpeg/builds/
+
+ok finally working initially, but 
+@@asr-conformer-transformerlm-librispeech
+Why are you finding "DONT" in silence?  
+Really need to do the training for this to improve.  
+
+**\testing\speechbrain\recipes\LJSpeech\TTS\tacotron2
+
+> python ./speechbrain/recipes/LJSpeech/ljspeech_prepare.py
+
+> pip install tgt
+> pip install unidecode
+
+workbench.action.chat.readChatResponseAloud
+
+**web/public/page.html
+~~Should automatically ask what are you doing..
+
+**web/public/chata.html
+test using vecDB from trans.json
+
+
+**web/public/chat.mjs
+
+I cant code fast enough..
+
+
+$$chrome://flags/#enable-unsafe-webgpu
+
+Some GPUs need this, not sure why..
+

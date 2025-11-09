@@ -83,7 +83,7 @@ export async function ingestText(text, filename, filetype="text/plain", category
         //not sure if category is the right thing to pass here..
           LLM.getEmbedding(chunks[i], category).then(tv => {
               console.log("Embedding vector:", tv[0]);
-              vecDB.saveVec(tv[0], tv[1], tv[2], 0, function(res){
+              vDB.saveVec(tv[0], tv[1], tv[2], 0, function(res){
                   console.log("Vector saved:", res);
                   $('#statusmessage').text(' Vector ' + i + ' saved!<br/>');
               });

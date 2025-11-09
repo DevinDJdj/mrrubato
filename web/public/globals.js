@@ -23,3 +23,5 @@ let selectedModel = "Llama-3.2-1B-Instruct-q4f16_1-MLC";
 //selectedModel = "gemma-2-2b-it-q4f32_1-MLC"; //See if we can use this?  
 //I think I like this model, but it was causing sparks..
 let embedModel = "snowflake-arctic-embed-m-q0f32-MLC-b4";
+
+var vDB = null; //vector DB instance.
