@@ -837,4 +837,8 @@ Wow getting the feedback to not bleat was annoying.
 
 > git clone https://github.com/DevinDJdj/mrrubato.git .
 
+**TRAINING
+
+$$PYTHON=3.13.9
+$$NODEJS=22.20
 
