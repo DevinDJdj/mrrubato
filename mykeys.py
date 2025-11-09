@@ -30,7 +30,7 @@ from datetime import datetime
 from mido.ports import MultiPort
 #probably should move..
 import extensions.trey.synth as synth
-
+import winsound
 import base64
 import os
 import threading
@@ -74,7 +74,9 @@ class MyLang:
 class MyKeys:
   def __init__(self, config, qapp=None, startx=0, stop_event=None):
     self.config = config
-    self.stop_event = stop_event
+    self.lasttick = time.time()
+    self.stop_event = stop_event #stop event for MK
+    self.synth_stop_event = None
     self.now = datetime.now()
     self.nowstr = self.now.strftime("%Y%m%d%H%M%S")
     self.mid = self.getmidifile()
@@ -82,7 +84,7 @@ class MyKeys:
     self.transcriptdir = config['keymap']['settings']['TRANSCRIPT_DIR']
     self.qapp = qapp
     self.startx = startx
-    self.maxseq = 20 #can we chain together anything meaningful?  
+    self.maxseq = 30 #can we chain together anything meaningful?  
     self.sequence = []
     self.words = [] #this can be passed from microphone input as well.  
     self.words_ = [] #this is the full list of executed words.  
@@ -107,6 +109,9 @@ class MyKeys:
     self.currentcmd = None
     self.notes = np.zeros(config['keymap']['global']['top'] - config['keymap']['global']['bottom'], dtype=int)
     self.play_feedback = False
+    self.transcript = ""
+    self.starttime = time.time()
+    self.lasttick = self.starttime
 
     if (self.config['keymap']['settings']['PLAY_FEEDBACK']):
         self.play_feedback = True
@@ -138,16 +143,35 @@ class MyKeys:
       except:
         print("language doesnt exist " + key)
 
-
+  def get_bbox(self):
+    
+    if (self.currentlangna !="" and hasattr(self.languages[self.currentlangna], 'bbox')):
+      return self.languages[self.currentlangna].bbox
+    return None
+  
+  def get_qr(self):
+    qr = ""
+    for (l,la) in self.languages.items():
+      if (hasattr(la, 'qr')):
+        qr += la.qr + "\n"
+    return qr
+  
   def start_feedback(self):
     if (self.play_feedback):
-      self.play_thread = threading.Thread(target=synth.play_stream, args=(self.stop_event,))
+      self.synth_stop_event = threading.Event()  # Event to signal stopping
+      self.play_thread = threading.Thread(target=synth.play_stream, args=(self.synth_stop_event,))
       self.play_thread.start()
 
   def unload(self):
     #unload language specific data
     for (l,la) in self.languages.items():
       la.unload()
+    if (self.play_feedback):
+      logger.info('Stopping Synth thread')
+      self.synth_stop_event.set()
+      self.play_thread.join()
+      time.sleep(2) #wait for this to end
+      
     return 0
   
   def set_startx(self, startx):
@@ -156,6 +180,10 @@ class MyKeys:
     for (l,la) in self.languages.items():
       la.startx = startx
 
+  def set_geo(self, geo):
+    print(f'Setting geometry for languages to {geo}')
+    for (l,la) in self.languages.items():
+        la.geo = geo
 
   def callback(self, cmd):
     """Callback function for languages."""
@@ -200,6 +228,7 @@ class MyKeys:
     #take action based on action returned from language.  
     #pass words as well.  
     logger.info(f'Checking action {cmd} in {l} for {ss}')
+    orig = ss.copy()
     action = self.languages[l].act(cmd, self.words, ss)
     if (action == -1):
       #reset action
@@ -217,7 +246,7 @@ class MyKeys:
       #remove ss from end of sequence instead of resetting everything.  
 
 
-      self.sequence = self.sequence[:-len(ss)] #remove length of sequence.  
+      self.sequence = self.sequence[:-len(orig)] #remove length of original sequence.  
       self.sequence = self.sequence[:-len(self.words[-1]['sequence'])] #remove length of last word.      
 
       self.words[-1]['ss'] = ss
@@ -228,6 +257,24 @@ class MyKeys:
       self.currentlang = self.words[-1]['lang'] if len(self.words) > 0 else ""
       self.currentcmd = self.words[-1]['word'] if len(self.words) > 0 else None
       self.currentseqno = len(self.sequence)
+
+      if (hasattr(self.languages[l], 'transcript') and self.languages[l].transcript != ""):
+        self.transcript += self.languages[l].transcript + " "
+        logger.info(f'Audio Transcript updated: {self.transcript}')
+        seq = self.text2seq(self.languages[l].transcript)
+        for idx,s in enumerate(seq):
+          #for now assume we are not getting any new messages while appending this..  
+          #or get last message time.
+#          mytime = int((time.time()-self.starttime) * 1000)
+          msg = Message('note_on', note=s, velocity=64, time=10)
+#          self.mid.tracks[self.currentchannel].append(msg) #add transcript
+          msg = Message('note_off', note=s, velocity=64, time=10)
+#          self.mid.tracks[self.currentchannel].append(msg) #add transcript
+          #only adding for posterity right now.  
+        time.sleep(len(seq)*2/1000) #wait for notes to play out.
+
+        self.languages[l].transcript = "" #reset transcript after adding to midi.
+
 
       return self.sequence
 #      self.reset_sequence()
@@ -248,23 +295,32 @@ class MyKeys:
     #if hasattr(msg, 'type') and msg.type=='note_on' and 
     #adjust message channel for anything but base channel
     #for now dont use tracks, just channels.  
+    logger.info(f'Key pressed: {note} Msg: {msg}')
 
     if (hasattr(msg, 'time') and msg.time <= 0):
-      msg.time = int(time.time() * 1000)
+      #this is default at the moment..
+      temptime = time.time() - self.lasttick #msg.time #time.time() #msg.time
+      msg.time = int(temptime * 1000) #time since last msg
 
     if self.play_feedback:
       #sound feedback when playing a note.  
 
       if (msg.type == 'note_on' and hasattr(msg, 'velocity') and msg.velocity > 0):
+          self.lasttick = time.time()
           synth.note_on(msg.note, msg.velocity)
+          self.mid.tracks[self.currentchannel].append(msg)
 #          synth.play_note(msg.note, 0.3, msg.velocity/127)
       elif (msg.type == 'note_off' or (msg.type == 'note_on' and hasattr(msg, 'velocity') and msg.velocity == 0)):
+          self.lasttick = time.time()
           synth.note_off(msg.note)
+          self.mid.tracks[self.currentchannel].append(msg)
+
+      #should also append audio transcript text here to keep in time..
 
 
     if hasattr(msg, 'type') and msg.type=='note_on' and hasattr(msg, 'velocity') and msg.velocity > 0:
       #data is stale, start again.  
-      if (self.lastnotetime < msg.time - 10000):
+      if (temptime > 10): #longer than 10 seconds..
         self.reset_sequence()
         print("Resetting sequence due to long time since last note")
 
@@ -279,10 +335,12 @@ class MyKeys:
         
       self.sequence.append(note)
       #not using currentchannel at the moment.. all languages using same track..
-      self.mid.tracks[self.currentchannel].append(msg)
+      #self.currentchannel = self.currentlang.keybot - 48 
+      #have to move each word?  dont like this..
+
 
       self.currentseqno += 1
-      self.lastnotetime = msg.time
+      self.lastnotetime = self.lasttick
       print(self.sequence)
       #try fixed length?  try to read messages.  If just garbage, check for any known word.  
       if (self.sequence[-3:] == self.config['keymap']['global']['Reset']):
@@ -390,6 +448,7 @@ class MyKeys:
             #reset command
             self.reset_sequence()
             self.currentcmd = None
+            winsound.Beep(2000, 500) #beep to end error
           elif (a == 0):
             #action was successful, reset command
             logger.info(f'> <{self.currentlangna}>{self.currentcmd} {self.sequence[self.startseqno:]}')
@@ -413,6 +472,7 @@ class MyKeys:
 #              self.reset_sequence()
         #      self.reset_sequence()
 #              self.currentcmd = None
+            winsound.Beep(1000, 500) #beep to end complete without error
         else:
           print("Error: action not int") #action not intended ..
           print(a)
@@ -545,8 +605,9 @@ class MyKeys:
 
   def savemidi(self, fname=""):
     if (fname == ""):
-      fname = self.langdir + "/" + self.nowstr + ".mid"
+      fname = self.transcriptdir + "/" + self.nowstr + ".mid"
     self.mid.save(fname)
+    logging.info("Saved midi file to " + fname)
     print("Saved midi file to " + fname)
 
 

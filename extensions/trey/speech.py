@@ -25,6 +25,7 @@ def record_audio(duration=10, fname="example.wav", stop_event=None):
     print("Recording complete.")
     audio_tensor = torch.from_numpy(recording.squeeze()) # Remove channel dimension if mono
     wav.write(fname, samplerate, (recording * 32767).astype(np.int16)) # Save as int16 WAV file
+    winsound.Beep(1000, 200) #beep to end
     return fname
 
 def listen_audio(duration=10, fname="example.wav"):
@@ -37,14 +38,81 @@ def listen_audio(duration=10, fname="example.wav"):
 
     return audio_thread
 
-def transcribe_audio(fname="example2.wav"):
+def download_file(mediafile):
+    OUTPUT_DIR = "./temp/"
+    mediafile = mediafile.replace(" ", "%20")
+    if not os.path.exists(OUTPUT_DIR):
+        os.makedirs(OUTPUT_DIR)
+    import urllib.request
+    urllib.request.urlretrieve(mediafile, OUTPUT_DIR + "test.mp4")
+    fname = OUTPUT_DIR + "test.mp4"
+    return fname
+
+def convert_mp4_to_wav(mp4_fname):
+    from moviepy.editor import VideoFileClip
+    from pydub import AudioSegment
+    # Load the video clip
+    video_clip = VideoFileClip(mp4_fname)
+
+    # Extract the audio from the video clip
+    audio_clip = video_clip.audio
+
+    # Write the audio to a separate file
+    mp3_file = mp4_fname[:-4] + '.mp3'
+    print(f"Converting mp4 to audio: {mp3_file}")
+    audio_clip.write_audiofile(mp3_file)
+
+    # Close the video and audio clips
+    audio_clip.close()
+    video_clip.close()
+
+    print(f"Converting mp3 to wav: {mp3_file}")
+    sound = AudioSegment.from_mp3(mp3_file)
+    wav_fname = mp4_fname[:-4] + '.wav'
+    sound.export(wav_fname, format="wav")
+    return wav_fname
+
+def transcribe_audio(fname="example2.wav", start_times=[], end_times=[], use_timestamps=True):
 
     asr_model = EncoderDecoderASR.from_hparams(source="./models/pretrained_ASR")
+    print(f"Transcribing audio... {fname}")
+
+    if (fname.startswith('http://') or fname.startswith('https://')):
+        #download first
+        fname = download_file(fname)
+
+
+
 #    asr_model = EncoderDecoderASR.from_hparams(source="speechbrain/asr-conformer-transformerlm-librispeech", savedir="./models/pretrained_models/asr-transformer-transformerlm-librispeech")
-    result = asr_model.transcribe_file(fname)
-    #result = asr_model.transcribe_file("speechbrain/asr-conformer-transformerlm-librispeech/example.wav")
-    print(result)
-    return result
+    if (fname.endswith('.mp4')):
+        #convert to wav first
+        fname = convert_mp4_to_wav(fname)
+
+    if (use_timestamps and len(start_times) > 0 and len(end_times) > 0 and len(start_times) == len(end_times)):
+        full_transcript = ""
+        for i in range(len(start_times)):
+            segment_fname = f'segment_{i}.wav'
+            #extract segment
+            samplerate, data = wav.read(fname)
+            st = 0
+            if (i > 0):
+                st = end_times[i-1]
+            et = start_times[i]
+            start_sample = int(st * samplerate)
+            end_sample = int(et * samplerate)
+            segment_data = data[start_sample:end_sample]
+            wav.write(segment_fname, samplerate, segment_data)
+            result  = asr_model.transcribe_file(segment_fname)
+                # Process the words_with_timestamps list
+                #for now just use segment time..
+
+            full_transcript += result + " (" + str(st) + ")\n"
+        return full_transcript.strip()         
+    else:   
+        result = asr_model.transcribe_file(fname)
+        #result = asr_model.transcribe_file("speechbrain/asr-conformer-transformerlm-librispeech/example.wav")
+        print(result)
+        return result
 
 
 def generate_audio(text, fname="example_tts.wav", fast=True):

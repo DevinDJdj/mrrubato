@@ -756,13 +756,13 @@ page.html?codefile=web/public/page.html
     for (var i=0; i<transdata.length; i++){
         if (transdata[i].transcript){
 
-            let exists = await vecDB.getVec(transdata[i].transcript); 
+            let exists = await vDB.getVec(transdata[i].transcript); 
             if (typeof(exists) !== "undefined" && exists !== null){     
             }
             else{
                 let tv = await LLM.getEmbedding(transdata[i].transcript, transdata[i].id);
                 console.log("Embedding vector:", tv[0]);
-                vecDB.saveVec(tv[0], tv[1], tv[2], "transcript", 0, function(res){
+                vDB.saveVec(tv[0], tv[1], tv[2], "transcript", 0, function(res){
                     console.log("Transcript Vector saved:", res);
                     $('#statusmessage').text('Transcript Vector ' + i + ' saved!<br/>');
                 });
@@ -797,7 +797,7 @@ page.html?codefile=web/public/page.html
 //        getVideoJson(video);
         gitSignin();
         gitSetNature(GIT_CODE | GIT_DETAILS | GIT_RELATIONS);
-        vecDB = new vecDB();
+        vDB = new vecDB();
         populateGitRepos(getState('selectedgitindex')); //select repo to analyze.  
         selectGitRepo(getState('selectedgitindex')); //this loads the repo and gitstruct.  
         //go through all files in repo and add to vecDB.  
@@ -992,7 +992,7 @@ async function ChatLocalDone(answer){
     img.style.visibility = "hidden";
 
     vec = await LLM.getEmbedding(answer);
-    simvecs = vecDB.getSimilar(vec);    
+    simvecs = vDB.getSimilar(vec);    
     for (i=0; i<simvecs.length; i++){
         //get topic.  Use this topic?  
         //how to display similar results?  
@@ -1231,7 +1231,7 @@ function ChatLocal(transcript){
     img.style.visibility = "visible";
 
     vec = await LLM.getEmbedding(transcript);
-    simvecs = vecDB.getSimilar(vec);    
+    simvecs = vDB.getSimilar(vec);    
     for (i=0; i<simvecs.length; i++){
         //get topic.  Use this topic?  
         //just display?  

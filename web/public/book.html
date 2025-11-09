@@ -1172,7 +1172,7 @@ Load any speech from this time.
         loadUserConfig();
         loadDictionaries(0);
 
-        vecDB = new vecDB();
+        vDB = new vecDB();
 
 //        pipeListen();
 
@@ -1246,6 +1246,8 @@ Load any speech from this time.
 //        getGitContents('web/public/book.html');
         setTimeout(function(){ document.getElementById("download").click(); }, 2000);
                 //from test.js set context_window_size to sliding.  
+        //initialize the local chat..
+        setTimeout(function(){ let query = "What are you doing?"; ChatLocal(query); }, 40000);
     }
     
 

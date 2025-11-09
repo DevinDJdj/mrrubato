@@ -124,10 +124,10 @@ export function addChatRow(query, answer, prompt="", topic="", sources=[]) {
     r.cells[1].innerHTML += '<br><font color="green">$$' + currenttimelinestart + '-' + currenttimelineend + '</font>';
     if (ChatID%2==0){
 
-        r.cells[2].innerHTML = "@@" + query + '<br><font color="yellow">==<br>' + fanswer + '</font>';
+        r.cells[2].innerHTML = '<p style="background-color: black;">' + "@@" + query + '<br><font color="yellow">==<br>' + fanswer + '</font></p>';
     }
     else{
-        r.cells[2].innerHTML = "@@" + query + '<br><font color="black">==<br>' + fanswer + '</font>';
+        r.cells[2].innerHTML = '<p style="background-color: yellow;">' + "@@" + query + '<br><font color="black">==<br>' + fanswer + '</font></p>';
     }
     r.cells[3].innerHTML = getSourceHTML(sources, ChatID);
 

@@ -26,7 +26,6 @@ import config
 
 logger = logging.getLogger(__name__)
 
-pages = {}
 page_cache = [] # this should include history of pages each time.  
 #array of arrays with {query, page, body, links, title, reader_queue, sim_queue, reader_stop_event}
 
@@ -59,17 +58,25 @@ def click_link(cacheno, text_offset, link_offset=0, open_new_tab=False):
                 linkno = i
         if (link_offset != 0):
             linkno += link_offset
+
+        while (linkno < len(links)-1 and (links[linkno]['href'].startswith(page_info['url'] + "#") or links[linkno]['href'].startswith('#'))):
+            #for now skip internal links.  
+            #really want to jump to this text location..
+            linkno += 1            
+
         if linkno < len(links) and linkno >= 0:
             link = links[linkno]
             href = link['href']
             if href:
+                #is internal link?
+
                 logging.info(f'Clicking link: {link['text']} {link['offset']} \n#{href}')
                 logging.info(f'\n<!-- \noffset {text_offset} \n{page_info['body'][text_offset-50:text_offset+50]} \n-->\n')
 
                 if open_new_tab:
                     page = page.context.new_page()
                     page.goto(href)
-                    page_cache.append({'query': page_info['query'], 'page': page, 'body': page_info['body'], 'links': page_info['links'], 'title' : page_info['title']})
+                    page_cache.append({'url': page_info['url'], 'page': page, 'body': page_info['body'], 'links': page_info['links'], 'title' : page_info['title']})
                 else:
                     if ('reader_stop_event' in page_info and page_info['reader_stop_event'] is not None):
                         page_info['reader_stop_event'].set() #stop any reading.
@@ -122,9 +129,14 @@ def go_back(num=1, cacheno=-1):
     if (num == 0):  #go back one for default case.  
         num = 1
     if cacheno >= 0 and cacheno < len(page_cache):
+        page_info = page_cache[cacheno]       
         page = get_ppage(cacheno)
         for _ in range(num):
             page.go_back()
+        if ('reader_stop_event' in page_info and page_info['reader_stop_event'] is not None):
+            page_info['reader_stop_event'].set() #stop any reading.
+        logger.info(f'Using existing tab to go to {page.url}')
+        return read_page(page.url, cacheno) #use same tab
 
         logging.info(f'Went back to previous page in cache {current_cache}')
         body_text, link_data = get_page_details(page)
@@ -132,6 +144,9 @@ def go_back(num=1, cacheno=-1):
     #        await browser.close()
         cacheno = cache_page(page.url, page, body_text, link_data, cacheno)
         current_cache = cacheno
+        if (page.url not in page_cache[cacheno]['current_offset']):
+            page_cache[cacheno]['current_offset'][page.url] = 0
+
 
         return body_text, link_data, page, cacheno
     else:
@@ -152,11 +167,19 @@ def open_browser():
     return mybrowser
 
 def close_browser():
+    #for now complete reset.  
     global mybrowser
     global myplaywright
+    global mycontext
+    global current_cache
+    global page_cache
     if mybrowser is not None:
         mybrowser.close()
-        mybrowser = None
+    mybrowser = None
+    myplaywright = None
+    mycontext = None
+    current_cache = -1
+    page_cache = []
     return 0
 
 def get_stop_event(cacheno=-1):
@@ -224,34 +247,61 @@ def get_page_details(page):
     body_text = ""
     link_data = []
     last_link = None
+    idx = 0
+    logger.info(f'Getting page details for: {page.url}')
+    #page.set_default_timeout(1000)
     try:
+        """
         links_locator = page.locator('a')
         for i in range(links_locator.count()):
             link_element = links_locator.nth(i)
             href = link_element.get_attribute('href')
             text_content = link_element.text_content()
             bb = link_element.bounding_box()
-            if href != last_link and text_content is not None and text_content.strip() != '':
-                link_data.append({'href': href, 'text': text_content, 'bbox': bb})        
+            if href != last_link and href !="" and text_content is not None and text_content.strip() != '':
+                idx += 1
+                link_data.append({'href': href, 'text': text_content, 'bbox': bb, 'index': idx})        
                 last_link = href
+        """
+        link_data = page.evaluate("""() => {
+            const links = Array.from(document.querySelectorAll('a'));
+            return links.map((link, index) => {
+                const rect = link.getBoundingClientRect();
+                return {
+                    href: link.href,
+                    text: link.innerText,
+                    bbox: {
+                        x: rect.x,
+                        y: rect.y,
+                        width: rect.width,
+                        height: rect.height
+                    },
+                    index: index
+                };
+            });
+        }""")
 
+        logger.info(f'Got Links for: {page.url}')
         print(link_data)
         body = page.locator('body')
         for i in range(body.count()):
             body_element = body.nth(i)
 
             body_text += body.inner_text()
-        print(body_text)
+#        print(body_text)
+        logger.info(f'Got Body for: {page.url}')
 
         #iterate through and add offset for the link content
         #should create multiple links if multiple same text. For now we just get the last offset.  
         link_text_count = {}
+        link_last_offset = {}
         offset_found = 0
         for link in link_data:
             if link['text'] and link['href']:
                 nth = link_text_count.get(link['text'], 0) + 1
                 link_text_count[link['text']] = nth
                 offset = find_nth_occurrence(body_text, link['text'], nth)
+                link_last_offset[link['text']] = offset
                 if (offset == -1):
                     print(f"Could not find link text in body: {link['text']}")
                 else:
@@ -263,7 +313,7 @@ def get_page_details(page):
                 link['offset'] = -1
         #sort by offset.  
         link_data.sort(key=lambda x: x.get('offset'))
-        print(link_data)
+        #print(link_data)
         logger.info(f'Got page details with {len(body_text)} characters and {len(link_data)} links')
 
         return body_text, link_data
@@ -272,11 +322,24 @@ def get_page_details(page):
         logging.error(f'Error getting page details: {e}')
         return body_text, link_data
     
+def update_page_offset(cacheno=-1):
+    global current_cache
+    total_read = 0
+    if (cacheno < 0):
+        cacheno = current_cache
+    q2 = page_cache[cacheno]['reader_queue']
+    while (q2 is not None and not q2.empty()):
+        total_read = q2.get() #get current link number.  
+        #set offset
+        page_cache[cacheno]['current_offset'][page_cache[current_cache]['page'].url] = total_read
+    total_read = page_cache[cacheno]['current_offset'][page_cache[cacheno]['page'].url]
+    return total_read
+
 def cache_page(url, page, body_text, link_data, cacheno=-1):
     if cacheno >= 0 and cacheno < len(page_cache):
-        page_cache[cacheno] = {'query': url, 'page': page, 'body': body_text, 'links': link_data, 'title' : page.title(), 'reader_queue': page_cache[cacheno].get('reader_queue', None), 'sim_queue': page_cache[cacheno].get('sim_queue', None), 'reader_stop_event': page_cache[cacheno].get('reader_stop_event', None)}            
+        page_cache[cacheno] = {'url': url, 'page': page, 'current_offset': {url: 0}, 'body': body_text, 'links': link_data, 'title' : page.title(), 'reader_queue': page_cache[cacheno].get('reader_queue', None), 'sim_queue': page_cache[cacheno].get('sim_queue', None), 'reader_stop_event': page_cache[cacheno].get('reader_stop_event', None)}            
     else:
-        page_cache.append({'query': url, 'page': page, 'body': body_text, 'links': link_data, 'title' : page.title(), 'reader_queue': None, 'sim_queue': None, 'reader_stop_event': None})
+        page_cache.append({'url': url, 'page': page, 'current_offset': {url: 0}, 'body': body_text, 'links': link_data, 'title' : page.title(), 'reader_queue': None, 'sim_queue': None, 'reader_stop_event': None})
         cacheno = len(page_cache) - 1
     return cacheno
 
@@ -306,12 +369,25 @@ def read_page(url, cacheno=-1):
 
     if (url != ''):
         page.goto(url, wait_until="domcontentloaded")
+    logging.info(f'Page loaded: {page.url}')
     body_text, link_data = get_page_details(page)
 #        await page.close()
 #        await browser.close()
+
+    #pull prev offset if exists.  
+    prev_offsets = {url: 0}
+    if (cacheno >=0 and cacheno < len(page_cache) and page_cache[cacheno] is not None and 'current_offset' in page_cache[cacheno]):
+        prev_offsets = page_cache[cacheno]['current_offset']
+
     cacheno = cache_page(url, page, body_text, link_data, cacheno)
     current_cache = cacheno
+    
+    page_cache[cacheno]['current_offset'] = prev_offsets
 
+    if (page.url not in page_cache[cacheno]['current_offset']):
+        page_cache[cacheno]['current_offset'][page.url] = 0
+        
+    logging.info(f'Cached page {cacheno} for URL: {url}')
     return body_text, link_data, page, cacheno
 
 

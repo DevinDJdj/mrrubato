@@ -17,13 +17,18 @@ class hotkeys:
     self.config = config
     self.qapp = qapp
     self.startx = startx
+    self.func = None
+    self.qr = "" #info for QR message
+
+    self.geo = None
     self.name = "hotkeys"
     self.keybot = 53 #
+    self.keymid = 7 #middle C for bbox calc
     self.keyoffset = 5 #offset within octave mapping
     self.links = []
     self.maxseq = 10 #includes parameters
     self.callback = None
-    self.audio_transcript = ""
+    self.transcript = ""
     self.funcdict = {}
 
   def word(self, sequence=[]):
@@ -44,8 +49,11 @@ class hotkeys:
 
   def unload(self):
     #unload language specific data
-    if (playwrighty.mybrowser is not None):
-      playwrighty.close_browser()
+    #if (playwrighty.mybrowser is not None):
+      #this resets playwrighty context.
+      #how do we keep context?  
+      #playwrighty.close_browser()
+
     return 0
   
   def load(self):
@@ -66,9 +74,10 @@ class hotkeys:
       from mykeys import text2seq
       seq = text2seq(word)
       if (len(sequence) == 1): #default case.  Have to add extra keybot
-        sequence = sequence + seq + [self.keybot] #separator
+        #should be using negative index so append to beginning.
+        sequence = seq + sequence + [self.keybot] #separator
       else:
-        sequence = sequence + seq
+        sequence = seq + sequence
       return sequence
     
   def load_data(self):
@@ -77,11 +86,10 @@ class hotkeys:
     default = {
       "2": {
 #        "Start": [53,54], #read from this cache page current point.  
-        "Stop": [53,52],
+        "Stop": [53,51],
+        "Pause": [53,52],
+        "Resume": [53,54],
         "Read Screen": [53,50],      
-        "Go Back": [53,51], 
-        "Next": [53,57], #parameter type
-        "List Tabs": [53,58],
 #        "Page": [53,57],
       },
       "3": {
@@ -91,6 +99,9 @@ class hotkeys:
         "Find Last": [53,55, 58], #Jump in screen
         "Search Web": [53,55, 61], #also read screen
         "Comment": [53,56, 57], #record comment
+        "Go Back": [53,55,51], 
+        "List Tabs": [53,58,59],
+        "Select Tab": [53,58,60],
 #        "Select Type": [53,57, 58], #parameter type default go next.  
       }
     }
@@ -114,9 +125,10 @@ class hotkeys:
       "Search Web": "search_web",
       "Comment": "comment",
       "Select Type": "select_type",
-      "Next": "next",
       "List Tabs": "list_tabs",
+      "Select Tab": "select_tab",
       "_Search Web": "_search_web",
+      "Search Web_": "search_web_",
     }
 
     return 0  
@@ -134,6 +146,11 @@ class hotkeys:
       func = self.funcdict[cmd]
       #all require keybot at end.
 
+      #this function called every time a key is pressed.
+      if hasattr(self, func + "_"):
+        #no return here..
+        getattr(self, func + "_")(sequence)
+      
       if hasattr(self, func):
         if (len(sequence) == 1 and sequence[0] == self.keybot):
           return getattr(self, func)(sequence[:-1])
@@ -171,8 +188,33 @@ class hotkeys:
       self.speak('No browser session active.')
     return 0
 
+  def select_tab(self, sequence=[]):
+    logger.info(f'> Select Tab {sequence}')
+    if (playwrighty.mybrowser is not None):
+      select_index = 0
+      if (len(sequence) > 1):
+        select_index = sequence[-1]-(self.keybot+self.keymid) #offset from middle C
+      if (select_index >= 0 and select_index < len(playwrighty.page_cache)):
+        playwrighty.current_cache = select_index
+        page = playwrighty.page_cache[select_index]['page']
+        print(f'Switched to Tab {select_index}: {page.url}')
+        self.speak(f'Switched to Tab {select_index}: {page.title}')
+        #read page from current offset.  
+        body_text, link_data, page, cacheno = playwrighty.read_page('', select_index)
+        self.links = link_data
+        #pause audio first..
+
+        q2, q3, stop_event = self.speak(body_text, link_data)
+        playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
+
+    else:
+      print('No browser session active.')
+      self.speak('No browser session active.')
+    return 0
+
   def _search_web(self, sequence=[]):  
     logger.info(f'> _Search Web {sequence}')
+    print("> _Search Web called")
     #get audio input for query.  
     from extensions.trey.speech import listen_audio
     at = listen_audio(5, "query.wav")
@@ -182,16 +224,23 @@ class hotkeys:
     #but this is only called once.  
     return 1
 
+  def search_web_(self, sequence=[]):  
+
+    logger.info(f'> Search Web_ {sequence}')
+    #no function, just demo..
+    return 1
+
 
   def search_web(self, sequence=[]):
     logger.info(f'> Search Web {sequence}')
     query = "What is the capital of France?"
     from extensions.trey.speech import transcribe_audio
-    self.audio_transcript = transcribe_audio("query.wav")
-    logger.info('$$Audio_Transcript = ' + self.audio_transcript)
+    self.transcript = transcribe_audio("query.wav")
+    logger.info('$$AUDIO = ' + self.transcript)
+    
 
-    if (self.audio_transcript != ""):
-      query = self.audio_transcript
+    if (self.transcript != ""):
+      query = self.transcript
     from extensions.trey.trey import speak
     speak(f'Searching the web for: {query}')
     engine = 0
@@ -213,6 +262,8 @@ class hotkeys:
 
     q2, q3, stop_event = self.speak(body_text, link_data)
     playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
+
+
     return 0
 
 
@@ -238,20 +289,16 @@ class hotkeys:
     if (len(sequence) < 1):
       sequence = [53] #default to first link
     logger.info(f'> Click Link {sequence}')
+    print('> Click Link {sequence}')
 
     #find the current link from our reading.  
     if (playwrighty.mybrowser is not None):
       total_read = 0
-      current_cache = playwrighty.current_cache
-      if (current_cache >= 0 and current_cache < len(playwrighty.page_cache)):
-        #get queue for reading.
-        q2 = playwrighty.page_cache[current_cache]['reader_queue']
-        while (q2 is not None and not q2.empty()):
-          total_read = q2.get() #get current link number.  
-        q3 = playwrighty.page_cache[current_cache]['sim_queue']
-        siml = []
-        while (q3 is not None and not q3.empty()):
-          siml.insert(0,q3.get()) #get current similar offset.
+      total_read = playwrighty.update_page_offset()
+      q3 = playwrighty.page_cache[playwrighty.current_cache]['sim_queue']
+      siml = []
+      while (q3 is not None and not q3.empty()):
+        siml.insert(0,q3.get()) #get current similar offset.
 
 
 
@@ -290,8 +337,12 @@ class hotkeys:
         body_text, link_data, page, cacheno = a
 
         self.links = link_data
-        print(body_text)
-        q2, q3, stop_event = self.speak(body_text, link_data)
+#        print(body_text)
+        page = playwrighty.page_cache[cacheno]['page']
+        if (playwrighty.page_cache[cacheno]['current_offset'] is not None and page.url in playwrighty.page_cache[cacheno]['current_offset']):
+            total_read = playwrighty.page_cache[cacheno]['current_offset'][page.url]
+        logger.info('$$Total_Read = ' + str(total_read))
+        q2, q3, stop_event = self.speak(body_text, link_data, total_read) #add offset to skip until where we were.  
         playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
         return 0
       else:
@@ -305,6 +356,17 @@ class hotkeys:
     logger.info(f'> Page {sequence}')
     from extensions.trey.trey import page
     page(sequence[-1]-self.keybot)
+
+  def pause_reader(self, sequence=[]):
+    logger.info(f'> Pause Reader {sequence}')
+    from extensions.trey.trey import pause_reader
+    pause_reader()
+    return 0
+
+  def resume_reader(self, sequence=[]):
+    logger.info(f'> Resume Reader {sequence}')
+    from extensions.trey.trey import resume_reader
+    resume_reader()
 
   def skip_lines(self, sequence=[]):
     if (len(sequence) < 1):
@@ -320,12 +382,6 @@ class hotkeys:
     from extensions.trey.trey import select_type
     select_type(sequence[-1]-self.keybot)
 
-  def next_type(self, sequence=[]):
-    if (len(sequence) < 1):
-      sequence = [54] #default to next type
-    logger.info(f'> Next {sequence}')
-    from extensions.trey.trey import next_type
-    next_type(sequence[-1]-self.keybot)
 
   def start_me(self, sequence=[]):
     #Pass parameter for which topic to start.  
@@ -412,10 +468,10 @@ class hotkeys:
         
       return 0
 
-  def speak(self, text, links=[]):
+  def speak(self, text, links=[], total_read=0):
     from extensions.trey.trey import speak
 #    print(f'Speaking: {text}')
-    return speak(text, links)
+    return speak(text, links, total_read)
 
   
   def ocr_image(self, img):
