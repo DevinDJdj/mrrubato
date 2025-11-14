@@ -568,7 +568,8 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
                 else:
                     print(f'Generating and playing audio: {l}')
                     sound_file = f"./temp/{idx}.mp3"
-                    os.system(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --text \"{l}\" --rate=\"-10%\"")
+                    lesc = l.replace('"', '\\"').replace("'", "\\'")
+                    os.system(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --text \"{lesc}\" --rate=\"-10%\"")
 #                    sound_file = f"./temp/{idx}.wav"
                     #fast not working.. edge-tts much better quality than speechbrain tts.
 #                    cmd = f"python ./extensions/trey/speech.py --text \"{l}\" --fname \"{sound_file}\""
@@ -605,7 +606,8 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
                                 print(f'Reading similar item: {siml}')
                                 try:
                                     sound_file = f"./temp/sim{rid}.mp3"
-                                    os.system(f"edge-tts --voice \"{voice}\" --write-media \"{sound_file}\" --text \"Similar: {siml}\" --rate=\"-10%\" --volume=-40%")
+                                    lesc = siml.replace('"', '\\"').replace("'", "\\'")
+                                    os.system(f"edge-tts --voice \"{voice}\" --write-media \"{sound_file}\" --text \"Similar: {lesc}\" --rate=\"+20%\" --volume=-40%")
                                     playsound(sound_file, block=False) # Ensure this thread blocks for its sound
 
                                 except Exception as e:

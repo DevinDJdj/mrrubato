@@ -5,7 +5,8 @@ from PIL import Image
 from io import BytesIO
 import win32con
 import time
-
+import os
+from datetime import datetime, timedelta
 import extensions.trey.playwrighty as playwrighty
 
 logger = logging.getLogger(__name__)
@@ -79,7 +80,43 @@ class hotkeys:
       else:
         sequence = seq + sequence
       return sequence
-    
+
+  def load_bookmarks(self):
+    #load bookmarks from file for this date.  
+    #maybe playwrighty should handle this?
+    #get date as YYYYMMDD
+    #for now just open most recent file.
+    today = datetime.now().strftime("%Y%m%d")
+    logger.info(f'Loading bookmarks')
+    #yesterday also    
+    yesterday = (datetime.now() - timedelta(1)).strftime("%Y%m%d")
+    #list all files in directory
+    files = os.listdir('../' + self.name)
+    sorted_files = sorted(files)
+    numloaded = 0
+    for f in sorted_files:
+      if (f.startswith(yesterday) or f.startswith(today)):
+        with open('../' + self.name + '/' + f) as ff:
+          lines = ff.readlines()
+          for line in lines:
+            #add bookmark manually.  
+            parts = line.strip().split('\t')
+            cmd = parts[0]
+            if (cmd == '> Add Bookmark'):
+              url = parts[1]
+              total_read = int(parts[2])
+              body_length = int(parts[3]) if len(parts) > 3 else 0
+
+              print(f'Loaded bookmark {url} at {total_read}')
+              playwrighty.add_bookmark(url, total_read) #call playwrighty add bookmark..
+              numloaded += 1
+
+
+    #list files in 
+    logger.info(f'Loaded {numloaded} bookmarks from {len(sorted_files)} files')
+    return 0    
+  
+
   def load_data(self):
 
     #load language specific data into the config.  
@@ -89,7 +126,7 @@ class hotkeys:
         "Stop": [53,51],
         "Pause": [53,52],
         "Resume": [53,54],
-        "Read Screen": [53,50],      
+        "Read Screen": [53,50],
 #        "Page": [53,57],
       },
       "3": {
@@ -103,8 +140,14 @@ class hotkeys:
         "List Tabs": [53,58,59],
         "Select Tab": [53,58,60],
 #        "Select Type": [53,57, 58], #parameter type default go next.  
+      }, 
+      "4": {
+        "Add Bookmark": [53,58,60,62], #feedback tells which mark it is.  Or default to set to 0 idx.  
+        #manually select 0 idx = [53,58,60,62,53,53,53]
+        "List Bookmarks": [53,58,60,63], #no params
       }
     }
+
     if (self.name in self.config['languages']):
       logger.info(f'Merging existing {self.name} config')
       #need logic to iterate and pick each one.  This is not working right.  
@@ -115,6 +158,8 @@ class hotkeys:
     self.config['languages'][self.name] = default
     self.funcdict = {
       "Stop": "stop_me",
+      "Pause": "pause_reader",
+      "Resume": "resume_reader",
       "Go Back": "go_back",
       "Start": "start_me",
       "Read Screen": "read_screen",
@@ -129,20 +174,26 @@ class hotkeys:
       "Select Tab": "select_tab",
       "_Search Web": "_search_web",
       "Search Web_": "search_web_",
+      "Add Bookmark": "add_bookmark",
+      "List Bookmarks": "list_bookmarks"
     }
 
+    self.load_bookmarks()
     return 0  
 
   #act differently based on words in sequence.    
   def act(self, cmd, words=[], sequence=[]):
     """ACT based on command and sequence."""
+    logger.info("-> "+ cmd + " " + str(sequence))
     if (len(sequence) == 0 and "_" + cmd in self.funcdict):
       #run prefix command
+      logger.info("-_> "+ cmd + " " + str(sequence))
       func = self.funcdict["_" + cmd]
       if hasattr(self, func):
         return getattr(self, func)(sequence)
       
     elif cmd in self.funcdict:
+      logger.info("--> "+ cmd + " " + str(sequence))
       func = self.funcdict[cmd]
       #all require keybot at end.
 
@@ -152,7 +203,7 @@ class hotkeys:
         getattr(self, func + "_")(sequence)
       
       if hasattr(self, func):
-        if (len(sequence) == 1 and sequence[0] == self.keybot):
+        if (len(sequence) == 1 and sequence[-1] == self.keybot):
           return getattr(self, func)(sequence[:-1])
         elif (len(sequence) > 1 and sequence[-2:] == [self.keybot, self.keybot]):
           return getattr(self, func)(sequence[:-2])
@@ -161,6 +212,9 @@ class hotkeys:
       else:
         logger.error(f"Function {func} not found in {self.__class__.__name__}")
     else:
+      print(f"{self.funcdict}")
+      logger.info(f"{self.funcdict}")
+      logger.error(f"Command {cmd} not found in function maps")
       print(f"Command {cmd} not found in function maps")
     return -1
   
@@ -188,6 +242,49 @@ class hotkeys:
       self.speak('No browser session active.')
     return 0
 
+  def list_bookmarks(self, sequence=[]):
+    logger.info(f'> List Bookmarks {sequence}')
+    #for now just demo..
+
+    return 0
+
+  def add_bookmark(self, sequence=[]):
+    logger.info(f'> Add Bookmark {sequence}')
+    #do this also on pause..
+    #for now just demo..
+    #how to store local data for this?  
+    #readable file?  Just use date for now..
+    #get URL and location in page.  
+    cacheno = -1
+    if (playwrighty.mybrowser is not None):
+      if (len(sequence) > 0):
+        cacheno = sequence[-1]-self.keybot
+      
+      if (cacheno > -1 and cacheno < len(playwrighty.page_cache)):
+        cacheno = cacheno
+      else:
+        cacheno = playwrighty.current_cache
+
+      page = playwrighty.get_ppage(playwrighty.current_cache)
+      url = page.url
+      total_read = 0
+      total_read = playwrighty.update_page_offset()
+      #get date as YYYYMMDD
+
+      today = datetime.now().strftime("%Y%m%d")
+      #find URL in bookmarks already?
+      playwrighty.add_bookmark(url, total_read)
+      body_length = playwrighty.page_cache[playwrighty.current_cache]['length'] if playwrighty.current_cache >=0 and playwrighty.current_cache < len(playwrighty.page_cache) else 0
+
+      os.makedirs('../' + self.name, exist_ok=True)
+      with open('../' + self.name + '/' + today + '.txt', 'a') as f:        
+        f.write(f'> Add Bookmark\t{url}\t{total_read}\t{body_length}\n')
+        #dont worry about duplication at this point.
+
+
+
+    return 0
+  
   def select_tab(self, sequence=[]):
     logger.info(f'> Select Tab {sequence}')
     if (playwrighty.mybrowser is not None):
@@ -259,8 +356,9 @@ class hotkeys:
     body_text, link_data, page, cacheno = playwrighty.search_web(query, engine=engine, cacheno=cacheno)
 #    print(body_text)
     self.links = link_data
-
-    q2, q3, stop_event = self.speak(body_text, link_data)
+    #should always have a value here..  
+    total_read = playwrighty.get_bookmark(page.url, cacheno)
+    q2, q3, stop_event = self.speak(body_text, link_data, total_read)
     playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
 
 
@@ -312,7 +410,9 @@ class hotkeys:
         body_text, link_data, page, cacheno = a
         self.links = link_data
         print(body_text)
-        q2, q3, stop_event = self.speak(body_text, link_data)
+        total_read = playwrighty.get_bookmark(page.url, cacheno)
+
+        q2, q3, stop_event = self.speak(body_text, link_data, total_read) #add offset to skip until where we were.)
         playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
         return 0
       else:
@@ -339,8 +439,7 @@ class hotkeys:
         self.links = link_data
 #        print(body_text)
         page = playwrighty.page_cache[cacheno]['page']
-        if (playwrighty.page_cache[cacheno]['current_offset'] is not None and page.url in playwrighty.page_cache[cacheno]['current_offset']):
-            total_read = playwrighty.page_cache[cacheno]['current_offset'][page.url]
+        total_read = playwrighty.get_bookmark(page.url, cacheno)
         logger.info('$$Total_Read = ' + str(total_read))
         q2, q3, stop_event = self.speak(body_text, link_data, total_read) #add offset to skip until where we were.  
         playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
@@ -361,6 +460,7 @@ class hotkeys:
     logger.info(f'> Pause Reader {sequence}')
     from extensions.trey.trey import pause_reader
     pause_reader()
+    self.add_bookmark()
     return 0
 
   def resume_reader(self, sequence=[]):
@@ -395,11 +495,13 @@ class hotkeys:
     from extensions.trey.trey import stop_audio
     cacheno = -1
     if (len(sequence) > 0):
+      self.add_bookmark(sequence)
       cacheno = sequence[-1]-self.keybot
       stop_event = playwrighty.get_stop_event(cacheno)
       if (stop_event is not None):
         stop_event.set()  # Signal the specific audio thread to stop
     else:
+      self.add_bookmark()
       stop_audio() #stop all.  
 
     return 0

@@ -412,6 +412,7 @@ class MyKeys:
   #          self.switchLang(lkey)
 
       if (self.currentcmd is not None):
+        logger.info("> " + self.currentcmd + " " + str(self.sequence[self.startseqno:]))
 #        print("> " + self.currentcmd + " " + str(self.sequence[self.startseqno:]))
         #check for any languages that can handle this sequence. we did not find a command.  
         scmd = self.currentcmd
@@ -441,6 +442,7 @@ class MyKeys:
         #so completing the loop requires a closure of the same number of commands in order to actually be executed.  
         #yeah I think thats nice.  But not sure if it will work logically.  
         print(f'Action returned {a} for {self.currentcmd} {self.sequence[self.startseqno:]}')
+        logger.info(f'Action returned {a} for {self.currentcmd} {self.sequence[self.startseqno:]}')
         if (isinstance(a, int)): #should always be true
           if (a == -1):
             #reset action

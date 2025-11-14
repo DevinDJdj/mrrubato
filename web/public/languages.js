@@ -1115,7 +1115,10 @@ function loadDictionaries(user=0, langstoload=[]){
             updateVidTimes(user);     
             //this sets currentvidtime.  
             //get the transcript from here
-            getCurrentTranscript();
+            currenttranscriptentry = getCurrentTranscript();
+
+            displayTranscriptDiv((moment() - startc));
+        
 
         }, 1000);
         //set up to highlight video times 
@@ -1136,15 +1139,25 @@ function loadDictionaries(user=0, langstoload=[]){
 
 }
 
-function getCurrentTranscript(){
+function getCurrentTranscript(vidtime=-1){
+    if (vidtime < 0){
+        vidtime = currentvidtime;
+    }
     i = 0;
-    while (i< transcriptarray.length && getTime(transcriptarray[i])+feedbackdelay < currentvidtime/1000){
+    while (i< transcriptarray.length && getTime(transcriptarray[i])+feedbackdelay < vidtime/1000){
         i++;
     }
-    if (transcript.length > 0 && i == transcriptarray.length ){
+    if (transcriptarray.length > 0 && i < transcriptarray.length ){
         i = i-1;
     }
-    currenttranscriptentry = transcriptarray[i];
+    else if (i == transcriptarray.length){
+        i = -1;
+        transcriptelapsedidx = i;
+        return "";
+    }
+    transcriptelapsedidx = i;
+    return transcriptarray[i];
+
     //  notesarray
 
 }
@@ -1896,4 +1909,20 @@ function addDictRow(lang, word, row, user=0, add=0) {
 
         }
 //    }
+}
+
+transcriptelapsedentry = "";
+transcriptelapsedidx = 0;
+
+function displayTranscriptDiv(t){
+    s = getCurrentTranscript(t);
+    if (s != transcriptelapsedentry){
+        transcriptelapsedentry = s;
+        $('#transcriptdiv').html(transcriptelapsedentry);
+        if (transcriptelapsedidx >= 0){
+            $('#transcriptsh').animate({
+                scrollTop: transcriptelapsedidx*15}, "slow"
+            );
+        }
+    }
 }

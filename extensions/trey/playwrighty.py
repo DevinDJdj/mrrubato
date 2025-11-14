@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 page_cache = [] # this should include history of pages each time.  
 #array of arrays with {query, page, body, links, title, reader_queue, sim_queue, reader_stop_event}
-
+bookmarks = [] #list of {url, [total_read, total_read]}
 mybrowser = None
 myplaywright = None
 mycontext = None
@@ -91,6 +91,28 @@ def click_link(cacheno, text_offset, link_offset=0, open_new_tab=False):
         logging.warning(f'Cache number {cacheno} out of range')
     return False
 
+
+def get_bookmark(url, cacheno=-1):
+    global bookmarks
+    found_item = next(filter(lambda item: item.get("url") == url, bookmarks), None)
+    if (found_item is not None):
+        return found_item['total_read'][0]
+    if (cacheno < 0):
+        cacheno = current_cache
+    if (page_cache[cacheno]['current_offset'] is not None and url in page_cache[cacheno]['current_offset']):
+        return page_cache[cacheno]['current_offset'][url]
+    
+    return 0
+
+def add_bookmark(url, total_read):
+    global bookmarks
+    found_item = next(filter(lambda item: item.get("url") == url, bookmarks), None)
+    body_length = page_cache[current_cache]['length'] if current_cache >=0 and current_cache < len(page_cache) else 0
+    if (found_item is not None):
+        found_item['total_read'].insert(0, total_read)
+    else:
+        bookmarks.append({'url': url, 'total_read': [total_read], 'length': body_length})
+    return 0
 
 def find_last(link_offset=1, cacheno=-1, text_offset=-1):
     """Go back to the previous page in the current cache."""
@@ -328,11 +350,18 @@ def update_page_offset(cacheno=-1):
     if (cacheno < 0):
         cacheno = current_cache
     q2 = page_cache[cacheno]['reader_queue']
+    url = page_cache[current_cache]['page'].url
     while (q2 is not None and not q2.empty()):
         total_read = q2.get() #get current link number.  
         #set offset
-        page_cache[cacheno]['current_offset'][page_cache[current_cache]['page'].url] = total_read
-    total_read = page_cache[cacheno]['current_offset'][page_cache[cacheno]['page'].url]
+        page_cache[cacheno]['current_offset'][url] = total_read
+
+    if (total_read > 0):
+        found_item = next(filter(lambda item: item.get("url") == url, bookmarks), None)
+        if (found_item is not None):
+            #this is temporary info, how to distinguish temporary vs permanent bookmarks?  
+            found_item['total_read'].insert(0, total_read)
+    total_read = page_cache[cacheno]['current_offset'][url]
     return total_read
 
 def cache_page(url, page, body_text, link_data, cacheno=-1):
@@ -375,7 +404,7 @@ def read_page(url, cacheno=-1):
 #        await browser.close()
 
     #pull prev offset if exists.  
-    prev_offsets = {url: 0}
+    prev_offsets = {}
     if (cacheno >=0 and cacheno < len(page_cache) and page_cache[cacheno] is not None and 'current_offset' in page_cache[cacheno]):
         prev_offsets = page_cache[cacheno]['current_offset']
 
@@ -383,10 +412,13 @@ def read_page(url, cacheno=-1):
     current_cache = cacheno
     
     page_cache[cacheno]['current_offset'] = prev_offsets
+    page_cache[cacheno]['length'] = len(body_text)
 
     if (page.url not in page_cache[cacheno]['current_offset']):
-        page_cache[cacheno]['current_offset'][page.url] = 0
-        
+        #get previous bookmark offset.
+        page_cache[cacheno]['current_offset'][page.url] = get_bookmark(page.url)
+
+    page_cache[cacheno]['page'].bring_to_front()
     logging.info(f'Cached page {cacheno} for URL: {url}')
     return body_text, link_data, page, cacheno
 

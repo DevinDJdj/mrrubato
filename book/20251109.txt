@@ -488,3 +488,36 @@ $$chrome://flags/#enable-unsafe-webgpu
 
 Some GPUs need this, not sure why..
 
+
+**languages/hotkeys.py
+Pause working..
+List Tabs is starting to read the first tab..
+
+New word:
+Bookmark - 
+test add_bookmark
+--load_data
+Need to read bookmarks
+
+Test add bookmark..
+load_bookmark not working..
+
+
+Need to 
+OK, add_bookmark seems to work on_pause.
+
+Not starting from there.  
+
+List links, list latest tabs, and select from there on startup perhaps.  
+List bookmarks for a page when opened..
+Just the first few words..
+When select page default to last bookmark, but list and then select also possible.  
+
+Kind of a mess with bookmarks..
+
+
+Need command to speed up / slow down..
+
+Check click_link / back..
+
+Need separate command to use/read internal links..
