@@ -151,7 +151,31 @@ class hotkeys:
     if (self.name in self.config['languages']):
       logger.info(f'Merging existing {self.name} config')
       #need logic to iterate and pick each one.  This is not working right.  
-      default.update(self.config['languages'][self.name])
+#      default.update(self.config['languages'][self.name])
+
+      for sl in self.config['languages'][self.name]:
+        #check for each word
+        if (sl != 'keybot'):
+          for k in self.config['languages'][self.name][sl]:
+            default[sl][k] = self.config['languages'][self.name][sl][k]
+
+      if ('keybot' in self.config['languages'][self.name]):
+        default['keybot'] = self.config['languages'][self.name]['keybot']
+        self.keybot = default['keybot']
+
+      #update all others based on any keybot change.
+      for sl in default:
+        for k in default[sl]:
+          #update all sequences by diff.
+          seq = default[sl][k]
+          #this allows to 0 index or any index if preferred..
+          #easier to port relative words from other languages..
+          #eventually probably get used to 0-indexing
+          innerdiff = self.keybot - seq[0]
+          for i in range(len(seq)):
+            seq[i] += innerdiff
+
+          default[sl][k] = seq
     else:
       logger.info(f'No existing {self.name} config found, creating new one')
 

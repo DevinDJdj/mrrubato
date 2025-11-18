@@ -521,3 +521,70 @@ Need command to speed up / slow down..
 Check click_link / back..
 
 Need separate command to use/read internal links..
+
+
+**timestep.py
+Keep and use trey records in some way.  
+Create equivalent of audio recording trans.json
+
+
+
+**CACHE
+
+prev and future command cache access:
+[n, n] [cmdidx] [paramidx]
+n==n brings up cache
+[53,53] [IDX] = looks up this cmd, then following param idx can be used.  
+Or break [60]? and recreate params.  
+So we have a cache tree of [24][24][24]
+[0:12] is past [12:24] is predicted
+first 24 is just base key, so really only 12.  
+really only using 10 because of meta [60] break?  
+Not sure how to chain or break..
+
+Cmd creation as well need a struct for this.  
+[n, n+12] = Create
+[n, n-12] = delete
+[53,65] [WORD] [53,65] [idx] [idx] [53,65] [idx] [idx] ... [53,65] [53,65]
+pull from cache multiple commands?  
+created words are only sequences of existing programmed commands..
+too complex?  
+Delete:
+[65,53] [WORD] [65,53]
+
+
+Each [53,53] or [53,65] brings up display of cmd cache and param cache to be selected..
+Also as word is input
+Bring up potential sequences..
+This should be immediate in trey..
+As word is constructed, should show similar constructs..
+Dont want a bunch of duplicate words..
+
+Display trey window until command construction complete.  
+Should this window be full screen?  
+Not sure..
+Do we need delay param between commands?? 
+Or just use input delay as delay.
+
+How to create words in a meaningful way.  
+After word creation need to find similar and purge from dictionary.  
+Import dictionary which will highlight overlap, and which words you want to keep.  
+Should be able to import dictionary ported to any particular key..
+All basekey (0-based) indexes eventually.  
+
+Meta command to list dictionaries..
+[SWITCH] [key] [key]
+[IMPORT] [key] [dic]
+
+Or just
+CONFIG put basekeys for all languages?  
+This is much simpler..
+languages->lang->basekey
+
+Yeah lets switch to 0-idx now
+Add basekey config param..
+Adjust array on loaddata..
+test load_data with different index..
+Test 0-indexed words..
+
+
