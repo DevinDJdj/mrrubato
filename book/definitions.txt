@@ -35,6 +35,8 @@ May have some problematic names.
 $$ ENVIRONMENT (can also be direct link to topic) also math symbol if also ending in same.  
 $$ E=mc^2 $$
 
+%% WORK
+
 !! Log output or error
 
 - sub task
@@ -72,7 +74,7 @@ Leading OPEN:
 +
 % = wild? or modulate/random? 
 ^ = generate (Exponentiate)
-_ = pre-requisite
+_ = pre-requisite /test?
 / = path
 \ = macro?  (TEX i.e. \being{itemize}..) 
 : = line identification
@@ -102,10 +104,20 @@ defstring = "!@#$%^&*<>/-+=;"
  ? Open question
  & trailing and removes from ENV.  
 <!--
+$$ ENV
 $$+MYVAR
 $$-MYVAR
 $$-**TOPIC removes all topic ENV variables.  
 TOPIC cant start with -
+
+%% WORK
+%%+
+%%-
+%%+& book
+%%+_ test
+%%-&
+%%-_ test
+
 -->
 
 

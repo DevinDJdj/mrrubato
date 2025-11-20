@@ -4,6 +4,7 @@
 //npm install --global yo generator-code
 //if not working run this..
 //>cd [extensiondir]
+//>ollama start..
 //>tsc -watch -p ./
 //npm install --save @vscode/prompt-tsx
 //npm install --save ollama
@@ -373,8 +374,17 @@ export function activate(context: vscode.ExtensionContext) {
 
 		}
 
-		if (request.command === 'genbook' || request.command === 'gencomments' || request.command === 'gencode'){
+		if (request.command === 'genbook' || request.command === 'gencomments' || request.command === 'gencode' || request.command === 'gentests'){
 			//generate context for this topic.  
+			if (request.command === 'genbook'){
+
+			}
+			if (request.command === 'gencomments'){
+			}
+			if (request.command === 'gencode'){
+			}
+			if (request.command === 'gentests'){
+			}
 		}
 
 		if (request.command === 'summarize' || request.command=== 'summary'){
@@ -390,7 +400,9 @@ export function activate(context: vscode.ExtensionContext) {
 			let response = await Book.markdown(summary)
 			stream.markdown(response);
 			//workbench.action.chat.readChatResponseAloud
+			setTimeout(() => {	
 			vscode.commands.executeCommand('workbench.action.chat.readChatResponseAloud');
+			}, 15000);
 
 
 
@@ -416,6 +428,10 @@ export function activate(context: vscode.ExtensionContext) {
 				
 			}
 			stream.markdown(doc);
+			setTimeout(() => {	
+				//vscode.commands.executeCommand('workbench.action.chat.readChatResponseAloud');
+				}, 10000);
+	
 
 
 			return;
@@ -502,7 +518,10 @@ export function activate(context: vscode.ExtensionContext) {
 			for await (const fragment of chatResponse.text) {
 				stream.markdown(fragment);
 			}
-	
+			setTimeout(() => {	
+				//vscode.commands.executeCommand('workbench.action.chat.readChatResponseAloud');
+				}, 10000);
+		
 //			stream.markdown('```ls -l\n');
 			return;
 		}
@@ -659,6 +678,10 @@ export function activate(context: vscode.ExtensionContext) {
 								//Make book suggestions.  
 								cmd = "/genbook ";
 							}
+							else if (text.charAt(2) === "_"){
+								//make test cases?  
+								cmd = "/gentests ";
+							}
 							if (text.length < 3 || Book.findInputTopics(text).length === 0){
 								//summarize current topic.  
 								text = "**" + topic + " " + text;
@@ -687,14 +710,29 @@ export function activate(context: vscode.ExtensionContext) {
 						}
 						if (text.charAt(2) === "-"){
 							//remove worker.  
-							console.log("Removing worker: " + topic);
-							let removed = await Worker.removeWorker(topic);
+							if (text.length > 3 && (text.charAt(3) === "&" || text.charAt(3) === "_" )){
+								console.log(text + " **" + topic);								
+								let removed = await Worker.removeWorker(topic, text.charAt(3));	
+							}
+							else{
+								//normal remove.
+								console.log(text + " **" + topic);
+								let removed = await Worker.removeWorker(topic);
+							}
 						}
 						else if (text.charAt(2) === "+"){
 							//add worker.  
-							console.log("Adding worker: " + topic);	
-							let added = await Worker.addWorker(topic);	
+							if (text.length > 3 && (text.charAt(3) === "&" || text.charAt(3) === "_" )){
+								console.log(text + " **" + topic);	
+								let added = await Worker.addWorker(topic, text.charAt(3));	
+							}
+							else{
+								//normal add.  
+								console.log(text + " **" + topic);	
+								let added = await Worker.addWorker(topic);	
+							}
 						}						
+
 						console.log("Workers: " + JSON.stringify(Worker.workers));
 						break;
 				}
@@ -864,18 +902,15 @@ export function activate(context: vscode.ExtensionContext) {
 					case "#":
 						//open references.html?topic=
 						break;
-					case "-":
+					case "&":
 						//open book contents topic= 
 						break;
-					case "/":
+					case "%":
 						//start thinking about topic
 						break;
 					case "$":
 						//open page.html?topic=
 						//show env info.  
-						break;
-					case "%":
-						//open graph.html?topic=
 						break;
 
 				}
@@ -903,12 +938,12 @@ export function activate(context: vscode.ExtensionContext) {
 						break;
 				}
 				case "~":
-					//summarize this topic. 
+					//similar to this topic. 
 					switch (cmdtype[1]) {
 						case "~":
-							//summarize this topic.
+							//similar this topic.
 							if (text.length < 3 || Book.findInputTopics(text).length === 0){
-								//summarize current topic.  
+								//similar current topic.  
 								const editor = vscode.window.activeTextEditor;
 								if (editor) {
 									topic = getTopicFromLocation(editor);

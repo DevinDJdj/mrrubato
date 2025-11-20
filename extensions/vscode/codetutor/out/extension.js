@@ -5,6 +5,7 @@
 //npm install --global yo generator-code
 //if not working run this..
 //>cd [extensiondir]
+//>ollama start..
 //>tsc -watch -p ./
 //npm install --save @vscode/prompt-tsx
 //npm install --save ollama
@@ -340,8 +341,16 @@ function activate(context) {
             stream.markdown('**My agent coding mode** ' + mySettings.codingmode + '  \n');
             stream.markdown('**My agent work prompt** ' + mySettings.workprompt.slice(-255) + '  \n');
         }
-        if (request.command === 'genbook' || request.command === 'gencomments' || request.command === 'gencode') {
+        if (request.command === 'genbook' || request.command === 'gencomments' || request.command === 'gencode' || request.command === 'gentests') {
             //generate context for this topic.  
+            if (request.command === 'genbook') {
+            }
+            if (request.command === 'gencomments') {
+            }
+            if (request.command === 'gencode') {
+            }
+            if (request.command === 'gentests') {
+            }
         }
         if (request.command === 'summarize' || request.command === 'summary') {
             //find similar topics.  
@@ -349,7 +358,12 @@ function activate(context) {
             //do same on Ctrl+Shift+9
             let summary = await Book.summary(request.prompt);
             //replace topics.  
-            stream.markdown(await Book.markdown(summary));
+            let response = await Book.markdown(summary);
+            stream.markdown(response);
+            //workbench.action.chat.readChatResponseAloud
+            setTimeout(() => {
+                vscode.commands.executeCommand('workbench.action.chat.readChatResponseAloud');
+            }, 15000);
             return;
         }
         if (request.command === 'similar') {
@@ -369,6 +383,9 @@ function activate(context) {
                 doc += `${data} $$  \n`;
             }
             stream.markdown(doc);
+            setTimeout(() => {
+                //vscode.commands.executeCommand('workbench.action.chat.readChatResponseAloud');
+            }, 10000);
             return;
         }
         if (request.command === 'list') {
@@ -435,6 +452,9 @@ function activate(context) {
             for await (const fragment of chatResponse.text) {
                 stream.markdown(fragment);
             }
+            setTimeout(() => {
+                //vscode.commands.executeCommand('workbench.action.chat.readChatResponseAloud');
+            }, 10000);
             //			stream.markdown('```ls -l\n');
             return;
         }
@@ -567,6 +587,10 @@ function activate(context) {
                                 //Make book suggestions.  
                                 cmd = "/genbook ";
                             }
+                            else if (text.charAt(2) === "_") {
+                                //make test cases?  
+                                cmd = "/gentests ";
+                            }
                             if (text.length < 3 || Book.findInputTopics(text).length === 0) {
                                 //summarize current topic.  
                                 text = "**" + topic + " " + text;
@@ -591,13 +615,27 @@ function activate(context) {
                         }
                         if (text.charAt(2) === "-") {
                             //remove worker.  
-                            console.log("Removing worker: " + topic);
-                            let removed = await Worker.removeWorker(topic);
+                            if (text.length > 3 && (text.charAt(3) === "&" || text.charAt(3) === "_")) {
+                                console.log(text + " **" + topic);
+                                let removed = await Worker.removeWorker(topic, text.charAt(3));
+                            }
+                            else {
+                                //normal remove.
+                                console.log(text + " **" + topic);
+                                let removed = await Worker.removeWorker(topic);
+                            }
                         }
                         else if (text.charAt(2) === "+") {
                             //add worker.  
-                            console.log("Adding worker: " + topic);
-                            let added = await Worker.addWorker(topic);
+                            if (text.length > 3 && (text.charAt(3) === "&" || text.charAt(3) === "_")) {
+                                console.log(text + " **" + topic);
+                                let added = await Worker.addWorker(topic, text.charAt(3));
+                            }
+                            else {
+                                //normal add.  
+                                console.log(text + " **" + topic);
+                                let added = await Worker.addWorker(topic);
+                            }
                         }
                         console.log("Workers: " + JSON.stringify(Worker.workers));
                         break;
@@ -757,18 +795,15 @@ function activate(context) {
                     case "#":
                         //open references.html?topic=
                         break;
-                    case "-":
+                    case "&":
                         //open book contents topic= 
                         break;
-                    case "/":
+                    case "%":
                         //start thinking about topic
                         break;
                     case "$":
                         //open page.html?topic=
                         //show env info.  
-                        break;
-                    case "%":
-                        //open graph.html?topic=
                         break;
                 }
                 break;
@@ -794,12 +829,12 @@ function activate(context) {
                         break;
                 }
             case "~":
-                //summarize this topic. 
+                //similar to this topic. 
                 switch (cmdtype[1]) {
                     case "~":
-                        //summarize this topic.
+                        //similar this topic.
                         if (text.length < 3 || Book.findInputTopics(text).length === 0) {
-                            //summarize current topic.  
+                            //similar current topic.  
                             const editor = vscode.window.activeTextEditor;
                             if (editor) {
                                 topic = getTopicFromLocation(editor);

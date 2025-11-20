@@ -579,12 +579,48 @@ Meta command to list dictionaries..
 Or just
 CONFIG put basekeys for all languages?  
 This is much simpler..
-languages->lang->basekey
+languages->lang->keybot
 
 Yeah lets switch to 0-idx now
-Add basekey config param..
+Add keybot config param..
 Adjust array on loaddata..
 test load_data with different index..
+OK..
+
 Test 0-indexed words..
+..
+
+
+Test can rerun transcripts?  
+But how do we define expected result?  
+Just with image comparison?  
+How do we link transcript with topic?  
+
+
+**extensions/vscode/codetutor/src/extension.ts
+
+Problem with readaloud..
+fix Date reading..
+
+We should list selected topics in response..
+
+How do we override the reading of the text??  
+
+Sometimes we are reading the prior comment.. 
+
+workbench.action.chat.stopreadaloud
+ctrl+shift+4
+WHEN textToSpeechInProgress
+
+workbench.action.chat.readChatResponseAloud
+WHEN !textToSpeechInProgress
+
+!!reading previous chat entry
+> workbench.action.chat.readChatResponseAloud
+Had to use timeout for vscode.commands.executeCommand('workbench.action.chat.readChatResponseAloud');.
+15 seconds seems to be enough to stream response for now..
+
+--stream.markdown
+@@vscode Why cant I speed this up??
 
 

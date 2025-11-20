@@ -1074,6 +1074,30 @@ export async function getChunks(text: string, CTX_WND: number = 5000) : Promise<
     return chunks;
 }    
 
+
+export function getReadableName(name: string, line: number = 0) : string {
+    //this will be used to get a readable name for the topic.
+    let ret = name;
+    //try to open the topic file and read the first line.
+    let fidx = ret.lastIndexOf("/");
+    if (fidx !== -1) {
+        ret = ret.slice(fidx + 1); //get the file name.
+    }
+    if (line > 0){
+        let extidx = ret.lastIndexOf(".");
+        if (extidx !== -1) {
+            ret = ret.slice(0, extidx); //remove txt extension.  
+        }
+
+        //insert spaces for YYYY mm dd
+        if (ret.length === 8 && !isNaN(Number(ret))) {
+            ret = ret.slice(0,4) + " " + ret.slice(4,6) + " " + ret.slice(6,8);
+        }
+        ret = ret + " line " + line.toString();
+    }
+    return ret;
+}
+
 export async function markdown(prompt: string) : Promise<string> {
     //this just adjustst the base string to include links to markdown files.  
     //replace **topic with [topic](topic.md)
@@ -1093,7 +1117,7 @@ export async function markdown(prompt: string) : Promise<string> {
         else{
             let colon = p2.lastIndexOf(":");
             if (colon !== -1) {
-                //this is a file:line reference.  
+                //this is a file:line reference.  Book page..
 
                 let fname = p2.slice(0, colon); //get the file name.
                 //check if file exists.  
@@ -1102,14 +1126,19 @@ export async function markdown(prompt: string) : Promise<string> {
                 let line = p2.slice(colon + 1); //get the line number. 
                 //remove folder from file name.  
                 p2 = p2.replace(folderUri.path + "/", ""); //remove the folder path from the file name for display purposes.  
-                return `[${p1}${p2}](${fname}#L${line})`; //return the markdown link.
+                //need to rewrite dates to something else..
+                let readablename = getReadableName(p2, line);
+                return `[${p1}${readablename}](${fname}#L${line})`; //return the markdown link.
+//                return `[${p1}${p2}](${fname}#L${line})`; //return the markdown link.
             }
             //try to detect generated markdown unrelated to file.  
             //check for a topic that exists.  
             //maybe make a smart search for a topics that exists or similar vectors and their files.  
             if (p2 in topicarray) {
                 p2 = p2.replace(folderUri.path + "/", ""); //remove the folder path from the file name for display purposes.  
-                return `[${p1}${p2}](${fileUri.path})`; //return the markdown link.
+                let readablename = getReadableName(p2);
+                return `[${p1}${readablename}](${fileUri.path})`; //return the markdown link.
+//                return `[${p1}${p2}](${fileUri.path})`; //return the markdown link.
             }
             return match; //return the original match if file does not exist.
 
@@ -1124,8 +1153,14 @@ export async function summary(prompt: string) : Promise<string> {
     //for now just return the topics in the book.
     //should have just topice really expecting.  
     let sim = await similar(prompt); //get the similar topics from the book.
+    let topics = [];
     for (let i=0; i<sim.length; i++) {
         let topic = sim[i].topic;
+        if (topics.includes(topic)){
+            //line is different, but topic is the same.
+            continue; //skip duplicate topics.
+        }
+        topics.push(topic);
         prompt = "**" + topic + " \n" + prompt; //add the topic to the prompt.
     }
 
@@ -1136,7 +1171,7 @@ export async function summary(prompt: string) : Promise<string> {
     let summary = await getSummary(b[1], 5000); //get the summary of the chunks.
     console.log(`Summary: ${summary}`);
 
-    return summary;
+    return prompt + "\n" + summary;
 }
 
 
