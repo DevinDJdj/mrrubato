@@ -8,6 +8,8 @@ import time
 import os
 from datetime import datetime, timedelta
 import extensions.trey.playwrighty as playwrighty
+# Import Module
+import shutil
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +32,9 @@ class hotkeys:
     self.maxseq = 10 #includes parameters
     self.callback = None
     self.transcript = ""
+    self.now = datetime.now()
+    self.feedbacknowstr = self.now.strftime("%Y%m%d%H%M%S")
+
     self.funcdict = {}
 
   def word(self, sequence=[]):
@@ -81,6 +86,7 @@ class hotkeys:
         sequence = seq + sequence
       return sequence
 
+  #really should load all data in same iteration..
   def load_bookmarks(self):
     #load bookmarks from file for this date.  
     #maybe playwrighty should handle this?
@@ -91,12 +97,12 @@ class hotkeys:
     #yesterday also    
     yesterday = (datetime.now() - timedelta(1)).strftime("%Y%m%d")
     #list all files in directory
-    files = os.listdir('../' + self.name)
+    files = os.listdir('../transcripts/' + self.name)
     sorted_files = sorted(files)
     numloaded = 0
     for f in sorted_files:
-      if (f.startswith(yesterday) or f.startswith(today)):
-        with open('../' + self.name + '/' + f) as ff:
+#      if (f.startswith(yesterday) or f.startswith(today)):
+        with open('../transcripts/' + self.name + '/' + f) as ff:
           lines = ff.readlines()
           for line in lines:
             #add bookmark manually.  
@@ -140,6 +146,7 @@ class hotkeys:
         "List Tabs": [53,58,59],
         "Select Tab": [53,58,60],
 #        "Select Type": [53,57, 58], #parameter type default go next.  
+        "Record Feedback": [53,57, 60], 
       }, 
       "4": {
         "Add Bookmark": [53,58,60,62], #feedback tells which mark it is.  Or default to set to 0 idx.  
@@ -202,7 +209,8 @@ class hotkeys:
       "_Search Web": "_search_web",
       "Search Web_": "search_web_",
       "Add Bookmark": "add_bookmark",
-      "List Bookmarks": "list_bookmarks"
+      "List Bookmarks": "list_bookmarks", 
+      "Record Feedback": "record_feedback"
     }
 
     self.load_bookmarks()
@@ -303,8 +311,8 @@ class hotkeys:
       playwrighty.add_bookmark(url, total_read)
       body_length = playwrighty.page_cache[playwrighty.current_cache]['length'] if playwrighty.current_cache >=0 and playwrighty.current_cache < len(playwrighty.page_cache) else 0
 
-      os.makedirs('../' + self.name, exist_ok=True)
-      with open('../' + self.name + '/' + today + '.txt', 'a') as f:        
+      os.makedirs('../transcripts/' + self.name, exist_ok=True)
+      with open('../transcripts/' + self.name + '/' + today + '.txt', 'a') as f:        
         f.write(f'> Add Bookmark\t{url}\t{total_read}\t{body_length}\n')
         #dont worry about duplication at this point.
 
@@ -348,11 +356,123 @@ class hotkeys:
     #but this is only called once.  
     return 1
 
+  def record_feedback_(self, sequence=[]):  
+    if (len(sequence) == 1):
+
+      logger.info(f'> Record Feedback_ {sequence}')
+
+      print("> Record Feedback_ called")
+      #get audio input for query.  
+      duration = sequence[0]-self.keybot #in seconds
+      from extensions.trey.speech import listen_audio
+      self.now = datetime.now()
+      self.feedbacknowstr = self.now.strftime("%Y%m%d%H%M%S") #set nowstr for feedback.  
+      at = listen_audio(duration, "feedback.wav")
+      #at.join() #wait for it to finish.
+      #have to just use some keys until this is done.  
+      #need to return 1 to indicate we need more keys.
+      #but this is only called once.  
+
+      return 0
+    return 1
+
   def search_web_(self, sequence=[]):  
 
     logger.info(f'> Search Web_ {sequence}')
     #no function, just demo..
     return 1
+
+  def record_feedback(self, sequence=[]):
+    logger.info(f'> Record Feedback {sequence}')
+    duration = sequence[0]-self.keybot if (len(sequence) > 0) else 5
+    print(f'> Record Feedback for {duration} seconds')
+    from extensions.trey.speech import transcribe_audio
+    timer = datetime.now()
+    self.transcript = transcribe_audio("feedback.wav")
+    lag = (datetime.now() - timer).total_seconds()
+    print(f'Transcription completed in {lag} seconds: {self.transcript}')
+    #get current line and previous line in case we are on a partial..
+    #then find the most likely location from text.  
+    #if we are reading a page, get current line of that page..
+
+    if (len(self.transcript) > 0):
+
+      #find the current link from our reading.  
+      if (playwrighty.mybrowser is not None):
+        tr = 0
+        tr = playwrighty.update_page_offset()
+        tr -= int(lag * 12) #assume 12 chars per second read. this is our timer.. 
+
+        textduration = duration*2
+        if (len(self.transcript) > duration*12): #12 chars per second approx.
+          textduration = int(len(self.transcript)/12)*2 #need larger buffer...Should be behind current read pos.
+
+        original = playwrighty.get_text(-1, tr, textduration)
+        original = original.replace('\n','  ')
+        original = original.upper()
+        #find best match location
+        from rapidfuzz import fuzz
+        bestscore = 0
+        # Get the score and the start/end indices of the match
+        score = 0
+        start = 0
+        ostart = 0
+        end = len(self.transcript)
+        oend = duration*12
+
+        #ScoreAlignment(score=27.77777777777778, src_start=0, src_end=24, dest_start=28, dest_end=40)
+        ff = fuzz.partial_ratio_alignment(self.transcript, original)
+        print(ff)
+        print("$$FEEDBACK=" + self.transcript)
+        print("$$ORIGINAL=" + original)
+
+        #is this a match in our eyes.  Only want good data.  
+        #play around with params here as model diverges / converges ..
+        if (score in ff and ff.score > 25 and (ff.src_end - ff.src_start) > len(self.transcript)-4 and (ff.dest_end - ff.dest_start) / (ff.src_end - ff.src_start) > 0.7):
+          ostart = ff.dest_start
+          oend = ff.dest_end
+          score = ff.score
+
+          today = datetime.now().strftime("%Y%m%d")
+          os.makedirs('../transcripts/' + self.name, exist_ok=True)
+          with open('../transcripts/' + self.name + '/' + today + '.txt', 'a') as f:        
+            f.write(f'> Record Feedback {sequence}\n')
+            f.write(f'$$DURATION=' + str(duration) + '\n')
+            f.write(f'$$FEEDBACK=' + self.transcript + '\n')
+            if (playwrighty.mybrowser is not None):
+              f.write(f'$$TRANSCRIPT=' + original + '\n')
+              f.write(f'$$SCORE={score}\n')
+              f.write(f'$$START={ostart}\n')
+              f.write(f'$$END={oend}\n')
+              f.write(f'$$ORIGINAL={original[ostart:oend]}\n')
+              fname = '../transcripts/' + self.name + '/' + self.feedbacknowstr + '.wav'
+              f.write(f'$$FILE={fname}\n')
+              f.write('$$\n')
+              shutil.copy('feedback.wav', fname) #keep a copy for training..
+
+        else:
+          print('no good transcript match found')
+          return -1 #error beep..
+    else:
+      print('no transcript detected')
+      """
+      possibles = original.split('  ')
+      charlength = len(self.transcript)
+      idx = 0
+      startpos = 0
+      endpos = 0
+      currentstring = []
+      while (idx < len(possibles)):
+        if (endpos-startpos < charlength):
+          currentstring.append(possibles[idx])
+          endpos += len(possibles[idx]) + 1 #account for spaces
+        else:
+          if (startpos + len(possibles[idx]) >= charlength):
+          
+        idx += 1
+      """      
+
+    return 0
 
 
   def search_web(self, sequence=[]):
@@ -480,8 +600,10 @@ class hotkeys:
     if (len(sequence) < 1):
       sequence = [61] #default to page down
     logger.info(f'> Page {sequence}')
-    from extensions.trey.trey import page
+    from extensions.trey.trey import page, pause_reader, resume_reader
+#    pause_reader() #this does not add bookmark..
     page(sequence[-1]-self.keybot)
+#    resume_reader()
 
   def pause_reader(self, sequence=[]):
     logger.info(f'> Pause Reader {sequence}')

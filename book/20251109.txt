@@ -624,3 +624,38 @@ Had to use timeout for vscode.commands.executeCommand('workbench.action.chat.rea
 @@vscode Why cant I speed this up??
 
 
+**extensions/trey/trey.py
+Can I provide feedback during the reading?? 
+Yeah, lets just do here.  
+We should get a bunch of data.  
+We have to estimate the amount of time needed.  
+
+> Record Feedback [time-53] [encoded text]
+So max 15 seconds feedback.  
+Get the line number text and add this to the message.  
+Can try to find which part is being corrected.  
+
+
+> pip install rapidfuzz
+
+Try record_feedback
+
+**timestep.py
+later read these logs to extract correction information for training the STT model..
+and also possibly a TTS model..
+So all we have to do is reread portions of the website we are reading anyway to train the model..
+
+**backupy.py
+Need to add backup of [/transcripts] ..
+
+
+
+**extensions/trey/trey.py
+Adjust Record Feedback..
+
+fuzz not so great..
+
+Transcription completed in 32.707763 seconds: EARLY BUDDHISTS WERE SUSPICIOUS ABOUT
+ScoreAlignment(score=21.818181818181813, src_start=0, src_end=37, dest_start=0, dest_end=18)
+$$FEEDBACK=EARLY BUDDHISTS WERE SUSPICIOUS ABOUT
+$$ORIGINAL= Buddhism. Early Buddhists were suspicious about the spiritual value of a soul. They wanted to c

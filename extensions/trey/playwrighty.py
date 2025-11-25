@@ -35,6 +35,26 @@ mycontext = None
 
 current_cache = -1 #current cache page we are on.
 
+
+def get_text(cacheno=-1, total_read=0, duration=5):
+    """Get text from the cached page starting at total_read offset."""
+    global current_cache
+    if (cacheno < 0):
+        cacheno = current_cache
+    if cacheno < len(page_cache):
+        page_info = page_cache[cacheno]       
+        body = page_info['body']
+        if (total_read > len(body)):
+            total_read = (len(body) - duration*12)
+        if (total_read - duration*12 < 0):
+            total_read = duration*12
+            
+        
+        text_chunk = body[total_read-duration*12:total_read]
+        return text_chunk
+    else:
+        logging.warning(f'Cache number {cacheno} out of range')
+        return "", total_read
 #text_offset is how far into the text we are.  link_offset is which link to click relative to that we want to click.
 #usually this will be 0 or -1 to go back one link.
 def click_link(cacheno, text_offset, link_offset=0, open_new_tab=False):
@@ -337,6 +357,7 @@ def get_page_details(page):
         link_data.sort(key=lambda x: x.get('offset'))
         #print(link_data)
         logger.info(f'Got page details with {len(body_text)} characters and {len(link_data)} links')
+        body_text = '$$TITLE=' + page.title() + '\n' + body_text
 
         return body_text, link_data
     except Exception as e:

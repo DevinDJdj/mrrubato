@@ -495,11 +495,21 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
 
     init_qdrantz(link_density_map, topic="websearch")
     print('Start Reading:')
+
     idx = -1
     while (idx < len(lines)-1):
 #    for idx in range(len(lines)):
         idx = idx + 1
         l = lines[idx]
+        if (len(l) > 2 and l[0:2] == '$$'):
+            #ENV info, read..
+            print(f'{l}')
+            sound_file = f"./temp/overview.mp3"
+            lesc = lines[0] if (len(lines[0]) < 200) else lines[0][:200]
+
+            os.system(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --text \"{lesc}\" --rate=\"-10%\"")
+            playsound(sound_file, block=False) # Ensure this thread blocks for its sound
+
         if (stop_event.is_set()):
             logger.info('Audio stop event set, stopping playback')
             print('Audio stop event set, stopping playback')
@@ -568,8 +578,9 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
                 else:
                     print(f'Generating and playing audio: {l}')
                     sound_file = f"./temp/{idx}.mp3"
+                    subtitle_file = f"./temp/{idx}.srt"
                     lesc = l.replace('"', '\\"')
-                    os.system(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --text \"{lesc}\" --rate=\"-10%\"")
+                    os.system(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --text \"{lesc}\" --write-subtitles \"{subtitle_file} --rate=\"-10%\"")
 #                    sound_file = f"./temp/{idx}.wav"
                     #fast not working.. edge-tts much better quality than speechbrain tts.
 #                    cmd = f"python ./extensions/trey/speech.py --text \"{l}\" --fname \"{sound_file}\""
@@ -622,35 +633,34 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
         print(f'Total read: {total_read}')
         waited = 0
         ttotal = total_read
-        time.sleep(0.03*len(l)) #wait for initial TTS to start playing.
+#        time.sleep(0.03*len(l)) #wait for initial TTS to start playing.
 
-        for i in range(0, len(l)+1, 5): #check every 5 characters
+        for i in range(0, len(l)+1, 12): #check every 12 characters
             #not sure if we want to beep for skipped lines or not.  
             #maybe problematic.  
+            """
             if (link_loc < len(links) and 'offset' in links[link_loc] and links[link_loc]['offset'] <= total_read):
-                print(f'At link: {links[link_loc]}')
+                #print(f'At link: {links[link_loc]}')
                 #winsound.Beep(500, 300) #short beep to indicate link
                 if (links[link_loc]['offset'] != -1):
                     #only move to next link if we are at the offset.  
                     #some links may be at -1 offset which we skip earlier.
                     ttotal = links[link_loc]['offset']+1
                 link_loc += 1
-            
-#            ttotal += 5
+            """            
+            #have to count total read here for record feedback..
+            ttotal += 12
             if (q2 is not None and ttotal > 0):
                 q2.put(ttotal) #communicate how much we have read.
-            waited += 0.35
-            time.sleep(0.35) #simulate reading time. 0.4 seconds per 5 characters estimate.  
+            waited += 1
+            time.sleep(1) #simulate reading time. 12 chars per second..
             #shouldnt have to be too exact.  
         print(f'Total waited: {waited}')
 
         total_read += len(l) + 1 #include newline
 
         if (q2 is not None):
-            if (ttotal > total_read):
-                q2.put(ttotal) #communicate how much we have read.
-            else:
-                q2.put(total_read)
+            q2.put(total_read)
 
 #    os.system(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --file \"{tts_file}\" --rate=\"-10%\"")
 #    time.sleep(2) #wait for file to be written
@@ -1044,18 +1054,22 @@ def next_type(n):
 def page(n):
     #called from hotkeys to skip n lines of audio.
     #stop audio, or just page down, and start reading from there.  
-    stop_audio()
+#    stop_audio()
     
     if (n > 0):
         print(f'Page Down {n}')
+        #estimate number of lines to skip and skip the lines.  
         i = 0
         for i in range(n):
             keyboard.Controller().press(keyboard.Key.page_down)
+        #really need to get data from screen..
+        skip_lines(n*20) #estimate 20 lines per page
         
     else:
         print(f'Page Up {-n}')
         for i in range(-n):
             keyboard.Controller().press(keyboard.Key.page_up)
+        skip_lines(-n*20) #estimate 20 lines per page
 
 
 
