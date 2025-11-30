@@ -11,6 +11,7 @@ import extensions.trey.playwrighty as playwrighty
 # Import Module
 import shutil
 
+
 logger = logging.getLogger(__name__)
 
 class hotkeys:
@@ -367,6 +368,7 @@ class hotkeys:
       from extensions.trey.speech import listen_audio
       self.now = datetime.now()
       self.feedbacknowstr = self.now.strftime("%Y%m%d%H%M%S") #set nowstr for feedback.  
+
       at = listen_audio(duration, "feedback.wav")
       #at.join() #wait for it to finish.
       #have to just use some keys until this is done.  
@@ -390,6 +392,7 @@ class hotkeys:
     timer = datetime.now()
     self.transcript = transcribe_audio("feedback.wav")
     lag = (datetime.now() - timer).total_seconds()
+    lag = int(lag)
     print(f'Transcription completed in {lag} seconds: {self.transcript}')
     #get current line and previous line in case we are on a partial..
     #then find the most likely location from text.  
@@ -401,13 +404,12 @@ class hotkeys:
       if (playwrighty.mybrowser is not None):
         tr = 0
         tr = playwrighty.update_page_offset()
-        tr -= int(lag * 12) #assume 12 chars per second read. this is our timer.. 
+#        tr -= (lag * 11) #assume 12 chars per second read. this is our timer.. 
 
         textduration = duration*2
-        if (len(self.transcript) > duration*12): #12 chars per second approx.
-          textduration = int(len(self.transcript)/12)*2 #need larger buffer...Should be behind current read pos.
 
-        original = playwrighty.get_text(-1, tr, textduration)
+        #too much lag to be accurate at the moment.  Maybe get better info with longer transcript..
+        original = playwrighty.get_text(-1, tr, textduration+lag) 
         original = original.replace('\n','  ')
         original = original.upper()
         #find best match location
@@ -432,24 +434,30 @@ class hotkeys:
           ostart = ff.dest_start
           oend = ff.dest_end
           score = ff.score
+          print(f'$$FOUND={original[ostart:oend]}')
+          print(f'$$SCORE={score}')
+          print(f'$$LAG={lag}')
 
           today = datetime.now().strftime("%Y%m%d")
-          os.makedirs('../transcripts/' + self.name, exist_ok=True)
-          with open('../transcripts/' + self.name + '/' + today + '.txt', 'a') as f:        
-            f.write(f'> Record Feedback {sequence}\n')
-            f.write(f'$$DURATION=' + str(duration) + '\n')
-            f.write(f'$$FEEDBACK=' + self.transcript + '\n')
-            if (playwrighty.mybrowser is not None):
-              f.write(f'$$TRANSCRIPT=' + original + '\n')
-              f.write(f'$$SCORE={score}\n')
-              f.write(f'$$START={ostart}\n')
-              f.write(f'$$END={oend}\n')
-              f.write(f'$$ORIGINAL={original[ostart:oend]}\n')
-              fname = '../transcripts/' + self.name + '/' + self.feedbacknowstr + '.wav'
-              f.write(f'$$FILE={fname}\n')
-              f.write('$$\n')
-              shutil.copy('feedback.wav', fname) #keep a copy for training..
-
+          try:
+            os.makedirs('../transcripts/' + self.name, exist_ok=True)
+            with open('../transcripts/' + self.name + '/' + today + '.txt', 'a') as f:        
+              f.write(f'> Record Feedback {sequence}\n')
+              f.write(f'$$DURATION=' + str(duration) + '\n')
+              f.write(f'$$FEEDBACK=' + self.transcript + '\n')
+              if (playwrighty.mybrowser is not None):
+                f.write(f'$$TRANSCRIPT=' + original + '\n')
+                f.write(f'$$LAG={lag}\n')
+                f.write(f'$$SCORE={score}\n')
+                f.write(f'$$START={ostart}\n')
+                f.write(f'$$END={oend}\n')
+                f.write(f'$$ORIGINAL={original[ostart:oend]}\n')
+                fname = '../transcripts/' + self.name + '/' + self.feedbacknowstr + '.wav'
+                f.write(f'$$FILE={fname}\n')
+                f.write('$$\n')
+                shutil.copy('feedback.wav', fname) #keep a copy for training..
+          except Exception as e:
+            print(f'Error writing feedback file: {e}')
         else:
           print('no good transcript match found')
           return -1 #error beep..
@@ -485,8 +493,6 @@ class hotkeys:
 
     if (self.transcript != ""):
       query = self.transcript
-    from extensions.trey.trey import speak
-    speak(f'Searching the web for: {query}')
     engine = 0
     cacheno = -1
     print(sequence)
@@ -500,6 +506,10 @@ class hotkeys:
       cacheno = sequence[-1]-self.keybot
 
     
+    from extensions.trey.trey import speak
+    enginename = playwrighty.get_engine(engine) #set engine
+    speak(f'Searching {enginename} for: {query}')
+
     body_text, link_data, page, cacheno = playwrighty.search_web(query, engine=engine, cacheno=cacheno)
 #    print(body_text)
     self.links = link_data

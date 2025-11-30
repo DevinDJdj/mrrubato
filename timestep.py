@@ -48,6 +48,8 @@ from firebase_admin import initialize_app, storage, auth
 
 import traceback
 
+from mido import MidiFile
+
 #from transcribe import transcribe_fromyoutube
 #import whisper
 
@@ -409,6 +411,32 @@ def rungitDownload():
     print("git download complete")
 
 
+def downloadMidiFile(midilink, force=False):
+    if (midilink is None or midilink == ""):
+        print("!!No MIDI link")
+        return
+    midi_path = "c:/devinpiano/backup/midi/"
+    midilink = midilink.replace("\r", "")
+    midiname = os.path.basename(midilink)
+    midiname = os.path.splitext(midiname)[0]
+    filename = midiname + '.mid'
+    #dont redo this.  Live with the analysis of the time for now.  
+    if (os.path.exists(os.path.join(midi_path , filename)) and not force):
+        print("Skipping " + midilink)
+        return
+    
+    r = requests.get(midilink)
+    print(len(r.content))
+    midisize = len(r.content)
+    if (len(r.content) < 200): #not sure why this is here.  Change 500->200
+        print(r.content)
+        return
+    
+    with open(midi_path + midiname + ".mid", "wb") as f:
+        f.write(r.content)
+#    mid = MidiFile(midi_path + midiname + ".mid")
+    return midisize
+
 
 def writeTranscripts(alltranscripts):
     #this should be a separate function.  
@@ -494,6 +522,11 @@ if __name__ == '__main__':
             plwords = ""
             #update to public if we have reviewed.  
             #if we dont want to publish, rank as 0.  
+
+            midi_file = util.getMidiFile(description)
+            downloadMidiFile(midi_file)
+
+            #skip TIME_WINDOW months
             if (pDate.date() < mydate):
                 continue
                         
@@ -643,7 +676,7 @@ if __name__ == '__main__':
                         #just call server/transcription/transcribe.py --transcribe_fromyoutube
                         from extensions.trey.speech import transcribe_audio, listen_audio
                         transcript = transcribe_audio(mediafile, util.st, util.et, True)
-                        servererrorcnt += 3 #testing..
+                        servererrorcnt += 1 #testing..
 
                         """
                         if (model is None):

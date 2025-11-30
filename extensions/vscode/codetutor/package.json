@@ -213,7 +213,15 @@
           },
           {
             "name": "book",
+            "description": "Read the book. Test.."
+          },
+          {
+            "name": "read",
             "description": "Read the book."
+          },
+          {
+            "name": "chat",
+            "description": "Only chat context LLM query."
           },
           {
             "name": "start",

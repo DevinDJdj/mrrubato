@@ -65,6 +65,7 @@ import qrcode
 from PIL import Image, ImageDraw
 
 
+itoffset = 0
 mappgram = {} #map [ SIGNGRAM ] [PGRAM]
 mapsgram = {} #map [seqngram][pgram]
 
@@ -347,7 +348,7 @@ def ngramToImage(t, midilink, starttimes, endtimes):
                     #print(wrds)
                     pgram = mymsg.getPGram(wrds)
                     seqgram = mymsg.getSeqNGram(wrds)
-                    signs = mymsg.getSigns(wrds) 
+                    signs = mymsg.getSigns() 
                     
                     mappgram[ signs ] [ pgram ]
                         
@@ -484,8 +485,35 @@ def printNgrams(t, title, GroupName, videoid, midilink):
                 
     #this should have something
     print(mappgram)
-    
+
+def analyzeNgrams():
+    #use mappgram and mapsgram to analyze patterns.
+    global itoffset
+    totalngrams = 0
+    matches = 0
+    nonmatches = 0
+    for sign in mappgram:
+        for pgram in mappgram[sign]:
+            totalngrams += 1
+            times = mappgram[ sign ] [ pgram ]['time']
+            iterations = mappgram[ sign ] [ pgram ]['iteration']
+            msgs = mappgram[ sign ] [ pgram ]['msgs']
+            if (len(times) > 2):
+                print(f"Sign: {sign} Pgram: {pgram} Times: {times} Iterations: {iterations}")    
+                #find match in relative time.  
+                for t in range(1, len(times)):
+                    dt = abs(times[t] - times[t-1])
+                    if (dt < 0.05):
+                        print(f" MATCH: {iterations[t]} {iterations[t-1]} DT: {dt} ")
+                        print(f" {print(msgs[t-1].msg)} ")
+                        matches += 1
+                    else:
+                        nonmatches += 1
+    print(f"Iterations: {itoffset} Total Ngrams: {totalngrams} Matches: {matches} Nonmatches: {nonmatches}")
+
+
 def getNgrams(t):
+    global itoffset
     it = -1
     on = 0
     currentTime = 0
@@ -498,7 +526,7 @@ def getNgrams(t):
         print(starttimes)
         print(endtimes)
         return None, None
-        
+    
     else:    
         notearray = np.zeros(len(t.notes), dtype=int)
         #create array of [iterations (10)][notes (88)][prevnote (88)]
@@ -511,6 +539,7 @@ def getNgrams(t):
         #calculated volume of each note like we have for the piano roll.  
         #then create histogram of this.  
         counter = 0
+        maxit = -1
         for mymsg in t.notes:
             if (on > 0):
                 currentTime += mymsg.msg.time
@@ -548,7 +577,7 @@ def getNgrams(t):
                 #print(wrds)
                 pgram = mymsg.getPGram(wrds)
                 seqgram = mymsg.getSeqNGram(wrds)
-                signs = mymsg.getSigns(wrds) 
+                signs = mymsg.getSigns() 
                 
                 #here can use seqgram as well.  
                 #try to find the patterns.  
@@ -556,12 +585,15 @@ def getNgrams(t):
                 if signs not in mappgram:
                     mappgram[signs] = {}
                 if pgram not in mappgram[signs]:
-                    mappgram[ signs ] [ pgram ] = { 'time': [], 'iteration': [] }
+                    mappgram[ signs ] [ pgram ] = { 'time': [], 'iteration': [], 'msgs': [] }
                     
                 it = getIteration(currentTime, starttimes, endtimes)
                 reltime = getRelativeTime(it, currentTime, starttimes, endtimes)
                 mappgram[ signs ] [ pgram ]['time'].append( reltime)
-                mappgram[ signs ] [ pgram ]['iteration'].append(it)
+                mappgram[ signs ] [ pgram ]['iteration'].append(it+itoffset)
+                mappgram[ signs ] [ pgram ]['msgs'].append(mymsg)
+                if (it> maxit):
+                    maxit = it
                 
                 
                 if seqgram not in mapsgram:
@@ -569,12 +601,15 @@ def getNgrams(t):
                 if pgram not in mapsgram[seqgram]:
                     mapsgram[ seqgram ] [ pgram ] = { 'time': [], 'iteration': [] }
                 mapsgram[ seqgram ] [ pgram ]['time'].append(reltime)
-                mapsgram[ seqgram ] [ pgram ]['iteration'].append(it)
+                mapsgram[ seqgram ] [ pgram ]['iteration'].append(it+itoffset)
 
             if (mymsg.msg.type=='note_on'):
                 if (on > 0 and it > -1):  
                     prevTime = currentTime
                 on = isOn(mymsg.note, on)
+        
+        #increase itoffset for next time.
+        itoffset += (maxit+1)
         return data, rythmdata
         
 def testNgramModel():
@@ -981,7 +1016,7 @@ if __name__ == '__main__':
     
 
     data = search(title)
-#    print(data)
+    print(data)
 
     iterations = []    
     totalidx = 0
@@ -989,7 +1024,11 @@ if __name__ == '__main__':
     latestvideoitem = None
     latestvideoDate = None
     latestmidilink = None
-    for key, item in reversed(data):
+
+    sorted_data_items = sorted(data, key=lambda item: item[1]['snippet']['publishedAt'])
+    print(sorted_data_items)
+
+    for key, item in sorted_data_items:
 #    for item in reversed(data["items"]):
 #    for item in data['items']:
 #        print(item["id"])
@@ -1078,6 +1117,10 @@ if __name__ == '__main__':
 #                        print(mydata)
                     iterations.append(mydata)
     
+
+    #further analysis after mappgram and mapsgram built.  
+    analyzeNgrams()
+
     #this is same check as latestmidilink
     if (latestvideoitem is not None):
         getqrcode(latestvideo)

@@ -2,7 +2,7 @@ from torch import nn, optim
 import torch.nn.functional as F
 import numpy as np
 
-MAXNGRAM = 10
+MAXNGRAM = 8
 
 def primes(n): # simple sieve of multiples 
   odds = range(3, n+1, 2)
@@ -74,14 +74,19 @@ class MyMsg:
       ret *= w
     return ret
 
-  def getSigns(self, words):
+  def getSigns(self):
+    i = 0
+    i = i+1
     bits = 0
-    for w in words:
-      tmp = 0
-      if w > 0:
+    while (i < MAXNGRAM):
+      tmp = self.ngrams[i] - self.ngrams[i-1]
+      if (tmp < 0):
+        tmp = 0
+      else:
         tmp = 1
       bits = bits << 1
       bits |= tmp
+      i = i+1
     return bits
     
   def getWords(self):

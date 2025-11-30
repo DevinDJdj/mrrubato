@@ -13,18 +13,25 @@ import winsound
 
 
 
-
 #default 10 seconds for comment
 def record_audio(duration=10, fname="example.wav", stop_event=None):
     samplerate = 16000  # Sample rate (Hz)
     #no easy way to stop early with sounddevice, so just record fixed time for now.
     print("Recording...")
     winsound.Beep(2000, 200) #beep to start
+    from pycaw.pycaw import AudioUtilities
+    device = AudioUtilities.GetSpeakers()
+    volume = device.EndpointVolume
+    currentvolume = volume.GetMasterVolumeLevel()
+    volume.SetMasterVolumeLevel(currentvolume-20, None) #reduce volume to 20% for recording.
     recording = sd.rec(int(samplerate * duration), samplerate=samplerate, channels=1, dtype='float32')
     sd.wait()  # Wait until recording is finished
     print("Recording complete.")
     audio_tensor = torch.from_numpy(recording.squeeze()) # Remove channel dimension if mono
     wav.write(fname, samplerate, (recording * 32767).astype(np.int16)) # Save as int16 WAV file
+
+    volume.SetMasterVolumeLevel(currentvolume, None) #return to normal volume.  
+
     winsound.Beep(1000, 200) #beep to end
     return fname
 
@@ -35,6 +42,7 @@ def listen_audio(duration=10, fname="example.wav"):
 
     audio_thread = threading.Thread(target=record_audio, args=(duration, f'{fname}', audio_stop_event))
     audio_thread.start()
+
 
     return audio_thread
 
@@ -72,6 +80,11 @@ def convert_mp4_to_wav(mp4_fname):
     sound.export(wav_fname, format="wav")
     return wav_fname
 
+def getTimeFromSecs(secs):
+    minutes = secs // 60
+    seconds = secs % 60
+    return f"{minutes:02}:{seconds:02}"
+
 def transcribe_audio(fname="example2.wav", start_times=[], end_times=[], use_timestamps=True):
 
     asr_model = EncoderDecoderASR.from_hparams(source="./models/pretrained_ASR")
@@ -105,8 +118,8 @@ def transcribe_audio(fname="example2.wav", start_times=[], end_times=[], use_tim
             result  = asr_model.transcribe_file(segment_fname)
                 # Process the words_with_timestamps list
                 #for now just use segment time..
-
-            full_transcript += result + " (" + str(st) + ")\n"
+            if (len(result) > 8): #sometimes get garbage like "mm" or "dont" during silence..
+                full_transcript += result + " (" + getTimeFromSecs(st) + ")\n"
         return full_transcript.strip()         
     else:   
         result = asr_model.transcribe_file(fname)

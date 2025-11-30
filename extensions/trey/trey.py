@@ -635,7 +635,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
         ttotal = total_read
 #        time.sleep(0.03*len(l)) #wait for initial TTS to start playing.
 
-        for i in range(0, len(l)+1, 12): #check every 12 characters
+        for i in range(0, len(l)+1, 11): #check every 12 characters
             #not sure if we want to beep for skipped lines or not.  
             #maybe problematic.  
             """
@@ -649,7 +649,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
                 link_loc += 1
             """            
             #have to count total read here for record feedback..
-            ttotal += 12
+            ttotal += 11
             if (q2 is not None and ttotal > 0):
                 q2.put(ttotal) #communicate how much we have read.
             waited += 1

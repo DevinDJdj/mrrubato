@@ -659,3 +659,111 @@ Transcription completed in 32.707763 seconds: EARLY BUDDHISTS WERE SUSPICIOUS AB
 ScoreAlignment(score=21.818181818181813, src_start=0, src_end=37, dest_start=0, dest_end=18)
 $$FEEDBACK=EARLY BUDDHISTS WERE SUSPICIOUS ABOUT
 $$ORIGINAL= Buddhism. Early Buddhists were suspicious about the spiritual value of a soul. They wanted to c
+
+have to capitalize in order to find..
+But works ok..
+
+change searching the web to use each engine name..
+get_engine(id)
+
+> pip install pycaw
+
+
+**timestep.py
+Download all midi and feedback for global analysis..
+if doesnt exist..
+
+
+**transcripts
+$$MODEL=speechbrain/asr-conformer-transformerlm-librispeech
+$$20250815
+
+Quite slow about 3x audio time..
+
+
+**analyze/analyze.py
+Match pct quite low.  
+Match = within 5% relative time..
+
+$$9keys
+around 0.6% match rate with 9 keys.  
+Iterations: 36 Total Ngrams: 100764 Matches: 636 Nonmatches: 1690
+~2000/100000 = 2%
+$$8keys
+around 1.2% match rate with 8 keys.  
+Iterations: 36 Total Ngrams: 97349 Matches: 1195 Nonmatches: 3338
+4%
+$$7keys
+around 2.4% match rate with 7 keys.  
+Iterations: 36 Total Ngrams: 91735 Matches: 2216 Nonmatches: 6637
+8%
+2^7 = 64
+A few more matches with different iterations..
+
+@@What is random result for this?  
+Do a match heat map..
+
+
+#https://en.wikipedia.org/wiki/Birthday_problem
+$$N=NUM NGRAMS
+$$SEQ = FULL SEQ LENGTH
+$$NKEYS = 50
+$$P(A) = NKEYS^N*((NKEYS^N)-1)* ... *((NKEYS^N)-SEQ) / (NKEYS^N)^SEQ
+$$P(B) = 1 - P(A)
+
+P(B) = > 1 exact match.  
+
+NKEYS=50
+N=9
+SEQ=10000
+
+P(B) = 0
+
+NKEYS=10
+N=9
+SEQ=10000
+
+P(B) = 0.05
+
+NKEYS=10
+N=8
+SEQ=10000
+
+P(B) = 0.4
+
+
+NKEYS=10
+N=9
+SEQ=20000
+
+P(B) = 0.18
+
+NKEYS=10
+N=9
+SEQ=50000
+
+P(B) = 0.71
+
+
+NKEYS=10
+N=9
+SEQ=100000
+
+P(B) = 0.99
+
+NKEYS=10
+N=9
+SEQ=10000000
+
+P(B) = 1
+
+
+
+INNER form unclear.  
+Definitely more than random, but lower than expected..
+
+
+
+**extensions/vscode/codetutor/extension.ts
+Probably need to pass chat context in queries.  
+How do we get chat context..

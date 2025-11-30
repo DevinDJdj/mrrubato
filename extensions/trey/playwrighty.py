@@ -444,6 +444,32 @@ def read_page(url, cacheno=-1):
     return body_text, link_data, page, cacheno
 
 
+def get_engine(engine=0):
+    """Get the name of the search engine based on its index."""
+    enginename = "Bing News"
+    if (engine == 1): #wiki
+        enginename = "Wikipedia"
+    elif (engine == 2): #yahoo
+        enginename = "Yahoo"
+    elif (engine == 3):
+        enginename = "DuckDuckGo"
+    elif (engine == 4):
+        enginename = "Bing"
+    elif (engine == 5):
+        enginename = "Ecosia"
+    elif (engine == 6):
+        enginename = "Qwant"
+    elif (engine == 7):
+        enginename = "Startpage"
+    elif (engine == 8):
+        enginename = "Yandex"
+    elif (engine == 9):
+        enginename = "Wikipedia"
+    elif (engine == 10):
+        enginename = "Google News"
+    elif (engine == 11):
+        enginename = "Bing News"
+    return enginename
 def search_web(query, engine=0, cacheno=-1):
     """Search the web for a query using Playwright."""
     logging.info(f'Searching the web for: {query}')

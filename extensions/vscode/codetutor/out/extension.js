@@ -439,6 +439,30 @@ function activate(context) {
             vscode.commands.executeCommand("workbench.action.chat.open", options);
             return;
         }
+        if (request.command === 'chat') {
+            //no context query..
+            //shouldnt want this..
+            let res = await Book.getChat(request.prompt);
+            let response = await Book.markdown(res);
+            stream.markdown(response);
+            //workbench.action.chat.readChatResponseAloud
+            setTimeout(() => {
+                vscode.commands.executeCommand('workbench.action.chat.readChatResponseAloud');
+            }, 15000);
+            return;
+        }
+        if (request.command === 'read') {
+            //general text query..
+            let summary = await Book.summary(request.prompt);
+            //replace topics.  
+            let response = await Book.markdown(summary);
+            stream.markdown(response);
+            //workbench.action.chat.readChatResponseAloud
+            setTimeout(() => {
+                vscode.commands.executeCommand('workbench.action.chat.readChatResponseAloud');
+            }, 15000);
+            return;
+        }
         if (request.command === 'book') {
             //query book only.  
             stream.markdown('Reading a book\n');
@@ -804,6 +828,32 @@ function activate(context) {
                     case "$":
                         //open page.html?topic=
                         //show env info.  
+                        break;
+                }
+                break;
+            case "&":
+                //text query. 
+                switch (cmdtype[1]) {
+                    case "&":
+                        //text query.  
+                        if (text.length < 3 || Book.findInputTopics(text).length === 0) {
+                            //summarize current topic.  
+                            const editor = vscode.window.activeTextEditor;
+                            if (editor) {
+                                topic = getTopicFromLocation(editor);
+                                text = "**" + topic + " " + text;
+                            }
+                        }
+                        console.log(text);
+                        if (text.length > 2 && text.charAt(2) === "&") {
+                            //detailed context pass.  
+                            vscode.commands.executeCommand('workbench.action.chat.open', "@mr /read " + text);
+                            break;
+                        }
+                        //no context pass..						
+                        vscode.commands.executeCommand('workbench.action.chat.open', "@mr /chat " + text);
+                        break;
+                    default:
                         break;
                 }
                 break;

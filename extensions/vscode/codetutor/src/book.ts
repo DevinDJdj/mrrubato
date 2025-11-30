@@ -995,6 +995,24 @@ async function fixVectraError(filePath: vscode.Uri){
     }
 }
 
+export async function getChat(input: string, model: string = 'llama3.1:8b') : Promise<string> {
+    let response = await ollama.chat({
+        model: 'llama3.1:8b',
+        //model: 'gemma3n:latest',
+        //model: 'gemma3:4b',
+//            model: 'granite3.3:8b',
+
+        messages: [
+            { role: 'system', content: `Answer the Query to the best of your ability.  ` },
+            { role: 'user', content: `::QUERY::  \n
+                ${input} \n
+                ::ANSWER:: \n
+            ` }
+        ]
+    });
+    return response["message"]["content"];
+}
+
 export async function getSummary(input : string, CTX_WND: number = 5000) : Promise<string> {
     //get the summary of the chunks.  
     //this will be used to summarize the book.

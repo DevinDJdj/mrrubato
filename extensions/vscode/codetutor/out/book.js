@@ -62,6 +62,7 @@ exports.getBook = getBook;
 exports.closeFileIfOpen = closeFileIfOpen;
 exports.getFileName = getFileName;
 exports.updatePage = updatePage;
+exports.getChat = getChat;
 exports.getSummary = getSummary;
 exports.getChunks = getChunks;
 exports.getReadableName = getReadableName;
@@ -901,6 +902,22 @@ async function fixVectraError(filePath) {
             vscode.window.showErrorMessage(`Error reading file: ${error.message}`);
         }
     }
+}
+async function getChat(input, model = 'llama3.1:8b') {
+    let response = await ollama_1.default.chat({
+        model: 'llama3.1:8b',
+        //model: 'gemma3n:latest',
+        //model: 'gemma3:4b',
+        //            model: 'granite3.3:8b',
+        messages: [
+            { role: 'system', content: `Answer the Query to the best of your ability.  ` },
+            { role: 'user', content: `::QUERY::  \n
+                ${input} \n
+                ::ANSWER:: \n
+            ` }
+        ]
+    });
+    return response["message"]["content"];
 }
 async function getSummary(input, CTX_WND = 5000) {
     //get the summary of the chunks.  

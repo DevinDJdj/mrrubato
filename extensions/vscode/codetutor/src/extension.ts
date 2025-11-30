@@ -498,6 +498,34 @@ export function activate(context: vscode.ExtensionContext) {
 			return;
 		}
 
+		if (request.command === 'chat'){
+			//no context query..
+			//shouldnt want this..
+			let res = await Book.getChat(request.prompt);
+			let response = await Book.markdown(res);
+			stream.markdown(response);
+			//workbench.action.chat.readChatResponseAloud
+			setTimeout(() => {	
+			vscode.commands.executeCommand('workbench.action.chat.readChatResponseAloud');
+			}, 15000);
+
+			return;
+		}
+		if (request.command === 'read'){
+			//general text query..
+
+			let summary = await Book.summary(request.prompt);
+			//replace topics.  
+			let response = await Book.markdown(summary);
+			stream.markdown(response);
+			//workbench.action.chat.readChatResponseAloud
+			setTimeout(() => {	
+			vscode.commands.executeCommand('workbench.action.chat.readChatResponseAloud');
+			}, 15000);
+
+			return;
+
+		}
 		if (request.command === 'book'){
 			//query book only.  
 			stream.markdown('Reading a book\n');
@@ -915,28 +943,57 @@ export function activate(context: vscode.ExtensionContext) {
 
 				}
 				break;
-			case ":":
-				//summarize this topic. 
-				switch (cmdtype[1]) {
-					case ":":
-						//summarize this topic.
-						if (text.length < 3 || Book.findInputTopics(text).length === 0){
-							//summarize current topic.  
-							const editor = vscode.window.activeTextEditor;
-							if (editor) {
-								topic = getTopicFromLocation(editor);
-								text = "**" + topic + " " + text;
+				case "&":
+					//text query. 
+					switch (cmdtype[1]) {
+						case "&":
+							//text query.  
+							if (text.length < 3 || Book.findInputTopics(text).length === 0){
+								//summarize current topic.  
+								const editor = vscode.window.activeTextEditor;
+								if (editor) {
+									topic = getTopicFromLocation(editor);
+									text = "**" + topic + " " + text;
+								}
 							}
-						}
-						//pass topic and chat.  does this work?  Dont remember.  
-						vscode.commands.executeCommand('workbench.action.chat.open', "@mr /summary " + text );
-						break;
+							console.log(text);
 
-					default:
-						//summarize this topic with a different prompt.
-						//no single char handler.  
-						break;
-				}
+							if (text.length > 2 && text.charAt(2) === "&"){
+								//detailed context pass.  
+								vscode.commands.executeCommand('workbench.action.chat.open', "@mr /read " + text );
+								break;
+							}
+
+							//no context pass..						
+							vscode.commands.executeCommand('workbench.action.chat.open', "@mr /chat " + text );
+							break;
+						default:
+							break;
+					}
+					break;
+						
+				case ":":
+					//summarize this topic. 
+					switch (cmdtype[1]) {
+						case ":":
+							//summarize this topic.
+							if (text.length < 3 || Book.findInputTopics(text).length === 0){
+								//summarize current topic.  
+								const editor = vscode.window.activeTextEditor;
+								if (editor) {
+									topic = getTopicFromLocation(editor);
+									text = "**" + topic + " " + text;
+								}
+							}
+							//pass topic and chat.  does this work?  Dont remember.  
+							vscode.commands.executeCommand('workbench.action.chat.open', "@mr /summary " + text );
+							break;
+
+						default:
+							//summarize this topic with a different prompt.
+							//no single char handler.  
+							break;
+					}
 				case "~":
 					//similar to this topic. 
 					switch (cmdtype[1]) {
