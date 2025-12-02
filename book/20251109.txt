@@ -767,3 +767,38 @@ Definitely more than random, but lower than expected..
 **extensions/vscode/codetutor/extension.ts
 Probably need to pass chat context in queries.  
 How do we get chat context..
+
+
+Need to test with DBCS..
+
+Need to create separate vector sizes in vector DB, and then we will get better similarity results.  
+Take the size of query and use it against the entries.  
+--addVectorData:1366
+
+Simple full-text search needed.  
+Combine with Vector search.  
+#https://github.com/leeoniya/uFuzzy
+
+**extensions/trey/trey.py
+Need better math Reading
+Right now we are skipping too short.  
+All math text seems to come in line by line via body_text.  
+Need some logic here to convert.  
+How can we detect this easily?  
+
+Have to get all alts from images.  
+Can we get this in order, or can we compare the text and get the best match?  
+
+
+-Display past bookmarks for quick jump.  
+        "Select Tab": [53,58,60],
+        "Select Bookmark": [53,58,57], #feedback tells which mark it is.  Or default to set to 0 idx.  
+
+
+Need to stop the reading in a more orderly way..
+
+
+        '<ctrl>+<shift>+h': on_activate_overlay,
+        '<ctrl>+<shift>+g': on_deactivate_overlay,
+
+Link offset is off..

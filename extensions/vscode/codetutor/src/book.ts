@@ -1364,6 +1364,11 @@ async function addVectorData(topic: BookTopic) {
     }
 
 
+    if (topic.data.length > 1000) {
+        let lines = topic.data.split("\n");
+        //split into chunks and add entry for each chunk.  
+        
+    }
     let checkexisting = await topicvectorarray[topic.topic].listItemsByMetadata({
         data: topic.data, date: topic.date, file: topic.file, line: topic.line, topic: topic.topic
         //this should get the last occurrence of this data when vector file is created.  

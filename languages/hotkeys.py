@@ -101,22 +101,25 @@ class hotkeys:
     files = os.listdir('../transcripts/' + self.name)
     sorted_files = sorted(files)
     numloaded = 0
+    print(sorted_files)
     for f in sorted_files:
 #      if (f.startswith(yesterday) or f.startswith(today)):
-        with open('../transcripts/' + self.name + '/' + f) as ff:
-          lines = ff.readlines()
-          for line in lines:
-            #add bookmark manually.  
-            parts = line.strip().split('\t')
-            cmd = parts[0]
-            if (cmd == '> Add Bookmark'):
-              url = parts[1]
-              total_read = int(parts[2])
-              body_length = int(parts[3]) if len(parts) > 3 else 0
+        if (f.endswith('.txt')): #dont open wav files..
+          print(f'> Read Bookmarks {f}') 
+          with open('../transcripts/' + self.name + '/' + f) as ff:
+            lines = ff.readlines()
+            for line in lines:
+              #add bookmark manually.  
+              parts = line.strip().split('\t')
+              cmd = parts[0]
+              if (cmd == '> Add Bookmark'):
+                url = parts[1]
+                total_read = int(parts[2])
+                body_length = int(parts[3]) if len(parts) > 3 else 0
 
-              print(f'Loaded bookmark {url} at {total_read}')
-              playwrighty.add_bookmark(url, total_read) #call playwrighty add bookmark..
-              numloaded += 1
+                print(f'Loaded bookmark {url} at {total_read}')
+                playwrighty.add_bookmark(url, total_read) #call playwrighty add bookmark..
+                numloaded += 1
 
 
     #list files in 
@@ -142,12 +145,13 @@ class hotkeys:
         "Click Link": [53,55, 60], #also read screen
         "Find Last": [53,55, 58], #Jump in screen
         "Search Web": [53,55, 61], #also read screen
-        "Comment": [53,56, 57], #record comment
         "Go Back": [53,55,51], 
-        "List Tabs": [53,58,59],
-        "Select Tab": [53,58,60],
+        "List Tabs": [53,56,59],
+        "Select Tab": [53,56,60],
 #        "Select Type": [53,57, 58], #parameter type default go next.  
+        "Comment": [53,57, 58], #record comment
         "Record Feedback": [53,57, 60], 
+        "Select Bookmark": [53,58,57], #feedback tells which mark it is.  Or default to set to 0 idx.  
       }, 
       "4": {
         "Add Bookmark": [53,58,60,62], #feedback tells which mark it is.  Or default to set to 0 idx.  
@@ -211,6 +215,7 @@ class hotkeys:
       "Search Web_": "search_web_",
       "Add Bookmark": "add_bookmark",
       "List Bookmarks": "list_bookmarks", 
+      "Select Bookmark": "select_bookmark", 
       "Record Feedback": "record_feedback"
     }
 
@@ -283,6 +288,36 @@ class hotkeys:
     #for now just demo..
 
     return 0
+
+  def select_bookmark(self, sequence=[]):
+    selected = 0
+    cacheno = -1
+    if (len(sequence) == 0):
+      selected = 0
+    if (len(sequence) > 0):
+      selected = sequence[0]-self.keybot
+    if (len(sequence) > 1):
+      cacheno = sequence[-1] -self.keybot
+
+    logger.info(f'> Select Bookmark {sequence}')
+    #get bookmark at index selected
+    bookmark = playwrighty.get_bookmark_at_index(selected)
+
+    #should keep 0 index as most recent.  
+    if (bookmark is not None):
+      url = bookmark['url']
+      total_read = bookmark['total_read']
+      print(f'Selected Bookmark {selected}: {url} at {total_read}')
+      #get readable text
+      urlt = url.rsplit('/', 1)[-1]
+      self.speak(f'Selected Bookmark {selected}: {urlt}')
+      #load page at this bookmark
+      body_text, link_data, page, cacheno = playwrighty.read_page(url, cacheno)
+      self.links = link_data
+      #pause audio first..
+
+      q2, q3, stop_event = self.speak(body_text, link_data)
+      playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
 
   def add_bookmark(self, sequence=[]):
     logger.info(f'> Add Bookmark {sequence}')
@@ -515,7 +550,7 @@ class hotkeys:
     self.links = link_data
     #should always have a value here..  
     total_read = playwrighty.get_bookmark(page.url, cacheno)
-    q2, q3, stop_event = self.speak(body_text, link_data, total_read)
+    q2, q3, stop_event = self.speak(body_text, link_data, playwrighty.page_cache[cacheno]['alt_text'], total_read)
     playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
 
 
@@ -671,7 +706,7 @@ class hotkeys:
 
     if (playwrighty.mybrowser is not None): #we have started a browser session with playwright.
       logger.info('Getting page from Playwright')
-      text, links = playwrighty.get_page_details(playwrighty.get_ppage(playwrighty.current_cache))
+      text, links, alt_text_data = playwrighty.get_page_details(playwrighty.get_ppage(playwrighty.current_cache))
       text, links, page, cacheno = playwrighty.read_page('', playwrighty.current_cache) #read current page
 
       self.links = links
@@ -729,7 +764,7 @@ class hotkeys:
         
       return 0
 
-  def speak(self, text, links=[], total_read=0):
+  def speak(self, text, links=[], alt_text_data=[], total_read=0):
     from extensions.trey.trey import speak
 #    print(f'Speaking: {text}')
     return speak(text, links, total_read)

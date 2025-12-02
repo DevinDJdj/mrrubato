@@ -35,6 +35,9 @@ from PyQt5.QtGui import QPixmap, QPainter, QPen, QBrush
 from PyQt5.QtCore import Qt
 import win32gui
 import win32process
+import win32api
+import win32con
+
 import winsound
 
 #Local imports
@@ -67,6 +70,9 @@ from fastembed import (
                 LateInteractionMultimodalEmbedding,
                 LateInteractionTextEmbedding,
             )
+
+
+import extensions.trey.playwrighty as playwrighty
 
 
 
@@ -501,6 +507,8 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
 #    for idx in range(len(lines)):
         idx = idx + 1
         l = lines[idx]
+        combined = "" #line to hold combined short lines and read together. 
+        combined_counter = 0 
         if (len(l) > 2 and l[0:2] == '$$'):
             #ENV info, read..
             print(f'{l}')
@@ -564,6 +572,15 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
         print(f'Line: {l}')
         print(f'Line offset: {link_density_map[idx]["offset"]}')
         sound_file = link_density_map[idx]['audio']
+        if (len(l) <= 5 and idx > 5 and idx < len(lines)-1):
+            combined += " " + l
+            combined_counter += 1
+            #look ahead for more short lines to combine.  
+            if (link_density_map[idx+1]['length'] > 50 or link_density_map[idx+1]['length'] > (len(combined)/combined_counter)*5):
+                l = combined.strip()
+                combined_counter = 0
+                combined = ""
+
         if (len(l) > 5):
             try:
     #            communicate = edge_tts.Communicate(text, VOICE)
@@ -769,6 +786,7 @@ def create_qr_text(text, hwnd):
         return text
     threadid, procid = win32process.GetWindowThreadProcessId(hwnd)
     name = psutil.Process(procid).name()
+
     ret = ""
     if 'Path' in os.environ:
         ret += "$$Path=" + os.environ['Path'] + "\n"
@@ -778,9 +796,14 @@ def create_qr_text(text, hwnd):
     ret += "$$ThreadID=" + str(threadid) + "\n"
     ret += "$$ProcessName=" + name + "\n"
     ret += text
+
+    #ask for further info here..
+    lparam = "Hello from Python!" # The text to set
+#    win32api.PostMessage(hwnd, win32con.WM_SETTEXT, 0, lparam)
+
     return ret
 
-def draw_overlay():
+def draw_overlay(delay=10): #default hide in 10 seconds
     global active_window
 
     #creating the main window
@@ -805,16 +828,19 @@ def draw_overlay():
         title = win32gui.GetWindowText(active_window)
         logger.info(f'Active window: {title} at {rect}')
         logger.info('Showing QR code')
-        qrdata = f'$$BBOX={rect}\n$$TITLE={title}'
-        qrdata = create_qr_text(qrdata, active_window)
+        qrdata = f'$$BBOX={rect}\n$$TITLE={title}\n'
+        #what other info..
+        #open tab names, latest bookmarks
+        play = playwrighty.get_browser_info()
+        qrdata = create_qr_text(qrdata + play, active_window)
         mywindow.showQR(qrdata)
 
     mywindow.activateWindow() # Bring to front
     draw_screen_box()
 
     #hiding in 3 seconds
-    logger.info('Hiding window after 3 seconds')
-    t = threading.Timer(3, _hide, args=["Hello from Timer!"])
+    logger.info(f'Hiding window after {delay} seconds')
+    t = threading.Timer(delay, _hide, args=["Hello from Timer!"])
     t.start()  # Start the timer in a new thread
 
     start_mouse_listener()  # Start the mouse listener
@@ -971,6 +997,8 @@ class MyWindow(QMainWindow):
         """Method to close the window."""
         self.hide()
         logger.info('Window hidden')
+
+
     def showQR(self, data):
         """Method to show a QR code."""
         logger.info('Showing QR code')
@@ -980,6 +1008,8 @@ class MyWindow(QMainWindow):
         pixmap = QPixmap('qrcode.png')
         self.label_2.setPixmap(pixmap)
         self.label_2.adjustSize()
+        self.label_1.setText(data)
+        self.label_1.adjustSize()
         logger.info('QR code displayed')
 
     def paintEvent(self, event):

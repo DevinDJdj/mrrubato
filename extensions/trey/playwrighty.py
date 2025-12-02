@@ -124,14 +124,33 @@ def get_bookmark(url, cacheno=-1):
     
     return 0
 
+
+def get_bookmark_at_index(index):
+    #only positive for now.  
+    global bookmarks
+    if (index >= 0 and index < len(bookmarks)):
+        return bookmarks[index]
+    return None
+
+def remove_bookmark_at_index(index):
+    #only positive for now.  
+    global bookmarks
+    if (index >= 0 and index < len(bookmarks)):
+        bookmarks.pop(index)
+        return True
+    return False
+
 def add_bookmark(url, total_read):
     global bookmarks
     found_item = next(filter(lambda item: item.get("url") == url, bookmarks), None)
     body_length = page_cache[current_cache]['length'] if current_cache >=0 and current_cache < len(page_cache) else 0
     if (found_item is not None):
         found_item['total_read'].insert(0, total_read)
+        bookmarks.remove(found_item)
+        bookmarks.insert(0, found_item)
     else:
-        bookmarks.append({'url': url, 'total_read': [total_read], 'length': body_length})
+        bookmarks.insert(0, {'url': url, 'total_read': [total_read], 'length': body_length})
+#        bookmarks.append({'url': url, 'total_read': [total_read], 'length': body_length})
     return 0
 
 def find_last(link_offset=1, cacheno=-1, text_offset=-1):
@@ -288,6 +307,7 @@ def get_page_details(page):
 
     body_text = ""
     link_data = []
+    alt_text_data = []
     last_link = None
     idx = 0
     logger.info(f'Getting page details for: {page.url}')
@@ -323,8 +343,29 @@ def get_page_details(page):
             });
         }""")
 
+        alt_text_data = page.evaluate("""() => {
+            const images = Array.from(document.querySelectorAll('img'));
+            return images.map((img, index) => {
+                const rect = img.getBoundingClientRect();
+                return {
+                    src: img.src,
+                    alt: img.alt,
+                    bbox: {
+                        x: rect.x,
+                        y: rect.y,
+                        width: rect.width,
+                        height: rect.height
+                    },
+                    index: index
+                };
+            });
+        }""")
+
         logger.info(f'Got Links for: {page.url}')
         print(link_data)
+        logger.info(f'Got Alt Text for: {page.url}')
+        print(alt_text_data)
+
         body = page.locator('body')
         for i in range(body.count()):
             body_element = body.nth(i)
@@ -359,11 +400,11 @@ def get_page_details(page):
         logger.info(f'Got page details with {len(body_text)} characters and {len(link_data)} links')
         body_text = '$$TITLE=' + page.title() + '\n' + body_text
 
-        return body_text, link_data
+        return body_text, link_data, alt_text_data
     except Exception as e:
 
         logging.error(f'Error getting page details: {e}')
-        return body_text, link_data
+        return body_text, link_data, alt_text_data
     
 def update_page_offset(cacheno=-1):
     global current_cache
@@ -393,6 +434,34 @@ def cache_page(url, page, body_text, link_data, cacheno=-1):
         cacheno = len(page_cache) - 1
     return cacheno
 
+def get_bookmark_list():
+    global bookmarks
+    info = ""
+    for i, bm in enumerate(bookmarks):
+
+        info += f"$$BOOKMARK{i}=URL:{bm['url']} OFFSET:{bm['total_read'][0]} LENGTH:{bm['length']}\n"
+        if (i >= 9):
+            break #only first 10 for now.
+    return info
+
+def get_browser_info():
+    #get current open tabs and URLs
+    global current_cache
+    info = ""
+    if (current_cache >=0 and current_cache < len(page_cache)):
+        page = page_cache[current_cache]['page']
+        context = page.context
+        pages = context.pages
+        info += f"$$TABS={len(pages)}\n"
+        for i, p in enumerate(pages):
+            #wait for load state
+            p.wait_for_load_state("domcontentloaded", timeout=1000)
+            info += f"$$TAB{i}={p.title()}\n"
+            info += f"$$TABURL{i}={p.url}\n"
+
+    info += get_bookmark_list()
+    return info
+
 def read_page(url, cacheno=-1):
     global current_cache
     """Search the web for a query using Playwright."""
@@ -420,7 +489,7 @@ def read_page(url, cacheno=-1):
     if (url != ''):
         page.goto(url, wait_until="domcontentloaded")
     logging.info(f'Page loaded: {page.url}')
-    body_text, link_data = get_page_details(page)
+    body_text, link_data, alt_text_data = get_page_details(page)
 #        await page.close()
 #        await browser.close()
 
@@ -434,6 +503,7 @@ def read_page(url, cacheno=-1):
     
     page_cache[cacheno]['current_offset'] = prev_offsets
     page_cache[cacheno]['length'] = len(body_text)
+    page_cache[cacheno]['alt_text'] = alt_text_data
 
     if (page.url not in page_cache[cacheno]['current_offset']):
         #get previous bookmark offset.

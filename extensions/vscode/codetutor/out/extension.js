@@ -841,12 +841,15 @@ function activate(context) {
                             const editor = vscode.window.activeTextEditor;
                             if (editor) {
                                 topic = getTopicFromLocation(editor);
-                                text = "**" + topic + " " + text;
                             }
+                        }
+                        else {
+                            topic = "";
                         }
                         console.log(text);
                         if (text.length > 2 && text.charAt(2) === "&") {
                             //detailed context pass.  
+                            text = "**" + topic + " " + text;
                             vscode.commands.executeCommand('workbench.action.chat.open', "@mr /read " + text);
                             break;
                         }
@@ -888,7 +891,7 @@ function activate(context) {
                             const editor = vscode.window.activeTextEditor;
                             if (editor) {
                                 topic = getTopicFromLocation(editor);
-                                text = "**" + topic + " " + text;
+                                //									text = "**" + topic + " " + text;
                             }
                         }
                         //pass topic and chat.  does this work?  Dont remember.  

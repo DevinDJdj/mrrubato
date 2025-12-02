@@ -323,6 +323,7 @@ class MyKeys:
       if (temptime > 10): #longer than 10 seconds..
         self.reset_sequence()
         print("Resetting sequence due to long time since last note")
+#        winsound.Beep(2000, 500) #beep to end error
 
 #        print("Resetting sequence due to long time since last note")
 
