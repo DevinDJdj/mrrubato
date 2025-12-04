@@ -331,6 +331,7 @@ function updateQRResult(result, id='qrincoming') {
 
       //see if we have a barcode in the canvas.  
       if (lastbarcodecheck + 1000 < Date.now()) {
+        //draw 
         if (typeof(combinedStream) !== "undefined" && combinedStream != null && combinedStream.active) {
 
           const imageCapture = new ImageCapture(combinedStream.getVideoTracks()[1]);

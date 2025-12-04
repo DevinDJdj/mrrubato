@@ -755,6 +755,39 @@ def speak(text):
 
 """
 
+
+def get_window_details():
+    """Get details of all visible windows."""
+    win32gui.EnumWindows(window_list_callback, None)
+    #iterate and draw this data.  
+    for procid in windows:
+        w = windows[procid]
+        print(f'Process ID: {procid}, Title: {w["title"]}, Rect: {w["rect"]}, Other: {w.get("other", {})}')
+        #draw this on screen.  
+
+
+
+def get_text_color(rect, screenshot):
+    """Get the color of the text at the given coordinates."""
+    total_luminance = 0
+    pixel_count = 1    
+    img = screenshot.toImage()
+    for x in range(rect[0], rect[2]):
+        for y in range(rect[1], rect[3]):
+            color = img.pixelColor(x, y)
+            r, g, b, _ = color.getRgb()
+            luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255.0
+            total_luminance += luminance
+            pixel_count += 1  
+
+    average_luminance = total_luminance / pixel_count
+
+    # Choose text color based on average luminance
+    if average_luminance < 0.5:  # Threshold can be adjusted
+        return "white"
+    else:
+        return "black"
+
 def get_screen():
 
 
@@ -763,7 +796,10 @@ def get_screen():
     [Kokoro](/kˈOkəɹO/) is an open-weight TTS model with 82 million parameters. Despite its lightweight architecture, it delivers comparable quality to larger models while being significantly faster and more cost-efficient. With Apache-licensed weights, [Kokoro](/kˈOkəɹO/) can be deployed anywhere from production environments to personal projects.
     '''
     text = "This is a test of text to speech using edge-tts on Windows."
-    speak(text)
+#    speak(text)
+
+    #initialize window info..
+    get_window_details()
 
     screen = qapp.primaryScreen()
     screens = qapp.screens()
@@ -772,6 +808,17 @@ def get_screen():
         logger.info('Capturing Screen')
 
         screenshot = s.grabWindow( 0 ) # 0 is the main window, you can specify another window id if needed
+        #get all windows and see if any are in trey.
+
+        rect = (100,100,200,200)
+        get_text_color(rect, screenshot)
+        mywindow.screenshots.append(screenshot)
+
+        #assume 2 screens for now..
+        if (len(mywindow.screenshots) > 10):
+            mywindow.screenshots.pop(0)
+            mywindow.screenshots.pop(0)
+
         screenshot.save('shot' + str(i) + '.jpg', 'jpg')
 
 def get_screen_qrinfo():
@@ -788,14 +835,16 @@ def create_qr_text(text, hwnd):
     name = psutil.Process(procid).name()
 
     ret = ""
-    if 'Path' in os.environ:
-        ret += "$$Path=" + os.environ['Path'] + "\n"
-    if 'HOME' in os.environ:
-        ret += "$$HOME=" + os.environ['HOME'] + "\n"
+
     ret += "$$PID=" + str(procid) + "\n"
     ret += "$$ThreadID=" + str(threadid) + "\n"
     ret += "$$ProcessName=" + name + "\n"
     ret += text
+
+    if 'HOME' in os.environ:
+        ret += "$$HOME=" + os.environ['HOME'] + "\n"
+    if 'Path' in os.environ:
+        ret += "$$Path=" + os.environ['Path'] + "\n"
 
     #ask for further info here..
     lparam = "Hello from Python!" # The text to set
@@ -805,6 +854,7 @@ def create_qr_text(text, hwnd):
 
 def draw_overlay(delay=10): #default hide in 10 seconds
     global active_window
+    global mywindow
 
     #creating the main window
     logger.info('Opening main window')
@@ -830,11 +880,12 @@ def draw_overlay(delay=10): #default hide in 10 seconds
         logger.info('Showing QR code')
         qrdata = f'$$BBOX={rect}\n$$TITLE={title}\n'
         #what other info..
-        #open tab names, latest bookmarks
+        #open tab names, latest bookmarks, link list
         play = playwrighty.get_browser_info()
         qrdata = create_qr_text(qrdata + play, active_window)
         mywindow.showQR(qrdata)
 
+    mywindow.updateLabels(windows)
     mywindow.activateWindow() # Bring to front
     draw_screen_box()
 
@@ -931,6 +982,10 @@ def _hide(data):
     mk.set_startx(mywindow.startx)
     mk.set_geo(mywindow.geo)
 
+    #get average color and screen
+    get_window_details()
+
+
     
 class MyWindow(QMainWindow):
 
@@ -941,6 +996,9 @@ class MyWindow(QMainWindow):
         self.highlighton = False
         self.startx = 0
         self.geo = None
+        self.windowlabels = {} #list of window details by pid
+        self.windowcounter = 0
+        self.screenshots = [] #list of screenshots per monitor
 
         # set the title
 
@@ -969,13 +1027,15 @@ class MyWindow(QMainWindow):
                 self.setWindowTitle("Trey - " + s.name())
 
 #        self.setGeometry(60, 60, 600, 400)
-
+        for i in range(100):
+            self.windowlabels[str(i)] = QLabel(f'Label {i}', self)
         # creating a label widget
         self.label_1 = QLabel("transparent ", self)
         # moving position
-        self.label_1.move(100, 100)
-
+        self.label_1.move(self.geo.width() - 500, 100)
+        self.label_1.setStyleSheet("background-color: rgba(255, 255, 255, 1);color: red;")
         self.label_1.adjustSize()
+        self.label_1.setWordWrap(True)
 
         self.label_2 = QLabel(self)
         #move to bottom right corner
@@ -999,10 +1059,16 @@ class MyWindow(QMainWindow):
         logger.info('Window hidden')
 
 
-    def showQR(self, data):
+    def showQR(self, data, struct={}):
         """Method to show a QR code."""
         logger.info('Showing QR code')
-        qr_image = create_qr_code(data)
+        qrdata = data
+        #if we need to truncate
+        print(f'QR data length: {len(qrdata)}')
+        if (len(qrdata) > 1500):
+            qrdata = qrdata[0:1500] #truncate to 1500 bytes max for QR code.
+            qrdata += "\n...\n$$\n"
+        qr_image = create_qr_code(qrdata)
 #        qr_image = Image.open("qrcode.png")
 #        qr_image.show()
         pixmap = QPixmap('qrcode.png')
@@ -1010,7 +1076,37 @@ class MyWindow(QMainWindow):
         self.label_2.adjustSize()
         self.label_1.setText(data)
         self.label_1.adjustSize()
+
         logger.info('QR code displayed')
+
+    def findLabel(self, pid):
+        if (pid in self.windowlabels):
+            return self.windowlabels[pid]
+        elif (self.windowcounter < 100):
+            label = self.windowlabels[str(self.windowcounter)]
+            self.windowlabels[pid] = label
+            self.windowcounter += 1
+            return label
+        
+    def updateLabels(self, allwindows):
+        for pid, w in allwindows.items():
+            label = self.findLabel(pid)
+            #title, rect, other
+            if (label is not None):
+                label.setText(f'PID: {pid}\nTitle: {w["title"]}\nRect: {w["rect"]}\n')
+                textcolor = "black"
+                if (len(self.screenshots) > 0):
+                    #get average color of window area
+                    textcolor = get_text_color(w['rect'], self.screenshots[-1])
+                    if (textcolor == "white"):
+                        label.setStyleSheet("background-color: rgba(0, 0, 0, 0.7);color: white;")
+                    else:
+                        label.setStyleSheet("background-color: rgba(255, 255, 255, 1);color: black;")
+                #label.setWordWrap(True)
+                label.move(w['rect'][0]-self.startx, w['rect'][1])
+                #label.resize(w['rect'][2]-w['rect'][0], w['rect'][3]-w['rect'][1])
+                label.adjustSize()
+                label.update()
 
     def paintEvent(self, event):
         if (self.highlighton):

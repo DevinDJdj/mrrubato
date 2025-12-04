@@ -273,11 +273,13 @@
     "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.4.1",
     "eslint": "^9.23.0",
+    "fuzzysort": "^3.1.0",
     "typescript": "^5.8.2"
   },
   "dependencies": {
     "@react-native-community/netinfo": "^11.4.1",
     "@vscode/prompt-tsx": "^0.3.0-alpha.23",
+    "flexsearch": "^0.8.212",
     "jazz-midi-vscode": "^1.0.7",
     "jzz": "^1.9.2",
     "jzz-gui-player": "^1.7.7",

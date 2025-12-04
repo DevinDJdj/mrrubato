@@ -116,9 +116,10 @@ class hotkeys:
                 url = parts[1]
                 total_read = int(parts[2])
                 body_length = int(parts[3]) if len(parts) > 3 else 0
+                text = parts[4] if len(parts) > 4 else ""
 
                 print(f'Loaded bookmark {url} at {total_read}')
-                playwrighty.add_bookmark(url, total_read) #call playwrighty add bookmark..
+                playwrighty.add_bookmark(url, total_read, text) #call playwrighty add bookmark..
                 numloaded += 1
 
 
@@ -336,7 +337,7 @@ class hotkeys:
       else:
         cacheno = playwrighty.current_cache
 
-      page = playwrighty.get_ppage(playwrighty.current_cache)
+      page = playwrighty.get_ppage(cacheno)
       url = page.url
       total_read = 0
       total_read = playwrighty.update_page_offset()
@@ -344,12 +345,21 @@ class hotkeys:
 
       today = datetime.now().strftime("%Y%m%d")
       #find URL in bookmarks already?
-      playwrighty.add_bookmark(url, total_read)
-      body_length = playwrighty.page_cache[playwrighty.current_cache]['length'] if playwrighty.current_cache >=0 and playwrighty.current_cache < len(playwrighty.page_cache) else 0
+      body_text = playwrighty.page_cache[cacheno]['body']
+      newline = body_text.find('\n', total_read)
+      if (newline < 1):
+        newline = newline+100
+        if (newline > len(body_text)):
+          newline = len(body_text)
+      if (newline-total_read > 100):
+        newline = total_read + 100
+      text = body_text[total_read:newline]
+      playwrighty.add_bookmark(url, total_read, text)
+      body_length = playwrighty.page_cache[cacheno]['length'] if cacheno >=0 and cacheno < len(playwrighty.page_cache) else 0
 
       os.makedirs('../transcripts/' + self.name, exist_ok=True)
       with open('../transcripts/' + self.name + '/' + today + '.txt', 'a') as f:        
-        f.write(f'> Add Bookmark\t{url}\t{total_read}\t{body_length}\n')
+        f.write(f'> Add Bookmark\t{url}\t{total_read}\t{body_length}\t{text}\n')
         #dont worry about duplication at this point.
 
 

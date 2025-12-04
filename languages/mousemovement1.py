@@ -13,6 +13,7 @@ class mousemovement1:
     self.config = config
     self.qapp = qapp
     self.startx = startx
+    self.geo = None
 
     self.name = "mousemovement1"
     self.maxseq = 10 #includes parameters
@@ -25,15 +26,33 @@ class mousemovement1:
 
   def act(self, cmd, words=[], sequence=[]):
     """ACT based on command and sequence."""
-    if cmd in self.funcdict:
-      func = self.funcdict[cmd]
+    if (len(sequence) == 0 and "_" + cmd in self.funcdict):
+      #run prefix command
+      func = self.funcdict["_" + cmd]
       if hasattr(self, func):
         return getattr(self, func)(sequence)
+      
+    elif cmd in self.funcdict:
+      func = self.funcdict[cmd]
+      #all require keybot at end.
+
+      #this function called every time a key is pressed.
+      if hasattr(self, func + "_"):
+        return getattr(self, func + "_")(sequence)
+      
+      if hasattr(self, func):
+        if (len(sequence) == 1 and sequence[0] == self.keybot):
+          return getattr(self, func)(sequence[:-1])
+        elif (len(sequence) > 1 and sequence[-2:] == [self.keybot, self.keybot]):
+          return getattr(self, func)(sequence[:-2])
+        else:
+          return 1 #need more keys.
       else:
         logger.error(f"Function {func} not found in {self.__class__.__name__}")
     else:
       print(f"Command {cmd} not found in function maps")
     return -1
+
 
   def word(self, sequence=[]):
     """Word lookup."""

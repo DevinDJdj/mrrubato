@@ -71,6 +71,7 @@ function startClock(){
       endc = moment();
       clockoutput.innerText = endc.format(urlParams["format"] || 'DD/MM/YYYY HH:mm:ss');
       secondselapsed.innerText = (endc - startc)/1000;
+
   //	$("#secondselapsed").load(" #secondselapsed > *");
     
   //    output.innerText = moment().format(urlParams["format"] || '');

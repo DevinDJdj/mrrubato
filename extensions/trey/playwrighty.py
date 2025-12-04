@@ -140,16 +140,17 @@ def remove_bookmark_at_index(index):
         return True
     return False
 
-def add_bookmark(url, total_read):
+def add_bookmark(url, total_read, text=""):
     global bookmarks
     found_item = next(filter(lambda item: item.get("url") == url, bookmarks), None)
     body_length = page_cache[current_cache]['length'] if current_cache >=0 and current_cache < len(page_cache) else 0
     if (found_item is not None):
         found_item['total_read'].insert(0, total_read)
+        found_item['text'].insert(0, text)
         bookmarks.remove(found_item)
         bookmarks.insert(0, found_item)
     else:
-        bookmarks.insert(0, {'url': url, 'total_read': [total_read], 'length': body_length})
+        bookmarks.insert(0, {'url': url, 'total_read': [total_read], 'length': body_length, 'text': [text]})
 #        bookmarks.append({'url': url, 'total_read': [total_read], 'length': body_length})
     return 0
 

@@ -802,3 +802,53 @@ Need to stop the reading in a more orderly way..
         '<ctrl>+<shift>+g': on_deactivate_overlay,
 
 Link offset is off..
+
+**languages/hotkeys.py
+Save bookmark text for listing.
+
+**extensions/trey/trey.py
+--draw_overlay
+Add link list to screen
+
+
+**extensions/vscode/codetutor/extension.ts
+
+> npm install flexsearch
+--addVectorData 
+see if ftsindex works as desired.  
+
+ftsindex not working yet.  
+
+Right now heavy bias toward the beginning of the text.  
+Is this tolerable?  
+
+> npm install fuzzysort
+
+Adjust search results to prioritize longer results..
+
+> npm install --save-dev fuzzysort
+> npm install --save-dev @types/fuzzysort
+
+
+OK working..
+Need to try to prioritize deeper results.  
+
+Not exactly what I want but similar search working somewhat better..
+
+Need to add recency to calculation.  
++ 1/ln(days)?  
+Or somethign like this.  
+
+**extensions/trey/trey.py
+Add context info to each window on overlay.  
+How can we make this more readable?  
+Detect color underneath and then use suitable color/size to be legible.  
+Then extract context info in language.  
+
+--updateLabels
+test this..
+
+OK finally got some decent result.  
+Lot of mess still here, but ..
+
+

@@ -453,7 +453,7 @@ def getNgrams(t):
                 #print(wrds)
                 pgram = mymsg.getPGram(wrds)
                 seqgram = mymsg.getSeqNGram(wrds)
-                signs = mymsg.getSigns(wrds) 
+                signs = mymsg.getSigns() 
                 
                 #here can use seqgram as well.  
                 #try to find the patterns.  

@@ -4,6 +4,8 @@ import * as tokenizer from './tokenizer'; // Import the Token interface
 import * as  Worker from './worker'; // Import the Worker class
 
 import { LocalIndex } from 'vectra';
+import * as FlexSearch from 'flexsearch';
+import fuzzysort from 'fuzzysort';
 import ollama from 'ollama';
 import * as fs from 'fs';
 /*
@@ -118,6 +120,7 @@ export interface BookTopic {
 export var vectrafixes: {[key: string] : boolean } = {};
 
 export var alltopics: string[] = [];
+export var alltopicdata: Array<BookTopic> = [];
 export var alltopicsa: string[] = [];
 
 export var envarray: {[key: string] : string} = {}; //environment variables.
@@ -135,6 +138,17 @@ export var commandarray: {[key: string] : Array<BookTopic> | undefined} = {};
 
 export var arrays: {[key: string] : {[key: string] : Array<BookTopic> | undefined}} = {};
 //this will look like arrays[">"]["TOPIC"] = ...
+
+/*
+var FlexSearchParams = {
+    encode: "balance",
+    threshold: 0.6, // Adjust this value to control fuzzy matching sensitivity
+    store: true
+};
+*/
+var FlexSearchParams = {};
+export var ftsindex : FlexSearch.Index = new FlexSearch.Index(FlexSearchParams);
+
 
 var refarray = [];
 
@@ -1221,6 +1235,7 @@ export async function similar(prompt: string) : Promise<Array<BookTopic>> {
     let vec = await getVector(prompt, model);
 
     let ret = [];
+    let ret2 = [];
     for (let j=0; j<pathParts.length; j++){
         for (let i=0; i<pathParts[j].length+1; i++) {
             let sub1 = pathParts[j].slice(0, i).join('/');
@@ -1230,12 +1245,21 @@ export async function similar(prompt: string) : Promise<Array<BookTopic>> {
             try {
                 if (sub1 in topicvectorarray) {
                     //get more results from closer path or less?  
-                    let res = await topicvectorarray[sub1].queryItems(vec, prompt, pathParts[j].length -i+2); 
+                    //isBM25TextSearchEnabled
+                    let res = await topicvectorarray[sub1].queryItems(vec, prompt, i + 2); 
                     if (res.length > 0) {
                         for (const result of res) {
-                            ret.push(result.item.metadata); //should be BookTopic type.
-                            console.log(`[${result.score}] ${result.item.metadata.data}`);
+                            //only add results with more than 50 characters. quite a bit of noise otherwise.
+                            if ((result.item.metadata.data as string).length > 50){ 
+                                ret.push(result.item.metadata); //should be BookTopic type.
+                                console.log(`ret [${result.score}]\n ${result.item.metadata.data}`);
+                            }
                         }
+                        for (const result of res) {
+                            //only add results with more than 50 characters. quite a bit of noise otherwise.
+                            ret2.push(result.item.metadata); //should be BookTopic type.
+                            console.log(`ret2 [${result.score}]\n ${result.item.metadata.data}`);
+                        }    
                     } else {
                         console.log(`No results found.`);
                     }
@@ -1251,8 +1275,70 @@ export async function similar(prompt: string) : Promise<Array<BookTopic>> {
             }
         }
     }
-    //deduplicate ret array.  
 
+    if (ret.length < 6) {
+        //try ret2 for more results.  
+        for (let i=0; i<ret2.length; i++) {
+            //mark as secondary result..
+            let r = { ... ret2[i] }; //copy object.
+            r.data = r.data.slice(0, r.topic.length + 2) + "\n_V2_\n" + r.data.slice(r.topic.length + 2); //add topic at start.
+            ret.push(r);
+            if (ret.length >= 6) {
+                break;
+            }
+        }
+    }
+    //add ftsindex results if there are none with similar text.  
+    //check text results with high similarity via uFuzzy.  
+    if (ret.length < 10) {
+        /*
+        console.log(`Fuzzy searching for more results... ${alltopicdata.length} topics available.`);        
+        let ftsresults = fuzzysort.go(prompt, alltopicdata, { keys: ['topic', 'data'] });
+        //need to deduplicate here?          
+        for (let i=0; i<ftsresults.length && i<10; i++) {
+            //mark as fuzzy result..
+            //this not getting very good results..
+            if (ftsresults[i].score > 0.15){ //only add if score is reasonable.}
+                let r = { ... ftsresults[i].obj }; //copy object.
+                r.data = r.data.slice(0, r.topic.length + 2) + "\n_V2_\n" + r.data.slice(r.topic.length + 2); //add topic at start.
+                ret.push(r);
+                console.log(`FTS Result: ${ftsresults[i].obj.data}  Score: ${ftsresults[i].score}`);
+    //            metadata: {data: topic.data, date: topic.date, file: topic.file, line: topic.line, topic: topic.topic},
+                if (ret.length >= 10) {
+                    break;
+                }
+            }
+        }
+            */
+        let ftsresults = ftsindex.search(prompt);
+        for (let i=0; i<ftsresults.length; i++) {
+            console.log(`FTS Result: ${ftsresults[i]}`);
+            let r = (ftsresults[i] as string); //copy object.
+            
+            let top = r.slice(0, r.indexOf(":"));
+            let l = Number(r.slice(r.indexOf(":") + 1));
+            let topicdata = alltopicdata.filter((t) => t.topic === top && t.line === l);
+            console.log(`FTS Topic Data: ${JSON.stringify(topicdata)}`);
+            if (topicdata.length > 0){
+                let tdata = { ... topicdata[0]}; //copy object.
+                let fidx = tdata.data.indexOf(prompt.slice(2).trim()); //just to use prompt variable.
+                if (fidx > -1){
+                    console.log(`FTS Match in data: ${tdata.data.slice(fidx-50, fidx+50)}`);
+                    let offseta = fidx - 150 > tdata.topic.length + 2 ? fidx - 150 : tdata.topic.length + 2;
+                    tdata.data = "**" + tdata.topic + " \n_FT2_\n" + tdata.data.slice(offseta, fidx+150); //add topic at start.
+                }
+                else{
+                    tdata.data = tdata.data.slice(0, tdata.topic.length + 2) + "\n_FT_\n" + tdata.data.slice(tdata.topic.length + 2);
+                }
+                ret.push(tdata);
+            }
+            //add to return array.  item.metadata = 
+//            metadata: {data: topic.data, date: topic.date, file: topic.file, line: topic.line, topic: topic.topic},
+        }
+
+    }
+
+    //deduplicate ret array.  
     for (let i=0; i<ret.length; i++) {
         for (let j=i+1; j<ret.length; j++) {
             //same file and line number. no need to duplicate.  
@@ -1262,6 +1348,7 @@ export async function similar(prompt: string) : Promise<Array<BookTopic>> {
             }
         }
     }
+    
     return ret;
 
 }
@@ -1379,6 +1466,11 @@ async function addVectorData(topic: BookTopic) {
     let checkdate = timelag.getFullYear()*10000 + timelag.getMonth()*100 + timelag.getDate();
 
     console.log(`Checking existing items for topic ${topic.topic}:`, checkexisting);
+
+    alltopicdata.push(topic); //add to all topic data for ftsindex.
+    //insert the item into the ftsindex as well.  
+    ftsindex.add(topic.topic + ':' + topic.line, topic.data);
+
     if (checkexisting.length > 0) {
         //assume it is already there.  Duplicate data.  No need to add again.  
         //randomly upsert if the topic is older than 9 months.  
@@ -1406,7 +1498,6 @@ async function addVectorData(topic: BookTopic) {
 */
     }
     else{
-
         topicvectorarray[topic.topic].upsertItem({
             vector: await getVector(topic.data),
             //sort order not used.  
@@ -1429,6 +1520,7 @@ async function addVectorData(topic: BookTopic) {
                     }); //insert the item into the index.
 
         }
+
 
     }
 
