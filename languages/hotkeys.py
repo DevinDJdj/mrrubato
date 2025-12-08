@@ -106,22 +106,24 @@ class hotkeys:
 #      if (f.startswith(yesterday) or f.startswith(today)):
         if (f.endswith('.txt')): #dont open wav files..
           print(f'> Read Bookmarks {f}') 
-          with open('../transcripts/' + self.name + '/' + f) as ff:
-            lines = ff.readlines()
-            for line in lines:
-              #add bookmark manually.  
-              parts = line.strip().split('\t')
-              cmd = parts[0]
-              if (cmd == '> Add Bookmark'):
-                url = parts[1]
-                total_read = int(parts[2])
-                body_length = int(parts[3]) if len(parts) > 3 else 0
-                text = parts[4] if len(parts) > 4 else ""
+          try:
+            with open('../transcripts/' + self.name + '/' + f, encoding='utf-8') as ff:
+              lines = ff.readlines()
+              for line in lines:
+                #add bookmark manually.  
+                parts = line.strip().split('\t')
+                cmd = parts[0]
+                if (cmd == '> Add Bookmark'):
+                  url = parts[1]
+                  total_read = int(parts[2])
+                  body_length = int(parts[3]) if len(parts) > 3 else 0
+                  text = parts[4] if len(parts) > 4 else ""
 
-                print(f'Loaded bookmark {url} at {total_read}')
-                playwrighty.add_bookmark(url, total_read, text) #call playwrighty add bookmark..
-                numloaded += 1
-
+                  print(f'Loaded bookmark {url} at {total_read}')
+                  playwrighty.add_bookmark(url, total_read, text) #call playwrighty add bookmark..
+                  numloaded += 1
+          except Exception as e:
+            logger.error(f'!!>Read Bookmarks [{f}]\n !!{e}')
 
     #list files in 
     logger.info(f'Loaded {numloaded} bookmarks from {len(sorted_files)} files')
@@ -240,10 +242,22 @@ class hotkeys:
       #all require keybot at end.
 
       #this function called every time a key is pressed.
+
+
       if hasattr(self, func + "_"):
         #no return here..
-        getattr(self, func + "_")(sequence)
-      
+        if getattr(self, func + "_")(sequence) > 0:
+          #no function, run sequence through mk.key
+          a = 0
+        else:
+          logger.info(f'--> {func}_')
+          if (len(sequence) == 1 and sequence[-1] == self.keybot):
+            a = 0 #continue logic and see if we need to end.  
+          elif (len(sequence) > 1 and sequence[-2:] == [self.keybot, self.keybot]):
+            a = 0 #continue logic and see if we need to end.
+          else:
+            return -len(sequence)-1 #indicate handled, can look for other words from what position
+
       if hasattr(self, func):
         if (len(sequence) == 1 and sequence[-1] == self.keybot):
           return getattr(self, func)(sequence[:-1])
@@ -253,6 +267,10 @@ class hotkeys:
           return 1 #need more keys.
       else:
         logger.error(f"Function {func} not found in {self.__class__.__name__}")
+
+
+
+      
     else:
       print(f"{self.funcdict}")
       logger.info(f"{self.funcdict}")
@@ -358,7 +376,8 @@ class hotkeys:
       body_length = playwrighty.page_cache[cacheno]['length'] if cacheno >=0 and cacheno < len(playwrighty.page_cache) else 0
 
       os.makedirs('../transcripts/' + self.name, exist_ok=True)
-      with open('../transcripts/' + self.name + '/' + today + '.txt', 'a') as f:        
+      #add utf-8?  
+      with open('../transcripts/' + self.name + '/' + today + '.txt', 'a', encoding='utf-8') as f:        
         f.write(f'> Add Bookmark\t{url}\t{total_read}\t{body_length}\t{text}\n')
         #dont worry about duplication at this point.
 
@@ -420,7 +439,7 @@ class hotkeys:
       #need to return 1 to indicate we need more keys.
       #but this is only called once.  
 
-      return 0
+      return 0 #handled, this function will not be called again with further parameters.
     return 1
 
   def search_web_(self, sequence=[]):  
@@ -486,7 +505,7 @@ class hotkeys:
           today = datetime.now().strftime("%Y%m%d")
           try:
             os.makedirs('../transcripts/' + self.name, exist_ok=True)
-            with open('../transcripts/' + self.name + '/' + today + '.txt', 'a') as f:        
+            with open('../transcripts/' + self.name + '/' + today + '.txt', 'a', encoding='utf-8') as f:        
               f.write(f'> Record Feedback {sequence}\n')
               f.write(f'$$DURATION=' + str(duration) + '\n')
               f.write(f'$$FEEDBACK=' + self.transcript + '\n')
@@ -658,6 +677,7 @@ class hotkeys:
     from extensions.trey.trey import page, pause_reader, resume_reader
 #    pause_reader() #this does not add bookmark..
     page(sequence[-1]-self.keybot)
+    return 0
 #    resume_reader()
 
   def pause_reader(self, sequence=[]):
@@ -671,6 +691,7 @@ class hotkeys:
     logger.info(f'> Resume Reader {sequence}')
     from extensions.trey.trey import resume_reader
     resume_reader()
+    return 0
 
   def skip_lines(self, sequence=[]):
     if (len(sequence) < 1):
@@ -678,6 +699,7 @@ class hotkeys:
     logger.info(f'> Skip Lines {sequence}')
     from extensions.trey.trey import skip_lines
     skip_lines(sequence[-1]-self.keybot)
+    return 0
 
   def select_type(self, sequence=[]):
     if (len(sequence) < 1):

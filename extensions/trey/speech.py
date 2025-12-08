@@ -18,13 +18,13 @@ def record_audio(duration=10, fname="example.wav", stop_event=None):
     samplerate = 16000  # Sample rate (Hz)
     #no easy way to stop early with sounddevice, so just record fixed time for now.
     print("Recording...")
-    winsound.Beep(2000, 200) #beep to start
     from pycaw.pycaw import AudioUtilities
     device = AudioUtilities.GetSpeakers()
     volume = device.EndpointVolume
     currentvolume = volume.GetMasterVolumeLevel()
     volume.SetMasterVolumeLevel(currentvolume-20, None) #reduce volume to 20% for recording.
     recording = sd.rec(int(samplerate * duration), samplerate=samplerate, channels=1, dtype='float32')
+    winsound.Beep(2000, 200) #beep to start
     sd.wait()  # Wait until recording is finished
     print("Recording complete.")
     audio_tensor = torch.from_numpy(recording.squeeze()) # Remove channel dimension if mono

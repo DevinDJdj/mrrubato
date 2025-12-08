@@ -852,3 +852,87 @@ OK finally got some decent result.
 Lot of mess still here, but ..
 
 
+**mykeys.py
+While giving audio feedback, allow for additional context.  
+[53,57,60] [60] [etc.] [53,53]
+[etc.] = full word in separate langauge.  
+Need to allow for separate language to be used during this time.  
+Signal to 
+
+Some of this is coded, need to test this..
+
+Check if transcript Audio transcript is being encoded.  
+
+
+**timestep.py
+Add transcripts to book.  
+Just copy each day transcript.  
+--writeTranscripts
+test..
+
+
+[WORDA] [PARAMSA] [WORDB] [PARAMSB] [ENDB] [ENDA]
+
+**PARAMS
+need zero-based calculation
+Try to keep same order and minimal variations.  
+
+0 = most relevant
+
+> Record Feedback
+0 = time selection
+
+> Search Web
+0 = Selection (engine)
+1 = Selection2 (cache)
+
+> Go back
+0 = Selection
+
+> Skip lines
+0 = selection
+
+> Click link
+0 = selection
+
+> Select Tab 
+0 = selection
+
+> Select Bookmark
+0 = selection
+
+
+FULL example:
+[ASTART] [WORDA] [PARAMSA]
+
+
+[WORDA] [PARAMSA] [WORDB] [PARAMSB] [ENDB] [ENDA]
+[53,57,60] [57] [] [53,53]
+
+This is where we can use timings.  
+Within record feedback, we can do things like take screenshot.  
+This will have stronger correlation.  
+Previous and post will also have strong correlation.  
+
+Need example of where this is necessary to do within a word.  
+Perhaps meaning will just be slightly different.  
+
+(Select Tab [5] (Record Feedback [6 secs]) )
+vs
+(Select Tab [5]) (Record Feedback [6 secs])
+
+
+
+**dictionary/lang.txt
+**dictionary/hotkeys.txt
+Start some dictionary.  
+
+**extensions/trey/trey.py
+Could parse and display definition of last called function.  
+
+-->Record Feedback
+test..
+OK, seems to work, but quite slow at the moment?  
+Switch machines..
+
+

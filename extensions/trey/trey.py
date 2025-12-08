@@ -829,13 +829,22 @@ def get_screen_qrinfo():
 
 def create_qr_text(text, hwnd):
     """Create a QR code with the given text."""
+
     if (hwnd is None):
         return text
     threadid, procid = win32process.GetWindowThreadProcessId(hwnd)
+    title = win32gui.GetWindowText(hwnd)
+    rect = win32gui.GetWindowRect(hwnd)
+
+    logger.info(f'Active window: {title} at {rect}')
+    logger.info('Showing QR code')
+    qrdata = f'$$BBOX={rect}\n$$TITLE={title}\n'
+    #what other info..
+    #open tab names, latest bookmarks, link list
     name = psutil.Process(procid).name()
 
     ret = ""
-
+    #get languages used and basic qr information.  
     ret += "$$PID=" + str(procid) + "\n"
     ret += "$$ThreadID=" + str(threadid) + "\n"
     ret += "$$ProcessName=" + name + "\n"
@@ -875,17 +884,11 @@ def draw_overlay(delay=10): #default hide in 10 seconds
         active_window = temp
 
     if (active_window is not None):
-        title = win32gui.GetWindowText(active_window)
-        logger.info(f'Active window: {title} at {rect}')
-        logger.info('Showing QR code')
-        qrdata = f'$$BBOX={rect}\n$$TITLE={title}\n'
-        #what other info..
-        #open tab names, latest bookmarks, link list
         play = playwrighty.get_browser_info()
         qrdata = create_qr_text(qrdata + play, active_window)
         mywindow.showQR(qrdata)
 
-    mywindow.updateLabels(windows)
+    mywindow.updateLabels(windows) #gives info for all windows
     mywindow.activateWindow() # Bring to front
     draw_screen_box()
 

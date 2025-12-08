@@ -448,6 +448,28 @@ def writeTranscripts(alltranscripts):
     f1 = open('./web/public/data/trans.json', "w", encoding='utf-8')
     f1.write(json.dumps(alltranscripts, ensure_ascii=False, indent=4))
 
+    today = date.today()
+    today = today.strftime("%Y%m%d")
+    folder = '../transcripts/' + today[0:4] + '/'
+    fname = folder + tdate + '.txt'
+    #full copy of historical transcripts on this date.  
+    #maybe helpful if we redo transcripts.  Probably will occur.  
+    #2 years ~ few MB?
+
+    #go through and add to individual files as well.  
+    with open(fname, 'a', encoding='utf-8') as f2:
+        for t in alltranscripts:
+            vid = t['id']
+            desc = t['description']
+            tdate = t['updated']
+            transcript = t['transcript']
+            f2.write(f'**{vid}\n')
+            f2.write(f'$${tdate}\n')
+            f2.write(transcript + '\n\n')
+
+
+
+
 
 
 if __name__ == '__main__':
