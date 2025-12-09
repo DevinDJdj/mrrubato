@@ -149,6 +149,18 @@ class MyKeys:
       return self.languages[self.currentlangna].bbox
     return None
   
+  def get_langs(self):
+    #get all unique languages used in words
+    self.langused = []
+    for w in self.words_:
+      if (w['langna'] not in self.langused):
+        self.langused.append(w['langna'])
+    return self.langused
+  
+  def get_words(self):
+    return self.words_
+  
+
   def get_qr(self):
     qr = ""
     for (l,la) in self.languages.items():
@@ -198,14 +210,11 @@ class MyKeys:
   def reset_sequence(self):
 #    self.fullsequence.extend(self.sequence)
 
-    if (len(self.mid.tracks[self.currentchannel]) >= len(self.sequence)):
-      for s in self.sequence:
-        self.mid.tracks[self.currentchannel].pop() #remove from midi track.
+#dont get rid of midi feedback tracks.  
+#    if (len(self.mid.tracks[self.currentchannel]) >= len(self.sequence)):
+#      for s in self.sequence:
+#        self.mid.tracks[self.currentchannel].pop() #remove from midi track.
         #get rid of unused data..
-    else:
-      #should never occur...
-      print("Error: midi track shorter than sequence, cannot reset properly")
-      logger.error("Error: midi track shorter than sequence, cannot reset properly")
 
     self.sequence = []
     self.words = []
@@ -244,6 +253,8 @@ class MyKeys:
 
       #last command succeeds.  retrigger without this sequence.  
       #remove ss from end of sequence instead of resetting everything.  
+      #are we second word or first word?  
+      #if we are second word, we must not remove the first word.
 
 
       self.sequence = self.sequence[:-len(orig)] #remove length of original sequence.  
@@ -266,12 +277,12 @@ class MyKeys:
           #for now assume we are not getting any new messages while appending this..  
           #or get last message time.
 #          mytime = int((time.time()-self.starttime) * 1000)
-          msg = Message('note_on', note=s, velocity=64, time=10)
-#          self.mid.tracks[self.currentchannel].append(msg) #add transcript
+          msg = Message('note_on', note=s, velocity=64, time=10) #microseconds..
+          self.mid.tracks[self.currentchannel].append(msg) #add transcript
           msg = Message('note_off', note=s, velocity=64, time=10)
-#          self.mid.tracks[self.currentchannel].append(msg) #add transcript
+          self.mid.tracks[self.currentchannel].append(msg) #add transcript
           #only adding for posterity right now.  
-        time.sleep(len(seq)*2/1000) #wait for notes to play out.
+        time.sleep(len(seq)*2/1000) #wait for notes to play out. 500 chars/sec
 
         self.languages[l].transcript = "" #reset transcript after adding to midi.
 
@@ -279,7 +290,20 @@ class MyKeys:
       return self.sequence
 #      self.reset_sequence()
 #      self.currentcmd = None
+    elif (action < -1):
+      #error in action
+      logger.info(f'> <{l}>{cmd}_ {ss}')
+      #reset command sequence to current sequence number.  
+      # This command only needs closure keys.  
+      
+      #do we add here??  Maybe not..
+      #self.words_.append({"word": cmd+"_", "lang": l, "langna": l, "sequence": self.sequence[self.startseqno:], "ss": [], "_words": self.words}) #add to executed words.
+
+#      self.startseqno = self.currentseqno
+#      self.currentcmd = self.currentcmd
+
     else:
+      #set to None here?  Or keep currentcmd?
       self.currentcmd = self.currentcmd
       #search for word again?            
       #if isinstance(action, list):
@@ -373,8 +397,8 @@ class MyKeys:
         word, l, la = self.findword(self.sequence[self.startseqno:])
       if (word != ""):
         found = True
-        print("Second Word found: " + word + " in " + l)
-        logger.info(f'Second Word found: {word} in {l}')
+        print(f"&<{l}>{word}\n")
+        logger.info(f'&<{l}>{word}\n')
         #_words words before this one.  
         self.words.append({"word": word, "lang": la, "langna": l, "sequence": self.sequence[self.startseqno:], "ss": [], "_words": self.words})
         self.startseqno = self.currentseqno
@@ -529,6 +553,8 @@ class MyKeys:
   def text2seq(self, text):
     #convert text to sequence.  
     seq = []
+    seq.append(110) #start text
+      
     for c in text:
       n = ord(c)
       if (n >= 0 and n <= 255):
@@ -538,26 +564,41 @@ class MyKeys:
         note2 = 112 + c2
         seq.append(note1)
         seq.append(note2)
+        print(f'Encoded char {c} to notes [{note1},{note2}]')
       else:
         print(f'Error: character {c} out of range')
         logger.error(f'Error: character {c} out of range')
-    
+
+    seq.append(111) #end text    
     return seq
   def seq2text(self, seq):
     #convert sequence to text.  
     text = ""
-    if (len(seq)%2 != 0):
-      print("Error: sequence not even length")
-      logger.error("Error: sequence not even length")
-      return text
     
+    skip = False
     for idx, m in enumerate(seq):
-      n = seq[idx+1]  
-      if (n >= 112 and n <= 127 and m >=112 and m <=127): #E8 to G9
-        c1 = (n - 112) * 16
-        c2 = (m - 112)
+      if (skip):
+        skip = False
+        continue
+      if (m > 109 and m < 112 ):
+        text += "\n" #some separation.  
+      elif (m >=112 and m <=127): #E8 to G9
+        if (idx+1 >= len(seq)):
+          print("!!>seq2text: odd length sequence error")
+          logger.error("!!>seq2text: odd length sequence error")
+          continue
+        n = seq[idx+1]  
+        if (n < 112 ):
+          print("!!>seq2text: incorrect value for text sequence")
+          logger.error("!!>seq2text: incorrect value for text sequence")
+          skip = True
+        c1 = (m - 112) * 16
+        c2 = (n - 112)
         c = c1 + c2
         text += chr(c)
+        print(f'Char from seq: {c1} {c2} {chr(c)}')
+        skip = True
+        
       else:
         #ignore non-text notes.
         c1 = 0
@@ -591,7 +632,7 @@ class MyKeys:
   
   def getmidifile(self):
     #default 2 tracks and control..
-    mid = MidiFile()
+    mid = MidiFile(type=1)
 #    mid.ticks_per_beat = 1000000
 #    mid.tempo = 60
     track = MidiTrack()
@@ -608,10 +649,14 @@ class MyKeys:
 
   def savemidi(self, fname=""):
     if (fname == ""):
-      fname = self.transcriptdir + "/" + self.nowstr + ".mid"
+      #use year folder
+      fname = self.transcriptdir + "/" + self.nowstr[0:4] + "/" + self.nowstr + ".mid"
+    folder = os.path.dirname(fname)
+    if not os.path.exists(folder):
+      os.makedirs(folder)
     self.mid.save(fname)
-    logging.info("Saved midi file to " + fname)
-    print("Saved midi file to " + fname)
+    logging.info("$$TRANSCRIPT=" + fname + "\n")
+    print("$$TRANSCRIPT=" + fname + "\n")
 
 
   def text2midi(self, text):

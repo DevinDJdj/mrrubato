@@ -437,7 +437,11 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
 
     skipmenu = True
     sound_file = "0.mp3"
+    VOICES = ["en-US-AriaNeural", "en-US-CoraNeural", "en-US-ElizabethNeural", "en-US-AshleyNeural", "en-US-AvaNeural", "en-US-BrandonNeural", "en-US-BrianNeural", "en-US-EmmaNeural", "en-US-EricNeural"]
     VOICE = "en-US-AriaNeural"
+    #for now random.  
+    VOICE = VOICES[int(time.time()) % len(VOICES)]
+
     SIMVOICE = ["en-US-CoraNeural", "en-US-ElizabethNeural"]
     #en-US-AshleyNeural 
     #en-US-AvaNeural   
@@ -611,41 +615,6 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
                 total_read += len(l) + 1 #include newline
                 continue
 
-            if (len(l) > 50): #only do similar for longer lines
-                r = None
-                r = get_similar(idx, link_density_map) #do a vector search for similar items.
-                #if we have good results here we could read them out.
-    #            print(r)
-                if (r is not None and len(r) > 0):
-                    print(f'Similar items to line {idx}: {link_density_map[idx]["text"]}')
-                    for ridx,result in enumerate(r):
-                        if (abs(result['id'] - idx) < 5):
-                            continue #skip nearby items
-                        voice = SIMVOICE[ridx % len(SIMVOICE)]
-                        print(result)
-                        rid = result['id']
-                        #read out the similar item.  
-                        if (rid > 0 and rid < len(link_density_map)):
-                            siml = link_density_map[rid]['text']
-                            print(link_density_map[rid])
-                            #only get similar when we have a lengthy item, also dont read too long similar items.
-                            #dont read if we are about to read.  
-                            if (len(siml) > 5 and len(siml) < 200 and len(siml) < len(l) and link_density_map[rid]['numlinks'] > 0 and abs(link_density_map[rid]['offset']-total_read) > 100): 
-                                print(f'Reading similar item: {siml}')
-                                try:
-                                    sound_file = f"./temp/sim{rid}.mp3"
-                                    lesc = siml.replace('"', '\\"')
-                                    os.system(f"edge-tts --voice \"{voice}\" --write-media \"{sound_file}\" --text \"Similar: {lesc}\" --rate=\"+20%\" --volume=-40%")
-                                    playsound(sound_file, block=False) # Ensure this thread blocks for its sound
-
-                                except Exception as e:
-                                    logger.error(f'Error in TTS playback of similar item: {e}')
-                                    logger.error(f'{siml}')
-                                    print(f'Error in TTS playback of similar item: {e}')
-                                    
-                                    continue
-                            if (q3 is not None):
-                                q3.put(link_density_map[rid]['offset']) #send back the offset of the similar item.
 
         print(f'Total read: {total_read}')
         waited = 0
@@ -675,6 +644,43 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
         print(f'Total waited: {waited}')
 
         total_read += len(l) + 1 #include newline
+
+        r = None
+        if (len(l) > 50): #only do similar for longer lines
+            r = get_similar(idx, link_density_map) #do a vector search for similar items.
+            #if we have good results here we could read them out.
+#            print(r)
+        #similar moved to end of reading line.
+        if (r is not None and len(r) > 0):
+            print(f'Similar items to line {idx}: {link_density_map[idx]["text"]}')
+            for ridx,result in enumerate(r):
+                if (abs(result['id'] - idx) < 5):
+                    continue #skip nearby items
+                voice = SIMVOICE[ridx % len(SIMVOICE)]
+                print(result)
+                rid = result['id']
+                #read out the similar item.  
+                if (rid > 0 and rid < len(link_density_map)):
+                    siml = link_density_map[rid]['text']
+                    print(link_density_map[rid])
+                    #only get similar when we have a lengthy item, also dont read too long similar items.
+                    #dont read if we are about to read.  
+                    if (len(siml) > 5 and len(siml) < 200 and len(siml) < len(l) and link_density_map[rid]['numlinks'] > 0 and abs(link_density_map[rid]['offset']-total_read) > 100): 
+                        print(f'Reading similar item: {siml}')
+                        try:
+                            sound_file = f"./temp/sim{rid}.mp3"
+                            lesc = siml.replace('"', '\\"')
+                            os.system(f"edge-tts --voice \"{voice}\" --write-media \"{sound_file}\" --text \"Similar: {lesc}\" --rate=\"+20%\" --volume=-40%")
+                            playsound(sound_file, block=False) # Ensure this thread blocks for its sound
+
+                        except Exception as e:
+                            logger.error(f'Error in TTS playback of similar item: {e}')
+                            logger.error(f'{siml}')
+                            print(f'Error in TTS playback of similar item: {e}')
+                            
+                            continue
+                    if (q3 is not None):
+                        q3.put(link_density_map[rid]['offset']) #send back the offset of the similar item.
 
         if (q2 is not None):
             q2.put(total_read)

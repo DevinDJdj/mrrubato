@@ -936,3 +936,12 @@ OK, seems to work, but quite slow at the moment?
 Switch machines..
 
 
+#https://magenta.github.io/magenta-js/music/demos/visualizer.html
+Add QPM?  
+
+**play.py
+oh just use this..
+OK, we are getting > 112 now.  
+test text2seq and seq2text.  
+
+Play midi transcripts as we play..
