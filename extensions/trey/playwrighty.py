@@ -55,8 +55,33 @@ def get_text(cacheno=-1, total_read=0, duration=5):
     else:
         logging.warning(f'Cache number {cacheno} out of range')
         return "", total_read
+
+
+
+def get_links(cacheno=-1, text_offset=0):
+    """Get link offset from the cached page based on text offset."""
+    global current_cache
+    ret = []
+    if (cacheno < 0):
+        cacheno = current_cache
+    linkno = 0
+    if cacheno < len(page_cache):
+        page_info = page_cache[cacheno]       
+        links = page_info['links']
+        for i, link in enumerate(links):
+            if 'offset' in link and link['offset'] <= text_offset:
+                linkno = i
+    else:
+        logging.warning(f'Cache number {cacheno} out of range')
+
+    for i in range(min(linkno-10, 0), linkno):
+        ret.append(links[i])
+    return ret
+
 #text_offset is how far into the text we are.  link_offset is which link to click relative to that we want to click.
 #usually this will be 0 or -1 to go back one link.
+
+
 def click_link(cacheno, text_offset, link_offset=0, open_new_tab=False):
 
     global current_cache
@@ -463,6 +488,21 @@ def get_browser_info():
     info += get_bookmark_list()
     return info
 
+def detect_language(cacheno=-1):
+    """Detect the language of the cached page."""
+    global current_cache
+    if (cacheno < 0):
+        cacheno = current_cache
+    if cacheno < len(page_cache):
+        page_info = page_cache[cacheno]       
+        page = page_info['page']
+        lang = page.evaluate("() => document.documentElement.lang")
+        logging.info(f'Detected language: {lang} for URL: {page.url}')
+        return lang
+    else:
+        logging.warning(f'Cache number {cacheno} out of range')
+        return ""
+    
 def read_page(url, cacheno=-1):
     global current_cache
     """Search the web for a query using Playwright."""

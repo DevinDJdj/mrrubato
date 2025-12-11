@@ -1027,6 +1027,44 @@ export async function getChat(input: string, model: string = 'llama3.1:8b') : Pr
     return response["message"]["content"];
 }
 
+
+export async function getExpanded(input : string, MAX_MULT: number = 3) : Promise<string> {
+    //expand the input by a factor of MAX_MULT.
+    //use exp(number) to determine how much to expand.  
+    let expansionfactor = Math.exp(MAX_MULT);   
+     //get the summary of the chunks.  
+    //this will be used to summarize the book.
+    let expanded = input;
+    let expandme = await ollama.chat({
+        model: 'llama3.1:8b',
+//            model: 'deepseek-coder-v2:latest',
+        //deepseek-r1:latest 
+        //granite-code:latest
+        //codegemma:latest 
+        //model: 'gemma3n:latest',
+        //model: 'gemma3:4b',
+//            model: 'granite3.3:8b',
+
+        messages: [
+            { role: 'system', content: `You are expanding a brief summary of text 
+                and creating an expanded version.  ::ABRIDGED VERSION::\n**MYTOPIC\n Brief text which is being expanded.  
+                ::EXPANDED VERSION::  **MYTOPIC\nExpanded explanation which is significantly longer than the original brief text. Roughly $$${expansionfactor.toFixed(2)} times the size.
+                **ADDITIONALTOPIC\nWhen creating the expanded version, the same writing style and syntax as the original is used.  It continues on below ` },
+            { role: 'user', content: `::ABRIDGED VERSION::\n
+                ${input}\n
+                ::NOTES::\n
+                Using the above I have expanded the content to include more details, examples, and explanations.
+                Here is the expanded version.  I tried to use about ${(expansionfactor*input.length/4).toFixed(2)} words.\n
+                ::EXPANDED VERSION::\n` }
+        ]
+        });
+        if (expandme["message"]["content"] === undefined){
+            console.log("Error expanding content.");
+            return input; //return the original input if there was an error.
+        }        
+        return expandme["message"]["content"];
+}
+
 export async function getSummary(input : string, CTX_WND: number = 5000) : Promise<string> {
     //get the summary of the chunks.  
     //this will be used to summarize the book.
@@ -1207,10 +1245,17 @@ export async function summary(prompt: string) : Promise<string> {
 }
 
 
+export async function expandPrompt(prompt: string) : Promise<string> {
+    //expand the prompt to include more context.
+    //for now just return the prompt.
+    return Promise.resolve(await getExpanded(prompt, 3)); //exponential expansion
+    return Promise.resolve(prompt);
+}
 export async function similar(prompt: string) : Promise<Array<BookTopic>> {
     //this will be used to find similar topics in the book.  
     //for now just return the topics in the book.
-    let selectedtopics = findInputTopics(prompt); 
+    let expandedprompt = await expandPrompt(prompt); //expand the prompt to include more context.
+    let selectedtopics = findInputTopics(prompt + "\n" + expandedprompt); 
     console.log("Selected topics: ", selectedtopics);
     let bvFolder = getUri(bookvectorFolder);
     let pathParts = [];
@@ -1232,7 +1277,8 @@ export async function similar(prompt: string) : Promise<Array<BookTopic>> {
         pathParts.push([""]);
     }
     let model = 'nomic-embed-text'; //default model to use for embedding.
-    let vec = await getVector(prompt, model);
+    //here only pass expanded prompt.. otherwise too much bias to the ** topics.
+    let vec = await getVector(expandedprompt, model);
 
     let ret = [];
     let ret2 = [];
@@ -1349,6 +1395,9 @@ export async function similar(prompt: string) : Promise<Array<BookTopic>> {
         }
     }
     
+    let today = new Date();
+    let todaydate = today.getFullYear()*10000 + (today.getMonth()+1)*100 + today.getDate();
+    ret.push({topic: "PROMPT", data: expandedprompt, date: todaydate, file: "", line: 0}); //add the prompt as the first item.
     return ret;
 
 }

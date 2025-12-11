@@ -438,6 +438,43 @@ def downloadMidiFile(midilink, force=False):
     return midisize
 
 
+def get_relative_file_paths_os(root_dir):
+    relative_paths = []
+    for dirpath, _, filenames in os.walk(root_dir):
+        for filename in filenames:
+            # Combine the directory path and filename to get the full path
+            full_path = os.path.join(dirpath, filename)
+            # Calculate the path relative to the initial root directory
+            rel_path = os.path.relpath(full_path, start=root_dir)
+            relative_paths.append(rel_path)
+    return relative_paths
+
+#local transcripts from keyboard usage and transcribed commands.  
+def saveLocalTranscripts():
+    #upload to folder any transcripts in local folder
+    tfolder = 'transcripts/'
+    transcript_path = "../" + tfolder
+    #recursively go through all files in the transcript path
+    allfiles = get_relative_file_paths_os(transcript_path)
+    print(f"Checking {len(allfiles)} transcripts:")
+    print(allfiles)
+    uploadedfiles = []
+    for file in allfiles:
+        #check if exists in firebase storage
+        bucket = storage.bucket()
+        blob = bucket.blob(tfolder + file)
+        if not blob.exists():            
+            blob.upload_from_filename(transcript_path + file)
+            # Opt : if you want to make public access from the URL
+            blob.make_public()
+            uploadedfiles.append(tfolder + file)
+
+    print(f"Uploaded {len(uploadedfiles)} transcripts:")
+    print(uploadedfiles)
+
+    return uploadedfiles
+
+
 def writeTranscripts(alltranscripts):
     #this should be a separate function.  
     #append to the existing transcript file.  

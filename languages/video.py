@@ -65,16 +65,16 @@ class video:
     #load language specific data into the config.  
     default = {
       "2": {
+         "Pause": [49,48], #pause video
+         "Unpause": [49,50], #unpause video
       },
       "3": {
-        "Start": [49,60,61], #Start recording
-        "Stop": [49,61,60], #stop recording
-        "Help": [49,50,51], 
-        "Pause": [49,50,52], #pause video
-        "Unpause": [49,50,53], #unpause video
-        "Comment": [49,56, 57], #record comment
-        "Screenshot": [49,52,55], #take screenshot
-        "Zoomshot": [49,52,56], #take zoomed screenshot
+        "Start": [49,61,62], #Start/resume recording
+        "Stop": [49,61,60], #stop/pause recording
+        "Help": [49,61,50], 
+        "Comment": [49,53, 56], #record comment
+        "Screenshot": [49,53,55], #take screenshot
+        "Zoomshot": [49,53,57], #take zoomed screenshot
       }
     }
     if (self.name in self.config['languages']):
@@ -102,23 +102,38 @@ class video:
   #act differently based on words in sequence.    
   def act(self, cmd, words=[], sequence=[]):
     """ACT based on command and sequence."""
+    logger.info("-> "+ cmd + " " + str(sequence))
     if (len(sequence) == 0 and "_" + cmd in self.funcdict):
       #run prefix command
+      logger.info("-_> "+ cmd + " " + str(sequence))
       func = self.funcdict["_" + cmd]
       if hasattr(self, func):
         return getattr(self, func)(sequence)
       
     elif cmd in self.funcdict:
+      logger.info("--> "+ cmd + " " + str(sequence))
       func = self.funcdict[cmd]
-      self.func = func
       #all require keybot at end.
 
       #this function called every time a key is pressed.
+
+
       if hasattr(self, func + "_"):
-        return getattr(self, func + "_")(sequence)
-      
+        #no return here..
+        if getattr(self, func + "_")(sequence) > 0:
+          #no function, run sequence through mk.key
+          a = 0
+        else:
+          logger.info(f'--> {func}_')
+          if (len(sequence) == 1 and sequence[-1] == self.keybot):
+            a = 0 #continue logic and see if we need to end.  
+          elif (len(sequence) > 1 and sequence[-2:] == [self.keybot, self.keybot]):
+            a = 0 #continue logic and see if we need to end.
+          else:
+            return -len(sequence)-1 #indicate handled, can look for other words from what position
+
       if hasattr(self, func):
-        if (len(sequence) == 1 and sequence[0] == self.keybot):
+        if (len(sequence) == 1 and sequence[-1] == self.keybot):
           return getattr(self, func)(sequence[:-1])
         elif (len(sequence) > 1 and sequence[-2:] == [self.keybot, self.keybot]):
           return getattr(self, func)(sequence[:-2])
@@ -126,7 +141,14 @@ class video:
           return 1 #need more keys.
       else:
         logger.error(f"Function {func} not found in {self.__class__.__name__}")
+
+
+
+      
     else:
+      print(f"{self.funcdict}")
+      logger.info(f"{self.funcdict}")
+      logger.error(f"Command {cmd} not found in function maps")
       print(f"Command {cmd} not found in function maps")
     return -1
   
@@ -193,6 +215,7 @@ class video:
         if (bbox[3] > self.geo.y()+self.geo.height()):
             bbox[3] = self.geo.y()+self.geo.height()
     return bbox
+
   
   def get_bbox(self, sequence=[]):
     """Get BBOX from sequence."""
@@ -257,10 +280,22 @@ class video:
         self.qr += f"$${k}={v}\n"
     return 0  
   
+  def screenshot_(self, sequence=[]):  
+    if (len(sequence) >= 4):
+      #calc new BBOX from sequence and display
+      self.bbox = self.get_bbox(sequence)
+      logger.info(f'> Screenshot_ {sequence}')
+      logger.info(f'$$BBOX={self.bbox}')
+      #show bbox on screen for user to see
+      return 0
+
   def screenshot(self, sequence=[]):
     """Take Screenshot."""
+    #always in groups of 4 for bbox
+    #no need, this should be done..
     self.bbox = self.get_bbox(sequence)
-    logger.info(f'> Screenshot {sequence} {self.bbox}') 
+    logger.info(f'> Screenshot {sequence}') 
+    logger.info(f'$$BBOX={self.bbox}')
 
     #qr specific to current action.
     self.set_qr(self.func, {'BB': self.ar2str(self.bbox), 'SEQ': self.ar2str(sequence)})
@@ -268,11 +303,10 @@ class video:
     self.draw_screen_box(self.bbox)
     return 0
 
-  def screenshot_(self, sequence=[]):
+  def _screenshot(self, sequence=[]):
     """Take Screenshot."""
-    self.bbox = self.get_bbox(sequence)
-    logger.info(f'> Screenshot_ {sequence} {self.bbox}') 
-    #show bbox on screen for user to see
+    logger.info(f'> _Screenshot {sequence}')
+    #show bbox on screen for user to see?
     return 0
 
   def zoomshot(self, sequence=[]):

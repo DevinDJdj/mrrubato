@@ -13,6 +13,7 @@ import time
 import sys
 import threading
 import multiprocessing
+import subprocess
 import psutil
 
 from queue import Queue
@@ -433,12 +434,50 @@ def get_similar(idx, ldmap, topk=3):
         return results
     return []
 
-def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=None, q=None, q2=None, q3=None):
+
+def get_voices(lang='en'):
+    #call edge tts to get voices for language
+    voices = []
+    result = subprocess.run(['edge-tts', '--list-voices'], capture_output=True, text=True, check=True)
+    output = result.stdout
+    voices_lines = output.strip().split('\n')
+    print(f'Found {len(voices)} voices for language {lang}')
+    for line in voices_lines:
+        try:
+            # The output format is "Name: ..., ShortName: ..., Gender: ..., Locale: ..."
+            # We need to parse this string format as it's not standard JSON array
+            voice_details = {}
+            # Split by the key-value separator
+            parts = line.split(', ')
+            for part in parts:
+                if ':' in part:
+                    key, value = part.split(': ', 1)
+                    voice_details[key.strip()] = value.strip()
+            
+            # Check if the 'Locale' or 'ShortName' indicates English
+            # English locales generally start with 'en-'
+            if 'Locale' in voice_details and voice_details['Locale'].startswith(lang):
+                voices.append(voice_details)
+            elif 'ShortName' in voice_details and voice_details['ShortName'].startswith(lang):
+                voices.append(voice_details)
+                
+        except Exception as e:
+            # Skip lines that don't match the expected format
+            continue
+    return voices
+
+def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=None, q=None, q2=None, q3=None, lang='en'):
 
     skipmenu = True
     sound_file = "0.mp3"
-    VOICES = ["en-US-AriaNeural", "en-US-CoraNeural", "en-US-ElizabethNeural", "en-US-AshleyNeural", "en-US-AvaNeural", "en-US-BrandonNeural", "en-US-BrianNeural", "en-US-EmmaNeural", "en-US-EricNeural"]
-    VOICE = "en-US-AriaNeural"
+    if lang is None or lang == '':
+        #detect language if long enough?          
+        lang = 'en'
+    
+    VOICES = get_voices(lang)
+    if (len(VOICES) == 0):        
+        VOICES = ["en-US-AriaNeural", "en-US-CoraNeural", "en-US-ElizabethNeural", "en-US-AshleyNeural", "en-US-AvaNeural", "en-US-BrandonNeural", "en-US-BrianNeural", "en-US-EmmaNeural", "en-US-EricNeural"]
+#    VOICE = "en-US-AriaNeural"
     #for now random.  
     VOICE = VOICES[int(time.time()) % len(VOICES)]
 
@@ -714,7 +753,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
 #    os.remove(sound_file) # Clean up the sound file
 #    sys.exit() # Exit the thread when done
 
-def speak(text, links = [], offset=0):
+def speak(text, links = [], alt_text=[], offset=0, lang='en'):
     global audio_stop_events
     """Speak the given text using the speech pipeline."""
 #    print(f'Speaking: {text}')
@@ -731,7 +770,7 @@ def speak(text, links = [], offset=0):
     q3 = Queue()
 
     print(audio_stop_events)
-    audio_thread = threading.Thread(target=play_in_background, args=(f'{text}',links, offset, audio_stop_event, audio_skip_event, q, q2, q3))
+    audio_thread = threading.Thread(target=play_in_background, args=(f'{text}',links, offset, audio_stop_event, audio_skip_event, q, q2, q3, lang))
     audio_thread.start()
     return q2, q3, audio_stop_event #communicate how much we have read.  
 
@@ -1011,7 +1050,7 @@ class MyWindow(QMainWindow):
 
         # set the title
 
-        self.setWindowOpacity(0.4)
+        self.setWindowOpacity(0.2) 
         #Qt.WA_TransparentForMouseEvents | Qt.WindowTransparentForInput to make click-through
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool | Qt.WA_TransparentForMouseEvents | Qt.WindowTransparentForInput)
         screens = qapp.screens()

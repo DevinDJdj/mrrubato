@@ -470,7 +470,7 @@ class hotkeys:
         tr = playwrighty.update_page_offset()
 #        tr -= (lag * 11) #assume 12 chars per second read. this is our timer.. 
 
-        textduration = duration*2
+        textduration = duration*3 #some extra lag here.  
 
         #too much lag to be accurate at the moment.  Maybe get better info with longer transcript..
         original = playwrighty.get_text(-1, tr, textduration+lag) 
@@ -604,6 +604,27 @@ class hotkeys:
 
 
 
+  def _click_link(self, sequence=[]):
+    logger.info(f'> _Click Link {sequence}')
+    print("> _Click Link")
+    #display links on page.  
+    return 1
+  
+  def click_link_(self, sequence=[]):
+    if (len(sequence) == 1):
+
+      logger.info(f'> Click Link_ {sequence}')
+      print("> Click Link_")
+      #possibly handle here instead of end..
+      total_read = 0
+      total_read = playwrighty.update_page_offset()
+      links = playwrighty.get_links(total_read)
+      #display links
+      for i, link in enumerate(links):
+        print(f'Link {i}: {link["text"]} ({link["url"]})')
+      return 0 #handled, this function will not be called again with further parameters.
+    return 1
+  
   def click_link(self, sequence=[]):
     if (len(sequence) < 1):
       sequence = [53] #default to first link
@@ -631,9 +652,10 @@ class hotkeys:
         body_text, link_data, page, cacheno = a
         self.links = link_data
         print(body_text)
+        lang = playwrighty.detect_language(cacheno)
         total_read = playwrighty.get_bookmark(page.url, cacheno)
-
-        q2, q3, stop_event = self.speak(body_text, link_data, total_read) #add offset to skip until where we were.)
+        alt_text = playwrighty.page_cache[cacheno]['alt_text']
+        q2, q3, stop_event = self.speak(body_text, link_data, alt_text, total_read, lang) #add offset to skip until where we were.)
         playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
         return 0
       else:
@@ -683,6 +705,9 @@ class hotkeys:
   def pause_reader(self, sequence=[]):
     logger.info(f'> Pause Reader {sequence}')
     from extensions.trey.trey import pause_reader
+    cacheno = -1
+    if (len(sequence) > 0):
+      cacheno = sequence[-1]-self.keybot
     pause_reader()
     self.add_bookmark()
     return 0
@@ -796,10 +821,10 @@ class hotkeys:
         
       return 0
 
-  def speak(self, text, links=[], alt_text_data=[], total_read=0):
+  def speak(self, text, links=[], alt_text_data=[], total_read=0, lang="en"):
     from extensions.trey.trey import speak
 #    print(f'Speaking: {text}')
-    return speak(text, links, total_read)
+    return speak(text, links, alt_text_data, total_read, lang)
 
   
   def ocr_image(self, img):

@@ -945,3 +945,65 @@ OK, we are getting > 112 now.
 test text2seq and seq2text.  
 
 Play midi transcripts as we play..
+
+**timestep.py
+Need to upload transcripts folders.  
+--saveLocalTranscripts
+test..
+
+
+**play.py
+
+#https://github.com/onlaj/Piano-LED-Visualizer
+fun..
+#https://github.com/EliasAlesand/MIDI-lights/blob/master/MIDI-lights.py
+
+Add python visualizer
+
+
+**extensions/trey/trey.py
+Try a lighter overlay adjust this when taking screenshot?  
+        self.setWindowOpacity(0.4) 
+        -> 0.2
+        QR Code may not be readable..
+Try this combination
+Screenshot -> Record Feedback
+or vice versa 
+
+Load latest commands from transcript.  
+Create auto-complete for keyed commands.  
+
+
+
+How do we allow transcript sharing?  
+Too time-consuming at the moment..
+Should think about mechanism though..
+
+Similarity search across transcripts should be fairly easy and meaningful.  
+Get user/date etc.  
+
+
+Need multilingual TTS and STT
+TTS should be fairly easy just adjust
+--speak
+pass language param.  
+List voices for language.  
+Select one..
+> edge-tts --list-voices
+
+Beep when complete..
+
+
+@@github
+so many errors recently.  
+Can we prioritize human users please.  
+
+#https://github.com/miroslavpejic85/mirotalk
+P2P Javascript version of this would be better.  
+Check more..
+
+
+**extensions/vscode/codetutor/src/book.ts
+Do query expansion on similar function.  
+Then pass expanded query to vector DB.  
+

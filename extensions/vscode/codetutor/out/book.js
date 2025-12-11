@@ -63,11 +63,13 @@ exports.closeFileIfOpen = closeFileIfOpen;
 exports.getFileName = getFileName;
 exports.updatePage = updatePage;
 exports.getChat = getChat;
+exports.getExpanded = getExpanded;
 exports.getSummary = getSummary;
 exports.getChunks = getChunks;
 exports.getReadableName = getReadableName;
 exports.markdown = markdown;
 exports.summary = summary;
+exports.expandPrompt = expandPrompt;
 exports.similar = similar;
 exports.loadPage = loadPage;
 exports.getBookPath = getBookPath;
@@ -930,6 +932,41 @@ async function getChat(input, model = 'llama3.1:8b') {
     });
     return response["message"]["content"];
 }
+async function getExpanded(input, MAX_MULT = 3) {
+    //expand the input by a factor of MAX_MULT.
+    //use exp(number) to determine how much to expand.  
+    let expansionfactor = Math.exp(MAX_MULT);
+    //get the summary of the chunks.  
+    //this will be used to summarize the book.
+    let expanded = input;
+    let expandme = await ollama_1.default.chat({
+        model: 'llama3.1:8b',
+        //            model: 'deepseek-coder-v2:latest',
+        //deepseek-r1:latest 
+        //granite-code:latest
+        //codegemma:latest 
+        //model: 'gemma3n:latest',
+        //model: 'gemma3:4b',
+        //            model: 'granite3.3:8b',
+        messages: [
+            { role: 'system', content: `You are expanding a brief summary of text 
+                and creating an expanded version.  ::ABRIDGED VERSION::\n**MYTOPIC\n Brief text which is being expanded.  
+                ::EXPANDED VERSION::  **MYTOPIC\nExpanded explanation which is significantly longer than the original brief text. Roughly $$${expansionfactor.toFixed(2)} times the size.
+                **ADDITIONALTOPIC\nWhen creating the expanded version, the same writing style and syntax as the original is used.  It continues on below ` },
+            { role: 'user', content: `::ABRIDGED VERSION::\n
+                ${input}\n
+                ::NOTES::\n
+                Using the above I have expanded the content to include more details, examples, and explanations.
+                Here is the expanded version.  I tried to use about ${(expansionfactor * input.length / 4).toFixed(2)} words.\n
+                ::EXPANDED VERSION::\n` }
+        ]
+    });
+    if (expandme["message"]["content"] === undefined) {
+        console.log("Error expanding content.");
+        return input; //return the original input if there was an error.
+    }
+    return expandme["message"]["content"];
+}
 async function getSummary(input, CTX_WND = 5000) {
     //get the summary of the chunks.  
     //this will be used to summarize the book.
@@ -1090,10 +1127,17 @@ async function summary(prompt) {
     console.log(`Summary: ${summary}`);
     return prompt + "\n" + summary;
 }
+async function expandPrompt(prompt) {
+    //expand the prompt to include more context.
+    //for now just return the prompt.
+    return Promise.resolve(await getExpanded(prompt, 3)); //exponential expansion
+    return Promise.resolve(prompt);
+}
 async function similar(prompt) {
     //this will be used to find similar topics in the book.  
     //for now just return the topics in the book.
-    let selectedtopics = findInputTopics(prompt);
+    let expandedprompt = await expandPrompt(prompt); //expand the prompt to include more context.
+    let selectedtopics = findInputTopics(prompt + "\n" + expandedprompt);
     console.log("Selected topics: ", selectedtopics);
     let bvFolder = getUri(bookvectorFolder);
     let pathParts = [];
@@ -1113,7 +1157,8 @@ async function similar(prompt) {
         pathParts.push([""]);
     }
     let model = 'nomic-embed-text'; //default model to use for embedding.
-    let vec = await getVector(prompt, model);
+    //here only pass expanded prompt.. otherwise too much bias to the ** topics.
+    let vec = await getVector(expandedprompt, model);
     let ret = [];
     let ret2 = [];
     for (let j = 0; j < pathParts.length; j++) {
@@ -1224,6 +1269,9 @@ async function similar(prompt) {
             }
         }
     }
+    let today = new Date();
+    let todaydate = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+    ret.push({ topic: "PROMPT", data: expandedprompt, date: todaydate, file: "", line: 0 }); //add the prompt as the first item.
     return ret;
 }
 async function getVector(text, model = 'nomic-embed-text') {

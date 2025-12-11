@@ -379,7 +379,7 @@ function activate(context) {
                 doc += `[${item.topic}](${filename})  \n`;
                 let fname = item.file.replace(wsUri.path, '');
                 doc += `[${fname}:${item.line}](${item.file}#L${item.line})  \n`;
-                let data = item.data.substring(item.topic.length + 2, 300);
+                let data = item.data.substring(item.topic.length + 2, 400);
                 doc += `${data} $$  \n`;
             }
             stream.markdown(doc);

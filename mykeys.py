@@ -286,13 +286,13 @@ class MyKeys:
 
         self.languages[l].transcript = "" #reset transcript after adding to midi.
 
-
       return self.sequence
 #      self.reset_sequence()
 #      self.currentcmd = None
     elif (action < -1):
       #error in action
       logger.info(f'> <{l}>{cmd}_ {ss}')
+      winsound.Beep(1000, 250) #beep to end success
       #reset command sequence to current sequence number.  
       # This command only needs closure keys.  
       
