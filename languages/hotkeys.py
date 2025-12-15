@@ -30,6 +30,7 @@ class hotkeys:
     self.keymid = 7 #middle C for bbox calc
     self.keyoffset = 5 #offset within octave mapping
     self.links = []
+    self.currentlinks = []
     self.maxseq = 10 #includes parameters
     self.callback = None
     self.transcript = ""
@@ -208,6 +209,7 @@ class hotkeys:
       "Skip Lines": "skip_lines",
       "Page": "page",
       "Click Link": "click_link",
+      "_Click Link": "_click_link",
       "Find Last": "find_last",
       "Search Web": "search_web",
       "Comment": "comment",
@@ -225,10 +227,12 @@ class hotkeys:
     self.load_bookmarks()
     return 0  
 
+  
   #act differently based on words in sequence.    
   def act(self, cmd, words=[], sequence=[]):
     """ACT based on command and sequence."""
     logger.info("-> "+ cmd + " " + str(sequence))
+    #need _ prefix in funcdict.  
     if (len(sequence) == 0 and "_" + cmd in self.funcdict):
       #run prefix command
       logger.info("-_> "+ cmd + " " + str(sequence))
@@ -279,6 +283,13 @@ class hotkeys:
     return -1
   
 
+  def set_qr(self, func, param={}):
+    """Set QR."""
+    self.qr = "$$F=" + func + "\n"
+    for k,v in param.items():
+        self.qr += f"$${k}={v}\n"
+    return 0  
+  
   def comment(self, sequence=[]):
     #start recording on 0, but return 1
     from extensions.trey.speech import transcribe_audio, listen_audio
@@ -473,6 +484,7 @@ class hotkeys:
         textduration = duration*3 #some extra lag here.  
 
         #too much lag to be accurate at the moment.  Maybe get better info with longer transcript..
+        url = playwrighty.get_url(-1)      
         original = playwrighty.get_text(-1, tr, textduration+lag) 
         original = original.replace('\n','  ')
         original = original.upper()
@@ -485,13 +497,15 @@ class hotkeys:
         ostart = 0
         end = len(self.transcript)
         oend = duration*12
-
         #ScoreAlignment(score=27.77777777777778, src_start=0, src_end=24, dest_start=28, dest_end=40)
         ff = fuzz.partial_ratio_alignment(self.transcript, original)
         print(ff)
         print("$$FEEDBACK=" + self.transcript)
-        print("$$ORIGINAL=" + original)
-
+        print("$$ORIGINAL=" + original)        
+        if (end < oend/3):
+          print('!!Feedback shorter than expected')
+          #too short.. not detected properly?  
+          return -1
         #is this a match in our eyes.  Only want good data.  
         #play around with params here as model diverges / converges ..
         if (score in ff and ff.score > 25 and (ff.src_end - ff.src_start) > len(self.transcript)-4 and (ff.dest_end - ff.dest_start) / (ff.src_end - ff.src_start) > 0.7):
@@ -510,6 +524,9 @@ class hotkeys:
               f.write(f'$$DURATION=' + str(duration) + '\n')
               f.write(f'$$FEEDBACK=' + self.transcript + '\n')
               if (playwrighty.mybrowser is not None):
+                lang = playwrighty.detect_language()
+                f.write(f'$$LANG=' + lang + '\n') #assume same lang as page..
+                #f.write(f'$$URL=' + url + '\n') #not sure we want this..
                 f.write(f'$$TRANSCRIPT=' + original + '\n')
                 f.write(f'$$LAG={lag}\n')
                 f.write(f'$$SCORE={score}\n')
@@ -604,10 +621,24 @@ class hotkeys:
 
 
 
+
   def _click_link(self, sequence=[]):
     logger.info(f'> _Click Link {sequence}')
     print("> _Click Link")
     #display links on page.  
+    #possibly handle here instead of end..
+    total_read = 0
+    total_read = playwrighty.update_page_offset()
+    links = playwrighty.get_links(-1, total_read)
+    #display links
+    for i, link in enumerate(reversed(links)): #start from most recent..
+      self.currentlinks.append(link["text"])
+
+    for i, link in enumerate(links):
+      print(f'Link {i}: {link["text"]} ({link["url"]})')
+    self.set_qr(self.func, {'links': self.currentlinks})
+    #update display.  
+    
     return 1
   
   def click_link_(self, sequence=[]):
@@ -615,13 +646,6 @@ class hotkeys:
 
       logger.info(f'> Click Link_ {sequence}')
       print("> Click Link_")
-      #possibly handle here instead of end..
-      total_read = 0
-      total_read = playwrighty.update_page_offset()
-      links = playwrighty.get_links(total_read)
-      #display links
-      for i, link in enumerate(links):
-        print(f'Link {i}: {link["text"]} ({link["url"]})')
       return 0 #handled, this function will not be called again with further parameters.
     return 1
   
