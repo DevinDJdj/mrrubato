@@ -27,13 +27,15 @@ from pynput import keyboard, mouse
 #MIDI libraries
 import mido
 
+import random
 
 #UI components
 import pystray
 from PIL import Image, ImageDraw
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QLabel
 from PyQt5.QtGui import QPixmap, QPainter, QPen, QBrush
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QObject, pyqtSignal
+import PyQt5.QtCore as QtCore
 import win32gui
 import win32process
 import win32api
@@ -47,6 +49,7 @@ sys.path.insert(1, 'c:/devinpiano/music/') #config.py path Base project path
 import config 
 import mykeys
 
+import tts
 #from kokoro import KPipeline
 #from IPython.display import display, Audio
 #import soundfile as sf
@@ -96,6 +99,9 @@ audio_location_queue = []
 speech_pipe = None
 active_window = None  # Global variable to store the active window handle
 
+
+global all_voices
+all_voices = []
 global windows
 windows = {}
 
@@ -107,6 +113,8 @@ global myactions
 myactions = []  # Global list to store sequential actions
 global current_qrdata
 current_qrdata = ""
+global incoming_qrdata
+incoming_qrdata = ""
 global current_bbox
 current_bbox = None
 
@@ -437,7 +445,14 @@ def get_similar(idx, ldmap, topk=3):
 
 def get_voices(lang='en'):
     #call edge tts to get voices for language
+    #cache results only call once.  
     voices = []
+    if (len(all_voices) > 0):
+        for v in all_voices:
+            if (('Locale' in v and v['Locale'].startswith(lang)) or ('ShortName' in v and v['ShortName'].startswith(lang))):
+                voices.append(v)
+        return voices
+    
     result = subprocess.run(['edge-tts', '--list-voices'], capture_output=True, text=True, check=True)
     output = result.stdout
     voices_lines = output.strip().split('\n')
@@ -453,6 +468,7 @@ def get_voices(lang='en'):
                 if ':' in part:
                     key, value = part.split(': ', 1)
                     voice_details[key.strip()] = value.strip()
+            all_voices.append(voice_details)
             
             # Check if the 'Locale' or 'ShortName' indicates English
             # English locales generally start with 'en-'
@@ -469,12 +485,15 @@ def get_voices(lang='en'):
 def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=None, q=None, q2=None, q3=None, lang='en'):
 
     skipmenu = True
-    sound_file = "0.mp3"
+
+    sound_file = f"{random.randint(0, 100)}.mp3"
     if lang is None or lang == '':
         #detect language if long enough?          
         lang = 'en'
-    
-    VOICES = get_voices(lang)
+    try:
+        VOICES = get_voices(lang)
+    except:
+        VOICES = []
     if (len(VOICES) == 0):        
         VOICES = ["en-US-AriaNeural", "en-US-CoraNeural", "en-US-ElizabethNeural", "en-US-AshleyNeural", "en-US-AvaNeural", "en-US-BrandonNeural", "en-US-BrianNeural", "en-US-EmmaNeural", "en-US-EricNeural"]
 #    VOICE = "en-US-AriaNeural"
@@ -557,8 +576,11 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
             print(f'{l}')
             sound_file = f"./temp/overview.mp3"
             lesc = lines[0] if (len(lines[0]) < 200) else lines[0][:200]
-
-            os.system(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --text \"{lesc}\" --rate=\"-10%\"")
+            print(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --text \"{lesc}\" --rate=\"-10%\"")
+            suc = os.system(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --text \"{lesc}\" --rate=\"-10%\"")
+            if (suc != 0):
+                print(f'Error generating overview audio')
+                tts.speak(lesc, VOICE, sound_file)
             playsound(sound_file, block=False) # Ensure this thread blocks for its sound
 
         if (stop_event.is_set()):
@@ -640,7 +662,12 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
                     sound_file = f"./temp/{idx}.mp3"
                     subtitle_file = f"./temp/{idx}.srt"
                     lesc = l.replace('"', '\\"')
-                    os.system(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --text \"{lesc}\" --write-subtitles \"{subtitle_file} --rate=\"-10%\"")
+
+                    suc = os.system(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --text \"{lesc}\" --write-subtitles \"{subtitle_file} --rate=\"-10%\"")
+                    if (suc != 0):
+                        print(f'Error generating overview audio')
+                        tts.speak(lesc, VOICE, sound_file)
+
 #                    sound_file = f"./temp/{idx}.wav"
                     #fast not working.. edge-tts much better quality than speechbrain tts.
 #                    cmd = f"python ./extensions/trey/speech.py --text \"{l}\" --fname \"{sound_file}\""
@@ -1034,7 +1061,10 @@ def _hide(data):
     get_window_details()
 
 
-    
+
+class Communicate(QtCore.QObject):
+    mySignal = QtCore.pyqtSignal(int)
+
 class MyWindow(QMainWindow):
 
 
@@ -1288,9 +1318,19 @@ def get_midi_ports():
     return inputs, outputs
 
 
+def updateQR(idx):
+    global incoming_qrdata
+    global current_qrdata
+    if (incoming_qrdata != current_qrdata):
+        current_qrdata = incoming_qrdata
+        update_qr_code(incoming_qrdata)
+
 def handle_keys():
     global midiout, midiin
     global mk
+    c = Communicate()
+    c.mySignal.connect(updateQR)
+
     with midiin as inport:
         while (not midi_stop_event.is_set()):
             for msg in inport.iter_pending():
@@ -1306,7 +1346,10 @@ def handle_keys():
                         #add key to sequence and check for any actions.  
                         a = mk.key(note, msg, callback=None)
                         #every note adjust the QR code in case something changed.
-                        #update_qr_code(mk.get_qr(), mk.get_bbox())
+                        global incoming_qrdata
+                        incoming_qrdata = mk.get_qr()
+                        c.mySignal.emit(0)
+                        #update QR code if changed.
 
 #                        if (a == -1):
                             #error or reset
@@ -1329,6 +1372,7 @@ def run_midi(stop_event, kill_event):
     mk = mykeys.MyKeys(config.cfg, qapp, mywindow.startx, stop_event)
     logger.info('Starting MIDI input/output')
     init_inputs()
+    
     #Portable Grand-1 2
     #should really have some config selection here.  
     mk.start_feedback() #play feedback if enabled.  This takes some time apparently to start thread.  

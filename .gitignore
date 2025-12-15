@@ -60,3 +60,5 @@ analyze/runs/*
 temp/*
 pretrained**/*
 models/*
+
+web/public/test/MultiRTC-firebase/*

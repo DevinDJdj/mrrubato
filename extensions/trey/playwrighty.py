@@ -36,6 +36,18 @@ mycontext = None
 current_cache = -1 #current cache page we are on.
 
 
+def get_url(cacheno=-1):
+    """Get URL from the cached page."""
+    global current_cache
+    if (cacheno < 0):
+        cacheno = current_cache
+    if cacheno < len(page_cache):
+        page_info = page_cache[cacheno]       
+        return page_info['url']
+    else:
+        logging.warning(f'Cache number {cacheno} out of range')
+        return ""
+    
 def get_text(cacheno=-1, total_read=0, duration=5):
     """Get text from the cached page starting at total_read offset."""
     global current_cache

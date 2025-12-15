@@ -993,6 +993,8 @@ Select one..
 
 Beep when complete..
 
+Logic is there, try different language..
+
 
 @@github
 so many errors recently.  
@@ -1006,4 +1008,131 @@ Check more..
 **extensions/vscode/codetutor/src/book.ts
 Do query expansion on similar function.  
 Then pass expanded query to vector DB.  
+Better..
 
+
+#https://github.com/bigbluebutton/bigbluebutton
+
+#https://github.com/muaz-khan/MultiRTC/tree/master/MultiRTC-firebase
+Yeah try this..
+
+Best to have real-time ability.  
+
+
+**web/public/test/MultiRTC-firebase/index.html
+Could we just use this?  
+> npm install multirtc-firebase
+
+**web/public/test/MultiRTC-firebase/RTCMultiConnection.js
+Adjust DB.  
+Not working..
+
+#https://github.com/fireship-io/webrtc-firebase-demo
+
+**web/public/test/webrtc-firebase-demo
+see if this works..
+
+#https://webrtc.org/getting-started/firebase-rtc-codelab
+#https://github.com/webrtc/FirebaseRTC
+meh.. try..
+
+
+
+**extensions/trey/trey.py
+German
+#https://huggingface.co/speechbrain/asr-crdnn-commonvoice-de
+Japanse model
+speechbrain/lang-id-voxlingua107-ecapa
+#https://huggingface.co/jonatasgrosman/wav2vec2-large-xlsr-53-japanese
+#https://dataloop.ai/library/model/kotoba-tech_kotoba-whisper-v10/
+
+Try german first as easy to integrate with SpeechBrain.  
+
+
+**extensions/trey/testspeechbrain.py
+--train_model
+#https://github.com/speechbrain/speechbrain/blob/develop/recipes/CommonVoice/common_voice_prepare.py
+
+
+#https://stackoverflow.com/questions/45556440/pyqt-emit-signal-from-threading-thread
+
+
+**extensions/trey/trey.py
+--handle_keys
+test PyQT5 comm signal..
+
+Need to add feedback URLs to QR code info for recording.  
+Any visited pages since starting recording.  
+
+Trey should not have any backend interaction, purely a window recorder.  
+
+**web/public/rec.html
+No interaction between [trey.py] other than QR code..
+Possibly to set recent topic.  
+Should really be in sync though so not needed..
+
+End of recording, detect all Feedback URLs from Frames, and update DB with this info.  
+
+**extensions/trey/trey.py
+--speak
+@edge-tts
+$$20251212
+> edge-tts --text "Hello, this is a test." --voice en-US-EmmaNeural --write-media hello.mp3
+!!edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+Is there a problem?  Commands that used to work no longer do
+
+#https://github.com/rany2/edge-tts/issues/443
+==
+> pip install edge-tts==7.2.1
+$$
+
+
+
+**dictionary/hotkeys.txt
+@@What commands do we want?  
+Web control:
+Select Bookmark
+find = 9
+Search Bookmark
+
+Window control:
+Select Window
+find = 9
+Search Window
+
+create = 10
+Use context from previous selections
+
+book = 2
+allow all prefix commands for writing..
+select topic
+Use US keyboard..
+[2,1] error
+[2,3] reference
+[2,4] variable
+[2,7] none
+[2,14] question
+etc..
+
+i.e.
+[2,1] [select error text] [2,2]
+
+create = 10
+use this for creation of words?  
+words represent sequences of base words or created words.  
+i.e. [10,14,17] [$NUMWORDS] [WORDSEQ] [WORDCLOSURE] [10,10]
+Cant use base octave as start.  
+Use params as is or fixed params..
+
+Use genbook, or book when adding comments?  
+
+
+
+!!aiohttp.client_exceptions.ClientConnectorError: Cannot connect to host speech.platform.bing.com:443 ssl:<ssl.SSLContext object at 0x000002A892B8A150> [The specified network name is no longer available]
+Still get this intermittently.  
+Probably have Request per minute limit.  
+
+Maybe need different solution..
+Perhaps Azure has killed this library..
+
+> pip install pyttsx3

@@ -85,6 +85,8 @@ def getTimeFromSecs(secs):
     seconds = secs % 60
     return f"{minutes:02}:{seconds:02}"
 
+
+    
 def transcribe_audio(fname="example2.wav", start_times=[], end_times=[], use_timestamps=True):
 
     asr_model = EncoderDecoderASR.from_hparams(source="./models/pretrained_ASR")
