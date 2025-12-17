@@ -86,10 +86,13 @@ def getTimeFromSecs(secs):
     return f"{minutes:02}:{seconds:02}"
 
 
-    
+def init_asr_model():
+    asr_model = EncoderDecoderASR.from_hparams(source="./models/pretrained_ASR")
+    return asr_model
+
 def transcribe_audio(fname="example2.wav", start_times=[], end_times=[], use_timestamps=True):
 
-    asr_model = EncoderDecoderASR.from_hparams(source="./models/pretrained_ASR")
+    asr_model = init_asr_model()
     print(f"Transcribing audio... {fname}")
 
     if (fname.startswith('http://') or fname.startswith('https://')):

@@ -635,8 +635,8 @@ class hotkeys:
       self.currentlinks.append(link["text"])
 
     for i, link in enumerate(links):
-      print(f'Link {i}: {link["text"]} ({link["url"]})')
-    self.set_qr(self.func, {'links': self.currentlinks})
+      print(f'Link {i}: {link["text"]} ({link["href"]})')
+    self.set_qr("_Click Link", {'links': self.currentlinks})
     #update display.  
     
     return 1

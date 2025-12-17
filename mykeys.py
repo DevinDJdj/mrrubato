@@ -174,6 +174,11 @@ class MyKeys:
       self.play_thread = threading.Thread(target=synth.play_stream, args=(self.synth_stop_event,))
       self.play_thread.start()
 
+#      from extensions.trey.speech import init_asr_model
+#      self.asr_thread = threading.Thread(target=init_asr_model, args=())
+#      self.asr_thread.start()
+
+
   def unload(self):
     #unload language specific data
     for (l,la) in self.languages.items():

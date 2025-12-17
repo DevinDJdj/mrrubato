@@ -34,7 +34,7 @@ import pystray
 from PIL import Image, ImageDraw
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QLabel
 from PyQt5.QtGui import QPixmap, QPainter, QPen, QBrush
-from PyQt5.QtCore import Qt, QObject, pyqtSignal
+from PyQt5.QtCore import Qt, QObject, pyqtSignal, QThread
 import PyQt5.QtCore as QtCore
 import win32gui
 import win32process
@@ -117,6 +117,8 @@ global incoming_qrdata
 incoming_qrdata = ""
 global current_bbox
 current_bbox = None
+
+global qr_queue
 
 def on_click(x, y, button, pressed):
 
@@ -576,10 +578,10 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
             print(f'{l}')
             sound_file = f"./temp/overview.mp3"
             lesc = lines[0] if (len(lines[0]) < 200) else lines[0][:200]
-            print(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --text \"{lesc}\" --rate=\"-10%\"")
-            suc = os.system(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --text \"{lesc}\" --rate=\"-10%\"")
+            print(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --text \"{lesc}\" --rate=\"-10%\" > NUL 2>&1")
+            suc = os.system(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --text \"{lesc}\" --rate=\"-10%\" > NUL 2>&1")
             if (suc != 0):
-                print(f'Error generating overview audio')
+                print(f'Error generating audio fallback to tts.speak')
                 tts.speak(lesc, VOICE, sound_file)
             playsound(sound_file, block=False) # Ensure this thread blocks for its sound
 
@@ -663,9 +665,10 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
                     subtitle_file = f"./temp/{idx}.srt"
                     lesc = l.replace('"', '\\"')
 
-                    suc = os.system(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --text \"{lesc}\" --write-subtitles \"{subtitle_file} --rate=\"-10%\"")
+#                    suc = os.system(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --text \"{lesc}\" --write-subtitles \"{subtitle_file} --rate=\"-10%\" > NUL 2>&1")
+                    suc = os.system(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --text \"{lesc}\" --rate=\"-10%\" > NUL 2>&1")
                     if (suc != 0):
-                        print(f'Error generating overview audio')
+                        print(f'Error generating audio fallback to tts.speak')
                         tts.speak(lesc, VOICE, sound_file)
 
 #                    sound_file = f"./temp/{idx}.wav"
@@ -736,7 +739,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
                         try:
                             sound_file = f"./temp/sim{rid}.mp3"
                             lesc = siml.replace('"', '\\"')
-                            os.system(f"edge-tts --voice \"{voice}\" --write-media \"{sound_file}\" --text \"Similar: {lesc}\" --rate=\"+20%\" --volume=-40%")
+                            os.system(f"edge-tts --voice \"{voice}\" --write-media \"{sound_file}\" --text \"Similar: {lesc}\" --rate=\"+20%\" --volume=-40% > NUL 2>&1")
                             playsound(sound_file, block=False) # Ensure this thread blocks for its sound
 
                         except Exception as e:
@@ -951,7 +954,8 @@ def draw_overlay(delay=10): #default hide in 10 seconds
 
     temp = win32gui.GetForegroundWindow()
     rect = win32gui.GetWindowRect(temp)
-    qrdata = ""
+    global current_qrdata
+    qrdata = current_qrdata #use QR data we have received.  
     if (in_trey(rect)):
         active_window = temp
 
@@ -1065,14 +1069,56 @@ def _hide(data):
 class Communicate(QtCore.QObject):
     mySignal = QtCore.pyqtSignal(int)
 
+
+# Step 1: Create a worker class
+class Worker(QObject):
+    finished = pyqtSignal()
+    progress = pyqtSignal(int)
+
+    def __init__(self, my_queue, parent=None):
+        super(Worker, self).__init__(parent)
+        self.my_queue = my_queue # Store parameter in the worker instance
+
+    def run(self):
+        """Long-running task."""
+        while (self.my_queue is not None):
+            while (not self.my_queue.empty()):
+                qrdata = self.my_queue.get() #get current link number.  
+                logger.info(f'Worker processing QR data: {qrdata}')
+                mywindow.showQR(qrdata)
+                time.sleep(0.2) #allow for QR data to be processed by any reader.  
+                self.progress.emit(0) #can pass param here as well.  
+            time.sleep(1) #wait before checking again
+        self.finished.emit()
+
 class MyWindow(QMainWindow):
 
+    def reportProgress(self, n):
+        logger.info(f"Incoming QR: {n}")
+    # Snip...
+    def runQRThread(self):
+        # Step 2: Create a QThread object
+        self.thread = QThread()
+        # Step 3: Create a worker object
+        self.worker = Worker(self.queue)
+        # Step 4: Move worker to the thread
+        self.worker.moveToThread(self.thread)
+        # Step 5: Connect signals and slots
+        self.thread.started.connect(self.worker.run)
+        self.worker.finished.connect(self.thread.quit)
+        self.worker.finished.connect(self.worker.deleteLater)
+        self.thread.finished.connect(self.thread.deleteLater)
+        self.worker.progress.connect(self.reportProgress)
+        # Step 6: Start the thread
+        self.thread.start()
 
-    def __init__(self):
+
+    def __init__(self, q=None):
         super().__init__()
         self.highlightrect = {'x': 100, 'y': 100, 'width': 200, 'height': 200}
         self.highlighton = False
         self.startx = 0
+        self.queue = q
         self.geo = None
         self.windowlabels = {} #list of window details by pid
         self.windowcounter = 0
@@ -1129,6 +1175,10 @@ class MyWindow(QMainWindow):
         t = threading.Timer(3, _hide, args=["Hello from Timer!"])
         t.start()  # Start the timer in a new thread
         logger.info('Window created')
+        self.runQRThread() #
+
+        #start internal thread to check the queue for updates.  
+        #and update the window when there is new data.  
 
 
     def hideme(self):
@@ -1143,6 +1193,7 @@ class MyWindow(QMainWindow):
         qrdata = data
         #if we need to truncate
         print(f'QR data length: {len(qrdata)}')
+        print(qrdata)
         if (len(qrdata) > 1500):
             qrdata = qrdata[0:1500] #truncate to 1500 bytes max for QR code.
             qrdata += "\n...\n$$\n"
@@ -1297,6 +1348,8 @@ def stop_midi(kill=False):
 
 
 def start_midi():
+    global qr_queue
+
     global midi_stop_event
     global midi_thread
     global midi_kill_event
@@ -1308,7 +1361,7 @@ def start_midi():
     #set playwrighty context to null
     midi_stop_event = threading.Event()
     midi_kill_event = threading.Event()
-    midi_thread = threading.Thread(target=run_midi, args=(midi_stop_event,midi_kill_event))
+    midi_thread = threading.Thread(target=run_midi, args=(midi_stop_event,midi_kill_event, qr_queue))
     midi_thread.start()
 
 
@@ -1322,14 +1375,16 @@ def updateQR(idx):
     global incoming_qrdata
     global current_qrdata
     if (incoming_qrdata != current_qrdata):
+        logger.info('MIDI thread updating QR code')
+        print('MIDI thread updating QR code')
         current_qrdata = incoming_qrdata
-        update_qr_code(incoming_qrdata)
+        on_activate_overlay()
 
-def handle_keys():
+def handle_keys(qr_queue=None):
     global midiout, midiin
     global mk
-    c = Communicate()
-    c.mySignal.connect(updateQR)
+#    c = Communicate()
+#    c.mySignal.connect(updateQR)
 
     with midiin as inport:
         while (not midi_stop_event.is_set()):
@@ -1346,9 +1401,9 @@ def handle_keys():
                         #add key to sequence and check for any actions.  
                         a = mk.key(note, msg, callback=None)
                         #every note adjust the QR code in case something changed.
-                        global incoming_qrdata
-                        incoming_qrdata = mk.get_qr()
-                        c.mySignal.emit(0)
+                        qrdata = mk.get_qr()
+                        qr_queue.put(qrdata)
+#                        c.mySignal.emit(0)
                         #update QR code if changed.
 
 #                        if (a == -1):
@@ -1366,7 +1421,7 @@ def init_inputs():
 #    midiout = mido.open_output(outputs[1]) #open first output for now.  
     midiin = mido.open_input(inputs[0]) #open first input for now.
 
-def run_midi(stop_event, kill_event):
+def run_midi(stop_event, kill_event, qr_queue=None):
     global midiout, midiin
     global mk
     mk = mykeys.MyKeys(config.cfg, qapp, mywindow.startx, stop_event)
@@ -1379,7 +1434,7 @@ def run_midi(stop_event, kill_event):
     cont = keyboard.Controller()    
 
     while (not kill_event.is_set()):
-        handle_keys()
+        handle_keys(qr_queue)
         init_inputs() #re-init inputs in case something changed.
         time.sleep(0.1)  # Small delay to prevent high CPU usage
         stop_event.clear()  # Clear the event for the next iteration
@@ -1390,33 +1445,6 @@ def run_midi(stop_event, kill_event):
     logger.info('MIDI thread ended')
 
 
-def update_qr_code(qrdata="", bbox=None):
-    """Update the QR code displayed in the overlay window."""
-    global current_qrdata
-    global current_bbox
-    global active_window
-    if (qrdata == current_qrdata and bbox == current_bbox):
-        return #no change
-    current_qrdata = qrdata
-    current_bbox = bbox
-    logger.info('Updating QR code in overlay window')
-    if (active_window is not None):
-        title = win32gui.GetWindowText(active_window)
-        rect = win32gui.GetWindowRect(active_window)
-        logger.info(f'Active window: {title} at {rect}')        
-        
-    qr = create_qr_text(qrdata, active_window)
-    mywindow.showQR(qrdata)
-
-    mywindow.activateWindow() # Bring to front
-
-    draw_screen_box(bbox)
-
-    #hiding in 3 seconds
-    logger.info('Hiding window after 3 seconds')
-    t = threading.Timer(3, _hide, args=["Hello from Timer!"])
-    t.start()  # Start the timer in a new thread
-    
 
 
 def main():
@@ -1425,6 +1453,7 @@ def main():
     global active_window
     global midiout, midiin
     global speech_pipe
+    global qr_pipe
 
     # Create an icon image
     icon_image = create_image(64, 64, 'blue', 'yellow')
@@ -1459,7 +1488,9 @@ def main():
     qapp = QApplication(sys.argv)
     logger.info('Creating application window')
     # Create the main application window
-    mywindow = MyWindow()
+    global qr_queue
+    qr_queue = Queue()
+    mywindow = MyWindow(qr_queue)
 
     logger.info('Running icon')
     #icon.run()

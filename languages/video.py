@@ -300,7 +300,7 @@ class video:
     #qr specific to current action.
     self.set_qr(self.func, {'BB': self.ar2str(self.bbox), 'SEQ': self.ar2str(sequence)})
     #possibly return other data here for other functions.  
-    self.draw_screen_box(self.bbox)
+#    self.draw_screen_box(self.bbox)
     return 0
 
   def _screenshot(self, sequence=[]):
