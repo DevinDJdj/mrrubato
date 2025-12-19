@@ -28,6 +28,31 @@ const generateDMS = (coords, isLat) => {
   return `${deg}°${min}'${sec}"${direction}`;
 };
 
+
+function updateQRCode(text) {
+    const div = document.getElementById('qrcode');
+    while(div.firstChild){
+        div.removeChild(div.firstChild);
+    }
+
+    var qrcode = new QRCode("qrcode", {
+        text: text,
+        width: 128,
+        height: 128,
+        colorDark : "#000000",
+        colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.H
+    });
+//   div.innerHTML = "";
+//   div.innerHTML = text;
+
+}
+chrome.tabs.query({'active': true, 'windowId': chrome.windows.WINDOW_ID_CURRENT},
+  function(tabs){
+    updateQRCode(tabs[0].url);
+  }
+);
+
 navigator.geolocation.getCurrentPosition(
   (loc) => {
     const { coords } = loc;

@@ -641,6 +641,8 @@ Use genbook, or book when adding comments?
 
 
 
+**extensions/trey/trey.py
+
 !!aiohttp.client_exceptions.ClientConnectorError: Cannot connect to host speech.platform.bing.com:443 ssl:<ssl.SSLContext object at 0x000002A892B8A150> [The specified network name is no longer available]
 Still get this intermittently.  
 Probably have Request per minute limit.  
@@ -649,3 +651,79 @@ Maybe need different solution..
 Perhaps Azure has killed this library..
 
 > pip install pyttsx3
+
+**web/public/analyze.html
+Need to provide feedback on recorded audio as well.  
+Need to add communication QR code to show videoID as well as timestamp, constantly updating..
+Use this along with [**extensions/trey/trey.py] to generate corrected text for audio.  
+Or could use original idea to update text.  
+
+
+
+**extensions/handsfree/manifest.json
+Make simpler version.  
+Use popup functionality to just display QR code constantly.  
+Separate functionality, but could launch this with [**extensions/trey/trey.py]
+Does this still work?  
+Lets adjust this to be simpler and just display QR code in some scenario..
+
+
+**extensions/handsfree/sidepanel.js
+Dont think this is using MIDI yet.  
+::
+
+**extensions/handsfree/mrrubato.js
+--initCommands
+$$20240305
+
+Command basically injects JS.  
+I dont think we need the JS injection portion though for this.  
+Just use tab 
+
+#https://developer.chrome.com/docs/extensions/develop/ui/add-popup
+
+#https://developer.chrome.com/docs/extensions/reference/api/action#type-OpenPopupOptions
+
+
+also use built-in bookmarks chrome.bookmarks.getTree(function ( bookmarkTreeNodes ) { $('#bookmarks').append(dumpTreeNodes(bookmarkTreeNodes,.append(dumpTreeNodes(bookmarkTreeNodes,) query)); });
+
+
+--initTab
+get necessary info..
+            this.mr.Chat("tabs");
+Command("tabs")            
+
+Been so long..
+
+OK need to run this..
+
+Need option with and without side panel..
+Without side panel, just show QR.  
+Make sure it works though first.
+
+On trigger, open and display popup with current tab information..
+
+
+**extensions/handsfree/background.js
+service worker, we can open side panel.  
+#https://developer.chrome.com/docs/extensions/reference/api/sidePanel
+--open_sr_page
+
+#chrome://extensions/
+--Load unpacked
+$$folder=**extensions/handsfree
+
+Debug for this:
+#chrome://inspect/#service-workers
+
+    "default_popup": "popup.html"
+If we set this, the page is no longer activated.  
+
+OK, I think this is enough..
+
+	  chrome.action.setPopup({popup: 'popup.html'});
+	  chrome.action.openPopup();
+
+We need to change the content of this though when URL is changed.  
+
+OK, closer to what we want...

@@ -36,6 +36,39 @@ async function toggleSpeechToText() {
     });
   }
   
+
+  //actually enable side panel only on google.com for now.
+  const GOOGLE_ORIGIN = 'https://www.google.com';
+  const mrrubato_origin = 'https://www.misterrubato.com';
+
+  chrome.tabs.onUpdated.addListener(async (tabId, info, tab) => {
+	if (!tab.url) return;
+	//create QR code here which represents the current tab URL.
+
+	const url = new URL(tab.url);
+
+	// Enables the side panel on google.com
+	if (url.origin === GOOGLE_ORIGIN || url.origin === mrrubato_origin) {
+		console.log("Enabling side panel on google.com");
+	  chrome.sidePanel.setOptions({
+		tabId,
+		path: 'popup.html',
+		enabled: true
+	  });
+	  console.log("Opening side panel on google.com");
+
+	  //chrome.sidePanel.open({ tabId: tabId });
+	  chrome.action.setPopup({popup: 'popup.html'});
+	  chrome.action.openPopup();
+	} else {
+	  // Disables the side panel on all other sites
+	  chrome.sidePanel.setOptions({
+		tabId,
+		enabled: false
+	  });
+	}
+  });
+
   chrome.action.onClicked.addListener(() => {
 //    toggleSpeechToText();
 

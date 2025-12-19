@@ -488,7 +488,7 @@ def writeTranscripts(alltranscripts):
     today = date.today()
     today = today.strftime("%Y%m%d")
     folder = '../transcripts/' + today[0:4] + '/'
-    fname = folder + tdate + '.txt'
+    fname = folder + today + '.txt'
     #full copy of historical transcripts on this date.  
     #maybe helpful if we redo transcripts.  Probably will occur.  
     #2 years ~ few MB?
