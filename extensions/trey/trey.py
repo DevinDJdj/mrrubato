@@ -119,6 +119,7 @@ global current_bbox
 current_bbox = None
 
 global qr_queue
+global qrin_queue
 
 def on_click(x, y, button, pressed):
 
@@ -306,7 +307,6 @@ def build_map(lines, links):
     mavglength = 0.0
     currentl = 0
     for idx, l in enumerate(lines):
-        total_read += len(l) + 1  #include newline
         numlinks = 0
 
         currentl += 1
@@ -321,6 +321,8 @@ def build_map(lines, links):
         mavglength += len(l)
         mavgdensity += numlinks/(len(l)+1)
         link_density_map.append({"offset": total_read, "text": l, "length": len(l), "mavglength": mavglength, "numlinks": numlinks, "audio": f"./temp/{idx}.wav", "density": numlinks/(len(l)+1)})
+        total_read += len(l) + 1  #include newline
+
         
 
     return link_density_map
@@ -638,6 +640,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
 
         print(f'Line: {l}')
         print(f'Line offset: {link_density_map[idx]["offset"]}')
+        total_read = link_density_map[idx]['offset']
         sound_file = link_density_map[idx]['audio']
         if (len(l) <= 5 and idx > 5 and idx < len(lines)-1):
             combined += " " + l
@@ -686,6 +689,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
 
 
         print(f'Total read: {total_read}')
+        logger.info(f'Total read: {total_read}')
         waited = 0
         ttotal = total_read
 #        time.sleep(0.03*len(l)) #wait for initial TTS to start playing.
@@ -708,6 +712,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
             if (q2 is not None and ttotal > 0):
                 q2.put(ttotal) #communicate how much we have read.
             waited += 1
+            logger.info(f'Total read: {ttotal}')
             time.sleep(1) #simulate reading time. 12 chars per second..
             #shouldnt have to be too exact.  
         print(f'Total waited: {waited}')
@@ -1070,13 +1075,60 @@ class Communicate(QtCore.QObject):
     mySignal = QtCore.pyqtSignal(int)
 
 
+
+#thread to get QR data from window and add text info to trey cache.  
+
+import cv2
+from qreader import QReader
+import numpy as np
+
 # Step 1: Create a worker class
-class Worker(QObject):
+class QRInWorker(QObject):
+    finished = pyqtSignal()
+    progress = pyqtSignal(int)
+
+    def read_qr_code(img):
+        
+        qreader = QReader()
+        image = cv2.cvtColor(np.array(img), cv2.COLOR_BGR2RGB)
+        decoded_texts = qreader.detect_and_decode(image=image)
+        if decoded_texts:
+            for text in decoded_texts:
+                print(f"QR Code data: {text}")
+            return decoded_texts
+        else:
+            print("No QR code detected.")
+            return []
+        
+    def __init__(self, my_queue, parent=None):
+        super(QRInWorker, self).__init__(parent)
+        self.my_queue = my_queue # Store parameter in the worker instance
+
+    def run(self):
+        """Long-running task to find QR data from window."""
+        while (True):
+            #get QR data from window
+            screens = qapp.screens()
+            #assume last window
+            qrdata = self.read_qr_code(screens[-1].grabWindow(0).toImage())
+
+            for qd in qrdata:
+                logger.info(f'QRInWorker found QR data: {qd}')
+                self.my_queue.put(qd)
+            if (len(qrdata) > 0):   
+                self.progress.emit(0) #can pass param here as well.  
+
+            time.sleep(0.2) #run each 0.2 seconds
+        self.finished.emit()
+
+
+# Step 1: Create a worker class
+class QRWorker(QObject):
     finished = pyqtSignal()
     progress = pyqtSignal(int)
 
     def __init__(self, my_queue, parent=None):
-        super(Worker, self).__init__(parent)
+        super(QRWorker, self).__init__(parent)
         self.my_queue = my_queue # Store parameter in the worker instance
 
     def run(self):
@@ -1093,14 +1145,33 @@ class Worker(QObject):
 
 class MyWindow(QMainWindow):
 
+    def reportProgressIn(self, n):
+        logger.info(f"QR In: {n}")
     def reportProgress(self, n):
-        logger.info(f"Incoming QR: {n}")
+        logger.info(f"QR Out: {n}")
+
     # Snip...
     def runQRThread(self):
         # Step 2: Create a QThread object
         self.thread = QThread()
         # Step 3: Create a worker object
-        self.worker = Worker(self.queue)
+        self.worker = QRWorker(self.queue)
+        # Step 4: Move worker to the thread
+        self.worker.moveToThread(self.thread)
+        # Step 5: Connect signals and slots
+        self.thread.started.connect(self.worker.run)
+        self.worker.finished.connect(self.thread.quit)
+        self.worker.finished.connect(self.worker.deleteLater)
+        self.thread.finished.connect(self.thread.deleteLater)
+        self.worker.progress.connect(self.reportProgress)
+        # Step 6: Start the thread
+        self.thread.start()
+
+    def runQRInThread(self):
+        # Step 2: Create a QThread object
+        self.thread = QThread()
+        # Step 3: Create a worker object
+        self.worker = QRInWorker(self.inqueue, self.queue)
         # Step 4: Move worker to the thread
         self.worker.moveToThread(self.thread)
         # Step 5: Connect signals and slots
@@ -1113,12 +1184,13 @@ class MyWindow(QMainWindow):
         self.thread.start()
 
 
-    def __init__(self, q=None):
+    def __init__(self, q=None, inq=None):
         super().__init__()
         self.highlightrect = {'x': 100, 'y': 100, 'width': 200, 'height': 200}
         self.highlighton = False
         self.startx = 0
         self.queue = q
+        self.inqueue = inq
         self.geo = None
         self.windowlabels = {} #list of window details by pid
         self.windowcounter = 0
@@ -1349,6 +1421,7 @@ def stop_midi(kill=False):
 
 def start_midi():
     global qr_queue
+    global qrin_queue
 
     global midi_stop_event
     global midi_thread
@@ -1361,7 +1434,7 @@ def start_midi():
     #set playwrighty context to null
     midi_stop_event = threading.Event()
     midi_kill_event = threading.Event()
-    midi_thread = threading.Thread(target=run_midi, args=(midi_stop_event,midi_kill_event, qr_queue))
+    midi_thread = threading.Thread(target=run_midi, args=(midi_stop_event,midi_kill_event, qr_queue, qrin_queue))
     midi_thread.start()
 
 
@@ -1380,7 +1453,7 @@ def updateQR(idx):
         current_qrdata = incoming_qrdata
         on_activate_overlay()
 
-def handle_keys(qr_queue=None):
+def handle_keys(qr_queue=None, qrin_queue=None):
     global midiout, midiin
     global mk
 #    c = Communicate()
@@ -1388,6 +1461,11 @@ def handle_keys(qr_queue=None):
 
     with midiin as inport:
         while (not midi_stop_event.is_set()):
+            while (qrin_queue is not None and not qrin_queue.empty()):
+                qrdata = qrin_queue.get()
+                mk.add_qrin(qrdata)
+                logger.info(f'MIDI Received QR input data: {qrdata}')
+                
             for msg in inport.iter_pending():
                 if msg.type == 'note_on' or msg.type == 'note_off':
                     print(msg)
@@ -1421,7 +1499,7 @@ def init_inputs():
 #    midiout = mido.open_output(outputs[1]) #open first output for now.  
     midiin = mido.open_input(inputs[0]) #open first input for now.
 
-def run_midi(stop_event, kill_event, qr_queue=None):
+def run_midi(stop_event, kill_event, qr_queue=None, qrin_queue=None):
     global midiout, midiin
     global mk
     mk = mykeys.MyKeys(config.cfg, qapp, mywindow.startx, stop_event)
@@ -1434,7 +1512,7 @@ def run_midi(stop_event, kill_event, qr_queue=None):
     cont = keyboard.Controller()    
 
     while (not kill_event.is_set()):
-        handle_keys(qr_queue)
+        handle_keys(qr_queue, qrin_queue)
         init_inputs() #re-init inputs in case something changed.
         time.sleep(0.1)  # Small delay to prevent high CPU usage
         stop_event.clear()  # Clear the event for the next iteration
@@ -1488,9 +1566,10 @@ def main():
     qapp = QApplication(sys.argv)
     logger.info('Creating application window')
     # Create the main application window
-    global qr_queue
+    global qr_queue, qrin_queue
     qr_queue = Queue()
-    mywindow = MyWindow(qr_queue)
+    qrin_queue = Queue()
+    mywindow = MyWindow(qr_queue, qrin_queue)
 
     logger.info('Running icon')
     #icon.run()

@@ -113,6 +113,8 @@ class MyKeys:
     self.starttime = time.time()
     self.lasttick = self.starttime
 
+    self.qrin = [] #qr inputs
+
     if (self.config['keymap']['settings']['PLAY_FEEDBACK']):
         self.play_feedback = True
     else:
@@ -160,6 +162,15 @@ class MyKeys:
   def get_words(self):
     return self.words_
   
+  def add_qrin(self, data):
+    #find this QRData.  If exists, ignore.  
+    if (data not in self.qrin):
+      self.qrin.insert(0, data) #add to start of list
+    else:
+      #dont keep duplicates for now..
+      self.qrin.remove(data)
+      self.qrin.insert(0, data) #move to start of list
+
 
   def get_qr(self):
     qr = ""

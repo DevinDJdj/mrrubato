@@ -668,8 +668,8 @@ class hotkeys:
 
       #Use simlink if we are using future links.  
       #should be the location of the simlink.  
-      if sequence[-1]-self.keybot > 0 and len(siml) > sequence[-1]-self.keybot-1:
-        total_read = siml[sequence[-1]-self.keybot-1]
+#      if sequence[-1]-self.keybot > 0 and len(siml) > sequence[-1]-self.keybot-1:
+#        total_read = siml[sequence[-1]-self.keybot-1]
 
       a = playwrighty.click_link(-1, total_read, sequence[-1]-self.keybot)
       if (isinstance(a, tuple)):

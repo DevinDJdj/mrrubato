@@ -727,3 +727,26 @@ OK, I think this is enough..
 We need to change the content of this though when URL is changed.  
 
 OK, closer to what we want...
+
+**extensions/trey/trey.py
+Pick up any QR info directly from screen..
+and add it to retrievable info..
+
+Scaffolding done, try QRInWorker
+
+
+!!FileNotFoundError: Could not find module 'C:\Users\devin\AppData\Local\Programs\Python\Python312\Lib\site-packages\pyzbar\libzbar-64.dll'
+
+==
+#https://www.microsoft.com/en-gb/download/details.aspx?id=40784
+$$
+
+
+Again link location calculation is off..
+ok, seems better..
+
+#https://strawberryperl.com/
+
+
+!!llama runner process has terminated: error loading model: unable to allocate CUDA0 buffer llama_model_load_from_file_impl: failed to load model
+random Mem issue? 

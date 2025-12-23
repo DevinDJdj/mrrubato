@@ -29,12 +29,14 @@ const generateDMS = (coords, isLat) => {
 };
 
 
-function updateQRCode(text) {
+function updateQRCode(text, type='URL'){ 
     const div = document.getElementById('qrcode');
     while(div.firstChild){
         div.removeChild(div.firstChild);
     }
 
+    //adjust to use LANG.  
+    text = '$$' + type + '=' + text;
     var qrcode = new QRCode("qrcode", {
         text: text,
         width: 128,
