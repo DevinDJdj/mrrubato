@@ -67,6 +67,7 @@ class video:
       "2": {
          "Pause": [49,48], #pause video
          "Unpause": [49,50], #unpause video
+         "Screen Toggle": [49,51], #show/hide screen overlay, param set opacity..
       },
       "3": {
         "Start": [49,61,62], #Start/resume recording
@@ -94,6 +95,7 @@ class video:
       "Unpause": "unpause",
       "Screenshot": "screenshot",
       "Zoomshot": "zoomshot",
+      "Screen Toggle": "screen_toggle",
 
     }
 
@@ -275,9 +277,10 @@ class video:
 
   def set_qr(self, func, param={}):
     """Set QR."""
-    self.qr = "$$F=" + func + "\n"
+    self.qr = "> " + func + "\n"
     for k,v in param.items():
         self.qr += f"$${k}={v}\n"
+    self.qr += "$$\n"
     return 0  
   
   def screenshot_(self, sequence=[]):  
@@ -293,6 +296,7 @@ class video:
     """Take Screenshot."""
     #always in groups of 4 for bbox
     #no need, this should be done..
+    self.func = "Screenshot"
     self.bbox = self.get_bbox(sequence)
     logger.info(f'> Screenshot {sequence}') 
     logger.info(f'$$BBOX={self.bbox}')
@@ -309,6 +313,21 @@ class video:
     #show bbox on screen for user to see?
     return 0
 
+  def screen_toggle(self, sequence=[]):
+    """Toggle Screen Overlay."""
+    self.func = "Screen Toggle"
+    logger.info(f'> Screen Toggle {sequence}')
+    opacity = 0.4    
+    if (len(sequence) >=1):
+        opacity = (sequence[0]-self.keybot)*10
+        if (opacity < 0):
+            opacity = 0
+        elif (opacity > 100):
+            opacity = 100
+        opacity = opacity / 100.0
+    self.set_qr(self.func, {'OPACITY': opacity})
+    return 0
+  
   def zoomshot(self, sequence=[]):
     """Take Zoomed Screenshot."""
     logger.info(f'> Zoomshot {sequence}')

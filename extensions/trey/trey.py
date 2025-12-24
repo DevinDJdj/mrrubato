@@ -941,7 +941,15 @@ def create_qr_text(text, hwnd):
 
     return ret
 
-def draw_overlay(delay=10): #default hide in 10 seconds
+
+def hide_overlay():
+    """Hide the overlay window."""
+    global mywindow
+    logger.info('Hiding overlay window')
+    mywindow.hideme()
+#    stop_mouse_listener()  # Stop the mouse listener
+
+def draw_overlay(delay=10, opacity=0.4): #default hide in 10 seconds
     global active_window
     global mywindow
 
@@ -970,6 +978,7 @@ def draw_overlay(delay=10): #default hide in 10 seconds
         mywindow.showQR(qrdata)
 
     mywindow.updateLabels(windows) #gives info for all windows
+    mywindow.setWindowOpacity(opacity)
     mywindow.activateWindow() # Bring to front
     draw_screen_box()
 
@@ -1085,7 +1094,7 @@ import numpy as np
 # Step 1: Create a worker class
 class QRInWorker(QObject):
     finished = pyqtSignal()
-    progress = pyqtSignal(int)
+    progress = pyqtSignal(str)
 
     def read_qr_code(img):
         
@@ -1115,8 +1124,9 @@ class QRInWorker(QObject):
             for qd in qrdata:
                 logger.info(f'QRInWorker found QR data: {qd}')
                 self.my_queue.put(qd)
+                self.all_qr.append({'data': qd, 'timestamp': time.time()})
             if (len(qrdata) > 0):   
-                self.progress.emit(0) #can pass param here as well.  
+                self.progress.emit(qrdata) #can pass param here as well.  
 
             time.sleep(0.2) #run each 0.2 seconds
         self.finished.emit()
@@ -1125,7 +1135,7 @@ class QRInWorker(QObject):
 # Step 1: Create a worker class
 class QRWorker(QObject):
     finished = pyqtSignal()
-    progress = pyqtSignal(int)
+    progress = pyqtSignal(str)
 
     def __init__(self, my_queue, parent=None):
         super(QRWorker, self).__init__(parent)
@@ -1135,21 +1145,80 @@ class QRWorker(QObject):
         """Long-running task."""
         while (self.my_queue is not None):
             while (not self.my_queue.empty()):
+                #incoming data from mykeys..
                 qrdata = self.my_queue.get() #get current link number.  
                 logger.info(f'Worker processing QR data: {qrdata}')
-                mywindow.showQR(qrdata)
+                self.progress.emit(qrdata) #can pass param here as well.  
                 time.sleep(0.2) #allow for QR data to be processed by any reader.  
-                self.progress.emit(0) #can pass param here as well.  
             time.sleep(1) #wait before checking again
         self.finished.emit()
 
 class MyWindow(QMainWindow):
 
-    def reportProgressIn(self, n):
-        logger.info(f"QR In: {n}")
-    def reportProgress(self, n):
-        logger.info(f"QR Out: {n}")
+    def reportProgressIn(self, qrdata):
+        logger.info(f"QR In: {qrdata}")
+        cmds = self.parseQRData(qrdata)
+        for idx, cmd in enumerate(cmds):
+            currentcmd = cmd['cmd']
+            vars = cmd['vars']
+            logger.info(f'Parsed QR command: {currentcmd} with vars: {vars}')
+            self.qr_in.append({'cmd': currentcmd, 'vars': vars, 'timestamp': time.time()})
+            #process incoming commands as needed.
+            #for now just log them.
+            
+    def reportProgress(self, qrdata):
+        logger.info(f"QR Out: {qrdata}")
+        cmds = self.parseQRData(qrdata)
+        for idx, cmd in enumerate(cmds):
+            currentcmd = cmd['cmd']
+            vars = cmd['vars']
+            logger.info(f'Parsed QR command: {currentcmd} with vars: {vars}')
+            self.qr_out.append({'cmd': currentcmd, 'vars': vars, 'timestamp': time.time()})
+            self.executeQRCommand(currentcmd, vars)
 
+
+    def executeQRCommand(self, command, vars):
+        """Execute a QR command based on the parsed data."""
+        logger.info(f'Executing QR command: {command} with vars: {vars}')
+        if (command == "Screen Toggle"):
+            if (self.isVisible()):
+                self.hide()
+            else:
+                self.show()
+        elif (command == "_Click Link"):
+            self.show()
+            #simulate click at link location if given.
+
+        #add more commands as needed.
+    def parseQRData(self, qrdata):
+        """Parse the QR data and extract relevant information."""
+        # For simplicity, just return the data as is.
+        lines = qrdata.split('\n')
+        currentcmd = ""
+        vars = {}
+        ret = []
+        for idx, line in enumerate(lines):
+            logger.info(f'QR Data Line: {line}')
+
+            if (line.startswith('> ')):
+                #command line internal command
+                currentcmd = line[2:]
+                logger.info(f'Executing QR command: {currentcmd}')
+            if (line.startswith('$$')):
+                #special trey data line
+                if (len(line) == 2):
+                    #execute command
+                    ret.append({'cmd': currentcmd, 'vars': vars, 'timestamp': time.time()})
+
+                else:
+                    parts = line[2:].split('=')
+                    if (len(parts) == 2):
+                        key = parts[0]
+                        value = parts[1]
+                        vars[key] = value
+
+                
+        return ret
     # Snip...
     def runQRThread(self):
         # Step 2: Create a QThread object
@@ -1192,6 +1261,8 @@ class MyWindow(QMainWindow):
         self.queue = q
         self.inqueue = inq
         self.geo = None
+        self.qr_in = []
+        self.qr_out = []
         self.windowlabels = {} #list of window details by pid
         self.windowcounter = 0
         self.screenshots = [] #list of screenshots per monitor
@@ -1251,7 +1322,6 @@ class MyWindow(QMainWindow):
 
         #start internal thread to check the queue for updates.  
         #and update the window when there is new data.  
-
 
     def hideme(self):
         """Method to close the window."""
@@ -1479,8 +1549,10 @@ def handle_keys(qr_queue=None, qrin_queue=None):
                         #add key to sequence and check for any actions.  
                         a = mk.key(note, msg, callback=None)
                         #every note adjust the QR code in case something changed.
+                        #probably better way to do this..
                         qrdata = mk.get_qr()
-                        qr_queue.put(qrdata)
+                        if (qrdata is not None and qrdata != ""):
+                            qr_queue.put(qrdata)
 #                        c.mySignal.emit(0)
                         #update QR code if changed.
 

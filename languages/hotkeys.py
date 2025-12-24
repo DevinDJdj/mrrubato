@@ -285,9 +285,10 @@ class hotkeys:
 
   def set_qr(self, func, param={}):
     """Set QR."""
-    self.qr = "$$F=" + func + "\n"
+    self.qr = "> " + func + "\n"
     for k,v in param.items():
         self.qr += f"$${k}={v}\n"
+    self.qr += "$$\n"
     return 0  
   
   def comment(self, sequence=[]):
@@ -625,6 +626,7 @@ class hotkeys:
   def _click_link(self, sequence=[]):
     logger.info(f'> _Click Link {sequence}')
     print("> _Click Link")
+    self.func = "_Click Link"
     #display links on page.  
     #possibly handle here instead of end..
     total_read = 0
@@ -636,7 +638,7 @@ class hotkeys:
 
     for i, link in enumerate(links):
       print(f'Link {i}: {link["text"]} ({link["href"]})')
-    self.set_qr("_Click Link", {'links': self.currentlinks})
+    self.set_qr(self.func, {'links': self.currentlinks})
     #update display.  
     
     return 1

@@ -587,18 +587,23 @@ function select(topic, open = opennature) {
     }
     return false;
 }
-function pickTopic(selectedtopics, defaultprompts = [], numtopics = 10) {
+function pickTopic(selectedtopics, defaultprompts = [], numtopics = 10, extendtopics = false) {
     //pick a topic from the topicarray based on the sort order.
     //still need to improve when we have no selected topics.  
     let minsort = 1000000; //set to a large number.
     let retkey = "NONE";
-    if (exports.selectionhistory.length > 0) {
-        for (let i = exports.selectionhistory.length - 1; i > -1; i--) {
-            if (exports.topicarray[exports.selectionhistory[i]] !== undefined && exports.topicarray[exports.selectionhistory[i]].length > 0) {
-                //sort the topics by date.  
-                selectedtopics.unshift(exports.selectionhistory[i]); //add the topic to the selected topics.
-                if (retkey === "NONE") {
-                    retkey = exports.selectionhistory[i]; //set the key to the topic.
+    if (selectedtopics.length > 0) {
+        retkey = selectedtopics[0]; //set the key to the first topic.
+    }
+    if (extendtopics || selectedtopics.length === 0) {
+        if (exports.selectionhistory.length > 0) {
+            for (let i = exports.selectionhistory.length - 1; i > -1; i--) {
+                if (exports.topicarray[exports.selectionhistory[i]] !== undefined && exports.topicarray[exports.selectionhistory[i]].length > 0) {
+                    //sort the topics by date.  
+                    selectedtopics.unshift(exports.selectionhistory[i]); //add the topic to the selected topics.
+                    if (retkey === "NONE") {
+                        retkey = exports.selectionhistory[i]; //set the key to the topic.
+                    }
                 }
             }
         }
@@ -698,7 +703,7 @@ async function read(prompt, mode = exports.GIT_BOOK) {
     //then retrieve topic information.  
     //find the topic in the topicarray if we have passed some
     let selectedtopics = findInputTopics(prompt);
-    console.log("Selected topics: ", selectedtopics);
+    console.log("READ topics: ", selectedtopics);
     sortArray(exports.topicarray);
     //pick a topic to return.  
     //right now random.  
@@ -706,6 +711,8 @@ async function read(prompt, mode = exports.GIT_BOOK) {
     //get from selectionhistory if exists.  
     let [topkey, topics] = pickTopic(selectedtopics); //get the topic from the topicarray.
     //find last topic and add all git changes.  
+    console.log("PICK topic: ", topkey);
+    console.log("PICK topics: ", topics);
     if (selectedtopics.length > 0 && topkey !== selectedtopics[selectedtopics.length - 1]) {
         selectedtopics.push(topkey); //add the topic to the list of selected topics.
     }
@@ -1103,29 +1110,77 @@ async function markdown(prompt) {
             return match; //return the original match if file does not exist.
         }
     });
+    marked = marked.replace(/(\$\$)(\S+)/g, (match, p1, p2) => {
+        // p1 is $$
+        //need some logic here for $$ variable replacement.  
+        // p2 is the topic or link 
+        let fname = p2;
+        // this should be a book path.  Use as you would work on the project.  
+        let colon = p2.lastIndexOf(":");
+        if (colon !== -1) {
+            //this is a file:line reference.  Book page..
+            let fname = p2.slice(0, colon); //get the file name.
+            //check if file exists.  
+            if (fname.length === 8 && !isNaN(Number(fname))) {
+                fname = "book/" + fname + ".txt"; //assume its a date file.
+            }
+            let fileUri = folderUri.with({ path: path_1.posix.join(folderUri.path, fname) });
+            let line = p2.slice(colon + 1); //get the line number. 
+            //remove folder from file name.  
+            p2 = p2.replace(folderUri.path + "/", ""); //remove the folder path from the file name for display purposes.  
+            //need to rewrite dates to something else..
+            return `[${p1}${p2}](${fileUri.path}#L${line})`; //return the markdown link.
+        }
+        else {
+            let readablename = getReadableName(p2);
+            return `[${p1}${readablename}](${fname})`; //return the markdown link.
+        }
+    });
     return marked;
 }
 async function summary(prompt) {
     //this will be used to find similar topics in the book.  
     //for now just return the topics in the book.
     //should have just topice really expecting.  
+    //read the original topics only.  
+    let originalb = await read(prompt, exports.GIT_BOOK);
     let sim = await similar(prompt); //get the similar topics from the book.
     let topics = [];
+    let expandedprompt = prompt;
+    let simdata = "";
     for (let i = 0; i < sim.length; i++) {
         let topic = sim[i].topic;
+        simdata += "$$" + sim[i].date + ':' + sim[i].line + '  \n' + sim[i].data + "  \n"; //add the topic data to the simdata.
         if (topics.includes(topic)) {
             //line is different, but topic is the same.
             continue; //skip duplicate topics.
         }
         topics.push(topic);
-        prompt = "**" + topic + " \n" + prompt; //add the topic to the prompt.
+        if (expandedprompt.indexOf("**" + topic) !== -1) {
+            continue; //skip duplicate topics.
+        }
+        expandedprompt = "**" + topic + "  \n" + expandedprompt; //add the topic to the prompt.
     }
     //read the prompt and similar topics.  
-    let b = await read(prompt, exports.GIT_BOOK);
+    //    let b = await read(prompt, GIT_BOOK);
     //large context window.  testing gemma3n:latest
-    let summary = await getSummary(b[1], 5000); //get the summary of the chunks.
-    console.log(`Summary: ${summary}`);
-    return prompt + "\n" + summary;
+    let originalsummary = await getSummary(originalb[1], 5000); //get the summary of the chunks.
+    console.log(`Original Summary: ${originalsummary}`);
+    //use original if we have some data..
+    if (originalsummary.length < 300) {
+        let combined = await getSummary(simdata + '\n' + originalb[1], 5000); //get the summary of the chunks.
+        console.log(`Similar Summary: ${combined}`);
+        if (combined.length < 500) {
+            let b = await read(prompt, exports.GIT_BOOK);
+            let expandedsummary = await getSummary(b[1], 5000); //get the summary of the chunks.
+            console.log(`Expanded Summary: ${expandedsummary}`);
+            return expandedprompt + "  \n" + expandedsummary + '\n\n';
+        }
+        return prompt + "  \n" + combined + '\n\n';
+    }
+    else {
+        return prompt + "\n" + originalsummary + '\n\n'; // + expandedsummary;
+    }
 }
 async function expandPrompt(prompt) {
     //expand the prompt to include more context.
@@ -1137,8 +1192,9 @@ async function similar(prompt) {
     //this will be used to find similar topics in the book.  
     //for now just return the topics in the book.
     let expandedprompt = await expandPrompt(prompt); //expand the prompt to include more context.
-    let selectedtopics = findInputTopics(prompt + "\n" + expandedprompt);
-    console.log("Selected topics: ", selectedtopics);
+    //    let selectedtopics = findInputTopics(prompt + "\n" + expandedprompt); 
+    let selectedtopics = findInputTopics(prompt);
+    console.log("SIMILAR Selected topics: ", selectedtopics);
     let bvFolder = getUri(bookvectorFolder);
     let pathParts = [];
     if (selectedtopics.length === 0) {
@@ -1271,7 +1327,7 @@ async function similar(prompt) {
     }
     let today = new Date();
     let todaydate = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
-    ret.push({ topic: "PROMPT", data: expandedprompt, date: todaydate, file: "", line: 0 }); //add the prompt as the first item.
+    ret.push({ topic: "EXPANDED", data: expandedprompt, date: todaydate, file: "", line: 0 }); //add the prompt as the first item.
     return ret;
 }
 async function getVector(text, model = 'nomic-embed-text') {

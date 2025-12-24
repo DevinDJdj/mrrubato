@@ -12,7 +12,7 @@
 
 import * as vscode from 'vscode';
 import { renderPrompt } from '@vscode/prompt-tsx';
-import { posix } from 'path';
+import { format, posix } from 'path';
 import { PlayPrompt } from './prompts';
 import * as Book from './book';
 import * as Worker from './worker';
@@ -340,6 +340,16 @@ function getTextFromCursor(editor: vscode.TextEditor) {
 	}
 	return [text, topic];
 }
+
+export function formatMarkdownSnippet(snippet: string): string {
+	let commentidx = snippet.indexOf('<!--');
+	let endcommentidx = snippet.indexOf('-->') + 3;
+	if (commentidx >= 0 && endcommentidx < commentidx) {
+		snippet = snippet + '-->';
+	}
+	return snippet;
+}
+
 export function activate(context: vscode.ExtensionContext) {
 	//not being activated until chatted to...
     registerToolUserChatParticipant(context);
@@ -397,7 +407,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 
 			//replace topics.  
-			let response = await Book.markdown(summary)
+			let response = await Book.markdown(summary);
 			stream.markdown(response);
 			//workbench.action.chat.readChatResponseAloud
 			setTimeout(() => {	
@@ -424,7 +434,10 @@ export function activate(context: vscode.ExtensionContext) {
 				let fname = item.file.replace(wsUri.path, '');
 				doc += `[${fname}:${item.line}](${item.file}#L${item.line})  \n`;
 				let data = item.data.substring(item.topic.length+2, 400);
+				data = formatMarkdownSnippet(data);
 				doc += `${data} $$  \n`;
+
+				
 				
 			}
 			stream.markdown(doc);

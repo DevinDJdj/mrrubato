@@ -175,8 +175,10 @@ class MyKeys:
   def get_qr(self):
     qr = ""
     for (l,la) in self.languages.items():
-      if (hasattr(la, 'qr')):
+      if (hasattr(la, 'qr') and la.qr != ""):
+        qr += "<" + l + ">\n"
         qr += la.qr + "\n"
+        la.qr = "" #reset qr after getting it.
     return qr
   
   def start_feedback(self):

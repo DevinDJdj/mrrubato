@@ -46,6 +46,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.formatMarkdownSnippet = formatMarkdownSnippet;
 exports.activate = activate;
 exports.default = deactivate;
 const vscode = __importStar(require("vscode"));
@@ -317,6 +318,14 @@ function getTextFromCursor(editor) {
     }
     return [text, topic];
 }
+function formatMarkdownSnippet(snippet) {
+    let commentidx = snippet.indexOf('<!--');
+    let endcommentidx = snippet.indexOf('-->') + 3;
+    if (commentidx >= 0 && endcommentidx < commentidx) {
+        snippet = snippet + '-->';
+    }
+    return snippet;
+}
 function activate(context) {
     //not being activated until chatted to...
     (0, toolParticipant_1.registerToolUserChatParticipant)(context);
@@ -380,6 +389,7 @@ function activate(context) {
                 let fname = item.file.replace(wsUri.path, '');
                 doc += `[${fname}:${item.line}](${item.file}#L${item.line})  \n`;
                 let data = item.data.substring(item.topic.length + 2, 400);
+                data = formatMarkdownSnippet(data);
                 doc += `${data} $$  \n`;
             }
             stream.markdown(doc);

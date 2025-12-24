@@ -750,3 +750,21 @@ ok, seems better..
 
 !!llama runner process has terminated: error loading model: unable to allocate CUDA0 buffer llama_model_load_from_file_impl: failed to load model
 random Mem issue? 
+
+**extensions/vscode/codetutor/book.ts
+When we truncate, some issue with formatting if we have control characters in truncated area.  
+--similar
+--summary
+Still need some work here..
+Need customized model I think..
+
+
+**extensions/trey/hotkeys.py
+Just have command to show/hide.  
+Check BBOX command..
+
+**extensions/trey/video.py
+OK, simple screen toggle works.  
+Dont like this pyqtSignal stuff, but it works ok I guess for now..
+
+
