@@ -56,6 +56,21 @@ def merge(a: dict, b: dict, path=[]):
           a[key] = b[key]
   return a
 
+def recursive_values(data):
+    """
+    Recursively walks a nested dictionary (and lists within it)
+    and yields all non-container values.
+    """
+    if isinstance(data, dict):
+        for k, value in data.items():
+            # If the key is from struct, recurse into it
+            if (isinstance(k, int)):
+              yield from recursive_values(value)
+            else:
+              yield value
+    else:
+        # Base case: if it's a simple value, yield it
+        yield data
 
 class MyLang:
   #define action for some sequences.  
@@ -181,16 +196,23 @@ class MyKeys:
         self.langused.append(w['langna'])
     return self.langused
   
-  def get_words(self, prefix=[]):
+  
+  def get_words_(self, prefix=[]):
     if (len(prefix) == 0):
-      return self.keystruct
+      #filter here for most used words.  
+      ret = recursive_values(self.keystruct)
+
+      return ret
     
     if (len(prefix) > 0):
       ret, end = self.get_keystruct(prefix)
-      return end      #should include all words with this prefix.. needs reformatting..
-
-    return self.words_
+      print(end)
+      fret = recursive_values(end)
+      print(fret)
+      return fret      #should include all words with this prefix.. needs reformatting..
   
+  def get_spoken_words(self):
+    return self.words_
 
 
   def get_keystruct(self, keys, struct={}):
@@ -221,7 +243,7 @@ class MyKeys:
         if (cmdlen.isnumeric()):
           for word, vals in words.items():
             ks,end = self.get_keystruct(vals)
-            end[word] = {'lang': lang, 'word': word} #some info about word..
+            end[word] = {'lang': lang, 'word': word, 'keys': vals} #some info about word..
             #merge ks into struct
             #print(ks)
             final = merge(final, ks)            
@@ -264,6 +286,13 @@ class MyKeys:
         qr += "<" + l + ">\n"
         qr += la.qr + "\n"
         la.qr = "" #reset qr after getting it.
+    qr += "<meta>\n"
+    words = self.get_words_(self.sequence[self.startseqno:])
+    #potentially get most likely words here only.
+    for w in words:
+      qr += f"~~{w['word']} | {w['keys']} <br>\n" #br working for line breaks..
+    #output info about potential keys here.  
+
     return qr
   
   def start_feedback(self):

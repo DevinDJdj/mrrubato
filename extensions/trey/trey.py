@@ -1165,17 +1165,29 @@ class MyWindow(QMainWindow):
             self.qr_in.append({'cmd': currentcmd, 'vars': vars, 'timestamp': time.time()})
             #process incoming commands as needed.
             #for now just log them.
-            
+
     def reportProgress(self, qrdata):
         logger.info(f"QR Out: {qrdata}")
+        self.showQR(qrdata) #refresh QR display
         cmds = self.parseQRData(qrdata)
+        pwords = []
         for idx, cmd in enumerate(cmds):
-            currentcmd = cmd['cmd']
-            vars = cmd['vars']
-            logger.info(f'Parsed QR command: {currentcmd} with vars: {vars}')
-            self.qr_out.append({'cmd': currentcmd, 'vars': vars, 'timestamp': time.time()})
-            self.executeQRCommand(currentcmd, vars)
+            if (cmd['type'] == '> '):
+                currentcmd = cmd['cmd']
+                vars = cmd['vars']
+                logger.info(f'Parsed QR command: {currentcmd} with vars: {vars}')
+                self.qr_out.append({'cmd': currentcmd, 'vars': vars, 'timestamp': time.time()})
+                self.executeQRCommand(currentcmd, vars)
+            if (cmd['type'] == '~~'):
+                word = cmd['word']
+                keys = cmd['keys']
+                pwords.append({'word': word, 'keys': keys})
+#                logger.info(f'Parsed QR word: {word} with keys: {keys}')
+                #process as needed.
+                #add to list of words to display..
 
+        print(f'~~: {len(pwords)}')
+#        self.updateWords(pwords)
 
     def executeQRCommand(self, command, vars):
         """Execute a QR command based on the parsed data."""
@@ -1198,17 +1210,20 @@ class MyWindow(QMainWindow):
         vars = {}
         ret = []
         for idx, line in enumerate(lines):
-            logger.info(f'QR Data Line: {line}')
-
-            if (line.startswith('> ')):
+#            logger.info(f'QR Data Line: {line}')
+            type = line[:2] #first 2 chars is type
+            if (type == '> '):
                 #command line internal command
                 currentcmd = line[2:]
-                logger.info(f'Executing QR command: {currentcmd}')
-            if (line.startswith('$$')):
+            if (type == '$$'):
                 #special trey data line
                 if (len(line) == 2):
                     #execute command
-                    ret.append({'cmd': currentcmd, 'vars': vars, 'timestamp': time.time()})
+                    if (currentcmd != ""):
+                        type = '> '
+                    ret.append({'type': type, 'cmd': currentcmd, 'vars': vars, 'timestamp': time.time()})
+#                    logger.info(f'Adding QR {type}: {currentcmd}')
+                    currentcmd = ""
 
                 else:
                     parts = line[2:].split('=')
@@ -1216,6 +1231,14 @@ class MyWindow(QMainWindow):
                         key = parts[0]
                         value = parts[1]
                         vars[key] = value
+            if (type == '~~'):
+                #end of command
+                w = line[2:].split('|')
+                if (len(w) == 2):
+                    word = w[0]
+                    keys = w[1].split(',')
+                    ret.append({'type': type, 'word': word, 'keys': keys, 'timestamp': time.time()})
+#                    logger.info(f'Adding QR {type}: {word}')
 
                 
         return ret
@@ -1332,6 +1355,10 @@ class MyWindow(QMainWindow):
     def showQR(self, data, struct={}):
         """Method to show a QR code."""
         logger.info('Showing QR code')
+        #adjust readable text first..
+        self.label_1.setText(data)
+        self.label_1.adjustSize()
+        self.label_1.update()
         qrdata = data
         #if we need to truncate
         print(f'QR data length: {len(qrdata)}')
@@ -1345,8 +1372,6 @@ class MyWindow(QMainWindow):
         pixmap = QPixmap('qrcode.png')
         self.label_2.setPixmap(pixmap)
         self.label_2.adjustSize()
-        self.label_1.setText(data)
-        self.label_1.adjustSize()
 
         logger.info('QR code displayed')
 
@@ -1359,6 +1384,20 @@ class MyWindow(QMainWindow):
             self.windowcounter += 1
             return label
         
+    def updateWords(self, pwords):
+        y = 100
+        for idx, pw in enumerate(pwords):
+            word = pw['word']
+            keys = pw['keys']
+            label = self.findLabel(f'word{idx}')
+            if (label is not None):
+                label.setText(f'Word: {word}\nKeys: {",".join(keys)}\n')
+                label.setStyleSheet("background-color: rgba(255, 255, 255, 1);color: black;")
+                label.move(self.geo.width() - 500, y)
+                label.adjustSize()
+                label.update()
+                y += label.height() + 10
+
     def updateLabels(self, allwindows):
         for pid, w in allwindows.items():
             label = self.findLabel(pid)
