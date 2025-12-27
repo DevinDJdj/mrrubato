@@ -34,12 +34,27 @@ import winsound
 import base64
 import os
 import threading
+
+from collections import defaultdict
+
 #logging.basicConfig(filename='trey.log', 
 #    format='%(asctime)s %(levelname)-8s %(message)s',
 #    level=logging.INFO,
 #    datefmt='%Y-%m-%d %H:%M:%S')    
 
 logger = logging.getLogger(__name__)
+
+
+def merge(a: dict, b: dict, path=[]):
+  for key in b:
+      if key in a:
+          if isinstance(a[key], dict) and isinstance(b[key], dict):
+              merge(a[key], b[key], path + [str(key)])
+          elif a[key] != b[key]:
+              raise Exception('Conflict at ' + '.'.join(path + [str(key)]))
+      else:
+          a[key] = b[key]
+  return a
 
 
 class MyLang:
@@ -113,6 +128,7 @@ class MyKeys:
     self.starttime = time.time()
     self.lasttick = self.starttime
 
+    self.keystruct = {}
     self.qrin = [] #qr inputs
 
     if (self.config['keymap']['settings']['PLAY_FEEDBACK']):
@@ -145,6 +161,12 @@ class MyKeys:
       except:
         print("language doesnt exist " + key)
 
+    self.keystruct = self.gen_lang_struct() #initialize keystruct for all known words.  
+    print("Keystruct generated")
+    print(self.keystruct)
+
+
+    
   def get_bbox(self):
     
     if (self.currentlangna !="" and hasattr(self.languages[self.currentlangna], 'bbox')):
@@ -159,8 +181,71 @@ class MyKeys:
         self.langused.append(w['langna'])
     return self.langused
   
-  def get_words(self):
+  def get_words(self, prefix=[]):
+    if (len(prefix) == 0):
+      return self.keystruct
+    
+    if (len(prefix) > 0):
+      ret, end = self.get_keystruct(prefix)
+      return end      #should include all words with this prefix.. needs reformatting..
+
     return self.words_
+  
+
+
+  def get_keystruct(self, keys, struct={}):
+    end = self.add_keys(keys, struct)
+    return struct, end
+  
+  def add_keys(self, keys, struct):
+      if keys[0] not in struct:
+          struct[keys[0]] = {}
+      if len(keys) > 1:
+        return self.add_keys(keys[1:], struct[keys[0]])
+      return struct[keys[0]]
+
+  def gen_lang_struct(self, config=None, lang=""):
+    if (config is None):
+      struct = {}
+      final = {}
+      for (l,la) in self.languages.items():
+        if (hasattr(la, 'config') and hasattr(la, 'keybot')):
+          struct = self.gen_lang_struct(la.config['languages'][l], lang=l)
+          final = merge(final, struct)
+      return final
+    else:
+      kb = self.languages[lang].keybot
+      struct = {}
+      final = {}
+      for cmdlen, words in config.items():
+        if (cmdlen.isnumeric()):
+          for word, vals in words.items():
+            ks,end = self.get_keystruct(vals)
+            end[word] = {'lang': lang, 'word': word} #some info about word..
+            #merge ks into struct
+            #print(ks)
+            final = merge(final, ks)            
+          
+      return final
+    
+  def gen_dot(self, config=None, lang=""):
+    if (config is None):
+      dot = "digraph G {\n"
+      dot += "rankdir=LR;\n"
+      dot += "node [shape=circle];\n"
+      for (l,la) in self.languages.items():
+        if (hasattr(la, 'config')):
+          dot += self.gen_dot(la.config['languages'][l], lang=l)
+      dot += "}\n"
+    else:
+      dot = ""
+      for cmdlen, words in config.items():
+        if (cmdlen.is_numeric()):
+          for word, vals in words.items():
+            for v in vals:
+              dot += f'"{lang}:{word}\\n{v["action"]}" -> "{lang}:{v["next"]}\\n{v["next_action"]}" [ label="{cmdlen}" ];\n'
+            
+    return dot
   
   def add_qrin(self, data):
     #find this QRData.  If exists, ignore.  

@@ -768,3 +768,27 @@ OK, simple screen toggle works.
 Dont like this pyqtSignal stuff, but it works ok I guess for now..
 
 
+**LANGSTRUCT
+Need to keep all word use history.  
+For generating suggestions..
+Also need a dictionary visual.  
+This should provide all potential words.  Similar to 
+
+
+**web/public/languages.js
+--filterDicAuto
+
+What to call this a word "tree"?  
+#https://pair-code.github.io/interpretability/bert-tree/
+Any tree with n
+ nodes has a Pythagorean embedding into Rn−1
+
+Generate dot graph perhaps for each sequence of words..
+Take input of full language and generate a dot graph from that struct.  
+
+**mykeys.py
+--gen_lang_struct
+Think this works..
+How to use..
+--get_words(prefix)
+Should be called after each key for filtered display.
