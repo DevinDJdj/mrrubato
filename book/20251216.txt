@@ -792,3 +792,79 @@ Think this works..
 How to use..
 --get_words(prefix)
 Should be called after each key for filtered display.
+
+OK, something close.  
+Window update is quite slow..
+test again..
+
+Need function to update settings, just hold in config for now
+
+> Toggle Screen
+$$OPACITY=0.4
+ok, updating opacity works ok.  
+
+Need to list results in order of prevalence.  
+Sort order += 1 /(log(recency) + 1)
+recency TIME unit since usage instance?  
+TIME unit = time since last X words used.  
+X = ?  
+for now arbitrary 50
+
+Can we update this easily, or can we just do this at initialization?  
+Read backward X*X lets say to initialize dictionary.  
+We can always adjust current time later to go back in history.  
+
+I think at initialization is sufficient..
+
+**WORDFILTER
+Use this as sort order for filter listing.  
+Tree filter then sort..
+
+**LANGFILTER
+Separate filter for word patterns..
+When reading past language, create _NWORD (XWORD_) pattern.  
+
+
+We may want to go several into the future as well.  
+Based on
+
+Need to build word graph..
+
+Then once we have Next Word prediction based on a trained model
+just iterate over that to get several probable next word lists.  
+Lets go 2 or 3 words into future for now..
+And list those most probable sets based on this filter along with initial [**WORDFILTER]
+Get top N words and run two-word? predictor for each of these words.  
+
+**server/xword/test.py
+#https://www.kaggle.com/code/dota2player/next-word-prediction-with-lstm-pytorch
+
+> pip install demoji
+> pip install torchtext
+> pip install bs4
+
+> pip install torch==2.3.0
+
+> pip install torchtext==0.18.0
+
+
+!!module 'torchtext' has no attribute 'vocab'
+How far do I have to downgrade..
+2 yrs already so outdated??
+==
+from torchtext import vocab
+_torchtext.vocab.build_vocab_from_iterator
+$$
+
+!!A module that was compiled using NumPy 1.x cannot be run in NumPy 2.2.6 as it may crash.
+> pip install numpy==1.26.4
+==
+...
+> pip install torch==2.7.0
+> pip install numpy==2.2.6
+#https://debuggercafe.com/word-level-text-generation-using-lstm/
+$$
+
+
+**server/xword/test2.py
+#https://gaia.cs.umass.edu/wireshark-labs/alice.txt

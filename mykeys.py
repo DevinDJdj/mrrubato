@@ -114,6 +114,7 @@ class MyKeys:
     self.transcriptdir = config['keymap']['settings']['TRANSCRIPT_DIR']
     self.qapp = qapp
     self.startx = startx
+    self.helpx = config['keymap']['settings']['HELP_X']
     self.maxseq = 30 #can we chain together anything meaningful?  
     self.sequence = []
     self.words = [] #this can be passed from microphone input as well.  
@@ -196,7 +197,7 @@ class MyKeys:
         self.langused.append(w['langna'])
     return self.langused
   
-  
+
   def get_words_(self, prefix=[]):
     if (len(prefix) == 0):
       #filter here for most used words.  

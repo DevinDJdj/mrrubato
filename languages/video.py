@@ -18,6 +18,7 @@ class video:
     self.qr = "" #info for QR message
     self.startx = startx
     self.bbox = [0,0,100,100]   
+    self.opacity = 0.4
     self.geo = None
     self.name = "video"
     self.keybot = 49 #
@@ -317,7 +318,7 @@ class video:
     """Toggle Screen Overlay."""
     self.func = "Screen Toggle"
     logger.info(f'> Screen Toggle {sequence}')
-    opacity = 0.4    
+    opacity = self.opacity
     if (len(sequence) >=1):
         opacity = (sequence[0]-self.keybot)*10
         if (opacity < 0):
@@ -325,6 +326,7 @@ class video:
         elif (opacity > 100):
             opacity = 100
         opacity = opacity / 100.0
+        self.opacity = opacity
     self.set_qr(self.func, {'OPACITY': opacity})
     return 0
   

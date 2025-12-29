@@ -1150,7 +1150,7 @@ class QRWorker(QObject):
                 logger.info(f'Worker processing QR data: {qrdata}')
                 self.progress.emit(qrdata) #can pass param here as well.  
                 time.sleep(0.2) #allow for QR data to be processed by any reader.  
-            time.sleep(1) #wait before checking again
+            time.sleep(0.1) #wait before checking again
         self.finished.emit()
 
 class MyWindow(QMainWindow):
@@ -1194,8 +1194,10 @@ class MyWindow(QMainWindow):
         logger.info(f'Executing QR command: {command} with vars: {vars}')
         if (command == "Screen Toggle"):
             if (self.isVisible()):
-                self.hide()
+                #remove stale info?  
+                self.hide()                
             else:
+                self.setWindowOpacity(float(vars.get('OPACITY', 0.4)))
                 self.show()
         elif (command == "_Click Link"):
             self.show()
@@ -1322,7 +1324,7 @@ class MyWindow(QMainWindow):
         # creating a label widget
         self.label_1 = QLabel("transparent ", self)
         # moving position
-        self.label_1.move(self.geo.width() - 500, 100)
+        self.label_1.move(self.geo.width() - 300, 100)
         self.label_1.setStyleSheet("background-color: rgba(255, 255, 255, 1);color: red;")
         self.label_1.adjustSize()
         self.label_1.setWordWrap(True)
