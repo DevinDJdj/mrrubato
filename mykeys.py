@@ -174,8 +174,9 @@ class MyKeys:
           self.langkey.append(value)
           self.langna.append(key)
           print("language added " + key)
-      except:
+      except Exception as e:
         print("language doesnt exist " + key)
+        logger.error(f'Error loading language {key}: {e}')
 
     self.keystruct = self.gen_lang_struct() #initialize keystruct for all known words.  
     print("Keystruct generated")

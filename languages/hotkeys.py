@@ -11,6 +11,7 @@ import extensions.trey.playwrighty as playwrighty
 # Import Module
 import shutil
 
+import languages.helpers.transcriber as transcriber
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +20,7 @@ class hotkeys:
   def __init__(self, config, qapp=None, startx=0):
 
     self.config = config
+    self.transcriber = transcriber.transcriber(self)
     self.qapp = qapp
     self.startx = startx
     self.func = None
@@ -87,6 +89,44 @@ class hotkeys:
       else:
         sequence = seq + sequence
       return sequence
+
+  #general transcript loading..  
+  def load_transcripts(self):
+    #for now..
+    allcmds = self.transcriber.read(self.name, None, None) #default 7 days
+    logger.info(f'Loaded {len(allcmds)} command transcripts for {self.name}')
+    #filter commands for bookmarks.  
+    self.load_bookmarks2(allcmds)
+
+    #self.load_bookmarks()
+
+  def load_bookmarks2(self, allcmds):
+    totalcmds = len(allcmds)
+    numloaded = 0
+    for c in allcmds:
+      if (c['cmd'] == 'Add Bookmark'):
+        print(f'Found bookmark command {c}')
+        url = c['vars']['URL']
+        total_read = int(c['vars']['TOTAL_READ'])
+        body_length = int(c['vars']['BODY_LENGTH']) if 'BODY_LENGTH' in c['vars'] else 0
+        text = c['vars']['TEXT'] if 'TEXT' in c['vars'] else ""
+
+        print(f'Loaded bookmark {url} at {total_read}')
+        playwrighty.add_bookmark(url, total_read, text) #call playwrighty add bookmark..
+        numloaded += 1
+
+      elif c['cmd'].startswith('Add Bookmark'): #handle alternate format
+        parts = c['cmd'].strip().split('\t')
+        url = parts[1]
+        total_read = int(parts[2])
+        body_length = int(parts[3]) if len(parts) > 3 else 0
+        text = parts[4] if len(parts) > 4 else ""
+        print(f'Loaded bookmark {url} at {total_read}')
+        playwrighty.add_bookmark(url, total_read, text) #call playwrighty add bookmark..
+        numloaded += 1
+            
+        
+    logger.info(f'Loaded {numloaded} bookmarks from {totalcmds} commands')
 
   #really should load all data in same iteration..
   def load_bookmarks(self):
@@ -224,7 +264,7 @@ class hotkeys:
       "Record Feedback": "record_feedback"
     }
 
-    self.load_bookmarks()
+    self.load_transcripts()
     return 0  
 
   
@@ -384,15 +424,27 @@ class hotkeys:
       if (newline-total_read > 100):
         newline = total_read + 100
       text = body_text[total_read:newline]
+      text = text.replace('\n','  ')
+      text = text.replace('\t',' ')
       playwrighty.add_bookmark(url, total_read, text)
       body_length = playwrighty.page_cache[cacheno]['length'] if cacheno >=0 and cacheno < len(playwrighty.page_cache) else 0
 
+      self.transcriber.write(self.name, "Add Bookmark", {
+        'URL': url,'TOTAL_READ': total_read,'BODY_LENGTH': body_length,'TEXT': text
+      })  
+      """
       os.makedirs('../transcripts/' + self.name, exist_ok=True)
       #add utf-8?  
       with open('../transcripts/' + self.name + '/' + today + '.txt', 'a', encoding='utf-8') as f:        
         f.write(f'> Add Bookmark\t{url}\t{total_read}\t{body_length}\t{text}\n')
+        f.write(f'$$URL={url}\n')
+        f.write(f'$$TOTAL_READ={total_read}\n')
+        f.write(f'$$BODY_LENGTH={body_length}\n')
+        f.write(f'$$TEXT={text}\n')
+        f.write(f'$$TIME={datetime.now().strftime("%Y%m%d %H%M%S")}\n')
+        f.write(f'$$\n')
         #dont worry about duplication at this point.
-
+"""
 
 
     return 0

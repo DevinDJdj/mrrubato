@@ -6,6 +6,8 @@ from io import BytesIO
 import win32con
 import time
 
+import languages.helpers.transcriber as transcriber
+
 logger = logging.getLogger(__name__)
 
 class video:
@@ -13,6 +15,7 @@ class video:
   def __init__(self, config, qapp=None, startx=0):
 
     self.config = config
+    self.transcriber = transcriber.transcriber(self)
     self.qapp = qapp
     self.func = None
     self.qr = "" #info for QR message
@@ -61,6 +64,13 @@ class video:
     return 0
 
 
+  def load_transcript(self):
+    #load commands from config into funcdict
+    allcmds = self.transcriber.read(self.name, None, None) #default 7 days
+    logger.info(f'Loaded {len(allcmds)} command transcripts for {self.name}')
+
+    return 0
+  
   def load_data(self):
 
     #load language specific data into the config.  
@@ -99,7 +109,7 @@ class video:
       "Screen Toggle": "screen_toggle",
 
     }
-
+    self.load_transcript()
     return 0  
 
   #act differently based on words in sequence.    

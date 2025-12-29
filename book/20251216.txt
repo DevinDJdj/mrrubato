@@ -868,3 +868,23 @@ $$
 
 **server/xword/test2.py
 #https://gaia.cs.umass.edu/wireshark-labs/alice.txt
+
+make separate tokens for each word type.  
+For now just CMD to predict next CMD.  
+
+Use char based linguistic transcript for now..
+
+**languages/video.py
+Add transcript.  
+Create overall transcript, no need to separate language, just have language in param.  
+> <LANG> CMD
+
+**languages/helpers/transcriber.py
+Simple wrapper for logging commands and parameters..
+
+Need to add better timestamp.  
+OK, something like this..
+Dont write much..
+Just key commands..
+
+

@@ -1226,6 +1226,7 @@ class MyWindow(QMainWindow):
                     ret.append({'type': type, 'cmd': currentcmd, 'vars': vars, 'timestamp': time.time()})
 #                    logger.info(f'Adding QR {type}: {currentcmd}')
                     currentcmd = ""
+                    vars = {}
 
                 else:
                     parts = line[2:].split('=')
