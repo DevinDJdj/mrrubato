@@ -40,6 +40,7 @@ class hotkeys:
     self.feedbacknowstr = self.now.strftime("%Y%m%d%H%M%S")
 
     self.funcdict = {}
+    self.suggestions = []
 
   def word(self, sequence=[]):
     """Word lookup."""
@@ -573,7 +574,7 @@ class hotkeys:
           try:
             os.makedirs('../transcripts/' + self.name, exist_ok=True)
             with open('../transcripts/' + self.name + '/' + today + '.txt', 'a', encoding='utf-8') as f:        
-              f.write(f'> Record Feedback {sequence}\n')
+              f.write(f'> Record Feedback\t{sequence}\n')
               f.write(f'$$DURATION=' + str(duration) + '\n')
               f.write(f'$$FEEDBACK=' + self.transcript + '\n')
               if (playwrighty.mybrowser is not None):

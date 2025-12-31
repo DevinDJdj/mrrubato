@@ -291,8 +291,9 @@ class MyKeys:
     qr += "<meta>\n"
     words = self.get_words_(self.sequence[self.startseqno:])
     #potentially get most likely words here only.
-    for w in words:
-      qr += f"~~{w['word']} | {w['keys']} <br>\n" #br working for line breaks..
+    qr += f"$$SEQLEN={self.currentseqno - self.startseqno} <br>\n"
+    for i, w in enumerate(words):      
+      qr += f"~~{i} | {w['word']} | {w['keys']} <br>\n" #br working for line breaks..
     #output info about potential keys here.  
 
     return qr

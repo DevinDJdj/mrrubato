@@ -32,6 +32,7 @@ class video:
     self.callback = None
     self.audio_transcript = ""
     self.funcdict = {}
+    self.suggestions = []
 
   def word(self, sequence=[]):
     """Word lookup."""
@@ -297,11 +298,15 @@ class video:
   def screenshot_(self, sequence=[]):  
     if (len(sequence) >= 4):
       #calc new BBOX from sequence and display
+      self.func = "Screenshot_"
       self.bbox = self.get_bbox(sequence)
+
       logger.info(f'> Screenshot_ {sequence}')
       logger.info(f'$$BBOX={self.bbox}')
+      self.set_qr(self.func, {'BBOX': self.ar2str(self.bbox), 'SEQ': self.ar2str(sequence)})
       #show bbox on screen for user to see
       return 0
+    return 1
 
   def screenshot(self, sequence=[]):
     """Take Screenshot."""
@@ -313,7 +318,7 @@ class video:
     logger.info(f'$$BBOX={self.bbox}')
 
     #qr specific to current action.
-    self.set_qr(self.func, {'BB': self.ar2str(self.bbox), 'SEQ': self.ar2str(sequence)})
+    self.set_qr(self.func, {'BBOX': self.ar2str(self.bbox), 'SEQ': self.ar2str(sequence)})
     #possibly return other data here for other functions.  
 #    self.draw_screen_box(self.bbox)
     return 0

@@ -688,8 +688,9 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
                 continue
 
 
-        print(f'Total read: {total_read}')
-        logger.info(f'Total read: {total_read}')
+        if random.randint(0,100) < 5:
+            print(f'Total read: {total_read}')
+            logger.info(f'Total read: {total_read}')
         waited = 0
         ttotal = total_read
 #        time.sleep(0.03*len(l)) #wait for initial TTS to start playing.
@@ -1050,7 +1051,7 @@ def create_qr_code(data):
     600 bytes of info max. 
      Dont need good error correction as we are just passing immediately to a QR code reader.
      """
-    logger.info('Creating QR code')
+#    logger.info('Creating QR code')
     qr = qrcode.QRCode(
         version=15,
         error_correction=qrcode.constants.ERROR_CORRECT_M,
@@ -1062,7 +1063,7 @@ def create_qr_code(data):
 
     img = qr.make_image(fill_color="black", back_color="white")
     img.save("qrcode.png")
-    logger.info('QR code created and saved as qrcode.png')
+#    logger.info('QR code created and saved as qrcode.png')
     return img
 
 def _hide(data):
@@ -1147,7 +1148,7 @@ class QRWorker(QObject):
             while (not self.my_queue.empty()):
                 #incoming data from mykeys..
                 qrdata = self.my_queue.get() #get current link number.  
-                logger.info(f'Worker processing QR data: {qrdata}')
+                logger.info(f'Worker processing QR data: {qrdata[0:50]}')
                 self.progress.emit(qrdata) #can pass param here as well.  
                 time.sleep(0.2) #allow for QR data to be processed by any reader.  
             time.sleep(0.1) #wait before checking again
@@ -1202,6 +1203,12 @@ class MyWindow(QMainWindow):
         elif (command == "_Click Link"):
             self.show()
             #simulate click at link location if given.
+        elif (command == "Screenshot"):
+            print("Taking Screenshot")
+            print(vars['BBOX'])
+            self.draw_screen_box(vars.get('BBOX', None))
+        elif (command == "Screenshot_"):
+            self.draw_screen_box(vars.get('BBOX', None))
 
         #add more commands as needed.
     def parseQRData(self, qrdata):
@@ -1211,6 +1218,7 @@ class MyWindow(QMainWindow):
         currentcmd = ""
         vars = {}
         ret = []
+        tempidx = 0
         for idx, line in enumerate(lines):
 #            logger.info(f'QR Data Line: {line}')
             type = line[:2] #first 2 chars is type
@@ -1240,11 +1248,18 @@ class MyWindow(QMainWindow):
                 if (len(w) == 2):
                     word = w[0]
                     keys = w[1].split(',')
-                    ret.append({'type': type, 'word': word, 'keys': keys, 'timestamp': time.time()})
+                    ret.append({'type': type, 'index': tempidx, 'word': word, 'keys': keys, 'timestamp': time.time()})
+                    tempidx += 1
 #                    logger.info(f'Adding QR {type}: {word}')
+                if (len(w) == 3):
+                    idx = w[0]
+                    word = w[1]
+                    keys = w[2].split(',')
+                    ret.append({'type': type, 'index': idx, 'word': word, 'keys': keys, 'timestamp': time.time()})
 
                 
         return ret
+    
     # Snip...
     def runQRThread(self):
         # Step 2: Create a QThread object
@@ -1349,6 +1364,20 @@ class MyWindow(QMainWindow):
         #start internal thread to check the queue for updates.  
         #and update the window when there is new data.  
 
+    def draw_screen_box(self, bbox=""):
+        """Draws a box around the screen."""
+        self.highlighton = True
+        #get geometry of the highlight rectangle.  
+        if (bbox !=""): #xxyy
+            bbox = bbox.split(',')
+            bbox = [int(b) for b in bbox]
+            self.highlightrect = {'x': bbox[0], 'y': bbox[2], 'width': bbox[1]-bbox[0], 'height': bbox[3]-bbox[2]}
+        else:
+            geometry = self.geometry()
+            self.highlightrect = {'x': geometry.x()+100, 'y': geometry.y()+100, 'width': geometry.width()-100, 'height': geometry.height()-100}
+        self.update()  # Trigger a repaint to show the box
+        logger.info('Screen box drawn')
+        
     def hideme(self):
         """Method to close the window."""
         self.hide()
@@ -1357,7 +1386,7 @@ class MyWindow(QMainWindow):
 
     def showQR(self, data, struct={}):
         """Method to show a QR code."""
-        logger.info('Showing QR code')
+#        logger.info('Showing QR code')
         #adjust readable text first..
         self.label_1.setText(data)
         self.label_1.adjustSize()
@@ -1365,7 +1394,7 @@ class MyWindow(QMainWindow):
         qrdata = data
         #if we need to truncate
         print(f'QR data length: {len(qrdata)}')
-        print(qrdata)
+        print(qrdata[0:50])
         if (len(qrdata) > 1500):
             qrdata = qrdata[0:1500] #truncate to 1500 bytes max for QR code.
             qrdata += "\n...\n$$\n"
@@ -1426,7 +1455,9 @@ class MyWindow(QMainWindow):
             painter = QPainter(self) # Create a QPainter instance, passing 'self' (the widget) as the paint device.
             pen = QPen(Qt.red, 5, Qt.SolidLine)
             painter.setPen(pen)
-            painter.drawRect(100, 100, 200, 200)
+            rect = self.highlightrect
+            painter.drawRect(rect['x']-self.geo.x(), rect['y']-self.geo.y(), rect['width'], rect['height'])
+#            painter.drawRect(100, 100, 200, 200)
         #    painter.drawRect(geometry.x()+100, geometry.y()+100, geometry.width()-100, geometry.height()-100)
     #        painter.setFont(painter.font()) # Use default font or set a custom one
     #        painter.drawText(50, 200, "Hello QPainter!")

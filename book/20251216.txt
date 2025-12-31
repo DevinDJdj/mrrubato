@@ -887,4 +887,71 @@ OK, something like this..
 Dont write much..
 Just key commands..
 
+Need combined set after loading each language.  
+Use this to predict next command...
+Also have a language specific one model to predict.  
+
+What is hotkey to quick select?  
+Highlight next needed key in suggestions.  
+Maybe not worth quick select button?  
+Unless we quick select several future words..
+Yes this is worth.  So need to list the most likely future sets as well if there are likely sets.  
+Otherwise just list the words and allow quick select.
+
+Make general feedback function as well.  
+Video search needed.  
+Can we drive a video UI from this as well?  
+> Watch Analyze
+And give correct feedback here..
+
+
+**server/xword/test3.py
+Try to get next word for current vocabulary.  
+OK, this works, but need more vocabulary.  
+Also need a model for the params?  
+Or just show a few dissimilar samples?  
+
+Run sequence of events.  
+[Record Feedback] [Screenshot]
+[53,57, 60] [60] [49,53,55] [53,65,53,65] [49,49] [53,53]
+
+
+When overlay is on, record screen if there is difference in image.  
+"Add Bookmark": [53,58,60,62]
+
+OK add bookmark working..
+
+Switch Record Feedback to use transcriber.  
+Why are we not getting screenshot...
+Test Screenshot..
+
+[49,53,55] [53,65,53,65] [49,49]
+
+
+Shortcut should be any remaining 2-seq.  
+49, 52,49
+49,53,49
+These will equate to the suggestions.  
+This will automatically be removed from the sequence, but details about selection will be displayed.  
+And know at what point we are in the sequence..
+
+If selected again from detail screen, selection/suggestion will run as written.  
+For now max 10 suggestions.  
+These can be done any time within the word.  
+
+Selecting 49,n expands suggestions..
+And suggestion can be selected from there.  
+
+Can the language be dynamic in that way?  
+Probably too confusing.
+
+
+OK, Screenshot works..
+For now just highlighting.  
+
+Should turn video on when overlay on..
+Also should OCR data in box, or perhaps wait for separate command to do this?  
+May as well take the data..
+
+
 
