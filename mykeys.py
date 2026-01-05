@@ -281,6 +281,26 @@ class MyKeys:
       self.qrin.insert(0, data) #move to start of list
 
 
+  def convert_keys(self, keys):
+    copy = []
+    ret = ""
+    for i,k in enumerate(keys):
+      if (i==0):
+        copy.append(k)
+      else:
+        copy.append(k - keys[0])
+    base = keys[0]
+    for k in copy:
+      mod12 = (base + k) % 12
+      if (k == base): 
+        ret += "<i>" + str(k) + "</i>,"
+      else:
+        if (mod12 in (1, 3, 6, 8, 10)): #sharp keys
+          ret += "<b>" + str(k) + "</b>,"
+        else:
+          ret += str(k) + ","
+    return ret
+  
   def get_qr(self):
     qr = ""
     for (l,la) in self.languages.items():
@@ -293,7 +313,8 @@ class MyKeys:
     #potentially get most likely words here only.
     qr += f"$$SEQLEN={self.currentseqno - self.startseqno} <br>\n"
     for i, w in enumerate(words):      
-      qr += f"~~{i} | {w['word']} | {w['keys']} <br>\n" #br working for line breaks..
+      keys = self.convert_keys(w['keys'])
+      qr += f"~~{i} | {w['word']} | {keys} <br>\n" #br working for line breaks..
     #output info about potential keys here.  
 
     return qr

@@ -17,7 +17,7 @@ import time
 import sys
 import threading
 import psutil
-
+import datetime
 
 #Local imports
 sys.path.insert(0, 'c:/devinpiano/') #config.json path
@@ -257,6 +257,8 @@ def open_browser():
     global myplaywright
     if mybrowser is None:
         myplaywright = sync_playwright().start()
+        
+#        args = ["--disable-blink-features=AutomationControlled", "--load-extension=C:\devinpiano\music\extensions\handsfree"]
         args = ["--disable-blink-features=AutomationControlled"]
         mybrowser = myplaywright.chromium.launch(headless=False, args=args)  
 
@@ -264,6 +266,16 @@ def open_browser():
 #            browser_type = p.chromium
 #            mybrowser = await browser_type.launch(headless=False, args=args)  
     return mybrowser
+
+
+def save_screenshot(cacheno=-1, lang="video"):
+    page = get_ppage(cacheno)
+    now = datetime.now()
+    folder = f'../transcripts/{lang}/' 
+    fname = f'{now.strftime('%Y%m%d_%H%M%S')}.png'
+    if (page is not None):
+        page.screenshot(path=folder + fname)
+        return folder + fname
 
 def close_browser():
     #for now complete reset.  
@@ -522,6 +534,9 @@ def read_page(url, cacheno=-1):
     # Implement the web search logic here
     # This is a placeholder implementation
 
+    global current_cache
+    if (cacheno < 0):
+        cacheno = current_cache
     page = get_ppage(cacheno)
 
     logging.info(f'Getting: {url}')

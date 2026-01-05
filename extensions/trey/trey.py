@@ -16,6 +16,8 @@ import multiprocessing
 import subprocess
 import psutil
 
+from datetime import datetime
+
 from queue import Queue
 
 #Screen capture, QR code generation
@@ -1207,6 +1209,10 @@ class MyWindow(QMainWindow):
             print("Taking Screenshot")
             print(vars['BBOX'])
             self.draw_screen_box(vars.get('BBOX', None))
+            self.save_screenshot(vars.get('KLANG', 'hotkeys'), vars.get('FNAME', ''), vars.get('BBOX', None))
+            #send to QR In queue for processing by mykeys.  
+            
+
         elif (command == "Screenshot_"):
             self.draw_screen_box(vars.get('BBOX', None))
 
@@ -1219,9 +1225,13 @@ class MyWindow(QMainWindow):
         vars = {}
         ret = []
         tempidx = 0
+        lang = 'hotkeys'
         for idx, line in enumerate(lines):
 #            logger.info(f'QR Data Line: {line}')
             type = line[:2] #first 2 chars is type
+            if (len(line) > 1 and line[0] == '<' and line[-1] == '>'):
+                #lang command
+                lang = line[1:-1]
             if (type == '> '):
                 #command line internal command
                 currentcmd = line[2:]
@@ -1231,7 +1241,8 @@ class MyWindow(QMainWindow):
                     #execute command
                     if (currentcmd != ""):
                         type = '> '
-                    ret.append({'type': type, 'cmd': currentcmd, 'vars': vars, 'timestamp': time.time()})
+                    vars['KLANG'] = lang
+                    ret.append({'type': type, 'lang': lang, 'cmd': currentcmd, 'vars': vars, 'timestamp': time.time()})
 #                    logger.info(f'Adding QR {type}: {currentcmd}')
                     currentcmd = ""
                     vars = {}
@@ -1245,17 +1256,18 @@ class MyWindow(QMainWindow):
             if (type == '~~'):
                 #end of command
                 w = line[2:].split('|')
+                vars['KLANG'] = lang
                 if (len(w) == 2):
                     word = w[0]
                     keys = w[1].split(',')
-                    ret.append({'type': type, 'index': tempidx, 'word': word, 'keys': keys, 'timestamp': time.time()})
+                    ret.append({'type': type, 'lang': lang, 'index': tempidx, 'word': word, 'keys': keys, 'timestamp': time.time()})
                     tempidx += 1
 #                    logger.info(f'Adding QR {type}: {word}')
                 if (len(w) == 3):
                     idx = w[0]
                     word = w[1]
                     keys = w[2].split(',')
-                    ret.append({'type': type, 'index': idx, 'word': word, 'keys': keys, 'timestamp': time.time()})
+                    ret.append({'type': type, 'lang': lang, 'index': idx, 'word': word, 'keys': keys, 'timestamp': time.time()})
 
                 
         return ret
@@ -1364,6 +1376,32 @@ class MyWindow(QMainWindow):
         #start internal thread to check the queue for updates.  
         #and update the window when there is new data.  
 
+    def save_screenshot(self, lang='hotkeys', fname='', bbox=None):
+        """Save a screenshot of the current window."""
+        screen = qapp.primaryScreen()
+        screens = qapp.screens()
+        logger.info('saving screenshot')
+        screenshot = None
+        for i, s in enumerate(screens):
+
+            screenshot = s.grabWindow( 0 ) # 0 is the main window, you can specify another window id if needed
+
+
+        self.screenshots.append(screenshot)
+        logger.info('Capturing Screen')
+
+        now = datetime.now()
+        if (fname == ''):
+            fname = f'{now.strftime("%Y%m%d_%H%M%S")}.png'
+        folder = f'../transcripts/{lang}/' 
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+        geometry = self.geometry()
+
+        screenshot.save(folder + fname, 'png')
+        logger.info(f'Screenshot saved as {folder + fname}')
+        return folder + fname
+        
     def draw_screen_box(self, bbox=""):
         """Draws a box around the screen."""
         self.highlighton = True

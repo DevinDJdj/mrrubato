@@ -7,6 +7,8 @@ import win32con
 import time
 
 import languages.helpers.transcriber as transcriber
+import extensions.trey.playwrighty as playwrighty
+
 
 logger = logging.getLogger(__name__)
 
@@ -110,6 +112,19 @@ class video:
       "Screen Toggle": "screen_toggle",
 
     }
+    self.helpdict = {
+      "Stop": {"help": "stop", "params": "None", "desc": "Stop/Pause video recording."},
+      "Comment": {"help": "comment", "params": "None", "desc": "Add comment to video timeline."},
+      "Start": {"help": "start", "params": "None", "desc": "Start/Resume video recording."},
+      "Help": {"help": "help", "params": "None", "desc": "Show video commands."},
+      "Pause": {"help": "pause", "params": "None", "desc": "Pause video playback."},
+      "Unpause": {"help": "unpause", "params": "None", "desc": "Unpause video playback."},
+      "Screenshot": {"help": "screenshot", "params": "[bbox] in form X1, X2, Y1, Y2", "desc": "Take screenshot of video."},
+      "Zoomshot": {"help": "zoomshot", "params": "None", "desc": "Take zoomed screenshot of video."},
+      "Screen Toggle": {"help": "screen_toggle", "params": "[opacity] 10-90%", "desc": "Toggle video screen overlay."},
+
+    }
+
     self.load_transcript()
     return 0  
 
@@ -320,7 +335,6 @@ class video:
     #qr specific to current action.
     self.set_qr(self.func, {'BBOX': self.ar2str(self.bbox), 'SEQ': self.ar2str(sequence)})
     #possibly return other data here for other functions.  
-#    self.draw_screen_box(self.bbox)
     return 0
 
   def _screenshot(self, sequence=[]):

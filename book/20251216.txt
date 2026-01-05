@@ -954,4 +954,90 @@ Also should OCR data in box, or perhaps wait for separate command to do this?
 May as well take the data..
 
 
+**extensions/trey/playwrighty.py
+--open_browser
+Can we get images from non-visible virtual desktops?  
+via playwrighty, otherwise maybe not easy.  
+See if we can activate the extension and get the popup info.  
+--save_screenshot
+
+**languages/hotkeys.py
+add similar..
+
+--executeQRCommand
+Check if screenshot being saved..
+
+
+OK, this takes screenshot, not sure yet what to do with ..
+Maybe just annotate time and OCR with this time stamp..
+
+Worker thread to get OCR inside BBOX and save to params?  
+
+Enable video capture while overlay is on..
+
+
+What gets logged vs what doesnt?  
+Switch to transcriber..
+OCR -> QRIn..
+
+QR - Communicate language with UI
+QRIn - Communicate UI to language..
+
+Maybe just make relative numbers after the first.  
+
+
+Things could be cleaner..
+
+Just indicate whether black key or not with bold..
+
+Need function to get params help..
+
+
+**extensions/trey/trey.py
+Need topic list/selection
+and abiility to define sequence for topic
+[52] = Base?
+Utilize [52,53,52], [52,54,52] etc for base feedback..
+No single elements I think for now..
+When we have selected topic, this should be added to transcript as usual..
+This way video/screenshot etc will be associated..
+
+@@How do we share data across video?  Right now only one-directional.
+
+Just have a RTDB page which includes all potential QR feedback..
+This will be the extended link..
+User shares this at beginning automatically, which is picked up by QR scanner..
+All participants use this scanned url to share for that session.
+This assumes meeting is in use..
+Perhaps chatter can go across bottom/right of screen dynamically..
+User: comment/command
+Driver decides whether or not to display any overlay automatically..
+ver 10 57x57 = 174 chars..
+ver 25 117x117 = 1200 chars..
+Ver 40 177x177 = 1800 chars..
+Seems these should be fine..
+Depending on data, share or not via QR..
+
+Could allow viewer vs contributor..
+
+Generate share URL and display via QR code.  
+If this is detected, post to this location.  
+Require login?  
+and compare login ID, so much hassle.  
+
+For now just use random generated ID.  
+Create session.  
+Remove session
+Save session..
+List sessions/transcripts..
+Retrieve all transcripts only during this time..
+
+
+For now all transcripts will remain just local.  
+
+Separate batch job to upload/rerun against any repository..
+Topic/language combination determines distribution.
+
+**mykeys.py
+Do Quick-select.  
 

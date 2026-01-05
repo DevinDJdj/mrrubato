@@ -99,6 +99,18 @@ class hotkeys:
     #filter commands for bookmarks.  
     self.load_bookmarks2(allcmds)
 
+    book = self.transcriber.read(self.name, None, None, './book/')
+    #get num topics.  
+    numtopics = 0
+    alltopics = {}
+    for c in book:
+      if (c['type']=='**'):
+        if (c['cmd'] not in alltopics):
+          alltopics[c['cmd']] = []
+        alltopics[c['cmd']].append(c)
+        numtopics += 1
+    logger.info(f'Loaded {numtopics} topics and {len(book)} book transcripts from ./book/')
+
     #self.load_bookmarks()
 
   def load_bookmarks2(self, allcmds):
@@ -118,6 +130,8 @@ class hotkeys:
 
       elif c['cmd'].startswith('Add Bookmark'): #handle alternate format
         parts = c['cmd'].strip().split('\t')
+        if (len(parts) < 2):
+          continue
         url = parts[1]
         total_read = int(parts[2])
         body_length = int(parts[3]) if len(parts) > 3 else 0
@@ -264,6 +278,26 @@ class hotkeys:
       "Select Bookmark": "select_bookmark", 
       "Record Feedback": "record_feedback"
     }
+
+    self.helpdict = {
+      "Stop": {"help": "stop", "params": "None", "desc": "Stop/Pause audio."},
+      "Comment": {"help": "comment", "params": "None", "desc": "Add comment to audio timeline."},
+      "Resume": {"help": "resume", "params": "None", "desc": "Start/Resume reading."},
+      "Go Back": {"help": "go back", "params": "None", "desc": "Go back to previous page."},
+      "Start": {"help": "start", "params": "None", "desc": "Start reading from current page."},
+      "Read Screen": {"help": "read screen", "params": "None", "desc": "Read current screen content."},
+      "Skip Lines": {"help": "skip lines", "params": "Number of lines", "desc": "Skip specified number of lines."},
+      "Page": {"help": "page", "params": "Number of pages", "desc": "Read next page."},
+      "Click Link": {"help": "click link", "params": "Link number", "desc": "Click specified link on the page."},
+      "Find Last": {"help": "find last", "params": "None", "desc": "Find last read position."},
+      "Search Web": {"help": "search web", "params": "Search engine", "desc": "Search the web with the given query."},
+      "List Tabs": {"help": "list tabs", "params": "None", "desc": "List all open browser tabs."},
+      "Select Tab": {"help": "select tab", "params": "Tab number", "desc": "Select specified browser tab."},
+      "Add Bookmark": {"help": "add bookmark", "params": "None", "desc": "Add a bookmark at the current position."},
+      "List Bookmarks": {"help": "list bookmarks", "params": "None", "desc": "List all bookmarks."},
+      "Select Bookmark": {"help": "select bookmark", "params": "Bookmark number", "desc": "Select specified bookmark."},
+      "Record Feedback": {"help": "record feedback", "params": "Feedback text", "desc": "Record feedback for the current session."}
+    }      
 
     self.load_transcripts()
     return 0  
