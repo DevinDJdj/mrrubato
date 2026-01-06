@@ -156,7 +156,8 @@
 			"mousemovement1": [53, 55],			
 			"mousemovement2": [62, 63],
 			"hotkeys": [53, 54],
-			"video": [49,50]
+			"video": [49,50], 
+			"_meta": [48,49]
 			
 		},
 		"settings":{

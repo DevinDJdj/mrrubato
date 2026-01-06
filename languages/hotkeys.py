@@ -99,17 +99,6 @@ class hotkeys:
     #filter commands for bookmarks.  
     self.load_bookmarks2(allcmds)
 
-    book = self.transcriber.read(self.name, None, None, './book/')
-    #get num topics.  
-    numtopics = 0
-    alltopics = {}
-    for c in book:
-      if (c['type']=='**'):
-        if (c['cmd'] not in alltopics):
-          alltopics[c['cmd']] = []
-        alltopics[c['cmd']].append(c)
-        numtopics += 1
-    logger.info(f'Loaded {numtopics} topics and {len(book)} book transcripts from ./book/')
 
     #self.load_bookmarks()
 

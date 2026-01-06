@@ -25,6 +25,7 @@ import mss
 import qrcode
 from pynput import keyboard, mouse
 
+import glob
 
 #MIDI libraries
 import mido
@@ -122,6 +123,70 @@ current_bbox = None
 
 global qr_queue
 global qrin_queue
+
+global obsp
+
+def is_process_running(process_name):
+    """
+    Check if a process with a given name is currently running.
+    """
+    for process in psutil.process_iter(['name']):
+        if process.info['name'].lower() == process_name.lower():
+            return True
+    return False
+
+
+def send_hotkey(hotkey):
+    """Send a hotkey combination using pynput."""
+    k = keyboard.Controller()
+    k.press(keyboard.Key.ctrl)
+    k.press(keyboard.Key.shift)
+    k.press(hotkey)
+    time.sleep(0.25)
+    k.release(hotkey)
+    k.release(keyboard.Key.ctrl)
+    k.release(keyboard.Key.shift)
+
+def pause_obs_capture():
+    checkobs = is_process_running("obs64.exe")
+
+    if (checkobs):
+        logger.info('OBS process detected, pausing capture.')
+        #send pause hotkey to OBS
+        send_hotkey('8')
+        print("Pause Recording " + str(time.time()))
+
+def stop_obs_capture():
+    checkobs = is_process_running("obs64.exe")
+
+    if (checkobs):
+        logger.info('OBS process detected, stopping capture.')
+        #send stop hotkey to OBS
+        send_hotkey('z')
+        print("Stop Recording " + str(time.time()))
+    else:
+        logger.info('OBS process not running, nothing to stop.')
+
+def start_obs_capture():
+    checkobs = is_process_running("obs64.exe")
+
+    if (checkobs):
+        logger.info('OBS process detected, starting capture.')
+        #send start hotkey to OBS
+        send_hotkey('a')
+        print("Start Recording " + str(time.time()))
+        send_hotkey('9')
+        print("Unpause Recording " + str(time.time()))
+
+    else:
+        obsp = subprocess.Popen("C:\\Program Files\\obs-studio\\bin\\64bit\\obs64.exe", start_new_session=True, cwd="C:\\Program Files\\obs-studio\\bin\\64bit")
+        logger.info('Starting OBS process.')
+        time.sleep(10) #wait for OBS to start        
+        logger.info('OBS process started, starting capture.')
+        #send start hotkey to OBS
+        send_hotkey('a')
+        print("Start Recording " + str(time.time()))
+
 
 def on_click(x, y, button, pressed):
 
@@ -248,6 +313,24 @@ def create_image(width, height, color1, color2):
     dc.rectangle((0, height // 2, width // 2, height), fill=color2)
     return image
 
+def copy_latest_file():
+    list_of_files = glob.glob('C:/Users/devin/Videos/*.mp4') # * means all if need specific format then *.csv
+    if (len(list_of_files) == 0):
+        logger.info('No video files found to copy')
+        return None
+    latest_file = max(list_of_files, key=os.path.getctime)
+    print(latest_file)
+    logger.info(f'/{latest_file}')
+    basefname = os.path.basename(latest_file)
+
+    #mkdir if necessary
+    os.makedirs(f'../transcripts/{basefname[0:4]}', exist_ok=True)
+    newfname = f'../transcripts/{basefname[0:4]}/{basefname}'
+    os.rename(latest_file, newfname)
+    logger.info(f'->/{newfname}')
+    return latest_file
+
+
 def on_quit_action(icon, item):
     global mk
     """Callback function for the 'Quit' menu item."""
@@ -257,6 +340,12 @@ def on_quit_action(icon, item):
 
     mk.savemidi() #save current midi file
     stop_midi(True) #kill the midi thread
+
+    logger.info('Closing OBS capture if running')
+    stop_obs_capture()
+    time.sleep(5) #wait for OBS to close
+    #save latest file to transcripts..
+    copy_latest_file()
     logger.info('Quitting application')
     qapp.quit()
     #some cleanup still necessary?  
@@ -1199,9 +1288,14 @@ class MyWindow(QMainWindow):
             if (self.isVisible()):
                 #remove stale info?  
                 self.hide()                
+                #pause OBS capture.
+                pause_obs_capture()
             else:
                 self.setWindowOpacity(float(vars.get('OPACITY', 0.4)))
                 self.show()
+                #start OBS capture..
+                start_obs_capture()
+
         elif (command == "_Click Link"):
             self.show()
             #simulate click at link location if given.
@@ -1211,7 +1305,7 @@ class MyWindow(QMainWindow):
             self.draw_screen_box(vars.get('BBOX', None))
             self.save_screenshot(vars.get('KLANG', 'hotkeys'), vars.get('FNAME', ''), vars.get('BBOX', None))
             #send to QR In queue for processing by mykeys.  
-            
+
 
         elif (command == "Screenshot_"):
             self.draw_screen_box(vars.get('BBOX', None))
@@ -1432,7 +1526,7 @@ class MyWindow(QMainWindow):
         qrdata = data
         #if we need to truncate
         print(f'QR data length: {len(qrdata)}')
-        print(qrdata[0:50])
+        print(qrdata[0:100] + "...\n")
         if (len(qrdata) > 1500):
             qrdata = qrdata[0:1500] #truncate to 1500 bytes max for QR code.
             qrdata += "\n...\n$$\n"

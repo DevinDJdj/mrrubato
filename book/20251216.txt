@@ -1041,3 +1041,17 @@ Topic/language combination determines distribution.
 **mykeys.py
 Do Quick-select.  
 
+#https://github.com/asweigart/pyautogui
+#https://github.com/ra1nty/DXcam
+#https://github.com/obsproject/obs-studio
+maybe just start/pause/stop etc with hotkeys..
+    obsp = subprocess.Popen("C:\\Program Files\\obs-studio\\bin\\64bit\\obs64.exe", start_new_session=True, cwd="C:\\Program Files\\obs-studio\\bin\\64bit")
+
+
+**extensions/trey/trey.py
+--copy_latest_file
+Do this also on change of topic..
+
+Need to list topic and store any video transcript entries..
+ok, using _meta for now..
+some topics seem truncated..
