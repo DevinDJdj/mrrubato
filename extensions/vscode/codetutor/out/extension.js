@@ -371,9 +371,14 @@ function activate(context) {
             stream.markdown(response);
             //workbench.action.chat.readChatResponseAloud
             setTimeout(() => {
+                vscode.commands.executeCommand('workbench.action.chat.nextCodeBlock');
                 vscode.commands.executeCommand('workbench.action.chat.readChatResponseAloud');
             }, 15000);
             return;
+        }
+        if (request.command === 'genbook') {
+            //generate book context for this topic.
+            //need new file for this..
         }
         if (request.command === 'similar') {
             //find similar topics.  
@@ -621,9 +626,8 @@ function activate(context) {
                                 //Make book suggestions.  
                                 cmd = "/genbook ";
                             }
-                            else if (text.charAt(2) === "_") {
-                                //make test cases?  
-                                cmd = "/gentests ";
+                            else if (text.charAt(2) === "?") {
+                                cmd = "/genhelp";
                             }
                             if (text.length < 3 || Book.findInputTopics(text).length === 0) {
                                 //summarize current topic.  

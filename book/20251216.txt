@@ -1054,4 +1054,9 @@ Do this also on change of topic..
 
 Need to list topic and store any video transcript entries..
 ok, using _meta for now..
-some topics seem truncated..
+
+**extensions/vscode/codetutor/src/gen.ts
+Placeholder for generation logic..
+
+
+

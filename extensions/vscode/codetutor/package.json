@@ -180,6 +180,10 @@
         "isSticky": true,
         "commands": [
           {
+            "name": "genhelp",
+            "description": "Generate explanation."
+          },
+          {
             "name": "genbook",
             "description": "Generate next steps in BOOK."
           },
