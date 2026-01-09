@@ -34,7 +34,7 @@ def getIterations(desc):
             te = desc.index(")", ts)
             if ts > -1:
                 e = getSecsFromTime(desc[ts+(len(fnd))+2:te])
-            if s > 0 and e > 0 and e > s:
+            if s > -1 and e > s:
                 st.append(s)
                 et.append(e)
     except:

@@ -402,6 +402,8 @@ def updatestatsdb(videoid, starttimes, endtimes, midisize, numwords):
         
     #really this can all be set at play record.py as well, but this is essentially the same as we run this during record.py
     #need to test this works.  Seems to work ok.  
+    #get timeplaying..
+    ref.update({'midisize': midisize})
     ref.update({'wordsrecognized': numwords})
 
 
@@ -583,7 +585,7 @@ if __name__ == '__main__':
             #if we dont want to publish, rank as 0.  
 
             midi_file = util.getMidiFile(description)
-            downloadMidiFile(midi_file)
+            midisize = downloadMidiFile(midi_file)
 
             #skip TIME_WINDOW months
             if (pDate.date() < mydate):
@@ -735,7 +737,7 @@ if __name__ == '__main__':
                         #just call server/transcription/transcribe.py --transcribe_fromyoutube
                         from extensions.trey.speech import transcribe_audio, listen_audio
                         transcript = transcribe_audio(mediafile, util.st, util.et, True)
-                        servererrorcnt += 1 #testing..
+                        #servererrorcnt += 1 #testing..
 
                         """
                         if (model is None):
@@ -752,7 +754,8 @@ if __name__ == '__main__':
                             data = {'transcript':transcript}
                             reftranscript.set(data)
                             print(data)
-                            updatestatsdb(videoid, util.st, util.et, 0, len(transcript.split())) #wordcount
+                            #this done in analyze.py as well.
+                            updatestatsdb(videoid, util.st, util.et, midisize, len(transcript.split())) #wordcount
 
                         else:
                             print('transcript error' + videoid)

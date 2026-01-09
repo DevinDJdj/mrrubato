@@ -909,7 +909,7 @@ function getVideoJson(videoid, mode=VID_VIEW){
           console.log(title);
 
           //we need to get the iterations here before we do anything else, otherwise the graphic doesnt work.  
-          numiterations = getIterations(item.snippet.description, item.snippet.publishedAt, true);
+          numiterations = getIterations(item.snippet.description, item.snippet.publishedAt, item, true);
 //			searchPrevious(videoid);
 
           if (mode & VID_DETAILS){

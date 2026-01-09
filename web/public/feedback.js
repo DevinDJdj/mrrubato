@@ -262,10 +262,11 @@ function getTime(comment){
 }
 
 
-function getIterations(desc, vidtime, isme=false){
+function getIterations(desc, vidtime, vidobj=null, isme=false){
 	st = [];
 	et = [];
 	s = 0;
+
 
 	if (desc ==""){
 		//one iteration length of video.  
@@ -294,7 +295,7 @@ function getIterations(desc, vidtime, isme=false){
 			te = desc.indexOf(")", ts);
 			if (ts > -1)
 				e = getSecsFromTime(desc.substring(ts+(fnd.length)+2, te));
-			if (s > -1 && e > -1 && e > s){
+			if (s > -1 && e > s){
 				st.push(s);
 				et.push(e);
 			}
@@ -307,9 +308,18 @@ function getIterations(desc, vidtime, isme=false){
 			for (i=0; i< st.length; i++){
 				if (et[i] !==null){
 					tempdate = mydate;
-					tempdate.setSeconds(tempdate.getSeconds()+st[i]);
-					starttimes.push(tempdate);
-					durations.push([tempdate, et[i]-st[i]]);
+					const startDate = new Date(tempdate.getTime() + st[i]*1000);
+//					tempdate.setSeconds(tempdate.getSeconds()+st[i]);
+//					starttimes.push(tempdate);
+					//get stats from vidobj
+					var notespersecond = 0;
+					if (vidobj !==null && vidobj.hasOwnProperty('stats')){
+						if (vidobj.stats.hasOwnProperty('timeplaying') && vidobj.stats.timeplaying > 0 && vidobj.stats.hasOwnProperty('midisize')){
+							notespersecond = vidobj.stats.midisize / (vidobj.stats.timeplaying*6); //6 bytes per note in midi noteon/noteoff.
+						}
+					}
+//					durations.push([startDate, et[i]-st[i]]);
+//					durations.push([tempdate, et[i]-st[i]]);
 					if (isme){
 						myst.push(st[i]);
 						myet.push(et[i]);
@@ -318,8 +328,15 @@ function getIterations(desc, vidtime, isme=false){
 							
 						}
 					}
-					tempdate.setSeconds(tempdate.getSeconds()+(et[i]-st[i]));
-					endtimes.push(tempdate);
+					else{
+						starttimes.push(startDate);
+						durations.push([startDate, et[i]-st[i], notespersecond*60]);
+						const endDate = new Date(startDate.getTime() + (et[i]-st[i])*1000);
+						endtimes.push(endDate);
+	
+					}
+//					tempdate.setSeconds(tempdate.getSeconds()+(et[i]-st[i]));
+//					endtimes.push(tempdate);
 				}
 			}
 		}

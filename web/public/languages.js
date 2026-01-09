@@ -98,7 +98,10 @@ function updateState(transcript="", lang=""){
     mytranscript = $('#mycomments').val();
     mystate = "";
     mystate += currentlanguage + ": " + midiarray[currentmidiuser][currentlanguage].length + "<br>";
-    mystate += "meta: " + midiarray[currentmidiuser]["meta"].length + "<br>";
+    //why doesnt this exist sometimes??
+    if (typeof(midiarray[currentmidiuser]["meta"]) !== "undefined"){
+        mystate += "meta: " + midiarray[currentmidiuser]["meta"].length + "<br>";
+    }
     mystate += "last entry: " + transcript + "<br>";
     mystate += "current video time: " + getTimeFromSecs(currentvidtime/1000) + "<br>"; //video.js
     if (lastnote !==null){

@@ -98,6 +98,7 @@ Load any speech from this time.
     </script>
     <script src="keymap.js"></script>
     <script src="languages.js"></script>
+    <script src="feedback.js"></script>
     
     <script src="js/drawkeyboard.js"></script>
     
@@ -1011,70 +1012,6 @@ Load any speech from this time.
     }
     
     
-    function getIterations(desc, vidtime, isme=false){
-        st = [];
-        et = [];
-        s = 0;
-    
-        if (desc ==""){
-            //one iteration length of video.  
-            //this is for watch.  
-            e = player.getDuration();
-            st.push(1);
-            et.push(e);
-            maxduration = e-1;
-            numiterations = 1;
-            myst.push(st[0]);
-            myet.push(et[0]);
-        }
-        else{
-            for (i=1; i< 20; i++){
-                s = -1;
-                e = -1;
-                fnd = "TRIAL#" + i;
-                let ts = desc.indexOf(fnd);
-                te = desc.indexOf(")", ts);
-                if (ts > -1)
-                    s = getSecsFromTime(desc.substring(ts+(fnd.length)+2, te));
-                    
-                fnd = "END#" + i;
-                ts = desc.indexOf(fnd);
-                te = desc.indexOf(")", ts);
-                if (ts > -1)
-                    e = getSecsFromTime(desc.substring(ts+(fnd.length)+2, te));
-                if (s > -1 && e > -1 && e > s){
-                    st.push(s);
-                    et.push(e);
-                }
-            }
-            console.log(st);
-            console.log(et);
-            //arrays of all iterations
-            mydate = new Date(vidtime);
-    //		if (!isme){
-                for (i=0; i< st.length; i++){
-                    if (et[i] !==null){
-                        tempdate = mydate;
-                        tempdate.setSeconds(tempdate.getSeconds()+st[i]);
-                        starttimes.push(tempdate);
-                        durations.push([tempdate, et[i]-st[i]]);
-                        if (isme){
-                            myst.push(st[i]);
-                            myet.push(et[i]);
-                            if (et[i]-st[i] > maxduration){
-                                maxduration = et[i]-st[i];
-                                
-                            }
-                        }
-                        tempdate.setSeconds(tempdate.getSeconds()+(et[i]-st[i]));
-                        endtimes.push(tempdate);
-                    }
-                }
-            }
-            //from here generate some sort of graphic.  
-    //	}
-        return st.length;
-    }
     
     
     function addMe(user){

@@ -76,8 +76,11 @@ def convert_mp4_to_wav(mp4_fname):
 
     print(f"Converting mp3 to wav: {mp3_file}")
     sound = AudioSegment.from_mp3(mp3_file)
+    mono_sound = sound.set_channels(1)
+    resampled_audio = mono_sound.set_frame_rate(16000)
     wav_fname = mp4_fname[:-4] + '.wav'
-    sound.export(wav_fname, format="wav")
+    resampled_audio.export(wav_fname, format="wav")
+#    sound.export(wav_fname, format="wav")
     return wav_fname
 
 def getTimeFromSecs(secs):
@@ -87,6 +90,19 @@ def getTimeFromSecs(secs):
 
 
 def init_asr_model():
+    model_w2v2 = EncoderDecoderASR.from_hparams(
+        source="speechbrain/asr-wav2vec2-commonvoice-en",
+        savedir="pretrained_models/asr-wav2vec2-commonvoice-en"
+    )
+    return model_w2v2
+    
+    from speechbrain.inference.ASR import WhisperASR
+    model_whisper = WhisperASR.from_hparams(
+        source="speechbrain/asr-whisper-small",
+        savedir="pretrained_models/asr-whisper-small"
+    )
+    return model_whisper
+
     asr_model = EncoderDecoderASR.from_hparams(source="./models/pretrained_ASR")
     return asr_model
 
@@ -116,8 +132,13 @@ def transcribe_audio(fname="example2.wav", start_times=[], end_times=[], use_tim
             if (i > 0):
                 st = end_times[i-1]
             et = start_times[i]
-            start_sample = int(st * samplerate)
-            end_sample = int(et * samplerate)
+            if (et <= st+4 or et > st+300): #min 5 sec segments, max 5 min segments
+                print(f"Skipping invalid segment {st} to {et}")
+                continue
+
+
+            start_sample = int((st) * samplerate)
+            end_sample = int((et) * samplerate)
             segment_data = data[start_sample:end_sample]
             wav.write(segment_fname, samplerate, segment_data)
             result  = asr_model.transcribe_file(segment_fname)

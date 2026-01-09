@@ -106,11 +106,36 @@ def train_model():
 
 
 def transcribe_audio(fname):
+    from speechbrain.lobes.models.huggingface_transformers.wav2vec2 import Wav2Vec2
+    from speechbrain.lobes.models.huggingface_transformers.whisper import Whisper
+
+    # HuggingFace model hub
+    model_hub_w2v2 = "facebook/wav2vec2-base-960h"
+    model_hub_whisper = "openai/whisper-small"
+    """
+    from speechbrain.inference.ASR import EncoderASR
+    model_w2v2 = EncoderASR.from_hparams(
+        source="speechbrain/asr-wav2vec2-commonvoice-en",
+        savedir="./models/asr-wav2vec2-commonvoice-en"
+    )
+    result = model_w2v2.transcribe_file(fname)
+    print("Transcription (wav2vec2):")
+    print(result)
+    from speechbrain.inference.ASR import WhisperASR
+    model_whisper = WhisperASR.from_hparams(
+        source="speechbrain/asr-whisper-small",
+        savedir="./models/asr-whisper-small"
+    )
+    result = model_whisper.transcribe_file(fname)
+    print("Transcription (whisper-small):")
+    print(result)
+    """
 
     asr_model = EncoderDecoderASR.from_hparams(source="./models/pretrained_ASR")
 #    asr_model = EncoderDecoderASR.from_hparams(source="speechbrain/asr-conformer-transformerlm-librispeech", savedir="./models/pretrained_models/asr-transformer-transformerlm-librispeech")
     result = asr_model.transcribe_file("example2.wav")
     #result = asr_model.transcribe_file("speechbrain/asr-conformer-transformerlm-librispeech/example.wav")
+    print("Transcription (conformer-transformer):")
     print(result)
 
 
@@ -211,7 +236,7 @@ class EncDecFineTune(sb.Brain):
 if (__name__ == "__main__"):
 
     samplerate = 16000  # Sample rate (Hz)
-    duration = 5       # Recording duration (seconds)
+    duration = 25       # Recording duration (seconds)
 
     print("Recording...")
     recording = sd.rec(int(samplerate * duration), samplerate=samplerate, channels=1, dtype='float32')
@@ -225,7 +250,7 @@ if (__name__ == "__main__"):
     generate_audio("This is a test of the text to speech system.")
 
 
-    #train_model()
+    train_model()
 
 
 

@@ -71,6 +71,12 @@ function get_current_weather(city) {
 function validateChange(topkey, change) {
     //check if the change is valid.
     const allDiagnostics = vscode.languages.getDiagnostics();
+    const topDiagnostics = vscode.languages.getDiagnostics(Book.getUri(topkey));
+    //updatePage
+    //track number of updates and make sure we are going a decent speed..
+    const afterChangeDiagnostics = vscode.languages.getDiagnostics(Book.getUri(topkey));
+    //compare before and after diagnostics.
+    //if no issues, keep change, otherwise revert.  
     //get diagnostics for all open files.  
     //if there is some error, prompt to try to fix.  
     //return the diagnostic info.  

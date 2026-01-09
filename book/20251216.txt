@@ -1059,4 +1059,72 @@ ok, using _meta for now..
 Placeholder for generation logic..
 
 
+**extensions/vscode/codetutor/src/book.ts
+--updatePage
+use this from gen..
+test this..
+
+After each gen, what checks are needed?  
+
+**extensions/vscode/codetutor/src/extension.ts
+--validateChange
+Continue here..
+
+
+vscode.window.onDidChangeActiveTextEditor
+
+@@How to redirect midi to remote machines?  
+
+
+**timestep.py
+statistics do we have note count or something else simple to graph..
+For now just use midisize compared to time..
+
+
+**web/public/book.html
+**web/public/recent.html
+**web/public/analyze.html
+Change all to use feedback.js function getIterations
+OK, iterations look somewhat better, can add addl. stats if desired..
+
+
+**timestep.py
+Transcripts are horrible with this model..
+Going to need to redo transcripts if we want anything useful..
+Just have multiple..
+video/transcript/transcript
+video/transcript/transcript2..
+
+**extensions/trey/testspeechbrain.py
+Need to check some other models.  
+This transcription is too bad..
+
+Try with adjusted frame rate..
+Audio quality is primary issue I guess..
+
+
+
+**record.py
+there is some issue with data with 0 start time.  
+
+
+
+
+**extensions/trey/testspeechbrain.py
+Add some more models..
+#https://speechbrain.readthedocs.io/en/v1.0.2/tutorials/nn/using-wav2vec-2.0-hubert-wavlm-and-whisper-from-huggingface-with-speechbrain.html
+
+#https://github.com/speechbrain/speechbrain/blob/develop/recipes/LibriSpeech/ASR/CTC/train_with_wav2vec.py
+
+> pip install --upgrade huggingface_hub
+
+
+**/speechbrain/utils/fetching.py
+!!TypeError: hf_hub_download() got an unexpected keyword argument 'use_auth_token'
+==
+> pip install huggingface-hub==0.30.0
+$$
+
+Lot of garbage samples.  
+Library incompatibility too much..
 
