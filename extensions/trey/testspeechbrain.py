@@ -7,11 +7,18 @@ import numpy as np
 import torch
 import scipy.io.wavfile as wav
 import json
+
 #from parse_data import parse_to_json
+
+import sys
+sys.path.insert(0, 'c:/devinpiano/')
+sys.path.insert(1, 'c:/devinpiano/music')
+
+import config
 
 asr_model = None
 
-def parse_to_json(basedir="../testing/speechbrain/templates/speech_recognition/mini_librispeech/LibriSpeech/", type="dev-clean-2", out='data.json'):
+def parse_to_json(basedir="../testing/data/mini_librispeech/LibriSpeech/", type="dev-clean-2", out='data.json'):
     #parse a directory of audio files and create a json file for training.  
 #    "test-clean"
 #    "train-clean-5"
@@ -84,7 +91,16 @@ def train_model():
 
 
     
+    """
+    modules = {"enc": asr_model.mods.encoder.transformer_encoder,
+#            "emb": asr_model.hparams.emb,
+            "dec": asr_model.hparams.decoder,
+            "compute_features": asr_model.mods.encoder.compute_features, # we use the same features
+            "normalize": asr_model.mods.encoder.normalize,
+            "seq_lin": asr_model.hparams.seq_lin,
 
+            }   
+    """
     modules = {"enc": asr_model.mods.encoder.model,
             "emb": asr_model.hparams.emb,
             "dec": asr_model.hparams.dec,
@@ -106,8 +122,8 @@ def train_model():
 
 
 def transcribe_audio(fname):
-    from speechbrain.lobes.models.huggingface_transformers.wav2vec2 import Wav2Vec2
-    from speechbrain.lobes.models.huggingface_transformers.whisper import Whisper
+#    from speechbrain.lobes.models.huggingface_transformers.wav2vec2 import Wav2Vec2
+#    from speechbrain.lobes.models.huggingface_transformers.whisper import Whisper
 
     # HuggingFace model hub
     model_hub_w2v2 = "facebook/wav2vec2-base-960h"
@@ -132,7 +148,7 @@ def transcribe_audio(fname):
     """
 
     asr_model = EncoderDecoderASR.from_hparams(source="./models/pretrained_ASR")
-#    asr_model = EncoderDecoderASR.from_hparams(source="speechbrain/asr-conformer-transformerlm-librispeech", savedir="./models/pretrained_models/asr-transformer-transformerlm-librispeech")
+#    asr_model = EncoderDecoderASR.from_hparams(source="speechbrain/asr-conformer-transformerlm-librispeech", savedir="./models/pretrained_ASR_conformer")
     result = asr_model.transcribe_file("example2.wav")
     #result = asr_model.transcribe_file("speechbrain/asr-conformer-transformerlm-librispeech/example.wav")
     print("Transcription (conformer-transformer):")
@@ -236,7 +252,7 @@ class EncDecFineTune(sb.Brain):
 if (__name__ == "__main__"):
 
     samplerate = 16000  # Sample rate (Hz)
-    duration = 25       # Recording duration (seconds)
+    duration = 5       # Recording duration (seconds)
 
     print("Recording...")
     recording = sd.rec(int(samplerate * duration), samplerate=samplerate, channels=1, dtype='float32')
@@ -245,13 +261,16 @@ if (__name__ == "__main__"):
     audio_tensor = torch.from_numpy(recording.squeeze()) # Remove channel dimension if mono
     wav.write("example2.wav", samplerate, (recording * 32767).astype(np.int16)) # Save as int16 WAV file
 
+    mytoken = config.cfg["huggingface"]["TOKEN"]
+    from huggingface_hub import login
+    login(token=mytoken)
     transcribe_audio("example2.wav")
 
     generate_audio("This is a test of the text to speech system.")
 
 
     train_model()
-
+    
 
 
     #parse_to_json(type="train-clean-5", out='train.json')

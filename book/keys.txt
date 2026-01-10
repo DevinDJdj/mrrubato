@@ -77,7 +77,7 @@ hotkeys = 5 (53)
 ok = 6
 good = 7
 generate = 8
-find = 9
+find/check = 9
 create = 10
 lang = 11
 

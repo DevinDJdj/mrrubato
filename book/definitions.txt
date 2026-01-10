@@ -16,6 +16,7 @@ reference from document
 -->
 
 > CMD operation
+>>Elevated CMD operation
 
 ** topic (source code file name with separator, OR videoID > 10 chars, otherwise content/topic tag)
 

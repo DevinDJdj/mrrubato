@@ -1,0 +1,87 @@
+**extensions/trey/testspeechbrain.py
+!!OSError: [WinError 1114] A dynamic link library (DLL) initialization routine failed. Error loading "c:\Python\Python314\Lib\site-packages\torch\lib\c10.dll" or one of its dependencies.
+==
+#https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170
+$$
+
+!!module 'torchaudio' has no attribute 'list_audio_backends'
+==
+> pip install torchaudio==2.8
+$$
+
+python version 3.12 only supported..
+Minimal setup?  
+$$PYTHON=3.12.9
+> pip install speechbrain
+> pip install torchaudio==2.7
+> pip install requests
+> pip install sounddevice
+> pip install transformers
+
+!!HFValidationError: Repo id must be in the form 'repo_name' or 'namespace/repo_name': './models/pretrained_ASR'. Use `repo_type` argument if needed.
+
+> powershell -ExecutionPolicy ByPass -c "irm https://hf.co/cli/install.ps1 | iex"
+
+> hf auth login
+
+!!OSError: [WinError 1314] A required privilege is not held by the client: 'C:\\Users\\devin\\.cache\\huggingface\\hub\\models--speechbrain--asr-conformer-transformerlm-librispeech\\snapshots\\eb981701f2831dae595e6d55ab02ed6080cd38d2\\hyperparams.yaml' -> 'C:\\devinpiano\\music\\models\\pretrained_ASR\\hyperparams.yaml'
+==
+>>python ./extensions/trey/testspeechbrain.py
+$$
+
+!! raise RuntimeError(f"Couldn't find appropriate backend to handle uri {uri} and format {format}.") 
+!! RuntimeError: Couldn't find appropriate backend to handle uri C:\devinpiano\music\example2.wav and format None.
+==
+Install ffmpeg
+#https://www.ffmpeg.org/download.html
+#https://www.gyan.dev/ffmpeg/builds/
+> pip install sox
+> pip install soundfile
+$$
+
+!!  File "C:\devinpiano\music\extensions\trey\testspeechbrain.py", line 37, in parse_to_json
+!!    flac_files[0]
+!!    ~~~~~~~~~~^^^
+!!IndexError: list index out of range
+==
+$$DIR=../testing
+> git clone https://github.com/speechbrain/speechbrain.git
+#https://www.openslr.org/12
+
+> python ../testing/speechbrain/templates/speech_recognition/mini_librispeech_prepare.py
+
+**../testing/speechbrain/templates/speech_recognition/mini_librispeech_prepare.py
++if __name__ == "__main__":
++    data_folder = "../testing/data/mini_librispeech"
++    os.makedirs(data_folder, exist_ok=True)
++    prepare_mini_librispeech(
++        data_folder,
++        "train.json",
++        "valid.json",
++        "test.json",
++    )
+
+$$
+
+**extensions/trey/testspeechbrain.py
+
+!!  File "C:\devinpiano\music\extensions\trey\testspeechbrain.py", line 95, in train_model
+!!    modules = {"enc": asr_model.mods.encoder.model,
+!!                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+!! File "c:\Python\Python312\Lib\site-packages\torch\nn\modules\module.py", line 1940, in __getattr__
+!!    raise AttributeError(
+!!AttributeError: 'LengthsCapableSequential' object has no attribute 'model'
+
+==
+make sure this is active first..
+--train_model
++    asr_model = EncoderDecoderASR.from_hparams(source="speechbrain/asr-crdnn-rnnlm-librispeech", savedir="./models/pretrained_ASR", hparams_file="hyperparams.yaml")
+$$
+
+
+
+**mykeys.py
+What do we do with just double-key no word?  
+Should be special handler for double strokes.  
+refer to [**book/keys.txt]
+
