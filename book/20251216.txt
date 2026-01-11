@@ -1128,3 +1128,21 @@ $$
 Lot of garbage samples.  
 Library incompatibility too much..
 
+Python 3.12 needed..
+
+
+**NEWKEYS
+MOD MX 8
+sometime..
+
+**web/public/analyze.html
+Could just sync the midiarray real-time..
+Not sure this is needed..
+
+Set up speech training from data..
+
+@@Is mic quality better?  
+
+**extensions/trey/speech.py
+--parse_to_json
+change to use captured data..

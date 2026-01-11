@@ -62,3 +62,6 @@ pretrained**/*
 models/*
 
 web/public/test/MultiRTC-firebase/*
+
+model_checkpoints/*
+*.wav
