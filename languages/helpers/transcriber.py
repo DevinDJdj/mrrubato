@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 class transcriber:
-    def __init__(self, lang_helper):
+    def __init__(self, lang_helper=None):
         self.lang_helper = lang_helper
 
     def getTime(self, relativedays=0):

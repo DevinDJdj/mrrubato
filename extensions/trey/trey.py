@@ -63,7 +63,7 @@ from playsound3 import playsound
 from pydub import AudioSegment
 from pydub.playback import play
 
-import simpleaudio as sa
+#import simpleaudio as sa
 import pygame
 import edge_tts
 

@@ -85,3 +85,69 @@ What do we do with just double-key no word?
 Should be special handler for double strokes.  
 refer to [**book/keys.txt]
 
+**extensions/trey/speech.py
+--speech_parse_to_json2
+use existing data..
+wav to flac?  
+--speech_load_feedback
+
+**extensions/trey/trey.py
+> pip install psutil
+> pip install mss
+> pip install qrcode
+> pip install pynput
+> pip install mido
+> pip install pystray
+> pip install PyQt5
+> pip install win32gui
+
+!!ModuleNotFoundError: No module named 'win32.distutils.command'
+==
+> pip install pywin32
+$$
+
+> pip install pyaudio
+> pip install matplotlib
+> pip install pyttsx3
+> pip install playsound3
+> pip install pydub
+> pip install pygame
+> pip install edge_tts
+> pip install qdrant_client
+> pip install newspaper3k
+> pip install lxml_html_clean
+
+!!ImportError: DLL load failed while importing onnxruntime_pybind11_state: A dynamic link library (DLL) initialization routine failed.
+==
+> pip install onnxruntime==1.20.1
+$$
+> pip install playwright
+> pip install playwright-stealth
+> pip install opencv-python
+
+wow lot more dependencies than hoped..
+> pip install qreader
+
+!!FileNotFoundError: Could not find module 'c:\Python\Python312\Lib\site-packages\pyzbar\libzbar-64.dll' (or one of its dependencies). Try using the full path with constructor syntax.
+==
+https://www.microsoft.com/en-gb/download/details.aspx?id=40784
+$$
+
+!!OSError: [WinError 1114] A dynamic link library (DLL) initialization routine failed. Error loading "c:\Python\Python312\Lib\site-packages\torch\lib\c10.dll" or one of its dependencies.
+==
+> pip install torch==2.7
+> pip install torchaudio==2.7
+> pip install torchvision==0.22.0
+$$
+
+> pip install rtmidi
+!!error: Microsoft Visual C++ 14.0 or greater is required. Get it with "Microsoft C++ Build Tools": https://visualstudio.microsoft.com/visual-cpp-build-tools/
+==
+stupid message..
+> pip install python-rtmidi
+$$
+
+**extensions/trey/requirements.txt
+Not sure this is minimal..
+But it works now..
+

@@ -79,7 +79,82 @@ class EncDecFineTune(sb.Brain):
         return loss
 
 
-def parse_to_json(basedir="../testing/data/mini_librispeech/LibriSpeech/", type="dev-clean-2", out='data.json'):
+def wav_to_flac(wav_file, flac_file):
+    """
+    Converts a WAV file to a FLAC file using pydub.
+    """
+    if not os.path.exists(wav_file):
+        print(f"Error: {wav_file} not found")
+        return
+
+    print(f"Converting {wav_file} to {flac_file}...")
+    try:
+        # Load the WAV file
+        audio = AudioSegment.from_wav(wav_file)
+        
+        # Export as FLAC file (pydub automatically uses ffmpeg for the conversion)
+        audio.export(flac_file, format="flac")
+        print("Conversion successful!")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+
+def speech_load_feedback(allcmds):
+    totalcmds = len(allcmds)
+    numloaded = 0
+    examples = {}
+    words_dict = {}
+    for c in allcmds:
+      if (c['cmd'] == 'Record Feedback'):
+        print(f'Found Record Feedback {c}')
+        feedback = c['vars'].get('FEEDBACK', '')
+        o = c['vars'].get('ORIGINAL', '')
+        s = c['vars'].get('SCORE', '')
+        f = c['vars'].get('FILE', '')
+        print(f'Feedback: {feedback}\nOriginal: {o}\nScore: {s}\n')        
+        #change file to flac for model.  
+        flac_file = f.replace(".wav", ".flac")
+        wav_to_flac(f, flac_file)
+
+        numloaded += 1
+        #use original assuming user actually read what was written..
+        words = " ".join(o.split(" ")[1:])
+        utt_id = Path(flac_file).stem
+        words_dict[utt_id] = words
+            
+        
+        examples[utt_id] = {"file_path": flac_file,
+                            "words": words_dict[utt_id],
+                            "spkID": "0",
+                            "length": torchaudio.info(flac_file).num_frames}
+
+
+    print(examples[list(examples.keys())[0]])
+
+    logger.info(f'Loaded {numloaded} feedback from {totalcmds} commands')
+    return examples
+
+def speech_parse_to_json2(lang="hotkeys"):
+    import languages.helpers.transcriber as transcriber
+    trans = transcriber.Transcriber()
+    allcmds = trans.read(lang, None, None) #default 7 days
+    logger.info(f'Loaded {len(allcmds)} command transcripts for {lang}')
+    #filter commands for > Record Feedback
+
+    #filter commands for bookmarks.  
+    examples = speech_load_feedback(allcmds)
+    if (len(examples) > 0):
+        out = 'feedback_data.json'
+        with open(out, "w") as f:
+            import json
+            json.dump(examples, f, indent=4)
+        logger.info(f'Saved feedback data to {out}')
+        return out
+
+
+    return ""
+
+def speech_parse_to_json(basedir="../testing/data/mini_librispeech/LibriSpeech/", type="dev-clean-2", out='data.json'):
     #parse a directory of audio files and create a json file for training.  
 #    "test-clean"
 #    "train-clean-5"
@@ -127,13 +202,13 @@ def parse_to_json(basedir="../testing/data/mini_librispeech/LibriSpeech/", type=
     #filename for json_file
     return dev_clean_root + "/" + out
 
-def train_model():
+def speech_train_model():
     #set up JSON files for training.  
     global asr_model
 
     asr_model = EncoderDecoderASR.from_hparams(source="./models/pretrained_ASR", savedir="./models/pretrained_ASR", hparams_file="hyperparams.yaml")    
 #    asr_model = EncoderDecoderASR.from_hparams(source="speechbrain/asr-crdnn-rnnlm-librispeech", savedir="./models/pretrained_ASR", hparams_file="hyperparams.yaml")
-    fname = parse_to_json()
+    fname = speech_parse_to_json()
     from speechbrain.dataio.dataset import DynamicItemDataset
     dataset = DynamicItemDataset.from_json(fname)
     dataset = dataset.filtered_sorted(sort_key="length", select_n=100)
