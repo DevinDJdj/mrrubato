@@ -315,7 +315,7 @@ class hotkeys:
       if hasattr(self, func + "_"):
         #no return here..
         if getattr(self, func + "_")(sequence) > 0:
-          #no function, run sequence through mk.key
+          #function not yet complete..
           a = 0
         else:
           logger.info(f'--> {func}_')

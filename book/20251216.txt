@@ -1146,3 +1146,142 @@ Set up speech training from data..
 **extensions/trey/speech.py
 --parse_to_json
 change to use captured data..
+
+@@How to measure if quality is better after training STT.  
+Probably need to train TTS as well.  
+#https://github.com/speechbrain/speechbrain/blob/develop/recipes/LJSpeech/TTS/fastspeech2/train.py
+#https://github.com/speechbrain/speechbrain/blob/develop/recipes/LJSpeech/TTS/tacotron2/train.py
+#https://github.com/speechbrain/speechbrain/blob/develop/recipes/LibriTTS/TTS/mstacotron2/train.py
+
+
+**/../testing/speechbrain/recipes/LibriTTS/libritts_prepare.py
+This doesnt download for you.  
+Have to download..
+#https://www.openslr.org/60/
+
+
+++
+
+if __name__ == "__main__":
+    # Example usage
+    print("Preparing LibriTTS dataset...")
+    prepare_libritts(
+        data_folder="data",
+        save_json_train="./data/train.json",
+        save_json_valid="./data/valid.json",
+        save_json_test="./data/test.json",
+        sample_rate=24000,
+        #must download
+        libritts_subsets=[
+            "train-clean-100", 
+            "dev-clean",
+            "test-clean",
+        ],
+        model_name="Tacotron2",
+    )
+++
+
+
+--create_json
+++
+        normalized_text_path = normalized_text_path.replace("\\", "/")
+        normalized_text_path = "." + normalized_text_path
+++
+
+
+The audio files are at 24kHz sampling rate.
+
+> python ./libritts_prepare.py
+
+**/../testing/speechbrain/recipes/LibriTTS/TTS/mstacotron2/hparams/train.yaml
++skip_prep: True
+
+> python ./TTS/mstacotron2/train.py TTS/mstacotron2/hparams/train.yaml --data_folder="./data" --device=cuda:0 --max_grad_norm=1.0
+
+!!AssertionError: Torch not compiled with CUDA enabled
+
+==
+$$SYSTEM=UBUNTU
+> pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
+> python -c "import torch; print('Torch Version:', torch.__version__); print('CUDA Version:', torch.version.cuda); print('CUDA Available:', torch.cuda.is_available())"
+Torch Version: 2.4.1+cu124
+CUDA Version: 12.4
+CUDA Available: True
+$$
+
+!!FileNotFoundError: [Errno 2] No such file or directory: './results/tacotron2/1234/save/train.json'
+==
+**/../testing/speechbrain/recipes/LibriTTS/TTS/mstacotron2/train.py
+++
+    else:
+        logger.info("Skipping data preparation...")
+        #copy files to save_folder experiment directory
+        import shutil
+        import glob
+        source_dir = hparams["data_folder"]
+        dest_dir = hparams["output_folder"] + "/save"
+        files_to_copy = glob.glob(os.path.join(source_dir, '*.json'))
+        for file_path in files_to_copy:
+            shutil.copy(file_path, dest_dir)
+
+++
+
+--compute_speaker_embeddings
+Windows/Linux path problems..
++            wav_file = wav_file.replace("\\", "/")
++            utt_wav_path = utt_wav_path.replace("\\", "/")
+
+$$
+
+
+This whole process is way too complex..
+We need this to be done by a user to get better speech recognition..
+The premise is very simple from users perspective.  
+I have a dictionary of TEXT->SPEECH.  
+Use this to improve the output of the model..
+But the process to do this, I dont understand how none of these libraries have made it very user-friendly.  
+
+OK training seems to work.  
+
+**timestep.py
+run this training process for ASR and TTS using collected info. 
+
+**extensions/trey/trey.py
+change to utilize trained TTS model.  
+
+Pick up OCR from screenshot and same comparison if 
+> Record Feedback
+is used.  
+Should be an addition to screenshot.  
+Screenshot = [49,53,55]
+Screenshot feedback = [49,53,54,55] ??
+Record Feedback = [53,57, 60]
+Record Feedback Screenshot = [53,54,57,60]
+
+@@How to trigger longer words with shorter sequences..
+General for now no 2 set can include intermediate functions..
+Only 3 and above..
+            #word = "" #reset word to not found.
+            #this should allow us to include shorter word subsets..
+
+**languages/video.py
+Need to enable manual mouse selection of bbox.. 
+--screenshot_feedback
+Need to continue here..
+handle 
+Screenshot Feedback_
+should essentially show overlay and allow for mouse drag input..
+deliver info via same queue mechanism..
+
+Can we get 
+
+> pip install pytesseract
+
+OK, test this whole thing for screenshot_feedback
+
+Also need to test the subsetted words..
+But 
+> _WORD 
+> WORD_
+will be executed if exists..
+For now assume subsetted words dont have this.  

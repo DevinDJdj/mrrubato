@@ -81,6 +81,9 @@ from fastembed import (
 
 import extensions.trey.playwrighty as playwrighty
 
+import languages.helpers.transcriber as transcriber
+
+import pytesseract
 
 
 logger = logging.getLogger(__name__)
@@ -1247,6 +1250,7 @@ class QRWorker(QObject):
 
 class MyWindow(QMainWindow):
 
+
     def reportProgressIn(self, qrdata):
         logger.info(f"QR In: {qrdata}")
         cmds = self.parseQRData(qrdata)
@@ -1282,6 +1286,7 @@ class MyWindow(QMainWindow):
 #        self.updateWords(pwords)
 
     def executeQRCommand(self, command, vars):
+        #use transcriber here??
         """Execute a QR command based on the parsed data."""
         logger.info(f'Executing QR command: {command} with vars: {vars}')
         if (command == "Screen Toggle"):
@@ -1295,6 +1300,13 @@ class MyWindow(QMainWindow):
                 self.show()
                 #start OBS capture..
                 start_obs_capture()
+        elif (command =="Screenshot Feedback_"):
+            self.draw_screen_box(vars.get('BBOX', None))
+            ocrtext = self.save_screenshot(vars.get('KLANG', 'video'), vars.get('TRANSCRIPT', ''), vars.get('BBOX', None), True) #always OCR
+            #send back the OCR text as feedback.
+            #just add to file assuming we 
+            vars['OCR'] = ocrtext
+            transcriber.write(vars.get('KLANG', 'video'), command, vars)
 
         elif (command == "_Click Link"):
             self.show()
@@ -1413,6 +1425,7 @@ class MyWindow(QMainWindow):
         self.windowlabels = {} #list of window details by pid
         self.windowcounter = 0
         self.screenshots = [] #list of screenshots per monitor
+        self.transcriber = transcriber.transcriber(self)
 
         # set the title
 
@@ -1470,7 +1483,7 @@ class MyWindow(QMainWindow):
         #start internal thread to check the queue for updates.  
         #and update the window when there is new data.  
 
-    def save_screenshot(self, lang='hotkeys', fname='', bbox=None):
+    def save_screenshot(self, lang='hotkeys', fname='', bbox=None, ocr=False):
         """Save a screenshot of the current window."""
         screen = qapp.primaryScreen()
         screens = qapp.screens()
@@ -1494,6 +1507,17 @@ class MyWindow(QMainWindow):
 
         screenshot.save(folder + fname, 'png')
         logger.info(f'Screenshot saved as {folder + fname}')
+        if (ocr):
+            #do OCR on screenshot
+            img = Image.open(folder + fname)
+            #get bbox area
+            if (bbox is not None):
+                bbox = bbox.split(',')
+                bbox = [int(b) for b in bbox]
+                img = img.crop((bbox[0], bbox[2], bbox[1], bbox[3]))
+
+            ocrtext = pytesseract.image_to_string(img)
+            return ocrtext
         return folder + fname
         
     def draw_screen_box(self, bbox=""):

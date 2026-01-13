@@ -4,6 +4,7 @@ import os
 import logging
 import time
 import pathlib
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -11,6 +12,8 @@ logger = logging.getLogger(__name__)
 class transcriber:
     def __init__(self, lang_helper=None):
         self.lang_helper = lang_helper
+        self.defstring = "[~!@#$%^&*<>/:;-+=]"
+
 
     def getTime(self, relativedays=0):
         now = datetime.now()
@@ -20,7 +23,17 @@ class transcriber:
     def getTimeString(self, relativedays=0):
         now = self.getTime(relativedays)
         return now.strftime('%Y%m%d_%H%M%S')
-    
+
+    def write_plain(self, lang, text):
+      #write to transcript file.  
+      #for now just one time param.  
+
+      today = datetime.now().strftime("%Y%m%d")
+      folder = '../transcripts/' + lang + '/'
+      os.makedirs(folder, exist_ok=True)
+      with open(folder + today + '.txt', 'a', encoding='utf-8') as f:        
+        f.write(f'{text}\n') 
+
     def write(self, lang, command, params):
       #write to transcript file.  
       #for now just one time param.  
@@ -34,6 +47,11 @@ class transcriber:
         f.write(f'> {command}\n')
         vars = {}
         for pkey, p in params.items():
+            #replace any \ndefstring with \n defstring to avoid confusion.            
+            pattern = r"\n(" + self.defstring + r")" 
+            #for now ok, really want \n$ or \n> to break.  
+            p = re.sub(pattern, r"\n \1", p) #untested..
+
             f.write(f'$${pkey}={p}\n')
         if ('TIME' not in params):
             f.write(f'$$TIME={self.getTimeString()}\n')

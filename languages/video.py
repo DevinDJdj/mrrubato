@@ -5,6 +5,7 @@ from PIL import Image
 from io import BytesIO
 import win32con
 import time
+from datetime import datetime, timedelta
 
 import languages.helpers.transcriber as transcriber
 import extensions.trey.playwrighty as playwrighty
@@ -21,6 +22,7 @@ class video:
     self.qapp = qapp
     self.func = None
     self.qr = "" #info for QR message
+    self.qrin = "" #info from incoming QR message
     self.startx = startx
     self.bbox = [0,0,100,100]   
     self.opacity = 0.4
@@ -32,7 +34,8 @@ class video:
     self.links = []
     self.maxseq = 10 #includes parameters
     self.callback = None
-    self.audio_transcript = ""
+    self.transcript = ""
+    self.feedbacknowstr = ""
     self.funcdict = {}
     self.suggestions = []
 
@@ -90,6 +93,9 @@ class video:
         "Comment": [49,53, 56], #record comment
         "Screenshot": [49,53,55], #take screenshot
         "Zoomshot": [49,53,57], #take zoomed screenshot
+      },
+      "4": {
+        "Screenshot Feedback": [49,53,55,53], #screenshot with feedback
       }
     }
     if (self.name in self.config['languages']):
@@ -110,6 +116,8 @@ class video:
       "Screenshot": "screenshot",
       "Zoomshot": "zoomshot",
       "Screen Toggle": "screen_toggle",
+      "Screenshot Feedback": "screenshot_feedback",
+      "Screenshot Feedback_": "screenshot_feedback_",
 
     }
     self.helpdict = {
@@ -122,6 +130,7 @@ class video:
       "Screenshot": {"help": "screenshot", "params": "[bbox] in form X1, X2, Y1, Y2", "desc": "Take screenshot of video."},
       "Zoomshot": {"help": "zoomshot", "params": "None", "desc": "Take zoomed screenshot of video."},
       "Screen Toggle": {"help": "screen_toggle", "params": "[opacity] 10-90%", "desc": "Toggle video screen overlay."},
+      "Screenshot Feedback": {"help": "screenshot feedback", "params": "[bbox] in form X1, X2, Y1, Y2", "desc": "Take screenshot of video and read what is in selected area."},
 
     }
 
@@ -334,6 +343,69 @@ class video:
 
     #qr specific to current action.
     self.set_qr(self.func, {'BBOX': self.ar2str(self.bbox), 'SEQ': self.ar2str(sequence)})
+    #possibly return other data here for other functions.  
+    return 0
+
+  def _screenshot_feedback(self, sequence=[]):
+     """allow for mouse input to set bbox."""
+     logger.info(f'> _Screenshot Feedback {sequence}')
+     print("> _Screenshot Feedback called")
+     return 1
+
+  def screenshot_feedback_(self, sequence=[]):
+     """Take Screenshot Feedback_.  Use 53 to indicate that we are done building bbox."""
+
+     if (len(sequence) == 1):
+        #calc new BBOX from sequence and display
+        logger.info(f'> Screenshot Feedback_ {sequence}')
+
+        print("> Screenshot Feedback_ called")
+        #get audio input for query.  
+        duration = sequence[0]-self.keybot #in seconds
+        if (duration < 2): #min 2 seconds
+            duration = 2
+        from extensions.trey.speech import listen_audio
+        self.now = datetime.now()
+        self.feedbacknowstr = self.now.strftime("%Y%m%d%H%M%S") #set nowstr for feedback.  
+
+        at = listen_audio(duration, "feedback.wav")
+        self.func = "Screenshot Feedback_"
+        #indicate to get OCR text
+        self.set_qr(self.func, {'DURATION': duration, 'TIME': self.feedbacknowstr})
+        #show that we are recording for duration seconds.
+        return 0
+     elif (len(sequence) > 1 and sequence[-1] == self.keybot): #end of message OK to OCR.
+        #calc new BBOX from sequence and display
+        self.func = "Screenshot Feedback_"
+        self.bbox = self.get_bbox(sequence[1:-1])
+
+        logger.info(f'> Screenshot Feedback_ {sequence}')
+        logger.info(f'$$BBOX={self.bbox}')
+
+        #transcribe audio now..
+        from extensions.trey.speech import transcribe_audio
+        timer = datetime.now()
+        self.transcript = transcribe_audio("feedback.wav")
+        lag = (datetime.now() - timer).total_seconds()
+        lag = int(lag)
+
+        self.set_qr(self.func, {'OCR': True, 'TRANSCRIPT': self.transcript, 'LAG': lag, 'BBOX': self.ar2str(self.bbox), 'SEQ': self.ar2str(sequence)})
+        #do OCR in thread or in UI side..
+        #need transcriber there too.. or just write as is message and append OCR variable..
+
+        return 0
+     return 1
+     
+  def screenshot_feedback(self, sequence=[]):
+    """Take Screenshot, OCR screenshot and record input"""
+    #always in groups of 4 for bbox
+    #no need, this should be done..
+    self.func = "Screenshot Feedback"
+    logger.info(f'> Screenshot Feedback {sequence}') 
+    logger.info(f'$$BBOX={self.bbox}')
+
+
+
     #possibly return other data here for other functions.  
     return 0
 

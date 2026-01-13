@@ -275,6 +275,11 @@ class MyKeys:
     #find this QRData.  If exists, ignore.  
     if (data not in self.qrin):
       self.qrin.insert(0, data) #add to start of list
+      #find language which matches this data?  for now just broadcast to all languages.
+      #use language and function <lang>func [params]
+      for (l,la) in self.languages.items():
+        if (hasattr(la, 'qrin')):
+          la.qrin = (data)
     else:
       #dont keep duplicates for now..
       self.qrin.remove(data)
@@ -446,7 +451,7 @@ class MyKeys:
 #      self.reset_sequence()
 #      self.currentcmd = None
     elif (action < -1):
-      #error in action
+      #action_ handled, no further params needed.
       logger.info(f'> <{l}>{cmd}_ {ss}')
       winsound.Beep(1000, 250) #beep to end success
       #reset command sequence to current sequence number.  
@@ -543,7 +548,14 @@ class MyKeys:
         word, l, la = self.findword(self.sequence)
         #start of word, take start of word action.  
         if (word != ""):
-          self.takeaction(word, l, [], callback)
+          acted = self.takeaction(word, l, [], callback)
+          if (acted > 0):
+            #not yet ready to complete..
+            #1 means not done yet.. possibly include how many params necessary?
+            acted = 1
+            #word = "" #reset word to not found.
+            #this should allow us to include shorter word subsets in dictionary..
+            #i.e. [60, 62] = "Hi" and [60, 62, 64] = "Hello"
 
       else:
         #second word check occurs distinguish between parameters and new command.
@@ -607,6 +619,7 @@ class MyKeys:
         a = ss
         while (isinstance(a, list) and a != []):
           #potential to unwind entire stack here.  
+          #dont think loop necessary as we only have two levels.
           if (slangna == ""):
             print(f'Error: {scmd} no language for action' + str(a))
             break
