@@ -25,6 +25,8 @@ import { startWatchingWorkspace, updateStatusBarItem, registerStatusBarTool, reg
 import { start } from 'repl';
 import { get } from 'http';
 
+import * as TerminalWorker from './terminalworker';
+
 const BASE_PROMPT =
   'You are a helpful code tutor. Your job is to teach the user with simple descriptions and sample code of the concept. Respond with a guided overview of the concept in a series of messages. Do not give the user the answer directly, but guide them to find the answer themselves. If the user asks a non-programming question, politely decline to respond.';
 
@@ -369,7 +371,7 @@ export function activate(context: vscode.ExtensionContext) {
 	registerCompletionTool(context);
 	registerStatusBarTool(context);
 	startWatchingWorkspace(context); //watch for changes to book.  
-
+	TerminalWorker.addClosedTerminalListener();
 
 	Book.open(context); //open the book.  
 
@@ -797,13 +799,40 @@ export function activate(context: vscode.ExtensionContext) {
 				}
 			case ">":
 				//run the command.
+				//pull name from $$TERM=NAME variable if set..
+				//>> admin
+				//> normal
+				//>$ ubuntu for now only pick latest version default.  
+				//>$-1 CMD (-1 version)
+				//>$24 CMD (version 24, any terminal type which contains this text)
+
+				let alllines = text.split("\n");
+				console.log("alllines: " + alllines.length);
+				if (alllines.length > 1){
+					//multiple line command, run each line.  need sequential thread.  
+					for (let line of alllines){
+						TerminalWorker.run(line);
+						/*
+						let idx = line.indexOf(" "); //assume we have a space after command type.  
+						console.log("running line: " + line.substring(idx));
+						//for now not distinguishing terminal types, and running in parallel?  
+						vscode.commands.executeCommand('workbench.action.terminal.focus');
+						vscode.commands.executeCommand('workbench.action.terminal.sendSequence', { text: line.substring(idx) + "\n" });
+						*/
+					}
+					break;
+
+				}
 				switch (cmdtype[1]) {
+					//only single line commands for now.  
 					case ">":							
+						//run admin command.
 						vscode.commands.executeCommand('workbench.action.terminal.focus');
 						vscode.commands.executeCommand('workbench.action.terminal.sendSequence', { text: text.substring(2) + "\n" });
 						break;
 
 					default:
+
 						vscode.commands.executeCommand('workbench.action.terminal.focus');
 						vscode.commands.executeCommand('workbench.action.terminal.sendSequence', { text: text.substring(1) + "\n" });
 						break;
@@ -926,6 +955,14 @@ export function activate(context: vscode.ExtensionContext) {
 								Book.printENV();
 
 
+
+							}
+							else{
+								//default add variable..
+								let kv = text.substring(2).split("=");
+								if (kv.length === 2) {
+									Book.addToEnvironment(kv[0], kv[1]);
+								}
 							}
 						}
 						//add to book.  

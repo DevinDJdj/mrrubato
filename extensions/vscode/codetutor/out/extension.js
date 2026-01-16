@@ -57,6 +57,7 @@ const Book = __importStar(require("./book"));
 const Worker = __importStar(require("./worker"));
 const ollama_1 = __importDefault(require("ollama"));
 const toolParticipant_1 = require("./toolParticipant");
+const TerminalWorker = __importStar(require("./terminalworker"));
 const BASE_PROMPT = 'You are a helpful code tutor. Your job is to teach the user with simple descriptions and sample code of the concept. Respond with a guided overview of the concept in a series of messages. Do not give the user the answer directly, but guide them to find the answer themselves. If the user asks a non-programming question, politely decline to respond.';
 const EXERCISES_PROMPT = 'You are a helpful tutor. Your job is to teach the user with fun, simple exercises that they can complete in the editor. Your exercises should start simple and get more complex as the user progresses. Move one concept at a time, and do not move on to the next concept until the user provides the correct answer. Give hints in your exercises to help the user learn. If the user is stuck, you can provide the answer and explain why it is the answer. If the user asks a non-programming question, politely decline to respond.';
 // define a chat handler
@@ -338,6 +339,7 @@ function activate(context) {
     (0, toolParticipant_1.registerCompletionTool)(context);
     (0, toolParticipant_1.registerStatusBarTool)(context);
     (0, toolParticipant_1.startWatchingWorkspace)(context); //watch for changes to book.  
+    TerminalWorker.addClosedTerminalListener();
     Book.open(context); //open the book.  
     (0, toolParticipant_1.registerPiano)(context);
     // define a chat handler
@@ -686,8 +688,32 @@ function activate(context) {
                 }
             case ">":
                 //run the command.
+                //pull name from $$TERM=NAME variable if set..
+                //>> admin
+                //> normal
+                //>$ ubuntu for now only pick latest version default.  
+                //>$-1 CMD (-1 version)
+                //>$24 CMD (version 24, any terminal type which contains this text)
+                let alllines = text.split("\n");
+                console.log("alllines: " + alllines.length);
+                if (alllines.length > 1) {
+                    //multiple line command, run each line.  need sequential thread.  
+                    for (let line of alllines) {
+                        TerminalWorker.run(line);
+                        /*
+                        let idx = line.indexOf(" "); //assume we have a space after command type.
+                        console.log("running line: " + line.substring(idx));
+                        //for now not distinguishing terminal types, and running in parallel?
+                        vscode.commands.executeCommand('workbench.action.terminal.focus');
+                        vscode.commands.executeCommand('workbench.action.terminal.sendSequence', { text: line.substring(idx) + "\n" });
+                        */
+                    }
+                    break;
+                }
                 switch (cmdtype[1]) {
+                    //only single line commands for now.  
                     case ">":
+                        //run admin command.
                         vscode.commands.executeCommand('workbench.action.terminal.focus');
                         vscode.commands.executeCommand('workbench.action.terminal.sendSequence', { text: text.substring(2) + "\n" });
                         break;
@@ -805,6 +831,13 @@ function activate(context) {
                                     }
                                 }
                                 Book.printENV();
+                            }
+                            else {
+                                //default add variable..
+                                let kv = text.substring(2).split("=");
+                                if (kv.length === 2) {
+                                    Book.addToEnvironment(kv[0], kv[1]);
+                                }
                             }
                         }
                         //add to book.  

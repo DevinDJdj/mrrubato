@@ -1285,3 +1285,36 @@ But
 > WORD_
 will be executed if exists..
 For now assume subsetted words dont have this.  
+
+
+**extensions/vscode/codetutor/src/extension.ts
+When we have commands, just use 
+> terminal.sendText
+wait for completion, log when completed.  
+If multiple highlighted, do all and show progress..
+
+**extensions/vscode/codetutor/src/terminalworker.ts
+continue..
+
+**./vscode/settings.json
+terminal.integrated.profiles.windows
+++
+	    "Ubuntu-20.04 (WSL)": {
+			"path": "C:\\WINDOWS\\System32\\wsl.exe",
+			"args": [
+				"-d",
+				"Ubuntu-20.04"
+			], 
+			"icon": "terminal-ubuntu"
+		}, 
+	    "Ubuntu-24.04 (WSL)": {
+			"path": "C:\\WINDOWS\\System32\\wsl.exe",
+			"args": [
+				"-d",
+				"Ubuntu-24.04"
+			], 
+			"icon": "terminal-ubuntu"
+		}
+++
+
+#https://github.com/microsoft/vscode/issues/126738
