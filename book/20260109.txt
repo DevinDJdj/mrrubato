@@ -151,3 +151,154 @@ $$
 Not sure this is minimal..
 But it works now..
 
+
+> wsl.exe --install
+
+$$SYSTEM=UBUNTU
+$$VERSION=Ubuntu 24.04.1 LTS
+> sudo apt update
+> sudo apt install python3 python3-pip
+> lsb_release -a
+
+Dont like the whole venv enable/disable mechanism.  
+But seems to be standard now..
+#https://docs.python.org/3/library/venv.html
+
+> sudo apt install python3-venv
+
+> python3 -m venv speechvenv
+> source speechvenv/bin/activate
+$$VENV=speechvenv
+--for training models..
+
+> pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
+
+;> pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
+;> pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu130
+
+> python -c "import torch; print(f'Torch Version: {torch.__version__}, CUDA Available: {torch.cuda.is_available()}, CUDA Version: {torch.version.cuda}')"
+Torch Version: 2.6.0+cu124, CUDA Available: True, CUDA Version: 12.4
+
+**/../testing/speechbrain/recipes/LibriTTS/TTS/mstacotron2/train.py
+> pip install hyperpyyaml
+> pip install speechbrain
+> pip install soundfile
+> sudo apt-get install ffmpeg
+> pip install sox
+> pip install requests
+
+!!ImportError: cannot import name 'audio_io' from 'speechbrain.dataio' (/mnt/c/devinpiano/music/speechvenv/lib/python3.12/site-packages/speechbrain/dataio/__init__.py)
+==
+manually copy from here:
+#https://github.com/speechbrain/speechbrain/blob/develop/speechbrain/dataio/audio_io.py
+/mnt/c/devinpiano/music/speechvenv/lib/python3.12/site-packages/speechbrain/dataio/
+@speechbrain why is this not installed during standard install
+> pip install speechbrain
+Not part of the most recent packages?
+$$
+
+> cd ../testing/speechbrain/recipes/LibriTTS
+
+> mkdir data
+
+> python ./libritts_prepare.py
+Have to download.. 
+#https://www.openslr.org/60/
+dev-clean, test-clean, train-clean-100
+> wget -O ./data/dev-clean.tar.gz https://openslr.trmal.net/resources/60/dev-clean.tar.gz
+> wget -O ./data/test-clean.tar.gz https://openslr.trmal.net/resources/60/test-clean.tar.gz
+> wget -O ./data/train-clean-100.tar.gz https://openslr.trmal.net/resources/60/train-clean-100.tar.gz
+> tar -xf ./data/dev-clean.tar.gz
+> tar -xf ./data/test-clean.tar.gz
+> tar -xf ./data/train-clean-100.tar.gz
+;> cp -r ./LibriTTS/* ./data
+> mv ./LibriTTS/* ./data
+
+
+install vscode WSL extensions
+
+> python ./TTS/mstacotron2/train.py TTS/mstacotron2/hparams/train.yaml --data_folder="./data" --device=cuda:0 --max_grad_norm=1.0
+
+> pip install huggingface-hub==0.30.0
+
+
+**/../testing/speechbrain/recipes/LibriTTS/libritts_prepare.py
+++
+
+if __name__ == "__main__":
+    # Example usage
+    print("Preparing LibriTTS dataset...")
+    prepare_libritts(
+        data_folder="data",
+        save_json_train="./data/train.json",
+        save_json_valid="./data/valid.json",
+        save_json_test="./data/test.json",
+        sample_rate=24000,
+        #must download
+        libritts_subsets=[
+            "train-clean-100", 
+            "dev-clean",
+            "test-clean",
+        ],
+        model_name="Tacotron2",
+    )
+++
+
+> python ./libritts_prepare.py
+
+!!NVIDIA GeForce RTX 5060 Ti with CUDA capability sm_120 is not compatible with the current PyTorch installation.
+!!RuntimeError: CUDA error: no kernel image is available for execution on the device
+==
+compatibility hell..
+#https://www.nvidia.com/en-us/geforce/forums/geforce-graphics-cards/5/578477/rtx-5060-sm120-an-unusual-cuda-compute-capability/
+> pip uninstall torch torchvision torchaudio
+> pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
+> python -c "import torch; print(f'Torch Version: {torch.__version__}, CUDA Available: {torch.cuda.is_available()}, CUDA Version: {torch.version.cuda}')"
+Torch Version: 2.9.1+cu128, CUDA Available: True, CUDA Version: 12.8
+
+$$
+
+!!module 'torchaudio' has no attribute 'list_audio_backends'
+==
+> pip install torchaudio==2.8 --index-url https://download.pytorch.org/whl/cu128
+
+> python -c "import torch; print(f'Torch Version: {torch.__version__}, CUDA Available: {torch.cuda.is_available()}, CUDA Version: {torch.version.cuda}')"
+Torch Version: 2.9.1+cu128, CUDA Available: True, CUDA Version: 12.8
+$$
+
+> python ./libritts_prepare.py
+> pip install transformers
+;> pip install huggingface-hub==0.30.0
+
+!!RuntimeError: operator torchvision::nms does not exist
+==
+> pip install torchvision==0.23.0 --index-url https://download.pytorch.org/whl/cu128
+$$
+Compatibility hell done?
+Finally..
+
+**/../testing/speechbrain/recipes/LibriTTS/libritts_prepare.py
+Path problems..
+data_folder only works with FULL PATH..
+
++        normalized_text_path = "." + normalized_text_path
+
+
+
+> python ./TTS/mstacotron2/train.py TTS/mstacotron2/hparams/train.yaml --data_folder="./data" --device=cuda:0 --max_grad_norm=1.0
+
+**/../testing/speechbrain/recipes/LibriTTS/TTS/mstacotron2/train.py
+++
+    else:
+        logger.info("Skipping data preparation...")
+        #copy files to save_folder experiment directory
+        import shutil
+        import glob
+        source_dir = hparams["data_folder"]
+        dest_dir = hparams["output_folder"] + "/save"
+        files_to_copy = glob.glob(os.path.join(source_dir, '*.json'))
+        for file_path in files_to_copy:
+            shutil.copy(file_path, dest_dir)
+
+++
+
