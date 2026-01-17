@@ -1318,3 +1318,14 @@ terminal.integrated.profiles.windows
 ++
 
 #https://github.com/microsoft/vscode/issues/126738
+
+#https://www.instructables.com/DIY-USB-Midi-Controller-With-Arduino-a-Beginners-G/
+#https://docs.arduino.cc/tutorials/generic/midi-device/
+
+
+#https://tttapa.github.io/Control-Surface/Doxygen/d3/df7/midi-tutorial.html
+#https://dualo.com/en/exquis/
+
+
+
+

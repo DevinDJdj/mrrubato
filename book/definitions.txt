@@ -16,7 +16,8 @@ reference from document
 -->
 
 > CMD operation
->>Elevated CMD operation
+>> Elevated CMD operation
+>$ ubuntu CMD
 
 ** topic (source code file name with separator, OR videoID > 10 chars, otherwise content/topic tag)
 
@@ -120,13 +121,6 @@ TOPIC cant start with -
 %%-_ test
 
 -->
-
-
-**KEYS/vscode
-Ctrl+Enter = Continue
-Ctrl+I = voice chat
-
-0->11 = past->future
 
 
 
