@@ -1,0 +1,45 @@
+**COMMS
+@@How do we manage the comms
+RTDB channel.  
+On start generate channel entry.  
+Does it need to be user-based?  
+Single write.  
+
+RTDB "channels"
+channels/uid/timestamp
+each time we start/stop trey, this is generated..
+Also allow split by user cmd.  
+
+When screen toggled, write any QR to channel.  
+settings to determine which languages/commands are shared..
+channels/uid/settings
+Just simple JSON struct, if lang/cmd contained, it is shared.
+lang/cmd/var
+If var is file, it is populated as Base64 struct..
+Dont really need settings in DB..
+
+First lets populate this, and then worry about read structure.  
+Generally each user will just share the uid/timestamp, and this data will come as QRIn.  
+No need to necessarily display.  
+setting whether to display or not..
+Top half is IN, bottom half is out.  
+
+How do we start following other user input?  
+Different struct for just user comms.  
+doors/uid/incoming
+doors/uid/outgoing
+doors/uid/settings
+contains all timestamps for channels..
+
+This is global writable.  
+So just write incoming/outgoing uids/timestamps in list, and periodically this is ingested and deleted.  
+
+Keep this local info to read and share any transcripts from that user in top half..
+joined, left, screenshot..
+
+Share screen size settings to dynamically adjust BBOX for any screenshots while IN room.  
+
+Probably can detect from size and location of QR code during screen share for instance..
+
+
+
