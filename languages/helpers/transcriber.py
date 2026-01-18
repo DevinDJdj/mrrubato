@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 class transcriber:
     def __init__(self, lang_helper=None):
         self.lang_helper = lang_helper
-        self.defstring = "[~!@#$%^&*<>/:;-+=]"
+        self.defstring = "[~!@#$%^&*<>/:;\-\+=]"
 
 
     def getTime(self, relativedays=0):
@@ -50,7 +50,9 @@ class transcriber:
             #replace any \ndefstring with \n defstring to avoid confusion.            
             pattern = r"\n(" + self.defstring + r")" 
             #for now ok, really want \n$ or \n> to break.  
-            p = re.sub(pattern, r"\n \1", p) #untested..
+#            print(p)
+            if (isinstance(p, str)):
+                p = re.sub(pattern, r"\n \1", p) #untested..
 
             f.write(f'$${pkey}={p}\n')
         if ('TIME' not in params):

@@ -126,6 +126,7 @@
 			"Stop": 22, 
 			
 			"Reset": [48,48,48],
+			"Unset": [60,60,60],
 			"ShowScreen": 105, 
 			"HideScreen": 106,
 			"LangSelect": [36,29,31,36],
@@ -157,7 +158,8 @@
 			"mousemovement2": [62, 63],
 			"hotkeys": [53, 54],
 			"video": [49,50], 
-			"_meta": [48,49]
+			"_meta": [48,49], 
+			"base": [61,62]
 			
 		},
 		"settings":{

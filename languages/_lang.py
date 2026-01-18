@@ -8,7 +8,7 @@ import extensions.trey.playwrighty as playwrighty
 
 logger = logging.getLogger(__name__)
 
-class _meta:
+class _lang:
   #define action for some sequences.  
   def __init__(self, config, qapp=None, startx=0):
 
@@ -18,11 +18,12 @@ class _meta:
     self.func = None
     self.qr = "" #info for QR message
     self.startx = startx
-    self.name = "_meta"
-    self.keybot = 48 #
+    self.name = "_lang"
+    self._langseq = [61,62] #default language key sequence "base"
+    self.keybot = 59 #
     self.mid = 60 #middle C for bbox calc
-    self.keyoffset = 0 #offset within octave mapping
-    self.maxseq = 10 #includes parameters
+    self.keyoffset = 11 #offset within octave mapping
+    self.maxseq = 16 #includes parameters
     self.callback = None
     self.audio_transcript = ""
     self.funcdict = {}
@@ -62,44 +63,20 @@ class _meta:
     return 0
 
 
-  def load_transcript(self):
-    #load commands from config into funcdict
-    allcmds = self.transcriber.read(self.name, None, None) #default 7 days
-    logger.info(f'Loaded {len(allcmds)} command transcripts for {self.name}')
-
-    book = self.transcriber.read(self.name, None, None, './book/')
-    #get num topics.  
-    numtopics = 0
-    self.alltopics = {}
-    for c in book:
-      if (c['type']=='**'):
-        if (c['cmd'] not in self.alltopics):
-          self.alltopics[c['cmd']] = []
-        self.alltopics[c['cmd']].append(c)
-        numtopics += 1
-
-        self.topicarray.insert(0, c['cmd']) #time reverse order
-    if (numtopics > 0):
-      self.selectedtopic = self.topicarray[0] #default to first topic.
-
-    logger.info(f'Loaded {numtopics} topics and {len(book)} book transcripts from ./book/')
-
-    return 0
   
   def load_data(self):
 
     #load language specific data into the config.  
     default = {
       "2": {
-         "Pause": [48,49], #pause video
-      },
-      "3": {
-        "Start": [48,60,61], #Start/resume recording
-        "Help": [48,60,49], #show help
-        "List Topics": [48,51,54], #list topics
-        "Select Topic": [48,51,55], #select topic
-        "Set Topic": [48,51,56], #set topic with voice command
-      }
+        "Set Language": [59,60], #Set language
+      }, 
+        "3": {
+            "Help": [59,71,60], #show help
+            "New Language": [59,61,62], #Create language definition..
+        }
+
+
     }
     if (self.name in self.config['languages']):
       logger.info(f'Merging existing {self.name} config')
@@ -110,26 +87,18 @@ class _meta:
 
     self.config['languages'][self.name] = default
     self.funcdict = {
-      "Pause": "pause",
-      "Start": "start",
       "Help": "help",
-      "List Topics": "list_topics",
-      "Select Topic": "select_topic",
-      "Set Topic": "set_topic", #smart search of existing topics?  
-      "_Set Topic": "_set_topic", #smart search of existing topics?  
+      "Set Language": "set_language",
+      "New Language": "new_language",
+
     }
     self.helpdict = {
-      "Start": {"help": "start", "params": "None", "desc": "Start/Resume video recording."},
       "Help": {"help": "help", "params": "None", "desc": "Show video commands."},
-      "Pause": {"help": "pause", "params": "None", "desc": "Pause video playback."},
-      "List Topics": {"help": "list topics", "params": "None", "desc": "List available topics."},
-      "Select Topic": {"help": "select topic <index>", "params": "<index>", "desc": "Select topic by index from list."},
-      "Set Topic": {"help": "set topic <name>", "params": "<name>", "desc": "Set topic by name."}
-                       
+        "Set Language": {"help": "set_language", "params": "None", "desc": "Set current language."},
+        "New Language": {"help": "new_language", "params": "None", "desc": "Create new language definition."},
 
     }
 
-    self.load_transcript()
     return 0  
 
   #act differently based on words in sequence.    
@@ -184,71 +153,46 @@ class _meta:
       logger.error(f"Command {cmd} not found in function maps")
       print(f"Command {cmd} not found in function maps")
     return -1
-  
-
-  def start(self, sequence=[]):
-    """Start Meta."""
-    logger.info(f'> Start {sequence}')
-    return 0
-  
+    
   def help(self, sequence=[]):
     """Show all commands."""
     logger.info(f'> Help {sequence}')
     return 0
 
 
-  def list_topics(self, sequence=[]):
-    logger.info(f'> List Topics {sequence}')
-    #for now just demo..
-    #list all topics from book transcripts.
 
+  def set_language(self, sequence=[]):
+    if (len(sequence) == 0):
+      sequence = self._langseq
+    #find language from sequence
+    logger.info(f'> Set Language {sequence}')
+
+    #find in config.  
+    lang = None
+    for langname, langseq in self.config['languages'].items():
+      if (langseq == sequence):
+        lang = langname
+        break
+    if (lang is None):
+        self.speak('Language not found')
+        return -1
+    self.func = "Set Language"
+    self.set_qr(self.func, {'LANG': lang})
+    self.speak(f'Set language {lang}')
+    #shift octave.  
+    #dynamically load language module here.
+
+    self._langseq = sequence
     return 0
-
-  def select_topic(self, sequence=[]):
-    selected = 0
-    if (len(sequence) > 0):
-      selected = sequence[0]-self.keybot
-
-    if selected < 0 or selected >= len(self.topicarray):
-      logger.info(f'> Select Topic {sequence} INVALID SELECTION')
-      return -1
-    self.selectedtopic = self.topicarray[selected] if selected < len(self.topicarray) else None
-    logger.info(f'> Select Topic {sequence}')
-    #get bookmark at index selected
-    self.func = "Select Topic"
-    self.set_qr(self.func, {'topic': self.selectedtopic})
-    self.speak(f'Selected topic {self.selectedtopic}')
+  
+  
+  def new_language(self, sequence=[]):
+    """Create new language definition."""
+    logger.info(f'> New Language {sequence}')
+    self.func = "New Language"
+    self.speak('Creating new language definition not yet implemented')
     return 0
-
-  def set_topic(self, sequence=[]):
-    logger.info(f'> Set Topic {sequence}')
-    topic = "Australian Open 2026"
-    from extensions.trey.speech import transcribe_audio
-    self.transcript = transcribe_audio("topic.wav")
-
-    logger.info('$$AUDIO = ' + self.transcript)
-    if (self.transcript != ""):
-      topic = self.transcript
-    from extensions.trey.trey import speak
-    speak(f'Setting topic: {topic}')
-
-    return 0
-
-
-  def _set_topic(self, sequence=[]):  
-    logger.info(f'> _Set Topic {sequence}')
-    print("> _Set Topic called")
-    #get audio input for query.  
-    from extensions.trey.speech import listen_audio
-    at = listen_audio(5, "topic.wav")
-    #but this is only called once.  
-    return 1
-
-  def pause(self, sequence=[]):
-    """Pause Video."""
-    logger.info(f'> Pause {sequence}')
-    return 0
-
+  
   def set_qr(self, func, param={}):
     """Set QR."""
     self.qr = "> " + func + "\n"

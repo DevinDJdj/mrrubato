@@ -132,6 +132,7 @@ class MyKeys:
       #then funcdict for each language?  
     self.currentlang = None
     self.currentlangna = ""
+    self.setlanguage = None
     self.currentchannel = 0
     self.transcripts = {} #transcripts for each language
     self.currentseqno = 0
@@ -143,6 +144,7 @@ class MyKeys:
     self.transcript = ""
     self.starttime = time.time()
     self.lasttick = self.starttime
+    self.keyshift = 0 #current keyshift.
 
     self.keystruct = {}
     self.qrin = [] #qr inputs
@@ -178,12 +180,23 @@ class MyKeys:
         print("language doesnt exist " + key)
         logger.error(f'Error loading language {key}: {e}')
 
-    self.keystruct = self.gen_lang_struct() #initialize keystruct for all known words.  
+    self.keystruct = self.gen_lang_struct() #initialize keystruct for all known words, if no keybot, then not loaded here..
     print("Keystruct generated")
     print(self.keystruct)
 
 
+  def set_language(self, langna):
+    if (langna in self.languages):
+      self.setlanguage = langna
+      print(f'Set current language to {langna}')
+      logger.info(f'Set current language to {langna}')
+      return 0
+    else:
+      print(f'Language {langna} not found')
+      logger.error(f'Language {langna} not found')
+      return -1    
     
+
   def get_bbox(self):
     
     if (self.currentlangna !="" and hasattr(self.languages[self.currentlangna], 'bbox')):
@@ -203,6 +216,8 @@ class MyKeys:
     if (len(prefix) == 0):
       #filter here for most used words.  
       ret = recursive_values(self.keystruct)
+      #also get setlanguage words..
+      #todo: show all words in setlanguage for reference.  Should be small set and just hotkeys.  
 
       return ret
     
@@ -210,6 +225,8 @@ class MyKeys:
       ret, end = self.get_keystruct(prefix)
       print(end)
       fret = recursive_values(end)
+      #todo: show all words in setlanguage as well for reference.  Should be small set.
+
       print(fret)
       return fret      #should include all words with this prefix.. needs reformatting..
   
@@ -310,6 +327,19 @@ class MyKeys:
     qr = ""
     for (l,la) in self.languages.items():
       if (hasattr(la, 'qr') and la.qr != ""):
+        if (l == "_lang"):
+          if (la.qr.startswith("> Set Language")):
+            #get the language to set..
+            #parse info.. maybe want somewhere else..
+            vars = la.qr.split("\n")
+            langdef = vars[-2].split("=")
+            if (langdef[1] == self.setlanguage):
+              continue #skip lang set messages.
+            else:
+              #dynamically load language
+              self.setlanguage = langdef[1]
+              #lang already loaded, but check setlanguage for words..
+
         qr += "<" + l + ">\n"
         qr += la.qr + "\n"
         la.qr = "" #reset qr after getting it.
@@ -419,12 +449,16 @@ class MyKeys:
 
 
       self.sequence = self.sequence[:-len(orig)] #remove length of original sequence.  
-      self.sequence = self.sequence[:-len(self.words[-1]['sequence'])] #remove length of last word.      
+      if (len(self.words) > 0):
+        self.sequence = self.sequence[:-len(self.words[-1]['sequence'])] #remove length of last word.      
 
-      self.words[-1]['ss'] = ss
-      self.words_.append(self.words[-1]) #add to executed words.
+        self.words[-1]['ss'] = ss
+        self.words_.append(self.words[-1]) #add to executed words.
 
-      self.words = self.words[:-1 ] #remove last word as it executed.  
+        self.words = self.words[:-1 ] #remove last word as it executed.  
+      else:
+        #hotkey only word.  _word with empty sequence.
+        self.words_.append({"word": cmd, "lang": l, "langna": l, "sequence": orig, "ss": ss, "_words": self.words}) #add to executed words.
       self.currentlangna = self.words[-1]['langna'] if len(self.words) > 0 else ""
       self.currentlang = self.words[-1]['lang'] if len(self.words) > 0 else ""
       self.currentcmd = self.words[-1]['word'] if len(self.words) > 0 else None
@@ -533,7 +567,13 @@ class MyKeys:
         self.reset_sequence()
         print("Resetting sequence due to Reset key")
         return -1 #reset sequence notify error.
-
+      elif (self.sequence[-3:] == self.config['keymap']['global']['Unset'] and self.keyshift == 12):
+        #unset keyshift, move octave back down.
+        self.keyshift = 0
+        self.setlanguage = None
+        self.reset_sequence()
+        #unset last language
+        return -1 #unset last word notify error.
 
       r1 = self.maxseq #max length of sequence to check
       if (self.currentseqno <self.maxseq):
@@ -554,6 +594,12 @@ class MyKeys:
             #1 means not done yet.. possibly include how many params necessary?
             acted = 1
             #word = "" #reset word to not found.
+            #this should allow us to include shorter word subsets in dictionary..
+            #i.e. [60, 62] = "Hi" and [60, 62, 64] = "Hello"
+          elif (acted == 0):
+            #word completed immediately.  
+            word = "" #reset word to not found.
+#            winsound.Beep(1000, 500) #beep to end complete without error
             #this should allow us to include shorter word subsets in dictionary..
             #i.e. [60, 62] = "Hi" and [60, 62, 64] = "Hello"
 

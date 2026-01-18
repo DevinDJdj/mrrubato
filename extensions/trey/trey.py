@@ -391,7 +391,7 @@ def build_map(lines, links):
 
     total_read = 0
     link_loc = 0
-    while (link_loc < len(links) and 'offset' in links[link_loc] and links[link_loc]['offset'] == -1):
+    while (link_loc < len(links) and 'offset' in links[link_loc] and links[link_loc]['offset'] <= 0):
         link_loc += 1
         #skip all links with no offset
 
@@ -409,7 +409,7 @@ def build_map(lines, links):
             mavglength -= link_density_map[idx - mavgcounter]['length']
             mavgdensity -= link_density_map[idx - mavgcounter]['density']
 
-        while (link_loc < len(links) and 'offset' in links[link_loc] and links[link_loc]['offset'] != -1 and links[link_loc]['offset'] <= total_read):
+        while (link_loc < len(links) and 'offset' in links[link_loc] and links[link_loc]['offset'] >= total_read and links[link_loc]['offset'] < total_read + len(l) + 1):
             numlinks += 1
             link_loc += 1
         mavglength += len(l)
@@ -486,14 +486,15 @@ def get_first_content_line(ldmap):
     mavgcounter = 10
     for idx, l in enumerate(ldmap):
         mavglength += l['length']
-        mavgdensity += l['density']
+        mavgdensity += l['numlinks']
         currentl += 1
         print(f'Line {currentl} length {l["length"]} density {l["density"]} : mavg length {mavglength} mavg density {mavgdensity}')
-        if (currentl > 5 and (mavgdensity/mavgcounter < 0.02 and mavglength/mavgcounter > 20)):
+#        if (currentl > 5 and (mavgdensity/mavgcounter < 0.2 and mavglength/mavgcounter > 20)):
+        if (currentl > 5 and (mavglength/(mavgdensity+1) > 30) and (mavglength/mavgcounter > 60)):
             return currentl - 2 #return a few lines earlier to get context
         if (currentl > mavgcounter):
             mavglength -= ldmap[idx - mavgcounter]['length']
-            mavgdensity -= ldmap[idx - mavgcounter]['density']
+            mavgdensity -= ldmap[idx - mavgcounter]['numlinks']
     return 0
 
 def get_type(l):
@@ -659,7 +660,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
         #skip all links with no offset
 
 
-    init_qdrantz(link_density_map, topic="websearch")
+    #init_qdrantz(link_density_map, topic="websearch")
     print('Start Reading:')
 
     idx = -1

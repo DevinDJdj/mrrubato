@@ -42,4 +42,50 @@ Share screen size settings to dynamically adjust BBOX for any screenshots while 
 Probably can detect from size and location of QR code during screen share for instance..
 
 
+**languages
+need ability for single key languages.  
+For now start at 60, 49-59 reserved for control languages.  
+Need ability to select language.  
+Select language
+[59,60] [LANG] [59,59]
+Shift keys up octave..
+Reset down octave.. 
+and deselect?
+[60,60,60] 
+This allows us to just use keys..
+and similar to [48,48,48] reset..
+So cant use 60 single key mechanism.  
+But otherwise we can use single key mechanism.  
+These messages for LANG and META are MOD12.  
+_LANG can set to any octave automatically.  
+and in any language, _META lang and _LANG always exist.  
+Not sure if we want absolute keys, or still switch to relative keys..
+for now all but _META and _LANG are absolute.  
+LANG lookup also must be relative.  
+in keymap->languages
+0 MOD 12 and 11 MOD 12
+If we move to relative keys, maybe just point to a set of languages.  
+Then no need to create new lang structures, just set of existing lang structs.  
+All related code then becomes easier to manage perhaps..
+not sure..
+
+
+
+
+**mykeys.py
+Adjust act to tolerate single key action.. 
+Need ability to call other languages from this type of hot language..
+Prioritize single key action when lang has been selected.  
+
+OK, too many changes, what did we break..
+
+not stuff I did, but some reason qdrantz broken..
+
+!!File "C:\Users\devin\AppData\Local\Programs\Python\Python312\Lib\site-packages\qdrant_client\embed\model_embedder.py", line 391, in _embed_accumulator
+!!    for model, data in self._batch_accumulator.items():
+!!RuntimeError: dictionary changed size during iteration
+==
+    #init_qdrantz(link_density_map, topic="websearch")
+$$
+
 

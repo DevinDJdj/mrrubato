@@ -325,6 +325,7 @@ def getTimeFromSecs(secs):
 
 
 def init_asr_model():
+    """
     model_w2v2 = EncoderDecoderASR.from_hparams(
         source="speechbrain/asr-wav2vec2-commonvoice-en",
         savedir="pretrained_models/asr-wav2vec2-commonvoice-en"
@@ -337,7 +338,7 @@ def init_asr_model():
         savedir="pretrained_models/asr-whisper-small"
     )
     return model_whisper
-
+    """
     asr_model = EncoderDecoderASR.from_hparams(source="./models/pretrained_ASR")
     return asr_model
 
