@@ -302,3 +302,27 @@ data_folder only works with FULL PATH..
 
 ++
 
+
+**speech/prepare.py
+
+> source speechvenv/bin/activate
+Need to build set of data for training..
+#https://takeout.google.com/?pli=1
+recorder
+> python ./speech/prepare.py
+
+!!An error occurred: 'MP4Info' object has no attribute 'creation_time'
+==
+Wow all these libraries not working very well..
+mutagen, tinytag, eyed3, etc..
+
+@@Why
+No quick solution
+> pip install pymediainfo
+Finally..
+
+$$
+
+
+OK, so this is working now.  
+Then we need to pull the individual snippets out of the wav file for ingestion into the training pipeline..
