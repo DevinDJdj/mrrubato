@@ -25,9 +25,10 @@ class base:
     self.qrin = "" #info from incoming QR message
     self.startx = startx
     self.name = "base"
-    #self.keybot = 49 #no keybot for dynamic and short languages...
+    #self.keybot = 49 #no keybot for dynamic and short/created languages...
     self.mid = 60 #middle C for bbox calc
-    self.keyoffset = 12 #offset within octave mapping anything above 12 is dynamic for now
+    self.keyoffset = 0 #offset within octave
+    self.octaveshift = 1 #number of octaves to shift up for dynamic keys
     self.maxseq = 10 #includes parameters
     self.callback = None
     self.transcript = ""

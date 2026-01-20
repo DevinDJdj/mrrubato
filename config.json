@@ -126,7 +126,7 @@
 			"Stop": 22, 
 			
 			"Reset": [48,48,48],
-			"Unset": [60,60,60],
+			"Unset": [0,0,0],
 			"ShowScreen": 105, 
 			"HideScreen": 106,
 			"LangSelect": [36,29,31,36],

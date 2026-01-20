@@ -13,7 +13,7 @@ class transcriber:
     def __init__(self, lang_helper=None):
         self.lang_helper = lang_helper
         self.defstring = "[~!@#$%^&*<>/:;\-\+=]"
-
+        self.langmap = {}
 
     def getTime(self, relativedays=0):
         now = datetime.now()
@@ -43,7 +43,9 @@ class transcriber:
       os.makedirs(folder, exist_ok=True)
       #add utf-8?  
       with open(folder + today + '.txt', 'a', encoding='utf-8') as f:        
-        f.write(f'<{lang}>\n')
+        if (lang not in self.langmap or self.langmap[lang] != lang):
+            self.langmap[lang] = lang
+            f.write(f'<{lang}>\n') #in case we want multiple languages in one file.
         f.write(f'> {command}\n')
         vars = {}
         for pkey, p in params.items():
@@ -138,7 +140,8 @@ class transcriber:
                                     #save previous command if exists with no params..
                                     c = self.get_cmd(type, currentcmd, vars)
                                     ret.append(c)
-                                currentcmd = line[2:]
+                                currentcmd = line[2:].strip()
+                                vars = {}
                             if (type == '$$'):
                                 #special trey data line
                                 if (len(line) == 2):
@@ -153,9 +156,10 @@ class transcriber:
 
                                 else:
                                     parts = line[2:].split('=')
-                                    if (len(parts) == 2):
+                                    if (len(parts) >= 2):
                                         key = parts[0]
-                                        value = parts[1]
+                                        #in case we have = within the value..
+                                        value = "".join(parts[1:]).strip()
                                         vars[key] = value
 
                 except Exception as e:

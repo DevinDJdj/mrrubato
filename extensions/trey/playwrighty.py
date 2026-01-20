@@ -179,6 +179,7 @@ def remove_bookmark_at_index(index):
 
 def add_bookmark(url, total_read, text=""):
     global bookmarks
+    logger.info(f'Adding bookmark for {url} at offset {total_read}')
     found_item = next(filter(lambda item: item.get("url") == url, bookmarks), None)
     body_length = page_cache[current_cache]['length'] if current_cache >=0 and current_cache < len(page_cache) else 0
     if (found_item is not None):

@@ -145,6 +145,8 @@ class MyKeys:
     self.starttime = time.time()
     self.lasttick = self.starttime
     self.keyshift = 0 #current keyshift.
+    self.octaveshift = 0 #current octave shift.
+    self.octaveinterval = 12 #number of keys per octave.
 
     self.keystruct = {}
     self.qrin = [] #qr inputs
@@ -339,6 +341,13 @@ class MyKeys:
               #dynamically load language
               self.setlanguage = langdef[1]
               #lang already loaded, but check setlanguage for words..
+              if (self.setlanguage in self.languages):
+                self.currentlang = self.languages[self.setlanguage]
+                self.currentlangna = self.setlanguage
+                logger.info(la.qr) #> Set Language [sequence]
+                if (hasattr(self.currentlang, 'octaveshift')):
+                  self.octaveshift = self.currentlang.octaveshift
+
 
         qr += "<" + l + ">\n"
         qr += la.qr + "\n"
@@ -508,13 +517,33 @@ class MyKeys:
       #a = self.languages[]
       return action #return 
     return action
-  
+
+  def unset_sequence(self):
+    self.keyshift = 0
+    self.setlanguage = None
+    self.octaveshift = 0
+    logger.info("Unsetting keyshift and octave shift")
+    self.reset_sequence()
+    #perhaps make shorter
+    winsound.Beep(500, 100) #beep to end complete without error
+    time.sleep(0.1)
+    winsound.Beep(500, 100) #beep to end complete without error
+    time.sleep(0.1)
+    winsound.Beep(500, 100) #beep to end complete without error
+
   def key(self, note, msg, callback=None):
     #add this key to the notes map
     #if hasattr(msg, 'type') and msg.type=='note_on' and 
     #adjust message channel for anything but base channel
     #for now dont use tracks, just channels.  
+ 
     logger.info(f'Key pressed: {note} Msg: {msg}')
+    #shift incoming note based on octaveshift.  
+    #just use this instead of trying to send midi messages to shift octaves.
+    if (self.octaveshift !=0):
+      note = note + (self.octaveshift * self.octaveinterval)
+      msg.note = note + (self.octaveshift * self.octaveinterval)
+      logger.info(f'Octave shifted note to: {note} Msg: {msg}')
 
     if (hasattr(msg, 'time') and msg.time <= 0):
       #this is default at the moment..
@@ -563,15 +592,16 @@ class MyKeys:
       self.lastnotetime = self.lasttick
       print(self.sequence)
       #try fixed length?  try to read messages.  If just garbage, check for any known word.  
-      if (self.sequence[-3:] == self.config['keymap']['global']['Reset']):
-        self.reset_sequence()
-        print("Resetting sequence due to Reset key")
-        return -1 #reset sequence notify error.
-      elif (self.sequence[-3:] == self.config['keymap']['global']['Unset'] and self.keyshift == 12):
+#      if (self.sequence[-3:] == self.config['keymap']['global']['Reset']):
+#        self.reset_sequence()
+#        print("Resetting sequence due to Reset key")
+#        return -1 #reset sequence notify error.
+      #dynamic based on 
+      unsetseq = self.config['keymap']['global']['Unset'] #assume 3 keys for now..
+      if (len(self.sequence) >= 3 and self.sequence[-3] % self.octaveinterval == unsetseq[-3] and self.sequence[-2] % self.octaveinterval == unsetseq[-2] and self.sequence[-1] % self.octaveinterval == unsetseq[-1]):
         #unset keyshift, move octave back down.
-        self.keyshift = 0
-        self.setlanguage = None
-        self.reset_sequence()
+        self.unset_sequence()
+
         #unset last language
         return -1 #unset last word notify error.
 

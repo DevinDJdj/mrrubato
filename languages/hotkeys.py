@@ -106,8 +106,11 @@ class hotkeys:
     totalcmds = len(allcmds)
     numloaded = 0
     for c in allcmds:
+      #print(f'Processing command {c}')
       if (c['cmd'] == 'Add Bookmark'):
-        print(f'Found bookmark command {c}')
+        #print(f'Found bookmark command {c}')
+        if ('URL' not in c['vars'] or 'TOTAL_READ' not in c['vars']):
+          continue
         url = c['vars']['URL']
         total_read = int(c['vars']['TOTAL_READ'])
         body_length = int(c['vars']['BODY_LENGTH']) if 'BODY_LENGTH' in c['vars'] else 0
@@ -117,7 +120,7 @@ class hotkeys:
         playwrighty.add_bookmark(url, total_read, text) #call playwrighty add bookmark..
         numloaded += 1
 
-      elif c['cmd'].startswith('Add Bookmark'): #handle alternate format
+      elif c['cmd'].startswith('Add Bookmark'): #handle alternate old format
         parts = c['cmd'].strip().split('\t')
         if (len(parts) < 2):
           continue
@@ -673,6 +676,7 @@ class hotkeys:
     self.links = link_data
     #should always have a value here..  
     total_read = playwrighty.get_bookmark(page.url, cacheno)
+    print(f'Bookmark at {total_read}')
     q2, q3, stop_event = self.speak(body_text, link_data, playwrighty.page_cache[cacheno]['alt_text'], total_read)
     playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
 
