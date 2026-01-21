@@ -88,9 +88,9 @@ _ = pre-requisite /test?
 ``` = code snippet?  
 
 QUOTESETS:
-< > = language?  
+<< >> = language?  
 <? ?> = inline macro (PHP)
-[ ] = internal clickable reference?  (markup)
+[ ] = internal clickable reference?  (markup) or key sequence
 ( )
 { } 
 "" = key phrase

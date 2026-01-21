@@ -520,6 +520,7 @@ class hotkeys:
       print("> Record Feedback_ called")
       #get audio input for query.  
       duration = sequence[0]-self.keybot #in seconds
+      duration *=2  #double duration for feedback
       from extensions.trey.speech import listen_audio
       self.now = datetime.now()
       self.feedbacknowstr = self.now.strftime("%Y%m%d%H%M%S") #set nowstr for feedback.  
@@ -667,11 +668,13 @@ class hotkeys:
       cacheno = sequence[-1]-self.keybot
 
     
-    from extensions.trey.trey import speak
+    from extensions.trey.trey import speak, pause_reader
     enginename = playwrighty.get_engine(engine) #set engine
     speak(f'Searching {enginename} for: {query}')
 
     body_text, link_data, page, cacheno = playwrighty.search_web(query, engine=engine, cacheno=cacheno)
+
+    pause_reader() #pause before starting to read new page.
 #    print(body_text)
     self.links = link_data
     #should always have a value here..  
@@ -752,7 +755,9 @@ class hotkeys:
       #should be the location of the simlink.  
 #      if sequence[-1]-self.keybot > 0 and len(siml) > sequence[-1]-self.keybot-1:
 #        total_read = siml[sequence[-1]-self.keybot-1]
+      from extensions.trey.trey import pause_reader
 
+      pause_reader() #pause first before clicking link.
       a = playwrighty.click_link(-1, total_read, sequence[-1]-self.keybot)
       if (isinstance(a, tuple)):
         body_text, link_data, page, cacheno = a

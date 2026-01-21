@@ -93,3 +93,16 @@ OK, small problem with Bookmarks fixed..
 @@How and when to use recording..
 Still too early perhaps, but probably good to try from time to time..
 
+**extensions/trey/speech.py
+Need to fix speech thread to allow for stopping listen_audio early..
+--transcribe_audio
+add sd.stop()
+Not sure if this will stop any other playback..
+Dont think this is working..
+
+
+**timestep.py
+Need to back up transcripts somewhere, no need to use from web yet..
+
+**languages/hotkeys.py
+Some reason we are still reading two pages at once..

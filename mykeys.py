@@ -349,7 +349,7 @@ class MyKeys:
                   self.octaveshift = self.currentlang.octaveshift
 
 
-        qr += "<" + l + ">\n"
+        qr += "<<" + l + ">>\n"
         qr += la.qr + "\n"
         la.qr = "" #reset qr after getting it.
     qr += "<meta>\n"

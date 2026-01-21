@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 class transcriber:
     def __init__(self, lang_helper=None):
         self.lang_helper = lang_helper
-        self.defstring = "[~!@#$%^&*<>/:;\-\+=]"
+        self.defstring = r"[~!@#$%^&*<>/:;\-\+=]"
         self.langmap = {}
 
     def getTime(self, relativedays=0):
