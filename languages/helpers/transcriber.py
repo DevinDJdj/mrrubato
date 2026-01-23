@@ -45,7 +45,7 @@ class transcriber:
       with open(folder + today + '.txt', 'a', encoding='utf-8') as f:        
         if (lang not in self.langmap or self.langmap[lang] != lang):
             self.langmap[lang] = lang
-            f.write(f'<{lang}>\n') #in case we want multiple languages in one file.
+            f.write(f'<<{lang}>>\n') #in case we want multiple languages in one file.
         f.write(f'> {command}\n')
         vars = {}
         for pkey, p in params.items():

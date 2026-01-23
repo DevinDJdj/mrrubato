@@ -99,6 +99,9 @@ Need to fix speech thread to allow for stopping listen_audio early..
 add sd.stop()
 Not sure if this will stop any other playback..
 Dont think this is working..
+Added dynamic timing for recording to use thread event to stop..
+Max duration 30s for now..
+
 
 
 **timestep.py
@@ -106,3 +109,113 @@ Need to back up transcripts somewhere, no need to use from web yet..
 
 **languages/hotkeys.py
 Some reason we are still reading two pages at once..
+
+
+**COMMS
+on topic change, regenerate recording?  
+/uid/timestamp
+cmd flow is dynamically updated (transcriber?), but recording only after..
+Retrieve /uid for latest info, and/or search through shared data..
+/topic/timestamp pointer to uid..
+MTG URL will be one of the QRIn which is shared..
+For now no minutia for access control.  
+auth !=null allows read access..
+
+When content viewed, authid gets registered.  
+Simple stats on view activity..
+channels/uid/settings
+possibility to contain detailed access control by date/time.  
+Too much for now..
+
+
+**extensions/trey/trey.py
+Consumer
+Select topic, search/preview recent, if active find MTG url, open MTG url, or if complete watch video/peruse transcription
+Leave feedback in time..
+Display timeline for all events..
+Compress timeline if large gaps..
+Any videos display full screen for in-time feedback
+if "in-meeting"
+Post real-time feedback to same /channels/uid..
+write QR transcripts to 
+/channels/myuid
+parameters define topic of what is being displayed and time of video being watched..
+or transcript being read..
+Along with topic which was originally selected..
+And original video identifier.  
+Ability to search for all instances of original identifier..
+This can be feedback or screen clip, etc..
+While "in-meeting", change Trey icon.  
+All CMD info is passed to meeting.  
+This allows search for My transcripts and My feedback..
+Ability to mark feedback as consumed..
+@@How/where..
+
+Feedback copied two places
+/channels/myuid/feedback/YYYYMMDD/originaluid
+and 
+/channels/originaluid/feedback/YYYYMMDD/myuid/..
+contains contentID and editable by originaluid or myuid..
+originaluid marks feedback as consumed..
+Similarly
+/channels/myuid/feedback/YYYYMMDD/originaluid
+content entry is updated..
+
+Need quick acknowledge key..
+UI default shows outstanding own unacknowledged feedback for selected topic..
+
+Chaining just done by topic and time..
+Can filter topic by set of user input or select all..
+Feedback identified by @user.  
+@@What acknowledge message
+-@user?  
+
+
+Provider
+Start trey, channel entry auto-generated, set topic, (open MTG, QR info for MTG generated), record/transcribe, close trey
+
+Need recording start/stop time messages..
+
+#https://github.com/thisbejim/Pyrebase
+
+#https://github.com/nhorvath/Pyrebase4
+
+#https://github.com/googleapis/google-api-python-client/tree/main/samples
+
+**extensions/trey/test/pyrebasetest.py
+Simple email/pass login.  
+Works after enabling and adding user.. 
+Can use with existing?  
+Trey use email login, web use google login??
+OK for now I guess..
+Separate web UI pages for listing this data..
+For now just use in same config..
+trey/user/pass..
+Otherwise too much of a time suck
+
+**web/public/storage_upload.html
+Need to post here perhaps with user info..
+New version of this needed..
+Post to temporary bucket.  
+Any transcripts and videos..
+Need userid specified somehow.
+
+**web/public/rec.html
+Pull my data from storage into localDB for alternate web search and recall if doesnt exist..
+
+**extensions/vscode/codetutor/src/extension.ts
+Utilize transcripts and links from here as well later.  
+Separate from book, but similar..
+Separate vectradb.  
+
+
+**timestep.py
+add transcriptions to git somehow and delete old data.  
+
+
+**extensions/trey/trey.py
+--start_record
+test..
+
+When User is deleted and re-added, is UID the same or we start from scratch?  
+Maybe need some other user identifier..

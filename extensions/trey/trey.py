@@ -14,6 +14,7 @@ import sys
 import threading
 import multiprocessing
 import subprocess
+from huggingface_hub import login
 import psutil
 
 from datetime import datetime
@@ -1413,13 +1414,62 @@ class MyWindow(QMainWindow):
         self.thread.start()
 
 
-    def __init__(self, q=None, inq=None):
+
+    import pyrebase
+
+    def start_record(self):
+        try:
+            db = self.firebase.database()
+
+            data = {"status": "recording", "timestamp": time.time()}
+            #get date YYYYMMDD
+            date_str = time.strftime("%Y%m%d")
+            mydata = db.child("channels").child(self.myuser['localId']).shallow().get(self.myuser['idToken'])
+            print(mydata.val())
+            db.child("channels").child(self.myuser['localId']).update(data, self.myuser['idToken'])
+            data = {self.myuser['localId']: ""}
+            print(data)
+            db.child("channels").child(self.myuser['localId']).child("feedback").child(date_str).set(data, self.myuser['idToken'])
+        except Exception as e:
+            #if fail
+            auth = self.firebase.auth()
+            user = auth.refresh(self.myuser['refreshToken'])
+            self.myuser = user
+
+
+    def login(self):
+        auth = self.firebase.auth()
+        email = self.cfg["trey"]["user"]
+        password = self.cfg["trey"]["pwd"]
+        try:
+            user = auth.sign_in_with_email_and_password(email, password)
+            # Extract the UID (localId) from the user object
+            self.myuser = user
+#            uid2 = user['userId']
+            print(f"Successfully signed in. User UID: {self.myuser['localId']} {self.myuser['idToken']}")
+            logger.info(f'Firebase login successful for {email}, UID: {self.myuser['localId']}')
+            self.start_record()
+        except Exception as e:
+            logger.error(f'Firebase login failed: {e}')
+            print(f'Firebase login failed: {e}')
+
+
+    def init_fb(self):
+        databaseURL = self.cfg["firebase"]["fbconfig"]["databaseURL"]
+            # Init firebase with your credentials
+        import pyrebase
+        self.firebase = pyrebase.initialize_app({'apiKey': self.cfg["firebase"]["fbconfig"]["apiKey"], 'authDomain': self.cfg["firebase"]["fbconfig"]["authDomain"], 'databaseURL':databaseURL, 'storageBucket': self.cfg["firebase"]["fbconfig"]["storageBucket"]})    
+        self.login()
+
+    def __init__(self, q=None, inq=None, cfg=None):
         super().__init__()
         self.highlightrect = {'x': 100, 'y': 100, 'width': 200, 'height': 200}
         self.highlighton = False
         self.startx = 0
         self.queue = q
         self.inqueue = inq
+        self.cfg = cfg
+        self.myuser = None
         self.geo = None
         self.qr_in = []
         self.qr_out = []
@@ -1427,7 +1477,8 @@ class MyWindow(QMainWindow):
         self.windowcounter = 0
         self.screenshots = [] #list of screenshots per monitor
         self.transcriber = transcriber.transcriber(self)
-
+        if (self.cfg is not None and 'firebase' in self.cfg):
+            self.init_fb()
         # set the title
 
         self.setWindowOpacity(0.2) 
@@ -1827,6 +1878,8 @@ def run_midi(stop_event, kill_event, qr_queue=None, qrin_queue=None):
 
 
 
+
+
 def main():
     global qapp
     global mywindow
@@ -1871,7 +1924,7 @@ def main():
     global qr_queue, qrin_queue
     qr_queue = Queue()
     qrin_queue = Queue()
-    mywindow = MyWindow(qr_queue, qrin_queue)
+    mywindow = MyWindow(qr_queue, qrin_queue, config.cfg)
 
     logger.info('Running icon')
     #icon.run()

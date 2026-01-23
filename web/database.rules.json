@@ -39,17 +39,11 @@
 					".read": "auth.uid === $uid"
 				}
 			  }
-		},		
-		"doors": {
-			".indexOn": ["status"],
-			"$uid": {
-				"settings": {
-					".write": "$uid === auth.uid"
-				}
-			  }
+
 		},		
 		".read": "auth != null",
-			".write": "'ZW130KE3xXMvdDoIXTe9kbOkp003' === auth.uid || auth.token.admin === true"
-		}
+		".write": "'ZW130KE3xXMvdDoIXTe9kbOkp003' === auth.uid || auth.token.admin === true"
+	}
+	
 
 }

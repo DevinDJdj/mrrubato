@@ -100,6 +100,15 @@
 		
 	
 	},
+	"trey": {
+		"user": "me@yahoo.com", 
+		"pwd": "Passw0rd",
+		"speech":{
+			"asr_model_path": "./models/pretrained_ASR",
+			"tts_model_path": "./models/pretrained_tts",
+			"language_model_path": "./models/lm/lm.zip"
+		}
+	},
 	
 	"keymap":{
 	    "global":{
