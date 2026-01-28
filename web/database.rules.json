@@ -37,6 +37,15 @@
 				".write": "$uid === auth.uid",
 				"settings": {
 					".read": "auth.uid === $uid"
+				},
+				"feedback": {
+					"$date":{
+						"$time": {
+							"$uid2": {
+								".write": "$uid2 === auth.uid"
+							}
+						}
+					}
 				}
 			  }
 

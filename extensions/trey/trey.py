@@ -1303,12 +1303,29 @@ class MyWindow(QMainWindow):
                 #start OBS capture..
                 start_obs_capture()
         elif (command =="Screenshot Feedback_"):
-            self.draw_screen_box(vars.get('BBOX', None))
-            ocrtext = self.save_screenshot(vars.get('KLANG', 'video'), vars.get('TRANSCRIPT', ''), vars.get('BBOX', None), True) #always OCR
+            bbox = vars.get('BBOX', None)
+            if (bbox is not None):
+                self.draw_screen_box(vars.get('BBOX', self.geometry().getRect()))
+
             #send back the OCR text as feedback.
             #just add to file assuming we 
-            vars['OCR'] = ocrtext
-            transcriber.write(vars.get('KLANG', 'video'), command, vars)
+            #probably dont need this..
+            if (vars.get('OCR', 'False') == 'True'):
+                ocrtext, fname = self.save_screenshot(vars.get('KLANG', 'video'), vars.get('TRANSCRIPT', ''), vars.get('BBOX', None), True) #always OCR
+                vars['OCRTEXT'] = ocrtext
+                vars['FNAME'] = fname
+                self.ocrtext = ocrtext
+            written = self.transcriber.write(vars.get('KLANG', 'video'), command, vars)
+            self.set_feedback(written, vars)
+        elif (command == "Screenshot Feedback"):
+            #right now we are just calling screenshot..
+            #get OCR, and transcribe.  This is delayed because of the transcription time..
+            ocrtext, fname = self.save_screenshot(vars.get('KLANG', 'video'), '', vars.get('BBOX', None), True) #always OCR
+            vars['OCRTEXT'] = ocrtext
+            vars['FNAME'] = fname
+            self.ocrtext = ocrtext
+            written = self.transcriber.write(vars.get('KLANG', 'video'), command, vars)
+            self.set_feedback(written, vars)
 
         elif (command == "_Click Link"):
             self.show()
@@ -1316,8 +1333,14 @@ class MyWindow(QMainWindow):
         elif (command == "Screenshot"):
             print("Taking Screenshot")
             print(vars['BBOX'])
-            self.draw_screen_box(vars.get('BBOX', None))
-            self.save_screenshot(vars.get('KLANG', 'hotkeys'), vars.get('FNAME', ''), vars.get('BBOX', None))
+            self.draw_screen_box(vars.get('BBOX', self.geometry().getRect()))
+            ocrtext, fname = self.save_screenshot(vars.get('KLANG', 'hotkeys'), vars.get('FNAME', ''), vars.get('BBOX', self.geometry().getRect()), True) #always OCR?
+            vars['OCRTEXT'] = ocrtext
+            vars['FNAME'] = fname
+            self.ocrtext = ocrtext
+            written = self.transcriber.write(vars.get('KLANG', 'video'), command, vars)
+            self.set_feedback(written, vars)
+
             #send to QR In queue for processing by mykeys.  
 
 
@@ -1337,9 +1360,9 @@ class MyWindow(QMainWindow):
         for idx, line in enumerate(lines):
 #            logger.info(f'QR Data Line: {line}')
             type = line[:2] #first 2 chars is type
-            if (len(line) > 1 and line[0] == '<' and line[-1] == '>'):
+            if (len(line) > 3 and line[0] == '<' and line[1] == '<' and line[-2] == '>' and line[-1] == '>'):
                 #lang command
-                lang = line[1:-1]
+                lang = line[2:-2]
             if (type == '> '):
                 #command line internal command
                 currentcmd = line[2:]
@@ -1417,6 +1440,23 @@ class MyWindow(QMainWindow):
 
     import pyrebase
 
+    def set_feedback(self, feedback, vars = {}, rerun=False):
+        try:
+            db = self.firebase.database()
+
+            data = {"feedback": feedback}
+            date_str = time.strftime("%Y%m%d")
+            time_str = time.strftime("%H%M%S")
+            db.child("channels").child(self.myuser['localId']).child("feedback").child(date_str).child(time_str).child(self.myuser['localId']).set(data, self.myuser['idToken'])
+        except Exception as e:
+            #if fail
+            if (rerun):
+                return
+            auth = self.firebase.auth()
+            user = auth.refresh(self.myuser['refreshToken'])
+            self.myuser = user
+            self.set_feedback(feedback, vars, True)
+
     def start_record(self):
         try:
             db = self.firebase.database()
@@ -1424,12 +1464,13 @@ class MyWindow(QMainWindow):
             data = {"status": "recording", "timestamp": time.time()}
             #get date YYYYMMDD
             date_str = time.strftime("%Y%m%d")
+            time_str = time.strftime("%H%M%S")
             mydata = db.child("channels").child(self.myuser['localId']).shallow().get(self.myuser['idToken'])
             print(mydata.val())
             db.child("channels").child(self.myuser['localId']).update(data, self.myuser['idToken'])
-            data = {self.myuser['localId']: ""}
+            data = {"feedback": "test"}
             print(data)
-            db.child("channels").child(self.myuser['localId']).child("feedback").child(date_str).set(data, self.myuser['idToken'])
+            db.child("channels").child(self.myuser['localId']).child("feedback").child(date_str).child(time_str).child(self.myuser['localId']).set(data, self.myuser['idToken'])
         except Exception as e:
             #if fail
             auth = self.firebase.auth()
@@ -1473,6 +1514,7 @@ class MyWindow(QMainWindow):
         self.geo = None
         self.qr_in = []
         self.qr_out = []
+        self.ocrtext = ""
         self.windowlabels = {} #list of window details by pid
         self.windowcounter = 0
         self.screenshots = [] #list of screenshots per monitor
@@ -1559,6 +1601,7 @@ class MyWindow(QMainWindow):
 
         screenshot.save(folder + fname, 'png')
         logger.info(f'Screenshot saved as {folder + fname}')
+        ocrtext = ""
         if (ocr):
             #do OCR on screenshot
             img = Image.open(folder + fname)
@@ -1566,11 +1609,12 @@ class MyWindow(QMainWindow):
             if (bbox is not None):
                 bbox = bbox.split(',')
                 bbox = [int(b) for b in bbox]
-                img = img.crop((bbox[0], bbox[2], bbox[1], bbox[3]))
+                img = img.crop((bbox[0]-self.geo.x(), bbox[2]-self.geo.y(), bbox[1]-self.geo.x(), bbox[3]-self.geo.y()))
+                logger.info(f'Cropping image to bbox: {bbox}')
 
             ocrtext = pytesseract.image_to_string(img)
-            return ocrtext
-        return folder + fname
+
+        return ocrtext, folder + fname
         
     def draw_screen_box(self, bbox=""):
         """Draws a box around the screen."""

@@ -42,11 +42,12 @@ class transcriber:
       folder = '../transcripts/' + lang + '/'
       os.makedirs(folder, exist_ok=True)
       #add utf-8?  
+      ret = ""
       with open(folder + today + '.txt', 'a', encoding='utf-8') as f:        
         if (lang not in self.langmap or self.langmap[lang] != lang):
             self.langmap[lang] = lang
-            f.write(f'<<{lang}>>\n') #in case we want multiple languages in one file.
-        f.write(f'> {command}\n')
+            ret += f'<<{lang}>>\n'
+        ret += f'> {command}\n'
         vars = {}
         for pkey, p in params.items():
             #replace any \ndefstring with \n defstring to avoid confusion.            
@@ -56,11 +57,13 @@ class transcriber:
             if (isinstance(p, str)):
                 p = re.sub(pattern, r"\n \1", p) #untested..
 
-            f.write(f'$${pkey}={p}\n')
+            ret += f'$${pkey}={p}\n'
         if ('TIME' not in params):
-            f.write(f'$$TIME={self.getTimeString()}\n')
-        f.write(f'$$\n')
+            ret += f'$$TIME={self.getTimeString()}\n'
+        ret += f'$$\n'
+        f.write(ret)
         #dont worry about duplication at this point.
+        return ret
 
     def get_cmd(self, type, command, vars):
         t = time.time()

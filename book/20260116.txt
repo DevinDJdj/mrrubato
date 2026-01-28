@@ -219,3 +219,27 @@ test..
 
 When User is deleted and re-added, is UID the same or we start from scratch?  
 Maybe need some other user identifier..
+
+test screenshot_feedback
+49,53,55,53 [BBOX]
+
+Need to display BBOX earlier.  
+
+OK, closer.  
+Still audio transcription takes way too long..
+Need to perhaps do this in background thread..
+
+Finally got some OCR..
+                img = img.crop((bbox[0]-self.geo.x(), bbox[2]-self.geo.y(), bbox[1]-self.geo.x(), bbox[3]-self.geo.y()))
+
+Maybe on _screenshot, just display bbox.. 
+
+Need 
+> Select Screenshot [..] last 20..
+show the OCR text for selection and the image somewhere..
+Select Screenshot_ 
+display this selection..
+just end select with clear action..
+[49] clears selection, then [49] transcribes if necessary..
+
+

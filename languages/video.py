@@ -114,8 +114,10 @@ class video:
       "Pause": "pause",
       "Unpause": "unpause",
       "Screenshot": "screenshot",
+      "_Screenshot": "_screenshot",
       "Zoomshot": "zoomshot",
       "Screen Toggle": "screen_toggle",
+      "_Screenshot Feedback": "_screenshot_feedback",
       "Screenshot Feedback": "screenshot_feedback",
       "Screenshot Feedback_": "screenshot_feedback_",
 
@@ -341,8 +343,9 @@ class video:
     logger.info(f'> Screenshot {sequence}') 
     logger.info(f'$$BBOX={self.bbox}')
 
+
     #qr specific to current action.
-    self.set_qr(self.func, {'BBOX': self.ar2str(self.bbox), 'SEQ': self.ar2str(sequence)})
+    self.set_qr(self.func, {'TRANSCRIPT': self.transcript, 'BBOX': self.ar2str(self.bbox), 'SEQ': self.ar2str(sequence)})
     #possibly return other data here for other functions.  
     return 0
 
@@ -350,50 +353,51 @@ class video:
      """allow for mouse input to set bbox."""
      logger.info(f'> _Screenshot Feedback {sequence}')
      print("> _Screenshot Feedback called")
+
+
+     #get audio input for query.  
+     from extensions.trey.speech import listen_audio
+     self.now = datetime.now()
+     self.feedbacknowstr = self.now.strftime("%Y%m%d%H%M%S") #set nowstr for feedback.  
+     duration = 15
+     at = listen_audio(duration, "feedback.wav") #default 30 seconds and save to feedback.wav
+     self.func = "_Screenshot Feedback"
+     #indicate to get OCR text
+     self.set_qr(self.func, {'DURATION': duration, 'TIME': self.feedbacknowstr})
+     #show that we are recording for duration seconds.
+
      return 1
 
   def screenshot_feedback_(self, sequence=[]):
      """Take Screenshot Feedback_.  Use 53 to indicate that we are done building bbox."""
 
      if (len(sequence) == 1):
-        #calc new BBOX from sequence and display
-        logger.info(f'> Screenshot Feedback_ {sequence}')
-
-        print("> Screenshot Feedback_ called")
-        #get audio input for query.  
-        duration = sequence[0]-self.keybot #in seconds
-        if (duration < 2): #min 2 seconds
-            duration = 2
-        from extensions.trey.speech import listen_audio
-        self.now = datetime.now()
-        self.feedbacknowstr = self.now.strftime("%Y%m%d%H%M%S") #set nowstr for feedback.  
-
-        at = listen_audio(duration, "feedback.wav")
-        self.func = "Screenshot Feedback_"
-        #indicate to get OCR text
-        self.set_qr(self.func, {'DURATION': duration, 'TIME': self.feedbacknowstr})
-        #show that we are recording for duration seconds.
-        return 0
-     elif (len(sequence) > 1 and sequence[-1] == self.keybot): #end of message OK to OCR.
+        self._screenshot_feedback(sequence)
+        return 1 #still not complete..
+     
+     if (len(sequence) > 1 and sequence[-1] == self.keybot): #end of message OK to OCR.
         #calc new BBOX from sequence and display
         self.func = "Screenshot Feedback_"
-        self.bbox = self.get_bbox(sequence[1:-1])
+        self.bbox = self.get_bbox(sequence[0:-1])
 
         logger.info(f'> Screenshot Feedback_ {sequence}')
         logger.info(f'$$BBOX={self.bbox}')
 
-        #transcribe audio now..
-        from extensions.trey.speech import transcribe_audio
-        timer = datetime.now()
-        self.transcript = transcribe_audio("feedback.wav")
-        lag = (datetime.now() - timer).total_seconds()
-        lag = int(lag)
 
-        self.set_qr(self.func, {'OCR': True, 'TRANSCRIPT': self.transcript, 'LAG': lag, 'BBOX': self.ar2str(self.bbox), 'SEQ': self.ar2str(sequence)})
+        self.set_qr(self.func, {'OCR': 'True', 'BBOX': self.ar2str(self.bbox), 'SEQ': self.ar2str(sequence)})
         #do OCR in thread or in UI side..
         #need transcriber there too.. or just write as is message and append OCR variable..
 
         return 0
+     elif (len(sequence) > 1):
+        #calc new BBOX from sequence and display
+        self.func = "Screenshot Feedback_"
+        self.bbox = self.get_bbox(sequence)
+
+        logger.info(f'> Screenshot Feedback_ {sequence}')
+        logger.info(f'$$BBOX={self.bbox}')
+
+        self.set_qr(self.func, {'BBOX': self.ar2str(self.bbox), 'SEQ': self.ar2str(sequence)})
      return 1
      
   def screenshot_feedback(self, sequence=[]):
@@ -403,6 +407,15 @@ class video:
     self.func = "Screenshot Feedback"
     logger.info(f'> Screenshot Feedback {sequence}') 
     logger.info(f'$$BBOX={self.bbox}')
+    #transcribe audio now..
+    from extensions.trey.speech import transcribe_audio
+    timer = datetime.now()
+    self.transcript = transcribe_audio("feedback.wav")
+    lag = (datetime.now() - timer).total_seconds()
+    lag = int(lag)
+
+    self.func = "Screenshot Feedback"
+    self.set_qr(self.func, {'TRANSCRIPT': self.transcript, 'LAG': lag, 'BBOX': self.ar2str(self.bbox), 'SEQ': self.ar2str(sequence)})
 
 
 
@@ -413,7 +426,7 @@ class video:
     """Take Screenshot."""
     logger.info(f'> _Screenshot {sequence}')
     #show bbox on screen for user to see?
-    return 0
+    return 2 #indicate skip this function.  
 
   def screen_toggle(self, sequence=[]):
     """Toggle Screen Overlay."""

@@ -352,7 +352,7 @@ class MyKeys:
         qr += "<<" + l + ">>\n"
         qr += la.qr + "\n"
         la.qr = "" #reset qr after getting it.
-    qr += "<meta>\n"
+    qr += "<<meta>>\n"
     words = self.get_words_(self.sequence[self.startseqno:])
     #potentially get most likely words here only.
     qr += f"$$SEQLEN={self.currentseqno - self.startseqno} <br>\n"
@@ -508,7 +508,11 @@ class MyKeys:
 
     else:
       #set to None here?  Or keep currentcmd?
-      self.currentcmd = self.currentcmd
+      if (action > 1):
+        #just prefix function, remove currentcmd
+        self.currentcmd = None
+      else:
+        self.currentcmd = self.currentcmd
       #search for word again?            
       #if isinstance(action, list):
         #nword, nl, nla = self.findword(action)
@@ -618,17 +622,26 @@ class MyKeys:
         word, l, la = self.findword(self.sequence)
         #start of word, take start of word action.  
         if (word != ""):
+          logger.info(f'&<{l}>{word} []\n')
           acted = self.takeaction(word, l, [], callback)
+          logger.info(f'Action returned {acted} for {word} in {l} {self.sequence}')
           if (acted > 0):
             #not yet ready to complete..
             #1 means not done yet.. possibly include how many params necessary?
+            if (acted > 1):
+              word = "" #reset word to not found.
             acted = 1
+#            word = "" #reset word to not found.
             #word = "" #reset word to not found.
             #this should allow us to include shorter word subsets in dictionary..
             #i.e. [60, 62] = "Hi" and [60, 62, 64] = "Hello"
           elif (acted == 0):
             #word completed immediately.  
+            #not sure use-case at the moment..
+            #keep sequence, but run prefix command.  
             word = "" #reset word to not found.
+            self.currentcmd = None
+
 #            winsound.Beep(1000, 500) #beep to end complete without error
             #this should allow us to include shorter word subsets in dictionary..
             #i.e. [60, 62] = "Hi" and [60, 62, 64] = "Hello"

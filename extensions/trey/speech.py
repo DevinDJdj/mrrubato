@@ -12,6 +12,9 @@ import os
 import threading
 import winsound
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 asr_model = None
 # 3. Define text pipeline:
@@ -296,6 +299,7 @@ def record_audio(duration=10, fname="example.wav", stop_event=None):
     samplerate = 16000  # Sample rate (Hz)
     #no easy way to stop early with sounddevice, so just record fixed time for now.
     print("Recording...")
+    logger.info("Recording...")
     from pycaw.pycaw import AudioUtilities
     device = AudioUtilities.GetSpeakers()
     volume = device.EndpointVolume
@@ -392,6 +396,7 @@ def init_asr_model():
     global asr_model
     if (asr_model is not None):
         return asr_model
+    print(f"Loading ASR model...")
     asr_model = EncoderDecoderASR.from_hparams(source="./models/pretrained_ASR")
     return asr_model
 
@@ -399,9 +404,10 @@ def transcribe_audio(fname="example2.wav", start_times=[], end_times=[], use_tim
     global rec_stop_event, asr_model
     print("Stopping any existing audio recording...")
     rec_stop_event.set() #stop any existing recording
+    time.sleep(0.3) #give time to stop
+
     asr_model = init_asr_model()
     #sd.stop() #stop any existing playback/recording
-    time.sleep(0.3) #give time to stop
     print(f"Transcribing audio... {fname}")
 
     if (fname.startswith('http://') or fname.startswith('https://')):
