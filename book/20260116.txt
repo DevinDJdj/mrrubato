@@ -243,3 +243,17 @@ just end select with clear action..
 [49] clears selection, then [49] transcribes if necessary..
 
 
+**languages/hotkeys.py
+Need quick key to start/stop entire process..
+Stop should be easy enough..
+
+**extensions/trey/trey.py
+Still QR detection takes 10 seconds.  
+And only using upper quartile.  
+Quite inefficient.  
+Even with nano model.  
+Is this tolerable?  
+Not really.  I think 3 seconds is tolerable.  
+No Code takes 3 seconds..
+
+

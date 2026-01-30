@@ -37,7 +37,7 @@ import random
 import pystray
 from PIL import Image, ImageDraw
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QLabel
-from PyQt5.QtGui import QPixmap, QPainter, QPen, QBrush
+from PyQt5.QtGui import QPixmap, QPainter, QPen, QBrush, QImage
 from PyQt5.QtCore import Qt, QObject, pyqtSignal, QThread
 import PyQt5.QtCore as QtCore
 import win32gui
@@ -598,7 +598,9 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
         VOICES = ["en-US-AriaNeural", "en-US-CoraNeural", "en-US-ElizabethNeural", "en-US-AshleyNeural", "en-US-AvaNeural", "en-US-BrandonNeural", "en-US-BrianNeural", "en-US-EmmaNeural", "en-US-EricNeural"]
 #    VOICE = "en-US-AriaNeural"
     #for now random.  
-    VOICE = VOICES[int(time.time()) % len(VOICES)]
+    rnd = int(time.time()) % len(VOICES)
+    VOICE = VOICES[rnd]
+    LINKVOICE = VOICES[(rnd+1) % len(VOICES)]
 
     SIMVOICE = ["en-US-CoraNeural", "en-US-ElizabethNeural"]
     #en-US-AshleyNeural 
@@ -725,6 +727,10 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
             idx = idx + skip
             skip = 0
 #            total_read += len(l) + 1 #include newline
+            #check this works..
+            link_loc = 0
+            while (link_loc < len(links) and 'offset' in links[link_loc] and links[link_loc]['offset'] < total_read):
+                link_loc += 1
 
         if (skip < 0):
             if (idx + skip < 0):
@@ -789,28 +795,37 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
             logger.info(f'Total read: {total_read}')
         waited = 0
         ttotal = total_read
-#        time.sleep(0.03*len(l)) #wait for initial TTS to start playing.
 
+
+        time.sleep(0.01*len(l)) #wait for initial TTS to start playing.
         for i in range(0, len(l)+1, 11): #check every 12 characters
             #not sure if we want to beep for skipped lines or not.  
             #maybe problematic.  
-            """
-            if (link_loc < len(links) and 'offset' in links[link_loc] and links[link_loc]['offset'] <= total_read):
-                #print(f'At link: {links[link_loc]}')
+            linksspoken = 0
+            if (link_loc < len(links) and 'offset' in links[link_loc] and links[link_loc]['offset'] <= ttotal):
+                print(f'At link: {links[link_loc]}')
                 #winsound.Beep(500, 300) #short beep to indicate link
                 if (links[link_loc]['offset'] != -1):
+                    sound_file = f"./temp/link{link_loc}.mp3"
+                    tts.speak(links[link_loc]['text'], LINKVOICE, sound_file, 1.0, 200) #quieter slower for links
+                    winsound.Beep(500, 200) #short beep to indicate link
+                    playsound(sound_file, block=False) # Ensure this thread blocks for its sound
                     #only move to next link if we are at the offset.  
                     #some links may be at -1 offset which we skip earlier.
-                    ttotal = links[link_loc]['offset']+1
-                link_loc += 1
-            """            
+#                    ttotal = links[link_loc]['offset']+1
+                    link_loc += 1
+                    linksspoken += 1
+                        
             #have to count total read here for record feedback..
-            ttotal += 11
+            ttotal += 12+linksspoken*7 #some time for generating tts..
             if (q2 is not None and ttotal > 0):
                 q2.put(ttotal) #communicate how much we have read.
             waited += 1
-            logger.info(f'Total read: {ttotal}')
-            time.sleep(1) #simulate reading time. 12 chars per second..
+#            logger.info(f'Total read: {ttotal}')
+#            if (linksspoken == 0):
+            time.sleep(0.7) #simulate reading time. 12 chars per second..
+            if (ttotal > total_read+len(l)+1):
+                break
             #shouldnt have to be too exact.  
         print(f'Total waited: {waited}')
 
@@ -1193,39 +1208,108 @@ class QRInWorker(QObject):
     finished = pyqtSignal()
     progress = pyqtSignal(str)
 
-    def read_qr_code(img):
+    def qimage_to_cv2(self, qimage):
+        """Converts a QImage into an OpenCV image (numpy array)."""
+        # Ensure the QImage is in a format that allows direct byte access (e.g., RGBA8888 or RGB888)
+        # OpenCV expects BGR format, so conversion might be needed later depending on the source
+        if qimage.format() != QImage.Format_RGB888:
+            # Convert to a standard 8-bit RGB format. Format_ARGB32 is common
+            qimage = qimage.convertToFormat(QImage.Format_ARGB32)
+
+        width = qimage.width()
+        height = qimage.height()
         
-        qreader = QReader()
-        image = cv2.cvtColor(np.array(img), cv2.COLOR_BGR2RGB)
-        decoded_texts = qreader.detect_and_decode(image=image)
+        # Get a pointer to the raw bytes
+        ptr = qimage.bits()
+        # Set the size of the pointer to the total number of bytes
+        ptr.setsize(qimage.byteCount())
+        
+        # Create a NumPy array from the raw data
+        # The shape will be (height, width, channels)
+        # The data is copied in this step
+        arr = np.array(ptr).reshape(height, width, -1) # Use -1 to infer the number of channels
+
+        # If the QImage was in ARGB32 format, the array will be in BGRA order (due to Qt's internal representation on many systems)
+        # OpenCV uses BGR, so if you need to perform typical OpenCV operations, convert the color space
+        if qimage.format() == QImage.Format_ARGB32:
+            # Convert from BGRA to BGR
+            arr = cv2.cvtColor(arr, cv2.COLOR_BGRA2BGR)
+        elif qimage.format() == QImage.Format_RGB888:
+            # Convert from RGB to BGR (OpenCV's default color order)
+            arr = cv2.cvtColor(arr, cv2.COLOR_RGB2BGR)
+        # Handle other formats as needed (e.g., grayscale)
+        elif qimage.format() == QImage.Format_Grayscale8:
+            # No color conversion needed for grayscale, it's a 2D array
+            arr = arr.reshape(height, width)
+
+        return arr
+
+    def read_qr_code(self, img):
+        
+        #qreader too slow, use nano model for speed.
+        #income as QImage
+        img = self.qimage_to_cv2(img)
+        #calc width, get upper right quadrant for now just read here.  
+        x_start = int(img.shape[1] / 2)
+        x_end = img.shape[1]
+        y_start = 0
+        y_end = int(img.shape[0] / 2)
+        cropped_img = img[y_start:y_end, x_start:x_end, :]
+        print(f'Cropped image shape: {cropped_img.shape}')
+        cropped_image = cv2.cvtColor(np.array(cropped_img), cv2.COLOR_BGR2RGB)
+        decoded_texts = self.qreader.detect_and_decode(image=cropped_image)
         if decoded_texts:
             for text in decoded_texts:
-                print(f"QR Code data: {text}")
+                print(f"QR In Code data: {text}")
+                logger.info(f"QR In Code data: {text}")
             return decoded_texts
         else:
-            print("No QR code detected.")
+            print("No QR In code detected.")
             return []
         
     def __init__(self, my_queue, parent=None):
         super(QRInWorker, self).__init__(parent)
         self.my_queue = my_queue # Store parameter in the worker instance
+        self.all_qr = [] #store all qr data seen.
+        self.qreader = QReader(model_size='n')  # Initialize the QR code reader with a nano model
 
+    def find_recent_qr(self, qrin, timeframe=5):
+        """Find QR data seen in the last timeframe seconds."""
+        current_time = time.time()
+        recent_qr = self.all_qr[-5:] #last 5 entries
+        for qr in recent_qr:
+            if ('data' not in qr or 'timestamp' not in qr):
+                continue #not valid data
+            if (qr['data'] == qrin and (current_time - qr['timestamp']) < timeframe):
+                return True
+        return False
+    
     def run(self):
         """Long-running task to find QR data from window."""
         while (True):
             #get QR data from window
+            print(time.time())
             screens = qapp.screens()
             #assume last window
-            qrdata = self.read_qr_code(screens[-1].grabWindow(0).toImage())
+            qimage = screens[-1].grabWindow(0).toImage()
+            print(time.time())
+            print(qimage.width(), qimage.height())
+            qrdata = self.read_qr_code(qimage)
+            print(time.time())
 
             for qd in qrdata:
                 logger.info(f'QRInWorker found QR data: {qd}')
-                self.my_queue.put(qd)
-                self.all_qr.append({'data': qd, 'timestamp': time.time()})
-            if (len(qrdata) > 0):   
-                self.progress.emit(qrdata) #can pass param here as well.  
+                if (isinstance(qd, str) == False):
+                    continue
+                if (qd.find('<<meta>>') == -1): #for now dont accept meta data, simple way to not read self for now.
+                    continue #not our data.
+                if not self.find_recent_qr(qd): #skip anything we just saw.  
+                    self.my_queue.put(qd)
+                    self.all_qr.append({'data': qd, 'timestamp': time.time()})
+                    self.progress.emit(qd) #can pass param here as well.  
 
             time.sleep(0.2) #run each 0.2 seconds
+            print(time.time())
         self.finished.emit()
 
 
@@ -1422,19 +1506,19 @@ class MyWindow(QMainWindow):
 
     def runQRInThread(self):
         # Step 2: Create a QThread object
-        self.thread = QThread()
+        self.inthread = QThread()
         # Step 3: Create a worker object
-        self.worker = QRInWorker(self.inqueue, self.queue)
+        self.inworker = QRInWorker(self.inqueue)
         # Step 4: Move worker to the thread
-        self.worker.moveToThread(self.thread)
+        self.inworker.moveToThread(self.inthread)
         # Step 5: Connect signals and slots
-        self.thread.started.connect(self.worker.run)
-        self.worker.finished.connect(self.thread.quit)
-        self.worker.finished.connect(self.worker.deleteLater)
-        self.thread.finished.connect(self.thread.deleteLater)
-        self.worker.progress.connect(self.reportProgress)
+        self.inthread.started.connect(self.inworker.run)
+        self.inworker.finished.connect(self.inthread.quit)
+        self.inworker.finished.connect(self.inworker.deleteLater)
+        self.inthread.finished.connect(self.inthread.deleteLater)
+        self.inworker.progress.connect(self.reportProgressIn)
         # Step 6: Start the thread
-        self.thread.start()
+        self.inthread.start()
 
 
 
@@ -1573,6 +1657,7 @@ class MyWindow(QMainWindow):
         t.start()  # Start the timer in a new thread
         logger.info('Window created')
         self.runQRThread() #
+        self.runQRInThread() #start thread to detect incoming QR data from other apps or locations..
 
         #start internal thread to check the queue for updates.  
         #and update the window when there is new data.  

@@ -14,7 +14,7 @@ def initVoices():
     all_voices = voices
     return all_voices
 
-def speak(text, voice_id=None, fname=None):
+def speak(text, voice_id=None, fname=None, volume=0.7, rate=150):
     engine = pyttsx3.init()
     if voice_id is not None:
         #get lang.  
@@ -24,8 +24,10 @@ def speak(text, voice_id=None, fname=None):
             if (v.languages is not None and lang in v.languages):
                 voice_id = v.id
                 break
-        engine.setProperty('voice', voice_id)
+        engine.setProperty('voice', voice_id)        
 #    engine.say(text)
+    engine.setProperty('volume', volume)  # Volume: 0.0 to 1.0
+    engine.setProperty('rate', rate)      # Speed percent (can go over 100
     if fname is not None:
         engine.save_to_file(text, fname)
     else:
