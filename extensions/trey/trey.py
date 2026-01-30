@@ -33,6 +33,9 @@ import mido
 
 import random
 
+
+import torch
+
 #UI components
 import pystray
 from PIL import Image, ImageDraw
@@ -57,7 +60,6 @@ import tts
 #from kokoro import KPipeline
 #from IPython.display import display, Audio
 #import soundfile as sf
-#import torch
 
 #pip install playsound
 from playsound3 import playsound

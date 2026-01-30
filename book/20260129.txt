@@ -1,0 +1,83 @@
+**extensions/trey/trey.py
+Lets try to get CUDA working?  
+
+> pip install virtualenv
+> python -m venv treyenv
+> .\treyenv\Scripts\activate
+> .\treyenv\Scripts\deactivate
+
+$$VENV=treyenv
+
+> pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
+
+> python -c "import torch; print(f'Torch Version: {torch.__version__}, CUDA Available: {torch.cuda.is_available()}, CUDA Version: {torch.version.cuda}')"
+Torch Version: 2.9.1+cu128, CUDA Available: True, CUDA Version: 12.8
+
+OK, use this to run trey.  
+Install pre-reqs.  
+
+> pip install speechbrain
+> pip install requests
+> pip install sounddevice
+> pip install transformers
+> pip install sox
+> pip install soundfile
+> pip install psutil
+> pip install mss
+> pip install qrcode
+> pip install pynput
+> pip install mido
+> pip install pystray
+> pip install PyQt5
+...
+> pip install win32gui
+!!ModuleNotFoundError: No module named 'win32.distutils.command'
+==
+> pip install pywin32
+$$
+> pip install pywin32
+> pip install pyaudio
+> pip install matplotlib
+> pip install pyttsx3
+> pip install playsound3
+> pip install pydub
+> pip install pygame
+> pip install edge_tts
+> pip install qdrant_client
+> pip install newspaper3k
+> pip install lxml_html_clean
+> pip install onnxruntime==1.20.1
+> pip install playwright
+> pip install playwright-stealth
+> pip install opencv-python
+> pip install qreader
+> pip install python-rtmidi
+;> pip install hyperpyyaml
+;> pip install huggingface-hub==0.30.0
+;> pip install torchvision==0.23.0 --index-url https://download.pytorch.org/whl/cu128
+
+
+> python ./extensions/trey/trey.py
+
+> pip install fastembed
+> pip install pytesseract
+
+!!OSError: [WinError 1114] A dynamic link library (DLL) initialization routine failed. Error loading "C:\devinpiano\music\treyenv\Lib\site-packages\torch\lib\c10.dll" or one of its dependencies.
+==
+import torch
+...
+import PyQt5
+
+
+$$
+> python ./test/cudatest.py
+> pip install tensorflow
+
+> pip install pyrebase4
+
+
+**extensions/handsfree
+#chrome://extensions
+Load Unpacked
+
+Still 20 seconds for qreader..

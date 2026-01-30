@@ -66,3 +66,4 @@ web/public/test/MultiRTC-firebase/*
 model_checkpoints/*
 *.wav
 speechvenv/*
+treyenv/*
