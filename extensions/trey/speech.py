@@ -268,12 +268,13 @@ def record_audio2(duration=30, fname="example.wav", stop_event=None):
     global recording
     samplerate = 16000  # Sample rate (Hz)
     print("Recording...")
+#    logger.info("Recording...")
     from pycaw.pycaw import AudioUtilities
     device = AudioUtilities.GetSpeakers()
+    winsound.Beep(2000, 200) #beep to start
     volume = device.EndpointVolume
     currentvolume = volume.GetMasterVolumeLevel()
     volume.SetMasterVolumeLevel(currentvolume-20, None) #reduce volume to 20% for recording.
-    winsound.Beep(2000, 200) #beep to start
     total_duration = 0
     with sd.InputStream(samplerate=samplerate, channels=1, callback=record_audio_callback):
         # This loop runs as long as the stream is active
@@ -284,6 +285,7 @@ def record_audio2(duration=30, fname="example.wav", stop_event=None):
                 break
             sd.sleep(100)  # Sleep briefly to allow other operations
     print("Recording complete.")
+#    logger.info("Recording complete.")
     recording = np.concatenate(recording, axis=0)
     audio_tensor = torch.from_numpy(recording.squeeze()) # Remove channel dimension if mono
 #    audio_tensor = torch.from_numpy(recording.squeeze()) # Remove channel dimension if mono
@@ -403,12 +405,14 @@ def init_asr_model():
 def transcribe_audio(fname="example2.wav", start_times=[], end_times=[], use_timestamps=True):
     global rec_stop_event, asr_model
     print("Stopping any existing audio recording...")
+    logger.info("Stopping any existing audio recording...")
     rec_stop_event.set() #stop any existing recording
     time.sleep(0.3) #give time to stop
 
     asr_model = init_asr_model()
     #sd.stop() #stop any existing playback/recording
     print(f"Transcribing audio... {fname}")
+    logger.info(f"Transcribing audio... {fname}")
 
     if (fname.startswith('http://') or fname.startswith('https://')):
         #download first

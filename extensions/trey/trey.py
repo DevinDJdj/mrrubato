@@ -584,6 +584,10 @@ def get_voices(lang='en'):
             continue
     return voices
 
+
+def play_sound_process(sound_file):
+    playsound(sound_file)
+
 def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=None, q=None, q2=None, q3=None, lang='en'):
 
     skipmenu = True
@@ -658,6 +662,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
 #    print(f'Density map: {link_density_map}')
     #find menus and content and treat differently.  
 
+    playsoundprocess = None
     total_read = 0
     link_loc = 0
     while (link_loc < len(links) and 'offset' in links[link_loc] and links[link_loc]['offset'] == -1):
@@ -685,7 +690,9 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
             if (suc != 0):
                 print(f'Error generating audio fallback to tts.speak')
                 tts.speak(lesc, VOICE, sound_file)
-            playsound(sound_file, block=False) # Ensure this thread blocks for its sound
+            playsoundprocess = multiprocessing.Process(target=play_sound_process, args=(sound_file,))
+            playsoundprocess.start()
+#            playsound(sound_file, block=False) # Ensure this thread blocks for its sound
 
         if (stop_event.is_set()):
             logger.info('Audio stop event set, stopping playback')
@@ -817,15 +824,21 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
 #                    ttotal = links[link_loc]['offset']+1
                     link_loc += 1
                     linksspoken += 1
-                        
+
+            if (stop_event.is_set()):
+                logger.info('Audio stop event set, stopping playback during line wait')
+                print('Audio stop event set, stopping playback during line wait')
+                mp_stop.set() #stop audio generation as well
+                break
+
             #have to count total read here for record feedback..
-            ttotal += 12+linksspoken*7 #some time for generating tts..
+            ttotal += 11 #some time for generating tts..
             if (q2 is not None and ttotal > 0):
                 q2.put(ttotal) #communicate how much we have read.
             waited += 1
 #            logger.info(f'Total read: {ttotal}')
 #            if (linksspoken == 0):
-            time.sleep(0.7) #simulate reading time. 12 chars per second..
+            time.sleep(0.7-0.2*linksspoken) #simulate reading time. 12 chars per second..
             if (ttotal > total_read+len(l)+1):
                 break
             #shouldnt have to be too exact.  

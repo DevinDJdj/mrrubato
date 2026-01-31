@@ -81,3 +81,40 @@ $$
 Load Unpacked
 
 Still 20 seconds for qreader..
+
+**config.json
+"Unset": [0,0,0]
+
+#https://obsproject.com/download
+Settings Hotkeys
+$$START=CTRL+SHIFT+A
+$$STOP=CTRL+SHIFT+Z
+$$PAUSE=CTRL+SHIFT+8
+$$UNPAUSE=CTRL+SHIFT+9
+
+**extensions/trey/playwrighty.py
+Need to launch in second screen if available..
+
+!!'torchaudio' has no attribute 'list_audio_backends'
+==
+> pip install torchaudio==2.8 --index-url https://download.pytorch.org/whl/cu128
+$$
+
+!!torchvision::nms does not exist
+==
+> pip install torchvision==0.23.0 --index-url https://download.pytorch.org/whl/cu128
+$$
+
+> pip install pycaw
+
+!![WinError 3] The system cannot find the path specified: './temp/'
+==
+> mkdir temp
+$$
+
+!!BrowserType.launch: Executable doesn't exist at C:\Users\devin\AppData\Local\ms-playwright\chromium-1200\chrome-win64\chrome.exe
+==
+> playwright install  
+$$
+
+

@@ -35,6 +35,28 @@ mycontext = None
 
 current_cache = -1 #current cache page we are on.
 
+screen_position = (0,0,0,0) #x,y,width,height
+
+
+def load(qapp=None):
+    """Load the Playwright library and initialize the browser."""
+    global mybrowser
+    global myplaywright
+    global mycontext
+    global screen_position
+
+    logger.info('Loading Playwright library')
+    if qapp is not None:
+        #connect to signals
+        primary_screen = qapp.primaryScreen()
+        screens = qapp.screens()
+        for i, s in enumerate(screens):
+            if (s.name() != primary_screen.name()):
+                logger.info(f'PScreen {i}: {s.name()} - PSize: {s.size()}')
+                screen_position = (s.geometry().x(), s.geometry().y(), s.geometry().width(), s.geometry().height())
+
+#    open_browser()
+    return 0
 
 def get_url(cacheno=-1):
     """Get URL from the cached page."""
@@ -121,12 +143,16 @@ def click_link(cacheno, text_offset, link_offset=0, open_new_tab=False):
             #really want to jump to this text location..
             linkno += 1            
 
+        logger.info(f"Clicking link on page {page_info['url']}")
+        logger.info(f"Clicking on {links[linkno]['href'] if linkno < len(links) else 'No link'}")
+
         if linkno < len(links) and linkno >= 0:
             link = links[linkno]
             href = link['href']
             if href:
                 #is internal link?
-
+                
+                
                 logging.info(f'Clicking link: {link['text']} {link['offset']} \n#{href}')
                 logging.info(f'\n<!-- \noffset {text_offset} \n{page_info['body'][text_offset-50:text_offset+50]} \n-->\n')
 
@@ -256,11 +282,20 @@ def go_back(num=1, cacheno=-1):
 def open_browser():
     global mybrowser
     global myplaywright
+    global screen_position
     if mybrowser is None:
         myplaywright = sync_playwright().start()
         
 #        args = ["--disable-blink-features=AutomationControlled", "--load-extension=C:\devinpiano\music\extensions\handsfree"]
         args = ["--disable-blink-features=AutomationControlled"]
+        x = screen_position[0]
+        y = screen_position[1]
+        w = screen_position[2]
+        h = screen_position[3]
+        #f"--window-position={x_position},{y_position}", "--window-size=1000,800"
+        args.append(f"--window-position={x},{y}")
+        args.append(f"--window-size={w},{h}")
+        logger.info(f'Launching browser at position {x},{y} size {w}x{h}')
         mybrowser = myplaywright.chromium.launch(headless=False, args=args)  
 
 #        async with Stealth().use_async(async_playwright()) as p:

@@ -75,6 +75,7 @@ class hotkeys:
     else:
       logger.info(f'!! <{self.__class__.__name__}> No Data')
       print(f'!! <{self.__class__.__name__}> No Data')  
+    playwrighty.load(self.qapp)
     return 0
 
 
