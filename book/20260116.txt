@@ -256,4 +256,12 @@ Is this tolerable?
 Not really.  I think 3 seconds is tolerable.  
 No Code takes 3 seconds..
 
+Need to follow along with 
 
+**extensions/trey/playwrighty.py
+--set_reader_queue
+--update_page_offset
+
+await page.locator('selector-for-your-element').scrollIntoViewIfNeeded()
+
+OK, not perfect, but something like this..

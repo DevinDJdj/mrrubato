@@ -290,6 +290,13 @@ class MyKeys:
             
     return dot
   
+  def set_audio_location(self):
+    #set audio location queue for languages that use it.  
+#    logging.info('Setting audio location queue for languages')
+    for (l,la) in self.languages.items():
+      if (hasattr(la, 'set_audio_location')):
+        la.set_audio_location()
+
   def add_qrin(self, data):
     #find this QRData.  If exists, ignore.  
     if (data not in self.qrin):

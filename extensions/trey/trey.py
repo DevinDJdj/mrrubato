@@ -100,9 +100,14 @@ global midi_stop_event
 global midi_kill_event
 midi_thread = None
 global speech_pipe
+global audio_stop_events
+global audio_skip_events
+global audio_skip_queue
+global audio_location_queue
+
 audio_stop_events = []  # List to hold stop events for audio threads
 audio_skip_events = []  # List to hold skip events for audio threads
-audio_skip_queue = []
+audio_skip_queue = []  # List to hold skip queues for audio threads
 audio_location_queue = []
 
 speech_pipe = None
@@ -838,7 +843,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
             waited += 1
 #            logger.info(f'Total read: {ttotal}')
 #            if (linksspoken == 0):
-            time.sleep(0.7-0.2*linksspoken) #simulate reading time. 12 chars per second..
+            time.sleep(0.6-0.3*linksspoken) #simulate reading time. 12 chars per second..
             if (ttotal > total_read+len(l)+1):
                 break
             #shouldnt have to be too exact.  
@@ -917,6 +922,9 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
 
 def speak(text, links = [], alt_text=[], offset=0, lang='en'):
     global audio_stop_events
+    global audio_location_queue
+    global audio_skip_events
+    global audio_skip_queue
     """Speak the given text using the speech pipeline."""
 #    print(f'Speaking: {text}')
 
@@ -1961,6 +1969,9 @@ def handle_keys(qr_queue=None, qrin_queue=None):
                 mk.add_qrin(qrdata)
                 logger.info(f'MIDI Received QR input data: {qrdata}')
                 
+            #get all q2 output messages.  
+            mk.set_audio_location()
+
             for msg in inport.iter_pending():
                 if msg.type == 'note_on' or msg.type == 'note_off':
                     print(msg)
@@ -1996,7 +2007,7 @@ def init_inputs():
 #    midiout = mido.open_output(outputs[1]) #open first output for now.  
     midiin = mido.open_input(inputs[0]) #open first input for now.
 
-def run_midi(stop_event, kill_event, qr_queue=None, qrin_queue=None):
+def run_midi(stop_event, kill_event, qr_queue=None, qrin_queue=None, audio_location_queue=None):
     global midiout, midiin
     global mk
     mk = mykeys.MyKeys(config.cfg, qapp, mywindow.startx, stop_event)

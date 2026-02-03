@@ -115,18 +115,12 @@ def get_links(cacheno=-1, text_offset=0):
 #text_offset is how far into the text we are.  link_offset is which link to click relative to that we want to click.
 #usually this will be 0 or -1 to go back one link.
 
-
-def click_link(cacheno, text_offset, link_offset=0, open_new_tab=False):
-
+def get_link_number(cacheno=-1, text_offset=0, link_offset=0):
+    """Get link from the cached page based on text offset and link offset."""
     global current_cache
     if (cacheno < 0):
         cacheno = current_cache
 
-    if (text_offset < 0):
-        text_offset = 0
-    
-
-    """Click a link on a cached page."""
     if cacheno < len(page_cache):
         page_info = page_cache[cacheno]       
         page = page_info['page']
@@ -142,8 +136,29 @@ def click_link(cacheno, text_offset, link_offset=0, open_new_tab=False):
             #for now skip internal links.  
             #really want to jump to this text location..
             linkno += 1            
+        return linkno
+    else:
+        logging.warning(f'Cache number {cacheno} out of range')
+    return -1
 
-        logger.info(f"Clicking link on page {page_info['url']}")
+
+def click_link(cacheno, text_offset, link_offset=0, open_new_tab=False):
+
+    global current_cache
+    if (cacheno < 0):
+        cacheno = current_cache
+
+    if (text_offset < 0):
+        text_offset = 0
+    
+
+    """Click a link on a cached page."""
+    if cacheno < len(page_cache):
+        linkno = get_link_number(cacheno, text_offset, link_offset)
+        if (linkno < 0):
+            return False
+        page_info = page_cache[cacheno]
+        links = page_info['links']
         logger.info(f"Clicking on {links[linkno]['href'] if linkno < len(links) else 'No link'}")
 
         if linkno < len(links) and linkno >= 0:
@@ -497,19 +512,46 @@ def update_page_offset(cacheno=-1):
     total_read = 0
     if (cacheno < 0):
         cacheno = current_cache
+    if (cacheno < 0 or cacheno >= len(page_cache)):
+        return total_read
     q2 = page_cache[cacheno]['reader_queue']
-    url = page_cache[current_cache]['page'].url
+    url = page_cache[cacheno]['page'].url
+#    print("Updating page offset for URL:", url)
     while (q2 is not None and not q2.empty()):
         total_read = q2.get() #get current link number.  
         #set offset
         page_cache[cacheno]['current_offset'][url] = total_read
+        logging.info(f'Updated page offset for URL: {url} to {total_read}')
 
     if (total_read > 0):
         found_item = next(filter(lambda item: item.get("url") == url, bookmarks), None)
         if (found_item is not None):
             #this is temporary info, how to distinguish temporary vs permanent bookmarks?  
             found_item['total_read'].insert(0, total_read)
+
+    if (total_read > 0):    #something was in queue...
+        linkno = get_link_number(cacheno, total_read, 0) #update link offsets.
+        #scroll into view
+        if (linkno >= 0):
+            if (linkno != page_cache[cacheno].get('current_link', -1)):
+                page = page_cache[cacheno]['page']
+                links = page_cache[cacheno]['links']
+                link = links[linkno]
+                try:
+                    page_cache[cacheno]['current_link'] = linkno
+                    #this only gets exact matches, probably what we want, so we dont jump around the page too much.
+                    #ideally detect the correct link based on location..
+                    page.get_by_role("link", name=link['text']).scroll_into_view_if_needed()
+#                    page.locator("a:has-text('" + link['text'] + "')").scroll_into_view_if_needed()
+                    logging.info(f'Updated page scroll to link: {link["text"]} {link["offset"]} \n#{link["href"]}')
+                except Exception as e:
+                    jumped = False
+                    #dont log all partial match failures..
+#                    logging.error(f'Error scrolling to link: {link["text"]} - {e}')
+
+
     total_read = page_cache[cacheno]['current_offset'][url]
+
     return total_read
 
 def cache_page(url, page, body_text, link_data, cacheno=-1):

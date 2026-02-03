@@ -351,6 +351,12 @@ class hotkeys:
     return -1
   
 
+  def set_audio_location(self):
+    #set audio location queue for this language.  
+    #set to last one only.
+    #dont actually need param...
+    playwrighty.update_page_offset()
+
   def set_qr(self, func, param={}):
     """Set QR."""
     self.qr = "> " + func + "\n"
