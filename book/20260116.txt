@@ -265,3 +265,22 @@ Need to follow along with
 await page.locator('selector-for-your-element').scrollIntoViewIfNeeded()
 
 OK, not perfect, but something like this..
+
+
+**extensions/vscode/codetutor/src/extension.ts
+Some reason [@@] not working, while [~~] works..
+
+OK, better..
+
+@@ How can we customize the tts voice in [**extensions/vscode/codetutor/src/extension.ts]
+Should we just call python tts script perhaps..
+
+**extensions/trey/trey.py 
+--speak
+Use custom tts engine here?  
+;$$=[49,49]
+;**=[60,60]
+;etc..
+
+
+
