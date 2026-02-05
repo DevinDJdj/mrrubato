@@ -296,6 +296,11 @@ def record_audio2(duration=30, fname="example.wav", stop_event=None):
     winsound.Beep(1000, 200) #beep to end
     return fname
 
+def get_duration(fname):
+    samplerate, data = wav.read(fname)
+    duration = data.shape[0] / samplerate
+    return int(duration)
+
 #default 10 seconds for comment
 def record_audio(duration=10, fname="example.wav", stop_event=None):
     samplerate = 16000  # Sample rate (Hz)

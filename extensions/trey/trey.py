@@ -1278,7 +1278,7 @@ class QRInWorker(QObject):
         y_start = 0
         y_end = int(img.shape[0] / 2)
         cropped_img = img[y_start:y_end, x_start:x_end, :]
-        print(f'Cropped image shape: {cropped_img.shape}')
+#        print(f'Cropped image shape: {cropped_img.shape}')
         cropped_image = cv2.cvtColor(np.array(cropped_img), cv2.COLOR_BGR2RGB)
         decoded_texts = self.qreader.detect_and_decode(image=cropped_image)
         if decoded_texts:
@@ -1287,7 +1287,7 @@ class QRInWorker(QObject):
                 logger.info(f"QR In Code data: {text}")
             return decoded_texts
         else:
-            print("No QR In code detected.")
+#            print("No QR In code detected.")
             return []
         
     def __init__(self, my_queue, parent=None):
@@ -1309,16 +1309,22 @@ class QRInWorker(QObject):
     
     def run(self):
         """Long-running task to find QR data from window."""
+        previmg = None
         while (True):
             #get QR data from window
-            print(time.time())
+            #this has between 2-10 second delay in read_qr_code.  
+#            print(time.time())
             screens = qapp.screens()
             #assume last window
             qimage = screens[-1].grabWindow(0).toImage()
-            print(time.time())
-            print(qimage.width(), qimage.height())
+            #skip if same as previous image.
+            if (qimage == previmg):
+                time.sleep(0.5)
+                continue #skip same image
+            previmg = qimage
+#            print(qimage.width(), qimage.height())
             qrdata = self.read_qr_code(qimage)
-            print(time.time())
+#            print(time.time())
 
             for qd in qrdata:
                 logger.info(f'QRInWorker found QR data: {qd}')

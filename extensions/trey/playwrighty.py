@@ -541,13 +541,24 @@ def update_page_offset(cacheno=-1):
                     page_cache[cacheno]['current_link'] = linkno
                     #this only gets exact matches, probably what we want, so we dont jump around the page too much.
                     #ideally detect the correct link based on location..
-                    page.get_by_role("link", name=link['text']).scroll_into_view_if_needed()
+                    temptext = page_cache[cacheno]['body']
+                    offset = link['offset']
+                    if (offset -30 <0):
+                        offset = 30
+                    temptext = temptext[offset-30: offset+30]
+                    #find text in the page..
+                    locator = page.get_by_text(temptext)
+                    if locator.count() == 0:
+                        #try partial match
+                        locator = page.get_by_role("link", name=link['text'])
+                    locator.scroll_into_view_if_needed()
+
 #                    page.locator("a:has-text('" + link['text'] + "')").scroll_into_view_if_needed()
                     logging.info(f'Updated page scroll to link: {link["text"]} {link["offset"]} \n#{link["href"]}')
                 except Exception as e:
                     jumped = False
                     #dont log all partial match failures..
-#                    logging.error(f'Error scrolling to link: {link["text"]} - {e}')
+                    logging.error(f'Error scrolling to link: {link["text"]} - {e}')
 
 
     total_read = page_cache[cacheno]['current_offset'][url]

@@ -527,7 +527,7 @@ class hotkeys:
       print("> Record Feedback_ called")
       #get audio input for query.  
       duration = sequence[0]-self.keybot #in seconds
-      duration *=2  #double duration for feedback
+      duration *=3  #double duration for feedback
       from extensions.trey.speech import listen_audio
       self.now = datetime.now()
       self.feedbacknowstr = self.now.strftime("%Y%m%d%H%M%S") #set nowstr for feedback.  
@@ -550,10 +550,13 @@ class hotkeys:
   def record_feedback(self, sequence=[]):
     logger.info(f'> Record Feedback {sequence}')
     duration = sequence[0]-self.keybot if (len(sequence) > 0) else 5
+    duration *=3  #triple duration for feedback
     print(f'> Record Feedback for {duration} seconds')
-    from extensions.trey.speech import transcribe_audio
+    from extensions.trey.speech import transcribe_audio, get_duration
     timer = datetime.now()
+
     self.transcript = transcribe_audio("feedback.wav")
+    duration = get_duration("feedback.wav") #actual dynamic duration..
     lag = (datetime.now() - timer).total_seconds()
     lag = int(lag)
     print(f'Transcription completed in {lag} seconds: {self.transcript}')
