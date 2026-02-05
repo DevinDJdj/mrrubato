@@ -83,6 +83,7 @@ from fastembed import (
 
 
 import extensions.trey.playwrighty as playwrighty
+import extensions.trey.synth as synth
 
 import languages.helpers.transcriber as transcriber
 
@@ -461,19 +462,27 @@ def play_l(l, pctcomplete=0.0):
         type="content"
     if (type == "menu"):
 
-        winsound.Beep(round(c), 50) #short beep to indicate menu
+#        winsound.Beep(round(c), 50) #short beep to indicate menu
+        synth.play_synth([53], 36, 0.05)
     elif (type == "title"):
-        winsound.Beep(round(c/2), 50) #short beep to indicate title
+#        winsound.Beep(round(c/2), 50) #short beep to indicate title
+        synth.play_synth([41], 36, 0.05)
     elif (type == "blurb"):
-        winsound.Beep(round(c/2), 100) #short beep to indicate blurb
+#        winsound.Beep(round(c/2), 100) #short beep to indicate blurb
+        synth.play_synth([41], 36, 0.1)
     else:
-        winsound.Beep(round(c/4), 200) #short beep to indicate content
+#        winsound.Beep(round(c/4), 200) #short beep to indicate content
+        synth.play_synth([29], 36, 0.2)
     
     if (pctcomplete > 0.0):
         #play a quick ascending scale to indicate progress through document
+        localseq = []
         for i in range(6):
             if (pctcomplete >= (i-1)/5):
-                winsound.Beep(round(c*2 * (1 + i/12)), 20)
+                localseq.append(53 + i)
+#                winsound.Beep(round(c*2 * (1 + i/12)), 20)
+        if (len(localseq) > 0):
+            synth.play_synth(localseq, 36, 0.02)
 
 
 def play_ldmap(ldmap):
@@ -732,7 +741,8 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
             #probably a menu or title section.  skip ahead to the long line.
             skip = 5
             print(f'>> Skipmenu [{idx}, {skip}]')
-            winsound.Beep(3000, 100) #beep to start
+#            winsound.Beep(3000, 100) #beep to start
+            synth.play_synth([50,62,74], 12)
         if (skip > 0):
             if (idx + skip >= len(lines)):
                 skip = len(lines) - idx - 2
@@ -822,7 +832,9 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
                 if (links[link_loc]['offset'] != -1):
                     sound_file = f"./temp/link{link_loc}.mp3"
                     tts.speak(links[link_loc]['text'], LINKVOICE, sound_file, 1.0, 200) #quieter slower for links
-                    winsound.Beep(500, 200) #short beep to indicate link
+#                    winsound.Beep(500, 200) #short beep to indicate link
+                    synth.play_synth([53,65,77])
+
                     playsound(sound_file, block=False) # Ensure this thread blocks for its sound
                     #only move to next link if we are at the offset.  
                     #some links may be at -1 offset which we skip earlier.

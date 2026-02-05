@@ -282,5 +282,15 @@ Use custom tts engine here?
 ;**=[60,60]
 ;etc..
 
+**extensions/trey/synth.py
+Adjusted beep -> play_synth
 
+**extensions/trey/playwrighty.py
+--update_page_offset
+OK, highlighting works, but annoying popup.  
+
+**languages/hotkeys.py
+--record_feedback
+Also have an issue with long feedback.  
+This freezes
 

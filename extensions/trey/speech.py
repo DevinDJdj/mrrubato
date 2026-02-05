@@ -12,6 +12,9 @@ import os
 import threading
 import winsound
 
+import extensions.trey.synth as synth
+
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -263,7 +266,7 @@ def record_audio_callback(indata, frames, time, status):
         raise sd.CallbackStop # Stops the stream gracefully from within the callback
     recording.append(indata.copy())
 
-def record_audio2(duration=30, fname="example.wav", stop_event=None):
+def record_audio2(duration=30, fname="example.wav", stop_event=None, seq=[77, 81, 84, 89]):
     #no easy way to stop early with sounddevice, so just record fixed time for now.
     global recording
     samplerate = 16000  # Sample rate (Hz)
@@ -271,7 +274,8 @@ def record_audio2(duration=30, fname="example.wav", stop_event=None):
 #    logger.info("Recording...")
     from pycaw.pycaw import AudioUtilities
     device = AudioUtilities.GetSpeakers()
-    winsound.Beep(2000, 200) #beep to start
+#    winsound.Beep(2000, 200) #beep to start
+    synth.play_synth(seq, 12) #C major chord to start
     volume = device.EndpointVolume
     currentvolume = volume.GetMasterVolumeLevel()
     volume.SetMasterVolumeLevel(currentvolume-20, None) #reduce volume to 20% for recording.
@@ -282,7 +286,10 @@ def record_audio2(duration=30, fname="example.wav", stop_event=None):
 #            time.sleep(0.1)
             total_duration += 0.1
             if total_duration >= duration:
-                break
+                if (not stop_event.set()):
+                    stop_event.set()
+                else:
+                    break #never make it here?  
             sd.sleep(100)  # Sleep briefly to allow other operations
     print("Recording complete.")
 #    logger.info("Recording complete.")
@@ -293,7 +300,8 @@ def record_audio2(duration=30, fname="example.wav", stop_event=None):
 
     volume.SetMasterVolumeLevel(currentvolume, None) #return to normal volume.  
 
-    winsound.Beep(1000, 200) #beep to end
+#    winsound.Beep(1000, 200) #beep to end
+    synth.play_synth(seq) #C major chord to start
     return fname
 
 def get_duration(fname):
@@ -302,7 +310,7 @@ def get_duration(fname):
     return int(duration)
 
 #default 10 seconds for comment
-def record_audio(duration=10, fname="example.wav", stop_event=None):
+def record_audio(duration=10, fname="example.wav", stop_event=None, seq=[77,81,84,89]):
     samplerate = 16000  # Sample rate (Hz)
     #no easy way to stop early with sounddevice, so just record fixed time for now.
     print("Recording...")
@@ -313,7 +321,7 @@ def record_audio(duration=10, fname="example.wav", stop_event=None):
     currentvolume = volume.GetMasterVolumeLevel()
     volume.SetMasterVolumeLevel(currentvolume-20, None) #reduce volume to 20% for recording.
     recording = sd.rec(int(samplerate * duration), samplerate=samplerate, channels=1, dtype='float32')
-    winsound.Beep(2000, 200) #beep to start
+    synth.play_synth(seq, 12) #C major chord to start
     sd.wait()  # Wait until recording is finished
     print("Recording complete.")
     audio_tensor = torch.from_numpy(recording.squeeze()) # Remove channel dimension if mono
@@ -321,10 +329,10 @@ def record_audio(duration=10, fname="example.wav", stop_event=None):
 
     volume.SetMasterVolumeLevel(currentvolume, None) #return to normal volume.  
 
-    winsound.Beep(1000, 200) #beep to end
+    synth.play_synth(seq) #C major chord to start
     return fname
 
-def listen_audio(duration=30, fname="example.wav"):
+def listen_audio(duration=30, fname="example.wav", seq=[77,81,84,89]): #default C major chord
     if os.path.exists(fname):
         os.remove(fname)
     global rec_stop_event
@@ -332,7 +340,7 @@ def listen_audio(duration=30, fname="example.wav"):
     rec_stop_event = threading.Event()
     recording = []
     rec_stop_event.clear()
-    audio_thread = threading.Thread(target=record_audio2, args=(duration, f'{fname}', rec_stop_event))
+    audio_thread = threading.Thread(target=record_audio2, args=(duration, f'{fname}', rec_stop_event, seq))
     audio_stop_event = threading.Event()  # Event to signal stopping
 #    audio_thread = threading.Thread(target=record_audio, args=(duration, f'{fname}', audio_stop_event))
     audio_thread.start()

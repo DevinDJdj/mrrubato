@@ -446,10 +446,12 @@ class MyKeys:
     logger.info(f'Checking action {cmd} in {l} for {ss}')
     orig = ss.copy()
     action = self.languages[l].act(cmd, self.words, ss)
+    localseq = self.words[-1]['sequence'] if len(self.words) > 0 else []
     if (action == -1):
       #reset action
       logger.info(f'!! > <{l}>{cmd} {ss}')
       #reset command
+      synth.play_synth(localseq, action) #play failed sequence
       self.reset_sequence()
       self.currentcmd = None
     elif (action == 0):
@@ -497,13 +499,15 @@ class MyKeys:
 
         self.languages[l].transcript = "" #reset transcript after adding to midi.
 
+      synth.play_synth(localseq, action) #play failed sequence
       return self.sequence
 #      self.reset_sequence()
 #      self.currentcmd = None
     elif (action < -1):
       #action_ handled, no further params needed.
       logger.info(f'> <{l}>{cmd}_ {ss}')
-      winsound.Beep(1000, 250) #beep to end success
+#      winsound.Beep(1000, 250) #beep to end success
+      synth.play_synth(localseq, action) #play failed sequence
       #reset command sequence to current sequence number.  
       # This command only needs closure keys.  
       
@@ -534,13 +538,11 @@ class MyKeys:
     self.setlanguage = None
     self.octaveshift = 0
     logger.info("Unsetting keyshift and octave shift")
-    self.reset_sequence()
+
     #perhaps make shorter
-    winsound.Beep(500, 100) #beep to end complete without error
-    time.sleep(0.1)
-    winsound.Beep(500, 100) #beep to end complete without error
-    time.sleep(0.1)
-    winsound.Beep(500, 100) #beep to end complete without error
+    localseq = self.sequence[-3:] #play last three notes for unset.
+    self.reset_sequence()
+    synth.play_synth(localseq)
 
   def key(self, note, msg, callback=None):
     #add this key to the notes map
@@ -740,7 +742,7 @@ class MyKeys:
             #reset command
             self.reset_sequence()
             self.currentcmd = None
-            winsound.Beep(2000, 500) #beep to end error
+#            winsound.Beep(2000, 500) #beep to end error
           elif (a == 0):
             #action was successful, reset command
             logger.info(f'> <{self.currentlangna}>{self.currentcmd} {self.sequence[self.startseqno:]}')
@@ -764,7 +766,7 @@ class MyKeys:
 #              self.reset_sequence()
         #      self.reset_sequence()
 #              self.currentcmd = None
-            winsound.Beep(1000, 500) #beep to end complete without error
+#            winsound.Beep(1000, 500) #beep to end complete without error
         else:
           print("Error: action not int") #action not intended ..
           print(a)

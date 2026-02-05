@@ -113,6 +113,30 @@ def play(play_count): #default each 0.1 seconds
 #        plot_signal(final, steps=200)
         stream.write(audio)
 
+def play_synth(sequence=[], type=0, dur=0.05): #default success case
+    vel = 32
+    if (type == -1): #error case
+        #backward -1
+        sequence.reverse()
+        for idx in range(len(sequence)):
+            sequence[idx] = sequence[idx] -1 #decrease note by 1 semitone
+        vel = 64
+        return -1
+    if (type == 0): #success case
+        vel = 32
+    if (type < -1): #complete
+        vel = 64
+    if (type > 0 and type < 60): #info
+        for idx in range(len(sequence)):
+            sequence[idx] = sequence[idx] +type #increase note by octave
+    for note in sequence:
+        note_on(note, vel)
+        time.sleep(dur) #fixed for now..
+        note_off(note)
+
+    return 0
+
+        
 def note_off(note):
     if note in notes_dict:
         del notes_dict[note]

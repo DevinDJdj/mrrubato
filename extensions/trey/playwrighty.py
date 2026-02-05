@@ -404,6 +404,24 @@ def find_nth_occurrence(main_string, sub_string, n):
 
     return -1 # Should not be reached if n > 0 and occurrence_count is handled correctly
 
+
+def play_video(cacheno=-1):
+    global current_cache
+    total_read = 0
+    if (cacheno < 0):
+        cacheno = current_cache
+    if (cacheno < 0 or cacheno >= len(page_cache)):
+        return -1
+    page = page_cache[cacheno]['page']
+    #more complex with multiple video controls..
+    page.evaluate("""() => {
+        const video = document.querySelector('video');
+        if (video) {
+            video.play();
+        }
+    }""")
+
+
 def get_page_details(page):
 
     body_text = ""
@@ -537,21 +555,25 @@ def update_page_offset(cacheno=-1):
                 page = page_cache[cacheno]['page']
                 links = page_cache[cacheno]['links']
                 link = links[linkno]
+                futurelink = links[linkno+2] if (linkno + 2 < len(links)) else None
                 try:
                     page_cache[cacheno]['current_link'] = linkno
                     #this only gets exact matches, probably what we want, so we dont jump around the page too much.
                     #ideally detect the correct link based on location..
                     temptext = page_cache[cacheno]['body']
                     offset = link['offset']
-                    if (offset -30 <0):
-                        offset = 30
-                    temptext = temptext[offset-30: offset+30]
+                    offset = temptext.find("\n", offset)
+                    if (offset < 0):
+                        offset = 0
+                    temptext = temptext[offset: offset+50]
                     #find text in the page..
                     locator = page.get_by_text(temptext)
-                    if locator.count() == 0:
+#                    if locator.count() == 0 and futurelink is not None:
                         #try partial match
-                        locator = page.get_by_role("link", name=link['text'])
+#                        locator = page.get_by_role("link", name=futurelink['text'])
                     locator.scroll_into_view_if_needed()
+                    if (locator.bounding_box() is not None and locator.bounding_box().get('height', 400) < 400):
+                        locator.highlight() #dont highlight the whole page..
 
 #                    page.locator("a:has-text('" + link['text'] + "')").scroll_into_view_if_needed()
                     logging.info(f'Updated page scroll to link: {link["text"]} {link["offset"]} \n#{link["href"]}')
