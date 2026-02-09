@@ -256,6 +256,8 @@ def speech_train_model():
 
 global recording
 global rec_stop_event
+rec_stop_event = threading.Event()
+
 def record_audio_callback(indata, frames, time, status):
     global recording, rec_stop_event
 #    print("Hello from callback")
@@ -415,7 +417,7 @@ def init_asr_model():
     asr_model = EncoderDecoderASR.from_hparams(source="./models/pretrained_ASR")
     return asr_model
 
-def transcribe_audio(fname="example2.wav", start_times=[], end_times=[], use_timestamps=True):
+def transcribe_audio(fname="example2.wav", start_times=[], end_times=[], use_timestamps=False):
     global rec_stop_event, asr_model
     print("Stopping any existing audio recording...")
     logger.info("Stopping any existing audio recording...")
@@ -438,32 +440,38 @@ def transcribe_audio(fname="example2.wav", start_times=[], end_times=[], use_tim
         #convert to wav first
         fname = convert_mp4_to_wav(fname)
 
-    if (use_timestamps and len(start_times) > 0 and len(end_times) > 0 and len(start_times) == len(end_times)):
+    if (use_timestamps):
         full_transcript = ""
-        for i in range(len(start_times)):
-            segment_fname = f'segment_{i}.wav'
-            #extract segment
-            samplerate, data = wav.read(fname)
-            st = 0
-            if (i > 0):
-                st = end_times[i-1]
-            et = start_times[i]
-            if (et <= st+4 or et > st+300): #min 5 sec segments, max 5 min segments
-                print(f"Skipping invalid segment {st} to {et}")
-                continue
+        if (len(start_times) > 0 and len(end_times) > 0 and len(start_times) == len(end_times)):
+            print(f"Starting Transcription.. {len(start_times)} segments found.")
+            for i in range(len(start_times)):
+                segment_fname = f'segment_{i}.wav'
+                #extract segment
+                samplerate, data = wav.read(fname)
+                st = 0
+                if (i > 0):
+                    st = end_times[i-1]
+                et = start_times[i]
+                if (et <= st+4 or et > st+300): #min 5 sec segments, max 5 min segments
+                    print(f"Skipping invalid segment {st} to {et}")
+                    continue
 
 
-            start_sample = int((st) * samplerate)
-            end_sample = int((et) * samplerate)
-            segment_data = data[start_sample:end_sample]
-            wav.write(segment_fname, samplerate, segment_data)
-            result  = asr_model.transcribe_file(segment_fname)
-                # Process the words_with_timestamps list
-                #for now just use segment time..
-            if (len(result) > 8): #sometimes get garbage like "mm" or "dont" during silence..
-                full_transcript += result + " (" + getTimeFromSecs(st) + ")\n"
+                start_sample = int((st) * samplerate)
+                end_sample = int((et) * samplerate)
+                segment_data = data[start_sample:end_sample]
+                wav.write(segment_fname, samplerate, segment_data)
+                result  = asr_model.transcribe_file(segment_fname)
+                    # Process the words_with_timestamps list
+                    #for now just use segment time..
+                if (len(result) > 8): #sometimes get garbage like "mm" or "dont" during silence..
+                    full_transcript += result + " (" + getTimeFromSecs(st) + ")\n"
         return full_transcript.strip()         
     else:   
+        if (not os.path.exists(fname)):
+            print(f"!! {fname} not found.")
+            logger.error(f"!! {fname} not found.")
+            return ""
         result = asr_model.transcribe_file(fname)
         #result = asr_model.transcribe_file("speechbrain/asr-conformer-transformerlm-librispeech/example.wav")
         print(result)

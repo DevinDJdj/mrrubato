@@ -294,3 +294,33 @@ OK, highlighting works, but annoying popup.
 Also have an issue with long feedback.  
 This freezes
 
+
+Need in-page search..
+
+Need to try to use multiple tabs..
+
+**languages/hotkeys.py
+--find
+--next
+not quite working..
+Skipping everything..
+
+Need a mini page heat map of where this is and what is selected..
+
+Finally have this kind of working..
+Very fragile at the moment.. 
+Need to adjust logging, too much junk.  
+Use language more for logging.  
+
+
+--click_link_
+stop audio.  
+announce selected link each time.  
+use [-1] 
+
+
+Try to clean up real-time print vs logger.info
+--click_link_
+test..
+
+

@@ -11,6 +11,8 @@ import extensions.trey.playwrighty as playwrighty
 # Import Module
 import shutil
 
+from extensions.trey.trey import skip_lines
+from extensions.trey.trey import skip_lines
 import languages.helpers.transcriber as transcriber
 
 logger = logging.getLogger(__name__)
@@ -36,6 +38,9 @@ class hotkeys:
     self.maxseq = 10 #includes parameters
     self.callback = None
     self.transcript = ""
+    self.transcripthistory = []
+    self.tofind = ""
+    self.tofindhistory = []
     self.now = datetime.now()
     self.feedbacknowstr = self.now.strftime("%Y%m%d%H%M%S")
 
@@ -192,17 +197,18 @@ class hotkeys:
 #        "Page": [53,57],
       },
       "3": {
-        "Skip Lines": [53,55, 57],
-        "Page": [53,55, 59], #also read screen
-        "Click Link": [53,55, 60], #also read screen
-        "Find Last": [53,55, 58], #Jump in screen
-        "Search Web": [53,55, 61], #also read screen
+        "Skip Lines": [53,55,57],
+        "Page": [53,55,59], #also read screen
+        "Click Link": [53,55,60], #also read screen
+        "Find": [53,55,58], #Jump in screen
+        "Find Last": [53,55,52], #Jump in screen
+        "Next": [53,55,56], #go to next location where this text is found..
+        "Search Web": [53,55,61], #also read screen
         "Go Back": [53,55,51], 
         "List Tabs": [53,56,59],
         "Select Tab": [53,56,60],
-#        "Select Type": [53,57, 58], #parameter type default go next.  
         "Comment": [53,57, 58], #record comment
-        "Record Feedback": [53,57, 60], 
+        "Record Feedback": [53,57,60], 
         "Select Bookmark": [53,58,57], #feedback tells which mark it is.  Or default to set to 0 idx.  
       }, 
       "4": {
@@ -258,7 +264,10 @@ class hotkeys:
       "Page": "page",
       "Click Link": "click_link",
       "_Click Link": "_click_link",
+      "Next": "next",
+      "Find": "find",
       "Find Last": "find_last",
+      "_Find": "_find",
       "Search Web": "search_web",
       "Comment": "comment",
       "Select Type": "select_type",
@@ -421,7 +430,7 @@ class hotkeys:
       self.links = link_data
       #pause audio first..
 
-      q2, q3, stop_event = self.speak(body_text, link_data)
+      q2, q3, stop_event = self.speak(body_text, link_data, playwrighty.page_cache[cacheno]['alt_text'], total_read=total_read, cacheno=cacheno)
       playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
 
   def add_bookmark(self, sequence=[]):
@@ -499,7 +508,7 @@ class hotkeys:
         self.links = link_data
         #pause audio first..
 
-        q2, q3, stop_event = self.speak(body_text, link_data)
+        q2, q3, stop_event = self.speak(body_text, link_data, playwrighty.page_cache[cacheno]['alt_text'], total_read=playwrighty.get_bookmark(page.url, cacheno), cacheno=cacheno)
         playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
 
     else:
@@ -507,6 +516,41 @@ class hotkeys:
       self.speak('No browser session active.')
     return 0
 
+  def _find(self, sequence=[]):  
+    logger.info(f'> _Find {sequence}')
+    print("> _Find called")
+    #get audio input for query.  
+    from extensions.trey.speech import listen_audio
+    at = listen_audio(5, "find.wav")
+    #at.join() #wait for it to finish.
+    #have to just use some keys until this is done.  
+    #need to return 1 to indicate we need more keys.
+    #but this is only called once.  
+    return 1
+
+  def next(self, sequence=[]):  
+    logger.info(f'> Next {sequence}')
+    print("> Next called")
+    #no function, just demo..
+    cacheno = -1
+    if (len(sequence) > 0):
+      cacheno = sequence[0]-self.keybot
+
+    offset = playwrighty.pnext(self.tofind, cacheno)
+    print(f'Found at offset {offset}')
+    logger.info(f'$$FOUND_OFFSET={offset}')
+    skipno,current, all = playwrighty.get_skip_from_offset(offset, cacheno)
+
+    print(f'Skipping {skipno}')
+
+  
+    from extensions.trey.trey import skip_lines, speak
+    skip_lines(skipno/3, cacheno)
+
+    speak(f'Next {self.tofind} at {current} of {all}')
+
+    return 0
+  
   def _search_web(self, sequence=[]):  
     logger.info(f'> _Search Web {sequence}')
     print("> _Search Web called")
@@ -565,7 +609,7 @@ class hotkeys:
     #if we are reading a page, get current line of that page..
 
     if (len(self.transcript) > 0):
-
+      self.transcripthistory.append(self.transcript)
       #find the current link from our reading.  
       if (playwrighty.mybrowser is not None):
         tr = 0
@@ -665,6 +709,7 @@ class hotkeys:
 
     if (self.transcript != ""):
       query = self.transcript
+      self.transcripthistory.append(self.transcript)
     engine = 0
     cacheno = -1
     print(sequence)
@@ -675,29 +720,76 @@ class hotkeys:
     #two = engine, cacheno
     if (len(sequence) > 1):
       engine = sequence[-2]-self.keybot
-      cacheno = sequence[-1]-self.keybot
+      cacheno = sequence[-1]-self.keybot-1
 
     
-    from extensions.trey.trey import speak, pause_reader
+    from extensions.trey.trey import speak, pause_reader, resume_reader
     enginename = playwrighty.get_engine(engine) #set engine
     speak(f'Searching {enginename} for: {query}')
 
     body_text, link_data, page, cacheno = playwrighty.search_web(query, engine=engine, cacheno=cacheno)
 
-    pause_reader() #pause before starting to read new page.
 #    print(body_text)
     self.links = link_data
     #should always have a value here..  
     total_read = playwrighty.get_bookmark(page.url, cacheno)
     print(f'Bookmark at {total_read}')
-    q2, q3, stop_event = self.speak(body_text, link_data, playwrighty.page_cache[cacheno]['alt_text'], total_read)
+    q2, q3, stop_event = self.speak(body_text, link_data, playwrighty.page_cache[cacheno]['alt_text'], total_read, cacheno=cacheno)
     playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
+    logger.info(f'$$CACHENO={cacheno}')
+    self.transcript = "" #reset transcript..
 
 
     return 0
 
 
+  def find(self, sequence=[]):
+    logger.info(f'> Find {sequence}')
+    query = "What is the capital of France?"
+    from extensions.trey.speech import transcribe_audio
+    self.tofind = transcribe_audio("find.wav")
+    logger.info('$$AUDIO = ' + self.tofind)
+    
 
+    if (self.tofind != ""):      
+      query = self.tofind
+      self.tofindhistory.append(self.tofind)
+
+    cacheno = -1
+    print(sequence)
+
+    if (len(sequence) > 0):
+      cacheno = sequence[-1]-self.keybot - 1
+
+    if (cacheno < 0):
+      cacheno = playwrighty.current_cache
+    
+    from extensions.trey.trey import speak, pause_reader, skip_lines
+
+#    pause_reader() #pause before starting to read new page.
+
+    speak(f'Searching for: {query}')
+#    print(body_text)
+    #find in current page text.  
+    offset = playwrighty.pfind(query, cacheno)
+    #skip to this offset..
+    print(f'Found at offset {offset}')
+    logger.info(f'$$FOUND_OFFSET={offset}')
+    if (offset < 0):
+      speak(f'Could not find {query}')
+      return 0
+    skipno,current,all = playwrighty.get_skip_from_offset(offset, cacheno)
+    logger.info(f'$$SKIPNO={skipno}')
+    print(f'$$SKIPNO {skipno}')
+
+    skip_lines(skipno/3, cacheno)
+    speak(f'Found {query} at {current} of {all}')
+    logger.info(f'$$FOUND={query}')
+
+    return 0
+
+
+#not used for now..
   def find_last(self, sequence=[]):
     if (len(sequence) < 1):
       sequence = [53] #default to first link
@@ -708,10 +800,11 @@ class hotkeys:
       if (current_cache >= 0 and current_cache < len(playwrighty.page_cache)):
         #get queue for reading.
         q2 = playwrighty.page_cache[current_cache]['reader_queue']
+        total_read = 0
         while (q2 is not None and not q2.empty()):
           total_read = q2.get() #get current link number.  
           #find last link read.  
-        return playwrighty.find_last(sequence[-1]-self.keybot, current_cache, text_offset=total_read)
+        return playwrighty.pfind(sequence[-1]-self.keybot, current_cache, text_offset=total_read)
 
 
 
@@ -737,11 +830,26 @@ class hotkeys:
     return 1
   
   def click_link_(self, sequence=[]):
-    if (len(sequence) == 1):
+    if (len(sequence) > 0):
 
       logger.info(f'> Click Link_ {sequence}')
       print("> Click Link_")
-      return 0 #handled, this function will not be called again with further parameters.
+        #find the current link from our reading.  
+      testing = True
+      if (playwrighty.mybrowser is not None and testing):
+        total_read = 0
+        total_read = playwrighty.update_page_offset()
+        linkno = playwrighty.get_link_number(-1, total_read, sequence[-1]-self.keybot)
+        links = playwrighty.page_cache[playwrighty.current_cache]['links']
+        link = links[linkno]
+
+
+        from extensions.trey.trey import pause_reader, resume_reader
+        pause_reader() #pause first before clicking link.
+        time.sleep(0.5) #wait for pause to take effect.  Need better way to ensure this.
+        self.speak(f'{link["text"]}')
+        resume_reader() #resume after speaking link number.
+
     return 1
   
   def click_link(self, sequence=[]):
@@ -765,19 +873,22 @@ class hotkeys:
       #should be the location of the simlink.  
 #      if sequence[-1]-self.keybot > 0 and len(siml) > sequence[-1]-self.keybot-1:
 #        total_read = siml[sequence[-1]-self.keybot-1]
-      from extensions.trey.trey import pause_reader
+      from extensions.trey.trey import pause_reader, resume_reader
 
-      pause_reader() #pause first before clicking link.
+#      pause_reader() #pause first before clicking link.
+#      time.sleep(0.3) #wait for pause to take effect.  Need better way to ensure this.
       a = playwrighty.click_link(-1, total_read, sequence[-1]-self.keybot)
       if (isinstance(a, tuple)):
         body_text, link_data, page, cacheno = a
         self.links = link_data
-        print(body_text)
+        #print(body_text)
+        print(f'Clicked link, got new page {page.url}')
         lang = playwrighty.detect_language(cacheno)
         total_read = playwrighty.get_bookmark(page.url, cacheno)
         alt_text = playwrighty.page_cache[cacheno]['alt_text']
-        q2, q3, stop_event = self.speak(body_text, link_data, alt_text, total_read, lang) #add offset to skip until where we were.)
+        q2, q3, stop_event = self.speak(body_text, link_data, alt_text, total_read, lang, cacheno) #add offset to skip until where we were.)
         playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
+#        resume_reader()
         return 0
       else:
         print(f'Clicked link, no new page returned {a}')
@@ -805,7 +916,9 @@ class hotkeys:
         page = playwrighty.page_cache[cacheno]['page']
         total_read = playwrighty.get_bookmark(page.url, cacheno)
         logger.info('$$Total_Read = ' + str(total_read))
-        q2, q3, stop_event = self.speak(body_text, link_data, total_read) #add offset to skip until where we were.  
+        lang = playwrighty.detect_language(cacheno)
+        alt_text = playwrighty.page_cache[cacheno]['alt_text']
+        q2, q3, stop_event = self.speak(body_text, link_data, alt_text, total_read, lang, cacheno) #add offset to skip until where we were.  
         playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
         return 0
       else:
@@ -828,7 +941,7 @@ class hotkeys:
     from extensions.trey.trey import pause_reader
     cacheno = -1
     if (len(sequence) > 0):
-      cacheno = sequence[-1]-self.keybot
+      cacheno = sequence[-1]-self.keybot -1
     pause_reader()
     self.add_bookmark()
     return 0
@@ -868,7 +981,7 @@ class hotkeys:
     cacheno = -1
     if (len(sequence) > 0):
       self.add_bookmark(sequence)
-      cacheno = sequence[-1]-self.keybot
+      cacheno = sequence[-1]-self.keybot -1
       stop_event = playwrighty.get_stop_event(cacheno)
       if (stop_event is not None):
         stop_event.set()  # Signal the specific audio thread to stop
@@ -889,8 +1002,8 @@ class hotkeys:
 
       self.links = links
       print(f'Playwright found {len(text)} characters and {len(links)} links  on the page') 
-      q2, q3, stop_event = self.speak(text, links)
-      playwrighty.set_reader_queue(q2, q3, stop_event, playwrighty.current_cache)
+      q2, q3, stop_event = self.speak(text, links, cacheno=cacheno)
+      playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
       return 0
     
     else:
@@ -942,10 +1055,10 @@ class hotkeys:
         
       return 0
 
-  def speak(self, text, links=[], alt_text_data=[], total_read=0, lang="en"):
+  def speak(self, text, links=[], alt_text_data=[], total_read=0, lang="en", cacheno=-1):
     from extensions.trey.trey import speak
 #    print(f'Speaking: {text}')
-    return speak(text, links, alt_text_data, total_read, lang)
+    return speak(text, links, alt_text_data, total_read, lang, cacheno)
 
   
   def ocr_image(self, img):

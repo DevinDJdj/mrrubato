@@ -109,7 +109,7 @@ def play(play_count): #default each 0.1 seconds
         samples = final
 
         audio = samples.astype(np.float32).tobytes()
-        print(final)
+        #print(final)
 #        plot_signal(final, steps=200)
         stream.write(audio)
 

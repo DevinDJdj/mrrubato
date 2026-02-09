@@ -3,6 +3,7 @@
 #>playwright install
 #>pip install asyncio
 import asyncio
+import random
 from playwright.async_api import async_playwright
 from playwright_stealth import Stealth
 
@@ -61,7 +62,7 @@ def load(qapp=None):
 def get_url(cacheno=-1):
     """Get URL from the cached page."""
     global current_cache
-    if (cacheno < 0):
+    if (cacheno < 0 or cacheno >= len(page_cache)):
         cacheno = current_cache
     if cacheno < len(page_cache):
         page_info = page_cache[cacheno]       
@@ -73,7 +74,7 @@ def get_url(cacheno=-1):
 def get_text(cacheno=-1, total_read=0, duration=5):
     """Get text from the cached page starting at total_read offset."""
     global current_cache
-    if (cacheno < 0):
+    if (cacheno < 0 or cacheno >= len(page_cache)):
         cacheno = current_cache
     if cacheno < len(page_cache):
         page_info = page_cache[cacheno]       
@@ -96,10 +97,10 @@ def get_links(cacheno=-1, text_offset=0):
     """Get link offset from the cached page based on text offset."""
     global current_cache
     ret = []
-    if (cacheno < 0):
+    if (cacheno < 0 or cacheno >= len(page_cache)):
         cacheno = current_cache
     linkno = 0
-    if cacheno < len(page_cache):
+    if cacheno > -1 and cacheno < len(page_cache):
         page_info = page_cache[cacheno]       
         links = page_info['links']
         for i, link in enumerate(links):
@@ -118,12 +119,13 @@ def get_links(cacheno=-1, text_offset=0):
 def get_link_number(cacheno=-1, text_offset=0, link_offset=0):
     """Get link from the cached page based on text offset and link offset."""
     global current_cache
-    if (cacheno < 0):
+    if (cacheno < 0 or cacheno >= len(page_cache)):
         cacheno = current_cache
 
     if cacheno < len(page_cache):
         page_info = page_cache[cacheno]       
         page = page_info['page']
+        url = page.url
         links = page_info['links']
         linkno = 0
         for i, link in enumerate(links):
@@ -132,7 +134,7 @@ def get_link_number(cacheno=-1, text_offset=0, link_offset=0):
         if (link_offset != 0):
             linkno += link_offset
 
-        while (linkno < len(links)-1 and (links[linkno]['href'].startswith(page_info['url'] + "#") or links[linkno]['href'].startswith('#'))):
+        while (linkno < len(links)-1 and (links[linkno]['href'].startswith(url + "#") or links[linkno]['href'].startswith('#'))):
             #for now skip internal links.  
             #really want to jump to this text location..
             linkno += 1            
@@ -145,7 +147,7 @@ def get_link_number(cacheno=-1, text_offset=0, link_offset=0):
 def click_link(cacheno, text_offset, link_offset=0, open_new_tab=False):
 
     global current_cache
-    if (cacheno < 0):
+    if (cacheno < 0 or cacheno >= len(page_cache)):
         cacheno = current_cache
 
     if (text_offset < 0):
@@ -195,7 +197,7 @@ def get_bookmark(url, cacheno=-1):
     found_item = next(filter(lambda item: item.get("url") == url, bookmarks), None)
     if (found_item is not None):
         return found_item['total_read'][0]
-    if (cacheno < 0):
+    if (cacheno < 0 or cacheno >= len(page_cache)):
         cacheno = current_cache
     if (page_cache[cacheno]['current_offset'] is not None and url in page_cache[cacheno]['current_offset']):
         return page_cache[cacheno]['current_offset'][url]
@@ -233,10 +235,106 @@ def add_bookmark(url, total_read, text=""):
 #        bookmarks.append({'url': url, 'total_read': [total_read], 'length': body_length})
     return 0
 
+
+def get_skip_from_offset(offset=0, cacheno=-1):
+    global current_cache
+    if (cacheno < 0 or cacheno >= len(page_cache)):
+        cacheno = current_cache
+    if cacheno < len(page_cache):
+        page_info = page_cache[cacheno]       
+        body = page_info['body']
+        url = page_info['page'].url
+        current_offset = page_info['current_offset'][url] if url in page_info['current_offset'] else 0
+        orig_line_no = body.count('\n', 0, current_offset) + 1
+        print(f'Current offset: {current_offset}, line number: {orig_line_no}')
+        line_no = body.count('\n', 0, offset) + 1
+        print(f'Target offset: {offset}, line number: {line_no}')
+        total = len(page_info['found_positions'])
+        current_tofind = page_info.get('current_tofind_index', -1)
+        return line_no - orig_line_no-2, current_tofind, total #-1 to start at previous line
+    else:
+        logging.warning(f'Cache number {cacheno} out of range')
+        return -1, -1, -1
+    
+def pprev(text, cacheno=-1):
+    return pnext(text, cacheno, direction=-1)
+
+def pnext(text, cacheno=-1, direction = 1):
+    global current_cache
+    print(f"searching for next occurrence of text: {text}")
+    if (cacheno < 0 or cacheno >= len(page_cache)):
+        cacheno = current_cache
+    if cacheno >= 0 and cacheno < len(page_cache):
+        page_info = page_cache[cacheno]       
+        page = page_info['page']
+        body = page_info['body']
+        if (page_info['tofind'] != text):
+            print(f"Text to find changed from {page_info['tofind']} to {text}, calling pfind")
+            return pfind(text, cacheno)
+
+
+        positions = page_info.get('found_positions', [])
+        current_index = page_info.get('current_tofind_index', -1)
+        if (current_index < 0 or current_index >= len(positions)):
+            if (len(positions) > 0):
+                current_index = 0 if direction == 1 else len(positions) - 1
+            else:
+                return -1
+
+        if (direction == 1):
+            page_info['current_tofind_index'] = current_index + 1
+        else:
+            page_info['current_tofind_index'] = current_index - 1
+        logger.info(f'Finding text: {text} at offset {positions[current_index]}')
+        #jump to this link in page.  if we have repetitive text, can potentially be problematic..
+        ftext = body[positions[current_index]: positions[current_index]+len(text)*2]
+        locator = page.get_by_text(ftext, exact=True)
+        if (locator.count() == 0):
+            boo = 1
+        else:
+            locator.scroll_into_view_if_needed()
+            logger.info(f'Jumping to text: {ftext} at offset {positions[current_index]}')
+            print(f"Jumped to text: {ftext} at offset {positions[current_index]}")
+        return positions[current_index]
+    return -1
+
+def pfind(text, cacheno=-1):
+    #find in page top level header with this text.  
+    #get the line number where we see this text.  
+    global current_cache
+    if (cacheno < 0 or cacheno >= len(page_cache)):
+        cacheno = current_cache
+    print(f"searching for text: {text} in page cache {cacheno}")
+
+    if cacheno >= 0 and cacheno < len(page_cache):
+        page_info = page_cache[cacheno]       
+        page = page_info['page']
+        body = page_info['body']
+        #find all instances..
+        positions = []
+
+        # Iterate over all non-overlapping matches
+        import re
+        for match in re.finditer(text, body, re.IGNORECASE):
+            positions.append(match.start()) # Get the starting index of the match
+                    
+        page_info['found_positions'] = positions
+        page_info['tofind'] = text
+        if len(positions) == 0:
+            logger.info(f'No occurrences of text: {text} found')
+            print(f"Could not find text: {text} in page")
+            page_info['current_tofind_index'] = -1
+            return -1
+        page_info['current_tofind_index'] = 0
+        offset = positions[ page_info['current_tofind_index'] ] if len(positions) > 0 else -1
+        return pnext(text, cacheno)
+
+    return -1
+
 def find_last(link_offset=1, cacheno=-1, text_offset=-1):
     """Go back to the previous page in the current cache."""
     global current_cache
-    if (cacheno < 0):
+    if (cacheno < 0 or cacheno >= len(page_cache)):
         cacheno = current_cache
     if (link_offset == 0):  #go back one for default case.  
         link_offset = -1
@@ -265,7 +363,7 @@ def find_last(link_offset=1, cacheno=-1, text_offset=-1):
 def go_back(num=1, cacheno=-1):
     """Go back to the previous page in the current cache."""
     global current_cache
-    if (cacheno < 0):
+    if (cacheno < 0 or cacheno >= len(page_cache)):
         cacheno = current_cache
     if (num == 0):  #go back one for default case.  
         num = 1
@@ -408,7 +506,7 @@ def find_nth_occurrence(main_string, sub_string, n):
 def play_video(cacheno=-1):
     global current_cache
     total_read = 0
-    if (cacheno < 0):
+    if (cacheno < 0 or cacheno >= len(page_cache)):
         cacheno = current_cache
     if (cacheno < 0 or cacheno >= len(page_cache)):
         return -1
@@ -498,6 +596,7 @@ def get_page_details(page):
         link_text_count = {}
         link_last_offset = {}
         offset_found = 0
+        offset_notfound = 0
         for link in link_data:
             if link['text'] and link['href']:
                 nth = link_text_count.get(link['text'], 0) + 1
@@ -505,18 +604,20 @@ def get_page_details(page):
                 offset = find_nth_occurrence(body_text, link['text'], nth)
                 link_last_offset[link['text']] = offset
                 if (offset == -1):
-                    print(f"Could not find link text in body: {link['text']}")
+#                    print(f"Could not find link text in body: {link['text']}")
+                    offset_notfound += 1
                 else:
                     offset_found += 1
                 link['offset'] = offset
 
             else:
-                print("Link with missing text or href")
+                #print("Link with missing text or href")
                 link['offset'] = -1
         #sort by offset.  
         link_data.sort(key=lambda x: x.get('offset'))
         #print(link_data)
         logger.info(f'Got page details with {len(body_text)} characters and {len(link_data)} links')
+        logger.info(f'Found offsets for {offset_found} links, could not find offsets for {offset_notfound} links')
         body_text = '$$TITLE=' + page.title() + '\n' + body_text
 
         return body_text, link_data, alt_text_data
@@ -528,7 +629,7 @@ def get_page_details(page):
 def update_page_offset(cacheno=-1):
     global current_cache
     total_read = 0
-    if (cacheno < 0):
+    if (cacheno < 0 or cacheno >= len(page_cache)):
         cacheno = current_cache
     if (cacheno < 0 or cacheno >= len(page_cache)):
         return total_read
@@ -539,7 +640,9 @@ def update_page_offset(cacheno=-1):
         total_read = q2.get() #get current link number.  
         #set offset
         page_cache[cacheno]['current_offset'][url] = total_read
-        logging.info(f'Updated page offset for URL: {url} to {total_read}')
+        
+        if (random.random() < 0.1):
+            logging.info(f'Updated page offset for URL: {url} to {total_read}')
 
     if (total_read > 0):
         found_item = next(filter(lambda item: item.get("url") == url, bookmarks), None)
@@ -551,9 +654,12 @@ def update_page_offset(cacheno=-1):
         linkno = get_link_number(cacheno, total_read, 0) #update link offsets.
         #scroll into view
         if (linkno >= 0):
+            page = page_cache[cacheno]['page']
+            links = page_cache[cacheno]['links']
             if (linkno != page_cache[cacheno].get('current_link', -1)):
-                page = page_cache[cacheno]['page']
-                links = page_cache[cacheno]['links']
+                # or page_cache[cacheno].get('last_total_read', links[linkno]['offset']) <= total_read-100): 
+                page_cache[cacheno]['last_total_read'] = total_read
+                #jump if we have read too much or have a new link.
                 link = links[linkno]
                 futurelink = links[linkno+2] if (linkno + 2 < len(links)) else None
                 try:
@@ -568,12 +674,13 @@ def update_page_offset(cacheno=-1):
                     temptext = temptext[offset: offset+50]
                     #find text in the page..
                     locator = page.get_by_text(temptext)
-#                    if locator.count() == 0 and futurelink is not None:
-                        #try partial match
-#                        locator = page.get_by_role("link", name=futurelink['text'])
                     locator.scroll_into_view_if_needed()
-                    if (locator.bounding_box() is not None and locator.bounding_box().get('height', 400) < 400):
-                        locator.highlight() #dont highlight the whole page..
+                    if link is not None:
+                        #try partial match
+                        locator = page.get_by_role("link", name=link['text'])
+                        locator.highlight()
+#                    if (locator.bounding_box() is not None and locator.bounding_box().get('height', 400) < 400):
+#                        locator.highlight() #dont highlight the whole page..
 
 #                    page.locator("a:has-text('" + link['text'] + "')").scroll_into_view_if_needed()
                     logging.info(f'Updated page scroll to link: {link["text"]} {link["offset"]} \n#{link["href"]}')
@@ -626,7 +733,7 @@ def get_browser_info():
 def detect_language(cacheno=-1):
     """Detect the language of the cached page."""
     global current_cache
-    if (cacheno < 0):
+    if (cacheno < 0 or cacheno >= len(page_cache)):
         cacheno = current_cache
     if cacheno < len(page_cache):
         page_info = page_cache[cacheno]       
@@ -646,7 +753,7 @@ def read_page(url, cacheno=-1):
     # This is a placeholder implementation
 
     global current_cache
-    if (cacheno < 0):
+    if (cacheno < 0 or cacheno >= len(page_cache)):
         cacheno = current_cache
     page = get_ppage(cacheno)
 

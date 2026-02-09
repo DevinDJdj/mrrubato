@@ -106,10 +106,10 @@ global audio_skip_events
 global audio_skip_queue
 global audio_location_queue
 
-audio_stop_events = []  # List to hold stop events for audio threads
-audio_skip_events = []  # List to hold skip events for audio threads
-audio_skip_queue = []  # List to hold skip queues for audio threads
-audio_location_queue = []
+audio_stop_events = [threading.Event() for _ in range(10)]  # List to hold stop events for audio threads
+audio_skip_events = [threading.Event() for _ in range(10)]  # List to hold skip events for audio threads
+audio_skip_queue = [Queue() for _ in range(10)]  # List to hold skip queues for audio threads
+audio_location_queue = [Queue() for _ in range(10)]
 
 speech_pipe = None
 active_window = None  # Global variable to store the active window handle
@@ -717,18 +717,17 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
             logger.info('Audio skip event set, skipping this line')
             print('Audio skip event set, skipping next several lines')
             lines_to_skip = q.get()
+            print('Skipping lines command received: ' + str(lines_to_skip))
             if (lines_to_skip > -1000):
                 skip += lines_to_skip    #skip next 3 lines
                 skip_event.clear()
-            elif (lines_to_skip > -100000):
-                #skip to the next type of line.  
-                if (lines_to_skip == -1001):
-                    #next type
-                    #pause event.  
-                    while skip_event.is_set():
-                        time.sleep(0.5)
-                        #sleep until skip event cleared.
-
+            elif (lines_to_skip == -1001):
+                #pause event.  
+                while skip_event.is_set():
+                    time.sleep(0.5)
+                    if random.randint(0,100) < 10:
+                        print('Waiting for pause to clear...')
+                    #sleep until skip event cleared.
 
             else:
                 #this is go to next type or previous type event.  
@@ -765,6 +764,9 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
             skip = 0
 
         print(f'Line: {l}')
+        print(f'Total Lines: {len(lines)}')
+        print(f'Current IDX: {idx}')
+        print(f'Skipping: {skip}')
         print(f'Line offset: {link_density_map[idx]["offset"]}')
         total_read = link_density_map[idx]['offset']
         sound_file = link_density_map[idx]['audio']
@@ -830,15 +832,19 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
                 print(f'At link: {links[link_loc]}')
                 #winsound.Beep(500, 300) #short beep to indicate link
                 if (links[link_loc]['offset'] != -1):
-                    sound_file = f"./temp/link{link_loc}.mp3"
-                    tts.speak(links[link_loc]['text'], LINKVOICE, sound_file, 1.0, 200) #quieter slower for links
-#                    winsound.Beep(500, 200) #short beep to indicate link
-                    synth.play_synth([53,65,77])
+                    try:
+                        sound_file = f"./temp/link{link_loc}.mp3"
+                        tts.speak(links[link_loc]['text'], LINKVOICE, sound_file, 1.0, 200) #quieter slower for links
+    #                    winsound.Beep(500, 200) #short beep to indicate link
+                        synth.play_synth([53,65,77])
 
-                    playsound(sound_file, block=False) # Ensure this thread blocks for its sound
-                    #only move to next link if we are at the offset.  
-                    #some links may be at -1 offset which we skip earlier.
-#                    ttotal = links[link_loc]['offset']+1
+                        playsound(sound_file, block=False) # Ensure this thread blocks for its sound
+                        #only move to next link if we are at the offset.  
+                        #some links may be at -1 offset which we skip earlier.
+    #                    ttotal = links[link_loc]['offset']+1
+                    except Exception as e:
+                        print(f'!!Audio Generation Error: {links[link_loc]["text"]} {e}')
+                        logger.error(f'!!Audio Generation Error: {links[link_loc]["text"]} {e}')
                     link_loc += 1
                     linksspoken += 1
 
@@ -847,6 +853,12 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
                 print('Audio stop event set, stopping playback during line wait')
                 mp_stop.set() #stop audio generation as well
                 break
+
+            while skip_event.is_set():
+                time.sleep(0.5)
+                if random.randint(0,100) < 10:
+                    print(f'Waiting for pause ... {text[0:50]}')
+                    
 
             #have to count total read here for record feedback..
             ttotal += 11 #some time for generating tts..
@@ -892,9 +904,9 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
                             playsound(sound_file, block=False) # Ensure this thread blocks for its sound
 
                         except Exception as e:
-                            logger.error(f'Error in TTS playback of similar item: {e}')
-                            logger.error(f'{siml}')
-                            print(f'Error in TTS playback of similar item: {e}')
+                            logger.error(f'!!Error in TTS playback of similar item: {e}')
+                            logger.error(f'!!{siml}')
+                            print(f'!!Error in TTS playback of similar item: {e}')
                             
                             continue
                     if (q3 is not None):
@@ -932,7 +944,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
 #    os.remove(sound_file) # Clean up the sound file
 #    sys.exit() # Exit the thread when done
 
-def speak(text, links = [], alt_text=[], offset=0, lang='en'):
+def speak(text, links = [], alt_text=[], offset=0, lang='en', cacheno=-1):
     global audio_stop_events
     global audio_location_queue
     global audio_skip_events
@@ -941,14 +953,33 @@ def speak(text, links = [], alt_text=[], offset=0, lang='en'):
 #    print(f'Speaking: {text}')
 
     
-    audio_stop_event = threading.Event()  # Event to signal stopping
-    audio_stop_events.append(audio_stop_event)  # Store the event in the global list
-    audio_skip_event = threading.Event()  # Event to signal skipping
-    audio_skip_events.append(audio_skip_event)  # Store the event in the skip list as well
-    q = Queue()
-    audio_skip_queue.append(q)
-    q2 = Queue()
-    audio_location_queue.append(q2)
+    if (cacheno >=0 and cacheno < len(audio_stop_events)):
+        #stop any existing audio for this cache slot, and clear skip event and queue
+        logger.info(f'> Restart Audio Cache Slot {cacheno}')
+        audio_stop_events[cacheno].set() #stop any existing audio for this cache slot
+        audio_stop_event = threading.Event() #audio_stop_events[cacheno]
+        audio_stop_events[cacheno] = audio_stop_event
+#        audio_stop_event.clear()
+    else:
+        audio_stop_event = threading.Event()  # Event to signal stopping
+        audio_stop_events.append(audio_stop_event)  # Store the event in the global list for access
+    if (cacheno >=0 and cacheno < len(audio_skip_events)):
+        audio_skip_event = audio_skip_events[cacheno]
+        audio_skip_event.clear()
+    else:
+        audio_skip_event = threading.Event()  # Event to signal skipping    
+        audio_skip_events.append(audio_skip_event)  # Event to signal skipping
+
+    if (cacheno >=0 and cacheno < len(audio_skip_queue)):
+        q = audio_skip_queue[cacheno]
+    else:
+        q = Queue()
+        audio_skip_queue.append(q)
+    if (cacheno >=0 and cacheno < len(audio_location_queue)):
+        q2 = audio_location_queue[cacheno]
+    else:
+        q2 = Queue()
+        audio_location_queue.append(q2)
     q3 = Queue()
 
     print(audio_stop_events)
@@ -1390,7 +1421,7 @@ class MyWindow(QMainWindow):
             #for now just log them.
 
     def reportProgress(self, qrdata):
-        logger.info(f"QR Out: {qrdata}")
+#        logger.info(f"QR Out: {qrdata}")
         self.showQR(qrdata) #refresh QR display
         cmds = self.parseQRData(qrdata)
         pwords = []
@@ -1843,40 +1874,61 @@ class MyWindow(QMainWindow):
         
         # You can also draw text, ellipses, images, etc.
 
-def stop_audio():
+def stop_audio(cacheno=-1):
     #called from hotkeys to stop all audio threads.
     global audio_stop_events
     print('Stopping all audio threads')
     print(audio_stop_events)
+    if (cacheno >=0 and cacheno < len(audio_stop_events)):
+        print(f'Stopping audio thread {cacheno}')
+        audio_stop_events[cacheno].set()  # Signal the audio thread to stop
+        return
     for audio_stop_event in audio_stop_events:
         print('Stopping audio thread')
         audio_stop_event.set()  # Signal the audio thread to stop
 
-def pause_reader():
+def pause_reader(cacheno=-1):
     #called from hotkeys to pause all audio threads.
     global audio_stop_events
     print('Pausing all audio threads')
+    if (cacheno >=0 and cacheno < len(audio_skip_events)):
+        print(f'Pausing audio thread {cacheno}')
+        audio_skip_queue[cacheno].put(-1001) #signal to pause
+        audio_skip_events[cacheno].set()
+        return
     for i, audio_skip_event in enumerate(audio_skip_events):
-        print('Pausing audio thread')
+        print('Pausing all audio threads')
         audio_skip_queue[i].put(-1001) #signal to pause
         audio_skip_event.set()
 
-def resume_reader():
+def resume_reader(cacheno=-1):
     #called from hotkeys to resume all audio threads.
     global audio_stop_events
     print('Resuming all audio threads')
+    if (cacheno >=0 and cacheno < len(audio_skip_events)):
+        print(f'Resuming audio thread {cacheno}')
+        audio_skip_queue[cacheno].put(0) #signal to skip 0 if something wrong with the event thread..
+        audio_skip_events[cacheno].clear()
+        return
     for i, audio_skip_event in enumerate(audio_skip_events):
-        print('Resuming audio thread')
+        print('Resuming all audio threads')
         audio_skip_queue[i].put(0) #signal to skip 0 if something wrong with the event thread..
-        audio_skip_event.clear()
+        audio_skip_events[i].clear()
+#        audio_skip_event.clear()
 
-def skip_lines(n):
+def skip_lines(n, cacheno=-1):
     #called from hotkeys to skip n lines of audio.
+    #eventually match up audio_skip_events with playwrighty cache numbers so we can skip in specific readers if needed.
     global audio_skip_events
     print(f'Skipping {n*3} lines of audio')
+    if (cacheno >=0 and cacheno < len(audio_skip_events)):
+        print(f'Skipping lines in audio thread {cacheno}')
+        audio_skip_queue[cacheno].put(int(n*3))
+        audio_skip_events[cacheno].set()
+        return
     for i, audio_skip_event in enumerate(audio_skip_events):
-        print('Skipping lines in audio thread')
-        audio_skip_queue[i].put(n*3)
+        print(f'Skipping lines in audio thread {i}')
+        audio_skip_queue[i].put(int(n*3))
         audio_skip_event.set()
 
 def select_type(n):
