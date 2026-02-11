@@ -323,4 +323,22 @@ Try to clean up real-time print vs logger.info
 --click_link_
 test..
 
+OK, 
 
+**extensions/trey/speech.py
+--record_audio2
+some issue with MIC detection?  
+Not sure what causes, but sometimes the 
+callback not called if MIC detection poor.  
+
+
+If we click internal link, just read what is at that location.  
+Jump there and jump back..
+
+**extensions/trey/playwrighty.py
+--click_link
+test internal link click..
+Should read text..
+
+Still some overlap for long paragraphs after clicking early link, not ideal..
+Is there some way to stop the playaudio?  

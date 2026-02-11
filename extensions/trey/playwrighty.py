@@ -134,15 +134,22 @@ def get_link_number(cacheno=-1, text_offset=0, link_offset=0):
         if (link_offset != 0):
             linkno += link_offset
 
-        while (linkno < len(links)-1 and (links[linkno]['href'].startswith(url + "#") or links[linkno]['href'].startswith('#'))):
+#        while (linkno < len(links)-1 and (links[linkno]['href'].startswith(url + "#") or links[linkno]['href'].startswith('#'))):
             #for now skip internal links.  
             #really want to jump to this text location..
-            linkno += 1            
+#            linkno += 1            
         return linkno
     else:
         logging.warning(f'Cache number {cacheno} out of range')
     return -1
 
+
+def is_internal_link(linkno, cacheno=-1):
+    links = page_cache[cacheno]['links']
+    orig_url = page_cache[cacheno].get('orig_url', '')
+    url = page_cache[cacheno]['page'].url
+    if (linkno < len(links)-1 and (links[linkno]['href'].startswith(url + "#") or links[linkno]['href'].startswith(orig_url+"#") or links[linkno]['href'].startswith('#'))):
+        return True
 
 def click_link(cacheno, text_offset, link_offset=0, open_new_tab=False):
 
@@ -159,8 +166,22 @@ def click_link(cacheno, text_offset, link_offset=0, open_new_tab=False):
         linkno = get_link_number(cacheno, text_offset, link_offset)
         if (linkno < 0):
             return False
+
         page_info = page_cache[cacheno]
         links = page_info['links']
+
+        if (is_internal_link(linkno, cacheno)):
+            #find href and return offset of this text..
+            id = links[linkno]['href'].split('#')[-1]
+            internal_info = page.locator(f"#{id}")
+            inner_text = internal_info.inner_text()
+            #jump to here in page temporarily.. 
+            try:
+                internal_info.scroll_into_view_if_needed()
+            except Exception as e:
+                logging.error(f'Error scrolling to internal link: {e}')
+            return inner_text
+        
         logger.info(f"Clicking on {links[linkno]['href'] if linkno < len(links) else 'No link'}")
 
         if linkno < len(links) and linkno >= 0:
@@ -774,6 +795,7 @@ def read_page(url, cacheno=-1):
 
     if (url != ''):
         page.goto(url, wait_until="domcontentloaded")
+    orig_url = page.url
     logging.info(f'Page loaded: {page.url}')
     body_text, link_data, alt_text_data = get_page_details(page)
 #        await page.close()
@@ -790,6 +812,7 @@ def read_page(url, cacheno=-1):
     page_cache[cacheno]['current_offset'] = prev_offsets
     page_cache[cacheno]['length'] = len(body_text)
     page_cache[cacheno]['alt_text'] = alt_text_data
+    page_cache[cacheno]['orig_url'] = orig_url
 
     if (page.url not in page_cache[cacheno]['current_offset']):
         #get previous bookmark offset.

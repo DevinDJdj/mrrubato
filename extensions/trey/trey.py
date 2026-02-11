@@ -602,10 +602,17 @@ def get_voices(lang='en'):
 def play_sound_process(sound_file):
     playsound(sound_file)
 
+
+def stopsound(currentsound):
+    if (currentsound is not None and currentsound.is_alive()):
+        #stop current sound if we are skipping.  
+        #this is a bit aggressive but should work for now.  
+        currentsound.stop()
+
 def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=None, q=None, q2=None, q3=None, lang='en'):
 
     skipmenu = True
-
+    currentsound = None
     sound_file = f"{random.randint(0, 100)}.mp3"
     if lang is None or lang == '':
         #detect language if long enough?          
@@ -704,9 +711,10 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
             if (suc != 0):
                 print(f'Error generating audio fallback to tts.speak')
                 tts.speak(lesc, VOICE, sound_file)
-            playsoundprocess = multiprocessing.Process(target=play_sound_process, args=(sound_file,))
-            playsoundprocess.start()
-#            playsound(sound_file, block=False) # Ensure this thread blocks for its sound
+#            playsoundprocess = multiprocessing.Process(target=play_sound_process, args=(sound_file,))
+#            playsoundprocess.start()
+            playsound(sound_file, block=False) # Ensure this thread blocks for its sound
+            #try other mechanism.. stopsound..
 
         if (stop_event.is_set()):
             logger.info('Audio stop event set, stopping playback')
@@ -785,11 +793,15 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
     #            await communicate.save(sound_file)
                 #play the line type info first
                 play_l(link_density_map[idx], idx/len(lines))
-
+                vol = 0.7
+                rate = 150
+                if (idx < 2): #adjust for informational lines..
+                    vol = 1.0
+                    rate = 100
 
                 if (os.path.exists(sound_file)):
                     print(f'Playing pre-generated audio: {sound_file}')
-                    playsound(sound_file, block=False) # Ensure this thread blocks for its sound
+                    currentsound = playsound(sound_file, block=False) # Ensure this thread blocks for its sound
                 else:
                     print(f'Generating and playing audio: {l}')
                     sound_file = f"./temp/{idx}.mp3"
@@ -800,13 +812,13 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
                     suc = os.system(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --text \"{lesc}\" --rate=\"-10%\" > NUL 2>&1")
                     if (suc != 0):
                         print(f'Error generating audio fallback to tts.speak')
-                        tts.speak(lesc, VOICE, sound_file)
+                        tts.speak(lesc, VOICE, sound_file, vol, rate)
 
 #                    sound_file = f"./temp/{idx}.wav"
                     #fast not working.. edge-tts much better quality than speechbrain tts.
 #                    cmd = f"python ./extensions/trey/speech.py --text \"{l}\" --fname \"{sound_file}\""
 #                    os.system(cmd)
-                    playsound(sound_file, block=False) # Ensure this thread blocks for its sound
+                    currentsound = playsound(sound_file, block=False) # Ensure this thread blocks for its sound
 #                time.sleep(0.5) #short pause between lines
             except Exception as e:
                 logger.error(f'Error in TTS playback: {e}')
@@ -855,6 +867,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
                 break
 
             while skip_event.is_set():
+                stopsound(currentsound)
                 time.sleep(0.5)
                 if random.randint(0,100) < 10:
                     print(f'Waiting for pause ... {text[0:50]}')

@@ -839,7 +839,7 @@ class hotkeys:
       if (playwrighty.mybrowser is not None and testing):
         total_read = 0
         total_read = playwrighty.update_page_offset()
-        linkno = playwrighty.get_link_number(-1, total_read, sequence[-1]-self.keybot)
+        linkno = playwrighty.get_link_number(-1, total_read, -(sequence[-1]-self.keybot))
         links = playwrighty.page_cache[playwrighty.current_cache]['links']
         link = links[linkno]
 
@@ -847,7 +847,8 @@ class hotkeys:
         from extensions.trey.trey import pause_reader, resume_reader
         pause_reader() #pause first before clicking link.
         time.sleep(0.5) #wait for pause to take effect.  Need better way to ensure this.
-        self.speak(f'{link["text"]}')
+        logger.info(f'--{link["text"]}')
+        self.speak(f'--Clicking {link["text"]}')
         resume_reader() #resume after speaking link number.
 
     return 1
@@ -877,7 +878,7 @@ class hotkeys:
 
 #      pause_reader() #pause first before clicking link.
 #      time.sleep(0.3) #wait for pause to take effect.  Need better way to ensure this.
-      a = playwrighty.click_link(-1, total_read, sequence[-1]-self.keybot)
+      a = playwrighty.click_link(-1, total_read, -(sequence[-1]-self.keybot))
       if (isinstance(a, tuple)):
         body_text, link_data, page, cacheno = a
         self.links = link_data
@@ -889,6 +890,10 @@ class hotkeys:
         q2, q3, stop_event = self.speak(body_text, link_data, alt_text, total_read, lang, cacheno) #add offset to skip until where we were.)
         playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
 #        resume_reader()
+        return 0
+      elif (isinstance(a, str)):
+        #internal link..
+        self.speak(f'{a}')
         return 0
       else:
         print(f'Clicked link, no new page returned {a}')
