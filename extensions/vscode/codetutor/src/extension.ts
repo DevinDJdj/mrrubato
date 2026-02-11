@@ -453,18 +453,23 @@ export function activate(context: vscode.ExtensionContext) {
 //				doc += `File: ${item.file}, Line: ${item.line}, Sort: ${item.sortorder}  \n`;
 				doc += `[${item.topic}](${filename})  \n`;
 				let fname = item.file.replace(wsUri.path, '');
-				doc += `[${fname}:${item.line}](${item.file}#L${item.line})  \n`;
+				let fileUri = Book.getUri(fname);
+				let readablename = Book.getReadableName(fname, item.line);
+				doc += `[${readablename}](${fileUri}#L${item.line})  \n`;
 				let data = item.data.substring(item.topic.length+2, 400);
-				data = formatMarkdownSnippet(data);
-				doc += `${data} $$  \n`;
+				//data = formatMarkdownSnippet(data);
+				data = await Book.markdown(data);
+
+				doc += `${data}  \n$$  \n`;
 
 				
 				
 			}
 			stream.markdown(doc);
 			setTimeout(() => {	
-				//vscode.commands.executeCommand('workbench.action.chat.readChatResponseAloud');
-				}, 10000);
+				vscode.commands.executeCommand('workbench.action.chat.nextCodeBlock');
+				vscode.commands.executeCommand('workbench.action.chat.readChatResponseAloud');
+				}, 15000);
 	
 
 
@@ -868,7 +873,8 @@ export function activate(context: vscode.ExtensionContext) {
 
 						}
 						//pass topic and chat.  for now just /similar
-						vscode.commands.executeCommand('workbench.action.chat.open', "@mr /similar " + text );
+						let atext = text.replace("@@", "~~");
+						vscode.commands.executeCommand('workbench.action.chat.open', "@mr /similar " + atext );
 						break;
 					default:
 						//find person.  
@@ -896,7 +902,7 @@ export function activate(context: vscode.ExtensionContext) {
 						let question = query.slice(1).join(" ");
 						break;
 				}
-
+				break;
 			case "#":
 				//open on web.
 				vscode.env.openExternal(vscode.Uri.parse(text.substring(1)));

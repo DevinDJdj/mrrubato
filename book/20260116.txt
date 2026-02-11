@@ -256,4 +256,71 @@ Is this tolerable?
 Not really.  I think 3 seconds is tolerable.  
 No Code takes 3 seconds..
 
+Need to follow along with 
+
+**extensions/trey/playwrighty.py
+--set_reader_queue
+--update_page_offset
+
+await page.locator('selector-for-your-element').scrollIntoViewIfNeeded()
+
+OK, not perfect, but something like this..
+
+
+**extensions/vscode/codetutor/src/extension.ts
+Some reason [@@] not working, while [~~] works..
+
+OK, better..
+
+@@ How can we customize the tts voice in [**extensions/vscode/codetutor/src/extension.ts]
+Should we just call python tts script perhaps..
+
+**extensions/trey/trey.py 
+--speak
+Use custom tts engine here?  
+;$$=[49,49]
+;**=[60,60]
+;etc..
+
+**extensions/trey/synth.py
+Adjusted beep -> play_synth
+
+**extensions/trey/playwrighty.py
+--update_page_offset
+OK, highlighting works, but annoying popup.  
+
+**languages/hotkeys.py
+--record_feedback
+Also have an issue with long feedback.  
+This freezes
+
+
+Need in-page search..
+
+Need to try to use multiple tabs..
+
+**languages/hotkeys.py
+--find
+--next
+not quite working..
+Skipping everything..
+
+Need a mini page heat map of where this is and what is selected..
+
+Finally have this kind of working..
+Very fragile at the moment.. 
+Need to adjust logging, too much junk.  
+Use language more for logging.  
+
+
+--click_link_
+stop audio.  
+announce selected link each time.  
+use [-1] 
+
+
+Try to clean up real-time print vs logger.info
+--click_link_
+test..
+
 

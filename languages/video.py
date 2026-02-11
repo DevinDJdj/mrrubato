@@ -230,6 +230,11 @@ class video:
   def unpause(self, sequence=[]):  
     """Unpause Video."""
     logger.info(f'> Unpause {sequence}')
+    cacheno = -1
+    if (len(sequence) > 0):
+      cacheno = sequence[-1]-self.keybot #first key cache selection
+    playwrighty.play_video(cacheno) #play video if it is valid cache no..
+    
     return 0
 
   def get_XY(self, key, idx=0):
