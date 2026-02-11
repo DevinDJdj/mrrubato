@@ -759,6 +759,8 @@ class hotkeys:
       from extensions.trey.trey import pause_reader
 
       pause_reader() #pause first before clicking link.
+      #save last 10 links here to redo if needed..
+      self.templinks = self.links[-10:] if len(self.links) > 10 else self.links[:]
       a = playwrighty.click_link(-1, total_read, sequence[-1]-self.keybot)
       if (isinstance(a, tuple)):
         body_text, link_data, page, cacheno = a
