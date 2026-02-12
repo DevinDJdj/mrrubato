@@ -925,6 +925,11 @@ class MyKeys:
     logging.info("$$TRANSCRIPT=" + fname + "\n")
     print("$$TRANSCRIPT=" + fname + "\n")
 
+    for (l,la) in self.languages.items():
+      if (hasattr(la, 'save_state')):
+        la.save_state()
+
+
 
   def text2midi(self, text):
     #convert text to midi keys.  

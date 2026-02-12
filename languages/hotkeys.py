@@ -360,6 +360,14 @@ class hotkeys:
     return -1
   
 
+  def load_state(self):
+    #pick latest bookmark..
+    self.select_bookmark()
+
+  def save_state(self):
+    #for now just save_bookmark.  eventually save more state here.
+    self.add_bookmark()
+    
   def set_audio_location(self):
     #set audio location queue for this language.  
     #set to last one only.
@@ -830,7 +838,7 @@ class hotkeys:
     return 1
   
   def click_link_(self, sequence=[]):
-    if (len(sequence) > 0):
+    if (len(sequence) > 0) and sequence[-1] != self.keybot:
 
       logger.info(f'> Click Link_ {sequence}')
       print("> Click Link_")
@@ -848,7 +856,7 @@ class hotkeys:
         pause_reader() #pause first before clicking link.
         time.sleep(0.5) #wait for pause to take effect.  Need better way to ensure this.
         logger.info(f'--{link["text"]}')
-        self.speak(f'--Clicking {link["text"]}')
+        self.speak(f'--{link["text"]}')
         resume_reader() #resume after speaking link number.
 
     return 1
@@ -874,9 +882,10 @@ class hotkeys:
       #should be the location of the simlink.  
 #      if sequence[-1]-self.keybot > 0 and len(siml) > sequence[-1]-self.keybot-1:
 #        total_read = siml[sequence[-1]-self.keybot-1]
-      from extensions.trey.trey import pause_reader, resume_reader
+      from extensions.trey.trey import pause_reader, resume_reader, stop_audio
 
 #      pause_reader() #pause first before clicking link.
+#      stop_audio() #stop audio to prevent overlap.  We will restart if we get a valid page back.
 #      time.sleep(0.3) #wait for pause to take effect.  Need better way to ensure this.
       a = playwrighty.click_link(-1, total_read, -(sequence[-1]-self.keybot))
       if (isinstance(a, tuple)):
@@ -889,7 +898,7 @@ class hotkeys:
         alt_text = playwrighty.page_cache[cacheno]['alt_text']
         q2, q3, stop_event = self.speak(body_text, link_data, alt_text, total_read, lang, cacheno) #add offset to skip until where we were.)
         playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
-#        resume_reader()
+        resume_reader()
         return 0
       elif (isinstance(a, str)):
         #internal link..

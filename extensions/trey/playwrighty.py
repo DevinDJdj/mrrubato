@@ -172,6 +172,7 @@ def click_link(cacheno, text_offset, link_offset=0, open_new_tab=False):
 
         if (is_internal_link(linkno, cacheno)):
             #find href and return offset of this text..
+            logger.info(f'Link {linkno} is an internal link, jumping to it in page')
             id = links[linkno]['href'].split('#')[-1]
             internal_info = page.locator(f"#{id}")
             inner_text = internal_info.inner_text()
@@ -581,6 +582,8 @@ def get_page_details(page):
             });
         }""")
 
+        #remove single char links..
+        link_data = [link for link in link_data if link['text'] and link['href'] and len(link['text'].strip()) > 1 and len(link['href'].strip()) > 1]
         alt_text_data = page.evaluate("""() => {
             const images = Array.from(document.querySelectorAll('img'));
             return images.map((img, index) => {
@@ -688,14 +691,20 @@ def update_page_offset(cacheno=-1):
                     #this only gets exact matches, probably what we want, so we dont jump around the page too much.
                     #ideally detect the correct link based on location..
                     temptext = page_cache[cacheno]['body']
+
                     offset = link['offset']
-                    offset = temptext.find("\n", offset)
-                    if (offset < 0):
-                        offset = 0
-                    temptext = temptext[offset: offset+50]
+                    off2 = temptext.rfind("\n", 0, offset)
+                    if (off2 < offset-100):
+                        temptext = temptext[offset-50: offset]
+                    else:
+                        offset = temptext.find("\n", offset)
+                        if (offset < 0):
+                            offset = off2
+                        temptext = temptext[offset: offset+50]
                     #find text in the page..
                     locator = page.get_by_text(temptext)
-                    locator.scroll_into_view_if_needed()
+                    if (locator.count() > 0):
+                        locator.scroll_into_view_if_needed()
                     if link is not None:
                         #try partial match
                         locator = page.get_by_role("link", name=link['text'])

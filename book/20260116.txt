@@ -342,3 +342,11 @@ Should read text..
 
 Still some overlap for long paragraphs after clicking early link, not ideal..
 Is there some way to stop the playaudio?  
+Maybe better..
+
+**extensions/trey/trey.py
+--quit_me
+Allow for restart 
+CTRL+SHIFT+R = restart
+CTRL+SHIFT+Q = quit..
+Seems to work ok..

@@ -343,11 +343,8 @@ def copy_latest_file():
     return latest_file
 
 
-def on_quit_action(icon, item):
+def quit_me(restart=False):
     global mk
-    """Callback function for the 'Quit' menu item."""
-    logger.info('Stopping icon')
-    icon.stop()
     logger.info('Stopping MIDI thread')
 
     mk.savemidi() #save current midi file
@@ -366,7 +363,17 @@ def on_quit_action(icon, item):
     for thread in active_threads:
         print(f"- Name: {thread.name}, Alive: {thread.is_alive()}")    
     #force exit for now.  Not sure why threads are hanging around.
+    if (restart):
+        os.execl(sys.executable, sys.executable, *sys.argv)
     os._exit(1)
+
+
+def on_quit_action(icon, item):
+    global mk
+    """Callback function for the 'Quit' menu item."""
+    logger.info('Stopping icon')
+    icon.stop()
+    quit_me()
 
 def on_show_message(icon, item):
     """Callback function to display a notification."""
@@ -759,6 +766,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
             skip = 0
 #            total_read += len(l) + 1 #include newline
             #check this works..
+            #reset link_loc
             link_loc = 0
             while (link_loc < len(links) and 'offset' in links[link_loc] and links[link_loc]['offset'] < total_read):
                 link_loc += 1
@@ -770,6 +778,10 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
                 total_read -= len(lines[idx - i -1]) + 1 #include newline
             idx = idx + skip
             skip = 0
+            #reset link_loc
+            link_loc = 0
+            while (link_loc < len(links) and 'offset' in links[link_loc] and links[link_loc]['offset'] < total_read):
+                link_loc += 1
 
         print(f'Line: {l}')
         print(f'Total Lines: {len(lines)}')
@@ -797,7 +809,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
                 rate = 150
                 if (idx < 2): #adjust for informational lines..
                     vol = 1.0
-                    rate = 100
+                    rate = 120
 
                 if (os.path.exists(sound_file)):
                     print(f'Playing pre-generated audio: {sound_file}')
@@ -863,14 +875,19 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
             if (stop_event.is_set()):
                 logger.info('Audio stop event set, stopping playback during line wait')
                 print('Audio stop event set, stopping playback during line wait')
+                stopsound(currentsound)
                 mp_stop.set() #stop audio generation as well
                 break
 
-            while skip_event.is_set():
-                stopsound(currentsound)
-                time.sleep(0.5)
-                if random.randint(0,100) < 10:
-                    print(f'Waiting for pause ... {text[0:50]}')
+            if skip_event.is_set():
+                ev = q.get()
+                if (ev == -1001): #pause event.. for speaking..
+                    while(skip_event.is_set()):
+                        time.sleep(0.5)
+                else: #real skip
+                    stopsound(currentsound)                    
+                    i = len(l)+1 #break out of loop to move to next line.
+                    continue
                     
 
             #have to count total read here for record feedback..
@@ -882,7 +899,8 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
 #            if (linksspoken == 0):
             time.sleep(0.6-0.3*linksspoken) #simulate reading time. 12 chars per second..
             if (ttotal > total_read+len(l)+1):
-                break
+                i = len(l)+1 #break out of loop if we have read past the line, to avoid long waits on long lines.
+                continue
             #shouldnt have to be too exact.  
         print(f'Total waited: {waited}')
 
@@ -957,6 +975,13 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
 #    os.remove(sound_file) # Clean up the sound file
 #    sys.exit() # Exit the thread when done
 
+
+def delay_stop_event(stop_event, delay):
+    """Set the stop event after a delay."""
+    time.sleep(delay)
+    stop_event.set()
+
+
 def speak(text, links = [], alt_text=[], offset=0, lang='en', cacheno=-1):
     global audio_stop_events
     global audio_location_queue
@@ -968,7 +993,9 @@ def speak(text, links = [], alt_text=[], offset=0, lang='en', cacheno=-1):
     
     if (cacheno >=0 and cacheno < len(audio_stop_events)):
         #stop any existing audio for this cache slot, and clear skip event and queue
-        logger.info(f'> Restart Audio Cache Slot {cacheno}')
+#        logger.info(f'> Restart Audio Cache Slot {cacheno}')
+#        t = threading.Timer(5, delay_stop_event, args=(audio_stop_events[cacheno], 5)) # Set a timer to stop the audio after 5 seconds
+#        t.start()  # Starts the timer in a separate thread
         audio_stop_events[cacheno].set() #stop any existing audio for this cache slot
         audio_stop_event = threading.Event() #audio_stop_events[cacheno]
         audio_stop_events[cacheno] = audio_stop_event
@@ -1212,6 +1239,9 @@ def on_activate_overlay():
     draw_overlay()
     logger.info('Hotkey activated!')
 
+def restart_me():
+    quit_me(True)
+
 def setup_hotkey_listener():
 
     # Define the hotkey combination and the function to call
@@ -1220,7 +1250,8 @@ def setup_hotkey_listener():
     hotkeys = {
         '<ctrl>+<shift>+h': on_activate_overlay,
         '<ctrl>+<shift>+g': on_deactivate_overlay,
-        '<ctrl>+<shift>+m': start_midi,
+        '<ctrl>+<shift>+r': restart_me,
+        '<ctrl>+<shift>+q': quit_me,
 
         # You can add more hotkeys here, e.g.:
         # '<shift>+a': another_function,
@@ -1916,18 +1947,21 @@ def pause_reader(cacheno=-1):
 
 def resume_reader(cacheno=-1):
     #called from hotkeys to resume all audio threads.
-    global audio_stop_events
+    global audio_stop_events, audio_skip_events
     print('Resuming all audio threads')
     if (cacheno >=0 and cacheno < len(audio_skip_events)):
         print(f'Resuming audio thread {cacheno}')
         audio_skip_queue[cacheno].put(0) #signal to skip 0 if something wrong with the event thread..
         audio_skip_events[cacheno].clear()
+        audio_stop_events[cacheno].clear() #make sure stop event is cleared as well.
         return
     for i, audio_skip_event in enumerate(audio_skip_events):
         print('Resuming all audio threads')
         audio_skip_queue[i].put(0) #signal to skip 0 if something wrong with the event thread..
         audio_skip_events[i].clear()
 #        audio_skip_event.clear()
+    for audio_stop_event in audio_stop_events:
+        audio_stop_event.clear() #make sure stop event is cleared as well.
 
 def skip_lines(n, cacheno=-1):
     #called from hotkeys to skip n lines of audio.
@@ -2016,7 +2050,7 @@ def start_midi():
         logger.info('MIDI thread already running')
         stop_midi()
         #this calls unload..
-        time.sleep(2) #give some time to close down.
+        time.sleep(4) #give some time to close down.
     #set playwrighty context to null
     midi_stop_event = threading.Event()
     midi_kill_event = threading.Event()
@@ -2117,6 +2151,10 @@ def run_midi(stop_event, kill_event, qr_queue=None, qrin_queue=None, audio_locat
 
 
 
+def restart_trey():
+    on_quit_action()
+    os.execl(sys.executable, sys.executable, *sys.argv)
+    return 0
 
 def main():
     global qapp
