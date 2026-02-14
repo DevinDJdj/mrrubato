@@ -37,6 +37,8 @@ import threading
 
 from collections import defaultdict
 
+from multiprocessing.shared_memory import SharedMemory
+
 #logging.basicConfig(filename='trey.log', 
 #    format='%(asctime)s %(levelname)-8s %(message)s',
 #    level=logging.INFO,
@@ -150,6 +152,8 @@ class MyKeys:
 
     self.keystruct = {}
     self.qrin = [] #qr inputs
+#    self.qrinmem = SharedMemory(name="mykeys") #shared memory for qrin if needed.
+#    self.qroutmem = None #shared memory for qrout if needed.
 
     if (self.config['keymap']['settings']['PLAY_FEEDBACK']):
         self.play_feedback = True

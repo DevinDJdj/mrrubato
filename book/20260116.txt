@@ -350,3 +350,27 @@ Allow for restart
 CTRL+SHIFT+R = restart
 CTRL+SHIFT+Q = quit..
 Seems to work ok..
+
+
+instead of using the QR reading mechanism, switch internal communication to use mmap..
+QR processing just too slow..
+
+not actually needed for now.  
+
+
+Second shared screen with just huge Text and QR code, would this work in a meeting scenario and pick up necessary info?  
+Set to participant mode for instance which will overlay QR code and potentially text when sharing feedback..
+
+
+--MyWindow
+Display selection items in 
+
+**languages/hotkeys.py
+--list_bookmarks
+Dont need this, just make it part of
+--select_bookmark
+
+Need time component.  
+For now just use text.  
+Fixed width text.
+

@@ -150,6 +150,8 @@ def is_internal_link(linkno, cacheno=-1):
     url = page_cache[cacheno]['page'].url
     if (linkno < len(links)-1 and (links[linkno]['href'].startswith(url + "#") or links[linkno]['href'].startswith(orig_url+"#") or links[linkno]['href'].startswith('#'))):
         return True
+    else:
+        return False
 
 def click_link(cacheno, text_offset, link_offset=0, open_new_tab=False):
 

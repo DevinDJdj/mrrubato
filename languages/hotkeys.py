@@ -409,6 +409,7 @@ class hotkeys:
     logger.info(f'> List Bookmarks {sequence}')
     #for now just demo..
 
+
     return 0
 
   def select_bookmark(self, sequence=[]):
@@ -836,7 +837,9 @@ class hotkeys:
     #update display.  
     
     return 1
-  
+
+
+
   def click_link_(self, sequence=[]):
     if (len(sequence) > 0) and sequence[-1] != self.keybot:
 
@@ -850,12 +853,22 @@ class hotkeys:
         linkno = playwrighty.get_link_number(-1, total_read, -(sequence[-1]-self.keybot))
         links = playwrighty.page_cache[playwrighty.current_cache]['links']
         link = links[linkno]
+        lenlinks = len(links)
 
 
         from extensions.trey.trey import pause_reader, resume_reader
         pause_reader() #pause first before clicking link.
         time.sleep(0.5) #wait for pause to take effect.  Need better way to ensure this.
         logger.info(f'--{link["text"]}')
+        self.func = "Click Link_"
+        #should make this more general.. send last ten links
+        last20 = links[max(0, linkno-10):min(linkno+10, lenlinks)]
+        vars = {}
+        vars['linkno'] = linkno
+        for i, l in enumerate(last20):
+          vars[f'link{i}'] = l['text']
+#          vars[f'href{i}'] = l['href']
+        self.set_qr(self.func, vars)
         self.speak(f'--{link["text"]}')
         resume_reader() #resume after speaking link number.
 

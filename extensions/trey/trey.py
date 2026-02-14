@@ -34,13 +34,14 @@ import mido
 import random
 
 
+from sklearn import metrics
 import torch
 
 #UI components
 import pystray
 from PIL import Image, ImageDraw
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QLabel
-from PyQt5.QtGui import QPixmap, QPainter, QPen, QBrush, QImage
+from PyQt5.QtGui import QPixmap, QPainter, QPen, QBrush, QImage, QFont, QFontMetrics
 from PyQt5.QtCore import Qt, QObject, pyqtSignal, QThread
 import PyQt5.QtCore as QtCore
 import win32gui
@@ -88,6 +89,8 @@ import extensions.trey.synth as synth
 import languages.helpers.transcriber as transcriber
 
 import pytesseract
+
+from multiprocessing.shared_memory import SharedMemory
 
 
 logger = logging.getLogger(__name__)
@@ -1463,11 +1466,16 @@ class MyWindow(QMainWindow):
             self.qr_in.append({'cmd': currentcmd, 'vars': vars, 'timestamp': time.time()})
             #process incoming commands as needed.
             #for now just log them.
+            if (cmd['type'] == '> '):
+                if (currentcmd == "Record Feedback"):
+                    #process feedback command.  
+                    logger.info(f'Processing record feedback command with vars: {vars}')
 
     def reportProgress(self, qrdata):
 #        logger.info(f"QR Out: {qrdata}")
-        self.showQR(qrdata) #refresh QR display
         cmds = self.parseQRData(qrdata)
+        self.showQR(qrdata, cmds) #refresh QR display
+
         pwords = []
         for idx, cmd in enumerate(cmds):
             if (cmd['type'] == '> '):
@@ -1751,19 +1759,35 @@ class MyWindow(QMainWindow):
         for i in range(100):
             self.windowlabels[str(i)] = QLabel(f'Label {i}', self)
         # creating a label widget
-        self.label_1 = QLabel("transparent ", self)
+        self.label_info = QLabel("transparent ", self)
         # moving position
-        self.label_1.move(self.geo.width() - 300, 100)
-        self.label_1.setStyleSheet("background-color: rgba(255, 255, 255, 1);color: red;")
-        self.label_1.adjustSize()
-        self.label_1.setWordWrap(True)
+        self.label_info.move(self.geo.width() - 300, 100)
+        self.label_info.setStyleSheet("background-color: rgba(255, 255, 255, 1);color: red;")
+        self.label_info.adjustSize()
+        self.label_info.setWordWrap(True)
 
-        self.label_2 = QLabel(self)
+        self.label_qr = QLabel(self)
         #move to bottom right corner
-        self.label_2.setStyleSheet("background-color: rgba(255, 255, 255, 1);")
+        self.label_qr.setStyleSheet("background-color: rgba(255, 255, 255, 1);")
         #not sure best size.  
-        self.label_2.move(self.width() - 500, self.height() - 400)
+        self.label_qr.move(self.width() - 500, self.height() - 400)
 
+        self.label_p = QLabel(self)
+        # 2. Set a monospaced font
+        font = QFont("Courier", 12) # Specify font family and size
+        font.setFixedPitch(True)    # Ensure it uses the fixed pitch version if available
+        self.label_p.setFont(font)    # Apply the font to the label        
+        self.label_p.setStyleSheet("background-color: rgba(255, 255, 255, 1);color: red;")
+        self.label_p.move(200, self.geo.height() - 200)
+        self.label_p.setTextFormat(Qt.PlainText)
+        metrics = QFontMetrics(font)
+        # Using boundingRect is generally more accurate than width() or horizontalAdvance()
+        w = metrics.boundingRect("X").width()
+        h = metrics.boundingRect("X").height()
+        self.pwidth = self.geo.width()/w
+        self.pheight = 200/h
+        logger.info(f'MyWindow {self.pwidth} X {self.pheight} loaded')
+    
         # show all the widgets
         self.show()
         self.showQR("Starting Trey Overlay")
@@ -1837,13 +1861,49 @@ class MyWindow(QMainWindow):
         logger.info('Window hidden')
 
 
-    def showQR(self, data, struct={}):
+    def show_p(self, struct=[]):
+      """Method to show a QR code."""
+      #{'type': type, 'lang': lang, 'cmd': currentcmd, 'vars': vars, 'timestamp': time.time()}
+      varsperline = 2
+      fulltext = ""
+      nextline = ""
+      cnt = 0
+      for i, l in enumerate(struct):
+        type = l['type']
+        if (type == '> '):
+          if (l['cmd'] == 'Click Link_'): 
+            cnt = 0           
+            for k, v in l['vars'].items():
+                fulltext += f"$${k}={v}"
+                if (cnt % varsperline == 0):
+                    fulltext += "\n"
+                else:                     
+                    tlen = len(v)
+                    while (tlen < 64): #for now 64 len value assumed.  
+                        fulltext += "\t"
+                        tlen += 8
+                cnt += 1
+        elif (type == '~~'):
+            test = ''
+
+      if (fulltext != ""):
+        self.label_p.setText(fulltext)
+        self.label_p.adjustSize()
+        self.label_p.update()
+        logger.info(f'$$PTEXT={fulltext}')
+        
+
+
+    def showQR(self, data, struct=[]):
         """Method to show a QR code."""
 #        logger.info('Showing QR code')
         #adjust readable text first..
-        self.label_1.setText(data)
-        self.label_1.adjustSize()
-        self.label_1.update()
+        #check for last last command is it list_bookmarks.  
+        self.show_p(struct)
+
+        self.label_info.setText(data)
+        self.label_info.adjustSize()
+        self.label_info.update()
         qrdata = data
         #if we need to truncate
         print(f'QR data length: {len(qrdata)}')
@@ -1855,8 +1915,8 @@ class MyWindow(QMainWindow):
 #        qr_image = Image.open("qrcode.png")
 #        qr_image.show()
         pixmap = QPixmap('qrcode.png')
-        self.label_2.setPixmap(pixmap)
-        self.label_2.adjustSize()
+        self.label_qr.setPixmap(pixmap)
+        self.label_qr.adjustSize()
 
         logger.info('QR code displayed')
 
