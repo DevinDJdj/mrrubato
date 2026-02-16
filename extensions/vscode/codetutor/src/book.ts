@@ -1022,9 +1022,9 @@ async function fixVectraError(filePath: vscode.Uri){
 
 export async function getChat(input: string, model: string = 'llama3.1:8b') : Promise<string> {
     let response = await ollama.chat({
-        model: 'llama3.1:8b',
-        //model: 'gemma3n:latest',
-        //model: 'gemma3:4b',
+//        model: 'llama3.1:8b',
+//        model: 'gemma3n:latest',
+        model: 'gemma3:4b',
 //            model: 'granite3.3:8b',
 
         messages: [
@@ -1259,6 +1259,18 @@ export async function markdown(prompt: string) : Promise<string> {
 
     return marked;
 
+}
+
+export async function ask(prompt: string) : Promise<string> {
+    //this will be used to ask a question about the book.  
+    //for now just return the prompt.
+    let originalb = await read(prompt, GIT_BOOK);
+//    let summary = await getSummary(originalb[1], 5000); //get the summary of the chunks.
+    //not efficient, maybe just get end of book..
+    let summary = originalb[1].slice(-10000); //just take the end of the book for context.
+    //context window is small I think..
+    let response = await getChat(summary + "\n\n\n" + prompt + "==\n");
+    return response;
 }
 
 export async function summary(prompt: string) : Promise<string> {

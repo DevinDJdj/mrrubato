@@ -862,12 +862,14 @@ class hotkeys:
         logger.info(f'--{link["text"]}')
         self.func = "Click Link_"
         #should make this more general.. send last ten links
-        last20 = links[max(0, linkno-10):min(linkno+10, lenlinks)]
+        last15 = links[max(0, linkno-15):min(linkno+5, lenlinks)]
+        last15.reverse() #reverse to match with Future:Past order in display.. [48 - 68]
+        #does this match up with keys?  
         vars = {}
-        vars['linkno'] = linkno
-        for i, l in enumerate(last20):
+        for i, l in enumerate(last15):
           vars[f'link{i}'] = l['text']
 #          vars[f'href{i}'] = l['href']
+        vars['linkno'] = linkno
         self.set_qr(self.func, vars)
         self.speak(f'--{link["text"]}')
         resume_reader() #resume after speaking link number.

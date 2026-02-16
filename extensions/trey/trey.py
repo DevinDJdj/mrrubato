@@ -388,14 +388,14 @@ def on_get_screen(icon, item):
     get_screen()
 
 
-def gen_audio(ldmap, stop_event=None):
+def gen_audio(ldmap, astop_event=None):
     """Generate audio from text using the speech pipeline."""
     from extensions.trey.speech import generate_audio
     logger.info('Starting audio generation thread')
     print('Generating audio for link density map')
     print(ldmap)
     for idx, l in enumerate(ldmap):
-        if (stop_event is not None and stop_event.is_set()):
+        if (astop_event is not None and astop_event.is_set()):
             logger.info('Audio generation stop event set, stopping audio generation')
             print('Audio generation stop event set, stopping audio generation')
             break
@@ -883,10 +883,13 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
                 break
 
             if skip_event.is_set():
-                ev = q.get()
+                ev = q.queue[-1] 
                 if (ev == -1001): #pause event.. for speaking..
                     while(skip_event.is_set()):
                         time.sleep(0.5)
+                        if (random.randint(0,100) < 10):
+                            print('Waiting for pause to clear...')
+                    q.get() #clear the event
                 else: #real skip
                     stopsound(currentsound)                    
                     i = len(l)+1 #break out of loop to move to next line.
@@ -979,10 +982,10 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
 #    sys.exit() # Exit the thread when done
 
 
-def delay_stop_event(stop_event, delay):
+def delay_stop_event(s_event, delay):
     """Set the stop event after a delay."""
     time.sleep(delay)
-    stop_event.set()
+    s_event.set()
 
 
 def speak(text, links = [], alt_text=[], offset=0, lang='en', cacheno=-1):
@@ -1703,6 +1706,45 @@ class MyWindow(QMainWindow):
             print(f'Firebase login failed: {e}')
 
 
+    def getColorFromSequence(self, seqno, format="rgb"):
+        NUM_COLORS = 6
+        """
+        Generates a color string (RGB or hexadecimal) based on a sequence number.
+        """
+        adjust = int(seqno / NUM_COLORS)  # Ensure adjust is an integer
+        adjust = adjust % (NUM_COLORS / 2)
+        r = 0
+        g = 0
+        b = 0
+
+        if seqno % NUM_COLORS == 0:
+            r = 255
+        elif seqno % NUM_COLORS == 1:
+            r = 255
+            g = 127
+        elif seqno % NUM_COLORS == 2:
+            r = 255
+            g = 255
+        elif seqno % NUM_COLORS == 3:
+            g = 255
+        elif seqno % NUM_COLORS == 4:
+            b = 255
+        elif seqno % NUM_COLORS == 5:
+            r = 148
+            b = 211
+
+        if adjust > 0:
+            r = int(r * (1 - (adjust / NUM_COLORS)))
+            g = int(g * (1 - (adjust / NUM_COLORS)))
+            b = int(b * (1 - (adjust / NUM_COLORS)))
+
+        if format == "hex":
+            def toHex(c):
+                return c.to_bytes(1, 'big').decode('hex')
+            return "#" + toHex(r) + toHex(g) + toHex(b)
+        else:
+            return "rgba(" + str(r) + "," + str(g) + "," + str(b) + ",1)"
+
     def init_fb(self):
         databaseURL = self.cfg["firebase"]["fbconfig"]["databaseURL"]
             # Init firebase with your credentials
@@ -1772,14 +1814,36 @@ class MyWindow(QMainWindow):
         #not sure best size.  
         self.label_qr.move(self.width() - 500, self.height() - 400)
 
+        self.label_ps = []
+        wbarray = [0,1,0,1,0,0,1,0,1,0,1,0] #for now fixed from C
+        colorarray = [""]
+        for i in range(25): #assume 25 key range for now..
+            self.label_ps.append(QLabel(self))
+            color = self.getColorFromSequence(i)
+            if (wbarray[i%len(wbarray)] == 0):
+                self.label_ps[i].setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};")
+            else:
+                self.label_ps[i].setStyleSheet(f"background-color: rgba(0, 0, 0, 1);color: {color};")
+            font = QFont("Courier", 12-wbarray[i%len(wbarray)]*2) # Specify font family and size
+            self.label_ps[i].setFont(font)
+#            self.label_ps[i].setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};")
+            self.label_ps[i].move(250, self.geo.height() - (300-i*10-wbarray[i%len(wbarray)]*2))
+            self.label_ps[i].setFixedHeight(10-wbarray[i%len(wbarray)]*2)
+            self.label_ps[i].setFixedWidth(500)
+            self.label_ps[i].setTextFormat(Qt.PlainText)
+
+
         self.label_p = QLabel(self)
         # 2. Set a monospaced font
         font = QFont("Courier", 12) # Specify font family and size
         font.setFixedPitch(True)    # Ensure it uses the fixed pitch version if available
         self.label_p.setFont(font)    # Apply the font to the label        
         self.label_p.setStyleSheet("background-color: rgba(255, 255, 255, 1);color: red;")
-        self.label_p.move(200, self.geo.height() - 200)
+        self.label_p.move(750, self.geo.height() - 300)
+        self.label_p.setFixedHeight(250)
         self.label_p.setTextFormat(Qt.PlainText)
+#        self.label_p.setStyleSheet("background-image: url(path/to/your/image.png); border: 2px solid blue;")
+
         metrics = QFontMetrics(font)
         # Using boundingRect is generally more accurate than width() or horizontalAdvance()
         w = metrics.boundingRect("X").width()
@@ -1868,20 +1932,32 @@ class MyWindow(QMainWindow):
       fulltext = ""
       nextline = ""
       cnt = 0
+
+      wbarray = [0,1,0,1,0,0,1,0,1,0,1,0] #for now fixed from C
+      
+      
       for i, l in enumerate(struct):
         type = l['type']
         if (type == '> '):
           if (l['cmd'] == 'Click Link_'): 
-            cnt = 0           
+            cnt = 0       
             for k, v in l['vars'].items():
-                fulltext += f"$${k}={v}"
-                if (cnt % varsperline == 0):
-                    fulltext += "\n"
-                else:                     
-                    tlen = len(v)
-                    while (tlen < 64): #for now 64 len value assumed.  
-                        fulltext += "\t"
-                        tlen += 8
+                if (wbarray[i%len(wbarray)] == 0):
+                    fulltext += "\t"
+                else:
+                    fulltext += "\t\t\t"
+                #find number in key
+                n = k[4:]
+
+                if (n.isdigit()):
+                    for j in range(int(n)%12):
+                        fulltext += " "
+                    color = self.getColorFromSequence(int(n))
+                    self.label_ps[int(n)%len(self.label_ps)].setText(f'{n}={v}')
+
+
+                fulltext += f" {n} = {v}"
+                fulltext += "\n"
                 cnt += 1
         elif (type == '~~'):
             test = ''
@@ -2036,7 +2112,7 @@ def skip_lines(n, cacheno=-1):
     for i, audio_skip_event in enumerate(audio_skip_events):
         print(f'Skipping lines in audio thread {i}')
         audio_skip_queue[i].put(int(n*3))
-        audio_skip_event.set()
+        audio_skip_events[i].set()
 
 def select_type(n):
     #called from hotkeys to skip n lines of audio.
@@ -2184,10 +2260,10 @@ def init_inputs():
 #    midiout = mido.open_output(outputs[1]) #open first output for now.  
     midiin = mido.open_input(inputs[0]) #open first input for now.
 
-def run_midi(stop_event, kill_event, qr_queue=None, qrin_queue=None, audio_location_queue=None):
+def run_midi(mstop_event, kill_event, qr_queue=None, qrin_queue=None, audio_location_queue=None):
     global midiout, midiin
     global mk
-    mk = mykeys.MyKeys(config.cfg, qapp, mywindow.startx, stop_event)
+    mk = mykeys.MyKeys(config.cfg, qapp, mywindow.startx, mstop_event)
     logger.info('Starting MIDI input/output')
     init_inputs()
     
@@ -2200,7 +2276,7 @@ def run_midi(stop_event, kill_event, qr_queue=None, qrin_queue=None, audio_locat
         handle_keys(qr_queue, qrin_queue)
         init_inputs() #re-init inputs in case something changed.
         time.sleep(0.1)  # Small delay to prevent high CPU usage
-        stop_event.clear()  # Clear the event for the next iteration
+        mstop_event.clear()  # Clear the event for the next iteration
         mk.start_feedback() #restart feedback if needed.
 
     logger.info('MIDI thread completed, unloading MK')

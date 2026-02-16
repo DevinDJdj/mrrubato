@@ -171,6 +171,7 @@ def click_link(cacheno, text_offset, link_offset=0, open_new_tab=False):
 
         page_info = page_cache[cacheno]
         links = page_info['links']
+        page = page_info['page']
 
         if (is_internal_link(linkno, cacheno)):
             #find href and return offset of this text..

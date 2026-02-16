@@ -469,7 +469,7 @@ function activate(context) {
         if (request.command === 'chat') {
             //no context query..
             //shouldnt want this..
-            let res = await Book.getChat(request.prompt);
+            let res = await Book.ask(request.prompt);
             let response = await Book.markdown(res);
             stream.markdown(response);
             //workbench.action.chat.readChatResponseAloud
@@ -755,7 +755,7 @@ function activate(context) {
                         }
                         //pass topic and chat.  for now just /similar
                         let atext = text.replace("@@", "~~");
-                        vscode.commands.executeCommand('workbench.action.chat.open', "@mr /similar " + atext);
+                        vscode.commands.executeCommand('workbench.action.chat.open', "@mr /chat " + atext);
                         break;
                     default:
                         //find person.  

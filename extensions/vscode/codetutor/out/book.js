@@ -68,6 +68,7 @@ exports.getSummary = getSummary;
 exports.getChunks = getChunks;
 exports.getReadableName = getReadableName;
 exports.markdown = markdown;
+exports.ask = ask;
 exports.summary = summary;
 exports.expandPrompt = expandPrompt;
 exports.similar = similar;
@@ -925,9 +926,9 @@ async function fixVectraError(filePath) {
 }
 async function getChat(input, model = 'llama3.1:8b') {
     let response = await ollama_1.default.chat({
-        model: 'llama3.1:8b',
-        //model: 'gemma3n:latest',
-        //model: 'gemma3:4b',
+        //        model: 'llama3.1:8b',
+        //        model: 'gemma3n:latest',
+        model: 'gemma3:4b',
         //            model: 'granite3.3:8b',
         messages: [
             { role: 'system', content: `Answer the Query to the best of your ability.  ` },
@@ -1137,6 +1138,17 @@ async function markdown(prompt) {
         }
     });
     return marked;
+}
+async function ask(prompt) {
+    //this will be used to ask a question about the book.  
+    //for now just return the prompt.
+    let originalb = await read(prompt, exports.GIT_BOOK);
+    //    let summary = await getSummary(originalb[1], 5000); //get the summary of the chunks.
+    //not efficient, maybe just get end of book..
+    let summary = originalb[1].slice(-10000); //just take the end of the book for context.
+    //context window is small I think..
+    let response = await getChat(summary + "\n\n\n" + prompt + "==\n");
+    return response;
 }
 async function summary(prompt) {
     //this will be used to find similar topics in the book.  

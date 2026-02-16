@@ -374,3 +374,19 @@ Need time component.
 For now just use text.  
 Fixed width text.
 
+**extensions/vscode/codetutor/src/extension.ts
+Maybe add to vectra DB all file names.  
+Probably want to do this..
+
+
+WBWBWWBWBWBW
+5 7 segment
+
+
+**extensions/vscode/codetutor/src/extension.ts
+for now @@ send to LLM.. 
+Need additional context built as well..
+
+
+**extensions/trey/trey.py
+Need to get rid of overlay after link clicked..
