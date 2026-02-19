@@ -99,6 +99,7 @@ class transcriber:
         print(sorted_files)
         ret = []
         currentcmd = ""
+        currenttopc = None
         vars = {}
         topc = None
         last_time = None
@@ -133,6 +134,7 @@ class transcriber:
                                 now += timedelta(days=relativedays)
                                 topc = self.get_cmd(type, line[2:].strip(), {'TIME': now.strftime('%Y%m%d_%H%M%S')})
                                 ret.append(topc)
+                                currenttopc = topc
                             else:
                                 if (topc is not None and 'lines' in topc):
                                     topc['lines'].append(line)
@@ -164,6 +166,10 @@ class transcriber:
                                         #in case we have = within the value..
                                         value = "".join(parts[1:]).strip()
                                         vars[key] = value
+
+                                        #add to topic as well..                                        
+                                        if (currenttopc is not None and 'vars' in currenttopc):
+                                            currenttopc['vars'][key] = value
 
                 except Exception as e:
                     logger.error(f'!!> Read [{f}]\n !!{e}\n')

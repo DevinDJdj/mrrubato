@@ -48,6 +48,13 @@ async function toggleSpeechToText() {
 	chrome.tabs.get(activeInfo.tabId, function(tab) {
 		if (!tab.url) return;
 		//create QR code here which represents the current tab URL.
+		const formattedUTC = new Date()
+		.toISOString()
+		.replace(/[^0-9]/g, '')
+		.slice(0, 14);
+		msg = "$$TIME=" + formattedUTC; //milliseconds
+		msg += "\n";
+		msg += "$$URL=" + tab.url;
 		openQR(tab.url, activeInfo.tabId);
 	  console.log("New active tab URL: " + tab.url);
 	});
@@ -59,6 +66,17 @@ async function toggleSpeechToText() {
 
 	openQR(tab.url, tabId);
   });
+
+
+	// background.js
+	chrome.runtime.onConnect.addListener(function(port) {
+		if (port.name === "popup") {
+			port.onDisconnect.addListener(function() {
+			console.log("popup has been closed")
+			
+			});
+		}
+	});
 
   function openQR(aurl, tabId=null){
 	const url = new URL(aurl);

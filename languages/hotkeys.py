@@ -867,9 +867,10 @@ class hotkeys:
         #does this match up with keys?  
         vars = {}
         for i, l in enumerate(last15):
-          vars[f'link{i}'] = l['text']
+          vars[f'{i}'] = l['text']
 #          vars[f'href{i}'] = l['href']
-        vars['linkno'] = linkno
+        vars['idx'] = linkno
+
         self.set_qr(self.func, vars)
         self.speak(f'--{link["text"]}')
         resume_reader() #resume after speaking link number.
@@ -917,7 +918,12 @@ class hotkeys:
         return 0
       elif (isinstance(a, str)):
         #internal link..
+        pause_reader()
         self.speak(f'{a}')
+        time.sleep(min(len(a)/40, 4)) #wait for speaking to finish.  Need better way to ensure this.
+        #dont block input too long..
+        resume_reader()
+        logger.info(f'Internal Link: {a}')
         return 0
       else:
         print(f'Clicked link, no new page returned {a}')

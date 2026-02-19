@@ -30,6 +30,7 @@ class _meta:
     self.alltopics = {}
     self.topicarray = []
     self.selectedtopic = None
+    self.selectedtopicindex = None
 
   def word(self, sequence=[]):
     """Word lookup."""
@@ -80,7 +81,8 @@ class _meta:
 
         self.topicarray.insert(0, c['cmd']) #time reverse order
     if (numtopics > 0):
-      self.selectedtopic = self.topicarray[0] #default to first topic.
+      self.selectedtopicindex = 0      
+      self.selectedtopic = self.topicarray[self.selectedtopicindex] #default to first topic.
 
     logger.info(f'Loaded {numtopics} topics and {len(book)} book transcripts from ./book/')
 
@@ -204,15 +206,41 @@ class _meta:
 
     return 0
 
+  def adjust_topic_index(self, idx):
+    if idx+self.selectedtopicindex < 0:
+      return 0
+    elif (idx+self.selectedtopicindex) >= len(self.topicarray):
+      return len(self.topicarray)-1
+    else:
+      return self.selectedtopicindex + idx
+      
+  def select_topic_(self, sequence=[]):
+    if (len(sequence) > 0) and sequence[-1] != self.keybot:
+      logger.info(f'> Select Topic_ {sequence}')
+      print("> Select Topic_")
+      newidx = self.adjust_topic_index(sequence[-1]-self.keymid)
+      logger.info(f'--{self.topicarray[newidx]["text"]}')
+      self.func = "Select Topic_"
+      #should make this more general.. send last ten links
+      last15 = self.topicarray[max(0, newidx-12):min(newidx+12, len(self.topicarray))]
+      last15.reverse() #reverse to match with Future:Past order in display.. [48 - 68]
+      #does this match up with keys?  
+      vars = {}
+      for i, l in enumerate(last15):
+        vars[f'{i}'] = l
+#          vars[f'href{i}'] = l['href']
+      vars['idx'] = newidx
+      self.set_qr(self.func, vars)
+    #scroll up or back?  
+    #list most likely topics based on recency and relevance to current topic.
+
   def select_topic(self, sequence=[]):
     selected = 0
     if (len(sequence) > 0):
-      selected = sequence[0]-self.keybot
+      selected = sequence[-1]-self.keymid
 
-    if selected < 0 or selected >= len(self.topicarray):
-      logger.info(f'> Select Topic {sequence} INVALID SELECTION')
-      return -1
-    self.selectedtopic = self.topicarray[selected] if selected < len(self.topicarray) else None
+    self.selectedtopicindex = self.adjust_topic_index(selected)
+    self.selectedtopic = self.topicarray[self.selectedtopicindex] if self.selectedtopicindex < len(self.topicarray) else None
     logger.info(f'> Select Topic {sequence}')
     #get bookmark at index selected
     self.func = "Select Topic"

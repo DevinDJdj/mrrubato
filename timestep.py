@@ -470,6 +470,8 @@ def saveLocalTranscripts():
             # Opt : if you want to make public access from the URL
             blob.make_public()
             uploadedfiles.append(tfolder + file)
+#        else:
+#            print(f"{tfolder + file} already exists in storage, skipping upload.")
 
     print(f"Uploaded {len(uploadedfiles)} transcripts:")
     print(uploadedfiles)

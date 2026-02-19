@@ -390,3 +390,101 @@ Need additional context built as well..
 
 **extensions/trey/trey.py
 Need to get rid of overlay after link clicked..
+
+still issue with internal links..
+
+Just have page down scroll down or up..
+Or turn on/off follow.  
+
+**languages/hotkeys.py
+Need command to bring up transcripts..
+
+**timestep.py
+--saveLocalTranscripts
+Need to upload the transcripts associated with the time of recording..
+Need separate entry point in DB for each video.  
+For now only upload data while recording..
+Get snippet of MIDI?  
+Get Video and any transcript for that time period..
+Lazy.., just upload all?  
+
+
+**extensions/handsfree/background.js
+--openQR
+Use QR Read to sync times.  
+Update QR every few seconds to include time..
+Then when read, we know how to match up the time..
+For now no updating, adds complexity/confusion.  
+Dont want to re-read all the time..
+How long has it been displayed?  
+When someone joins the real-time room update..
+This should be sufficient..
+Find another way to sync times...
+use TIME param in scanned QR..
+Need to scan Full screen.  
+
+
+**mykeys.py
+@@Word creation logic?  
+[11,11,11]
+After the fact.  
+Take prior sequence.  Define sequence length to take.  
+Feedback describing sequence.  
+Detect number of params for each word and automatically instigate each action after that number of params is given.. 
+Essentially just call each 
+> _word 
+and 
+> word_ 
+> word
+based on number of params given..
+Extend wait time when word has been created.. 
+
+Custom defined sequences for now standard start with [A,2A]
+Should be able to dynamically set language keybot..
+Everything needs to be relative from that perspective..
+later..
+
+
+**languages/_meta.py
+--select_topic
+topic selection.  
+> Select Topic_
+@@How to scroll?
+[11,12] scroll..
+[12,11] scroll..
+
+Display minimap timeline, just text?  
+Squish timeline..
+
+horizontal greenscreen text.  
+Time scale adjustable based on context.  
+Need label size calculations all dynamic based on geo..
+
+Type
+NumEvents
+label.setText("A<span style='color: red;'>B</span><span style='color: blue;'>C</span>");
+
+Color indicates 
+
+Use time scale and allow for zoom in/out.. 
+Select relevant info from current time scale transcripts..
+Display this..
+This will also go to that location in video or audio if available..
+
+#https://github.com/ctrlcctrlv/FRBCistercian
+
+
+**/testing/fonts
+
+> git clone https://github.com/ctrlcctrlv/FRBCistercian.git
+
+#https://fontforge.org/en-US/downloads/windows-dl/
+
+$$PATH=C:\Program Files\FontForgeBuilds\bin
+
+
+@@is .. ok for a time prefix?  
+
+**extensions/trey/trey.py
+--show_t
+text graph..

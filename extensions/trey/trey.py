@@ -41,7 +41,7 @@ import torch
 import pystray
 from PIL import Image, ImageDraw
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QLabel
-from PyQt5.QtGui import QPixmap, QPainter, QPen, QBrush, QImage, QFont, QFontMetrics
+from PyQt5.QtGui import QPixmap, QPainter, QPen, QBrush, QImage, QFont, QFontMetrics, QFontDatabase
 from PyQt5.QtCore import Qt, QObject, pyqtSignal, QThread
 import PyQt5.QtCore as QtCore
 import win32gui
@@ -893,6 +893,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
                 else: #real skip
                     stopsound(currentsound)                    
                     i = len(l)+1 #break out of loop to move to next line.
+
                     continue
                     
 
@@ -1801,9 +1802,12 @@ class MyWindow(QMainWindow):
         for i in range(100):
             self.windowlabels[str(i)] = QLabel(f'Label {i}', self)
         # creating a label widget
+
+
+
         self.label_info = QLabel("transparent ", self)
         # moving position
-        self.label_info.move(self.geo.width() - 300, 100)
+        self.label_info.move(int(self.geo.width()*0.8), int(self.geo.height()*0.1))
         self.label_info.setStyleSheet("background-color: rgba(255, 255, 255, 1);color: red;")
         self.label_info.adjustSize()
         self.label_info.setWordWrap(True)
@@ -1812,35 +1816,40 @@ class MyWindow(QMainWindow):
         #move to bottom right corner
         self.label_qr.setStyleSheet("background-color: rgba(255, 255, 255, 1);")
         #not sure best size.  
-        self.label_qr.move(self.width() - 500, self.height() - 400)
+        self.label_qr.move(int(self.width()*0.75), int(self.height()*0.75))
 
         self.label_ps = []
         wbarray = [0,1,0,1,0,0,1,0,1,0,1,0] #for now fixed from C
         colorarray = [""]
+        fullwidth = self.geo.width()
+        pwidth = int(fullwidth/5)
+        fontsize = 16
         for i in range(25): #assume 25 key range for now..
             self.label_ps.append(QLabel(self))
             color = self.getColorFromSequence(i)
+            color = "red" #for now just red, can use color sequence later. Not very visible with several colors..
             if (wbarray[i%len(wbarray)] == 0):
                 self.label_ps[i].setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};")
             else:
                 self.label_ps[i].setStyleSheet(f"background-color: rgba(0, 0, 0, 1);color: {color};")
-            font = QFont("Courier", 12-wbarray[i%len(wbarray)]*2) # Specify font family and size
+            font = QFont("Courier", fontsize-wbarray[i%len(wbarray)]*2) # Specify font family and size
             self.label_ps[i].setFont(font)
 #            self.label_ps[i].setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};")
-            self.label_ps[i].move(250, self.geo.height() - (300-i*10-wbarray[i%len(wbarray)]*2))
-            self.label_ps[i].setFixedHeight(10-wbarray[i%len(wbarray)]*2)
-            self.label_ps[i].setFixedWidth(500)
+            self.label_ps[i].move(pwidth+(i//12)*pwidth+wbarray[i%len(wbarray)]*20, self.geo.height() - (pwidth-(i%12)*fontsize))
+            self.label_ps[i].setFixedHeight(fontsize-wbarray[i%len(wbarray)]*2)
+            self.label_ps[i].setFixedWidth(pwidth-wbarray[i%len(wbarray)]*40)
             self.label_ps[i].setTextFormat(Qt.PlainText)
 
 
         self.label_p = QLabel(self)
         # 2. Set a monospaced font
-        font = QFont("Courier", 12) # Specify font family and size
+        font = QFont("Courier", fontsize-2) # Specify font family and size
         font.setFixedPitch(True)    # Ensure it uses the fixed pitch version if available
         self.label_p.setFont(font)    # Apply the font to the label        
         self.label_p.setStyleSheet("background-color: rgba(255, 255, 255, 1);color: red;")
-        self.label_p.move(750, self.geo.height() - 300)
-        self.label_p.setFixedHeight(250)
+        self.label_p.move(0, self.geo.height() - pwidth)
+        self.label_p.setFixedHeight(pwidth)
+        self.label_p.setFixedWidth(pwidth)
         self.label_p.setTextFormat(Qt.PlainText)
 #        self.label_p.setStyleSheet("background-image: url(path/to/your/image.png); border: 2px solid blue;")
 
@@ -1851,7 +1860,35 @@ class MyWindow(QMainWindow):
         self.pwidth = self.geo.width()/w
         self.pheight = 200/h
         logger.info(f'MyWindow {self.pwidth} X {self.pheight} loaded')
-    
+
+#        QFontDatabase.addApplicationFont("../fonts/FRBCistercian.otf")
+#for now no custom fun font.. 
+#just use UTF-8 characters and a monospaced font.
+
+        self.label_times = []
+        for i in range(2):
+            #show event types for each time point.
+
+            t = QLabel(f'Time{i}', self)
+            t.setFont(font)    # Apply the font to the label        
+            t.move(int(self.geo.width()*0.1), int(self.geo.height()*0.02*(i+1)))
+            t.setFixedHeight(h+2)
+            w = metrics.boundingRect(chr(0x2160)).width()
+            t.setFixedWidth(w*60*2) #60 char of time info.. 36-96 ? 
+            t.setStyleSheet("background-color: rgba(255, 255, 255, 1);color: red;")
+            #some reason <pre> makes formatting a bit nicer..
+            ltext = ""
+            startchar = 0x2160 #start of roman numeral characters, just to have some unique chars to test with for now.
+            startchar = 0x30A1 #start of katakana characters, just to have some unique chars to test with for now.
+            for j in range(60):
+                ltext += chr(startchar+j) #white square as placeholder for now.
+#            t.setText('<pre>\u2160\u2160\u2160\u2160\u2160</pre>') #roman numeral 1 as placeholder for now.
+            t.setText(f'<pre>{ltext}</pre>')
+
+            t.adjustSize()
+
+            self.label_times.append(t)
+
         # show all the widgets
         self.show()
         self.showQR("Starting Trey Overlay")
@@ -1939,7 +1976,7 @@ class MyWindow(QMainWindow):
       for i, l in enumerate(struct):
         type = l['type']
         if (type == '> '):
-          if (l['cmd'] == 'Click Link_'): 
+          if (l['cmd'] == 'Click Link_' or l['cmd'] == 'Select Topic_'): 
             cnt = 0       
             for k, v in l['vars'].items():
                 if (wbarray[i%len(wbarray)] == 0):
@@ -1947,7 +1984,7 @@ class MyWindow(QMainWindow):
                 else:
                     fulltext += "\t\t\t"
                 #find number in key
-                n = k[4:]
+                n = k
 
                 if (n.isdigit()):
                     for j in range(int(n)%12):
@@ -1959,6 +1996,7 @@ class MyWindow(QMainWindow):
                 fulltext += f" {n} = {v}"
                 fulltext += "\n"
                 cnt += 1
+
         elif (type == '~~'):
             test = ''
 
