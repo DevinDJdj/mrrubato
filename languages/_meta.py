@@ -1,10 +1,10 @@
 import logging
 from pynput import *
 import time
-
+from datetime import datetime, timedelta
 import languages.helpers.transcriber as transcriber
-import extensions.trey.playwrighty as playwrighty
-
+#import extensions.trey.playwrighty as playwrighty
+import languages.helpers.timewindow as timewindow
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +31,10 @@ class _meta:
     self.topicarray = []
     self.selectedtopic = None
     self.selectedtopicindex = None
+    self.speed = 1.0
+    self.zoom = 1.0
+    self.timewindow = timewindow.timewindow(self) #starttime/endtime, etc.  
+
 
   def word(self, sequence=[]):
     """Word lookup."""
@@ -98,9 +102,17 @@ class _meta:
       "3": {
         "Start": [48,60,61], #Start/resume recording
         "Help": [48,60,49], #show help
+        #48, 51 TOPIC
         "List Topics": [48,51,54], #list topics
         "Select Topic": [48,51,55], #select topic
         "Set Topic": [48,51,56], #set topic with voice command
+        #48, 50 TIME
+        "Set Speed": [48,50,54], #set speed of time
+        "Time Jump": [48,50,52], #jump to time 
+        "Time Zoom": [48,50,53], #set zoom, separate from speed.  
+        #48, 52 FIND?  
+        "Tick": [48,53], #manual tick forward in time by small increments.
+        "Tock": [48,54], #manual tick backward in time by small increments.
       }
     }
     if (self.name in self.config['languages']):
@@ -118,7 +130,12 @@ class _meta:
       "List Topics": "list_topics",
       "Select Topic": "select_topic",
       "Set Topic": "set_topic", #smart search of existing topics?  
-      "_Set Topic": "_set_topic", #smart search of existing topics?  
+      "_Set Topic": "_set_topic", #smart search of existing topics?
+      "Set Speed": "set_speed",
+      "Time Jump": "time_jump",
+      "Time Zoom": "time_zoom", 
+      "Tick": "tick",
+      "Tock": "tock",
     }
     self.helpdict = {
       "Start": {"help": "start", "params": "None", "desc": "Start/Resume video recording."},
@@ -126,7 +143,12 @@ class _meta:
       "Pause": {"help": "pause", "params": "None", "desc": "Pause video playback."},
       "List Topics": {"help": "list topics", "params": "None", "desc": "List available topics."},
       "Select Topic": {"help": "select topic <index>", "params": "<index>", "desc": "Select topic by index from list."},
-      "Set Topic": {"help": "set topic <name>", "params": "<name>", "desc": "Set topic by name."}
+      "Set Topic": {"help": "set topic <name>", "params": "<name>", "desc": "Set topic by name."},
+      "Set Speed": {"help": "set speed <value>", "params": "<value>", "desc": "Set playback speed, relative to current."}, 
+      "Time Jump": {"help": "time jump <time>", "params": "<time>", "desc": "Jump to specific time."},
+      "Time Zoom": {"help": "time zoom <level>", "params": "<level>", "desc": "Set zoom level of time."},
+      "Tick": {"help": "tick", "params": "None", "desc": "Manually tick forward in time by small increments."},
+      "Tock": {"help": "tock", "params": "None", "desc": "Manually tick backward in time by small increments."},
                        
 
     }
@@ -199,6 +221,53 @@ class _meta:
     return 0
 
 
+  def tick(self, sequence=[]):
+    logger.info(f'> Tick {sequence}')
+    t = self.timewindow.tick(self.speed)
+    return 0
+
+
+  def tock(self, sequence=[]):
+    logger.info(f'> Tock {sequence}')
+    t = self.timewindow.tick(-self.speed)
+    return 0
+
+  def set_speed(self, sequence=[]):
+    logger.info(f'> Set Speed {sequence}')
+    if (len(sequence) > 0):
+      adjust = float(sequence[-1] - self.mid) / 10.0 #just use 10 keys for mid..
+      if (adjust <= 0.1):
+        adjust = 0.1
+      if adjust > 10:
+        adjust = 10
+      self.speed *= adjust
+      logger.info(f'$$SPEED={self.speed}')
+    return 0
+
+  def time_jump(self, sequence=[]):
+    logger.info(f'> Time Jump {sequence}')
+    jump = 0.1 #default jump level
+    if (len(sequence) > 0):
+      jump = float(sequence[-1] - self.mid) / 10.0 #just use 10 keys for mid..
+    t = self.timewindow.timeJump(jump)
+    vars = {}
+    logger.info(f'$$TIME={t}')
+    self.set_qr("Time Jump", {'JUMP': jump, 'TIME': t, 'START': self.timewindow.starttime, 'END': self.timewindow.endtime})
+    return 0
+  
+  def time_zoom(self, sequence=[]):
+    logger.info(f'> Time Zoom {sequence}')
+    zoom = 2.0 #default zoom level
+    if (len(sequence) > 0):
+      zoom = float(sequence[-1] - self.keybot) / 5.0
+    w = self.timewindow.timeZoom(zoom)
+    vars = {}
+    logger.info(f'$$TIMEWINDOW={w}')
+    self.set_qr("Time Zoom", {'ZOOM': zoom, 'WINDOW': w, 'TIME': self.timewindow.getTime(), 'START': self.timewindow.starttime, 'END': self.timewindow.endtime})
+
+
+    return 0
+  
   def list_topics(self, sequence=[]):
     logger.info(f'> List Topics {sequence}')
     #for now just demo..

@@ -1542,6 +1542,20 @@ class MyWindow(QMainWindow):
         elif (command == "_Click Link"):
             self.show()
             #simulate click at link location if given.
+        elif (command == "Time Jump" or command == "Time Zoom"):
+            t = float(vars.get('TIME', time.time()))
+            w = float(vars.get('WINDOW', 86400)) #default 1 day
+            s = float(vars.get('START', t-w/2))                              
+            e = float(vars.get('END', t+w/2))
+            self.set_time(t, s, e, w)
+            print("Time Jump to: " + str(t) + " Start: " + str(s) + " End: " + str(e) + " Window: " + str(w))
+            #set time locally.  
+            #simulate click at link location if given.
+        elif (command == "Set Speed"):
+            speed = float(vars.get('SPEED', '1.0'))
+            self.set_speed(speed)
+            print("Set Speed to: " + str(speed))
+
         elif (command == "Screenshot"):
             print("Taking Screenshot")
             print(vars['BBOX'])
@@ -1889,6 +1903,17 @@ class MyWindow(QMainWindow):
 
             self.label_times.append(t)
 
+        self.label_timeinfo = []
+        for i in range(4):
+            self.label_timeinfo.append(QLabel(self))
+            self.label_timeinfo[i].setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: red;")
+            font = QFont("Courier", fontsize-4) # Specify font family and size
+            self.label_timeinfo[i].setFont(font)
+            self.label_timeinfo[i].move(int(self.geo.width()*0.01), int(self.geo.height()*0.02*(i+1)))
+            self.label_timeinfo[i].setFixedHeight(fontsize-4)
+            self.label_timeinfo[i].setFixedWidth(int(self.geo.width()*0.09))
+            self.label_timeinfo[i].setTextFormat(Qt.PlainText)
+
         # show all the widgets
         self.show()
         self.showQR("Starting Trey Overlay")
@@ -1961,6 +1986,22 @@ class MyWindow(QMainWindow):
         self.hide()
         logger.info('Window hidden')
 
+
+    def set_time(self, t, s, e, w):
+        localt = datetime.fromtimestamp(t)
+        formattedt = localt.strftime('%Y%m%d %H%M%S')
+        st = datetime.fromtimestamp(s).strftime('%Y%m%d %H%M%S')
+        et = datetime.fromtimestamp(e).strftime('%Y%m%d %H%M%S')
+        self.label_timeinfo[0].setText(f'$${formattedt}')
+        self.label_timeinfo[1].setText(f'$$ST={st}')
+        self.label_timeinfo[2].setText(f'$$ET={et}')
+        for i in range(3):
+            self.label_timeinfo[i].update()
+        
+
+    def set_speed(self, speed):
+        self.speed = speed
+        self.label_timeinfo[3].setText(f'$$S={speed}')
 
     def show_p(self, struct=[]):
       """Method to show a QR code."""

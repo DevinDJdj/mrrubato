@@ -488,3 +488,26 @@ $$PATH=C:\Program Files\FontForgeBuilds\bin
 **extensions/trey/trey.py
 --show_t
 text graph..
+Just use minutes/hours..
+Select hour to zoom to minutes..
+Show command summary and associate command with same letter of minute.  
+Then select in that way..
+Highlight selection area (24 key), and scroll along.. jump etc.  
+Need DATE / hour display top left..
+> Select Item [A]
+> Jump/Zoom [T]
+
+Switch to 24 for hours?  
+If video available, select this frame and loop at current time frame.  
+Jump will also jump the video/audio..
+
+
+**extensions/vscode/codetutor/src/extension.ts
+Same time implement date time filter.  
+Keep history of selected time.  
+Amount of actual time spent at zoomed time.. 
+
+**languages/_meta.py
+try speed adjust.  
+time zoom etc..
+
