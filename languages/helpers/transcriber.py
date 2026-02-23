@@ -13,6 +13,7 @@ class transcriber:
     def __init__(self, lang_helper=None):
         self.lang_helper = lang_helper
         self.defstring = r"[~!@#$%^&*<>/:;\-\+=]"
+        self.allcmds = {} #lang -> {cmds, start_time, end_time, list of cmds in order..
         self.langmap = {}
 
     def getTime(self, relativedays=0):
@@ -76,7 +77,43 @@ class transcriber:
 
         lines = []
         return {'type': type, 'cmd': command, 'vars': vars, 'lines': lines, 'timestamp': t}
-    
+
+
+    def read_existing(self, lang, start_time=None, end_time=None):
+        logger.info(f'Using cached commands for {lang} from {self.allcmds[lang]["start_time"]} to {self.allcmds[lang]["end_time"]}')
+        #find startidx
+        increment = 1
+        if (start_time < self.allcmds[lang]['start_time']):
+            start_idx = self.allcmds[lang]['start_idx']
+            for (i, cmd) in enumerate(reversed(self.allcmds[lang]['cmds'][:start_idx])):
+                if (cmd['timestamp'] <= start_time.timestamp()):
+                    start_idx -= 1
+                else:
+                    break
+        else:
+            start_idx = self.allcmds[lang]['start_idx']
+            for (i, cmd) in enumerate(self.allcmds[lang]['cmds'][start_idx:]):
+                if (cmd['timestamp'] >= start_time.timestamp()):
+                    start_idx += 1
+                else:
+                    break   
+        
+        if (end_time < self.allcmds[lang]['start_time']):
+            end_idx = self.allcmds[lang]['end_idx']
+            for (i, cmd) in enumerate(reversed(self.allcmds[lang]['cmds'][:end_idx])):
+                if (cmd['timestamp'] <= end_time.timestamp()):
+                    end_idx -= 1
+                else:
+                    break
+        else:
+            end_idx = self.allcmds[lang]['end_idx']
+            for (i, cmd) in enumerate(self.allcmds[lang]['cmds'][end_idx:]):
+                if (cmd['timestamp'] >= end_time.timestamp()):
+                    end_idx += 1
+                else:
+                    break
+        return self.allcmds[lang]['cmds'][start_idx:end_idx]
+
     def read(self, lang, start_time=None, end_time=None, myfolder=""):
 
       #read from transcript file all instances of this.   
@@ -85,15 +122,19 @@ class transcriber:
         if (end_time is None):
             end_time = self.getTime()
         logger.info(f'Loading {lang} {myfolder} start {start_time} to {end_time}')
+
+        if (lang in self.allcmds and self.allcmds[lang]['start_time'] <= start_time and self.allcmds[lang]['end_time'] >= end_time):
+            return self.read_existing(lang, start_time, end_time) #get existing cmds..
+        
         #list all files in directory
         folder = '../transcripts/' + lang + '/'
         if (myfolder != ""):
             folder = myfolder
         os.makedirs(folder, exist_ok=True)
 
-        files = [f for f in os.listdir(folder) if os.path.getmtime(folder + f) >= start_time.timestamp() and os.path.getmtime(folder + f) <= end_time.timestamp()]
+        files = [f for f in os.listdir(folder) if os.path.getmtime(folder + f) >= start_time.timestamp() and os.path.getctime(folder + f) <= end_time.timestamp()]
 
-        sorted_files = sorted(files)
+        sorted_files = sorted(files, key=lambda f: os.path.getmtime(os.path.join(folder, f))) #sort by modification time, oldest first.  could also sort by creation time if needed.
         numloaded = 0
         print('Reading transcripts from:')
         print(sorted_files)
@@ -102,14 +143,16 @@ class transcriber:
         currenttopc = None
         vars = {}
         topc = None
-        last_time = None
+        last_time = start_time.timestamp()
+        mtime = None
         for f in sorted_files:
     #      if (f.startswith(yesterday) or f.startswith(today)):
             if (f.endswith('.txt')): #dont open wav files.. maybe rethink sharing directory..
                 #get name without extension
+                if (mtime is not None and mtime > last_time):
+                    last_time = mtime
+
                 mtime = os.path.getmtime(folder + f)
-                if (last_time is None):
-                    last_time = mtime - 30*86400  #30 days prior to first mtime to get relative time.  
 
                 try:
                     with open(folder + f, encoding='utf-8') as ff:
@@ -182,4 +225,8 @@ class transcriber:
                     vars = {}
                 last_time = mtime
                 numloaded += 1
+        ret.sort(key=lambda x: x['timestamp']) #sort by timestamp just in case.
+
+        self.allcmds[lang] = {'cmds': ret, 'start_time': start_time, 'end_time': end_time, 'start_idx': 0, 'end_idx': len(ret)-1}
+        logger.info(f'Loaded {numloaded} files for {lang} with {len(ret)} commands')
         return ret

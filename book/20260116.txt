@@ -511,3 +511,8 @@ Amount of actual time spent at zoomed time..
 try speed adjust.  
 time zoom etc..
 
+**extensions/trey/trey.py
+read from transcriber..
+Display number of entries/type of entries.  
+Display some sample entries..
+

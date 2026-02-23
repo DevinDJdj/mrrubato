@@ -16,6 +16,7 @@ import multiprocessing
 import subprocess
 from huggingface_hub import login
 import psutil
+import math
 
 from datetime import datetime
 
@@ -162,6 +163,9 @@ def send_hotkey(hotkey):
     k.release(keyboard.Key.ctrl)
     k.release(keyboard.Key.shift)
 
+
+start_times = []
+end_times = []
 def pause_obs_capture():
     checkobs = is_process_running("obs64.exe")
 
@@ -170,6 +174,7 @@ def pause_obs_capture():
         #send pause hotkey to OBS
         send_hotkey('8')
         print("Pause Recording " + str(time.time()))
+        end_times.append(time.time())
 
 def stop_obs_capture():
     checkobs = is_process_running("obs64.exe")
@@ -179,6 +184,8 @@ def stop_obs_capture():
         #send stop hotkey to OBS
         send_hotkey('z')
         print("Stop Recording " + str(time.time()))
+        if (len(start_times) < len(end_times)):
+            end_times.append(time.time())
     else:
         logger.info('OBS process not running, nothing to stop.')
 
@@ -192,6 +199,7 @@ def start_obs_capture():
         print("Start Recording " + str(time.time()))
         send_hotkey('9')
         print("Unpause Recording " + str(time.time()))
+        start_times.append(time.time())
 
     else:
         obsp = subprocess.Popen("C:\\Program Files\\obs-studio\\bin\\64bit\\obs64.exe", start_new_session=True, cwd="C:\\Program Files\\obs-studio\\bin\\64bit")
@@ -201,6 +209,7 @@ def start_obs_capture():
         #send start hotkey to OBS
         send_hotkey('a')
         print("Start Recording " + str(time.time()))
+        start_times.append(time.time())
 
 
 def on_click(x, y, button, pressed):
@@ -343,6 +352,29 @@ def copy_latest_file():
     newfname = f'../transcripts/{basefname[0:4]}/{basefname}'
     os.rename(latest_file, newfname)
     logger.info(f'->/{newfname}')
+
+    ttranscriber = transcriber.transcriber()
+    vars = {}
+    vars['fname'] = newfname
+    vars['TIME'] = int(os.path.getctime(newfname)) #for now just use file creation time as the time param.
+    #add start and end times for each pause..
+    formatted_start_times = [datetime.fromtimestamp(x).strftime("%Y%m%d_%H%M%S") for x in start_times]
+    formatted_end_times = [datetime.fromtimestamp(x).strftime("%Y%m%d_%H%M%S") for x in end_times]
+    if (len(formatted_start_times) != len(formatted_end_times)):
+        logger.warning('!! Number of start times does not match number of end times !!')
+        logger.warning(f'Start times: {formatted_start_times}')
+        logger.warning(f'End times: {formatted_end_times}')
+    else:
+        vars['START_TIMES'] = "\t".join(formatted_start_times) + "\n"
+        vars['END_TIMES'] = "\t".join(formatted_end_times) + "\n"
+        #calculate durations
+        durations = []
+        for start, end in zip(start_times, end_times):
+            duration = int(end - start) #not exact data anyway..
+            durations.append(str(duration))
+        vars['DURATIONS'] = "\t".join(durations) + "\n"
+
+    ttranscriber.write('video', 'RECORD', vars)
     return latest_file
 
 
@@ -1784,6 +1816,11 @@ class MyWindow(QMainWindow):
         self.windowcounter = 0
         self.screenshots = [] #list of screenshots per monitor
         self.transcriber = transcriber.transcriber(self)
+
+        #for now just fixed 30 days max info.  
+        self.tmap = [] #current transcripts in time window, sorted by time.  
+        self.aggmap = [] #aggregated info for current time window, updated as new transcripts come in.
+
         if (self.cfg is not None and 'firebase' in self.cfg):
             self.init_fb()
         # set the title
@@ -1922,6 +1959,8 @@ class MyWindow(QMainWindow):
         t = threading.Timer(3, _hide, args=["Hello from Timer!"])
         t.start()  # Start the timer in a new thread
         logger.info('Window created')
+        self.read(['hotkeys', 'video'], None, None) #initial read of all data, can be filtered by time later.
+
         self.runQRThread() #
         self.runQRInThread() #start thread to detect incoming QR data from other apps or locations..
 
@@ -1987,16 +2026,102 @@ class MyWindow(QMainWindow):
         logger.info('Window hidden')
 
 
+    def show_tmap(self):
+        logger.info('Updating time map display')
+        startchar = chr(0x30A1)
+        cnttext = ""
+        typecnttext = ""
+        sumval = 0
+        for i in range(60):
+            val = self.aggmap[i]['cnt']
+            sumval += val
+            cnttext += f'{chr(ord(startchar)+val)}'
+            val2 = len(self.aggmap[i]['cnts'])
+            typecnttext += f'{chr(ord(startchar)+val2)}'
+
+        if sumval > 0:            
+            logger.info(f"Data found {sumval} total commands in current time window.")
+
+        self.label_times[0].setText(f'<pre>{typecnttext}</pre>')
+        self.label_times[0].update()
+        self.label_times[1].setText(f'<pre>{cnttext}</pre>')
+        self.label_times[1].update()
+
+    def set_tmap(self, tmap = []):
+        logger.info(f'Updating time map display {len(tmap)}')
+        #allcommands..
+        self.tmap = tmap
+        startchar = chr(0x30A1)
+        startchar = chr(0x0041) #start with A for testing, can use other unicode chars as needed.
+        #need better than this, but..
+        self.aggmap = [{'cnt': 0, 'cnts': {} } for i in range(60)] #reset aggmap
+        max = 0
+        if (len(tmap) > 0):
+            start_time = self.transcriber.allcmds['hotkeys']['start_time']
+            end_time = self.transcriber.allcmds['hotkeys']['end_time']
+            start_time = start_time.timestamp()
+            end_time = end_time.timestamp()
+            total_seconds = end_time - start_time
+            quantize_seconds = total_seconds / 60 #quantize into 60 time points for display
+            for i,cmd in enumerate(tmap):
+                t = cmd['timestamp']
+                if (t < start_time or t > end_time):
+                    continue #skip out of range
+                pos = int((t - start_time) / quantize_seconds)
+                self.aggmap[pos]['cnt'] += 1 #for now just count number of commands in each time bucket, can add more info later about types of commands etc.
+                self.aggmap[pos]['cnts'][cmd['type']] = self.aggmap[pos]['cnts'].get(cmd['type'], 0) + 1 #count by type as well.
+                if (self.aggmap[pos]['cnt'] > max):
+                    max = self.aggmap[pos]['cnt']
+            
+            if (max > 24):
+                for i in range(60):
+                    if (self.aggmap[i]['cnt'] > 0):
+                        self.aggmap[i]['cnt'] = math.ceil(self.aggmap[i]['cnt'] / max * 24) #scale to 24 for display purposes, can adjust as needed.
+            self.show_tmap()
+
+
+
+
+
+    def read(self, langs=['hotkeys', 'video'], start_time=None, end_time=None):
+        combined = []
+
+        for lang in langs:
+            data = self.transcriber.read(lang, start_time, end_time)
+            logger.info(f'Reading data for {lang} from {start_time} to {end_time}: {len(data)} entries')
+            #combine all data into single array sorted by timestamp
+            combined.extend(data)
+        combined.sort(key=lambda x: x['timestamp'])
+        return combined
+    
+            
+    
+
     def set_time(self, t, s, e, w):
+
         localt = datetime.fromtimestamp(t)
         formattedt = localt.strftime('%Y%m%d %H%M%S')
         st = datetime.fromtimestamp(s).strftime('%Y%m%d %H%M%S')
         et = datetime.fromtimestamp(e).strftime('%Y%m%d %H%M%S')
+        #do we need to reread
         self.label_timeinfo[0].setText(f'$${formattedt}')
         self.label_timeinfo[1].setText(f'$$ST={st}')
         self.label_timeinfo[2].setText(f'$$ET={et}')
         for i in range(3):
             self.label_timeinfo[i].update()
+
+        #only read if start/end change..
+        if (datetime.fromtimestamp(s) < self.transcriber.allcmds['hotkeys']['start_time'] or datetime.fromtimestamp(e) > self.transcriber.allcmds['hotkeys']['end_time']):
+            logger.info(f'Time range {datetime.fromtimestamp(s)} to {datetime.fromtimestamp(e)} is out of bounds for available data.')
+            b = self.read(['hotkeys', 'video'], datetime.fromtimestamp(s), datetime.fromtimestamp(e))
+            self.set_tmap(b)
+        elif (datetime.fromtimestamp(s) > self.transcriber.allcmds['hotkeys']['start_time'] or datetime.fromtimestamp(e) < self.transcriber.allcmds['hotkeys']['end_time']):
+            logger.info(f'Time range {datetime.fromtimestamp(s)} to {datetime.fromtimestamp(e)} is within bounds for available data.')
+            #just filter by updated start/end
+            b = self.read(['hotkeys', 'video'], datetime.fromtimestamp(s), datetime.fromtimestamp(e))
+
+            self.set_tmap(b)
+
         
 
     def set_speed(self, speed):
