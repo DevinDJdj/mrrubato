@@ -585,7 +585,7 @@ class MyKeys:
 
     if hasattr(msg, 'type') and msg.type=='note_on' and hasattr(msg, 'velocity') and msg.velocity > 0:
       #data is stale, start again.  
-      if (temptime > 10): #longer than 10 seconds..
+      if (temptime > 10 and len(self.sequence) > 0): #longer than 10 seconds..
         self.reset_sequence()
         print("Resetting sequence due to long time since last note")
 #        winsound.Beep(2000, 500) #beep to end error

@@ -516,3 +516,10 @@ read from transcriber..
 Display number of entries/type of entries.  
 Display some sample entries..
 
+Also read midi from time frame and display selections.  
+Display potential selections..
+
+
+Set speed
+and tick along..
+

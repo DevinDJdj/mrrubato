@@ -18,7 +18,7 @@ from huggingface_hub import login
 import psutil
 import math
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from queue import Queue
 
@@ -1815,7 +1815,7 @@ class MyWindow(QMainWindow):
         self.windowlabels = {} #list of window details by pid
         self.windowcounter = 0
         self.screenshots = [] #list of screenshots per monitor
-        self.transcriber = transcriber.transcriber(self)
+        self.transcriber = transcriber.transcriber(self, mykeys.MyKeys(config.cfg))
 
         #for now just fixed 30 days max info.  
         self.tmap = [] #current transcripts in time window, sorted by time.  
@@ -1858,16 +1858,18 @@ class MyWindow(QMainWindow):
 
         self.label_info = QLabel("transparent ", self)
         # moving position
-        self.label_info.move(int(self.geo.width()*0.8), int(self.geo.height()*0.1))
-        self.label_info.setStyleSheet("background-color: rgba(255, 255, 255, 1);color: red;")
-        self.label_info.adjustSize()
-        self.label_info.setWordWrap(True)
+        self.init_label(self.label_info, 0.8, 0.1, 0.2, 0.6)
+
+        self.label_main = []
+        for i in range(3):
+            self.label_main.append(QLabel("transparent ", self))
+            # moving position
+            self.init_label(self.label_main[i], 0.1+0.2*i, 0.2, 0.2, 0.5)
+            self.label_main[i].setText("Main Label")
 
         self.label_qr = QLabel(self)
         #move to bottom right corner
-        self.label_qr.setStyleSheet("background-color: rgba(255, 255, 255, 1);")
-        #not sure best size.  
-        self.label_qr.move(int(self.width()*0.75), int(self.height()*0.75))
+        self.init_label(self.label_qr, 0.7, 0.7, 0.2, 0.2)
 
         self.label_ps = []
         wbarray = [0,1,0,1,0,0,1,0,1,0,1,0] #for now fixed from C
@@ -1967,6 +1969,16 @@ class MyWindow(QMainWindow):
         #start internal thread to check the queue for updates.  
         #and update the window when there is new data.  
 
+    def init_label(self, label, x, y, w, h):
+        label.setTextFormat(QtCore.Qt.RichText)
+        label.setStyleSheet("background-color: rgba(255, 255, 255, 1);color: red;")
+        label.adjustSize()
+        label.setWordWrap(True)
+        label.move(int(self.geo.width()*x), int(self.geo.height()*y))
+        label.setFixedWidth(int(self.geo.width()*w))
+        label.setFixedHeight(int(self.geo.height()*h))
+        label.setWordWrap(True)
+
     def save_screenshot(self, lang='hotkeys', fname='', bbox=None, ocr=False):
         """Save a screenshot of the current window."""
         screen = qapp.primaryScreen()
@@ -2026,18 +2038,33 @@ class MyWindow(QMainWindow):
         logger.info('Window hidden')
 
 
-    def show_tmap(self):
+    def show_tmap(self, current_time, secs):
         logger.info('Updating time map display')
         startchar = chr(0x30A1)
         cnttext = ""
         typecnttext = ""
         sumval = 0
+        selected = []
         for i in range(60):
             val = self.aggmap[i]['cnt']
             sumval += val
             cnttext += f'{chr(ord(startchar)+val)}'
             val2 = len(self.aggmap[i]['cnts'])
+
             typecnttext += f'{chr(ord(startchar)+val2)}'
+
+        sorted_tmap = sorted(self.tmap, key=lambda x: abs(x['timestamp'] - current_time))
+        maintext = []
+        for i in range(len(sorted_tmap)):
+            #compare to current time, and select if within current time window.  
+            if (len(maintext) < 3):
+                maintext.append({'timestamp': sorted_tmap[i]['timestamp'], 'text': self.transcriber.write(sorted_tmap[i]['lang'], sorted_tmap[i]['cmd'], sorted_tmap[i]['vars'], False)})
+        maintext = sorted(maintext, key=lambda x: x['timestamp'])
+        for i in range(len(maintext)):
+            self.label_main[i].setText(maintext[i]['text'].replace('\n', '<br>'))
+            self.label_main[i].update()
+
+
 
         if sumval > 0:            
             logger.info(f"Data found {sumval} total commands in current time window.")
@@ -2047,7 +2074,7 @@ class MyWindow(QMainWindow):
         self.label_times[1].setText(f'<pre>{cnttext}</pre>')
         self.label_times[1].update()
 
-    def set_tmap(self, tmap = []):
+    def set_tmap(self, tmap = [], current_time=None):
         logger.info(f'Updating time map display {len(tmap)}')
         #allcommands..
         self.tmap = tmap
@@ -2058,7 +2085,13 @@ class MyWindow(QMainWindow):
         max = 0
         if (len(tmap) > 0):
             start_time = self.transcriber.allcmds['hotkeys']['start_time']
-            end_time = self.transcriber.allcmds['hotkeys']['end_time']
+            end_time = self.transcriber.allcmds['hotkeys']['end_time']            
+            secs = (end_time.timestamp() - start_time.timestamp())
+            if (current_time is None):
+                #mid of start/end                
+                current_time = start_time + timedelta(seconds=int(secs/2))
+                current_time = current_time.timestamp()
+
             start_time = start_time.timestamp()
             end_time = end_time.timestamp()
             total_seconds = end_time - start_time
@@ -2077,7 +2110,7 @@ class MyWindow(QMainWindow):
                 for i in range(60):
                     if (self.aggmap[i]['cnt'] > 0):
                         self.aggmap[i]['cnt'] = math.ceil(self.aggmap[i]['cnt'] / max * 24) #scale to 24 for display purposes, can adjust as needed.
-            self.show_tmap()
+            self.show_tmap(current_time, secs)
 
 
 
@@ -2114,13 +2147,15 @@ class MyWindow(QMainWindow):
         if (datetime.fromtimestamp(s) < self.transcriber.allcmds['hotkeys']['start_time'] or datetime.fromtimestamp(e) > self.transcriber.allcmds['hotkeys']['end_time']):
             logger.info(f'Time range {datetime.fromtimestamp(s)} to {datetime.fromtimestamp(e)} is out of bounds for available data.')
             b = self.read(['hotkeys', 'video'], datetime.fromtimestamp(s), datetime.fromtimestamp(e))
-            self.set_tmap(b)
+            self.set_tmap(b, t)
+            self.transcriber.read_midi(datetime.fromtimestamp(s), datetime.fromtimestamp(e)) #only when starttime or endtime is out of bounds, otherwise we are just filtering existing data in memory, so no need to reread midi data.
+
         elif (datetime.fromtimestamp(s) > self.transcriber.allcmds['hotkeys']['start_time'] or datetime.fromtimestamp(e) < self.transcriber.allcmds['hotkeys']['end_time']):
             logger.info(f'Time range {datetime.fromtimestamp(s)} to {datetime.fromtimestamp(e)} is within bounds for available data.')
             #just filter by updated start/end
             b = self.read(['hotkeys', 'video'], datetime.fromtimestamp(s), datetime.fromtimestamp(e))
 
-            self.set_tmap(b)
+            self.set_tmap(b, t)
 
         
 

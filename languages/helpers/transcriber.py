@@ -6,15 +6,26 @@ import time
 import pathlib
 import re
 
+import mido
+import sys
+
+#Local imports
+sys.path.insert(0, 'c:/devinpiano/') #config.json path
+sys.path.insert(1, 'c:/devinpiano/music/') #config.py path Base project path
+import config 
+import mykeys
+
 logger = logging.getLogger(__name__)
 
 
 class transcriber:
-    def __init__(self, lang_helper=None):
+    def __init__(self, lang_helper=None, mk=None):
         self.lang_helper = lang_helper
         self.defstring = r"[~!@#$%^&*<>/:;\-\+=]"
         self.allcmds = {} #lang -> {cmds, start_time, end_time, list of cmds in order..
         self.langmap = {}
+        self.allmidi = []
+        self.mykeys = mk
 
     def getTime(self, relativedays=0):
         now = datetime.now()
@@ -35,38 +46,40 @@ class transcriber:
       with open(folder + today + '.txt', 'a', encoding='utf-8') as f:        
         f.write(f'{text}\n') 
 
-    def write(self, lang, command, params):
+    def write(self, lang, command, params, save=True):
       #write to transcript file.  
       #for now just one time param.  
 
-      today = datetime.now().strftime("%Y%m%d")
-      folder = '../transcripts/' + lang + '/'
-      os.makedirs(folder, exist_ok=True)
       #add utf-8?  
       ret = ""
-      with open(folder + today + '.txt', 'a', encoding='utf-8') as f:        
-        if (lang not in self.langmap or self.langmap[lang] != lang):
-            self.langmap[lang] = lang
-            ret += f'<<{lang}>>\n'
-        ret += f'> {command}\n'
-        vars = {}
-        for pkey, p in params.items():
-            #replace any \ndefstring with \n defstring to avoid confusion.            
-            pattern = r"\n(" + self.defstring + r")" 
-            #for now ok, really want \n$ or \n> to break.  
+      if (lang not in self.langmap or self.langmap[lang] != lang):
+        self.langmap[lang] = lang
+        ret += f'<<{lang}>>\n'
+      ret += f'> {command}\n'
+      vars = {}
+      for pkey, p in params.items():
+        #replace any \ndefstring with \n defstring to avoid confusion.            
+        pattern = r"\n(" + self.defstring + r")" 
+        #for now ok, really want \n$ or \n> to break.  
 #            print(p)
-            if (isinstance(p, str)):
-                p = re.sub(pattern, r"\n \1", p) #untested..
+        if (isinstance(p, str)):
+            p = re.sub(pattern, r"\n \1", p) #untested..
 
-            ret += f'$${pkey}={p}\n'
-        if ('TIME' not in params):
-            ret += f'$$TIME={self.getTimeString()}\n'
-        ret += f'$$\n'
-        f.write(ret)
+        ret += f'$${pkey}={p}\n'
+      if ('TIME' not in params):
+        ret += f'$$TIME={self.getTimeString()}\n'
+      ret += f'$$\n'
+
+      if save:
+        today = datetime.now().strftime("%Y%m%d")
+        folder = '../transcripts/' + lang + '/'
+        os.makedirs(folder, exist_ok=True)
+        with open(folder + today + '.txt', 'a', encoding='utf-8') as f:
+          f.write(ret)
         #dont worry about duplication at this point.
-        return ret
+      return ret
 
-    def get_cmd(self, type, command, vars):
+    def get_cmd(self, lang, type, command, vars):
         t = time.time()
         if ('TIME' in vars):
             timestr = vars['TIME']
@@ -76,7 +89,7 @@ class transcriber:
                 pass
 
         lines = []
-        return {'type': type, 'cmd': command, 'vars': vars, 'lines': lines, 'timestamp': t}
+        return {'lang': lang, 'type': type, 'cmd': command, 'vars': vars, 'lines': lines, 'timestamp': t}
 
 
     def read_existing(self, lang, start_time=None, end_time=None):
@@ -114,6 +127,75 @@ class transcriber:
                     break
         return self.allcmds[lang]['cmds'][start_idx:end_idx]
 
+    def play_midi(self, midi_data, speed=1.0, volume=1.0):
+        #for now just print the notes with timing.  
+        if self.mykeys is None:
+            return
+        for item in midi_data:
+            timestamp = item['timestamp']
+            notes = item['notes']
+
+            #use mykeys.seq2text to get any text input, where to pass this..
+            for n in notes:
+
+                msg = mido.Msg('note_on', note=notes[0], velocity=64, time=0) #just play first note for now.  need to handle timing and multiple notes for real playback.
+                self.mykeys.key(n, msg)
+                msg = mido.Msg('note_off', note=notes[0], velocity=64, time=0) #note off after 500ms for now.  need to handle timing for real playback.
+                self.mykeys.key(n, msg)
+
+    def read_midi(self, start_time=None, end_time=None):
+        #for now just read from transcript file all instances of this.   
+        if (start_time is None):
+            start_time = self.getTime(-30)  #default last 30 days
+        if (end_time is None):
+            end_time = self.getTime()
+        logger.info(f'> MIDI Load start {start_time} to {end_time}')
+        #list all files in directory
+        #get year
+        y = start_time.year
+        for y in range(start_time.year, end_time.year+1):
+            folder = '../transcripts/' + str(y) + '/'
+            files = [f for f in os.listdir(folder) if os.path.getmtime(folder + f) >= start_time.timestamp() and os.path.getctime(folder + f) <= end_time.timestamp()]
+
+            sorted_files = sorted(files, key=lambda f: os.path.getmtime(os.path.join(folder, f))) #sort by modification time, oldest first.  could also sort by creation time if needed.
+            numloaded = 0
+            print(f'MIDI Read: {folder}')
+            print(sorted_files)
+            ret = []
+            last_time = start_time.timestamp()
+            ctime = None
+            for f in sorted_files:
+        #      if (f.startswith(yesterday) or f.startswith(today)):
+                if (f.endswith('.mid')): #dont open wav files.. maybe rethink sharing directory..
+
+                    ctime = os.path.getctime(folder + f)
+
+                    try:
+                        #read midi file and save as sequence..
+                        notes = []
+                        mid = mido.MidiFile(folder + f)
+                        for msg in mid:
+                            if ('type' in msg and msg.type == 'note_on'):
+                                notes.append(msg.note) #no time/velocity for simplicity in searching..
+
+                    except Exception as e:
+                        logger.error(f'!!> Read {f}\n !!{e}\n')
+                        continue
+                        
+                    last_time = ctime
+                    numloaded += 1
+                    ret.append({'timestamp': ctime, 'notes': notes})
+
+        logger.info(f'MIDI Loaded {numloaded} files')
+        self.allmidi = {'midi': ret, 'start_time': start_time, 'end_time': end_time}
+        for item in ret:
+            timestamp = item['timestamp']
+            notes = item['notes']
+            #self.play_midi([item]) #for now just print the notes with timing.
+        return ret
+
+
+    
     def read(self, lang, start_time=None, end_time=None, myfolder=""):
 
       #read from transcript file all instances of this.   
@@ -175,7 +257,7 @@ class transcriber:
                                 now = datetime.fromtimestamp(mtime)
                                 relativedays = -int(pdays)
                                 now += timedelta(days=relativedays)
-                                topc = self.get_cmd(type, line[2:].strip(), {'TIME': now.strftime('%Y%m%d_%H%M%S')})
+                                topc = self.get_cmd(lang, type, line[2:].strip(), {'TIME': now.strftime('%Y%m%d_%H%M%S')})
                                 ret.append(topc)
                                 currenttopc = topc
                             else:
@@ -186,7 +268,7 @@ class transcriber:
                                 #command line internal command
                                 if (currentcmd != ""):
                                     #save previous command if exists with no params..
-                                    c = self.get_cmd(type, currentcmd, vars)
+                                    c = self.get_cmd(lang, type, currentcmd, vars)
                                     ret.append(c)
                                 currentcmd = line[2:].strip()
                                 vars = {}
@@ -196,7 +278,7 @@ class transcriber:
                                     #execute command
                                     if (currentcmd != ""):
                                         type = '> '
-                                    c = self.get_cmd(type, currentcmd, vars)
+                                    c = self.get_cmd(lang, type, currentcmd, vars)
                                     ret.append(c)
                 #                    logger.info(f'Adding QR {type}: {currentcmd}')
                                     currentcmd = ""
@@ -219,7 +301,7 @@ class transcriber:
 
                 if (currentcmd != ""):
                     type = '> '
-                    c = self.get_cmd(type, currentcmd, vars)
+                    c = self.get_cmd(lang, type, currentcmd, vars)
                     ret.append(c)
                     currentcmd = ""
                     vars = {}
