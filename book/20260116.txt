@@ -523,3 +523,36 @@ Display potential selections..
 Set speed
 and tick along..
 
+Get midi words, and add data about past usage.  
+List based on speed of word input..
+If word is "known", dont list at top..
+Weight recent speed more than older speed.  
+Distinguish between manual input vs non-manual.  
+After we have one sample, should be able to list..
+
+Also save common params.. 
+Allow quick selection of word, and params separately..
+@@What is quick selection mechanism?  
+Allow keyboard input somehow for text selections..
+
+**languages/helpers/transcriber.py
+--play_midi
+test..
+act = False
+
+data stored in mykeys.words_
+along with seq and transcript..
+
+probably should be _words?  
+
+
+Need selection to play displayed transcript commands.  
+> RECORD
+or
+> 
+
+Save/load state.  
+Need loading indicator of some kind when we resize time window..
+
+
+

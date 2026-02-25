@@ -435,6 +435,8 @@ class MyKeys:
     self.currentseqno = 0
     self.startseqno = 0
     self.lastnotetime = 0
+    self.wordstarttime = 0
+    self.wordendtime = 0
     
   def findword(self, sequence=[]):
     """Find word in all languages."""
@@ -444,12 +446,12 @@ class MyKeys:
         return word, l, la
     return "", "", None
       
-  def takeaction(self, cmd, l, ss, callback=None):
+  def takeaction(self, cmd, l, ss, callback=None, doact=True):
     #take action based on action returned from language.  
     #pass words as well.  
     logger.info(f'Checking action {cmd} in {l} for {ss}')
     orig = ss.copy()
-    action = self.languages[l].act(cmd, self.words, ss)
+    action = self.languages[l].act(cmd, self.words, ss, doact=doact)
     localseq = self.words[-1]['sequence'] if len(self.words) > 0 else []
     if (action == -1):
       #reset action
@@ -502,6 +504,10 @@ class MyKeys:
         time.sleep(len(seq)*2/1000) #wait for notes to play out. 500 chars/sec
 
         self.languages[l].transcript = "" #reset transcript after adding to midi.
+      elif (not doact):
+        #get text from sequence
+        mytext = self.seq2text(ss)
+        self.words_[-1]['transcript'] = mytext
 
       synth.play_synth(localseq, action) #play failed sequence
       return self.sequence
@@ -548,7 +554,7 @@ class MyKeys:
     self.reset_sequence()
     synth.play_synth(localseq)
 
-  def key(self, note, msg, callback=None):
+  def key(self, note, msg, callback=None, doact=True): #just get the words if doact=False
     #add this key to the notes map
     #if hasattr(msg, 'type') and msg.type=='note_on' and 
     #adjust message channel for anything but base channel
@@ -598,7 +604,11 @@ class MyKeys:
         self.reset_sequence()
         print("Resetting sequence due to max sequence length")
         return -1 #too long sequence notify error.  
-        
+      
+      if (len(self.sequence) == 0):
+        self.wordstarttime = msg.time if hasattr(msg, 'time') else time.time()
+      else: 
+        self.wordendtime = msg.time if hasattr(msg, 'time') else time.time()
       self.sequence.append(note)
       #not using currentchannel at the moment.. all languages using same track..
       #self.currentchannel = self.currentlang.keybot - 48 
@@ -636,7 +646,7 @@ class MyKeys:
         #start of word, take start of word action.  
         if (word != ""):
           logger.info(f'&<{l}>{word} []\n')
-          acted = self.takeaction(word, l, [], callback)
+          acted = self.takeaction(word, l, [], callback, doact=doact)
           logger.info(f'Action returned {acted} for {word} in {l} {self.sequence}')
           if (acted > 0):
             #not yet ready to complete..
@@ -670,7 +680,7 @@ class MyKeys:
         print(f"&<{l}>{word}\n")
         logger.info(f'&<{l}>{word}\n')
         #_words words before this one.  
-        self.words.append({"word": word, "lang": la, "langna": l, "sequence": self.sequence[self.startseqno:], "ss": [], "_words": self.words})
+        self.words.append({"wordstart": self.wordstarttime, "wordend": self.wordendtime, "word": word, "lang": la, "langna": l, "sequence": self.sequence[self.startseqno:], "ss": [], "_words": self.words})
         self.startseqno = self.currentseqno
         self.currentcmd = word
         self.currentlang = la
@@ -725,7 +735,7 @@ class MyKeys:
           if (slangna == ""):
             print(f'Error: {scmd} no language for action' + str(a))
             break
-          a = self.takeaction(scmd, slangna, ss, callback)
+          a = self.takeaction(scmd, slangna, ss, callback, doact=doact)
           scmd = self.currentcmd
           slangna = self.currentlangna
           #keep ss the same?

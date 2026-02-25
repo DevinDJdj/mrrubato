@@ -157,8 +157,16 @@ class _meta:
     return 0  
 
   #act differently based on words in sequence.    
-  def act(self, cmd, words=[], sequence=[]):
+  def act(self, cmd, words=[], sequence=[], doact=True):
     """ACT based on command and sequence."""
+    if (not doact):
+      if (len(sequence) == 1 and sequence[-1] == self.keybot):
+        return 0
+      elif (len(sequence) > 1 and sequence[-2:] == [self.keybot, self.keybot]):
+        return 0
+      else:
+        return 1 #need more keys.
+
     logger.info("-> "+ cmd + " " + str(sequence))
     if (len(sequence) == 0 and "_" + cmd in self.funcdict):
       #run prefix command
@@ -259,7 +267,13 @@ class _meta:
     logger.info(f'> Time Zoom {sequence}')
     zoom = 2.0 #default zoom level
     if (len(sequence) > 0):
-      zoom = float(sequence[-1] - self.keybot) / 5.0
+      zoom = float(sequence[-1] - self.keybot) - 6 #use 6 keys above keybot for zoom levels, so we have some negative and positive levels.
+      if (zoom > 6):
+        zoom = 6 #for now max 64x zoom at 6 keys above keybot.
+      if zoom >= 0:
+        zoom = pow(2, zoom) #exponential zoom for more range. max 64x
+      else:
+        zoom = pow(2, zoom) #exponential zoom for more range. min 1/64x
     w = self.timewindow.timeZoom(zoom)
     vars = {}
     logger.info(f'$$TIMEWINDOW={w}')

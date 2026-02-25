@@ -102,8 +102,16 @@ class _lang:
     return 0  
 
   #act differently based on words in sequence.    
-  def act(self, cmd, words=[], sequence=[]):
+  def act(self, cmd, words=[], sequence=[], doact=True):
     """ACT based on command and sequence."""
+    if (not doact):
+      if (len(sequence) == 1 and sequence[-1] == self.keybot):
+        return 0
+      elif (len(sequence) > 1 and sequence[-2:] == [self.keybot, self.keybot]):
+        return 0
+      else:
+        return 1 #need more keys.
+
     logger.info("-> "+ cmd + " " + str(sequence))
     if (len(sequence) == 0 and "_" + cmd in self.funcdict):
       #run prefix command

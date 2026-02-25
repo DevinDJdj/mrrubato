@@ -19,13 +19,26 @@ logger = logging.getLogger(__name__)
 
 
 class transcriber:
-    def __init__(self, lang_helper=None, mk=None):
+    def __init__(self, lang_helper=None, mk=None, qr_queue=None):
         self.lang_helper = lang_helper
         self.defstring = r"[~!@#$%^&*<>/:;\-\+=]"
         self.allcmds = {} #lang -> {cmds, start_time, end_time, list of cmds in order..
         self.langmap = {}
         self.allmidi = []
+        self.qr_queue = qr_queue
         self.mykeys = mk
+        self.mydic = {}
+        self.allneedles = []
+        if (self.mykeys is not None):
+            allwords = self.mykeys.get_words_()
+            for i, w in enumerate(allwords):            
+                keys = w['keys']
+                strkeys = ','.join(str(k) for k in keys)
+                if (str(len(keys)) not in self.mydic):
+                    self.mydic[str(len(keys))] = {}
+                self.mydic[str(len(keys))][strkeys] = {'w': w['word'], 'l': w['lang'], 'k': keys, 'cnt': 0, 'vars': {}}
+                if (len(keys) > 1): #dont search single for now..
+                    self.allneedles.append(strkeys)
 
     def getTime(self, relativedays=0):
         now = datetime.now()
@@ -127,21 +140,24 @@ class transcriber:
                     break
         return self.allcmds[lang]['cmds'][start_idx:end_idx]
 
-    def play_midi(self, midi_data, speed=1.0, volume=1.0):
+    def play_midi(self, midi_data, act=True, speed=1.0, volume=1.0):
         #for now just print the notes with timing.  
         if self.mykeys is None:
             return
         for item in midi_data:
             timestamp = item['timestamp']
             notes = item['notes']
+            msgs = item['msgs']
 
             #use mykeys.seq2text to get any text input, where to pass this..
-            for n in notes:
-
-                msg = mido.Msg('note_on', note=notes[0], velocity=64, time=0) #just play first note for now.  need to handle timing and multiple notes for real playback.
-                self.mykeys.key(n, msg)
-                msg = mido.Msg('note_off', note=notes[0], velocity=64, time=0) #note off after 500ms for now.  need to handle timing for real playback.
-                self.mykeys.key(n, msg)
+            for msg in msgs:
+                if ('type' in msg and (msg.type == 'note_on' or msg.type == 'note_off')):
+                    self.mykeys.key(msg.note, msg, None, doact=act)
+                    qrdata = self.mykeys.get_qr()
+                    if (qrdata is not None and qrdata != ""):
+                        #only do this if necessary, too much processing..
+                        self.qr_queue.put(qrdata)
+        #mykeys.words should include all words..
 
     def read_midi(self, start_time=None, end_time=None):
         #for now just read from transcript file all instances of this.   
@@ -167,14 +183,15 @@ class transcriber:
             for f in sorted_files:
         #      if (f.startswith(yesterday) or f.startswith(today)):
                 if (f.endswith('.mid')): #dont open wav files.. maybe rethink sharing directory..
-
                     ctime = os.path.getctime(folder + f)
 
                     try:
                         #read midi file and save as sequence..
                         notes = []
+                        msgs = []
                         mid = mido.MidiFile(folder + f)
                         for msg in mid:
+                            msgs.append(msg)
                             if ('type' in msg and msg.type == 'note_on'):
                                 notes.append(msg.note) #no time/velocity for simplicity in searching..
 
@@ -184,17 +201,47 @@ class transcriber:
                         
                     last_time = ctime
                     numloaded += 1
-                    ret.append({'timestamp': ctime, 'notes': notes})
+                    ret.append({'timestamp': ctime, 'notes': notes, 'msgs': msgs})
 
         logger.info(f'MIDI Loaded {numloaded} files')
         self.allmidi = {'midi': ret, 'start_time': start_time, 'end_time': end_time}
+        self.play_midi(ret, act=False) #get words without acting on them, to associate with midi data.
+            
+        """
+        #filter for lang here potentially..
+        pattern = '|'.join(map(re.escape, self.allneedles))
+        logger.info(f'MIDI Search pattern: {len(pattern)} chars for {len(self.allneedles)} needles')
         for item in ret:
             timestamp = item['timestamp']
             notes = item['notes']
             #self.play_midi([item]) #for now just print the notes with timing.
+            #find words..
+            strnotes = ','.join(str(n) for n in notes)
+#            matches = re.findall(pattern, strnotes) #may get some garbage here, but probably good enough..
+            words_with_indices = [(m.start(), m.end(), m.group(0)) for m in re.finditer(pattern, strnotes)]
+
+            print(f'MIDI {datetime.fromtimestamp(timestamp)}: -> words found: {len(words_with_indices)}')
+            logger.info(f'MIDI {datetime.fromtimestamp(timestamp)}: -> words found: {len(words_with_indices)}')
+            for (start, end, match) in words_with_indices:
+                lngth = len(match.split(','))
+                if match in self.mydic[str(lngth)]:
+                    word_info = self.mydic[str(lngth)][match]
+                    word_info['cnt'] += 1
+                    #find passed variables.. and add vars data..
+        #get all embedded text info and associate with the commands..
+        #This function could be problematic with large amounts of data I suspect..
+        for lngth, words in self.mydic.items():
+            for match, word_info in words.items():
+                if (word_info['cnt'] > 0):                    
+                    logger.info(f'Word "{word_info["w"]}" found {word_info["cnt"]} times in MIDI data with keys {match} and vars {word_info["vars"]}')
+        """
         return ret
 
-
+    def get_word(self, seq):
+        if (str(len(seq)) in self.mydic):
+            if self.mydic and str(seq) in self.mydic[str(len(seq))]:
+                return self.mydic[str(len(seq))][str(seq)]
+        return None
     
     def read(self, lang, start_time=None, end_time=None, myfolder=""):
 

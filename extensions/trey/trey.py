@@ -1815,7 +1815,8 @@ class MyWindow(QMainWindow):
         self.windowlabels = {} #list of window details by pid
         self.windowcounter = 0
         self.screenshots = [] #list of screenshots per monitor
-        self.transcriber = transcriber.transcriber(self, mykeys.MyKeys(config.cfg))
+        #rerunning with this may require separate queue, or indicator for rerun in the data.  For now same..
+        self.transcriber = transcriber.transcriber(self, mykeys.MyKeys(config.cfg), self.queue) #maybe want different queue..
 
         #for now just fixed 30 days max info.  
         self.tmap = [] #current transcripts in time window, sorted by time.  
