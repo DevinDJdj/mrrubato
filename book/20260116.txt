@@ -549,10 +549,22 @@ probably should be _words?
 Need selection to play displayed transcript commands.  
 > RECORD
 or
-> 
+> Save Feedback
+
 
 Save/load state.  
 Need loading indicator of some kind when we resize time window..
+
+
+**timestep.py
+--saveLocalTranscripts
+test..
+
+
+**extensions/trey/trey.py
+--pause_tmap
+--play_tmap
+test..
 
 
 

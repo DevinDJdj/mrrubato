@@ -83,7 +83,7 @@ class video:
     default = {
       "2": {
          "Pause": [49,48], #pause video
-         "Unpause": [49,50], #unpause video
+         "Unpause": [49,50], #unpause video/audio
          "Screen Toggle": [49,51], #show/hide screen overlay, param set opacity..
       },
       "3": {
@@ -93,6 +93,7 @@ class video:
         "Comment": [49,53, 56], #record comment
         "Screenshot": [49,53,55], #take screenshot
         "Zoomshot": [49,53,57], #take zoomed screenshot
+        "Next": [49, 53, 54], #next video in playlist or folder
       },
       "4": {
         "Screenshot Feedback": [49,53,55,53], #screenshot with feedback
@@ -112,6 +113,7 @@ class video:
       "Start": "start",
       "Help": "help",
       "Pause": "pause",
+      "Next": "next",
       "Unpause": "unpause",
       "Screenshot": "screenshot",
       "_Screenshot": "_screenshot",
@@ -128,6 +130,7 @@ class video:
       "Start": {"help": "start", "params": "None", "desc": "Start/Resume video recording."},
       "Help": {"help": "help", "params": "None", "desc": "Show video commands."},
       "Pause": {"help": "pause", "params": "None", "desc": "Pause video playback."},
+      "Next": {"help": "next", "params": "[no]-5 default [54] next in playlist", "desc": "Next video in playlist or folder."},
       "Unpause": {"help": "unpause", "params": "None", "desc": "Unpause video playback."},
       "Screenshot": {"help": "screenshot", "params": "[bbox] in form X1, X2, Y1, Y2", "desc": "Take screenshot of video."},
       "Zoomshot": {"help": "zoomshot", "params": "None", "desc": "Take zoomed screenshot of video."},
@@ -218,11 +221,13 @@ class video:
   def start(self, sequence=[]):
     """Start Recording."""
     logger.info(f'> Start {sequence}')
+    self.set_qr("Start", {'type': 'record'})
     return 0
   
   def stop(self, sequence=[]):
     """Stop Recording."""
     logger.info("> Stop {sequence}")
+    self.set_qr("Stop", {'type': 'record'})
     return 0
 
   def help(self, sequence=[]):
@@ -230,9 +235,28 @@ class video:
     logger.info(f'> Help {sequence}')
     return 0
 
+
+
+  def next(self, sequence=[]):
+    """Next Video."""
+    logger.info(f'> Next {sequence}')
+    cacheno = 1 #default to next..
+    if (len(sequence) > 0):
+      cacheno = sequence[-1]-self.keybot-5 #first key cache selection
+      #ends on 54 so 54 is next, 53 is current, 52 is previous.
+    #pause trey.  
+    self.set_qr("Next", {'type': 'video', 'no': cacheno})
+    return 0
+
   def pause(self, sequence=[]):
     """Pause Video."""
     logger.info(f'> Pause {sequence}')
+    if (len(sequence) > 0):
+      cacheno = sequence[-1]-self.keybot #first key cache selection
+      playwrighty.pause_video(cacheno) #pause video if it is valid cache no..
+    else:
+       #pause trey.  
+       self.set_qr("Pause", {'type': 'video'})
     return 0
 
   def unpause(self, sequence=[]):  
@@ -241,7 +265,11 @@ class video:
     cacheno = -1
     if (len(sequence) > 0):
       cacheno = sequence[-1]-self.keybot #first key cache selection
-    playwrighty.play_video(cacheno) #play video if it is valid cache no..
+      playwrighty.play_video(cacheno) #play video if it is valid cache no..
+    else:
+        #unpause trey.  
+        self.set_qr("Unpause", {'type': 'video'})
+
     
     return 0
 

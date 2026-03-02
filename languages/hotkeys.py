@@ -678,7 +678,7 @@ class hotkeys:
               if (playwrighty.mybrowser is not None):
                 lang = playwrighty.detect_language()
                 f.write(f'$$LANG=' + lang + '\n') #assume same lang as page..
-                #f.write(f'$$URL=' + url + '\n') #not sure we want this..
+                f.write(f'$$URL=' + url + '\n') #not sure we want this..
                 f.write(f'$$TRANSCRIPT=' + original + '\n')
                 f.write(f'$$LAG={lag}\n')
                 f.write(f'$$SCORE={score}\n')

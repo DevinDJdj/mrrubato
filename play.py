@@ -20,6 +20,8 @@ https://natespilman.com/blog/playing-chords-with-mido-and-python/
 """
 
 
+import threading
+
 import mido
 from time import sleep
 from random import randint
@@ -28,6 +30,8 @@ import os
 import glob
 from oauth2client.tools import argparser, run_flow
 import sys
+
+import extensions.trey.synth as synth
 sys.path.insert(0, 'c:/devinpiano/') #config.json path
 sys.path.insert(1, 'c:/devinpiano/music/') #config.py path Base project path
 import config 
@@ -62,6 +66,8 @@ def get_latest_file():
     
     if (os.path.getctime(latest_file2) > os.path.getctime(latest_file)):
         return latest_file2
+    else:
+        return latest_file
 
 
 
@@ -108,13 +114,19 @@ if __name__ == '__main__':
     outport = mido.open_output(outputs[len(outputs)-1])
 
 
+    play_synth = True
+    if (play_synth):
+      synth_stop_event = threading.Event()  # Event to signal stopping
+      play_thread = threading.Thread(target=synth.play_stream, args=(synth_stop_event,))
+      play_thread.start()
+
     if (args.file == ""):
         args.file = get_latest_file()
     
     mid = MidiFile(args.file)
     istranscript = False
     args.speed = float(args.speed)
-    if (args.file.find("transcripts") > -1):
+    if (args.file and args.file.find("transcripts") > -1):
         print("Playing transcript MIDI: " + args.file)
         istranscript = True
         args.speed = args.speed * 0.01 #speed up x10 for transcripts by default.  
@@ -130,10 +142,27 @@ if __name__ == '__main__':
     for i, track in enumerate(mid.tracks):
         print('Track {}: {}'.format(i, track.name))
         seq = []
-        for msg in mid.play():
+#        for msg in mid.play():
+        prevmsg = None
+        for msg in track:
   #          msg.velocity = round(msg.velocity / 2)
-            outport.send(msg)
+
             print(msg)
+            if (prevmsg is not None):
+                sleeptime = msg.time - prevmsg.time
+                if (sleeptime > 0):
+                    sleep(sleeptime/1000)
+
+            prevmsg = msg
+            if (play_synth):
+                if (msg.type == 'note_on' and hasattr(msg, 'velocity') and msg.velocity > 0):
+                    synth.note_on(msg.note, msg.velocity)
+            #          synth.play_note(msg.note, 0.3, msg.velocity/127)
+                elif (msg.type == 'note_off' or (msg.type == 'note_on' and hasattr(msg, 'velocity') and msg.velocity == 0)):
+                    synth.note_off(msg.note)
+
+#            sleep(msg.time)
+            outport.send(msg)
             if (hasattr(msg, 'note') and hasattr(msg, 'type') and msg.type == 'note_on' and msg.velocity > 0 and istranscript):
                 #for now no language, just 110 start, 111 end, 112+ keys.
                 #perhaps just define lang with $$LANG=name in transcript?

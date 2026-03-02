@@ -45,6 +45,11 @@ from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QLabel
 from PyQt5.QtGui import QPixmap, QPainter, QPen, QBrush, QImage, QFont, QFontMetrics, QFontDatabase
 from PyQt5.QtCore import Qt, QObject, pyqtSignal, QThread
 import PyQt5.QtCore as QtCore
+#video widget..
+from PyQt5.QtMultimediaWidgets import QVideoWidget
+from PyQt5.QtCore import QUrl
+from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
+
 import win32gui
 import win32process
 import win32api
@@ -1546,6 +1551,51 @@ class MyWindow(QMainWindow):
                 self.show()
                 #start OBS capture..
                 start_obs_capture()
+        elif (command == "Stop"):
+            type = vars.get('type', 'video')
+            if (type == 'video'):
+                #not used
+                n = 0
+            elif (type == 'record'):
+                pause_obs_capture()
+        elif (command == "Start"):
+            type = vars.get('type', 'video')
+            if (type == 'video'):
+                #not used..
+                n = 0 
+            elif (type == 'record'):
+                start_obs_capture()
+
+        elif (command == "Next"):
+            type = vars.get('type', 'video')
+            no = vars.get('no', '1')
+            if (type == 'video'):
+                #logic to pick next video/audio in our commands.. tmap
+                self.play_tmap(int(no)) #play next item in tmap
+                n = 0
+            elif (type == 'record'):
+                #not used..
+                n = 0
+        elif (command == "Pause"):
+            type = vars.get('type', 'video')
+            if (type == 'video'):
+                #logic to pause video playback
+                #pick next video/audio in our commands.. tmap
+                self.pause_tmap()
+                n = 0
+            elif (type == 'record'):
+                pause_obs_capture()
+        elif (command == "Unpause"):
+            type = vars.get('type', 'video')
+            if (type == 'video'):
+                #logic to unpause video playback
+                #pick next video/audio in our commands.. tmap
+                #anything with $$FILE or $$fname or..
+                self.play_tmap()
+                n = 0
+            elif (type == 'record'):
+                start_obs_capture()
+
         elif (command =="Screenshot Feedback_"):
             bbox = vars.get('BBOX', None)
             if (bbox is not None):
@@ -1826,6 +1876,15 @@ class MyWindow(QMainWindow):
             self.init_fb()
         # set the title
 
+
+        self.video_widget = QVideoWidget(self)
+        self.video_widget.setGeometry(int(self.width()*0.2), int(self.height()*0.2), int(self.width()*0.5), int(self.height()*0.5)) #set up location
+#        self.set_geometry(self.video_widget, 0.2, 0.2, 0.5, 0.5) #set up location
+        self.video_widget.hide() #hide by default
+        self.video_player = QMediaPlayer()
+        self.video_player.setVideoOutput(self.video_widget)
+
+
         self.setWindowOpacity(0.2) 
         #Qt.WA_TransparentForMouseEvents | Qt.WindowTransparentForInput to make click-through
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool | Qt.WA_TransparentForMouseEvents | Qt.WindowTransparentForInput)
@@ -1975,10 +2034,14 @@ class MyWindow(QMainWindow):
         label.setStyleSheet("background-color: rgba(255, 255, 255, 1);color: red;")
         label.adjustSize()
         label.setWordWrap(True)
-        label.move(int(self.geo.width()*x), int(self.geo.height()*y))
-        label.setFixedWidth(int(self.geo.width()*w))
-        label.setFixedHeight(int(self.geo.height()*h))
-        label.setWordWrap(True)
+        self.set_geometry(label, x, y, w, h)
+
+
+    def set_geometry(self, widget, x, y, w, h):
+        widget.adjustSize()
+        widget.move(int(self.geo.width()*x), int(self.geo.height()*y))
+        widget.setFixedWidth(int(self.geo.width()*w))
+        widget.setFixedHeight(int(self.geo.height()*h))
 
     def save_screenshot(self, lang='hotkeys', fname='', bbox=None, ocr=False):
         """Save a screenshot of the current window."""
@@ -2039,6 +2102,66 @@ class MyWindow(QMainWindow):
         logger.info('Window hidden')
 
 
+    def play(self, fname):
+        """Play a media file."""
+        logger.info(f'Playing file: {fname}')
+        #add actual playback logic here, e.g. open file with default app, or send command to other app, etc.
+        #for now just log it.
+        #get file type from extension
+        ext = os.path.splitext(fname)[1].lower()
+        if (ext in ['.mp4', '.avi', '.mkv']):
+            logger.info(f'Playing video file: {fname}')
+            #play on Qt video widget..
+            self.video_player.setMedia(QMediaContent(QUrl.fromLocalFile(fname)))
+            self.video_widget.show()
+            self.video_player.play()
+
+        elif (ext in ['.mp3', '.wav', '.ogg']):
+            logger.info(f'Playing audio file: {fname}')
+            self.currentsound = playsound(fname, block=False) #non-blocking play, may need to adjust for different file types and playback needs.
+
+    def pause_tmap(self):
+        logger.info('Pausing playback')
+        #add actual pause logic here, e.g. pause video widget, or send command to other app, etc.
+        self.video_player.pause()
+        self.video_widget.hide()
+        if (self.currentsound is not None and self.currentsound.is_alive()):
+            self.currentsound.stop() #stop current sound, may need to adjust for different playback needs.
+
+    def play_tmap(self, no=0):
+        logger.info(f'Playing next item in time map: {no}')
+        #find next item in tmap based on current time, and play it.  
+        #for now just log it, can add actual playback logic later.
+        if (len(self.tmap) == 0):
+            logger.info('Time map is empty, nothing to play.')
+            return
+        else:
+            if (self.tmapindex + no >= len(self.tmap)):
+                #time jump..?
+                #just play indicator?  
+                self.tmapindex = len(self.tmap) - 1
+            elif (self.tmapindex + no < 0):
+                #time jump back..?
+                #just play indicator?  
+                self.tmapindex = 0
+            else:
+                self.tmapindex += no
+
+            t = self.tmap[self.tmapindex]
+            try:
+                if (t["vars"].get('fname', None) is not None):
+                    logger.info(f'Playing file: {t["vars"]["fname"]}')
+                    #add actual playback logic here, e.g. open file with default app, or send command to other app, etc.
+                    #assume video..
+                    self.play(t["vars"]["fname"]) #non-blocking play, may need to adjust for different file types and playback needs.
+                elif (t["vars"].get('FILE', None) is not None):
+                    logger.info(f'Playing file: {t["vars"]["FILE"]}')
+                    #add actual playback logic here, e.g. open file with default app, or send command to other app, etc.
+                    #for now assume audio..
+                    self.play(t["vars"]["FILE"]) #non-blocking play, may need to adjust for different file types and playback needs.
+            except Exception as e:
+                logger.error(f'Error playing file from time map: {e}\nData: {t}')
+
     def show_tmap(self, current_time, secs):
         logger.info('Updating time map display')
         startchar = chr(0x30A1)
@@ -2055,6 +2178,8 @@ class MyWindow(QMainWindow):
             typecnttext += f'{chr(ord(startchar)+val2)}'
 
         sorted_tmap = sorted(self.tmap, key=lambda x: abs(x['timestamp'] - current_time))
+        sorted_indices = sorted(range(len(self.tmap)), key=lambda i: self.tmap[i]['timestamp'])
+        self.tmapindex = sorted_indices[0] #index of closest item in tmap to current time, can use this to select items to display or play etc.
         maintext = []
         for i in range(len(sorted_tmap)):
             #compare to current time, and select if within current time window.  

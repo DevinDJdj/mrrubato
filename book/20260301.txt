@@ -1,0 +1,152 @@
+
+**languages
+These messages for LANG and META are MOD12.  
+_LANG can set to any octave automatically.  
+and in any language, _META lang and _LANG always exist.  
+Not sure if we want absolute keys, or still switch to relative keys..
+for now all but _META and _LANG are absolute.  
+LANG lookup also must be relative.  
+in keymap->languages
+0 MOD 12 and 11 MOD 12
+If we move to relative keys, maybe just point to a set of languages.  
+Then no need to create new lang structures, just set of existing lang structs.  
+All related code then becomes easier to manage perhaps..
+not sure..
+
+
+
+
+**mykeys.py
+Adjust act to tolerate single key action.. 
+
+
+**COMMS
+on topic change, regenerate recording?  
+/uid/timestamp
+cmd flow is dynamically updated (transcriber?), but recording only after..
+Retrieve /uid for latest info, and/or search through shared data..
+/topic/timestamp pointer to uid..
+MTG URL will be one of the QRIn which is shared..
+For now no minutia for access control.  
+auth !=null allows read access..
+
+When content viewed, authid gets registered.  
+Simple stats on view activity..
+channels/uid/settings
+possibility to contain detailed access control by date/time.  
+Too much for now..
+
+
+**extensions/trey/trey.py
+
+Chaining just done by topic and time..
+Can filter topic by set of user input or select all..
+Feedback identified by @user.  
+@@What acknowledge message
+-@user?  
+
+
+
+
+
+**extensions/trey/trey.py
+--quit_me
+Allow for restart 
+CTRL+SHIFT+R = restart
+CTRL+SHIFT+Q = quit..
+Seems to work ok..
+
+
+**timestep.py
+--saveLocalTranscripts
+Need to upload the transcripts associated with the time of recording..
+Lazy.., just upload all?  
+
+
+**extensions/handsfree/background.js
+--openQR
+How long has it been displayed?  
+When someone joins the real-time room update..
+This should be sufficient..
+
+
+**mykeys.py
+@@Word creation logic?  
+[11,11,11]
+After the fact.  
+Take prior sequence.  Define sequence length to take.  
+Feedback describing sequence.  
+Detect number of params for each word and automatically instigate each action after that number of params is given.. 
+Essentially just call each 
+> _word 
+and 
+> word_ 
+> word
+based on number of params given..
+Extend wait time when word has been created.. 
+
+Custom defined sequences for now standard start with [A,2A]
+Should be able to dynamically set language keybot..
+Everything needs to be relative from that perspective..
+later..
+
+
+**languages/_meta.py
+--select_topic
+topic selection.  
+> Select Topic_
+@@How to scroll?
+[11,12] scroll..
+[12,11] scroll..
+
+Display minimap timeline, just text?  
+Squish timeline..
+
+
+
+**extensions/vscode/codetutor/src/extension.ts
+Same time implement date time filter.  
+Keep history of selected time.  
+Amount of actual time spent at zoomed time.. 
+
+
+**languages/helpers/transcriber.py
+--play_midi
+test..
+act = False
+
+data stored in mykeys.words_
+along with seq and transcript..
+
+probably should be _words?  
+
+
+Need selection to play displayed transcript commands.  
+> RECORD
+or
+> Record Feedback
+Bring up site?  
+
+
+Save/load state.  
+Need loading indicator of some kind when we resize time window..
+
+
+**timestep.py
+--saveLocalTranscripts
+test..
+
+
+**extensions/trey/trey.py
+--pause_tmap
+--play_tmap
+test..
+
+!!DirectShowPlayerService::doRender: Unresolved error code 0x80040266 (IDispatch error #102)
+==
+#https://www.codecguide.com/download_k-lite_codec_pack_standard.htm
+$$
+
+
+**extensions/trey/test/qtvideo.py
+

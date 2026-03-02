@@ -456,7 +456,7 @@ def saveLocalTranscripts():
     #upload to folder any transcripts in local folder
     tfolder = 'transcripts/'
     transcript_path = "../" + tfolder
-    #recursively go through all files in the transcript path
+
     allfiles = get_relative_file_paths_os(transcript_path)
     print(f"Checking {len(allfiles)} transcripts:")
     print(allfiles)
@@ -469,6 +469,7 @@ def saveLocalTranscripts():
             blob.upload_from_filename(transcript_path + file)
             # Opt : if you want to make public access from the URL
             blob.make_public()
+            #blob.public_url
             uploadedfiles.append(tfolder + file)
 #        else:
 #            print(f"{tfolder + file} already exists in storage, skipping upload.")
@@ -792,6 +793,8 @@ if __name__ == '__main__':
 
     #    #write the transcripts to a file.
     writeTranscripts(alltranscripts)
+
+    saveLocalTranscripts() #save any transcripts which we have created..
 
     getCodeHistory()
     

@@ -505,7 +505,7 @@ class MyKeys:
 
         self.languages[l].transcript = "" #reset transcript after adding to midi.
       elif (not doact):
-        #get text from sequence
+        #get any text from sequence
         mytext = self.seq2text(ss)
         self.words_[-1]['transcript'] = mytext
 
