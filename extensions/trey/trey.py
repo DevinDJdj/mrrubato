@@ -41,7 +41,7 @@ import torch
 #UI components
 import pystray
 from PIL import Image, ImageDraw
-from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QLabel
+from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QLabel, QDialog, QVBoxLayout
 from PyQt5.QtGui import QPixmap, QPainter, QPen, QBrush, QImage, QFont, QFontMetrics, QFontDatabase
 from PyQt5.QtCore import Qt, QObject, pyqtSignal, QThread
 import PyQt5.QtCore as QtCore
@@ -1871,19 +1871,19 @@ class MyWindow(QMainWindow):
         #for now just fixed 30 days max info.  
         self.tmap = [] #current transcripts in time window, sorted by time.  
         self.aggmap = [] #aggregated info for current time window, updated as new transcripts come in.
+        self.s = 0 #current start time of window
+        self.e = 0 #current end time of window
+        self.currentsound = None #current sound being played.
+        self.mylayout = QVBoxLayout()
 
         if (self.cfg is not None and 'firebase' in self.cfg):
             self.init_fb()
         # set the title
 
 
-        self.video_widget = QVideoWidget(self)
-        self.video_widget.setGeometry(int(self.width()*0.2), int(self.height()*0.2), int(self.width()*0.5), int(self.height()*0.5)) #set up location
-#        self.set_geometry(self.video_widget, 0.2, 0.2, 0.5, 0.5) #set up location
-        self.video_widget.hide() #hide by default
-        self.video_player = QMediaPlayer()
-        self.video_player.setVideoOutput(self.video_widget)
 
+        color = "red" #for now just red, can use color sequence later. Not very visible with several colors..
+        self.color = "red"
 
         self.setWindowOpacity(0.2) 
         #Qt.WA_TransparentForMouseEvents | Qt.WindowTransparentForInput to make click-through
@@ -1915,6 +1915,14 @@ class MyWindow(QMainWindow):
         # creating a label widget
 
 
+        self.video_widget = QVideoWidget(self)
+        self.video_widget.setGeometry(0, 0, self.width(), self.height()) #set up location
+#        self.video_widget.setGeometry(int(self.width()*0.2), int(self.height()*0.2), int(self.width()*0.5), int(self.height()*0.5)) #set up location
+#        self.set_geometry(self.video_widget, 0.2, 0.2, 0.5, 0.5) #set up location
+#        self.video_widget.hide() #hide by default
+        self.video_widget.show()
+        self.video_player = QMediaPlayer()
+        self.video_player.setVideoOutput(self.video_widget)
 
         self.label_info = QLabel("transparent ", self)
         # moving position
@@ -1923,9 +1931,13 @@ class MyWindow(QMainWindow):
         self.label_main = []
         for i in range(3):
             self.label_main.append(QLabel("transparent ", self))
-            # moving position
             self.init_label(self.label_main[i], 0.1+0.2*i, 0.2, 0.2, 0.5)
+#            self.label_main.append(QLabel("transparent ", self.video_widget))
+#            self.init_label(self.label_main[i], 0.33*i, 0, 0.33, 1)
+            # moving position
             self.label_main[i].setText("Main Label")
+#            self.label_main[i].raise() #bring to front
+        
 
         self.label_qr = QLabel(self)
         #move to bottom right corner
@@ -1940,7 +1952,6 @@ class MyWindow(QMainWindow):
         for i in range(25): #assume 25 key range for now..
             self.label_ps.append(QLabel(self))
             color = self.getColorFromSequence(i)
-            color = "red" #for now just red, can use color sequence later. Not very visible with several colors..
             if (wbarray[i%len(wbarray)] == 0):
                 self.label_ps[i].setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};")
             else:
@@ -1959,7 +1970,7 @@ class MyWindow(QMainWindow):
         font = QFont("Courier", fontsize-2) # Specify font family and size
         font.setFixedPitch(True)    # Ensure it uses the fixed pitch version if available
         self.label_p.setFont(font)    # Apply the font to the label        
-        self.label_p.setStyleSheet("background-color: rgba(255, 255, 255, 1);color: red;")
+        self.label_p.setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};")
         self.label_p.move(0, self.geo.height() - pwidth)
         self.label_p.setFixedHeight(pwidth)
         self.label_p.setFixedWidth(pwidth)
@@ -1988,7 +1999,7 @@ class MyWindow(QMainWindow):
             t.setFixedHeight(h+2)
             w = metrics.boundingRect(chr(0x2160)).width()
             t.setFixedWidth(w*60*2) #60 char of time info.. 36-96 ? 
-            t.setStyleSheet("background-color: rgba(255, 255, 255, 1);color: red;")
+            t.setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};")
             #some reason <pre> makes formatting a bit nicer..
             ltext = ""
             startchar = 0x2160 #start of roman numeral characters, just to have some unique chars to test with for now.
@@ -2005,7 +2016,7 @@ class MyWindow(QMainWindow):
         self.label_timeinfo = []
         for i in range(4):
             self.label_timeinfo.append(QLabel(self))
-            self.label_timeinfo[i].setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: red;")
+            self.label_timeinfo[i].setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};")
             font = QFont("Courier", fontsize-4) # Specify font family and size
             self.label_timeinfo[i].setFont(font)
             self.label_timeinfo[i].move(int(self.geo.width()*0.01), int(self.geo.height()*0.02*(i+1)))
@@ -2029,9 +2040,9 @@ class MyWindow(QMainWindow):
         #start internal thread to check the queue for updates.  
         #and update the window when there is new data.  
 
-    def init_label(self, label, x, y, w, h):
+    def init_label(self, label, x, y, w, h, color='red'):
         label.setTextFormat(QtCore.Qt.RichText)
-        label.setStyleSheet("background-color: rgba(255, 255, 255, 1);color: red;")
+        label.setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};")
         label.adjustSize()
         label.setWordWrap(True)
         self.set_geometry(label, x, y, w, h)
@@ -2112,24 +2123,33 @@ class MyWindow(QMainWindow):
         if (ext in ['.mp4', '.avi', '.mkv']):
             logger.info(f'Playing video file: {fname}')
             #play on Qt video widget..
+            for i in range(3):
+                self.label_main[i].hide() #hide main labels when playing video, can adjust as needed.
             self.video_player.setMedia(QMediaContent(QUrl.fromLocalFile(fname)))
             self.video_widget.show()
             self.video_player.play()
 
         elif (ext in ['.mp3', '.wav', '.ogg']):
             logger.info(f'Playing audio file: {fname}')
-            self.currentsound = playsound(fname, block=False) #non-blocking play, may need to adjust for different file types and playback needs.
+            absolute_path = os.path.abspath(fname)
+            self.currentsound = playsound(absolute_path, block=False) #non-blocking play, may need to adjust for different file types and playback needs.
+        else:
+            logger.info(f'Unknown file type for playback: {fname}')
+        
 
     def pause_tmap(self):
         logger.info('Pausing playback')
         #add actual pause logic here, e.g. pause video widget, or send command to other app, etc.
         self.video_player.pause()
         self.video_widget.hide()
+        for i in range(3):
+            self.label_main[i].show() #show main labels when pausing video, can adjust as needed.
+
         if (self.currentsound is not None and self.currentsound.is_alive()):
             self.currentsound.stop() #stop current sound, may need to adjust for different playback needs.
 
     def play_tmap(self, no=0):
-        logger.info(f'Playing next item in time map: {no}')
+        logger.info(f'Playing next item in time map: {self.tmapindex} + {no}')
         #find next item in tmap based on current time, and play it.  
         #for now just log it, can add actual playback logic later.
         if (len(self.tmap) == 0):
@@ -2159,8 +2179,18 @@ class MyWindow(QMainWindow):
                     #add actual playback logic here, e.g. open file with default app, or send command to other app, etc.
                     #for now assume audio..
                     self.play(t["vars"]["FILE"]) #non-blocking play, may need to adjust for different file types and playback needs.
+                else:
+                    logger.warning(f"Unknown command in time map item, no file to play. \nData: {t}")
             except Exception as e:
                 logger.error(f'Error playing file from time map: {e}\nData: {t}')
+            self.tmapindex += 1 #move to next item for next play command, can adjust as needed.
+            #time jump to next entry?
+            if (self.tmapindex < len(self.tmap)):
+                next_time = self.tmap[self.tmapindex]['timestamp']
+                self.set_time(next_time) #jump to time of next item, can adjust as needed.
+                #this will reread if necessary..
+
+
 
     def show_tmap(self, current_time, secs):
         logger.info('Updating time map display')
@@ -2177,8 +2207,11 @@ class MyWindow(QMainWindow):
 
             typecnttext += f'{chr(ord(startchar)+val2)}'
 
+        print(f"Current time: {current_time}, Time window seconds: {secs}")
         sorted_tmap = sorted(self.tmap, key=lambda x: abs(x['timestamp'] - current_time))
-        sorted_indices = sorted(range(len(self.tmap)), key=lambda i: self.tmap[i]['timestamp'])
+        print(f"Sorted tmap: {sorted_tmap}")
+        sorted_indices = sorted(range(len(self.tmap)), key=lambda i: abs(self.tmap[i]['timestamp'] - current_time))
+        print(f"Sorted indices: {sorted_indices}")
         self.tmapindex = sorted_indices[0] #index of closest item in tmap to current time, can use this to select items to display or play etc.
         maintext = []
         for i in range(len(sorted_tmap)):
@@ -2256,12 +2289,22 @@ class MyWindow(QMainWindow):
             
     
 
-    def set_time(self, t, s, e, w):
+    def set_time(self, t, s=0, e=0, w=0):
 
         localt = datetime.fromtimestamp(t)
         formattedt = localt.strftime('%Y%m%d %H%M%S')
+        if (s == 0):
+            s = self.s
+        if (e == 0):
+            e = self.e
+        if (w == 0):
+            w = e - s
+
         st = datetime.fromtimestamp(s).strftime('%Y%m%d %H%M%S')
         et = datetime.fromtimestamp(e).strftime('%Y%m%d %H%M%S')
+        self.s = s
+        self.e = e
+
         #do we need to reread
         self.label_timeinfo[0].setText(f'$${formattedt}')
         self.label_timeinfo[1].setText(f'$$ST={st}')
@@ -2282,6 +2325,10 @@ class MyWindow(QMainWindow):
             b = self.read(['hotkeys', 'video'], datetime.fromtimestamp(s), datetime.fromtimestamp(e))
 
             self.set_tmap(b, t)
+        else:
+            logger.info(f'Time range {datetime.fromtimestamp(s)} to {datetime.fromtimestamp(e)} is the same as available data, no need to reread.')
+            #just update display with existing data in memory
+            self.show_tmap(t, e-s)
 
         
 

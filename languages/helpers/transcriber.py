@@ -97,7 +97,11 @@ class transcriber:
         if ('TIME' in vars):
             timestr = vars['TIME']
             try: 
-                t = time.mktime(datetime.strptime(timestr, '%Y%m%d_%H%M%S').timetuple())
+                if (timestr.isdigit()):
+                    #assume its a timestamp in seconds.
+                    t = float(timestr)
+                elif (timestr[8] == '_' and timestr.replace('_', '').isdigit()):
+                    t = time.mktime(datetime.strptime(timestr, '%Y%m%d_%H%M%S').timetuple())
             except:
                 pass
 

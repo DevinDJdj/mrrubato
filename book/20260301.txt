@@ -150,3 +150,27 @@ $$
 
 **extensions/trey/test/qtvideo.py
 
+
+Need better layout for this overlay window..
+Video widget now displays, but need some sort of tab display for the window..
+Otherwise too small..
+Just put main labels on the video control easiest?
+        # 3. Create Labels
+        self.label1 = QLabel("Top Label", self.video_widget)
+        self.label2 = QLabel("Bottom Label", self.video_widget)
+
+Possibly remove red from any image or video overlay..?  
+We would need to highlight in a different color then..
+Either display text in different color or 
+
+**timestep.py
+Transcript quality still not great.  
+
+
+**extensions/trey/trey.py
+Add text input display to load/edit topic.  
+
+**git/clone.py
+--cloneme
+flag to add most recent files to robot directory..
+

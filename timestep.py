@@ -424,7 +424,8 @@ def downloadMidiFile(midilink, force=False):
     filename = midiname + '.mid'
     #dont redo this.  Live with the analysis of the time for now.  
     if (os.path.exists(os.path.join(midi_path , filename)) and not force):
-        print("Skipping " + midilink)
+#        print("Skipping " + midilink)
+        print("_") 
         return
     
     r = requests.get(midilink)
@@ -448,7 +449,7 @@ def get_relative_file_paths_os(root_dir):
             full_path = os.path.join(dirpath, filename)
             # Calculate the path relative to the initial root directory
             rel_path = os.path.relpath(full_path, start=root_dir)
-            relative_paths.append(rel_path)
+            relative_paths.append(rel_path.replace("\\", "/"))  # Replace backslashes with forward slashes for consistency
     return relative_paths
 
 #local transcripts from keyboard usage and transcribed commands.  
