@@ -59,6 +59,27 @@ class transcriber:
       with open(folder + today + '.txt', 'a', encoding='utf-8') as f:        
         f.write(f'{text}\n') 
 
+    def speak(self, lang, command, params, save=False):
+      ret = ""
+      if (lang not in self.langmap or self.langmap[lang] != lang):
+        self.langmap[lang] = lang
+        ret += f'<<{lang}>>\n'
+      ret += f'> {command}\n'
+      vars = {}
+      for pkey, p in params.items():
+        #replace any \ndefstring with \n defstring to avoid confusion.            
+        pattern = r"\n(" + self.defstring + r")" 
+        #for now ok, really want \n$ or \n> to break.  
+#            print(p)
+        if (isinstance(p, str)):
+            p = re.sub(pattern, r"\n \1", p) #untested..
+
+        ret += f'$${pkey}={p}\n'
+      if ('TIME' not in params):
+        ret += f'$$TIME={self.getTimeString()}\n'
+      ret += f'$$\n'
+      return ret
+
     def write(self, lang, command, params, save=True):
       #write to transcript file.  
       #for now just one time param.  

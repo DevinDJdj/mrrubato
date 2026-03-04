@@ -19,6 +19,10 @@ notes_dict = {}
 global last_freq
 last_freq = 440
 
+global key_stats
+key_stats = {}
+
+
 def get_audio_stream():
     
     global stream
@@ -112,6 +116,33 @@ def play(play_count): #default each 0.1 seconds
         #print(final)
 #        plot_signal(final, steps=200)
         stream.write(audio)
+
+
+#run this when ingesting.  
+def digit_to_seq(key, value):
+    #find directionality on this log scale
+    #map 0-9 to a sequence of notes for a quick audio cue.  
+    seq = []
+    try:
+        num = int(value)
+        if (key not in key_stats):
+            key_stats[key] = {'cnt': 1, 'avg': num, 'stddev': 0}
+        else:
+            avg = key_stats[key]['avg']
+            if (num > avg):
+                #upward sequence
+                seq = [60, 64, 67]  # C major chord
+            else:
+                #downward sequence
+                seq = [67, 64, 60]  # C major chord reversed
+                
+            key_stats[key]['stddev'] = math.sqrt(((num - avg) ** 2 + (key_stats[key]['stddev'] ** 2 * (key_stats[key]['cnt'] - 1))) / key_stats[key]['cnt'])
+            key_stats[key]['avg'] = (avg * key_stats[key]['cnt'] + num) / (key_stats[key]['cnt'] + 1)
+            key_stats[key]['cnt'] += 1
+    except:
+        print("Value is not a digit, cannot convert to sequence.")
+
+    return seq
 
 def play_synth(sequence=[], type=0, dur=0.05): #default success case
     vel = 32

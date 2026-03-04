@@ -656,6 +656,7 @@ def stopsound(currentsound):
         #this is a bit aggressive but should work for now.  
         currentsound.stop()
 
+
 def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=None, q=None, q2=None, q3=None, lang='en'):
 
     skipmenu = True
@@ -742,14 +743,43 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
     print('Start Reading:')
 
     idx = -1
+
+    intro_played = 0
     while (idx < len(lines)-1):
 #    for idx in range(len(lines)):
         idx = idx + 1
         l = lines[idx]
         combined = "" #line to hold combined short lines and read together. 
         combined_counter = 0 
-        if (len(l) > 2 and l[0:2] == '$$'):
-            #ENV info, read..
+        if (len(l) > 2 and l[0:2] == '$$' and time.time() - intro_played > 30): #wait 30 secs between intros.  this is for the initial environment info that trey sends.
+            #ENV info, read header line..
+            intro_played = time.time()
+            #parse variable info..
+            parts = l[2:].split('=')
+
+            text = l
+            if (len(parts) == 2):
+                key = parts[0]
+                value = parts[1]
+                vars[key] = value
+                #simple reformatting for some known variables.
+                if (key == 'LANG'):
+                    text = 'Language ' + value
+                if (key == 'TIME'):
+                    if ('-' in value):
+                        t = datetime.strptime(value, "%Y%m%d_%H%M%S").timestamp()
+                        text = datetime.fromtimestamp(t).strftime("%B %d, %H:%M")
+                    else:
+                        t = datetime.fromtimestamp(int(value))
+                        text = 'Time ' + t.strftime("%B %d, %H:%M")
+                #play value for any integer.  
+                else:
+                    if (value.isdigit()):
+                        text = key
+                        seq = synth.digit_to_seq(key, value)
+                        synth.play_synth(seq, 0, 0.2)
+
+            l = text
             print(f'{l}')
             sound_file = f"./temp/overview.mp3"
             lesc = lines[0] if (len(lines[0]) < 200) else lines[0][:200]
@@ -2180,6 +2210,9 @@ class MyWindow(QMainWindow):
                     #for now assume audio..
                     self.play(t["vars"]["FILE"]) #non-blocking play, may need to adjust for different file types and playback needs.
                 else:
+                    text = self.transcriber.write(t['lang'], t['cmd'], t['vars'], False)
+                    speak(text)
+
                     logger.warning(f"Unknown command in time map item, no file to play. \nData: {t}")
             except Exception as e:
                 logger.error(f'Error playing file from time map: {e}\nData: {t}')
@@ -2621,6 +2654,16 @@ def updateQR(idx):
         current_qrdata = incoming_qrdata
         on_activate_overlay()
 
+
+def joystick_loop(qr_queue=None, qrin_queue=None):
+    #get joystick input and convert to MIDI messages, then put in queue for MIDI thread to process.
+    #for now just log the joystick input, can add actual MIDI message conversion and queueing
+    while True:
+        #get joystick input, e.g. using pygame or other library
+        #convert to MIDI message, e.g. using mido.Message('control_change', control=..., value=...)
+        #put MIDI message in queue for MIDI thread to process, e.g. midi_queue.put(msg)
+        time.sleep(0.1) #small delay to prevent high CPU usage
+
 def handle_keys(qr_queue=None, qrin_queue=None):
     global midiout, midiin
     global mk
@@ -2638,6 +2681,11 @@ def handle_keys(qr_queue=None, qrin_queue=None):
             mk.set_audio_location()
 
             for msg in inport.iter_pending():
+                if msg.type == 'control_change':
+                    print(msg)
+                    logger.info(f'> MIDI Control [{msg.control}, {msg.value}]')
+                    #use midi joystick control.  
+                    #also allow external joystick control..
                 if msg.type == 'note_on' or msg.type == 'note_off':
                     print(msg)
                     logger.info(f'Received MIDI message: {msg}')

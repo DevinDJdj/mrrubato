@@ -174,3 +174,24 @@ Add text input display to load/edit topic.
 --cloneme
 flag to add most recent files to robot directory..
 
+**extensions/trey/speech.py
+--transcribe_audio
+Try to use some VAD
+like silero VAD
+transcription quality is still too poor.  
+Once we have detected segments, then pass to transcribe..
+#https://github.com/snakers4/silero-vad
+or other..
+#https://github.com/wiseman/py-webrtcvad
+
+
+Use Ring controller and translate to commands.. 
+Use 20ms interval or something for checking input L/R etc
+Use this for additional control for sizing etc..
+Perhaps easier than button control..
+Or just use the midi inputs.  
+
+
+Need indicator of peripheral connectivity..
+for Midi device and joystick..
+
