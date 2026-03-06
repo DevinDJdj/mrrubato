@@ -57,6 +57,7 @@ import win32con
 
 import winsound
 
+
 #Local imports
 sys.path.insert(0, 'c:/devinpiano/') #config.json path
 sys.path.insert(1, 'c:/devinpiano/music/') #config.py path Base project path
@@ -75,6 +76,7 @@ from pydub.playback import play
 
 #import simpleaudio as sa
 import pygame
+from pygame.locals import *
 import edge_tts
 
 import extensions.trey.qdrantz as qdrantz
@@ -106,6 +108,7 @@ global qapp
 global midiout
 global midiin
 global midi_thread
+global joystick_thread
 global midi_stop_event
 global midi_kill_event
 midi_thread = None
@@ -398,6 +401,9 @@ def quit_me(restart=False):
     logger.info('Quitting application')
     qapp.quit()
     #some cleanup still necessary?  
+    logger.info('Saving custom settings')
+    config.save_custom_settings() #save custom settings if available
+
     active_threads = threading.enumerate()
     print("\nCurrently active threads:")
     for thread in active_threads:
@@ -771,7 +777,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
                         text = datetime.fromtimestamp(t).strftime("%B %d, %H:%M")
                     else:
                         t = datetime.fromtimestamp(int(value))
-                        text = 'Time ' + t.strftime("%B %d, %H:%M")
+                        text = t.strftime("%B %d, %H:%M")
                 #play value for any integer.  
                 else:
                     if (value.isdigit()):
@@ -1503,6 +1509,8 @@ class QRInWorker(QObject):
         self.finished.emit()
 
 
+#separate worker probably better for non-QR commands..
+
 # Step 1: Create a worker class
 class QRWorker(QObject):
     finished = pyqtSignal()
@@ -1520,7 +1528,7 @@ class QRWorker(QObject):
                 qrdata = self.my_queue.get() #get current link number.  
                 logger.info(f'Worker processing QR data: {qrdata[0:50]}')
                 self.progress.emit(qrdata) #can pass param here as well.  
-                time.sleep(0.2) #allow for QR data to be processed by any reader.  
+#                time.sleep(0.2) #allow for QR data to be processed by any reader.  
             time.sleep(0.1) #wait before checking again
         self.finished.emit()
 
@@ -1545,7 +1553,10 @@ class MyWindow(QMainWindow):
     def reportProgress(self, qrdata):
 #        logger.info(f"QR Out: {qrdata}")
         cmds = self.parseQRData(qrdata)
-        self.showQR(qrdata, cmds) #refresh QR display
+        #get lang.. dont show based on lang for now..
+        is_joystick_cmd = next((cmd for cmd in cmds if cmd['lang'] == 'joystick'), None)
+        if (len(cmds) > 0 and is_joystick_cmd is None):
+            self.showQR(qrdata, cmds) #refresh QR display
 
         pwords = []
         for idx, cmd in enumerate(cmds):
@@ -1566,6 +1577,14 @@ class MyWindow(QMainWindow):
         print(f'~~: {len(pwords)}')
 #        self.updateWords(pwords)
 
+    def add_setting(self, key, value):
+        """Add a setting to the custom settings."""
+        config.custom_settings[key] = value
+
+    def get_setting(self, key, default=None):
+        """Get a setting from the custom settings."""
+        return config.custom_settings.get(key, default)
+
     def executeQRCommand(self, command, vars):
         #use transcriber here??
         """Execute a QR command based on the parsed data."""
@@ -1577,7 +1596,10 @@ class MyWindow(QMainWindow):
                 #pause OBS capture.
                 pause_obs_capture()
             else:
-                self.setWindowOpacity(float(vars.get('OPACITY', 0.4)))
+                op = self.get_setting('OPACITY', 0.4)
+                op = float(vars.get('OPACITY', op))
+                self.setWindowOpacity(op)
+                self.add_setting('OPACITY', op)
                 self.show()
                 #start OBS capture..
                 start_obs_capture()
@@ -1659,12 +1681,15 @@ class MyWindow(QMainWindow):
             w = float(vars.get('WINDOW', 86400)) #default 1 day
             s = float(vars.get('START', t-w/2))                              
             e = float(vars.get('END', t+w/2))
+            self.add_setting('TIME', t)
+            self.add_setting('WINDOW', w)
             self.set_time(t, s, e, w)
             print("Time Jump to: " + str(t) + " Start: " + str(s) + " End: " + str(e) + " Window: " + str(w))
             #set time locally.  
             #simulate click at link location if given.
         elif (command == "Set Speed"):
             speed = float(vars.get('SPEED', '1.0'))
+            self.add_setting('SPEED', speed)
             self.set_speed(speed)
             print("Set Speed to: " + str(speed))
 
@@ -1703,7 +1728,20 @@ class MyWindow(QMainWindow):
                 lang = line[2:-2]
             if (type == '> '):
                 #command line internal command
+                if (currentcmd != ""):
+                    #store previous command before starting new one.
+                    ret.append({'type': type, 'lang': lang, 'cmd': currentcmd, 'vars': vars, 'timestamp': time.time()})
                 currentcmd = line[2:]
+                sp = currentcmd.find('[')
+                ep = currentcmd.find(']')
+                if (sp != -1 and ep != -1 and ep > sp):
+                    #has embedded variable, parse out and add to vars.
+                    varstr = currentcmd[sp+1:ep]
+                    currentcmd = currentcmd[:sp-1] #remove assumed white space
+                    seq = varstr.split(',')
+                    vars['SEQ'] = seq
+
+
             if (type == '$$'):
                 #special trey data line
                 if (len(line) == 2):
@@ -1738,7 +1776,10 @@ class MyWindow(QMainWindow):
                     keys = w[2].split(',')
                     ret.append({'type': type, 'lang': lang, 'index': idx, 'word': word, 'keys': keys, 'timestamp': time.time()})
 
-                
+        if (currentcmd != ""):
+            #store last command if exists.
+            ret.append({'type': type, 'lang': lang, 'cmd': currentcmd, 'vars': vars, 'timestamp': time.time()})                
+
         return ret
     
     # Snip...
@@ -1915,7 +1956,7 @@ class MyWindow(QMainWindow):
         color = "red" #for now just red, can use color sequence later. Not very visible with several colors..
         self.color = "red"
 
-        self.setWindowOpacity(0.2) 
+        self.setWindowOpacity(config.custom_settings.get('OPACITY', 0.8)) #default opacity, can be set by QR command as well.
         #Qt.WA_TransparentForMouseEvents | Qt.WindowTransparentForInput to make click-through
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool | Qt.WA_TransparentForMouseEvents | Qt.WindowTransparentForInput)
         screens = qapp.screens()
@@ -2620,6 +2661,77 @@ def stop_midi(kill=False):
 #    midiout.close()  # Close the MIDI output port
 
 
+def stop_joystick():
+    global joystick_thread
+    pygame.joystick.quit()
+    if (joystick_thread is not None and joystick_thread.is_alive()):
+        logger.info('Stopping joystick thread')
+        joystick_thread.join()  # Wait for the joystick thread to finish
+
+
+def joystick_loop(qr_queue):
+    joycount = pygame.joystick.get_count()
+    if joycount == 0:
+        print("No joysticks were detected.")
+        return
+
+    logger.info(f'{joycount} joystick(s) detected.')
+    logger.info('Starting Joystick thread')
+    joyaxes = [[] for i in range(joycount)]
+    for (i) in range(joycount):
+        joy = pygame.joystick.Joystick(i)
+        joy.init()
+        logger.info(f'Initialized Joystick {i}: {joy.get_name()}')
+        axis = joy.get_numaxes()
+        joyaxes[i] = [0.0] * axis
+        logger.info(f'Joystick {i} has {axis} axes.')
+
+    while True:
+#        pygame.display.flip()
+        time.sleep(0.05) #small delay to prevent high CPU usage, adjust as needed event rate 20 Hz for now
+#        print('Checking for joystick events...')
+        joyaxes = [[0.0] * joy.get_numaxes() for joy in [pygame.joystick.Joystick(i) for i in range(joycount)]]
+        for event in pygame.event.get():
+            logger.info(f'Joystick event: {event}')
+
+            # JOYAXISMOTION    joy, axis, value
+            # JOYBALLMOTION    joy, ball, rel
+            # JOYHATMOTION     joy, hat, value
+            # JOYBUTTONUP      joy, button
+            # JOYBUTTONDOWN    joy, button
+
+            if event.type == JOYAXISMOTION: #too many events, just take last value for each axis and send in batch every loop, can adjust as needed.
+                joyaxes[event.joy][event.axis] = event.value
+            elif event.type == JOYBALLMOTION:
+                qr_queue.put(f'<<joystick>>\n> BALL [{event.joy},{event.ball},{event.rel}]\n')
+            elif event.type == JOYHATMOTION:
+                qr_queue.put(f'<<joystick>>\n> HAT [{event.joy},{event.hat},{event.value}]\n')
+            elif event.type == JOYBUTTONUP:
+                qr_queue.put(f'<<joystick>>\n> BUTTON [{event.joy},{event.button},0]\n')
+            elif event.type == JOYBUTTONDOWN:
+                qr_queue.put(f'<<joystick>>\n> BUTTON [{event.joy},{event.button},1]\n')
+
+        axisstr = "<<joystick>>\n"
+        for i in range(joycount):
+            for j in range(len(joyaxes[i])):
+                if abs(joyaxes[i][j]) > 0.1: #threshold to prevent noise, adjust as needed
+                    axisstr += f'> AXIS [{i},{j},{joyaxes[i][j]:.2f}]\n'
+        if (len(axisstr) > len("<<joystick>>\n")):
+            qr_queue.put(axisstr)
+
+def start_joystick():
+    global joystick_thread
+    global qr_queue
+
+    pygame.init()
+    pygame.event.set_blocked((MOUSEMOTION, MOUSEBUTTONUP, MOUSEBUTTONDOWN))
+
+    pygame.joystick.init()
+    clock = pygame.time.Clock() # Create a Clock object
+#    clock.tick(60) # Limit the loop to run at 60 frames per second (adjust as needed)
+    joystick_thread = threading.Thread(target=joystick_loop, args=(qr_queue,))
+    joystick_thread.start()
+
 def start_midi():
     global qr_queue
     global qrin_queue
@@ -2654,15 +2766,6 @@ def updateQR(idx):
         current_qrdata = incoming_qrdata
         on_activate_overlay()
 
-
-def joystick_loop(qr_queue=None, qrin_queue=None):
-    #get joystick input and convert to MIDI messages, then put in queue for MIDI thread to process.
-    #for now just log the joystick input, can add actual MIDI message conversion and queueing
-    while True:
-        #get joystick input, e.g. using pygame or other library
-        #convert to MIDI message, e.g. using mido.Message('control_change', control=..., value=...)
-        #put MIDI message in queue for MIDI thread to process, e.g. midi_queue.put(msg)
-        time.sleep(0.1) #small delay to prevent high CPU usage
 
 def handle_keys(qr_queue=None, qrin_queue=None):
     global midiout, midiin
@@ -2788,6 +2891,8 @@ def main():
     hotkey_listener = setup_hotkey_listener()
     logger.info('Hotkey listener set up')
 
+    logger.info('Loading custom settings')
+    config.load_custom_settings() #load custom settings if available
     logger.info('Creating Qapplication object')
     # Create the application object
     qapp = QApplication(sys.argv)
@@ -2806,6 +2911,9 @@ def main():
     # Create a Thread object to listedn for MIDI messages
     # Create an event
     start_midi()
+
+    #start joystick thread.  
+    start_joystick()
 
 
 

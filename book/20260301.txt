@@ -195,3 +195,27 @@ Or just use the midi inputs.
 Need indicator of peripheral connectivity..
 for Midi device and joystick..
 
+
+**web/public/analyze.html
+Flag for recording feedback.  
+Start on unpause.  Should be one wav same length as video ideally.  
+Save flag setting in local env.  
+
+
+
+**extensions/trey/trey.py
+Load/Save settings on end.  
+Simple settings JSON file.  
+
+**config.py
+OK, basics seem ok.  
+
+
+**extensions/trey/test/joytest.py
+#https://github.com/denilsonsa/pygame-joystick-test/blob/master/pygame-joystick-test.py
+
+OK, separate thread to ingest input here.  
+Use similar to midi thread.  
+Not sure how to use joy yet..
+
+Need indicator for Joystick connected, midi connected..

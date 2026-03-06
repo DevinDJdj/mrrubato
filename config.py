@@ -6,7 +6,7 @@ import os
 #not great mechanism, but cant be bothered.  
 global cfg
 global cfg_path
-
+global custom_settings
 
 if os.path.isfile(sys.path[0] + "/config.json"):
     cfg = json.load(open(sys.path[0] + "/config.json"))
@@ -27,3 +27,15 @@ def init(fname):
         cfg = json.load(open(fname))
         print("config loaded from " + fname)
         return cfg
+
+def load_custom_settings():
+    global custom_settings
+    if os.path.isfile(sys.path[0] + "/custom_settings.json"):
+        custom_settings = json.load(open(sys.path[0] + "/custom_settings.json"))
+    else:
+        custom_settings = {}
+
+def save_custom_settings():
+    global custom_settings
+    with open(sys.path[0] + "/custom_settings.json", "w") as json_file:
+        json.dump(custom_settings, json_file, indent=4)

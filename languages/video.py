@@ -474,6 +474,7 @@ class video:
     self.func = "Screen Toggle"
     logger.info(f'> Screen Toggle {sequence}')
     opacity = self.opacity
+    vars = {}
     if (len(sequence) >=1):
         opacity = (sequence[0]-self.keybot)*10
         if (opacity < 0):
@@ -482,7 +483,9 @@ class video:
             opacity = 100
         opacity = opacity / 100.0
         self.opacity = opacity
-    self.set_qr(self.func, {'OPACITY': opacity})
+        vars['OPACITY'] = opacity
+
+    self.set_qr(self.func, vars)
     return 0
   
   def zoomshot(self, sequence=[]):
