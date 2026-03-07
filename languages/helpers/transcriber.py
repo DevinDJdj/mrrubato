@@ -8,6 +8,7 @@ import re
 
 import mido
 import sys
+import ast
 
 #Local imports
 sys.path.insert(0, 'c:/devinpiano/') #config.json path
@@ -112,22 +113,6 @@ class transcriber:
           f.write(ret)
         #dont worry about duplication at this point.
       return ret
-
-    def get_cmd(self, lang, type, command, vars):
-        t = time.time()
-        if ('TIME' in vars):
-            timestr = vars['TIME']
-            try: 
-                if (timestr.isdigit()):
-                    #assume its a timestamp in seconds.
-                    t = float(timestr)
-                elif (timestr[8] == '_' and timestr.replace('_', '').isdigit()):
-                    t = time.mktime(datetime.strptime(timestr, '%Y%m%d_%H%M%S').timetuple())
-            except:
-                pass
-
-        lines = []
-        return {'lang': lang, 'type': type, 'cmd': command, 'vars': vars, 'lines': lines, 'timestamp': t}
 
 
     def read_existing(self, lang, start_time=None, end_time=None):
@@ -267,7 +252,141 @@ class transcriber:
             if self.mydic and str(seq) in self.mydic[str(len(seq))]:
                 return self.mydic[str(len(seq))][str(seq)]
         return None
+
+
+    def get_cmd(self, lang, type, command, vars):
+        t = time.time()
+        if ('TIME' in vars):
+            timestr = vars['TIME']
+            try: 
+                if (timestr.isdigit()):
+                    #assume its a timestamp in seconds.
+                    t = float(timestr)
+                elif (timestr[8] == '_' and timestr.replace('_', '').isdigit()):
+                    t = time.mktime(datetime.strptime(timestr, '%Y%m%d_%H%M%S').timetuple())
+            except:
+                pass
+
+        lines = []
+        return {'lang': lang, 'type': type, 'cmd': command, 'vars': vars, 'lines': lines, 'timestamp': t}
+
+
+    def get_seq(self, command):
+        #for now just return command, but could do some parsing here to extract variables if needed.  
+        #could also do some normalization here if needed.  
+        #potentially want to extract variables here as well, but for now just pass raw command and vars in get_cmd.
+        seq = []
+        vars = {}
+        sp = command.find('[')
+        ep = command.rfind(']')
+        if (sp != -1 and ep != -1 and ep > sp):
+            #has embedded variable, parse out and add to vars.
+            varstr = command[sp+1:ep]
+            command = command[:sp].strip() #remove assumed white space
+            seq = varstr.split(',')
+            for (i, s) in enumerate(seq):
+                try:
+                    seq[i] = int(s)
+
+                except ValueError:
+                    try:
+                        seq[i] = float(s)
+                    except ValueError:
+                        #keep as string, not worth to check white space
+                        seq[i] = s                        
+                    pass
+
+            vars['SEQ'] = seq #can be strings, for now prioritize numbers
+
+        return command, seq
     
+
+    def read_lines(self, lang, lines, last_time=None, mtime=None):
+        ret = []
+        currentcmd = ""
+        currentcmdobj = None
+        currenttopc = None
+
+        vars = {}
+        topc = None
+        numlines = len(lines)
+        now = datetime.fromtimestamp(mtime)
+        for idx, line in enumerate(lines):
+            #add bookmark manually.  
+            if (len(line) < 2):
+                continue
+            type = line[0:2]
+            if (type=='**'):
+                #topic definition.  
+                #use file modification time for the time being..
+                #get days since last file mod time.  
+                daysdiff = 0
+                if (last_time is not None):
+                    daysdiff = mtime - last_time
+                    daysdiff = int(daysdiff / 86400)
+                pdays = ((numlines - idx) / numlines) * daysdiff
+                relativedays = -int(pdays)
+                now += timedelta(days=relativedays)
+                topc = self.get_cmd(lang, type, line[2:].strip(), {'TIME': now.strftime('%Y%m%d_%H%M%S')})
+                ret.append(topc)
+                currenttopc = topc
+            else:
+                if (topc is not None and 'lines' in topc):
+                    topc['lines'].append(line)
+
+            if (type == '> '):
+                #command line internal command
+                if (currentcmd != ""):
+                    #save previous command if exists with no params..
+#                                    c = self.get_cmd(lang, type, currentcmd, vars)
+#                                    ret.append(c)
+                    ret.append(currentcmdobj)
+                    currentcmd = ""
+                    currentcmdobj = None
+
+                currentcmd = line[2:].strip()
+                currentcmd,seq = self.get_seq(currentcmd)
+                currentcmdobj = self.get_cmd(lang, type, currentcmd, {'TIME': now.strftime('%Y%m%d_%H%M%S'), 'SEQ': seq})
+                vars = {}
+            if (type == '$$'):
+                #special trey data line
+                if (len(line) == 2):
+                    #execute command
+                    if (currentcmd != ""):
+                        type = '> '
+                        ret.append(currentcmdobj)
+
+#                                    c = self.get_cmd(lang, type, currentcmd, vars)
+#                                    ret.append(c)
+#                    logger.info(f'Adding QR {type}: {currentcmd}')
+                    currentcmd = ""
+                    currentcmdobj = None
+                    vars = {}
+
+                else:
+                    parts = line[2:].split('=')
+                    if (len(parts) >= 2):
+                        key = parts[0]
+                        #in case we have = within the value..
+                        value = "".join(parts[1:]).strip()
+                        vars[key] = value
+
+                        #prioritize vars here.  
+                        #not really notable..  
+                        if (currentcmdobj is not None and 'vars' in currentcmdobj):
+                            currentcmdobj['vars'][key] = value
+                        #add to topic as well..                                        
+                        elif (currenttopc is not None and 'vars' in currenttopc):
+                            currenttopc['vars'][key] = value
+
+        if (currentcmd != ""):
+            type = '> '
+            c = self.get_cmd(lang, type, currentcmd, vars)
+            ret.append(c)
+            currentcmd = ""
+            vars = {}
+        return ret
+
     def read(self, lang, start_time=None, end_time=None, myfolder=""):
 
       #read from transcript file all instances of this.   
@@ -294,7 +413,9 @@ class transcriber:
         print(sorted_files)
         ret = []
         currentcmd = ""
+        currentcmdobj = None
         currenttopc = None
+
         vars = {}
         topc = None
         last_time = start_time.timestamp()
@@ -311,72 +432,11 @@ class transcriber:
                 try:
                     with open(folder + f, encoding='utf-8') as ff:
                         lines = ff.readlines()
-                        numlines = len(lines)
-                        for idx, line in enumerate(lines):
-                            #add bookmark manually.  
-                            if (len(line) < 2):
-                                continue
-                            type = line[0:2]
-                            if (type=='**'):
-                                #topic definition.  
-                                #use file modification time for the time being..
-                                #get days since last file mod time.  
-                                daysdiff = 0
-                                if (last_time is not None):
-                                    daysdiff = mtime - last_time
-                                    daysdiff = int(daysdiff / 86400)
-                                pdays = ((numlines - idx) / numlines) * daysdiff
-                                now = datetime.fromtimestamp(mtime)
-                                relativedays = -int(pdays)
-                                now += timedelta(days=relativedays)
-                                topc = self.get_cmd(lang, type, line[2:].strip(), {'TIME': now.strftime('%Y%m%d_%H%M%S')})
-                                ret.append(topc)
-                                currenttopc = topc
-                            else:
-                                if (topc is not None and 'lines' in topc):
-                                    topc['lines'].append(line)
-
-                            if (type == '> '):
-                                #command line internal command
-                                if (currentcmd != ""):
-                                    #save previous command if exists with no params..
-                                    c = self.get_cmd(lang, type, currentcmd, vars)
-                                    ret.append(c)
-                                currentcmd = line[2:].strip()
-                                vars = {}
-                            if (type == '$$'):
-                                #special trey data line
-                                if (len(line) == 2):
-                                    #execute command
-                                    if (currentcmd != ""):
-                                        type = '> '
-                                    c = self.get_cmd(lang, type, currentcmd, vars)
-                                    ret.append(c)
-                #                    logger.info(f'Adding QR {type}: {currentcmd}')
-                                    currentcmd = ""
-                                    vars = {}
-
-                                else:
-                                    parts = line[2:].split('=')
-                                    if (len(parts) >= 2):
-                                        key = parts[0]
-                                        #in case we have = within the value..
-                                        value = "".join(parts[1:]).strip()
-                                        vars[key] = value
-
-                                        #add to topic as well..                                        
-                                        if (currenttopc is not None and 'vars' in currenttopc):
-                                            currenttopc['vars'][key] = value
-
+                        test = self.read_lines(lang, lines, last_time, mtime)
+                        ret.extend(test)                        
                 except Exception as e:
                     logger.error(f'!!> Read [{f}]\n !!{e}\n')
 
-                if (currentcmd != ""):
-                    type = '> '
-                    c = self.get_cmd(lang, type, currentcmd, vars)
-                    ret.append(c)
-                    currentcmd = ""
-                    vars = {}
                 last_time = mtime
                 numloaded += 1
         ret.sort(key=lambda x: x['timestamp']) #sort by timestamp just in case.

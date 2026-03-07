@@ -2685,6 +2685,7 @@ def joystick_loop(qr_queue):
         axis = joy.get_numaxes()
         joyaxes[i] = [0.0] * axis
         logger.info(f'Joystick {i} has {axis} axes.')
+        qr_queue.put(f'<<joystick>>\n> JOY [{i},{axis}]\n$$\n')
 
     while True:
 #        pygame.display.flip()
@@ -2692,7 +2693,7 @@ def joystick_loop(qr_queue):
 #        print('Checking for joystick events...')
         joyaxes = [[0.0] * joy.get_numaxes() for joy in [pygame.joystick.Joystick(i) for i in range(joycount)]]
         for event in pygame.event.get():
-            logger.info(f'Joystick event: {event}')
+#            logger.info(f'Joystick event: {event}')
 
             # JOYAXISMOTION    joy, axis, value
             # JOYBALLMOTION    joy, ball, rel
@@ -2703,13 +2704,13 @@ def joystick_loop(qr_queue):
             if event.type == JOYAXISMOTION: #too many events, just take last value for each axis and send in batch every loop, can adjust as needed.
                 joyaxes[event.joy][event.axis] = event.value
             elif event.type == JOYBALLMOTION:
-                qr_queue.put(f'<<joystick>>\n> BALL [{event.joy},{event.ball},{event.rel}]\n')
+                qr_queue.put(f'<<joystick>>\n> BALL [{event.joy},{event.ball},{event.rel}]\n$$\n')
             elif event.type == JOYHATMOTION:
-                qr_queue.put(f'<<joystick>>\n> HAT [{event.joy},{event.hat},{event.value}]\n')
+                qr_queue.put(f'<<joystick>>\n> HAT [{event.joy},{event.hat},{event.value}]\n$$\n')
             elif event.type == JOYBUTTONUP:
-                qr_queue.put(f'<<joystick>>\n> BUTTON [{event.joy},{event.button},0]\n')
+                qr_queue.put(f'<<joystick>>\n> BUTTON [{event.joy},{event.button},0]\n$$\n')
             elif event.type == JOYBUTTONDOWN:
-                qr_queue.put(f'<<joystick>>\n> BUTTON [{event.joy},{event.button},1]\n')
+                qr_queue.put(f'<<joystick>>\n> BUTTON [{event.joy},{event.button},1]\n$$\n')
 
         axisstr = "<<joystick>>\n"
         for i in range(joycount):

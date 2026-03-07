@@ -219,3 +219,24 @@ Use similar to midi thread.
 Not sure how to use joy yet..
 
 Need indicator for Joystick connected, midi connected..
+Change trey icon and add labels..
+
+qr_queue
+question/response?  
+quick response?
+
+Really need to build a parser.  
+
+**languages/helpers/transcriber.py
+transcriber.read
+--get_seq
+going to have a problem with strings with []
+Parse the sequence..
+
+**extensions/trey/trey.py
+--mywindow
+Dont like parsing the transcripts twice..
+But hassle to figure how to change.
+
+
+
