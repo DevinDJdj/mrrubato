@@ -26,6 +26,7 @@ class video:
     self.startx = startx
     self.bbox = [0,0,100,100]   
     self.opacity = 0.4
+    self.speed = 1.0
     self.geo = None
     self.name = "video"
     self.keybot = 49 #
@@ -90,6 +91,7 @@ class video:
         "Start": [49,61,62], #Start/resume recording
         "Stop": [49,61,60], #stop/pause recording
         "Help": [49,61,50], 
+        "Set Speed": [49,52,56], #set speed of time
         "Comment": [49,53, 56], #record comment
         "Screenshot": [49,53,55], #take screenshot
         "Zoomshot": [49,53,57], #take zoomed screenshot
@@ -115,6 +117,7 @@ class video:
       "Pause": "pause",
       "Next": "next",
       "Unpause": "unpause",
+      "Set Speed": "set_speed",
       "Screenshot": "screenshot",
       "_Screenshot": "_screenshot",
       "Zoomshot": "zoomshot",
@@ -132,6 +135,7 @@ class video:
       "Pause": {"help": "pause", "params": "None", "desc": "Pause video playback."},
       "Next": {"help": "next", "params": "[no]-5 default [54] next in playlist", "desc": "Next video in playlist or folder."},
       "Unpause": {"help": "unpause", "params": "None", "desc": "Unpause video playback."},
+      "Set Speed": {"help": "set speed <value>", "params": "<value>", "desc": "Set playback speed, relative to current."}, 
       "Screenshot": {"help": "screenshot", "params": "[bbox] in form X1, X2, Y1, Y2", "desc": "Take screenshot of video."},
       "Zoomshot": {"help": "zoomshot", "params": "None", "desc": "Take zoomed screenshot of video."},
       "Screen Toggle": {"help": "screen_toggle", "params": "[opacity] 10-90%", "desc": "Toggle video screen overlay."},
@@ -271,6 +275,20 @@ class video:
         self.set_qr("Unpause", {'type': 'video'})
 
     
+    return 0
+
+
+  def set_speed(self, sequence=[]):
+    logger.info(f'> Set Speed {sequence}')
+    if (len(sequence) > 0):
+      adjust = float(sequence[-1] - self.mid) / 5.0 #just use 10 keys for mid..
+      if (adjust <= 0.2):
+        adjust = 0.2
+      if adjust > 5:
+        adjust = 5
+      self.speed *= adjust
+      logger.info(f'$$SPEED={self.speed}')
+      self.set_qr("Set Speed", {'ADJUST': adjust, 'SPEED': self.speed})
     return 0
 
   def get_XY(self, key, idx=0):

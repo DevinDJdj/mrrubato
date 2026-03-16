@@ -243,13 +243,14 @@ class _meta:
   def set_speed(self, sequence=[]):
     logger.info(f'> Set Speed {sequence}')
     if (len(sequence) > 0):
-      adjust = float(sequence[-1] - self.mid) / 10.0 #just use 10 keys for mid..
-      if (adjust <= 0.1):
-        adjust = 0.1
-      if adjust > 10:
-        adjust = 10
+      adjust = float(sequence[-1] - self.mid) / 5.0 #just use 10 keys for mid..
+      if (adjust <= 0.2):
+        adjust = 0.2
+      if adjust > 5:
+        adjust = 5
       self.speed *= adjust
       logger.info(f'$$SPEED={self.speed}')
+      self.set_qr("Set Speed", {'ADJUST': adjust, 'SPEED': self.speed})
     return 0
 
   def time_jump(self, sequence=[]):

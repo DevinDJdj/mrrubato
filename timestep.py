@@ -741,7 +741,7 @@ if __name__ == '__main__':
                         #just call server/transcription/transcribe.py --transcribe_fromyoutube
                         from extensions.trey.speech import transcribe_audio, listen_audio
                         transcript = transcribe_audio(mediafile, util.st, util.et, True)
-                        #servererrorcnt += 1 #testing..
+                        servererrorcnt += 1 #testing..
 
                         """
                         if (model is None):

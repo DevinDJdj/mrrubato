@@ -417,6 +417,21 @@ def init_asr_model():
     asr_model = EncoderDecoderASR.from_hparams(source="./models/pretrained_ASR")
     return asr_model
 
+
+
+
+def get_speech_(fname):
+    model, utils = torch.hub.load(repo_or_dir='snakers4/silero-vad', model='silero_vad')
+    (get_speech_timestamps, _, read_audio, _, _) = utils
+
+    wav = read_audio(fname, sampling_rate=16000)
+    speech_timestamps = get_speech_timestamps(
+    wav,
+    model,
+    return_seconds=True,  # Return speech timestamps in seconds (default is samples)
+    )
+
+
 def transcribe_audio(fname="example2.wav", start_times=[], end_times=[], use_timestamps=False):
     global rec_stop_event, asr_model
     print("Stopping any existing audio recording...")
@@ -457,6 +472,8 @@ def transcribe_audio(fname="example2.wav", start_times=[], end_times=[], use_tim
                     continue
 
 
+                speech_stamps = get_speech_(segment_fname)
+                print(f"Segment {i}: {st} to {et}, speech timestamps: {speech_stamps}")
                 start_sample = int((st) * samplerate)
                 end_sample = int((et) * samplerate)
                 segment_data = data[start_sample:end_sample]

@@ -239,4 +239,45 @@ Dont like parsing the transcripts twice..
 But hassle to figure how to change.
 
 
+$$SYSTEM/Notifications=ENABLE
 
+
+**extensions/trey/test/chirptest.py
+Maybe just use this for now.  
+Quality too poor with local model..
+ugh..
+
+
+**extensions/trey/trey.py
+--label_timeinfo
+--label_times
+--??observe selection time / topic
+
+
+--label_topic_info (selected topic and relevant topics / filters)
+--label_main (next info details)
+--label_info (selection and action info)
+
+--label_p (should be same as relevant topics on topic selection)
+--label_ps (selection)
+--label_qr (selection and action info)
+
+Time/topic/observe/respond
+
+
+
+--label_topic_info (topic, topic time png, addl filter info)
+topic time png = selected time vs total time..
+
+--label_info
+selection help..
+
+
+
+**languages/_meta.py
+adjust speed..
+
+**languages/video.py
+adjust speed..
+
+Whatever the speed, leave adjustable silence between ticks..

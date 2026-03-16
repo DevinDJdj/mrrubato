@@ -41,8 +41,8 @@ import torch
 #UI components
 import pystray
 from PIL import Image, ImageDraw
-from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QLabel, QDialog, QVBoxLayout
-from PyQt5.QtGui import QPixmap, QPainter, QPen, QBrush, QImage, QFont, QFontMetrics, QFontDatabase
+from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QLabel, QDialog, QVBoxLayout, QSystemTrayIcon, QMenu, QAction, QMessageBox
+from PyQt5.QtGui import QPixmap, QPainter, QPen, QBrush, QImage, QFont, QFontMetrics, QFontDatabase, QIcon, QColor
 from PyQt5.QtCore import Qt, QObject, pyqtSignal, QThread
 import PyQt5.QtCore as QtCore
 #video widget..
@@ -105,6 +105,8 @@ logger = logging.getLogger(__name__)
 global mywindow
 global active_window
 global qapp
+global qtray #system tray icon
+global qmenu #system tray menu
 global midiout
 global midiin
 global midi_thread
@@ -336,6 +338,9 @@ def window_list_callback(hwnd, extra):
             update_actions(hwnd, action)
 
     return True # Continue enumeration    
+
+
+
 
 def create_image(width, height, color1, color2):
     """Generates a simple image for the icon."""
@@ -1557,6 +1562,7 @@ class MyWindow(QMainWindow):
         is_joystick_cmd = next((cmd for cmd in cmds if cmd['lang'] == 'joystick'), None)
         if (len(cmds) > 0 and is_joystick_cmd is None):
             self.showQR(qrdata, cmds) #refresh QR display
+            #process joystick command as needed.  For now just log it.
 
         pwords = []
         for idx, cmd in enumerate(cmds):
@@ -1565,7 +1571,7 @@ class MyWindow(QMainWindow):
                 vars = cmd['vars']
                 logger.info(f'Parsed QR command: {currentcmd} with vars: {vars}')
                 self.qr_out.append({'cmd': currentcmd, 'vars': vars, 'timestamp': time.time()})
-                self.executeQRCommand(currentcmd, vars)
+                self.executeQRCommand(currentcmd, vars, cmd['lang'])
             if (cmd['type'] == '~~'):
                 word = cmd['word']
                 keys = cmd['keys']
@@ -1585,7 +1591,7 @@ class MyWindow(QMainWindow):
         """Get a setting from the custom settings."""
         return config.custom_settings.get(key, default)
 
-    def executeQRCommand(self, command, vars):
+    def executeQRCommand(self, command, vars, lang='hotkeys'):
         #use transcriber here??
         """Execute a QR command based on the parsed data."""
         logger.info(f'Executing QR command: {command} with vars: {vars}')
@@ -1688,10 +1694,11 @@ class MyWindow(QMainWindow):
             #set time locally.  
             #simulate click at link location if given.
         elif (command == "Set Speed"):
+
             speed = float(vars.get('SPEED', '1.0'))
             self.add_setting('SPEED', speed)
-            self.set_speed(speed)
-            print("Set Speed to: " + str(speed))
+            self.set_speed(speed, lang)
+            print(f"<<{lang}>>\n$$SPEED=" + str(speed))
 
         elif (command == "Screenshot"):
             print("Taking Screenshot")
@@ -1920,13 +1927,54 @@ class MyWindow(QMainWindow):
         self.firebase = pyrebase.initialize_app({'apiKey': self.cfg["firebase"]["fbconfig"]["apiKey"], 'authDomain': self.cfg["firebase"]["fbconfig"]["authDomain"], 'databaseURL':databaseURL, 'storageBucket': self.cfg["firebase"]["fbconfig"]["storageBucket"]})    
         self.login()
 
-    def __init__(self, q=None, inq=None, cfg=None):
+
+    def show_tray(self, qapp):
+        # 2. Create the system tray icon
+        image = QImage(64, 64, QImage.Format_ARGB32)
+        image.fill(0x00ff0000) # Fill with transparent background
+
+        # ... use QPainter to draw on the image if needed ...
+        logger.info('Creating system tray icon')
+        pixmap = QPixmap.fromImage(image)
+        icon = QIcon(pixmap) # Use the pixmap as the icon
+        tray = QSystemTrayIcon()
+        tray.setIcon(icon)
+        tray.setVisible(True)
+
+        # 3. Create a context menu
+        menu = QMenu()
+
+        # Define menu actions
+        # Action to show a message
+        show_action = QAction("Show Message")
+        show_action.triggered.connect(lambda: QMessageBox.information(None, "PyQt5 Systray", "Hello from the tray app!"))
+        menu.addAction(show_action)
+
+        # Add a separator
+        menu.addSeparator()
+
+        # Action to quit the application
+        quit_action = QAction("Quit")
+        quit_action.triggered.connect(qapp.quit)
+        menu.addAction(quit_action)
+
+        # 4. Add the menu to the tray icon
+        tray.setContextMenu(menu)
+
+        # Optional: Add a tooltip (hover text)
+        tray.setToolTip("My PyQt5 Tray App")
+
+        # Optional: Show a balloon message on launch (Windows/Linux)
+        tray.showMessage("My PyQt5 Tray App", "Application started in the background", QSystemTrayIcon.Information, 2000)
+
+    def __init__(self, q=None, inq=None, cfg=None, qapp=None):
         super().__init__()
         self.highlightrect = {'x': 100, 'y': 100, 'width': 200, 'height': 200}
         self.highlighton = False
         self.startx = 0
         self.queue = q
         self.inqueue = inq
+        self.qapp = qapp
         self.cfg = cfg
         self.myuser = None
         self.geo = None
@@ -1959,9 +2007,9 @@ class MyWindow(QMainWindow):
         self.setWindowOpacity(config.custom_settings.get('OPACITY', 0.8)) #default opacity, can be set by QR command as well.
         #Qt.WA_TransparentForMouseEvents | Qt.WindowTransparentForInput to make click-through
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool | Qt.WA_TransparentForMouseEvents | Qt.WindowTransparentForInput)
-        screens = qapp.screens()
+        screens = self.qapp.screens()
         logger.info('Listing available screens')
-        primary_screen = qapp.primaryScreen()
+        primary_screen = self.qapp.primaryScreen()
         if len(screens) == 1:
             logger.info('Only one screen detected, add a second monitor to use trey overlay.')
         for i, s in enumerate(screens):
@@ -1995,10 +2043,22 @@ class MyWindow(QMainWindow):
         self.video_player = QMediaPlayer()
         self.video_player.setVideoOutput(self.video_widget)
 
+        #left mid
+        #BBOX(0,0.2,0.2,0.7)
+        self.label_topic_info = []
+        for i in range(25): #info 0-3, and addl potential filter/param labels
+            self.label_topic_info.append(QLabel("transparent ", self))
+            self.init_label(self.label_topic_info[i], 0, 0.2+0.02*i, 0.2, 0.02)
+
+
+        #mid right
+        #BBOX(0.8,0.1,0.2,0.6)
         self.label_info = QLabel("transparent ", self)
         # moving position
         self.init_label(self.label_info, 0.8, 0.1, 0.2, 0.6)
 
+        #mid mid
+        #BBOX(0.3,0.2,0.7,0.7)
         self.label_main = []
         for i in range(3):
             self.label_main.append(QLabel("transparent ", self))
@@ -2010,6 +2070,8 @@ class MyWindow(QMainWindow):
 #            self.label_main[i].raise() #bring to front
         
 
+        #bot right
+        #BBOX(0.7,0.7,0.9,0.9)
         self.label_qr = QLabel(self)
         #move to bottom right corner
         self.init_label(self.label_qr, 0.7, 0.7, 0.2, 0.2)
@@ -2024,9 +2086,9 @@ class MyWindow(QMainWindow):
             self.label_ps.append(QLabel(self))
             color = self.getColorFromSequence(i)
             if (wbarray[i%len(wbarray)] == 0):
-                self.label_ps[i].setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};")
+                self.label_ps[i].setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};border: 1px solid black;")
             else:
-                self.label_ps[i].setStyleSheet(f"background-color: rgba(0, 0, 0, 1);color: {color};")
+                self.label_ps[i].setStyleSheet(f"background-color: rgba(0, 0, 0, 1);color: {color};border: 1px solid black;")
             font = QFont("Courier", fontsize-wbarray[i%len(wbarray)]*2) # Specify font family and size
             self.label_ps[i].setFont(font)
 #            self.label_ps[i].setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};")
@@ -2035,13 +2097,14 @@ class MyWindow(QMainWindow):
             self.label_ps[i].setFixedWidth(pwidth-wbarray[i%len(wbarray)]*40)
             self.label_ps[i].setTextFormat(Qt.PlainText)
 
-
+        #bot left
+        #BBOX(0,0.8, 0.2, 1)
         self.label_p = QLabel(self)
         # 2. Set a monospaced font
         font = QFont("Courier", fontsize-2) # Specify font family and size
         font.setFixedPitch(True)    # Ensure it uses the fixed pitch version if available
         self.label_p.setFont(font)    # Apply the font to the label        
-        self.label_p.setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};")
+        self.label_p.setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};border: 1px solid black;")
         self.label_p.move(0, self.geo.height() - pwidth)
         self.label_p.setFixedHeight(pwidth)
         self.label_p.setFixedWidth(pwidth)
@@ -2060,6 +2123,8 @@ class MyWindow(QMainWindow):
 #for now no custom fun font.. 
 #just use UTF-8 characters and a monospaced font.
 
+        #bot mid
+        #BBOX(0.1,0.01, 0.02, 0.6, 0.06)
         self.label_times = []
         for i in range(2):
             #show event types for each time point.
@@ -2070,7 +2135,7 @@ class MyWindow(QMainWindow):
             t.setFixedHeight(h+2)
             w = metrics.boundingRect(chr(0x2160)).width()
             t.setFixedWidth(w*60*2) #60 char of time info.. 36-96 ? 
-            t.setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};")
+            t.setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};border: 1px solid black;")
             #some reason <pre> makes formatting a bit nicer..
             ltext = ""
             startchar = 0x2160 #start of roman numeral characters, just to have some unique chars to test with for now.
@@ -2084,16 +2149,19 @@ class MyWindow(QMainWindow):
 
             self.label_times.append(t)
 
+        #top left
+        #BBOX(0,0.01, 0.02, 0.1, 0.1)
         self.label_timeinfo = []
         for i in range(4):
             self.label_timeinfo.append(QLabel(self))
-            self.label_timeinfo[i].setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};")
+            self.label_timeinfo[i].setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};border: 1px solid black;")
             font = QFont("Courier", fontsize-4) # Specify font family and size
             self.label_timeinfo[i].setFont(font)
             self.label_timeinfo[i].move(int(self.geo.width()*0.01), int(self.geo.height()*0.02*(i+1)))
             self.label_timeinfo[i].setFixedHeight(fontsize-4)
             self.label_timeinfo[i].setFixedWidth(int(self.geo.width()*0.09))
             self.label_timeinfo[i].setTextFormat(Qt.PlainText)
+
 
         # show all the widgets
         self.show()
@@ -2108,12 +2176,14 @@ class MyWindow(QMainWindow):
         self.runQRThread() #
         self.runQRInThread() #start thread to detect incoming QR data from other apps or locations..
 
+#        self.show_tray(self.qapp) #show system tray icon for quick access to some functions.
+
         #start internal thread to check the queue for updates.  
         #and update the window when there is new data.  
 
     def init_label(self, label, x, y, w, h, color='red'):
         label.setTextFormat(QtCore.Qt.RichText)
-        label.setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};")
+        label.setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};border: 2px solid black;")
         label.adjustSize()
         label.setWordWrap(True)
         self.set_geometry(label, x, y, w, h)
@@ -2127,8 +2197,8 @@ class MyWindow(QMainWindow):
 
     def save_screenshot(self, lang='hotkeys', fname='', bbox=None, ocr=False):
         """Save a screenshot of the current window."""
-        screen = qapp.primaryScreen()
-        screens = qapp.screens()
+        screen = self.qapp.primaryScreen()
+        screens = self.qapp.screens()
         logger.info('saving screenshot')
         screenshot = None
         for i, s in enumerate(screens):
@@ -2406,10 +2476,14 @@ class MyWindow(QMainWindow):
 
         
 
-    def set_speed(self, speed):
-        self.speed = speed
-        self.label_timeinfo[3].setText(f'$$S={speed}')
-
+    def set_speed(self, speed, lang='_meta'):
+        if (lang == '_meta'):
+            self.speed = speed
+            self.label_timeinfo[3].setText(f'$$S={speed}')
+        elif (lang == 'video'):
+            self.video_player.setPlaybackRate(speed)
+            self.label_timeinfo[3].setText(f'$$VS={speed}')
+            
     def show_p(self, struct=[]):
       """Method to show a QR code."""
       #{'type': type, 'lang': lang, 'cmd': currentcmd, 'vars': vars, 'timestamp': time.time()}
@@ -2672,7 +2746,6 @@ def stop_joystick():
 def joystick_loop(qr_queue):
     joycount = pygame.joystick.get_count()
     if joycount == 0:
-        print("No joysticks were detected.")
         return
 
     logger.info(f'{joycount} joystick(s) detected.')
@@ -2691,6 +2764,7 @@ def joystick_loop(qr_queue):
 #        pygame.display.flip()
         time.sleep(0.05) #small delay to prevent high CPU usage, adjust as needed event rate 20 Hz for now
 #        print('Checking for joystick events...')
+        joycount = pygame.joystick.get_count()
         joyaxes = [[0.0] * joy.get_numaxes() for joy in [pygame.joystick.Joystick(i) for i in range(joycount)]]
         for event in pygame.event.get():
 #            logger.info(f'Joystick event: {event}')
@@ -2730,8 +2804,16 @@ def start_joystick():
     pygame.joystick.init()
     clock = pygame.time.Clock() # Create a Clock object
 #    clock.tick(60) # Limit the loop to run at 60 frames per second (adjust as needed)
-    joystick_thread = threading.Thread(target=joystick_loop, args=(qr_queue,))
-    joystick_thread.start()
+    joycount = pygame.joystick.get_count()
+    if joycount > 0:
+        logger.info(f'{joycount} joystick(s) detected and initialized.')
+        joystick_thread = threading.Thread(target=joystick_loop, args=(qr_queue,))
+        joystick_thread.start()
+        return True
+    else:
+        logger.info('No joysticks detected.')
+        print("No joysticks were detected.")
+        return False
 
 def start_midi():
     global qr_queue
@@ -2750,6 +2832,11 @@ def start_midi():
     midi_kill_event = threading.Event()
     midi_thread = threading.Thread(target=run_midi, args=(midi_stop_event,midi_kill_event, qr_queue, qrin_queue))
     midi_thread.start()
+    midin, midout = get_midi_ports()
+    if (len(midin) > 0):
+        logger.info(f'MIDI input ports: {midin}')
+        return True
+    return False
 
 
 def get_midi_ports():
@@ -2775,6 +2862,7 @@ def handle_keys(qr_queue=None, qrin_queue=None):
 #    c.mySignal.connect(updateQR)
 
     with midiin as inport:
+#        qr_queue.put('<<midi>>\n> MIDIStart [0]\n$$\n')
         while (not midi_stop_event.is_set()):
             while (qrin_queue is not None and not qrin_queue.empty()):
                 qrdata = qrin_queue.get()
@@ -2856,6 +2944,103 @@ def restart_trey():
     os.execl(sys.executable, sys.executable, *sys.argv)
     return 0
 
+
+
+
+def create_circle_icon(color: QColor, size: int) -> QIcon:
+    """
+    Draws a circle onto a QPixmap and returns a QIcon.
+    """
+    # 1. Create a QPixmap and fill with a transparent color
+    pixmap = QPixmap(size, size)
+    pixmap.fill(Qt.GlobalColor.transparent)
+
+    # 2. Initialize a QPainter on the QPixmap
+    painter = QPainter(pixmap)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing) # For smooth edges
+    
+    # 3. Draw the shape (a circle)
+    painter.setBrush(color)
+    painter.setPen(QPen(Qt.GlobalColor.black, 1.25))
+    # Draw an ellipse that fills the pixmap's rectangle (makes it a circle if size is square)
+    painter.drawEllipse(pixmap.rect().adjusted(1, 1, -1, -1))
+
+    # 4. End the QPainter
+    painter.end()
+
+    # 5. Create and return a QIcon
+    return QIcon(pixmap)
+
+def show_tray(qapp):
+    global qtray
+    global qmenu
+    # 2. Create the system tray icon
+    icon = create_circle_icon(QColor(0, 255, 0), 64) #green circle for now, can adjust color and size as needed.
+    qtray = QSystemTrayIcon()
+    qtray.setIcon(icon)
+    qtray.setVisible(True)
+
+
+    # 3. Create a context menu
+    qmenu = QMenu()
+
+    # Action to quit the application
+    quit_action = QAction("Quit")
+    quit_action.triggered.connect(qapp.quit)
+    qmenu.addAction(quit_action)
+
+    # 4. Add the menu to the tray icon
+    qtray.setContextMenu(qmenu)
+    qtray.show()
+    # Optional: Add a tooltip (hover text)
+#    tray.setToolTip("My PyQt5 Tray App")
+
+    # Optional: Show a balloon message on launch (Windows/Linux)
+#    tray.showMessage("My PyQt5 Tray App", "Application started in the background", QSystemTrayIcon.Information, 2000)
+
+
+# 2. Define a function to dynamically change the icon
+def change_icon_dynamically(icon):
+    lastjoyconn = 100
+    lastmidiconn = 100
+    while True:
+        # Wait a few seconds to demonstrate the change after the icon is visible
+        time.sleep(3)
+        # Load a new image using Pillow
+        midiconn = 1
+        joyconn = 1
+        joyconn = pygame.joystick.get_count()
+        inputs, outputs = get_midi_ports()
+        if (len(inputs) > 0):
+            midiconn = len(inputs)
+#        print(f'MIDI connections: {midiconn}, Joystick connections: {joyconn}')
+        #probably could do dynamically, but not worth..
+        if (midiconn > lastmidiconn or joyconn > lastjoyconn):
+            print('New MIDI or Joystick connections detected, restart to connect??')
+#            print(pystray.Icon.HAS_NOTIFICATION)
+            #win: System/Notifications
+            icon.notify('New Device Connections available\nCTRL+SHIFT+R to restart', title='Trey Connection status')
+#            quit_me(True) #restart to get new connections..
+        elif (midiconn < lastmidiconn or joyconn < lastjoyconn and lastjoyconn != 100 and lastmidiconn != 100):
+            print('MIDI or Joystick connections lost, restart??')
+            icon.notify('Device Connections lost\nCTRL+SHIFT+R to restart', title='Trey Connection status')
+
+        if (midiconn >0 and joyconn > 0):
+            new_image = Image.new('RGB', (64, 64), color='green') # Replace with your actual image loading
+        elif (midiconn > 0):
+            new_image = Image.new('RGB', (64, 64), color='blue') # Replace with your actual image loading
+        elif (joyconn > 0):
+            new_image = Image.new('RGB', (64, 64), color='purple') # Replace with your actual image loading
+
+        # Change the icon attribute directly
+        icon.icon = new_image
+
+        lastjoyconn = joyconn
+        lastmidiconn = midiconn
+    #        icon.title = f"Trey {midiconn} {joyconn}" # Optionally change the title
+        
+
+
 def main():
     global qapp
     global mywindow
@@ -2881,7 +3066,6 @@ def main():
         title='Trey',  # Title displayed on hover
         menu=menu  # The menu associated with the icon
     )
-
     # Run the icon (this call is blocking)
     logging.basicConfig(filename='trey.log', 
         format='%(asctime)s %(levelname)-8s %(message)s',
@@ -2897,26 +3081,33 @@ def main():
     logger.info('Creating Qapplication object')
     # Create the application object
     qapp = QApplication(sys.argv)
+    qapp.setQuitOnLastWindowClosed(False)
     logger.info('Creating application window')
     # Create the main application window
     global qr_queue, qrin_queue
     qr_queue = Queue()
     qrin_queue = Queue()
-    mywindow = MyWindow(qr_queue, qrin_queue, config.cfg)
+
+#    show_tray(qapp)
+
+    mywindow = MyWindow(qr_queue, qrin_queue, config.cfg, qapp)
 
     logger.info('Running icon')
-    #icon.run()
+#    icon.run()
     icon.run_detached()
+
 
 
     # Create a Thread object to listedn for MIDI messages
     # Create an event
-    start_midi()
+    midiconn = start_midi()
 
     #start joystick thread.  
-    start_joystick()
+    joyconn = start_joystick()
 
 
+    dynamic_change_thread = threading.Thread(target=change_icon_dynamically, args=(icon,))
+    dynamic_change_thread.start()
 
     logger.info('Executing application')
 
