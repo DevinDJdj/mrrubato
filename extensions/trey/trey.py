@@ -756,6 +756,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
     idx = -1
 
     intro_played = 0
+    vars = {}
     while (idx < len(lines)-1):
 #    for idx in range(len(lines)):
         idx = idx + 1
@@ -992,8 +993,13 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
         total_read += len(l) + 1 #include newline
 
         r = None
-        if (len(l) > 50): #only do similar for longer lines
-            r = get_similar(idx, link_density_map) #do a vector search for similar items.
+        #skip for now..
+        if (r is not None and len(l) > 50): #only do similar for longer lines
+            try:
+                r = get_similar(idx, link_density_map) #do a vector search for similar items.
+            except Exception as e:
+                print(f'!!QDRANTZ Error getting similar items: {e}')
+                logger.error(f'!!QDRANTZ Error getting similar items: {e}')
             #if we have good results here we could read them out.
 #            print(r)
         #similar moved to end of reading line.
@@ -1249,10 +1255,11 @@ def hide_overlay():
     """Hide the overlay window."""
     global mywindow
     logger.info('Hiding overlay window')
+
     mywindow.hideme()
 #    stop_mouse_listener()  # Stop the mouse listener
 
-def draw_overlay(delay=10, opacity=0.4): #default hide in 10 seconds
+def draw_overlay(delay=15, opacity=0.4): #default hide in 10 seconds
     global active_window
     global mywindow
 
@@ -1379,6 +1386,10 @@ def _hide(data):
 #    speech_pipe = KPipeline(lang_code='a')
     logger.info('Hiding mywindow after delay')
     mywindow.hideme()
+    #initialize time..
+    day = 86400
+    tnow = time.time()
+    mywindow.set_time(tnow-day*1, tnow-day*7, tnow, day*7)
     mk.set_startx(mywindow.startx)
     mk.set_geo(mywindow.geo)
 
@@ -2168,7 +2179,7 @@ class MyWindow(QMainWindow):
         self.showQR("Starting Trey Overlay")
         #hide after a few seconds
         #workaround, something wrong with the PyQt if we hide this immediately
-        t = threading.Timer(3, _hide, args=["Hello from Timer!"])
+        t = threading.Timer(5, _hide, args=["Hello from Timer!"])
         t.start()  # Start the timer in a new thread
         logger.info('Window created')
         self.read(['hotkeys', 'video'], None, None) #initial read of all data, can be filtered by time later.
@@ -2251,6 +2262,7 @@ class MyWindow(QMainWindow):
     def hideme(self):
         """Method to close the window."""
         self.hide()
+
         logger.info('Window hidden')
 
 
@@ -2356,16 +2368,17 @@ class MyWindow(QMainWindow):
         print(f"Sorted tmap: {sorted_tmap}")
         sorted_indices = sorted(range(len(self.tmap)), key=lambda i: abs(self.tmap[i]['timestamp'] - current_time))
         print(f"Sorted indices: {sorted_indices}")
-        self.tmapindex = sorted_indices[0] #index of closest item in tmap to current time, can use this to select items to display or play etc.
-        maintext = []
-        for i in range(len(sorted_tmap)):
-            #compare to current time, and select if within current time window.  
-            if (len(maintext) < 3):
-                maintext.append({'timestamp': sorted_tmap[i]['timestamp'], 'text': self.transcriber.write(sorted_tmap[i]['lang'], sorted_tmap[i]['cmd'], sorted_tmap[i]['vars'], False)})
-        maintext = sorted(maintext, key=lambda x: x['timestamp'])
-        for i in range(len(maintext)):
-            self.label_main[i].setText(maintext[i]['text'].replace('\n', '<br>'))
-            self.label_main[i].update()
+        if (len(sorted_indices) > 0):
+            self.tmapindex = sorted_indices[0] #index of closest item in tmap to current time, can use this to select items to display or play etc.
+            maintext = []
+            for i in range(len(sorted_tmap)):
+                #compare to current time, and select if within current time window.  
+                if (len(maintext) < 3):
+                    maintext.append({'timestamp': sorted_tmap[i]['timestamp'], 'text': self.transcriber.write(sorted_tmap[i]['lang'], sorted_tmap[i]['cmd'], sorted_tmap[i]['vars'], False)})
+            maintext = sorted(maintext, key=lambda x: x['timestamp'])
+            for i in range(len(maintext)):
+                self.label_main[i].setText(maintext[i]['text'].replace('\n', '<br>'))
+                self.label_main[i].update()
 
 
 
@@ -2483,7 +2496,7 @@ class MyWindow(QMainWindow):
         elif (lang == 'video'):
             self.video_player.setPlaybackRate(speed)
             self.label_timeinfo[3].setText(f'$$VS={speed}')
-            
+
     def show_p(self, struct=[]):
       """Method to show a QR code."""
       #{'type': type, 'lang': lang, 'cmd': currentcmd, 'vars': vars, 'timestamp': time.time()}

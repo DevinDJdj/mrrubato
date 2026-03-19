@@ -8,7 +8,7 @@ from playwright.async_api import async_playwright
 from playwright_stealth import Stealth
 
 
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright, Page
 
 
 #standard libraries
@@ -37,7 +37,7 @@ mycontext = None
 current_cache = -1 #current cache page we are on.
 
 screen_position = (0,0,0,0) #x,y,width,height
-
+last10 = [] #last 10 bookmark URLs for preloading.
 
 def load(qapp=None):
     """Load the Playwright library and initialize the browser."""
@@ -424,8 +424,10 @@ def open_browser():
     if mybrowser is None:
         myplaywright = sync_playwright().start()
         
-#        args = ["--disable-blink-features=AutomationControlled", "--load-extension=C:\devinpiano\music\extensions\handsfree"]
-        args = ["--disable-blink-features=AutomationControlled"]
+        user_data_dir = os.path.join(config.get_data_folder(), 'playwright_user_data')
+        args = ["--disable-blink-features=AutomationControlled", "--load-extension=C:\devinpiano\music\extensions\handsfree"]
+
+#        args = ["--disable-blink-features=AutomationControlled"]
         x = screen_position[0]
         y = screen_position[1]
         w = screen_position[2]
@@ -434,7 +436,15 @@ def open_browser():
         args.append(f"--window-position={x},{y}")
         args.append(f"--window-size={w},{h}")
         logger.info(f'Launching browser at position {x},{y} size {w}x{h}')
-        mybrowser = myplaywright.chromium.launch(headless=False, args=args)  
+#        mybrowser = myplaywright.chromium.launch(headless=False, args=args)  
+        mybrowser = myplaywright.chromium.launch_persistent_context(user_data_dir, headless=False, args=args)
+
+
+        #load last 10
+        for url in last10:
+            read_page(url) #preload last 10 bookmarks.
+            #but dont read..
+            print(f'Last 10 bookmark URLs: {url}')
 
 #        async with Stealth().use_async(async_playwright()) as p:
 #            browser_type = p.chromium
@@ -487,12 +497,17 @@ def get_ppage(cacheno=-1): #get playwright page from cacheno
 
     if cacheno >= 0 and cacheno < len(page_cache):
         page = page_cache[cacheno]['page']
+        activate_tab(cacheno)
     else:
         browser = open_browser()
         global mycontext
         if mycontext is None:
-            mycontext = browser.new_context()
-        page = mycontext.new_page()
+            mycontext = browser     #browser.new_context()
+        all_tabs: list[Page] = mycontext.pages
+        if (cacheno > -1 and len(all_tabs) > cacheno):
+            page = all_tabs[cacheno]
+        else:   
+            page = mycontext.new_page()
     return page
 
 def find_nth_occurrence(main_string, sub_string, n):
@@ -729,9 +744,9 @@ def update_page_offset(cacheno=-1):
 
 def cache_page(url, page, body_text, link_data, cacheno=-1):
     if cacheno >= 0 and cacheno < len(page_cache):
-        page_cache[cacheno] = {'url': url, 'page': page, 'current_offset': {url: 0}, 'body': body_text, 'links': link_data, 'title' : page.title(), 'reader_queue': page_cache[cacheno].get('reader_queue', None), 'sim_queue': page_cache[cacheno].get('sim_queue', None), 'reader_stop_event': page_cache[cacheno].get('reader_stop_event', None)}            
+        page_cache[cacheno] = {'timestamp': time.time(), 'url': url, 'page': page, 'current_offset': {url: 0}, 'body': body_text, 'links': link_data, 'title' : page.title(), 'reader_queue': page_cache[cacheno].get('reader_queue', None), 'sim_queue': page_cache[cacheno].get('sim_queue', None), 'reader_stop_event': page_cache[cacheno].get('reader_stop_event', None)}            
     else:
-        page_cache.append({'url': url, 'page': page, 'current_offset': {url: 0}, 'body': body_text, 'links': link_data, 'title' : page.title(), 'reader_queue': None, 'sim_queue': None, 'reader_stop_event': None})
+        page_cache.append({'timestamp': time.time(), 'url': url, 'page': page, 'current_offset': {url: 0}, 'body': body_text, 'links': link_data, 'title' : page.title(), 'reader_queue': None, 'sim_queue': None, 'reader_stop_event': None})
         cacheno = len(page_cache) - 1
     return cacheno
 
@@ -777,7 +792,20 @@ def detect_language(cacheno=-1):
     else:
         logging.warning(f'Cache number {cacheno} out of range')
         return ""
-    
+
+def activate_tab(cacheno=0):
+    global current_cache
+    if cacheno > -1 and cacheno < len(page_cache):
+        page_info = page_cache[cacheno]       
+        page = page_info['page']
+        current_cache = cacheno
+#        page.bring_to_front()
+        logging.info(f'--activate_tab [{cacheno},{page.url}]')
+        return True
+    else:
+        logging.warning(f'!!activate_tab [{cacheno}]\nCache number {cacheno} out of range')
+        return False  
+      
 def read_page(url, cacheno=-1):
     global current_cache
     """Search the web for a query using Playwright."""
@@ -785,10 +813,20 @@ def read_page(url, cacheno=-1):
     # Implement the web search logic here
     # This is a placeholder implementation
 
-    global current_cache
-    if (cacheno < 0 or cacheno >= len(page_cache)):
-        cacheno = current_cache
-    page = get_ppage(cacheno)
+#    if (cacheno < 0 or cacheno >= len(page_cache)):
+#        cacheno = current_cache
+#check for existing.  
+    if (url !=''):
+        found_item = next((item for item in page_cache if item.get('url') == url), None)
+        if found_item is not None and found_item.get('timestamp', 0) + 60 > time.time(): #cache for 1 minute for now.
+            logging.info(f'#{url}\nURL already in cache and valid, returning cached page')
+            cacheno = page_cache.index(found_item)
+            activate_tab(cacheno)
+            return found_item['body'], found_item['links'], found_item['page'], page_cache.index(found_item)
+        elif found_item is not None:
+            logging.info(f'#{url}\nURL already in cache but expired, refreshing page')
+            cacheno = page_cache.index(found_item)
+    page = get_ppage(cacheno) #gets new page if -1
 
     logging.info(f'Getting: {url}')
 

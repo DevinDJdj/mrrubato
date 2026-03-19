@@ -39,3 +39,11 @@ def save_custom_settings():
     global custom_settings
     with open(sys.path[0] + "/custom_settings.json", "w") as json_file:
         json.dump(custom_settings, json_file, indent=4)
+
+def get_data_folder():
+    if sys.platform == "win32":
+        return os.path.join(os.getenv('APPDATA'), 'Trey')
+    elif sys.platform == "darwin":
+        return os.path.join(os.path.expanduser('~'), 'Library', 'Application Support', 'Trey')
+    else:
+        return os.path.join(os.path.expanduser('~'), '.trey')

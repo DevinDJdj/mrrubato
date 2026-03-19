@@ -281,3 +281,45 @@ adjust speed..
 adjust speed..
 
 Whatever the speed, leave adjustable silence between ticks..
+
+
+**extensions/vscode/codetutor/src/extension.ts
+Need to at least genbook..
+On a loop..
+
+
+**extensions/trey/playwrighty.py
+Need to save session info.  
+Or just open last 10 bookmarks saved for now..
+Just dont start reading..
+
+**languages/hotkeys.py
+--load_bookmarks2
+load pages and set current_cache to last bookmark..
+--read_page(url, cacheno)
+
+
+[53,56,60] [cacheno]
+test..
+
+!!greenlet.error: Cannot switch to a different thread
+==
+Have to start in mykeys thread..
+$$
+
+Still not getting the right tab..
+Closer.  
+How to select tab 0.  
+
+Generate and read summary option..
+
+Finish select topic..
+
+**extensions/trey/trey.py
+--_hide
+--set_time
+1 week to start..
+
+See if we can play embedded video from URL.  
+
+

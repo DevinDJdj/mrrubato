@@ -298,30 +298,49 @@ class _meta:
     else:
       return self.selectedtopicindex + idx
       
+  def get_context(self, topic, num=5):
+    #get context for topic from book transcripts.  
+    ret = f"**{topic}\n"
+    if topic in self.alltopics:
+      topiccmds = self.alltopics[topic]
+      topiccmds.sort(key=lambda x: abs(self.timewindow.currenttime - x['timestamp']), reverse=True) #sort by recency to current time, most recent first.
+      sortedcmds = topiccmds[:num]
+      sortedcmds.sort(key=lambda x: x['timestamp']) #sort by time for display.
+      context = []
+      for cmd in sortedcmds:
+        ret += f'$${datetime.fromtimestamp(cmd["timestamp"]).strftime("%Y%m%d_%H%M%S")}\n'
+        ret += '\n'.join(cmd['lines']) + "\n"
+    return ret
+    
   def select_topic_(self, sequence=[]):
     if (len(sequence) > 0) and sequence[-1] != self.keybot:
       logger.info(f'> Select Topic_ {sequence}')
       print("> Select Topic_")
-      newidx = self.adjust_topic_index(sequence[-1]-self.keymid)
-      logger.info(f'--{self.topicarray[newidx]["text"]}')
+      newidx = self.adjust_topic_index(sequence[-1]-self.mid)
+      logger.info(f'--{self.topicarray[newidx]}')
       self.func = "Select Topic_"
       #should make this more general.. send last ten links
       last15 = self.topicarray[max(0, newidx-12):min(newidx+12, len(self.topicarray))]
       last15.reverse() #reverse to match with Future:Past order in display.. [48 - 68]
       #does this match up with keys?  
       vars = {}
+      vars['topic'] = self.topicarray[newidx]
+      vars['context'] = self.get_context(self.topicarray[newidx], 5) #get context for topic
+
+
       for i, l in enumerate(last15):
         vars[f'{i}'] = l
 #          vars[f'href{i}'] = l['href']
       vars['idx'] = newidx
       self.set_qr(self.func, vars)
+    return 1
     #scroll up or back?  
     #list most likely topics based on recency and relevance to current topic.
 
   def select_topic(self, sequence=[]):
     selected = 0
     if (len(sequence) > 0):
-      selected = sequence[-1]-self.keymid
+      selected = sequence[-1]-self.mid
 
     self.selectedtopicindex = self.adjust_topic_index(selected)
     self.selectedtopic = self.topicarray[self.selectedtopicindex] if self.selectedtopicindex < len(self.topicarray) else None

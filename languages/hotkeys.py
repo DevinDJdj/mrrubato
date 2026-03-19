@@ -111,8 +111,10 @@ class hotkeys:
   def load_bookmarks2(self, allcmds):
     totalcmds = len(allcmds)
     numloaded = 0
+    last10 = []
     for c in allcmds:
       #print(f'Processing command {c}')
+      url = ''
       if (c['cmd'] == 'Add Bookmark'):
         #print(f'Found bookmark command {c}')
         if ('URL' not in c['vars'] or 'TOTAL_READ' not in c['vars']):
@@ -138,6 +140,15 @@ class hotkeys:
         playwrighty.add_bookmark(url, total_read, text) #call playwrighty add bookmark..
         numloaded += 1
             
+      if url != "":
+        if (url in last10):
+          last10.remove(url)
+        last10.append(url)
+        if len(last10) > 10:
+          last10.pop(0)
+
+    logger.info(f'Last 10 bookmark URLs: {last10}')
+    playwrighty.last10 = last10
         
     logger.info(f'Loaded {numloaded} bookmarks from {totalcmds} commands')
 
@@ -508,14 +519,51 @@ class hotkeys:
 
 
     return 0
+
+
+  def select_tab_(self, sequence=[]):
+    if (len(sequence) > 0) and sequence[-1] != self.keybot:
+
+      logger.info(f'> Select Tab_ {sequence}')
+      print("> Select Tab_")
+        #find the current link from our reading.  
+      testing = True
+      if (playwrighty.mybrowser is not None and testing):
+
+        vars = {}
+        for (i, page_info) in enumerate(playwrighty.page_cache[-15:]):          
+          print(f'Tab {i}: {page_info["url"]}')
+          logger.info(f'Tab {i}: {page_info["url"]}')
+          vars["{i}"] = page_info["title"]
+
+        from extensions.trey.trey import pause_reader, resume_reader, stop_audio
+        pause_reader(playwrighty.current_cache) #pause first before clicking link.
+        time.sleep(0.5) #wait for pause to take effect.  Need better way to ensure this.
+
+        self.func = "Select Tab_"
+        linkno = sequence[-1]-self.keybot
+        if (linkno < 0 or linkno >= len(playwrighty.page_cache)):
+          linkno = len(playwrighty.page_cache)-1
+
+        vars['idx'] = linkno
+
+        self.set_qr(self.func, vars)
+        self.speak(f'--{playwrighty.page_cache[linkno]["title"]}')
+        resume_reader(playwrighty.current_cache) #resume after speaking link number.
+    return 1
   
   def select_tab(self, sequence=[]):
     logger.info(f'> Select Tab {sequence}')
     if (playwrighty.mybrowser is not None):
       select_index = 0
-      if (len(sequence) > 1):
-        select_index = sequence[-1]-(self.keybot+self.keymid) #offset from middle C
+      if (len(sequence) > 0):
+        select_index = sequence[-1]-(self.keybot) #offset from middle C
+      logger.info(f'Selecting Tab with index {select_index} of {len(playwrighty.page_cache)}')
       if (select_index >= 0 and select_index < len(playwrighty.page_cache)):
+        from extensions.trey.trey import pause_reader, resume_reader, stop_audio
+        stop_audio(playwrighty.current_cache) #stop audio to ensure it stops immediately.
+        #should start from here again..
+        time.sleep(0.5) #wait for pause to take effect.  Need better way to ensure this.
         playwrighty.current_cache = select_index
         page = playwrighty.page_cache[select_index]['page']
         print(f'Switched to Tab {select_index}: {page.url}')
@@ -1037,7 +1085,9 @@ class hotkeys:
 
   def read_screen(self, sequence=[]):
     logger.info(f'> Read Screen {sequence}')
-
+    if (len(sequence) > 0):
+      #start the browser if any params passed for now..  
+      playwrighty.open_browser()
     if (playwrighty.mybrowser is not None): #we have started a browser session with playwright.
       logger.info('Getting page from Playwright')
       text, links, alt_text_data = playwrighty.get_page_details(playwrighty.get_ppage(playwrighty.current_cache))
@@ -1045,7 +1095,7 @@ class hotkeys:
 
       self.links = links
       print(f'Playwright found {len(text)} characters and {len(links)} links  on the page') 
-      q2, q3, stop_event = self.speak(text, links, cacheno=cacheno)
+      q2, q3, stop_event = self.speak(text, links, alt_text_data, cacheno=cacheno)
       playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
       return 0
     

@@ -544,9 +544,9 @@ class MyKeys:
     return action
 
   def unset_sequence(self):
-    self.keyshift = 0
+#    self.keyshift = 0
     self.setlanguage = None
-    self.octaveshift = 0
+#    self.octaveshift = 0
     logger.info("Unsetting keyshift and octave shift")
 
     #perhaps make shorter
@@ -648,7 +648,19 @@ class MyKeys:
           logger.info(f'&<{l}>{word} []\n')
           acted = self.takeaction(word, l, [], callback, doact=doact)
           logger.info(f'Action returned {acted} for {word} in {l} {self.sequence}')
-          if (acted > 0):
+          
+
+          if (isinstance(acted, int) and (acted == 0)):
+            #word completed immediately.  
+            #not sure use-case at the moment..
+            #keep sequence, but run prefix command.  
+            word = "" #reset word to not found.
+            self.currentcmd = None
+          elif(isinstance(acted, list) and acted == []):
+            word = "" #reset word to not found.
+            self.currentcmd = None
+
+          elif (isinstance(acted, int) and (acted > 0)) :
             #not yet ready to complete..
             #1 means not done yet.. possibly include how many params necessary?
             if (acted > 1):
@@ -658,12 +670,6 @@ class MyKeys:
             #word = "" #reset word to not found.
             #this should allow us to include shorter word subsets in dictionary..
             #i.e. [60, 62] = "Hi" and [60, 62, 64] = "Hello"
-          elif (acted == 0):
-            #word completed immediately.  
-            #not sure use-case at the moment..
-            #keep sequence, but run prefix command.  
-            word = "" #reset word to not found.
-            self.currentcmd = None
 
 #            winsound.Beep(1000, 500) #beep to end complete without error
             #this should allow us to include shorter word subsets in dictionary..
