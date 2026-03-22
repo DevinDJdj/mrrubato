@@ -397,3 +397,6 @@ Context still not loading..
 Try to expand time window, and then load..
 Should get better result..
 
+
+Somewhat better.  
+Some contexts not loading, not sure the cause..

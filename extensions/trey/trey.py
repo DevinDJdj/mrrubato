@@ -1616,11 +1616,16 @@ class MyWindow(QMainWindow):
             else:
                 op = self.get_setting('OPACITY', 0.4)
                 op = float(vars.get('OPACITY', op))
+                rec = self.get_setting('RECORD', 'False')
+                rec = vars.get('RECORD', rec)
                 self.setWindowOpacity(op)
                 self.add_setting('OPACITY', op)
+                self.add_setting('RECORD', rec)
+                
                 self.show()
                 #start OBS capture..
-                start_obs_capture()
+                if (rec == 'True'):
+                    start_obs_capture()
         elif (command == "Stop"):
             type = vars.get('type', 'video')
             if (type == 'video'):
@@ -1712,13 +1717,19 @@ class MyWindow(QMainWindow):
             self.set_speed(speed, lang)
             print(f"<<{lang}>>\n$$SPEED=" + str(speed))
         elif (command == "Select Topic"):
-            topic = vars.get('TOPIC', 'None')
-            self.add_setting('TOPIC', topic)
-            context = vars.get('CONTEXT', '')
+            topic = vars.get('topic', 'None')
+            self.add_setting('topic', topic)
+            context = vars.get('context', '')
             self.transcriber.current_topic = topic
-            print(f"<<{lang}>>\n$$TOPIC=" + str(topic))
+            print(f"<<{lang}>>\n$$topic=" + str(topic))
+            print(f"<<{lang}>>\n$$context=" + str(context))
             self.label_topic_info[0].setText(f'**{topic}')
-            self.label_topic_info[1].setText(f'{context}')
+
+            #format this a bit nicer..
+            self.label_topic_info[1].setText(f'{context}') 
+
+            self.label_topic_info[0].update()
+            self.label_topic_info[1].update()
 
         elif (command == "Screenshot"):
             print("Taking Screenshot")
@@ -1783,9 +1794,9 @@ class MyWindow(QMainWindow):
 
                 else:
                     parts = line[2:].split('=')
-                    if (len(parts) == 2):
+                    if (len(parts) >= 2):
                         key = parts[0]
-                        value = parts[1]
+                        value = ''.join(parts[1:])
                         vars[key] = value
             if (type == '~~'):
                 #end of command
@@ -2128,7 +2139,7 @@ class MyWindow(QMainWindow):
         self.label_p.move(0, self.geo.height() - pwidth)
         self.label_p.setFixedHeight(pwidth)
         self.label_p.setFixedWidth(pwidth)
-        self.label_p.setTextFormat(Qt.PlainText)
+#        self.label_p.setTextFormat(Qt.PlainText)
 #        self.label_p.setStyleSheet("background-image: url(path/to/your/image.png); border: 2px solid blue;")
 
         metrics = QFontMetrics(font)
@@ -2192,7 +2203,7 @@ class MyWindow(QMainWindow):
             self.label_topic_info[i].move(int(self.geo.width()*0.1), int(self.geo.height()*(0.06+0.02*(i+1))))
             self.label_topic_info[i].setFixedHeight(int(self.geo.height()*(0.02+(0.06*i)))) #larger height for context info..
             self.label_topic_info[i].setFixedWidth(int(self.geo.width()*0.6))
-            self.label_topic_info[i].setTextFormat(Qt.PlainText)
+#            self.label_topic_info[i].setTextFormat(Qt.PlainText)
 
         # show all the widgets
         self.show()
@@ -2556,7 +2567,7 @@ class MyWindow(QMainWindow):
                     fulltext += "\n"
 
                 cnt += 1
-            context = l['vars'].get('CONTEXT', None)
+            context = l['vars'].get('context', None)
             if (context is not None):
                 fulltext += f"\n{context}\n"
                 

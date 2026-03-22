@@ -13,6 +13,7 @@ class mousemovement1:
     self.config = config
     self.qapp = qapp
     self.startx = startx
+    self.keybot = 0 #dont use..
     self.geo = None
 
     self.name = "mousemovement1"
@@ -34,6 +35,7 @@ class mousemovement1:
       else:
         return 1 #need more keys.
 
+    
     if (len(sequence) == 0 and "_" + cmd in self.funcdict):
       #run prefix command
       func = self.funcdict["_" + cmd]
@@ -64,6 +66,9 @@ class mousemovement1:
 
   def word(self, sequence=[]):
     """Word lookup."""
+
+    if (self.keybot == 0):
+      return "" #no keybot set, so cant run any commands.
 
     cmd = ""
     sl = str(len(sequence))

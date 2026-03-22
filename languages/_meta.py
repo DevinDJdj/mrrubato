@@ -326,12 +326,13 @@ class _meta:
     logger.info(f'--{self.topicarray[newidx]}')
     self.func = "Select Topic_"
     #should make this more general.. send last ten links
-    last15 = self.topicarray[max(0, self.selectedtopicindex-12):min(self.selectedtopicindex+12, len(self.topicarray))]
+    last15 = self.topicarray[max(0, self.selectedtopicindex-11):min(self.selectedtopicindex+13, len(self.topicarray))]
     last15.reverse() #reverse to match with Future:Past order in display.. [48 - 68]
     #does this match up with keys?  
     vars = {}
     vars['topic'] = self.topicarray[newidx]
-    vars['context'] = self.get_context(self.topicarray[newidx], 5) #get context for topic
+    ctxt = self.get_context(self.topicarray[newidx], 5) #get context for topic
+    vars['context'] = ctxt.replace('\n', '<br>')
 
     start = 0
 #    if self.selectedtopicindex < 12:
@@ -354,11 +355,12 @@ class _meta:
 
     self.selectedtopicindex = self.adjust_topic_index(selected)
     self.selectedtopic = self.topicarray[self.selectedtopicindex] if self.selectedtopicindex < len(self.topicarray) else None
-    context = self.get_context(self.topicarray[self.selectedtopicindex], 5) #get context for topic
+    ctxt = self.get_context(self.topicarray[self.selectedtopicindex], 5) #get context for topic
     logger.info(f'> Select Topic {sequence}')
     #get bookmark at index selected
     self.func = "Select Topic"
-    self.set_qr(self.func, {'CONTEXT': context, 'TOPIC': self.selectedtopic})
+    self.set_qr(self.func, {'context': ctxt.replace('\n', '<br>'), 'topic': self.selectedtopic})
+#    logger.info(ctxt.replace('\n', '<br>'))
     self.speak(f'Selected topic {self.selectedtopic}')
     return 0
 

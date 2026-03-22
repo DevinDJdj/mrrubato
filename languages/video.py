@@ -494,14 +494,22 @@ class video:
     opacity = self.opacity
     vars = {}
     if (len(sequence) >=1):
-        opacity = (sequence[0]-self.keybot)*10
-        if (opacity < 0):
-            opacity = 0
-        elif (opacity > 100):
-            opacity = 100
-        opacity = opacity / 100.0
-        self.opacity = opacity
-        vars['OPACITY'] = opacity
+        if (sequence[-1] == self.keybot-1):
+          #turn off recording.  
+          vars['RECORD'] = 'False'
+          vars['OPACITY'] = opacity #use same opacity..
+        elif (sequence[-1] == self.keybot+1):
+          vars['RECORD'] = 'True'
+          vars['OPACITY'] = opacity #use same opacity..
+        else:
+          opacity = (sequence[0]-self.keybot)*10  #use first param as opacity..
+          if (opacity < 0):
+              opacity = 0
+          elif (opacity > 100):
+              opacity = 100
+          opacity = opacity / 100.0
+          self.opacity = opacity
+          vars['OPACITY'] = opacity
 
     self.set_qr(self.func, vars)
     return 0

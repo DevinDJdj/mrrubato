@@ -319,7 +319,14 @@ class transcriber:
         topc = None
         numlines = len(lines)
         now = datetime.fromtimestamp(mtime)
+        daysdiff = 0
+        if (last_time is not None):
+            daysdiff = mtime - last_time
+            daysdiff = int(daysdiff / 86400)
+        pdays = (1 / numlines) * daysdiff
+        now += timedelta(days=-daysdiff) #start at last_time and increment by pdays for each line, so we can have a timestamp for each line even if they dont have one explicitly.  could be useful for sorting topics/commands later.  not perfect, but should be good enough for now.  ideally would want to parse out actual timestamps from lines if available, but this is a start.
         for idx, line in enumerate(lines):
+            now += timedelta(days=pdays)
             #add bookmark manually.  
             if (len(line) < 2):
                 continue
@@ -328,13 +335,6 @@ class transcriber:
                 #topic definition.  
                 #use file modification time for the time being..
                 #get days since last file mod time.  
-                daysdiff = 0
-                if (last_time is not None):
-                    daysdiff = mtime - last_time
-                    daysdiff = int(daysdiff / 86400)
-                pdays = ((numlines - idx) / numlines) * daysdiff
-                relativedays = -int(pdays)
-                now += timedelta(days=relativedays)
                 self.current_topic = line[2:].strip() #update current topic to this topic. then get_cmd with new topic.
                 topc = self.get_cmd(lang, type, line[2:].strip(), {'TIME': now.strftime('%Y%m%d_%H%M%S')})
                 ret.append(topc)

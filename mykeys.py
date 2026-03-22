@@ -379,7 +379,7 @@ class MyKeys:
         la.qr = "" #reset qr after getting it.
     qr += "<<meta>>\n"
     words = self.get_words_(self.sequence[self.startseqno:])
-    #potentially get most likely words here only.
+    #potentially get most likely words here only.  Eventually..
     qr += f"$$SEQLEN={self.currentseqno - self.startseqno} \n"
     for i, w in enumerate(words):      
       keys = self.convert_keys(w['keys'])
