@@ -30,6 +30,7 @@ class transcriber:
         self.mykeys = mk
         self.mydic = {}
         self.allneedles = []
+        self.current_topic = None
         if (self.mykeys is not None):
             allwords = self.mykeys.get_words_()
             for i, w in enumerate(allwords):            
@@ -62,9 +63,6 @@ class transcriber:
 
     def speak(self, lang, command, params, save=False):
       ret = ""
-      if (lang not in self.langmap or self.langmap[lang] != lang):
-        self.langmap[lang] = lang
-        ret += f'<<{lang}>>\n'
       ret += f'> {command}\n'
       vars = {}
       for pkey, p in params.items():
@@ -87,9 +85,14 @@ class transcriber:
 
       #add utf-8?  
       ret = ""
-      if (lang not in self.langmap or self.langmap[lang] != lang):
-        self.langmap[lang] = lang
+      if (lang not in self.langmap or self.langmap[lang]['lang'] != lang):
+        self.langmap[lang] = {'lang':lang, 'topic': self.current_topic}
         ret += f'<<{lang}>>\n'
+        ret += f'**{self.langmap[lang]["topic"]}\n'
+      elif (self.langmap[lang]['topic'] is not None and self.langmap[lang]['topic'] != self.current_topic):
+        ret += f'**{self.langmap[lang]["topic"]}\n'
+        if (save): #dual purpose.. save to file and save current topic in langmap for future reference.  OK for now..
+            self.langmap[lang]['topic'] = self.current_topic
       ret += f'> {command}\n'
       vars = {}
       for pkey, p in params.items():
@@ -134,7 +137,7 @@ class transcriber:
                 else:
                     break   
         
-        if (end_time < self.allcmds[lang]['start_time']):
+        if (end_time < self.allcmds[lang]['end_time']):
             end_idx = self.allcmds[lang]['end_idx']
             for (i, cmd) in enumerate(reversed(self.allcmds[lang]['cmds'][:end_idx])):
                 if (cmd['timestamp'] <= end_time.timestamp()):
@@ -148,6 +151,8 @@ class transcriber:
                     end_idx += 1
                 else:
                     break
+#        self.current_topic = self.allcmds[lang]['cmds'][end_idx-1]['topic'] if end_idx > 0 else self.current_topic
+        
         return self.allcmds[lang]['cmds'][start_idx:end_idx]
 
     def play_midi(self, midi_data, act=True, speed=1.0, volume=1.0):
@@ -268,7 +273,7 @@ class transcriber:
                 pass
 
         lines = []
-        return {'lang': lang, 'type': type, 'cmd': command, 'vars': vars, 'lines': lines, 'timestamp': t}
+        return {'lang': lang, 'type': type, 'cmd': command, 'topic': self.current_topic, 'vars': vars, 'lines': lines, 'timestamp': t}
 
 
     def get_seq(self, command):
@@ -306,6 +311,9 @@ class transcriber:
         currentcmd = ""
         currentcmdobj = None
         currenttopc = None
+        if (mtime is None):
+            mtime = time.time()
+            last_time = mtime - 86400 #default to last 24 hours if no time provided, should be close enough for sorting topics.
 
         vars = {}
         topc = None
@@ -327,12 +335,15 @@ class transcriber:
                 pdays = ((numlines - idx) / numlines) * daysdiff
                 relativedays = -int(pdays)
                 now += timedelta(days=relativedays)
+                self.current_topic = line[2:].strip() #update current topic to this topic. then get_cmd with new topic.
                 topc = self.get_cmd(lang, type, line[2:].strip(), {'TIME': now.strftime('%Y%m%d_%H%M%S')})
                 ret.append(topc)
                 currenttopc = topc
             else:
                 if (topc is not None and 'lines' in topc):
                     topc['lines'].append(line)
+                if (currentcmdobj is not None and 'lines' in currentcmdobj):
+                    currentcmdobj['lines'].append(line)
 
             if (type == '> '):
                 #command line internal command
@@ -347,6 +358,7 @@ class transcriber:
                 currentcmd = line[2:].strip()
                 currentcmd,seq = self.get_seq(currentcmd)
                 currentcmdobj = self.get_cmd(lang, type, currentcmd, {'TIME': now.strftime('%Y%m%d_%H%M%S'), 'SEQ': seq})
+                currentcmdobj['lines'].append(line)
                 vars = {}
             if (type == '$$'):
                 #special trey data line
@@ -379,12 +391,9 @@ class transcriber:
                         elif (currenttopc is not None and 'vars' in currenttopc):
                             currenttopc['vars'][key] = value
 
-        if (currentcmd != ""):
-            type = '> '
-            c = self.get_cmd(lang, type, currentcmd, vars)
-            ret.append(c)
-            currentcmd = ""
-            vars = {}
+        if (currentcmd != "" and currentcmdobj is not None):
+            ret.append(currentcmdobj)
+
         return ret
 
     def read(self, lang, start_time=None, end_time=None, myfolder=""):
@@ -431,6 +440,7 @@ class transcriber:
 
                 try:
                     with open(folder + f, encoding='utf-8') as ff:
+                        self.current_topic = f[:-4] #file name without extension
                         lines = ff.readlines()
                         test = self.read_lines(lang, lines, last_time, mtime)
                         ret.extend(test)                        

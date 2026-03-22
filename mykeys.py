@@ -310,6 +310,8 @@ class MyKeys:
       for (l,la) in self.languages.items():
         if (hasattr(la, 'qrin')):
           la.qrin = (data)
+        if (hasattr(la, 'qr_in')):
+          la.qr_in(data)
     else:
       #dont keep duplicates for now..
       self.qrin.remove(data)
@@ -345,7 +347,7 @@ class MyKeys:
             #get the language to set..
             #parse info.. maybe want somewhere else..
             vars = la.qr.split("\n")
-            langdef = vars[-2].split("=")
+            langdef = vars[-3].split("=")
             if (langdef[1] == self.setlanguage):
               continue #skip lang set messages.
             else:
@@ -358,6 +360,18 @@ class MyKeys:
                 logger.info(la.qr) #> Set Language [sequence]
                 if (hasattr(self.currentlang, 'octaveshift')):
                   self.octaveshift = self.currentlang.octaveshift
+        if (l == "_meta"):
+          if (la.qr.startswith("> Select Topic\n")):
+            vars = la.qr.split("\n")
+            print(vars)
+            topicdef = vars[-3].split("=")
+            if (len(topicdef) > 1 and topicdef[1] != ""):
+              for (l2,la2) in self.languages.items():
+                if hasattr(la2, 'current_topic'):
+                    la2.current_topic = topicdef[1]
+                if hasattr(la2, 'transcriber') and hasattr(la2.transcriber, 'current_topic'):
+                    la2.transcriber.current_topic = topicdef[1]
+                
 
 
         qr += "<<" + l + ">>\n"
@@ -366,10 +380,10 @@ class MyKeys:
     qr += "<<meta>>\n"
     words = self.get_words_(self.sequence[self.startseqno:])
     #potentially get most likely words here only.
-    qr += f"$$SEQLEN={self.currentseqno - self.startseqno} <br>\n"
+    qr += f"$$SEQLEN={self.currentseqno - self.startseqno} \n"
     for i, w in enumerate(words):      
       keys = self.convert_keys(w['keys'])
-      qr += f"~~{i} | {w['word']} | {keys} <br>\n" #br working for line breaks..
+      qr += f"~~{i} | {w['word']} | {keys} \n" #br working for line breaks..
     #output info about potential keys here.  
 
     return qr

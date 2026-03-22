@@ -350,7 +350,7 @@ def create_image(width, height, color1, color2):
     dc.rectangle((0, height // 2, width // 2, height), fill=color2)
     return image
 
-def copy_latest_file():
+def copy_latest_file(current_topic=None):
     list_of_files = glob.glob('C:/Users/devin/Videos/*.mp4') # * means all if need specific format then *.csv
     if (len(list_of_files) == 0):
         logger.info('No video files found to copy')
@@ -367,6 +367,7 @@ def copy_latest_file():
     logger.info(f'->/{newfname}')
 
     ttranscriber = transcriber.transcriber()
+    ttranscriber.current_topic = current_topic
     vars = {}
     vars['fname'] = newfname
     vars['TIME'] = int(os.path.getctime(newfname)) #for now just use file creation time as the time param.
@@ -402,7 +403,7 @@ def quit_me(restart=False):
     stop_obs_capture()
     time.sleep(5) #wait for OBS to close
     #save latest file to transcripts..
-    copy_latest_file()
+    copy_latest_file(mywindow.transcriber.current_topic)
     logger.info('Quitting application')
     qapp.quit()
     #some cleanup still necessary?  
@@ -1710,6 +1711,14 @@ class MyWindow(QMainWindow):
             self.add_setting('SPEED', speed)
             self.set_speed(speed, lang)
             print(f"<<{lang}>>\n$$SPEED=" + str(speed))
+        elif (command == "Select Topic"):
+            topic = vars.get('TOPIC', 'None')
+            self.add_setting('TOPIC', topic)
+            context = vars.get('CONTEXT', '')
+            self.transcriber.current_topic = topic
+            print(f"<<{lang}>>\n$$TOPIC=" + str(topic))
+            self.label_topic_info[0].setText(f'**{topic}')
+            self.label_topic_info[1].setText(f'{context}')
 
         elif (command == "Screenshot"):
             print("Taking Screenshot")
@@ -2056,10 +2065,10 @@ class MyWindow(QMainWindow):
 
         #left mid
         #BBOX(0,0.2,0.2,0.7)
-        self.label_topic_info = []
+        self.label_filter_info = []
         for i in range(25): #info 0-3, and addl potential filter/param labels
-            self.label_topic_info.append(QLabel("transparent ", self))
-            self.init_label(self.label_topic_info[i], 0, 0.2+0.02*i, 0.2, 0.02)
+            self.label_filter_info.append(QLabel("transparent ", self))
+            self.init_label(self.label_filter_info[i], 0, 0.2+0.02*i, 0.2, 0.02)
 
 
         #mid right
@@ -2174,12 +2183,23 @@ class MyWindow(QMainWindow):
             self.label_timeinfo[i].setTextFormat(Qt.PlainText)
 
 
+        self.label_topic_info = []
+        for i in range(2):
+            self.label_topic_info.append(QLabel(self))
+            self.label_topic_info[i].setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};border: 1px solid black;")
+            font = QFont("Courier", fontsize-4) # Specify font family and size
+            self.label_topic_info[i].setFont(font)
+            self.label_topic_info[i].move(int(self.geo.width()*0.1), int(self.geo.height()*(0.06+0.02*(i+1))))
+            self.label_topic_info[i].setFixedHeight(int(self.geo.height()*(0.02+(0.06*i)))) #larger height for context info..
+            self.label_topic_info[i].setFixedWidth(int(self.geo.width()*0.6))
+            self.label_topic_info[i].setTextFormat(Qt.PlainText)
+
         # show all the widgets
         self.show()
         self.showQR("Starting Trey Overlay")
         #hide after a few seconds
         #workaround, something wrong with the PyQt if we hide this immediately
-        t = threading.Timer(5, _hide, args=["Hello from Timer!"])
+        t = threading.Timer(10, _hide, args=["Hello from Timer!"])
         t.start()  # Start the timer in a new thread
         logger.info('Window created')
         self.read(['hotkeys', 'video'], None, None) #initial read of all data, can be filtered by time later.
@@ -2332,6 +2352,9 @@ class MyWindow(QMainWindow):
                     #add actual playback logic here, e.g. open file with default app, or send command to other app, etc.
                     #for now assume audio..
                     self.play(t["vars"]["FILE"]) #non-blocking play, may need to adjust for different file types and playback needs.
+                elif (t['type'] == '> ' and t['cmd'] == 'Add Bookmark'):
+                    #read in this and start playwrighty 
+                    self.inqueue.put(('\n').join(t['lines']))
                 else:
                     text = self.transcriber.write(t['lang'], t['cmd'], t['vars'], False)
                     speak(text)
@@ -2339,11 +2362,11 @@ class MyWindow(QMainWindow):
                     logger.warning(f"Unknown command in time map item, no file to play. \nData: {t}")
             except Exception as e:
                 logger.error(f'Error playing file from time map: {e}\nData: {t}')
-            self.tmapindex += 1 #move to next item for next play command, can adjust as needed.
+
+#            self.tmapindex += 1 #move to next item for next play command, can adjust as needed.
             #time jump to next entry?
-            if (self.tmapindex < len(self.tmap)):
-                next_time = self.tmap[self.tmapindex]['timestamp']
-                self.set_time(next_time) #jump to time of next item, can adjust as needed.
+#               next_time = self.tmap[self.tmapindex]['timestamp']
+#               self.set_time(next_time) #jump to time of next item, can adjust as needed.
                 #this will reread if necessary..
 
 
@@ -2375,6 +2398,7 @@ class MyWindow(QMainWindow):
                 #compare to current time, and select if within current time window.  
                 if (len(maintext) < 3):
                     maintext.append({'timestamp': sorted_tmap[i]['timestamp'], 'text': self.transcriber.write(sorted_tmap[i]['lang'], sorted_tmap[i]['cmd'], sorted_tmap[i]['vars'], False)})
+                    self.transcriber.current_topic = sorted_tmap[i]['cmd']
             maintext = sorted(maintext, key=lambda x: x['timestamp'])
             for i in range(len(maintext)):
                 self.label_main[i].setText(maintext[i]['text'].replace('\n', '<br>'))
@@ -2514,23 +2538,28 @@ class MyWindow(QMainWindow):
           if (l['cmd'] == 'Click Link_' or l['cmd'] == 'Select Topic_'): 
             cnt = 0       
             for k, v in l['vars'].items():
-                if (wbarray[i%len(wbarray)] == 0):
-                    fulltext += "\t"
-                else:
-                    fulltext += "\t\t\t"
+#                if (wbarray[i%len(wbarray)] == 0):
+#                    fulltext += "\t"
+#                else:
+#                    fulltext += "\t\t\t"
                 #find number in key
                 n = k
 
                 if (n.isdigit()):
-                    for j in range(int(n)%12):
-                        fulltext += " "
+#                    for j in range(int(n)%12):
+#                        fulltext += " "
                     color = self.getColorFromSequence(int(n))
                     self.label_ps[int(n)%len(self.label_ps)].setText(f'{n}={v}')
 
+                else:
+                    fulltext += f" {n} = {v}"
+                    fulltext += "\n"
 
-                fulltext += f" {n} = {v}"
-                fulltext += "\n"
                 cnt += 1
+            context = l['vars'].get('CONTEXT', None)
+            if (context is not None):
+                fulltext += f"\n{context}\n"
+                
 
         elif (type == '~~'):
             test = ''
@@ -2550,7 +2579,7 @@ class MyWindow(QMainWindow):
         #check for last last command is it list_bookmarks.  
         self.show_p(struct)
 
-        self.label_info.setText(data)
+        self.label_info.setText(data.replace('\n', '<br>'))
         self.label_info.adjustSize()
         self.label_info.update()
         qrdata = data

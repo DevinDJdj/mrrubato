@@ -321,5 +321,79 @@ Finish select topic..
 1 week to start..
 
 See if we can play embedded video from URL.  
+--mywindow.inqueue.put..
 
+
+**extensions/handsfree
+MIDI or hotkey to open URL in trey..
+Pick from scanned URLs..
+
+Move QDRANTZ ingestion before speak..
+Use all tabs..
+
+
+#https://www.youtube.com/results?search_query=revival
+document.querySelectorAll("video")
+
+**extensions/trey/playwrighty.py
+--search_web
+[1] = wiki
+[2] = youtube
+[3] = 
+
+test..
+Not sure I like this..
+-1 = cacheno
+-2 = engine..
+
+48 = current ..
+Pause [49,48,48,49,49]
+Play [49,50,48,49,49]
+
+Cant start playing videos when loading..
+
+How do we skip ads..
+Need to save location in video..
+
+
+
+Language patterns:
+Skip 0,2,2
+
+Select
+0,2,7
+
+Select Spoken
+0,2,8
+
+Selection
+0,3,7
+Select Tab [53,56,60],
+Select Topic [48,51,55]
+
+Feedback 
+0,4,7
+
+
+selection
+
+Stay conscious, change words if needed..
+
+Check transcription of topic..
+
+MIDI not reading properly.. 
+Display topic..
+
+**mykeys.py
+--get_qr
+--Select Topic
+--Set Language
+Not great to have this logic here..
+
+Getting duplicate bookmarks..
+But now at least geting correct topic..
+
+Context still not loading..
+Try to expand time window, and then load..
+Should get better result..
 

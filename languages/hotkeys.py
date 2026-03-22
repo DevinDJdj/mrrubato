@@ -393,6 +393,25 @@ class hotkeys:
     #dont actually need param...
     playwrighty.update_page_offset()
 
+
+  def qr_in(self, data):
+    #handle incoming QR data. 
+    #used for internal comms as well.. should change queue for that..
+    cmds = self.transcriber.read_lines(self.name, data.split('\n')) #save all QR data to transcript.  This is for debugging and record keeping, as well as for loading state from previous sessions.
+    for c in cmds:
+      if (c['type'] == '> ' and c['cmd'] == 'Add Bookmark'):
+        #open the page.  
+        url = c['vars']['URL'] if 'URL' in c['vars'] else ""
+        total_read = int(c['vars']['TOTAL_READ']) if 'TOTAL_READ' in c['vars'] else 0
+        body_length = int(c['vars']['BODY_LENGTH']) if 'BODY_LENGTH' in c['vars'] else 0
+        text = c['vars']['TEXT'] if 'TEXT' in c['vars'] else ""
+        if (url != ""):
+          logger.info(f'#{url}\n{total_read}')
+          playwrighty.open_browser() #in case not open already..
+          playwrighty.add_bookmark(url, total_read, text) #call playwrighty add bookmark..
+          playwrighty.read_page(url, -1) #cacheno -1 means load new page if not already open.  
+
+
   def set_qr(self, func, param={}):
     """Set QR."""
     self.qr = "> " + func + "\n"

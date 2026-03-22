@@ -72,7 +72,8 @@ class _meta:
     allcmds = self.transcriber.read(self.name, None, None) #default 7 days
     logger.info(f'Loaded {len(allcmds)} command transcripts for {self.name}')
 
-    book = self.transcriber.read(self.name, None, None, './book/')
+    #load 6 months of book topics..
+    book = self.transcriber.read(self.name, self.transcriber.getTime(-180), None, './book/')
     #get num topics.  
     numtopics = 0
     self.alltopics = {}
@@ -312,27 +313,36 @@ class _meta:
         ret += '\n'.join(cmd['lines']) + "\n"
     return ret
     
+
   def select_topic_(self, sequence=[]):
-    if (len(sequence) > 0) and sequence[-1] != self.keybot:
-      logger.info(f'> Select Topic_ {sequence}')
-      print("> Select Topic_")
-      newidx = self.adjust_topic_index(sequence[-1]-self.mid)
-      logger.info(f'--{self.topicarray[newidx]}')
-      self.func = "Select Topic_"
-      #should make this more general.. send last ten links
-      last15 = self.topicarray[max(0, newidx-12):min(newidx+12, len(self.topicarray))]
-      last15.reverse() #reverse to match with Future:Past order in display.. [48 - 68]
-      #does this match up with keys?  
-      vars = {}
-      vars['topic'] = self.topicarray[newidx]
-      vars['context'] = self.get_context(self.topicarray[newidx], 5) #get context for topic
 
+    logger.info(f'> Select Topic_ {sequence}')
+    print("> Select Topic_")
+    newidx = self.selectedtopicindex
+    if (len(sequence) > 0):
+      if (sequence[-1] == self.keybot): #dont adjust if keybot, 
+        return 1
+      newidx = self.adjust_topic_index(self.mid-sequence[-1])
+    logger.info(f'--{self.topicarray[newidx]}')
+    self.func = "Select Topic_"
+    #should make this more general.. send last ten links
+    last15 = self.topicarray[max(0, self.selectedtopicindex-12):min(self.selectedtopicindex+12, len(self.topicarray))]
+    last15.reverse() #reverse to match with Future:Past order in display.. [48 - 68]
+    #does this match up with keys?  
+    vars = {}
+    vars['topic'] = self.topicarray[newidx]
+    vars['context'] = self.get_context(self.topicarray[newidx], 5) #get context for topic
 
-      for i, l in enumerate(last15):
-        vars[f'{i}'] = l
+    start = 0
+#    if self.selectedtopicindex < 12:
+#      start = 12 - self.selectedtopicindex
+    for i, l in enumerate(last15):
+      i = i + start
+      vars[f'{i}'] = l
 #          vars[f'href{i}'] = l['href']
-      vars['idx'] = newidx
-      self.set_qr(self.func, vars)
+    vars['idx'] = newidx
+    self.set_qr(self.func, vars)
+    
     return 1
     #scroll up or back?  
     #list most likely topics based on recency and relevance to current topic.
@@ -340,14 +350,15 @@ class _meta:
   def select_topic(self, sequence=[]):
     selected = 0
     if (len(sequence) > 0):
-      selected = sequence[-1]-self.mid
+      selected = self.mid - sequence[-1]
 
     self.selectedtopicindex = self.adjust_topic_index(selected)
     self.selectedtopic = self.topicarray[self.selectedtopicindex] if self.selectedtopicindex < len(self.topicarray) else None
+    context = self.get_context(self.topicarray[self.selectedtopicindex], 5) #get context for topic
     logger.info(f'> Select Topic {sequence}')
     #get bookmark at index selected
     self.func = "Select Topic"
-    self.set_qr(self.func, {'topic': self.selectedtopic})
+    self.set_qr(self.func, {'CONTEXT': context, 'TOPIC': self.selectedtopic})
     self.speak(f'Selected topic {self.selectedtopic}')
     return 0
 

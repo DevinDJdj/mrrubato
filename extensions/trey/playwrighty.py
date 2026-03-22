@@ -33,8 +33,11 @@ bookmarks = [] #list of {url, [total_read, total_read]}
 mybrowser = None
 myplaywright = None
 mycontext = None
-
+engine_urls = []
+engine_names = []
+last_link_clicked_time = time.time()
 current_cache = -1 #current cache page we are on.
+video_playing = False
 
 screen_position = (0,0,0,0) #x,y,width,height
 last10 = [] #last 10 bookmark URLs for preloading.
@@ -131,8 +134,9 @@ def get_link_number(cacheno=-1, text_offset=0, link_offset=0):
         for i, link in enumerate(links):
             if 'offset' in link and link['offset'] <= text_offset:
                 linkno = i
-        if (link_offset != 0):
+        if (link_offset != 0 and linkno + link_offset >= 0 and linkno + link_offset < len(links)):
             linkno += link_offset
+        
 
 #        while (linkno < len(links)-1 and (links[linkno]['href'].startswith(url + "#") or links[linkno]['href'].startswith('#'))):
             #for now skip internal links.  
@@ -156,6 +160,7 @@ def is_internal_link(linkno, cacheno=-1):
 def click_link(cacheno, text_offset, link_offset=0, open_new_tab=False):
 
     global current_cache
+    global last_link_clicked_time
     if (cacheno < 0 or cacheno >= len(page_cache)):
         cacheno = current_cache
 
@@ -206,6 +211,7 @@ def click_link(cacheno, text_offset, link_offset=0, open_new_tab=False):
                     if ('reader_stop_event' in page_info and page_info['reader_stop_event'] is not None):
                         page_info['reader_stop_event'].set() #stop any reading.
                     logger.info(f'Using existing tab to go to {href}')
+                    last_link_clicked = time.time()
                     return read_page(href, cacheno) #use same tab
                 return True
             else:
@@ -443,6 +449,7 @@ def open_browser():
         #load last 10
         for url in last10:
             read_page(url) #preload last 10 bookmarks.
+            pause_video() #pause any videos on these pages.
             #but dont read..
             print(f'Last 10 bookmark URLs: {url}')
 
@@ -543,6 +550,24 @@ def find_nth_occurrence(main_string, sub_string, n):
     return -1 # Should not be reached if n > 0 and occurrence_count is handled correctly
 
 
+def pause_video(cacheno=-1):
+    global current_cache
+    global video_playing
+    total_read = 0
+    if (cacheno < 0 or cacheno >= len(page_cache)):
+        cacheno = current_cache
+    if (cacheno < 0 or cacheno >= len(page_cache)):
+        return -1
+    page = page_cache[cacheno]['page']
+    #more complex with multiple video controls..
+    page.evaluate("""() => {
+        const video = document.querySelector('video');
+        if (video) {
+            video.pause();
+        }
+    }""")
+    video_playing = False
+
 def play_video(cacheno=-1):
     global current_cache
     total_read = 0
@@ -558,6 +583,8 @@ def play_video(cacheno=-1):
             video.play();
         }
     }""")
+    global video_playing
+    video_playing = True
 
 
 def get_page_details(page):
@@ -669,6 +696,9 @@ def get_page_details(page):
         return body_text, link_data, alt_text_data
     
 def update_page_offset(cacheno=-1):
+    if (last_link_clicked_time is not None and time.time() - last_link_clicked_time < 1):
+        #if we have clicked a link in the last second, we may be in the process of navigating to a new page, so skip updating the offset for now to avoid conflicts.
+        return -1
     global current_cache
     total_read = 0
     if (cacheno < 0 or cacheno >= len(page_cache)):
@@ -698,7 +728,7 @@ def update_page_offset(cacheno=-1):
         if (linkno >= 0):
             page = page_cache[cacheno]['page']
             links = page_cache[cacheno]['links']
-            if (linkno != page_cache[cacheno].get('current_link', -1)):
+            if (linkno != page_cache[cacheno].get('current_link', -1) and linkno < len(links) and linkno >= 0):
                 # or page_cache[cacheno].get('last_total_read', links[linkno]['offset']) <= total_read-100): 
                 page_cache[cacheno]['last_total_read'] = total_read
                 #jump if we have read too much or have a new link.
@@ -721,12 +751,15 @@ def update_page_offset(cacheno=-1):
                         temptext = temptext[offset: offset+50]
                     #find text in the page..
                     locator = page.get_by_text(temptext)
-                    if (locator.count() > 0):
+                    #some problems with multiple results..
+                    if (locator.count() == 1):
                         locator.scroll_into_view_if_needed()
                     if link is not None:
                         #try partial match
                         locator = page.get_by_role("link", name=link['text'])
-                        locator.highlight()
+                        if (locator.count() == 1):
+                            locator.highlight()
+                            locator.scroll_into_view_if_needed()
 #                    if (locator.bounding_box() is not None and locator.bounding_box().get('height', 400) < 400):
 #                        locator.highlight() #dont highlight the whole page..
 
@@ -844,7 +877,11 @@ def read_page(url, cacheno=-1):
         return "", [], page, cacheno
 
     if (url != ''):
-        page.goto(url, wait_until="domcontentloaded")
+        try:
+            page.goto(url, wait_until="domcontentloaded")
+        except Exception as e:
+            logging.error(f'Error navigating to URL: {url} - {e}')
+            return "", [], page, cacheno
     orig_url = page.url
     logging.info(f'Page loaded: {page.url}')
     body_text, link_data, alt_text_data = get_page_details(page)
@@ -874,60 +911,39 @@ def read_page(url, cacheno=-1):
 
 
 def get_engine(engine=0):
+    global engine_names
+    if (len(engine_names) == 0):
+        engine_names = ["Bing", "Wikipedia", "YouTube", "Bing", "DuckDuckGo", "Ecosia", "Google News", "Bing News", 
+                        "Wikipedia (JA)", "YouTube (JA)", "Google News", "PeerTube"]
     """Get the name of the search engine based on its index."""
-    enginename = "Bing News"
-    if (engine == 1): #wiki
-        enginename = "Wikipedia"
-    elif (engine == 2): #yahoo
-        enginename = "Yahoo"
-    elif (engine == 3):
-        enginename = "DuckDuckGo"
-    elif (engine == 4):
-        enginename = "Bing"
-    elif (engine == 5):
-        enginename = "Ecosia"
-    elif (engine == 6):
-        enginename = "Qwant"
-    elif (engine == 7):
-        enginename = "Startpage"
-    elif (engine == 8):
-        enginename = "Yandex"
-    elif (engine == 9):
-        enginename = "Wikipedia"
-    elif (engine == 10):
-        enginename = "Google News"
-    elif (engine == 11):
-        enginename = "Bing News"
+    enginename = engine_names[engine] if engine >=0 and engine < len(engine_names) else engine_names[0]
+
     return enginename
+
 def search_web(query, engine=0, cacheno=-1):
     """Search the web for a query using Playwright."""
+    global engine_urls
     logging.info(f'Searching the web for: {query}')
     # Implement the web search logic here
     # This is a placeholder implementation
-    baseurl = "https://www.bing.com/news/search?q="
+    if (len(engine_urls) == 0):
+        #populate
+        engine_urls = ["https://www.bing.com/search?q=", #0=default
+                       "https://en.wikipedia.org/w/index.php?search=", #1=wiki
+                       "https://www.youtube.com/results?search_query=", #2=youtube
+                       "https://www.bing.com/search?q=", #3=bing (default)
+                       "https://duckduckgo.com/?q=", #4=duckduckgo
+                       "https://www.ecosia.org/search?q=", #5=ecosia
+                       "https://news.google.com/search?q=", #6=google news
+                       "https://www.bing.com/news/search?q=", #7=bing news
+                       "https://ja.wikipedia.org/w/index.php?search=", #8=japanese wikipedia different language wikipedia for testing.
+                       "https://www.youtube.com/results?hl=ja&&gl=JP&search_query=", #9=japanese youtube different language wikipedia for testing.
+                       "https://news.google.com/search?q=", #10=google news
+                       "https://peertube.tv/search?search="] #11=peertube peertube search for comparison.  
+    baseurl = engine_urls[engine] if engine >=0 and engine < len(engine_urls) else engine_urls[0]
+
+
     print(f"Using search engine {engine}")
-    if (engine == 1): #wiki
-        baseurl = "https://en.wikipedia.org/w/index.php?search="
-    elif (engine == 2): #yahoo
-        baseurl = "https://search.yahoo.com/search?p="
-    elif (engine == 3):
-        baseurl = "https://duckduckgo.com/?q="
-    elif (engine == 4):
-        baseurl = "https://www.bing.com/search?q="
-    elif (engine == 5):
-        baseurl = "https://www.ecosia.org/search?q="
-    elif (engine == 6):
-        baseurl = "https://www.qwant.com/?q="
-    elif (engine == 7):
-        baseurl = "https://www.startpage.com/do/dsearch?query="
-    elif (engine == 8):
-        baseurl = "https://www.yandex.com/search/?text="
-    elif (engine == 9):
-        baseurl = "https://www.wikipedia.org/wiki/Special:Search?search="
-    elif (engine == 10):
-        baseurl = "https://news.google.com/search?q="
-    elif (engine == 11):
-        baseurl = "https://www.bing.com/news/search?q="
 
     url = f"{baseurl}{query}"
     body_text, link_data, page, cacheno = read_page(url, cacheno)

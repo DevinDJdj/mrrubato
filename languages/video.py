@@ -246,7 +246,7 @@ class video:
     logger.info(f'> Next {sequence}')
     cacheno = 1 #default to next..
     if (len(sequence) > 0):
-      cacheno = sequence[-1]-self.keybot-5 #first key cache selection
+      cacheno = sequence[-1]-self.keybot-4 #first key cache selection
       #ends on 54 so 54 is next, 53 is current, 52 is previous.
     #pause trey.  
     self.set_qr("Next", {'type': 'video', 'no': cacheno})
@@ -259,8 +259,8 @@ class video:
       cacheno = sequence[-1]-self.keybot #first key cache selection
       playwrighty.pause_video(cacheno) #pause video if it is valid cache no..
     else:
-       #pause trey.  
-       self.set_qr("Pause", {'type': 'video'})
+      #pause trey.  
+      self.set_qr("Pause", {'type': 'video'})
     return 0
 
   def unpause(self, sequence=[]):  
