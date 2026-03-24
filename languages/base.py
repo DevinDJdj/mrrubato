@@ -21,6 +21,7 @@ class base:
     self.transcriber = transcriber.transcriber(self)
     self.qapp = qapp
     self.func = None
+    self.cmd = None
     self.qr = "" #info for QR message
     self.qrin = "" #info from incoming QR message
     self.startx = startx
@@ -49,6 +50,7 @@ class base:
           #can compare directly.  if strings, we do ','.join(self.sequence[-i:]) == v
           found = True
           cmd = k
+          self.cmd = cmd
     return cmd
 
   def unload(self):

@@ -21,10 +21,13 @@ class video:
     self.transcriber = transcriber.transcriber(self)
     self.qapp = qapp
     self.func = None
+    self.cmd = None
     self.qr = "" #info for QR message
     self.qrin = "" #info from incoming QR message
     self.startx = startx
-    self.bbox = [0,0,100,100]   
+    self._bbox = [0,0,0,0] #for now just use this for all functions that need a bbox.  This is left, top, right, bottom.  We can also use this for screen toggle to indicate where the screen overlay should be.
+    self.bbox = [100,200,100,200]   
+    self.bbox_aftertouch = [400,500,400,500] #just start here, or from last bbox.  Load from settings..
     self.opacity = 0.4
     self.speed = 1.0
     self.geo = None
@@ -54,6 +57,7 @@ class video:
           #can compare directly.  if strings, we do ','.join(self.sequence[-i:]) == v
           found = True
           cmd = k
+          self.cmd = cmd
     return cmd
 
   def unload(self):
@@ -298,69 +302,100 @@ class video:
     offset = key - self.mid #for now hardcoded mid.  
     if (self.geo is not None):
         if (idx < 2):
-            return self.geo.x() + self.geo.width() * (offset+12) // 24
+            return self._bbox[0] + self._bbox[2] * (offset+12) // 24
         else:
-            return self.geo.y() + self.geo.height() * (offset+12) // 24
-    
+            return self._bbox[1] + self._bbox[3] * (offset+12) // 24
   def contain_bbox(self, bbox):
     """Contain BBOX within screen."""
     if (self.geo is not None):
-        if (bbox[0] < self.geo.x()):
-            bbox[0] = self.geo.x()
-        if (bbox[1] > self.geo.x()+self.geo.width()):
-            bbox[1] = self.geo.x()+self.geo.width()
-        if (bbox[2] < self.geo.y()):
-            bbox[2] = self.geo.y()
-        if (bbox[3] > self.geo.y()+self.geo.height()):
-            bbox[3] = self.geo.y()+self.geo.height()
+        if (bbox[0] < self._bbox[0]):
+            bbox[0] = self._bbox[0]
+        if (bbox[1] > self._bbox[1]):
+            bbox[1] = self._bbox[1]
+        if (bbox[2] < self._bbox[2]):
+            bbox[2] = self._bbox[2]
+        if (bbox[3] > self._bbox[3]):
+            bbox[3] = self._bbox[3]
     return bbox
 
+
+  def get_bbox_aftertouch(self, sequence=[]):
+    """Get BBOX from aftertouch sequence."""
+    bbox = self.bbox_aftertouch
+    #adjust, then save.  
+    p = sequence[3] #pressure for now, but could use other params here.
+    r = sequence[2] #rotational for now, but could use other params here.
+    v = sequence[1] #vertical for now, but could use other params here.
+    k = sequence[0] #key for now, but could use other params here.
+    if (k == 53): #set first point with original last keypress..
+        y = v -35 if (v < 30 or v > 40) else 0 #vertical midpoint 35?  
+        y = -y
+        x = r if abs(r) > 10 else 0 #rotational
+        if (p > 50):
+            bbox[0] = bbox[0] - 5 #shift left
+            bbox[1] = bbox[1] - 5 #shift left
+        else:
+            bbox[0] = bbox[0] + int(x/2)
+            bbox[2] = bbox[2] + int(y/2)
+    elif (k == 55): #for now fixed..
+        y = v - 35 if (v < 30 or v > 40) else 0 #vertical midpoint 35?  
+        y = -y
+        x = r if abs(r) > 10 else 0 #rotational
+        if (p > 50):
+            bbox[0] = bbox[0] + 5 #shift right
+            bbox[1] = bbox[1] + 5 #shift right  
+        else:
+            bbox[1] = bbox[1] + int(x/2)
+            bbox[3] = bbox[3] + int(y/2)
+        
+    bbox = self.contain_bbox(bbox)
+    self.bbox_aftertouch = bbox       
+    return bbox
   
   def get_bbox(self, sequence=[]):
     """Get BBOX from sequence."""
     #get BBOX
-    bbox = []
-    if (len(sequence) > 3):
-        for i in range(4):  
-            bbox.append(self.get_XY(sequence[i], i))
-    elif (len(sequence) > 1):
-        tempb = self.bbox #use previous bbox to calc offset
-        for i in range(2):  
-            bbox.append(self.get_XY(sequence[i], i*2))
-            if (i==0):
-                offset = tempb[1]-tempb[0]
-            else:
-                offset = tempb[3]-tempb[2]
-            bbox.append(bbox[-1]+offset)
+    if (self.bbox_aftertouch != [400,500,400,500]):
+        #default to use aftertouch bbox..
+        bbox = self.bbox_aftertouch #start with aftertouch bbox if it has been set, then adjust based on sequence.  This allows for more fluid adjustment.  We can also use aftertouch for more fluid adjustment.
     else:
-        #think xxyy is a more natural pattern for this..
-        bbox.append(self.geo.x())
-        bbox.append(self.geo.x()+self.geo.width())
-        bbox.append(self.geo.y())
-        bbox.append(self.geo.y()+self.geo.height())
-    
-    if (len(sequence) > 4):
-        logger.info(f'Using custom bbox {bbox} from {sequence}')
-        #override with more precise bbox
-        adjust = 10
-        for i in range(4, len(sequence)):
-            """down left, up right, left down, right up""" #ok
-            """left up, right down""" #ok
-            """up left, down right""" #ng
-            """[60,60,61,61]""" #up
-            """[59,59,60,60]""" #left
-            """[61,61,60,60]""" #right
+        bbox = self.bbox #default bbox if no aftertouch has been set.  This is just a starting point, and can be adjusted with the sequence.
+        if (len(sequence) > 3):
+            for i in range(4):  
+                bbox.append(self.get_XY(sequence[i], i))
+        elif (len(sequence) > 1):
+            tempb = self.bbox #use previous bbox to calc offset
+            for i in range(2):  
+                bbox.append(self.get_XY(sequence[i], i*2))
+                if (i==0):
+                    offset = tempb[1]-tempb[0]
+                else:
+                    offset = tempb[3]-tempb[2]
+                bbox.append(bbox[-1]+offset)
+
+        
+        if (len(sequence) > 4):
+            logger.info(f'Using custom bbox {bbox} from {sequence}')
+            #override with more precise bbox
+            adjust = 10
+            for i in range(4, len(sequence)):
+                """down left, up right, left down, right up""" #ok
+                """left up, right down""" #ok
+                """up left, down right""" #ng
+                """[60,60,61,61]""" #up
+                """[59,59,60,60]""" #left
+                """[61,61,60,60]""" #right
 
 
-            #i.e. move left, down = 59 decrease x1, 59 = decrease x2, 61 = increase y1, 61 = increase y2
-            #squeeze towards mid, 61 = increase x1, 59 = decrease x2, 59 = decrease y1, 61 = increase y2
-            #4n+2, 4n+3 = y adjustments reversed
-            if (i // 4 == 2 or i // 4 == 3):
-                adjust = -10
-            bbox[i%4] += (self.mid-sequence[i])*adjust
+                #i.e. move left, down = 59 decrease x1, 59 = decrease x2, 61 = increase y1, 61 = increase y2
+                #squeeze towards mid, 61 = increase x1, 59 = decrease x2, 59 = decrease y1, 61 = increase y2
+                #4n+2, 4n+3 = y adjustments reversed
+                if (i // 4 == 2 or i // 4 == 3):
+                    adjust = -10
+                bbox[i%4] += (self.mid-sequence[i])*adjust
 
-        #check bounds.  
-        bbox = self.contain_bbox(bbox)
+            #check bounds.  
+            bbox = self.contain_bbox(bbox)
 
 
     return bbox
@@ -371,6 +406,26 @@ class video:
     single_string = ", ".join(string_elements)
 
     return single_string
+
+  def qr_in(self, data):
+    #handle incoming QR data for now just MPE aftertouch. 
+    #used for internal comms as well.. should change queue for that..
+    if (self.cmd == "Screenshot" or self.cmd == "Screenshot Feedback"):
+      cmds = self.transcriber.read_lines(self.name, data.split('\n')) #save all QR data to transcript.  This is for debugging and record keeping, as well as for loading state from previous sessions.
+      for c in cmds:
+        if (c['type'] == '> ' and c['cmd'] == 'Aftertouch'):
+          #open the page.  
+          logger.info(f'Screenshot Aftertouch: {c}')
+          self.func = "Screenshot_"
+          
+          seq = c['vars']['SEQ']
+          self.bbox = self.get_bbox_aftertouch(seq)
+
+          logger.info(f'> Screenshot_ {seq}')
+          logger.info(f'$$BBOX={self.bbox}')
+          self.set_qr(self.func, {'BBOX': self.ar2str(self.bbox), 'SEQ': self.ar2str(seq)})
+
+
 
   def set_qr(self, func, param={}):
     """Set QR."""
@@ -390,6 +445,9 @@ class video:
       logger.info(f'$$BBOX={self.bbox}')
       self.set_qr(self.func, {'BBOX': self.ar2str(self.bbox), 'SEQ': self.ar2str(sequence)})
       #show bbox on screen for user to see
+    if (len(sequence) > 0 and sequence[-1] == self.keybot):
+      #complete command..
+      self.cmd = None
       return 0
     return 1
 
@@ -397,11 +455,12 @@ class video:
     """Take Screenshot."""
     #always in groups of 4 for bbox
     #no need, this should be done..
-    self.func = "Screenshot"
+    self.cmd = None
     self.bbox = self.get_bbox(sequence)
     logger.info(f'> Screenshot {sequence}') 
     logger.info(f'$$BBOX={self.bbox}')
 
+    self.func = "Screenshot"
 
     #qr specific to current action.
     self.set_qr(self.func, {'TRANSCRIPT': self.transcript, 'BBOX': self.ar2str(self.bbox), 'SEQ': self.ar2str(sequence)})
@@ -431,7 +490,7 @@ class video:
      """Take Screenshot Feedback_.  Use 53 to indicate that we are done building bbox."""
 
      if (len(sequence) == 1):
-        self._screenshot_feedback(sequence)
+#        self._screenshot_feedback(sequence)
         return 1 #still not complete..
      
      if (len(sequence) > 1 and sequence[-1] == self.keybot): #end of message OK to OCR.

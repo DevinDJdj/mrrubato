@@ -1291,7 +1291,7 @@ def draw_overlay(delay=15, opacity=0.4): #default hide in 10 seconds
     mywindow.updateLabels(windows) #gives info for all windows
     mywindow.setWindowOpacity(opacity)
     mywindow.activateWindow() # Bring to front
-    draw_screen_box()
+#    draw_screen_box()
 
     #hiding in 3 seconds
     logger.info(f'Hiding window after {delay} seconds')
@@ -1301,18 +1301,6 @@ def draw_overlay(delay=15, opacity=0.4): #default hide in 10 seconds
     start_mouse_listener()  # Start the mouse listener
 
 
-
-def draw_screen_box(bbox=None):
-    """Draws a box around the screen."""
-    mywindow.highlighton = True
-    #get geometry of the highlight rectangle.  
-    if (bbox is not None): #xxyy
-        mywindow.highlightrect = {'x': bbox[0], 'y': bbox[2], 'width': bbox[1]-bbox[0], 'height': bbox[3]-bbox[2]}
-    else:
-        geometry = mywindow.geometry()
-        mywindow.highlightrect = {'x': geometry.x()+100, 'y': geometry.y()+100, 'width': geometry.width()-100, 'height': geometry.height()-100}
-    mywindow.update()  # Trigger a repaint to show the box
-    logger.info('Screen box drawn')
 
 
 def on_deactivate_overlay():
@@ -1393,6 +1381,7 @@ def _hide(data):
     mywindow.set_time(tnow-day*1, tnow-day*7, tnow, day*7)
     mk.set_startx(mywindow.startx)
     mk.set_geo(mywindow.geo)
+    mk.set_bbox(mywindow._bbox)
 
     #get average color and screen
     get_window_details()
@@ -1549,6 +1538,35 @@ class QRWorker(QObject):
             time.sleep(0.1) #wait before checking again
         self.finished.emit()
 
+
+class QPaintedLabel(QLabel):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.bbox = None
+
+
+    def paintEvent(self, event):
+        # Let QLabel paint its original content (like text/pixmap) first
+#        print("painting QPaintedLabel")
+        super().paintEvent(event)
+        
+        # Create a painter for the label
+        painter = QPainter(self)
+        
+        # Set your drawing properties
+        pen = QPen(QColor("red"))
+        pen.setWidth(5)
+        painter.setPen(pen)
+        
+        # Perform custom drawing
+        if self.bbox is not None:
+            painter.drawRect(self.bbox['x'], self.bbox['y'], self.bbox['width'], self.bbox['height'])
+    
+    def set_overlay_bbox(self, bbox):
+        self.bbox = bbox
+        self.update()  # Trigger a repaint to show the new bounding box
+
+
 class MyWindow(QMainWindow):
 
 
@@ -1684,7 +1702,7 @@ class MyWindow(QMainWindow):
                 vars['OCRTEXT'] = ocrtext
                 vars['FNAME'] = fname
                 self.ocrtext = ocrtext
-            written = self.transcriber.write(vars.get('KLANG', 'video'), command, vars)
+            written = self.transcriber.write(vars.get('KLANG', 'video'), command, vars) #dont write intermediate msg?
             self.set_feedback(written, vars)
         elif (command == "Screenshot Feedback"):
             #right now we are just calling screenshot..
@@ -2001,6 +2019,7 @@ class MyWindow(QMainWindow):
     def __init__(self, q=None, inq=None, cfg=None, qapp=None):
         super().__init__()
         self.highlightrect = {'x': 100, 'y': 100, 'width': 200, 'height': 200}
+        self.bboxes = [] #list of drawn boxes..
         self.highlighton = False
         self.startx = 0
         self.queue = q
@@ -2009,6 +2028,7 @@ class MyWindow(QMainWindow):
         self.cfg = cfg
         self.myuser = None
         self.geo = None
+        self._bbox = None
         self.qr_in = []
         self.qr_out = []
         self.ocrtext = ""
@@ -2055,6 +2075,7 @@ class MyWindow(QMainWindow):
                 self.setGeometry(geometry.x(), geometry.y(), geometry.width(), geometry.height())
                 self.startx = geometry.x()
                 self.geo = geometry
+                self._bbox = [0,geometry.width(), 0,geometry.height()]
 
                 print(f'Setting window to second monitor at {geometry.x()},{geometry.y()} size {geometry.width()}x{geometry.height()}')
                 self.setWindowTitle("Trey - " + s.name())
@@ -2073,6 +2094,14 @@ class MyWindow(QMainWindow):
         self.video_widget.show()
         self.video_player = QMediaPlayer()
         self.video_player.setVideoOutput(self.video_widget)
+
+        self.video_overlay = QPaintedLabel(self) 
+        self.video_overlay.setGeometry(0, 0, self.width(), self.height())
+        self.video_overlay.setStyleSheet(f"background-color: rgba(0, 0, 0, 0);color: {color};") #transparent overlay for text
+        self.video_overlay.setAlignment(Qt.AlignCenter)
+        self.video_overlay.setText("Hello Overlay")
+        self.video_overlay.show()
+
 
         #left mid
         #BBOX(0,0.2,0.2,0.7)
@@ -2113,7 +2142,7 @@ class MyWindow(QMainWindow):
         fullwidth = self.geo.width()
         pwidth = int(fullwidth/5)
         fontsize = 16
-        for i in range(25): #assume 25 key range for now..
+        for i in range(24): #assume 25 key range for now..
             self.label_ps.append(QLabel(self))
             color = self.getColorFromSequence(i)
             if (wbarray[i%len(wbarray)] == 0):
@@ -2123,7 +2152,7 @@ class MyWindow(QMainWindow):
             font = QFont("Courier", fontsize-wbarray[i%len(wbarray)]*2) # Specify font family and size
             self.label_ps[i].setFont(font)
 #            self.label_ps[i].setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};")
-            self.label_ps[i].move(pwidth+(i//12)*pwidth+wbarray[i%len(wbarray)]*20, self.geo.height() - (pwidth-(i%12)*fontsize))
+            self.label_ps[i].move(int(pwidth*1.5+(i//12)*pwidth+wbarray[i%len(wbarray)]*20), int(self.geo.height() - (0.65*pwidth-(i%12)*fontsize)))
             self.label_ps[i].setFixedHeight(fontsize-wbarray[i%len(wbarray)]*2)
             self.label_ps[i].setFixedWidth(pwidth-wbarray[i%len(wbarray)]*40)
             self.label_ps[i].setTextFormat(Qt.PlainText)
@@ -2162,11 +2191,11 @@ class MyWindow(QMainWindow):
 
             t = QLabel(f'Time{i}', self)
             t.setFont(font)    # Apply the font to the label        
-            t.move(int(self.geo.width()*0.1), int(self.geo.height()*0.02*(i+1)))
+            t.move(int(self.geo.width()*0.2), int(self.geo.height()*0.02*(i*1.6+1)))
             t.setFixedHeight(h+2)
             w = metrics.boundingRect(chr(0x2160)).width()
-            t.setFixedWidth(w*60*2) #60 char of time info.. 36-96 ? 
-            t.setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};border: 1px solid black;")
+            t.setFixedWidth(int(w*60*1.5)) #60 char of time info.. 36-96 ? 
+            t.setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};")
             #some reason <pre> makes formatting a bit nicer..
             ltext = ""
             startchar = 0x2160 #start of roman numeral characters, just to have some unique chars to test with for now.
@@ -2269,6 +2298,7 @@ class MyWindow(QMainWindow):
             if (bbox is not None):
                 bbox = bbox.split(',')
                 bbox = [int(b) for b in bbox]
+                bbox = self.format_bbox(bbox)
                 img = img.crop((bbox[0]-self.geo.x(), bbox[2]-self.geo.y(), bbox[1]-self.geo.x(), bbox[3]-self.geo.y()))
                 logger.info(f'Cropping image to bbox: {bbox}')
 
@@ -2276,19 +2306,88 @@ class MyWindow(QMainWindow):
 
         return ocrtext, folder + fname
         
+    def format_bbox(self, bbox):
+        if (bbox[0] > bbox[1]):
+            x1 = bbox[0]
+            bbox[0] = bbox[1]
+            bbox[1] = x1
+        if (bbox[2] > bbox[3]):
+            y1 = bbox[2]
+            bbox[2] = bbox[3]
+            bbox[3] = y1
+        return bbox
+
+    def play_video(self, fname):
+        """Play a video file on the overlay."""
+        logger.info(f'Playing video: {fname}')
+
+        for i in range(3):
+            self.label_main[i].hide() #hide main labels when playing video, can adjust as needed.
+        self.label_qr.hide()
+        for l in self.label_ps:
+            l.hide()
+        for l in self.label_filter_info:
+            l.hide()
+        self.label_info.hide()
+        self.label_topic_info[0].hide()
+        self.label_topic_info[1].hide()
+        self.label_p.hide()
+
+
+        ext = os.path.splitext(fname)[1].lower()
+        if (ext in ['.png']): #screenshot image..
+            self.video_overlay.setPixmap(QPixmap(fname).scaled(self.video_overlay.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
+            self.video_overlay.show()
+        else:
+            self.video_player.setMedia(QMediaContent(QUrl.fromLocalFile(fname)))
+            self.video_widget.show()
+            self.video_player.play()
+    
+    def pause_video(self):
+        """Pause the video playback."""
+        logger.info('Pausing video')
+        self.highlighton = False #turn off highlight when pausing video, can adjust as needed.
+        self.video_player.pause()
+        self.video_widget.hide()
+        self.video_player.setMedia(QMediaContent()) #clear media to stop playback and release resources.
+        self.video_overlay.hide()
+
+        for i in range(3):
+            self.label_main[i].show() #show main labels when pausing video, can adjust as needed.
+        self.label_qr.show()
+        for l in self.label_ps:
+            l.show()
+        for l in self.label_filter_info:
+            l.show()
+        self.label_info.show()
+        self.label_topic_info[0].show()
+        self.label_topic_info[1].show()
+        self.label_p.show()
+
     def draw_screen_box(self, bbox=""):
         """Draws a box around the screen."""
-        self.highlighton = True
+        if (self.highlighton):
+            logger.info('Highlight already on, skipping draw_screen_box')
+        else:
+            ocrtext, fname = self.save_screenshot('hotkeys', 'screenshot.png')
+            self.play_video(fname)
+            self.highlighton = True
+
         #get geometry of the highlight rectangle.  
         if (bbox !=""): #xxyy
             bbox = bbox.split(',')
             bbox = [int(b) for b in bbox]
+            bbox = self.format_bbox(bbox)
             self.highlightrect = {'x': bbox[0], 'y': bbox[2], 'width': bbox[1]-bbox[0], 'height': bbox[3]-bbox[2]}
+            self.video_overlay.set_overlay_bbox(self.highlightrect)
+#            self.video_widget.update()
+            logger.info(f'Screen box drawn: {self.highlightrect}')
         else:
             geometry = self.geometry()
             self.highlightrect = {'x': geometry.x()+100, 'y': geometry.y()+100, 'width': geometry.width()-100, 'height': geometry.height()-100}
+
+        
         self.update()  # Trigger a repaint to show the box
-        logger.info('Screen box drawn')
         
     def hideme(self):
         """Method to close the window."""
@@ -2307,11 +2406,8 @@ class MyWindow(QMainWindow):
         if (ext in ['.mp4', '.avi', '.mkv']):
             logger.info(f'Playing video file: {fname}')
             #play on Qt video widget..
-            for i in range(3):
-                self.label_main[i].hide() #hide main labels when playing video, can adjust as needed.
-            self.video_player.setMedia(QMediaContent(QUrl.fromLocalFile(fname)))
-            self.video_widget.show()
-            self.video_player.play()
+            self.play_video(fname)
+
 
         elif (ext in ['.mp3', '.wav', '.ogg']):
             logger.info(f'Playing audio file: {fname}')
@@ -2324,10 +2420,7 @@ class MyWindow(QMainWindow):
     def pause_tmap(self):
         logger.info('Pausing playback')
         #add actual pause logic here, e.g. pause video widget, or send command to other app, etc.
-        self.video_player.pause()
-        self.video_widget.hide()
-        for i in range(3):
-            self.label_main[i].show() #show main labels when pausing video, can adjust as needed.
+        self.pause_video()
 
         if (self.currentsound is not None and self.currentsound.is_alive()):
             self.currentsound.stop() #stop current sound, may need to adjust for different playback needs.
@@ -2652,19 +2745,25 @@ class MyWindow(QMainWindow):
                 label.adjustSize()
                 label.update()
 
+
     def paintEvent(self, event):
+        super().paintEvent(event)
         if (self.highlighton):
+            self.video_overlay.update() #update the video overlay to draw the highlight box on top of the video widget.
+#            self.video_widget.paintEvent(event) #call paint event of video widget to draw video frame first, then we will draw highlight box on top.
+            """
             painter = QPainter(self) # Create a QPainter instance, passing 'self' (the widget) as the paint device.
             pen = QPen(Qt.red, 5, Qt.SolidLine)
             painter.setPen(pen)
             rect = self.highlightrect
-            painter.drawRect(rect['x']-self.geo.x(), rect['y']-self.geo.y(), rect['width'], rect['height'])
-#            painter.drawRect(100, 100, 200, 200)
-        #    painter.drawRect(geometry.x()+100, geometry.y()+100, geometry.width()-100, geometry.height()-100)
-    #        painter.setFont(painter.font()) # Use default font or set a custom one
-    #        painter.drawText(50, 200, "Hello QPainter!")
+#            painter.drawRect(rect['x']-self.geo.x(), rect['y']-self.geo.y(), rect['width'], rect['height'])
+#            painter.drawRect(rect['x'], rect['y'], rect['width'], rect['height'])
+            painter.drawRect(50, 150, 100, 100)
+#            painter.drawRect(self.geo.x()+100, self.geo.y()+100, self.geo.width()-100, self.geo.height()-100)
+            painter.setFont(painter.font()) # Use default font or set a custom one
+            painter.drawText(50, 200, "Hello QPainter!")
             painter.end()
-        
+            """        
         # You can also draw text, ellipses, images, etc.
 
 def stop_audio(cacheno=-1):
@@ -2911,6 +3010,10 @@ def updateQR(idx):
 def handle_keys(qr_queue=None, qrin_queue=None):
     global midiout, midiin
     global mk
+    #[channel] = [note, vertical, rotational, pressure]
+    channelsmap = [[-1,-1,-1,-1]]*256 #array for channels
+    channelmap = [[-1,-1,-1,-1]]*256 #array for channels
+    #channel, value for MPE
 #    c = Communicate()
 #    c.mySignal.connect(updateQR)
 
@@ -2926,16 +3029,47 @@ def handle_keys(qr_queue=None, qrin_queue=None):
             mk.set_audio_location()
 
             for msg in inport.iter_pending():
-                if msg.type == 'control_change':
-                    print(msg)
-                    logger.info(f'> MIDI Control [{msg.control}, {msg.value}]')
+                channel = -1
+                if (msg.type == 'aftertouch'):
+                    #print(msg)
+                    if (hasattr(msg, 'channel') and hasattr(msg, 'value')):
+                        #pressure
+                        channel = msg.channel
+                        currentval = channelmap[channel]
+                        channelmap[channel] = [currentval[0], currentval[1], currentval[2], msg.value]
+                elif (msg.type == 'pitchwheel'):
+                    #print(msg)
+                    if (hasattr(msg, 'channel') and hasattr(msg, 'pitch')):
+                        #rotational
+                        channel = msg.channel
+                        currentval = channelmap[channel]
+                        channelmap[channel] = [currentval[0], currentval[1], msg.pitch, currentval[3]]
+                    
+                elif msg.type == 'control_change':
+                    #print(msg)
+                    if (hasattr(msg, 'channel') and hasattr(msg, 'control') and hasattr(msg, 'value') and msg.control == 74): #MPE standard for timbre control
+                        channel = msg.channel
+                        currentval = channelmap[channel]
+                        #vertical
+                        channelmap[channel] = [currentval[0], msg.value, currentval[2], currentval[3]]
                     #use midi joystick control.  
                     #also allow external joystick control..
+                if (channel != -1 and qr_queue is not None):
+                    #send update for this channel to QR code, can adjust format as needed.
+                    mk.add_qrin(f'<<midi>>\n> Aftertouch [{channelmap[channel][0]},{channelmap[channel][1]},{channelmap[channel][2]},{channelmap[channel][3]}]\n$$\n')
+                    
                 if msg.type == 'note_on' or msg.type == 'note_off':
                     print(msg)
                     logger.info(f'Received MIDI message: {msg}')
                     if hasattr(msg, 'note'):
                         note = msg.note
+                        if (hasattr(msg, 'channel')):
+                            channel = msg.channel
+                            if (msg.type == 'note_on' and msg.velocity > 0):
+                                channelmap[channel] = [note, -1, -1, -1]
+                            else:
+                                channelmap[channel] = [-1,-1,-1,-1]   
+
                         if hasattr(msg, 'velocity'):
                             velocity = msg.velocity
                         else:
@@ -2955,6 +3089,10 @@ def handle_keys(qr_queue=None, qrin_queue=None):
 #                            winsound.Beep(2000, 500) # Beep at 2000 Hz for 500 ms
                     else:
                         print("Message does not have a note attribute")
+                else:
+                    dontprint = 1
+#                    print(msg)
+#                    logger.info(f'Received MIDI message: {msg}')
 
 
 def init_inputs():

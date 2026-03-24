@@ -400,3 +400,51 @@ Should get better result..
 
 Somewhat better.  
 Some contexts not loading, not sure the cause..
+OK..
+
+
+**extensions/trey/trey.py
+Adjust so apps fit better together..
+
+Test joy..
+**R1
+BT connect joystick mode:
+M+B
+
+Take MPE messages and add to qr_in?  
+Then we get back QROut..
+
+OK, try screenshot with aftertouch..
+
+
+**MPE
+MPE messages:
+NVRP = Note Vertical Rotational Pressure
+Fixed?  53, 55
+V1 = Y1 (up > 40, down < 30)
+V2 = Y2
+R1 = X1 (left < -10, right > 10)
+R2 = X2
+P1 = All left (use V and R motion unless > 50, then All left/all right)
+P2 = All right
+
+
+label_qr
+label_ps[]
+label_filter_info[]
+label_p
+label_info
+
+
+!!cant get video widget to paint.  
+==
+QVideoWidget doesnt use paintEvent
+$$
+
+Wow such a hassle to do an overlay.  
+Somewhat closer to what I want..  
+
+Screenshot not working
+but
+Screenshot Feedback is..
+

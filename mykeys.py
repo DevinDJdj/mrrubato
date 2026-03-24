@@ -417,10 +417,17 @@ class MyKeys:
     for (l,la) in self.languages.items():
       la.startx = startx
 
+  def set_bbox(self, bbox):
+    print(f'Setting bbox for languages to {bbox}')
+    for (l,la) in self.languages.items():
+      if (hasattr(la, '_bbox')):
+        la._bbox = bbox
+        
   def set_geo(self, geo):
     print(f'Setting geometry for languages to {geo}')
     for (l,la) in self.languages.items():
-        la.geo = geo
+        if (hasattr(la, 'geo')):
+          la.geo = geo
 
   def callback(self, cmd):
     """Callback function for languages."""

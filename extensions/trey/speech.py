@@ -280,7 +280,7 @@ def record_audio2(duration=30, fname="example.wav", stop_event=None, seq=[77, 81
     synth.play_synth(seq, 12) #C major chord to start
     volume = device.EndpointVolume
     currentvolume = volume.GetMasterVolumeLevel()
-    volume.SetMasterVolumeLevel(currentvolume-20, None) #reduce volume to 20% for recording.
+    volume.SetMasterVolumeLevel(currentvolume-20, None) #reduce output volume to 20% for recording.
     total_duration = 0
     with sd.InputStream(samplerate=samplerate, channels=1, callback=record_audio_callback):
         # This loop runs as long as the stream is active
@@ -293,11 +293,13 @@ def record_audio2(duration=30, fname="example.wav", stop_event=None, seq=[77, 81
                 else:
                     break #never make it here?  
             sd.sleep(100)  # Sleep briefly to allow other operations
-    print("Recording complete.")
+    print("Recording completeA.")
 #    logger.info("Recording complete.")
     recording = np.concatenate(recording, axis=0)
     audio_tensor = torch.from_numpy(recording.squeeze()) # Remove channel dimension if mono
 #    audio_tensor = torch.from_numpy(recording.squeeze()) # Remove channel dimension if mono
+    #triple volume.  
+#    recording = recording * 3
     wav.write(fname, samplerate, (recording * 32767).astype(np.int16)) # Save as int16 WAV file
 
     volume.SetMasterVolumeLevel(currentvolume, None) #return to normal volume.  

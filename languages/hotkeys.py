@@ -26,6 +26,7 @@ class hotkeys:
     self.qapp = qapp
     self.startx = startx
     self.func = None
+    self.cmd = None
     self.qr = "" #info for QR message
 
     self.geo = None
@@ -61,6 +62,7 @@ class hotkeys:
           #can compare directly.  if strings, we do ','.join(self.sequence[-i:]) == v
           found = True
           cmd = k
+          self.cmd = cmd
     return cmd
 
   def unload(self):
