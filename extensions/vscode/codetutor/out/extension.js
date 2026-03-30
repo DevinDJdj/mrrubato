@@ -339,6 +339,8 @@ function activate(context) {
     (0, toolParticipant_1.registerCompletionTool)(context);
     (0, toolParticipant_1.registerStatusBarTool)(context);
     (0, toolParticipant_1.startWatchingWorkspace)(context); //watch for changes to book.  
+    (0, toolParticipant_1.startWatchingTranscriber)('hotkeys');
+    (0, toolParticipant_1.startWatchingTranscriber)('video');
     TerminalWorker.addClosedTerminalListener();
     Book.open(context); //open the book.  
     (0, toolParticipant_1.registerPiano)(context);

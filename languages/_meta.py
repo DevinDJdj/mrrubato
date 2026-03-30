@@ -234,13 +234,15 @@ class _meta:
 
   def tick(self, sequence=[]):
     logger.info(f'> Tick {sequence}')
-    t = self.timewindow.tick(self.speed)
+#    t = self.timewindow.tick(self.speed)
+    self.set_qr("Tick", {'TIME': self.timewindow.getTime(), 'TICK': self.speed})
     return 0
 
 
   def tock(self, sequence=[]):
     logger.info(f'> Tock {sequence}')
-    t = self.timewindow.tick(-self.speed)
+#    t = self.timewindow.tick(-self.speed)
+    self.set_qr("Tock", {'TIME': self.timewindow.getTime(), 'TICK': -self.speed})
     return 0
 
   def set_speed(self, sequence=[]):

@@ -490,6 +490,7 @@ class video:
      """Take Screenshot Feedback_.  Use 53 to indicate that we are done building bbox."""
 
      if (len(sequence) == 1):
+      #this was causing duplicate recording..
 #        self._screenshot_feedback(sequence)
         return 1 #still not complete..
      

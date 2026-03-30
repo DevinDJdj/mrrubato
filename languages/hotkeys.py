@@ -1,4 +1,5 @@
 import logging
+from pydoc import text
 from pynput import *
 import pytesseract
 from PIL import Image
@@ -422,15 +423,57 @@ class hotkeys:
     self.qr += "$$\n"
     return 0  
   
+  def comment_(self, sequence=[]):
+    if (len(sequence) == 1):
+
+      logger.info(f'> Comment_ {sequence}')
+
+      print("> Comment_ called")
+      #get audio input for query.  
+      duration = sequence[0]-self.keybot #in seconds
+      duration *=3  #double duration for feedback
+      if (duration < 6):
+        duration = 6
+      from extensions.trey.speech import listen_audio
+      self.now = datetime.now()
+      self.feedbacknowstr = self.now.strftime("%Y%m%d%H%M%S") #set nowstr for feedback.  
+
+      at = listen_audio(duration, "comment.wav")
+      #at.join() #wait for it to finish.
+      #have to just use some keys until this is done.  
+      #need to return 1 to indicate we need more keys.
+      #but this is only called once.  
+
+      return 0 #handled, this function will not be called again with further parameters.
+    return 1
+  
   def comment(self, sequence=[]):
     #start recording on 0, but return 1
-    from extensions.trey.speech import transcribe_audio, listen_audio
+    from extensions.trey.speech import transcribe_audio, listen_audio, get_duration
 
     logger.info(f'> Comment {sequence}')
     #stop recording.  for now just using fixed 10 seconds.  
     #needs to be async to do this properly.
-    listen_audio(10, "comment.wav")
-    text = transcribe_audio("comment.wav")
+    timer = datetime.now()
+
+    self.transcript = transcribe_audio("comment.wav")
+    duration = get_duration("comment.wav") #actual dynamic duration..
+    lag = (datetime.now() - timer).total_seconds()
+    lag = int(lag)
+    print(f'Transcription completed in {lag} seconds: {self.transcript}')
+
+    try:
+      vars = {}
+      vars['DURATION'] = duration
+      vars['COMMENT'] = self.transcript
+      vars['LAG'] = lag
+      fname = '../transcripts/' + self.name + '/' + self.feedbacknowstr + '.wav'
+      vars['FILE'] = fname
+      shutil.copy('comment.wav', fname) #keep a copy for training..
+      self.transcriber.write(self.name, "Comment", vars)  
+
+    except Exception as e:
+      print(f'Error writing comment file: {e}')
 
     return 0
     
@@ -675,6 +718,10 @@ class hotkeys:
 
     logger.info(f'> Search Web_ {sequence}')
     #no function, just demo..
+    if (len(sequence) > 1 and sequence[-1] > self.keybot):
+      self.speak(playwrighty.get_engine(sequence[-1]-self.keybot))
+
+
     return 1
 
   def record_feedback(self, sequence=[]):
@@ -739,25 +786,23 @@ class hotkeys:
 
           today = datetime.now().strftime("%Y%m%d")
           try:
-            os.makedirs('../transcripts/' + self.name, exist_ok=True)
-            with open('../transcripts/' + self.name + '/' + today + '.txt', 'a', encoding='utf-8') as f:        
-              f.write(f'> Record Feedback\t{sequence}\n')
-              f.write(f'$$DURATION=' + str(duration) + '\n')
-              f.write(f'$$FEEDBACK=' + self.transcript + '\n')
-              if (playwrighty.mybrowser is not None):
-                lang = playwrighty.detect_language()
-                f.write(f'$$LANG=' + lang + '\n') #assume same lang as page..
-                f.write(f'$$URL=' + url + '\n') #not sure we want this..
-                f.write(f'$$TRANSCRIPT=' + original + '\n')
-                f.write(f'$$LAG={lag}\n')
-                f.write(f'$$SCORE={score}\n')
-                f.write(f'$$START={ostart}\n')
-                f.write(f'$$END={oend}\n')
-                f.write(f'$$ORIGINAL={original[ostart:oend]}\n')
-                fname = '../transcripts/' + self.name + '/' + self.feedbacknowstr + '.wav'
-                f.write(f'$$FILE={fname}\n')
-                f.write('$$\n')
-                shutil.copy('feedback.wav', fname) #keep a copy for training..
+            vars = {}
+            vars['DURATION'] = duration
+            vars['FEEDBACK'] = self.transcript
+            vars['LANG'] = playwrighty.detect_language() if playwrighty.mybrowser is not None else "None"
+            if (playwrighty.mybrowser is not None):
+              vars['URL'] = url
+              vars['TRANSCRIPT'] = original
+              vars['LAG'] = lag
+              vars['SCORE'] = score
+              vars['START'] = ostart
+              vars['END'] = oend
+              vars['ORIGINAL'] = original[ostart:oend]
+              fname = '../transcripts/' + self.name + '/' + self.feedbacknowstr + '.wav'
+              vars['FILE'] = fname
+            shutil.copy('feedback.wav', fname) #keep a copy for training..
+            self.transcriber.write(self.name, "Record Feedback", vars)  
+
           except Exception as e:
             print(f'Error writing feedback file: {e}')
         else:
@@ -1172,6 +1217,8 @@ class hotkeys:
   def speak(self, text, links=[], alt_text_data=[], total_read=0, lang="en", cacheno=-1):
     from extensions.trey.trey import speak
 #    print(f'Speaking: {text}')
+    #really want to be able to turn on/off speaking with some setting similar to OPACITY..
+
     return speak(text, links, alt_text_data, total_read, lang, cacheno)
 
   

@@ -281,7 +281,7 @@ function getCommandType(str) {
         return [str.charAt(0), str.charAt(1)]; //get the first two characters of the string for now.
     }
 }
-function open(context) {
+function open(context = null) {
     return getBook(context);
 }
 function close() {
@@ -1646,7 +1646,7 @@ function getBookUri() {
     const bookUri = folderUri.with({ path: path_1.posix.join(folderUri.path, bookFolder) });
     return bookUri;
 }
-function loadBook(context) {
+function loadBook(context = null) {
     if (!vscode.workspace.workspaceFolders) {
         return vscode.window.showInformationMessage('No folder or workspace opened');
     }
@@ -1680,7 +1680,9 @@ function loadBook(context) {
         buildTopicGraph(prevdate.toISOString().slice(0, 10).replace(/-/g, ""), currentdate.toISOString().slice(0, 10).replace(/-/g, "")); //build the topic graph for last year.  
         console.log(bookgraph);
         //start workers.  
-        Worker.initWorkers(context); //start the workers.
+        if (context) {
+            Worker.initWorkers(context); //start the workers.
+        }
     });
     function createDateFromYYYYmmdd(dateString) {
         try {

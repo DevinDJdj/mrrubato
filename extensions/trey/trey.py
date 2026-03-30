@@ -1379,6 +1379,8 @@ def _hide(data):
     day = 86400
     tnow = time.time()
     mywindow.set_time(tnow-day*1, tnow-day*7, tnow, day*7)
+    mywindow.set_speed(None, "_meta")
+    mywindow.set_speed(None, "video")
     mk.set_startx(mywindow.startx)
     mk.set_geo(mywindow.geo)
     mk.set_bbox(mywindow._bbox)
@@ -1613,158 +1615,167 @@ class MyWindow(QMainWindow):
         print(f'~~: {len(pwords)}')
 #        self.updateWords(pwords)
 
-    def add_setting(self, key, value):
+    def add_setting(self, key, value, lang='_meta'):
         """Add a setting to the custom settings."""
-        config.custom_settings[key] = value
+        config.custom_settings[lang+"_"+key] = value
 
-    def get_setting(self, key, default=None):
+    def get_setting(self, key, default=None, lang='_meta'):
         """Get a setting from the custom settings."""
-        return config.custom_settings.get(key, default)
-
+        return config.custom_settings.get(lang+"_"+key, default)
+    
     def executeQRCommand(self, command, vars, lang='hotkeys'):
         #use transcriber here??
         """Execute a QR command based on the parsed data."""
         logger.info(f'Executing QR command: {command} with vars: {vars}')
-        if (command == "Screen Toggle"):
-            if (self.isVisible()):
-                #remove stale info?  
-                self.hide()                
-                #pause OBS capture.
-                pause_obs_capture()
-            else:
-                op = self.get_setting('OPACITY', 0.4)
-                op = float(vars.get('OPACITY', op))
-                rec = self.get_setting('RECORD', 'False')
-                rec = vars.get('RECORD', rec)
-                self.setWindowOpacity(op)
-                self.add_setting('OPACITY', op)
-                self.add_setting('RECORD', rec)
-                
-                self.show()
-                #start OBS capture..
-                if (rec == 'True'):
+        match command:
+            case "Screen Toggle":
+                if (self.isVisible()):
+                    #remove stale info?  
+                    self.hide()                
+                    #pause OBS capture.
+                    pause_obs_capture()
+                else:
+                    op = self.get_setting('OPACITY', 0.4, lang)
+                    op = float(vars.get('OPACITY', op))
+                    rec = self.get_setting('RECORD', 'False', lang)
+                    rec = vars.get('RECORD', rec)
+                    self.setWindowOpacity(op)
+                    self.add_setting('OPACITY', op, lang)
+                    self.add_setting('RECORD', rec, lang)
+                    
+                    self.show()
+                    #start OBS capture..
+                    if (rec == 'True'):
+                        start_obs_capture()
+
+            case "Stop":        
+                type = vars.get('type', 'video')
+                if (type == 'video'):
+                    #not used
+                    n = 0
+                elif (type == 'record'):
+                    pause_obs_capture()
+            case "Start":
+                type = vars.get('type', 'video')
+                if (type == 'video'):
+                    #not used..
+                    n = 0 
+                elif (type == 'record'):
                     start_obs_capture()
-        elif (command == "Stop"):
-            type = vars.get('type', 'video')
-            if (type == 'video'):
-                #not used
-                n = 0
-            elif (type == 'record'):
-                pause_obs_capture()
-        elif (command == "Start"):
-            type = vars.get('type', 'video')
-            if (type == 'video'):
-                #not used..
-                n = 0 
-            elif (type == 'record'):
-                start_obs_capture()
+            case "Next":
+                type = vars.get('type', 'video')
+                no = vars.get('no', '1')
+                if (type == 'video'):
+                    #logic to pick next video/audio in our commands.. tmap
+                    self.play_tmap(int(no)) #play next item in tmap
+                    n = 0
+                elif (type == 'record'):
+                    #not used..
+                    n = 0
+            case "Pause":
+                type = vars.get('type', 'video')
+                if (type == 'video'):
+                    #logic to pause video playback
+                    #pick next video/audio in our commands.. tmap
+                    self.pause_tmap()
+                    n = 0
+                elif (type == 'record'):
+                    pause_obs_capture()
+            case "Unpause":
+                type = vars.get('type', 'video')
+                if (type == 'video'):
+                    #logic to unpause video playback
+                    #pick next video/audio in our commands.. tmap
+                    #anything with $$FILE or $$fname or..
+                    self.play_tmap()
+                    n = 0
+                elif (type == 'record'):
+                    start_obs_capture()
+            case "Screenshot Feedback_":
+                bbox = vars.get('BBOX', None)
+                if (bbox is not None):
+                    self.draw_screen_box(vars.get('BBOX', self.geometry().getRect()))
 
-        elif (command == "Next"):
-            type = vars.get('type', 'video')
-            no = vars.get('no', '1')
-            if (type == 'video'):
-                #logic to pick next video/audio in our commands.. tmap
-                self.play_tmap(int(no)) #play next item in tmap
-                n = 0
-            elif (type == 'record'):
-                #not used..
-                n = 0
-        elif (command == "Pause"):
-            type = vars.get('type', 'video')
-            if (type == 'video'):
-                #logic to pause video playback
-                #pick next video/audio in our commands.. tmap
-                self.pause_tmap()
-                n = 0
-            elif (type == 'record'):
-                pause_obs_capture()
-        elif (command == "Unpause"):
-            type = vars.get('type', 'video')
-            if (type == 'video'):
-                #logic to unpause video playback
-                #pick next video/audio in our commands.. tmap
-                #anything with $$FILE or $$fname or..
-                self.play_tmap()
-                n = 0
-            elif (type == 'record'):
-                start_obs_capture()
-
-        elif (command =="Screenshot Feedback_"):
-            bbox = vars.get('BBOX', None)
-            if (bbox is not None):
-                self.draw_screen_box(vars.get('BBOX', self.geometry().getRect()))
-
-            #send back the OCR text as feedback.
-            #just add to file assuming we 
-            #probably dont need this..
-            if (vars.get('OCR', 'False') == 'True'):
-                ocrtext, fname = self.save_screenshot(vars.get('KLANG', 'video'), vars.get('TRANSCRIPT', ''), vars.get('BBOX', None), True) #always OCR
+                #send back the OCR text as feedback.
+                #just add to file assuming we 
+                #probably dont need this..
+                if (vars.get('OCR', 'False') == 'True'):
+                    ocrtext, fname = self.save_screenshot(vars.get('KLANG', 'video'), vars.get('TRANSCRIPT', ''), vars.get('BBOX', None), True) #always OCR
+                    vars['OCRTEXT'] = ocrtext
+                    vars['FNAME'] = fname
+                    self.ocrtext = ocrtext
+                written = self.transcriber.write(vars.get('KLANG', 'video'), command, vars) #dont write intermediate msg?
+                self.set_feedback(written, vars)
+            case "Screenshot Feedback":
+                #right now we are just calling screenshot..
+                #get OCR, and transcribe.  This is delayed because of the transcription time..
+                ocrtext, fname = self.save_screenshot(vars.get('KLANG', 'video'), '', vars.get('BBOX', None), True) #always OCR
                 vars['OCRTEXT'] = ocrtext
                 vars['FNAME'] = fname
                 self.ocrtext = ocrtext
-            written = self.transcriber.write(vars.get('KLANG', 'video'), command, vars) #dont write intermediate msg?
-            self.set_feedback(written, vars)
-        elif (command == "Screenshot Feedback"):
-            #right now we are just calling screenshot..
-            #get OCR, and transcribe.  This is delayed because of the transcription time..
-            ocrtext, fname = self.save_screenshot(vars.get('KLANG', 'video'), '', vars.get('BBOX', None), True) #always OCR
-            vars['OCRTEXT'] = ocrtext
-            vars['FNAME'] = fname
-            self.ocrtext = ocrtext
-            written = self.transcriber.write(vars.get('KLANG', 'video'), command, vars)
-            self.set_feedback(written, vars)
+                written = self.transcriber.write(vars.get('KLANG', 'video'), command, vars)
+                self.set_feedback(written, vars)
+            case "_Click Link":
+                self.show()
+                #simulate click at link location if given.
+            case "Time Jump" | "Time Zoom":
+                t = float(vars.get('TIME', time.time()))
+                w = float(vars.get('WINDOW', 86400)) #default 1 day
+                s = float(vars.get('START', t-w/2))                              
+                e = float(vars.get('END', t+w/2))
+                self.add_setting('TIME', t, lang)
+                self.add_setting('WINDOW', w, lang)
+                self.set_time(t, s, e, w)
+                print("Time Jump to: " + str(t) + " Start: " + str(s) + " End: " + str(e) + " Window: " + str(w))
+                #set time locally.  
+                #simulate click at link location if given.
+            case "Set Speed":
+                speed = float(vars.get('SPEED', '1.0'))
+                self.add_setting('SPEED', speed, lang)
+                self.set_speed(speed, lang)
+                #video = playback speed
+                #_meta = tick speed
 
-        elif (command == "_Click Link"):
-            self.show()
-            #simulate click at link location if given.
-        elif (command == "Time Jump" or command == "Time Zoom"):
-            t = float(vars.get('TIME', time.time()))
-            w = float(vars.get('WINDOW', 86400)) #default 1 day
-            s = float(vars.get('START', t-w/2))                              
-            e = float(vars.get('END', t+w/2))
-            self.add_setting('TIME', t)
-            self.add_setting('WINDOW', w)
-            self.set_time(t, s, e, w)
-            print("Time Jump to: " + str(t) + " Start: " + str(s) + " End: " + str(e) + " Window: " + str(w))
-            #set time locally.  
-            #simulate click at link location if given.
-        elif (command == "Set Speed"):
+                print(f"<<{lang}>>\n$$SPEED=" + str(speed))
+            case "Tick":
+                speed = self.get_setting('SPEED', 1.0, lang)
+                #jump forward by tick amount.  
+                self.play_tmap(int(speed)) #play next item in tmap
 
-            speed = float(vars.get('SPEED', '1.0'))
-            self.add_setting('SPEED', speed)
-            self.set_speed(speed, lang)
-            print(f"<<{lang}>>\n$$SPEED=" + str(speed))
-        elif (command == "Select Topic"):
-            topic = vars.get('topic', 'None')
-            self.add_setting('topic', topic)
-            context = vars.get('context', '')
-            self.transcriber.current_topic = topic
-            print(f"<<{lang}>>\n$$topic=" + str(topic))
-            print(f"<<{lang}>>\n$$context=" + str(context))
-            self.label_topic_info[0].setText(f'**{topic}')
+            case "Tock":
+                speed = self.get_setting('SPEED', 1.0, lang)
+                #jump backward by tick amount.
+                self.play_tmap(int(-speed)) #play previous item in tmap
+                
+            case "Select Topic":
+                topic = vars.get('topic', 'None')
+                self.add_setting('topic', topic, lang)
+                context = vars.get('context', '')
+                self.transcriber.current_topic = topic
+                print(f"<<{lang}>>\n$$topic=" + str(topic))
+                print(f"<<{lang}>>\n$$context=" + str(context))
+                self.label_topic_info[0].setText(f'**{topic}')
 
-            #format this a bit nicer..
-            self.label_topic_info[1].setText(f'{context}') 
+                #format this a bit nicer..
+                self.label_topic_info[1].setText(f'{context}') 
 
-            self.label_topic_info[0].update()
-            self.label_topic_info[1].update()
+                self.label_topic_info[0].update()
+                self.label_topic_info[1].update()
+            case "Screenshot":
+                print("Taking Screenshot")
+                print(vars['BBOX'])
+                self.draw_screen_box(vars.get('BBOX', self.geometry().getRect()))
+                ocrtext, fname = self.save_screenshot(vars.get('KLANG', 'hotkeys'), vars.get('FNAME', ''), vars.get('BBOX', self.geometry().getRect()), True) #always OCR?
+                vars['OCRTEXT'] = ocrtext
+                vars['FNAME'] = fname
+                self.ocrtext = ocrtext
+                written = self.transcriber.write(vars.get('KLANG', 'video'), command, vars)
+                self.set_feedback(written, vars)
 
-        elif (command == "Screenshot"):
-            print("Taking Screenshot")
-            print(vars['BBOX'])
-            self.draw_screen_box(vars.get('BBOX', self.geometry().getRect()))
-            ocrtext, fname = self.save_screenshot(vars.get('KLANG', 'hotkeys'), vars.get('FNAME', ''), vars.get('BBOX', self.geometry().getRect()), True) #always OCR?
-            vars['OCRTEXT'] = ocrtext
-            vars['FNAME'] = fname
-            self.ocrtext = ocrtext
-            written = self.transcriber.write(vars.get('KLANG', 'video'), command, vars)
-            self.set_feedback(written, vars)
+                #send to QR In queue for processing by mykeys.  
 
-            #send to QR In queue for processing by mykeys.  
-
-
-        elif (command == "Screenshot_"):
-            self.draw_screen_box(vars.get('BBOX', None))
+            case "Screenshot_":
+                self.draw_screen_box(vars.get('BBOX', None))
 
         #add more commands as needed.
     def parseQRData(self, qrdata):
@@ -2044,6 +2055,9 @@ class MyWindow(QMainWindow):
         self.s = 0 #current start time of window
         self.e = 0 #current end time of window
         self.currentsound = None #current sound being played.
+        self.speed = 1.0
+        self.playback_speed = 1.0
+
         self.mylayout = QVBoxLayout()
 
         if (self.cfg is not None and 'firebase' in self.cfg):
@@ -2445,6 +2459,11 @@ class MyWindow(QMainWindow):
                 self.tmapindex += no
 
             t = self.tmap[self.tmapindex]
+            print(t)
+            if (t.get('timestamp', None) is not None):
+                timestamp = t["timestamp"]
+                logger.info(f'Playing item with timestamp: {timestamp}')
+                self.set_time(timestamp) #jump to time of item, can adjust as needed.
             try:
                 if (t["vars"].get('fname', None) is not None):
                     logger.info(f'Playing file: {t["vars"]["fname"]}')
@@ -2618,10 +2637,14 @@ class MyWindow(QMainWindow):
         
 
     def set_speed(self, speed, lang='_meta'):
+        #pass none to load default..
+        if speed is None:
+            speed = self.get_setting('SPEED', 1.0, lang)
         if (lang == '_meta'):
             self.speed = speed
             self.label_timeinfo[3].setText(f'$$S={speed}')
         elif (lang == 'video'):
+            self.playback_speed = speed
             self.video_player.setPlaybackRate(speed)
             self.label_timeinfo[3].setText(f'$$VS={speed}')
 
@@ -3057,7 +3080,13 @@ def handle_keys(qr_queue=None, qrin_queue=None):
                 if (channel != -1 and qr_queue is not None):
                     #send update for this channel to QR code, can adjust format as needed.
                     mk.add_qrin(f'<<midi>>\n> Aftertouch [{channelmap[channel][0]},{channelmap[channel][1]},{channelmap[channel][2]},{channelmap[channel][3]}]\n$$\n')
-                    
+                    #only update sometimes?  For now do all.  
+
+                    if (random.random() < 0.05): #adjust this threshold as needed to balance responsiveness with performance, currently set to update on average every 20 messages.
+                        qrdata = mk.get_qr()
+                        if (qrdata is not None and qrdata != ""):
+                            qr_queue.put(qrdata)
+                
                 if msg.type == 'note_on' or msg.type == 'note_off':
                     print(msg)
                     logger.info(f'Received MIDI message: {msg}')

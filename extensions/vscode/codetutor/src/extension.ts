@@ -21,7 +21,7 @@ import ollama from 'ollama';
 import { LanguageModelPromptTsxPart, LanguageModelToolInvocationOptions, LanguageModelToolResult } from 'vscode';
 
 
-import { startWatchingWorkspace, updateStatusBarItem, registerStatusBarTool, registerCompletionTool, registerToolUserChatParticipant, registerPiano, unregisterPiano } from './toolParticipant';
+import { startWatchingWorkspace, startWatchingTranscriber, updateStatusBarItem, registerStatusBarTool, registerCompletionTool, registerToolUserChatParticipant, registerPiano, unregisterPiano } from './toolParticipant';
 import { start } from 'repl';
 import { get } from 'http';
 
@@ -371,6 +371,8 @@ export function activate(context: vscode.ExtensionContext) {
 	registerCompletionTool(context);
 	registerStatusBarTool(context);
 	startWatchingWorkspace(context); //watch for changes to book.  
+	startWatchingTranscriber('hotkeys');
+	startWatchingTranscriber('video');
 	TerminalWorker.addClosedTerminalListener();
 
 	Book.open(context); //open the book.  

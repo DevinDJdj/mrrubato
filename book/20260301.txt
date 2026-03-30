@@ -445,6 +445,80 @@ Wow such a hassle to do an overlay.
 Somewhat closer to what I want..  
 
 Screenshot not working
-but
+but     
 Screenshot Feedback is..
+
+
+**extensions/vscode/codetutor/src/extension.ts
+Need to accept commands..
+
+**extensions/vscode/codetutor/src/midi/mykeys.ts
+Does this work?  
+
+**extensions/vscode/codetutor/src/languages/meta.js
+change to _meta.js
+Change to 0 base.  
+Get first messages..
+
+Create book.js
+I guess using JS ok..
+
+
+Book.select(text, Book.BOOK_OPEN_FILE); //select and open topic
+We dont need the midi here.  
+Lets assume trey is default input for midi.  
+Just need to pass transcript..
+
+**extensions/vscode/codetutor/src/toolParticipant.ts
+--startWatchingWorkspace
+Same logic, have location specific for messaging..
+../transcripts/{lang}/{today}
+Dont display file..
+
+
+!!folder not showing details
+==
+Folder -> Properties -> Customize -> Optimize this folder for:
+General items
+$$
+
+
+test screenbox drawing, should be better..
+Nope, aftertouch is too much to update..
+Maybe can take once in a while..
+
+
+
+**extensions/vscode/codetutor/src/transcriber.ts
+After getting new string from monitoring, parse here..
+
+OK, list of topic and cmds.  
+Just see if tokenizer is working for now..
+
+;> Set Topic 
+should add to transcript even without command?
+
+Not horrible responses..
+Test topic selection through trey..
+
+Eventually need to reload transcript watcher each day..
+Right now using book page for context, maybe adding to selection history is enough..
+
+
+**extensions/trey/speech.py
+Why is recognition still so bad with this open source model.  
+Try to adjust reading speed, and ingest some info.  
+Create some more data to attempt training..
+Accuracy over speed for now.  Just use small segments.  
+See if we can accurately detect speech breaks as well..
+#https://github.com/snakers4/silero-vad
+
+**languages/hotkeys.py
+Adjust reading speed here..
+
+
+
+Need to collect and display feedback from recorded video..
+Screenshot feedback should save wav file as well..
+But cant use for training yet..
 

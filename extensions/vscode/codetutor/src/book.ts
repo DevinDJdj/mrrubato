@@ -265,7 +265,7 @@ export function getCommandType(str: string) : [string, string] {
 
 }
 
-export function open(context: vscode.ExtensionContext) {
+export function open(context: vscode.ExtensionContext | null = null) {
     return getBook(context);
 
 
@@ -1854,7 +1854,7 @@ function getBookUri() : vscode.Uri {
     return bookUri;
 }
 
-function loadBook(context?: vscode.ExtensionContext) {
+function loadBook(context: vscode.ExtensionContext | null = null) {
     if (!vscode.workspace.workspaceFolders) {
         return vscode.window.showInformationMessage('No folder or workspace opened');
     }
@@ -1896,7 +1896,9 @@ function loadBook(context?: vscode.ExtensionContext) {
         console.log(bookgraph);
 
         //start workers.  
-        Worker.initWorkers(context); //start the workers.
+        if (context){
+            Worker.initWorkers(context); //start the workers.
+        }
 
     
     });

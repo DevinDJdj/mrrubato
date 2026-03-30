@@ -29,7 +29,7 @@ class timewindow:
             self.endtime = newtime + self.window/2
     
     def tick(self, speed=1.0):
-        self.currenttime += speed * 1
+#        self.currenttime += speed * 1
         return self.currenttime
 
     def timeJump(self, jump=0.1): #relative to window size, so 0.1 is 10% of window size.

@@ -2,6 +2,9 @@
 //def 
 import { AudioContext, OscillatorNode, GainNode } from 'node-web-audio-api';
 
+import * as vscode from 'vscode';
+import * as Book from '../book';
+
 let playfeedback = true;
 let pedal = false;
 let volumeControl = "0.1";
