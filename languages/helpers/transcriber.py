@@ -16,6 +16,8 @@ sys.path.insert(1, 'c:/devinpiano/music/') #config.py path Base project path
 import config 
 import mykeys
 
+import networkx as nx
+
 logger = logging.getLogger(__name__)
 
 
@@ -25,12 +27,16 @@ class transcriber:
         self.defstring = r"[~!@#$%^&*<>/:;\-\+=]"
         self.allcmds = {} #lang -> {cmds, start_time, end_time, list of cmds in order..
         self.langmap = {}
+        self.kg = {}
         self.allmidi = []
         self.qr_queue = qr_queue
         self.mykeys = mk
         self.mydic = {}
         self.allneedles = []
         self.current_topic = None
+        self.current_context = None
+        self.kg_ignorevars = ['TIME', 'WINDOW', 'START', 'END', 'FNAME', 'FILE', 'DURATION', 'LAG'] #vars to ignore in display of info, used for time window commands.
+
         if (self.mykeys is not None):
             allwords = self.mykeys.get_words_()
             for i, w in enumerate(allwords):            
@@ -79,6 +85,21 @@ class transcriber:
       ret += f'$$\n'
       return ret
 
+    def write_topic(self, lang, topic, save=True):
+
+        ret = ""
+        if (topic != self.current_topic and topic is not None):                
+            ret += f'**{topic}\n'
+            self.current_topic = topic
+
+        if save:
+            today = datetime.now().strftime("%Y%m%d")
+            folder = '../transcripts/' + lang + '/'
+            os.makedirs(folder, exist_ok=True)
+            with open(folder + today + '.txt', 'a', encoding='utf-8') as f:
+                f.write(ret)
+        return ret
+    
     def write(self, lang, command, params, save=True):
       #write to transcript file.  
       #for now just one time param.  
@@ -86,7 +107,7 @@ class transcriber:
       #add utf-8?  
       ret = ""
       if (lang not in self.langmap or self.langmap[lang]['lang'] != lang):
-        self.langmap[lang] = {'lang':lang, 'topic': self.current_topic}
+        self.langmap[lang] = {'lang':lang, 'topic': self.current_topic, 'topics': {}, 'kg': nx.Graph()}
         ret += f'<<{lang}>>\n'
         ret += f'**{self.langmap[lang]["topic"]}\n'
       elif (self.langmap[lang]['topic'] is not None and self.langmap[lang]['topic'] != self.current_topic):
@@ -315,6 +336,9 @@ class transcriber:
             mtime = time.time()
             last_time = mtime - 86400 #default to last 24 hours if no time provided, should be close enough for sorting topics.
 
+        if (lang not in self.langmap or self.langmap[lang]['lang'] != lang):
+            self.langmap[lang] = {'lang':lang, 'topic': self.current_topic, 'topics': {}, 'kg': nx.Graph()} 
+
         vars = {}
         topc = None
         numlines = len(lines)
@@ -394,7 +418,57 @@ class transcriber:
         if (currentcmd != "" and currentcmdobj is not None):
             ret.append(currentcmdobj)
 
+        self.update_kg(ret)
         return ret
+
+
+    #not used at the moment, but best if we put into dot lang as well probably..
+    def gen_DOT(self, cmds):
+        #for now just generate a DOT file for the knowledge graph, could also generate for individual topics or languages if needed.  
+        dot = "digraph G {\n"
+        for cmd in cmds:
+            cmd_node = f'"{cmd["cmd"]}"'
+
+            dot += f'{cmd["type"]}{cmd_node} [topic="{cmd["topic"]}", lang="{cmd["lang"]}"];\n'
+
+            for var_key, var_value in cmd['vars'].items():
+                var_node = f'"{var_key}={var_value}"'
+                topic = cmd["topic"] if cmd["topic"] is not None else "None"
+                dot += f'  {var_node} [topic="{topic}", lang="{cmd["lang"]}"];\n'
+                dot += f'  {cmd_node} -> {var_node} [label="$$"];\n'
+                dot += f'  {topic} -> {var_node} [label="$$"];\n'
+        dot += "}\n"
+        #nx.nx_pydot.from_pydot(PG)
+        return dot
+    
+    def update_kg(self, cmds):
+        #for now just add commands and topics as nodes, and edges between topics and commands, and commands and their variables.  could also add edges between commands based on sequence in transcript, but for now just direct edges to topic and variables.
+        for idx, cmd in enumerate(cmds):
+            if (cmd['type'] not in self.kg):
+                self.kg[cmd['type']] = nx.Graph()
+            #add topics and cmds..
+            self.kg[cmd['type']].add_node(cmd['cmd'], label=cmd['type']+cmd['cmd'], type=cmd['type'], lang=cmd['lang'], topic=cmd['topic'])
+            for var_key, var_value in cmd['vars'].items():
+                if (var_key in self.kg_ignorevars):
+                    continue
+                var_node = f"{var_key}={var_value}"
+                self.kg[cmd['type']].add_node(var_node, label=var_node, type='$$', lang=cmd['lang'], cmd=cmd['cmd'], topic=cmd['topic'])
+                self.kg[cmd['type']].add_edge(cmd['cmd'], var_node, type='$$')
+                if (cmd['topic'] is not None):
+                    if (not self.kg['**'].has_node(cmd['topic'])):
+                        self.kg['**'].add_node(cmd['topic'], label=cmd['topic'], type='**', lang=cmd['lang'], topic=cmd['topic'])
+                    self.kg['**'].add_node(cmd['topic'], label=cmd['topic'], type='**', lang=cmd['lang'], topic=cmd['topic'])
+                    self.kg['**'].add_edge(cmd['topic'], var_node, type='$$')
+            if (idx > 0):
+                for prev_idx in range(max(0, idx-5), idx-1): #add edges to previous 5 commands for context, could adjust this number as needed.
+                    self.kg[cmd['type']].add_edge(cmds[prev_idx]['cmd'], cmd['cmd'], type=cmd['type'], topic=cmd['topic'], lang=cmd['lang'])
+
+
+    def get_kg_DOT(self, type):
+        if (type not in self.kg):
+            return ""
+        dot = nx.nx_pydot.to_pydot(self.kg[type]).to_string()
+        return dot
 
     def read(self, lang, start_time=None, end_time=None, myfolder=""):
 

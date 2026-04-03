@@ -128,6 +128,7 @@ class hotkeys:
         text = c['vars']['TEXT'] if 'TEXT' in c['vars'] else ""
 
         print(f'Loaded bookmark {url} at {total_read}')
+        logger.info(f'Loaded bookmark {url} at {total_read}')
         playwrighty.add_bookmark(url, total_read, text) #call playwrighty add bookmark..
         numloaded += 1
 
@@ -712,6 +713,15 @@ class hotkeys:
       #but this is only called once.  
 
       return 0 #handled, this function will not be called again with further parameters.
+    else:
+      #get real-time input
+      from extensions.trey.speech import transcribe_now
+      self.func = "Record Feedback_"
+      self.transcript += transcribe_now() + "\n"
+      self.set_qr(self.func, {'transcript': self.transcript})
+      #update display.  
+
+
     return 1
 
   def search_web_(self, sequence=[]):  
@@ -729,10 +739,13 @@ class hotkeys:
     duration = sequence[0]-self.keybot if (len(sequence) > 0) else 5
     duration *=3  #triple duration for feedback
     print(f'> Record Feedback for {duration} seconds')
-    from extensions.trey.speech import transcribe_audio, get_duration
+    from extensions.trey.speech import transcribe_audio, get_duration, transcribe_audio_whisper
     timer = datetime.now()
 
-    self.transcript = transcribe_audio("feedback.wav")
+#    self.transcript = transcribe_audio("feedback.wav")
+    self.transcript = transcribe_audio_whisper("feedback.wav") #try whisper for better accuracy.  This is slower but hopefully more accurate, especially for short feedback.
+
+
     duration = get_duration("feedback.wav") #actual dynamic duration..
     lag = (datetime.now() - timer).total_seconds()
     lag = int(lag)
@@ -755,7 +768,7 @@ class hotkeys:
         url = playwrighty.get_url(-1)      
         original = playwrighty.get_text(-1, tr, textduration+lag) 
         original = original.replace('\n','  ')
-        original = original.upper()
+#        original = original.upper()
         #find best match location
         from rapidfuzz import fuzz
         bestscore = 0
@@ -1158,10 +1171,10 @@ class hotkeys:
       logger.info('Getting page from Playwright')
       text, links, alt_text_data = playwrighty.get_page_details(playwrighty.get_ppage(playwrighty.current_cache))
       text, links, page, cacheno = playwrighty.read_page('', playwrighty.current_cache) #read current page
-
+      total_read = playwrighty.get_bookmark(page.url, cacheno)
       self.links = links
       print(f'Playwright found {len(text)} characters and {len(links)} links  on the page') 
-      q2, q3, stop_event = self.speak(text, links, alt_text_data, cacheno=cacheno)
+      q2, q3, stop_event = self.speak(text, links, alt_text_data, total_read, cacheno=cacheno)
       playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
       return 0
     

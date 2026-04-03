@@ -139,7 +139,7 @@ class video:
       "Pause": {"help": "pause", "params": "None", "desc": "Pause video playback."},
       "Next": {"help": "next", "params": "[no]-5 default [54] next in playlist", "desc": "Next video in playlist or folder."},
       "Unpause": {"help": "unpause", "params": "None", "desc": "Unpause video playback."},
-      "Set Speed": {"help": "set speed <value>", "params": "<value>", "desc": "Set playback speed, relative to current."}, 
+      "Set Speed": {"help": "set speed [value]", "params": "[value]", "desc": "Set playback speed, relative to current."}, 
       "Screenshot": {"help": "screenshot", "params": "[bbox] in form X1, X2, Y1, Y2", "desc": "Take screenshot of video."},
       "Zoomshot": {"help": "zoomshot", "params": "None", "desc": "Take zoomed screenshot of video."},
       "Screen Toggle": {"help": "screen_toggle", "params": "[opacity] 10-90%", "desc": "Toggle video screen overlay."},

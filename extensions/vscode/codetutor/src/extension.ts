@@ -373,6 +373,8 @@ export function activate(context: vscode.ExtensionContext) {
 	startWatchingWorkspace(context); //watch for changes to book.  
 	startWatchingTranscriber('hotkeys');
 	startWatchingTranscriber('video');
+	startWatchingTranscriber('_meta'); //get all topic changes..
+
 	TerminalWorker.addClosedTerminalListener();
 
 	Book.open(context); //open the book.  

@@ -522,3 +522,104 @@ Need to collect and display feedback from recorded video..
 Screenshot feedback should save wav file as well..
 But cant use for training yet..
 
+
+**extensions/vscode/codetutor/src/extension.ts
+What is stop reading function?  
+Need one so dont have to use mouse..
+
+
+**KNOWLEDGEGRAPH
+
+#https://networkx.org/en/
+#https://github.com/networkx/networkx
+
+> pip install networkx
+
+**web/public/graph.html
+**web/public/netgraph.mjs
+
+**languages/helpers/transcriber.py
+--update_kg
+use networkx here to build a basic knowledge graph.  
+Then we can just query these graphs, and strength of connections perhaps.. 
+See how we can use to start..
+
+test..
+See if we can visualize this in trey with a view..
+
+
+> pip install pyqtgraph
+#https://soniakopel.wordpress.com/2017/11/15/network-visualization-with-networkx-tutorial/
+
+-fruchterman_reingold_layout
+
+**extensions/trey/trey.py
+--visualize_kg
+test..
+Call on select topic
+
+OK, but dont call here, need separate word..
+Also this library is too slow to generate this image..
+Needs to be in separate thread??
+Maybe just generate the text..
+Quick select for topic selection history -> double-tap
+
+Transcription monitoring for topic selection in codetutor not working..
+
+Can we bring window to front?  
+Perhaps just create temp docs and open in codetutor
+Or chat response
+
+
+need to be able to show related changes..
+
+
+--get_window_info
+test..
+
+get rid of old global funcs..
+
+Need topic next which just shows the current topic info PGDN/PGUP
+
+Can we pick up the clicks?  
+
+Why is procid and threadid same across vscode debug instance?  
+
+
+**extensions/vscode/codetutor/src/extension.ts
+OK, so we activate robot, then just Book.select(topic)
+Or something..
+
+OK, we are picking up the new data.  
+On select topic we want to put in the 
+
+**extensions/trey/speech.py
+Try this for transcription..
+#https://github.com/gaborvecsei/whisper-live-transcription/blob/main/standalone-poc/live-transcribe.py
+
+**extensions/trey/test/live.py
+> pip install faster-whisper
+Need some real-time transcription.  
+> huggingface-cli login
+
+!!huggingface_hub.errors.LocalEntryNotFoundError
+==
+whisper = WhisperModel("base", device="cpu", compute_type="int8", cpu_threads=WHISPER_THREADS)
+#, download_root="./models")
+$$
+
+
+**extensions/trey/speech.py
+--transcribe_now
+--faster-whisper
+OK, this seems to work ok..
+
+Far superior to the other model.  
+Also get realtime updates in qr_screen..
+Get rid of timestamp..
+
+Need to switch other locations..
+**languages/hotkeys.py
+video, _meta..
+
+

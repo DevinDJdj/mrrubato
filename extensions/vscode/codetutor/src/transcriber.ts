@@ -20,14 +20,13 @@ export function transcribe(str: string, topic: string = "NONE"): Array<{topic: s
     //now we have a list of tokens.  We need to group them by line.
     let topics = [];
     let cmds = [];
+    let topicobj = null;
+    let commandobj = null;
     for (let i = 0; i < lines.length; i++) {
         let line = lines[i].line;
         let linestr = lines[i].map(token => token.data).join("");
         console.log( linestr);
         let basetype = linestr.substring(0, 2);
-        let topicobj = {topic: "", data: "", vars: {}, cmds: []};
-        let currentcmds = [];
-        let commandobj = {'lang': current_lang, 'cmd': current_cmd, 'topic': current_topic, 'vars': {}, 'data': ""};
 
         switch (basetype) {
             case "**":
@@ -50,7 +49,7 @@ export function transcribe(str: string, topic: string = "NONE"): Array<{topic: s
                     cmdhistory.push(commandobj);
                     cmds.push(commandobj);
                     topicobj.cmds.push(commandobj);
-
+                    commandobj = null;
                 }
                 current_cmd = linestr.slice(2).trim();
                 commandobj = {
@@ -89,5 +88,15 @@ export function transcribe(str: string, topic: string = "NONE"): Array<{topic: s
 
         }
     }
+    //add last topic and command to history.
+    if (topicobj !== null && topicobj.data.trim().length > 0) {
+        topichistory.push(topicobj);
+        topics.push(topicobj);
+    }
+    if (commandobj !== null && commandobj.cmd.trim().length > 0) {
+        cmdhistory.push(commandobj);
+        cmds.push(commandobj);
+    }
+
     return topics; //mostly use topics[n].cmds for commands.
 }

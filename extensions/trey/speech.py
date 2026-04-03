@@ -10,6 +10,7 @@ import argparse
 
 import os
 import threading
+import queue
 import winsound
 
 import extensions.trey.synth as synth
@@ -20,6 +21,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 asr_model = None
+whisper_model = None
+
+
 # 3. Define text pipeline:
 @sb.utils.data_pipeline.takes("words")
 @sb.utils.data_pipeline.provides(
@@ -258,8 +262,69 @@ global recording
 global rec_stop_event
 rec_stop_event = threading.Event()
 
+global audio_queue
+audio_queue = queue.Queue()
+
+# Audio settings
+STEP_IN_SEC: int = 1    # We'll increase the processable audio data by this
+LENGHT_IN_SEC: int = 6    # We'll process this amount of audio data together maximum
+NB_CHANNELS = 1
+RATE = 16000
+CHUNK = RATE
+MAX_SENTENCE_CHARACTERS = 80
+
+
+import re
+def transcribe_now():
+    global rec_stop_event
+    global recording
+    global audio_queue
+    global whisper_model
+
+    whisper_model = init_whisper_model()
+    working_buffer = b""
+    if (audio_queue.empty()):
+        return ""
+    audio_data = []
+    while (not audio_queue.empty()):
+        audio_data.append(audio_queue.get())
+    working_buffer = np.concatenate(audio_data).astype(np.float32)
+
+    transcription_start_time = time.time()
+
+    # convert the bytes data toa  numpy array
+    audio_data_array: np.ndarray = np.frombuffer(working_buffer, np.float32)
+    # audio_data_array = np.expand_dims(audio_data_array, axis=0)
+
+    segments, _ = whisper_model.transcribe(audio_data_array,
+                                        language=WHISPER_LANGUAGE,
+                                        beam_size=5,
+                                        vad_filter=True,
+                                        vad_parameters=dict(min_silence_duration_ms=1000))
+    segments = [s.text for s in segments]
+
+    transcription_end_time = time.time()
+
+    transcription = " ".join(segments)
+    # remove anything from the text which is between () or [] --> these are non-verbal background noises/music/etc.
+    transcription = re.sub(r"\[.*\]", "", transcription)
+    transcription = re.sub(r"\(.*\)", "", transcription)
+    # We do this for the more clean visualization (when the next transcription we print would be shorter then the one we printed)
+    transcription = transcription.ljust(MAX_SENTENCE_CHARACTERS, " ")
+
+    transcription_postprocessing_end_time = time.time()
+
+    print(transcription, end='\r', flush=True)
+
+    audio_queue.task_done()
+    print(f"Transcription: {transcription}")
+    print(f"Transcription time: {transcription_end_time - transcription_start_time:.2f} seconds")
+    return transcription
+
+
+
 def record_audio_callback(indata, frames, time, status):
-    global recording, rec_stop_event
+    global recording, rec_stop_event, audio_queue
 #    print("Hello from callback")
     if status:
         print(status)
@@ -267,6 +332,7 @@ def record_audio_callback(indata, frames, time, status):
     if rec_stop_event.is_set():
         raise sd.CallbackStop # Stops the stream gracefully from within the callback
     recording.append(indata.copy())
+    audio_queue.put(indata.copy())
 
 def record_audio2(duration=30, fname="example.wav", stop_event=None, seq=[77, 81, 84, 89]):
     #no easy way to stop early with sounddevice, so just record fixed time for now.
@@ -282,7 +348,18 @@ def record_audio2(duration=30, fname="example.wav", stop_event=None, seq=[77, 81
     currentvolume = volume.GetMasterVolumeLevel()
     volume.SetMasterVolumeLevel(currentvolume-20, None) #reduce output volume to 20% for recording.
     total_duration = 0
-    with sd.InputStream(samplerate=samplerate, channels=1, callback=record_audio_callback):
+    """
+    consumer = threading.Thread(target=consumer_thread, args=())
+    consumer.start()
+
+    try:
+        consumer.join()
+    except Exception as e:
+        print(f"Error in consumer thread: {e}")
+
+    """
+
+    with sd.InputStream(samplerate=samplerate, channels=1, callback=record_audio_callback, blocksize=samplerate): #blocksize is how often the callback is called, set to 1 second of audio.
         # This loop runs as long as the stream is active
         while not stop_event.is_set():
 #            time.sleep(0.1)
@@ -307,6 +384,8 @@ def record_audio2(duration=30, fname="example.wav", stop_event=None, seq=[77, 81
 #    winsound.Beep(1000, 200) #beep to end
     synth.play_synth(seq) #C major chord to start
     return fname
+
+
 
 def get_duration(fname):
     samplerate, data = wav.read(fname)
@@ -345,6 +424,7 @@ def listen_audio(duration=30, fname="example.wav", seq=[77,81,84,89]): #default 
     recording = []
     rec_stop_event.clear()
     audio_thread = threading.Thread(target=record_audio2, args=(duration, f'{fname}', rec_stop_event, seq))
+#    audio_thread = threading.Thread(target=record_audio2, args=(duration, f'{fname}', rec_stop_event, seq, qr_queue))
     audio_stop_event = threading.Event()  # Event to signal stopping
 #    audio_thread = threading.Thread(target=record_audio, args=(duration, f'{fname}', audio_stop_event))
     audio_thread.start()
@@ -420,6 +500,18 @@ def init_asr_model():
     return asr_model
 
 
+# Whisper settings
+WHISPER_LANGUAGE = "en"
+WHISPER_THREADS = 4
+from faster_whisper import WhisperModel
+
+def init_whisper_model():
+    global whisper_model
+    if (whisper_model is not None):
+        return whisper_model
+    print(f"Loading Whisper model...")
+    whisper_model = WhisperModel("base", device="cpu", compute_type="int8", cpu_threads=WHISPER_THREADS)
+    return whisper_model
 
 
 def get_speech_(fname):
@@ -432,6 +524,35 @@ def get_speech_(fname):
     model,
     return_seconds=True,  # Return speech timestamps in seconds (default is samples)
     )
+
+
+def transcribe_audio_whisper(fname="example2.wav", start_times=[], end_times=[], use_timestamps=False):
+    global whisper_model, recording
+    global rec_stop_event, asr_model
+    print("Stopping any existing audio recording...")
+    logger.info("Stopping any existing audio recording...")
+    rec_stop_event.set() #stop any existing recording
+    time.sleep(0.3) #give time to stop
+
+    #sd.stop() #stop any existing playback/recording
+    print(f"Transcribing audio... {fname}")
+    logger.info(f"Transcribing audio... {fname}")
+
+    whisper_model = init_whisper_model()
+    if (os.path.exists(fname)):
+        segments, info = whisper_model.transcribe(fname, beam_size=5)
+    else:
+        recording = np.concatenate(recording, axis=0)
+        audio_data = np.frombuffer(recording, np.float32)
+        segments, info = whisper_model.transcribe(audio_data, language=WHISPER_LANGUAGE, beam_size=5, vad_filter=True, vad_parameters=dict(min_silence_duration_ms=1000))
+
+    print("Detected language '%s' with probability %f" % (info.language, info.language_probability))
+    full_transcript = ""
+    for segment in segments:
+        print("[%.2fs -> %.2fs] %s" % (segment.start, segment.end, segment.text))
+        full_transcript += segment.text + " (" + getTimeFromSecs(int(segment.start)) + ")\n"
+    return full_transcript.strip()
+
 
 
 def transcribe_audio(fname="example2.wav", start_times=[], end_times=[], use_timestamps=False):

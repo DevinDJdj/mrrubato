@@ -145,11 +145,11 @@ class _meta:
       "Help": {"help": "help", "params": "None", "desc": "Show video commands."},
       "Pause": {"help": "pause", "params": "None", "desc": "Pause video playback."},
       "List Topics": {"help": "list topics", "params": "None", "desc": "List available topics."},
-      "Select Topic": {"help": "select topic <index>", "params": "<index>", "desc": "Select topic by index from list."},
-      "Set Topic": {"help": "set topic <name>", "params": "<name>", "desc": "Set topic by name."},
-      "Set Speed": {"help": "set speed <value>", "params": "<value>", "desc": "Set playback speed, relative to current."}, 
-      "Time Jump": {"help": "time jump <time>", "params": "<time>", "desc": "Jump to specific time."},
-      "Time Zoom": {"help": "time zoom <level>", "params": "<level>", "desc": "Set zoom level of time."},
+      "Select Topic": {"help": "select topic [index]", "params": "[index]", "desc": "Select topic by index from list."},
+      "Set Topic": {"help": "set topic [topic]", "params": "[topic]", "desc": "Set topic by name."},
+      "Set Speed": {"help": "set speed [value]", "params": "[value]", "desc": "Set playback speed, relative to current."}, 
+      "Time Jump": {"help": "time jump [time]", "params": "[time]", "desc": "Jump to specific time."},
+      "Time Zoom": {"help": "time zoom [level]", "params": "[level]", "desc": "Set zoom level of time."},
       "Tick": {"help": "tick", "params": "None", "desc": "Manually tick forward in time by small increments."},
       "Tock": {"help": "tock", "params": "None", "desc": "Manually tick backward in time by small increments."},
                        
@@ -365,6 +365,8 @@ class _meta:
     self.func = "Select Topic"
     self.set_qr(self.func, {'context': ctxt.replace('\n', '<br>'), 'topic': self.selectedtopic})
 #    logger.info(ctxt.replace('\n', '<br>'))
+    self.transcriber.write_topic(self.selectedtopic, ctxt) #write topic context to transcriber for use in other languages.)
+    #keep track of topic history..
     self.speak(f'Selected topic {self.selectedtopic}')
     return 0
 

@@ -101,6 +101,12 @@ import pytesseract
 from multiprocessing.shared_memory import SharedMemory
 
 
+import networkx as nx
+import matplotlib 
+matplotlib.use('Qt5Agg')
+import matplotlib.pyplot as plt
+
+
 logger = logging.getLogger(__name__)
 global mywindow
 global active_window
@@ -246,7 +252,7 @@ def start_mouse_listener():
     global mouse_listener
     if mouse_listener is not None:
         mouse_listener.stop()
-    mouse_listener = mouse.Listener(on_click=on_click)
+    mouse_listener = mouse.Listener(on_click=mywindow.on_click)
     if not mouse_listener.running:
         logger.info('Starting mouse listener')
         mouse_listener.start()
@@ -1386,7 +1392,8 @@ def _hide(data):
     mk.set_bbox(mywindow._bbox)
 
     #get average color and screen
-    get_window_details()
+    #get_window_details()
+    mywindow.get_window_info()
 
 
 
@@ -1704,7 +1711,7 @@ class MyWindow(QMainWindow):
                     vars['OCRTEXT'] = ocrtext
                     vars['FNAME'] = fname
                     self.ocrtext = ocrtext
-                written = self.transcriber.write(vars.get('KLANG', 'video'), command, vars) #dont write intermediate msg?
+                written = self.transcriber.write(vars.get('KLANG', 'video'), command, vars, False) #dont write intermediate msg?
                 self.set_feedback(written, vars)
             case "Screenshot Feedback":
                 #right now we are just calling screenshot..
@@ -1713,7 +1720,7 @@ class MyWindow(QMainWindow):
                 vars['OCRTEXT'] = ocrtext
                 vars['FNAME'] = fname
                 self.ocrtext = ocrtext
-                written = self.transcriber.write(vars.get('KLANG', 'video'), command, vars)
+                written = self.transcriber.write(vars.get('KLANG', 'video'), command, vars, True) #write final message
                 self.set_feedback(written, vars)
             case "_Click Link":
                 self.show()
@@ -1752,6 +1759,7 @@ class MyWindow(QMainWindow):
                 self.add_setting('topic', topic, lang)
                 context = vars.get('context', '')
                 self.transcriber.current_topic = topic
+                self.transcriber.current_context = context
                 print(f"<<{lang}>>\n$$topic=" + str(topic))
                 print(f"<<{lang}>>\n$$context=" + str(context))
                 self.label_topic_info[0].setText(f'**{topic}')
@@ -1761,6 +1769,12 @@ class MyWindow(QMainWindow):
 
                 self.label_topic_info[0].update()
                 self.label_topic_info[1].update()
+                self.topichistory.insert(0, {'topic': topic, 'context': context, 'timestamp': time.time()}) #0 based index for most recent
+                self.update_topic_history()
+                #bring vscode to front if not there..
+                self.show_mrroboto()
+                #self.visualize_kg(self.transcriber.kg['**'], topic)
+
             case "Screenshot":
                 print("Taking Screenshot")
                 print(vars['BBOX'])
@@ -1777,7 +1791,25 @@ class MyWindow(QMainWindow):
             case "Screenshot_":
                 self.draw_screen_box(vars.get('BBOX', None))
 
+            case "Record Feedback_":
+                #process feedback command.  
+                logger.info(f'Processing record feedback command with vars: {vars}')
+                #update QR info.. should display already..
+
         #add more commands as needed.
+
+    def show_mrroboto(self):
+        """Bring MrRoboto to the front if not already."""
+        #get all windows, find mrroboto window and bring to front.  
+        for pid, w in self.windows.items():
+            logger.debug(f'Checking window for MrRoboto: {w["title"]}')
+
+            if ('mrroboto' in w['title'].lower()):
+                logger.info(f'Bringing MrRoboto to front: {w["title"]}')
+                #this should already have the topic selected and also run a chat.. show any changes..
+                win32gui.SetForegroundWindow(w['hwnd'])
+                break
+
     def parseQRData(self, qrdata):
         """Parse the QR data and extract relevant information."""
         # For simplicity, just return the data as is.
@@ -2046,12 +2078,21 @@ class MyWindow(QMainWindow):
         self.windowlabels = {} #list of window details by pid
         self.windowcounter = 0
         self.screenshots = [] #list of screenshots per monitor
+        self.topichistory = []
+        self.filters = {}
+        self.windows = {} #current windows by pid, updated by window thread.
+        self.myactions = [] #list of current actions to display, updated by QR commands.
+        self.trey_data = {} #current data to display, updated by QR commands and transcription.
+
         #rerunning with this may require separate queue, or indicator for rerun in the data.  For now same..
         self.transcriber = transcriber.transcriber(self, mykeys.MyKeys(config.cfg), self.queue) #maybe want different queue..
+        #need to load book to have same topics as _meta.. ugh..
+        book = self.transcriber.read('book', self.transcriber.getTime(-180), None, './book/')
 
         #for now just fixed 30 days max info.  
         self.tmap = [] #current transcripts in time window, sorted by time.  
         self.aggmap = [] #aggregated info for current time window, updated as new transcripts come in.
+
         self.s = 0 #current start time of window
         self.e = 0 #current end time of window
         self.currentsound = None #current sound being played.
@@ -2119,6 +2160,7 @@ class MyWindow(QMainWindow):
 
         #left mid
         #BBOX(0,0.2,0.2,0.7)
+
         self.label_filter_info = []
         for i in range(25): #info 0-3, and addl potential filter/param labels
             self.label_filter_info.append(QLabel("transparent ", self))
@@ -2162,7 +2204,7 @@ class MyWindow(QMainWindow):
             if (wbarray[i%len(wbarray)] == 0):
                 self.label_ps[i].setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};border: 1px solid black;")
             else:
-                self.label_ps[i].setStyleSheet(f"background-color: rgba(0, 0, 0, 1);color: {color};border: 1px solid black;")
+                self.label_ps[i].setStyleSheet(f"background-color: rgba(127, 127, 127, 1);color: {color};border: 1px solid black;")
             font = QFont("Courier", fontsize-wbarray[i%len(wbarray)]*2) # Specify font family and size
             self.label_ps[i].setFont(font)
 #            self.label_ps[i].setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};")
@@ -2265,6 +2307,208 @@ class MyWindow(QMainWindow):
 
         #start internal thread to check the queue for updates.  
         #and update the window when there is new data.  
+
+
+    def on_click(self, x, y, button, pressed):
+
+        if pressed:
+            temp = win32gui.WindowFromPoint((x, y))
+            if (self.in_trey((x,y))): #only capture second monitor clicks
+                action = {'button': str(button), 'x': x, 'y': y, 'hwnd': temp, 'act': 'click'}
+        #        action = f'Mouse clicked at ({x}, {y}) with {button}'
+                self.update_actions(temp, action)
+
+    def update_actions(self, hwnd, action):
+
+        """Update the actions for the given window handle."""
+        threadid, procid = win32process.GetWindowThreadProcessId(hwnd)
+        action['threadid'] = threadid
+        action['procid'] = procid
+        if (hwnd in self.windows):
+            if 'actions' not in self.windows[hwnd]:
+                self.windows[hwnd]['actions'] = []
+            self.windows[hwnd]['actions'].append(action)
+            if (len(self.windows[hwnd]['actions']) > 100):
+                logger.debug(f'Removing oldest action from {hwnd} actions list')
+                self.windows[hwnd]['actions'].pop(0)
+
+        logger.info(f'{action}')
+        self.myactions.append(action)  # Append to global actions list
+        #remove if too many actions
+        if len(self.myactions) > 100:
+            logger.debug('Removing oldest action from global actions list')
+            self.myactions.pop(0)
+
+
+    def update_window_data(self, hwnd, title, rect, initobj=None):
+
+        if (hwnd not in self.windows):
+            self.windows[hwnd] = {}
+            if (initobj is not None):
+                self.windows[hwnd] = initobj
+
+        self.windows[hwnd]['title'] = title
+        self.windows[hwnd]['rect'] = rect
+        self.windows[hwnd]['hwnd'] = hwnd
+        logger.info(f'{title} at {rect}')
+
+
+    def window_list_callback(self, hwnd, extra):
+        if win32gui.GetWindowText(hwnd) != "":
+            # Get window title
+            title = win32gui.GetWindowText(hwnd)
+            # Get window position and size (left, top, right, bottom)
+            rect = win32gui.GetWindowRect(hwnd)
+            if (title.startswith("Trey - ")):
+                #get the rect we need to be aware of.  
+                #expand rect some windows have odd borders.  
+                logger.info(f"Found Trey window: {title} at {rect}")
+                x, y, right, bottom = rect
+                x -= 8  # Adjust for window borders
+                y -= 8
+                right += 8
+                bottom += 8
+                rect = (x, y, right, bottom)
+                self.trey_data['rect'] = rect
+                self.trey_data['hwnd'] = hwnd
+                self.trey_data['title'] = title
+
+            trect = (0,0,0,0)
+            if ('rect' in self.trey_data):
+                trect = self.trey_data['rect']
+    #            trect[0] += 50 #some margin for overlapping windows.  
+
+            # Check if the window is fully within the trey window
+            if (self.in_trey(rect) and win32gui.IsWindowVisible(hwnd)): #only monitor visible windows..
+                threadid, procid = win32process.GetWindowThreadProcessId(hwnd)
+                self.update_window_data(hwnd, title, rect, {'threadid': threadid, 'procid': procid, 'hwnd': hwnd})
+                x, y, right, bottom = rect
+                width = right - x
+                height = bottom - y
+                action = {'title': title, 'rect': rect, 'hwnd': hwnd, 'procid': procid, 'threadid': threadid, 'act': 'init'}
+                self.update_actions(hwnd, action)
+
+        return True # Continue enumeration    
+
+    def in_trey(self, rect):
+        """Check if the rectangle is within the trey window."""
+        if ('rect' in self.trey_data):
+            trect = self.trey_data['rect']
+#            logger.debug(f"Checking if {rect} is in {self.trey_data['rect']}")
+    #        print(f"Checking if {rect} is in {self.trey_data['rect']}")
+            if (len(rect) == 4 and len(trect) == 4):
+                return (rect[0] >= trect[0] and rect[1] >= trect[1] and rect[2] <= trect[2] and rect[3] <= trect[3])
+            elif (len(rect) == 2 and len(trect) == 4): #allow for point check
+                return (rect[0] >= trect[0] and rect[1] >= trect[1] and rect[0] <= trect[2] and rect[1] <= trect[3])
+        return False
+
+
+    def get_top_z(self): #this also initializes z_index for self.windows
+        hwnd = win32gui.GetTopWindow(0)
+        z_index = 0
+        topz = None
+        logger.debug("Starting z-index enumeration of windows in trey area")
+        while hwnd:
+            threadid, procid = win32process.GetWindowThreadProcessId(hwnd)
+            rect = win32gui.GetWindowRect(hwnd)
+            if (self.in_trey(rect)):
+                if (topz is None and hwnd in self.windows and win32gui.IsWindowVisible(hwnd)):
+                    topz = hwnd
+                if (hwnd in self.windows):
+                    logger.debug(f"Found window in trey at z index {z_index}: {self.windows[hwnd]['title']} with rect {rect}")
+                    self.windows[hwnd]['z_index'] = z_index
+            hwnd = win32gui.GetWindow(hwnd, win32con.GW_HWNDNEXT)
+            z_index += 1   
+        logger.debug(f"Got top z window: {topz} at index {self.windows[topz]['z_index']}")     
+        return topz
+    
+    def get_window_info(self):
+        if ('rect' not in self.trey_data):
+            win32gui.EnumWindows(self.window_list_callback, None)    
+
+        win32gui.EnumWindows(self.window_list_callback, None)    
+
+        self.active_window = self.get_top_z() #get top z window in trey area, not necessarily active window.
+
+        self.updateLabels(self.windows) #gives info for all windows
+
+    def visualize_kg(self, kg, topic="ALL"):
+        #dpi 96 assume..
+        #why we cant pass in pixels?  
+        width_inches = self.geo.width() / 96
+        height_inches = self.geo.height() / 96
+
+        if (topic == "ALL" or topic not in kg):
+            fname = "kg_rand.png"
+            logger.info(f'Topic {topic} not found in KG, visualizing entire graph with {len(kg.nodes())} nodes and {len(kg.edges())} edges')
+            subgraph = nx.ego_graph(kg, list(kg.nodes())[random.randint(0, len(kg.nodes())-1)], radius=1) #get subgraph around first node with radius 1, can adjust as needed.
+        else:
+            fname = f"./temp/{topic}.png"
+            subgraph = nx.ego_graph(kg,topic, radius=1) #get subgraph around topic with radius 2, can adjust as needed.
+
+        if (os.path.exists(fname) and os.path.getmtime(fname) > time.time() - 86400): #if file exists and is less than 1 day old, use it instead of regenerating
+            self.play_video(fname) #for now just use video player to show image, can adjust later for better performance if needed.
+            return
+        else:
+            directory_path = os.path.dirname(fname)
+            if not os.path.exists(directory_path):
+                os.makedirs(directory_path)
+
+        logger.info(f'Visualizing knowledge graph for topic: {topic} with {len(subgraph.nodes())} nodes and {len(subgraph.edges())} edges')
+
+#        print(subgraph)
+        plt.rc('text', usetex=False) # Ensure global setting is False
+        fig, ax = plt.subplots(figsize=(width_inches, height_inches), dpi=96)
+#        nx.draw(subgraph, with_labels=True)
+        nx.draw(subgraph, with_labels=True, node_color='skyblue', node_size=500, edge_color='gray', font_size=10)
+
+#        graph_text = nx.write_network_text(subgraph, sources=[topic])
+#        ax.text(0.5, 0.01, graph_text, transform=ax.transAxes, fontsize=8, verticalalignment='bottom', horizontalalignment='center', wrap=True)
+        # 3. Save the figure to a file
+        plt.savefig(fname, format="png")
+#        print(f"Graph saved as {fname}")
+        #show png result as overlay..
+        self.play_video(fname) #for now just use video player to show image, can adjust later for better performance if needed.
+
+
+
+
+    #not used..
+    import pyqtgraph as pg
+    def visualize_networkx_pyqtgraph(self, graph):
+        # 1. Calculate node positions using a NetworkX layout algorithm
+        # fruchterman_reingold_layout is a common "spring layout"
+        pos = nx.fruchterman_reingold_layout(graph)
+
+        # 2. Format positions for PyQtGraph: an Nx2 numpy array of (x, y)
+        # The order of positions must match the order of nodes in the graph
+        nodes_list = list(graph.nodes())
+        positions = np.array([pos[node] for node in nodes_list])
+
+        # 3. Format edges for PyQtGraph: an Mx2 numpy array of (node_index_1, node_index_2)
+        # PyQtGraph requires zero-based indices corresponding to the position array
+        node_to_index = {node: i for i, node in enumerate(nodes_list)}
+        edges = np.array([(node_to_index[u], node_to_index[v]) for u, v in graph.edges()])
+
+        mw = self.video_overlay
+        view = pg.GraphicsLayoutWidget()
+        mw.setCentralWidget(view)
+        p = view.addPlot(title="Graph Visualization")
+
+        # Create the GraphItem
+        graph_item = pg.GraphItem(nodeSymbols='o', symbolSize=10, pxMode=False)
+        p.addItem(graph_item)
+
+        # Set the graph data
+        graph_item.setData(pos=positions, edges=edges,
+                        # Optional: set colors or other properties
+                        edgePen=pg.mkPen(color=(200, 200, 200), width=1),
+                        symbolBrush=(50, 50, 150, 200))
+
+        # Optional: adjust view to fit the graph
+        p.autoRange()
+
+        mw.show()
 
     def init_label(self, label, x, y, w, h, color='red'):
         label.setTextFormat(QtCore.Qt.RichText)
@@ -2648,6 +2892,33 @@ class MyWindow(QMainWindow):
             self.video_player.setPlaybackRate(speed)
             self.label_timeinfo[3].setText(f'$$VS={speed}')
 
+    def update_topic_history(self):
+        #update topic history with current topic from transcriber, and show in filter info area.  
+        self.show_filter_info()
+
+    def short_display(self, text, maxlen=28):
+        if (len(text) > maxlen):
+            return text[0:int(maxlen/2)] + ".." + text[-int(maxlen/2):]
+        else:
+            return text
+        
+    def show_filter_info(self):
+        idx = 0
+        for k, v in self.filters.items():
+            self.label_filter_info[idx].setText(f'$${k}={v}')
+            self.label_filter_info[idx].update()
+            idx += 1    
+        if (idx < len(self.label_filter_info)):
+            self.label_filter_info[idx].setText(f'$$') #clear next line for new filter info
+            self.label_filter_info[idx].update()
+            idx += 1
+        for i in range(idx, len(self.label_filter_info)):
+             t = self.short_display(self.topichistory[i-idx]['topic']) if i-idx < len(self.topichistory) else ""
+             self.label_filter_info[i].setText(f'{i-idx}=**{t}') #clear remaining filter info
+             self.label_filter_info[i].update()
+
+
+
     def show_p(self, struct=[]):
       """Method to show a QR code."""
       #{'type': type, 'lang': lang, 'cmd': currentcmd, 'vars': vars, 'timestamp': time.time()}
@@ -2676,10 +2947,10 @@ class MyWindow(QMainWindow):
 #                    for j in range(int(n)%12):
 #                        fulltext += " "
                     color = self.getColorFromSequence(int(n))
-                    self.label_ps[int(n)%len(self.label_ps)].setText(f'{n}={v}')
+                    self.label_ps[int(n)%len(self.label_ps)].setText(self.short_display(f'{n}={v}'))
 
                 else:
-                    fulltext += f" {n} = {v}"
+                    fulltext += self.short_display(f" {n} = {v}")
                     fulltext += "\n"
 
                 cnt += 1
@@ -2725,12 +2996,12 @@ class MyWindow(QMainWindow):
 
         logger.info('QR code displayed')
 
-    def findLabel(self, pid):
-        if (pid in self.windowlabels):
-            return self.windowlabels[pid]
+    def findLabel(self, hwnd):
+        if (hwnd in self.windowlabels):
+            return self.windowlabels[hwnd]
         elif (self.windowcounter < 100):
             label = self.windowlabels[str(self.windowcounter)]
-            self.windowlabels[pid] = label
+            self.windowlabels[hwnd] = label
             self.windowcounter += 1
             return label
         
@@ -2748,16 +3019,38 @@ class MyWindow(QMainWindow):
                 label.update()
                 y += label.height() + 10
 
+    def get_text_color(self, rect, screenshot):
+        """Get the color of the text at the given coordinates."""
+        total_luminance = 0
+        pixel_count = 1    
+        img = screenshot.toImage()
+        for x in range(rect[0], rect[2]):
+            for y in range(rect[1], rect[3]):
+                color = img.pixelColor(x, y)
+                r, g, b, _ = color.getRgb()
+                luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255.0
+                total_luminance += luminance
+                pixel_count += 1  
+
+        average_luminance = total_luminance / pixel_count
+
+        # Choose text color based on average luminance
+        if average_luminance < 0.5:  # Threshold can be adjusted
+            return "white"
+        else:
+            return "black"
+
     def updateLabels(self, allwindows):
-        for pid, w in allwindows.items():
-            label = self.findLabel(pid)
+        print(f"Updating labels for windows: {len(allwindows)}")
+        for hwnd, w in allwindows.items():
+            label = self.findLabel(hwnd)
             #title, rect, other
             if (label is not None):
-                label.setText(f'PID: {pid}\nTitle: {w["title"]}\nRect: {w["rect"]}\n')
+                label.setText(f'HWND: {hwnd}\nTitle: {w["title"]}\nRect: {w["rect"]}\n')
                 textcolor = "black"
                 if (len(self.screenshots) > 0):
                     #get average color of window area
-                    textcolor = get_text_color(w['rect'], self.screenshots[-1])
+                    textcolor = self.get_text_color(w['rect'], self.screenshots[-1])
                     if (textcolor == "white"):
                         label.setStyleSheet("background-color: rgba(0, 0, 0, 0.7);color: white;")
                     else:

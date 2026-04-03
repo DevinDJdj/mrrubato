@@ -362,10 +362,13 @@ export function startWatchingTranscriber(lang: string, transcriptFolder: string 
             stream.on('end', () => {
                 console.log('Finished reading stream.');
                 let topics = transcriber.transcribe(incomingData, Book.selectedtopic); //use selected topic to start..
+                console.log("Transcribed topics:", topics);
                 if (topics.length > 0){
                     //read commands and do something..
                     let topic = topics[topics.length-1].topic;
                     //open topic if not already open..
+                    console.log("Current topic:", Book.selectedtopic);
+                    console.log("Adding to history and selecting topic ", topic);
                     if (topic !== Book.selectedtopic){
                         Book.addToHistory(topic);
                         Book.select(topic);

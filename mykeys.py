@@ -381,6 +381,20 @@ class MyKeys:
     words = self.get_words_(self.sequence[self.startseqno:])
     #potentially get most likely words here only.  Eventually..
     qr += f"$$SEQLEN={self.currentseqno - self.startseqno} \n"
+    if (self.currentseqno - self.startseqno == 0):
+
+      qr += f"&&{self.currentcmd} \n"
+      help = ""
+      if (self.currentlangna in self.languages and hasattr(self.languages[self.currentlangna], 'helpdict') and self.currentcmd in self.languages[self.currentlangna].helpdict):
+        if ('help' in (self.languages[self.currentlangna].helpdict[self.currentcmd])):
+          help += f"&&{self.languages[self.currentlangna].helpdict[self.currentcmd]['help']} \n"        
+        else:
+          help += f"&&{self.languages[self.currentlangna].helpdict[self.currentcmd]}\n"
+        if ('params' in (self.languages[self.currentlangna].helpdict[self.currentcmd])):
+          help += f"&&{self.languages[self.currentlangna].helpdict[self.currentcmd]['params']} \n"
+      qr += f"{help} \n"      
+      #get params here..
+
     for i, w in enumerate(words):      
       keys = self.convert_keys(w['keys'])
       qr += f"~~{i} | {w['word']} | {keys} \n" #br working for line breaks..
@@ -508,6 +522,7 @@ class MyKeys:
       self.currentlang = self.words[-1]['lang'] if len(self.words) > 0 else ""
       self.currentcmd = self.words[-1]['word'] if len(self.words) > 0 else None
       self.currentseqno = len(self.sequence)
+      self.startseqno = self.currentseqno
 
       if (hasattr(self.languages[l], 'transcript') and self.languages[l].transcript != ""):
         self.transcript += self.languages[l].transcript + " "

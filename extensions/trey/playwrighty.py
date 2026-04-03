@@ -225,6 +225,7 @@ def click_link(cacheno, text_offset, link_offset=0, open_new_tab=False):
 
 def get_bookmark(url, cacheno=-1):
     global bookmarks
+    logger.info(f"Getting Bookmark for {url}")
     found_item = next(filter(lambda item: item.get("url") == url, bookmarks), None)
     if (found_item is not None):
         return found_item['total_read'][0]
@@ -414,7 +415,7 @@ def go_back(num=1, cacheno=-1):
     #        await browser.close()
         cacheno = cache_page(page.url, page, body_text, link_data, cacheno)
         current_cache = cacheno
-        if (page.url not in page_cache[cacheno]['current_offset']):
+        if (page.url not in page_cache[cacheno]['current_offset']): #really shouldnt happen?  
             page_cache[cacheno]['current_offset'][page.url] = 0
 
 
@@ -777,7 +778,7 @@ def update_page_offset(cacheno=-1):
 
 def cache_page(url, page, body_text, link_data, cacheno=-1):
     if cacheno >= 0 and cacheno < len(page_cache):
-        page_cache[cacheno] = {'timestamp': time.time(), 'url': url, 'page': page, 'current_offset': {url: 0}, 'body': body_text, 'links': link_data, 'title' : page.title(), 'reader_queue': page_cache[cacheno].get('reader_queue', None), 'sim_queue': page_cache[cacheno].get('sim_queue', None), 'reader_stop_event': page_cache[cacheno].get('reader_stop_event', None)}            
+        page_cache[cacheno] = {'timestamp': time.time(), 'url': url, 'page': page, 'current_offset': page_cache[cacheno].get('current_offset', {url: 0}), 'body': body_text, 'links': link_data, 'title' : page.title(), 'reader_queue': page_cache[cacheno].get('reader_queue', None), 'sim_queue': page_cache[cacheno].get('sim_queue', None), 'reader_stop_event': page_cache[cacheno].get('reader_stop_event', None)}            
     else:
         page_cache.append({'timestamp': time.time(), 'url': url, 'page': page, 'current_offset': {url: 0}, 'body': body_text, 'links': link_data, 'title' : page.title(), 'reader_queue': None, 'sim_queue': None, 'reader_stop_event': None})
         cacheno = len(page_cache) - 1
@@ -896,14 +897,16 @@ def read_page(url, cacheno=-1):
     cacheno = cache_page(url, page, body_text, link_data, cacheno)
     current_cache = cacheno
     
-    page_cache[cacheno]['current_offset'] = prev_offsets
+#    page_cache[cacheno]['current_offset'] = prev_offsets
     page_cache[cacheno]['length'] = len(body_text)
     page_cache[cacheno]['alt_text'] = alt_text_data
     page_cache[cacheno]['orig_url'] = orig_url
 
-    if (page.url not in page_cache[cacheno]['current_offset']):
+    if (page.url not in page_cache[cacheno]['current_offset'] or page_cache[cacheno]['current_offset'][page.url] == 0):
         #get previous bookmark offset.
         page_cache[cacheno]['current_offset'][page.url] = get_bookmark(page.url)
+        logging.info(f"Got Bookmark {page_cache[cacheno]['current_offset'][page.url]}")
+
 
     page_cache[cacheno]['page'].bring_to_front()
     logging.info(f'Cached page {cacheno} for URL: {url}')
