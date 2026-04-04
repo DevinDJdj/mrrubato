@@ -739,8 +739,9 @@ if __name__ == '__main__':
 #                        transcript = requests.get(url, timeout=(30, None)).text
                         #set OUTPUT_DIR
                         #just call server/transcription/transcribe.py --transcribe_fromyoutube
-                        from extensions.trey.speech import transcribe_audio, listen_audio
-                        transcript = transcribe_audio(mediafile, util.st, util.et, True)
+                        from extensions.trey.speech import transcribe_audio, listen_audio, transcribe_audio_whisper
+#                        transcript = transcribe_audio(mediafile, util.st, util.et, True)
+                        transcript = transcribe_audio_whisper(mediafile, util.st, util.et, True)
                         servererrorcnt += 1 #testing..
 
                         """

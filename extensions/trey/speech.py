@@ -1,4 +1,18 @@
 import time
+#pip install -q kokoro>=0.9.4 soundfile
+#> espeak-ng.msi
+#> pip install git+https://github.com/cheuerde/kokoro-tts-cli.git
+#$$KOKORO_PATH=C:\devinpiano\music\models
+
+import shutil
+
+from kokoro import KPipeline
+import soundfile as sf
+import pygame
+import os
+import threading
+from playsound3 import playsound
+
 from speechbrain.inference import EncoderDecoderASR
 from speechbrain.inference.TTS import FastSpeech2
 import speechbrain as sb
@@ -12,6 +26,7 @@ import os
 import threading
 import queue
 import winsound
+import subprocess
 
 import extensions.trey.synth as synth
 
@@ -22,7 +37,7 @@ logger = logging.getLogger(__name__)
 
 asr_model = None
 whisper_model = None
-
+kokoro_pipeline = None
 
 # 3. Define text pipeline:
 @sb.utils.data_pipeline.takes("words")
@@ -534,11 +549,52 @@ def transcribe_audio_whisper(fname="example2.wav", start_times=[], end_times=[],
     rec_stop_event.set() #stop any existing recording
     time.sleep(0.3) #give time to stop
 
+    whisper_model = init_whisper_model()
     #sd.stop() #stop any existing playback/recording
     print(f"Transcribing audio... {fname}")
     logger.info(f"Transcribing audio... {fname}")
 
-    whisper_model = init_whisper_model()
+    if (fname.startswith('http://') or fname.startswith('https://')):
+        #download first
+        fname = download_file(fname)
+
+
+
+#    asr_model = EncoderDecoderASR.from_hparams(source="speechbrain/asr-conformer-transformerlm-librispeech", savedir="./models/pretrained_models/asr-transformer-transformerlm-librispeech")
+    if (fname.endswith('.mp4')):
+        #convert to wav first
+        fname = convert_mp4_to_wav(fname)
+
+    full_transcript = ""
+    if (use_timestamps):
+        if (len(start_times) > 0 and len(end_times) > 0 and len(start_times) == len(end_times)):
+            print(f"Starting Transcription.. {len(start_times)} segments found.")
+            for i in range(len(start_times)):
+                segment_fname = f'segment_{i}.wav'
+                #extract segment
+                samplerate, data = wav.read(fname)
+                st = 0
+                if (i > 0):
+                    st = end_times[i-1]
+                et = start_times[i]
+                if (et <= st+4 or et > st+300): #min 5 sec segments, max 5 min segments
+                    print(f"Skipping invalid segment {st} to {et}")
+                    continue
+
+
+#                speech_stamps = get_speech_(segment_fname)
+#                print(f"Segment {i}: {st} to {et}, speech timestamps: {speech_stamps}")
+                start_sample = int((st) * samplerate)
+                end_sample = int((et) * samplerate)
+                segment_data = data[start_sample:end_sample]
+                wav.write(segment_fname, samplerate, segment_data)
+                result  = whisper_model.transcribe_file(segment_fname)
+                    # Process the words_with_timestamps list
+                    #for now just use segment time..
+                if (len(result) > 8): #sometimes get garbage like "mm" or "dont" during silence..
+                    full_transcript += result + " (" + getTimeFromSecs(st) + ")\n"
+        return full_transcript.strip()         
+
     if (os.path.exists(fname)):
         segments, info = whisper_model.transcribe(fname, beam_size=5)
     else:
@@ -547,7 +603,6 @@ def transcribe_audio_whisper(fname="example2.wav", start_times=[], end_times=[],
         segments, info = whisper_model.transcribe(audio_data, language=WHISPER_LANGUAGE, beam_size=5, vad_filter=True, vad_parameters=dict(min_silence_duration_ms=1000))
 
     print("Detected language '%s' with probability %f" % (info.language, info.language_probability))
-    full_transcript = ""
     for segment in segments:
         print("[%.2fs -> %.2fs] %s" % (segment.start, segment.end, segment.text))
         full_transcript += segment.text + " (" + getTimeFromSecs(int(segment.start)) + ")\n"
@@ -617,6 +672,80 @@ def transcribe_audio(fname="example2.wav", start_times=[], end_times=[], use_tim
         print(result)
         return result
 
+
+def set_volume(fname="example_tts.wav", volume=1.0):
+    # Load the audio file
+    samplerate, data = wav.read(fname)
+
+    # Adjust the volume
+    adjusted_data = (data * volume).astype(np.int16)
+
+    # Save the adjusted audio back to a file
+    wav.write(fname, samplerate, adjusted_data)
+    return fname
+
+def speak_cmd(text="", fname="example_tts.wav", voice='af_heart', vol=1.0, speed=1.0, skip=0, engine='kokoro-tts'):
+#    thread1 = threading.Thread(target=speak, args=(f'{text}',f'{fname}',f'{voice}',vol,speed,'kokoro-tts'))
+#    thread1.start()
+    #why we have to do this.. if we call directly it is far too slow..
+    infile = ""
+    if (fname == ""):
+        #special case for generating all
+        infile = f"./temp/tts_{int(time.time())}.txt"
+        with open(infile, "w", encoding="utf-8") as f:
+            f.write(text)
+        cmd = f'python ./generate/generatetts.py --infile "{infile}" --fname "{fname}" --voice "{voice}" --vol {vol} --speed {speed} --skip {skip} --engine {engine}'
+        subprocess.Popen(
+            cmd,
+            shell=True
+        )
+        suc = ""
+                
+        #suc = os.system(cmd)
+    else:
+        suc = os.system(f'python ./generate/generatetts.py --text "{text}" --fname "{fname}" --voice "{voice}" --vol {vol} --speed {speed} --skip {skip} --engine {engine}')
+#    thread1.join() #wait for completion..
+    if (suc == 0):
+        return fname
+    else:
+        return ""
+#    return speak(text, fname, voice, vol, speed)
+
+
+def get_kokoro_pipeline():
+    global kokoro_pipeline
+    if (kokoro_pipeline is not None):
+        return kokoro_pipeline
+    print(f"Loading Kokoro pipeline...")
+    num_devices = torch.cuda.device_count()
+    device_names = [torch.cuda.get_device_name(i) for i in range(num_devices)]
+    print(f"Available CUDA devices: {device_names}")
+
+    kokoro_pipeline = KPipeline(lang_code='a',device='cuda:0') 
+    print(f"Kokoro pipeline loaded.")
+    return kokoro_pipeline
+
+def speak(text="", fname="example_tts.wav", voice='af_heart', vol=1.0, speed=1.0, engine='kokoro-tts'):
+    # Initialize pipeline (lang_code 'a' for American English)
+    try:
+        pipeline = get_kokoro_pipeline()
+        if (text == ""):
+            text = "Kokoro is a lightweight and natural text-to-speech model."
+
+
+        # Generate and save audio
+        generator = pipeline(text, voice=voice, speed=speed)
+        with sf.SoundFile(fname, mode='w', samplerate=24000, channels=1) as f:
+            for i, (gs, ps, audio) in enumerate(generator):
+    #            sf.write(f'kokoro_{i}.wav', audio, 24000)    
+                f.seek(0, sf.SEEK_END)  # Move to the end of the file for appending
+                adjusted_data = (audio * vol)
+                f.write(adjusted_data)  # Append the adjusted audio data to the file
+        print(f"Audio saved to '{fname}'")
+        return fname #return first segment for now
+    except Exception as e:
+        print(f"Error in speak function: {e}")
+        return ""
 
 def generate_audio(text, fname="example_tts.wav", fast=True):
 

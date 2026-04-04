@@ -18,6 +18,15 @@ from huggingface_hub import login
 import psutil
 import math
 
+#Local imports
+sys.path.insert(0, 'c:/devinpiano/') #config.json path
+sys.path.insert(1, 'c:/devinpiano/music/') #config.py path Base project path
+import config 
+import mykeys
+
+import tts
+import extensions.trey.speech  as speech #import early due to issues with Kokoro
+
 from datetime import datetime, timedelta
 
 from queue import Queue
@@ -35,7 +44,7 @@ import mido
 import random
 
 
-from sklearn import metrics
+#from sklearn import metrics
 import torch
 
 #UI components
@@ -58,13 +67,6 @@ import win32con
 import winsound
 
 
-#Local imports
-sys.path.insert(0, 'c:/devinpiano/') #config.json path
-sys.path.insert(1, 'c:/devinpiano/music/') #config.py path Base project path
-import config 
-import mykeys
-
-import tts
 #from kokoro import KPipeline
 #from IPython.display import display, Audio
 #import soundfile as sf
@@ -77,10 +79,11 @@ from pydub.playback import play
 #import simpleaudio as sa
 import pygame
 from pygame.locals import *
-import edge_tts
+#import edge_tts
 
 import extensions.trey.qdrantz as qdrantz
 import news as news #get news articles
+
 
 from fastembed import (
                 SparseTextEmbedding,
@@ -628,6 +631,9 @@ def get_voices(lang='en'):
     #call edge tts to get voices for language
     #cache results only call once.  
     voices = []
+    #Kokoro voices..
+    voices = ['af_heart', 'af_bella', 'af_nicole', 'af_aoede']
+    """
     if (len(all_voices) > 0):
         for v in all_voices:
             if (('Locale' in v and v['Locale'].startswith(lang)) or ('ShortName' in v and v['ShortName'].startswith(lang))):
@@ -661,6 +667,8 @@ def get_voices(lang='en'):
         except Exception as e:
             # Skip lines that don't match the expected format
             continue
+    """
+
     return voices
 
 
@@ -675,7 +683,15 @@ def stopsound(currentsound):
         currentsound.stop()
 
 
+def generate_tts(text, voice, vol=1.0, rate=1.0, skip=0):
+    suc = speech.speak_cmd(text, "", voice, vol, rate, skip, 'kokoro-tts')
+
+
 def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=None, q=None, q2=None, q3=None, lang='en'):
+
+    #give high priority?  
+    p = psutil.Process(os.getpid())
+    p.nice(psutil.HIGH_PRIORITY_CLASS)
 
     skipmenu = True
     currentsound = None
@@ -694,8 +710,8 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
     rnd = int(time.time()) % len(VOICES)
     VOICE = VOICES[rnd]
     LINKVOICE = VOICES[(rnd+1) % len(VOICES)]
-
-    SIMVOICE = ["en-US-CoraNeural", "en-US-ElizabethNeural"]
+    rnd = int(time.time() * 1.3) % len(VOICES)
+    SIMVOICE = VOICES[rnd]
     #en-US-AshleyNeural 
     #en-US-AvaNeural   
     #en-US-BrandonNeural 
@@ -760,6 +776,10 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
     #init_qdrantz(link_density_map, topic="websearch")
     print('Start Reading:')
 
+    #generate tts for all lines first to minimize wait time when playing.  This is a bit aggressive but should work for now.
+    generate_tts(text, VOICE, vol=1.0, rate=1.0,skip=skip) #pre-generate
+
+    print('Finished generating TTS for all lines, starting playback')
     idx = -1
 
     intro_played = 0
@@ -800,11 +820,16 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
 
             l = text
             print(f'{l}')
-            sound_file = f"./temp/overview.mp3"
+            sound_file = f"./temp/overview.wav"
             lesc = lines[0] if (len(lines[0]) < 200) else lines[0][:200]
-            print(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --text \"{lesc}\" --rate=\"-10%\" > NUL 2>&1")
-            suc = os.system(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --text \"{lesc}\" --rate=\"-10%\" > NUL 2>&1")
-            if (suc != 0):
+            #print(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --text \"{lesc}\" --rate=\"-10%\" > NUL 2>&1")
+            #suc = os.system(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --text \"{lesc}\" --rate=\"-10%\" > NUL 2>&1")
+#            suc = speech.speak(l, sound_file, VOICE)
+            suc = ""
+            if (torch.cuda.is_available() and False): #otherwise too slow..
+                suc = speech.speak_cmd(lesc, sound_file, VOICE)
+
+            if (suc == ""):
                 print(f'Error generating audio fallback to tts.speak')
                 tts.speak(lesc, VOICE, sound_file)
 #            playsoundprocess = multiprocessing.Process(target=play_sound_process, args=(sound_file,))
@@ -895,25 +920,31 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
                 #play the line type info first
                 play_l(link_density_map[idx], idx/len(lines))
                 vol = 0.7
-                rate = 150
+                rate = 1.2
                 if (idx < 2): #adjust for informational lines..
                     vol = 1.0
-                    rate = 120
+                    rate = 1.0
 
                 if (os.path.exists(sound_file)):
                     print(f'Playing pre-generated audio: {sound_file}')
                     currentsound = playsound(sound_file, block=False) # Ensure this thread blocks for its sound
                 else:
                     print(f'Generating and playing audio: {l}')
-                    sound_file = f"./temp/{idx}.mp3"
+                    sound_file = f"./temp/{idx}.wav"
                     subtitle_file = f"./temp/{idx}.srt"
                     lesc = l.replace('"', '\\"')
 
 #                    suc = os.system(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --text \"{lesc}\" --write-subtitles \"{subtitle_file} --rate=\"-10%\" > NUL 2>&1")
-                    suc = os.system(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --text \"{lesc}\" --rate=\"-10%\" > NUL 2>&1")
-                    if (suc != 0):
+#                    suc = speech.speak(l, sound_file, VOICE, vol, rate)
+                    suc = ""
+                    if (torch.cuda.is_available() and False): #otherwise too slow..
+                        #suc = speech.speak_cmd(lesc, sound_file, VOICE, vol, rate)
+                        print("speaking with kokoro tts...")
+                        suc = speech.speak(lesc, sound_file, VOICE, vol, rate)
+                        print("speak command returned: " + str(suc))
+                    if (suc == ""):
                         print(f'Error generating audio fallback to tts.speak')
-                        tts.speak(lesc, VOICE, sound_file, vol, rate)
+                        tts.speak(lesc, VOICE, sound_file, vol, rate*120)
 
 #                    sound_file = f"./temp/{idx}.wav"
                     #fast not working.. edge-tts much better quality than speechbrain tts.
@@ -1027,9 +1058,10 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
                     if (len(siml) > 5 and len(siml) < 200 and len(siml) < len(l) and link_density_map[rid]['numlinks'] > 0 and abs(link_density_map[rid]['offset']-total_read) > 100): 
                         print(f'Reading similar item: {siml}')
                         try:
-                            sound_file = f"./temp/sim{rid}.mp3"
+                            sound_file = f"./temp/sim{rid}.wav"
                             lesc = siml.replace('"', '\\"')
-                            os.system(f"edge-tts --voice \"{voice}\" --write-media \"{sound_file}\" --text \"Similar: {lesc}\" --rate=\"+20%\" --volume=-40% > NUL 2>&1")
+                            speech.speak(f'Similar: {siml}', sound_file, voice, 0.6, 1.2)
+#                            os.system(f"edge-tts --voice \"{voice}\" --write-media \"{sound_file}\" --text \"Similar: {lesc}\" --rate=\"+20%\" --volume=-40% > NUL 2>&1")
                             playsound(sound_file, block=False) # Ensure this thread blocks for its sound
 
                         except Exception as e:
@@ -1043,6 +1075,15 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
 
         if (q2 is not None):
             q2.put(total_read)
+        if (idx ==len(lines)-1):
+            print('Finished reading all lines.')
+            #go back to start?  
+            skip = get_first_content_line(link_density_map)
+            idx = skip #will be incremented to skip on next loop
+            total_read = 0
+            for i in range(skip):
+                total_read += len(lines[i]) + 1 #include newline            
+            skip = 0
 
 #    os.system(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --file \"{tts_file}\" --rate=\"-10%\"")
 #    time.sleep(2) #wait for file to be written
@@ -1294,7 +1335,7 @@ def draw_overlay(delay=15, opacity=0.4): #default hide in 10 seconds
         qrdata = create_qr_text(qrdata + play, active_window)
         mywindow.showQR(qrdata)
 
-    mywindow.updateLabels(windows) #gives info for all windows
+    mywindow.updateLabels(mywindow.windows) #gives info for all windows
     mywindow.setWindowOpacity(opacity)
     mywindow.activateWindow() # Bring to front
 #    draw_screen_box()
@@ -2970,6 +3011,13 @@ class MyWindow(QMainWindow):
         
 
 
+    def is_complete_cmd(self, struct):
+      for i, l in enumerate(struct):
+        type = l['type']
+        if (type == '> ' and l['cmd'][-1] != '_'):
+          return True
+      return False
+    
     def showQR(self, data, struct=[]):
         """Method to show a QR code."""
 #        logger.info('Showing QR code')
@@ -2984,15 +3032,18 @@ class MyWindow(QMainWindow):
         #if we need to truncate
         print(f'QR data length: {len(qrdata)}')
         print(qrdata[0:100] + "...\n")
-        if (len(qrdata) > 1500):
-            qrdata = qrdata[0:1500] #truncate to 1500 bytes max for QR code.
-            qrdata += "\n...\n$$\n"
-        qr_image = create_qr_code(qrdata)
-#        qr_image = Image.open("qrcode.png")
-#        qr_image.show()
-        pixmap = QPixmap('qrcode.png')
-        self.label_qr.setPixmap(pixmap)
-        self.label_qr.adjustSize()
+
+        
+        if (self.is_complete_cmd(struct)): #only display if completion
+            if (len(qrdata) > 1500):
+                qrdata = qrdata[0:1500] #truncate to 1500 bytes max for QR code.
+                qrdata += "\n...\n$$\n"
+            qr_image = create_qr_code(qrdata)
+    #        qr_image = Image.open("qrcode.png")
+    #        qr_image.show()
+            pixmap = QPixmap('qrcode.png')
+            self.label_qr.setPixmap(pixmap)
+            self.label_qr.adjustSize()
 
         logger.info('QR code displayed')
 
@@ -3004,6 +3055,8 @@ class MyWindow(QMainWindow):
             self.windowlabels[hwnd] = label
             self.windowcounter += 1
             return label
+        else:
+            return None
         
     def updateWords(self, pwords):
         y = 100

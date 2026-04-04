@@ -622,4 +622,5 @@ Need to switch other locations..
 **languages/hotkeys.py
 video, _meta..
 
+Need distinction to update QR or not..
 

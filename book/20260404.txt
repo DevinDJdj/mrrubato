@@ -1,0 +1,57 @@
+**extensions/trey/trey.py
+Lets try to get CUDA working?  
+
+> pip install virtualenv
+> python -m venv treyenv
+> .\treyenv\Scripts\activate
+> .\treyenv\Scripts\deactivate
+
+$$VENV=treyenv
+
+> pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
+
+> python -c "import torch; print(f'Torch Version: {torch.__version__}, CUDA Available: {torch.cuda.is_available()}, CUDA Version: {torch.version.cuda}')"
+Torch Version: 2.11.0+cu128, CUDA Available: True, CUDA Version: 12.8
+
+
+> pip install speechbrain
+> pip install requests transformers sox 
+> pip install sounddevice soundfile 
+> pip install psutil mss qrcode pynput mido python-rtmidi
+> pip install pystray PyQt5
+
+> pip install pywin32 pyaudio pyttsx3 playsound3 pydub
+> pip install matplotlib pygame
+;> pip install edge_tts
+> pip install qdrant_client
+> pip install newspaper3k lxml_html_clean
+> pip install onnxruntime==1.20.1
+> pip install playwright playwright-stealth
+> pip install opencv-python qreader
+> pip install fastembed pytesseract
+
+> pip install tensorflow
+> pip install pyrebase4
+
+> pip install torchaudio==2.8 --index-url https://download.pytorch.org/whl/cu128
+> pip install torchvision==0.23.0 --index-url https://download.pytorch.org/whl/cu128
+
+> mkdir temp
+> playwright install  
+
+> python -c "import torch; print(f'Torch Version: {torch.__version__}, CUDA Available: {torch.cuda.is_available()}, CUDA Version: {torch.version.cuda}')"
+....
+
+> pip install kokoro
+> pip install faster-whisper
+> pip install scikit-learn
+> pip install pyqtgraph
+
+> pip install pycaw
+> pip install rapidfuzz
+
+
+> pip freeze -r ./extensions/trey/requirements.txt
+
+
+

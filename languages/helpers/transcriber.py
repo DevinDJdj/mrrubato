@@ -90,6 +90,8 @@ class transcriber:
         ret = ""
         if (topic != self.current_topic and topic is not None):                
             ret += f'**{topic}\n'
+            ret += f'$$TIME={self.getTimeString()}\n'
+
             self.current_topic = topic
 
         if save:

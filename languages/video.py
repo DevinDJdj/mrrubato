@@ -6,6 +6,7 @@ from io import BytesIO
 import win32con
 import time
 from datetime import datetime, timedelta
+import shutil
 
 import languages.helpers.transcriber as transcriber
 import extensions.trey.playwrighty as playwrighty
@@ -527,14 +528,17 @@ class video:
     logger.info(f'> Screenshot Feedback {sequence}') 
     logger.info(f'$$BBOX={self.bbox}')
     #transcribe audio now..
-    from extensions.trey.speech import transcribe_audio
+    from extensions.trey.speech import transcribe_audio, transcribe_audio_whisper
     timer = datetime.now()
-    self.transcript = transcribe_audio("feedback.wav")
+    self.transcript = transcribe_audio_whisper("feedback.wav")
     lag = (datetime.now() - timer).total_seconds()
     lag = int(lag)
 
     self.func = "Screenshot Feedback"
-    self.set_qr(self.func, {'TRANSCRIPT': self.transcript, 'LAG': lag, 'BBOX': self.ar2str(self.bbox), 'SEQ': self.ar2str(sequence)})
+    fname = '../transcripts/' + self.name + '/' + self.feedbacknowstr + '.wav'
+    shutil.copy('feedback.wav', fname) #keep a copy for training..
+
+    self.set_qr(self.func, {'TRANSCRIPT': self.transcript, 'FNAME': fname, 'LAG': lag, 'BBOX': self.ar2str(self.bbox), 'SEQ': self.ar2str(sequence)})
 
 
 

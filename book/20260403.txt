@@ -1,0 +1,347 @@
+
+**languages
+These messages for LANG and META are MOD12.  
+_LANG can set to any octave automatically.  
+and in any language, _META lang and _LANG always exist.  
+
+**mykeys.py
+Adjust act to tolerate single key action.. 
+
+
+
+**mykeys.py
+@@Word creation logic?  
+[11,11,11]
+After the fact.  
+Take prior sequence.  Define sequence length to take.  
+
+Custom defined sequences for now standard start with [A,2A]
+
+
+
+**languages/helpers/transcriber.py
+
+Save/load state.  
+Need loading indicator of some kind when we resize time window..
+
+
+
+**timestep.py
+Transcript quality still not great.  
+
+
+**extensions/trey/trey.py
+Add text input display to load/edit topic.  
+
+**git/clone.py
+--cloneme
+flag to add most recent files to robot directory..
+
+**extensions/trey/trey.py
+**languages/base.py
+Use Ring controller and translate to commands.. 
+
+
+**extensions/trey/trey.py
+--label_timeinfo
+--label_times
+--??observe selection time / topic
+
+
+--label_topic_info (selected topic and relevant topics / filters)
+--label_main (next info details)
+--label_info (selection and action info)
+
+--label_p (should be same as relevant topics on topic selection)
+--label_ps (selection)
+--label_qr (selection and action info)
+
+Time/topic/observe/respond
+
+
+
+--label_topic_info (topic, topic time png, addl filter info)
+topic time png = selected time vs total time..
+
+--label_info
+selection help..
+
+
+
+**languages/_meta.py
+adjust speed..
+
+**languages/video.py
+adjust speed..
+
+Whatever the speed, leave adjustable silence between ticks..
+
+
+**extensions/vscode/codetutor/src/extension.ts
+Need to at least genbook..
+On a loop..
+
+
+**languages/hotkeys.py
+
+[53,56,60] [cacheno]
+test..
+
+Generate and read summary option..
+
+Finish select topic..
+
+**extensions/handsfree
+MIDI or hotkey to open URL in trey..
+Pick from scanned URLs..
+
+**extensions/trey/playwrighty.py
+--search_web
+[1] = wiki
+[2] = youtube
+[3] = 
+
+test..
+Not sure I like this..
+-1 = cacheno
+-2 = engine..
+
+Need to save location in video..
+
+
+
+Language patterns:
+Skip 0,2,2
+
+Select
+0,2,7
+
+Select Spoken
+0,2,8
+
+Selection
+0,3,7
+Select Tab [53,56,60],
+Select Topic [48,51,55]
+
+Feedback 
+0,4,7
+
+Stay conscious, change words if needed..
+
+
+**mykeys.py
+--get_qr
+--Select Topic
+--Set Language
+Not great to have this logic here..
+
+
+**extensions/trey/trey.py
+Adjust so apps fit better together..
+
+Test joy..
+**R1
+BT connect joystick mode:
+M+B
+
+
+**MPE
+MPE messages:
+NVRP = Note Vertical Rotational Pressure
+Fixed?  53, 55
+V1 = Y1 (up > 40, down < 30)
+V2 = Y2
+R1 = X1 (left < -10, right > 10)
+R2 = X2
+P1 = All left (use V and R motion unless > 50, then All left/all right)
+P2 = All right
+
+
+label_qr
+label_ps[]
+label_filter_info[]
+label_p
+label_info
+
+
+Screenshot not working
+but     
+Screenshot Feedback is..
+
+
+**extensions/vscode/codetutor/src/toolParticipant.ts
+--startWatchingWorkspace
+Same logic, have location specific for messaging..
+../transcripts/{lang}/{today}
+Dont display file..
+
+
+
+**extensions/vscode/codetutor/src/transcriber.ts
+After getting new string from monitoring, parse here..
+
+;> Set Topic 
+should add to transcript even without command?
+
+Eventually need to reload transcript watcher each day..
+Right now using book page for context, maybe adding to selection history is enough..
+
+
+**languages/hotkeys.py
+Adjust reading speed here..
+
+
+
+**extensions/vscode/codetutor/src/extension.ts
+What is stop reading function?  
+Need one so dont have to use mouse..
+
+
+**KNOWLEDGEGRAPH
+
+#https://networkx.org/en/
+#https://github.com/networkx/networkx
+
+> pip install networkx
+
+**web/public/graph.html
+**web/public/netgraph.mjs
+
+**languages/helpers/transcriber.py
+--update_kg
+use networkx here to build a basic knowledge graph.  
+Then we can just query these graphs, and strength of connections perhaps.. 
+See how we can use to start..
+
+
+**extensions/trey/trey.py
+--visualize_kg
+test..
+Call on select topic
+
+OK, but dont call here, need separate word..
+Also this library is too slow to generate this image..
+Needs to be in separate thread??
+
+--get_window_info
+test..
+
+get rid of old global funcs..
+
+Need topic next which just shows the current topic info PGDN/PGUP
+
+
+**extensions/vscode/codetutor/src/extension.ts
+OK, so we activate robot, then just Book.select(topic)
+Or something..
+
+OK, we are picking up the new data.  
+On select topic we want to put in the 
+
+**extensions/trey/speech.py
+--transcribe_now
+--faster-whisper
+OK, this seems to work ok..
+
+Far superior to the other model.  
+Also get realtime updates in qr_screen..
+Get rid of timestamp..
+
+Need to switch other locations..
+**languages/hotkeys.py
+video, _meta..
+
+Need distinction to update QR or not..
+
+
+**generate/generatetts.py
+#https://huggingface.co/hexgrad/Kokoro-82M
+
+**./models
+> git clone https://huggingface.co/hexgrad/Kokoro-82M
+
+!!FileNotFoundError: Kokoro-82M directory not found. Please either:
+==
+???
+1. Clone it in the current directory: git clone https://huggingface.co/hexgrad/Kokoro-82M
+;2. Set KOKORO_PATH environment variable to point to your Kokoro-82M directory
+3. Place it in your home directory
+
+#https://github.com/cheuerde/kokoro-tts-cli/blob/main/kokoro_tts_cli/streamer.py#L43
+~~Fix this..
+You are bound to this version..
+Too many issues here..
+
+$$
+
+!!from kokoro import KPipeline RuntimeError: can't register atexit after shutdown
+==
+set import to top..
+$$
+
+!!'EspeakWrapper' has no attribute 'set_data_path'
+==
+#https://github.com/thewh1teagle/kokoro-onnx/issues/46
+> pip uninstall phonemizer
+> pip install phonemizer-fork
+
+$$
+
+**extensions/trey/trey.py
+**extensions/trey/speech.py
+--speak
+OK, lets switch to this..
+
+**languages/_meta.py
+--select_topic
+Add $$time to topic selection..
+ok
+Save context as cache, so dont need to rebuild every time?  
+Maybe useful eventually.  
+
+**extensions/vscode/codetutor/src/extension.ts
+Stop speech prior to making LLM call for lag time..
+..
+
+**extensions/trey/trey.py
+Only show QR if cmd doesnt end in _
+ok
+
+
+See if TTS tolerable now with Kokoro..
+
+> hf auth login --token $HF_TOKEN --add-to-git-credential
+
+
+**extensions/trey/speech.py
+--speak_cmd
+Finally works but too slow to use..
+Kokoro-82M about 3x actual time, maybe on better machine..
+
+!!Error in speak function: CUDA requested but not available
+==
+> python -c "import torch; print(f'Torch Version: {torch.__version__}, CUDA Available: {torch.cuda.is_available()}, CUDA Version: {torch.version.cuda}')"
+> pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
+
+$$
+
+Still too slow..
+Even 
+$$ENV=treyenv
+with CUDA..
+
+#https://github.com/thewh1teagle/kokoro-onnx/blob/main/examples/english.py
+Try this?
+
+$$ONNX_PROVIDER=CUDAExecutionProvider
+
+
+Problem with 
+;> Record Feedback_
+OK..
+
+Something close to what we want..
+
+Need cacheno in temp folder..
+When to trigger regeneration?  

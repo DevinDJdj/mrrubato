@@ -549,7 +549,8 @@ export function activate(context: vscode.ExtensionContext) {
 			stream.markdown(response);
 			//workbench.action.chat.readChatResponseAloud
 			setTimeout(() => {	
-			vscode.commands.executeCommand('workbench.action.chat.readChatResponseAloud');
+				vscode.commands.executeCommand('workbench.action.chat.nextCodeBlock');
+				vscode.commands.executeCommand('workbench.action.chat.readChatResponseAloud');
 			}, 15000);
 
 			return;
@@ -563,7 +564,8 @@ export function activate(context: vscode.ExtensionContext) {
 			stream.markdown(response);
 			//workbench.action.chat.readChatResponseAloud
 			setTimeout(() => {	
-			vscode.commands.executeCommand('workbench.action.chat.readChatResponseAloud');
+				vscode.commands.executeCommand('workbench.action.chat.nextCodeBlock');
+				vscode.commands.executeCommand('workbench.action.chat.readChatResponseAloud');
 			}, 15000);
 
 			return;

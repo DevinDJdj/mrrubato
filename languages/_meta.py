@@ -365,8 +365,9 @@ class _meta:
     self.func = "Select Topic"
     self.set_qr(self.func, {'context': ctxt.replace('\n', '<br>'), 'topic': self.selectedtopic})
 #    logger.info(ctxt.replace('\n', '<br>'))
-    self.transcriber.write_topic(self.selectedtopic, ctxt) #write topic context to transcriber for use in other languages.)
     #keep track of topic history..
+    self.transcriber.write_topic(self.name, self.selectedtopic) #write topic to _meta.. to pick up in other tools.  
+    self.transcriber.write_topic(self.selectedtopic, ctxt) #write topic context?  Get latest info for robot.. trigger read of this file..
     self.speak(f'Selected topic {self.selectedtopic}')
     return 0
 
