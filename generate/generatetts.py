@@ -101,9 +101,9 @@ def play_in_background(text, engine='edge-tts'):
 #    pygame.mixer.music.play()
 
 
-def generate_line(text, idx, voice, vol, speed, engine):
-    sound_file = f"./temp/{idx}.wav"
-    subtitle_file = f"./temp/{idx}.srt"
+def generate_line(text, idx, voice, vol, speed, cacheno=-1, engine='kokoro-tts'):
+    sound_file = f"./temp/{cacheno}/{idx}.wav"
+    subtitle_file = f"./temp/{cacheno}/{idx}.srt"
     lesc = text.replace('"', '\\"')
 
     suc = ""
@@ -125,6 +125,7 @@ if (__name__ == "__main__"):
     parser.add_argument("--engine", type=str, help="TTS engine to use (kokoro-tts or edge-tts)", default="kokoro-tts")
     parser.add_argument("--skip", type=int, help="Number of lines to skip for TTS generation", default=0)
     parser.add_argument("--infile", type=str, help="Input text file for TTS generation", default=None)
+    parser.add_argument("--cacheno", type=str, help="Cache number for TTS generation", default=-1)
     #fast not working..
 
     args = parser.parse_args()    
@@ -147,11 +148,11 @@ if (__name__ == "__main__"):
             continue
         l = lines[idx]
 
-        generate_line(l, idx, args.voice, args.vol, args.speed, args.engine)    
+        generate_line(l, idx, args.voice, args.vol, args.speed, args.cacheno, args.engine)    
     print("Starting on skipped lines...")
     for (idx, l) in enumerate(lines[:args.skip]):
 
-        generate_line(l, idx, args.voice, args.vol, args.speed, args.engine)    
+        generate_line(l, idx, args.voice, args.vol, args.speed, args.cacheno, args.engine)    
     print("TTS generation complete.")
     exit(0)
 #    thread1.start()

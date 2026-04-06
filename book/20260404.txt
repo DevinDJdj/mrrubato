@@ -49,6 +49,7 @@ Torch Version: 2.11.0+cu128, CUDA Available: True, CUDA Version: 12.8
 
 > pip install pycaw
 > pip install rapidfuzz
+> pip install k2
 
 
 > pip freeze -r ./extensions/trey/requirements.txt

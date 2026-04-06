@@ -170,6 +170,15 @@ def is_process_running(process_name):
             return True
     return False
 
+def send_ok():
+    k = keyboard.Controller()
+    k.press(keyboard.Key.enter)
+    k.release(keyboard.Key.enter)
+    k.press('O')
+    k.release('O')
+    k.press('K')
+    k.release('K')
+
 
 def send_hotkey(hotkey):
     """Send a hotkey combination using pynput."""
@@ -461,7 +470,7 @@ def gen_audio(ldmap, astop_event=None):
         if (len(l['text']) > 5):
             generate_audio(l['text'], fname=l['audio'], fast=True)
 
-def build_map(lines, links):
+def build_map(lines, links, cacheno=-1):
 
     """Build a map of the link density."""
     #for now just return the text with link counts.  
@@ -491,7 +500,7 @@ def build_map(lines, links):
             link_loc += 1
         mavglength += len(l)
         mavgdensity += numlinks/(len(l)+1)
-        link_density_map.append({"offset": total_read, "text": l, "length": len(l), "mavglength": mavglength, "numlinks": numlinks, "audio": f"./temp/{idx}.wav", "density": numlinks/(len(l)+1)})
+        link_density_map.append({"offset": total_read, "text": l, "length": len(l), "mavglength": mavglength, "numlinks": numlinks, "audio": f"./temp/{cacheno}/{idx}.wav", "density": numlinks/(len(l)+1)})
         total_read += len(l) + 1  #include newline
 
         
@@ -500,13 +509,14 @@ def build_map(lines, links):
 
 def remove_temp_audio(dir):
     #remove temp files first.  
-    for filename in os.listdir(dir):
-        file_path = os.path.join(dir, filename)
-        if os.path.isfile(file_path):
-            try:
-                os.remove(file_path)
-            except OSError as e:
-                print(f"Error removing file {file_path}: {e}")
+    if (os.path.exists(dir) and os.path.isdir(dir)):
+        for filename in os.listdir(dir):
+            file_path = os.path.join(dir, filename)
+            if os.path.isfile(file_path):
+                try:
+                    os.remove(file_path)
+                except OSError as e:
+                    print(f"Error removing file {file_path}: {e}")
 
 
 
@@ -683,11 +693,11 @@ def stopsound(currentsound):
         currentsound.stop()
 
 
-def generate_tts(text, voice, vol=1.0, rate=1.0, skip=0):
-    suc = speech.speak_cmd(text, "", voice, vol, rate, skip, 'kokoro-tts')
+def generate_tts(text, voice, vol=1.0, rate=1.0, skip=0, cacheno=-1):
+    suc = speech.speak_cmd(text, "", voice, vol, rate, skip, cacheno, 'kokoro-tts')
 
 
-def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=None, q=None, q2=None, q3=None, lang='en'):
+def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=None, cacheno=-1, q=None, q2=None, q3=None, lang='en'):
 
     #give high priority?  
     p = psutil.Process(os.getpid())
@@ -732,11 +742,12 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
 #    logger.info(text)
     skip = 0
 
-    remove_temp_audio("./temp/")
+
+    remove_temp_audio("./temp/" + str(cacheno)) #clear old cache if exists.
 
     if (offset == 0):
         #pre-read detect good starting point.
-        link_density_map = build_map(lines, links)
+        link_density_map = build_map(lines, links, cacheno)
         print(f'Link density map: {len(link_density_map)} lines')
         #start audio generation thread then
         #not sure this adds anything.  
@@ -752,7 +763,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
             offset -= len(lines[i]) + 1 #include newline
             skip += 1
         print(f'Skipping lines {i}')
-        link_density_map = build_map(lines, links)
+        link_density_map = build_map(lines, links, cacheno)
 
     mp_stop = multiprocessing.Event()
 #    audio_gen_thread = multiprocessing.Process(target=gen_audio, args=(link_density_map, mp_stop))
@@ -777,7 +788,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
     print('Start Reading:')
 
     #generate tts for all lines first to minimize wait time when playing.  This is a bit aggressive but should work for now.
-    generate_tts(text, VOICE, vol=1.0, rate=1.0,skip=skip) #pre-generate
+    generate_tts(text, VOICE, vol=1.0, rate=1.0,skip=skip, cacheno=cacheno) #pre-generate
 
     print('Finished generating TTS for all lines, starting playback')
     idx = -1
@@ -820,7 +831,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
 
             l = text
             print(f'{l}')
-            sound_file = f"./temp/overview.wav"
+            sound_file = f"./temp/{cacheno}/overview.wav"
             lesc = lines[0] if (len(lines[0]) < 200) else lines[0][:200]
             #print(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --text \"{lesc}\" --rate=\"-10%\" > NUL 2>&1")
             #suc = os.system(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --text \"{lesc}\" --rate=\"-10%\" > NUL 2>&1")
@@ -834,7 +845,8 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
                 tts.speak(lesc, VOICE, sound_file)
 #            playsoundprocess = multiprocessing.Process(target=play_sound_process, args=(sound_file,))
 #            playsoundprocess.start()
-            playsound(sound_file, block=False) # Ensure this thread blocks for its sound
+            if (os.path.exists(sound_file)):
+                playsound(sound_file, block=False) # Ensure this thread blocks for its sound
             #try other mechanism.. stopsound..
 
         if (stop_event.is_set()):
@@ -925,13 +937,13 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
                     vol = 1.0
                     rate = 1.0
 
+                sound_file = f"./temp/{cacheno}/{idx}.wav"
                 if (os.path.exists(sound_file)):
                     print(f'Playing pre-generated audio: {sound_file}')
                     currentsound = playsound(sound_file, block=False) # Ensure this thread blocks for its sound
                 else:
                     print(f'Generating and playing audio: {l}')
-                    sound_file = f"./temp/{idx}.wav"
-                    subtitle_file = f"./temp/{idx}.srt"
+                    subtitle_file = f"./temp/{cacheno}/{idx}.srt"
                     lesc = l.replace('"', '\\"')
 
 #                    suc = os.system(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --text \"{lesc}\" --write-subtitles \"{subtitle_file} --rate=\"-10%\" > NUL 2>&1")
@@ -950,7 +962,8 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
                     #fast not working.. edge-tts much better quality than speechbrain tts.
 #                    cmd = f"python ./extensions/trey/speech.py --text \"{l}\" --fname \"{sound_file}\""
 #                    os.system(cmd)
-                    currentsound = playsound(sound_file, block=False) # Ensure this thread blocks for its sound
+                    if (os.path.exists(sound_file)):
+                        currentsound = playsound(sound_file, block=False) # Ensure this thread blocks for its sound
 #                time.sleep(0.5) #short pause between lines
             except Exception as e:
                 logger.error(f'Error in TTS playback: {e}')
@@ -1058,7 +1071,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
                     if (len(siml) > 5 and len(siml) < 200 and len(siml) < len(l) and link_density_map[rid]['numlinks'] > 0 and abs(link_density_map[rid]['offset']-total_read) > 100): 
                         print(f'Reading similar item: {siml}')
                         try:
-                            sound_file = f"./temp/sim{rid}.wav"
+                            sound_file = f"./temp/{cacheno}/sim{rid}.wav"
                             lesc = siml.replace('"', '\\"')
                             speech.speak(f'Similar: {siml}', sound_file, voice, 0.6, 1.2)
 #                            os.system(f"edge-tts --voice \"{voice}\" --write-media \"{sound_file}\" --text \"Similar: {lesc}\" --rate=\"+20%\" --volume=-40% > NUL 2>&1")
@@ -1162,7 +1175,7 @@ def speak(text, links = [], alt_text=[], offset=0, lang='en', cacheno=-1):
     q3 = Queue()
 
     print(audio_stop_events)
-    audio_thread = threading.Thread(target=play_in_background, args=(f'{text}',links, offset, audio_stop_event, audio_skip_event, q, q2, q3, lang))
+    audio_thread = threading.Thread(target=play_in_background, args=(f'{text}',links, offset, audio_stop_event, audio_skip_event, cacheno, q, q2, q3, lang))
     audio_thread.start()
     return q2, q3, audio_stop_event #communicate how much we have read.  
 
@@ -1425,6 +1438,7 @@ def _hide(data):
     #initialize time..
     day = 86400
     tnow = time.time()
+    #should get from last three days and scroll each?  
     mywindow.set_time(tnow-day*1, tnow-day*7, tnow, day*7)
     mywindow.set_speed(None, "_meta")
     mywindow.set_speed(None, "video")
@@ -1675,7 +1689,19 @@ class MyWindow(QMainWindow):
         #use transcriber here??
         """Execute a QR command based on the parsed data."""
         logger.info(f'Executing QR command: {command} with vars: {vars}')
+        #get current foreground window.  
+
+        temp = win32gui.GetForegroundWindow()
+        rect = win32gui.GetWindowRect(temp)
         match command:
+            case "OK":
+                #testing
+                logger.info('Received OK command, showing QR code with current settings')
+                if (self.in_trey(rect)): #only capture second monitor clicks                
+                    send_ok()
+                #send keystroke test..
+
+
             case "Screen Toggle":
                 if (self.isVisible()):
                     #remove stale info?  
@@ -1848,7 +1874,10 @@ class MyWindow(QMainWindow):
             if ('mrroboto' in w['title'].lower()):
                 logger.info(f'Bringing MrRoboto to front: {w["title"]}')
                 #this should already have the topic selected and also run a chat.. show any changes..
-                win32gui.SetForegroundWindow(w['hwnd'])
+                try:
+                    win32gui.SetForegroundWindow(w['hwnd'])
+                except Exception as e:
+                    logger.error(f'Error bringing MrRoboto to front: {e}')
                 break
 
     def parseQRData(self, qrdata):

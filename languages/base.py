@@ -216,6 +216,7 @@ class base:
   def ok(self, sequence=[]):
     """Indicate OK."""
     logger.info(f'> OK {sequence}')
+    self.set_qr("OK", {"time": datetime.now().isoformat()})
     return 0
   
   def good(self, sequence=[]):

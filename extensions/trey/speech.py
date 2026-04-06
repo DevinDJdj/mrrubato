@@ -403,9 +403,14 @@ def record_audio2(duration=30, fname="example.wav", stop_event=None, seq=[77, 81
 
 
 def get_duration(fname):
-    samplerate, data = wav.read(fname)
-    duration = data.shape[0] / samplerate
-    return int(duration)
+    try:
+        samplerate, data = wav.read(fname)
+        duration = data.shape[0] / samplerate
+        return int(duration)
+    except Exception as e:
+        logger.error(f"Error getting duration: {e}")
+        print(f"Error getting duration: {e}")
+        return 0
 
 #default 10 seconds for comment
 def record_audio(duration=10, fname="example.wav", stop_event=None, seq=[77,81,84,89]):
@@ -603,9 +608,15 @@ def transcribe_audio_whisper(fname="example2.wav", start_times=[], end_times=[],
         segments, info = whisper_model.transcribe(audio_data, language=WHISPER_LANGUAGE, beam_size=5, vad_filter=True, vad_parameters=dict(min_silence_duration_ms=1000))
 
     print("Detected language '%s' with probability %f" % (info.language, info.language_probability))
-    for segment in segments:
+
+    for idx, segment in enumerate(segments):
         print("[%.2fs -> %.2fs] %s" % (segment.start, segment.end, segment.text))
-        full_transcript += segment.text + " (" + getTimeFromSecs(int(segment.start)) + ")\n"
+        
+        full_transcript += segment.text 
+        if (idx > 0):
+            full_transcript += " (" + getTimeFromSecs(int(segments[idx-1].start)) + ")"
+        full_transcript += "\n"
+
     return full_transcript.strip()
 
 
@@ -684,7 +695,7 @@ def set_volume(fname="example_tts.wav", volume=1.0):
     wav.write(fname, samplerate, adjusted_data)
     return fname
 
-def speak_cmd(text="", fname="example_tts.wav", voice='af_heart', vol=1.0, speed=1.0, skip=0, engine='kokoro-tts'):
+def speak_cmd(text="", fname="example_tts.wav", voice='af_heart', vol=1.0, speed=1.0, skip=0, cacheno=-1, engine='kokoro-tts'):
 #    thread1 = threading.Thread(target=speak, args=(f'{text}',f'{fname}',f'{voice}',vol,speed,'kokoro-tts'))
 #    thread1.start()
     #why we have to do this.. if we call directly it is far too slow..
@@ -694,7 +705,7 @@ def speak_cmd(text="", fname="example_tts.wav", voice='af_heart', vol=1.0, speed
         infile = f"./temp/tts_{int(time.time())}.txt"
         with open(infile, "w", encoding="utf-8") as f:
             f.write(text)
-        cmd = f'python ./generate/generatetts.py --infile "{infile}" --fname "{fname}" --voice "{voice}" --vol {vol} --speed {speed} --skip {skip} --engine {engine}'
+        cmd = f'python ./generate/generatetts.py --infile "{infile}" --fname "{fname}" --voice "{voice}" --vol {vol} --speed {speed} --skip {skip} --cacheno {cacheno} --engine {engine}'
         subprocess.Popen(
             cmd,
             shell=True
@@ -703,7 +714,7 @@ def speak_cmd(text="", fname="example_tts.wav", voice='af_heart', vol=1.0, speed
                 
         #suc = os.system(cmd)
     else:
-        suc = os.system(f'python ./generate/generatetts.py --text "{text}" --fname "{fname}" --voice "{voice}" --vol {vol} --speed {speed} --skip {skip} --engine {engine}')
+        suc = os.system(f'python ./generate/generatetts.py --text "{text}" --fname "{fname}" --voice "{voice}" --vol {vol} --speed {speed} --skip {skip} --cacheno {cacheno} --engine {engine}')
 #    thread1.join() #wait for completion..
     if (suc == 0):
         return fname
@@ -734,6 +745,7 @@ def speak(text="", fname="example_tts.wav", voice='af_heart', vol=1.0, speed=1.0
 
 
         # Generate and save audio
+        os.makedirs(os.path.dirname(fname), exist_ok=True)
         generator = pipeline(text, voice=voice, speed=speed)
         with sf.SoundFile(fname, mode='w', samplerate=24000, channels=1) as f:
             for i, (gs, ps, audio) in enumerate(generator):

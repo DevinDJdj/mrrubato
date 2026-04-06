@@ -345,3 +345,30 @@ Something close to what we want..
 
 Need cacheno in temp folder..
 When to trigger regeneration?  
+test cache folder..
+
+
+How to combine transcripts with music?  
+
+Can we send keystrokes to vscode?  
+OK test..
+That works, not sure.  
+
+Shortcut for inputting topic names..
+and running vscode..
+<<book>>read
+<<book>>stop
+<<book>>write (ingest)
+<<git>>read
+
+<<gen>>book
+<<gen>>git
+
+
+
+Also should re-focus playwright as well..
+
+Bring to front not exactly working how wanted..
+Its ok for now.  
+Only selected if it was last vscode selected..
+

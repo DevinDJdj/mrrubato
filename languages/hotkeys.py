@@ -599,7 +599,7 @@ class hotkeys:
         for (i, page_info) in enumerate(playwrighty.page_cache[-15:]):          
           print(f'Tab {i}: {page_info["url"]}')
           logger.info(f'Tab {i}: {page_info["url"]}')
-          vars["{i}"] = page_info["title"]
+          vars[str(i)] = page_info["title"]
 
         from extensions.trey.trey import pause_reader, resume_reader, stop_audio
         pause_reader(playwrighty.current_cache) #pause first before clicking link.
@@ -741,12 +741,16 @@ class hotkeys:
     print(f'> Record Feedback for {duration} seconds')
     from extensions.trey.speech import transcribe_audio, get_duration, transcribe_audio_whisper
     timer = datetime.now()
-
 #    self.transcript = transcribe_audio("feedback.wav")
     self.transcript = transcribe_audio_whisper("feedback.wav") #try whisper for better accuracy.  This is slower but hopefully more accurate, especially for short feedback.
 
 
-    duration = get_duration("feedback.wav") #actual dynamic duration..
+    dur = get_duration("feedback.wav") #actual dynamic duration..
+    if (dur == 0):
+      duration = (timer - self.now).total_seconds() if self.now is not None else duration
+    else:
+      duration = dur
+
     lag = (datetime.now() - timer).total_seconds()
     lag = int(lag)
     print(f'Transcription completed in {lag} seconds: {self.transcript}')
@@ -846,8 +850,9 @@ class hotkeys:
   def search_web(self, sequence=[]):
     logger.info(f'> Search Web {sequence}')
     query = "What is the capital of France?"
-    from extensions.trey.speech import transcribe_audio
-    self.transcript = transcribe_audio("query.wav")
+    from extensions.trey.speech import transcribe_audio, transcribe_audio_whisper
+#    self.transcript = transcribe_audio("query.wav")
+    self.transcript = transcribe_audio_whisper("query.wav") #try whisper for better accuracy.  This is slower but hopefully more accurate, especially for short queries.
     logger.info('$$AUDIO = ' + self.transcript)
     
 
