@@ -372,3 +372,22 @@ Bring to front not exactly working how wanted..
 Its ok for now.  
 Only selected if it was last vscode selected..
 
+#https://pydantic.dev/docs/ai/core-concepts/agent/
+#https://opencode.ai/docs/
+
+hmmm...
+#https://github.com/Nano-Collective/nanocoder
+
+#https://code.visualstudio.com/blogs/2025/07/17/copilot-coding-agent
+
+
+**extensions/vscode/codetutor/src/extension.ts
+**extensions/trey/trey.py
+Lets see if we can open [**public/web] with login with playwrighty.  
+
+
+**languages/check.py
+dont necessarily like this name..
+For now just use comment..
+--comment
+Check if comment works..

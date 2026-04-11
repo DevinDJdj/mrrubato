@@ -38,6 +38,7 @@ logger = logging.getLogger(__name__)
 asr_model = None
 whisper_model = None
 kokoro_pipeline = None
+transcript_info = None
 
 # 3. Define text pipeline:
 @sb.utils.data_pipeline.takes("words")
@@ -549,6 +550,7 @@ def get_speech_(fname):
 def transcribe_audio_whisper(fname="example2.wav", start_times=[], end_times=[], use_timestamps=False):
     global whisper_model, recording
     global rec_stop_event, asr_model
+    global transcript_info
     print("Stopping any existing audio recording...")
     logger.info("Stopping any existing audio recording...")
     rec_stop_event.set() #stop any existing recording
@@ -616,7 +618,7 @@ def transcribe_audio_whisper(fname="example2.wav", start_times=[], end_times=[],
         if (idx > 0):
             full_transcript += " (" + getTimeFromSecs(int(segments[idx-1].start)) + ")"
         full_transcript += "\n"
-
+    transcript_info = info
     return full_transcript.strip()
 
 
