@@ -595,11 +595,19 @@ def transcribe_audio_whisper(fname="example2.wav", start_times=[], end_times=[],
                 end_sample = int((et) * samplerate)
                 segment_data = data[start_sample:end_sample]
                 wav.write(segment_fname, samplerate, segment_data)
-                result  = whisper_model.transcribe_file(segment_fname)
+                segments, info  = whisper_model.transcribe(segment_fname)
                     # Process the words_with_timestamps list
                     #for now just use segment time..
-                if (len(result) > 8): #sometimes get garbage like "mm" or "dont" during silence..
-                    full_transcript += result + " (" + getTimeFromSecs(st) + ")\n"
+#                full_transcript += result['text'] + " (" + getTimeFromSecs(st) + ")\n"
+                segments = list(segments)
+                for idx, segment in enumerate(segments):
+                    print("[%.2fs -> %.2fs] %s" % (segment.start, segment.end, segment.text))
+                    
+                    full_transcript += segment.text 
+                    full_transcript += " (" + getTimeFromSecs(int(segments[idx].start+st)) + ")"
+                    full_transcript += "\n"
+                transcript_info = info
+                #print(info)
         return full_transcript.strip()         
 
     if (os.path.exists(fname)):
@@ -610,13 +618,13 @@ def transcribe_audio_whisper(fname="example2.wav", start_times=[], end_times=[],
         segments, info = whisper_model.transcribe(audio_data, language=WHISPER_LANGUAGE, beam_size=5, vad_filter=True, vad_parameters=dict(min_silence_duration_ms=1000))
 
     print("Detected language '%s' with probability %f" % (info.language, info.language_probability))
-
+    segments = list(segments)
     for idx, segment in enumerate(segments):
         print("[%.2fs -> %.2fs] %s" % (segment.start, segment.end, segment.text))
         
         full_transcript += segment.text 
-        if (idx > 0):
-            full_transcript += " (" + getTimeFromSecs(int(segments[idx-1].start)) + ")"
+#        if (idx > 0):
+#            full_transcript += " (" + getTimeFromSecs(int(segments[idx-1].start)) + ")"
         full_transcript += "\n"
     transcript_info = info
     return full_transcript.strip()

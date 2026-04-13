@@ -85,6 +85,8 @@ class transcriber:
       ret += f'$$\n'
       return ret
 
+
+
     def write_topic(self, lang, topic, save=True):
 
         ret = ""
@@ -101,7 +103,8 @@ class transcriber:
             with open(folder + today + '.txt', 'a', encoding='utf-8') as f:
                 f.write(ret)
         return ret
-    
+
+    #    
     def write(self, lang, command, params, save=True):
       #write to transcript file.  
       #for now just one time param.  
@@ -141,9 +144,26 @@ class transcriber:
       return ret
 
 
+    #filter for just this topic
+    def filter_topics(self, lang, topics, type='**'):
+        ret = []
+        topiccmds = self.read_existing(lang) #get existing cmds..
+        for idx, cmd in enumerate(topiccmds):
+            if (cmd['type'] == type and cmd['topic'] in topics):
+                ret.append(cmd)
+#        ret.sort(key=lambda x: x['timestamp']) #sort by timestamp just in case, should be sorted..
+        return ret
+
     def read_existing(self, lang, start_time=None, end_time=None):
         logger.info(f'Using cached commands for {lang} from {self.allcmds[lang]["start_time"]} to {self.allcmds[lang]["end_time"]}')
         #find startidx
+        if (start_time is None):
+            if (lang in self.allcmds and 'start_time' in self.allcmds[lang]):
+                start_time = self.allcmds[lang]['start_time']
+                end_time = self.allcmds[lang]['end_time']
+            else:
+                start_time = self.getTime(-30) #default to last 30 days, should be close enough for sorting topics.
+                end_time = self.getTime()
         increment = 1
         if (start_time < self.allcmds[lang]['start_time']):
             start_idx = self.allcmds[lang]['start_idx']
@@ -175,7 +195,18 @@ class transcriber:
                 else:
                     break
 #        self.current_topic = self.allcmds[lang]['cmds'][end_idx-1]['topic'] if end_idx > 0 else self.current_topic
-        
+        if (end_idx >= len(self.allcmds[lang]['cmds'])):
+            end_idx = len(self.allcmds[lang]['cmds'])-1
+        if (start_idx > end_idx):
+            start_idx = end_idx
+        if (start_idx < 0):
+            start_idx = 0
+        if (end_idx < 0):
+            end_idx = 0
+
+
+        self.allcmds[lang]['start_idx'] = start_idx
+        self.allcmds[lang]['end_idx'] = end_idx
         return self.allcmds[lang]['cmds'][start_idx:end_idx]
 
     def play_midi(self, midi_data, act=True, speed=1.0, volume=1.0):

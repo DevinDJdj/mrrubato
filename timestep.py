@@ -742,7 +742,7 @@ if __name__ == '__main__':
                         from extensions.trey.speech import transcribe_audio, listen_audio, transcribe_audio_whisper
 #                        transcript = transcribe_audio(mediafile, util.st, util.et, True)
                         transcript = transcribe_audio_whisper(mediafile, util.st, util.et, True)
-                        servererrorcnt += 1 #testing..
+                        #servererrorcnt += 1 #testing..
 
                         """
                         if (model is None):

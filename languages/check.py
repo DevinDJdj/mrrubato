@@ -1,5 +1,6 @@
 import logging
 from pynput import *
+from languages.helpers import timewindow
 import pytesseract
 from PIL import Image
 from io import BytesIO
@@ -19,7 +20,8 @@ class check:
   def __init__(self, config, qapp=None, startx=0):
 
     self.config = config
-    self.transcriber = transcriber.transcriber(self)
+    self.transcriber = transcriber.transcriber(self) #current_topic set by mykeys for now
+    self.current_topic = None #set by mykeys
     self.qapp = qapp
     self.func = None
     self.cmd = None
@@ -42,6 +44,9 @@ class check:
     self.funcdict = {}
     self.suggestions = []
     self.transcripthistory = [] #store past transcripts for context.  This is not currently used for anything but could be used for context in future functions.
+    self.topichistory = [] #store past topics for context.  This is not currently used for anything but could be used for context in future functions.
+    self.links = [] #currently selected link structure from page..
+    self.timewindow = timewindow(self) #for timeline functions, can also be used for general time tracking.  This is initialized here but can be reset by timeline if needed.
 
   def word(self, sequence=[]):
     """Word lookup."""
@@ -79,6 +84,12 @@ class check:
     #load commands from config into funcdict
     allcmds = self.transcriber.read(self.name, None, None) #default 7 days
     logger.info(f'Loaded {len(allcmds)} command transcripts for {self.name}')
+    #load commands from config into funcdict
+
+    #load 6 months of book topics..
+    book = self.transcriber.read(self.name, self.transcriber.getTime(-180), None, './book/')
+    logger.info(f'Loaded {len(book)} book transcripts from ./book/')    
+
 
     return 0
   
@@ -93,6 +104,8 @@ class check:
       "3": {
         "Help": [57,69,58], #show help for check commands
         "Comment": [57,61, 64], #record comment
+        "Check Topic": [57,60,64], #open topic
+
       },
     }
     if (self.name in self.config['languages']):
@@ -108,6 +121,7 @@ class check:
       "Help": "help",
       "Pause": "pause",
       "Unpause": "unpause",
+      "Check Topic": "check_topic",
 
     }
     self.helpdict = {
@@ -115,6 +129,7 @@ class check:
       "Help": {"help": "help", "params": "None", "desc": f"Show {self.name} commands."},
       "Pause": {"help": "pause", "params": "None", "desc": f"Pause {self.name} playback."},
       "Unpause": {"help": "unpause", "params": "None", "desc": f"Unpause {self.name} playback."},
+      "Check Topic": {"help": "check_topic", "params": "None", "desc": f"Open current topic in {self.name}."},
 
     }
 
@@ -183,6 +198,130 @@ class check:
     return -1
   
 
+  def get_context(self, topic, num=5):
+    #get context for topic from book transcripts.  
+    ret = f"**{topic}\n"
+    mydata = self.transcriber.filter_topics(self.name, [topic]) #set current topic for future commands.  This will also filter the existing transcripts to just this topic, which is what we want for the QR display.
+    if topic in self.alltopics:
+      topiccmds = self.alltopics[topic]
+      topiccmds.sort(key=lambda x: abs(self.timewindow.currenttime - x['timestamp']), reverse=True) #sort by recency to current time, most recent first.
+      sortedcmds = topiccmds[:num]
+      sortedcmds.sort(key=lambda x: x['timestamp']) #sort by time for display.
+      context = []
+      for cmd in sortedcmds:
+        ret += f'$${datetime.fromtimestamp(cmd["timestamp"]).strftime("%Y%m%d_%H%M%S")}\n'
+        ret += '\n'.join(cmd['lines']) + "\n"
+    return ret
+
+  def check_topic_(self, sequence=[]):
+    logger.info(f'> Check Topic_ {sequence}')
+    print("> Check Topic_")
+    newidx = 0
+    if (len(sequence) > 0):
+      if (sequence[-1] == self.keybot): #dont adjust if keybot, 
+        return 1
+      newidx = sequence[-1]-self.keybot
+      if (newidx < 0):
+        newidx = 0
+      if (newidx > len(self.topichistory)-1):
+        newidx = len(self.topichistory)-1
+    numtopics = 1
+    if (len(sequence) > 1):
+      numtopics = sequence[-2] - self.keybot
+    if (numtopics < 1):
+        numtopics = 1
+
+    logger.info(f'--{self.topichistory[newidx]}')
+    self.func = "Check Topic_"
+    #should make this more general.. send last ten links
+    last15 = self.topichistory[0:min(13, len(self.topichistory))]
+    vars = {}
+    vars['topic'] = self.topichistory[newidx]
+    tocheck = self.topichistory[newidx:newidx+numtopics] if len(self.topichistory) > newidx else [vars['topic']]
+    mydata = self.transcriber.filter_topics(self.name, tocheck) #set current topic for future commands.  default to **
+    for (idx, topic) in enumerate(self.topichistory):
+        vars[f'{idx}'] = topic
+
+    vars['context'] = ""
+    for (idx, cmd) in enumerate(mydata[-10:]): #for now last 10
+        vars[f'context'] += '\n'.join(cmd['lines'])
+
+    vars['idx'] = newidx
+    self.set_qr(self.func, vars)
+    
+    return 1
+  
+  def check_topic(self, sequence=[]):
+    #select topic based on sequence.  This is just a placeholder for now, but could be expanded to use the sequence to select from a list of topics.  
+    #if topic starts with web/public, open in browser, otherwise open in trey.  
+
+    if (len(sequence) > 0):
+      if (sequence[-1] == self.keybot): #dont adjust if keybot, 
+        return 1
+      newidx = sequence[-1]-self.keybot
+      if (newidx < 0):
+        newidx = 0
+      if (newidx > len(self.topichistory)-1):
+        newidx = len(self.topichistory)-1
+
+    if (len(sequence) > 1):
+      numtopics = sequence[-2] - self.keybot
+      #get this number of past topics for the filter..
+
+    if (newidx == 0 and self.current_topic is not None):
+      topic = self.current_topic
+    elif (newidx < len(self.topichistory)):
+      topic = self.topichistory[newidx]
+      self.topichistory.remove(topic) #remove from history and add to end so we can keep track of recency.
+
+    if (len(self.topichistory) < 1 or topic != self.topichistory[-1]):
+      self.topichistory.insert(0, topic)
+
+    base_url = "https://www.misterrubato.com/" #hardcode for now, should have set project in _meta
+    cacheno = -1 #for now just use -1, not enough importance to set cacheno?  
+    vars = {}
+    if (topic.startswith("web/public/")):
+        page_url = topic[11:]
+        body_text, link_data, page, cacheno = playwrighty.read_page(base_url+page_url, cacheno)
+    #    print(body_text)
+        self.links = link_data
+        #should always have a value here..  
+        total_read = playwrighty.get_bookmark(page.url, cacheno)
+        print(f'Bookmark at {total_read}')
+        q2, q3, stop_event = self.speak(body_text, link_data, playwrighty.page_cache[cacheno]['alt_text'], total_read, cacheno=cacheno)
+        playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
+        logger.info(f'$$CACHENO={cacheno}')
+        vars['cacheno'] = cacheno
+        vars['url'] = page.url
+    elif (topic.endswith(".py")):
+        #what to open for this topic, just run?  
+        logger.info(f'Running code for topic {topic}')
+        #need to have some security here, dont ruin everything..
+
+
+    elif (topic.endswith(".txt")):
+        #just read text file.  Read via transcriber?  
+        with open(topic, "r") as f:
+            body_text = f.read()
+            q2, q3, stop_event = self.speak(body_text, [], [], cacheno=cacheno)
+            playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
+            vars['cacheno'] = cacheno
+            vars['transcript'] = body_text
+
+    else:
+        transcript = self.transcriber.read(self.name, topic, None) #get all transcripts for this topic.  We could also filter by time here if we want to limit to recent commands.
+        vars['transcript'] = transcript
+        tocheck = self.topichistory[newidx:newidx+numtopics] if len(self.topichistory) > newidx else [vars['topic']]
+        mydata = self.transcriber.filter_topics(self.name, tocheck) #set current topic for future commands.  default to **
+        vars['context'] = ""
+        for (idx, cmd) in enumerate(mydata[-10:]): #for now last 10
+            vars[f'context'] += '\n'.join(cmd['lines'])
+
+    self.set_qr("Check Topic", vars) #probably too large for QR, need to summarize or just indicate number of commands.
+    return 0
+    
+
+  
   def comment_(self, sequence=[]):
     if (len(sequence) == 1):
 
@@ -244,9 +383,8 @@ class check:
         vars['DURATION'] = duration
         vars['TRANSCRIPT'] = self.transcript
         vars['LANG'] = transcript_info['language'] if transcript_info is not None and 'language' in transcript_info else "unknown"
-        if (playwrighty.mybrowser is not None):
-            fname = '../transcripts/' + self.name + '/' + self.feedbacknowstr + '.wav'
-            vars['FILE'] = fname
+        fname = '../transcripts/' + self.name + '/' + self.feedbacknowstr + '.wav'
+        vars['FILE'] = fname
         shutil.copy('comment.wav', fname) #keep a copy for training..
         self.transcriber.write(self.name, "Comment", vars)  
         self.set_qr("Comment", vars) #update QR with feedback data for debugging and record keeping.
@@ -310,9 +448,11 @@ class check:
     return 0  
   
 
-  def speak(self, text, links=[]):
+  def speak(self, text, links=[], alt_text_data=[], total_read=0, lang="en", cacheno=-1):
     from extensions.trey.trey import speak
 #    print(f'Speaking: {text}')
-    return speak(text, links)
+    #really want to be able to turn on/off speaking with some setting similar to OPACITY..
+
+    return speak(text, links, alt_text_data, total_read, lang, cacheno)
 
   

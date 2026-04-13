@@ -391,3 +391,83 @@ dont necessarily like this name..
 For now just use comment..
 --comment
 Check if comment works..
+
+
+**missesroboto
+When copying dont copy .firebaserc
+
+**../backup/db
+[**20250709]
+copy DB.. manually
+
+
+**./testing/vscode/mrroboto/web
+> firebase hosting:sites:list
+;confirm correct site..
+> firebase deploy
+
+ "db": {
+  "dbname": "/misterrubato/",
+  "domain": "https://missesroboto.com",
+
+!!https://firebasestorage.googleapis.com/v0/b/missesroboto-test.firebasestorage.app/o/videos%2F2026%2F2026-04-10%2019-12-20.mp4' from origin 'https://www.missesroboto.com' has been blocked by CORS policy
+
+Hmm..didnt test this I guess..
+Wrong pointers..
+
+https://firebasestorage.googleapis.com/v0/b/missesroboto-test.firebasestorage.app/o/analyze%2F2026-04-10%252019-12-20.jpg' 
+
+
+> gcloud auth login
+> gcloud storage folders create gs://missesroboto-test.firebasestorage.app/videos
+> gcloud storage cp - gs://missesroboto-test.firebasestorage.app/videos
+
+> gcloud storage cp "gs://misterrubato-test.appspot.com/videos/2026/2026-04-10 19-12-20.mp4" "gs://missesroboto-test.firebasestorage.app/videos/2026/2026-04-10 19-12-20.mp4"
+> gcloud storage cp "gs://misterrubato-test.appspot.com/midi/2026/2026-04-10 19-12-20.mid" "gs://missesroboto-test.firebasestorage.app/midi/2026/2026-04-10 19-12-20.mid"
+
+> gsutil cors get gs://misterrubato-test.appspot.com
+> gsutil cors get gs://missesroboto-test.firebasestorage.app
+> gsutil cors set cors.json gs://missesroboto-test.firebasestorage.app
+
+
+**languages/_meta.py
+Need some command to set vars..
+Do we pull all potential vars from transcriber when selecting topic?  
+Just pull most used..
+Need to select topic in transcriber..
+
+**languages/helpers/transcriber.py
+
+**languages/check.py
+--load_transcripts
+--check_topic
+Loading book multiple times, really should share..
+But talking ~ 2MB, so multiple copies not priority now..
+test..
+
+**languages/_meta.py
+need filter function..
+filter by n topics..
+Set relationship depth as well, search built topic network..
+
+Video replay seems ok, audio also continues when not displayed..
+Need function to adjust overlay opacity without needing to hide/show..
+
+What to load in trey..
+video, hotkeys, check, create
+
+**OFFSET:
+_meta = 0
+video = 1
+book = 2
+--52,..
+git = 3
+error = 4
+hotkeys = 5 (53)
+ok = 6
+good = 7
+generate = 8
+find/check = 9
+create = 10
+lang = 11
+

@@ -30,6 +30,7 @@ class _meta:
     self.suggestions = []
     self.alltopics = {}
     self.topicarray = []
+    self.topichistory = [] #store past topics for context.  This is not currently used for anything but could be used for context in future functions.
     self.selectedtopic = None
     self.selectedtopicindex = None
     self.speed = 1.0
@@ -359,6 +360,9 @@ class _meta:
 
     self.selectedtopicindex = self.adjust_topic_index(selected)
     self.selectedtopic = self.topicarray[self.selectedtopicindex] if self.selectedtopicindex < len(self.topicarray) else None
+    if (len(self.topichistory) < 1 or self.selectedtopic != self.topichistory[-1]):
+      self.topichistory.insert(0, self.selectedtopic)
+
     ctxt = self.get_context(self.topicarray[self.selectedtopicindex], 5) #get context for topic
     logger.info(f'> Select Topic {sequence}')
     #get bookmark at index selected
