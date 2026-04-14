@@ -270,13 +270,29 @@ class _meta:
     self.set_qr("Time Jump", {'JUMP': jump, 'TIME': t, 'START': self.timewindow.starttime, 'END': self.timewindow.endtime})
     return 0
   
+  def time_zoom_(self, sequence=[]):
+    #list similar items based on current time window.  
+    logger.info(f'> Time Zoom_ {sequence}')
+    self.func = "Time Zoom_"
+    vars = {}
+    similar = -1
+    if (len(sequence) > 0):
+      if (sequence[-1] >= self.keybot + 12): #if we go above keybot + 12, we can show similar items based on current time window.  
+        similar = sequence[-1] - (self.keybot + 12)
+        vars['SIMILAR'] = similar
+    self.set_qr(self.func, vars)
+    return 1
+  
   def time_zoom(self, sequence=[]):
     logger.info(f'> Time Zoom {sequence}')
     zoom = 2.0 #default zoom level
+    similar = -1
     if (len(sequence) > 0):
       zoom = float(sequence[-1] - self.keybot) - 6 #use 6 keys above keybot for zoom levels, so we have some negative and positive levels.
-      if (zoom > 6):
-        zoom = 6 #for now max 64x zoom at 6 keys above keybot.
+      if (zoom >= 6): #next octave, pick from similar items if exist..
+        similar = sequence[-1] - (self.keybot + 12)
+        zoom = 0 #just use same zoom level for similar items
+
       if zoom >= 0:
         zoom = pow(2, zoom) #exponential zoom for more range. max 64x
       else:
@@ -284,7 +300,14 @@ class _meta:
     w = self.timewindow.timeZoom(zoom)
     vars = {}
     logger.info(f'$$TIMEWINDOW={w}')
-    self.set_qr("Time Zoom", {'ZOOM': zoom, 'WINDOW': w, 'TIME': self.timewindow.getTime(), 'START': self.timewindow.starttime, 'END': self.timewindow.endtime})
+    vars['ZOOM'] = zoom
+    vars['WINDOW'] = w
+    vars['TIME'] = self.timewindow.getTime()
+    vars['START'] = self.timewindow.starttime
+    vars['END'] = self.timewindow.endtime
+    if (similar >= 0):
+      vars['SIMILAR'] = similar
+    self.set_qr("Time Zoom", vars)
 
 
     return 0
@@ -370,9 +393,10 @@ class _meta:
     self.set_qr(self.func, {'context': ctxt.replace('\n', '<br>'), 'topic': self.selectedtopic})
 #    logger.info(ctxt.replace('\n', '<br>'))
     #keep track of topic history..
-    self.transcriber.write_topic(self.name, self.selectedtopic) #write topic to _meta.. to pick up in other tools.  
+    writtentopic = self.transcriber.write_topic(self.name, self.selectedtopic) #write topic to _meta.. to pick up in other tools.  
     self.transcriber.write_topic(self.selectedtopic, ctxt) #write topic context?  Get latest info for robot.. trigger read of this file..
-    self.speak(f'Selected topic {self.selectedtopic}')
+    self.speak(f'{writtentopic}')
+    self.transcript = writtentopic #set transcript here to include into midi.  Dont include context for now too much repetition..
     return 0
 
   def set_topic(self, sequence=[]):

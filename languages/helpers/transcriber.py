@@ -29,6 +29,7 @@ class transcriber:
         self.langmap = {}
         self.kg = {}
         self.allmidi = []
+        self.fuzzmap = {} #store fuzz scores for midi search to avoid redundant calculations, since we may want to sort by score later.
         self.qr_queue = qr_queue
         self.mykeys = mk
         self.mydic = {}
@@ -92,7 +93,7 @@ class transcriber:
         ret = ""
         if (topic != self.current_topic and topic is not None):                
             ret += f'**{topic}\n'
-            ret += f'$$TIME={self.getTimeString()}\n'
+#            ret += f'$$TIME={self.getTimeString()}\n'
 
             self.current_topic = topic
 
@@ -209,6 +210,34 @@ class transcriber:
         self.allcmds[lang]['end_idx'] = end_idx
         return self.allcmds[lang]['cmds'][start_idx:end_idx]
 
+    def search_midi(self, midiarray, current_time):
+        #search for similar key structures
+        similar = []
+        self.fuzzmap = {} #store fuzz scores for each item to avoid redundant calculations, since we may want to sort by score later.
+        #for now reset each time we search..
+        print(f'Searching {len(self.allmidi['midi'])} MIDI for {str(midiarray)} at time {datetime.fromtimestamp(current_time).isoformat()}')
+        lag = time.time()
+        for item in self.allmidi['midi']:
+            timestamp = item['timestamp']
+            notes = item['notes']
+            #binary levenshtein or similar between midiarray and notes, for now just check if any keys match for simplicity.
+            #search levenshtein distance and location..
+            from rapidfuzz import fuzz
+            ff = fuzz.partial_ratio_alignment(midiarray, notes)
+            self.fuzzmap[timestamp] = ff
+            #time score based on distance from current time, with a decay based on window size, so items within the window have a higher score, and items outside the window have a lower score.  could adjust this formula as needed.
+            timescore = max(0, 1 - abs(current_time - timestamp) / (self.allmidi['end_time'] - self.allmidi['start_time']).total_seconds()) 
+            timescore *= 100 #scale to 100 to match fuzz score, could adjust as needed.
+
+            #get time from timestamp and notes.  for now forgoe this calculation..
+            mystart = ff.dest_start if ff.dest_start is not None else 0
+            transcript = self.mykeys.seq2text(notes[mystart:]) if self.mykeys is not None else "" #get transcript text for these notes if possible, could be useful for display and searching later, but for now just get the keys.
+            similar.append({'timestamp': timestamp, 'notes': notes, 'transcript': transcript, 'score': ff.score * 0.8 + timescore * 0.2, 'start': ff.dest_start}) #combine fuzz score and time score, with weights of 0.7 and 0.3 respectively, could adjust as needed.
+        
+        similar.sort(key=lambda x: x['score'], reverse=True)
+        print(f'LAG: {time.time() - lag} seconds to search MIDI')        
+        return similar[:10] #return first 10 top 10 for now, could adjust as needed.
+
     def play_midi(self, midi_data, act=True, speed=1.0, volume=1.0):
         #for now just print the notes with timing.  
         if self.mykeys is None:
@@ -222,10 +251,11 @@ class transcriber:
             for msg in msgs:
                 if ('type' in msg and (msg.type == 'note_on' or msg.type == 'note_off')):
                     self.mykeys.key(msg.note, msg, None, doact=act)
-                    qrdata = self.mykeys.get_qr()
-                    if (qrdata is not None and qrdata != ""):
-                        #only do this if necessary, too much processing..
-                        self.qr_queue.put(qrdata)
+                    if (act):
+                        qrdata = self.mykeys.get_qr()
+                        if (qrdata is not None and qrdata != ""):
+                            #only do this if necessary, too much processing..
+                            self.qr_queue.put(qrdata)
         #mykeys.words should include all words..
 
     def read_midi(self, start_time=None, end_time=None):
@@ -261,7 +291,7 @@ class transcriber:
                         mid = mido.MidiFile(folder + f)
                         for msg in mid:
                             msgs.append(msg)
-                            if ('type' in msg and msg.type == 'note_on'):
+                            if (hasattr(msg, 'type') and msg.type == 'note_on'):
                                 notes.append(msg.note) #no time/velocity for simplicity in searching..
 
                     except Exception as e:
@@ -270,11 +300,12 @@ class transcriber:
                         
                     last_time = ctime
                     numloaded += 1
-                    ret.append({'timestamp': ctime, 'notes': notes, 'msgs': msgs})
+                    ret.append({'timestamp': round(ctime), 'notes': notes, 'msgs': msgs})
 
         logger.info(f'MIDI Loaded {numloaded} files')
         self.allmidi = {'midi': ret, 'start_time': start_time, 'end_time': end_time}
-        self.play_midi(ret, act=False) #get words without acting on them, to associate with midi data.
+        #maybe want to play these back in order to associate with words in the transcript, but for now just load and search as needed.  could also do some processing here to extract any text info from the midi files if available, but for now just get the keys and timestamps.
+#        self.play_midi(ret, act=False) #get words without acting on them, to associate with midi data.
             
         """
         #filter for lang here potentially..

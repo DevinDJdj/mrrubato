@@ -574,6 +574,7 @@ class video:
           opacity = opacity / 100.0
           self.opacity = opacity
           vars['OPACITY'] = opacity
+          vars['HIDE'] = 'False'
 
     self.set_qr(self.func, vars)
     return 0

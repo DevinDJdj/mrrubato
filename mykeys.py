@@ -152,6 +152,8 @@ class MyKeys:
 
     self.keystruct = {}
     self.qrin = [] #qr inputs
+    self.qr = "" #qr output.  This is what is sent to the app.  Languages can set this to send messages to the app.
+
 #    self.qrinmem = SharedMemory(name="mykeys") #shared memory for qrin if needed.
 #    self.qroutmem = None #shared memory for qrout if needed.
 
@@ -338,6 +340,14 @@ class MyKeys:
           ret += str(k) + ","
     return ret
   
+  def set_qr(self, func, param={}):
+    """Set QR."""
+    self.qr = "> " + func + "\n"
+    for k,v in param.items():
+        self.qr += f"$${k}={v}\n"
+    self.qr += "$$\n"
+    return 0  
+
   def get_qr(self):
     qr = ""
     for (l,la) in self.languages.items():
@@ -399,6 +409,9 @@ class MyKeys:
       keys = self.convert_keys(w['keys'])
       qr += f"~~{i} | {w['word']} | {keys} \n" #br working for line breaks..
     #output info about potential keys here.  
+
+    qr += self.qr
+    self.qr = "" #reset qr after getting it.
 
     return qr
   
@@ -480,7 +493,25 @@ class MyKeys:
       if word != "":
         return word, l, la
     return "", "", None
-      
+
+  def tock(self):
+    #compare transcript to past midi sequences.  
+    vars = {}
+    vars['TIME'] = int(time.time())
+    vars['type'] = '_meta'
+    vars['MIDI'] = self.get_midiarray(10) #last 10 notes for now.
+    print(f'Tock {vars}')
+    self.set_qr("Tock", vars) #last 10 notes for now.
+
+  def get_midiarray(self, num=10):
+    mytrack = self.mid.tracks[self.currentchannel][-num*2:] #get last num notes, note on and note off.
+    midiarray = []
+    for msg in mytrack:
+#      print(msg)
+      if (hasattr(msg, 'type') and (msg.type == 'note_on')):
+        midiarray.append(msg.note)
+    return midiarray
+
   def takeaction(self, cmd, l, ss, callback=None, doact=True):
     #take action based on action returned from language.  
     #pass words as well.  
@@ -546,6 +577,10 @@ class MyKeys:
         self.words_[-1]['transcript'] = mytext
 
       synth.play_synth(localseq, action) #play failed sequence
+      self.languages[l].transcript = "" #reset local transcript after adding to midi.
+
+      self.tock()
+
       return self.sequence
 #      self.reset_sequence()
 #      self.currentcmd = None
@@ -808,6 +843,7 @@ class MyKeys:
             if (self.currentcmd == scmd):
               self.reset_sequence()
               #command completed.  
+              #need to expand this I guess to include more info..
             #last command succeeds.  retrigger without this sequence.  
             #remove ss from end of sequence instead of resetting everything.  
             if (len(self.sequence) > 0):

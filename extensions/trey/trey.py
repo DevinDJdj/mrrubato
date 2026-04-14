@@ -7,6 +7,7 @@
 
 
 #standard libraries
+import json
 import logging
 import os
 import time
@@ -1091,12 +1092,13 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
         if (idx ==len(lines)-1):
             print('Finished reading all lines.')
             #go back to start?  
-            skip = get_first_content_line(link_density_map)
-            idx = skip #will be incremented to skip on next loop
-            total_read = 0
-            for i in range(skip):
-                total_read += len(lines[i]) + 1 #include newline            
-            skip = 0
+            if (len(lines) > 20):
+                skip = get_first_content_line(link_density_map)
+                idx = skip #will be incremented to skip on next loop
+                total_read = 0
+                for i in range(skip):
+                    total_read += len(lines[i]) + 1 #include newline            
+                skip = 0
 
 #    os.system(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --file \"{tts_file}\" --rate=\"-10%\"")
 #    time.sleep(2) #wait for file to be written
@@ -1703,11 +1705,17 @@ class MyWindow(QMainWindow):
 
 
             case "Screen Toggle":
+                tohide = vars.get('HIDE', 'True')
                 if (self.isVisible()):
                     #remove stale info?  
-                    self.hide()                
-                    #pause OBS capture.
-                    pause_obs_capture()
+                    if (tohide == 'True'):
+                        self.hide()                
+                        #pause OBS capture.
+                        pause_obs_capture()
+                    else:
+                        op = self.get_setting('OPACITY', 0.4, lang)
+                        op = float(vars.get('OPACITY', op))
+                        self.setWindowOpacity(op)
                 else:
                     op = self.get_setting('OPACITY', 0.4, lang)
                     op = float(vars.get('OPACITY', op))
@@ -1792,15 +1800,40 @@ class MyWindow(QMainWindow):
             case "_Click Link":
                 self.show()
                 #simulate click at link location if given.
+            case "Time Zoom_":
+                #zoom in or out around a time point.
+                #preview info about this time..
+                #update the main display with this?  
+                i = 0
+                similar = int(vars.get('SIMILAR', -1))
+                if (similar != -1):
+                    if (len(self.similar) >= similar):
+                        t = int(self.similar[similar]['timestamp']) #get time of this item
+                        self.show_tmap(t)
+                        for (idx, item) in enumerate(self.similar):
+                            vars[f'{idx}'] = f'{item["timestamp"]}  {item["transcript"][:50]}'
+                        self.show_p({'cmd': command, 'vars': vars, 'timestamp': time.time()})
+
+                        self.update_info(f'{t}\n{self.similar[similar]["transcript"]}')
+#                        self.showQR(qrdata, cmds) #refresh QR display
+
             case "Time Jump" | "Time Zoom":
                 t = float(vars.get('TIME', time.time()))
                 w = float(vars.get('WINDOW', 86400)) #default 1 day
                 s = float(vars.get('START', t-w/2))                              
                 e = float(vars.get('END', t+w/2))
-                self.add_setting('TIME', t, lang)
-                self.add_setting('WINDOW', w, lang)
-                self.set_time(t, s, e, w)
-                print("Time Jump to: " + str(t) + " Start: " + str(s) + " End: " + str(e) + " Window: " + str(w))
+                similar = int(vars.get('SIMILAR', -1))
+                if (similar != -1):
+                    if (len(self.similar) >= similar):
+                        #show info about this item, or jump to this time..  
+                        t = int(self.similar[similar]['timestamp']) #get time of this item
+                        self.set_time(t, s, e, w)
+                        print(f"Similar items: {similar}")
+                else:
+                    self.add_setting('TIME', t, lang)
+                    self.add_setting('WINDOW', w, lang)                
+                    self.set_time(t, s, e, w)
+                    print("Time Jump to: " + str(t) + " Start: " + str(s) + " End: " + str(e) + " Window: " + str(w))
                 #set time locally.  
                 #simulate click at link location if given.
             case "Set Speed":
@@ -1817,9 +1850,22 @@ class MyWindow(QMainWindow):
                 self.play_tmap(int(speed)) #play next item in tmap
 
             case "Tock":
+                type = vars.get('type', 'video')
                 speed = self.get_setting('SPEED', 1.0, lang)
                 #jump backward by tick amount.
-                self.play_tmap(int(-speed)) #play previous item in tmap
+                if (type == 'video'):
+                    self.play_tmap(int(-speed)) #play previous item in tmap
+                elif (type == '_meta'):
+                    #get trigger search of current recent key structure to other midi keys in transcriber..
+                    current_time = int(vars.get('TIME', time.time()))
+                    #rapidfuzz search for similar key structures in all midi in transcriber.  
+                    midiarray = json.loads(vars.get('MIDI', "[]")) #load from string again..
+                    print(f"<<{lang}>>\n$$MIDI=" + str(midiarray))
+                    similar = self.transcriber.search_midi(midiarray, current_time)
+                    print(f"<<{lang}>>\n$$SIMILAR=" + json.dumps(similar))
+                    #what to do with this?  
+                    #save it and show in QR?  
+                    self.similar = similar
                 
             case "Select Topic":
                 topic = vars.get('topic', 'None')
@@ -2153,6 +2199,7 @@ class MyWindow(QMainWindow):
         self.windows = {} #current windows by pid, updated by window thread.
         self.myactions = [] #list of current actions to display, updated by QR commands.
         self.trey_data = {} #current data to display, updated by QR commands and transcription.
+        self.similar = [] #current similar items to display, updated by QR commands and transcription.
 
         #rerunning with this may require separate queue, or indicator for rerun in the data.  For now same..
         self.transcriber = transcriber.transcriber(self, mykeys.MyKeys(config.cfg), self.queue) #maybe want different queue..
@@ -3003,7 +3050,7 @@ class MyWindow(QMainWindow):
       for i, l in enumerate(struct):
         type = l['type']
         if (type == '> '):
-          if (l['cmd'] == 'Click Link_' or l['cmd'] == 'Select Topic_'): 
+          if (l['cmd'] == 'Click Link_' or l['cmd'] == 'Select Topic_' or l['cmd'] == 'Time Zoom_'): 
             cnt = 0       
             for k, v in l['vars'].items():
 #                if (wbarray[i%len(wbarray)] == 0):
@@ -3047,16 +3094,19 @@ class MyWindow(QMainWindow):
           return True
       return False
     
+    def update_info(self, data):
+        self.label_info.setText(data.replace('\n', '<br>'))
+        self.label_info.adjustSize()
+        self.label_info.update()
+
     def showQR(self, data, struct=[]):
         """Method to show a QR code."""
 #        logger.info('Showing QR code')
         #adjust readable text first..
         #check for last last command is it list_bookmarks.  
         self.show_p(struct)
+        self.update_info(data)
 
-        self.label_info.setText(data.replace('\n', '<br>'))
-        self.label_info.adjustSize()
-        self.label_info.update()
         qrdata = data
         #if we need to truncate
         print(f'QR data length: {len(qrdata)}')

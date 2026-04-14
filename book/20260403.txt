@@ -471,3 +471,21 @@ find/check = 9
 create = 10
 lang = 11
 
+**extensions/trey/trey.py
+Need ability to adjust overlay OPACITY without removing overlay..
+test..
+
+
+**mykeys.py
+Word completion trigger rapidfuzz on last sequence of midi.  
+Just use that word with params for now.  
+Then trigger for past several words.  
+Use track mid..
+
+Use transcript and midi sequence, compare both..
+transcript just compares spoken content..
+midi includes spoken content as well as command structure..
+
+See if tock works..
+
+What to store in transcript??
