@@ -488,4 +488,40 @@ midi includes spoken content as well as command structure..
 
 See if tock works..
 
-What to store in transcript??
+What else to store in transcript??
+
+
+**quickvector
+#https://en.wikipedia.org/wiki/Longest_common_subsequence
+> pip install rapidfuzz
+  from rapidfuzz import fuzz
+  ff = fuzz.partial_ratio_alignment(midiarray, notes)
+
+[53,50,52,53,53]
+
+> .\treyenv\Scripts\activate
+
+**extensions/trey/speech.py
+Need better math symbol TTS.  
+For now just substitute annoying stuff..
+--substitute_tts
+Still not really working..
+
+Read line no after skip..
+
+**extensions/trey/trey.py
+Switch speak to use this shared function..
+test..
+
+
+**extensions/vscode/codetutor/src/extension.ts
+Monitor
+<<hotkeys>>Record Feedback
+And add to end of current day book with selected topic..
+Should be same..
+
+OK, kind of working..
+
+Need to find incorrect current topic selection on load..
+Both trey and codetutor..
+Selecting 1 month prior date..

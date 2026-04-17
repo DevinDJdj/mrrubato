@@ -33,6 +33,8 @@ class transcriber:
         self.qr_queue = qr_queue
         self.mykeys = mk
         self.mydic = {}
+        self.typedefmap = {}
+
         self.allneedles = []
         self.current_topic = None
         self.current_context = None
@@ -93,7 +95,7 @@ class transcriber:
         ret = ""
         if (topic != self.current_topic and topic is not None):                
             ret += f'**{topic}\n'
-#            ret += f'$$TIME={self.getTimeString()}\n'
+            ret += f'$$TIME={self.getTimeString()}\n'
 
             self.current_topic = topic
 
@@ -391,6 +393,8 @@ class transcriber:
         return command, seq
     
 
+
+        
     def read_lines(self, lang, lines, last_time=None, mtime=None):
         ret = []
         currentcmd = ""
@@ -425,6 +429,7 @@ class transcriber:
                 #get days since last file mod time.  
                 self.current_topic = line[2:].strip() #update current topic to this topic. then get_cmd with new topic.
                 topc = self.get_cmd(lang, type, line[2:].strip(), {'TIME': now.strftime('%Y%m%d_%H%M%S')})
+                logger.info(f'Adding topic {topc["cmd"]} with vars {topc["vars"]}')
                 ret.append(topc)
                 currenttopc = topc
             else:
@@ -481,6 +486,7 @@ class transcriber:
 
         if (currentcmd != "" and currentcmdobj is not None):
             ret.append(currentcmdobj)
+            print(f'Adding final command {currentcmd} with vars {vars}')
 
         self.update_kg(ret)
         return ret
@@ -556,7 +562,7 @@ class transcriber:
 
         sorted_files = sorted(files, key=lambda f: os.path.getmtime(os.path.join(folder, f))) #sort by modification time, oldest first.  could also sort by creation time if needed.
         numloaded = 0
-        print('Reading transcripts from:')
+        print(f'Reading {lang} transcripts from:')
         print(sorted_files)
         ret = []
         currentcmd = ""
@@ -580,8 +586,12 @@ class transcriber:
                     with open(folder + f, encoding='utf-8') as ff:
                         self.current_topic = f[:-4] #file name without extension
                         lines = ff.readlines()
+                        if (len(lines) < 2):
+                            continue
                         test = self.read_lines(lang, lines, last_time, mtime)
-                        ret.extend(test)                        
+                        ret.extend(test) 
+                        logger.info(f)                       
+                        logger.info(test)
                 except Exception as e:
                     logger.error(f'!!> Read [{f}]\n !!{e}\n')
 

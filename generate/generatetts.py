@@ -66,6 +66,8 @@ import sys
 sys.path.insert(0, 'c:/devinpiano/') #config.json path
 sys.path.insert(1, 'c:/devinpiano/music/') #config.py path Base project path
 
+import extensions.trey.speech as speech
+
 def play_kokoro(text="", fname="kokoro.wav"):
 
     """
@@ -101,8 +103,12 @@ def play_in_background(text, engine='edge-tts'):
 #    pygame.mixer.music.play()
 
 
-def generate_line(text, idx, voice, vol, speed, cacheno=-1, engine='kokoro-tts'):
+def generate_line(text, idx, voice, vol, speed, cacheno=-1, engine='kokoro-tts', combined=False):
+
     sound_file = f"./temp/{cacheno}/{idx}.wav"
+    if (combined == True):
+        sound_file = f"./temp/{cacheno}/{idx}_combined.wav"
+        speed = 0.8 #slow down combined lines a bit more to make them more intelligible.  This is a bit hacky but should work for now.
     subtitle_file = f"./temp/{cacheno}/{idx}.srt"
     lesc = text.replace('"', '\\"')
 
@@ -129,7 +135,6 @@ if (__name__ == "__main__"):
     #fast not working..
 
     args = parser.parse_args()    
-    import extensions.trey.speech as speech
 
 #    thread1 = threading.Thread(target=speech.speak, args=(f'{args.text}',f'{args.fname}',f'{args.voice}',args.vol,args.speed,'kokoro-tts'))
     if (args.infile is not None and args.infile != "" and os.path.exists(args.infile)):
@@ -143,16 +148,33 @@ if (__name__ == "__main__"):
         exit(0)
 
     print(f"Generating TTS for {len(lines)} lines with voice {args.voice} at volume {args.vol} and speed {args.speed} using engine {args.engine}...")
+    temptext = ""
     for idx, l in enumerate(lines):
         if (idx <= args.skip or idx > len(lines)-1): #dont generate unneeded tts if we are skipping lines.  This is a bit hacky but should work for now.
             continue
         l = lines[idx]
-
-        generate_line(l, idx, args.voice, args.vol, args.speed, args.cacheno, args.engine)    
+        combined = False
+        if (len(l) > 10 or len(temptext) > 20):
+            if (temptext != ""):
+                combined = True
+                l = l + " " + temptext
+                temptext = ""
+            generate_line(l, idx, args.voice, args.vol, args.speed, args.cacheno, args.engine, combined)    
+        else:
+            temptext += " " + l
     print("Starting on skipped lines...")
+    temptext = ""
     for (idx, l) in enumerate(lines[:args.skip]):
-
-        generate_line(l, idx, args.voice, args.vol, args.speed, args.cacheno, args.engine)    
+        l = lines[idx]
+        combined = False
+        if (len(l) > 10 or len(temptext) > 20):            
+            if (temptext != ""):
+                combined = True
+                l = l + " " + temptext
+                temptext = ""
+            generate_line(l, idx, args.voice, args.vol, args.speed, args.cacheno, args.engine, combined)    
+        else:
+            temptext += " " + l 
     print("TTS generation complete.")
     exit(0)
 #    thread1.start()

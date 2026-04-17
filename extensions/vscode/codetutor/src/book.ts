@@ -618,6 +618,7 @@ export function select(topic: string, open: number = opennature) : boolean {
     return false;
 
 }
+
 export function pickTopic(selectedtopics : string[], defaultprompts: string[] = [], numtopics: number = 10, extendtopics: boolean = false) : [string, string] {
     //pick a topic from the topicarray based on the sort order.
     //still need to improve when we have no selected topics.  
@@ -985,7 +986,7 @@ export function updatePage(filePath: string, text: string, linefrom: number = 0,
                     }
                     else{
                         //still go back to previous editor?  maybe not just boolean for more possibilities.
-                        vscode.commands.executeCommand("workbench.action.openPreviousRecentlyUsedEditor");                         
+//                        vscode.commands.executeCommand("workbench.action.openPreviousRecentlyUsedEditor");                         
                     }
                 });
             });

@@ -718,9 +718,10 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
         VOICES = ["en-US-AriaNeural", "en-US-CoraNeural", "en-US-ElizabethNeural", "en-US-AshleyNeural", "en-US-AvaNeural", "en-US-BrandonNeural", "en-US-BrianNeural", "en-US-EmmaNeural", "en-US-EricNeural"]
 #    VOICE = "en-US-AriaNeural"
     #for now random.  
-    rnd = int(time.time()) % len(VOICES)
+    rnd = int(time.time()) % 2
     VOICE = VOICES[rnd]
-    LINKVOICE = VOICES[(rnd+1) % len(VOICES)]
+    logger.info(f'$$VOICE={VOICE}')
+    LINKVOICE = VOICES[(rnd+2) % len(VOICES)]
     rnd = int(time.time() * 1.3) % len(VOICES)
     SIMVOICE = VOICES[rnd]
     #en-US-AshleyNeural 
@@ -780,6 +781,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
     playsoundprocess = None
     total_read = 0
     link_loc = 0
+    temptext = ""
     while (link_loc < len(links) and 'offset' in links[link_loc] and links[link_loc]['offset'] == -1):
         link_loc += 1
         #skip all links with no offset
@@ -884,6 +886,12 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
             print(f'>> Skipmenu [{idx}, {skip}]')
 #            winsound.Beep(3000, 100) #beep to start
             synth.play_synth([50,62,74], 12)
+        if (skip != 0):
+            sound_file = f"./temp/{cacheno}/skip.wav"
+            temp = f'At Line {idx} of {len(lines)}, skipping {skip} lines'
+            print(f'Skipping lines [{idx}, {skip}]')
+            tts.speak(temp, VOICE, sound_file)
+
         if (skip > 0):
             if (idx + skip >= len(lines)):
                 skip = len(lines) - idx - 2
@@ -926,8 +934,14 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
                 combined_counter = 0
                 combined = ""
 
-        if (len(l) > 5):
+        if (len(l) > 10) or len(temptext) > 20:
             try:
+                if (temptext != ""):
+                    l = temptext + " " + l
+                    temptext = ""
+                    sound_file = f"./temp/{cacheno}/{idx}_combined.wav"
+                else:
+                    sound_file = f"./temp/{cacheno}/{idx}.wav"
     #            communicate = edge_tts.Communicate(text, VOICE)
     #            await communicate.save(sound_file)
                 #play the line type info first
@@ -938,7 +952,6 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
                     vol = 1.0
                     rate = 1.0
 
-                sound_file = f"./temp/{cacheno}/{idx}.wav"
                 if (os.path.exists(sound_file)):
                     print(f'Playing pre-generated audio: {sound_file}')
                     currentsound = playsound(sound_file, block=False) # Ensure this thread blocks for its sound
@@ -950,7 +963,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
 #                    suc = os.system(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --text \"{lesc}\" --write-subtitles \"{subtitle_file} --rate=\"-10%\" > NUL 2>&1")
 #                    suc = speech.speak(l, sound_file, VOICE, vol, rate)
                     suc = ""
-                    if (torch.cuda.is_available() and False): #otherwise too slow..
+                    if (torch.cuda.is_available() and False): #too slow generating real-time..
                         #suc = speech.speak_cmd(lesc, sound_file, VOICE, vol, rate)
                         print("speaking with kokoro tts...")
                         suc = speech.speak(lesc, sound_file, VOICE, vol, rate)
@@ -972,7 +985,8 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
                 print(f'Error in TTS playback: {e}')
                 total_read += len(l) + 1 #include newline
                 continue
-
+        else:
+            temptext += " " + l
 
         if random.randint(0,100) < 5:
             print(f'Total read: {total_read}')
@@ -1095,6 +1109,8 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
             if (len(lines) > 20):
                 skip = get_first_content_line(link_density_map)
                 idx = skip #will be incremented to skip on next loop
+                if (idx > len(lines)-5):
+                    idx -= 5
                 total_read = 0
                 for i in range(skip):
                     total_read += len(lines[i]) + 1 #include newline            
@@ -1716,6 +1732,7 @@ class MyWindow(QMainWindow):
                         op = self.get_setting('OPACITY', 0.4, lang)
                         op = float(vars.get('OPACITY', op))
                         self.setWindowOpacity(op)
+                        self.add_setting('OPACITY', op, lang)
                 else:
                     op = self.get_setting('OPACITY', 0.4, lang)
                     op = float(vars.get('OPACITY', op))
@@ -1914,6 +1931,9 @@ class MyWindow(QMainWindow):
     def show_mrroboto(self):
         """Bring MrRoboto to the front if not already."""
         #get all windows, find mrroboto window and bring to front.  
+
+        self.get_window_info() #update window info first.
+
         for pid, w in self.windows.items():
             logger.debug(f'Checking window for MrRoboto: {w["title"]}')
 
@@ -2415,7 +2435,7 @@ class MyWindow(QMainWindow):
         t = threading.Timer(10, _hide, args=["Hello from Timer!"])
         t.start()  # Start the timer in a new thread
         logger.info('Window created')
-        self.read(['hotkeys', 'video'], None, None) #initial read of all data, can be filtered by time later.
+        self.read(['hotkeys'], None, None) #initial read of all data, can be filtered by time later.
 
         self.runQRThread() #
         self.runQRInThread() #start thread to detect incoming QR data from other apps or locations..
@@ -2540,6 +2560,7 @@ class MyWindow(QMainWindow):
         return topz
     
     def get_window_info(self):
+        self.windows = {} #reset windows, will be updated by callback.  This is to remove windows that are closed or no longer in trey area.
         if ('rect' not in self.trey_data):
             win32gui.EnumWindows(self.window_list_callback, None)    
 
@@ -2872,7 +2893,7 @@ class MyWindow(QMainWindow):
 
         print(f"Current time: {current_time}, Time window seconds: {secs}")
         sorted_tmap = sorted(self.tmap, key=lambda x: abs(x['timestamp'] - current_time))
-        print(f"Sorted tmap: {sorted_tmap}")
+#        print(f"Sorted tmap: {sorted_tmap}")
         sorted_indices = sorted(range(len(self.tmap)), key=lambda i: abs(self.tmap[i]['timestamp'] - current_time))
         print(f"Sorted indices: {sorted_indices}")
         if (len(sorted_indices) > 0):
@@ -2880,12 +2901,16 @@ class MyWindow(QMainWindow):
             maintext = []
             for i in range(len(sorted_tmap)):
                 #compare to current time, and select if within current time window.  
-                if (len(maintext) < 3):
-                    maintext.append({'timestamp': sorted_tmap[i]['timestamp'], 'text': self.transcriber.write(sorted_tmap[i]['lang'], sorted_tmap[i]['cmd'], sorted_tmap[i]['vars'], False)})
-                    self.transcriber.current_topic = sorted_tmap[i]['cmd']
+                if (len(maintext) < 3 and sorted_tmap[i]['type'] == '> '): #only show commands for now.. no topic selection
+#                    self.transcriber.current_topic = sorted_tmap[i]['cmd'] #dont need topic to be updated..
+                    maintext.append({'topic': sorted_tmap[i]['topic'], 'timestamp': sorted_tmap[i]['timestamp'], 'text': self.transcriber.write(sorted_tmap[i]['lang'], sorted_tmap[i]['cmd'], sorted_tmap[i]['vars'], False)})
+
             maintext = sorted(maintext, key=lambda x: x['timestamp'])
+            print(maintext)
             for i in range(len(maintext)):
-                self.label_main[i].setText(maintext[i]['text'].replace('\n', '<br>'))
+#                if (temptext[0:2] != '**'):
+                temptext = f'**{maintext[i]["topic"]}\n{maintext[i]["text"]}' #add topic as header if not already included, can adjust formatting as needed.
+                self.label_main[i].setText(temptext.replace('\n', '<br>'))
                 self.label_main[i].update()
 
 
@@ -2940,7 +2965,7 @@ class MyWindow(QMainWindow):
 
 
 
-    def read(self, langs=['hotkeys', 'video'], start_time=None, end_time=None):
+    def read(self, langs=['hotkeys'], start_time=None, end_time=None):
         combined = []
 
         for lang in langs:
@@ -2980,14 +3005,15 @@ class MyWindow(QMainWindow):
         #only read if start/end change..
         if (datetime.fromtimestamp(s) < self.transcriber.allcmds['hotkeys']['start_time'] or datetime.fromtimestamp(e) > self.transcriber.allcmds['hotkeys']['end_time']):
             logger.info(f'Time range {datetime.fromtimestamp(s)} to {datetime.fromtimestamp(e)} is out of bounds for available data.')
-            b = self.read(['hotkeys', 'video'], datetime.fromtimestamp(s), datetime.fromtimestamp(e))
+            b = self.read(['hotkeys'], datetime.fromtimestamp(s), datetime.fromtimestamp(e))
             self.set_tmap(b, t)
+            logger.info(b)
             self.transcriber.read_midi(datetime.fromtimestamp(s), datetime.fromtimestamp(e)) #only when starttime or endtime is out of bounds, otherwise we are just filtering existing data in memory, so no need to reread midi data.
 
         elif (datetime.fromtimestamp(s) > self.transcriber.allcmds['hotkeys']['start_time'] or datetime.fromtimestamp(e) < self.transcriber.allcmds['hotkeys']['end_time']):
             logger.info(f'Time range {datetime.fromtimestamp(s)} to {datetime.fromtimestamp(e)} is within bounds for available data.')
             #just filter by updated start/end
-            b = self.read(['hotkeys', 'video'], datetime.fromtimestamp(s), datetime.fromtimestamp(e))
+            b = self.read(['hotkeys'], datetime.fromtimestamp(s), datetime.fromtimestamp(e))
 
             self.set_tmap(b, t)
         else:

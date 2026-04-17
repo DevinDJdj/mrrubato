@@ -339,7 +339,7 @@ function activate(context) {
     (0, toolParticipant_1.registerCompletionTool)(context);
     (0, toolParticipant_1.registerStatusBarTool)(context);
     (0, toolParticipant_1.startWatchingWorkspace)(context); //watch for changes to book.  
-    (0, toolParticipant_1.startWatchingTranscriber)('hotkeys');
+    (0, toolParticipant_1.startWatchingTranscriber)('hotkeys'); //get record feedback..
     (0, toolParticipant_1.startWatchingTranscriber)('video');
     (0, toolParticipant_1.startWatchingTranscriber)('_meta'); //get all topic changes..
     TerminalWorker.addClosedTerminalListener();

@@ -10,7 +10,7 @@ export var topichistory = [];
 export var cmdhistory = [];
 
 var current_lang = "_meta";
-var current_topic = "NONE";
+export var current_topic = "NONE";
 var current_cmd = "";
 
 

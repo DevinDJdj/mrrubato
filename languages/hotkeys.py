@@ -766,7 +766,7 @@ class hotkeys:
         tr = playwrighty.update_page_offset()
 #        tr -= (lag * 11) #assume 12 chars per second read. this is our timer.. 
 
-        textduration = duration*3 #some extra lag here.  
+        textduration = int(duration*3) #some extra lag here.  
 
         #too much lag to be accurate at the moment.  Maybe get better info with longer transcript..
         url = playwrighty.get_url(-1)      
@@ -819,7 +819,7 @@ class hotkeys:
               vars['FILE'] = fname
             shutil.copy('feedback.wav', fname) #keep a copy for training..
             self.transcriber.write(self.name, "Record Feedback", vars)  
-
+            self.set_qr("Record Feedback", vars) #update QR with feedback data for debugging and record keeping.
           except Exception as e:
             print(f'Error writing feedback file: {e}')
         else:
@@ -886,7 +886,7 @@ class hotkeys:
     q2, q3, stop_event = self.speak(body_text, link_data, playwrighty.page_cache[cacheno]['alt_text'], total_read, cacheno=cacheno)
     playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
     logger.info(f'$$CACHENO={cacheno}')
-    self.transcript = "" #reset transcript..
+    #self.transcript = "" #reset transcript.. cant do here..
 
 
     return 0

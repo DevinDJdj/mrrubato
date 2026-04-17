@@ -892,7 +892,7 @@ function updatePage(filePath, text, linefrom = 0, lineto = 0, show = false) {
                     }
                     else {
                         //still go back to previous editor?  maybe not just boolean for more possibilities.
-                        vscode.commands.executeCommand("workbench.action.openPreviousRecentlyUsedEditor");
+                        //                        vscode.commands.executeCommand("workbench.action.openPreviousRecentlyUsedEditor");                         
                     }
                 });
             });

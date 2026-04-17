@@ -371,7 +371,7 @@ export function activate(context: vscode.ExtensionContext) {
 	registerCompletionTool(context);
 	registerStatusBarTool(context);
 	startWatchingWorkspace(context); //watch for changes to book.  
-	startWatchingTranscriber('hotkeys');
+	startWatchingTranscriber('hotkeys'); //get record feedback..
 	startWatchingTranscriber('video');
 	startWatchingTranscriber('_meta'); //get all topic changes..
 

@@ -30,6 +30,9 @@ import subprocess
 
 import extensions.trey.synth as synth
 
+import extensions.trey.tts as tts
+
+
 
 import logging
 
@@ -746,25 +749,109 @@ def get_kokoro_pipeline():
     print(f"Kokoro pipeline loaded.")
     return kokoro_pipeline
 
+#hack for math right now..
+#use for markdown substitution as well..
+replace_dict = {
+    '𝐿': 'L',    
+    '𝑋': 'X',
+    '𝑌': 'Y',
+    '𝑍': 'Z',
+    '𝑎': 'alpha',
+    '𝑏': 'beta',
+    '𝑐': 'gamma',
+    '𝑑': 'delta',
+    '𝑒': 'epsilon',
+    '𝑖': 'i',
+    '𝑗': 'j',
+    '𝑘': 'k',
+    '𝑙': 'l',
+    '𝑚': 'm',
+    '𝑛': 'n',
+    '′': 'prime',
+    '(': 'open',
+    ')': 'close',
+    '+': 'plus',
+    '-': 'minus',
+    '≠': 'not equal to',
+    '≥': 'greater than or equal to',
+    '≤': 'less than or equal to',
+    '±': 'plus or minus',
+    '∑': 'sum',
+    '∏': 'product',
+    '∫': 'integral',
+    '∂': 'partial derivative',
+    '𝑥': 'x',
+    '𝑦': 'y',
+    '𝑧': 'z',
+
+
+}
+
+defstring = "~!@#$%^&*<>/:;-+="
+
+typedefmap = [{"#": "REF",">": "CMD", "-": "SUBTASK", "@": "USER"}, 
+    {"##": "REF", "**": "TOPIC", "@@": "QUESTION", "->": "DGRAPH", "--": "NOTE", "==": "ANSWER", "$$": "ENV", "!!": "ERROR", "%%": "WORKER"}, 
+    {"-->": "ENDCOMMENT", "!--": "ERRORNOTE" }, 
+    {"<!--": "STARTCOMMENT"}]
+
+
+def replace_all(text, dic):
+    # Create a regex pattern from dictionary keys
+    pattern = re.compile("|".join(re.escape(key) for key in dic.keys()))
+    # Use a lambda to return the value for each match
+    return pattern.sub(lambda m: dic[m.group(0)], text)
+
+def substitute_tts(text):
+    #substitute TTS for certain keywords.  This is a bit hacky but should work for now.  
+
+    #create synth file which can be played at the same time as TTS.  
+    #really want to modify the TTS engine..
+    text = replace_all(text, replace_dict)
+
+    return text
+
+    
+def get_type(text):
+    #reverse iterate
+    #get length of typed in defstring
+    length = 0
+    for c in text:
+        if c in defstring:
+            length += 1
+        else:
+            break
+    for (i, typedef) in enumerate(reversed(typedefmap)):
+        maplength = len(typedefmap[0])
+        if (length >= maplength):
+            if (text[0:length] in typedef):
+                return typedef[text[0:length]]
+    return ""
+    
+
 def speak(text="", fname="example_tts.wav", voice='af_heart', vol=1.0, speed=1.0, engine='kokoro-tts'):
     # Initialize pipeline (lang_code 'a' for American English)
     try:
-        pipeline = get_kokoro_pipeline()
-        if (text == ""):
-            text = "Kokoro is a lightweight and natural text-to-speech model."
+        text = substitute_tts(text)
+        text = get_type(text) + " " + text #prepend type for some addl info
+        if (engine == 'kokoro-tts'):
+            pipeline = get_kokoro_pipeline()
+            if (text == ""):
+                text = "Kokoro is a lightweight and natural text-to-speech model."
 
 
-        # Generate and save audio
-        os.makedirs(os.path.dirname(fname), exist_ok=True)
-        generator = pipeline(text, voice=voice, speed=speed)
-        with sf.SoundFile(fname, mode='w', samplerate=24000, channels=1) as f:
-            for i, (gs, ps, audio) in enumerate(generator):
-    #            sf.write(f'kokoro_{i}.wav', audio, 24000)    
-                f.seek(0, sf.SEEK_END)  # Move to the end of the file for appending
-                adjusted_data = (audio * vol)
-                f.write(adjusted_data)  # Append the adjusted audio data to the file
-        print(f"Audio saved to '{fname}'")
-        return fname #return first segment for now
+            # Generate and save audio
+            os.makedirs(os.path.dirname(fname), exist_ok=True)
+            generator = pipeline(text, voice=voice, speed=speed)
+            with sf.SoundFile(fname, mode='w', samplerate=24000, channels=1) as f:
+                for i, (gs, ps, audio) in enumerate(generator):
+        #            sf.write(f'kokoro_{i}.wav', audio, 24000)    
+                    f.seek(0, sf.SEEK_END)  # Move to the end of the file for appending
+                    adjusted_data = (audio * vol)
+                    f.write(adjusted_data)  # Append the adjusted audio data to the file
+            print(f"Audio saved to '{fname}'")
+            return fname #return first segment for now
+        else:
+            tts.speak(text, voice, fname, vol, speed*120)
     except Exception as e:
         print(f"Error in speak function: {e}")
         return ""

@@ -751,7 +751,10 @@ class MyKeys:
         #if we find a new command, we switch to that command.
         #currently not sure if we are coming out of this loop correctly.  
         #need more complex command structure before it is meaningful to check this.  
-        word, l, la = self.findword(self.sequence[self.startseqno:])
+        #in most cases, just use A,A to avoid finding new command when we are actually trying to use parameters.
+        #not sure if this is useful or not..
+        if (len(self.sequence[self.startseqno:]) > 1): #dont use single key commands for now
+          word, l, la = self.findword(self.sequence[self.startseqno:])
       if (word != ""):
         found = True
         print(f"&<{l}>{word}\n")

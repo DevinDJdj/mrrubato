@@ -326,16 +326,39 @@ function startWatchingTranscriber(lang, transcriptFolder = "C:/devinpiano/transc
                 console.log('Finished reading stream.');
                 let topics = transcriber.transcribe(incomingData, Book.selectedtopic); //use selected topic to start..
                 console.log("Transcribed topics:", topics);
+                let today = new Date();
+                let todaydate = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+                let file = todaydate + ".txt";
                 if (topics.length > 0) {
                     //read commands and do something..
-                    let topic = topics[topics.length - 1].topic;
+                    let topic = topics[topics.length - 1];
                     //open topic if not already open..
                     console.log("Current topic:", Book.selectedtopic);
                     console.log("Adding to history and selecting topic ", topic);
-                    if (topic !== Book.selectedtopic) {
-                        Book.addToHistory(topic);
-                        Book.select(topic);
+                    if (topic.topic !== Book.selectedtopic) {
+                        //only add to history if topic has changed.  
+                        Book.updatePage(Book.getBookPath() + "/" + file, '**' + transcriber.current_topic + '\n', -1, -1); //append to end of file.
+                        Book.addToHistory(topic.topic);
+                        Book.select(topic.topic);
                         //for now just open if it exists..
+                    }
+                    for (let cmd of topic.cmds) {
+                        console.log("Processing command: ", cmd);
+                        //for now just log the command.  In the future we can do something with it.
+                        if (cmd.cmd === "Record Feedback") {
+                            //do something with the feedback.  For now just log it.
+                            let input = "";
+                            if (cmd.vars && cmd.vars['FEEDBACK']) {
+                                input = cmd.vars['FEEDBACK'] + '\n';
+                            }
+                            if (cmd.vars && cmd.vars['ORIGINAL']) {
+                                input = cmd.vars['ORIGINAL'] + "\n";
+                            }
+                            //add data to file..
+                            //                            Book.updatePage("book/" + topic.topic, input);
+                            //get todays date for filename.  
+                            Book.updatePage(Book.getBookPath() + "/" + file, input, -1, -1); //append to end of file.
+                        }
                     }
                 }
             });
