@@ -762,7 +762,19 @@ page.html?codefile=web/public/page.html
             if (typeof(exists) !== "undefined" && exists !== null){     
             }
             else{
-                let tv = await LLM.getEmbedding(transdata[i].transcript, transdata[i].id);
+                let tv = null;
+                if ("id" in transdata[i]){
+
+                    tv = await LLM.getEmbedding(transdata[i].transcript, transdata[i].id);
+                }
+                else if ("timestamp" in transdata[i]){
+                    tv = await LLM.getEmbedding(transdata[i].transcript, transdata[i].timestamp); //use timestamp if no id.
+                }
+                else{
+                    console.log("No ID or timestamp for transcript, using index as ID.  This may cause issues if there are updates to the transcript data.  Recommend adding unique ID or timestamp to each transcript entry.  Index: " + i);
+                    now = Date.now() / 1000;
+                    tv = await LLM.getEmbedding(transdata[i].transcript, now); //use index as ID if no id or timestamp.
+                }
                 console.log("Embedding vector:", tv[0]);
                 vDB.saveVec(tv[0], tv[1], tv[2], "transcript", 0, function(res){
                     console.log("Transcript Vector saved:", res);
@@ -775,7 +787,7 @@ page.html?codefile=web/public/page.html
 }
 
   async function loadTranscripts(url){
-        console.log("Loading transcript json");
+        console.log("Loading transcript json " + url);
             $.ajax({
             url: url,
             dataType: 'text',
@@ -804,9 +816,11 @@ page.html?codefile=web/public/page.html
         selectGitRepo(getState('selectedgitindex')); //this loads the repo and gitstruct.  
         //go through all files in repo and add to vecDB.  
         //add the transcripts to vecDB.  
-        var url = "./data/trans.json";
         setTimeout(function(){
+            var url = "./data/trans.json";
             loadTranscripts(url);
+            var url2 = "./data/trans_trey.json";
+            loadTranscripts(url2);
 
         }, 30000); //wait until model is loaded.  
 
@@ -1052,6 +1066,10 @@ function GetRecentSelections(shortformat=false, maxlength=MAX_LOCAL_QUERY_LENGTH
     for (si=0; si<selectionhistory.length; si++){
         //really we want recent commits here, and not full source.  
         //and in order.  ...
+        if (ctx.length > maxlength){
+            break;
+        }
+
         if (shortformat){
           if (si > 0){  //dont want first entry always loading definitions.  
             ctx += "**" + selectionhistory[si] + "\n";
@@ -1060,21 +1078,27 @@ function GetRecentSelections(shortformat=false, maxlength=MAX_LOCAL_QUERY_LENGTH
         else{
 
             //really want recent git changes here, not full source I think..
-          ctx += "**" + selectionhistory[si] + "\n" + getGitContents(selectionhistory[si], false) + "\n";
+          ctx += "**" + selectionhistory[si] + "\n"
+          gitcontent = getGitContents(selectionhistory[si], false) + "\n";
+          ctx += gitcontent.slice(-maxlength/4) + "\n"; //just get the end of the file, which is more likely to have recent changes.
 
           let exists = gitcommits.filter(x => x.filename === selectionhistory[si]);
-
+          exists.sort((a, b) => b.d - a.d); //sort by date, most recent first.
           let alldates = [];
+          commitctxt = "";
           if (exists){
             for (let i=0; i<exists.length; i++){
-              ctx += "$$" + exists[i].d.format("yyyymmdd") + "\n";
-              ctx += "\n" + exists[i].patch + "\n";
+              if (commitctxt.length > maxlength/4){
+                break;
+              }
+              commitctxt = "$$" + exists[i].d.format("yyyymmdd") + "\n" + exists[i].patch + "\n" + commitctxt; //add to beginning so most recent is last in context.
 
               //getVideos from this time period.  
               const oneDayInMilliseconds = 24 * 60 * 60 * 1000;
               let pdate = new Date(exists[i].d.getTime() + oneDayInMilliseconds);
                 alldates.push(pdate.format("yyyy-mm-dd"));
             }
+            ctx += commitctxt.slice(-maxlength/4) + "\n"; //just get the end of the commit history, which is more likely to have recent changes.
 //            ctx += "**" + selectionhistory[si] + "\n" + exists.patch + "\n";
           }
 
@@ -1092,11 +1116,14 @@ function GetRecentSelections(shortformat=false, maxlength=MAX_LOCAL_QUERY_LENGTH
           querydate = ogdate;
 
           //book last?  not sure the preferred order.  
+          bookctxt = "";
           if (selectionhistory[si] in gitstruct["bytopic"]){
-            ctx += "**" + selectionhistory[si] + "\n";
-            ctx += getTopicContext(selectionhistory[si], 1/selectionhistory.length) + "\n";
+            bookctxt += "**" + selectionhistory[si] + "\n";
+            topicctxt = getTopicContext(selectionhistory[si], 1/selectionhistory.length, maxlength/4) + "\n";
+            bookctxt += topicctxt.slice(-maxlength/4) + "\n";
             
           }
+            ctx += bookctxt;
 
       }
 
@@ -1155,7 +1182,12 @@ function ChatBuildContext(context){
 
     
 }
+var ischatting = false;
 function ChatLocal(transcript){
+    if (ischatting){
+        return; //dont allow multiple chats at the same time.  
+    }
+    ischatting = true;
     if ($('#prompt').val() == ""){
         $('#prompt').val(localprompt);
     }
@@ -1164,26 +1196,34 @@ function ChatLocal(transcript){
     }
     ChatBuildContext(transcript);
 
+
     (async() => {
-      var img = document.getElementById('thinkingchat');
-    img.style.visibility = "visible";
+        try{
+            var img = document.getElementById('thinkingchat');
+            img.style.visibility = "visible";
 
-    vec = await LLM.getEmbedding(transcript);
-    simvecs = vDB.getSimilar(vec);    
-    for (i=0; i<simvecs.length; i++){
-        //get topic.  Use this topic?  
-        //just display?  
-    }
+            vec = await LLM.getEmbedding(transcript);
+            simvecs = vDB.getSimilar(vec);    
+            for (i=0; i<simvecs.length; i++){
+                //get topic.  Use this topic?  
+                //just display?  
+            }
 
-    FUNCS.CHAT.addChatHistory(FUNCS.CHAT.getLastQuery(), mycontext, files);
-    document.getElementById("user-input").value = mycontext;
-    console.log(mycontext);
+            FUNCS.CHAT.addChatHistory(FUNCS.CHAT.getLastQuery(), mycontext, files);
+            document.getElementById("user-input").value = mycontext;
+            console.log(mycontext);
 
 
-  console.log('1');
-  await LLM.sendToLLM(); //onMessageSend();//sendToLLM();   //test/web-llm/test.js
-  console.log('2');
-})()
+            console.log('1');
+            await LLM.sendToLLM(); //onMessageSend();//sendToLLM();   //test/web-llm/test.js
+            console.log('2');
+        }        catch(err){
+            console.log("Error in ChatLocal: " + err);
+            ischatting = false;
+        }
+    })().then(() => {
+        ischatting = false;
+    });
 
     
 }

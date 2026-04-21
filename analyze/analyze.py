@@ -512,6 +512,52 @@ def analyzeNgrams():
     print(f"Iterations: {itoffset} Total Ngrams: {totalngrams} Matches: {matches} Nonmatches: {nonmatches}")
 
 
+
+def lcs(X, Y): 
+    #longest common subsequence, not necessarily contiguous, but in order.
+    # find the length of the strings 
+    m = len(X) 
+    n = len(Y) 
+
+    # declaring the array for storing the dp values 
+    L = [[None]*(n + 1) for i in range(m + 1)] 
+
+    """Following steps build L[m + 1][n + 1] in bottom up fashion 
+    Note: L[i][j] contains length of LCS of X[0..i-1] 
+    and Y[0..j-1]"""
+    for i in range(m + 1): 
+        for j in range(n + 1): 
+            if i == 0 or j == 0 : 
+                L[i][j] = 0
+            elif X[i-1] == Y[j-1]: 
+                L[i][j] = L[i-1][j-1]+1
+            else: 
+                L[i][j] = max(L[i-1][j], L[i][j-1]) 
+
+    # L[m][n] contains the length of LCS of X[0..n-1] & Y[0..m-1] 
+    return L[m][n] 
+# end of function lcs 
+
+def getLCSMatrix(alliterations):
+
+    #get the LCS matrix for this track.  
+    matrix = np.zeros((len(alliterations), len(alliterations)), dtype=int)
+    for i in range(len(alliterations)):
+        for j in range(i+1, len(alliterations)):
+            X = alliterations[i]
+            Y = alliterations[j]
+            m = len(X)
+            n = len(Y)
+            lcs_length = lcs(X, Y)
+            print(f"LCS {i} and {j}: {lcs_length} // {m} and {n} ")
+            matrix[i][j] = lcs_length
+            matrix[j][i] = lcs_length
+
+    #get rid of the diagonal for better visualization.  
+#    for i in range(len(alliterations)):
+#        matrix[i][i] = 0
+    return matrix
+
 def getNgrams(t):
     global itoffset
     it = -1
@@ -529,6 +575,9 @@ def getNgrams(t):
     
     else:    
         notearray = np.zeros(len(t.notes), dtype=int)
+        
+        alliterations = [[] for i in range(len(starttimes))] #array of arrays of notes for each iteration.
+
         #create array of [iterations (10)][notes (88)][prevnote (88)]
         data = np.zeros((20, 88, 88), dtype=int)
         rythmdata = np.zeros((20, 64, 64), dtype=int)
@@ -547,6 +596,8 @@ def getNgrams(t):
                 counter += 1
                 #not very efficient, but good enough for now.  
                 it = getIteration(currentTime, starttimes, endtimes)
+                alliterations[it].append(mymsg.msg.note) #only note sequence info for now..
+
                 i = 0
                 tempmsg = mymsg
                 while (i < mymidi.MAXNGRAM and tempmsg.nextmsg is not None):
@@ -610,7 +661,9 @@ def getNgrams(t):
         
         #increase itoffset for next time.
         itoffset += (maxit+1)
-        return data, rythmdata
+
+
+        return data, rythmdata, alliterations
         
 def testNgramModel():
 
@@ -794,9 +847,11 @@ def printMidi(midilink, title, GroupName, videoid, force=False):
         uploadanalyze(filename, os.path.join(path, filename))
 
     printMidiGif(t, midilink)
-    data, rythmdata = getNgrams(t)
+    data, rythmdata, alliterations = getNgrams(t)
     if (data is None):
         return
+
+    lcsmatrix = getLCSMatrix(alliterations)
 
 
     nimg = ngramToImage(t, midilink, starttimes, endtimes)    
@@ -822,6 +877,14 @@ def printMidi(midilink, title, GroupName, videoid, force=False):
     
     keystrokes = temp.sum(axis=0) #keystrokes for all keys
     rythms = temprythm.sum(axis=0)
+
+
+    plt.matshow(lcsmatrix, cmap='gray_r') # Show the LCS matrix as a heatmap gray is closer correlation..
+    plt.title("LCS Matrix Heatmap")
+    filename = 'lcs_' + midiname + '.png'
+    plt.savefig(os.path.join(path , filename))
+    uploadanalyze(filename, os.path.join(path, filename))
+    plt.figure().clear()
 
     #keys
     print(keystrokes) 

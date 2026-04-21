@@ -449,6 +449,7 @@ function activate(context) {
             //stop running in background.
             mySettings.update('runinbackground', false);
             stream.markdown('**Stopping background agent**  \n' + mySettings.runinbackground);
+            vscode.commands.executeCommand('workbench.action.chat.stopReadChatResponseAloud'); //not working..		
             return;
         }
         if (request.command === 'exercise') {
@@ -484,9 +485,11 @@ function activate(context) {
         }
         if (request.command === 'read') {
             //general text query..
-            let summary = await Book.summary(request.prompt);
+            //let summary = await Book.summary(request.prompt);
+            let [topics, context] = await Book.read(request.prompt);
             //replace topics.  
-            let response = await Book.markdown(summary);
+            let response = await Book.markdown(context);
+            console.log("Response: ", response);
             stream.markdown(response);
             //workbench.action.chat.readChatResponseAloud
             setTimeout(() => {
@@ -816,6 +819,8 @@ function activate(context) {
                         if (text.length < 3) {
                             //list env variables.  
                             Book.printENV();
+                            //stop any reading..
+                            vscode.commands.executeCommand('workbench.action.chat.open', "@mr /stop");
                         }
                         else {
                             if (text.charAt(2) === "-") {
@@ -918,7 +923,8 @@ function activate(context) {
                             break;
                         }
                         //no context pass..						
-                        vscode.commands.executeCommand('workbench.action.chat.open', "@mr /chat " + text);
+                        //vscode.commands.executeCommand('workbench.action.chat.open', "@mr /chat " + text );
+                        vscode.commands.executeCommand('workbench.action.chat.open', "@mr /read " + text);
                         break;
                     default:
                         break;
@@ -1005,17 +1011,21 @@ function activate(context) {
 let uitimeout = undefined;
 //#https://code.visualstudio.com/api/references/vscode-api#DecorationRenderOptions
 const smallNumberDecorationType = vscode.window.createTextEditorDecorationType({
-    borderWidth: '1px',
+    //	borderWidth: '1px',
+    borderWidth: '2px 0 2px 0', // Top Right Bottom Left
     borderStyle: 'solid',
     overviewRulerColor: 'blue',
+    textDecoration: 'wavy',
     overviewRulerLane: vscode.OverviewRulerLane.Right,
     light: {
         // this color will be used in light color themes
-        borderColor: 'darkblue'
+        borderColor: 'darkblue',
+        //		textDecoration: 'underline #0000cc'
     },
     dark: {
         // this color will be used in dark color themes
-        borderColor: 'lightblue'
+        borderColor: 'lightblue',
+        //		textDecoration: 'underline #cccc00'
     }
 });
 // create a decorator type that we use to decorate large numbers
@@ -1023,6 +1033,22 @@ const largeNumberDecorationType = vscode.window.createTextEditorDecorationType({
     cursor: 'crosshair',
     // use a themable color. See package.json for the declaration and default values.
     backgroundColor: { id: 'myextension.largeNumberBackground' }
+});
+const defstringDecorationType = vscode.window.createTextEditorDecorationType({
+    fontStyle: 'italic',
+    borderWidth: '0 0 0 1px', // Top Right Bottom Left
+    borderStyle: 'solid',
+    // use a themable color. See package.json for the declaration and default values.
+    light: {
+        // this color will be used in light color themes
+        borderColor: 'darkred',
+        //		textDecoration: 'underline #0000cc'
+    },
+    dark: {
+        // this color will be used in dark color themes
+        borderColor: 'darkred',
+        //		textDecoration: 'underline #cccc00'
+    }
 });
 function updateDecorations() {
     if (!activeEditor) {
@@ -1036,7 +1062,8 @@ function updateDecorations() {
     while ((match = regEx.exec(text))) {
         const startPos = activeEditor.document.positionAt(match.index);
         const endPos = activeEditor.document.positionAt(match.index + match[0].length);
-        const decoration = { range: new vscode.Range(startPos, endPos), hoverMessage: 'Number **' + match[0] + '**' };
+        //const md = new vscode.MarkdownString('[Click to Run Action](command:myExtension.sayHello)');
+        const decoration = { range: new vscode.Range(startPos, endPos) }; //, hoverMessage: 'Number **' + match[0] + '**' };
         if (match[0].length < 3) {
             smallNumbers.push(decoration);
         }
@@ -1046,6 +1073,16 @@ function updateDecorations() {
     }
     activeEditor.setDecorations(smallNumberDecorationType, smallNumbers);
     activeEditor.setDecorations(largeNumberDecorationType, largeNumbers);
+    //defstring decorations.
+    const defstringRegex = /[~!@#$%^&*<>/:;\-+=]+/g;
+    const defstringDecorations = [];
+    while ((match = defstringRegex.exec(text))) {
+        const startPos = activeEditor.document.positionAt(match.index);
+        const endPos = activeEditor.document.positionAt(match.index + match[0].length);
+        const decoration = { range: new vscode.Range(startPos, endPos) }; //, hoverMessage: 'Defstring **' + match[0] + '**' };
+        defstringDecorations.push(decoration);
+    }
+    activeEditor.setDecorations(defstringDecorationType, defstringDecorations);
 }
 function triggerUpdateDecorations(throttle = false) {
     if (throttle) {

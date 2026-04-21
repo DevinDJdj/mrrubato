@@ -525,3 +525,65 @@ OK, kind of working..
 Need to find incorrect current topic selection on load..
 Both trey and codetutor..
 Selecting 1 month prior date..
+
+
+**extensions/trey/trey.py
+OK, time sorting bit better..
+
+**analyze/analyze.py
+See if we can use Longest common subsequence here..
+Seems to work..
+--analyze/lcs_..png
+
+
+**web/public/chata.html
+Allow for search of other data..
+Any transcript with 
+
+
+
+
+**timestep.py
+--saveLocalTranscripts
+Add to ./data/trans_trey.json
+
+**web/public/chata.html
+Load this new data..
+Kind of working..
+Need to limit context length to not break..
+--GetRecentSelections
+loading too much full GIT data..
+
+Some updates test..
+OK, but tough to get useful answers, try just book?  
+
+WSAM Model not good enough to care too much at the moment about results..
+
+
+
+**extensions/trey/trey.py
+need to run transcriber load in separate thread..
+
+**languages/helpers/transcriber.py
+Put result in memory shared file..
+For now this is available to read from UI I think..
+store context in [**TOPIC]
+read?  
+
+**extensions/vscode/codetutor/src/extension.ts
+Need to just list data on read..
+OK, use && to read..
+
+Start when selected..
+
+Still cant stop reading without click..
+Need to fix.
+
+<<vscode>>
+$$editor.hover.enabled=off
+$$
+
+
+
+
+

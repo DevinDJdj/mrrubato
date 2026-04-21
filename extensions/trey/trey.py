@@ -819,7 +819,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
                 if (key == 'LANG'):
                     text = 'Language ' + value
                 if (key == 'TIME'):
-                    if ('-' in value):
+                    if ('_' in value):
                         t = datetime.strptime(value, "%Y%m%d_%H%M%S").timestamp()
                         text = datetime.fromtimestamp(t).strftime("%B %d, %H:%M")
                     else:
@@ -1803,7 +1803,7 @@ class MyWindow(QMainWindow):
                     vars['OCRTEXT'] = ocrtext
                     vars['FNAME'] = fname
                     self.ocrtext = ocrtext
-                written = self.transcriber.write(vars.get('KLANG', 'video'), command, vars, False) #dont write intermediate msg?
+                written = self.transcriber.write(vars.get('KLANG', 'video'), command, vars, None, False) #dont write intermediate msg?
                 self.set_feedback(written, vars)
             case "Screenshot Feedback":
                 #right now we are just calling screenshot..
@@ -1812,7 +1812,7 @@ class MyWindow(QMainWindow):
                 vars['OCRTEXT'] = ocrtext
                 vars['FNAME'] = fname
                 self.ocrtext = ocrtext
-                written = self.transcriber.write(vars.get('KLANG', 'video'), command, vars, True) #write final message
+                written = self.transcriber.write(vars.get('KLANG', 'video'), command, vars, None, True) #write final message
                 self.set_feedback(written, vars)
             case "_Click Link":
                 self.show()
@@ -2495,36 +2495,38 @@ class MyWindow(QMainWindow):
             # Get window title
             title = win32gui.GetWindowText(hwnd)
             # Get window position and size (left, top, right, bottom)
-            rect = win32gui.GetWindowRect(hwnd)
-            if (title.startswith("Trey - ")):
-                #get the rect we need to be aware of.  
-                #expand rect some windows have odd borders.  
-                logger.info(f"Found Trey window: {title} at {rect}")
-                x, y, right, bottom = rect
-                x -= 8  # Adjust for window borders
-                y -= 8
-                right += 8
-                bottom += 8
-                rect = (x, y, right, bottom)
-                self.trey_data['rect'] = rect
-                self.trey_data['hwnd'] = hwnd
-                self.trey_data['title'] = title
+            try:
+                rect = win32gui.GetWindowRect(hwnd)
+                if (title.startswith("Trey - ")):
+                    #get the rect we need to be aware of.  
+                    #expand rect some windows have odd borders.  
+                    logger.info(f"Found Trey window: {title} at {rect}")
+                    x, y, right, bottom = rect
+                    x -= 8  # Adjust for window borders
+                    y -= 8
+                    right += 8
+                    bottom += 8
+                    rect = (x, y, right, bottom)
+                    self.trey_data['rect'] = rect
+                    self.trey_data['hwnd'] = hwnd
+                    self.trey_data['title'] = title
 
-            trect = (0,0,0,0)
-            if ('rect' in self.trey_data):
-                trect = self.trey_data['rect']
-    #            trect[0] += 50 #some margin for overlapping windows.  
+                trect = (0,0,0,0)
+                if ('rect' in self.trey_data):
+                    trect = self.trey_data['rect']
+        #            trect[0] += 50 #some margin for overlapping windows.  
 
-            # Check if the window is fully within the trey window
-            if (self.in_trey(rect) and win32gui.IsWindowVisible(hwnd)): #only monitor visible windows..
-                threadid, procid = win32process.GetWindowThreadProcessId(hwnd)
-                self.update_window_data(hwnd, title, rect, {'threadid': threadid, 'procid': procid, 'hwnd': hwnd})
-                x, y, right, bottom = rect
-                width = right - x
-                height = bottom - y
-                action = {'title': title, 'rect': rect, 'hwnd': hwnd, 'procid': procid, 'threadid': threadid, 'act': 'init'}
-                self.update_actions(hwnd, action)
-
+                # Check if the window is fully within the trey window
+                if (self.in_trey(rect) and win32gui.IsWindowVisible(hwnd)): #only monitor visible windows..
+                    threadid, procid = win32process.GetWindowThreadProcessId(hwnd)
+                    self.update_window_data(hwnd, title, rect, {'threadid': threadid, 'procid': procid, 'hwnd': hwnd})
+                    x, y, right, bottom = rect
+                    width = right - x
+                    height = bottom - y
+                    action = {'title': title, 'rect': rect, 'hwnd': hwnd, 'procid': procid, 'threadid': threadid, 'act': 'init'}
+                    self.update_actions(hwnd, action)
+            except Exception as e:
+                logger.error(f'Error processing window {hwnd} {title}: {e}')
         return True # Continue enumeration    
 
     def in_trey(self, rect):
@@ -2861,7 +2863,7 @@ class MyWindow(QMainWindow):
                     #read in this and start playwrighty 
                     self.inqueue.put(('\n').join(t['lines']))
                 else:
-                    text = self.transcriber.write(t['lang'], t['cmd'], t['vars'], False)
+                    text = self.transcriber.write(t['lang'], t['cmd'], t['vars'], t['topic'], False)
                     speak(text)
 
                     logger.warning(f"Unknown command in time map item, no file to play. \nData: {t}")
@@ -2899,17 +2901,19 @@ class MyWindow(QMainWindow):
         if (len(sorted_indices) > 0):
             self.tmapindex = sorted_indices[0] #index of closest item in tmap to current time, can use this to select items to display or play etc.
             maintext = []
+#            print(sorted_tmap[-10:]) #get last 10 items in sorted tmap for debugging, can adjust as needed.
+            print(sorted_tmap[:10]) #get first 10 items in sorted tmap for debugging, can adjust as needed.
             for i in range(len(sorted_tmap)):
                 #compare to current time, and select if within current time window.  
                 if (len(maintext) < 3 and sorted_tmap[i]['type'] == '> '): #only show commands for now.. no topic selection
 #                    self.transcriber.current_topic = sorted_tmap[i]['cmd'] #dont need topic to be updated..
-                    maintext.append({'topic': sorted_tmap[i]['topic'], 'timestamp': sorted_tmap[i]['timestamp'], 'text': self.transcriber.write(sorted_tmap[i]['lang'], sorted_tmap[i]['cmd'], sorted_tmap[i]['vars'], False)})
+                    maintext.append({'topic': sorted_tmap[i]['topic'], 'timestamp': sorted_tmap[i]['timestamp'], 'text': self.transcriber.write(sorted_tmap[i]['lang'], sorted_tmap[i]['cmd'], sorted_tmap[i]['vars'], sorted_tmap[i]['topic'], False)})
 
             maintext = sorted(maintext, key=lambda x: x['timestamp'])
             print(maintext)
             for i in range(len(maintext)):
 #                if (temptext[0:2] != '**'):
-                temptext = f'**{maintext[i]["topic"]}\n{maintext[i]["text"]}' #add topic as header if not already included, can adjust formatting as needed.
+                temptext = f'{maintext[i]["text"]}' #add topic as header if not already included, can adjust formatting as needed.
                 self.label_main[i].setText(temptext.replace('\n', '<br>'))
                 self.label_main[i].update()
 
@@ -2983,6 +2987,7 @@ class MyWindow(QMainWindow):
 
         localt = datetime.fromtimestamp(t)
         formattedt = localt.strftime('%Y%m%d %H%M%S')
+        print(f"Setting time to {formattedt} with start {s}, end {e}, window {w}")
         if (s == 0):
             s = self.s
         if (e == 0):

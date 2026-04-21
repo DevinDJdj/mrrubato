@@ -378,6 +378,8 @@ export function startWatchingTranscriber(lang: string, transcriptFolder: string 
                         
                         Book.addToHistory(topic.topic);
                         Book.select(topic.topic);
+                        vscode.commands.executeCommand('workbench.action.chat.open', "@mr /read " + "**" + topic.topic );
+
                         //for now just open if it exists..
 
                     }

@@ -18,6 +18,8 @@ import mykeys
 
 import networkx as nx
 
+from multiprocessing.shared_memory import SharedMemory
+
 logger = logging.getLogger(__name__)
 
 
@@ -90,7 +92,7 @@ class transcriber:
 
 
 
-    def write_topic(self, lang, topic, save=True):
+    def write_topic(self, lang, topic, extra="", save=True):
 
         ret = ""
         if (topic != self.current_topic and topic is not None):                
@@ -98,6 +100,12 @@ class transcriber:
             ret += f'$$TIME={self.getTimeString()}\n'
 
             self.current_topic = topic
+
+        if (extra != ""):
+            ret += f'<<{lang}>>\n{extra}\n'
+            self.langmap[lang]['topics'][topic] = {'mem': self.get_context_memory(f'**{topic}', size=1024*1024), 'extra': extra} 
+            mybytes = extra.encode('utf-8')
+            self.langmap[lang]['topics'][topic]['mem'].buf[:len(mybytes)] = mybytes #store extra info in shared memory 
 
         if save:
             today = datetime.now().strftime("%Y%m%d")
@@ -108,20 +116,25 @@ class transcriber:
         return ret
 
     #    
-    def write(self, lang, command, params, save=True):
+    def write(self, lang, command, params, topic=None, save=True):
       #write to transcript file.  
       #for now just one time param.  
-
+      if (topic is None):
+        topic = self.current_topic
+      else:
+        if (save):
+            self.current_topic = topic
+            print('Updating current topic to ' + topic)
       #add utf-8?  
       ret = ""
       if (lang not in self.langmap or self.langmap[lang]['lang'] != lang):
-        self.langmap[lang] = {'lang':lang, 'topic': self.current_topic, 'topics': {}, 'kg': nx.Graph()}
+        self.langmap[lang] = {'lang':lang, 'topic': topic, 'topics': {}, 'kg': nx.Graph()}
         ret += f'<<{lang}>>\n'
-        ret += f'**{self.langmap[lang]["topic"]}\n'
-      elif (self.langmap[lang]['topic'] is not None and self.langmap[lang]['topic'] != self.current_topic):
-        ret += f'**{self.langmap[lang]["topic"]}\n'
+        ret += f'**{topic}\n'
+      elif (self.langmap[lang]['topic'] is not None and self.langmap[lang]['topic'] != topic):
         if (save): #dual purpose.. save to file and save current topic in langmap for future reference.  OK for now..
-            self.langmap[lang]['topic'] = self.current_topic
+            self.langmap[lang]['topic'] = topic
+        ret += f'**{topic}\n'
       ret += f'> {command}\n'
       vars = {}
       for pkey, p in params.items():
@@ -227,6 +240,9 @@ class transcriber:
             from rapidfuzz import fuzz
             ff = fuzz.partial_ratio_alignment(midiarray, notes)
             self.fuzzmap[timestamp] = ff
+            #can be negative in rare cases with very short files..
+            lengthscore = 1 - (len(midiarray) / (1+len(notes)))
+            lengthscore *= 100
             #time score based on distance from current time, with a decay based on window size, so items within the window have a higher score, and items outside the window have a lower score.  could adjust this formula as needed.
             timescore = max(0, 1 - abs(current_time - timestamp) / (self.allmidi['end_time'] - self.allmidi['start_time']).total_seconds()) 
             timescore *= 100 #scale to 100 to match fuzz score, could adjust as needed.
@@ -234,7 +250,7 @@ class transcriber:
             #get time from timestamp and notes.  for now forgoe this calculation..
             mystart = ff.dest_start if ff.dest_start is not None else 0
             transcript = self.mykeys.seq2text(notes[mystart:]) if self.mykeys is not None else "" #get transcript text for these notes if possible, could be useful for display and searching later, but for now just get the keys.
-            similar.append({'timestamp': timestamp, 'notes': notes, 'transcript': transcript, 'score': ff.score * 0.8 + timescore * 0.2, 'start': ff.dest_start}) #combine fuzz score and time score, with weights of 0.7 and 0.3 respectively, could adjust as needed.
+            similar.append({'timestamp': timestamp, 'notes': notes, 'transcript': transcript, 'score': ff.score * 0.7 + lengthscore * 0.1 + timescore * 0.2, 'start': ff.dest_start}) #combine fuzz score, length score, and time score, with weights of 0.7, 0.1, and 0.2 respectively, could adjust as needed.
         
         similar.sort(key=lambda x: x['score'], reverse=True)
         print(f'LAG: {time.time() - lag} seconds to search MIDI')        
@@ -346,7 +362,7 @@ class transcriber:
         return None
 
 
-    def get_cmd(self, lang, type, command, vars):
+    def get_time_var(self, vars):
         t = time.time()
         if ('TIME' in vars):
             timestr = vars['TIME']
@@ -358,6 +374,9 @@ class transcriber:
                     t = time.mktime(datetime.strptime(timestr, '%Y%m%d_%H%M%S').timetuple())
             except:
                 pass
+        return t
+    def get_cmd(self, lang, type, command, vars):
+        t = self.get_time_var(vars)
 
         lines = []
         return {'lang': lang, 'type': type, 'cmd': command, 'topic': self.current_topic, 'vars': vars, 'lines': lines, 'timestamp': t}
@@ -480,9 +499,14 @@ class transcriber:
                         #not really notable..  
                         if (currentcmdobj is not None and 'vars' in currentcmdobj):
                             currentcmdobj['vars'][key] = value
+                            if (key == 'TIME'):
+                                currentcmdobj['timestamp'] = self.get_time_var(vars)
+
                         #add to topic as well..                                        
                         elif (currenttopc is not None and 'vars' in currenttopc):
                             currenttopc['vars'][key] = value
+                            if (key == 'TIME'):
+                                currenttopc['timestamp'] = self.get_time_var(vars)
 
         if (currentcmd != "" and currentcmdobj is not None):
             ret.append(currentcmdobj)
@@ -540,6 +564,22 @@ class transcriber:
         dot = nx.nx_pydot.to_pydot(self.kg[type]).to_string()
         return dot
 
+    def is_yyyymmdd(self, date_text):
+        try:
+            # %Y = 4-digit year, %m = 2-digit month, %d = 2-digit day
+            datetime.strptime(date_text, "%Y%m%d")
+            return True
+        except ValueError:
+            return False
+        
+    def get_context_memory(self, name, size=1024*1024):
+        try:
+            # 1. Attempt to create a new shared memory block
+            return SharedMemory(name=name, create=True, size=size)
+        except FileExistsError:
+            # 2. If it already exists, attach to the existing block
+            return SharedMemory(name=name)
+            
     def read(self, lang, start_time=None, end_time=None, myfolder=""):
 
       #read from transcript file all instances of this.   
@@ -577,21 +617,26 @@ class transcriber:
     #      if (f.startswith(yesterday) or f.startswith(today)):
             if (f.endswith('.txt')): #dont open wav files.. maybe rethink sharing directory..
                 #get name without extension
-                if (mtime is not None and mtime > last_time):
-                    last_time = mtime
 
-                mtime = os.path.getmtime(folder + f)
+                if (self.is_yyyymmdd(f[:8])):
+                    mtime = time.mktime(datetime.strptime(f[:8], '%Y%m%d').timetuple())
+                    mtime += 86400 #add one day to end of day for better sorting
+                else:
+                    mtime = os.path.getmtime(folder + f)
+
+                if (mtime < last_time):
+                    last_time = mtime - 86400 #set to start of day if we have data issue..
 
                 try:
                     with open(folder + f, encoding='utf-8') as ff:
-                        self.current_topic = f[:-4] #file name without extension
                         lines = ff.readlines()
                         if (len(lines) < 2):
                             continue
+                        self.current_topic = f[:-4] #file name without extension
                         test = self.read_lines(lang, lines, last_time, mtime)
                         ret.extend(test) 
                         logger.info(f)                       
-                        logger.info(test)
+#                        logger.info(test)
                 except Exception as e:
                     logger.error(f'!!> Read [{f}]\n !!{e}\n')
 

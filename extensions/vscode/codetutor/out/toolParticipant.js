@@ -340,6 +340,7 @@ function startWatchingTranscriber(lang, transcriptFolder = "C:/devinpiano/transc
                         Book.updatePage(Book.getBookPath() + "/" + file, '**' + transcriber.current_topic + '\n', -1, -1); //append to end of file.
                         Book.addToHistory(topic.topic);
                         Book.select(topic.topic);
+                        vscode.commands.executeCommand('workbench.action.chat.open', "@mr /read " + "**" + topic.topic);
                         //for now just open if it exists..
                     }
                     for (let cmd of topic.cmds) {

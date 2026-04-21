@@ -372,6 +372,8 @@ class _meta:
     vars['idx'] = newidx
     self.set_qr(self.func, vars)
     
+#    self.speak(f'{vars["topic"]}')
+    
     return 1
     #scroll up or back?  
     #list most likely topics based on recency and relevance to current topic.
@@ -394,8 +396,8 @@ class _meta:
 #    logger.info(ctxt.replace('\n', '<br>'))
     #keep track of topic history..
     writtentopic = self.transcriber.write_topic(self.name, self.selectedtopic) #write topic to _meta.. to pick up in other tools.  
-    self.transcriber.write_topic(self.selectedtopic, ctxt) #write topic context?  Get latest info for robot.. trigger read of this file..
-    self.speak(f'{writtentopic}')
+    self.transcriber.write_topic(self.name, self.selectedtopic, ctxt) #write topic context?  Get latest info for robot.. trigger read of this file..
+    self.speak(f'{self.selectedtopic}')
     self.transcript = writtentopic #set transcript here to include into midi.  Dont include context for now too much repetition..
     return 0
 

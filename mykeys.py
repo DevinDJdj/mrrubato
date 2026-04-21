@@ -958,7 +958,7 @@ class MyKeys:
         c2 = (n - 112)
         c = c1 + c2
         text += chr(c)
-        print(f'Char from seq: {c1} {c2} {chr(c)}')
+        #print(f'Char from seq: {c1} {c2} {chr(c)}')
         skip = True
         
       else:

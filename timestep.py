@@ -50,6 +50,8 @@ import traceback
 
 from mido import MidiFile
 
+from extensions.trey.transcriber import transcriber
+
 #from transcribe import transcribe_fromyoutube
 #import whisper
 
@@ -452,6 +454,20 @@ def get_relative_file_paths_os(root_dir):
             relative_paths.append(rel_path.replace("\\", "/"))  # Replace backslashes with forward slashes for consistency
     return relative_paths
 
+
+def get_transcripts(lang='hotkeys'):
+    transcriber = transcriber()
+    alltranscripts = []
+    tfolder = 'transcripts/'
+    transcript_path = "../" + tfolder
+    cmds = transcriber.read(lang, myfolder=transcript_path + lang) #read hotkeys
+    for c in cmds:
+        if 'vars' in c and 'TRANSCRIPT' in c['vars']:
+            transcript = c['vars']['TRANSCRIPT']
+            timestamp = c['timestamp']
+            alltranscripts.append({"timestamp": timestamp, "cmd": c['cmd'], "topic": c['topic'], "transcript": transcript})
+    return alltranscripts
+
 #local transcripts from keyboard usage and transcribed commands.  
 def saveLocalTranscripts():
     #upload to folder any transcripts in local folder
@@ -462,6 +478,7 @@ def saveLocalTranscripts():
     print(f"Checking {len(allfiles)} transcripts:")
     print(allfiles)
     uploadedfiles = []
+    alltranscripts = []
     for file in allfiles:
         #check if exists in firebase storage
         bucket = storage.bucket()
@@ -472,11 +489,22 @@ def saveLocalTranscripts():
             blob.make_public()
             #blob.public_url
             uploadedfiles.append(tfolder + file)
-#        else:
-#            print(f"{tfolder + file} already exists in storage, skipping upload.")
+                        
+        #open and read any $$TRANSCRIPT= lines
+        #really should use transcriber..
+    
+    trans = get_transcripts('hotkeys')
+    alltranscripts.extend(trans)
+    trans = get_transcripts('video')
+    alltranscripts.extend(trans)
+
 
     print(f"Uploaded {len(uploadedfiles)} transcripts:")
     print(uploadedfiles)
+    f = open('./data/transcription/trans_trey.json', "w", encoding='utf-8')
+    f.write(json.dumps(alltranscripts, ensure_ascii=False, indent=4))
+    f1 = open('./web/public/data/trans_trey.json', "w", encoding='utf-8')
+    f1.write(json.dumps(alltranscripts, ensure_ascii=False, indent=4))
 
     return uploadedfiles
 

@@ -715,7 +715,7 @@ export function pickTopic(selectedtopics : string[], defaultprompts: string[] = 
         //add the date to the data.  
         let item = mylist[i];
 //        retdata += `**${item.topic}\n`;
-        retdata += `**${item.file}:${item.line}  \n`;
+        retdata += `**${item.file}:${item.line}\n`;
         retdata += item.data + "  \n"; //add all data for the topic.
     }
     //for now returning all topic data in book.  
@@ -1185,6 +1185,7 @@ export async function markdown(prompt: string) : Promise<string> {
     //replace **topic with [topic](topic.md)
     //replace #link with [link](link)
 
+
     const folderUri = vscode.workspace.workspaceFolders[0].uri;
     let marked = prompt.replace(/(\*\*|\#)(\S+)/g, (match, p1, p2) => {
         // p1 is either ** or #
@@ -1206,11 +1207,16 @@ export async function markdown(prompt: string) : Promise<string> {
 
         
                 let line = p2.slice(colon + 1); //get the line number. 
-                //remove folder from file name.  
+
+
+                //remove folder from file name.  Why do we have to do this???
                 p2 = p2.replace(folderUri.path + "/", ""); //remove the folder path from the file name for display purposes.  
+                fname = fname.replace(folderUri.path + "/", ""); //remove the folder path from the file name for display purposes.
+//				let fileUri = getUri(fname);
+                let fileUri = folderUri.with({ path: posix.join(folderUri.path, fname) });
                 //need to rewrite dates to something else..
                 let readablename = getReadableName(p2, line);
-                return `[${p1}${readablename}](${fname}#L${line})`; //return the markdown link.
+                return `[${p1}${readablename}](${fileUri}#L${line})  `; //return the markdown link.
 //                return `[${p1}${p2}](${fname}#L${line})`; //return the markdown link.
             }
             //try to detect generated markdown unrelated to file.  
@@ -1219,7 +1225,7 @@ export async function markdown(prompt: string) : Promise<string> {
             if (p2 in topicarray) {
                 p2 = p2.replace(folderUri.path + "/", ""); //remove the folder path from the file name for display purposes.  
                 let readablename = getReadableName(p2);
-                return `[${p1}${readablename}](${fileUri.path})`; //return the markdown link.
+                return `[${p1}${readablename}](${fileUri})  `; //return the markdown link.
 //                return `[${p1}${p2}](${fileUri.path})`; //return the markdown link.
             }
             return match; //return the original match if file does not exist.
@@ -1838,6 +1844,7 @@ export function getUri(path: string) : vscode.Uri {
         return vscode.Uri.parse("");
     }
     const folderUri = vscode.workspace.workspaceFolders[0].uri;
+//    const retUri = folderUri.with({ path: posix.join(folderUri.path, path) });
     const retUri = folderUri.with({ path: posix.join(folderUri.path, path) });
     return retUri;
 }

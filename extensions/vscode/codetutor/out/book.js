@@ -666,7 +666,7 @@ function pickTopic(selectedtopics, defaultprompts = [], numtopics = 10, extendto
         //add the date to the data.  
         let item = mylist[i];
         //        retdata += `**${item.topic}\n`;
-        retdata += `**${item.file}:${item.line}  \n`;
+        retdata += `**${item.file}:${item.line}\n`;
         retdata += item.data + "  \n"; //add all data for the topic.
     }
     //for now returning all topic data in book.  
@@ -1092,11 +1092,14 @@ async function markdown(prompt) {
                 let fname = p2.slice(0, colon); //get the file name.
                 //check if file exists.  
                 let line = p2.slice(colon + 1); //get the line number. 
-                //remove folder from file name.  
+                //remove folder from file name.  Why do we have to do this???
                 p2 = p2.replace(folderUri.path + "/", ""); //remove the folder path from the file name for display purposes.  
+                fname = fname.replace(folderUri.path + "/", ""); //remove the folder path from the file name for display purposes.
+                //				let fileUri = getUri(fname);
+                let fileUri = folderUri.with({ path: path_1.posix.join(folderUri.path, fname) });
                 //need to rewrite dates to something else..
                 let readablename = getReadableName(p2, line);
-                return `[${p1}${readablename}](${fname}#L${line})`; //return the markdown link.
+                return `[${p1}${readablename}](${fileUri}#L${line})  `; //return the markdown link.
                 //                return `[${p1}${p2}](${fname}#L${line})`; //return the markdown link.
             }
             //try to detect generated markdown unrelated to file.  
@@ -1105,7 +1108,7 @@ async function markdown(prompt) {
             if (p2 in exports.topicarray) {
                 p2 = p2.replace(folderUri.path + "/", ""); //remove the folder path from the file name for display purposes.  
                 let readablename = getReadableName(p2);
-                return `[${p1}${readablename}](${fileUri.path})`; //return the markdown link.
+                return `[${p1}${readablename}](${fileUri})  `; //return the markdown link.
                 //                return `[${p1}${p2}](${fileUri.path})`; //return the markdown link.
             }
             return match; //return the original match if file does not exist.
@@ -1632,6 +1635,7 @@ function getUri(path) {
         return vscode.Uri.parse("");
     }
     const folderUri = vscode.workspace.workspaceFolders[0].uri;
+    //    const retUri = folderUri.with({ path: posix.join(folderUri.path, path) });
     const retUri = folderUri.with({ path: path_1.posix.join(folderUri.path, path) });
     return retUri;
 }
