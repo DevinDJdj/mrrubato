@@ -248,7 +248,7 @@ function gitDownloadCommits(data, qpath=null){
     var content = commitTableGit.getValue(commitidx, 2);
     var name = commitTableGit.getValue(commitidx, 1);
 //        var link = dataTableGit.getValue(event.row, 2);
-    console.log('Mouseover on:', name, 'with: ', content);
+    console.log('Mouseover on:', name, 'with: ', content.slice(0,100));
     mouseOverGit(content, name);
   } 
 
@@ -1358,13 +1358,13 @@ function getTopicContext(top, weight=1, maxlength=1000){ //weight 0.99 ~ 1000, 0
 function loadTopic(top){
     var img = document.getElementById('thinkinggit');
     img.style.visibility = "visible";
-
     selectedtopic = top;
 
 //    selectionhistory.unshift(top);
     var currentmode = $('#code_mode').find(":selected").val();
 
     //git code
+    pprevcontents = gitcurrentcontents;
     if (gitnature & GIT_CODE){
       if (currentmode == "GIT"){
         cont = getGitContents(top, true);
@@ -1401,8 +1401,10 @@ function loadTopic(top){
       getGitCommits(null, top);
       //also kick off LLM question regarding this topic.  
       setTimeout(function(){
-        lastspokenword = "comment";
-        MyChat(default_question); //auto-query the LLM after selection.  
+        if (pprevcontents != gitcurrentcontents){ //only query if we have selected a new topic, not folders..
+          lastspokenword = "comment";
+          MyChat(default_question); //auto-query the LLM after selection.  
+        }
       }, 10000);
     }
 

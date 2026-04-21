@@ -669,6 +669,11 @@ function getMidi(desc){
         im = im.replace(".mid", ".png");
         ims.push(im);
 
+		//heatmap of LCS matrix
+        im = "analyze/lcs_" + lastPart;
+        im = im.replace(".mid", ".png");
+        ims.push(im);
+
         addImages(ims, storageRef); //external function. should use class pointer function?  minimize to one call.  
 
 	}	
