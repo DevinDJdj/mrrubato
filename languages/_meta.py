@@ -330,8 +330,12 @@ class _meta:
   def get_context(self, topic, num=5):
     #get context for topic from book transcripts.  
     ret = f"**{topic}\n"
-    if topic in self.alltopics:
-      topiccmds = self.alltopics[topic]
+#    if topic in self.alltopics:
+#      topiccmds = self.alltopics[topic]
+    if (topic in self.transcriber.langmap[self.name]['topics']):
+      topicdata = self.transcriber.langmap[self.name]['topics'][topic]
+      if 'data' in topicdata:
+        topiccmds = topicdata['data']
       topiccmds.sort(key=lambda x: abs(self.timewindow.currenttime - x['timestamp']), reverse=True) #sort by recency to current time, most recent first.
       sortedcmds = topiccmds[:num]
       sortedcmds.sort(key=lambda x: x['timestamp']) #sort by time for display.
@@ -371,7 +375,7 @@ class _meta:
 #          vars[f'href{i}'] = l['href']
     vars['idx'] = newidx
     self.set_qr(self.func, vars)
-    
+
 #    self.speak(f'{vars["topic"]}')
     
     return 1

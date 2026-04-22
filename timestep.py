@@ -471,6 +471,7 @@ def get_transcripts(lang='hotkeys'):
 #local transcripts from keyboard usage and transcribed commands.  
 def saveLocalTranscripts():
     #upload to folder any transcripts in local folder
+    #may want some redaction here..
     tfolder = 'transcripts/'
     transcript_path = "../" + tfolder
 

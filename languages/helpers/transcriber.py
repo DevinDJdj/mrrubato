@@ -103,7 +103,8 @@ class transcriber:
 
         if (extra != ""):
             ret += f'<<{lang}>>\n{extra}\n'
-            self.langmap[lang]['topics'][topic] = {'mem': self.get_context_memory(f'**{topic}', size=1024*1024), 'extra': extra} 
+            if (topic not in self.langmap[lang]['topics']):
+                self.langmap[lang]['topics'][topic] = {'mem': self.get_context_memory(f'**{topic}', size=10*1024), 'extra': extra, 'data': []} 
             mybytes = extra.encode('utf-8')
             self.langmap[lang]['topics'][topic]['mem'].buf[:len(mybytes)] = mybytes #store extra info in shared memory 
 
@@ -512,7 +513,6 @@ class transcriber:
             ret.append(currentcmdobj)
             print(f'Adding final command {currentcmd} with vars {vars}')
 
-        self.update_kg(ret)
         return ret
 
 
@@ -535,9 +535,14 @@ class transcriber:
         #nx.nx_pydot.from_pydot(PG)
         return dot
     
-    def update_kg(self, cmds):
+    def update_kg(self, lang, cmds):
         #for now just add commands and topics as nodes, and edges between topics and commands, and commands and their variables.  could also add edges between commands based on sequence in transcript, but for now just direct edges to topic and variables.
         for idx, cmd in enumerate(cmds):
+            #add to array.  
+            if (cmd['topic'] not in self.langmap[lang]['topics']):
+                self.langmap[lang]['topics'][cmd['topic']] = {'mem': self.get_context_memory(f'**{cmd["topic"]}', size=10*1024), 'extra': "", 'data': []} #store extra info in langmap for reference, and also store in shared memory for access by other processes if needed.  could also store in a file or database if needed, but for now just use shared memory for simplicity.  need to manage memory usage and cleanup as needed, but for now just create a new block for each topic and overwrite as needed.
+            self.langmap[lang]['topics'][cmd['topic']]['data'].append(cmd) #store topic data in langmap for reference, could be useful for display and searching later, but for now just store in memory.  could also store in shared memory or a file/database if needed.
+
             if (cmd['type'] not in self.kg):
                 self.kg[cmd['type']] = nx.Graph()
             #add topics and cmds..
@@ -645,5 +650,6 @@ class transcriber:
         ret.sort(key=lambda x: x['timestamp']) #sort by timestamp just in case.
 
         self.allcmds[lang] = {'cmds': ret, 'start_time': start_time, 'end_time': end_time, 'start_idx': 0, 'end_idx': len(ret)-1}
+        self.update_kg(lang, ret)
         logger.info(f'Loaded {numloaded} files for {lang} with {len(ret)} commands')
         return ret

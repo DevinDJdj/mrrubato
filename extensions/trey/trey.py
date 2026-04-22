@@ -1715,8 +1715,11 @@ class MyWindow(QMainWindow):
             case "OK":
                 #testing
                 logger.info('Received OK command, showing QR code with current settings')
-                if (self.in_trey(rect)): #only capture second monitor clicks                
-                    send_ok()
+                #test function for sending keystrokes.. better to use transcriber..
+#                if (self.in_trey(rect)): #only capture second monitor clicks                
+#                    send_ok()
+                self.transcriber.write_plain(lang, command) #dont write intermediate msg?
+
                 #send keystroke test..
 
 
@@ -1780,6 +1783,12 @@ class MyWindow(QMainWindow):
                     n = 0
                 elif (type == 'record'):
                     pause_obs_capture()
+                elif (type == 'base'):
+                    self.pause_tmap(False) #dont hide the video, just pause it..
+                    #pause any other speaking or playing we are doing.
+                    self.transcriber.write_plain('base', command) #dont write intermediate msg?
+
+
             case "Unpause":
                 type = vars.get('type', 'video')
                 if (type == 'video'):
@@ -2233,6 +2242,7 @@ class MyWindow(QMainWindow):
         self.s = 0 #current start time of window
         self.e = 0 #current end time of window
         self.currentsound = None #current sound being played.
+        self.currentvideo = None #current video being played.
         self.speed = 1.0
         self.playback_speed = 1.0
 
@@ -2718,7 +2728,6 @@ class MyWindow(QMainWindow):
     def play_video(self, fname):
         """Play a video file on the overlay."""
         logger.info(f'Playing video: {fname}')
-
         for i in range(3):
             self.label_main[i].hide() #hide main labels when playing video, can adjust as needed.
         self.label_qr.hide()
@@ -2733,15 +2742,21 @@ class MyWindow(QMainWindow):
 
 
         ext = os.path.splitext(fname)[1].lower()
-        if (ext in ['.png']): #screenshot image..
+        if (self.currentvideo == fname):
+            logger.info('Video already playing, skipping play_video')
+            self.video_widget.show()
+            self.video_player.play()
+            #just restart..
+        elif (ext in ['.png']): #screenshot image..
             self.video_overlay.setPixmap(QPixmap(fname).scaled(self.video_overlay.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
             self.video_overlay.show()
         else:
             self.video_player.setMedia(QMediaContent(QUrl.fromLocalFile(fname)))
             self.video_widget.show()
             self.video_player.play()
+            self.currentvideo = fname
     
-    def pause_video(self):
+    def pause_video(self, hideme = True):
         """Pause the video playback."""
         logger.info('Pausing video')
         self.highlighton = False #turn off highlight when pausing video, can adjust as needed.
@@ -2807,6 +2822,7 @@ class MyWindow(QMainWindow):
             self.play_video(fname)
 
 
+
         elif (ext in ['.mp3', '.wav', '.ogg']):
             logger.info(f'Playing audio file: {fname}')
             absolute_path = os.path.abspath(fname)
@@ -2815,10 +2831,10 @@ class MyWindow(QMainWindow):
             logger.info(f'Unknown file type for playback: {fname}')
         
 
-    def pause_tmap(self):
+    def pause_tmap(self, hideme=True):
         logger.info('Pausing playback')
         #add actual pause logic here, e.g. pause video widget, or send command to other app, etc.
-        self.pause_video()
+        self.pause_video(hideme=hideme)
 
         if (self.currentsound is not None and self.currentsound.is_alive()):
             self.currentsound.stop() #stop current sound, may need to adjust for different playback needs.

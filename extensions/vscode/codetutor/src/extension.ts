@@ -374,6 +374,7 @@ export function activate(context: vscode.ExtensionContext) {
 	startWatchingTranscriber('hotkeys'); //get record feedback..
 	startWatchingTranscriber('video');
 	startWatchingTranscriber('_meta'); //get all topic changes..
+	startWatchingTranscriber('base'); //get all mood changes and extra pause..
 
 	TerminalWorker.addClosedTerminalListener();
 
@@ -514,8 +515,14 @@ export function activate(context: vscode.ExtensionContext) {
 			const mySettings = vscode.workspace.getConfiguration('mrrubato');	
 			//stop running in background.
 			mySettings.update('runinbackground', false);
-			stream.markdown('**Stopping background agent**  \n' + mySettings.runinbackground);
-			vscode.commands.executeCommand('workbench.action.chat.stopReadChatResponseAloud');	 //not working..		
+			stream.markdown('stop');
+			//vscode.commands.executeCommand('workbench.action.chat.stopReadChatResponseAloud');	 //not working..		
+			setTimeout(() => {	
+				vscode.commands.executeCommand('workbench.action.chat.nextCodeBlock');
+				vscode.commands.executeCommand('workbench.action.chat.readChatResponseAloud');
+			}, 5000);
+
+
 
 			return;
 		}
@@ -1188,17 +1195,19 @@ const largeNumberDecorationType = vscode.window.createTextEditorDecorationType({
 
 const defstringDecorationType = vscode.window.createTextEditorDecorationType({
 	fontStyle: 'italic',
-	borderWidth: '0 0 0 1px', // Top Right Bottom Left
-	borderStyle: 'solid',
+//	borderWidth: '0 0 0 1px', // Top Right Bottom Left
+//	borderStyle: 'solid',
 	// use a themable color. See package.json for the declaration and default values.
 	light: {
 		// this color will be used in light color themes
 		borderColor: 'darkred',
+		color: '#777777'
 //		textDecoration: 'underline #0000cc'
 	},
 	dark: {
 		// this color will be used in dark color themes
 		borderColor: 'darkred',
+		color: '#777777'		
 //		textDecoration: 'underline #cccc00'
 	}
 });

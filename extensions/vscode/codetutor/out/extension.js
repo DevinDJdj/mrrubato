@@ -342,6 +342,7 @@ function activate(context) {
     (0, toolParticipant_1.startWatchingTranscriber)('hotkeys'); //get record feedback..
     (0, toolParticipant_1.startWatchingTranscriber)('video');
     (0, toolParticipant_1.startWatchingTranscriber)('_meta'); //get all topic changes..
+    (0, toolParticipant_1.startWatchingTranscriber)('base'); //get all mood changes and extra pause..
     TerminalWorker.addClosedTerminalListener();
     Book.open(context); //open the book.  
     (0, toolParticipant_1.registerPiano)(context);
@@ -448,8 +449,12 @@ function activate(context) {
             const mySettings = vscode.workspace.getConfiguration('mrrubato');
             //stop running in background.
             mySettings.update('runinbackground', false);
-            stream.markdown('**Stopping background agent**  \n' + mySettings.runinbackground);
-            vscode.commands.executeCommand('workbench.action.chat.stopReadChatResponseAloud'); //not working..		
+            stream.markdown('stop');
+            //vscode.commands.executeCommand('workbench.action.chat.stopReadChatResponseAloud');	 //not working..		
+            setTimeout(() => {
+                vscode.commands.executeCommand('workbench.action.chat.nextCodeBlock');
+                vscode.commands.executeCommand('workbench.action.chat.readChatResponseAloud');
+            }, 5000);
             return;
         }
         if (request.command === 'exercise') {
@@ -1036,17 +1041,19 @@ const largeNumberDecorationType = vscode.window.createTextEditorDecorationType({
 });
 const defstringDecorationType = vscode.window.createTextEditorDecorationType({
     fontStyle: 'italic',
-    borderWidth: '0 0 0 1px', // Top Right Bottom Left
-    borderStyle: 'solid',
+    //	borderWidth: '0 0 0 1px', // Top Right Bottom Left
+    //	borderStyle: 'solid',
     // use a themable color. See package.json for the declaration and default values.
     light: {
         // this color will be used in light color themes
         borderColor: 'darkred',
+        color: '#777777'
         //		textDecoration: 'underline #0000cc'
     },
     dark: {
         // this color will be used in dark color themes
         borderColor: 'darkred',
+        color: '#777777'
         //		textDecoration: 'underline #cccc00'
     }
 });

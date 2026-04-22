@@ -324,7 +324,8 @@ export function startWatchingWorkspace(context: vscode.ExtensionContext) {
 export function startWatchingTranscriber(lang: string, transcriptFolder: string = "C:/devinpiano/transcripts/"){
     //watch the transcriber folder for changes and update the book accordingly.
     //get fname as YYYYMMDD.txt
-    let fname = `${transcriptFolder}${lang}/${Book.formatDate()}.txt`;
+    let now = Book.formatDate();
+    let fname = `${transcriptFolder}${lang}/${now}.txt`;
 
     if (!fs.existsSync(fname)) {
         //create the file if it doesn't exist.  
@@ -336,7 +337,7 @@ export function startWatchingTranscriber(lang: string, transcriptFolder: string 
         }
         else{
             console.log(`File ${fname} read successfully.`);
-            let topics = transcriber.transcribe(data);
+            let topics = transcriber.transcribe(data, now); //use date as initial topic.);
             if (topics.length > 0){
                 let topic = topics[topics.length-1].topic;
                 Book.addToHistory(topic);
@@ -346,7 +347,8 @@ export function startWatchingTranscriber(lang: string, transcriptFolder: string 
         }
     });
 
-    fs.watchFile(fname, (curr, prev) => {
+    //is default 5000 ms ok
+    fs.watchFile(fname, { interval: 5000 }, (curr, prev) => {
         if (curr.size !== prev.size && curr.size > prev.size) {
             const stream = fs.createReadStream(fname, { start: prev.size, end: curr.size });
             let incomingData = '';
@@ -382,10 +384,19 @@ export function startWatchingTranscriber(lang: string, transcriptFolder: string 
 
                         //for now just open if it exists..
 
+
+                        for (let l of topic.data.split('\n')){
+                            if (l.startsWith("Pause")){
+                                vscode.commands.executeCommand('workbench.action.chat.open', "@mr /stop");
+                            }
+                        }
                     }
                     for (let cmd of topic.cmds){
                         console.log("Processing command: ", cmd);
                         //for now just log the command.  In the future we can do something with it.
+                        if (cmd.cmd === "Pause"){
+                            vscode.commands.executeCommand('workbench.action.chat.open', "@mr /stop");
+                        }
                         if (cmd.cmd === "Record Feedback"){
                             //do something with the feedback.  For now just log it.
                             let input = "";

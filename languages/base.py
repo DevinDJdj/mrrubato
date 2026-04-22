@@ -148,7 +148,15 @@ class base:
       #this function called every time a key is pressed.
 
       if hasattr(self, func):
+        #if 1 key.. no keybot
+        if (cmd in self.config['languages'][self.name]["1"]):
+          return getattr(self, func)(sequence)
+        elif (len(sequence) == 1 and sequence[-1] == self.keybot):
           return getattr(self, func)(sequence[:-1])
+        elif (len(sequence) > 1 and sequence[-2:] == [self.keybot, self.keybot]):
+          return getattr(self, func)(sequence[:-2])
+        else:
+          return 1 #need more keys.
       else:
         logger.error(f"Function {func} not found in {self.__class__.__name__}")
 
@@ -185,6 +193,7 @@ class base:
   def pause(self, sequence=[]):
     """Pause Video."""
     logger.info(f'> Pause {sequence}')
+    self.set_qr("Pause", {'type': 'base'})
     return 0
 
   def unpause(self, sequence=[]):  

@@ -584,6 +584,30 @@ $$editor.hover.enabled=off
 $$
 
 
+**languages/helpers/transcriber.py
+--update_kg
+add to topic store..
+and use transcriber topic store..
+string together contexts from topics if they exist..
 
 
+**web/public/chata.html
+Get videos from time period, include transcript videos..
 
+can we use transcriber.ts directly?  
+
+**web/public/transcriber.ts
+**web/public/recent.js
+--loadAllRecentTranscripts
+Use to get video info..
+> tsc ./web/public/transcriber.ts --outDir ./web/public/
+test..
+
+
+**extensions/trey/trey.py
+Annotate any played records in RECORD..
+
+Allow for pause without hiding..
+<<base>>Pause should do this..
+
+test tock..
