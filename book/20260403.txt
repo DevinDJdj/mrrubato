@@ -611,3 +611,51 @@ Allow for pause without hiding..
 <<base>>Pause should do this..
 
 test tock..
+
+> sudo apt-get install zstd
+> curl -fsSL https://ollama.com/install.sh | sh
+> ollama pull gemma4:e4b
+
+set to default model..
+
+
+Add vtt file..
+
+https://developer.mozilla.org/en-US/docs/Web/API/WebVTT_API
+
+Just use this format so we can add to video element..
+
+**gemma4:e4b
+Quite slow, but info is nice..
+
+**extensions/vscode/codetutor/src/book.ts
+--addQueryHistory
+Need to be able to see the LLM query.  
+Keep the query history..
+replay query N with current topic history..
+summary,similar,read,ask
+Still need to Book.markdown(response) except summary..
+
+Query N with N topic selection N..
+Transfer query to trey?  
+
+Monitor book..
+on add query history..
+send data to shared memory file..
+
+
+;> npm install shm-typed-array
+;#https://github.com/ukrbublik/shm-typed-array
+
+node mmap-io?  
+> npm i @riaskov/mmap-io
+
+**extensions/vscode/codetutor/src/toolParticipant.ts
+--startWatchingMMAP
+see if this works ok..
+when popped from recent stack..
+fs.unwatchFile();
+
+**extensions/vscode/codetutor/src/book.ts
+--setTime
+test..

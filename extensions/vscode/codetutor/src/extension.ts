@@ -470,6 +470,8 @@ export function activate(context: vscode.ExtensionContext) {
 				
 				
 			}
+			//special for summary here in extension.ts
+			Book.addQueryHistory({ query: request.prompt, response: doc }); //add the query and response to the history.
 			stream.markdown(doc);
 			setTimeout(() => {	
 				vscode.commands.executeCommand('workbench.action.chat.nextCodeBlock');

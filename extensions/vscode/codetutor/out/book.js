@@ -36,13 +36,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MAX_SELECTION_HISTORY = exports.ftsindex = exports.arrays = exports.commandarray = exports.temptopicarray = exports.temptopics = exports.topicvectorarray = exports.topicarray = exports.envarray = exports.alltopicsa = exports.alltopicdata = exports.alltopics = exports.vectrafixes = exports.defstring = exports.fnmap = exports.defmap = exports.environmenthistory = exports.selectionhistory = exports.selectedtopic = exports.currenttopic = exports.BOOK_OPEN_GIT = exports.BOOK_OPEN_WEB = exports.BOOK_OPEN_FILE = exports.GIT_DB = exports.GIT_RELATIONS = exports.GIT_DETAILS = exports.GIT_CODE = exports.GIT_BOOK = void 0;
+exports.MAX_SELECTION_HISTORY = exports.ftsindex = exports.arrays = exports.commandarray = exports.temptopicarray = exports.temptopics = exports.topicvectorarray = exports.topicarray = exports.envarray = exports.alltopicsa = exports.alltopicdata = exports.alltopics = exports.vectrafixes = exports.defstring = exports.fnmap = exports.defmap = exports.ollama_model = exports.queryhistory = exports.environmenthistory = exports.selectionhistory = exports.selectedtopic = exports.currenttopic = exports.BOOK_OPEN_GIT = exports.BOOK_OPEN_WEB = exports.BOOK_OPEN_FILE = exports.GIT_DB = exports.GIT_RELATIONS = exports.GIT_DETAILS = exports.GIT_CODE = exports.GIT_BOOK = void 0;
 exports.logCommand = logCommand;
 exports.getTokens = getTokens;
 exports.executeTokens = executeTokens;
 exports.getCommandType = getCommandType;
 exports.open = open;
 exports.close = close;
+exports.setTime = setTime;
+exports.itemToDoc = itemToDoc;
 exports.findTopicsCompletion = findTopicsCompletion;
 exports.findInputTopics = findInputTopics;
 exports.getTempTopicsFromPath = getTempTopicsFromPath;
@@ -51,6 +53,7 @@ exports.printENV = printENV;
 exports.removeFromEnvironment = removeFromEnvironment;
 exports.addToEnvironment = addToEnvironment;
 exports.removeFromHistory = removeFromHistory;
+exports.addQueryHistory = addQueryHistory;
 exports.addToHistory = addToHistory;
 exports.select = select;
 exports.pickTopic = pickTopic;
@@ -122,6 +125,9 @@ var currentrefline = 0;
 var currentref = "NONE";
 exports.selectionhistory = [];
 exports.environmenthistory = [];
+exports.queryhistory = [];
+exports.ollama_model = 'gemma4:e4b';
+//ollama_model = 
 var myCodeMirror = null;
 var tempcodewindow = null;
 var usetempcodewindow = false;
@@ -303,6 +309,20 @@ function getDaysBetweenDates(startDate, endDate) {
     const daysDiff = Math.round(timeDiff / (1000 * 60 * 60 * 24));
     return daysDiff;
 }
+function setTime(t, w, s, e) {
+    const date = new Date(t * 1000);
+    sortRecency(date);
+    //for now just sort by this date.. 
+    //eventually use the window as well perhaps for context creation..
+}
+function sortRecency(mydate = new Date()) {
+    sortArray(exports.topicarray, '', mydate); //sort the topic array by date.
+    for (let i = 0; i < exports.defmap.length; i++) {
+        for (const [key, val] of Object.entries(exports.defmap[i])) {
+            sortArray(exports.arrays[key], key, mydate);
+        }
+    }
+}
 function getRecency(bt, mydate = new Date()) {
     let cumdate = 0;
     for (let i = 0; i < bt.length; i++) {
@@ -318,9 +338,23 @@ function getRecency(bt, mydate = new Date()) {
         return 0;
     }
 }
+function itemToDoc(item) {
+    const folderUri = vscode.workspace.workspaceFolders[0].uri;
+    let ret = "";
+    let fname = item.file;
+    fname = fname.replace(folderUri.path + "/", ""); //remove the folder path from the file name for display purposes.
+    let fileUri = folderUri.with({ path: path_1.posix.join(folderUri.path, fname) });
+    //need to rewrite dates to something else..
+    ret += `Line: ${item.line}, Sort: ${item.sortorder}  \n`;
+    ret += `Link: [${fname}](${fileUri}#L${item.line})  \n`;
+    let data = item.data.substring(0, 255);
+    ret += `Data: ${data}  \n`;
+    return ret;
+}
 function findTopicsCompletion(str = "") {
     let myarray = [];
     let sortText = "0000";
+    const folderUri = vscode.workspace.workspaceFolders[0].uri;
     if (str === "") {
         for (const [key, value] of Object.entries(exports.topicarray)) {
             if (value !== undefined && value.length > 0) {
@@ -329,8 +363,12 @@ function findTopicsCompletion(str = "") {
                 let doc = "";
                 sortText = "0000";
                 for (let item of value) {
+                    let fname = item.file;
+                    fname = fname.replace(folderUri.path + "/", ""); //remove the folder path from the file name for display purposes.
+                    let fileUri = folderUri.with({ path: path_1.posix.join(folderUri.path, fname) });
+                    //need to rewrite dates to something else..
                     doc += `Line: ${item.line}, Sort: ${value[0].sortorder}  \n`;
-                    doc += `Link: [${item.file}](${item.file}#L${item.line})  \n`;
+                    doc += `Link: [${fname}](${fileUri}#L${item.line})  \n`;
                     let data = item.data.substring(0, 255);
                     //add formatting here for timestamp and OCR if available.  
                     doc += `Data: ${data}  \n`;
@@ -385,10 +423,7 @@ function findTopicsCompletion(str = "") {
                 ci.detail = `**${key}`;
                 let doc = "";
                 for (let item of exports.topicarray[key]) {
-                    doc += `Line: ${item.line}, Sort: ${item.sortorder}  \n`;
-                    doc += `Link: [${item.file}](${item.file}#L${item.line})  \n`;
-                    let data = item.data.substring(0, 255);
-                    doc += `Data: ${data}  \n`;
+                    doc = itemToDoc(item);
                 }
                 ci.documentation = new vscode.MarkdownString(`${doc}`);
                 ci.sortText = exports.topicarray[key][0].sortorder.toString(16).padStart(4, '0').toUpperCase();
@@ -465,7 +500,7 @@ function adjustSort(array) {
 }
 //do we want to reset all here?  
 //for now the book isnt large enough to worry about this type of performance.  But...
-function sortArray(array, typekey = '') {
+function sortArray(array, typekey = '', mydate = new Date()) {
     if (typekey === '') {
         exports.alltopics = []; //reset all topics.
         exports.alltopicsa = []; //reset all topics.
@@ -474,7 +509,7 @@ function sortArray(array, typekey = '') {
         if (array[key] !== undefined) {
             //sort the topics by date.  
             if (array[key].length > 0) {
-                array[key][0].sortorder = getRecency(array[key]); //set the sort order to recency.
+                array[key][0].sortorder = getRecency(array[key], mydate); //set the sort order to recency.
             }
         }
         exports.alltopics.push(key);
@@ -513,6 +548,27 @@ function removeFromHistory(topic) {
     const found = exports.selectionhistory.findIndex((t) => t === topic);
     if (found > -1) {
         exports.selectionhistory.splice(found, 1); //remove the topic from the selection history.
+    }
+}
+function addQueryHistory(query) {
+    //add the query to the history.
+    const found = exports.queryhistory.findIndex((t) => t.query === query.query);
+    if (found < 0) {
+        exports.queryhistory.push({ 'query': query.query, 'expanded': query.expanded, 'response': query.response }); //add the query to the history.
+    }
+    else {
+        let obj = exports.queryhistory[found];
+        exports.queryhistory.splice(found, 1); //remove the query from the history.
+        if (query.expanded !== undefined) {
+            obj.expanded = query.expanded; //update the expanded value.
+        }
+        if (query.response !== undefined) {
+            obj.response = query.response; //update the response value.
+        }
+        if (query.query !== undefined) {
+            obj.query = query.query; //update the query value.
+        }
+        exports.queryhistory.push(obj); //add the query to the end of the history.
     }
 }
 function addToHistory(topic) {
@@ -729,6 +785,7 @@ async function read(prompt, mode = exports.GIT_BOOK) {
             console.error(`Error reading file: ${error}`);
         }
     }
+    addQueryHistory({ 'query': prompt, 'expanded': '**' + selectedtopics.join('\n**'), 'response': topics }); //add the query and the expanded context to the query history.
     return [topkey, topics];
 }
 function formatDate(date = new Date()) {
@@ -924,11 +981,12 @@ async function fixVectraError(filePath) {
         }
     }
 }
-async function getChat(input, model = 'llama3.1:8b') {
+async function getChat(input, model = exports.ollama_model) {
     let response = await ollama_1.default.chat({
         //        model: 'llama3.1:8b',
         //        model: 'gemma3n:latest',
-        model: 'gemma3:4b',
+        //        model: 'gemma3:4b',
+        model: model,
         //            model: 'granite3.3:8b',
         messages: [
             { role: 'system', content: `Answer the Query to the best of your ability.  ` },
@@ -948,7 +1006,7 @@ async function getExpanded(input, MAX_MULT = 3) {
     //this will be used to summarize the book.
     let expanded = input;
     let expandme = await ollama_1.default.chat({
-        model: 'llama3.1:8b',
+        model: exports.ollama_model,
         //            model: 'deepseek-coder-v2:latest',
         //deepseek-r1:latest 
         //granite-code:latest
@@ -975,7 +1033,7 @@ async function getExpanded(input, MAX_MULT = 3) {
     }
     return expandme["message"]["content"];
 }
-async function getSummary(input, CTX_WND = 5000) {
+async function getSummary(input, CTX_WND = 100000) {
     //get the summary of the chunks.  
     //this will be used to summarize the book.
     let chunks = await getChunks(input, CTX_WND); //get the chunks from the book.
@@ -984,7 +1042,7 @@ async function getSummary(input, CTX_WND = 5000) {
     for (let i = 0; i < chunks.length - 1; i++) {
         //send this chunk to the summarization model.  
         let summary = await ollama_1.default.chat({
-            model: 'llama3.1:8b',
+            model: exports.ollama_model,
             //            model: 'deepseek-coder-v2:latest',
             //deepseek-r1:latest 
             //granite-code:latest
@@ -1070,7 +1128,8 @@ function getReadableName(name, line = 0) {
     }
     return ret;
 }
-async function markdown(prompt) {
+//format is for what window..
+async function markdown(prompt, format = 1) {
     //this just adjustst the base string to include links to markdown files.  
     //replace **topic with [topic](topic.md)
     //replace #link with [link](link)
@@ -1151,6 +1210,7 @@ async function ask(prompt) {
     let summary = originalb[1].slice(-10000); //just take the end of the book for context.
     //context window is small I think..
     let response = await getChat(summary + "\n\n\n" + prompt + "==\n");
+    addQueryHistory({ query: prompt, expanded: prompt, response: response }); //add the query and response to the history.
     return response;
 }
 async function summary(prompt) {
@@ -1179,15 +1239,15 @@ async function summary(prompt) {
     //read the prompt and similar topics.  
     //    let b = await read(prompt, GIT_BOOK);
     //large context window.  testing gemma3n:latest
-    let originalsummary = await getSummary(originalb[1], 5000); //get the summary of the chunks.
+    let originalsummary = await getSummary(originalb[1], 50000); //get the summary of the chunks.
     console.log(`Original Summary: ${originalsummary}`);
     //use original if we have some data..
     if (originalsummary.length < 300) {
-        let combined = await getSummary(simdata + '\n' + originalb[1], 5000); //get the summary of the chunks.
+        let combined = await getSummary(simdata + '\n' + originalb[1], 50000); //get the summary of the chunks.
         console.log(`Similar Summary: ${combined}`);
         if (combined.length < 500) {
             let b = await read(prompt, exports.GIT_BOOK);
-            let expandedsummary = await getSummary(b[1], 5000); //get the summary of the chunks.
+            let expandedsummary = await getSummary(b[1], 50000); //get the summary of the chunks.
             console.log(`Expanded Summary: ${expandedsummary}`);
             return expandedprompt + "  \n" + expandedsummary + '\n\n';
         }
@@ -1343,6 +1403,7 @@ async function similar(prompt) {
     let today = new Date();
     let todaydate = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
     ret.push({ topic: "EXPANDED", data: expandedprompt, date: todaydate, file: "", line: 0 }); //add the prompt as the first item.
+    addQueryHistory({ 'query': prompt, 'expanded': expandedprompt }); //add to query history.
     return ret;
 }
 async function getVector(text, model = 'nomic-embed-text') {
@@ -1668,12 +1729,7 @@ function loadBook(context = null) {
         console.log(`Total size: ${result.total} bytes, File count: ${result.count}`);
         console.log(exports.topicarray);
         //add this to our CompletionItemProvider.   
-        sortArray(exports.topicarray); //sort the topic array by date.
-        for (let i = 0; i < exports.defmap.length; i++) {
-            for (const [key, val] of Object.entries(exports.defmap[i])) {
-                sortArray(exports.arrays[key], key);
-            }
-        }
+        sortRecency();
         //open the most recent file.
         select(result.page + ".txt"); //select and open topic
         let YYYYmmdd = result.page.split('/').at(-1); //get the date from the path.

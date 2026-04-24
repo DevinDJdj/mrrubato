@@ -469,6 +469,16 @@ def get_transcripts(lang='hotkeys'):
     return alltranscripts
 
 #local transcripts from keyboard usage and transcribed commands.  
+
+def transcribeLocal(fname):
+    #this should be a separate function
+    ext = os.path.splitext(fname)[1].lower()
+    ffname = os.path.splitext(os.path.basename(fname))[0]
+    if (ext in ['.mp4', '.wav']):
+        if (not os.path.exists(ffname + ".vtt")):
+            print(f"Transcribing {fname} to {ffname}.vtt")
+            transcribe_audio_whisper(fname)
+
 def saveLocalTranscripts():
     #upload to folder any transcripts in local folder
     #may want some redaction here..
@@ -476,6 +486,9 @@ def saveLocalTranscripts():
     transcript_path = "../" + tfolder
 
     allfiles = get_relative_file_paths_os(transcript_path)
+    for file in allfiles:
+        transcribeLocal(transcript_path + file)
+        
     print(f"Checking {len(allfiles)} transcripts:")
     print(allfiles)
     uploadedfiles = []

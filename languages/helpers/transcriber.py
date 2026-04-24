@@ -19,6 +19,8 @@ import mykeys
 import networkx as nx
 
 from multiprocessing.shared_memory import SharedMemory
+import mmap
+
 
 logger = logging.getLogger(__name__)
 
@@ -106,6 +108,9 @@ class transcriber:
             if (topic not in self.langmap[lang]['topics']):
                 self.langmap[lang]['topics'][topic] = {'mem': self.get_context_memory(f'**{topic}', size=10*1024), 'extra': extra, 'data': []} 
             mybytes = extra.encode('utf-8')
+            with open(f'temp/{topic}', 'w', encoding='utf-8') as f:
+                f.write(extra)
+
             self.langmap[lang]['topics'][topic]['mem'].buf[:len(mybytes)] = mybytes #store extra info in shared memory 
 
         if save:

@@ -550,6 +550,15 @@ def get_speech_(fname):
     )
 
 
+def write_vtt(fname, segments):
+    with open(fname, "w") as f:
+        f.write("WEBVTT\n\n")
+        for idx, segment in enumerate(segments):
+            start = getTimeFromSecs(int(segment.start))
+            end = getTimeFromSecs(int(segment.end))
+            text = segment.text
+            f.write(f"{idx+1}\n{start} --> {end}\n{text}\n\n")
+
 def transcribe_audio_whisper(fname="example2.wav", start_times=[], end_times=[], use_timestamps=False):
     global whisper_model, recording
     global rec_stop_event, asr_model
@@ -622,6 +631,8 @@ def transcribe_audio_whisper(fname="example2.wav", start_times=[], end_times=[],
 
     print("Detected language '%s' with probability %f" % (info.language, info.language_probability))
     segments = list(segments)
+    ffname = os.path.splitext(os.path.basename(fname))[0]
+    write_vtt(f"{ffname}.vtt", segments)
     for idx, segment in enumerate(segments):
         print("[%.2fs -> %.2fs] %s" % (segment.start, segment.end, segment.text))
         

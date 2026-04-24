@@ -56,7 +56,10 @@ var currentref = "NONE";
 
 export var selectionhistory = [];
 export var environmenthistory = [];
+export var queryhistory = [];
 
+export var ollama_model = 'gemma4:e4b';
+//ollama_model = 
 
 var myCodeMirror = null;
 var tempcodewindow = null;
@@ -116,6 +119,11 @@ export interface BookTopic {
     sortorder: number;
 }
 
+export interface QueryEntry {
+    query: string;
+    expanded?: string;  
+    response?: string;
+}
 
 export var vectrafixes: {[key: string] : boolean } = {};
 
@@ -294,6 +302,24 @@ function getDaysBetweenDates(startDate : Date, endDate: Date) : number{
     return daysDiff;
 }
 
+
+export function setTime(t : number, w: number, s: number, e: number) {
+    const date = new Date(t * 1000);
+    sortRecency(date);
+    //for now just sort by this date.. 
+    //eventually use the window as well perhaps for context creation..
+}
+
+function sortRecency(mydate: Date = new Date()) {
+    sortArray(topicarray, '', mydate); //sort the topic array by date.
+    for (let i=0; i<defmap.length; i++) {
+        for (const [key, val] of Object.entries(defmap[i])) {
+            sortArray(arrays[key], key, mydate);
+        }
+    }
+
+}
+
 function getRecency(bt : Array<BookTopic>, mydate: Date = new Date()) : number {
     let cumdate = 0;
     for (let i = 0; i < bt.length; i++) {
@@ -312,9 +338,28 @@ function getRecency(bt : Array<BookTopic>, mydate: Date = new Date()) : number {
     }
 }
 
+
+export function itemToDoc(item: BookTopic): string {
+    const folderUri = vscode.workspace.workspaceFolders[0].uri;    
+
+    let ret = "";
+    let fname = item.file;
+    fname = fname.replace(folderUri.path + "/", ""); //remove the folder path from the file name for display purposes.
+    let fileUri = folderUri.with({ path: posix.join(folderUri.path, fname) });
+    //need to rewrite dates to something else..
+
+    ret += `Line: ${item.line}, Sort: ${item.sortorder}  \n`;
+    ret += `Link: [${fname}](${fileUri}#L${item.line})  \n`;
+    let data = item.data.substring(0, 255);
+    ret += `Data: ${data}  \n`;
+
+    return ret;
+}
+
 export function findTopicsCompletion(str: string = "") : string[]{
     let myarray = [];
     let sortText = "0000";
+    const folderUri = vscode.workspace.workspaceFolders[0].uri;    
     if (str === ""){
         for (const [key, value] of Object.entries(topicarray)) {
             if (value !== undefined && value.length > 0) {
@@ -323,8 +368,14 @@ export function findTopicsCompletion(str: string = "") : string[]{
                 let doc = "";
                 sortText = "0000";
                 for (let item of value) {
+
+                    let fname = item.file;
+                    fname = fname.replace(folderUri.path + "/", ""); //remove the folder path from the file name for display purposes.
+                    let fileUri = folderUri.with({ path: posix.join(folderUri.path, fname) });
+                    //need to rewrite dates to something else..
+
                     doc += `Line: ${item.line}, Sort: ${value[0].sortorder}  \n`;
-                    doc += `Link: [${item.file}](${item.file}#L${item.line})  \n`;
+                    doc += `Link: [${fname}](${fileUri}#L${item.line})  \n`;
                     let data = item.data.substring(0, 255);
                     //add formatting here for timestamp and OCR if available.  
                     doc += `Data: ${data}  \n`;
@@ -384,10 +435,7 @@ export function findTopicsCompletion(str: string = "") : string[]{
                 ci.detail = `**${key}`;
                 let doc = "";
                 for (let item of topicarray[key]) {
-                    doc += `Line: ${item.line}, Sort: ${item.sortorder}  \n`;
-                    doc += `Link: [${item.file}](${item.file}#L${item.line})  \n`;
-                    let data = item.data.substring(0, 255);
-                    doc += `Data: ${data}  \n`;
+                    doc = itemToDoc(item);
 
                 }
                 ci.documentation = new vscode.MarkdownString(`${doc}`);
@@ -475,7 +523,7 @@ export function adjustSort(array: Array<string>) {
 
 //do we want to reset all here?  
 //for now the book isnt large enough to worry about this type of performance.  But...
-function sortArray(array: {[key: string] : Array<BookTopic> | undefined}, typekey='')  {
+function sortArray(array: {[key: string] : Array<BookTopic> | undefined}, typekey='', mydate: Date = new Date()) {
     if (typekey===''){
         alltopics = []; //reset all topics.
         alltopicsa = []; //reset all topics.
@@ -485,7 +533,7 @@ function sortArray(array: {[key: string] : Array<BookTopic> | undefined}, typeke
         if (array[key] !== undefined) {
             //sort the topics by date.  
             if (array[key].length > 0) {
-                array[key][0].sortorder = getRecency(array[key]); //set the sort order to recency.
+                array[key][0].sortorder = getRecency(array[key], mydate); //set the sort order to recency.
             }
         }
         alltopics.push(key);
@@ -533,6 +581,29 @@ export function removeFromHistory(topic: string){
     }
 
 }
+
+export function addQueryHistory(query: QueryEntry){
+    //add the query to the history.
+    const found = queryhistory.findIndex((t) => t.query === query.query);
+    if (found < 0){
+        queryhistory.push({'query': query.query, 'expanded': query.expanded, 'response': query.response}); //add the query to the history.
+    }
+    else{
+        let obj = queryhistory[found];
+        queryhistory.splice(found, 1); //remove the query from the history.
+        if (query.expanded !== undefined) {
+            obj.expanded = query.expanded; //update the expanded value.
+        }
+        if (query.response !== undefined) {
+            obj.response = query.response; //update the response value.
+        }
+        if (query.query !== undefined) {
+            obj.query = query.query; //update the query value.
+        }
+        queryhistory.push(obj); //add the query to the end of the history.
+    }
+}
+
 
 export function addToHistory(topic: string){
     //add the topic to the history.  
@@ -794,6 +865,7 @@ export async function read(prompt: string, mode: number = GIT_BOOK) : Promise<[s
         }
     }
 
+    addQueryHistory({'query': prompt, 'expanded': '**' + selectedtopics.join('\n**'), 'response': topics}); //add the query and the expanded context to the query history.
     return [topkey, topics];
 
 
@@ -1021,11 +1093,12 @@ async function fixVectraError(filePath: vscode.Uri){
     }
 }
 
-export async function getChat(input: string, model: string = 'llama3.1:8b') : Promise<string> {
+export async function getChat(input: string, model: string = ollama_model) : Promise<string> {
     let response = await ollama.chat({
 //        model: 'llama3.1:8b',
 //        model: 'gemma3n:latest',
-        model: 'gemma3:4b',
+//        model: 'gemma3:4b',
+        model: model,
 //            model: 'granite3.3:8b',
 
         messages: [
@@ -1048,7 +1121,7 @@ export async function getExpanded(input : string, MAX_MULT: number = 3) : Promis
     //this will be used to summarize the book.
     let expanded = input;
     let expandme = await ollama.chat({
-        model: 'llama3.1:8b',
+        model: ollama_model,
 //            model: 'deepseek-coder-v2:latest',
         //deepseek-r1:latest 
         //granite-code:latest
@@ -1077,7 +1150,7 @@ export async function getExpanded(input : string, MAX_MULT: number = 3) : Promis
         return expandme["message"]["content"];
 }
 
-export async function getSummary(input : string, CTX_WND: number = 5000) : Promise<string> {
+export async function getSummary(input : string, CTX_WND: number = 100000) : Promise<string> {
     //get the summary of the chunks.  
     //this will be used to summarize the book.
     let chunks = await getChunks(input, CTX_WND); //get the chunks from the book.
@@ -1087,7 +1160,7 @@ export async function getSummary(input : string, CTX_WND: number = 5000) : Promi
     for (let i=0; i<chunks.length-1; i++) {
         //send this chunk to the summarization model.  
         let summary = await ollama.chat({
-            model: 'llama3.1:8b',
+            model: ollama_model,
 //            model: 'deepseek-coder-v2:latest',
             //deepseek-r1:latest 
             //granite-code:latest
@@ -1180,7 +1253,8 @@ export function getReadableName(name: string, line: number = 0) : string {
     return ret;
 }
 
-export async function markdown(prompt: string) : Promise<string> {
+//format is for what window..
+export async function markdown(prompt: string, format: number =1) : Promise<string> {
     //this just adjustst the base string to include links to markdown files.  
     //replace **topic with [topic](topic.md)
     //replace #link with [link](link)
@@ -1277,6 +1351,7 @@ export async function ask(prompt: string) : Promise<string> {
     let summary = originalb[1].slice(-10000); //just take the end of the book for context.
     //context window is small I think..
     let response = await getChat(summary + "\n\n\n" + prompt + "==\n");
+    addQueryHistory({ query: prompt, expanded: prompt, response: response }); //add the query and response to the history.
     return response;
 }
 
@@ -1310,17 +1385,17 @@ export async function summary(prompt: string) : Promise<string> {
 //    let b = await read(prompt, GIT_BOOK);
 
     //large context window.  testing gemma3n:latest
-    let originalsummary = await getSummary(originalb[1], 5000); //get the summary of the chunks.
+    let originalsummary = await getSummary(originalb[1], 50000); //get the summary of the chunks.
     console.log(`Original Summary: ${originalsummary}`);
 
     //use original if we have some data..
     if (originalsummary.length < 300){
-        let combined = await getSummary(simdata + '\n' + originalb[1], 5000); //get the summary of the chunks.
+        let combined = await getSummary(simdata + '\n' + originalb[1], 50000); //get the summary of the chunks.
         console.log(`Similar Summary: ${combined}`);
 
         if (combined.length < 500){
             let b = await read(prompt, GIT_BOOK);
-            let expandedsummary = await getSummary(b[1], 5000); //get the summary of the chunks.
+            let expandedsummary = await getSummary(b[1], 50000); //get the summary of the chunks.
             console.log(`Expanded Summary: ${expandedsummary}`);
             return expandedprompt + "  \n" + expandedsummary + '\n\n';
         
@@ -1487,6 +1562,8 @@ export async function similar(prompt: string) : Promise<Array<BookTopic>> {
     let today = new Date();
     let todaydate = today.getFullYear()*10000 + (today.getMonth()+1)*100 + today.getDate();
     ret.push({topic: "EXPANDED", data: expandedprompt, date: todaydate, file: "", line: 0}); //add the prompt as the first item.
+
+    addQueryHistory({'query': prompt, 'expanded': expandedprompt}); //add to query history.
     return ret;
 
 }
@@ -1883,12 +1960,8 @@ function loadBook(context: vscode.ExtensionContext | null = null) {
         console.log(`Total size: ${result.total} bytes, File count: ${result.count}`);
         console.log(topicarray);
         //add this to our CompletionItemProvider.   
-        sortArray(topicarray); //sort the topic array by date.
-        for (let i=0; i<defmap.length; i++) {
-            for (const [key, val] of Object.entries(defmap[i])) {
-                sortArray(arrays[key], key);
-            }
-        }
+        sortRecency();
+
 
         //open the most recent file.
         select(result.page + ".txt"); //select and open topic

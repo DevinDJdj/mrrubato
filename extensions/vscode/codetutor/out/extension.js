@@ -412,6 +412,8 @@ function activate(context) {
                 data = await Book.markdown(data);
                 doc += `${data}  \n$$  \n`;
             }
+            //special for summary here in extension.ts
+            Book.addQueryHistory({ query: request.prompt, response: doc }); //add the query and response to the history.
             stream.markdown(doc);
             setTimeout(() => {
                 vscode.commands.executeCommand('workbench.action.chat.nextCodeBlock');

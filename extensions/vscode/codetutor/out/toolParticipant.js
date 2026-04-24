@@ -38,6 +38,8 @@ exports.registerStatusBarTool = registerStatusBarTool;
 exports.updateStatusBarItem = updateStatusBarItem;
 exports.registerCompletionTool = registerCompletionTool;
 exports.startWatchingWorkspace = startWatchingWorkspace;
+exports.stopWatchingMMAP = stopWatchingMMAP;
+exports.startWatchingMMAP = startWatchingMMAP;
 exports.startWatchingTranscriber = startWatchingTranscriber;
 exports.registerToolUserChatParticipant = registerToolUserChatParticipant;
 exports.registerPiano = registerPiano;
@@ -160,12 +162,7 @@ function registerCompletionTool(context) {
                                     let doc = "";
                                     let sortText = "0000";
                                     for (let item of value) {
-                                        let filename = Book.getUri(item.topic);
-                                        doc += `File: ${item.file}, Line: ${item.line}, Sort: ${item.sortorder}  \n`;
-                                        doc += `Topic: [${item.topic}](${filename})  \n`;
-                                        doc += `Link: [${item.file}](${item.file}#L${item.line})  \n`;
-                                        let data = item.data.substring(0, 255);
-                                        doc += `Data: ${data}  \n`;
+                                        doc = Book.itemToDoc(item);
                                         //set sortText to top if it is in selection history.  
                                         const found = Book.selectionhistory.findIndex((t) => t === item.topic);
                                         if (found > -1) {
@@ -194,12 +191,7 @@ function registerCompletionTool(context) {
                         let doc = "";
                         let sortText = "0000";
                         for (let item of value) {
-                            let filename = Book.getUri(item.topic);
-                            doc += `File: ${item.file}, Line: ${item.line}, Sort: ${item.sortorder}  \n`;
-                            doc += `Topic: [${item.topic}](${filename})  \n`;
-                            doc += `Link: [${item.file}](${item.file}#L${item.line})  \n`;
-                            let data = item.data.substring(0, 255);
-                            doc += `Data: ${data}  \n`;
+                            doc = Book.itemToDoc(item);
                             //set sortText to top if it is in selection history.  
                             const found = Book.selectionhistory.findIndex((t) => t === item.topic);
                             if (found > -1) {
@@ -290,6 +282,38 @@ function startWatchingWorkspace(context) {
         return watcher;
     }));
 }
+function stopWatchingMMAP(name) {
+    let basePath = "temp/";
+    fs.unwatchFile(basePath + name);
+}
+//use for monitoring topic state changes when selecting times and filters..
+function startWatchingMMAP(name) {
+    //watch the mmap file for changes and update the book accordingly.
+    let basePath = "temp/";
+    //read initial if exists..
+    if (fs.existsSync(basePath + name)) {
+        const file = fs.openSync(basePath + name, 'r');
+        const stats = fs.fstatSync(file);
+        const data = Buffer.alloc(stats.size);
+        fs.readSync(file, data, 0, stats.size, 0);
+        const content = data.toString();
+        console.log(`Initial read of MMAP file ${name}, size: ${stats.size}`);
+        // Book.loadPage(content, "mmap:" + name);
+    }
+    fs.watchFile(basePath + name, { interval: 3000 }, (curr, prev) => {
+        if (curr.mtimeMs !== prev.mtimeMs) {
+            const file = fs.openSync(basePath + name, 'r+');
+            const data = Buffer.alloc(curr.size);
+            fs.readSync(file, data, 0, curr.size, 0);
+            const content = data.toString();
+            //            const newBuf = mmap.map(curr.size, mmap.MAP_SHARED, file, 0);
+            // Process the new data in newBuf
+            console.log(`MMAP file ${name} changed, new size: ${curr.size}`);
+            // For example, you could parse the new data and update the book accordingly
+            // Book.loadPage(newBuf.toString(), "mmap:" + name);
+        }
+    });
+}
 function startWatchingTranscriber(lang, transcriptFolder = "C:/devinpiano/transcripts/") {
     //watch the transcriber folder for changes and update the book accordingly.
     //get fname as YYYYMMDD.txt
@@ -369,6 +393,27 @@ function startWatchingTranscriber(lang, transcriptFolder = "C:/devinpiano/transc
                             //                            Book.updatePage("book/" + topic.topic, input);
                             //get todays date for filename.  
                             Book.updatePage(Book.getBookPath() + "/" + file, input, -1, -1); //append to end of file.
+                        }
+                        if (cmd.cmd === "Time Jump" || cmd.cmd === "Time Zoom") {
+                            //see what time is set and adjust topic selection accordingly..
+                            let t = Date.now() / 1000;
+                            if (cmd.vars && cmd.vars['TIME']) {
+                                t = parseFloat(cmd.vars['TIME']);
+                            }
+                            let w = 86400; // default 1 day
+                            if (cmd.vars && cmd.vars['WINDOW']) {
+                                w = parseFloat(cmd.vars['WINDOW']);
+                            }
+                            let s = t - w / 2;
+                            if (cmd.vars && cmd.vars['START']) {
+                                s = parseFloat(cmd.vars['START']);
+                            }
+                            let e = t + w / 2;
+                            if (cmd.vars && cmd.vars['END']) {
+                                e = parseFloat(cmd.vars['END']);
+                            }
+                            console.log(`Time Jump/Zoom to ${new Date(s * 1000).toISOString()} - ${new Date(e * 1000).toISOString()}`);
+                            Book.setTime(t, s, e, w);
                         }
                     }
                 }
