@@ -328,7 +328,7 @@ function getRecency(bt, mydate = new Date()) {
     for (let i = 0; i < bt.length; i++) {
         //need better calculation of recency.
         //get closest to mydate.  
-        cumdate += getDaysBetweenDates(getDateFromString(bt[i].date.toString()), mydate);
+        cumdate += Math.abs(getDaysBetweenDates(getDateFromString(bt[i].date.toString()), mydate));
         bt[i].sortorder = 0;
     }
     if (bt.length > 0) {

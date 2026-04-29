@@ -1,65 +1,259 @@
 "use strict";
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
-//npx --package yo --package generator-code -- yo code
-//npm install --global yo generator-code
-//if not working run this..
-//>cd [extensiondir]
-//>ollama start..
-//>tsc -watch -p ./
-//npm install --save @vscode/prompt-tsx
-//npm install --save ollama
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.formatMarkdownSnippet = formatMarkdownSnippet;
 exports.activate = activate;
 exports.default = deactivate;
-const vscode = __importStar(require("vscode"));
-const prompt_tsx_1 = require("@vscode/prompt-tsx");
-const path_1 = require("path");
-const prompts_1 = require("./prompts");
-const Book = __importStar(require("./book"));
-const Worker = __importStar(require("./worker"));
-const ollama_1 = __importDefault(require("ollama"));
-const toolParticipant_1 = require("./toolParticipant");
-const TerminalWorker = __importStar(require("./terminalworker"));
-const BASE_PROMPT = 'You are a helpful code tutor. Your job is to teach the user with simple descriptions and sample code of the concept. Respond with a guided overview of the concept in a series of messages. Do not give the user the answer directly, but guide them to find the answer themselves. If the user asks a non-programming question, politely decline to respond.';
-const EXERCISES_PROMPT = 'You are a helpful tutor. Your job is to teach the user with fun, simple exercises that they can complete in the editor. Your exercises should start simple and get more complex as the user progresses. Move one concept at a time, and do not move on to the next concept until the user provides the correct answer. Give hints in your exercises to help the user learn. If the user is stuck, you can provide the answer and explain why it is the answer. If the user asks a non-programming question, politely decline to respond.';
+ ** extensions / vscode / codetutor / src / extension.ts;
+$$20251002_050651;
+Use
+    ^  ^ #;
+to;
+generate;
+comments.
+    ^  ^ +to;
+generate;
+suggestions;
+to;
+add.
+    ^  ^ -to;
+generate;
+suggestions;
+to;
+remove.
+    ^  ^  & to;
+generate;
+book.
+;
+Continue;
+here..
+;
+Need;
+book;
+Make;
+a;
+command;
+for (each of these ?
+    I : )
+    guess.
+    ;
+gencomments - same, But;
+dont;
+include;
+commits;
+with (no)
+    comments.
+    ;
+gencode - Get;
+FULL;
+Topics, Order;
+ALL;
+GIT;
+changes;
+include;
+book;
+changes;
+gendelete - This;
+is;
+tricky;
+but;
+important.Maybe;
+try { }
+finally { }
+a;
+code;
+coverage;
+plugin.
+;
+genbook - Get;
+FULL;
+Topics, Get;
+GIT;
+changes;
+to;
+book in sequence.
+;
+Save;
+current;
+branch.
+    > git;
+branch--;
+show - current;
+$$BRANCHNAME
+    > git;
+branch;
+$$BRANCHNAME
+    > git;
+switch ($$BRANCHNAME
+    ..
+    > git) {
+}
+switch ($$ORIGBRANCH
+    > git) {
+}
+merge;
+Create;
+a;
+branch;
+each;
+time;
+we;
+run;
+the;
+improvement;
+process.
+;
+Or;
+keep;
+branch;
+for (each; topic.
+    ^  ^ +to; generate.
+)
+    Find;
+launchable;
+page;
+which;
+includes;
+this;
+topic.
+;
+All;
+launchable;
+pages;
+should;
+be;
+tried;
+if (possible.
+)
+    Start;
+recording..
+    Launch[ ** PAGE];
+Use[ ** PAGE];
+Switch;
+back;
+to;
+extension.
+;
+Make;
+updates..
+;
+Show;
+updates;
+for (time..
+    Redeploy; Use[ ** PAGE]; Make)
+    observations;
+and;
+compare;
+with (previous)
+    iterations.
+    ;
+add;
+to[ ** GENBOOK];
+Launch;
+other;
+operations..from[ ** GENBOOK];
+Accept / decline;
+changes;
+based;
+on;
+results;
+and;
+check;
+prompts.
+;
+Make;
+summary;
+information;
+about;
+changes.
+;
+Add;
+to[ ** GENBOOK];
+Merge;
+branch..
+;
+List;
+launched;
+operations;
+from[ ** GENBOOK];
+Only;
+one;
+branch;
+at;
+a;
+time;
+for (any; topic ?
+    For : ; now)
+    on;
+failure;
+just;
+delete and;
+start;
+over ?
+    Track : ;
+how;
+much;
+failure.
+;
+Repeat;
+process.
+    $$20251002_052926
+    > git;
+branch--;
+show - current;
+$$BRANCHNAME
+    > git;
+branch;
+$$BRANCHNAME;
+$$20251002_053206
+    > git;
+branch;
+$$BRANCHNAME
+    > git;
+switch ($$BRANCHNAME) {
+}
+$$20251002_053325
+    > git;
+switch ($$BRANCHNAME
+    ..
+    > git) {
+}
+switch ($$ORIGBRANCH) {
+}
+$$20251002_053605
+    > git;
+switch ($$ORIGBRANCH
+    > git) {
+}
+merge;
+p;
+the;
+user;
+learn.If;
+the;
+user;
+is;
+stuck, you;
+can;
+provide;
+the;
+answer;
+and;
+explain;
+why;
+it;
+is;
+the;
+answer.If;
+the;
+user;
+asks;
+a;
+non - programming;
+question, politely;
+decline;
+to;
+respond.;
+';;
 // define a chat handler
 let max_context_length = 512000; //for now using this max context length.  
 let activeEditor = vscode.window.activeTextEditor;
@@ -163,7 +357,7 @@ function roboupdate(topkey, topics, fullMessage) {
     }
     //Book.updatePage("book/20230110.txt", "hello");
     if (activeEditor) {
-        (0, toolParticipant_1.updateStatusBarItem)();
+        updateStatusBarItem();
         //show the change made and switch to this page.  
     }
 }
@@ -232,7 +426,7 @@ async function Chat(prompt, context, stream, token) {
         //response = client.generate(model='llama3.2b', prompt=my_prompt)
         //actual_response = response['response']
         await Book.read(prompt);
-        const response = await ollama_1.default.chat({
+        const response = await ollama.chat({
             //		model: 'llama3.1:8b',
             model: 'deepseek-coder-v2:latest',
             //deepseek-r1:latest 
@@ -335,17 +529,17 @@ function formatMarkdownSnippet(snippet) {
 }
 function activate(context) {
     //not being activated until chatted to...
-    (0, toolParticipant_1.registerToolUserChatParticipant)(context);
-    (0, toolParticipant_1.registerCompletionTool)(context);
-    (0, toolParticipant_1.registerStatusBarTool)(context);
-    (0, toolParticipant_1.startWatchingWorkspace)(context); //watch for changes to book.  
-    (0, toolParticipant_1.startWatchingTranscriber)('hotkeys'); //get record feedback..
-    (0, toolParticipant_1.startWatchingTranscriber)('video');
-    (0, toolParticipant_1.startWatchingTranscriber)('_meta'); //get all topic changes..
-    (0, toolParticipant_1.startWatchingTranscriber)('base'); //get all mood changes and extra pause..
+    registerToolUserChatParticipant(context);
+    registerCompletionTool(context);
+    registerStatusBarTool(context);
+    startWatchingWorkspace(context); //watch for changes to book.  
+    startWatchingTranscriber('hotkeys'); //get record feedback..
+    startWatchingTranscriber('video');
+    startWatchingTranscriber('_meta'); //get all topic changes..
+    startWatchingTranscriber('base'); //get all mood changes and extra pause..
     TerminalWorker.addClosedTerminalListener();
     Book.open(context); //open the book.  
-    (0, toolParticipant_1.registerPiano)(context);
+    registerPiano(context);
     // define a chat handler
     const handler = async (request, context, stream, token) => {
         //vscode.window.showInformationMessage('Hello world!');
@@ -513,7 +707,7 @@ function activate(context) {
             Book.updatePage("book/20230110.txt", "hello");
             let myquery = "play with me and use tool #file:definitions.txt"; //calling via # doesnt work.  
             //call external ollama.  
-            const { messages } = await (0, prompt_tsx_1.renderPrompt)(prompts_1.PlayPrompt, { userQuery: myquery }, { modelMaxPromptTokens: request.model.maxInputTokens }, request.model);
+            const { messages } = await renderPrompt(PlayPrompt, { userQuery: myquery }, { modelMaxPromptTokens: request.model.maxInputTokens }, request.model);
             const chatResponse = await request.model.sendRequest(messages, {}, token);
             for await (const fragment of chatResponse.text) {
                 stream.markdown(fragment);
@@ -1003,7 +1197,7 @@ function activate(context) {
             // do work
             triggerUpdateDecorations();
             triggerGetBookContext();
-            (0, toolParticipant_1.updateStatusBarItem)();
+            updateStatusBarItem();
         }
     });
     vscode.window.onDidChangeActiveTextEditor(editor => {
@@ -1011,7 +1205,7 @@ function activate(context) {
         if (editor) {
             triggerUpdateDecorations();
             triggerGetBookContext();
-            (0, toolParticipant_1.updateStatusBarItem)();
+            updateStatusBarItem();
         }
     }, null, context.subscriptions);
 }
@@ -1125,7 +1319,7 @@ async function getStats(request, context, stream, token) {
         let count = 0;
         for (const [name, type] of await vscode.workspace.fs.readDirectory(folder)) {
             if (type === vscode.FileType.File) {
-                const filePath = path_1.posix.join(folder.path, name);
+                const filePath = posix.join(folder.path, name);
                 const stat = await vscode.workspace.fs.stat(folder.with({ path: filePath }));
                 total += stat.size;
                 count += 1;
@@ -1140,7 +1334,7 @@ async function getStats(request, context, stream, token) {
     if (fileUri.scheme !== 'file') {
         return vscode.window.showInformationMessage('Open an existing file first');
     }
-    const folderPath = path_1.posix.dirname(fileUri.path);
+    const folderPath = posix.dirname(fileUri.path);
     const folderUri = fileUri.with({ path: folderPath });
     const info = await countAndTotalOfFilesInFolder(folderUri);
     //show this as message.  
@@ -1154,7 +1348,7 @@ function readFile(fname = "book/definitions.txt") {
     }
     const folderUri = vscode.workspace.workspaceFolders[0].uri;
     // this should be a book path.  Use as you would work on the project.  
-    const fileUri = folderUri.with({ path: path_1.posix.join(folderUri.path, fname) });
+    const fileUri = folderUri.with({ path: posix.join(folderUri.path, fname) });
     //	const fileUri = folderUri.with({ path: posix.join(folderUri.path, 'definitions.txt') });
     vscode.window.showTextDocument(fileUri);
     vscode.workspace.openTextDocument(fileUri).then((document) => {
@@ -1198,7 +1392,7 @@ function insertTextIntoActiveEditor(text) {
 }
 // This method is called when your extension is deactivated
 function deactivate() {
-    (0, toolParticipant_1.unregisterPiano)();
+    unregisterPiano();
     Book.close();
     if (workFunc) {
         clearInterval(workFunc);

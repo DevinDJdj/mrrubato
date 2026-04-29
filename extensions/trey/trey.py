@@ -1892,7 +1892,27 @@ class MyWindow(QMainWindow):
                     #what to do with this?  
                     #save it and show in QR?  
                     self.similar = similar
+
+            case "Select Book":
+                book = vars.get('book', 'None')
+                self.add_setting('book', book, lang)
+                context = vars.get('context', '')
+                self.transcriber.current_book = book
+                self.transcriber.current_context = context
+                print(f"<<{lang}>>\n$$book=" + str(book))
+                print(f"<<{lang}>>\n$$context=" + str(context))
+                self.label_topic_info[0].setText(f'**{book}')
+
+                #format this a bit nicer..
+                self.label_topic_info[1].setText(f'{context}') 
+
+                self.label_topic_info[0].update()
+                self.label_topic_info[1].update()
+                self.bookhistory.insert(0, {'book': book, 'context': context, 'timestamp': time.time()}) #0 based index for most recent
+                #bring vscode to front if not there..
                 
+                self.show_mrroboto()
+
             case "Select Topic":
                 topic = vars.get('topic', 'None')
                 self.add_setting('topic', topic, lang)
@@ -2224,6 +2244,7 @@ class MyWindow(QMainWindow):
         self.windowcounter = 0
         self.screenshots = [] #list of screenshots per monitor
         self.topichistory = []
+        self.bookhistory = []
         self.filters = {}
         self.windows = {} #current windows by pid, updated by window thread.
         self.myactions = [] #list of current actions to display, updated by QR commands.
@@ -3097,7 +3118,7 @@ class MyWindow(QMainWindow):
       for i, l in enumerate(struct):
         type = l['type']
         if (type == '> '):
-          if (l['cmd'] == 'Click Link_' or l['cmd'] == 'Select Topic_' or l['cmd'] == 'Time Zoom_'): 
+          if (l['cmd'] == 'Click Link_' or l['cmd'] == 'Select Book_' or l['cmd'] == 'Select Topic_' or l['cmd'] == 'Time Zoom_'): 
             cnt = 0       
             for k, v in l['vars'].items():
 #                if (wbarray[i%len(wbarray)] == 0):
@@ -3159,10 +3180,17 @@ class MyWindow(QMainWindow):
         print(f'QR data length: {len(qrdata)}')
         print(qrdata[0:100] + "...\n")
 
+
         
         if (self.is_complete_cmd(struct)): #only display if completion
-            if (len(qrdata) > 1500):
-                qrdata = qrdata[0:1500] #truncate to 1500 bytes max for QR code.
+            #truncate this command to show everything but suggestions.  
+            lines = data.split('\n')
+            for (i, l) in enumerate(lines):
+                if (l.startswith('<<meta>>')):
+                    qrdata = '\n'.join(lines[0:i]) #only show lines before suggestions, can adjust as needed.
+                    break
+            if (len(qrdata) > 600):
+                qrdata = qrdata[0:600] #truncate to 1000 bytes max for QR code.
                 qrdata += "\n...\n$$\n"
             qr_image = create_qr_code(qrdata)
     #        qr_image = Image.open("qrcode.png")

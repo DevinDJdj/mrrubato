@@ -448,11 +448,12 @@ def open_browser():
 
 
         #load last 10
+        logger.info(f'Preloading last 10 bookmark URLs: {last10}')
+        print(f'Last 10 bookmark URLs: {last10}')   
         for url in last10:
             read_page(url) #preload last 10 bookmarks.
             pause_video() #pause any videos on these pages.
             #but dont read..
-            print(f'Last 10 bookmark URLs: {url}')
 
 #        async with Stealth().use_async(async_playwright()) as p:
 #            browser_type = p.chromium

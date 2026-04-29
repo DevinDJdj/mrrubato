@@ -29,6 +29,8 @@ class transcriber:
     def __init__(self, lang_helper=None, mk=None, qr_queue=None):
         self.lang_helper = lang_helper
         self.defstring = r"[~!@#$%^&*<>/:;\-\+=]"
+        self.BOOK_FOLDER = '../books/'
+        self.TRANSCRIPT_FOLDER = '../transcripts/'
         self.allcmds = {} #lang -> {cmds, start_time, end_time, list of cmds in order..
         self.langmap = {}
         self.kg = {}
@@ -42,6 +44,8 @@ class transcriber:
         self.allneedles = []
         self.current_topic = None
         self.current_context = None
+        self.current_book = None
+
         self.kg_ignorevars = ['TIME', 'WINDOW', 'START', 'END', 'FNAME', 'FILE', 'DURATION', 'LAG'] #vars to ignore in display of info, used for time window commands.
 
         if (self.mykeys is not None):
@@ -54,6 +58,7 @@ class transcriber:
                 self.mydic[str(len(keys))][strkeys] = {'w': w['word'], 'l': w['lang'], 'k': keys, 'cnt': 0, 'vars': {}}
                 if (len(keys) > 1): #dont search single for now..
                     self.allneedles.append(strkeys)
+
 
     def getTime(self, relativedays=0):
         now = datetime.now()
@@ -69,7 +74,7 @@ class transcriber:
       #for now just one time param.  
 
       today = datetime.now().strftime("%Y%m%d")
-      folder = '../transcripts/' + lang + '/'
+      folder = self.TRANSCRIPT_FOLDER + lang + '/'
       os.makedirs(folder, exist_ok=True)
       with open(folder + today + '.txt', 'a', encoding='utf-8') as f:        
         f.write(f'{text}\n') 
@@ -94,9 +99,12 @@ class transcriber:
 
 
 
-    def write_topic(self, lang, topic, extra="", save=True):
+    def write_topic(self, lang, topic="", extra="", saveTranscript=True, saveBook=False):
 
         ret = ""
+        today = datetime.now().strftime("%Y%m%d")
+        if (topic == ""):
+            topic = self.current_topic
         if (topic != self.current_topic and topic is not None):                
             ret += f'**{topic}\n'
             ret += f'$$TIME={self.getTimeString()}\n'
@@ -106,19 +114,66 @@ class transcriber:
         if (extra != ""):
             ret += f'<<{lang}>>\n{extra}\n'
             if (topic not in self.langmap[lang]['topics']):
-                self.langmap[lang]['topics'][topic] = {'mem': self.get_context_memory(f'**{topic}', size=10*1024), 'extra': extra, 'data': []} 
+                self.langmap[lang]['topics'][topic] = {'mem': self.get_context_memory(f'{topic}', size=10*1024), 'extra': extra, 'data': []} 
             mybytes = extra.encode('utf-8')
+
+            file_path = pathlib.Path(f'temp/{topic}')
+            # Create parent directories if they don't exist
+            file_path.parent.mkdir(parents=True, exist_ok=True)
+
             with open(f'temp/{topic}', 'w', encoding='utf-8') as f:
                 f.write(extra)
+            self.write_context_memory(self.langmap[lang]['topics'][topic]['mem'], extra) #store extra info in shared memory for access by other processes if needed.  could also store in a file or database if needed, but for now just use shared memory for simplicity.  need to manage memory usage and cleanup as needed.
+            #self.langmap[lang]['topics'][topic]['mem'].buf[:len(mybytes)] = mybytes #store extra info in shared memory 
 
-            self.langmap[lang]['topics'][topic]['mem'].buf[:len(mybytes)] = mybytes #store extra info in shared memory 
+            if (saveBook):
+                #write to permanent topic
+                #write to permanent selected book/topic..
+                if (self.current_book is not None):
+                    topicstr = ""
+                    if (self.current_book not in self.langmap):
+                        self.langmap[self.current_book] = {'lang':self.current_book, 'topic': topic, 'topics': {}, 'kg': nx.Graph()}
+                        topicstr = f'**{topic}'
+                    try:
+                        file_path = pathlib.Path(f'{self.BOOK_FOLDER}{self.current_book}')
+                        # Create parent directories if they don't exist
+                        file_path.parent.mkdir(parents=True, exist_ok=True)
+                        with open(f'{self.BOOK_FOLDER}{self.current_book}/{today}.txt', 'a', encoding='utf-8') as f:
+                            if (topic != self.langmap[self.current_book]['topic']):
+                                topicstr = f'**{topic}'
+                            if (topicstr != ""): #had to change topics..
+                                f.write(topicstr + '\n')
+                            f.write(extra + '\n')
+                        self.langmap[self.current_book]['topic'] = topic
+                    except Exception as e:
+                        logger.error(f'Error writing to book file for current book {self.current_book}: {e}')
+                    #write also to topic file
+                    if (topic not in self.langmap):
+                        self.langmap[topic] = {'lang':topic, 'topic': self.current_book, 'topics': {}, 'kg': nx.Graph()}
+                        topicstr = f'**{self.current_book}'
+                    elif (self.langmap[topic]['topic'] == self.current_book):
+                        topicstr = "" #dont rewrite topic if its the same as current book, to avoid confusion in topic history.
+                    try:
+                        file_path = pathlib.Path(f'{self.BOOK_FOLDER}{topic}')
+                        # Create parent directories if they don't exist
+                        file_path.parent.mkdir(parents=True, exist_ok=True)
+                        with open(f'{self.BOOK_FOLDER}{topic}/{today}.txt', 'a', encoding='utf-8') as f:
+                            if (topicstr != ""): #had to change topics..
+                                topicstr = f'**{self.current_book}'
+                                f.write(topicstr + '\n')
+                            f.write(extra + '\n')
+                            #dont worry about time of day for this, not worth the space..
+                    except Exception as e:
+                        logger.error(f'Error writing to book file for topic {topic}: {e}')
 
-        if save:
-            today = datetime.now().strftime("%Y%m%d")
-            folder = '../transcripts/' + lang + '/'
+        if saveTranscript:
+            
+            folder = self.TRANSCRIPT_FOLDER + lang + '/'
             os.makedirs(folder, exist_ok=True)
             with open(folder + today + '.txt', 'a', encoding='utf-8') as f:
                 f.write(ret)
+
+
         return ret
 
     #    
@@ -158,7 +213,7 @@ class transcriber:
 
       if save:
         today = datetime.now().strftime("%Y%m%d")
-        folder = '../transcripts/' + lang + '/'
+        folder = self.TRANSCRIPT_FOLDER + lang + '/'
         os.makedirs(folder, exist_ok=True)
         with open(folder + today + '.txt', 'a', encoding='utf-8') as f:
           f.write(ret)
@@ -293,7 +348,7 @@ class transcriber:
         #get year
         y = start_time.year
         for y in range(start_time.year, end_time.year+1):
-            folder = '../transcripts/' + str(y) + '/'
+            folder = self.TRANSCRIPT_FOLDER + str(y) + '/'
             files = [f for f in os.listdir(folder) if os.path.getmtime(folder + f) >= start_time.timestamp() and os.path.getctime(folder + f) <= end_time.timestamp()]
 
             sorted_files = sorted(files, key=lambda f: os.path.getmtime(os.path.join(folder, f))) #sort by modification time, oldest first.  could also sort by creation time if needed.
@@ -545,9 +600,11 @@ class transcriber:
         for idx, cmd in enumerate(cmds):
             #add to array.  
             if (cmd['topic'] not in self.langmap[lang]['topics']):
-                self.langmap[lang]['topics'][cmd['topic']] = {'mem': self.get_context_memory(f'**{cmd["topic"]}', size=10*1024), 'extra': "", 'data': []} #store extra info in langmap for reference, and also store in shared memory for access by other processes if needed.  could also store in a file or database if needed, but for now just use shared memory for simplicity.  need to manage memory usage and cleanup as needed, but for now just create a new block for each topic and overwrite as needed.
+                self.langmap[lang]['topics'][cmd['topic']] = {'mem': self.get_context_memory(f'{cmd["topic"]}', size=10*1024), 'extra': "", 'data': []} #store extra info in langmap for reference, and also store in shared memory for access by other processes if needed.  could also store in a file or database if needed, but for now just use shared memory for simplicity.  need to manage memory usage and cleanup as needed, but for now just create a new block for each topic and overwrite as needed.
             self.langmap[lang]['topics'][cmd['topic']]['data'].append(cmd) #store topic data in langmap for reference, could be useful for display and searching later, but for now just store in memory.  could also store in shared memory or a file/database if needed.
 
+            if ('**' not in self.kg):
+                self.kg['**'] = nx.Graph()
             if (cmd['type'] not in self.kg):
                 self.kg[cmd['type']] = nx.Graph()
             #add topics and cmds..
@@ -582,14 +639,113 @@ class transcriber:
         except ValueError:
             return False
         
+
+    def write_context_memory(self, contextmemory, data):
+        #write data to shared memory block, with some basic management to avoid overflow.  for now just overwrite from the beginning if we exceed the size, but could implement a more sophisticated approach if needed.  need to manage memory usage and cleanup as needed, but for now just write to the block and overwrite as needed.
+        """
+        mybytes = data.encode('utf-8')
+        if (len(mybytes) > contextmemory.size):
+            logger.warning(f'Context memory overflow: data size {len(mybytes)} exceeds block size {contextmemory.size}, truncating data')
+            mybytes = mybytes[:contextmemory.size] #truncate data to fit in block
+        contextmemory.buf[:len(mybytes)] = mybytes
+        """
+        #use mmap
+        with open(contextmemory, "r+b") as f:
+            # memory-map the file, size 0 means whole file
+            mm = mmap.mmap(f.fileno(), 0)
+            # read content via standard file methods
+            mdata = data.encode('utf-8')
+            mm[:len(mdata)] = mdata
+
+            mm.close()        
+
     def get_context_memory(self, name, size=1024*1024):
+        # 1. Attempt to create a new shared memory block
+        name = name.replace('\\', '/')
+        if (name.startswith('/')):
+            name = name[1:] #remove leading slash if present
+        return name
+#            return SharedMemory(name=name, create=True, size=size)
+
+
+
+    def close_book(self, bookname, folder = "books"):
+        #for now clear from alllangs.  
+        if (bookname in self.allcmds):
+            #for now no clearing, just mark as closed for searches..
+            self.allcmds[bookname]['open'] = False
+        
+    def open_book(self, bookname, start_time, end_time, folder = "books"):
+        #for now just read the book and return the text, but could also do some processing here to extract relevant sections or create embeddings for searching later.  could also store in shared memory or a file/database if needed, but for now just read and return the text.
         try:
-            # 1. Attempt to create a new shared memory block
-            return SharedMemory(name=name, create=True, size=size)
-        except FileExistsError:
-            # 2. If it already exists, attach to the existing block
-            return SharedMemory(name=name)
+            self.read(bookname, start_time=start_time, end_time=end_time, myfolder=bookname) #load book into transcripts for reference, this will also update the knowledge graph with any topics/commands found in the book, which can be useful for searching and display later.  could also do some processing here to extract relevant sections or create embeddings for searching later, but for now just load and return the text.
+
+        except Exception as e:
+            logger.error(f'!!> Open book [{bookname}]\n !!{e}\n')
+
+        
+    def get_from_nested(self, data_dict, key_list):
+        try:
+            for key in key_list:
+                data_dict = data_dict[key]
+        except KeyError:
+            return None
+        return data_dict
+
+    def get_single_book(self, folder="books"):
+        book = self.get_from_nested(self.allbooks, folder.split('/'))
+        if (book is not None and '&&' in book and book['&&'] is not None):
+            return self.read_existing(book['&&']['**'])
+        
+    def get_chromatic(self, struct, start_time=None, end_time=None):
+        #get chromatic cmds from this struct, which is a nested dict with '&&' for cmds and subfolders for nested books.  this will allow us to get all cmds from a book and its subbooks recursively, with optional time filtering.  could also add topic filtering if needed, but for now just get all cmds.
+        ret = []
+        if (struct is None):
+            return ret
+        for s in struct:
+            if (s['cmds'] is not None and s['start_idx'] != s['end_idx']):
+                ret.extend(s['cmds'][s['start_idx']:s['end_idx']]) #get cmds for this struct, which should already be filtered by time in read_existing, so we can just get the cmds between start_idx and end_idx.  could also add topic filtering here if needed, but for now just get all cmds.
+
+        return ret
+    def filter_books_recursive(self, folder="books", searchbooks=None, start_time=None, end_time=None):
+        #get just name here..
+        if (searchbooks is None):
+            tree = folder.split('/')
+            searchbooks = self.get_from_nested(self.allbooks, tree)
+        if (searchbooks is None):
+            return []
+        retstruct = []
+        for k,v in searchbooks.items():
+            if (k == '&&' or k == '**'):
+                continue
+            retstruct.extend(self.filter_books_recursive(folder+"/"+k, searchbooks=v, start_time=start_time, end_time=end_time))
+        if (searchbooks['&&'] is not None):            
+            self.read_existing(searchbooks['&&']['**'], start_time=start_time, end_time=end_time) #get existing cmds filter time..
+            if (searchbooks['&&']['cmds'] is not None and searchbooks['&&']['start_idx'] != searchbooks['&&']['end_idx']):
+                retstruct.append(searchbooks['&&']) #get existing cmds with filtered time..
+
             
+        return retstruct
+    
+    def open_books(self, folder="books", days=365):
+        #check recursively and if there are any files in the folder, open them as books.  
+        #only include the immediate files in the book.  
+        #closing book will close all subbooks as well for now..
+
+        retstruct = {'&&': None}
+        #get just name here..
+        subfolders = [ f.name for f in os.scandir(folder) if f.is_dir() ]
+        for subfolder in subfolders:
+            logger.info(f'Opening book {subfolder} from folder {folder}')
+            print(f'Opening book {subfolder} from folder {folder}')
+            bookname = subfolder #books/worldhistory/worldwar2/YYYYmmdd.txt
+            #retstruct = books['worldhistory']['worldwar2']['&&'] #get cmd struct for this subbook..
+            #if we have other subfolders, load them..
+            retstruct[subfolder] = self.open_books(folder+"/"+subfolder) #recursively open subbooks as well, this will allow for nested book structures
+            #load data for this book..
+        retstruct['&&'] = self.open_book(folder, start_time=self.getTime(-days), end_time=self.getTime(), folder=folder) #open all books with last year of data, could adjust as needed.
+        return retstruct
+
     def read(self, lang, start_time=None, end_time=None, myfolder=""):
 
       #read from transcript file all instances of this.   
@@ -603,10 +759,12 @@ class transcriber:
             return self.read_existing(lang, start_time, end_time) #get existing cmds..
         
         #list all files in directory
-        folder = '../transcripts/' + lang + '/'
+        folder = self.TRANSCRIPT_FOLDER + lang + '/'
         if (myfolder != ""):
             folder = myfolder
         os.makedirs(folder, exist_ok=True)
+
+                
 
         files = [f for f in os.listdir(folder) if os.path.getmtime(folder + f) >= start_time.timestamp() and os.path.getctime(folder + f) <= end_time.timestamp()]
 
@@ -623,6 +781,7 @@ class transcriber:
         topc = None
         last_time = start_time.timestamp()
         mtime = None
+        last_mtime = None
         for f in sorted_files:
     #      if (f.startswith(yesterday) or f.startswith(today)):
             if (f.endswith('.txt')): #dont open wav files.. maybe rethink sharing directory..
@@ -634,6 +793,7 @@ class transcriber:
                 else:
                     mtime = os.path.getmtime(folder + f)
 
+                last_mtime = mtime
                 if (mtime < last_time):
                     last_time = mtime - 86400 #set to start of day if we have data issue..
 
@@ -642,6 +802,7 @@ class transcriber:
                         lines = ff.readlines()
                         if (len(lines) < 2):
                             continue
+
                         self.current_topic = f[:-4] #file name without extension
                         test = self.read_lines(lang, lines, last_time, mtime)
                         ret.extend(test) 
@@ -652,9 +813,10 @@ class transcriber:
 
                 last_time = mtime
                 numloaded += 1
+
         ret.sort(key=lambda x: x['timestamp']) #sort by timestamp just in case.
 
-        self.allcmds[lang] = {'cmds': ret, 'start_time': start_time, 'end_time': end_time, 'start_idx': 0, 'end_idx': len(ret)-1}
+        self.allcmds[lang] = {'**': lang, 'cmds': ret, 'last_mtime': last_mtime, 'start_time': start_time, 'end_time': end_time, 'start_idx': 0, 'end_idx': len(ret)-1, 'open': True}
         self.update_kg(lang, ret)
         logger.info(f'Loaded {numloaded} files for {lang} with {len(ret)} commands')
         return ret

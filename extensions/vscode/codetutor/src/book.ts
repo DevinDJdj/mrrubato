@@ -326,7 +326,7 @@ function getRecency(bt : Array<BookTopic>, mydate: Date = new Date()) : number {
         //need better calculation of recency.
 
         //get closest to mydate.  
-        cumdate += getDaysBetweenDates(getDateFromString(bt[i].date.toString()), mydate);
+        cumdate += Math.abs(getDaysBetweenDates(getDateFromString(bt[i].date.toString()), mydate));
 
         bt[i].sortorder = 0;
     }

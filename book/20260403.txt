@@ -659,3 +659,66 @@ fs.unwatchFile();
 **extensions/vscode/codetutor/src/book.ts
 --setTime
 test..
+
+**extensions/trey/trey.py
+--showQR
+QR Code somewhat smaller..
+600 bytes.. usually enough I think..
+Recognized even at 0.3 opacity decently.  
+less 0.2 not so much..
+
+Need to adjust opacity just when in middle of word..
+increase and then decrease back to original after selection..
+
+
+**books/WORLDHISTORY
+Start usage experiment here..
+
+**extensions/vscode/codetutor/src/book.ts
+Need to be able to switch between books seamlessly..
+
+**languages/helpers/transcriber.py
+--open_books
+Not sure we want book opening here..
+But need a recursive methodology.
+
+
+**languages/_meta.py
+Need open book cmd..
+Transcribe some commands to the books..
+Use selected book transcription..
+
+
+When to save?  
+Save on recycle..
+
+quick estimate can load ~ 1000 books at a time..
+Then just sequence and priority reorganization..
+
+#https://github.com/masouduut94/volleyball_analytics
+#https://github.com/openvolley/ovml
+
+Book/topic distinction?
+Just selected time period.  
+Different words may be useful..
+Write to book and topic YYYYmmdd file..
+
+Every book can be a topic
+Not every topic is a book.  
+When writing to a topic, this is same as writing to a book.  
+Book always writes on saveBook..
+
+test..
+;> Select Book
+Maybe works now..
+Need to be able to Set Book as well.  
+Use existing folder..
+
+
+Eventually need way to offload unused books..
+
+Not using the best word, book..
+
+Ending topic name in / may cause error..
+
+

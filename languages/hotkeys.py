@@ -115,11 +115,12 @@ class hotkeys:
     totalcmds = len(allcmds)
     numloaded = 0
     last10 = []
+
     for c in allcmds:
       #print(f'Processing command {c}')
       url = ''
       if (c['cmd'] == 'Add Bookmark'):
-        #print(f'Found bookmark command {c}')
+        print(f'Found bookmark command {c}')
         if ('URL' not in c['vars'] or 'TOTAL_READ' not in c['vars']):
           continue
         url = c['vars']['URL']
@@ -433,31 +434,44 @@ class hotkeys:
       #get audio input for query.  
       duration = sequence[0]-self.keybot #in seconds
       duration *=3  #double duration for feedback
-      if (duration < 6):
-        duration = 6
       from extensions.trey.speech import listen_audio
       self.now = datetime.now()
-      self.feedbacknowstr = self.now.strftime("%Y%m%d%H%M%S") #set nowstr for feedback.  
+      self.commentnowstr = self.now.strftime("%Y%m%d%H%M%S") #set nowstr for feedback.  
 
-      at = listen_audio(duration, "comment.wav")
+      at = listen_audio(duration, "feedback.wav")
       #at.join() #wait for it to finish.
       #have to just use some keys until this is done.  
       #need to return 1 to indicate we need more keys.
       #but this is only called once.  
 
       return 0 #handled, this function will not be called again with further parameters.
+    else:
+      #get real-time input
+      from extensions.trey.speech import transcribe_now
+      self.func = "Comment_"
+      self.transcript += transcribe_now() + "\n"
+      self.set_qr(self.func, {'transcript': self.transcript})
+      #update display.  
+
+
     return 1
   
   def comment(self, sequence=[]):
     #start recording on 0, but return 1
-    from extensions.trey.speech import transcribe_audio, listen_audio, get_duration
+
+    from extensions.trey.speech import transcribe_audio, get_duration, transcribe_audio_whisper
+    timer = datetime.now()
+#    self.transcript = transcribe_audio("feedback.wav")
+    self.transcript = transcribe_audio_whisper("feedback.wav") #try whisper for better accuracy.  This is slower but hopefully more accurate, especially for short feedback.
+
+    from extensions.trey.speech import transcribe_audio, listen_audio, get_duration, transcribe_audio_whisper
 
     logger.info(f'> Comment {sequence}')
     #stop recording.  for now just using fixed 10 seconds.  
     #needs to be async to do this properly.
     timer = datetime.now()
 
-    self.transcript = transcribe_audio("comment.wav")
+    self.transcript = transcribe_audio_whisper("comment.wav")
     duration = get_duration("comment.wav") #actual dynamic duration..
     lag = (datetime.now() - timer).total_seconds()
     lag = int(lag)
@@ -468,10 +482,11 @@ class hotkeys:
       vars['DURATION'] = duration
       vars['COMMENT'] = self.transcript
       vars['LAG'] = lag
-      fname = '../transcripts/' + self.name + '/' + self.feedbacknowstr + '.wav'
+      fname = '../transcripts/' + self.name + '/' + self.commentnowstr + '.wav'
       vars['FILE'] = fname
       shutil.copy('comment.wav', fname) #keep a copy for training..
       self.transcriber.write(self.name, "Comment", vars)  
+      self.transcriber.write_topic(self.name, "", self.transcript, saveTranscript=False, saveBook=True)
 
     except Exception as e:
       print(f'Error writing comment file: {e}')
@@ -565,9 +580,10 @@ class hotkeys:
       playwrighty.add_bookmark(url, total_read, text)
       body_length = playwrighty.page_cache[cacheno]['length'] if cacheno >=0 and cacheno < len(playwrighty.page_cache) else 0
 
-      self.transcriber.write(self.name, "Add Bookmark", {
-        'URL': url,'TOTAL_READ': total_read,'BODY_LENGTH': body_length,'TEXT': text
-      })  
+      if (url != "" and url != "about:blank"):
+        self.transcriber.write(self.name, "Add Bookmark", {
+          'URL': url,'TOTAL_READ': total_read,'BODY_LENGTH': body_length,'TEXT': text
+        })  
       """
       os.makedirs('../transcripts/' + self.name, exist_ok=True)
       #add utf-8?  
@@ -808,6 +824,8 @@ class hotkeys:
             vars['FEEDBACK'] = self.transcript
             vars['LANG'] = playwrighty.detect_language() if playwrighty.mybrowser is not None else "None"
             if (playwrighty.mybrowser is not None):
+              #where is url?  
+              print(f'$$URL={url}')
               vars['URL'] = url
               vars['TRANSCRIPT'] = original
               vars['LAG'] = lag

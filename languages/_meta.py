@@ -31,6 +31,12 @@ class _meta:
     self.alltopics = {}
     self.topicarray = []
     self.topichistory = [] #store past topics for context.  This is not currently used for anything but could be used for context in future functions.
+
+    self.bookarray = []
+    self.bookhistory = []
+    self.allbooks = {}
+    self.selectedbook = None
+    self.selectedbookindex = None
     self.selectedtopic = None
     self.selectedtopicindex = None
     self.speed = 1.0
@@ -94,6 +100,15 @@ class _meta:
 
     logger.info(f'Loaded {numtopics} topics and {len(book)} book transcripts from ./book/')
 
+    self.allbooks = self.transcriber.open_books() #open book files for writing topics.
+    #tree struct..
+    #recurse through books and subbooks to get a list. 
+    #array struct filter by time window and relevancy?  
+    self.bookarray = self.transcriber.filter_books_recursive() #get list of books for selection.
+    #sort by recency
+    self.bookarray.sort(key=lambda x: abs(self.timewindow.currenttime - x['last_mtime']), reverse=True) #sort by recency to current time, most recent first.
+
+
     return 0
   
   def load_data(self):
@@ -110,6 +125,11 @@ class _meta:
         "List Topics": [48,51,54], #list topics
         "Select Topic": [48,51,55], #select topic
         "Set Topic": [48,51,56], #set topic with voice command
+
+        #48, 52 BOOK
+        "List Books": [48,52,54], #list books
+        "Select Book": [48,52,55], #select book
+        "Set Book": [48,52,56], #set book with voice command
         #48, 50 TIME
         "Set Speed": [48,50,54], #set speed of time
         "Time Jump": [48,50,52], #jump to time 
@@ -135,6 +155,9 @@ class _meta:
       "Select Topic": "select_topic",
       "Set Topic": "set_topic", #smart search of existing topics?  
       "_Set Topic": "_set_topic", #smart search of existing topics?
+      "List Books": "list_books",
+      "Select Book": "select_book",
+      "Set Book": "set_book",
       "Set Speed": "set_speed",
       "Time Jump": "time_jump",
       "Time Zoom": "time_zoom", 
@@ -148,6 +171,9 @@ class _meta:
       "List Topics": {"help": "list topics", "params": "None", "desc": "List available topics."},
       "Select Topic": {"help": "select topic [index]", "params": "[index]", "desc": "Select topic by index from list."},
       "Set Topic": {"help": "set topic [topic]", "params": "[topic]", "desc": "Set topic by name."},
+      "List Books": {"help": "list books", "params": "None", "desc": "List available books."},
+      "Select Book": {"help": "select book [index]", "params": "[index]", "desc": "Select book by index from list."},
+      "Set Book": {"help": "set book [book]", "params": "[book]", "desc": "Set book by name."},
       "Set Speed": {"help": "set speed [value]", "params": "[value]", "desc": "Set playback speed, relative to current."}, 
       "Time Jump": {"help": "time jump [time]", "params": "[time]", "desc": "Jump to specific time."},
       "Time Zoom": {"help": "time zoom [level]", "params": "[level]", "desc": "Set zoom level of time."},
@@ -311,7 +337,8 @@ class _meta:
 
 
     return 0
-  
+
+
   def list_topics(self, sequence=[]):
     logger.info(f'> List Topics {sequence}')
     #for now just demo..
@@ -326,7 +353,33 @@ class _meta:
       return len(self.topicarray)-1
     else:
       return self.selectedtopicindex + idx
-      
+
+  def adjust_book_index(self, idx):
+    if idx+self.selectedbookindex < 0:
+      return 0
+    elif (idx+self.selectedbookindex) >= len(self.bookarray):
+      return len(self.bookarray)-1
+    else:
+      return self.selectedbookindex + idx
+
+
+  def get_book_context(self, book, num=5):
+    #get context for book from book transcripts.  
+    ret = f"**{book}\n"
+    if (book in self.transcriber.langmap):
+      bookdata = self.transcriber.langmap[book]
+      if ('cmds' in bookdata and bookdata['cmds'] is not None and bookdata['start_idx'] != bookdata['end_idx']):
+        bookcmds = bookdata['cmds'][bookdata['start_idx']:bookdata['end_idx']+1]
+      bookcmds.sort(key=lambda x: abs(self.timewindow.currenttime - x['timestamp']), reverse=True) #sort by recency to current time, most recent first.
+
+      sortedcmds = bookcmds[:num]
+      sortedcmds.sort(key=lambda x: x['timestamp']) #sort by time for display.
+      context = []
+      for cmd in sortedcmds:
+        ret += f'$${datetime.fromtimestamp(cmd["timestamp"]).strftime("%Y%m%d_%H%M%S")}\n'
+        ret += '\n'.join(cmd['lines']) + "\n"
+    return ret
+
   def get_context(self, topic, num=5):
     #get context for topic from book transcripts.  
     ret = f"**{topic}\n"
@@ -426,6 +479,102 @@ class _meta:
     #get audio input for query.  
     from extensions.trey.speech import listen_audio
     at = listen_audio(5, "topic.wav")
+    #but this is only called once.  
+    return 1
+
+
+
+
+  def list_books(self, sequence=[]):
+    logger.info(f'> List Books {sequence}')
+    #for now just demo..
+    #list all books from current reference folder.
+
+    return 0
+
+  #not implemented yet, show list of books based on recency..
+  def select_book_(self, sequence=[]):
+
+    logger.info(f'> Select Book_ {sequence}')
+    print("> Select Book_")
+
+    newidx = self.selectedbookindex
+    if (len(sequence) > 0):
+      if (sequence[-1] == self.keybot): #dont adjust if keybot, 
+        return 1
+      newidx = self.adjust_book_index(self.mid-sequence[-1])
+    logger.info(f'--{self.bookarray[newidx]}')
+    self.func = "Select Book_"
+    #should make this more general.. send last ten links
+    last15 = self.bookarray[max(0, self.selectedbookindex-11):min(self.selectedbookindex+13, len(self.bookarray))]
+    last15.reverse() #reverse to match with Future:Past order in display.. [48 - 68]
+    #does this match up with keys?  
+    vars = {}
+    vars['book'] = self.bookarray[newidx]['**']
+    ctxt = self.get_book_context(self.bookarray[newidx]['**'], 5) #get context for book
+    vars['context'] = ctxt.replace('\n', '<br>')
+
+    start = 0
+#    if self.selectedtopicindex < 12:
+#      start = 12 - self.selectedtopicindex
+    for i, l in enumerate(last15):
+      i = i + start
+      vars[f'{i}'] = l
+#          vars[f'href{i}'] = l['href']
+    vars['idx'] = newidx
+    self.set_qr(self.func, vars)
+
+#    self.speak(f'{vars["topic"]}')
+    
+    return 1
+    #scroll up or back?  
+    #list most likely topics based on recency and relevance to current topic.
+
+  def select_book(self, sequence=[]):
+    selected = 0
+    if (len(sequence) > 0):
+      selected = self.mid - sequence[-1]
+
+    self.selectedbookindex = self.adjust_book_index(selected)
+    self.selectedbook = self.bookarray[self.selectedbookindex] if self.selectedbookindex < len(self.bookarray) else None
+    if (len(self.bookhistory) < 1 or self.selectedbook != self.bookhistory[-1]):
+      self.bookhistory.insert(0, self.selectedbook)
+
+    ctxt = self.get_book_context(self.bookarray[self.selectedbookindex], 5) #get context for book
+    logger.info(f'> Select Book {sequence}')
+    #get bookmark at index selected
+    self.func = "Select Book"
+    self.set_qr(self.func, {'context': ctxt.replace('\n', '<br>'), 'book': self.selectedbook['**']})
+#    logger.info(ctxt.replace('\n', '<br>'))
+    #keep track of topic history..
+    writtentopic = self.transcriber.write_topic(self.name, self.selectedbook['**']) #write topic to _meta.. to pick up in other tools.  
+    self.transcriber.write_topic(self.name, self.selectedbook['**'], ctxt) #write temp topic context?  Get latest info for robot.. trigger read of this file..
+    self.speak(f'{self.selectedbook["**"]}')
+    self.transcript = writtentopic #set transcript here to include into midi.  Dont include context for now too much repetition..
+    return 0
+
+  #no good way to set book currently, too hard for audio input..  
+  def set_book(self, sequence=[]):
+    logger.info(f'> Set Book {sequence}')
+    book = "Australian Open 2026"
+    from extensions.trey.speech import transcribe_audio, transcribe_audio_whisper
+    self.transcript = transcribe_audio_whisper("book.wav")
+
+    logger.info('$$AUDIO = ' + self.transcript)
+    if (self.transcript != ""):
+      book = self.transcript
+    from extensions.trey.trey import speak
+    speak(f'Setting book: {book}')
+
+    return 0
+
+
+  def _set_book(self, sequence=[]):  
+    logger.info(f'> _Set Book {sequence}')
+    print("> _Set Book called")
+    #get audio input for query.  
+    from extensions.trey.speech import listen_audio
+    at = listen_audio(5, "book.wav")
     #but this is only called once.  
     return 1
 
