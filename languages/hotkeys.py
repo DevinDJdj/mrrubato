@@ -438,7 +438,7 @@ class hotkeys:
       self.now = datetime.now()
       self.commentnowstr = self.now.strftime("%Y%m%d%H%M%S") #set nowstr for feedback.  
 
-      at = listen_audio(duration, "feedback.wav")
+      at = listen_audio(duration, "comment.wav")
       #at.join() #wait for it to finish.
       #have to just use some keys until this is done.  
       #need to return 1 to indicate we need more keys.
@@ -462,7 +462,7 @@ class hotkeys:
     from extensions.trey.speech import transcribe_audio, get_duration, transcribe_audio_whisper
     timer = datetime.now()
 #    self.transcript = transcribe_audio("feedback.wav")
-    self.transcript = transcribe_audio_whisper("feedback.wav") #try whisper for better accuracy.  This is slower but hopefully more accurate, especially for short feedback.
+#    self.transcript = transcribe_audio_whisper("comment.wav") #try whisper for better accuracy.  This is slower but hopefully more accurate, especially for short feedback.
 
     from extensions.trey.speech import transcribe_audio, listen_audio, get_duration, transcribe_audio_whisper
 

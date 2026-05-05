@@ -1006,7 +1006,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
                 if (links[link_loc]['offset'] != -1):
                     try:
                         sound_file = f"./temp/link{link_loc}.mp3"
-                        tts.speak(links[link_loc]['text'], LINKVOICE, sound_file, 1.0, 200) #quieter slower for links
+                        tts.speak(links[link_loc]['text'], LINKVOICE, sound_file, 0.6, 200) #quieter slower for links
     #                    winsound.Beep(500, 200) #short beep to indicate link
                         synth.play_synth([53,65,77])
 
@@ -1787,6 +1787,11 @@ class MyWindow(QMainWindow):
                     self.pause_tmap(False) #dont hide the video, just pause it..
                     #pause any other speaking or playing we are doing.
                     self.transcriber.write_plain('base', command) #dont write intermediate msg?
+                elif (type == 'book'):
+                    cache = vars.get('cacheno', -1)
+                    pause_reader(cache)
+
+
 
 
             case "Unpause":
@@ -1799,6 +1804,10 @@ class MyWindow(QMainWindow):
                     n = 0
                 elif (type == 'record'):
                     start_obs_capture()
+                elif (type == 'book'):
+                    cache = vars.get('cacheno', -1)
+                    resume_reader(cache)
+                
             case "Screenshot Feedback_":
                 bbox = vars.get('BBOX', None)
                 if (bbox is not None):
@@ -1910,7 +1919,7 @@ class MyWindow(QMainWindow):
                 self.label_topic_info[1].update()
                 self.bookhistory.insert(0, {'book': book, 'context': context, 'timestamp': time.time()}) #0 based index for most recent
                 #bring vscode to front if not there..
-                
+
                 self.show_mrroboto()
 
             case "Select Topic":
@@ -1921,10 +1930,11 @@ class MyWindow(QMainWindow):
                 self.transcriber.current_context = context
                 print(f"<<{lang}>>\n$$topic=" + str(topic))
                 print(f"<<{lang}>>\n$$context=" + str(context))
-                self.label_topic_info[0].setText(f'**{topic}')
+                #self.label_topic_info[0].setText(f'**{topic}')
+                self.label_topic_info[0].setText(f'**{self.transcriber.current_book}')
 
                 #format this a bit nicer..
-                self.label_topic_info[1].setText(f'{context}') 
+                self.label_topic_info[1].setText(f'{topic}<br>{context}') 
 
                 self.label_topic_info[0].update()
                 self.label_topic_info[1].update()

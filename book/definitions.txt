@@ -91,7 +91,7 @@ QUOTESETS:
 << >> = language?  
 <? ?> = inline macro (PHP)
 [ ] = internal clickable reference?  (markup) or key sequence
-( )
+( ) = Start/end index
 { } 
 "" = key phrase
 ? 

@@ -722,3 +722,69 @@ Not using the best word, book..
 Ending topic name in / may cause error..
 
 
+**extensions/trey/trey.py
+**languages/book.py
+Need command to scroll/read book/topic display..
+self.current_topic
+
+read..
+pause..
+scroll..
+
+etc..
+
+[53,57, 58]
+--comment
+--write_topic
+test..
+
+;( = Start index
+;) = End index
+
+**languages/helpers/transcriber.py
+--read_existing
+index sorting was not correct..
+ok, finally getting some book results..
+**languages/_meta.py
+--bookarray
+Still test write_topic..
+
+Closer..
+
+
+**timestep.py
+Not sure I want all these vtt files and temp files here..
+Use vtt files for video viewing if they exist..
+
+
+**web/public/chata.html
+Load [**web/public/data/transcriptions/trey/2026]
+Local vector DB..
+Chat find similar transcript (spoken)..
+Load full transcript from this location..
+Need web transcript parser/viewer..
+
+
+**extensions/trey/trey.py
+@@Need permanent location to show book details and topic details..
+==
+--self.label_topic_info
+$$
+
+
+**languages/book.py
+Scroll/speak book/topic..
+
+
+[50,51] [N] [50,50]
+read current book on thread 100 + N
+
+[50,49] [N] [50,50]
+pause book on thread 100 + N
+
+
+only one book/ctxt allowed..
+--pause
+--unpause
+test..
+

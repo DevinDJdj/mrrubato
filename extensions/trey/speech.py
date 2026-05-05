@@ -468,6 +468,14 @@ def download_file(mediafile):
     fname = OUTPUT_DIR + "test.mp4"
     return fname
 
+def delete_temp_wav(mp4_fname):
+    wav_fname = mp4_fname[:-4] + '.wav'
+    mp3_fname = mp4_fname[:-4] + '.mp3'
+    if os.path.exists(wav_fname):
+        os.remove(wav_fname)
+    if (os.path.exists(mp3_fname)):
+        os.remove(mp3_fname)
+
 def convert_mp4_to_wav(mp4_fname):
     from moviepy.editor import VideoFileClip
     from pydub import AudioSegment
@@ -551,7 +559,7 @@ def get_speech_(fname):
 
 
 def write_vtt(fname, segments):
-    with open(fname, "w") as f:
+    with open(fname, "w", encoding="utf-8") as f:
         f.write("WEBVTT\n\n")
         for idx, segment in enumerate(segments):
             start = getTimeFromSecs(int(segment.start))
@@ -624,14 +632,19 @@ def transcribe_audio_whisper(fname="example2.wav", start_times=[], end_times=[],
 
     if (os.path.exists(fname)):
         segments, info = whisper_model.transcribe(fname, beam_size=5)
+        #dont need these temp files for conversion..
     else:
         recording = np.concatenate(recording, axis=0)
         audio_data = np.frombuffer(recording, np.float32)
         segments, info = whisper_model.transcribe(audio_data, language=WHISPER_LANGUAGE, beam_size=5, vad_filter=True, vad_parameters=dict(min_silence_duration_ms=1000))
+        #remove temp files..
+
+    delete_temp_wav(fname)
 
     print("Detected language '%s' with probability %f" % (info.language, info.language_probability))
     segments = list(segments)
-    ffname = os.path.splitext(os.path.basename(fname))[0]
+    #want full relative path..
+    ffname = os.path.splitext(fname)[0]
     write_vtt(f"{ffname}.vtt", segments)
     for idx, segment in enumerate(segments):
         print("[%.2fs -> %.2fs] %s" % (segment.start, segment.end, segment.text))

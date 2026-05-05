@@ -1,48 +1,57 @@
 import logging
+from operator import index
+from os import link
 from pynput import *
+from languages.helpers import timewindow
+import pytesseract
+from PIL import Image
+from io import BytesIO
+import win32con
 import time
 from datetime import datetime, timedelta
+import shutil
+
 import languages.helpers.transcriber as transcriber
-#import extensions.trey.playwrighty as playwrighty
-import languages.helpers.timewindow as timewindow
+import extensions.trey.playwrighty as playwrighty
+from server.login.app import index
+
 
 logger = logging.getLogger(__name__)
 
-class _meta:
+class book:
   #define action for some sequences.  
   def __init__(self, config, qapp=None, startx=0):
 
     self.config = config
-    self.transcriber = transcriber.transcriber(self)
+    self.transcriber = transcriber.transcriber(self) #current_topic set by mykeys for now
+    self.current_topic = None #set by mykeys
     self.qapp = qapp
     self.func = None
     self.cmd = None
     self.qr = "" #info for QR message
+    self.qrin = "" #info from incoming QR message
     self.startx = startx
-    self.name = "_meta"
-    self.keybot = 48 #
+    self._bbox = [0,0,0,0] #for now just use this for all functions that need a bbox.  This is left, top, right, bottom.  We can also use this for screen toggle to indicate where the screen overlay should be.
+    self.bbox = [100,200,100,200]   
+    self.bbox_aftertouch = [400,500,400,500] #just start here, or from last bbox.  Load from settings..
+    self.geo = None
+    self.name = "book"
+    self.keybot = 50 #
     self.mid = 60 #middle C for bbox calc
-    self.keyoffset = 0 #offset within octave mapping
+    self.keyoffset = 2 #offset within octave mapping
+    self.links = []
     self.maxseq = 10 #includes parameters
     self.callback = None
-    self.audio_transcript = ""
+    self.transcript = ""
+    self.feedbacknowstr = ""
     self.funcdict = {}
     self.suggestions = []
-    self.alltopics = {}
-    self.topicarray = []
+    self.transcripthistory = [] #store past transcripts for context.  This is not currently used for anything but could be used for context in future functions.
     self.topichistory = [] #store past topics for context.  This is not currently used for anything but could be used for context in future functions.
-
-    self.bookarray = []
-    self.bookhistory = []
-    self.allbooks = {}
-    self.selectedbook = None
-    self.selectedbookindex = None
-    self.selectedtopic = None
-    self.selectedtopicindex = None
-    self.speed = 1.0
-    self.zoom = 1.0
-    self.timewindow = timewindow.timewindow(self) #starttime/endtime, etc.  
-
+    self.links = [] #currently selected link structure from page..
+    self.timewindow = timewindow(self) #for timeline functions, can also be used for general time tracking.  This is initialized here but can be reset by timeline if needed.
+    self.bookmarks = {} #bookname: index in bookcontext
+    self.lastcacheno = 100
 
   def word(self, sequence=[]):
     """Word lookup."""
@@ -50,7 +59,7 @@ class _meta:
     cmd = ""
     sl = str(len(sequence))
     if (sl in self.config['languages'][self.name]):
-      logger.info(f'Looking up sequence {sequence} in video')
+      logger.info(f'Looking up sequence {sequence} in <<book>>')
       logger.info(self.config['languages'][self.name][sl])
       for k,v in self.config['languages'][self.name][sl].items():
         #check global first.  
@@ -80,44 +89,11 @@ class _meta:
     #load commands from config into funcdict
     allcmds = self.transcriber.read(self.name, None, None) #default 7 days
     logger.info(f'Loaded {len(allcmds)} command transcripts for {self.name}')
+    #load commands from config into funcdict
 
     #load 6 months of book topics..
     book = self.transcriber.read(self.name, self.transcriber.getTime(-180), None, './book/')
-    #get num topics.  
-    numtopics = 0
-    self.alltopics = {}
-    for c in book:
-      if (c['type']=='**'):
-        if (c['cmd'] not in self.alltopics):
-          self.alltopics[c['cmd']] = []
-        self.alltopics[c['cmd']].append(c)
-        numtopics += 1
-
-        self.topicarray.insert(0, c['cmd']) #time reverse order
-    if (numtopics > 0):
-      self.selectedtopicindex = 0      
-      self.selectedtopic = self.topicarray[self.selectedtopicindex] #default to first topic.
-
-    logger.info(f'Loaded {numtopics} topics and {len(book)} book transcripts from ./book/')
-
-    self.transcriber.allbooks = self.transcriber.open_books() #open book files for writing topics.
-    logger.info('Loaded book files for writing topics.')
-    logger.info(f'Books: {self.transcriber.allbooks}')
-    #tree struct..
-    #recurse through books and subbooks to get a list. 
-    #array struct filter by time window and relevancy?  relevancy = topic search...
-    self.filtered = self.transcriber.filter_books_recursive()
-    logger.info(f'Filtered book struct: {self.filtered}')
-    self.bookarray = self.transcriber.relevant_book_array(self.filtered) #get list of books for selection.
-    logger.info(f'Book array: {self.bookarray}')
-    #sort by recency
-    self.bookarray.sort(key=lambda x: abs(self.timewindow.currenttime - x['..']), reverse=True) #sort by recency to current time, most recent first.
-
-    if (len(self.bookarray) > 0):
-      self.selectedbookindex = 0      
-      self.selectedbook = self.bookarray[self.selectedbookindex] #default to first book.
-
-    self.bookhistory = self.bookarray[:100] #store last 100 books for quick access.
+    logger.info(f'Loaded {len(book)} book transcripts from ./book/')    
 
 
     return 0
@@ -127,28 +103,16 @@ class _meta:
     #load language specific data into the config.  
     default = {
       "2": {
-         "Pause": [48,49], #pause video
+         "Pause": [50,49], #pause check
+         "Unpause": [50,51], #unpause check
       },
       "3": {
-        "Start": [48,60,61], #Start/resume recording
-        "Help": [48,60,49], #show help
-        #48, 51 TOPIC
-        "List Topics": [48,51,54], #list topics
-        "Select Topic": [48,51,55], #select topic
-        "Set Topic": [48,51,56], #set topic with voice command
+        "Help": [50,52,51], #show help for check commands
+        "Comment": [50,54, 55], #record comment
+        "Select Book": [50,54,57], #open topic
+        "Select Topic": [50,53,57], #open topic
 
-        #48, 52 BOOK
-        "List Books": [48,52,54], #list books
-        "Select Book": [48,52,55], #select book
-        "Set Book": [48,52,56], #set book with voice command
-        #48, 50 TIME
-        "Set Speed": [48,50,54], #set speed of time
-        "Time Jump": [48,50,52], #jump to time 
-        "Time Zoom": [48,50,53], #set zoom, separate from speed.  
-        #48, 52 FIND?  
-        "Tick": [48,53], #manual tick forward in time by small increments.
-        "Tock": [48,54], #manual tick backward in time by small increments.
-      }
+      },
     }
     if (self.name in self.config['languages']):
       logger.info(f'Merging existing {self.name} config')
@@ -159,38 +123,23 @@ class _meta:
 
     self.config['languages'][self.name] = default
     self.funcdict = {
-      "Pause": "pause",
-      "Start": "start",
+      "Comment": "comment",
       "Help": "help",
-      "List Topics": "list_topics",
-      "Select Topic": "select_topic",
-      "Set Topic": "set_topic", #smart search of existing topics?  
-      "_Set Topic": "_set_topic", #smart search of existing topics?
-      "List Books": "list_books",
+      "Pause": "pause",
+      "Unpause": "unpause",
       "Select Book": "select_book",
+      "Select Topic": "select_topic",
       "Set Book": "set_book",
-      "Set Speed": "set_speed",
-      "Time Jump": "time_jump",
-      "Time Zoom": "time_zoom", 
-      "Tick": "tick",
-      "Tock": "tock",
+
     }
     self.helpdict = {
-      "Start": {"help": "start", "params": "None", "desc": "Start/Resume video recording."},
-      "Help": {"help": "help", "params": "None", "desc": "Show video commands."},
-      "Pause": {"help": "pause", "params": "None", "desc": "Pause video playback."},
-      "List Topics": {"help": "list topics", "params": "None", "desc": "List available topics."},
-      "Select Topic": {"help": "select topic [index]", "params": "[index]", "desc": "Select topic by index from list."},
-      "Set Topic": {"help": "set topic [topic]", "params": "[topic]", "desc": "Set topic by name."},
-      "List Books": {"help": "list books", "params": "None", "desc": "List available books."},
-      "Select Book": {"help": "select book [index]", "params": "[index]", "desc": "Select book by index from list."},
+      "Comment": {"help": "comment", "params": "None", "desc": f"Add comment to {self.name} timeline."},
+      "Help": {"help": "help", "params": "None", "desc": f"Show {self.name} commands."},
+      "Pause": {"help": "pause", "params": "None", "desc": f"Pause {self.name} playback."},
+      "Unpause": {"help": "unpause", "params": "None", "desc": f"Unpause {self.name} playback."},
+      "Select Book": {"help": "select_book", "params": "None", "desc": f"Open current book in {self.name}."},
+      "Select Topic": {"help": "select_topic", "params": "None", "desc": f"Open current topic in {self.name}."},
       "Set Book": {"help": "set book [book]", "params": "[book]", "desc": "Set book by name."},
-      "Set Speed": {"help": "set speed [value]", "params": "[value]", "desc": "Set playback speed, relative to current."}, 
-      "Time Jump": {"help": "time jump [time]", "params": "[time]", "desc": "Jump to specific time."},
-      "Time Zoom": {"help": "time zoom [level]", "params": "[level]", "desc": "Set zoom level of time."},
-      "Tick": {"help": "tick", "params": "None", "desc": "Manually tick forward in time by small increments."},
-      "Tock": {"help": "tock", "params": "None", "desc": "Manually tick backward in time by small increments."},
-                       
 
     }
 
@@ -259,121 +208,6 @@ class _meta:
     return -1
   
 
-  def start(self, sequence=[]):
-    """Start Meta."""
-    logger.info(f'> Start {sequence}')
-    return 0
-  
-  def help(self, sequence=[]):
-    """Show all commands."""
-    logger.info(f'> Help {sequence}')
-    return 0
-
-
-  def tick(self, sequence=[]):
-    logger.info(f'> Tick {sequence}')
-#    t = self.timewindow.tick(self.speed)
-    self.set_qr("Tick", {'TIME': self.timewindow.getTime(), 'TICK': self.speed})
-    return 0
-
-
-  def tock(self, sequence=[]):
-    logger.info(f'> Tock {sequence}')
-#    t = self.timewindow.tick(-self.speed)
-    self.set_qr("Tock", {'TIME': self.timewindow.getTime(), 'TICK': -self.speed})
-    return 0
-
-  def set_speed(self, sequence=[]):
-    logger.info(f'> Set Speed {sequence}')
-    if (len(sequence) > 0):
-      adjust = float(sequence[-1] - self.mid) / 5.0 #just use 10 keys for mid..
-      if (adjust <= 0.2):
-        adjust = 0.2
-      if adjust > 5:
-        adjust = 5
-      self.speed *= adjust
-      logger.info(f'$$SPEED={self.speed}')
-      self.set_qr("Set Speed", {'ADJUST': adjust, 'SPEED': self.speed})
-    return 0
-
-  def time_jump(self, sequence=[]):
-    logger.info(f'> Time Jump {sequence}')
-    jump = 0.1 #default jump level
-    if (len(sequence) > 0):
-      jump = float(sequence[-1] - self.mid) / 10.0 #just use 10 keys for mid..
-    t = self.timewindow.timeJump(jump)
-    vars = {}
-    logger.info(f'$$TIME={t}')
-    self.set_qr("Time Jump", {'JUMP': jump, 'TIME': t, 'START': self.timewindow.starttime, 'END': self.timewindow.endtime})
-    return 0
-  
-  def time_zoom_(self, sequence=[]):
-    #list similar items based on current time window.  
-    logger.info(f'> Time Zoom_ {sequence}')
-    self.func = "Time Zoom_"
-    vars = {}
-    similar = -1
-    if (len(sequence) > 0):
-      if (sequence[-1] >= self.keybot + 12): #if we go above keybot + 12, we can show similar items based on current time window.  
-        similar = sequence[-1] - (self.keybot + 12)
-        vars['SIMILAR'] = similar
-    self.set_qr(self.func, vars)
-    return 1
-  
-  def time_zoom(self, sequence=[]):
-    logger.info(f'> Time Zoom {sequence}')
-    zoom = 2.0 #default zoom level
-    similar = -1
-    if (len(sequence) > 0):
-      zoom = float(sequence[-1] - self.keybot) - 6 #use 6 keys above keybot for zoom levels, so we have some negative and positive levels.
-      if (zoom >= 6): #next octave, pick from similar items if exist..
-        similar = sequence[-1] - (self.keybot + 12)
-        zoom = 0 #just use same zoom level for similar items
-
-      if zoom >= 0:
-        zoom = pow(2, zoom) #exponential zoom for more range. max 64x
-      else:
-        zoom = pow(2, zoom) #exponential zoom for more range. min 1/64x
-    w = self.timewindow.timeZoom(zoom)
-    vars = {}
-    logger.info(f'$$TIMEWINDOW={w}')
-    vars['ZOOM'] = zoom
-    vars['WINDOW'] = w
-    vars['TIME'] = self.timewindow.getTime()
-    vars['START'] = self.timewindow.starttime
-    vars['END'] = self.timewindow.endtime
-    if (similar >= 0):
-      vars['SIMILAR'] = similar
-    self.set_qr("Time Zoom", vars)
-
-
-    return 0
-
-
-  def list_topics(self, sequence=[]):
-    logger.info(f'> List Topics {sequence}')
-    #for now just demo..
-    #list all topics from book transcripts.
-
-    return 0
-
-  def adjust_topic_index(self, idx):
-    if idx+self.selectedtopicindex < 0:
-      return 0
-    elif (idx+self.selectedtopicindex) >= len(self.topicarray):
-      return len(self.topicarray)-1
-    else:
-      return self.selectedtopicindex + idx
-
-  def adjust_book_index(self, idx):
-    if idx+self.selectedbookindex < 0:
-      return 0
-    elif (idx+self.selectedbookindex) >= len(self.bookarray):
-      return len(self.bookarray)-1
-    else:
-      return self.selectedbookindex + idx
-
-
   def get_book_context(self, book, num=5):
     #get context for book from book transcripts.  
     ret = f"**{book}\n"
@@ -409,7 +243,6 @@ class _meta:
         ret += f'$${datetime.fromtimestamp(cmd["timestamp"]).strftime("%Y%m%d_%H%M%S")}\n'
         ret += '\n'.join(cmd['lines']) + "\n"
     return ret
-    
 
   def select_topic_(self, sequence=[]):
 
@@ -470,41 +303,7 @@ class _meta:
     self.transcript = writtentopic #set transcript here to include into midi.  Dont include context for now too much repetition..
     return 0
 
-  def set_topic(self, sequence=[]):
-    logger.info(f'> Set Topic {sequence}')
-    topic = "Australian Open 2026"
-    from extensions.trey.speech import transcribe_audio
-    self.transcript = transcribe_audio("topic.wav")
 
-    logger.info('$$AUDIO = ' + self.transcript)
-    if (self.transcript != ""):
-      topic = self.transcript
-    from extensions.trey.trey import speak
-    speak(f'Setting topic: {topic}')
-
-    return 0
-
-
-  def _set_topic(self, sequence=[]):  
-    logger.info(f'> _Set Topic {sequence}')
-    print("> _Set Topic called")
-    #get audio input for query.  
-    from extensions.trey.speech import listen_audio
-    at = listen_audio(5, "topic.wav")
-    #but this is only called once.  
-    return 1
-
-
-
-
-  def list_books(self, sequence=[]):
-    logger.info(f'> List Books {sequence}')
-    #for now just demo..
-    #list all books from current reference folder.
-
-    return 0
-
-  #not implemented yet, show list of books based on recency..
   def select_book_(self, sequence=[]):
 
     logger.info(f'> Select Book_ {sequence}')
@@ -567,6 +366,79 @@ class _meta:
     self.transcript = writtentopic #set transcript here to include into midi.  Dont include context for now too much repetition..
     return 0
 
+  def comment_(self, sequence=[]):
+    if (len(sequence) == 1):
+
+      logger.info(f'> Comment_ {sequence}')
+
+      print("> Comment_ called")
+      #get audio input for query.  
+      duration = sequence[0]-self.keybot #in seconds
+      duration *=3  #double duration for feedback
+      from extensions.trey.speech import listen_audio
+      self.now = datetime.now()
+      self.feedbacknowstr = self.now.strftime("%Y%m%d%H%M%S") #set nowstr for feedback.  
+
+      at = listen_audio(duration, "comment.wav")
+      #at.join() #wait for it to finish.
+      #have to just use some keys until this is done.  
+      #need to return 1 to indicate we need more keys.
+      #but this is only called once.  
+
+      return 0 #handled, this function will not be called again with further parameters.
+    else:
+      #get real-time input
+      from extensions.trey.speech import transcribe_now
+      self.func = "Comment_"
+      self.transcript += transcribe_now() + "\n"
+      self.set_qr(self.func, {'transcript': self.transcript})
+      #update display.  
+    return 1
+
+
+  def comment(self, sequence=[]):
+    logger.info(f'> Comment {sequence}')
+    duration = sequence[0]-self.keybot if (len(sequence) > 0) else 5
+    duration *=3  #triple duration for feedback
+    print(f'> Comment for {duration} seconds')
+    from extensions.trey.speech import transcribe_audio, get_duration, transcribe_audio_whisper, transcript_info
+    timer = datetime.now()
+#    self.transcript = transcribe_audio("feedback.wav")
+    self.transcript = transcribe_audio_whisper("comment.wav") #try whisper for better accuracy.  This is slower but hopefully more accurate, especially for short feedback.
+
+
+    dur = get_duration("comment.wav") #actual dynamic duration..
+    if (dur == 0):
+      duration = (timer - self.now).total_seconds() if self.now is not None else duration
+    else:
+      duration = dur
+
+    lag = (datetime.now() - timer).total_seconds()
+    lag = int(lag)
+    print(f'Transcription completed in {lag} seconds: {self.transcript}')
+    #get current line and previous line in case we are on a partial..
+    #then find the most likely location from text.  
+    #if we are reading a page, get current line of that page..
+
+    if (len(self.transcript) > 0):
+      self.transcripthistory.append(self.transcript)
+      try:
+        vars = {}
+        vars['DURATION'] = duration
+        vars['TRANSCRIPT'] = self.transcript
+        vars['LANG'] = transcript_info['language'] if transcript_info is not None and 'language' in transcript_info else "unknown"
+        fname = '../transcripts/' + self.name + '/' + self.feedbacknowstr + '.wav'
+        vars['FILE'] = fname
+        shutil.copy('comment.wav', fname) #keep a copy for training..
+        self.transcriber.write(self.name, "Comment", vars)  
+        self.set_qr("Comment", vars) #update QR with feedback data for debugging and record keeping.
+
+      except Exception as e:
+        print(f'Error writing feedback file: {e}')
+    return 0
+    
+
+
   #no good way to set book currently, too hard for audio input..  
   def set_book(self, sequence=[]):
     logger.info(f'> Set Book {sequence}')
@@ -592,10 +464,125 @@ class _meta:
     #but this is only called once.  
     return 1
 
-  def pause(self, sequence=[]):
-    """Pause Video."""
-    logger.info(f'> Pause {sequence}')
+
+  def help(self, sequence=[]):
+    """Show all commands."""
+    logger.info(f'> Help {sequence}')
     return 0
+
+
+
+  def pause(self, sequence=[]):
+    """Pause Check."""
+    logger.info(f'> Pause {sequence}')
+    cacheno = -1
+    if (len(sequence) > 0):
+      cacheno = sequence[-1]-self.keybot #first key cache selection
+
+    if (cacheno < 0):
+      cacheno = self.lastcacheno
+    else:
+      cacheno = 100 + cacheno
+    
+    existing_book = self.bookmarks.get(self.transcriber.current_book, None)
+    ctxt = self.get_book_context(self.transcriber.current_book, 5) #get context for book
+    link_data = self.get_links(ctxt)
+    if (existing_book is None):
+      existing_book = {'total_read': 0, 'links': link_data, 'cacheno': cacheno, 'context': ctxt, 'q2': None}
+    else:
+      q2 = existing_book['q2']
+      cacheno = existing_book['cacheno']
+      total_read = existing_book['total_read']
+      if (q2 is not None):
+        while (q2 is not None and not q2.empty()):
+            total_read = q2.get() #get current link number.  
+      existing_book['total_read'] = total_read
+
+    #pause trey.  
+    self.set_qr("Pause", {'type': 'book', 'cacheno': cacheno})
+    return 0
+
+  def unpause(self, sequence=[]):  
+    """Unpause Check."""
+    logger.info(f'> Unpause {sequence}')
+    cacheno = -1
+    if (len(sequence) > 0):
+      cacheno = sequence[-1]-self.keybot #first key cache selection
+
+    if (cacheno < 0):
+      cacheno = self.lastcacheno
+      self.lastcacheno += 1
+      if (self.lastcacheno > 120):
+        self.lastcacheno = 100 #overwrite..
+    else:
+      cacheno = 100 + cacheno
+
+    self.set_qr("Unpause", {'type': 'book', 'cacheno': cacheno})
+    #get book context and read..
+    existing_book = self.bookmarks.get(self.transcriber.current_book, None)
+    ctxt = self.get_book_context(self.transcriber.current_book, 5) #get context for book
+    link_data = self.get_links(ctxt)
+    if (existing_book is None):
+      existing_book = {'total_read': 0, 'links': link_data, 'cacheno': cacheno, 'context': ctxt, 'q2': None}
+      self.bookmarks[self.transcriber.current_book] = existing_book
+    elif (existing_book['context'] != ctxt):
+        existing_book['links'] = link_data
+        existing_book['context'] = ctxt
+        existing_book['total_read'] = 0 #set back to 0 if context has changed, otherwise keep track of how much we have read for this book.
+        #existing_book['cacheno'] = cacheno
+
+    #dont overwrite cacheno if we already have one for this book, otherwise we lose track of it and cant pause again.
+    q2, q3, stop_event = self.speak(ctxt, link_data, [], total_read=existing_book['total_read'], cacheno=existing_book['cacheno'])
+    existing_book['q2'] = q2
+
+
+    
+    return 0
+
+  def get_links(self, ctxt):
+    """
+    {
+            href: link.href,
+            text: link.innerText,
+            bbox: {
+                x: rect.x,
+                y: rect.y,
+                width: rect.width,
+                height: rect.height
+            },
+            index: index
+        }
+    """
+    links = []
+    lines = ctxt.split('\n')
+    cmds = self.transcriber.read_lines(self.transcriber.current_book, lines)
+    total_read = 0
+    for cmd in cmds:
+      if cmd['type'] == '**':
+        bytes_read = 0
+        links.append({'href': cmd['lines'][0], 'text': cmd['topic'], 'bbox': self.bbox, 'index': total_read})
+        for line in cmd['lines']:
+          bytes_read = len(line) +1 #+1 for newline
+        total_read += bytes_read
+
+    self.links = links
+    return links
+
+  
+
+  def ar2str(self, arr):
+    """Array to String."""
+    string_elements = [str(x) for x in arr]
+    single_string = ", ".join(string_elements)
+
+    return single_string
+
+  def qr_in(self, data):
+    #handle incoming QR data for now just MPE aftertouch. 
+    #used for internal comms as well.. should change queue for that..
+    return 0
+
+
 
   def set_qr(self, func, param={}):
     """Set QR."""
@@ -606,9 +593,11 @@ class _meta:
     return 0  
   
 
-  def speak(self, text, links=[]):
+  def speak(self, text, links=[], alt_text_data=[], total_read=0, lang="en", cacheno=-1):
     from extensions.trey.trey import speak
 #    print(f'Speaking: {text}')
-    return speak(text, links)
+    #really want to be able to turn on/off speaking with some setting similar to OPACITY..
+
+    return speak(text, links, alt_text_data, total_read, lang, cacheno)
 
   

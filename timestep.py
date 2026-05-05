@@ -50,7 +50,7 @@ import traceback
 
 from mido import MidiFile
 
-from extensions.trey.transcriber import transcriber
+import languages.helpers.transcriber as transcriber
 
 #from transcribe import transcribe_fromyoutube
 #import whisper
@@ -445,27 +445,43 @@ def downloadMidiFile(midilink, force=False):
 
 def get_relative_file_paths_os(root_dir):
     relative_paths = []
+
     for dirpath, _, filenames in os.walk(root_dir):
         for filename in filenames:
             # Combine the directory path and filename to get the full path
             full_path = os.path.join(dirpath, filename)
             # Calculate the path relative to the initial root directory
             rel_path = os.path.relpath(full_path, start=root_dir)
-            relative_paths.append(rel_path.replace("\\", "/"))  # Replace backslashes with forward slashes for consistency
+            mtime = os.path.getmtime(full_path)
+            relative_paths.append({'path': rel_path.replace("\\", "/"), 'mtime': mtime})  # Replace backslashes with forward slashes for consistency
     return relative_paths
 
 
-def get_transcripts(lang='hotkeys'):
-    transcriber = transcriber()
+def get_transcripts(langs=['hotkeys', 'video']):
+    transc = transcriber.transcriber(None)
     alltranscripts = []
-    tfolder = 'transcripts/'
-    transcript_path = "../" + tfolder
-    cmds = transcriber.read(lang, myfolder=transcript_path + lang) #read hotkeys
-    for c in cmds:
-        if 'vars' in c and 'TRANSCRIPT' in c['vars']:
-            transcript = c['vars']['TRANSCRIPT']
-            timestamp = c['timestamp']
-            alltranscripts.append({"timestamp": timestamp, "cmd": c['cmd'], "topic": c['topic'], "transcript": transcript})
+    for lang in langs:
+        cmds = transc.read(lang) #read hotkeys
+        for c in cmds:
+            transcript = ""
+            timestamp = 0
+            url = ""
+            if 'vars' in c:
+                if 'TRANSCRIPT' in c['vars']:
+                    transcript = c['vars']['TRANSCRIPT']
+                    timestamp = c['timestamp']
+                elif 'COMMENT' in c['vars']:
+                    transcript = c['vars']['COMMENT']
+                    timestamp = c['timestamp']
+
+                if 'URL' in c['vars']:
+                    url = c['vars']['URL']
+
+                if (transcript != ""):
+                    alltranscripts.append({"lang": lang, "url": url, "timestamp": timestamp, "cmd": c['cmd'], "topic": c['topic'], "transcript": transcript})
+
+
+    alltranscripts.sort(key=lambda x: x['timestamp']) #sort by timestamp, most recent first        
     return alltranscripts
 
 #local transcripts from keyboard usage and transcribed commands.  
@@ -473,10 +489,13 @@ def get_transcripts(lang='hotkeys'):
 def transcribeLocal(fname):
     #this should be a separate function
     ext = os.path.splitext(fname)[1].lower()
-    ffname = os.path.splitext(os.path.basename(fname))[0]
+
+    ffname = os.path.splitext(fname)[0]
+#    ffname = os.path.splitext(os.path.basename(fname))[0]
     if (ext in ['.mp4', '.wav']):
         if (not os.path.exists(ffname + ".vtt")):
             print(f"Transcribing {fname} to {ffname}.vtt")
+            from extensions.trey.speech import transcribe_audio, listen_audio, transcribe_audio_whisper
             transcribe_audio_whisper(fname)
 
 def saveLocalTranscripts():
@@ -486,39 +505,63 @@ def saveLocalTranscripts():
     transcript_path = "../" + tfolder
 
     allfiles = get_relative_file_paths_os(transcript_path)
-    for file in allfiles:
-        transcribeLocal(transcript_path + file)
-        
+    allfiles.sort(key=lambda x: x['mtime'], reverse=True) #sort by modified time, most recent first
     print(f"Checking {len(allfiles)} transcripts:")
     print(allfiles)
     uploadedfiles = []
     alltranscripts = []
-    for file in allfiles:
+    endidx = 0
+
+    for idx, file in enumerate(allfiles):
+        #transcribe first..
+        transcribeLocal(transcript_path + file['path'])
+
+    for idx, file in enumerate(allfiles):
         #check if exists in firebase storage
         bucket = storage.bucket()
-        blob = bucket.blob(tfolder + file)
+        blob = bucket.blob(tfolder + file['path'])
+        if blob.exists():            
+            #can break here..
+            print(f"start upload from {datetime.fromtimestamp(file['mtime'])} {idx} files")
+            print(f"up to {file['path']}")
+            break
+
+        endidx = idx
+        #open and read any $$TRANSCRIPT= lines
+        #really should use transcriber..
+
+    toupload = allfiles[:endidx+1]
+    toupload = reversed(toupload) #upload oldest first
+    for file in toupload:
+        bucket = storage.bucket()
+        blob = bucket.blob(tfolder + file['path'])
         if not blob.exists():            
-            blob.upload_from_filename(transcript_path + file)
+            blob.upload_from_filename(transcript_path + file['path'])
             # Opt : if you want to make public access from the URL
             blob.make_public()
             #blob.public_url
-            uploadedfiles.append(tfolder + file)
-                        
-        #open and read any $$TRANSCRIPT= lines
-        #really should use transcriber..
-    
-    trans = get_transcripts('hotkeys')
-    alltranscripts.extend(trans)
-    trans = get_transcripts('video')
-    alltranscripts.extend(trans)
-
-
+            uploadedfiles.append(tfolder + file['path'])
+                   
     print(f"Uploaded {len(uploadedfiles)} transcripts:")
     print(uploadedfiles)
-    f = open('./data/transcription/trans_trey.json', "w", encoding='utf-8')
-    f.write(json.dumps(alltranscripts, ensure_ascii=False, indent=4))
-    f1 = open('./web/public/data/trans_trey.json', "w", encoding='utf-8')
-    f1.write(json.dumps(alltranscripts, ensure_ascii=False, indent=4))
+    langs = ['hotkeys', 'video']
+    print(f"getting transcripts from firebase for {', '.join(langs)}")
+    #just to generate data for website..
+    alltranscripts = get_transcripts(langs=langs)
+
+
+    #upload any new transcript listings..
+    if (len(alltranscripts) > 0):
+        datetimestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        y = datetime.now().year
+        fname = f'./data/transcription/trey/{y}/{datetimestamp}.json'
+        os.makedirs(os.path.dirname(fname), exist_ok=True)
+        f = open(fname, "w", encoding='utf-8')
+        f.write(json.dumps(alltranscripts, ensure_ascii=False, indent=4))
+        fname = f'./web/public/data/trey/{y}/{datetimestamp}.json'
+        os.makedirs(os.path.dirname(fname), exist_ok=True)
+        f1 = open(fname, "w", encoding='utf-8')
+        f1.write(json.dumps(alltranscripts, ensure_ascii=False, indent=4))
 
     return uploadedfiles
 

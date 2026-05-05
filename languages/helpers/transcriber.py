@@ -29,12 +29,15 @@ class transcriber:
     def __init__(self, lang_helper=None, mk=None, qr_queue=None):
         self.lang_helper = lang_helper
         self.defstring = r"[~!@#$%^&*<>/:;\-\+=]"
-        self.BOOK_FOLDER = '../books/'
+        self.BOOK_FOLDER = '../books/' #intentonally use outside of git struct, too much data.  
+        #only copy to ./books if really want..
         self.TRANSCRIPT_FOLDER = '../transcripts/'
+        self.CTXT_FOLDER = '../ctxt/' #context data for topics, stored in shared memory for now, but could also be stored in files or database as needed.  use shared memory for simplicity and speed, but need to manage memory usage and cleanup as needed.
         self.allcmds = {} #lang -> {cmds, start_time, end_time, list of cmds in order..
         self.langmap = {}
         self.kg = {}
         self.allmidi = []
+        self.filtered_topics = []
         self.fuzzmap = {} #store fuzz scores for midi search to avoid redundant calculations, since we may want to sort by score later.
         self.qr_queue = qr_queue
         self.mykeys = mk
@@ -117,12 +120,6 @@ class transcriber:
                 self.langmap[lang]['topics'][topic] = {'mem': self.get_context_memory(f'{topic}', size=10*1024), 'extra': extra, 'data': []} 
             mybytes = extra.encode('utf-8')
 
-            file_path = pathlib.Path(f'temp/{topic}')
-            # Create parent directories if they don't exist
-            file_path.parent.mkdir(parents=True, exist_ok=True)
-
-            with open(f'temp/{topic}', 'w', encoding='utf-8') as f:
-                f.write(extra)
             self.write_context_memory(self.langmap[lang]['topics'][topic]['mem'], extra) #store extra info in shared memory for access by other processes if needed.  could also store in a file or database if needed, but for now just use shared memory for simplicity.  need to manage memory usage and cleanup as needed.
             #self.langmap[lang]['topics'][topic]['mem'].buf[:len(mybytes)] = mybytes #store extra info in shared memory 
 
@@ -211,13 +208,30 @@ class transcriber:
         ret += f'$$TIME={self.getTimeString()}\n'
       ret += f'$$\n'
 
-      if save:
+      if save: #save to transcript and book(s)
         today = datetime.now().strftime("%Y%m%d")
         folder = self.TRANSCRIPT_FOLDER + lang + '/'
         os.makedirs(folder, exist_ok=True)
         with open(folder + today + '.txt', 'a', encoding='utf-8') as f:
           f.write(ret)
-        #dont worry about duplication at this point.
+        """
+        #dont want to write here except for certain data 
+        # --write_topic          
+        folder = self.BOOK_FOLDER + topic + '/'
+        os.makedirs(folder, exist_ok=True)
+        with open(folder + today + '.txt', 'a', encoding='utf-8') as f:
+          f.write(ret)
+
+        if (self.current_book is not None):
+            folder = self.BOOK_FOLDER + self.current_book + '/'
+            os.makedirs(folder, exist_ok=True)
+            with open(folder + today + '.txt', 'a', encoding='utf-8') as f:
+                f.write(ret)
+
+        #dont worry about duplication at this point, we have 3 copies of the same info but its not a big deal
+        # and it simplifies retrieval later.  could optimize this later if needed by tracking what has been written to each book/topic and only writing new info, 
+        # but for now just write everything to all relevant files for simplicity.
+        """
       return ret
 
 
@@ -244,36 +258,36 @@ class transcriber:
         increment = 1
         if (start_time < self.allcmds[lang]['start_time']):
             start_idx = self.allcmds[lang]['start_idx']
-            for (i, cmd) in enumerate(reversed(self.allcmds[lang]['cmds'][:start_idx])):
-                if (cmd['timestamp'] <= start_time.timestamp()):
+            for (i, cmd) in enumerate(reversed(self.allcmds[lang]['&&'][:start_idx])):
+                if (cmd['timestamp'] >= start_time.timestamp()):
                     start_idx -= 1
                 else:
                     break
         else:
             start_idx = self.allcmds[lang]['start_idx']
-            for (i, cmd) in enumerate(self.allcmds[lang]['cmds'][start_idx:]):
-                if (cmd['timestamp'] >= start_time.timestamp()):
+            for (i, cmd) in enumerate(self.allcmds[lang]['&&'][start_idx:]):
+                if (cmd['timestamp'] <= start_time.timestamp()):
                     start_idx += 1
                 else:
                     break   
         
         if (end_time < self.allcmds[lang]['end_time']):
             end_idx = self.allcmds[lang]['end_idx']
-            for (i, cmd) in enumerate(reversed(self.allcmds[lang]['cmds'][:end_idx])):
-                if (cmd['timestamp'] <= end_time.timestamp()):
+            for (i, cmd) in enumerate(reversed(self.allcmds[lang]['&&'][:end_idx])):
+                if (cmd['timestamp'] >= end_time.timestamp()):
                     end_idx -= 1
                 else:
                     break
         else:
             end_idx = self.allcmds[lang]['end_idx']
-            for (i, cmd) in enumerate(self.allcmds[lang]['cmds'][end_idx:]):
-                if (cmd['timestamp'] >= end_time.timestamp()):
+            for (i, cmd) in enumerate(self.allcmds[lang]['&&'][end_idx:]):
+                if (cmd['timestamp'] <= end_time.timestamp()):
                     end_idx += 1
                 else:
                     break
-#        self.current_topic = self.allcmds[lang]['cmds'][end_idx-1]['topic'] if end_idx > 0 else self.current_topic
-        if (end_idx >= len(self.allcmds[lang]['cmds'])):
-            end_idx = len(self.allcmds[lang]['cmds'])-1
+#        self.current_topic = self.allcmds[lang]['&&'][end_idx-1]['topic'] if end_idx > 0 else self.current_topic
+        if (end_idx >= len(self.allcmds[lang]['&&'])):
+            end_idx = len(self.allcmds[lang]['&&'])-1
         if (start_idx > end_idx):
             start_idx = end_idx
         if (start_idx < 0):
@@ -284,7 +298,7 @@ class transcriber:
 
         self.allcmds[lang]['start_idx'] = start_idx
         self.allcmds[lang]['end_idx'] = end_idx
-        return self.allcmds[lang]['cmds'][start_idx:end_idx]
+        return self.allcmds[lang]['&&'][start_idx:end_idx]
 
     def search_midi(self, midiarray, current_time):
         #search for similar key structures
@@ -509,7 +523,7 @@ class transcriber:
                 #get days since last file mod time.  
                 self.current_topic = line[2:].strip() #update current topic to this topic. then get_cmd with new topic.
                 topc = self.get_cmd(lang, type, line[2:].strip(), {'TIME': now.strftime('%Y%m%d_%H%M%S')})
-                logger.info(f'Adding topic {topc["cmd"]} with vars {topc["vars"]}')
+#                logger.info(f'Adding topic {topc["cmd"]} with vars {topc["vars"]}')
                 ret.append(topc)
                 currenttopc = topc
             else:
@@ -650,20 +664,43 @@ class transcriber:
         contextmemory.buf[:len(mybytes)] = mybytes
         """
         #use mmap
-        with open(contextmemory, "r+b") as f:
-            # memory-map the file, size 0 means whole file
-            mm = mmap.mmap(f.fileno(), 0)
-            # read content via standard file methods
-            mdata = data.encode('utf-8')
-            mm[:len(mdata)] = mdata
+        try:
+            with open(contextmemory, "w+b") as f:
+                # memory-map the file, size 0 means whole file
+                mm = mmap.mmap(f.fileno(), 0)
+                # read content via standard file methods
+                mdata = data.encode('utf-8')
+                mm[len(mdata):] = mdata #append
+    #            mm[:len(mdata)] = mdata
 
-            mm.close()        
-
+                mm.close()        
+        except Exception as e:
+            logger.error(f'Error writing to context memory file {contextmemory}: {e}')
+            
     def get_context_memory(self, name, size=1024*1024):
+        #handler
+        #starts with \
+        #starts with .
+        #starts with /
         # 1. Attempt to create a new shared memory block
         name = name.replace('\\', '/')
         if (name.startswith('/')):
             name = name[1:] #remove leading slash if present
+        #check if exists.  
+        if (name.endswith('/')):
+            name = name[:-1] #remove trailing slash if present
+
+        name = self.CTXT_FOLDER + name + ".ctx" #add .ctx extension?
+        try:
+            file_path = pathlib.Path(f'{name}')
+            # Create parent directories if they don't exist
+            file_path.parent.mkdir(parents=True, exist_ok=True)
+            if (not os.path.exists(f'{name}')):
+                with open(f'{name}', 'w+b') as f:
+                    f.write(b'\n')
+        except Exception as e:
+            logger.error(f'Error creating context memory file {name}: {e}')
+
         return name
 #            return SharedMemory(name=name, create=True, size=size)
 
@@ -678,11 +715,12 @@ class transcriber:
     def open_book(self, bookname, start_time, end_time, folder = "books"):
         #for now just read the book and return the text, but could also do some processing here to extract relevant sections or create embeddings for searching later.  could also store in shared memory or a file/database if needed, but for now just read and return the text.
         try:
-            self.read(bookname, start_time=start_time, end_time=end_time, myfolder=bookname) #load book into transcripts for reference, this will also update the knowledge graph with any topics/commands found in the book, which can be useful for searching and display later.  could also do some processing here to extract relevant sections or create embeddings for searching later, but for now just load and return the text.
+            logger.info(f'Opening book {bookname} from {start_time} to {end_time}')
+            return self.read(bookname, start_time=start_time, end_time=end_time, myfolder=bookname + "/") #load book into transcripts for reference, this will also update the knowledge graph with any topics/commands found in the book, which can be useful for searching and display later.  could also do some processing here to extract relevant sections or create embeddings for searching later, but for now just load and return the text.
 
         except Exception as e:
             logger.error(f'!!> Open book [{bookname}]\n !!{e}\n')
-
+        return None
         
     def get_from_nested(self, data_dict, key_list):
         try:
@@ -697,32 +735,65 @@ class transcriber:
         if (book is not None and '&&' in book and book['&&'] is not None):
             return self.read_existing(book['&&']['**'])
         
-    def get_chromatic(self, struct, start_time=None, end_time=None):
+    def get_chromatic(self, array, start_time=None, end_time=None):
         #get chromatic cmds from this struct, which is a nested dict with '&&' for cmds and subfolders for nested books.  this will allow us to get all cmds from a book and its subbooks recursively, with optional time filtering.  could also add topic filtering if needed, but for now just get all cmds.
         ret = []
-        if (struct is None):
+        if (array is None):
             return ret
-        for s in struct:
-            if (s['cmds'] is not None and s['start_idx'] != s['end_idx']):
-                ret.extend(s['cmds'][s['start_idx']:s['end_idx']]) #get cmds for this struct, which should already be filtered by time in read_existing, so we can just get the cmds between start_idx and end_idx.  could also add topic filtering here if needed, but for now just get all cmds.
+        for s in array.values():
+            if (s['&&'] is not None and s['('] != s[')']):
+                ret.extend(s['&&'][s['(']:s[')']]) #get cmds for this struct, which should already be filtered by time in read_existing, so we can just get the cmds between start_idx and end_idx.  could also add topic filtering here if needed, but for now just get all cmds.
+
+        ret.sort(key=lambda x: x['timestamp']) #sort by timestamp 
+        return ret
+    
+    def relevant_book_array(self, searchbooks=None):
+        #get just name here..
+        ret = []
+        for k,v in searchbooks.items():
+            if (k == '&&' or k == '**' or k == '(' or k == ')' or k=='..'):
+                continue
+            ret.extend(self.relevant_book_array(searchbooks=v))
+        if (searchbooks['&&'] is not None):     
+            #if we have commands, include this book..
+            ret.append(searchbooks)
 
         return ret
+
+
     def filter_books_recursive(self, folder="books", searchbooks=None, start_time=None, end_time=None):
         #get just name here..
         if (searchbooks is None):
             tree = folder.split('/')
+            if (len(tree) == 1 and tree[0] == "books"):
+                tree = tree[1:] #tree search if not default value.  
+            logger.info(f'Filtering book {folder} with tree {tree}')
             searchbooks = self.get_from_nested(self.allbooks, tree)
         if (searchbooks is None):
-            return []
-        retstruct = []
+            return {'**': folder, '&&': None, '(': 0, ')': 0} #if we dont have this book, return empty struct with just the folder name for reference, this will allow us to build the struct as we search and find books, and also handle cases where we have a book in the file system but not in our allbooks struct for some reason, this way we can still get the cmds for that book if it exists, and if not we just return an empty struct for it.
+        retstruct = {'**': folder, '&&': None, '(': 0, ')': 0} #store cmds for this book here, and also store start and end idx for filtering by time later.  could also store topic info here if needed, but for now just store cmds and time info.
+
+        logger.info(f'{folder} searchbooks: {searchbooks}')
         for k,v in searchbooks.items():
-            if (k == '&&' or k == '**'):
+            if (k == '&&' or k == '**' or k == '(' or k == ')' or k=='..'):
                 continue
-            retstruct.extend(self.filter_books_recursive(folder+"/"+k, searchbooks=v, start_time=start_time, end_time=end_time))
+            retstruct[k] = self.filter_books_recursive(folder+"/"+k, searchbooks=v, start_time=start_time, end_time=end_time)
         if (searchbooks['&&'] is not None):            
-            self.read_existing(searchbooks['&&']['**'], start_time=start_time, end_time=end_time) #get existing cmds filter time..
-            if (searchbooks['&&']['cmds'] is not None and searchbooks['&&']['start_idx'] != searchbooks['&&']['end_idx']):
-                retstruct.append(searchbooks['&&']) #get existing cmds with filtered time..
+#            searchbooks['&&'] = self.read_existing(searchbooks['**'], start_time=start_time, end_time=end_time) #get existing cmds filter time..
+#            searchbooks['start_idx'] = self.allcmds[searchbooks['**']]['start_idx']
+#            searchbooks['end_idx'] = self.allcmds[searchbooks['**']]['end_idx']
+#            logger.info(f'Filtering {folder} cmds from {searchbooks["**"]} {start_time} to {end_time}')
+#            logger.info(f'{self.allcmds[searchbooks["**"]]["&&"]}')
+            a = self.read_existing(searchbooks['**'], start_time=start_time, end_time=end_time) #get existing cmds filter time..
+            
+            logger.info(f'After filtering {folder} cmds from {searchbooks["**"]} got {len(a)} cmds {self.allcmds[searchbooks["**"]]["start_idx"]} to {self.allcmds[searchbooks["**"]]["end_idx"]}')
+#            logger.info(f'After filtering {folder} cmds from {searchbooks["**"]} start_idx {self.allcmds[searchbooks["**"]]["start_idx"]} end_idx {self.allcmds[searchbooks["**"]]["end_idx"]}')
+            if (searchbooks['&&'] is not None and len(a) > 0):
+                retstruct['&&'] = searchbooks['&&'] #get cmds for this struct
+                #dont update searchbooks['&&'], just set the start_idx and end_idx for filtering, this way we can keep the original cmds in searchbooks for reference and just use the start_idx and end_idx to filter by time when we get the chromatic cmds later.  this will also allow us to handle cases where we have a book in the file system but not in our allbooks struct for some reason, this way we can still get the cmds for that book if it exists, and if not we just return an empty struct for it.
+                retstruct['('] = self.allcmds[searchbooks['**']]['start_idx']
+                retstruct[')'] = self.allcmds[searchbooks['**']]['end_idx']+1
+                retstruct['..'] = self.allcmds[searchbooks['**']]['last_mtime'] #last modified..
 
             
         return retstruct
@@ -732,7 +803,7 @@ class transcriber:
         #only include the immediate files in the book.  
         #closing book will close all subbooks as well for now..
 
-        retstruct = {'&&': None}
+        retstruct = {'**': folder, '&&': None, '(': 0, ')': 0} #store cmds for this book here, and also store start and end idx for filtering by time later.  could also store topic info here if needed, but for now just store cmds and time info.
         #get just name here..
         subfolders = [ f.name for f in os.scandir(folder) if f.is_dir() ]
         for subfolder in subfolders:
@@ -741,9 +812,11 @@ class transcriber:
             bookname = subfolder #books/worldhistory/worldwar2/YYYYmmdd.txt
             #retstruct = books['worldhistory']['worldwar2']['&&'] #get cmd struct for this subbook..
             #if we have other subfolders, load them..
-            retstruct[subfolder] = self.open_books(folder+"/"+subfolder) #recursively open subbooks as well, this will allow for nested book structures
+            tempfolder = folder + "/" + subfolder
+            retstruct[subfolder] = self.open_books(tempfolder, days=days) #recursively open subbooks as well, this will allow for nested book structures
             #load data for this book..
         retstruct['&&'] = self.open_book(folder, start_time=self.getTime(-days), end_time=self.getTime(), folder=folder) #open all books with last year of data, could adjust as needed.
+
         return retstruct
 
     def read(self, lang, start_time=None, end_time=None, myfolder=""):
@@ -763,6 +836,7 @@ class transcriber:
         if (myfolder != ""):
             folder = myfolder
         os.makedirs(folder, exist_ok=True)
+
 
                 
 
@@ -816,7 +890,7 @@ class transcriber:
 
         ret.sort(key=lambda x: x['timestamp']) #sort by timestamp just in case.
 
-        self.allcmds[lang] = {'**': lang, 'cmds': ret, 'last_mtime': last_mtime, 'start_time': start_time, 'end_time': end_time, 'start_idx': 0, 'end_idx': len(ret)-1, 'open': True}
+        self.allcmds[lang] = {'**': lang, '&&': ret, 'cmds': ret, 'last_mtime': last_mtime, 'start_time': start_time, 'end_time': end_time, 'start_idx': 0, 'end_idx': len(ret)-1, 'open': True}
         self.update_kg(lang, ret)
         logger.info(f'Loaded {numloaded} files for {lang} with {len(ret)} commands')
         return ret
