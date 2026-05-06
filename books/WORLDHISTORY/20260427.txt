@@ -3,3 +3,6 @@
 **WH101/INTRO
 Try learning about world history as a demo to see if this tool might be useful..
 
+> Search Web World history
+[53,55,61] [1=WIKI,-1=TAB] 
+

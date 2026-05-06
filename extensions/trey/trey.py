@@ -956,7 +956,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
                     print(f'Playing pre-generated audio: {sound_file}')
                     currentsound = playsound(sound_file, block=False) # Ensure this thread blocks for its sound
                 else:
-                    print(f'Generating and playing audio: {l}')
+                    print(f'Generating and playing audio: {l} for {cacheno} at line {idx}')
                     subtitle_file = f"./temp/{cacheno}/{idx}.srt"
                     lesc = l.replace('"', '\\"')
 
@@ -1788,8 +1788,8 @@ class MyWindow(QMainWindow):
                     #pause any other speaking or playing we are doing.
                     self.transcriber.write_plain('base', command) #dont write intermediate msg?
                 elif (type == 'book'):
-                    cache = vars.get('cacheno', -1)
-                    pause_reader(cache)
+                    cacheno = vars.get('cacheno', -1)
+                    pause_reader(int(cacheno))
 
 
 
@@ -1805,8 +1805,8 @@ class MyWindow(QMainWindow):
                 elif (type == 'record'):
                     start_obs_capture()
                 elif (type == 'book'):
-                    cache = vars.get('cacheno', -1)
-                    resume_reader(cache)
+                    cacheno = vars.get('cacheno', -1)
+                    resume_reader(int(cacheno))
                 
             case "Screenshot Feedback_":
                 bbox = vars.get('BBOX', None)

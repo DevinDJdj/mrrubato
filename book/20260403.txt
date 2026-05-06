@@ -788,3 +788,34 @@ only one book/ctxt allowed..
 --unpause
 test..
 
+--comment
+save in book..
+[53,57,58]
+
+
+Switch between similar list and current time..
+Show similar/show time [N]
+Select similar to jump to this time..
+
+
+OK, finally have a comment in books..
+Not sure how we want this organized.
+
+See if we can read book or not..
+
+**extensions/vscode/codetutor/src/extension.ts
+Need to check that _meta is working..
+Not sure if this is too much context..
+Also lots of repetition, make sure this is tolerable..
+Open latest in folder..
+
+Check with Select topic and select book..
+
+
+**languages/_meta.py
+;> Set Book_ [startrec,endrec] [selection]
+;> Set Topic [startrec,endrec] [selection]
+
+On start of message, show/adjust opacity.  
+On end of message revert opacity..
+

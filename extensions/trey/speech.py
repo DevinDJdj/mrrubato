@@ -567,7 +567,7 @@ def write_vtt(fname, segments):
             text = segment.text
             f.write(f"{idx+1}\n{start} --> {end}\n{text}\n\n")
 
-def transcribe_audio_whisper(fname="example2.wav", start_times=[], end_times=[], use_timestamps=False):
+def transcribe_audio_whisper(fname="example2.wav", start_times=[], end_times=[], use_timestamps=False, delete=False):
     global whisper_model, recording
     global rec_stop_event, asr_model
     global transcript_info
@@ -638,8 +638,8 @@ def transcribe_audio_whisper(fname="example2.wav", start_times=[], end_times=[],
         audio_data = np.frombuffer(recording, np.float32)
         segments, info = whisper_model.transcribe(audio_data, language=WHISPER_LANGUAGE, beam_size=5, vad_filter=True, vad_parameters=dict(min_silence_duration_ms=1000))
         #remove temp files..
-
-    delete_temp_wav(fname)
+    if (delete):
+        delete_temp_wav(fname)
 
     print("Detected language '%s' with probability %f" % (info.language, info.language_probability))
     segments = list(segments)
@@ -795,7 +795,7 @@ replace_dict = {
     '(': 'open',
     ')': 'close',
     '+': 'plus',
-    '-': 'minus',
+#    '-': 'minus',
     '≠': 'not equal to',
     '≥': 'greater than or equal to',
     '≤': 'less than or equal to',

@@ -1,3 +1,5 @@
+import os
+
 import pyttsx3
 
 global all_voices
@@ -29,6 +31,7 @@ def speak(text, voice_id=None, fname=None, volume=0.7, rate=150):
     engine.setProperty('volume', volume)  # Volume: 0.0 to 1.0
     engine.setProperty('rate', rate)      # Speed percent (can go over 100
     if fname is not None:
+        os.makedirs(os.path.dirname(fname), exist_ok=True)
         engine.save_to_file(text, fname)
     else:
         engine.say(text)

@@ -20,6 +20,7 @@ import networkx as nx
 
 from multiprocessing.shared_memory import SharedMemory
 import mmap
+from rapidfuzz import fuzz
 
 
 logger = logging.getLogger(__name__)
@@ -134,7 +135,7 @@ class transcriber:
                     try:
                         file_path = pathlib.Path(f'{self.BOOK_FOLDER}{self.current_book}')
                         # Create parent directories if they don't exist
-                        file_path.parent.mkdir(parents=True, exist_ok=True)
+                        file_path.mkdir(parents=True, exist_ok=True)
                         with open(f'{self.BOOK_FOLDER}{self.current_book}/{today}.txt', 'a', encoding='utf-8') as f:
                             if (topic != self.langmap[self.current_book]['topic']):
                                 topicstr = f'**{topic}'
@@ -153,7 +154,7 @@ class transcriber:
                     try:
                         file_path = pathlib.Path(f'{self.BOOK_FOLDER}{topic}')
                         # Create parent directories if they don't exist
-                        file_path.parent.mkdir(parents=True, exist_ok=True)
+                        file_path.mkdir(parents=True, exist_ok=True)
                         with open(f'{self.BOOK_FOLDER}{topic}/{today}.txt', 'a', encoding='utf-8') as f:
                             if (topicstr != ""): #had to change topics..
                                 topicstr = f'**{self.current_book}'
@@ -454,7 +455,7 @@ class transcriber:
         t = self.get_time_var(vars)
 
         lines = []
-        return {'lang': lang, 'type': type, 'cmd': command, 'topic': self.current_topic, 'vars': vars, 'lines': lines, 'timestamp': t}
+        return {'lang': lang, 'type': type, 'cmd': command, 'topic': self.current_topic, 'vars': vars, 'lines': lines, 'timestamp': t, '..': t, '**': self.current_topic}
 
 
     def get_seq(self, command):
@@ -526,6 +527,7 @@ class transcriber:
 #                logger.info(f'Adding topic {topc["cmd"]} with vars {topc["vars"]}')
                 ret.append(topc)
                 currenttopc = topc
+                currenttopc['lines'].append(line)
             else:
                 if (topc is not None and 'lines' in topc):
                     topc['lines'].append(line)
@@ -667,16 +669,19 @@ class transcriber:
         try:
             with open(contextmemory, "w+b") as f:
                 # memory-map the file, size 0 means whole file
-                mm = mmap.mmap(f.fileno(), 0)
-                # read content via standard file methods
-                mdata = data.encode('utf-8')
-                mm[len(mdata):] = mdata #append
-    #            mm[:len(mdata)] = mdata
+                #append to file.  
 
-                mm.close()        
+                f.write(data.encode('utf-8')) #write data to file, this will also create the file if it doesn't exist
+
+#                mm = mmap.mmap(f.fileno(), 0)
+                # read content via standard file methods
+#                mdata = data.encode('utf-8')
+#                mm[len(mdata):] = mdata #append
+
+#                mm.close()        
         except Exception as e:
             logger.error(f'Error writing to context memory file {contextmemory}: {e}')
-            
+
     def get_context_memory(self, name, size=1024*1024):
         #handler
         #starts with \
@@ -747,16 +752,56 @@ class transcriber:
         ret.sort(key=lambda x: x['timestamp']) #sort by timestamp 
         return ret
     
-    def relevant_book_array(self, searchbooks=None):
+    def get_last_topic_cmd(self, lang, topic, timestamp):
+        ret = None
+        #keep data in time order..
+        if (lang in self.langmap and topic in self.langmap[lang]['topics'] and self.langmap[lang]['topics'][topic]['data'] is not None and len(self.langmap[lang]['topics'][topic]['data']) > 0):
+            for cmd in reversed(self.langmap[lang]['topics'][topic]['data']):
+                if cmd['type'] == '**':
+                    ret = cmd
+                    if (cmd['timestamp'] <= timestamp):
+                         break
+        return ret
+
+    def relevant_topic_array(self, lang='_meta', topicfilter="", timestamp=None):
+        if (timestamp is None):
+            timestamp = time.time()
+        #get just name here..
+        ret = []
+        #not most efficient.. but should be filtered list..
+        for (k,v) in self.langmap[lang]['topics'].items():
+            if topicfilter == "":
+                #get latest..
+                latest = self.get_last_topic_cmd(lang, k, timestamp=timestamp)
+                if (latest is not None):
+                    ret.append(latest)
+            else:
+                #not efficient, but want fuzzy search result..
+                ff = fuzz.partial_ratio_alignment(topicfilter, k)
+                if (ff.score > 80): #threshold for relevance, could adjust as needed.
+                    latest = self.get_last_topic_cmd(lang, k, timestamp=timestamp)
+                    if (latest is not None):
+                        ret.append(latest)
+
+        return ret
+    
+    def relevant_book_array(self, searchbooks=None, namefilter=""):
         #get just name here..
         ret = []
         for k,v in searchbooks.items():
             if (k == '&&' or k == '**' or k == '(' or k == ')' or k=='..'):
                 continue
-            ret.extend(self.relevant_book_array(searchbooks=v))
+            ret.extend(self.relevant_book_array(searchbooks=v, namefilter=namefilter))
         if (searchbooks['&&'] is not None):     
             #if we have commands, include this book..
-            ret.append(searchbooks)
+
+            if namefilter == "":            
+                ret.append(searchbooks)
+            else:
+                #not efficient, but want fuzzy search result..
+                ff = fuzz.partial_ratio_alignment(namefilter, searchbooks['**'])
+                if (ff.score > 80): #threshold for relevance, could adjust as needed.
+                    ret.append(searchbooks)
 
         return ret
 
@@ -768,7 +813,7 @@ class transcriber:
             if (len(tree) == 1 and tree[0] == "books"):
                 tree = tree[1:] #tree search if not default value.  
             logger.info(f'Filtering book {folder} with tree {tree}')
-            searchbooks = self.get_from_nested(self.allbooks, tree)
+            searchbooks = self.get_from_nested(self.allbooks, tree) #tree = [], searchbooks = self.allbooks
         if (searchbooks is None):
             return {'**': folder, '&&': None, '(': 0, ')': 0} #if we dont have this book, return empty struct with just the folder name for reference, this will allow us to build the struct as we search and find books, and also handle cases where we have a book in the file system but not in our allbooks struct for some reason, this way we can still get the cmds for that book if it exists, and if not we just return an empty struct for it.
         retstruct = {'**': folder, '&&': None, '(': 0, ')': 0} #store cmds for this book here, and also store start and end idx for filtering by time later.  could also store topic info here if needed, but for now just store cmds and time info.

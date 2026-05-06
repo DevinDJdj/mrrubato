@@ -496,7 +496,7 @@ def transcribeLocal(fname):
         if (not os.path.exists(ffname + ".vtt")):
             print(f"Transcribing {fname} to {ffname}.vtt")
             from extensions.trey.speech import transcribe_audio, listen_audio, transcribe_audio_whisper
-            transcribe_audio_whisper(fname)
+            transcribe_audio_whisper(fname, delete=True)
 
 def saveLocalTranscripts():
     #upload to folder any transcripts in local folder
@@ -826,7 +826,7 @@ if __name__ == '__main__':
                         #just call server/transcription/transcribe.py --transcribe_fromyoutube
                         from extensions.trey.speech import transcribe_audio, listen_audio, transcribe_audio_whisper
 #                        transcript = transcribe_audio(mediafile, util.st, util.et, True)
-                        transcript = transcribe_audio_whisper(mediafile, util.st, util.et, True)
+                        transcript = transcribe_audio_whisper(mediafile, util.st, util.et, True, delete=True)
                         #servererrorcnt += 1 #testing..
 
                         """

@@ -472,7 +472,12 @@ class hotkeys:
     timer = datetime.now()
 
     self.transcript = transcribe_audio_whisper("comment.wav")
-    duration = get_duration("comment.wav") #actual dynamic duration..
+    dur = get_duration("comment.wav") #actual dynamic duration..
+    if (dur == 0):
+      duration = (timer - self.now).total_seconds() if self.now is not None else duration
+    else:
+      duration = dur
+
     lag = (datetime.now() - timer).total_seconds()
     lag = int(lag)
     print(f'Transcription completed in {lag} seconds: {self.transcript}')

@@ -1,6 +1,7 @@
 import logging
 from pynput import *
-from languages.helpers import timewindow
+import languages.helpers.timewindow as timewindow
+
 import pytesseract
 from PIL import Image
 from io import BytesIO
@@ -46,7 +47,7 @@ class check:
     self.transcripthistory = [] #store past transcripts for context.  This is not currently used for anything but could be used for context in future functions.
     self.topichistory = [] #store past topics for context.  This is not currently used for anything but could be used for context in future functions.
     self.links = [] #currently selected link structure from page..
-    self.timewindow = timewindow(self) #for timeline functions, can also be used for general time tracking.  This is initialized here but can be reset by timeline if needed.
+    self.timewindow = timewindow.timewindow(self) #for timeline functions, can also be used for general time tracking.  This is initialized here but can be reset by timeline if needed.
 
   def word(self, sequence=[]):
     """Word lookup."""

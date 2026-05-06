@@ -30,15 +30,20 @@ class _meta:
     self.suggestions = []
     self.alltopics = {}
     self.topicarray = []
+    self.booktopicarray = [] #for only selected book..
+    self.filteredtopicarray = []
     self.topichistory = [] #store past topics for context.  This is not currently used for anything but could be used for context in future functions.
 
     self.bookarray = []
+    self.filteredbookarray = []
     self.bookhistory = []
     self.allbooks = {}
     self.selectedbook = None
     self.selectedbookindex = None
+    self.selectedfilteredbookindex = None
     self.selectedtopic = None
     self.selectedtopicindex = None
+    self.selectedfilteredtopicindex = None
     self.speed = 1.0
     self.zoom = 1.0
     self.timewindow = timewindow.timewindow(self) #starttime/endtime, etc.  
@@ -93,7 +98,7 @@ class _meta:
         self.alltopics[c['cmd']].append(c)
         numtopics += 1
 
-        self.topicarray.insert(0, c['cmd']) #time reverse order
+        self.topicarray.insert(0, c) #time reverse order
     if (numtopics > 0):
       self.selectedtopicindex = 0      
       self.selectedtopic = self.topicarray[self.selectedtopicindex] #default to first topic.
@@ -121,7 +126,24 @@ class _meta:
 
 
     return 0
-  
+
+  def load_booktopicarray(self):
+    #load topics for selected book into booktopicarray.  
+    self.booktopicarray = []
+    if (self.selectedbook is not None):
+      if (self.selectedbook['**'] in self.transcriber.langmap):
+        bookdata = self.transcriber.langmap[self.selectedbook['**']]
+        if ('&&' in bookdata and bookdata['&&'] is not None and bookdata['('] != bookdata[')']):
+          self.booktopicarray = bookdata['&&'][bookdata['(']:bookdata[')']+1]
+          for c in self.booktopicarray:
+            if (c['type']=='**'):
+              if (c['cmd'] not in self.alltopics):
+                self.alltopics[c['cmd']] = []
+              self.alltopics[c['cmd']].append(c)
+
+              self.booktopicarray.insert(0, c) #time reverse order
+          self.booktopicarray.sort(key=lambda x: abs(self.timewindow.currenttime - x['timestamp']), reverse=True) #sort by recency to current time, most recent first.  
+
   def load_data(self):
 
     #load language specific data into the config.  
@@ -169,6 +191,7 @@ class _meta:
       "List Books": "list_books",
       "Select Book": "select_book",
       "Set Book": "set_book",
+      "_Set Book": "_set_book",
       "Set Speed": "set_speed",
       "Time Jump": "time_jump",
       "Time Zoom": "time_zoom", 
@@ -365,6 +388,22 @@ class _meta:
     else:
       return self.selectedtopicindex + idx
 
+  def adjust_filteredtopic_index(self, idx):
+    if idx+self.selectedfilteredtopicindex < 0:
+      return 0
+    elif (idx+self.selectedfilteredtopicindex) >= len(self.filteredtopicarray):
+      return len(self.filteredtopicarray)-1
+    else:
+      return self.selectedfilteredtopicindex + idx
+    
+  def adjust_filteredbook_index(self, idx):
+    if idx+self.selectedfilteredbookindex < 0:
+      return 0
+    elif (idx+self.selectedfilteredbookindex) >= len(self.filteredbookarray):
+      return len(self.filteredbookarray)-1
+    else:
+      return self.selectedfilteredbookindex + idx
+    
   def adjust_book_index(self, idx):
     if idx+self.selectedbookindex < 0:
       return 0
@@ -386,7 +425,7 @@ class _meta:
 
       sortedcmds = bookcmds[:num]
       sortedcmds.sort(key=lambda x: x['timestamp']) #sort by time for display.
-      
+
       for cmd in sortedcmds:
         ret += f'$${datetime.fromtimestamp(cmd["timestamp"]).strftime("%Y%m%d_%H%M%S")}\n'
         ret += '\n'.join(cmd['lines']) + "\n"
@@ -420,15 +459,15 @@ class _meta:
       if (sequence[-1] == self.keybot): #dont adjust if keybot, 
         return 1
       newidx = self.adjust_topic_index(self.mid-sequence[-1])
-    logger.info(f'--{self.topicarray[newidx]}')
+    logger.info(f'--{self.topicarray[newidx]['**']}')
     self.func = "Select Topic_"
     #should make this more general.. send last ten links
     last15 = self.topicarray[max(0, self.selectedtopicindex-11):min(self.selectedtopicindex+13, len(self.topicarray))]
     last15.reverse() #reverse to match with Future:Past order in display.. [48 - 68]
     #does this match up with keys?  
     vars = {}
-    vars['topic'] = self.topicarray[newidx]
-    ctxt = self.get_context(self.topicarray[newidx], 5) #get context for topic
+    vars['topic'] = self.topicarray[newidx]['**']
+    ctxt = self.get_context(self.topicarray[newidx]['**'], 5) #get context for topic
     vars['context'] = ctxt.replace('\n', '<br>')
 
     start = 0
@@ -454,34 +493,109 @@ class _meta:
 
     self.selectedtopicindex = self.adjust_topic_index(selected)
     self.selectedtopic = self.topicarray[self.selectedtopicindex] if self.selectedtopicindex < len(self.topicarray) else None
-    if (len(self.topichistory) < 1 or self.selectedtopic != self.topichistory[-1]):
+    if (len(self.topichistory) < 1 or self.selectedtopic['**'] != self.topichistory[-1]['**'] or self.selectedtopic['..'] != self.topichistory[-1]['..']):
       self.topichistory.insert(0, self.selectedtopic)
 
-    ctxt = self.get_context(self.topicarray[self.selectedtopicindex], 5) #get context for topic
+    ctxt = self.get_context(self.topicarray[self.selectedtopicindex]['**'], 5) #get context for topic
     logger.info(f'> Select Topic {sequence}')
     #get bookmark at index selected
     self.func = "Select Topic"
-    self.set_qr(self.func, {'context': ctxt.replace('\n', '<br>'), 'topic': self.selectedtopic})
+    self.set_qr(self.func, {'context': ctxt.replace('\n', '<br>'), 'topic': self.selectedtopic['**']})
 #    logger.info(ctxt.replace('\n', '<br>'))
     #keep track of topic history..
-    writtentopic = self.transcriber.write_topic(self.name, self.selectedtopic) #write topic to _meta.. to pick up in other tools.  
-    self.transcriber.write_topic(self.name, self.selectedtopic, ctxt) #write topic context?  Get latest info for robot.. trigger read of this file..
-    self.speak(f'{self.selectedtopic}')
+    writtentopic = self.transcriber.write_topic(self.name, self.selectedtopic['**']) #write topic to _meta.. to pick up in other tools.  
+    self.transcriber.write_topic(self.name, self.selectedtopic['**'], ctxt) #write topic context?  Get latest info for robot.. trigger read of this file..
+    self.speak(f'{self.selectedtopic['**']}')
     self.transcript = writtentopic #set transcript here to include into midi.  Dont include context for now too much repetition..
     return 0
 
+  def set_topic_(self, sequence=[]):
+
+    logger.info(f'> Set Topic_ {sequence}')
+    print("> Set Topic_")
+
+    if (len(sequence) == 1):
+      from extensions.trey.speech import transcribe_audio, transcribe_audio_whisper
+      self.transcript = transcribe_audio_whisper("topic.wav")
+
+      logger.info('$$AUDIO = ' + self.transcript)
+    if (len(sequence) == 2):
+      #stop recording..
+      if (sequence[-1] == sequence[-2]):
+        #dont refilter..  
+        if (len(self.filteredtopicarray) > 0):
+          self.transcript = "" #skip refilter if double press, just repeat same options.
+      if (self.transcript != ""):
+        self.filtertopic = self.transcript
+        self.selectedfilteredtopicindex = 0
+
+      #sort topics by relevance to filtertopic.. this is just a demo of filtering, we can do more complex filtering based on topics, time, etc.
+      self.filteredtopicarray = self.transcriber.relevant_topic_array(self.name, self.filtertopic, self.timewindow.currenttime) #get list of topics for selection.
+      logger.info(f'Filtered topic array: {self.filteredtopicarray}')
+      #sort by recency
+      self.filteredtopicarray.sort(key=lambda x: abs(self.timewindow.currenttime - x['timestamp']), reverse=True) #sort by recency to current time, most recent first.
+    
+    if (len(sequence) > 2):
+      newidx = self.selectedfilteredtopicindex
+      if (sequence[-1] == self.keybot): #dont adjust if keybot, 
+        return 1
+      newidx = self.adjust_filteredtopic_index(self.mid-sequence[-1])
+      logger.info(f'--{self.filteredtopicarray[newidx]['topic']}')
+      self.func = "Set Topic_"
+      #should make this more general.. send last ten links
+      last15 = self.filteredtopicarray[max(0, self.selectedfilteredtopicindex-11):min(self.selectedfilteredtopicindex+13, len(self.filteredtopicarray))]
+      last15.reverse() #reverse to match with Future:Past order in display.. [48 - 68]
+      #does this match up with keys?  
+      vars = {}
+      vars['topic'] = self.filteredtopicarray[newidx]['topic']
+      ctxt = self.get_context(self.filteredtopicarray[newidx]['topic'], 5) #get context for topic
+      vars['context'] = ctxt.replace('\n', '<br>')
+
+      start = 0
+  #    if self.selectedtopicindex < 12:
+  #      start = 12 - self.selectedtopicindex
+      for i, l in enumerate(last15):
+        i = i + start
+        vars[f'{i}'] = l['topic']
+  #          vars[f'href{i}'] = l['href']
+      vars['idx'] = newidx
+      self.set_qr(self.func, vars)
+
+#    self.speak(f'{vars["topic"]}')
+    
+    return 1
+
   def set_topic(self, sequence=[]):
     logger.info(f'> Set Topic {sequence}')
-    topic = "Australian Open 2026"
-    from extensions.trey.speech import transcribe_audio
-    self.transcript = transcribe_audio("topic.wav")
+    selected = 0
+    if (len(sequence) > 0):
+      selected = self.mid - sequence[-1]
 
-    logger.info('$$AUDIO = ' + self.transcript)
-    if (self.transcript != ""):
-      topic = self.transcript
-    from extensions.trey.trey import speak
-    speak(f'Setting topic: {topic}')
+    self.selectedfilteredtopicindex = self.adjust_filteredtopic_index(selected)
+    self.selectedtopic = self.filteredtopicarray[self.selectedfilteredtopicindex] if self.selectedfilteredtopicindex < len(self.filteredtopicarray) else None
+    #find this in the main topic array..
+    if self.selectedtopic is not None:
+      for i, t in enumerate(self.topicarray):
+        if t['**'] == self.selectedtopic['**'] and self.selectedtopic['..'] == t['..']: #match topic and time
+          self.selectedtopicindex = i
+          break
+    #set transcriber selected topic for further writing..
+    self.transcriber.current_topic = self.selectedtopic['**'] if self.selectedtopic is not None else self.transcriber.current_topic
+    if (len(self.topichistory) < 1 or self.selectedtopic != self.topichistory[-1]):
+      #not sure if we want to remove earlier instances..
+      self.topichistory.insert(0, self.selectedtopic)
 
+    ctxt = self.get_topic_context(self.topicarray[self.selectedtopicindex]['**'], 5) #get context for topic
+    logger.info(f'> Set Topic {sequence}')
+    #get bookmark at index selected
+    self.func = "Set Topic"
+    self.set_qr(self.func, {'context': ctxt.replace('\n', '<br>'), 'topic': self.selectedtopic['**']})
+#    logger.info(ctxt.replace('\n', '<br>'))
+    #keep track of topic history..
+    writtentopic = self.transcriber.write_topic(self.name, self.selectedtopic['**']) #write topic to _meta.. to pick up in other tools.  
+    self.transcriber.write_topic(self.name, self.selectedtopic['**'], ctxt) #write temp topic context?  Get latest info for robot.. trigger read of this file..
+    self.speak(f'{self.selectedtopic["**"]}')
+    self.transcript = writtentopic #set transcript here to include into midi.  Dont include context for now too much repetition..
     return 0
 
 
@@ -531,7 +645,7 @@ class _meta:
 #      start = 12 - self.selectedtopicindex
     for i, l in enumerate(last15):
       i = i + start
-      vars[f'{i}'] = l
+      vars[f'{i}'] = l['**']
 #          vars[f'href{i}'] = l['href']
     vars['idx'] = newidx
     self.set_qr(self.func, vars)
@@ -567,21 +681,95 @@ class _meta:
     self.transcript = writtentopic #set transcript here to include into midi.  Dont include context for now too much repetition..
     return 0
 
+
+  def set_book_(self, sequence=[]):
+    logger.info(f'> Set Book_ {sequence}')
+    print("> Set Book_ called")
+    if (len(sequence) == 1):
+      #stop recording..
+      from extensions.trey.speech import transcribe_audio, transcribe_audio_whisper
+      self.transcript = transcribe_audio_whisper("book.wav")
+
+    if (len(sequence) == 2):
+      if (sequence[-1] == sequence[-2]):
+        #dont refilter..  
+        if (len(self.filteredtopicarray) > 0):
+          self.transcript = "" #skip refilter if double press, just repeat same options.
+      #otherwise get filter..
+
+      logger.info('$$AUDIO = ' + self.transcript)
+      if (self.transcript != ""):
+        filterbook = self.transcript
+        self.selectedfilteredbookindex = 0
+        #sort books by relevance to filterbook.. this is just a demo of filtering, we can do more complex filtering based on topics, time, etc.
+        self.filteredbookarray = self.transcriber.relevant_book_array(self.filtered, filterbook) #get list of books for selection.
+        logger.info(f'Filtered book array: {self.filteredbookarray}')
+        #sort by recency
+        self.filteredbookarray.sort(key=lambda x: abs(self.timewindow.currenttime - x['..']), reverse=True) #sort by recency to current time, most recent first.
+    
+    if (len(sequence) > 2):
+      #get audio input for query.  
+      newidx = self.selectedfilteredbookindex
+      if (sequence[-1] == self.keybot): #dont adjust if keybot, 
+        return 1
+      newidx = self.adjust_filteredbook_index(self.mid-sequence[-1])
+      logger.info(f'--{self.filteredbookarray[newidx]["**"]}')
+      self.func = "Set Book_"
+      #should make this more general.. send last ten links
+      last15 = self.filteredbookarray[max(0, self.selectedfilteredbookindex-11):min(self.selectedfilteredbookindex+13, len(self.filteredbookarray))]
+      last15.reverse() #reverse to match with Future:Past order in display.. [48 - 68]
+      #does this match up with keys?  
+      vars = {}
+      vars['book'] = self.filteredbookarray[newidx]['**']
+      ctxt = self.get_book_context(self.filteredbookarray[newidx]['**'], 5) #get context for book
+      vars['context'] = ctxt.replace('\n', '<br>')
+
+      start = 0
+  #    if self.selectedtopicindex < 12:
+  #      start = 12 - self.selectedtopicindex
+      for i, l in enumerate(last15):
+        i = i + start
+        vars[f'{i}'] = l['**']
+  #          vars[f'href{i}'] = l['href']
+      vars['idx'] = newidx
+      self.set_qr(self.func, vars)
+
+    return 1
   #no good way to set book currently, too hard for audio input..  
+
+
   def set_book(self, sequence=[]):
     logger.info(f'> Set Book {sequence}')
-    book = "Australian Open 2026"
-    from extensions.trey.speech import transcribe_audio, transcribe_audio_whisper
-    self.transcript = transcribe_audio_whisper("book.wav")
+    selected = 0
+    if (len(sequence) > 0):
+      selected = self.mid - sequence[-1]
 
-    logger.info('$$AUDIO = ' + self.transcript)
-    if (self.transcript != ""):
-      book = self.transcript
-    from extensions.trey.trey import speak
-    speak(f'Setting book: {book}')
+    self.selectedfilteredbookindex = self.adjust_filteredbook_index(selected)
+    self.selectedbook = self.filteredbookarray[self.selectedfilteredbookindex] if self.selectedfilteredbookindex < len(self.filteredbookarray) else None
+    #find this in the main book array..
+    if self.selectedbook is not None:
+      for i, b in enumerate(self.bookarray):
+        if b['**'] == self.selectedbook['**']:
+          self.selectedbookindex = i
+          break
+    #set transcriber selected book for further writing..
+    self.transcriber.current_book = self.selectedbook['**'] if self.selectedbook is not None else self.transcriber.current_book
+    if (len(self.bookhistory) < 1 or self.selectedbook != self.bookhistory[-1]):
+      #not sure if we want to remove earlier instances..
+      self.bookhistory.insert(0, self.selectedbook)
 
+    ctxt = self.get_book_context(self.bookarray[self.selectedbookindex]['**'], 5) #get context for book
+    logger.info(f'> Set Book {sequence}')
+    #get bookmark at index selected
+    self.func = "Set Book"
+    self.set_qr(self.func, {'context': ctxt.replace('\n', '<br>'), 'book': self.selectedbook['**']})
+#    logger.info(ctxt.replace('\n', '<br>'))
+    #keep track of topic history..
+    writtentopic = self.transcriber.write_topic(self.name, self.selectedbook['**']) #write topic to _meta.. to pick up in other tools.  
+    self.transcriber.write_topic(self.name, self.selectedbook['**'], ctxt) #write temp topic context?  Get latest info for robot.. trigger read of this file..
+    self.speak(f'{self.selectedbook["**"]}')
+    self.transcript = writtentopic #set transcript here to include into midi.  Dont include context for now too much repetition..
     return 0
-
 
   def _set_book(self, sequence=[]):  
     logger.info(f'> _Set Book {sequence}')

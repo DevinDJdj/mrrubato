@@ -1,0 +1,256 @@
+
+**languages
+These messages for LANG and META are MOD12.  
+_LANG can set to any octave automatically.  
+and in any language, _META lang and _LANG always exist.  
+
+
+**mykeys.py
+@@Word creation logic?  
+[11,11,11]
+After the fact.  
+Take prior sequence.  Define sequence length to take.  
+
+Custom defined sequences for now standard start with [A,2A]
+
+
+**extensions/trey/trey.py
+Add text input display to load/edit topic.  
+
+
+
+
+**languages/_meta.py
+adjust speed..
+
+**languages/video.py
+adjust speed..
+
+Whatever the speed, leave adjustable silence between ticks..
+
+
+**extensions/vscode/codetutor/src/extension.ts
+Need to at least genbook..
+On a loop..
+
+
+**languages/hotkeys.py
+Adjust reading speed here..
+
+
+
+Shortcut for inputting topic names..
+and running vscode..
+<<book>>read
+<<book>>stop
+<<book>>write (ingest)
+<<git>>read
+
+<<gen>>book
+<<gen>>git
+
+
+
+**extensions/vscode/codetutor/src/extension.ts
+**extensions/trey/trey.py
+Lets see if we can open [**public/web] with login with playwrighty.  
+
+
+**languages/check.py
+dont necessarily like this name..
+For now just use comment..
+--comment
+Check if comment works..
+
+
+**missesroboto
+When copying dont copy .firebaserc
+
+
+
+
+**OFFSET:
+_meta = 0
+video = 1
+book = 2
+--52,..
+git = 3
+error = 4
+hotkeys = 5 (53)
+ok = 6
+good = 7
+generate = 8
+find/check = 9
+create = 10
+lang = 11
+
+[53,50,52,53,53]
+
+> .\treyenv\Scripts\activate
+
+**extensions/trey/speech.py
+Need better math symbol TTS.  
+For now just substitute annoying stuff..
+--substitute_tts
+Still not really working..
+
+
+
+**web/public/chata.html
+Allow for search of other data..
+Any transcript with 
+
+
+**extensions/trey/trey.py
+need to run transcriber load in separate thread..
+
+
+**web/public/transcriber.ts
+**web/public/recent.js
+--loadAllRecentTranscripts
+Use to get video info..
+> tsc ./web/public/transcriber.ts --outDir ./web/public/
+test..
+
+
+**extensions/vscode/codetutor/src/book.ts
+--setTime
+test..
+
+
+**books/WORLDHISTORY
+Start usage experiment here..
+
+**extensions/vscode/codetutor/src/book.ts
+Need to be able to switch between books seamlessly..
+
+
+**languages/_meta.py
+quick estimate can load ~ 1000 books at a time..
+Then just sequence and priority reorganization..
+
+Book/topic distinction?
+Just selected time period.  
+Different words may be useful..
+
+Every book can be a topic
+Not every topic is a book.  
+When writing to a topic, this is same as writing to a book.  
+Book always writes on saveBook..
+
+
+**extensions/trey/trey.py
+**languages/book.py
+Need command to scroll/read book/topic display..
+self.current_topic
+
+read..
+pause..
+scroll..
+
+etc..
+
+[53,57, 58]
+--comment
+--write_topic
+test..
+
+;( = Start index
+;) = End index
+
+**languages/helpers/transcriber.py
+--read_existing
+index sorting was not correct..
+ok, finally getting some book results..
+**languages/_meta.py
+--bookarray
+Still test write_topic..
+
+Closer..
+
+
+**timestep.py
+Not sure I want all these vtt files and temp files here..
+Use vtt files for video viewing if they exist..
+
+
+**web/public/chata.html
+Load [**web/public/data/transcriptions/trey/2026]
+Local vector DB..
+Chat find similar transcript (spoken)..
+Load full transcript from this location..
+Need web transcript parser/viewer..
+
+
+**extensions/trey/trey.py
+@@Need permanent location to show book details and topic details..
+==
+--self.label_topic_info
+$$
+
+
+**languages/book.py
+Scroll/speak book/topic..
+
+
+[50,51] [N] [50,50]
+read current book on thread 100 + N
+
+[50,49] [N] [50,50]
+pause book on thread 100 + N
+
+
+only one book/ctxt allowed..
+--pause
+--unpause
+test..
+
+--comment
+save in book..
+[53,57,58]
+
+
+Switch between similar list and current time..
+Show similar/show time [N]
+Select similar to jump to this time..
+
+
+OK, finally have a comment in books..
+Not sure how we want this organized.
+
+See if we can read book or not..
+
+**extensions/vscode/codetutor/src/extension.ts
+Need to check that _meta is working..
+Not sure if this is too much context..
+Also lots of repetition, make sure this is tolerable..
+Open latest in folder..
+
+Check with Select topic and select book..
+
+
+**languages/_meta.py
+
+;> Set Book_ [fill,endrec] [selection]
+test..
+;> Set Topic_ [fill,endrec] [selection]
+test..
+
+
+On start of message, show/adjust opacity.  
+On end of message revert opacity..
+
+
+Book is what we are writing..
+Topic is any existing book..
+
+select from session:
+bookhistory, topichistory
+
+vscode open page with diff since N time..
+
+Is static data ok?  
+./book, ./books
+
+Lots of changes, probably broke some things..
+

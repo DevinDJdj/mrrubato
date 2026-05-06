@@ -184,6 +184,7 @@ class MyKeys:
           self.langkey.append(value)
           self.langna.append(key)
           print("language added " + key)
+          logger.info("language added " + key)
       except Exception as e:
         print("language doesnt exist " + key)
         logger.error(f'Error loading language {key}: {e}')
@@ -381,6 +382,16 @@ class MyKeys:
                     la2.current_topic = topicdef[1]
                 if hasattr(la2, 'transcriber') and hasattr(la2.transcriber, 'current_topic'):
                     la2.transcriber.current_topic = topicdef[1]
+          if (la.qr.startswith("> Select Book\n")):
+            vars = la.qr.split("\n")
+            print(vars)
+            bookdef = vars[-3].split("=")
+            if (len(bookdef) > 1 and bookdef[1] != ""):
+              for (l2,la2) in self.languages.items():
+                if hasattr(la2, 'current_book'):
+                    la2.current_book = bookdef[1]
+                if hasattr(la2, 'transcriber') and hasattr(la2.transcriber, 'current_book'):
+                    la2.transcriber.current_book = bookdef[1]
                 
 
 

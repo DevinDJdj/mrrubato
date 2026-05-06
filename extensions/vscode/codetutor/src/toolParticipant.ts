@@ -404,73 +404,75 @@ export function startWatchingTranscriber(lang: string, transcriptFolder: string 
                 if (topics.length > 0){
                     //read commands and do something..
                     let topic = topics[topics.length-1];
-                    //open topic if not already open..
-                    console.log("Current topic:", Book.selectedtopic);
-                    console.log("Adding to history and selecting topic ", topic);
-                    if (topic.topic !== Book.selectedtopic){
-                        //only add to history if topic has changed.  
-                        Book.updatePage(Book.getBookPath() + "/" + file, '**' + transcriber.current_topic + '\n', -1, -1); //append to end of file.
-                        
-                        Book.addToHistory(topic.topic);
-                        Book.select(topic.topic);
-                        vscode.commands.executeCommand('workbench.action.chat.open', "@mr /read " + "**" + topic.topic );
+                    for (let t of topics){
+                        //open topic if not already open..
+                        console.log("Current topic:", Book.selectedtopic);
+                        console.log("Adding to history and selecting topic ", t.topic);
+                        if (t.topic !== Book.selectedtopic){
+                            //only add to history if topic has changed.  
+                            Book.updatePage(Book.getBookPath() + "/" + file, '**' + transcriber.current_topic + '\n', -1, -1); //append to end of file.
+                            
+                            Book.addToHistory(t.topic);
+                            Book.select(t.topic);
+                            vscode.commands.executeCommand('workbench.action.chat.open', "@mr /read " + "**" + t.topic );
 
-                        //for now just open if it exists..
+                            //for now just open if it exists..
 
 
-                        for (let l of topic.data.split('\n')){
-                            if (l.startsWith("Pause")){
+                            for (let l of t.data.split('\n')){
+                                if (l.startsWith("Pause")){
+                                    vscode.commands.executeCommand('workbench.action.chat.open', "@mr /stop");
+                                }
+
+                            }
+                        }
+                        for (let cmd of t.cmds){
+                            console.log("Processing command: ", cmd);
+                            //for now just log the command.  In the future we can do something with it.
+                            if (cmd.cmd === "Pause"){
                                 vscode.commands.executeCommand('workbench.action.chat.open', "@mr /stop");
                             }
+                            if (cmd.cmd === "Record Feedback"){
+                                //do something with the feedback.  For now just log it.
+                                let input = "";
+                                if (cmd.vars && cmd.vars['FEEDBACK']){
+                                    input = cmd.vars['FEEDBACK'] + '\n';
+                                }
+                                if (cmd.vars && cmd.vars['ORIGINAL']){
+                                    input = cmd.vars['ORIGINAL'] + "\n";
+                                }
+                                //add data to file..
+
+    //                            Book.updatePage("book/" + topic.topic, input);
+                                //get todays date for filename.  
+
+                                Book.updatePage(Book.getBookPath() + "/" + file, input, -1, -1); //append to end of file.
+
+                            }
+                            if (cmd.cmd === "Time Jump" || cmd.cmd === "Time Zoom"){
+                                //see what time is set and adjust topic selection accordingly..
+                                let t = Date.now()/1000;
+                                if (cmd.vars && cmd.vars['TIME']){
+                                    t = parseFloat(cmd.vars['TIME']);
+                                }
+                                let w = 86400; // default 1 day
+                                if (cmd.vars && cmd.vars['WINDOW']){
+                                    w = parseFloat(cmd.vars['WINDOW']);
+                                }
+                                let s = t - w/2;
+                                if (cmd.vars && cmd.vars['START']){
+                                    s = parseFloat(cmd.vars['START']);
+                                }
+                                let e = t + w/2;
+                                if (cmd.vars && cmd.vars['END']){
+                                    e = parseFloat(cmd.vars['END']);
+                                }
+                                console.log(`Time Jump/Zoom to ${new Date(s*1000).toISOString()} - ${new Date(e*1000).toISOString()}`);
+                                Book.setTime(t, s, e, w);
+
+                            }
                         }
                     }
-                    for (let cmd of topic.cmds){
-                        console.log("Processing command: ", cmd);
-                        //for now just log the command.  In the future we can do something with it.
-                        if (cmd.cmd === "Pause"){
-                            vscode.commands.executeCommand('workbench.action.chat.open', "@mr /stop");
-                        }
-                        if (cmd.cmd === "Record Feedback"){
-                            //do something with the feedback.  For now just log it.
-                            let input = "";
-                            if (cmd.vars && cmd.vars['FEEDBACK']){
-                                input = cmd.vars['FEEDBACK'] + '\n';
-                            }
-                            if (cmd.vars && cmd.vars['ORIGINAL']){
-                                input = cmd.vars['ORIGINAL'] + "\n";
-                            }
-                            //add data to file..
-
-//                            Book.updatePage("book/" + topic.topic, input);
-                            //get todays date for filename.  
-
-                            Book.updatePage(Book.getBookPath() + "/" + file, input, -1, -1); //append to end of file.
-
-                        }
-                        if (cmd.cmd === "Time Jump" || cmd.cmd === "Time Zoom"){
-                            //see what time is set and adjust topic selection accordingly..
-                            let t = Date.now()/1000;
-                            if (cmd.vars && cmd.vars['TIME']){
-                                t = parseFloat(cmd.vars['TIME']);
-                            }
-                            let w = 86400; // default 1 day
-                            if (cmd.vars && cmd.vars['WINDOW']){
-                                w = parseFloat(cmd.vars['WINDOW']);
-                            }
-                            let s = t - w/2;
-                            if (cmd.vars && cmd.vars['START']){
-                                s = parseFloat(cmd.vars['START']);
-                            }
-                            let e = t + w/2;
-                            if (cmd.vars && cmd.vars['END']){
-                                e = parseFloat(cmd.vars['END']);
-                            }
-                            console.log(`Time Jump/Zoom to ${new Date(s*1000).toISOString()} - ${new Date(e*1000).toISOString()}`);
-                            Book.setTime(t, s, e, w);
-
-                        }
-                    }
-
                 }
             });            
         }

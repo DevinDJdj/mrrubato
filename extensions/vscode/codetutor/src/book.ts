@@ -8,6 +8,7 @@ import * as FlexSearch from 'flexsearch';
 import fuzzysort from 'fuzzysort';
 import ollama from 'ollama';
 import * as fs from 'fs';
+import { get } from 'http';
 /*
     * Book.ts - This file is part of the GitBook extension for VSCode.
     * It manages the GitBook structure, repositories, and content retrieval.
@@ -657,13 +658,43 @@ function webBook(topic: string){
 
 }
 
+function getMyUri(topic: string) : vscode.Uri {
+    //check if file or folder
+    const folderUri = vscode.workspace.workspaceFolders[0].uri;
+    // this should be a book path.  Use as you would work on the project.  
+    let fileUri = folderUri.with({ path: posix.join(folderUri.path, topic) });
+    if (fs.existsSync(fileUri.fsPath)) {
+        if (fs.lstatSync(fileUri.fsPath).isDirectory()) {
+            //this is a directory.  Get the index file for the directory.  
+            //find latest file in directory..
+            const files = fs.readdirSync(fileUri.fsPath);
+            let latestFile = null;
+            let latestMtime = 0;
+            for (const file of files) {
+                const filePath = posix.join(fileUri.fsPath, file);
+                const stats = fs.statSync(filePath);
+                if (stats.isFile() && stats.mtimeMs > latestMtime) {
+                    latestMtime = stats.mtimeMs;
+                    latestFile = file;
+                }
+            }
+            if (latestFile) {
+                fileUri = folderUri.with({ path: posix.join(folderUri.path, topic, latestFile) });
+            }
+        }
+    }
+    return fileUri;
+
+}
+
 export function select(topic: string, open: number = opennature) : boolean {
     //select the topic from the topicarray.  
     //this will be used to get the topic from the array.  
     let fname = topic.trim();
     const folderUri = vscode.workspace.workspaceFolders[0].uri;
     // this should be a book path.  Use as you would work on the project.  
-    const fileUri = folderUri.with({ path: posix.join(folderUri.path, fname) });
+    let fileUri = getMyUri(fname);
+
 //	const fileUri = folderUri.with({ path: posix.join(folderUri.path, 'definitions.txt') });
 
     const found = alltopics.find((t) => t === topic);

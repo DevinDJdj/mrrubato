@@ -1,9 +1,6 @@
 import logging
-from operator import index
-from os import link
-from pynput import *
-from languages.helpers import timewindow
-import pytesseract
+import languages.helpers.timewindow as timewindow
+
 from PIL import Image
 from io import BytesIO
 import win32con
@@ -12,8 +9,7 @@ from datetime import datetime, timedelta
 import shutil
 
 import languages.helpers.transcriber as transcriber
-import extensions.trey.playwrighty as playwrighty
-from server.login.app import index
+#from server.login.app import index
 
 
 logger = logging.getLogger(__name__)
@@ -49,9 +45,10 @@ class book:
     self.transcripthistory = [] #store past transcripts for context.  This is not currently used for anything but could be used for context in future functions.
     self.topichistory = [] #store past topics for context.  This is not currently used for anything but could be used for context in future functions.
     self.links = [] #currently selected link structure from page..
-    self.timewindow = timewindow(self) #for timeline functions, can also be used for general time tracking.  This is initialized here but can be reset by timeline if needed.
+    self.timewindow = timewindow.timewindow(self) #for timeline functions, can also be used for general time tracking.  This is initialized here but can be reset by timeline if needed.
     self.bookmarks = {} #bookname: index in bookcontext
     self.lastcacheno = 100
+
 
   def word(self, sequence=[]):
     """Word lookup."""
@@ -211,13 +208,15 @@ class book:
   def get_book_context(self, book, num=5):
     #get context for book from book transcripts.  
     ret = f"**{book}\n"
+    logger.info(f'Getting context for book {book}')
+
     if (book in self.transcriber.langmap):
       bookcmds = []
       bookdata = self.transcriber.langmap[book]
       if ('&&' in bookdata and bookdata['&&'] is not None and bookdata['('] != bookdata[')']):
         bookcmds = bookdata['&&'][bookdata['(']:bookdata[')']+1]
       bookcmds.sort(key=lambda x: abs(self.timewindow.currenttime - x['timestamp']), reverse=True) #sort by recency to current time, most recent first.
-
+      logger.info(f'Found {len(bookcmds)} commands for book {book} during time window {self.timewindow.currenttime} +/- {self.timewindow.window }')
       sortedcmds = bookcmds[:num]
       sortedcmds.sort(key=lambda x: x['timestamp']) #sort by time for display.
       
@@ -560,6 +559,7 @@ class book:
     for cmd in cmds:
       if cmd['type'] == '**':
         bytes_read = 0
+        print(f'{cmd}')
         links.append({'href': cmd['lines'][0], 'text': cmd['topic'], 'bbox': self.bbox, 'index': total_read})
         for line in cmd['lines']:
           bytes_read = len(line) +1 #+1 for newline
