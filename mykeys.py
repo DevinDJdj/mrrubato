@@ -36,6 +36,8 @@ import os
 import threading
 
 from collections import defaultdict
+import languages.helpers.transcriber as transcriber
+
 
 from multiprocessing.shared_memory import SharedMemory
 
@@ -106,6 +108,8 @@ class MyLang:
 class MyKeys:
   def __init__(self, config, qapp=None, startx=0, stop_event=None):
     self.config = config
+    self.transcriber = transcriber.transcriber(self)
+
     self.lasttick = time.time()
     self.stop_event = stop_event #stop event for MK
     self.synth_stop_event = None
@@ -176,7 +180,7 @@ class MyKeys:
           self.langused.append(key)
           #just use this language config.  
           self.languages[key] = la(config, self.qapp, self.startx)  # Create instance of class pass qapp for any UI stuff
-          self.languages[key].load()
+          self.languages[key].load(self.transcriber) #pass existing loaded data..
           self.languages[key].callback = self.callback
           if (self.languages[key].maxseq > self.config['keymap']['settings']['MAX_WORD']):
             self.maxseq = self.languages[key].maxseq
@@ -192,6 +196,7 @@ class MyKeys:
     self.keystruct = self.gen_lang_struct() #initialize keystruct for all known words, if no keybot, then not loaded here..
     print("Keystruct generated")
     print(self.keystruct)
+
 
 
   def set_language(self, langna):
@@ -376,22 +381,22 @@ class MyKeys:
             vars = la.qr.split("\n")
             print(vars)
             topicdef = vars[-3].split("=")
-            if (len(topicdef) > 1 and topicdef[1] != ""):
-              for (l2,la2) in self.languages.items():
-                if hasattr(la2, 'current_topic'):
-                    la2.current_topic = topicdef[1]
-                if hasattr(la2, 'transcriber') and hasattr(la2.transcriber, 'current_topic'):
-                    la2.transcriber.current_topic = topicdef[1]
+#            if (len(topicdef) > 1 and topicdef[1] != ""):
+#              for (l2,la2) in self.languages.items():
+#                if hasattr(la2, 'current_topic'):
+#                    la2.current_topic = topicdef[1]
+#                if hasattr(la2, 'transcriber') and hasattr(la2.transcriber, 'current_topic'):
+#                    la2.transcriber.current_topic = topicdef[1]
           if (la.qr.startswith("> Select Book\n")):
             vars = la.qr.split("\n")
             print(vars)
             bookdef = vars[-3].split("=")
-            if (len(bookdef) > 1 and bookdef[1] != ""):
-              for (l2,la2) in self.languages.items():
-                if hasattr(la2, 'current_book'):
-                    la2.current_book = bookdef[1]
-                if hasattr(la2, 'transcriber') and hasattr(la2.transcriber, 'current_book'):
-                    la2.transcriber.current_book = bookdef[1]
+#            if (len(bookdef) > 1 and bookdef[1] != ""):
+#              for (l2,la2) in self.languages.items():
+#                if hasattr(la2, 'current_book'):
+#                    la2.current_book = bookdef[1]
+#                if hasattr(la2, 'transcriber') and hasattr(la2.transcriber, 'current_book'):
+#                    la2.transcriber.current_book = bookdef[1]
                 
 
 
@@ -407,12 +412,12 @@ class MyKeys:
       qr += f"&&{self.currentcmd} \n"
       help = ""
       if (self.currentlangna in self.languages and hasattr(self.languages[self.currentlangna], 'helpdict') and self.currentcmd in self.languages[self.currentlangna].helpdict):
-        if ('help' in (self.languages[self.currentlangna].helpdict[self.currentcmd])):
-          help += f"&&{self.languages[self.currentlangna].helpdict[self.currentcmd]['help']} \n"        
+        if ('&&' in (self.languages[self.currentlangna].helpdict[self.currentcmd])):
+          help += f"&&{self.languages[self.currentlangna].helpdict[self.currentcmd]['&&']} \n"        
         else:
           help += f"&&{self.languages[self.currentlangna].helpdict[self.currentcmd]}\n"
-        if ('params' in (self.languages[self.currentlangna].helpdict[self.currentcmd])):
-          help += f"&&{self.languages[self.currentlangna].helpdict[self.currentcmd]['params']} \n"
+        if ('$$' in (self.languages[self.currentlangna].helpdict[self.currentcmd])):
+          help += f"[{self.languages[self.currentlangna].helpdict[self.currentcmd]['$$']}] \n"
       qr += f"{help} \n"      
       #get params here..
 

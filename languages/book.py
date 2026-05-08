@@ -19,8 +19,7 @@ class book:
   def __init__(self, config, qapp=None, startx=0):
 
     self.config = config
-    self.transcriber = transcriber.transcriber(self) #current_topic set by mykeys for now
-    self.current_topic = None #set by mykeys
+    self.transcriber = None #current_topic set by mykeys for now
     self.qapp = qapp
     self.func = None
     self.cmd = None
@@ -71,9 +70,11 @@ class book:
     #unload language specific data
     return 0
   
-  def load(self):
+  def load(self, transcriber=None):
     #load language specific data
      #config overrides load_data by default.  
+    if (transcriber is not None):
+      self.transcriber = transcriber
     if hasattr(self, 'load_data'):
       self.load_data()
     else:
@@ -89,7 +90,7 @@ class book:
     #load commands from config into funcdict
 
     #load 6 months of book topics..
-    book = self.transcriber.read(self.name, self.transcriber.getTime(-180), None, './book/')
+    book = self.transcriber.read('book', self.transcriber.getTime(-180), None, './book/')
     logger.info(f'Loaded {len(book)} book transcripts from ./book/')    
 
 

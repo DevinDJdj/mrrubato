@@ -23,7 +23,7 @@ class hotkeys:
   def __init__(self, config, qapp=None, startx=0):
 
     self.config = config
-    self.transcriber = transcriber.transcriber(self)
+    self.transcriber = None
     self.qapp = qapp
     self.startx = startx
     self.func = None
@@ -75,9 +75,11 @@ class hotkeys:
 
     return 0
   
-  def load(self):
+  def load(self, transcriber=None):
     #load language specific data
      #config overrides load_data by default.  
+    if (transcriber is not None):
+      self.transcriber = transcriber
     if hasattr(self, 'load_data'):
       self.load_data()
     else:
@@ -289,6 +291,7 @@ class hotkeys:
       "Select Type": "select_type",
       "List Tabs": "list_tabs",
       "Select Tab": "select_tab",
+      "Close Tab": "close_tab",
       "_Search Web": "_search_web",
       "Search Web_": "search_web_",
       "Add Bookmark": "add_bookmark",
@@ -298,23 +301,78 @@ class hotkeys:
     }
 
     self.helpdict = {
-      "Stop": {"help": "stop", "params": "None", "desc": "Stop/Pause audio."},
-      "Comment": {"help": "comment", "params": "None", "desc": "Add comment to audio timeline."},
-      "Resume": {"help": "resume", "params": "None", "desc": "Start/Resume reading."},
-      "Go Back": {"help": "go back", "params": "None", "desc": "Go back to previous page."},
-      "Start": {"help": "start", "params": "None", "desc": "Start reading from current page."},
-      "Read Screen": {"help": "read screen", "params": "None", "desc": "Read current screen content."},
-      "Skip Lines": {"help": "skip lines", "params": "Number of lines", "desc": "Skip specified number of lines."},
-      "Page": {"help": "page", "params": "Number of pages", "desc": "Read next page."},
-      "Click Link": {"help": "click link", "params": "Link number", "desc": "Click specified link on the page."},
-      "Find Last": {"help": "find last", "params": "None", "desc": "Find last read position."},
-      "Search Web": {"help": "search web", "params": "Search engine", "desc": "Search the web with the given query."},
-      "List Tabs": {"help": "list tabs", "params": "None", "desc": "List all open browser tabs."},
-      "Select Tab": {"help": "select tab", "params": "Tab number", "desc": "Select specified browser tab."},
-      "Add Bookmark": {"help": "add bookmark", "params": "None", "desc": "Add a bookmark at the current position."},
-      "List Bookmarks": {"help": "list bookmarks", "params": "None", "desc": "List all bookmarks."},
-      "Select Bookmark": {"help": "select bookmark", "params": "Bookmark number", "desc": "Select specified bookmark."},
-      "Record Feedback": {"help": "record feedback", "params": "Feedback text", "desc": "Record feedback for the current session."}
+      "Stop": {
+"> ": "stop", 
+"$$": "$cacheno", 
+"&&": "Stop/Pause audio."},
+      "Comment": {
+"> ": "0=$DUR=5 seconds\n1=$DUR*3 seconds", 
+"$$": "$DUR (audio duration), &comment", 
+"&&": "Add comment to current book."},
+      "Resume": {
+"> ": "resume", 
+"$$": "$cacheno", 
+"&&": "Start/Resume reading."},
+      "Go Back": {
+"> ": "go back", 
+"$$": "None", 
+"&&": "Go back to previous page."},
+      "Start": {
+"> ": "start", 
+"$$": "None", 
+"&&": "Not implemented."},
+      "Read Screen": {
+"> ": "read screen", 
+"$$": "$cacheno", 
+"&&": "0=take screenshot, OCR, read\n1=read browser tab"},
+      "Skip Lines": {
+"> ": "skip lines", 
+"$$": "$N*3", 
+"&&": "Skip $N*3 lines"},
+      "Page": {
+"> ": "page", 
+"$$": "$N*20", 
+"&&": "Not implemented.  \nSkip $N*20 lines."},
+      "Click Link": {"> ": "click link", 
+"> ": "click link", 
+"$$": "$linkno", 
+"&&": "0=current\n1=$linkno"},
+      "Find Last": {
+"> ": "find last", 
+"$$": "&Keyword", 
+"&&": "Not implemented.\nFind in page.."},
+      "Search Web": {
+"> ": "search web", 
+"$$": "$engine, $cacheno, &keyword", 
+"&&": "0=Search web for &Keyword\n1=Search web $engine for &Keyword and read screen\n2=Search web $engine for &Keyword on $cacheno and read page"},
+      "List Tabs": {
+"> ": "list tabs", 
+"$$": "None", 
+"&&": "List all open browser tabs."},
+      "Close Tab": {
+"> ": "close tab", 
+"$$": "$Tab", 
+"&&": "Close specified browser tab."},
+      "Select Tab": {
+"> ": "select tab", 
+"$$": "$Tab", 
+"&&": "Select specified browser tab."},
+      "Add Bookmark": {
+"> ": "add bookmark", 
+"$$": "None", 
+"&&": "Add a bookmark at the current position."},
+      "List Bookmarks": {
+"> ": "list bookmarks", 
+"$$": "None", 
+"&&": "List all bookmarks."},
+      "Select Bookmark": {
+"> ": "select bookmark", 
+"$$": "$Bookmark", 
+"&&": "Select specified bookmark."},
+      "Record Feedback": {
+"> ": "record feedback", 
+"$$": "$DUR, &Feedback", 
+"&&": "Record $DUR seconds of &Feedback for recall and training."}
     }      
 
     self.load_transcripts()
@@ -497,7 +555,45 @@ class hotkeys:
       print(f'Error writing comment file: {e}')
 
     return 0
+
+  def close_tab_(self, sequence=[]):
+    #close current tab.  if param given, close that tab.
+    if (len(sequence) > 0):
+      logger.info(f'> Close Tab_ {sequence}')
+      if (playwrighty.mybrowser is not None):
+        vars = {}
+        for (i, page_info) in enumerate(playwrighty.page_cache[-15:]):          
+          print(f'Tab {i}: {page_info["url"]}')
+#          logger.info(f'Tab {i}: {page_info["url"]}')
+          vars[str(i)] = page_info["title"]
+
+
+        self.func = "Close Tab_"
+        linkno = sequence[-1]-self.keybot
+        if (linkno < 0 or linkno >= len(playwrighty.page_cache)):
+          linkno = len(playwrighty.page_cache)-1
+
+        vars['idx'] = linkno
+
+        self.set_qr(self.func, vars)
+        self.speak(f'--{playwrighty.page_cache[linkno]["title"]}')
+
+
+
+  def close_tab(self, sequence=[]):
+    #default 0 tab closed..
     
+    logger.info(f'> Close Tab {sequence}')
+    if (playwrighty.mybrowser is not None):
+      if (len(sequence) > 0):
+        cacheno = sequence[-1]-self.keybot
+      else:
+        cacheno = playwrighty.current_cache
+      if (linkno < 0 or linkno >= len(playwrighty.page_cache)):
+        linkno = len(playwrighty.page_cache)-1
+      playwrighty.close_tab(cacheno)
+    return 0
+  
   def list_tabs(self, sequence=[]):
     logger.info(f'> List Tabs {sequence}')
     if (playwrighty.mybrowser is not None):
@@ -749,6 +845,9 @@ class hotkeys:
 
     logger.info(f'> Search Web_ {sequence}')
     #no function, just demo..
+    if (len(sequence) == 0):
+      #set engines..
+      self.helpdict['Search Web']['params'] = ", ".join(playwrighty.get_engines())
     if (len(sequence) > 1 and sequence[-1] > self.keybot):
       self.speak(playwrighty.get_engine(sequence[-1]-self.keybot))
 
@@ -1195,16 +1294,16 @@ class hotkeys:
     if (len(sequence) > 0):
       #start the browser if any params passed for now..  
       playwrighty.open_browser()
-    if (playwrighty.mybrowser is not None): #we have started a browser session with playwright.
-      logger.info('Getting page from Playwright')
-      text, links, alt_text_data = playwrighty.get_page_details(playwrighty.get_ppage(playwrighty.current_cache))
-      text, links, page, cacheno = playwrighty.read_page('', playwrighty.current_cache) #read current page
-      total_read = playwrighty.get_bookmark(page.url, cacheno)
-      self.links = links
-      print(f'Playwright found {len(text)} characters and {len(links)} links  on the page') 
-      q2, q3, stop_event = self.speak(text, links, alt_text_data, total_read, cacheno=cacheno)
-      playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
-      return 0
+      if (playwrighty.mybrowser is not None): #we have started a browser session with playwright.
+        logger.info('Getting page from Playwright')
+        text, links, alt_text_data = playwrighty.get_page_details(playwrighty.get_ppage(playwrighty.current_cache))
+        text, links, page, cacheno = playwrighty.read_page('', playwrighty.current_cache) #read current page
+        total_read = playwrighty.get_bookmark(page.url, cacheno)
+        self.links = links
+        print(f'Playwright found {len(text)} characters and {len(links)} links  on the page') 
+        q2, q3, stop_event = self.speak(text, links, alt_text_data, total_read, cacheno=cacheno)
+        playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
+        return 0
     
     else:
       #use PyQt to read screen.

@@ -13,7 +13,7 @@ class _lang:
   def __init__(self, config, qapp=None, startx=0):
 
     self.config = config
-    self.transcriber = transcriber.transcriber(self)
+    self.transcriber = None
     self.qapp = qapp
     self.func = None
     self.cmd = None
@@ -54,9 +54,11 @@ class _lang:
     #unload language specific data
     return 0
   
-  def load(self):
+  def load(self, transcriber=None):
     #load language specific data
      #config overrides load_data by default.  
+    if (transcriber is not None):
+      self.transcriber = transcriber
     if hasattr(self, 'load_data'):
       self.load_data()
     else:

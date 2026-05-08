@@ -13,7 +13,7 @@ class _meta:
   def __init__(self, config, qapp=None, startx=0):
 
     self.config = config
-    self.transcriber = transcriber.transcriber(self)
+    self.transcriber = None
     self.qapp = qapp
     self.func = None
     self.cmd = None
@@ -70,9 +70,11 @@ class _meta:
     #unload language specific data
     return 0
   
-  def load(self):
+  def load(self, transcriber=None):
     #load language specific data
      #config overrides load_data by default.  
+    if (transcriber is not None):
+      self.transcriber = transcriber
     if hasattr(self, 'load_data'):
       self.load_data()
     else:
@@ -87,7 +89,7 @@ class _meta:
     logger.info(f'Loaded {len(allcmds)} command transcripts for {self.name}')
 
     #load 6 months of book topics..
-    book = self.transcriber.read(self.name, self.transcriber.getTime(-180), None, './book/')
+    book = self.transcriber.read('book', self.transcriber.getTime(-180), None, './book/')
     #get num topics.  
     numtopics = 0
     self.alltopics = {}
@@ -121,8 +123,11 @@ class _meta:
     if (len(self.bookarray) > 0):
       self.selectedbookindex = 0      
       self.selectedbook = self.bookarray[self.selectedbookindex] #default to first book.
+      self.transcriber.set_current_book(self.selectedbook['**']) #set current book in transcriber for topic writing.
 
     self.bookhistory = self.bookarray[:100] #store last 100 books for quick access.
+    #find last used language and latest topic..
+    self.transcriber.set_current_topic()
 
 
     return 0
@@ -475,7 +480,7 @@ class _meta:
 #      start = 12 - self.selectedtopicindex
     for i, l in enumerate(last15):
       i = i + start
-      vars[f'{i}'] = l
+      vars[f'{i}'] = l['**']
 #          vars[f'href{i}'] = l['href']
     vars['idx'] = newidx
     self.set_qr(self.func, vars)

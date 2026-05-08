@@ -616,13 +616,40 @@ function webBook(topic) {
     //analyze the topic web external link.  
     vscode.env.openExternal(vscode.Uri.parse(mySettings.webbookurl + topic)); //open the web book in the browser.
 }
+function getMyUri(topic) {
+    //check if file or folder
+    const folderUri = vscode.workspace.workspaceFolders[0].uri;
+    // this should be a book path.  Use as you would work on the project.  
+    let fileUri = folderUri.with({ path: path_1.posix.join(folderUri.path, topic) });
+    if (fs.existsSync(fileUri.fsPath)) {
+        if (fs.lstatSync(fileUri.fsPath).isDirectory()) {
+            //this is a directory.  Get the index file for the directory.  
+            //find latest file in directory..
+            const files = fs.readdirSync(fileUri.fsPath);
+            let latestFile = null;
+            let latestMtime = 0;
+            for (const file of files) {
+                const filePath = path_1.posix.join(fileUri.fsPath, file);
+                const stats = fs.statSync(filePath);
+                if (stats.isFile() && stats.mtimeMs > latestMtime) {
+                    latestMtime = stats.mtimeMs;
+                    latestFile = file;
+                }
+            }
+            if (latestFile) {
+                fileUri = folderUri.with({ path: path_1.posix.join(folderUri.path, topic, latestFile) });
+            }
+        }
+    }
+    return fileUri;
+}
 function select(topic, open = opennature) {
     //select the topic from the topicarray.  
     //this will be used to get the topic from the array.  
     let fname = topic.trim();
     const folderUri = vscode.workspace.workspaceFolders[0].uri;
     // this should be a book path.  Use as you would work on the project.  
-    const fileUri = folderUri.with({ path: path_1.posix.join(folderUri.path, fname) });
+    let fileUri = getMyUri(fname);
     //	const fileUri = folderUri.with({ path: posix.join(folderUri.path, 'definitions.txt') });
     const found = exports.alltopics.find((t) => t === topic);
     vscode.workspace.openTextDocument(fileUri).then(doc => {

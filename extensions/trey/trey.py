@@ -919,9 +919,9 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
                 link_loc += 1
 
         print(f'Line: {l}')
-        print(f'Total Lines: {len(lines)}')
+#        print(f'Total Lines: {len(lines)}')
         print(f'Current IDX: {idx}')
-        print(f'Skipping: {skip}')
+#        print(f'Skipping: {skip}')
         print(f'Line offset: {link_density_map[idx]["offset"]}')
         total_read = link_density_map[idx]['offset']
         sound_file = link_density_map[idx]['audio']
@@ -938,6 +938,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
             try:
                 if (temptext != ""):
                     l = temptext + " " + l
+                    print(f'Combined: {l}')
                     temptext = ""
                     sound_file = f"./temp/{cacheno}/{idx}_combined.wav"
                 else:
@@ -3128,7 +3129,7 @@ class MyWindow(QMainWindow):
       for i, l in enumerate(struct):
         type = l['type']
         if (type == '> '):
-          if (l['cmd'] == 'Click Link_' or l['cmd'] == 'Select Book_' or l['cmd'] == 'Select Topic_' or l['cmd'] == 'Time Zoom_'): 
+          if (l['cmd'] == 'Click Link_' or l['cmd'] == 'Select Book_' or l['cmd'] == 'Select Topic_' or l['cmd'] == 'Select Tab_' or l['cmd'] == 'Time Zoom_'): 
             cnt = 0       
             for k, v in l['vars'].items():
 #                if (wbarray[i%len(wbarray)] == 0):

@@ -21,8 +21,7 @@ class check:
   def __init__(self, config, qapp=None, startx=0):
 
     self.config = config
-    self.transcriber = transcriber.transcriber(self) #current_topic set by mykeys for now
-    self.current_topic = None #set by mykeys
+    self.transcriber = None #current_topic set by mykeys for now
     self.qapp = qapp
     self.func = None
     self.cmd = None
@@ -70,9 +69,11 @@ class check:
     #unload language specific data
     return 0
   
-  def load(self):
+  def load(self, transcriber=None):
     #load language specific data
      #config overrides load_data by default.  
+    if (transcriber is not None):
+      self.transcriber = transcriber
     if hasattr(self, 'load_data'):
       self.load_data()
     else:
@@ -88,7 +89,7 @@ class check:
     #load commands from config into funcdict
 
     #load 6 months of book topics..
-    book = self.transcriber.read(self.name, self.transcriber.getTime(-180), None, './book/')
+    book = self.transcriber.read('book', self.transcriber.getTime(-180), None, './book/')
     logger.info(f'Loaded {len(book)} book transcripts from ./book/')    
 
 
@@ -269,8 +270,8 @@ class check:
       numtopics = sequence[-2] - self.keybot
       #get this number of past topics for the filter..
 
-    if (newidx == 0 and self.current_topic is not None):
-      topic = self.current_topic
+    if (newidx == 0 and self.transcriber.current_topic is not None):
+      topic = self.transcriber.current_topic
     elif (newidx < len(self.topichistory)):
       topic = self.topichistory[newidx]
       self.topichistory.remove(topic) #remove from history and add to end so we can keep track of recency.

@@ -470,6 +470,20 @@ def save_screenshot(cacheno=-1, lang="video"):
         page.screenshot(path=folder + fname)
         return folder + fname
 
+def close_tab(cacheno=-1):
+    global current_cache
+    if (cacheno < 0 or cacheno >= len(page_cache)):
+        cacheno = current_cache
+    if cacheno >= 0 and cacheno < len(page_cache):
+        page_info = page_cache[cacheno]       
+        page = page_info['page']
+        page.close()
+        logger.info(f'Closed tab for cache {cacheno}')
+        return True
+    else:
+        logging.warning(f'No valid current cache to close tab for')
+        return False
+    
 def close_browser():
     #for now complete reset.  
     global mybrowser
@@ -913,6 +927,13 @@ def read_page(url, cacheno=-1):
     logging.info(f'Cached page {cacheno} for URL: {url}')
     return body_text, link_data, page, cacheno
 
+
+def get_engines():
+    global engine_names
+    if (len(engine_names) == 0):
+        engine_names = ["Bing", "Wikipedia", "YouTube", "Bing", "DuckDuckGo", "Ecosia", "Google News", "Bing News", 
+                        "Wikipedia (JA)", "YouTube (JA)", "Google News", "PeerTube"]
+    return engine_names
 
 def get_engine(engine=0):
     global engine_names

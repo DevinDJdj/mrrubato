@@ -83,7 +83,7 @@ class mousemovement1:
           cmd = k
     return cmd
 
-  def load(self):
+  def load(self, transcriber=None):
     #load language specific data
      #config overrides load_data by default.  
     if hasattr(self, 'load_data'):

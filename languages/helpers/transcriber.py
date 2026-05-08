@@ -102,6 +102,10 @@ class transcriber:
       return ret
 
 
+    def set_current_book(self, book):
+        self.current_book = book
+        if (self.current_book not in self.langmap):
+            self.langmap[self.current_book] = {'lang':self.current_book, 'topic': self.current_topic, 'topics': {}, 'kg': nx.Graph()}
 
     def write_topic(self, lang, topic="", extra="", saveTranscript=True, saveBook=False):
 
@@ -935,7 +939,17 @@ class transcriber:
 
         ret.sort(key=lambda x: x['timestamp']) #sort by timestamp just in case.
 
-        self.allcmds[lang] = {'**': lang, '&&': ret, 'cmds': ret, 'last_mtime': last_mtime, 'start_time': start_time, 'end_time': end_time, 'start_idx': 0, 'end_idx': len(ret)-1, 'open': True}
+        self.allcmds[lang] = {'**': lang, '&&': ret, 'cmds': ret, '..': last_mtime, 'last_mtime': last_mtime, 'start_time': start_time, 'end_time': end_time, 'start_idx': 0, 'end_idx': len(ret)-1, 'open': True}
         self.update_kg(lang, ret)
         logger.info(f'Loaded {numloaded} files for {lang} with {len(ret)} commands')
         return ret
+
+    def set_current_topic(self):
+        lastlang = None
+        lastmtime = 0
+        for (k, v) in self.allcmds.items():
+            if (v['..'] > lastmtime):
+                lastmtime = v['..']
+                lastlang = k
+        if (lastlang is not None):
+            self.current_topic = self.allcmds[lastlang]['&&'][-1]['**']

@@ -157,7 +157,7 @@ if (__name__ == "__main__"):
         if (len(l) > 10 or len(temptext) > 20):
             if (temptext != ""):
                 combined = True
-                l = l + " " + temptext
+                l = temptext + " " + l
                 temptext = ""
             generate_line(l, idx, args.voice, args.vol, args.speed, args.cacheno, args.engine, combined)    
         else:
@@ -170,7 +170,7 @@ if (__name__ == "__main__"):
         if (len(l) > 10 or len(temptext) > 20):            
             if (temptext != ""):
                 combined = True
-                l = l + " " + temptext
+                l = temptext + " " + l
                 temptext = ""
             generate_line(l, idx, args.voice, args.vol, args.speed, args.cacheno, args.engine, combined)    
         else:

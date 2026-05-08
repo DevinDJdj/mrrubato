@@ -254,3 +254,16 @@ Is static data ok?
 
 Lots of changes, probably broke some things..
 
+Pass same transcriber to all langs..
+topic and book are global..
+Should find latest topic from all langs..
+Or just from book..
+
+Check transcriber load..
+
+;> Search Web 
+should show the selections in help..
+
+
+Need to dedup info (bookmarks) in main list..
+
