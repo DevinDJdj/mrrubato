@@ -48,6 +48,9 @@ class _meta:
     self.zoom = 1.0
     self.timewindow = timewindow.timewindow(self) #starttime/endtime, etc.  
 
+    #filter langs: 48,      49,      50,       51 .. 
+#    self.langs = ["_meta", "video", "book", "video", "hotkeys", "hotkeys", "hotkeys", "hotkeys", "check"]
+
 
   def word(self, sequence=[]):
     """Word lookup."""
@@ -155,6 +158,9 @@ class _meta:
     default = {
       "2": {
          "Pause": [48,49], #pause video
+        #48, 52 FIND?  
+        "Tick": [48,53], #manual tick forward in time by small increments.
+        "Tock": [48,54], #manual tick backward in time by small increments.
       },
       "3": {
         "Start": [48,60,61], #Start/resume recording
@@ -172,9 +178,12 @@ class _meta:
         "Set Speed": [48,50,54], #set speed of time
         "Time Jump": [48,50,52], #jump to time 
         "Time Zoom": [48,50,53], #set zoom, separate from speed.  
-        #48, 52 FIND?  
-        "Tick": [48,53], #manual tick forward in time by small increments.
-        "Tock": [48,54], #manual tick backward in time by small increments.
+        #48,55 Adjust display?
+        "Tune Time": [48,55,50], #time display, zoom level temporary?  tick quant?
+        "Tune Topic": [48,55,51], #topic display show in main?  
+        "Tune Book": [48,55,52], #book display show in main?
+        "Tune In": [48,55,56], #main display, show time/topic/book or other info?
+        "Tune Out": [48,55,54], #audio volume/mute or other info?
       }
     }
     if (self.name in self.config['languages']):
@@ -202,24 +211,75 @@ class _meta:
       "Time Zoom": "time_zoom", 
       "Tick": "tick",
       "Tock": "tock",
+      "Tune In": "tune_in",
+      "Tune Out": "tune_out",
     }
     self.helpdict = {
-      "Start": {"help": "start", "params": "None", "desc": "Start/Resume video recording."},
-      "Help": {"help": "help", "params": "None", "desc": "Show video commands."},
-      "Pause": {"help": "pause", "params": "None", "desc": "Pause video playback."},
-      "List Topics": {"help": "list topics", "params": "None", "desc": "List available topics."},
-      "Select Topic": {"help": "select topic [index]", "params": "[index]", "desc": "Select topic by index from list."},
-      "Set Topic": {"help": "set topic [topic]", "params": "[topic]", "desc": "Set topic by name."},
-      "List Books": {"help": "list books", "params": "None", "desc": "List available books."},
-      "Select Book": {"help": "select book [index]", "params": "[index]", "desc": "Select book by index from list."},
-      "Set Book": {"help": "set book [book]", "params": "[book]", "desc": "Set book by name."},
-      "Set Speed": {"help": "set speed [value]", "params": "[value]", "desc": "Set playback speed, relative to current."}, 
-      "Time Jump": {"help": "time jump [time]", "params": "[time]", "desc": "Jump to specific time."},
-      "Time Zoom": {"help": "time zoom [level]", "params": "[level]", "desc": "Set zoom level of time."},
-      "Tick": {"help": "tick", "params": "None", "desc": "Manually tick forward in time by small increments."},
-      "Tock": {"help": "tock", "params": "None", "desc": "Manually tick backward in time by small increments."},
+      "Start": {
+"> ": "start", 
+"$$": "None", 
+"&&": "Start/Resume video recording."},
+      "Help": {
+"> ": "help", 
+"$$": "None", 
+"&&": "Show video commands."},
+      "Pause": {
+"> ": "pause", 
+"$$": "None", 
+"&&": "Pause video playback."},
+      "List Topics": {
+"> ": "list topics", 
+"$$": "None", 
+"&&": "List available topics."},
+      "Select Topic": {
+"> ": "select topic", 
+"$$": "$index", 
+"&&": "Select topic by index from list."},
+      "Set Topic": {
+"> ": "set topic", 
+"$$": "$topic", 
+"&&": "Set topic by name."},
+      "List Books": {
+"> ": "list books", 
+"$$": "None", 
+"&&": "List available books."},
+      "Select Book": {
+"> ": "select book", 
+"$$": "$index", 
+"&&": "Select book by $index from list."},
+      "Set Book": {
+"> ": "set book", 
+"$$": "&book", 
+"&&": "Set book by name."},
+      "Set Speed": {
+"> ": "set speed", 
+"$$": "$value", 
+"&&": "Set playback speed, relative to current."}, 
+      "Time Jump": {
+"> ": "time jump", 
+"$$": "$time", 
+"&&": "Jump to specific time."},
+      "Time Zoom": {
+"> ": "time zoom", 
+"$$": "$level", 
+"&&": "Set zoom level of time."},
+      "Tick": {
+"> ": "tick", 
+"$$": "None", 
+"&&": "Manually tick forward in time by small increments."},
+      "Tock": {
+"> ": "tock", 
+"$$": "None", 
+"&&": "Manually tick backward in time by small increments."},
+      "Tune In": {
+"> ": "tune in", 
+"$$": "$lang", 
+"&&": "Tune in display to $lang.."},
+      "Tune Out": {
+"> ": "tune out", 
+"$$": "$lang", 
+"&&": "Tune out display to $lang.."},
                        
-
     }
 
     self.load_transcript()
@@ -301,14 +361,14 @@ class _meta:
   def tick(self, sequence=[]):
     logger.info(f'> Tick {sequence}')
 #    t = self.timewindow.tick(self.speed)
-    self.set_qr("Tick", {'TIME': self.timewindow.getTime(), 'TICK': self.speed})
+    self.set_qr("Tick", {'TIME': self.timewindow.getTime(), 'SPEED': self.speed})
     return 0
 
 
   def tock(self, sequence=[]):
     logger.info(f'> Tock {sequence}')
 #    t = self.timewindow.tick(-self.speed)
-    self.set_qr("Tock", {'TIME': self.timewindow.getTime(), 'TICK': -self.speed})
+    self.set_qr("Tock", {'TIME': self.timewindow.getTime(), 'SPEED': -self.speed})
     return 0
 
   def set_speed(self, sequence=[]):
@@ -320,19 +380,22 @@ class _meta:
       if adjust > 5:
         adjust = 5
       self.speed *= adjust
+      self.speed = round(self.speed)
+      if (self.speed < 1):
+        self.speed = 1
       logger.info(f'$$SPEED={self.speed}')
       self.set_qr("Set Speed", {'ADJUST': adjust, 'SPEED': self.speed})
     return 0
 
   def time_jump(self, sequence=[]):
     logger.info(f'> Time Jump {sequence}')
-    jump = 0.1 #default jump level
+    jump = 1 #default jump level
     if (len(sequence) > 0):
-      jump = float(sequence[-1] - self.mid) / 10.0 #just use 10 keys for mid..
+      jump = float(sequence[-1] - self.mid) #just use 10 keys for mid..
     t = self.timewindow.timeJump(jump)
     vars = {}
     logger.info(f'$$TIME={t}')
-    self.set_qr("Time Jump", {'JUMP': jump, 'TIME': t, 'START': self.timewindow.starttime, 'END': self.timewindow.endtime})
+    self.set_qr("Time Jump", {'JUMP': jump, 'WINDOW': self.timewindow.window, 'TIME': t, 'START': self.timewindow.starttime, 'END': self.timewindow.endtime})
     return 0
   
   def time_zoom_(self, sequence=[]):
@@ -788,6 +851,40 @@ class _meta:
   def pause(self, sequence=[]):
     """Pause Video."""
     logger.info(f'> Pause {sequence}')
+    return 0
+
+
+  def tune_in(self, sequence=[]):
+    logger.info(f'> Tune In {sequence}')
+    lang = "ALL"
+
+    if (len(sequence) > 0):
+      #for now just use single key for language selection, can expand to more complex selection later.
+      #i.e. just get commands which start with this sequence..
+      #command lookup from lang index.
+      langindex = sequence[-1]-self.keybot
+      for (l, v) in enumerate(self.config['keymap']['languages']):
+        if (v[0] == langindex+self.keybot): #for now..
+          lang = l
+          break
+    self.set_qr("Tune In", {'LANG': lang,'WINDOW': self.timewindow.window, 'TIME': self.timewindow.getTime(), 'START': self.timewindow.starttime, 'END': self.timewindow.endtime})
+    return 0
+
+  def tune_out(self, sequence=[]):
+    logger.info(f'> Tune Out {sequence}')
+    lang = "ALL"
+
+    if (len(sequence) > 0):
+      #for now just use single key for language selection, can expand to more complex selection later.
+      #i.e. just get commands which start with this sequence..
+      #command lookup from lang index.
+      langindex = sequence[-1]-self.keybot
+      for (l, v) in enumerate(self.config['keymap']['languages']):
+        if (v[0] == langindex+self.keybot): #for now..
+          lang = l
+          break
+
+    self.set_qr("Tune Out", {'LANG': lang,'WINDOW': self.timewindow.window, 'TIME': self.timewindow.getTime(), 'START': self.timewindow.starttime, 'END': self.timewindow.endtime})
     return 0
 
   def set_qr(self, func, param={}):

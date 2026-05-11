@@ -1882,6 +1882,7 @@ class MyWindow(QMainWindow):
                 print(f"<<{lang}>>\n$$SPEED=" + str(speed))
             case "Tick":
                 speed = self.get_setting('SPEED', 1.0, lang)
+                print('Tick with speed: ' + str(speed))
                 #jump forward by tick amount.  
                 self.play_tmap(int(speed)) #play next item in tmap
 
@@ -1965,6 +1966,31 @@ class MyWindow(QMainWindow):
                 #process feedback command.  
                 logger.info(f'Processing record feedback command with vars: {vars}')
                 #update QR info.. should display already..
+            case "Tune In" | "Tune Out":
+                t = float(vars.get('TIME', time.time()))
+                w = float(vars.get('WINDOW', 86400)) #default 1 day
+                s = float(vars.get('START', t-w/2))                              
+                e = float(vars.get('END', t+w/2))
+
+                #tune in window to display only this lang..
+                lang = vars.get('LANG', 'ALL')
+
+
+                if (lang != 'ALL'):
+                    if (command == 'Tune In'):
+                        self.langs.insert(0, lang) #move this lang to front of list to show first.
+                    else:
+                        if (lang in self.langs):
+                            self.langs.remove(lang) #remove this lang from list to hide it.
+                else:
+                    if (command == 'Tune In'):                        
+                        #show all langs..
+                        self.langs = ['video', 'hotkeys', '_meta'] #for now hardcoded..
+                    else:
+                        self.langs = self.langs[:1] #for now just show first lang..
+
+                self.set_time(s, e, w, t) #update display with new time window and lang settings.
+
 
         #add more commands as needed.
 
@@ -2273,6 +2299,7 @@ class MyWindow(QMainWindow):
 
         self.s = 0 #current start time of window
         self.e = 0 #current end time of window
+        self.langs = ['hotkeys', 'video'] #read and show in main display
         self.currentsound = None #current sound being played.
         self.currentvideo = None #current video being played.
         self.speed = 1.0
@@ -2477,7 +2504,7 @@ class MyWindow(QMainWindow):
         t = threading.Timer(10, _hide, args=["Hello from Timer!"])
         t.start()  # Start the timer in a new thread
         logger.info('Window created')
-        self.read(['hotkeys'], None, None) #initial read of all data, can be filtered by time later.
+        self.read(self.langs, None, None) #initial read of all data, can be filtered by time later.
 
         self.runQRThread() #
         self.runQRInThread() #start thread to detect incoming QR data from other apps or locations..
@@ -2771,11 +2798,13 @@ class MyWindow(QMainWindow):
         self.label_topic_info[0].hide()
         self.label_topic_info[1].hide()
         self.label_p.hide()
+        self.video_overlay.hide()
 
 
         ext = os.path.splitext(fname)[1].lower()
         if (self.currentvideo == fname):
-            logger.info('Video already playing, skipping play_video')
+            logger.info('Video already playing')
+#            self.video_player.setMedia(QMediaContent(QUrl.fromLocalFile(fname)))
             self.video_widget.show()
             self.video_player.play()
             #just restart..
@@ -2794,7 +2823,7 @@ class MyWindow(QMainWindow):
         self.highlighton = False #turn off highlight when pausing video, can adjust as needed.
         self.video_player.pause()
         self.video_widget.hide()
-        self.video_player.setMedia(QMediaContent()) #clear media to stop playback and release resources.
+#        self.video_player.setMedia(QMediaContent()) #clear media to stop playback and release resources.
         self.video_overlay.hide()
 
         for i in range(3):
@@ -3017,7 +3046,9 @@ class MyWindow(QMainWindow):
 
 
 
-    def read(self, langs=['hotkeys'], start_time=None, end_time=None):
+    def read(self, langs=None, start_time=None, end_time=None):
+        if (langs is None):
+            langs = self.langs
         combined = []
 
         for lang in langs:
@@ -3031,7 +3062,9 @@ class MyWindow(QMainWindow):
             
     
 
-    def set_time(self, t, s=0, e=0, w=0):
+    def set_time(self, t, s=0, e=0, w=0, langs=None):
+        if (langs is None):
+            langs = self.langs
 
         localt = datetime.fromtimestamp(t)
         formattedt = localt.strftime('%Y%m%d %H%M%S')
@@ -3056,17 +3089,17 @@ class MyWindow(QMainWindow):
             self.label_timeinfo[i].update()
 
         #only read if start/end change..
-        if (datetime.fromtimestamp(s) < self.transcriber.allcmds['hotkeys']['start_time'] or datetime.fromtimestamp(e) > self.transcriber.allcmds['hotkeys']['end_time']):
+        if (datetime.fromtimestamp(s) < self.transcriber.allcmds[langs[0]]['start_time'] or datetime.fromtimestamp(e) > self.transcriber.allcmds[langs[0]]['end_time']):
             logger.info(f'Time range {datetime.fromtimestamp(s)} to {datetime.fromtimestamp(e)} is out of bounds for available data.')
-            b = self.read(['hotkeys'], datetime.fromtimestamp(s), datetime.fromtimestamp(e))
+            b = self.read(langs, datetime.fromtimestamp(s), datetime.fromtimestamp(e))
             self.set_tmap(b, t)
             logger.info(b)
             self.transcriber.read_midi(datetime.fromtimestamp(s), datetime.fromtimestamp(e)) #only when starttime or endtime is out of bounds, otherwise we are just filtering existing data in memory, so no need to reread midi data.
 
-        elif (datetime.fromtimestamp(s) > self.transcriber.allcmds['hotkeys']['start_time'] or datetime.fromtimestamp(e) < self.transcriber.allcmds['hotkeys']['end_time']):
+        elif (datetime.fromtimestamp(s) > self.transcriber.allcmds[langs[0]]['start_time'] or datetime.fromtimestamp(e) < self.transcriber.allcmds[langs[0]]['end_time']):
             logger.info(f'Time range {datetime.fromtimestamp(s)} to {datetime.fromtimestamp(e)} is within bounds for available data.')
             #just filter by updated start/end
-            b = self.read(['hotkeys'], datetime.fromtimestamp(s), datetime.fromtimestamp(e))
+            b = self.read(langs, datetime.fromtimestamp(s), datetime.fromtimestamp(e))
 
             self.set_tmap(b, t)
         else:

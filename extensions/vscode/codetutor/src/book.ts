@@ -101,8 +101,8 @@ function fnWork(lines : Array<Array<tokenizer.Token>>, currentindex: number)  {
     return "WORK ";
 }
 
-export var defmap = [{"#": "REF",">": "CMD", "-": "SUBTASK", "@": "USER"}, 
-    {"##": "REF2", "**": "TOPIC", "@@": "QUESTION", "->": "DGRAPH", "--": "NOTE", "==": "ANSWER", "$$": "ENV", "!!": "ERROR", "%%": "WORKER"}, 
+export var defmap = [{"#": "REF",">": "CMD", "-": "SUBTASK", "@": "USER", ";": "COMMENT"}, 
+    {"##": "REF2", "~~": "SUGGESTION", "**": "TOPIC", "@@": "QUESTION", "->": "DGRAPH", "--": "NOTE", "==": "ANSWER", "$$": "ENV", "!!": "ERROR", "%%": "WORKER"}, 
     {"-->": "ENDCOMMENT", "!--": "ERRORNOTE" }, 
     {"<!--": "STARTCOMMENT"}];
 

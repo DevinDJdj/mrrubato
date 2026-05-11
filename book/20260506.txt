@@ -261,9 +261,42 @@ Or just from book..
 
 Check transcriber load..
 
+**languages/hotkeys.py
 ;> Search Web 
 should show the selections in help..
-
+started ok..
 
 Need to dedup info (bookmarks) in main list..
+
+;> Comment [DUR..BOOK/CURRENTBOOK/ASK]
+read from vscode extension if ASK..
+
+
+**languages/_meta.py
+Need display of similar main results..
+Adjust display
+[48,55,50] Time
+[48,55,51] Topic
+[48,55,52] Book
+[48,55,53] main
+[48,55,54] audio
+
+Highlight current time in range..
+Adjust display based on number of entities..
+Tick by display entity..
+Use ALL/Decade/Year/Quarter/Month/Week/Day display..
+Tick/zoom by this quantity..
+Time zoom using this..
+Default next level in..
+[48,50,53] [48] = OUT (1 Day->Week..)
+[48,50,53] [54] [48,48] = IN (1 Week->Day..)
+
+;> Time Jump
+;> Time Zoom
+test..
+
+;> Tune In
+;> Tune Out
+test..
+
 
