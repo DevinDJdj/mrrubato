@@ -172,3 +172,9 @@ Ctrl+Shift+7
 
 $$workbench.panel.chat.view.copilot.focus
 Ctrl+Shift+3
+
+
+> git config --global user.name "Me"
+
+> git config --global user.email "me@gmail.com"
+
