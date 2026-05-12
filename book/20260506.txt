@@ -300,3 +300,10 @@ test..
 test..
 
 
+**languages/hotkeys.py
+--load_bookmarks
+only load 10 or so
+higher usage = higher probability
+
+Video bookmark should note video location..
+Set .. should show list as well..

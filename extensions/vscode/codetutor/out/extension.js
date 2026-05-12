@@ -1,14 +1,15 @@
 "use strict";
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
-//npx --package yo --package generator-code -- yo code
-//npm install --global yo generator-code
+//> npx --package yo --package generator-code -- yo code
+//> npm install --global yo generator-code
 //if not working run this..
-//>cd [extensiondir]
-//>ollama start..
-//>tsc -watch -p ./
-//npm install --save @vscode/prompt-tsx
-//npm install --save ollama
+//> cd [extensiondir]
+//> ollama start..
+//> tsc -watch -p ./
+//> npm install --save @vscode/prompt-tsx
+//> npm install --save ollama
+//> npm install vectra
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
@@ -234,7 +235,8 @@ async function Chat(prompt, context, stream, token) {
         await Book.read(prompt);
         const response = await ollama_1.default.chat({
             //		model: 'llama3.1:8b',
-            model: 'deepseek-coder-v2:latest',
+            model: Book.ollama_model,
+            //deepseek-coder-v2:latest
             //deepseek-r1:latest 
             //granite-code:latest
             //codegemma:latest 
