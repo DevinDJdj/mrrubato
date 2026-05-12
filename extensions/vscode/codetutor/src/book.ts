@@ -60,7 +60,7 @@ export var environmenthistory = [];
 export var queryhistory = [];
 
 export var ollama_model = 'gemma4:e4b';
-//ollama_model = 
+ollama_model = 'gemma3';
 
 var myCodeMirror = null;
 var tempcodewindow = null;
