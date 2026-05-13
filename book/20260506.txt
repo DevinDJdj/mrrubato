@@ -307,3 +307,14 @@ higher usage = higher probability
 
 Video bookmark should note video location..
 Set .. should show list as well..
+
+
+**extensions/trey/trey.py
+--merge_cmds
+Time jump too slow..
+
+--update_kg
+
+OK, tolerable..
+Still some time to load new data..
+

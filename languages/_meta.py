@@ -391,7 +391,7 @@ class _meta:
     logger.info(f'> Time Jump {sequence}')
     jump = 1 #default jump level
     if (len(sequence) > 0):
-      jump = float(sequence[-1] - self.mid) #just use 10 keys for mid..
+      jump = float(sequence[-1] - self.keybot) - 6 #just use 10 keys for mid..
     t = self.timewindow.timeJump(jump)
     vars = {}
     logger.info(f'$$TIME={t}')

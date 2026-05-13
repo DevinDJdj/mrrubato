@@ -261,30 +261,29 @@ class transcriber:
                 start_time = self.getTime(-30) #default to last 30 days, should be close enough for sorting topics.
                 end_time = self.getTime()
         increment = 1
-        if (start_time < self.allcmds[lang]['start_time']):
-            start_idx = self.allcmds[lang]['start_idx']
+
+        start_idx = self.allcmds[lang]['start_idx']
+        if (start_time.timestamp() < self.allcmds[lang]['&&'][start_idx]['timestamp']):            
             for (i, cmd) in enumerate(reversed(self.allcmds[lang]['&&'][:start_idx])):
                 if (cmd['timestamp'] >= start_time.timestamp()):
                     start_idx -= 1
                 else:
                     break
         else:
-            start_idx = self.allcmds[lang]['start_idx']
             for (i, cmd) in enumerate(self.allcmds[lang]['&&'][start_idx:]):
                 if (cmd['timestamp'] <= start_time.timestamp()):
                     start_idx += 1
                 else:
                     break   
         
-        if (end_time < self.allcmds[lang]['end_time']):
-            end_idx = self.allcmds[lang]['end_idx']
+        end_idx = self.allcmds[lang]['end_idx']
+        if (end_time.timestamp() < self.allcmds[lang]['&&'][end_idx]['timestamp']):
             for (i, cmd) in enumerate(reversed(self.allcmds[lang]['&&'][:end_idx])):
                 if (cmd['timestamp'] >= end_time.timestamp()):
                     end_idx -= 1
                 else:
                     break
         else:
-            end_idx = self.allcmds[lang]['end_idx']
             for (i, cmd) in enumerate(self.allcmds[lang]['&&'][end_idx:]):
                 if (cmd['timestamp'] <= end_time.timestamp()):
                     end_idx += 1
@@ -939,10 +938,35 @@ class transcriber:
 
         ret.sort(key=lambda x: x['timestamp']) #sort by timestamp just in case.
 
-        self.allcmds[lang] = {'**': lang, '&&': ret, 'cmds': ret, '..': last_mtime, 'last_mtime': last_mtime, 'start_time': start_time, 'end_time': end_time, 'start_idx': 0, 'end_idx': len(ret)-1, 'open': True}
-        self.update_kg(lang, ret)
+#        self.allcmds[lang] = {'**': lang, '&&': ret, 'cmds': ret, '..': last_mtime, 'last_mtime': last_mtime, 'start_time': start_time, 'end_time': end_time, 'start_idx': 0, 'end_idx': len(ret)-1, 'open': True}
+#        self.update_kg(lang, ret)
+        self.merge_cmds(lang, ret, start_time, end_time, last_mtime)
         logger.info(f'Loaded {numloaded} files for {lang} with {len(ret)} commands')
         return ret
+
+    def merge_cmds(self, lang, ret, start_time, end_time, last_mtime):
+
+        if (lang in self.allcmds and self.allcmds[lang]['&&'] is not None):
+            #merge with existing cmds, keeping only unique cmds and sorting by timestamp.  this will allow us to keep the existing cmds in memory and just add any new cmds from the new files, which should be more efficient than reloading all cmds every time we open a book, especially if we have a lot of data.  could also implement a more sophisticated merging strategy if needed, but for now just merge and sort.
+            existing_cmds = self.allcmds[lang]['&&']
+            existing_start_time = self.allcmds[lang]['start_time']
+            existing_end_time = self.allcmds[lang]['end_time']
+            existing_cmds_dict = {cmd['timestamp']: cmd for cmd in existing_cmds} #use timestamp as key for uniqueness, this assumes we dont have duplicate timestamps which should be rare but could happen, if we do have duplicates we will just keep the last one we see which should be fine for now.
+            for cmd in ret:
+                existing_cmds_dict[cmd['timestamp']] = cmd #this will overwrite any existing cmd with the same timestamp, which should be fine for now.
+
+            merged_cmds = list(existing_cmds_dict.values())
+            merged_cmds.sort(key=lambda x: x['timestamp']) #sort by timestamp just in case.
+            
+            if (existing_start_time < start_time):
+                start_time = existing_start_time
+            if (existing_end_time > end_time):
+                end_time = existing_end_time
+            self.allcmds[lang] = {'**': lang, '&&': merged_cmds, 'cmds': merged_cmds, '..': last_mtime, 'last_mtime': last_mtime, 'start_time': start_time, 'end_time': end_time, 'start_idx': 0, 'end_idx': len(merged_cmds)-1, 'open': True}            
+            self.update_kg(lang, merged_cmds)
+        else:
+            self.allcmds[lang] = {'**': lang, '&&': ret, 'cmds': ret, '..': last_mtime, 'last_mtime': last_mtime, 'start_time': start_time, 'end_time': end_time, 'start_idx': 0, 'end_idx': len(ret)-1, 'open': True}
+            self.update_kg(lang, ret)
 
     def set_current_topic(self):
         lastlang = None

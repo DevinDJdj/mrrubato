@@ -37,6 +37,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MAX_SELECTION_HISTORY = exports.ftsindex = exports.arrays = exports.commandarray = exports.temptopicarray = exports.temptopics = exports.topicvectorarray = exports.topicarray = exports.envarray = exports.alltopicsa = exports.alltopicdata = exports.alltopics = exports.vectrafixes = exports.defstring = exports.fnmap = exports.defmap = exports.ollama_model = exports.queryhistory = exports.environmenthistory = exports.selectionhistory = exports.selectedtopic = exports.currenttopic = exports.BOOK_OPEN_GIT = exports.BOOK_OPEN_WEB = exports.BOOK_OPEN_FILE = exports.GIT_DB = exports.GIT_RELATIONS = exports.GIT_DETAILS = exports.GIT_CODE = exports.GIT_BOOK = void 0;
+exports.setModel = setModel;
 exports.logCommand = logCommand;
 exports.getTokens = getTokens;
 exports.executeTokens = executeTokens;
@@ -134,6 +135,9 @@ var usetempcodewindow = false;
 var definitions = { "REF": "#", "REF2": "##", "TOPIC": "**", "STARTCOMMENT": "<!--", "ENDCOMMENT": "-->", "CMD": ">", "QUESTION": "@@", "NOTE": "--", "SUBTASK": "-" };
 //have to include >, -> to get to -->
 //have to include -, --, !-- to get to <!--
+function setModel(model) {
+    exports.ollama_model = model;
+}
 function fnEnv(lines, currentindex) {
     //this will be used to create a token for the environment variable.  
     //look at the tokens and take proper action.  

@@ -70,6 +70,10 @@ var definitions = {"REF": "#", "REF2": "##", "TOPIC": "**", "STARTCOMMENT": "<!-
 //have to include -, --, !-- to get to <!--
 
 
+export function setModel(model: string) {
+    ollama_model = model;
+}
+
 function fnEnv(lines : Array<Array<tokenizer.Token>>, currentindex: number)  {
     //this will be used to create a token for the environment variable.  
     //look at the tokens and take proper action.  

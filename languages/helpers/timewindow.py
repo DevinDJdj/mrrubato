@@ -40,10 +40,10 @@ class timewindow:
         return self.currenttime
 
     def timeJump(self, jump=1): #relative to window size, so 0.1 is 10% of window size.
-        if (jump < -10):
-            jump = -10
-        if (jump > 10):
-            jump = 10
+        if (jump < -6):
+            jump = -6
+        if (jump > 6):
+            jump = 6
         jumpindex = self.windowindex - 1
         if (jumpindex < 0):
             jumpindex = 0
