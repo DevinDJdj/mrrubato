@@ -2446,14 +2446,14 @@ class MyWindow(QMainWindow):
 #just use UTF-8 characters and a monospaced font.
 
         #bot mid
-        #BBOX(0.1,0.01, 0.02, 0.6, 0.06)
+        #BBOX(0.2,0.01, 0.02, 0.6, 0.06)
         self.label_times = []
         for i in range(2):
             #show event types for each time point.
 
             t = QLabel(f'Time{i}', self)
             t.setFont(font)    # Apply the font to the label        
-            t.move(int(self.geo.width()*0.2), int(self.geo.height()*0.02*(i*1.6+1)))
+            t.move(int(self.geo.width()*0.2), int(self.geo.height()*0.02*(i*1.6+1.5)))
             t.setFixedHeight(h+2)
             w = metrics.boundingRect(chr(0x2160)).width()
             t.setFixedWidth(int(w*60*1.5)) #60 char of time info.. 36-96 ? 
@@ -2479,9 +2479,9 @@ class MyWindow(QMainWindow):
             self.label_timeinfo[i].setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};border: 1px solid black;")
             font = QFont("Courier", fontsize-4) # Specify font family and size
             self.label_timeinfo[i].setFont(font)
-            self.label_timeinfo[i].move(int(self.geo.width()*0.01), int(self.geo.height()*0.02*(i+1)))
+            self.label_timeinfo[i].move(int(self.geo.width()*0.08), int(self.geo.height()*0.02*(i+1.5)))
             self.label_timeinfo[i].setFixedHeight(fontsize-4)
-            self.label_timeinfo[i].setFixedWidth(int(self.geo.width()*0.09))
+            self.label_timeinfo[i].setFixedWidth(int(self.geo.width()*0.1))
             self.label_timeinfo[i].setTextFormat(Qt.PlainText)
 
 
@@ -2491,7 +2491,7 @@ class MyWindow(QMainWindow):
             self.label_topic_info[i].setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};border: 1px solid black;")
             font = QFont("Courier", fontsize-4) # Specify font family and size
             self.label_topic_info[i].setFont(font)
-            self.label_topic_info[i].move(int(self.geo.width()*0.1), int(self.geo.height()*(0.06+0.02*(i+1))))
+            self.label_topic_info[i].move(int(self.geo.width()*0.1), int(self.geo.height()*(0.08+0.02*(i+1))))
             self.label_topic_info[i].setFixedHeight(int(self.geo.height()*(0.02+(0.06*i)))) #larger height for context info..
             self.label_topic_info[i].setFixedWidth(int(self.geo.width()*0.6))
 #            self.label_topic_info[i].setTextFormat(Qt.PlainText)
@@ -2722,6 +2722,7 @@ class MyWindow(QMainWindow):
     def init_label(self, label, x, y, w, h, color='red'):
         label.setTextFormat(QtCore.Qt.RichText)
         label.setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};border: 2px solid black;")
+        label.setAlignment(Qt.AlignTop)
         label.adjustSize()
         label.setWordWrap(True)
         self.set_geometry(label, x, y, w, h)
@@ -2962,6 +2963,9 @@ class MyWindow(QMainWindow):
         typecnttext = ""
         sumval = 0
         selected = []
+        maintimes = []
+        maintext = []
+
         for i in range(60):
             val = self.aggmap[i]['cnt']
             sumval += val
@@ -2969,28 +2973,40 @@ class MyWindow(QMainWindow):
             val2 = len(self.aggmap[i]['cnts'])
 
             typecnttext += f'{chr(ord(startchar)+val2)}'
+            if (i%20 == 0):
+                cnttext += ' ' #add space every 20 chars for readability, can adjust as needed.
+                typecnttext += ' '
+                maintimes.append(current_time - secs/2 + (i/60)*secs) #calculate time for each bucket, can adjust as needed.
+                maintext.append({'&&': '&&', '..': maintimes[-1], '**': '**'}) #placeholder for main text display, can adjust as needed.
 
+        maintimes.reverse() #reverse to have most recent time on right, can adjust as needed.
         print(f"Current time: {current_time}, Time window seconds: {secs}")
-        sorted_tmap = sorted(self.tmap, key=lambda x: abs(x['timestamp'] - current_time))
+        sorted_tmap = sorted(self.tmap, key=lambda x: current_time - x['..'])
 #        print(f"Sorted tmap: {sorted_tmap}")
-        sorted_indices = sorted(range(len(self.tmap)), key=lambda i: abs(self.tmap[i]['timestamp'] - current_time))
+        sorted_indices = sorted(range(len(self.tmap)), key=lambda i: current_time - self.tmap[i]['..'])
         print(f"Sorted indices: {sorted_indices}")
         if (len(sorted_indices) > 0):
             self.tmapindex = sorted_indices[0] #index of closest item in tmap to current time, can use this to select items to display or play etc.
-            maintext = []
 #            print(sorted_tmap[-10:]) #get last 10 items in sorted tmap for debugging, can adjust as needed.
             print(sorted_tmap[:10]) #get first 10 items in sorted tmap for debugging, can adjust as needed.
             for i in range(len(sorted_tmap)):
                 #compare to current time, and select if within current time window.  
-                if (len(maintext) < 3 and sorted_tmap[i]['type'] == '> '): #only show commands for now.. no topic selection
-#                    self.transcriber.current_topic = sorted_tmap[i]['cmd'] #dont need topic to be updated..
-                    maintext.append({'topic': sorted_tmap[i]['topic'], 'timestamp': sorted_tmap[i]['timestamp'], 'text': self.transcriber.write(sorted_tmap[i]['lang'], sorted_tmap[i]['cmd'], sorted_tmap[i]['vars'], sorted_tmap[i]['topic'], False)})
+                #show one from each time window..
+                for j in reversed(range(3)): #check most recent 3 time buckets, can adjust as needed.
+                    if (maintext[j]['**'] == '**' and maintimes[j] <= sorted_tmap[i]['..'] < maintimes[j] + secs/3): #if item is within time bucket, can adjust bucket size as needed.
 
-            maintext = sorted(maintext, key=lambda x: x['timestamp'])
+#                    if (sorted_tmap[i]['timestamp'] >= maintimes[j] and sorted_tmap[i]['timestamp'] < maintimes[j] + secs/20): #if item is within time bucket, can adjust bucket size as needed.
+                        if (sorted_tmap[i]['type'] == '> '): #only show commands for now.. no topic selection
+                            maintext[j] = {'**': sorted_tmap[i]['**'], '..': sorted_tmap[i]['..'], '&&': self.transcriber.write(sorted_tmap[i]['<<'], sorted_tmap[i]['&&'], sorted_tmap[i]['$$'], sorted_tmap[i]['**'], False)}
+#                if (len(maintext) < 3 and sorted_tmap[i]['type'] == '> ' and sorted_tmap[i]['timestamp'] >= maintimes[len(maintimes)-1]): #only show commands for now.. no topic selection
+#                    self.transcriber.current_topic = sorted_tmap[i]['cmd'] #dont need topic to be updated..
+#                    maintext.append({'topic': sorted_tmap[i]['topic'], 'timestamp': sorted_tmap[i]['timestamp'], 'text': self.transcriber.write(sorted_tmap[i]['lang'], sorted_tmap[i]['cmd'], sorted_tmap[i]['vars'], sorted_tmap[i]['topic'], False)})
+
+            maintext = sorted(maintext, key=lambda x: x['..'])
             print(maintext)
             for i in range(len(maintext)):
 #                if (temptext[0:2] != '**'):
-                temptext = f'{maintext[i]["text"]}' #add topic as header if not already included, can adjust formatting as needed.
+                temptext = f'{maintext[i]["&&"]}' #add topic as header if not already included, can adjust formatting as needed.
                 self.label_main[i].setText(temptext.replace('\n', '<br>'))
                 self.label_main[i].update()
 
@@ -2999,9 +3015,15 @@ class MyWindow(QMainWindow):
         if sumval > 0:            
             logger.info(f"Data found {sumval} total commands in current time window.")
 
-        self.label_times[0].setText(f'<pre>{typecnttext}</pre>')
+        typecnttext = typecnttext.replace(startchar, '_')
+        cnttext = cnttext.replace(startchar, '_')
+
+        st = datetime.fromtimestamp(self.s).strftime('%Y%m%d %H%M%S')
+        et = datetime.fromtimestamp(self.e).strftime('%Y%m%d %H%M%S')
+
+        self.label_times[0].setText(f'<pre>{typecnttext}   {st}</pre>')
         self.label_times[0].update()
-        self.label_times[1].setText(f'<pre>{cnttext}</pre>')
+        self.label_times[1].setText(f'<pre>{cnttext}   {et}</pre>')
         self.label_times[1].update()
 
     def set_tmap(self, tmap = [], current_time=None):
@@ -3013,10 +3035,10 @@ class MyWindow(QMainWindow):
         #need better than this, but..
         self.aggmap = [{'cnt': 0, 'cnts': {} } for i in range(60)] #reset aggmap
         max = 0
+        start_time = datetime.fromtimestamp(self.s)
+        end_time = datetime.fromtimestamp(self.e)            
+        secs = (self.e - self.s)
         if (len(tmap) > 0):
-            start_time = self.transcriber.allcmds['hotkeys']['start_time']
-            end_time = self.transcriber.allcmds['hotkeys']['end_time']            
-            secs = (end_time.timestamp() - start_time.timestamp())
             if (current_time is None):
                 #mid of start/end                
                 current_time = start_time + timedelta(seconds=int(secs/2))
@@ -3040,7 +3062,10 @@ class MyWindow(QMainWindow):
                 for i in range(60):
                     if (self.aggmap[i]['cnt'] > 0):
                         self.aggmap[i]['cnt'] = math.ceil(self.aggmap[i]['cnt'] / max * 24) #scale to 24 for display purposes, can adjust as needed.
-            self.show_tmap(current_time, secs)
+
+            
+
+        self.show_tmap(current_time, secs)
 
 
 

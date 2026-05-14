@@ -318,3 +318,14 @@ Time jump too slow..
 OK, tolerable..
 Still some time to load new data..
 
+
+
+Need dynamic book opening..
+After opening, show topics from recent books..
+
+Need book filter still..
+
+Find topics within book only..
+
+Interaction between <<_meta>> and <<vscode>> seems to work ok..
+

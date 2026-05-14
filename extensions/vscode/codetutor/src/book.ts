@@ -725,7 +725,7 @@ export function select(topic: string, open: number = opennature) : boolean {
 
 }
 
-export function pickTopic(selectedtopics : string[], defaultprompts: string[] = [], numtopics: number = 10, extendtopics: boolean = false) : [string, string] {
+export function pickTopic(selectedtopics : string[], defaultprompts: string[] = [], numtopics: number = 10, extendtopics: boolean = false, numentries: number = 10) : [string, string] {
     //pick a topic from the topicarray based on the sort order.
     //still need to improve when we have no selected topics.  
     let minsort = 1000000; //set to a large number.
@@ -792,11 +792,14 @@ export function pickTopic(selectedtopics : string[], defaultprompts: string[] = 
     //what date do we want to search from?  
     //just add all.  
     let mylist = [];
+
     for (; i<selectedtopics.length; i++) {
         if (topicarray[ selectedtopics[i] ] !== undefined) {
             retdata += "**" + selectedtopics[i] + "\n"; //add the topic to the data.
             retkey = selectedtopics[i]; //set the key to the topic.
 
+            //only get 10 entries..
+            let tentries = topicarray[ selectedtopics[i] ].length;
             for (let j=0; j<topicarray[ selectedtopics[i] ].length; j++) {
                 //add date here.  
                 let item = topicarray[ selectedtopics[i] ][j];
@@ -807,7 +810,10 @@ export function pickTopic(selectedtopics : string[], defaultprompts: string[] = 
 //                retdata += `[${item.file}](${item.file}#L${item.line})  \n`;
                 
 //                retdata += item.data + "\n"; //add all data for the topic.
-                mylist.push(item);
+                //random number related to list length...
+                if (Math.random() < numentries/tentries){ //randomly add entries based on the number of entries for the topic.
+                    mylist.push(item);
+                }
             }
         }
     }
@@ -817,8 +823,10 @@ export function pickTopic(selectedtopics : string[], defaultprompts: string[] = 
         return a.date - b.date; //sort by date.
     });
 
+    //get only a subset of results to avoid overwhelming the model and the user..
     for (let i=0; i<mylist.length; i++) {
         //add the date to the data.  
+        //randomly return results?  
         let item = mylist[i];
 //        retdata += `**${item.topic}\n`;
         retdata += `**${item.file}:${item.line}\n`;

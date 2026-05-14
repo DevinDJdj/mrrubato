@@ -192,6 +192,8 @@ class MyKeys:
       except Exception as e:
         print("language doesnt exist " + key)
         logger.error(f'Error loading language {key}: {e}')
+        import traceback
+        traceback.print_exc()
 
     self.keystruct = self.gen_lang_struct() #initialize keystruct for all known words, if no keybot, then not loaded here..
     print("Keystruct generated")
