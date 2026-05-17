@@ -1,0 +1,22 @@
+
+I am making some good progress recently, but every day I see so many more things to do than what I can do myself.  
+I think about trying to involve more people from time to time, but I dont know if this would be enjoyable or not.  
+For now I continue alone in my bubble.  
+I contemplate some of the things I am doing now, and they are potentially significant.  
+But there is still much time before I reach some things I would like to do.  
+
+-Automated code generation and testing.  
+-Optimized notation system for reading (music)
+-Metrics for Harmonic quality
+-Metrics for learning quality
+
+Trying to think of overarching goals is not easy, but I reread the earlier chapters and they still make some sense..
+So I should really spend some more time reflecting here instead of incessant creation.  
+Albeit quite rubato.  
+
+Just like the piano needs a composer/musician, a project needs a architect/developer.  
+Sounded better in my head.
+
+Maybe I should write some more music..
+I have only done this at the very beginning.  
+
