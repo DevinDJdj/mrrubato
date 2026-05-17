@@ -1189,14 +1189,17 @@ async function markdown(prompt, format = 1) {
                 let fname = p2.slice(0, colon); //get the file name.
                 //check if file exists.  
                 let line = p2.slice(colon + 1); //get the line number. 
-                //remove folder from file name.  Why do we have to do this???
-                p2 = p2.replace(folderUri.path + "/", ""); //remove the folder path from the file name for display purposes.  
-                fname = fname.replace(folderUri.path + "/", ""); //remove the folder path from the file name for display purposes.
-                //				let fileUri = getUri(fname);
-                let fileUri = folderUri.with({ path: path_1.posix.join(folderUri.path, fname) });
-                //need to rewrite dates to something else..
-                let readablename = getReadableName(p2, line);
-                return `[${p1}${readablename}](${fileUri}#L${line})  `; //return the markdown link.
+                if (fname.length > 1) {
+                    //only do this with actual name.. not blank : 
+                    //remove folder from file name.  Why do we have to do this???
+                    p2 = p2.replace(folderUri.path + "/", ""); //remove the folder path from the file name for display purposes.  
+                    fname = fname.replace(folderUri.path + "/", ""); //remove the folder path from the file name for display purposes.
+                    //				let fileUri = getUri(fname);
+                    let fileUri = folderUri.with({ path: path_1.posix.join(folderUri.path, fname) });
+                    //need to rewrite dates to something else..
+                    let readablename = getReadableName(p2, line);
+                    return `[${p1}${readablename}](${fileUri}#L${line})  `; //return the markdown link.
+                }
                 //                return `[${p1}${p2}](${fname}#L${line})`; //return the markdown link.
             }
             //try to detect generated markdown unrelated to file.  

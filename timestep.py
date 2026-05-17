@@ -496,7 +496,12 @@ def transcribeLocal(fname):
         if (not os.path.exists(ffname + ".vtt")):
             print(f"Transcribing {fname} to {ffname}.vtt")
             from extensions.trey.speech import transcribe_audio, listen_audio, transcribe_audio_whisper
-            transcribe_audio_whisper(fname, delete=True)
+            if (ext == '.mp4'):
+                delete = True
+            else:
+                #dont delete wav files, since these are used for helping train model eventually..
+                delete = False
+            transcribe_audio_whisper(fname, delete=delete)  
 
 def saveLocalTranscripts():
     #upload to folder any transcripts in local folder

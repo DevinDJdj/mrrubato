@@ -329,3 +329,45 @@ Find topics within book only..
 
 Interaction between <<_meta>> and <<vscode>> seems to work ok..
 
+
+Listen and find closest frequency note..
+Highlight keys based on this..
+
+Play with some notations..
+Note primary character, Octave is Y location or color/location
+X location is time..
+Create midi visualization for this..
+
+
+**analyze/analyze.py
+**analyze/analyze3.py
+--printMidi
+Started some visualization here..
+
+
+**extensions/vscode/codetutor/src/book.ts
+--markdown
+Need to get rid of ** in LLM generated text..
+  **[space]
+This 
+
+$$MODEL=gemma3
+gemma4 seems slow on this machine and not significantly better for most queries..
+
+
+**languages/helpers/transcriber.py
+--search_midi
+Try to replicate similar in UI, or analyze.py
+partial_ratio_alignment
+
+
+**extensions/trey/speech.py
+--transcribe_audio_whisper
+Oops deleted all wav..
+Oh well..
+This was still small, annoying..
+
+Backup transcripts??
+
+
+
