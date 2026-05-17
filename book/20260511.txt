@@ -233,4 +233,10 @@ $$
 **web/public/me.html
 Need simple user setup and view..
 
+#https://medium.com/@aysunitai/creating-email-and-password-authentication-with-firebase-and-vanilla-javascript-668aa73868a0
+#https://www.geeksforgeeks.org/firebase/getting-started-with-firebase-email-password-authentication/
+
+**web/public/me.js
+OK, seems to work ok..
+
 
