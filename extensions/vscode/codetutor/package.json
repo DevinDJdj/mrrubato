@@ -269,6 +269,7 @@
     "test": "vscode-test"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "20.x",
     "@types/vscode": "^1.99.0",
@@ -281,6 +282,7 @@
     "typescript": "^5.8.2"
   },
   "dependencies": {
+    "@huggingface/transformers": "^3.8.1",
     "@react-native-community/netinfo": "^11.4.1",
     "@riaskov/mmap-io": "^1.4.3",
     "@vscode/prompt-tsx": "^0.3.0-alpha.23",
@@ -294,7 +296,8 @@
     "jzz-midi-ws": "^1.0.0",
     "jzz-synth-tiny": "^1.4.2",
     "node-web-audio-api": "^1.0.4",
-    "ollama": "^0.5.15",
-    "standardized-audio-context": "^25.3.77"
+    "ollama": "^0.5.18",
+    "standardized-audio-context": "^25.3.77",
+    "vectra": "^0.14.0"
   }
 }
