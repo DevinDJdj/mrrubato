@@ -345,6 +345,8 @@ function activate(context) {
     (0, toolParticipant_1.startWatchingTranscriber)('video');
     (0, toolParticipant_1.startWatchingTranscriber)('_meta'); //get all topic changes..
     (0, toolParticipant_1.startWatchingTranscriber)('base'); //get all mood changes and extra pause..
+    const mySettings = vscode.workspace.getConfiguration('mrrubato');
+    Book.setModel(mySettings.get('model'));
     TerminalWorker.addClosedTerminalListener();
     Book.open(context); //open the book.  
     (0, toolParticipant_1.registerPiano)(context);

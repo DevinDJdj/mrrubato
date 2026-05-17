@@ -300,3 +300,32 @@ test..
 test..
 
 
+**languages/hotkeys.py
+--load_bookmarks
+only load 10 or so
+higher usage = higher probability
+
+Video bookmark should note video location..
+Set .. should show list as well..
+
+
+**extensions/trey/trey.py
+--merge_cmds
+Time jump too slow..
+
+--update_kg
+
+OK, tolerable..
+Still some time to load new data..
+
+
+
+Need dynamic book opening..
+After opening, show topics from recent books..
+
+Need book filter still..
+
+Find topics within book only..
+
+Interaction between <<_meta>> and <<vscode>> seems to work ok..
+

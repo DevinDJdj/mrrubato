@@ -261,30 +261,34 @@ class transcriber:
                 start_time = self.getTime(-30) #default to last 30 days, should be close enough for sorting topics.
                 end_time = self.getTime()
         increment = 1
-        if (start_time < self.allcmds[lang]['start_time']):
-            start_idx = self.allcmds[lang]['start_idx']
+
+        if (lang not in self.allcmds or len(self.allcmds[lang]['&&']) == 0):
+            logger.warning(f'No existing commands for {lang}, returning empty list')
+            return []
+        
+        start_idx = self.allcmds[lang]['start_idx']
+        logger.info(f'Finding start index for {start_time} starting at index {start_idx} with cmds {self.allcmds[lang]["&&"]}')
+        if (start_time.timestamp() < self.allcmds[lang]['&&'][start_idx]['timestamp']):            
             for (i, cmd) in enumerate(reversed(self.allcmds[lang]['&&'][:start_idx])):
                 if (cmd['timestamp'] >= start_time.timestamp()):
                     start_idx -= 1
                 else:
                     break
         else:
-            start_idx = self.allcmds[lang]['start_idx']
             for (i, cmd) in enumerate(self.allcmds[lang]['&&'][start_idx:]):
                 if (cmd['timestamp'] <= start_time.timestamp()):
                     start_idx += 1
                 else:
                     break   
         
-        if (end_time < self.allcmds[lang]['end_time']):
-            end_idx = self.allcmds[lang]['end_idx']
+        end_idx = self.allcmds[lang]['end_idx']
+        if (end_time.timestamp() < self.allcmds[lang]['&&'][end_idx]['timestamp']):
             for (i, cmd) in enumerate(reversed(self.allcmds[lang]['&&'][:end_idx])):
                 if (cmd['timestamp'] >= end_time.timestamp()):
                     end_idx -= 1
                 else:
                     break
         else:
-            end_idx = self.allcmds[lang]['end_idx']
             for (i, cmd) in enumerate(self.allcmds[lang]['&&'][end_idx:]):
                 if (cmd['timestamp'] <= end_time.timestamp()):
                     end_idx += 1
@@ -455,11 +459,26 @@ class transcriber:
             except:
                 pass
         return t
+    
+
+    #single character for representation of type
+    def get_cmd_type(self, cmd):
+        if (cmd['_'] == '**'):
+            return '*'
+        elif (cmd['_'] == '> '):
+            return '>'
+        elif (cmd['_'] == '$$'):
+            return '$'
+        else:
+            #analyze type
+            return '_' #default to underscore for unknown types, could also do some analysis here to try to categorize types based on content if needed.
+        
     def get_cmd(self, lang, type, command, vars):
         t = self.get_time_var(vars)
 
         lines = []
-        return {'lang': lang, 'type': type, 'cmd': command, 'topic': self.current_topic, 'vars': vars, 'lines': lines, 'timestamp': t, '..': t, '**': self.current_topic}
+        return {'lang': lang, 'type': type, 'cmd': command, 'topic': self.current_topic, 'vars': vars, 'timestamp': t, 'lines': lines, 
+                    '<<': lang, '_': type, '&&': command, '**': self.current_topic, '$$': vars, '..': t} #add timestamp for sorting later, and topic for reference, and vars for any variables associated with this command, and lines for any lines associated with this command, which can be used for context when executing the command later.  also add the raw command as '&&' for easy reference later, and topic as '**' for easy reference later.  could also add other metadata here as needed.
 
 
     def get_seq(self, command):
@@ -580,14 +599,18 @@ class transcriber:
                         #not really notable..  
                         if (currentcmdobj is not None and 'vars' in currentcmdobj):
                             currentcmdobj['vars'][key] = value
+                            currentcmdobj['$$'][key] = value
                             if (key == 'TIME'):
                                 currentcmdobj['timestamp'] = self.get_time_var(vars)
+                                currentcmdobj['..'] = currentcmdobj['timestamp'] #duplicate for easy reference later, could also just use timestamp directly but this is more explicit.  could also add other metadata here as needed.
 
                         #add to topic as well..                                        
                         elif (currenttopc is not None and 'vars' in currenttopc):
                             currenttopc['vars'][key] = value
+                            currenttopc['$$'][key] = value
                             if (key == 'TIME'):
                                 currenttopc['timestamp'] = self.get_time_var(vars)
+                                currenttopc['..'] = currenttopc['timestamp'] #duplicate for easy reference later, could also just use timestamp directly but this is more explicit.  could also add other metadata here as needed.
 
         if (currentcmd != "" and currentcmdobj is not None):
             ret.append(currentcmdobj)
@@ -789,14 +812,16 @@ class transcriber:
 
         return ret
     
-    def relevant_book_array(self, searchbooks=None, namefilter=""):
+    #recursive search, could be painful..#save us some time for now just 3 depth
+    def relevant_book_array(self, searchbooks=None, namefilter="", maxdepth=3, currentdepth=0): 
         #get just name here..
         ret = []
         for k,v in searchbooks.items():
             if (k == '&&' or k == '**' or k == '(' or k == ')' or k=='..'):
                 continue
-            ret.extend(self.relevant_book_array(searchbooks=v, namefilter=namefilter))
-        if (searchbooks['&&'] is not None):     
+            if (currentdepth < maxdepth):
+                ret.extend(self.relevant_book_array(searchbooks=v, namefilter=namefilter, maxdepth=maxdepth, currentdepth=currentdepth+1))
+        if (searchbooks['&&'] is not None):         
             #if we have commands, include this book..
 
             if namefilter == "":            
@@ -806,6 +831,12 @@ class transcriber:
                 ff = fuzz.partial_ratio_alignment(namefilter, searchbooks['**'])
                 if (ff.score > 80): #threshold for relevance, could adjust as needed.
                     ret.append(searchbooks)
+                #search within the books as well?  
+                for cmd in searchbooks['&&']:
+                    if '**' in cmd and cmd['**'] is not None:
+                        book = self.get_from_nested(self.allbooks, cmd['**'].split('/'))
+                        ret.extend(self.relevant_book_array(searchbooks=book, namefilter=namefilter, maxdepth=maxdepth, currentdepth=currentdepth+1))                        
+
 
         return ret
 
@@ -939,17 +970,51 @@ class transcriber:
 
         ret.sort(key=lambda x: x['timestamp']) #sort by timestamp just in case.
 
-        self.allcmds[lang] = {'**': lang, '&&': ret, 'cmds': ret, '..': last_mtime, 'last_mtime': last_mtime, 'start_time': start_time, 'end_time': end_time, 'start_idx': 0, 'end_idx': len(ret)-1, 'open': True}
-        self.update_kg(lang, ret)
+#        self.allcmds[lang] = {'**': lang, '&&': ret, 'cmds': ret, '..': last_mtime, 'last_mtime': last_mtime, 'start_time': start_time, 'end_time': end_time, 'start_idx': 0, 'end_idx': len(ret)-1, 'open': True}
+#        self.update_kg(lang, ret)
+        self.merge_cmds(lang, ret, start_time, end_time, last_mtime)
         logger.info(f'Loaded {numloaded} files for {lang} with {len(ret)} commands')
         return ret
+
+    def merge_cmds(self, lang, ret, start_time, end_time, last_mtime):
+
+        if (lang in self.allcmds and self.allcmds[lang]['&&'] is not None):
+            #merge with existing cmds, keeping only unique cmds and sorting by timestamp.  this will allow us to keep the existing cmds in memory and just add any new cmds from the new files, which should be more efficient than reloading all cmds every time we open a book, especially if we have a lot of data.  could also implement a more sophisticated merging strategy if needed, but for now just merge and sort.
+            existing_cmds = self.allcmds[lang]['&&']
+            existing_start_time = self.allcmds[lang]['start_time']
+            existing_end_time = self.allcmds[lang]['end_time']
+            existing_cmds_dict = {cmd['timestamp']: cmd for cmd in existing_cmds} #use timestamp as key for uniqueness, this assumes we dont have duplicate timestamps which should be rare but could happen, if we do have duplicates we will just keep the last one we see which should be fine for now.
+            for cmd in ret:
+                existing_cmds_dict[cmd['timestamp']] = cmd #this will overwrite any existing cmd with the same timestamp, which should be fine for now.
+
+            merged_cmds = list(existing_cmds_dict.values())
+            merged_cmds.sort(key=lambda x: x['timestamp']) #sort by timestamp just in case.
+            
+            if (existing_start_time < start_time):
+                start_time = existing_start_time
+            if (existing_end_time > end_time):
+                end_time = existing_end_time
+
+            start_idx = 0
+            end_idx = len(merged_cmds)-1
+            self.allcmds[lang] = {'**': lang, '&&': merged_cmds, 'cmds': merged_cmds, '..': last_mtime, 'last_mtime': last_mtime, 'start_time': start_time, 'end_time': end_time, 'start_idx': start_idx, 'end_idx': end_idx, 'open': True}            
+            self.update_kg(lang, merged_cmds)
+        else:
+            self.allcmds[lang] = {'**': lang, '&&': ret, 'cmds': ret, '..': last_mtime, 'last_mtime': last_mtime, 'start_time': start_time, 'end_time': end_time, 'start_idx': 0, 'end_idx': len(ret)-1, 'open': True}
+            self.update_kg(lang, ret)
 
     def set_current_topic(self):
         lastlang = None
         lastmtime = 0
         for (k, v) in self.allcmds.items():
-            if (v['..'] > lastmtime):
+            if (v['..'] is not None and v['..'] > lastmtime):
                 lastmtime = v['..']
                 lastlang = k
-        if (lastlang is not None):
+            else:
+                #if we dont have a lastmtime, just get the most recent topic from this lang if it has cmds, this will allow us to set a current topic even if we dont have mtime data for some reason, which should be rare but could happen.
+                #what is this data?  
+                logger.info(f'No mtime for {k}, checking for most recent topic from cmds')                
+        if (lastlang is not None and len(self.allcmds[lastlang]['&&']) > 0):
             self.current_topic = self.allcmds[lastlang]['&&'][-1]['**']
+        else:
+            self.current_topic = None

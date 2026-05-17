@@ -24,6 +24,11 @@
     "configuration": {
       "title": "mrrubato",
       "properties": {
+        "mrrubato.model": {
+          "type": "string",
+          "default": "gemma3:4b",
+          "description": "Model to use for LLM interactions."
+        },
         "mrrubato.webbookurl": {
           "type": "string",
           "default": "https://www.misterrubato.com/page.html?codefile=",

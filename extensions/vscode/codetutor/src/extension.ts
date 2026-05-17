@@ -377,6 +377,8 @@ export function activate(context: vscode.ExtensionContext) {
 	startWatchingTranscriber('_meta'); //get all topic changes..
 	startWatchingTranscriber('base'); //get all mood changes and extra pause..
 
+	const mySettings = vscode.workspace.getConfiguration('mrrubato');	
+	Book.setModel(mySettings.get('model'));
 	TerminalWorker.addClosedTerminalListener();
 
 	Book.open(context); //open the book.  

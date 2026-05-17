@@ -37,6 +37,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MAX_SELECTION_HISTORY = exports.ftsindex = exports.arrays = exports.commandarray = exports.temptopicarray = exports.temptopics = exports.topicvectorarray = exports.topicarray = exports.envarray = exports.alltopicsa = exports.alltopicdata = exports.alltopics = exports.vectrafixes = exports.defstring = exports.fnmap = exports.defmap = exports.ollama_model = exports.queryhistory = exports.environmenthistory = exports.selectionhistory = exports.selectedtopic = exports.currenttopic = exports.BOOK_OPEN_GIT = exports.BOOK_OPEN_WEB = exports.BOOK_OPEN_FILE = exports.GIT_DB = exports.GIT_RELATIONS = exports.GIT_DETAILS = exports.GIT_CODE = exports.GIT_BOOK = void 0;
+exports.setModel = setModel;
 exports.logCommand = logCommand;
 exports.getTokens = getTokens;
 exports.executeTokens = executeTokens;
@@ -134,6 +135,9 @@ var usetempcodewindow = false;
 var definitions = { "REF": "#", "REF2": "##", "TOPIC": "**", "STARTCOMMENT": "<!--", "ENDCOMMENT": "-->", "CMD": ">", "QUESTION": "@@", "NOTE": "--", "SUBTASK": "-" };
 //have to include >, -> to get to -->
 //have to include -, --, !-- to get to <!--
+function setModel(model) {
+    exports.ollama_model = model;
+}
 function fnEnv(lines, currentindex) {
     //this will be used to create a token for the environment variable.  
     //look at the tokens and take proper action.  
@@ -671,7 +675,7 @@ function select(topic, open = opennature) {
     }
     return false;
 }
-function pickTopic(selectedtopics, defaultprompts = [], numtopics = 10, extendtopics = false) {
+function pickTopic(selectedtopics, defaultprompts = [], numtopics = 10, extendtopics = false, numentries = 10) {
     //pick a topic from the topicarray based on the sort order.
     //still need to improve when we have no selected topics.  
     let minsort = 1000000; //set to a large number.
@@ -728,6 +732,8 @@ function pickTopic(selectedtopics, defaultprompts = [], numtopics = 10, extendto
         if (exports.topicarray[selectedtopics[i]] !== undefined) {
             retdata += "**" + selectedtopics[i] + "\n"; //add the topic to the data.
             retkey = selectedtopics[i]; //set the key to the topic.
+            //only get 10 entries..
+            let tentries = exports.topicarray[selectedtopics[i]].length;
             for (let j = 0; j < exports.topicarray[selectedtopics[i]].length; j++) {
                 //add date here.  
                 let item = exports.topicarray[selectedtopics[i]][j];
@@ -737,7 +743,10 @@ function pickTopic(selectedtopics, defaultprompts = [], numtopics = 10, extendto
                 //                retdata += `**${item.file}:${item.line}\n`;
                 //                retdata += `[${item.file}](${item.file}#L${item.line})  \n`;
                 //                retdata += item.data + "\n"; //add all data for the topic.
-                mylist.push(item);
+                //random number related to list length...
+                if (Math.random() < numentries / tentries) { //randomly add entries based on the number of entries for the topic.
+                    mylist.push(item);
+                }
             }
         }
     }
@@ -745,8 +754,10 @@ function pickTopic(selectedtopics, defaultprompts = [], numtopics = 10, extendto
     mylist.sort((a, b) => {
         return a.date - b.date; //sort by date.
     });
+    //get only a subset of results to avoid overwhelming the model and the user..
     for (let i = 0; i < mylist.length; i++) {
         //add the date to the data.  
+        //randomly return results?  
         let item = mylist[i];
         //        retdata += `**${item.topic}\n`;
         retdata += `**${item.file}:${item.line}\n`;

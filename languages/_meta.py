@@ -8,6 +8,18 @@ import languages.helpers.timewindow as timewindow
 
 logger = logging.getLogger(__name__)
 
+_META = 48
+_VIDEO = 49
+_BOOK = 50
+_GIT = 51
+_ERROR = 52
+_HOTKEYS = 53
+_GEN = 56
+_CHECK = 57
+_CREATE = 58
+_LANG = 59
+
+
 class _meta:
   #define action for some sequences.  
   def __init__(self, config, qapp=None, startx=0):
@@ -119,6 +131,7 @@ class _meta:
     self.filtered = self.transcriber.filter_books_recursive()
     logger.info(f'Filtered book struct: {self.filtered}')
     self.bookarray = self.transcriber.relevant_book_array(self.filtered) #get list of books for selection.
+    self.filteredbookarray = self.bookarray[:] #start with all books in filteredbookarray, then we can filter based on search or time window.
     logger.info(f'Book array: {self.bookarray}')
     #sort by recency
     self.bookarray.sort(key=lambda x: abs(self.timewindow.currenttime - x['..']), reverse=True) #sort by recency to current time, most recent first.
@@ -391,7 +404,7 @@ class _meta:
     logger.info(f'> Time Jump {sequence}')
     jump = 1 #default jump level
     if (len(sequence) > 0):
-      jump = float(sequence[-1] - self.mid) #just use 10 keys for mid..
+      jump = float(sequence[-1] - self.keybot) - 6 #just use 10 keys for mid..
     t = self.timewindow.timeJump(jump)
     vars = {}
     logger.info(f'$$TIME={t}')
@@ -523,9 +536,13 @@ class _meta:
     logger.info(f'> Select Topic_ {sequence}')
     print("> Select Topic_")
     newidx = self.selectedtopicindex
+    _booktopic = False
     if (len(sequence) > 0):
       if (sequence[-1] == self.keybot): #dont adjust if keybot, 
         return 1
+      if (sequence[0] == _BOOK):
+        _booktopic = True
+
       newidx = self.adjust_topic_index(self.mid-sequence[-1])
     logger.info(f'--{self.topicarray[newidx]['**']}')
     self.func = "Select Topic_"
@@ -587,6 +604,7 @@ class _meta:
       self.transcript = transcribe_audio_whisper("topic.wav")
 
       logger.info('$$AUDIO = ' + self.transcript)
+
     if (len(sequence) == 2):
       #stop recording..
       if (sequence[-1] == sequence[-2]):
@@ -697,6 +715,7 @@ class _meta:
       if (sequence[-1] == self.keybot): #dont adjust if keybot, 
         return 1
       newidx = self.adjust_book_index(self.mid-sequence[-1])
+    logger.info(f'{newidx}')
     logger.info(f'--{self.bookarray[newidx]["**"]}')
     self.func = "Select Book_"
     #should make this more general.. send last ten links
