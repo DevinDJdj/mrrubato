@@ -178,3 +178,59 @@ Ctrl+Shift+3
 
 > git config --global user.email "me@gmail.com"
 
+
+
+**mrrubato
+;> .\treyenv\Scripts\activate
+;> pip install -r ./extensions/trey/requirements.txt
+> pip install huggingface_hub
+
+!!No module named 'rapidfuzz'
+==
+> pip install rapidfuzz
+> pip install kokoro
+> pip install faster-whisper
+> pip install scikit-learn
+> pip install pyqtgraph
+
+> pip install pycaw
+> pip install rapidfuzz
+> pip install k2
+> pip install pytesseract
+#https://github.com/tesseract-ocr/tesseract/releases/download/5.5.0/tesseract-ocr-w64-setup-5.5.0.20241111.exe
+
+> python ./extensions/trey/trey.py
+$$
+
+**extensions/vscode/codetutor/src/extension.ts
+Not using existing CMD terminal, 
+so sequential commands which are not run in same
+block will not work.  
+Maybe just default '$$' creates new terminal, or
+delete/create..
+Otherwise inherit existing $$
+
+
+**extensions/trey/trey.py
+#https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip
+> cp ffmpeg $$SYSTEM
+
+!!Could not find module 'C:\devinpiano\music\treyenv\Lib\site-packages\pyzbar\libzbar-64.dll'
+==
+#https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-supported-redistributable-version
+Also install
+C++ 2013 Redistributable package
+
+> pip install pyzbar
+$$
+
+!!No module named 'pyrebase'
+==
+> pip install pyrebase
+Set up user
+$$
+
+**web/public/me.html
+Need simple user setup and view..
+
+

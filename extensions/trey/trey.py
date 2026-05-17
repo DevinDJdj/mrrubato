@@ -22,6 +22,7 @@ import math
 #Local imports
 sys.path.insert(0, 'c:/devinpiano/') #config.json path
 sys.path.insert(1, 'c:/devinpiano/music/') #config.py path Base project path
+sys.path.insert(2, 'c:/devinpiano/music/mrrubato') #config.py path Base project path
 import config 
 import mykeys
 
