@@ -79,6 +79,11 @@
           "default": "genbook",
           "description": "Relative path for transcript generation."
         },
+        "mrrubato.transcriptfolder": {
+          "type": "string",
+          "default": "C:\\devinpiano\\transcripts\\",
+          "description": "Relative path for transcripts."
+        },
         "mrrubato.defaultprompts": {
           "type": "array",
           "items": {

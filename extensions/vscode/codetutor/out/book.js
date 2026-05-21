@@ -953,6 +953,15 @@ function updatePage(filePath, text, linefrom = 0, lineto = 0, show = false) {
     const folderUri = vscode.workspace.workspaceFolders[0].uri;
     // this should be a book path.  Use as you would work on the project.  
     const fileUri = folderUri.with({ path: path_1.posix.join(folderUri.path, filePath) });
+    const copyUri = filePath.split("/").pop(); //last part of file path
+    try {
+        const mySettings = vscode.workspace.getConfiguration('mrrubato');
+        const transcriptFolder = mySettings.get('transcriptfolder', 'C:\\devinpiano\\transcripts\\');
+        fs.appendFileSync(path_1.posix.join(transcriptFolder, 'genbook\\' + copyUri), text, 'utf-8'); //write the text to the transcript folder for backup and analysis.
+    }
+    catch (error) {
+        console.error(`Error writing file: ${error}`);
+    }
     const wsEdit = new vscode.WorkspaceEdit();
     wsEdit.createFile(fileUri, { ignoreIfExists: true });
     vscode.workspace.applyEdit(wsEdit).then(() => {

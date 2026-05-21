@@ -592,7 +592,7 @@ class transcriber:
                     if (len(parts) >= 2):
                         key = parts[0]
                         #in case we have = within the value..
-                        value = "".join(parts[1:]).strip()
+                        value = "=".join(parts[1:]).strip()
                         vars[key] = value
 
                         #prioritize vars here.  

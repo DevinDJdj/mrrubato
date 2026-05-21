@@ -104,8 +104,9 @@ export function transcribe(str: string, topic: string = "NONE"): Array<{topic: s
                 break;
             default:
                 topicobj.data += linestr + "\n";
-
-                break;
+                if (commandobj !== null) {
+                    commandobj.data += linestr + "\n";
+                }
 
         }
     }
@@ -115,6 +116,7 @@ export function transcribe(str: string, topic: string = "NONE"): Array<{topic: s
         topics.push(topicobj);
     }
     if (commandobj !== null && commandobj.cmd.trim().length > 0) {
+        topicobj.cmds.push(commandobj);
         cmdhistory.push(commandobj);
         cmds.push(commandobj);
     }

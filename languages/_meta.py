@@ -418,27 +418,31 @@ class _meta:
     vars = {}
     similar = -1
     if (len(sequence) > 0):
-      if (sequence[-1] >= self.keybot + 12): #if we go above keybot + 12, we can show similar items based on current time window.  
-        similar = sequence[-1] - (self.keybot + 12)
+      if (sequence[-1] > self.keybot + 6): #if we go above keybot + 6, we can show similar items based on current time window.  
+        similar = sequence[-1] - (self.keybot + 6)
         vars['SIMILAR'] = similar
     self.set_qr(self.func, vars)
     return 1
   
   def time_zoom(self, sequence=[]):
     logger.info(f'> Time Zoom {sequence}')
-    zoom = 2.0 #default zoom level
+    zoom = -1 #default zoom in
     similar = -1
     if (len(sequence) > 0):
+      #[48,50,53,54] zoom out, [48,50,53,52] zoom in
       zoom = float(sequence[-1] - self.keybot) - 6 #use 6 keys above keybot for zoom levels, so we have some negative and positive levels.
-      if (zoom >= 6): #next octave, pick from similar items if exist..
-        similar = sequence[-1] - (self.keybot + 12)
+      if (zoom == 0):
+        zoom = 1 #default to zoom out if keybot + 6 is pressed
+      elif (zoom == -2):
+        zoom = -1 #zoom in
+      elif (zoom > 0): #pick from similar items if exist..
+        similar = sequence[-1] - (self.keybot + 6)
         zoom = 0 #just use same zoom level for similar items
 
-      if zoom >= 0:
-        zoom = pow(2, zoom) #exponential zoom for more range. max 64x
-      else:
-        zoom = pow(2, zoom) #exponential zoom for more range. min 1/64x
-    w = self.timewindow.timeZoom(zoom)
+    if (zoom != 0):
+      self.timewindow.timeZoom(zoom)
+
+    w = self.timewindow.window
     vars = {}
     logger.info(f'$$TIMEWINDOW={w}')
     vars['ZOOM'] = zoom

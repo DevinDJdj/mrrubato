@@ -355,9 +355,13 @@ export function startWatchingMMAP(name: string){
 }
 
 export function startWatchingTranscriber(lang: string, transcriptFolder: string = "C:/devinpiano/transcripts/"){
+
+
     //watch the transcriber folder for changes and update the book accordingly.
     //get fname as YYYYMMDD.txt
     let now = Book.formatDate();
+    const mySettings = vscode.workspace.getConfiguration('mrrubato');	
+    transcriptFolder = mySettings.get('transcriptfolder', transcriptFolder);
     let fname = `${transcriptFolder}${lang}/${now}.txt`;
 
     if (!fs.existsSync(fname)) {
