@@ -443,3 +443,27 @@ add it directly to VTT?
 have some info from transcripts..
 Can now embed this with other entries..
 Or make separate listing..
+
+
+**extensions/trey/trey.py
+!!too long to load MIDI
+2026-05-21 15:38:57 INFO     > MIDI Load start 2026-05-14 15:38:52.814401 to 2026-05-21 15:38:52.814401
+2026-05-21 15:39:15 INFO     MIDI Loaded 18 files
+==
+dont use os.getctime os.getmtime, inefficient..
+Just use file names..
+Better..not great..
+2026-05-24 05:41:28 INFO     > MIDI Load start 2026-05-17 05:41:23.141803 to 2026-05-24 05:41:23.141803
+2026-05-24 05:41:30 INFO     > MIDI Load 107 files found
+2026-05-24 05:41:33 INFO     MIDI Loaded 21 files, 4429 messages and 2173 notes
+
+$$
+
+
+**timestep.py
+--saveLocalTranscripts
+test..
+
+**web/public/chata.html
+**web/public/data/trans_trey.json
+test..

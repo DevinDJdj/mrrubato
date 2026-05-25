@@ -370,21 +370,32 @@ class transcriber:
         #list all files in directory
         #get year
         y = start_time.year
+        totmsgs = 0
+        totnotes = 0
+        date_format = "%Y%m%d%H%M%S"
         for y in range(start_time.year, end_time.year+1):
             folder = self.TRANSCRIPT_FOLDER + str(y) + '/'
-            files = [f for f in os.listdir(folder) if os.path.getmtime(folder + f) >= start_time.timestamp() and os.path.getctime(folder + f) <= end_time.timestamp()]
+            files = []
+            for m in range(start_time.month, end_time.month+1):
+                sm = str(m).zfill(2)
+#                files.extend([f for f in os.listdir(folder) if f.endswith('.mid') and f.startswith(str(y) + sm) and os.path.getmtime(folder + f) >= start_time.timestamp() and os.path.getctime(folder + f) <= end_time.timestamp()])
+                files.extend([f for f in os.listdir(folder) if f.endswith('.mid') and f.startswith(str(y) + sm)]) #just use names..
 
-            sorted_files = sorted(files, key=lambda f: os.path.getmtime(os.path.join(folder, f))) #sort by modification time, oldest first.  could also sort by creation time if needed.
+            sorted_files = sorted(files, key=lambda f: f) #sort by modification time, oldest first.  could also sort by creation time if needed.
             numloaded = 0
             print(f'MIDI Read: {folder}')
             print(sorted_files)
+            logger.info(f'> MIDI Load {len(files)} files found')
             ret = []
             last_time = start_time.timestamp()
             ctime = None
             for f in sorted_files:
         #      if (f.startswith(yesterday) or f.startswith(today)):
                 if (f.endswith('.mid')): #dont open wav files.. maybe rethink sharing directory..
-                    ctime = os.path.getctime(folder + f)
+#                    ctime = os.path.getctime(folder + f)
+                    ctime = datetime.strptime(f[:14], date_format).timestamp()
+                    if (ctime < start_time.timestamp() or ctime > end_time.timestamp()):
+                        continue
 
                     try:
                         #read midi file and save as sequence..
@@ -403,8 +414,10 @@ class transcriber:
                     last_time = ctime
                     numloaded += 1
                     ret.append({'timestamp': round(ctime), 'notes': notes, 'msgs': msgs})
+                    totmsgs += len(msgs)
+                    totnotes += len(notes)
 
-        logger.info(f'MIDI Loaded {numloaded} files')
+        logger.info(f'MIDI Loaded {numloaded} files, {totmsgs} messages and {totnotes} notes')
         self.allmidi = {'midi': ret, 'start_time': start_time, 'end_time': end_time}
         #maybe want to play these back in order to associate with words in the transcript, but for now just load and search as needed.  could also do some processing here to extract any text info from the midi files if available, but for now just get the keys and timestamps.
 #        self.play_midi(ret, act=False) #get words without acting on them, to associate with midi data.
