@@ -55,9 +55,9 @@ class timewindow:
     def timeZoom(self, zoom=1.0):
         #quantize zoom windows to predefined human friendly values.  zoom in or out by going to next window size.
         #not sure if 5 years or 25 years will actually work in most cases..
-        if (zoom >= 1):
+        if (zoom > 0):
             self.windowindex += 1
-        else:
+        elif (zoom < 0):
             self.windowindex -= 1
         if (self.windowindex < 0):
             self.windowindex = 0

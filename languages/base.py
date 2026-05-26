@@ -28,6 +28,7 @@ class base:
     self.name = "base"
     #self.keybot = 49 #no keybot for dynamic and short/created languages...
     self.mid = 60 #middle C for bbox calc
+    self.keybot = 61
     self.keyoffset = 0 #offset within octave
     self.octaveshift = 1 #number of octaves to shift up for dynamic keys
     self.maxseq = 10 #includes parameters

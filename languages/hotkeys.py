@@ -728,6 +728,8 @@ class hotkeys:
           linkno = len(playwrighty.page_cache)-1
 
         vars['idx'] = linkno
+        #show title..
+        vars['title'] = playwrighty.page_cache[linkno]["title"]
 
         self.set_qr(self.func, vars)
         self.speak(f'--{playwrighty.page_cache[linkno]["title"]}')

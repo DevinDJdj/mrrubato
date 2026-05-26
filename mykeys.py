@@ -517,11 +517,11 @@ class MyKeys:
     vars = {}
     vars['TIME'] = int(time.time())
     vars['type'] = '_meta'
-    vars['MIDI'] = self.get_midiarray(10) #last 10 notes for now.
+    vars['MIDI'] = self.get_midiarray(50) #last 50 notes/chars for now.
     print(f'Tock {vars}')
-    self.set_qr("Tock", vars) #last 10 notes for now.
+    self.set_qr("Tock", vars) #last 50 notes for now.
 
-  def get_midiarray(self, num=10):
+  def get_midiarray(self, num=50):
     mytrack = self.mid.tracks[self.currentchannel][-num*2:] #get last num notes, note on and note off.
     midiarray = []
     for msg in mytrack:

@@ -10,16 +10,13 @@ var __assign = (this && this.__assign) || function () {
     };
     return __assign.apply(this, arguments);
 };
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.current_topic = exports.cmdhistory = exports.topichistory = void 0;
-exports.transcribe = transcribe;
-exports.topichistory = [];
-exports.cmdhistory = [];
-var current_lang = "_meta";
-exports.current_topic = "NONE";
+
+export var topichistory = [];
+export var cmdhistory = [];
+export var current_lang = "_meta";
+export var current_topic = "NONE";
 var current_cmd = "";
-function transcribe(str, topic) {
-    if (topic === void 0) { topic = "NONE"; }
+export function transcribe(str, topic="NONE") {
     //tokenize the input string.
     //    let lines = tokenizer.tokenize(str, topic);
     var lines = str.split("\n");
@@ -49,8 +46,8 @@ function transcribe(str, topic) {
         switch (basetype) {
             case "**":
                 if (topicobj !== null && topicobj.data.trim().length > 0) {
-                    exports.topichistory.push(topicobj);
-                    topics.push(topicobj);
+                    topichistory.push(__assign({}, topicobj));
+                    topics.push(__assign({}, topicobj));
                 }
                 topic = linestr.slice(2).trim();
                 topicobj = {
@@ -59,25 +56,27 @@ function transcribe(str, topic) {
                     vars: {},
                     cmds: Array(),
                 };
-                exports.current_topic = topic;
+                current_topic = topic;
                 break;
             case "> ":
             case ">>":
                 if (commandobj !== null && commandobj.cmd.trim().length > 0) {
-                    exports.cmdhistory.push(commandobj);
-                    cmds.push(commandobj);
-                    topicobj.cmds.push(commandobj);
+                    cmdhistory.push(__assign({}, commandobj));
+                    cmds.push(__assign({}, commandobj));
+                    topicobj.cmds.push(__assign({}, commandobj));
                     commandobj = __assign({}, blankcommandobj);
                 }
-                current_cmd = linestr.slice(2).trim();
                 commandobj = __assign({}, blankcommandobj);
+                current_cmd = linestr.slice(2).trim();
+                commandobj.cmd = current_cmd;
+                commandobj.topic = current_topic;
                 break;
             case "$$":
                 if (linestr.trim().length < 3) {
                     if (current_cmd.trim().length > 0) {
-                        exports.cmdhistory.push(commandobj);
-                        topicobj.cmds.push(commandobj);
-                        cmds.push(commandobj);
+                        cmdhistory.push(__assign({}, commandobj));
+                        topicobj.cmds.push(__assign({}, commandobj));
+                        cmds.push(__assign({}, commandobj));
                         commandobj = __assign({}, blankcommandobj);
                     }
                     break;
@@ -99,16 +98,19 @@ function transcribe(str, topic) {
                 break;
             default:
                 topicobj.data += linestr + "\n";
+                if (commandobj !== null && commandobj.cmd.trim().length > 0) {
+                    commandobj.data += linestr + "\n";
+                }
                 break;
         }
     }
     //add last topic and command to history.
     if (topicobj !== null && topicobj.data.trim().length > 0) {
-        exports.topichistory.push(topicobj);
+        topichistory.push(topicobj);
         topics.push(topicobj);
     }
     if (commandobj !== null && commandobj.cmd.trim().length > 0) {
-        exports.cmdhistory.push(commandobj);
+        cmdhistory.push(commandobj);
         cmds.push(commandobj);
     }
     return topics; //mostly use topics[n].cmds for commands.

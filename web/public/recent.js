@@ -1,11 +1,11 @@
 vids = [];
-import { transcribe } from './transcriber.js';
+//import { transcribe } from './transcriber.js';
 
 async function getAllRecursive(storageRef) {
   const res = await storageRef.listAll();
   let ret = [];
 
-  const promises = res.items.map((itemRef) => getMetadata(itemRef));
+  const promises = res.items.map((itemRef) => itemRef.getMetadata());
   const metadatas = await Promise.all(promises);
   // Process files in the current folder
   metadatas.sort((a, b) => new Date(b.updated) - new Date(a.updated));
@@ -40,20 +40,22 @@ function loadAllRecentTranscripts(limit=30){ //30 days default..
 		console.log("Transcript files used:", files);	
 		files.forEach((file) => {
 			console.log("Processing file:", file.path);
-			file.ref.getDownloadURL().then((url) => {
+
+			storageRef.child(file.path).getDownloadURL().then((url) => {
 				fetch(url)
 					.then((response) => response.text())
 					.then((text) => {
 						//transcribe this data to get RECORDs.  
 						//add records to listing.. addRecentRow
-						transcribe(text).then((records) => {
-							console.log("Transcribed records:", records);
-							records.forEach((record) => {
-								for (const cmd of record.cmds){
-									console.log("Command in record:", cmd);
-	//							addRecentRow(record);
-								}
-							});
+						fname = file.path.split('/').pop().replace('.txt', '');
+						console.log("Transcribing file:", fname);
+						records = FUNCS.TRANSCRIBER.transcribe(text, fname);
+						console.log("Transcribed records:", records);
+						records.forEach((record) => {
+							for (const cmd of record.cmds){
+								console.log("Command in record:", cmd);
+//							addRecentRow(record);
+							}
 						});
 
 

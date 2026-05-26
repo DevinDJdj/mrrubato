@@ -187,7 +187,7 @@ def localBackup():
 def getPlaylistFromGrade(grade):
     if grade == "test":
         return ""
-    if int(grade) > 8:
+    if int(grade) > 7:
         return config.cfg['youtube']['GREAT_PLAYLIST']
     elif int(grade) > 4:
         return config.cfg['youtube']['GOOD_PLAYLIST']
@@ -481,7 +481,7 @@ def get_transcripts(langs=['hotkeys', 'video']):
                     alltranscripts.append({"lang": lang, "url": url, "timestamp": timestamp, "cmd": c['cmd'], "topic": c['topic'], "transcript": transcript})
 
 
-    alltranscripts.sort(key=lambda x: x['timestamp']) #sort by timestamp, most recent first        
+    alltranscripts.sort(key=lambda x: x['timestamp']) #sort by timestamp, most recent last        
     return alltranscripts
 
 #local transcripts from keyboard usage and transcribed commands.  
@@ -556,17 +556,53 @@ def saveLocalTranscripts():
 
 
     #upload any new transcript listings..
+    #if > 30 days, we dont get all transcripts..
+    # < 30 days, we get duplication of transcripts.  This is not ideal, but we can live with it for now.
     if (len(alltranscripts) > 0):
-        datetimestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        datetimestamp = datetime.now().strftime("%Y%m%d")
         y = datetime.now().year
+        jsondump = json.dumps(alltranscripts, ensure_ascii=False, indent=4)
         fname = f'./data/transcription/trey/{y}/{datetimestamp}.json'
         os.makedirs(os.path.dirname(fname), exist_ok=True)
         f = open(fname, "w", encoding='utf-8')
-        f.write(json.dumps(alltranscripts, ensure_ascii=False, indent=4))
+        f.write(jsondump)
+
         fname = f'./web/public/data/trey/{y}/{datetimestamp}.json'
         os.makedirs(os.path.dirname(fname), exist_ok=True)
         f1 = open(fname, "w", encoding='utf-8')
-        f1.write(json.dumps(alltranscripts, ensure_ascii=False, indent=4))
+        f1.write(jsondump)
+
+        #just for ease of use.. duplicate data here.. number of days we have run timestep.py
+        fname = f'./web/public/data/trans_trey.json'
+        os.makedirs(os.path.dirname(fname), exist_ok=True)  
+        exists = os.path.exists(fname)      
+        f1 = open(fname, "a+", encoding='utf-8')
+        if (exists):
+            f1.seek(0)
+            existingcontent = f1.read() if exists else ""
+            f1.seek(0)
+            #find 
+            
+            if existingcontent != "":
+                existingtranscripts = json.loads(existingcontent)
+                last_time = existingtranscripts[-1]['timestamp'] if len(existingtranscripts) > 0 else 0
+                for t in alltranscripts:
+                    if t['timestamp'] > last_time:
+                        existingtranscripts.append(t)
+#                import difflib
+#                matcher = difflib.SequenceMatcher(None, existingcontent, jsondump)
+#                match = matcher.find_longest_match(0, len(existingcontent), 0, len(jsondump))
+#                if match.size > 100 and match.b == 0: 
+                    #if there is a significant overlap at the beginning of the jsondump, 
+                    #we assume this is duplication and skip appending to avoid bloating the file.  
+#                    print("Significant overlap with existing content, updating only non-overlapping part.")
+#                    f1.write(jsondump[match.size:]) #write only the non-overlapping part to avoid duplication
+#                    f1.close()
+#                    return uploadedfiles
+                jsondump = json.dumps(existingtranscripts, ensure_ascii=False, indent=4)
+                        
+        #write if no match or no file
+        f1.write(jsondump)
 
     return uploadedfiles
 

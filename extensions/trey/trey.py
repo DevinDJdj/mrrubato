@@ -1788,7 +1788,7 @@ class MyWindow(QMainWindow):
                 elif (type == 'base'):
                     self.pause_tmap(False) #dont hide the video, just pause it..
                     #pause any other speaking or playing we are doing.
-                    self.transcriber.write_plain('base', command) #dont write intermediate msg?
+                    self.transcriber.write_plain('base', '> ' + command) #dont write intermediate msg?
                 elif (type == 'book'):
                     cacheno = vars.get('cacheno', -1)
                     pause_reader(int(cacheno))
@@ -1844,12 +1844,13 @@ class MyWindow(QMainWindow):
                 i = 0
                 similar = int(vars.get('SIMILAR', -1))
                 if (similar != -1):
-                    if (len(self.similar) >= similar):
+                    if (len(self.similar) > similar):
                         t = int(self.similar[similar]['timestamp']) #get time of this item
+                        logger.info(f"Zooming to similar item at time: {t} with transcript: {self.similar[similar]['transcript']}")
                         self.show_tmap(t)
                         for (idx, item) in enumerate(self.similar):
                             vars[f'{idx}'] = f'{item["timestamp"]}  {item["transcript"][:50]}'
-                        self.show_p({'cmd': command, 'vars': vars, 'timestamp': time.time()})
+                        self.show_p({'type': '> ','cmd': command, 'vars': vars, 'timestamp': time.time()})
 
                         self.update_info(f'{t}\n{self.similar[similar]["transcript"]}')
 #                        self.showQR(qrdata, cmds) #refresh QR display
@@ -1864,6 +1865,8 @@ class MyWindow(QMainWindow):
                     if (len(self.similar) >= similar):
                         #show info about this item, or jump to this time..  
                         t = int(self.similar[similar]['timestamp']) #get time of this item
+                        s = t - w/2
+                        e = t + w/2
                         self.set_time(t, s, e, w)
                         print(f"Similar items: {similar}")
                 else:
@@ -2283,6 +2286,7 @@ class MyWindow(QMainWindow):
         self.screenshots = [] #list of screenshots per monitor
         self.topichistory = []
         self.bookhistory = []
+        self.reading_topic = None
         self.filters = {}
         self.windows = {} #current windows by pid, updated by window thread.
         self.myactions = [] #list of current actions to display, updated by QR commands.
@@ -2926,8 +2930,9 @@ class MyWindow(QMainWindow):
             print(t)
             if (t.get('timestamp', None) is not None):
                 timestamp = t["timestamp"]
-                logger.info(f'Playing item with timestamp: {timestamp}')
+                logger.info(f'Playing item with timestamp: {timestamp} {self.tmapindex}')
                 self.set_time(timestamp) #jump to time of item, can adjust as needed.
+                self.show_tmap(timestamp) #update time map display to show current item, can adjust as needed.
             try:
                 if (t["vars"].get('fname', None) is not None):
                     logger.info(f'Playing file: {t["vars"]["fname"]}')
@@ -2943,10 +2948,24 @@ class MyWindow(QMainWindow):
                     #read in this and start playwrighty 
                     self.inqueue.put(('\n').join(t['lines']))
                 else:
-                    text = self.transcriber.write(t['lang'], t['cmd'], t['vars'], t['topic'], False)
-                    speak(text)
-
+                    if (t['type'] == "**"):
+                        if (t['topic'] != self.reading_topic):
+                            self.reading_topic = t['topic']
+                            logger.info(f"Topic changed to {t['topic']}")
+                            text = t['topic']
+                            speak('**' + text)
+                        #if we have further commands, continue..
+                    
                     logger.warning(f"Unknown command in time map item, no file to play. \nData: {t}")
+                    if (self.tmapindex != 0 and self.tmapindex != len(self.tmap)-1):
+                        #get word from dictionary.  
+                        if (no > 0):
+                            speech.play_synth([48,53], 12, 0.05) #tick
+                        else:
+                            speech.play_synth([48,54], 12, 0.05) #tock
+                        self.play_tmap(no) #play next item to get to useful command..                            
+#                    text = self.transcriber.write(t['lang'], t['cmd'], t['vars'], t['topic'], False)
+
             except Exception as e:
                 logger.error(f'Error playing file from time map: {e}\nData: {t}')
 
@@ -2958,8 +2977,10 @@ class MyWindow(QMainWindow):
 
 
 
-    def show_tmap(self, current_time, secs):
+    def show_tmap(self, current_time, secs=0):
         logger.info('Updating time map display')
+        if (secs == 0):
+            secs = self.e - self.s #use full time range if secs not specified, can adjust as needed.
         startchar = chr(0x30A1)
         cnttext = ""
         typecnttext = ""
@@ -2985,26 +3006,60 @@ class MyWindow(QMainWindow):
         print(f"Current time: {current_time}, Time window seconds: {secs}")
         sorted_tmap = sorted(self.tmap, key=lambda x: current_time - x['..'])
 #        print(f"Sorted tmap: {sorted_tmap}")
-        sorted_indices = sorted(range(len(self.tmap)), key=lambda i: current_time - self.tmap[i]['..'])
+        sorted_indices = sorted(range(len(self.tmap)), key=lambda i: abs(current_time - self.tmap[i]['..']))
         print(f"Sorted indices: {sorted_indices}")
+        ctxtdic = {}
         if (len(sorted_indices) > 0):
             self.tmapindex = sorted_indices[0] #index of closest item in tmap to current time, can use this to select items to display or play etc.
 #            print(sorted_tmap[-10:]) #get last 10 items in sorted tmap for debugging, can adjust as needed.
             print(sorted_tmap[:10]) #get first 10 items in sorted tmap for debugging, can adjust as needed.
-            for i in range(len(sorted_tmap)):
+            skipped = 0
+            for i in range(len(sorted_tmap)): #check closest 10 items in tmap, can adjust as needed.
                 #compare to current time, and select if within current time window.  
                 #show one from each time window..
-                for j in reversed(range(3)): #check most recent 3 time buckets, can adjust as needed.
-                    if (maintext[j]['**'] == '**' and maintimes[j] <= sorted_tmap[i]['..'] < maintimes[j] + secs/3): #if item is within time bucket, can adjust bucket size as needed.
+                if (sorted_tmap[i]['..'] <= current_time - secs/2 or sorted_tmap[i]['..'] >= current_time + secs/2):
+                    skipped += 1
+                    if (skipped > 10):
+                        break #stop checking after skipping 10 items outside of time window, can adjust as needed.
+                    continue #skip items outside of time window, can adjust as needed.
 
-#                    if (sorted_tmap[i]['timestamp'] >= maintimes[j] and sorted_tmap[i]['timestamp'] < maintimes[j] + secs/20): #if item is within time bucket, can adjust bucket size as needed.
-                        if (sorted_tmap[i]['type'] == '> '): #only show commands for now.. no topic selection
-                            maintext[j] = {'**': sorted_tmap[i]['**'], '..': sorted_tmap[i]['..'], '&&': self.transcriber.write(sorted_tmap[i]['<<'], sorted_tmap[i]['&&'], sorted_tmap[i]['$$'], sorted_tmap[i]['**'], False)}
+                for j in reversed(range(3)): #check most recent 3 time buckets, can adjust as needed.
+#                    if (maintext[j]['**'] == '**'):
+                        if (maintimes[j] <= sorted_tmap[i]['..'] < maintimes[j] + secs/3): #if item is within time bucket, can adjust bucket size as needed.
+    #                    if (sorted_tmap[i]['timestamp'] >= maintimes[j] and sorted_tmap[i]['timestamp'] < maintimes[j] + secs/20): #if item is within time bucket, can adjust bucket size as needed.
+                            if (sorted_tmap[i]['type'] == '> '): #only show commands for now.. no topic selection
+                                maintext[j]['**'] = sorted_tmap[i]['**']
+                                maintext[j]['..'] = sorted_tmap[i]['..']
+
+                                #really want a specific key here..
+                                mytime = sorted_tmap[i]['$$'].get('TIME', "_")
+                                ctxtkey = sorted_tmap[i]['$$']['URL'] if (sorted_tmap[i]['$$'].get('URL', None) is not None) else "_"
+                                if (ctxtkey == "_"):
+                                    ctxtkey = mytime #use text as fallback if no URL, can adjust as needed.
+
+                                if (mytime == self.tmap[self.tmapindex]['$$'].get('TIME', None)):
+                                    maintext[j]['&&'] = maintext[j]['&&'] + '\n>>>>\n\n' #indicator for currently playing item, can adjust as needed.
+
+                                if (ctxtdic.get(sorted_tmap[i]['&&'] + '_' + ctxtkey, None) is None):
+                                    newentry = self.transcriber.write(sorted_tmap[i]['<<'], sorted_tmap[i]['&&'], sorted_tmap[i]['$$'], sorted_tmap[i]['**'], False)
+                                    maintext[j]['&&'] = maintext[j]['&&'] + newentry
+                                    ctxtdic[sorted_tmap[i]['&&'] + '_' + ctxtkey] = newentry
+                                else:
+                                    if (sorted_tmap[i]['$$'].get('TEXT', None) is not None):
+                                        #display shortened context key
+                                        shortkey = ctxtkey[:20]
+                                        if (len(ctxtkey) > 20):
+                                            shortkey += '...'
+                                            shortkey += ctxtkey[-20:] #last 20 chars
+                                        shorttext = sorted_tmap[i]['$$']['TEXT'][:100] #shorten text for display, can adjust as needed.
+                                        maintext[j]['&&'] = maintext[j]['&&'] + '#' + shortkey + '\n' + shorttext + '\n'
+#                                maintext[j] = {'**': sorted_tmap[i]['**'], '..': sorted_tmap[i]['..'], '&&': self.transcriber.write(sorted_tmap[i]['<<'], sorted_tmap[i]['&&'], sorted_tmap[i]['$$'], sorted_tmap[i]['**'], False)}
+
 #                if (len(maintext) < 3 and sorted_tmap[i]['type'] == '> ' and sorted_tmap[i]['timestamp'] >= maintimes[len(maintimes)-1]): #only show commands for now.. no topic selection
 #                    self.transcriber.current_topic = sorted_tmap[i]['cmd'] #dont need topic to be updated..
 #                    maintext.append({'topic': sorted_tmap[i]['topic'], 'timestamp': sorted_tmap[i]['timestamp'], 'text': self.transcriber.write(sorted_tmap[i]['lang'], sorted_tmap[i]['cmd'], sorted_tmap[i]['vars'], sorted_tmap[i]['topic'], False)})
 
-            maintext = sorted(maintext, key=lambda x: x['..'])
+            maintext = sorted(maintext, key=lambda x: x['..'])            
             print(maintext)
             for i in range(len(maintext)):
 #                if (temptext[0:2] != '**'):

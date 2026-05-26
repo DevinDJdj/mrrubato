@@ -62,6 +62,7 @@ export var queryhistory = [];
 export var ollama_model = 'gemma4:e4b';
 ollama_model = 'gemma3';
 
+
 var myCodeMirror = null;
 var tempcodewindow = null;
 var usetempcodewindow = false;
@@ -1061,6 +1062,18 @@ export function updatePage(filePath: string, text: string, linefrom: number = 0,
     const folderUri = vscode.workspace.workspaceFolders[0].uri;
     // this should be a book path.  Use as you would work on the project.  
     const fileUri = folderUri.with({ path: posix.join(folderUri.path, filePath) });
+
+    
+    const copyUri = filePath.split("/").pop(); //last part of file path
+
+    try{
+        const mySettings = vscode.workspace.getConfiguration('mrrubato');	
+        const transcriptFolder = mySettings.get('transcriptfolder', 'C:\\devinpiano\\transcripts\\');
+        fs.appendFileSync(posix.join(transcriptFolder, 'genbook\\' + copyUri), text, 'utf-8'); //write the text to the transcript folder for backup and analysis.
+    }
+    catch (error) {
+        console.error(`Error writing file: ${error}`);
+    }
 
     const wsEdit = new vscode.WorkspaceEdit();
     wsEdit.createFile(fileUri, { ignoreIfExists: true });
