@@ -226,7 +226,7 @@ $$
 
 !!No module named 'pyrebase'
 ==
-> pip install pyrebase
+> pip install Pyrebase4
 Set up user
 $$
 
@@ -238,5 +238,43 @@ Need simple user setup and view..
 
 **web/public/me.js
 OK, seems to work ok..
+
+
+**extensions/trey/trey.py
+!!403 Client Error: Forbidden for url: https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyPassword?key=
+==
+;> Enable SMB 1.0/CIFS File Sharing Support
+;HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters. Create a new DWORD, name it RequireSecuritySignature
+
+Set up config..
+**config.json
+--firebase/fbconfig/apiKey
+--firebase/credentialsfile
+$$
+
+
+Install second monitor..
+
+$$DIR=c:/devinpiano/music
+> .\treyenv\Scripts\activate
+> cd mrrubato
+$$DIR=c:/devinpiano/music/mrrubato
+> python ./extensions/trey/trey.py
+> playwright install
+
+> mkdir temp
+
+!!Error in speak function: Torch not compiled with CUDA enabled
+==
+
+$$
+
+
+> pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
+
+> python -c "import torch; print(f'Torch Version: {torch.__version__}, CUDA Available: {torch.cuda.is_available()}, CUDA Version: {torch.version.cuda}')"
+Torch Version: 2.11.0+cu128, CUDA Available: True, CUDA Version: 12.8
+> pip install torchaudio==2.8 --index-url https://download.pytorch.org/whl/cu128
+> pip install torchvision==0.23.0 --index-url https://download.pytorch.org/whl/cu128
 
 

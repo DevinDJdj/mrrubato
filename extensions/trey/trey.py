@@ -2628,7 +2628,8 @@ class MyWindow(QMainWindow):
                     self.windows[hwnd]['z_index'] = z_index
             hwnd = win32gui.GetWindow(hwnd, win32con.GW_HWNDNEXT)
             z_index += 1   
-        logger.debug(f"Got top z window: {topz} at index {self.windows[topz]['z_index']}")     
+        if (topz is not None):
+            logger.debug(f"Got top z window: {topz} at index {self.windows[topz]['z_index']}")     
         return topz
     
     def get_window_info(self):
