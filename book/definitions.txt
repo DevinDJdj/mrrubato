@@ -18,6 +18,7 @@ reference from document
 > CMD operation
 >> Elevated CMD operation
 >$ ubuntu CMD
+>@ vscode command operation
 
 ** topic (source code file name with separator, OR videoID > 10 chars, otherwise content/topic tag)
 
@@ -107,9 +108,9 @@ defstring = "!@#$%^&*<>/-+=;"
  & trailing and removes from ENV.  
 <!--
 $$ ENV
-$$+MYVAR
-$$-MYVAR
-$$-**TOPIC removes all topic ENV variables.  
+$$+ MYVAR
+$$- MYVAR
+$$- **TOPIC removes all topic ENV variables.  
 TOPIC cant start with -
 
 %% WORK

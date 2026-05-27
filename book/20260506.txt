@@ -467,3 +467,54 @@ test..
 **web/public/chata.html
 **web/public/data/trans_trey.json
 test..
+
+
+Should have batch to generate all trans_trey..
+
+
+**LEAN
+Why is it that I didnt like this language?  
+Should try to annotate..
+
+create book command.  
+if it doesnt 
+
+
+
+**languages/_meta.py
+Adjust speed should adjust speed of the narrator..
+
+**extensions/vscode/codetutor/src/extension.ts
+Need to go back from link in book to playwrighty..
+Transcribe into <<hotkeys>>
+CTRL+SHIFT+8 on link..
+
+**testing/lean/tutorials4
+\infixl
+\rcases
+\linarith
+\specialize
+
+#https://lean-lang.org/theorem_proving_in_lean4/Introduction/#Intro
+def m : Nat := 1       -- m is a natural number
+def b1 : Bool := true  -- b1 is a Boolean
+
+Kind of like typescript..
+
+#check n
+n : Nat
+
+
+\la
+\forall
+\ex
+\to
+\N
+\R
+
+>@ lean4.docs.showAbbreviations
+
+
+**extensions/vscode/codetutor/src/toolParticipant.ts
+General glossary of functions listed based on 
+--registerCompletionTool

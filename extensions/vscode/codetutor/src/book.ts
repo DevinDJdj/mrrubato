@@ -120,6 +120,10 @@ export interface BookTopic {
     file: string;
     line: number;
     topic: string;
+    "_": string; //this is the type of topic, based on the definition map.
+    "**": string; //this is the full topic string, including the definition characters.
+    "..": number; //this is the timestamp of the topic in milliseconds since epoch.
+    ":": number, //this is the line number
     data: string;
     date: number; //date in YYYYMMDD format.
     sortorder: number;
@@ -1814,10 +1818,24 @@ export function loadPage(text: string, filePath: string, altdate: number=0): Num
     if (mydate === 0 && altdate !== 0){
         mydate = altdate; //use the alternate date if we have one.
     }
-    let mypage = {"file": filePath, "line": 0, "topic": currenttopic, "sortorder": 0, "date": mydate, "data": ""};
+    if (mydate === 0){
+        let d = new Date();
+        mydate = d.getFullYear()*10000 + (d.getMonth()+1)*100 + d.getDate(); //use the current date in YYYYMMDD format if we have no other date.
+    }
+
+    const date = new Date(mydate.toString().slice(0,4) + "-" + mydate.toString().slice(4,6) + "-" + mydate.toString().slice(6,8)); //convert YYYYMMDD to Date object.
+
+    // Get Unix timestamp in seconds
+    const unixTimestamp = Math.floor(date.getTime() / 1000);
+
+
+    let mypage = {"file": filePath, "_": "**", "**": currenttopic, ":": 0, "..": unixTimestamp, 
+                                    "topic": currenttopic, "line": 0, "date": mydate, "sortorder": 0, "data": ""};
     //adjust sortorder based on order of occurrence for now. 
-    let mytopic = {"file": filePath, "line": 0, "topic": currenttopic, "sortorder": 0, "date": mydate, "data": ""};
-    let subtopic = {"file": filePath, "line": 0, "topic": currenttopic, "sortorder": 0, "date": mydate, "data": ""};
+    let mytopic = {"file": filePath, "_": "**", "**": currenttopic, ":": 0, "..": unixTimestamp, 
+                                    "topic": currenttopic, "line": 0, "date": mydate, "sortorder": 0, "data": ""};
+    let subtopic = {"file": filePath, "_": "> ", "**": currenttopic, ":": 0, "..": unixTimestamp, 
+                                    "topic": currenttopic, "line": 0, "date": mydate, "sortorder": 0, "data": ""};
 
     let strs = text.split("\n");
     let tkey = currenttopic;
@@ -1885,7 +1903,7 @@ export function loadPage(text: string, filePath: string, altdate: number=0): Num
         initArray(tkey, topicarray); //if doesnt exist, add.  
         let myorder = 0;
         myorder = topicarray[tkey]?.length || 0; //get the current order of the topic.
-        mytopic = {"file": filePath, "line": topicstart['**'][i], "topic": tkey, "sortorder": myorder, "date": mydate, "data": ""};
+        mytopic = {"file": filePath, "_": "**", "**": tkey, "..": unixTimestamp, ":": topicstart['**'][i], "line": topicstart['**'][i], "topic": tkey, "sortorder": myorder, "date": mydate, "data": ""};
         mytopic.data = strs.slice(topicstart['**'][i], (i+1)<topicstart['**'].length?topicstart['**'][i+1]:strs.length).join("\n"); //get the topic data from the lines.
 
         //add to vectra (vector DB) this data for later similarity search?  
@@ -1937,7 +1955,7 @@ export function loadPage(text: string, filePath: string, altdate: number=0): Num
             myorder = arrays[key][ckey]?.length || 0; //get the current order of the topic.
             
 
-            subtopic = {"file": filePath, "line": topicstart[key][i], "topic": currenttopic, "sortorder": myorder, "date": mydate, "data": ""};
+            subtopic = {"file": filePath, "_": key, "..": unixTimestamp, ":": topicstart[key][i], "**": currenttopic, "line": topicstart[key][i], "topic": currenttopic, "sortorder": myorder, "date": mydate, "data": ""};
             //for now just get two lines of data for subtopics.
             subtopic.data = strs.slice(topicstart[key][i],topicstart[key][i]+2 ).join("\n"); //get the subtopic data from the lines.
 

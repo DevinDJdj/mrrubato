@@ -40,6 +40,7 @@ exports.registerCompletionTool = registerCompletionTool;
 exports.startWatchingWorkspace = startWatchingWorkspace;
 exports.stopWatchingMMAP = stopWatchingMMAP;
 exports.startWatchingMMAP = startWatchingMMAP;
+exports.writeToTranscriber = writeToTranscriber;
 exports.startWatchingTranscriber = startWatchingTranscriber;
 exports.registerToolUserChatParticipant = registerToolUserChatParticipant;
 exports.registerPiano = registerPiano;
@@ -313,6 +314,21 @@ function startWatchingMMAP(name) {
             // Book.loadPage(newBuf.toString(), "mmap:" + name);
         }
     });
+}
+function writeToTranscriber(lang, topic = "", data = "", transcriptFolder = "C:/devinpiano/transcripts/") {
+    let now = Book.formatDate();
+    const mySettings = vscode.workspace.getConfiguration('mrrubato');
+    transcriptFolder = mySettings.get('transcriptfolder', transcriptFolder);
+    let fname = `${transcriptFolder}${lang}/${now}.txt`;
+    if (topic === "") {
+        topic = Book.currenttopic;
+    }
+    if (!fs.existsSync(fname)) {
+        //create the file if it doesn't exist.  
+        fs.writeFileSync(fname, "");
+    }
+    fs.appendFileSync(fname, `**${topic}\n`); //
+    fs.appendFileSync(fname, `${data}\n`); //append command to topic.
 }
 function startWatchingTranscriber(lang, transcriptFolder = "C:/devinpiano/transcripts/") {
     //watch the transcriber folder for changes and update the book accordingly.

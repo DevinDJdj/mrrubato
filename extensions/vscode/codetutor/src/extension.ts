@@ -21,7 +21,7 @@ import ollama from 'ollama';
 import { LanguageModelPromptTsxPart, LanguageModelToolInvocationOptions, LanguageModelToolResult } from 'vscode';
 
 
-import { startWatchingWorkspace, startWatchingTranscriber, updateStatusBarItem, registerStatusBarTool, registerCompletionTool, registerToolUserChatParticipant, registerPiano, unregisterPiano } from './toolParticipant';
+import { startWatchingWorkspace, startWatchingTranscriber, writeToTranscriber, updateStatusBarItem, registerStatusBarTool, registerCompletionTool, registerToolUserChatParticipant, registerPiano, unregisterPiano } from './toolParticipant';
 import { start } from 'repl';
 import { get } from 'http';
 
@@ -928,6 +928,16 @@ export function activate(context: vscode.ExtensionContext) {
 			case "#":
 				//open on web.
 				vscode.env.openExternal(vscode.Uri.parse(text.substring(1)));
+				//send to transcriber..
+				if (topic === ""){
+					const editor = vscode.window.activeTextEditor;
+					if (editor) {
+						topic = getTopicFromLocation(editor);
+					}
+				}
+				writeToTranscriber("book", topic, text);
+
+
 				break;
 			case "!":
 				//find in log files

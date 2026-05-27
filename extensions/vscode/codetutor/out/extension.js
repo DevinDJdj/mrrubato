@@ -804,6 +804,14 @@ function activate(context) {
             case "#":
                 //open on web.
                 vscode.env.openExternal(vscode.Uri.parse(text.substring(1)));
+                //send to transcriber..
+                if (topic === "") {
+                    const editor = vscode.window.activeTextEditor;
+                    if (editor) {
+                        topic = getTopicFromLocation(editor);
+                    }
+                }
+                (0, toolParticipant_1.writeToTranscriber)("book", topic, text);
                 break;
             case "!":
                 //find in log files

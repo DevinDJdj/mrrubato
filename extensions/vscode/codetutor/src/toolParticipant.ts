@@ -354,6 +354,26 @@ export function startWatchingMMAP(name: string){
 
 }
 
+
+export function writeToTranscriber(lang: string, topic: string = "", data : string = "",transcriptFolder: string = "C:/devinpiano/transcripts/"){
+    let now = Book.formatDate();
+    const mySettings = vscode.workspace.getConfiguration('mrrubato');	
+    transcriptFolder = mySettings.get('transcriptfolder', transcriptFolder);
+    let fname = `${transcriptFolder}${lang}/${now}.txt`;
+    if (topic === ""){
+        topic = Book.currenttopic;
+
+    }
+    if (!fs.existsSync(fname)) {
+        //create the file if it doesn't exist.  
+        fs.writeFileSync(fname, "");
+    }
+
+    fs.appendFileSync(fname, `**${topic}\n`); //
+    fs.appendFileSync(fname, `${data}\n`); //append command to topic.
+
+}
+
 export function startWatchingTranscriber(lang: string, transcriptFolder: string = "C:/devinpiano/transcripts/"){
 
 
