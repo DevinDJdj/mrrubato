@@ -561,12 +561,18 @@ class MyKeys:
         self.sequence = self.sequence[:-len(self.words[-1]['sequence'])] #remove length of last word.      
 
         self.words[-1]['ss'] = ss
+        if (hasattr(self.languages[l], 'transcript') and self.languages[l].transcript != ""):
+          self.words[-1]['transcript'] = self.languages[l].transcript #add transcript to word for reference in new word creation.
         self.words_.append(self.words[-1]) #add to executed words.
+        if ('_lang' in self.languages and hasattr(self.languages['_lang'], 'spokenwords')):
+          self.languages['_lang'].spokenwords.append(self.words[-1]) #add to spoken words in _lang for reference in new word creation.
 
         self.words = self.words[:-1 ] #remove last word as it executed.  
       else:
         #hotkey only word.  _word with empty sequence.
+        #think we dont pass here..
         self.words_.append({"word": cmd, "lang": l, "langna": l, "sequence": orig, "ss": ss, "_words": self.words}) #add to executed words.
+
       self.currentlangna = self.words[-1]['langna'] if len(self.words) > 0 else ""
       self.currentlang = self.words[-1]['lang'] if len(self.words) > 0 else ""
       self.currentcmd = self.words[-1]['word'] if len(self.words) > 0 else None

@@ -31,6 +31,9 @@ class _lang:
     self.suggestions = []
     self.alltopics = {}
     self.topicarray = []
+    self.wordmap = {} #sequence -> sequence mapping for new words or created words.  
+    self.spokenwords = [] #list of words spoken, can use for context in new word creation.
+    self.mywords = [] #list of words executed, can use for context in new word creation.
     self.selectedtopic = None
 
   def word(self, sequence=[]):
@@ -78,6 +81,7 @@ class _lang:
         "3": {
             "Help": [59,71,60], #show help
             "New Language": [59,61,62], #Create language definition..
+            "New Word": [59,61,63], #Create new word definition..
         }
 
 
@@ -94,12 +98,14 @@ class _lang:
       "Help": "help",
       "Set Language": "set_language",
       "New Language": "new_language",
+      "New Word": "new_word",
 
     }
     self.helpdict = {
       "Help": {"help": "help", "params": "None", "desc": "Show video commands."},
         "Set Language": {"help": "set_language", "params": "None", "desc": "Set current language."},
         "New Language": {"help": "new_language", "params": "None", "desc": "Create new language definition."},
+        "New Word": {"help": "new_word", "params": "None", "desc": "Create new word definition."},
 
     }
 
@@ -203,6 +209,76 @@ class _lang:
     logger.info(f'> New Language {sequence}')
     self.func = "New Language"
     self.speak('Creating new language definition not yet implemented')
+    return 0
+
+  def text2seq(self, text):
+    #convert text to sequence.  
+    seq = []
+    seq.append(110) #start text
+      
+    for c in text:
+      n = ord(c)
+      if (n >= 0 and n <= 255):
+        c1 = n // 16
+        c2 = n % 16
+        note1 = 112 + c1
+        note2 = 112 + c2
+        seq.append(note1)
+        seq.append(note2)
+        print(f'Encoded char {c} to notes [{note1},{note2}]')
+      else:
+        print(f'Error: character {c} out of range')
+        logger.error(f'Error: character {c} out of range')
+
+    seq.append(111) #end text    
+    return seq
+
+  def new_word(self, sequence=[]):
+    """Create new word definition."""
+    numwords = 1
+    if (len(sequence) == 1):
+      #find last word used along with sequence.  
+      #param for number of words to use for shortcut sequence..
+      #pull from mykeys.. words[-i:]
+      numwords = sequence[0] - self.keybot #number of words to use for new word sequence.
+      if numwords <= 0:
+        numwords = 1
+      self.mywords = self.spokenwords[-numwords:] if len(self.spokenwords) >= numwords else self.spokenwords
+
+    if (len(sequence) > 1):
+      if (sequence[-1] == self.keybot and sequence[-2] == self.keybot ):
+        definition = sequence[1:-2] #remove command, keybot sequence, and keybot at end.
+      elif (sequence[-1] == self.keybot):
+        definition = sequence[1:-1] #remove command and keybot at end.
+      else:
+        definition = sequence[1:] #remove command and keybot sequence.
+        #show if already have a word..
+        totalseq = []
+        if (self.wordmap.get(tuple(definition)) is not None):
+          #self.speak('Word already exists for this sequence')
+          return 1
+        else:
+
+          for i in range(len(self.mywords)):
+            totalseq.extend(self.mywords[i]['sequence'])
+            totalseq.extend(self.mywords[i]['ss']) #add params.  
+            #add text to ss
+            if 'transcript' in self.mywords[i]:
+              totalseq.extend(self.text2seq(self.mywords[i]['transcript']))
+          self.wordmap[tuple(definition)] = {'&&': definition, 'seq': totalseq} #add to wordmap for lookup.  can add more info here later like params or transcript.
+          logger.info(f'Created new word with sequence {definition}')
+#          self.speak(f'Created new word with sequence {definition}')
+          return 0
+
+
+      #need to parse definition into sequence and params.  for now, just use as text
+
+    #identify if already assigned..
+    #Use default params.. add dynamically to function dict?  
+    logger.info(f'> New Word {sequence}')
+    self.func = "New Word"
+#    self.speak('Creating new word definition not yet implemented')
+    
     return 0
   
   def set_qr(self, func, param={}):

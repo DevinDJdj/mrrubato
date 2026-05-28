@@ -516,5 +516,18 @@ n : Nat
 
 
 **extensions/vscode/codetutor/src/toolParticipant.ts
-General glossary of functions listed based on 
 --registerCompletionTool
+General glossary of functions listed based on topic and other contextual info
+Adjust sortOrder for these things.  
+
+**extensions/vscode/codetutor/src/book.ts
+--sortRecency
+Similar to this..
+
+
+
+**languages/_lang.py
+word assignment, just uses last word..
+
+Need to set transcripts here as well..
+

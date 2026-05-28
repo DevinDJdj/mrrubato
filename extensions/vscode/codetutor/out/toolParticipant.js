@@ -315,19 +315,26 @@ function startWatchingMMAP(name) {
         }
     });
 }
+var transcriberTopic = "";
+var transcriberTopics = {}; //populate latest topic for each language.  Reduce repetition
 function writeToTranscriber(lang, topic = "", data = "", transcriptFolder = "C:/devinpiano/transcripts/") {
     let now = Book.formatDate();
     const mySettings = vscode.workspace.getConfiguration('mrrubato');
     transcriptFolder = mySettings.get('transcriptfolder', transcriptFolder);
     let fname = `${transcriptFolder}${lang}/${now}.txt`;
-    if (topic === "") {
-        topic = Book.currenttopic;
-    }
     if (!fs.existsSync(fname)) {
         //create the file if it doesn't exist.  
         fs.writeFileSync(fname, "");
     }
-    fs.appendFileSync(fname, `**${topic}\n`); //
+    if (topic === "") {
+        topic = Book.currenttopic;
+    }
+    console.log(`Writing to transcriber file ${fname} with topic ${topic} and data ${data}`);
+    if (!(lang in transcriberTopics) || transcriberTopics[lang] !== topic) {
+        //if topic has changed, add to file.  
+        fs.appendFileSync(fname, `**${topic}\n`); //append topic to file.
+        transcriberTopics[lang] = topic;
+    }
     fs.appendFileSync(fname, `${data}\n`); //append command to topic.
 }
 function startWatchingTranscriber(lang, transcriptFolder = "C:/devinpiano/transcripts/") {
@@ -351,6 +358,7 @@ function startWatchingTranscriber(lang, transcriptFolder = "C:/devinpiano/transc
             if (topics.length > 0) {
                 let topic = topics[topics.length - 1].topic;
                 Book.addToHistory(topic);
+                transcriberTopics[lang] = topic;
             }
         }
     });

@@ -857,7 +857,11 @@ export function activate(context: vscode.ExtensionContext) {
 						vscode.commands.executeCommand('workbench.action.terminal.focus');
 						vscode.commands.executeCommand('workbench.action.terminal.sendSequence', { text: text.substring(2) + "\n" });
 						break;
-
+					case "@":
+						//run in vscode
+						vscode.commands.executeCommand(text.substring(2));
+						break;
+						
 					default:
 
 						vscode.commands.executeCommand('workbench.action.terminal.focus');
