@@ -4,6 +4,7 @@
 #>pip install asyncio
 import asyncio
 import random
+from languages import video
 from playwright.async_api import async_playwright
 from playwright_stealth import Stealth
 
@@ -38,6 +39,7 @@ engine_names = []
 last_link_clicked_time = time.time()
 current_cache = -1 #current cache page we are on.
 video_playing = False
+playback_rate = 1.0
 
 screen_position = (0,0,0,0) #x,y,width,height
 last10 = [] #last 10 bookmark URLs for preloading.
@@ -566,6 +568,28 @@ def find_nth_occurrence(main_string, sub_string, n):
     return -1 # Should not be reached if n > 0 and occurrence_count is handled correctly
 
 
+def set_speed(speed=-1, cacheno=-1):
+    global current_cache
+    global video_playing
+    global playback_rate
+    total_read = 0
+    if (speed < 0):
+        speed = playback_rate
+    if (cacheno < 0 or cacheno >= len(page_cache)):
+        cacheno = current_cache
+    if (cacheno < 0 or cacheno >= len(page_cache)):
+        return -1
+    page = page_cache[cacheno]['page']
+    speed = round(speed, 1)
+    #more complex with multiple video controls..
+    page.evaluate("""() => {
+        const video = document.querySelector('video');
+        if (video) {
+            video.playbackRate = """ + str(speed) + """;
+        }
+    }""")
+    video_playing = False
+
 def pause_video(cacheno=-1):
     global current_cache
     global video_playing
@@ -758,7 +782,7 @@ def update_page_offset(cacheno=-1):
 
                     offset = link['offset']
                     off2 = temptext.rfind("\n", 0, offset)
-                    if (off2 < offset-100):
+                    if (off2 < offset-100 or off2 == -1):
                         temptext = temptext[offset-50: offset]
                     else:
                         offset = temptext.find("\n", offset)
@@ -787,7 +811,10 @@ def update_page_offset(cacheno=-1):
                     logging.error(f'Error scrolling to link: {link["text"]} - {e}')
 
 
-    total_read = page_cache[cacheno]['current_offset'][url]
+    if (url in page_cache[cacheno]['current_offset']):
+        total_read = page_cache[cacheno]['current_offset'][url]
+    else:
+        total_read = 0
 
     return total_read
 

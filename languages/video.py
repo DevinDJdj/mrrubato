@@ -106,6 +106,13 @@ class video:
       },
       "4": {
         "Screenshot Feedback": [49,53,55,53], #screenshot with feedback
+        #old style recording commands..
+        "Start Record": [49,56,57,56], #start record old style > ./record.py
+        "Set Composer": [49,56,52,56], #set composer for recording find in DB
+        "Select Composer": [49,56,53,56], #select composer for recording find in DB go through sequential..        
+        "Set Song": [49,56,54,56], #select song for recording find in DB
+        "Select Song": [49,56,55,56], #select song for recording find in DB go through sequential..
+        "Toggle Screen Record": [49,56,51,56], #toggle screen display for recording
       }
     }
     if (self.name in self.config['languages']):
@@ -133,20 +140,96 @@ class video:
       "Screenshot Feedback": "screenshot_feedback",
       "Screenshot Feedback_": "screenshot_feedback_",
 
+      "Start Record": "start_record",
+      "Set Composer": "set_composer",
+      "Select Composer": "select_composer",
+      "Set Song": "set_song",
+      "Select Song": "select_song",
+      "Toggle Screen Record": "toggle_screen_record",
+
     }
     self.helpdict = {
-      "Stop": {"help": "stop", "params": "None", "desc": "Stop/Pause video recording."},
-      "Comment": {"help": "comment", "params": "None", "desc": "Add comment to video timeline."},
-      "Start": {"help": "start", "params": "None", "desc": "Start/Resume video recording."},
-      "Help": {"help": "help", "params": "None", "desc": "Show video commands."},
-      "Pause": {"help": "pause", "params": "None", "desc": "Pause video playback."},
-      "Next": {"help": "next", "params": "[no]-5 default [54] next in playlist", "desc": "Next video in playlist or folder."},
-      "Unpause": {"help": "unpause", "params": "None", "desc": "Unpause video playback."},
-      "Set Speed": {"help": "set speed [value]", "params": "[value]", "desc": "Set playback speed, relative to current."}, 
-      "Screenshot": {"help": "screenshot", "params": "[bbox] in form X1, X2, Y1, Y2", "desc": "Take screenshot of video."},
-      "Zoomshot": {"help": "zoomshot", "params": "None", "desc": "Take zoomed screenshot of video."},
-      "Screen Toggle": {"help": "screen_toggle", "params": "[opacity] 10-90%", "desc": "Toggle video screen overlay."},
-      "Screenshot Feedback": {"help": "screenshot feedback", "params": "[bbox] in form X1, X2, Y1, Y2", "desc": "Take screenshot of video and read what is in selected area."},
+      "Stop": {
+"> ": "stop", 
+"$$": "$cacheno", 
+"&&": "Stop/Pause audio."},
+
+      "Comment": {
+"> ": "0=$DUR=5 seconds\n1=$DUR*3 seconds", 
+"$$": "$DUR (audio duration), &comment", 
+"&&": "Add comment to current book."},
+
+      "Start": {
+"> ": "start",
+"$$": "None",
+"&&": "Start/Resume recording."},
+
+      "Help": {
+"> ": "help",
+"$$": "None",
+"&&": "Show this help message."},       
+
+      "Pause": {
+"> ": "pause",
+"$$": "None",
+"&&": "Pause video playback."},
+
+      "Next": {
+"> ": "next",
+"$$": "$no-5 default $54 next in playlist",
+"&&": "Next video in playlist or folder."},
+
+      "Unpause": {
+"> ": "unpause",
+"$$": "",
+"&&": "Unpause video playback."},
+      "Set Speed": {
+"> ": "set speed $value",
+"$$": "$value (multiplier 0.2-5.0)",
+"&&": "Set playback speed, relative to current."}, 
+
+      "Screenshot": {
+"> ": "screenshot",
+"$$": "$bbox4 (X1, X2, Y1, Y2)",
+"&&": "Take screenshot of video."},
+
+      "Zoomshot": {
+"> ": "zoomshot",
+"$$": "$bbox4 (X1, X2, Y1, Y2)",
+"&&": "Take zoomed screenshot of video."},
+      "Screen Toggle": {
+"> ": "screen_toggle",
+"$$": "$opacity | $record",
+"&&": "Toggle video screen overlay."},
+      "Screenshot Feedback": {
+"> ": "screenshot feedback",
+"$$": "$bbox4 (X1, X2, Y1, Y2)",
+"&&": "Take screenshot of video and read what is in selected area."},
+
+      "Start Record": {
+"> ": "start record",
+"$$": "",
+"&&": "Start video recording."},
+      "Set Composer": {
+"> ": "set composer",
+"$$": "$composer",
+"&&": "Set composer for recording."},
+      "Select Composer": {
+"> ": "select composer",
+"$$": "$composer",
+"&&": "Select composer for recording."},
+      "Set Song": {
+"> ": "set song",
+"$$": "$song",
+"&&": "Set song for recording."},
+      "Select Song": {
+"> ": "select song",
+"$$": "$song",
+"&&": "Select song for recording."},
+      "Toggle Screen Record": {
+"> ": "toggle screen record",
+"$$": "",
+"&&": "Toggle screen display for recording."},
 
     }
 
@@ -215,15 +298,77 @@ class video:
     return -1
   
 
+  def comment_(self, sequence=[]):
+    if (len(sequence) == 1):
+
+      logger.info(f'> Comment_ {sequence}')
+
+      print("> Comment_ called")
+      #get audio input for query.  
+      duration = sequence[0]-self.keybot #in seconds
+      duration *=3  #double duration for feedback
+      from extensions.trey.speech import listen_audio
+      self.now = datetime.now()
+      self.commentnowstr = self.now.strftime("%Y%m%d%H%M%S") #set nowstr for feedback.  
+      self.helpdict['Comment']['$$+'] = f"$DUR={duration} seconds"
+      at = listen_audio(duration, "comment.wav")
+      #at.join() #wait for it to finish.
+      #have to just use some keys until this is done.  
+      #need to return 1 to indicate we need more keys.
+      #but this is only called once.  
+
+      return 0 #handled, this function will not be called again with further parameters.
+    else:
+      #get real-time input
+      from extensions.trey.speech import transcribe_now
+      self.func = "Comment_"
+      self.transcript += transcribe_now() + "\n"
+
+      self.set_qr(self.func, {'transcript': self.transcript})
+      #update display.  
+
+
+    return 1
+  
   def comment(self, sequence=[]):
     #start recording on 0, but return 1
-    from extensions.trey.speech import transcribe_audio, listen_audio
+
+    from extensions.trey.speech import transcribe_audio, get_duration, transcribe_audio_whisper
+    timer = datetime.now()
+#    self.transcript = transcribe_audio("feedback.wav")
+#    self.transcript = transcribe_audio_whisper("comment.wav") #try whisper for better accuracy.  This is slower but hopefully more accurate, especially for short feedback.
+
+    from extensions.trey.speech import transcribe_audio, listen_audio, get_duration, transcribe_audio_whisper
 
     logger.info(f'> Comment {sequence}')
     #stop recording.  for now just using fixed 10 seconds.  
     #needs to be async to do this properly.
-    listen_audio(10, "comment.wav")
-    text = transcribe_audio("comment.wav")
+    timer = datetime.now()
+
+    self.transcript = transcribe_audio_whisper("comment.wav")
+    dur = get_duration("comment.wav") #actual dynamic duration..
+    if (dur == 0):
+      duration = (timer - self.now).total_seconds() if self.now is not None else duration
+    else:
+      duration = dur
+
+    lag = (datetime.now() - timer).total_seconds()
+    lag = int(lag)
+    print(f'Transcription completed in {lag} seconds: {self.transcript}')
+
+    try:
+      vars = {}
+      vars['DURATION'] = duration
+      vars['COMMENT'] = self.transcript
+      vars['LAG'] = lag
+      fname = '../transcripts/' + self.name + '/' + self.commentnowstr + '.wav'
+      vars['FILE'] = fname
+      shutil.copy('comment.wav', fname) #keep a copy for training..
+      self.transcriber.write(self.name, "Comment", vars)  
+      self.transcriber.write_topic(self.name, "", self.transcript, saveTranscript=False, saveBook=True)
+
+    except Exception as e:
+      print(f'Error writing comment file: {e}')
 
     return 0
     
@@ -247,7 +392,63 @@ class video:
     return 0
 
 
+  def toggle_screen_record(self, sequence=[]):
+    """Toggle Screen Record."""
+    logger.info(f'> Toggle Screen Record {sequence}')
+    self.set_qr("Toggle Screen Record", {'type': 'video'})
+    return 0
+  
+  def set_composer(self, sequence=[]):
+    """Set Composer."""
+    #listen to audio..
+    logger.info(f'> Set Composer {sequence}')
+    if (len(sequence) > 0):
+      composer = self.transcriber.get_composer(sequence[-1]-self.keybot) #get composer from key cache
+      self.set_qr("Set Composer", {'type': 'video', 'composer': composer})
+    return 0
+  
+  def select_composer(self, sequence=[]):
+    """Select Composer."""
+    logger.info(f'> Select Composer {sequence}')
+    if (len(sequence) > 0):
+      composer = self.transcriber.get_composer(sequence[-1]-self.keybot) #get composer from key cache
+      self.set_qr("Select Composer", {'type': 'video', 'composer': composer})
+    return 0
+  
+  def set_song(self, sequence=[]):
+    """Set Song."""
+    #listen to audio..
+    logger.info(f'> Set Song {sequence}')
+    if (len(sequence) > 0):
+      song = self.transcriber.get_song(sequence[-1]-self.keybot) #get song from key cache
+      self.set_qr("Set Song", {'type': 'video', 'song': song})
+    return 0
+  
+  def select_song(self, sequence=[]):
+    """Select Song."""
+    logger.info(f'> Select Song {sequence}')
+    if (len(sequence) > 0):
+      song = self.transcriber.get_song(sequence[-1]-self.keybot) #get song from key cache
+      self.set_qr("Select Song", {'type': 'video', 'song': song})
+    return 0
+  
+  def select_song_(self, sequence=[]):
+    """Select Song."""
+    logger.info(f'> Select Song_ {sequence}')
+    if (len(sequence) > 0 and sequence[-1] == self.keybot):
+      #confirm selection and start recording.  
+      #show selections..
 
+      self.set_qr("Start Record", {'type': 'video', 'song': self.selected_song})
+      return 0
+    return 1
+
+  def start_record(self, sequence=[]):
+    """Start Record."""
+    logger.info(f'> Start Record {sequence}')
+    self.set_qr("Start Record", {'type': 'video'})
+    return 0
+    
   def next(self, sequence=[]):
     """Next Video."""
     logger.info(f'> Next {sequence}')
@@ -296,6 +497,7 @@ class video:
       self.speed *= adjust
       logger.info(f'$$SPEED={self.speed}')
       self.set_qr("Set Speed", {'ADJUST': adjust, 'SPEED': self.speed})
+      playwrighty.set_speed(self.speed) #set global speed for all videos.  
     return 0
 
   def get_XY(self, key, idx=0):

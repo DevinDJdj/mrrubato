@@ -824,7 +824,7 @@ class hotkeys:
       from extensions.trey.speech import listen_audio
       self.now = datetime.now()
       self.feedbacknowstr = self.now.strftime("%Y%m%d%H%M%S") #set nowstr for feedback.  
-
+      self.helpdict['Record Feedback']['$$+'] = f"$DUR={duration}\n&Feedback\n"
       at = listen_audio(duration, "feedback.wav")
       #at.join() #wait for it to finish.
       #have to just use some keys until this is done.  
@@ -849,7 +849,7 @@ class hotkeys:
     #no function, just demo..
     if (len(sequence) == 0):
       #set engines..
-      self.helpdict['Search Web']['params'] = ", ".join(playwrighty.get_engines())
+      self.helpdict['Search Web']['$$+'] = ", ".join(playwrighty.get_engines())
     if (len(sequence) > 1 and sequence[-1] > self.keybot):
       self.speak(playwrighty.get_engine(sequence[-1]-self.keybot))
 

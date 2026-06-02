@@ -1877,6 +1877,7 @@ class MyWindow(QMainWindow):
                 #set time locally.  
                 #simulate click at link location if given.
             case "Set Speed":
+ 
                 speed = float(vars.get('SPEED', '1.0'))
                 self.add_setting('SPEED', speed, lang)
                 self.set_speed(speed, lang)

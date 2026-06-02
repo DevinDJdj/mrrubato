@@ -59,6 +59,7 @@ const Worker = __importStar(require("./worker"));
 const ollama_1 = __importDefault(require("ollama"));
 const toolParticipant_1 = require("./toolParticipant");
 const TerminalWorker = __importStar(require("./terminalworker"));
+const util_1 = require("util");
 const BASE_PROMPT = 'You are a helpful code tutor. Your job is to teach the user with simple descriptions and sample code of the concept. Respond with a guided overview of the concept in a series of messages. Do not give the user the answer directly, but guide them to find the answer themselves. If the user asks a non-programming question, politely decline to respond.';
 const EXERCISES_PROMPT = 'You are a helpful tutor. Your job is to teach the user with fun, simple exercises that they can complete in the editor. Your exercises should start simple and get more complex as the user progresses. Move one concept at a time, and do not move on to the next concept until the user provides the correct answer. Give hints in your exercises to help the user learn. If the user is stuck, you can provide the answer and explain why it is the answer. If the user asks a non-programming question, politely decline to respond.';
 // define a chat handler
@@ -742,7 +743,7 @@ function activate(context) {
                         break;
                     case "@":
                         //run in vscode
-                        vscode.commands.executeCommand(text.substring(2));
+                        vscode.commands.executeCommand(text.substring(2).trim());
                         break;
                     default:
                         vscode.commands.executeCommand('workbench.action.terminal.focus');
@@ -876,6 +877,14 @@ function activate(context) {
                                 let kv = text.substring(2).split("=");
                                 if (kv.length === 2) {
                                     Book.addToEnvironment(kv[0], kv[1]);
+                                }
+                                else {
+                                    //is date?  
+                                    if (kv[0].length === 8 && (0, util_1.isNumber)(Number(kv[0]))) {
+                                        //open book to date..
+                                        //get book folder
+                                        Book.select(Book.getBookPath() + "/" + kv[0] + '.txt'); //select and open topic										
+                                    }
                                 }
                             }
                         }

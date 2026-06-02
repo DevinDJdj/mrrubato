@@ -527,7 +527,63 @@ Similar to this..
 
 
 **languages/_lang.py
-word assignment, just uses last word..
+--new_word
+word assignment, just uses last words..
 
 Need to set transcripts here as well..
+
+creation of our language needs two aspects primarily
+-physical/tonal Proximity 
+-semantic tree definition 
+
+Ideally this should mirror.  
+
+
+**mykeys.py
+--findword
+should really use self.keystruct
+
+**book/keys.txt
+What other semantic tree concepts are needed.  
+
+**lean4
+Trying to learn a bit..
+Where to use this?  
+
+
+**extensions/trey/trey.py
+**languages/video.py
+Need to search rtdb
+or 
+Random selection.  
+to start record.
+;> python ./record.py --description "Selected (Composer)"
+;$$RUNMIDI=true
+to run cmds prior to [21]
+Use book location from this date..
+This way all data selected is based on this..
+
+Need cmd to set Output to replace musiccam.  
+
+
+**extensions/trey/trey.py
+Need treylaunch shortcut..
+
+**extensions/trey/run.ps1
+simple startup..
+
+> ../extensions/trey/run.ps1
+!!File C:\devinpiano\music\extensions\trey\run.ps1 cannot be 
+==
+#https:/go.microsoft.com/fwlink/?LinkID=135170
+
+> Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+$$
+
+create shortcut if desired..
+
+**mykeys.py
+--get_qr
+flesh out dynamic help a bit more..
 

@@ -1,4 +1,5 @@
 import logging
+import shutil
 from pynput import *
 import pytesseract
 from PIL import Image
@@ -116,15 +117,44 @@ class base:
 
     }
     self.helpdict = {
-       "Error": {"help": "error", "params": "None", "desc": "Indicate error."},
-         "OK": {"help": "ok", "params": "None", "desc": "Indicate OK."},
-            "Good": {"help": "good", "params": "None", "desc": "Indicate good."},
-         "Pause": {"help": "pause", "params": "None", "desc": "Pause video playback."},
-            "Unpause": {"help": "unpause", "params": "None", "desc": "Unpause video playback."},
-            "Screen Toggle": {"help": "screen toggle", "params": "[opacity]", "desc": "Toggle screen overlay with optional opacity (0-100)."},
-            "Screenshot": {"help": "screenshot [bbox]", "params": "[bbox]", "desc": "Take screenshot with optional bbox."},
-            "Comment": {"help": "comment", "params": "None", "desc": "Record audio comment."},
-            "Help": {"help": "help", "params": "None", "desc": "Show video commands."}, 
+      "Error": {
+"> ": "error", 
+"$$": "", 
+"&&": "Error,Dislike,Negative,Past",},
+      "OK": {
+"> ": "ok", 
+"$$": "", 
+"&&": "OK,Like,Positive,Present"},
+      "Good": {
+"> ": "good", 
+"$$": "", 
+"&&": "Good,Like,Positive,Present"},
+      "Pause": {
+"> ": "pause", 
+"$$": "", 
+"&&": "Pause"},
+      "Unpause": {
+"> ": "unpause", 
+"$$": "", 
+"&&": "Unpause"},
+
+      "Screen Toggle": {
+"> ": "screen_toggle", 
+"$$": "$opacity | $record",
+"&&": "Screen Toggle (Overlay),Record"},
+      "Screenshot": {
+"> ": "screenshot", 
+"$$": "$bbox4",
+"&&": "Take screenshot with optional bbox."},
+
+      "Comment": {
+"> ": "0=$DUR=5 seconds\n1=$DUR*3 seconds", 
+"$$": "$DUR (audio duration), &comment", 
+"&&": "Add comment to current book."},
+            "Help": {
+"> ": "help", 
+"$$": "", 
+"&&": "Show video commands."}, 
 
     }
 
@@ -174,15 +204,76 @@ class base:
     return -1
   
 
+  def comment_(self, sequence=[]):
+    if (len(sequence) == 1):
+
+      logger.info(f'> Comment_ {sequence}')
+
+      print("> Comment_ called")
+      #get audio input for query.  
+      duration = sequence[0]-self.keybot #in seconds
+      duration *=3  #double duration for feedback
+      from extensions.trey.speech import listen_audio
+      self.now = datetime.now()
+      self.commentnowstr = self.now.strftime("%Y%m%d%H%M%S") #set nowstr for feedback.  
+
+      at = listen_audio(duration, "comment.wav")
+      #at.join() #wait for it to finish.
+      #have to just use some keys until this is done.  
+      #need to return 1 to indicate we need more keys.
+      #but this is only called once.  
+
+      return 0 #handled, this function will not be called again with further parameters.
+    else:
+      #get real-time input
+      from extensions.trey.speech import transcribe_now
+      self.func = "Comment_"
+      self.transcript += transcribe_now() + "\n"
+      self.set_qr(self.func, {'transcript': self.transcript})
+      #update display.  
+
+
+    return 1
+  
   def comment(self, sequence=[]):
     #start recording on 0, but return 1
-    from extensions.trey.speech import transcribe_audio, listen_audio
+
+    from extensions.trey.speech import transcribe_audio, get_duration, transcribe_audio_whisper
+    timer = datetime.now()
+#    self.transcript = transcribe_audio("feedback.wav")
+#    self.transcript = transcribe_audio_whisper("comment.wav") #try whisper for better accuracy.  This is slower but hopefully more accurate, especially for short feedback.
+
+    from extensions.trey.speech import transcribe_audio, listen_audio, get_duration, transcribe_audio_whisper
 
     logger.info(f'> Comment {sequence}')
     #stop recording.  for now just using fixed 10 seconds.  
     #needs to be async to do this properly.
-    listen_audio(10, "comment.wav")
-    #not implemented yet..
+    timer = datetime.now()
+
+    self.transcript = transcribe_audio_whisper("comment.wav")
+    dur = get_duration("comment.wav") #actual dynamic duration..
+    if (dur == 0):
+      duration = (timer - self.now).total_seconds() if self.now is not None else duration
+    else:
+      duration = dur
+
+    lag = (datetime.now() - timer).total_seconds()
+    lag = int(lag)
+    print(f'Transcription completed in {lag} seconds: {self.transcript}')
+
+    try:
+      vars = {}
+      vars['DURATION'] = duration
+      vars['COMMENT'] = self.transcript
+      vars['LAG'] = lag
+      fname = '../transcripts/' + self.name + '/' + self.commentnowstr + '.wav'
+      vars['FILE'] = fname
+      shutil.copy('comment.wav', fname) #keep a copy for training..
+      self.transcriber.write(self.name, "Comment", vars)  
+      self.transcriber.write_topic(self.name, "", self.transcript, saveTranscript=False, saveBook=True)
+
+    except Exception as e:
+      print(f'Error writing comment file: {e}')
 
     return 0
     

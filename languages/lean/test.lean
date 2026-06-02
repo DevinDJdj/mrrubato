@@ -2,3 +2,5 @@
 --**testing/lean/tutorials4
 
 #eval 18 + 19
+def α := "hello"
+#eval α ++ " world"

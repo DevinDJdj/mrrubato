@@ -256,7 +256,9 @@ class _lang:
         totalseq = []
         if (self.wordmap.get(tuple(definition)) is not None):
           #self.speak('Word already exists for this sequence')
-          return 1
+          logger.info(f'Existing word sequence: {self.wordmap[tuple(definition)]["&&"]}, seq: {self.wordmap[tuple(definition)]["seq"]}')
+          logger.info(f'Delete first or choose different sequence for new word.')
+          return -1
         else:
 
           for i in range(len(self.mywords)):

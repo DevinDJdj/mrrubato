@@ -26,6 +26,7 @@ import { start } from 'repl';
 import { get } from 'http';
 
 import * as TerminalWorker from './terminalworker';
+import { isNumber } from 'util';
 
 const BASE_PROMPT =
   'You are a helpful code tutor. Your job is to teach the user with simple descriptions and sample code of the concept. Respond with a guided overview of the concept in a series of messages. Do not give the user the answer directly, but guide them to find the answer themselves. If the user asks a non-programming question, politely decline to respond.';
@@ -859,7 +860,7 @@ export function activate(context: vscode.ExtensionContext) {
 						break;
 					case "@":
 						//run in vscode
-						vscode.commands.executeCommand(text.substring(2));
+						vscode.commands.executeCommand(text.substring(2).trim());
 						break;
 						
 					default:
@@ -1007,6 +1008,15 @@ export function activate(context: vscode.ExtensionContext) {
 								let kv = text.substring(2).split("=");
 								if (kv.length === 2) {
 									Book.addToEnvironment(kv[0], kv[1]);
+								}
+								else {
+									//is date?  
+									if (kv[0].length === 8 && isNumber(Number(kv[0]))){
+										//open book to date..
+										//get book folder
+										Book.select(Book.getBookPath() + "/" + kv[0] + '.txt'); //select and open topic										
+									}
+
 								}
 							}
 						}

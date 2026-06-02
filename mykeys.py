@@ -414,6 +414,10 @@ class MyKeys:
       qr += f"&&{self.currentcmd} \n"
       help = ""
       if (self.currentlangna in self.languages and hasattr(self.languages[self.currentlangna], 'helpdict') and self.currentcmd in self.languages[self.currentlangna].helpdict):
+        if ('> ' in (self.languages[self.currentlangna].helpdict[self.currentcmd])):
+          help += f"> {self.languages[self.currentlangna].helpdict[self.currentcmd]['> ']} \n"
+        if ('$$+' in (self.languages[self.currentlangna].helpdict[self.currentcmd])):
+          help += f"$$+{self.languages[self.currentlangna].helpdict[self.currentcmd]['$$+']} \n"
         if ('&&' in (self.languages[self.currentlangna].helpdict[self.currentcmd])):
           help += f"&&{self.languages[self.currentlangna].helpdict[self.currentcmd]['&&']} \n"        
         else:
@@ -507,7 +511,11 @@ class MyKeys:
   def findword(self, sequence=[]):
     """Find word in all languages."""
     for (l,la) in self.languages.items():
-      word = la.word(self.sequence)
+      #really should use self.keystruct here instead of looping through all languages and words.  This is inefficient.
+      #ret, end = self.get_keystruct(prefix)
+      if (sequence[0] != la.keybot): #maybe have multiple prefix for language, but for now just one.
+        continue #skip if first key doesnt match, this is the most expensive check.
+      word = la.word(self.sequence) 
       if word != "":
         return word, l, la
     return "", "", None
