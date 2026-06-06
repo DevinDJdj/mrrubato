@@ -1,0 +1,310 @@
+
+**languages
+These messages for LANG and META are MOD12.  
+_LANG can set to any octave automatically.  
+and in any language, _META lang and _LANG always exist.  
+
+
+**mykeys.py
+@@Word creation logic?  
+**languages/_lang.py
+--new_word
+
+
+**extensions/vscode/codetutor/src/extension.ts
+Need to at least genbook..
+On a loop..
+
+
+
+
+**extensions/vscode/codetutor/src/extension.ts
+**extensions/trey/trey.py
+Lets see if we can open [**public/web] with login with playwrighty.  
+
+
+**languages/check.py
+dont necessarily like this name..
+For now just use comment..
+--comment
+Check if comment works..
+
+
+
+**extensions/trey/speech.py
+Need better math symbol TTS.  
+For now just substitute annoying stuff..
+--substitute_tts
+Still not really working..
+
+
+
+**web/public/chata.html
+Allow for search of other data..
+Any transcript with 
+
+
+
+**books/WORLDHISTORY
+Start usage experiment here..
+
+**extensions/vscode/codetutor/src/book.ts
+Need to be able to switch between books seamlessly..
+
+
+
+
+
+**web/public/chata.html
+Load [**web/public/data/transcriptions/trey/2026]
+Local vector DB..
+Chat find similar transcript (spoken)..
+Load full transcript from this location..
+Need web transcript parser/viewer..
+
+
+
+**languages/_meta.py
+
+;> Set Book_ [fill,endrec] [selection]
+test..
+;> Set Topic_ [fill,endrec] [selection]
+test..
+
+
+Book is what we are writing..
+Topic is any existing book..
+
+select from session:
+bookhistory, topichistory
+
+
+
+**languages/hotkeys.py
+;> Search Web 
+should show the selections in help..
+started ok..
+
+
+;> Comment [DUR..BOOK/CURRENTBOOK/ASK]
+read from vscode extension if ASK..
+
+
+**languages/_meta.py
+;> Time Jump
+;> Time Zoom
+test..
+
+;> Tune In
+;> Tune Out
+test..
+
+
+**languages/hotkeys.py
+--load_bookmarks
+only load 10 or so
+higher usage = higher probability
+
+Video bookmark should note video location..
+Set .. should show list as well..
+
+
+
+
+
+**analyze/analyze.py
+**analyze/analyze3.py
+--printMidi
+Started some visualization here..
+Play with some notations..
+Note primary character, Octave is Y location or color/location
+X location is time..
+Create midi visualization for this..
+
+
+
+
+**web/public/me.html
+Need simple user setup and view..
+
+
+**languages/_lang.py
+Save or name a sequence..
+
+Start/end..
+Track all param inputs selected..
+All text used.
+Or just allow for random selection.
+
+Create word on replay..
+Gather all transcripts with timestamps in this timespan.
+
+;> Start Word [SINCE]
+;> End Word [SINCE]
+Gather all transcript..
+
+> pip install watchfiles
+
+
+
+**timestep.py
+create summary for > RECORD
+add it directly to VTT?
+
+
+
+
+**web/public/chata.html
+**web/public/recent.js
+--loadAllRecentTranscripts
+have some info from transcripts..
+Can now embed this with other entries..
+Or make separate listing..
+
+
+
+
+**LEAN
+Why is it that I didnt like this language?  
+Should try to annotate..
+
+create book command.  
+if it doesnt 
+
+
+
+**languages/_meta.py
+Adjust speed should adjust speed of the narrator..
+
+**extensions/vscode/codetutor/src/extension.ts
+Need to go back from link in book to playwrighty..
+Transcribe into <<hotkeys>>
+CTRL+SHIFT+8 on link..
+
+**testing/lean/tutorials4
+\infixl
+\rcases
+\linarith
+\specialize
+
+#https://lean-lang.org/theorem_proving_in_lean4/Introduction/#Intro
+def m : Nat := 1       -- m is a natural number
+def b1 : Bool := true  -- b1 is a Boolean
+
+Kind of like typescript..
+
+#check n
+n : Nat
+
+
+\la
+\forall
+\ex
+\to
+\N
+\R
+
+>@ lean4.docs.showAbbreviations
+
+
+**extensions/vscode/codetutor/src/toolParticipant.ts
+--registerCompletionTool
+General glossary of functions listed based on topic and other contextual info
+Adjust sortOrder for these things.  
+
+**extensions/vscode/codetutor/src/book.ts
+--sortRecency
+Similar to this..
+
+
+
+**languages/_lang.py
+--new_word
+word assignment, just uses last words..
+
+Need to set transcripts here as well..
+
+creation of our language needs two aspects primarily
+-physical/tonal Proximity 
+-semantic tree definition 
+
+Ideally this should mirror.  
+
+
+**mykeys.py
+--findword
+should really use self.keystruct
+
+**book/keys.txt
+What other semantic tree concepts are needed.  
+
+**lean4
+Trying to learn a bit..
+Where to use this?  
+
+
+**extensions/trey/trey.py
+**languages/video.py
+Need to search rtdb
+or 
+Random selection.  
+to start record.
+;> python ./record.py --description "Selected (Composer)"
+;$$RUNMIDI=true
+to run cmds prior to [21]
+Use book location from this date..
+This way all data selected is based on this..
+
+Need cmd to set Output to replace musiccam.  
+
+
+**extensions/trey/trey.py
+Need treylaunch shortcut..
+
+**extensions/trey/run.ps1
+simple startup..
+
+> ../extensions/trey/run.ps1
+!!File C:\devinpiano\music\extensions\trey\run.ps1 cannot be 
+==
+#https:/go.microsoft.com/fwlink/?LinkID=135170
+
+> Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+$$
+
+create shortcut if desired..
+
+**mykeys.py
+--get_qr
+flesh out dynamic help a bit more..
+
+**extensions/trey/playwrighty.py
+Need to track video locations..
+On video pause, and start from there..
+
+Check this..
+Also set speed..
+
+**languages/hotkeys.py
+Some issues with bookmarks..
+--load_bookmarks2
+not so stable..
+
+
+Need close tab..
+test..
+[53,56,59]
+
+
+**extensions/trey/trey.py
+Select Topic and Book on load..
+
+
+Repetetive links, need to skip..
+
+**extensions/trey/playwrighty.py
+--get_unique_url
+workaround for youtube..
+
+Speed works, video bookmark works..

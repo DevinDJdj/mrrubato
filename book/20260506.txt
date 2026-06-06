@@ -587,3 +587,6 @@ create shortcut if desired..
 --get_qr
 flesh out dynamic help a bit more..
 
+**extensions/trey/playwrighty.py
+Need to track video locations..
+On video pause, and start from there..

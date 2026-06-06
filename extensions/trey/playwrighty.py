@@ -225,8 +225,59 @@ def click_link(cacheno, text_offset, link_offset=0, open_new_tab=False):
     return False
 
 
+def get_snippet(text, total_read):
+    newline = text.find('\n', total_read)
+    if (newline < 1):
+        newline = total_read + 100
+    if (newline > len(text)):
+        newline = len(text)
+    if (newline-total_read > 100):
+        newline = total_read + 100
+    text = text[total_read:newline]
+    text = text.replace('\n','  ')
+    text = text.replace('\t',' ')
+    return text.strip()
+
+
+def get_unique_url(url):
+    #for now just return url, but could potentially parse out more info here.  
+    if (url.find('youtube.com') > -1):
+        deadparam = url.split('&')[-1] #remove extra params for youtube links.
+        if (deadparam.startswith('index=')):
+            url = url.replace('&' + deadparam, '')
+    return url
+
+def transcribe_bookmark(url, cacheno=-1, transcriber=None, name="hotkeys"):
+    if (transcriber):
+#        page = get_ppage(cacheno)
+#        url = page.url
+        total_read = 0
+        global bookmarks
+        url = get_unique_url(url)
+        logger.info(f"Getting Bookmark for {url}")
+        found_item = next(filter(lambda item: item.get("url") == url, bookmarks), None)
+        video_no = 0
+        video_pos = -1
+        body_length = page_cache[cacheno]['length'] if cacheno >=0 and cacheno < len(page_cache) else 0
+        text = get_snippet(page_cache[cacheno]['body'], total_read) if cacheno >=0 and cacheno < len(page_cache) else ""
+        if (found_item is not None):
+            total_read = found_item['total_read'][0]
+            video_no = found_item['video_no'] if 'video_no' in found_item else 0
+            video_pos = found_item['video_pos'] if 'video_pos' in found_item else -1
+        else:
+            total_read = update_page_offset()
+
+
+        if (url != "" and url != "about:blank"):        
+            transcriber.write(name, "Add Bookmark", {
+            'URL': url,'TOTAL_READ': total_read,'BODY_LENGTH': body_length,'TEXT': text, 'VIDEO_NO': video_no, 'VIDEO_POS': video_pos
+            })  
+
+
+
 def get_bookmark(url, cacheno=-1):
     global bookmarks
+    url = get_unique_url(url)
     logger.info(f"Getting Bookmark for {url}")
     found_item = next(filter(lambda item: item.get("url") == url, bookmarks), None)
     if (found_item is not None):
@@ -254,18 +305,24 @@ def remove_bookmark_at_index(index):
         return True
     return False
 
-def add_bookmark(url, total_read, text=""):
+def add_bookmark(url, total_read, text="", video_pos=-1):
     global bookmarks
-    logger.info(f'Adding bookmark for {url} at offset {total_read}')
+    url = get_unique_url(url)
+    logger.info(f'Adding bookmark for {url} at offset {total_read} from {len(bookmarks)} bookmarks')
     found_item = next(filter(lambda item: item.get("url") == url, bookmarks), None)
     body_length = page_cache[current_cache]['length'] if current_cache >=0 and current_cache < len(page_cache) else 0
     if (found_item is not None):
         found_item['total_read'].insert(0, total_read)
         found_item['text'].insert(0, text)
+        video_pos = video_pos if video_pos >= 0 else (found_item['video_pos'] if 'video_pos' in found_item else -1)
+        found_item['video_pos'] = video_pos
         bookmarks.remove(found_item)
         bookmarks.insert(0, found_item)
+#        logger.info(f'Updated existing bookmark for {url}\n {found_item}')
     else:
-        bookmarks.insert(0, {'url': url, 'total_read': [total_read], 'length': body_length, 'text': [text]})
+        found_item = {'url': url, 'total_read': [total_read], 'length': body_length, 'text': [text], 'video_no': 0, 'video_pos': video_pos}
+        bookmarks.insert(0, found_item)
+#        logger.info(f'Added new bookmark for {url} at offset {total_read}\n {found_item}')
 #        bookmarks.append({'url': url, 'total_read': [total_read], 'length': body_length})
     return 0
 
@@ -453,7 +510,9 @@ def open_browser():
         logger.info(f'Preloading last 10 bookmark URLs: {last10}')
         print(f'Last 10 bookmark URLs: {last10}')   
         for url in last10:
-            read_page(url) #preload last 10 bookmarks.
+            read_page(url) #preload last 10 bookmarks.            
+            #wait
+            time.sleep(0.5)  #wait a bit need better solution..
             pause_video() #pause any videos on these pages.
             #but dont read..
 
@@ -588,9 +647,10 @@ def set_speed(speed=-1, cacheno=-1):
             video.playbackRate = """ + str(speed) + """;
         }
     }""")
-    video_playing = False
+    playback_rate = speed
+    logger.info(f'Set video playback speed to {speed}x')
 
-def pause_video(cacheno=-1):
+def pause_video(cacheno=-1, transcriber=None):
     global current_cache
     global video_playing
     total_read = 0
@@ -599,6 +659,7 @@ def pause_video(cacheno=-1):
     if (cacheno < 0 or cacheno >= len(page_cache)):
         return -1
     page = page_cache[cacheno]['page']
+
     #more complex with multiple video controls..
     page.evaluate("""() => {
         const video = document.querySelector('video');
@@ -608,6 +669,33 @@ def pause_video(cacheno=-1):
     }""")
     video_playing = False
 
+    url = page.url
+    url = get_unique_url(url)
+
+    if (transcriber is not None): #only transcribe if user pauses..
+        found_item = next(filter(lambda item: item.get("url") == url, bookmarks), None)
+        video_no = found_item['video_no'] if found_item is not None and 'video_no' in found_item else 0
+        secs = page.evaluate("""([video_no]) => {
+            var timeInSeconds = 0;
+            const video = document.querySelector('video');
+            if (video) {
+                // Get the current time in seconds
+                timeInSeconds = video.currentTime;
+                    
+            }
+            return timeInSeconds;
+        }""", [video_no])
+
+
+        if (found_item is not None):
+    #        found_item['video_no'] = 0 #for now just support one video per page, but could potentially extend to multiple.
+            found_item['video_pos'] = round(secs) # Store the actual video position
+        else:
+            found_item = {'url': url, 'total_read': [0], 'length': 0, 'text': [""], 'video_no': video_no, 'video_pos': round(secs)}
+            bookmarks.insert(0, found_item)
+        transcribe_bookmark(url, cacheno, transcriber, "hotkeys")
+    return 0
+
 def play_video(cacheno=-1):
     global current_cache
     total_read = 0
@@ -616,13 +704,27 @@ def play_video(cacheno=-1):
     if (cacheno < 0 or cacheno >= len(page_cache)):
         return -1
     page = page_cache[cacheno]['page']
+    url = page.url
+    url = get_unique_url(url)
+    found_item = next(filter(lambda item: item.get("url") == url, bookmarks), None)
+    video_no = found_item['video_no'] if found_item is not None and 'video_no' in found_item else 0
+    secs = found_item['video_pos'] if found_item is not None and 'video_pos' in found_item else 0
+    logger.info(f'Playing video for {url} starting at {secs} seconds')
+    #pass start time for video if we have it in bookmarks.
+    if found_item is not None and 'video_pos' in found_item and found_item['video_pos'] >= 0:
+        page.evaluate("""([secs]) => {
+            const video = document.querySelector('video');
+            if (video) {
+                video.currentTime = secs;
+            }
+        }""", [secs])
     #more complex with multiple video controls..
-    page.evaluate("""() => {
+    page.evaluate("""([video_no]) => {
         const video = document.querySelector('video');
         if (video) {
             video.play();
         }
-    }""")
+    }""", [video_no])
     global video_playing
     video_playing = True
 
