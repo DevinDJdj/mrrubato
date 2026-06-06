@@ -5,4 +5,4 @@ cd "C:\devinpiano\music\"
 .\treyenv\Scripts\Activate.ps1
 
 # Run your script using the environment's interpreter
-python ./extensions/trey/trey.py
+python ./mrrubato/extensions/trey/trey.py
