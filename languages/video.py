@@ -465,7 +465,7 @@ class video:
     logger.info(f'> Pause {sequence}')
     if (len(sequence) > 0):
       cacheno = sequence[-1]-self.keybot #first key cache selection
-      playwrighty.pause_video(cacheno) #pause video if it is valid cache no..
+      playwrighty.pause_video(cacheno, self.transcriber) #pause video and add bookmark..
     else:
       #pause trey.  
       self.set_qr("Pause", {'type': 'video'})
@@ -489,12 +489,13 @@ class video:
   def set_speed(self, sequence=[]):
     logger.info(f'> Set Speed {sequence}')
     if (len(sequence) > 0):
-      adjust = float(sequence[-1] - self.mid) / 5.0 #just use 10 keys for mid..
+      adjust = float(sequence[-1] - self.keybot) / 4.0 #just use 10 keys for mid.. 0.2 - 5.0
+      #use reverse? 
       if (adjust <= 0.2):
         adjust = 0.2
       if adjust > 5:
         adjust = 5
-      self.speed *= adjust
+      self.speed = round(adjust, 1)
       logger.info(f'$$SPEED={self.speed}')
       self.set_qr("Set Speed", {'ADJUST': adjust, 'SPEED': self.speed})
       playwrighty.set_speed(self.speed) #set global speed for all videos.  

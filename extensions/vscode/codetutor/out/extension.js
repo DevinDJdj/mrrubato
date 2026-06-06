@@ -739,7 +739,7 @@ function activate(context) {
                     case ">":
                         //run admin command.
                         vscode.commands.executeCommand('workbench.action.terminal.focus');
-                        vscode.commands.executeCommand('workbench.action.terminal.sendSequence', { text: text.substring(2) + "\n" });
+                        vscode.commands.executeCommand('workbench.action.terminal.sendSequence', { text: text.substring(2).trim() + "\n" });
                         break;
                     case "@":
                         //run in vscode

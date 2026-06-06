@@ -129,10 +129,11 @@ class hotkeys:
         total_read = int(c['vars']['TOTAL_READ'])
         body_length = int(c['vars']['BODY_LENGTH']) if 'BODY_LENGTH' in c['vars'] else 0
         text = c['vars']['TEXT'] if 'TEXT' in c['vars'] else ""
-
+        video_no = int(c['vars']['VIDEO_NO']) if 'VIDEO_NO' in c['vars'] else 0
+        video_pos = int(c['vars']['VIDEO_POS']) if 'VIDEO_POS' in c['vars'] else -1
         print(f'Loaded bookmark {url} at {total_read}')
         logger.info(f'Loaded bookmark {url} at {total_read}')
-        playwrighty.add_bookmark(url, total_read, text) #call playwrighty add bookmark..
+        playwrighty.add_bookmark(url, total_read, text, video_pos) #call playwrighty add bookmark..
         numloaded += 1
 
       elif c['cmd'].startswith('Add Bookmark'): #handle alternate old format
@@ -143,11 +144,13 @@ class hotkeys:
         total_read = int(parts[2])
         body_length = int(parts[3]) if len(parts) > 3 else 0
         text = parts[4] if len(parts) > 4 else ""
+        video_pos = int(parts[5]) if len(parts) > 5 else -1
         print(f'Loaded bookmark {url} at {total_read}')
-        playwrighty.add_bookmark(url, total_read, text) #call playwrighty add bookmark..
+        playwrighty.add_bookmark(url, total_read, text, video_pos) #call playwrighty add bookmark..
         numloaded += 1
             
       if url != "":
+        url = playwrighty.get_unique_url(url) #normalize url for bookmark list.
         if (url in last10):
           last10.remove(url)
         last10.append(url)
@@ -192,7 +195,8 @@ class hotkeys:
                   text = parts[4] if len(parts) > 4 else ""
 
                   print(f'Loaded bookmark {url} at {total_read}')
-                  playwrighty.add_bookmark(url, total_read, text) #call playwrighty add bookmark..
+                  video = parts[5] if len(parts) > 5 else 'False'
+                  playwrighty.add_bookmark(url, total_read, text, video) #call playwrighty add bookmark..
                   numloaded += 1
           except Exception as e:
             logger.error(f'!!>Read Bookmarks [{f}]\n !!{e}')
@@ -223,8 +227,10 @@ class hotkeys:
         "Next": [53,55,56], #go to next location where this text is found..
         "Search Web": [53,55,61], #also read screen
         "Go Back": [53,55,51], 
-        "List Tabs": [53,56,59],
+        "Close Tab": [53,56,59],
+        "List Tabs": [53,56,61],
         "Select Tab": [53,56,60],
+
         "Comment": [53,57, 58], #record comment
         "Record Feedback": [53,57,60], 
         "Select Bookmark": [53,58,57], #feedback tells which mark it is.  Or default to set to 0 idx.  
@@ -569,14 +575,14 @@ class hotkeys:
 
 
         self.func = "Close Tab_"
-        linkno = sequence[-1]-self.keybot
-        if (linkno < 0 or linkno >= len(playwrighty.page_cache)):
-          linkno = len(playwrighty.page_cache)-1
+        tabno = sequence[-1]-self.keybot
+        if (tabno < 0 or tabno >= len(playwrighty.page_cache)):
+          tabno = len(playwrighty.page_cache)-1
 
-        vars['idx'] = linkno
+        vars['idx'] = tabno
 
         self.set_qr(self.func, vars)
-        self.speak(f'--{playwrighty.page_cache[linkno]["title"]}')
+        self.speak(f'--{playwrighty.page_cache[tabno]["title"]}')
 
 
 
@@ -589,8 +595,8 @@ class hotkeys:
         cacheno = sequence[-1]-self.keybot
       else:
         cacheno = playwrighty.current_cache
-      if (linkno < 0 or linkno >= len(playwrighty.page_cache)):
-        linkno = len(playwrighty.page_cache)-1
+      if (cacheno < 0 or cacheno >= len(playwrighty.page_cache)):
+        cacheno = len(playwrighty.page_cache)-1
       playwrighty.close_tab(cacheno)
     return 0
   
@@ -662,29 +668,22 @@ class hotkeys:
       page = playwrighty.get_ppage(cacheno)
       url = page.url
       total_read = 0
-      total_read = playwrighty.update_page_offset()
+      total_read = playwrighty.update_page_offset(cacheno)
       #get date as YYYYMMDD
 
       today = datetime.now().strftime("%Y%m%d")
       #find URL in bookmarks already?
       body_text = playwrighty.page_cache[cacheno]['body']
-      newline = body_text.find('\n', total_read)
-      if (newline < 1):
-        newline = newline+100
-        if (newline > len(body_text)):
-          newline = len(body_text)
-      if (newline-total_read > 100):
-        newline = total_read + 100
-      text = body_text[total_read:newline]
-      text = text.replace('\n','  ')
-      text = text.replace('\t',' ')
+      text = playwrighty.get_snippet(body_text, total_read) if body_text is not None else ""
+
       playwrighty.add_bookmark(url, total_read, text)
       body_length = playwrighty.page_cache[cacheno]['length'] if cacheno >=0 and cacheno < len(playwrighty.page_cache) else 0
 
       if (url != "" and url != "about:blank"):
-        self.transcriber.write(self.name, "Add Bookmark", {
-          'URL': url,'TOTAL_READ': total_read,'BODY_LENGTH': body_length,'TEXT': text
-        })  
+        playwrighty.transcribe_bookmark(url, transcriber=self.transcriber, name=self.name)
+#        self.transcriber.write(self.name, "Add Bookmark", {
+#          'URL': url,'TOTAL_READ': total_read,'BODY_LENGTH': body_length,'TEXT': text
+#        })  
       """
       os.makedirs('../transcripts/' + self.name, exist_ok=True)
       #add utf-8?  
