@@ -49,6 +49,8 @@ class transcriber:
         self.current_topic = None
         self.current_context = None
         self.current_book = None
+        self.futuretree = None
+        self.similar = None
 
         self.kg_ignorevars = ['TIME', 'WINDOW', 'START', 'END', 'FNAME', 'FILE', 'DURATION', 'LAG'] #vars to ignore in display of info, used for time window commands.
 
@@ -314,11 +316,31 @@ class transcriber:
         similar = []
         self.fuzzmap = {} #store fuzz scores for each item to avoid redundant calculations, since we may want to sort by score later.
         #for now reset each time we search..
+
+        if (self.futuretree is not None):
+            #do we need to search midi?  
+            #for now do every time..
+            words = self.mykeys.get_spoken_words()
+            totcount = 0
+            for lang, events in self.futuretree.items():
+                self.futuretree[lang] = [x for x in self.futuretree[lang] if not (x['..'] == 1)]
+                events = self.futuretree[lang]
+                for e in events:
+                    e['..'] -= 1 #decrement the order in sequence
+                    #evaluate if this is still likely based on words_
+                    #for now, just return order of words without calculation
+                totcount += len(events)
+
+            if (totcount > 5):
+                return self.similar
+            
+        #if dont have enough info..
         print(f'Searching {len(self.allmidi['midi'])} MIDI for {str(midiarray)} at time {datetime.fromtimestamp(current_time).isoformat()}')
         lag = time.time()
         for item in self.allmidi['midi']:
             timestamp = item['timestamp']
             notes = item['notes']
+            msgs = item['msgs']
             #binary levenshtein or similar between midiarray and notes, for now just check if any keys match for simplicity.
             #search levenshtein distance and location..
             from rapidfuzz import fuzz
@@ -334,11 +356,96 @@ class transcriber:
             #get time from timestamp and notes.  for now forgoe this calculation..
             mystart = ff.dest_start if ff.dest_start is not None else 0
             transcript = self.mykeys.seq2text(notes[mystart:]) if self.mykeys is not None else "" #get transcript text for these notes if possible, could be useful for display and searching later, but for now just get the keys.
-            similar.append({'timestamp': timestamp, 'notes': notes, 'transcript': transcript, 'score': ff.score * 0.7 + lengthscore * 0.1 + timescore * 0.2, 'start': ff.dest_start}) #combine fuzz score, length score, and time score, with weights of 0.7, 0.1, and 0.2 respectively, could adjust as needed.
+            similar.append({'timestamp': timestamp, 'notes': notes, 'msgs': msgs, 'transcript': transcript, 'score': ff.score * 0.7 + lengthscore * 0.1 + timescore * 0.2, 'start': ff.dest_start}) #combine fuzz score, length score, and time score, with weights of 0.7, 0.1, and 0.2 respectively, could adjust as needed.
         
         similar.sort(key=lambda x: x['score'], reverse=True)
-        print(f'LAG: {time.time() - lag} seconds to search MIDI')        
+        print(f'LAG: {time.time() - lag} seconds to search MIDI')      
+
+        lag = time.time()  
+
+        #generate a next most likely events list..
+        futuretree = {}
+        self.mykeys.lasttick = time.time() #workaround to indicate we need to process msgs, mykeys object separate from user keys..
+        for item in similar[:10]: #just print top 10 for now, could adjust as needed.
+            #next sequence..
+            #count time..
+            #for now assume we get a proper match.. starting after EOW, and assuming we have no mistakes..
+            words = self.enscribe(item['notes'][item['start']+50:item['start']+200]) #enscribe next 150 notes after the match, could adjust as needed.
+
+            #here time is not significant..
+            #but find time..
+            cnt = 0
+            timepassed = 0
+            #tree
+            for msg in item['msgs']:
+                timepassed += msg.time /1000.0 #convert to seconds, may need to adjust based on actual timing of midi files, but for now just use this as a rough estimate.
+#                print(f'MIDI msg {msg} at time {timepassed} seconds after matched event')
+                if hasattr(msg, 'type') and msg.type=='note_on':
+                    cnt += 1
+                    if (cnt == 50):
+                        #now..
+                        t = item['timestamp']
+                        t += timepassed
+                        print(f'Similar event at {datetime.fromtimestamp(t).isoformat()} with score {item["score"]} and transcript "{item["transcript"]}"')                        
+                        if (words is not None and len(words) > 0):
+                            wcnt = 0
+                            for w in words:
+                                wcnt += 1
+                                lang = w['langna'] if 'langna' in w else 'unknown'
+                                if (lang not in futuretree):
+                                    futuretree[lang] = []
+                                kb = -1
+                                if (hasattr(self.mykeys, 'languages') and lang in self.mykeys.languages and hasattr(self.mykeys.languages[lang], 'keybot')):
+                                    kb = self.mykeys.languages[lang].keybot
+                                if (kb != -1): #usable lang?
+                                    futuretree[lang].append({'<<': lang, '..': wcnt, '&&': w['word'], '##': w['ss'], '__': kb})
+    
+                        #get index for this language..
+            item['msgs'] = None #clear msgs to save memory, we have the info we need from them at this point, also causes json.dump issue
+            for lang, events in futuretree.items():
+                print(f'Next likely events for language {lang}:')
+                sorted_events = sorted(events, key=lambda x: x['..']) #sort by order in sequence, which is stored in '..' key, could adjust as needed.
+                for e in sorted_events:
+                    print(f'> <{e['<<']}>{e["&&"]} [{e["##"]}]')
+
+
+            #find 
+        print(f'LAG2: {time.time() - lag} seconds to process top similar MIDI events')  
+
+        self.futuretree = futuretree #store this for later retrieval if needed, could also write to file or database as needed, but for now just store in memory for simplicity. 
+        self.similar = similar[:10] #store top 10 similar events for later retrieval if needed, could also write to file or database as needed, but for now just store in memory for simplicity.
         return similar[:10] #return first 10 top 10 for now, could adjust as needed.
+
+    def enscribe_callback(self, cmd):
+        #for now just print the notes, but could do some processing here to extract any text info from the midi files if available, and associate with the commands in the transcript, to create a more complete picture of what was happening at this time.
+#        print(f'{cmd}')
+        print(f'> <{cmd["<<"]}>{cmd["&&"]} [{cmd["##"]}]')
+#        logger.info(f'> <{cmd['<<']}>{cmd['&&']} [{cmd['##']}]')
+
+
+    def enscribe(self, notes):
+        #for now just print the notes, but could do some processing here to extract any text info from the midi files if available, and associate with the commands in the transcript, to create a more complete picture of what was happening at this time.  could also use this info to help with searching and sorting later, by associating certain key patterns with certain commands or topics in the transcript, to help identify relevant information more quickly.  for now just get the keys and timestamps, but could do more processing here as needed.
+        ret = []        
+        if self.mykeys is None:
+            return
+        msgs = self.mykeys.get_msgs(notes)
+        wordsb = len(self.mykeys.get_spoken_words())
+        for m in msgs:            
+#            self.mykeys.key(m.note, m, self.enscribe_callback, doact=False) #dont act on these keys, 
+            self.mykeys.key(m.note, m, None, doact=False) #dont act on these keys, dont actually need callback
+        wordsa = len(self.mykeys.get_spoken_words())
+        #get copy of words..
+        if (wordsa > wordsb):
+            for i in range(wordsb, wordsa):
+                 ret.append(self.mykeys.get_spoken_words().pop()) #get a copy of the new words and remove from mykeys queue, so we can associate with midi data without worrying about duplicates or missing data in the future.  could also do this with a separate function in mykeys to get and clear the queue directly, but for now just pop from the spoken words list as we process them here.
+                 #does this actually pop from mykeys.words_
+        #clear queue
+        ret.reverse() #reverse to get in order of occurrence, since we pop from the end of the list.
+        clearqueue = [60,60,60]
+        msgs = self.mykeys.get_msgs(clearqueue)
+        for m in msgs:            
+            self.mykeys.key(m.note, m, None, doact=False) #dont act on these keys, just clear the queue for next time.  could also do this with a separate function in mykeys to clear the queue directly, but for now just use a dummy note that is unlikely to be used in actual music to clear the queue.
+        return ret
 
     def play_midi(self, midi_data, act=True, speed=1.0, volume=1.0):
         #for now just print the notes with timing.  

@@ -56,6 +56,10 @@ export function run(command: string, dir: string="") {
             //run elevated?  
             worker = getTerminalWorker(cmdtype, cmdtype[1], version, dir);
         }
+        else if (cmdtype[1] === '#'){
+            //powershell
+            worker = getTerminalWorker(cmdtype, cmdtype[1], version, dir);
+        }
     }
 
     if (worker === undefined || worker.terminal === undefined){
@@ -119,6 +123,17 @@ function getTerminal(key: string, type: string="", version: string="", dir=""): 
         }
             */
     }
+    else if (type === '>'){
+        //elevated terminal
+    }
+    else if (type === '#'){
+        //powershell
+        myprofile = {
+            "name": key,
+            "shellPath": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+            "shellArgs": []
+        };
+    }   
 
     console.log("Creating terminal with profile: " + myprofile.name + " Type: " + type + " Version: " + version);
 

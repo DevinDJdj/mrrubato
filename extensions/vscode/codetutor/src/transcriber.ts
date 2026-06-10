@@ -80,6 +80,7 @@ export function transcribe(str: string, topic: string = "NONE"): Array<{topic: s
                     vars: {},
                     data: linestr + "\n",
                 };
+                topicobj.data += linestr + "\n";
                 break;
             case "$$":
                 if (linestr.trim().length < 3) {

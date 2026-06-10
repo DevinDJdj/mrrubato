@@ -308,3 +308,35 @@ Repetetive links, need to skip..
 workaround for youtube..
 
 Speed works, video bookmark works..
+
+
+**languages/helpers/transcriber.py
+--search_midi
+Find most likely next word for each language..
+--open_books
+self.allcmds[lang]['&&']
+
+**mykeys.py
+--get_qr
+
+
+**timestep.py
+get pre-generated DB of likely command sequences.
+
+--search_midi
+get from this time next sequence of commands from all transcripts..
+--enscribe
+Then get words..
+This is adding too much to words..
+Is this all fast enough..
+
+
+Need to test..
+--futuretree
+OK at least have something here.  
+Not nice yet..
+
+**extensions/vscode/codetutor/src/extension.ts
+On command need to find/open right terminal type..
+
+

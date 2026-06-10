@@ -1904,9 +1904,13 @@ class MyWindow(QMainWindow):
                     midiarray = json.loads(vars.get('MIDI', "[]")) #load from string again..
                     print(f"<<{lang}>>\n$$MIDI=" + str(midiarray))
                     similar = self.transcriber.search_midi(midiarray, current_time)
+                    print(f"Similar key structures found: {similar}")
                     print(f"<<{lang}>>\n$$SIMILAR=" + json.dumps(similar))
                     #what to do with this?  
                     #save it and show in QR?  
+                    self.futuretree = self.transcriber.futuretree #map[lang] = ['..': '&&': '##':]
+                    print(f"<<{lang}>>\n$$FUTURETREE=" + json.dumps(self.futuretree))
+                    #display this in info section..
                     self.similar = similar
 
             case "Select Book":

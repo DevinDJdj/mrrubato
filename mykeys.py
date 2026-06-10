@@ -1,3 +1,6 @@
+import math
+import random
+
 import numpy as np
 #midi controller points
 #how do we adjust octaves and/or spacing
@@ -549,7 +552,8 @@ class MyKeys:
       #reset action
       logger.info(f'!! > <{l}>{cmd} {ss}')
       #reset command
-      synth.play_synth(localseq, action) #play failed sequence
+      if (doact):
+        synth.play_synth(localseq, action) #play failed sequence
       self.reset_sequence()
       self.currentcmd = None
     elif (action == 0):
@@ -646,7 +650,7 @@ class MyKeys:
       return action #return 
     return action
 
-  def unset_sequence(self):
+  def unset_sequence(self, doact=True):
 #    self.keyshift = 0
     self.setlanguage = None
 #    self.octaveshift = 0
@@ -655,7 +659,9 @@ class MyKeys:
     #perhaps make shorter
     localseq = self.sequence[-3:] #play last three notes for unset.
     self.reset_sequence()
-    synth.play_synth(localseq)
+
+    if doact:
+      synth.play_synth(localseq)
 
   def key(self, note, msg, callback=None, doact=True): #just get the words if doact=False
     #add this key to the notes map
@@ -675,9 +681,11 @@ class MyKeys:
       #this is default at the moment..
       temptime = time.time() - self.lasttick #msg.time #time.time() #msg.time
       msg.time = int(temptime * 1000) #time since last msg
+    else:
+      temptime = time.time() - self.lasttick
 
-    if self.play_feedback:
-      #sound feedback when playing a note.  
+    if self.play_feedback and doact:
+      #sound feedback when playing a note.  not when simulating..
 
       if (msg.type == 'note_on' and hasattr(msg, 'velocity') and msg.velocity > 0):
           self.lasttick = time.time()
@@ -690,13 +698,20 @@ class MyKeys:
           self.mid.tracks[self.currentchannel].append(msg)
 
       #should also append audio transcript text here to keep in time..
+    unsetseq = self.config['keymap']['global']['Unset'] #assume 3 keys for now..
+    if not doact:
+      #check for end of word dont reset before reset sequence..
+      if (len(self.sequence) > 1 and self.sequence[-1] == self.sequence[-2] and (note % self.octaveinterval != unsetseq[-1]) and self.currentcmd is None):
+        #potentially end of word if we are repeating the same note, but check time between notes to be sure.  
+        if (random.random() < 0.5): #just randomly decide if this is end of word or not for now so we dont get stuck...  
+          self.reset_sequence()
 
-
+                                                
     if hasattr(msg, 'type') and msg.type=='note_on' and hasattr(msg, 'velocity') and msg.velocity > 0:
       #data is stale, start again.  
       if (temptime > 10 and len(self.sequence) > 0): #longer than 10 seconds..
+        print(f"Resetting sequence due to long time since last note {temptime} seconds")
         self.reset_sequence()
-        print("Resetting sequence due to long time since last note")
 #        winsound.Beep(2000, 500) #beep to end error
 
 #        print("Resetting sequence due to long time since last note")
@@ -727,10 +742,10 @@ class MyKeys:
 #        print("Resetting sequence due to Reset key")
 #        return -1 #reset sequence notify error.
       #dynamic based on 
-      unsetseq = self.config['keymap']['global']['Unset'] #assume 3 keys for now..
+
       if (len(self.sequence) >= 3 and self.sequence[-3] % self.octaveinterval == unsetseq[-3] and self.sequence[-2] % self.octaveinterval == unsetseq[-2] and self.sequence[-1] % self.octaveinterval == unsetseq[-1]):
         #unset keyshift, move octave back down.
-        self.unset_sequence()
+        self.unset_sequence(doact)
 
         #unset last language
         return -1 #unset last word notify error.
@@ -873,7 +888,7 @@ class MyKeys:
             #action was successful, reset command
             logger.info(f'> <{self.currentlangna}>{self.currentcmd} {self.sequence[self.startseqno:]}')
             if callback is not None:
-              callback(self.currentcmd + " " + str(self.sequence[self.startseqno:]))
+              callback({'<<': self.currentlangna, '&&': self.currentcmd, '##': self.sequence[self.startseqno:]})
 
             if (self.currentcmd == scmd):
               self.reset_sequence()
@@ -1057,7 +1072,17 @@ class MyKeys:
         la.save_state()
 
 
-
+  def get_msgs(self, notes):
+    #send midi notes to synth.  
+    shorttime = -50 #-50 to use current time..
+    msgs = []
+    for n in notes:
+      omsg = Message('note_on', note=n, velocity=64, time=shorttime)
+      omsgoff = Message('note_off', note=n, velocity=0, time=shorttime)
+      msgs.append(omsg)
+      msgs.append(omsgoff)
+    return msgs
+  
   def text2midi(self, text):
     #convert text to midi keys.  
     mid = MidiFile()

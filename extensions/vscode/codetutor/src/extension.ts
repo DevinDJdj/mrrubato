@@ -703,10 +703,23 @@ export function activate(context: vscode.ExtensionContext) {
 
 	const gencommand = vscode.commands.registerCommand('mrrubato.mytutor.generate', async (text="", topic="") => {
 		let topiccmd = "";
+		let datecmd = "";
 		if (text === "") {
 			//probably should remove header and then run ctrl+shift+f.  
 			const editor = vscode.window.activeTextEditor;
 			if (editor) {
+				const fullpath = editor.document.fileName;
+				if (fullpath.includes("book/")){
+					let fname = fullpath.split("book/")[1];
+					fname = fname.replace('.txt', '');
+					if (fname.length === 8 && !isNaN(Number(fname))){
+						//not sure if this is worth the space, but could be useful..
+						datecmd = "$$" + fname + "\n";
+						//get line number
+						let line = editor.selection.active.line;
+						//no need to pass this I think, just search if opening..
+					}
+				}
 				[text, topic] = getTextFromCursor(editor);
 				if (topic !== "" && topic !== Book.selectedtopic) {
 					//select the topic.  
@@ -857,6 +870,14 @@ export function activate(context: vscode.ExtensionContext) {
 						//run admin command.
 						vscode.commands.executeCommand('workbench.action.terminal.focus');
 						vscode.commands.executeCommand('workbench.action.terminal.sendSequence', { text: text.substring(2).trim() + "\n" });
+						break;
+					case "$":
+						//run in specific terminal.  
+						//pull name from $$TERM=NAME variable if set..
+						TerminalWorker.run(text.trim()); //does this work?  
+						break;
+					case "#": //powershell for now..
+						TerminalWorker.run(text.trim()); //does this work?  
 						break;
 					case "@":
 						//run in vscode
@@ -1151,7 +1172,7 @@ export function activate(context: vscode.ExtensionContext) {
 		}		
 		//log the command to genbook if valid.  
 
-		Book.logCommand(topiccmd + text);
+		Book.logCommand(topiccmd + datecmd + text);
 		//copy to the clipboard anyway by default.  
 		//if wanting to use in different environment.  
 
