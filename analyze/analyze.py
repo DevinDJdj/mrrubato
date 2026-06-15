@@ -11,6 +11,8 @@
 import sys
 
 import datetime
+import traceback
+from unittest import case
 # adding Folder_2/subfolder to the system path
 #not great mechanism for config.  Maybe just make absolute path?
 sys.path.insert(0, 'c:/devinpiano/')
@@ -69,6 +71,8 @@ itoffset = 0
 mappgram = {} #map [ SIGNGRAM ] [PGRAM]
 mapsgram = {} #map [seqngram][pgram]
 
+gstarttimes = []
+gendtimes = []
 #cred.CHANNELID
 channel_id = config.cfg["youtube"]["CHANNELID"] 
 #cred.APIKEY
@@ -281,10 +285,11 @@ def midiToImage(t, midilink, starttimes, endtimes):
         for mymsg in t.notes:
             if (on > 0):
                 #only do this once.  
-                mymsg.time = mymsg.msg.time
                 currentTime += mymsg.msg.time
                 #not very efficient, but good enough for now.  
                 i = getIteration(currentTime, starttimes, endtimes)
+                if (i == -1):
+                    print("!!--midiToImage " + str(currentTime) + "\n-$$" + str(starttimes) + "\n-$$" + str(endtimes))
             if (mymsg.msg.type=='note_on'):
                 if (on > 0 and i > -1):  
                     mymsg.msg.time = currentTime
@@ -336,12 +341,15 @@ def ngramToImage(t, midilink, starttimes, endtimes):
         for mymsg in t.notes:
             if (on > 0):
                 #this is already set.  just get value.  
-                currentTime += mymsg.time
+                currentTime = mymsg.msg.time
                 #not very efficient, but good enough for now.  
                 i = getIteration(currentTime, starttimes, endtimes)
+                if (i == -1):
+                    print("!!--ngramToImage " + str(currentTime) + "\n-$$" + str(starttimes) + "\n-$$" + str(endtimes))
+
             if (mymsg.msg.type=='note_on'):
                 if (on > 0 and i > -1):  
-                    mymsg.msg.time = currentTime
+#                    mymsg.msg.time = currentTime
                     notes[mymsg.note] = mymsg.msg
 
                     """wrds = mymsg.getWords()
@@ -474,6 +482,11 @@ def printNgrams(t, title, GroupName, videoid, midilink):
                 counter += 1
                 #not very efficient, but good enough for now.  
                 it = getIteration(currentTime, starttimes, endtimes)
+                if (i == -1):                    
+                    print("!!--printNgrams " + str(currentTime) + "\n-$$" + str(starttimes) + "\n-$$" + str(endtimes))
+                    traceback.print_exc()
+
+
                 i = 0
                 #too much printing.  
 #                mymsg.print(it, title, GroupName, videoid, midilink)
@@ -499,17 +512,17 @@ def analyzeNgrams():
             iterations = mappgram[ sign ] [ pgram ]['iteration']
             msgs = mappgram[ sign ] [ pgram ]['msgs']
             if (len(times) > 2):
-                print(f"Sign: {sign} Pgram: {pgram} Times: {times} Iterations: {iterations}")    
+#                print(f"Sign: {sign} Pgram: {pgram} Times: {times} Iterations: {iterations}")    
                 #find match in relative time.  
                 for t in range(1, len(times)):
                     dt = abs(times[t] - times[t-1])
                     if (dt < 0.05):
-                        print(f" MATCH: {iterations[t]} {iterations[t-1]} DT: {dt} ")
-                        print(f" {print(msgs[t-1].msg)} ")
+#                        print(f" MATCH: {iterations[t]} {iterations[t-1]} DT: {dt} ")
+#                        print(f" {print(msgs[t-1].msg)} ")
                         matches += 1
                     else:
                         nonmatches += 1
-    print(f"Iterations: {itoffset} Total Ngrams: {totalngrams} Matches: {matches} Nonmatches: {nonmatches}")
+    print(f"Iterations: {itoffset} Total Ngrams: {totalngrams} DT Matches: {matches} Others: {nonmatches}")
 
 
 
@@ -550,6 +563,7 @@ def getLCSMatrix(alliterations):
             n = len(Y)
             lcs_length = lcs(X, Y)
             print(f"LCS {i} and {j}: {lcs_length} // {m} and {n} ")
+            print(f"{i} {j}: {lcs_length/(min(m,n)+1)}")
             matrix[i][j] = lcs_length
             matrix[j][i] = lcs_length
 
@@ -724,6 +738,241 @@ def testNgramModel():
     print('real word is {}, predict word is {}'.format(label, predict_word))
 
 
+
+
+def getNoteColor(note, velocity):
+    match note % 12:
+        case 0 | 1:
+            color = (255, 0, 0)
+        case 2 | 3:
+            color = (255, 127, 0)
+        case 4 | 5:
+            color = (255, 255, 0)
+        case 6 | 7:
+            color = (0, 255, 0)
+        case 8 | 9:
+            color = (0, 0, 255)
+        case 10 | 11:
+            color = (75, 0, 130)
+        case _:
+            color = (0, 0, 0)
+    return color
+
+def getOctaveColor(note):
+    octave = note // 12
+    match octave:
+        case 2:
+            color = (255, 0, 0)
+        case 3:
+            color = (255, 127, 0)
+        case 4:
+            color = (255, 255, 0)
+        case 5:
+            color = (0, 255, 0)
+        case 6:
+            color = (0, 0, 255)
+        case 7:
+            color = (75, 0, 130)
+        case 8:
+            color = (148, 0, 211)
+        case _:
+            color = (0, 0, 0)
+    
+    return color
+
+def printMidiTicker(t, midilink):
+    images = []
+    images2 = []
+    radius = 40
+    gwidth = radius*3
+    center = gwidth // 2
+    color_1 = (255, 255, 255)
+    color_2 = (0, 0, 0)
+
+    print('MidiTicker: {}'.format(t.track.name))
+    notes = [Message('note_on', channel=0, note=60, velocity=0, time=0)] * 109
+    pedal = 0
+
+    st = gstarttimes
+    et = gendtimes
+    print(st)
+    print(et)
+#    st, et = getTrackTimes(t)
+    if len(st) != len(et) or len(st) < 1:
+        print("Incorrect data, please fix" + midilink)
+    else:    
+        prevIt = 0
+        currentTime = 0.0
+        prevTime = currentTime
+        i = 0
+        on = 0
+        prevmsg = None
+        currentseq = []
+        myseq = []
+        currentcolor = (0, 0, 0)
+        itlengths = [et[z]-st[z] for z in range(len(st))]
+        itlengths = [int(x/1000) for x in itlengths]
+        print(itlengths)
+        for mymsg in t.notes:
+            cstart = 0
+            cend = 360
+            if (on > 0):
+                prevTime = currentTime #in milliseconds..
+                currentTime = mymsg.msg.time
+                puretime = currentTime // 1000
+                #not very efficient, but good enough for now.  
+                i = getIteration(int(currentTime), st, et)
+                if (i == -1):
+                    print("Error: currentTime " + str(currentTime) + " st: " + str(st) + " et: " + str(et))
+                else:
+                    if (i != prevIt):
+                        prevIt = i                    
+                        #new sequence..
+                        myseq.append(currentseq)
+                        currentseq = []
+                    elif (currentTime // 1000 != prevTime // 1000): #per second separation for now.. not accounting for > 1 second pauses for now.  
+                        for j in range(1, int(currentTime // 1000 - prevTime // 1000)+1):
+                            #new sequence..
+                            myseq.append(currentseq)
+                            currentseq = []
+                    currentseq.append({'..': float(currentTime) / 1000, '&&': mymsg.note, '$$': mymsg.msg.velocity, ':': i})
+
+
+
+
+            if (mymsg.msg.type=='note_on'):
+                if (on > 0 and i > -1):  
+#                    mymsg.msg.time = currentTime
+                    notes[mymsg.note] = mymsg.msg
+                    #create image here for each note to start.  
+
+
+
+                on = isOn(mymsg.note, on)
+
+        #reset for second image type..
+        currentTime = 0
+        prevTime = currentTime
+        i = 0
+        on = 0
+        prevmsg = None
+        currentcolor = (0, 0, 0)
+        mainimgs = []
+        for it in range(prevIt+1):
+            itlength = itlengths[it]
+            print(f"Creating image for iteration {it} with length {itlength} seconds")
+            itimg = Image.new('RGB', (gwidth*20, gwidth * (1 + itlength//20)), color_1)
+            mainimgs.append(itimg)
+
+        loci = 0
+        locj = 0
+        prevIt = 0
+        for i, seq in enumerate(myseq):
+            #create image for sequence..
+#            print(seq)
+            im = Image.new('RGB', (gwidth, gwidth), color_1)
+            draw = ImageDraw.Draw(im)
+            cstart = 0
+            cend = 360
+            #draw outline for notes..
+#            draw.arc((center-radius, center-radius, center+radius, center+radius), start=cstart, end=cend, fill=currentcolor, width=1)
+            for note in seq:
+                prevTime = currentTime
+                currentTime = note['..']
+
+                puretime = currentTime // 1
+                #not very efficient, but good enough for now.  
+                i = note[':'] #iteration number
+
+                if (i != prevIt):
+                    prevIt = i                    
+
+                if (currentTime - prevTime < 1):
+                    cstart = (prevTime - puretime) * 360
+                    cend = (currentTime - puretime) * 360
+                else:
+                    print("! " + str(currentTime) + " seconds" + str(prevTime) + " seconds")
+                    cstart = (currentTime - puretime) * 360 - 10
+                    cend = cstart + 10
+
+                noteangle = (note['&&'] % 12) * 30
+                timeangle = (note['..'] - puretime) * 360
+                timeangle = round(timeangle)
+                oct = note['&&'] // 12
+                vol = note['$$'] // 30 #also width..
+                vol = max(vol, 1)
+
+                currentcolor = getOctaveColor(note['&&'])
+                draw.arc((center-radius, center-radius, center+radius, center+radius), start=cstart, end=cend, fill=currentcolor, width=vol)
+
+
+                timepointx = round(center + radius * math.cos(math.radians(timeangle)))
+                timepointy = round(center + radius * math.sin(math.radians(timeangle)))
+                notepointx = round(center + radius * math.cos(math.radians(noteangle)))
+                notepointy = round(center + radius * math.sin(math.radians(noteangle)))
+                width = round((currentTime-prevTime)*4)+1
+                if (width > 5):
+                    width = 5
+                color_2 = getNoteColor(note['&&'], note['$$']) #not sure if we want octave color or note color here..
+
+                centerx = (timepointx + notepointx) // 2
+                centerx += center
+                centerx /= 2
+                centery = (timepointy + notepointy) // 2
+                centery += center
+                centery /= 2
+                draw.line((timepointx, timepointy, centerx, centery), fill=currentcolor, width=width)
+                draw.line((centerx, centery, notepointx, notepointy), fill=currentcolor, width=vol)
+
+                cx = notepointx
+                cy = notepointy
+                if (cx < center):
+                    cx += 4
+                else:
+                    cx -= 4
+                if (cy < center):
+                    cy += 4
+                else:
+                    cy -= 4
+                draw.ellipse((cx, cy, cx+4, cy+4), fill=color_2, width=1)
+                polyx = timepointx
+                polyx2 = timepointx
+                polyy = timepointy
+                polyy2 = timepointy
+                if (polyx > center):
+                    polyx = timepointx + 4
+                    polyx2 = timepointx + 2
+                else:
+                    polyx = timepointx - 4
+                    polyx2 = timepointx - 2
+                if (polyy > center):
+                    polyy = timepointy + 4
+                    polyy2 = timepointy + 2
+                else:
+                    polyy = timepointy - 4
+                    polyy2 = timepointy - 2
+                draw.polygon((timepointx, timepointy, polyx, polyy, polyx2, polyy2), fill=color_2, width=1)
+
+#            print(mymsg.msg)
+
+            if (i > -1 and i < len(st)):
+                itlength = itlengths[i]
+                mainimgs[i].paste(im, (loci, locj))
+                loci += gwidth
+                if (loci >= mainimgs[i].width):
+                    loci = 0
+                    locj += gwidth
+
+
+    print(t.length)
+    print(gstarttimes)
+    print(gendtimes)
+
+    path = './output/'
+    for i, im in enumerate(mainimgs):
+        #1 second per frame..
+        im.save(path + 'b' + str(i) + '.png')
+
 def printMidiGif(t, midilink):
 
     images = []
@@ -804,7 +1053,7 @@ def printMidiGif(t, midilink):
 #    mid = MidiFile(midifile)
     path = './output/'
     for i, im in enumerate(images):
-        im.save(path + str(i) + '.png',
+        im.save(path + 'a' + str(i) + '.png',
                 save_all=True, append_images=images[1:], optimize=False, duration=40, loop=0)
     
 
@@ -837,6 +1086,9 @@ def printMidi(midilink, title, GroupName, videoid, force=False):
 
  #   printNgrams(t, title, GroupName, videoid, midilink)
     starttimes, endtimes = getTrackTimes(t)
+    global gstarttimes, gendtimes
+    gstarttimes = starttimes
+    gendtimes = endtimes
 
     img = midiToImage(t, midilink, starttimes, endtimes)
 
@@ -846,7 +1098,10 @@ def printMidi(midilink, title, GroupName, videoid, force=False):
 #        cv2.imwrite(os.path.join(path , filename), img)
         uploadanalyze(filename, os.path.join(path, filename))
 
-    printMidiGif(t, midilink)
+    #problem with calling getStartTimes multiple times..
+#    printMidiGif(t, midilink)
+    printMidiTicker(t, midilink)
+
     data, rythmdata, alliterations = getNgrams(t)
     if (data is None):
         return

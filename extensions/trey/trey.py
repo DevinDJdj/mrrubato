@@ -1107,8 +1107,9 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
             q2.put(total_read)
         if (idx ==len(lines)-1):
             print('Finished reading all lines.')
-            #go back to start?  
-            if (len(lines) > 20):
+            #go back to start?  Only if we have link content and long content.  
+            
+            if (len(lines) > 20 and len(links) > 0):
                 skip = get_first_content_line(link_density_map)
                 idx = skip #will be incremented to skip on next loop
                 if (idx > len(lines)-5):
@@ -1791,6 +1792,7 @@ class MyWindow(QMainWindow):
                     self.transcriber.write_plain('base', '> ' + command) #dont write intermediate msg?
                 elif (type == 'book'):
                     cacheno = vars.get('cacheno', -1)
+                    self.transcriber.write_plain('book', '> ' + command) #dont write intermediate msg?
                     pause_reader(int(cacheno))
 
 
@@ -2184,6 +2186,16 @@ class MyWindow(QMainWindow):
             print(f'Firebase login failed: {e}')
 
 
+    def getColorFromSequence2(self, seqno, format="rgb"):
+        wbarray = [0,1,0,1,0,0,1,0,1,0,1,0] #for now fixed from C
+        seqno = seqno % len(wbarray)
+        if wbarray[seqno] == 0:
+            return "rgb(0,0,0)" if format == "rgb" else "#ffffff"
+        else:
+            return "rgb(255,255,255)" if format == "rgb" else "#000000"
+
+        
+
     def getColorFromSequence(self, seqno, format="rgb"):
         NUM_COLORS = 6
         """
@@ -2416,11 +2428,11 @@ class MyWindow(QMainWindow):
         fontsize = 16
         for i in range(24): #assume 25 key range for now..
             self.label_ps.append(QLabel(self))
-            color = self.getColorFromSequence(i)
+            color = self.getColorFromSequence2(i) #wb only for now..
             if (wbarray[i%len(wbarray)] == 0):
                 self.label_ps[i].setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};border: 1px solid black;")
             else:
-                self.label_ps[i].setStyleSheet(f"background-color: rgba(127, 127, 127, 1);color: {color};border: 1px solid black;")
+                self.label_ps[i].setStyleSheet(f"background-color: rgba(63, 63, 63, 1);color: {color};border: 1px solid black;")
             font = QFont("Courier", fontsize-wbarray[i%len(wbarray)]*2) # Specify font family and size
             self.label_ps[i].setFont(font)
 #            self.label_ps[i].setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};")

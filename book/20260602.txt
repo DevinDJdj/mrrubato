@@ -337,6 +337,135 @@ OK at least have something here.
 Not nice yet..
 
 **extensions/vscode/codetutor/src/extension.ts
+**extensions/vscode/codetutor/src/terminalworker.ts
 On command need to find/open right terminal type..
 
 
+**languages/book.py
+Use pause here for vscode control..
+[50,49,50]
+instead of [61,60,61]
+
+For now not using "Set Book" or "Set Topic"
+Too annoying to implement..
+
+Just create/edit files if we want to select that book/topic..
+But still allow for search eventually..
+
+Need feature to basically always listen, and search for spoken commands..
+As spoken or keyed, potential set of commands is displayed in 13-22..
+This is default functionality unless there is a language for this keybot.
+Or there is a current command.  
+Can select command, then parameters via same mechanism..
+If there is no keybot, this is selection mechanism..
+Need with params (W) / (B) no params.. followed by params, or again selectable params..
+
+4 selections each. 
+[61,62,63,64] and [66,67,68,69]
+Special function for 
+65 (53+12) = create key combo?  
+70 = autocreate, immitate?  
+71 = word creation?  
+
+Need better way to represent sequences..
+#https://en.wikipedia.org/wiki/ABC_notation
+#https://ctan.org/pkg/musixtex
+#https://iris.unipv.it/retrieve/handle/11571/1228268/227299/PhD_thesis_7.pdf
+#https://en.wikipedia.org/wiki/Tonnetz
+
+
+Quick search perhaps..
+and then select from listing..
+Quit the coloring mechanism, too hard to read..
+Set text color to black and white..
+
+**extensions/trey/trey.py
+--getColorFromSequence2
+test..
+
+Use circle-inscribed shapes for word representation.  
+Create font character for each word entity.  
+This could also be not representation, but Need an octave representation as well..
+Time representation can just be character based..
+Each character represents a measure or half-measure..
+
+
+Display this with each Human language word until the entity is known.  
+Or perhaps just a variable mapping in help panel?  
+
+For now just use Clock mechanics starting on C=0..
+Max note sequence per character 4?  
+Fair for now.. 
+Can have up to 4 lines top to bottom perhaps.  
+How to adjust time representation within character?  
+sequence can have inverse color mechanics for multi overlap..
+Same note representation?  
+Octave representation with circle color?  
+ROYGBIV
+2 thickness..
+
+
+Color transition across octaves?  
+Start indicated by dot, and pen thickness and color change with time?  
+Try some things..
+Fill indicates simultaneous play.  
+Accent indicated with pen change.. 
+
+Can we represent/read simple rhythm and melody this way.  
+How to represent rest?  
+Center?  
+Repeated notes loop through center.  
+Off beat shown with curvature change between notes..
+Distance within circle irrelevant, but same curvature depth for same tempo mechanics..
+Lets do some midi->lang
+Generate all images beforehand.  
+Limited number of linguistic elements..
+Lets name them all as well.  
+File name uniqueness.  
+TIMESIG_SEQSIG
+
+Continuation marking?  
+I prefer font, but if multicolor and dynamic, perhaps just do images first.  
+Probably time wont be an issue..
+
+Sample 
+--label_qr
+
+--label_ps
+Create custom images and add to each label_ps..
+Just with labels no rhythm so should be very easy.  Start there..
+See if it is useful for just word sequence..
+This could be a font..
+
+
+In trey time display, display most used word sequence characters..
+
+
+
+**analyze/analyze.py
+$$20241025:116
+--printMidiGif
+adjust/copy to create a similar function which uses 1 second and generates all 4-note sequences within.  
+--printMidiTicker
+enable/test..
+check output..
+
+For now just doing simple TIME->NOTE array..
+
+Time shift shown in color?  
+Possible quantization just 360 for now default..
+round to degree..
+
+
+OK, we have some output..
+Interesting.
+Still needs work.
+
+
+**generate/generatetts.py
+
+**extensions/vscode/codetutor/src/book.ts
+--loadPage
+**languages/helpers/transcriber.py
+--read_lines
+Parse $$YYYYMMDD:line

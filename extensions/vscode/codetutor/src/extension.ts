@@ -377,6 +377,7 @@ export function activate(context: vscode.ExtensionContext) {
 	startWatchingTranscriber('video');
 	startWatchingTranscriber('_meta'); //get all topic changes..
 	startWatchingTranscriber('base'); //get all mood changes and extra pause..
+	startWatchingTranscriber('book'); //pause etc..
 
 	const mySettings = vscode.workspace.getConfiguration('mrrubato');	
 	Book.setModel(mySettings.get('model'));

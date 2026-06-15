@@ -107,8 +107,8 @@ class book:
       "3": {
         "Help": [50,52,51], #show help for check commands
         "Comment": [50,54, 55], #record comment
-        "Select Book": [50,54,57], #open topic
-        "Select Topic": [50,53,57], #open topic
+        "Select Book": [50,53,57], #open topic
+        "Select Topic": [50,54,57], #open topic
 
       },
     }

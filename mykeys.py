@@ -201,6 +201,8 @@ class MyKeys:
     self.keystruct = self.gen_lang_struct() #initialize keystruct for all known words, if no keybot, then not loaded here..
     print("Keystruct generated")
     print(self.keystruct)
+    #also generate image from note structure for each lang_word..
+    #here no rhythm, so should be very easy..
 
 
 

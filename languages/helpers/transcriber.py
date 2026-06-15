@@ -355,6 +355,18 @@ class transcriber:
 
             #get time from timestamp and notes.  for now forgoe this calculation..
             mystart = ff.dest_start if ff.dest_start is not None else 0
+
+            #find seqstart 110 if possible.. dont want to start in middle of transcript      
+            prevnotes = notes[:mystart]  #get notes leading up to mystart, which is the start of the matched sequence, and search for last occurrence of 110 in this sublist, which is the EOW note in mykeys, so we can get the transcript text for the sequence leading up to this point if possible, which can be useful for display and searching later.  if not found, will return -1, so we can just use mystart as the start of the sequence in that case.
+            prevtranstart = len(prevnotes) - 1 - prevnotes[::-1].index(110) if 110 in prevnotes else -1
+            prevtranend = len(prevnotes) - 1 - prevnotes[::-1].index(111) if 111 in prevnotes else -1
+
+#            prevtranstart = notes.rfind(110, 0, mystart) #find last occurrence of note 110 before mystart, which is the EOW note in mykeys, so we can get the transcript text for the sequence leading up to this point if possible, which can be useful for display and searching later.  if not found, will return -1, so we can just use mystart as the start of the sequence in that case.
+#            prevtranend = notes.rfind(111, 0, mystart) #find last occurrence of note 111 before mystart, which is the SOW note in mykeys, so we can get the transcript text for the sequence leading up to this point if possible, which can be useful for display and searching later.  if not found, will return -1, so we can just use mystart as the start of the sequence in that case.
+            if (prevtranstart != -1 and prevtranstart > prevtranend):
+                mystart = prevtranstart
+
+
             transcript = self.mykeys.seq2text(notes[mystart:]) if self.mykeys is not None else "" #get transcript text for these notes if possible, could be useful for display and searching later, but for now just get the keys.
             similar.append({'timestamp': timestamp, 'notes': notes, 'msgs': msgs, 'transcript': transcript, 'score': ff.score * 0.7 + lengthscore * 0.1 + timescore * 0.2, 'start': ff.dest_start}) #combine fuzz score, length score, and time score, with weights of 0.7, 0.1, and 0.2 respectively, could adjust as needed.
         
@@ -731,6 +743,24 @@ class transcriber:
                             if (key == 'TIME'):
                                 currenttopc['timestamp'] = self.get_time_var(vars)
                                 currenttopc['..'] = currenttopc['timestamp'] #duplicate for easy reference later, could also just use timestamp directly but this is more explicit.  could also add other metadata here as needed.
+                    else:
+                        #we have a date here?  special parsing for date/line
+                        #references for date/line
+                        if (self.is_yyyymmdd(line[2:10].strip())):
+                            if (currenttopc is not None and 'vars' in currenttopc):
+                                if (len(line) > 10 and line[10] == ':'):
+                                    linenum = line[10:].strip()
+                                    if (not linenum.isdigit()):
+                                        linenum = '0'
+                                else:
+                                    linenum = '0'
+                                if ('..' not in currenttopc['vars']):
+                                    currenttopc['$$']['..'] = line[2:10].strip()
+                                    currenttopc['$$'][':'] = linenum
+                                else:
+                                    currenttopc['$$']['..'] += ',' + line[2:10].strip()
+                                    currenttopc['$$'][':'] += ',' + linenum
+                                    
 
         if (currentcmd != "" and currentcmdobj is not None):
             ret.append(currentcmdobj)

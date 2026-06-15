@@ -1341,6 +1341,7 @@ export async function markdown(prompt: string, format: number =1) : Promise<stri
 
         
                 let line = p2.slice(colon + 1); //get the line number. 
+                line = line.trim(); //remove any whitespace from the line number.
 
                 if (fname.length > 1){
                     //only do this with actual name.. not blank : 
@@ -1349,9 +1350,18 @@ export async function markdown(prompt: string, format: number =1) : Promise<stri
                     fname = fname.replace(folderUri.path + "/", ""); //remove the folder path from the file name for display purposes.
     //				let fileUri = getUri(fname);
                     let fileUri = folderUri.with({ path: posix.join(folderUri.path, fname) });
+                    //check if valid too expensive..
+//                    if (fs.existsSync(fileUri.fsPath)) {
+                        //file exists, return the link.
+//                    }
                     //need to rewrite dates to something else..
-                    let readablename = getReadableName(p2, line);
-                    return `[${p1}${readablename}](${fileUri}#L${line})  `; //return the markdown link.
+                    if (line.length > 0 && !isNaN(Number(line))){
+                        let readablename = getReadableName(p2, line);
+                        return `[${p1}${readablename}](${fileUri}#L${line})  `; //return the markdown link.
+                    }
+                    else{
+                        return `[${p1}${fname}]`; //return the markdown link.
+                    }
                 }
 //                return `[${p1}${p2}](${fname}#L${line})`; //return the markdown link.
             }
