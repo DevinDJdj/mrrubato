@@ -172,6 +172,30 @@ def isOn(note, on):
 #we need to adjust to several images one per instance.  
 #if prevMsg = 21 or 108 then this is start time.  
 #if nextMsg = 22 or 107 then this is end time of the track.  
+
+def getTrackTimesControl(mytrack):
+    #skip between pauses and only start with the start signal.  
+    currentTime = 0
+    on = 0
+    starttimes = []
+    endtimes = []
+    for mymsg in mytrack.notes:        
+    #getting duplicates with multiple channels.  
+        if hasattr(mymsg.msg, 'time'):
+            currentTime += mymsg.msg.time
+        if (mymsg.msg.type == 'note_on' and hasattr(mymsg.msg, 'velocity') and mymsg.msg.velocity > 0 and mymsg.msg.channel==0):
+            if (mymsg.msg.note == 21 or mymsg.prevmsg.note == 108) and mymsg.msg.channel == 0:
+                print(mymsg.msg)
+                starttimes.append(currentTime)
+            if mymsg is not None and (mymsg.note == 22 or mymsg.note == 107) and mymsg.msg.channel == 0:
+                print(mymsg.msg)
+                endtimes.append(currentTime)
+                
+
+#    mymsg.simpleprint()
+#    mymsg.prevmsg.simpleprint()
+    return starttimes, endtimes
+
 def getTrackTimes(mytrack):
     #skip between pauses and only start with the start signal.  
     currentTime = 0
@@ -235,9 +259,14 @@ def getIteration(currentTime, starttimes, endtimes):
     for i, st in enumerate(starttimes):
         if (i < len(endtimes) and starttimes[i] <= currentTime and currentTime <= endtimes[i]):
             return i
+    for i, st in enumerate(starttimes):
+        #catch the case where we are between iterations, this is important for the image generation.
+        if (currentTime < starttimes[i]):
+            return -i-1 #-1 for 0 index, -2 for 1 index, etc.
     print("getIterationError" + str(currentTime))
     print(starttimes)
     print(endtimes)
+
     return -1
     
 
@@ -414,6 +443,51 @@ def isInputMessage(msg):
 #use some of the structures we have used before, just the P*P*P for now to define the note sequence.  Right now order not so important.  
 #each P represents a key.  
 
+def getControl(mid):
+    prevMsg = None
+    pedal = 0
+    maxtime = 0
+    
+    print("Get Control Midi start")
+    for i, track in enumerate(mid.tracks):
+        print("Track number " + str(i))
+        if i==0: #for now just using 1 track.  
+            totalTime = getTrackTime(track)
+            t = mymidi.MyTrack(track, totalTime, maxtime)
+            on = 0
+            othertime = 0
+            for msg in track:
+              #ignore feedback channels.  
+              if isInputMessage(msg):
+                if (msg.type=='note_on' or msg.type=='control_change' or msg.type=='program_change'):
+                    if (on == 0 
+                        or (msg.type=='control_change' and msg.control != 64) #control changes without pedal
+                        or (msg.type == 'program_change') #all instrument changes
+                        or (hasattr(msg, 'note') and msg.note in [21,22,105,106,107,108])):   #just get notes from between iterations..
+                        m = mymidi.MyMsg(msg, prevMsg, pedal)
+                        m.time += othertime
+                        m.msg.time += othertime #keep real time here when we are skipping notes..
+                        othertime = 0
+                        t.notes.append(m)
+                        if (m.prevmsg is not None):
+                            m.prevmsg.nextmsg = m
+                            if (maxtime < msg.time):
+                                maxtime = msg.time
+                        prevMsg = m
+                    elif hasattr(msg, 'time'):
+                        othertime += msg.time
+                    if (hasattr(msg, 'note')):
+                        on = isOn(msg.note, on)
+                elif hasattr(msg, 'time'):
+                    othertime += msg.time
+                if (msg.type=='control_change'):
+                    #https://www.midi.org/specifications-old/item/table-3-control-change-messages-data-bytes-2
+                    if (msg.control == 64):  #assuming this is pedal, yep 
+                        pedal = msg.value
+               # print(msg)
+    t.maxtime = maxtime                    
+    return t
+    
 def enhanceMidi(mid):
     
     prevMsg = None
@@ -434,7 +508,9 @@ def enhanceMidi(mid):
                 if (msg.type=='note_on'):
                     if (on > 0):  
                         m = mymidi.MyMsg(msg, prevMsg, pedal)
-                        m.msg.time += othertime
+                        m.msg.time += othertime #why am I using msg.time here, probably screwing up the time..
+                        m.time += othertime
+                        #can we switch to m.time
                         othertime = 0
                         t.notes.append(m)
                         if (m.prevmsg is not None):
@@ -780,10 +856,79 @@ def getOctaveColor(note):
     
     return color
 
+def findNote(fullseq, n=60): #find most recent note..
+    for _, seq in enumerate(reversed(fullseq)):
+        for _, note in enumerate(reversed(seq)):
+            if note['&&'] == n:
+                return note
+    return None
+
+
+def autocorrelation_envelopes(t, tlens, resolution=60):
+    # 'resolution' defines how many array indices equal one tick
+    envelopes = []
+    st = gstarttimes
+    et = gendtimes
+    for i, len in enumerate(tlens):
+        if len > 0:
+            env = {'env': np.zeros(int((len+1) * resolution)), 'start': st[i], 'end': et[i], 'length': len, 'peaks': [], 'bpm': None}
+            envelopes.append(env)
+
+    
+    for mymsg in t.notes:
+        #no determination based on frequency of note..
+        #simple example..
+        i = getIteration(int(mymsg.msg.time), st, et)
+
+        if (i == -1):
+            print("!!--autocorrelation_envelope " + str(mymsg.msg.time) + "\n-$$" + str(st) + "\n-$$" + str(et))
+            continue
+        idx = int((mymsg.msg.time - st[i]) * resolution)
+        if idx < tlens[i] * resolution:
+            envelopes[i]['env'][idx] += mymsg.msg.velocity
+            
+    #for each envelope, detect_beat_and_tempo and print results.
+    for i, env in enumerate(envelopes):
+        bpm, peaks = detect_beat_and_tempo(env['env'], resolution)
+        print(f"Iteration {i}: Detected BPM: {bpm}, Peaks: {peaks}")
+        env['peaks'] = peaks
+        env['bpm'] = bpm
+
+    return envelopes
+
+from scipy.signal import find_peaks
+
+def detect_beat_and_tempo(onset_env, resolution=60, tempo_min=40, tempo_max=300):
+    # Calculate autocorrelation resolution 60 means 60 samples per second, so each index in onset_env corresponds to 1/60th of a second.
+    corr = np.correlate(onset_env, onset_env, mode='full')
+    corr = corr[corr.size // 2:] # Keep only positive lags
+    
+    # Define search bounds based on expected BPM (tempo limits)
+    # Convert BPM range into lags based on the resolution/tick rate
+    min_lag = int((60 / tempo_max) * (resolution)) # 300 BPM corresponds to 0.2 seconds per beat, so min_lag is 0.2 * resolution
+    max_lag = int((60 / tempo_min) * (resolution)) # 40 BPM corresponds to 1.5 seconds per beat, so max_lag is 1.5 * resolution
+    
+    # Find peaks in the valid lag range
+    peaks, _ = find_peaks(corr, distance=min_lag, prominence=0.1)
+    
+    if len(peaks) == 0:
+        return None, None
+    
+    # The first significant peak beyond the zero-lag represents the beat interval
+    best_lag = peaks[0]
+    
+    # Calculate tempo (BPM)
+    # (60 seconds per min * samples per second) / (samples per beat)
+    # This calculation will vary based on your sampling units:
+    bpm = 60 / (best_lag * resolution) 
+    
+    return bpm, peaks
+
+
 def printMidiTicker(t, midilink):
     images = []
     images2 = []
-    radius = 40
+    radius = 35
     gwidth = radius*3
     center = gwidth // 2
     color_1 = (255, 255, 255)
@@ -813,6 +958,9 @@ def printMidiTicker(t, midilink):
         itlengths = [et[z]-st[z] for z in range(len(st))]
         itlengths = [int(x/1000) for x in itlengths]
         print(itlengths)
+
+        autocorrenvs = autocorrelation_envelopes(t, itlengths, resolution=10)
+
         for mymsg in t.notes:
             cstart = 0
             cend = 360
@@ -835,16 +983,25 @@ def printMidiTicker(t, midilink):
                             #new sequence..
                             myseq.append(currentseq)
                             currentseq = []
-                    currentseq.append({'..': float(currentTime) / 1000, '&&': mymsg.note, '$$': mymsg.msg.velocity, ':': i})
+                    currentseq.append({'..': float(currentTime) / 1000, '&&': mymsg.note, '$$': mymsg.msg.velocity, ':': i, 'dur': 0})
 
 
 
 
-            if (mymsg.msg.type=='note_on'):
+            if (mymsg.msg.type=='note_on' or mymsg.msg.type=='note_off'):
                 if (on > 0 and i > -1):  
 #                    mymsg.msg.time = currentTime
                     notes[mymsg.note] = mymsg.msg
                     #create image here for each note to start.  
+                    if (mymsg.msg.type == 'note_off' or (mymsg.msg.type == 'note_on' and mymsg.msg.velocity == 0)):
+                        #find current note.  
+                        mynote = findNote(myseq, mymsg.note)
+                        if mynote is not None:
+                            mynote['dur'] = float(currentTime) / 1000 - mynote['..']
+                            #print(f"Note {mymsg.note} at time {currentTime} duration {mynote['dur']} seconds")
+                        else:
+                            print("!!Error finding note " + str(mymsg.msg))
+
 
 
 
@@ -867,7 +1024,7 @@ def printMidiTicker(t, midilink):
         loci = 0
         locj = 0
         prevIt = 0
-        for i, seq in enumerate(myseq):
+        for k, seq in enumerate(myseq):
             #create image for sequence..
 #            print(seq)
             im = Image.new('RGB', (gwidth, gwidth), color_1)
@@ -875,10 +1032,18 @@ def printMidiTicker(t, midilink):
             cstart = 0
             cend = 360
             #draw outline for notes..
-#            draw.arc((center-radius, center-radius, center+radius, center+radius), start=cstart, end=cend, fill=currentcolor, width=1)
-            for note in seq:
+            draw.line((center-radius*1.3, center, center-radius*1.1, center), fill=(0, 0, 0), width=1)
+            draw.line((center+radius*1.1, center, center+radius*1.3, center), fill=(0, 0, 0), width=1)
+            draw.line((center, center-radius*1.3, center, center-radius*1.1), fill=(0, 0, 0), width=1)
+            draw.line((center, center+radius*1.1, center, center+radius*1.3), fill=(0, 0, 0), width=1)
+            draw.arc((center-radius, center-radius, center+radius, center+radius), start=cstart, end=cend, fill=(0,0,0), width=1)
+            for m, note in enumerate(seq):
                 prevTime = currentTime
                 currentTime = note['..']
+                dur = note['dur']
+                if (dur == 0):
+#                    print("!!No duration for note " + str(note) + " at time " + str(currentTime))
+                    dur = 0.1 #just a placeholder for now, but this is an issue.
 
                 puretime = currentTime // 1
                 #not very efficient, but good enough for now.  
@@ -886,13 +1051,15 @@ def printMidiTicker(t, midilink):
 
                 if (i != prevIt):
                     prevIt = i                    
+                    loci = 0
+                    locj = 0
 
                 if (currentTime - prevTime < 1):
-                    cstart = (prevTime - puretime) * 360
-                    cend = (currentTime - puretime) * 360
+                    cstart = (prevTime - puretime) * 360 - 90
+                    cend = (currentTime - puretime) * 360 - 90
                 else:
                     print("! " + str(currentTime) + " seconds" + str(prevTime) + " seconds")
-                    cstart = (currentTime - puretime) * 360 - 10
+                    cstart = (currentTime - puretime) * 360 - 100
                     cend = cstart + 10
 
                 noteangle = (note['&&'] % 12) * 30
@@ -900,16 +1067,22 @@ def printMidiTicker(t, midilink):
                 timeangle = round(timeangle)
                 oct = note['&&'] // 12
                 vol = note['$$'] // 30 #also width..
-                vol = max(vol, 1)
+                vol = max(vol, 2)
 
                 currentcolor = getOctaveColor(note['&&'])
-                draw.arc((center-radius, center-radius, center+radius, center+radius), start=cstart, end=cend, fill=currentcolor, width=vol)
+                #draw.arc((center-radius, center-radius, center+radius, center+radius), start=cstart, end=cend, fill=currentcolor, width=vol)
 
 
-                timepointx = round(center + radius * math.cos(math.radians(timeangle)))
-                timepointy = round(center + radius * math.sin(math.radians(timeangle)))
-                notepointx = round(center + radius * math.cos(math.radians(noteangle)))
-                notepointy = round(center + radius * math.sin(math.radians(noteangle)))
+                timepointx = round(center + radius * math.cos(math.radians(timeangle-90)))
+                timepointy = round(center + radius * math.sin(math.radians(timeangle-90)))
+                notepointx = round(center + radius * math.cos(math.radians(noteangle-90)))
+                notepointy = round(center + radius * math.sin(math.radians(noteangle-90)))
+                #adjust notepoints.  
+                notepointx = round(15 + 15 * math.sin(math.radians(noteangle-90)))
+                notepointy = round(15 + 15 * math.cos(math.radians(noteangle-90)))
+
+                timenoteangle = math.atan2(notepointy - timepointy, notepointx - timepointx)
+
                 width = round((currentTime-prevTime)*4)+1
                 if (width > 5):
                     width = 5
@@ -921,37 +1094,28 @@ def printMidiTicker(t, midilink):
                 centery = (timepointy + notepointy) // 2
                 centery += center
                 centery /= 2
-                draw.line((timepointx, timepointy, centerx, centery), fill=currentcolor, width=width)
-                draw.line((centerx, centery, notepointx, notepointy), fill=currentcolor, width=vol)
+                #draw.line((timepointx, timepointy, centerx, centery), fill=currentcolor, width=width)
+                #draw.line((centerx, centery, notepointx, notepointy), fill=currentcolor, width=vol)
+ #               if (m%2):
+                tnx = round(center + (radius) * math.cos(math.radians(timeangle-90)))
+                tny = round(center + (radius) * math.sin(math.radians(timeangle-90)))
+
+                tnx2 = tnx + round(math.cos(math.radians(noteangle+15))*vol*8)
+                tnx3 = tnx + round(math.cos(math.radians(noteangle-15))*vol*8)
+                tny2 = tny + round(math.sin(math.radians(noteangle+15))*vol*8)
+                tny3 = tny + round(math.sin(math.radians(noteangle-15))*vol*8)
+ #               else:
+
+#                tnx2 = tnx - round(math.cos(timenoteangle)*vol*2)
+#                tny2 = tny - round(math.sin(timenoteangle)*vol*2)
+#                draw.line((tnx2, tny2, tnx, tny), fill=currentcolor, width=1)
+                draw.polygon([(tnx, tny), (tnx2, tny2), (tnx3, tny3)], fill=currentcolor, width=1, outline="black")
 
                 cx = notepointx
                 cy = notepointy
-                if (cx < center):
-                    cx += 4
-                else:
-                    cx -= 4
-                if (cy < center):
-                    cy += 4
-                else:
-                    cy -= 4
-                draw.ellipse((cx, cy, cx+4, cy+4), fill=color_2, width=1)
-                polyx = timepointx
-                polyx2 = timepointx
-                polyy = timepointy
-                polyy2 = timepointy
-                if (polyx > center):
-                    polyx = timepointx + 4
-                    polyx2 = timepointx + 2
-                else:
-                    polyx = timepointx - 4
-                    polyx2 = timepointx - 2
-                if (polyy > center):
-                    polyy = timepointy + 4
-                    polyy2 = timepointy + 2
-                else:
-                    polyy = timepointy - 4
-                    polyy2 = timepointy - 2
-                draw.polygon((timepointx, timepointy, polyx, polyy, polyx2, polyy2), fill=color_2, width=1)
+#                draw.ellipse((tnx, tny, tnx+7, tny+7), fill=color_2, width=1)
+#                draw.ellipse((tnx, tny, tnx+vol, tny+vol), fill=currentcolor, width=1)
+#                draw.pieslice((tnx, tny, tnx2, tny2), start=noteangle-105, end=noteangle-75, fill=currentcolor, width=1, outline="black")
 
 #            print(mymsg.msg)
 
@@ -1304,11 +1468,34 @@ def getqrcode(prev):
     #save as C:\Temp\prevIterationQR.jpg
     img.save("C:\\Temp\\prevIterationQR.jpg")
 
+
+import asyncio
+
+async def async_execute(cmd):
+    # Start the process asynchronously
+    proc = await asyncio.create_subprocess_exec(
+        *cmd,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.STDOUT
+    )
+
+    # Non-blocking read loop
+    while True:
+        line = await proc.stdout.readline()
+        if not line:
+            break
+        print(f"Async Captured: {line.decode().strip()}")
+        
+        # You can perform other tasks right here
+        await asyncio.sleep(0.1) 
+
+
 if __name__ == '__main__':
     argparser.add_argument("--title", help="Video title", default="What a Wonderful World")
     argparser.add_argument("--video", help="Video ID", default="4flRJWtfY9c")
     #for now this is kind of getting annoying.  We can always calculate this later.  
     argparser.add_argument("--skipfinger", help="Skip finger test", default="true")
+    argparser.add_argument("--skipmidscribe", help="Skip midscribe test", default="true")
     argparser.add_argument("--force", help="Force reanalyze", default="false")
     args = argparser.parse_args()
 
@@ -1411,12 +1598,18 @@ if __name__ == '__main__':
                     if (args.skipfinger !="true"):
                         
                         #doesnt work for videoid starting with -
-                        cmd = ["python", "./analyze/fingertest.py", "--video", "\"" + videoid + "\"", "--midi", midilink]
+                        cmd = ["python", "./analyze/fingertest.py", "--video", "\"" + videoid + "\"", "--midi", midilink, "--force", args.force]
                         print(cmd)
-#                        os.spawn("python", cmd, no_wait=True)
-                        proc = subprocess.Popen(cmd)
+                        asyncio.run(async_execute(cmd)) #run and capture output asynchronously so we can see it in real time.
+    #                    proc = subprocess.Popen(cmd)
                         print("fingertest started")
-
+                if (args.skipmidscribe != "true"):
+                    #run midscribe test here as well.  
+                    cmd = ["python", "./analyze/midscribe.py", "--video", "\"" + videoid + "\"", "--midi", midilink, "--force", args.force]
+                    print(cmd)
+                    asyncio.run(async_execute(cmd)) #run and capture output asynchronously so we can see it in real time.
+#                    proc = subprocess.Popen(cmd)
+                    print("midscribe started")
             
             transcripts = desc.find("TRANSCRIPT:")
             if (transcripts > 0):

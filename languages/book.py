@@ -11,6 +11,8 @@ import shutil
 import languages.helpers.transcriber as transcriber
 #from server.login.app import index
 
+import extensions.trey.playwrighty as playwrighty
+
 
 logger = logging.getLogger(__name__)
 
@@ -34,16 +36,21 @@ class book:
     self.keybot = 50 #
     self.mid = 60 #middle C for bbox calc
     self.keyoffset = 2 #offset within octave mapping
-    self.links = []
     self.maxseq = 10 #includes parameters
     self.callback = None
     self.transcript = ""
     self.feedbacknowstr = ""
+    self.selectedtopic = None
+    self.selectedbook = None
+    self.selectedtopicindex = 0
+    self.selectedbookindex = 0
+    self.ext_links = [] #currently selected link structure from book..
+    self.ext_link_index = 0
     self.funcdict = {}
     self.suggestions = []
     self.transcripthistory = [] #store past transcripts for context.  This is not currently used for anything but could be used for context in future functions.
     self.topichistory = [] #store past topics for context.  This is not currently used for anything but could be used for context in future functions.
-    self.links = [] #currently selected link structure from page..
+    self.ext_links = [] #currently selected link structure from book..
     self.timewindow = timewindow.timewindow(self) #for timeline functions, can also be used for general time tracking.  This is initialized here but can be reset by timeline if needed.
     self.bookmarks = {} #bookname: index in bookcontext
     self.lastcacheno = 100
@@ -93,6 +100,22 @@ class book:
     book = self.transcriber.read('book', self.transcriber.getTime(-180), None, './book/')
     logger.info(f'Loaded {len(book)} book transcripts from ./book/')    
 
+    numtopics = 0
+    self.ext_links = []
+    self.ext_link_index = 0
+    self.alltopics = {}
+    linkcnt = 0
+    for c in book:
+      if (c['_']=='#'):
+        linkcnt += 1
+        self.ext_links.append(c['&&'])
+        if (c['**'] not in self.alltopics):
+          self.alltopics[c['**']] = {'#': [], '..': c['..'], ':': -1} #for now just link info..
+        self.alltopics[c['**']]['#'].append(c)
+        self.alltopics[c['**']][':'] += 1 #for now represents topic link index..
+
+    logger.info(f'Loaded {len(self.ext_links)} links from book transcripts, across {len(self.alltopics)} topics. Link count: {linkcnt}')
+
 
     return 0
   
@@ -109,7 +132,7 @@ class book:
         "Comment": [50,54, 55], #record comment
         "Select Book": [50,53,57], #open topic
         "Select Topic": [50,54,57], #open topic
-
+        "Read Link": [50,52,57], #read link on page, need to add link reading to book context first.
       },
     }
     if (self.name in self.config['languages']):
@@ -128,6 +151,8 @@ class book:
       "Select Book": "select_book",
       "Select Topic": "select_topic",
       "Set Book": "set_book",
+      "Read Link": "read_link",
+
 
     }
     self.helpdict = {
@@ -138,6 +163,7 @@ class book:
       "Select Book": {"help": "select_book", "params": "None", "desc": f"Open current book in {self.name}."},
       "Select Topic": {"help": "select_topic", "params": "None", "desc": f"Open current topic in {self.name}."},
       "Set Book": {"help": "set book [book]", "params": "[book]", "desc": "Set book by name."},
+      "Read Link": {"help": "read_link", "params": "[linkno]", "desc": f"Read link in book in {self.name}."},
 
     }
 
@@ -206,6 +232,104 @@ class book:
     return -1
   
 
+  def adjust_ext_link_index(self, idx):
+    if idx+self.ext_link_index < 0:
+      return 0
+    elif (idx+self.ext_link_index) >= len(self.ext_links):
+      return len(self.ext_links)-1
+    else:
+      return self.ext_link_index + idx
+
+  def get_ext_link_index(self, linkno=0, current_time=None, topic=None):
+    t = current_time if current_time is not None else self.transcriber.mytime
+    #find most recent link before current time.
+    topic = topic if topic is not None else self.transcriber.current_topic
+    #should topic always be selected?  Not sure..
+    if (topic is not None and topic in self.alltopics and ':' in self.alltopics[topic]):
+      topic_links = self.alltopics[topic]
+      index = topic_links[':'] #start with most recent link for this topic, which is at index ':', and check if it is before current time.  If not, go back until we find one that is before current time.
+      while (index > 0 and topic_links['#'][index]['..'] > t):
+        index -= 1
+      while (index < len(topic_links['#']) and topic_links['#'][index]['..'] <= t):
+        index += 1
+
+      if (index + linkno < 0):
+        index = 0
+      elif (index + linkno >= len(topic_links['#'])):
+        index = len(topic_links['#'])-1
+      else:
+        index += linkno
+
+      return index, topic_links['#']
+    
+    else:
+      #not sure we need this full list..
+      index = self.ext_link_index
+      link = self.ext_links[index] if index >= 0 and index < len(self.ext_links) else None
+      if (link is not None and link['..'] > t):
+        #need to go back in time to find the most recent link before current time.
+        while (index > 0 and self.ext_links[index]['..'] > t):
+          index -= 1
+        while (index < len(self.ext_links) and self.ext_links[index]['..'] <= t):
+          index += 1
+
+        if (index + linkno < 0):
+          index = 0
+        elif (index + linkno >= len(self.ext_links)):
+          index = len(self.ext_links)-1
+        else:
+          index += linkno
+        return index, self.ext_links
+    return -1, []
+
+  def read_link_(self, sequence=[]):
+    logger.info(f'> Read Link_ {sequence}')
+    #need to get content for this link and read it.  For now just speak the link text, but ideally we would get the content of the link and read that instead.
+    if (len(sequence) > 0):
+      linkno = sequence[-1] - self.mid
+    else:
+      linkno = 0 #default to first link if no parameter provided.  This is not ideal but we need some way to trigger reading a link without audio input for link number for now.  We can add audio input for link number in future.
+    index, links = self.get_ext_link_index(linkno)
+    if (index != -1):
+      link = links[index]
+    else:
+      logger.error(f'Invalid link number: {linkno}')
+      return -1
+    self.func = "Read Link_"
+    #should make this more general.. send last ten links
+    last15 = links[max(0, linkno-10):min(linkno+10, len(links))]
+    #does this match up with keys?  
+    vars = {}
+    for i, l in enumerate(last15):
+      vars[f'{i}'] = l['&&']
+    vars['idx'] = linkno
+
+    self.set_qr(self.func, vars)
+
+
+    return 1
+  
+  def read_link(self, sequence=[]):
+    logger.info(f'> Read Link {sequence}')
+    #try multi-select.  
+    #topic, then link within topic.  For now just use current topic..
+    #-1 to list all?
+    if (len(sequence) > 0):
+      linkno = sequence[-1] - self.mid
+    else:
+      linkno = 0 #default to first link if no parameter provided.  This is not ideal but we need some way to trigger reading a link without audio input for link number for now.  We can add audio input for link number in future.
+    
+    index, links = self.get_ext_link_index(linkno)
+    if (index != -1):
+      link = links[index]
+      playwrighty.read_page(link['&&']) #need to get content for this link and read it. 
+      #this should open up the page, then we can read aloud if we want..
+
+    else:
+      logger.error(f'Invalid link number: {linkno}')
+    return 0
+  
+  
   def get_book_context(self, book, num=5):
     #get context for book from book transcripts.  
     ret = f"**{book}\n"
@@ -216,8 +340,9 @@ class book:
       bookdata = self.transcriber.langmap[book]
       if ('&&' in bookdata and bookdata['&&'] is not None and bookdata['('] != bookdata[')']):
         bookcmds = bookdata['&&'][bookdata['(']:bookdata[')']+1]
-      bookcmds.sort(key=lambda x: abs(self.timewindow.currenttime - x['timestamp']), reverse=True) #sort by recency to current time, most recent first.
-      logger.info(f'Found {len(bookcmds)} commands for book {book} during time window {self.timewindow.currenttime} +/- {self.timewindow.window }')
+      bookcmds.sort(key=lambda x: abs(self.transcriber.timewindow.currenttime - x['timestamp']), reverse=True) #sort by recency to current time, most recent first.
+      #use transcriber timewindow..
+      logger.info(f'Found {len(bookcmds)} commands for book {book} during time window {self.transcriber.timewindow.currenttime} +/- {self.transcriber.timewindow.window }')
       sortedcmds = bookcmds[:num]
       sortedcmds.sort(key=lambda x: x['timestamp']) #sort by time for display.
       
@@ -486,9 +611,9 @@ class book:
     
     existing_book = self.bookmarks.get(self.transcriber.current_book, None)
     ctxt = self.get_book_context(self.transcriber.current_book, 5) #get context for book
-    link_data = self.get_links(ctxt)
+    book_links = self.get_book_links(ctxt)
     if (existing_book is None):
-      existing_book = {'total_read': 0, 'links': link_data, 'cacheno': cacheno, 'context': ctxt, 'q2': None}
+      existing_book = {'total_read': 0, 'links': book_links, 'cacheno': cacheno, 'context': ctxt, 'q2': None}
     else:
       q2 = existing_book['q2']
       cacheno = existing_book['cacheno']
@@ -521,25 +646,26 @@ class book:
     #get book context and read..
     existing_book = self.bookmarks.get(self.transcriber.current_book, None)
     ctxt = self.get_book_context(self.transcriber.current_book, 5) #get context for book
-    link_data = self.get_links(ctxt)
+    book_links = self.get_book_links(ctxt)
     if (existing_book is None):
-      existing_book = {'total_read': 0, 'links': link_data, 'cacheno': cacheno, 'context': ctxt, 'q2': None}
+      existing_book = {'total_read': 0, 'links': book_links, 'cacheno': cacheno, 'context': ctxt, 'q2': None}
       self.bookmarks[self.transcriber.current_book] = existing_book
     elif (existing_book['context'] != ctxt):
-        existing_book['links'] = link_data
+        existing_book['links'] = book_links
         existing_book['context'] = ctxt
         existing_book['total_read'] = 0 #set back to 0 if context has changed, otherwise keep track of how much we have read for this book.
         #existing_book['cacheno'] = cacheno
 
     #dont overwrite cacheno if we already have one for this book, otherwise we lose track of it and cant pause again.
-    q2, q3, stop_event = self.speak(ctxt, link_data, [], total_read=existing_book['total_read'], cacheno=existing_book['cacheno'])
+    q2, q3, stop_event = self.speak(ctxt, book_links, [], total_read=existing_book['total_read'], cacheno=existing_book['cacheno'])
     existing_book['q2'] = q2
 
 
     
     return 0
 
-  def get_links(self, ctxt):
+
+  def get_book_links(self, ctxt):
     """
     {
             href: link.href,
@@ -553,7 +679,7 @@ class book:
             index: index
         }
     """
-    links = []
+    book_links = []
     lines = ctxt.split('\n')
     cmds = self.transcriber.read_lines(self.transcriber.current_book, lines)
     total_read = 0
@@ -561,13 +687,13 @@ class book:
       if cmd['type'] == '**':
         bytes_read = 0
         print(f'{cmd}')
-        links.append({'href': cmd['lines'][0], 'text': cmd['topic'], 'bbox': self.bbox, 'index': total_read})
+        book_links.append({'href': cmd['lines'][0], 'text': cmd['topic'], 'bbox': self.bbox, 'index': total_read})
         for line in cmd['lines']:
           bytes_read = len(line) +1 #+1 for newline
         total_read += bytes_read
 
-    self.links = links
-    return links
+    self.book_links = book_links
+    return book_links
 
   
 

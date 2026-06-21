@@ -172,6 +172,7 @@ class MyKeys:
 
     for key, value in config['keymap']['languages'].items():
       #load files
+      #order from config.json should be _meta, _lang, other..
       try:
         la = importlib.import_module("languages." + key)
         la = getattr(la, key)  # Class From file

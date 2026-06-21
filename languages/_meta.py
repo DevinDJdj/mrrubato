@@ -90,6 +90,9 @@ class _meta:
      #config overrides load_data by default.  
     if (transcriber is not None):
       self.transcriber = transcriber
+      #use meta timewindow
+      self.timewindow = self.transcriber.timewindow #use transcriber's timewindow for consistency across tools.
+#      self.transcriber.timewindow = self.timewindow #set transcriber's timewindow to this language's timewindow for consistency across tools.
     if hasattr(self, 'load_data'):
       self.load_data()
     else:

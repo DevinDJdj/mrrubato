@@ -3261,7 +3261,8 @@ class MyWindow(QMainWindow):
       for i, l in enumerate(struct):
         type = l['type']
         if (type == '> '):
-          if (l['cmd'] == 'Click Link_' or l['cmd'] == 'Select Book_' or l['cmd'] == 'Select Topic_' or l['cmd'] == 'Select Tab_' or l['cmd'] == 'Time Zoom_'): 
+          if (l['cmd'] == 'Click Link_' or l['cmd'] == 'Select Book_' or l['cmd'] == 'Select Topic_' 
+              or l['cmd'] == 'Select Tab_' or l['cmd'] == 'Time Zoom_' or l['cmd'] == 'Read Link_'): 
             cnt = 0       
             for k, v in l['vars'].items():
 #                if (wbarray[i%len(wbarray)] == 0):

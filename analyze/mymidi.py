@@ -34,7 +34,10 @@ class MyTrack:
 class MyMsg:
   def __init__(self, msg, prev, pedal):
     self.msg = msg
-    self.note = msg.note
+    if (hasattr(msg, 'note')):
+      self.note = msg.note
+    else:
+      self.note = -1
     self.time = msg.time
     self.currentTime = 0
     self.startmsg = None

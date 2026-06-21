@@ -22,6 +22,8 @@ from multiprocessing.shared_memory import SharedMemory
 import mmap
 from rapidfuzz import fuzz
 
+import languages.helpers.timewindow as timewindow
+
 
 logger = logging.getLogger(__name__)
 
@@ -44,13 +46,14 @@ class transcriber:
         self.mykeys = mk
         self.mydic = {}
         self.typedefmap = {}
-
+        self.mytime = time.time() #use to search all elements.. search_midi
         self.allneedles = []
         self.current_topic = None
         self.current_context = None
         self.current_book = None
         self.futuretree = None
         self.similar = None
+        self.timewindow = timewindow.timewindow(self) #initialize timewindow for transcriber, shared..
 
         self.kg_ignorevars = ['TIME', 'WINDOW', 'START', 'END', 'FNAME', 'FILE', 'DURATION', 'LAG'] #vars to ignore in display of info, used for time window commands.
 
@@ -316,7 +319,7 @@ class transcriber:
         similar = []
         self.fuzzmap = {} #store fuzz scores for each item to avoid redundant calculations, since we may want to sort by score later.
         #for now reset each time we search..
-
+        self.mytime = current_time #update time for referential searches..
         if (self.futuretree is not None):
             #do we need to search midi?  
             #for now do every time..
@@ -601,6 +604,8 @@ class transcriber:
             return '>'
         elif (cmd['_'] == '$$'):
             return '$'
+        elif (cmd['_'] == '#'):
+            return '#'
         else:
             #analyze type
             return '_' #default to underscore for unknown types, could also do some analysis here to try to categorize types based on content if needed.
@@ -761,6 +766,12 @@ class transcriber:
                                     currenttopc['$$']['..'] += ',' + line[2:10].strip()
                                     currenttopc['$$'][':'] += ',' + linenum
                                     
+            if (type[0] == '#'):
+                #link here.. list for reading..
+                cmd = line[1:].strip()
+                obj = self.get_cmd(lang, '#', cmd, {'TIME': now.strftime('%Y%m%d_%H%M%S')})
+                ret.append(obj)
+
 
         if (currentcmd != "" and currentcmdobj is not None):
             ret.append(currentcmdobj)

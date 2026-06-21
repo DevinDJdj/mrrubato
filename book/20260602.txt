@@ -469,3 +469,161 @@ Still needs work.
 **languages/helpers/transcriber.py
 --read_lines
 Parse $$YYYYMMDD:line
+
+
+LOCATION=TIME
+SHAPE=NOTE
+COLOR=Octave
+
+Is line by line listing best?  
+1 second per graph may be ok.  
+Try different geometric representations.  
+Spiral, etc..
+
+for now keep the line by line listing.  
+Find highest autocorrelation for line length.  
+Possibly change line length throughout.  
+X and Y direction autocorrelation..
+Or other for non-rectangular.  
+
+30 degree portions..
+Somewhat closer..
+Nice chord representation with this..
+Not sure I like the time representation though..
+How to find best spiral rate?  
+One large spiral?  
+
+
+
+#https://en.wikipedia.org/wiki/Archimedean_spiral
+b = i.e. 1/2PI 
+r = b * theta
+b/2 (theta*sqrt(1+theta^2) + ln(theta+sqrt(1+theta^2)))
+
+(1/2PI/2) * ((2PI*sqrt(1+(2PI)^2)) + ln(2PI+sqrt(1+(2PI)^2)))
+r = 1 -> 
+d = 3.38
+(1/2PI/2) * ((4PI*sqrt(1+(4PI)^2)) + ln(4PI+sqrt(1+(4PI)^2)))
+r = 2 -> 
+d = 12.86
+(1/2PI/2) * ((6PI*sqrt(1+(6PI)^2)) + ln(6PI+sqrt(1+(6PI)^2)))
+r = 3 -> 
+d = 28.6
+
+
+
+b = 1.618
+
+
+1 = (1/PI) * ((n*sqrt(1+n^2)) + ln(n+sqrt(1+n^2)))
+1 = 1.278
+2 = 2.0808
+3 = 2.6881
+4 = 3.1938
+
+theta = 2PI*sqrt(2s/(1/2PI))
+s = 1,2,3,4
+
+
+
+#https://en.wikipedia.org/wiki/Golden_spiral
+1.618
+a+b/a = a/b
+
+
+r = e^(b*theta)
+b = ln(phi)/PI = 0.30635
+
+r = e^(0.30635*theta)
+
+
+r = e^(0.30635*PI) = 2.618
+r = e^(0.30635*2PI) = 6.85
+r = e^(0.30635*3PI) = 17.6
+r = e^(0.30635*4PI) = 46.9
+
+r*csc(1.273)
+
+fibonacci spiral
+
+
+Archimedean spiral more practical for this..
+can we get some integer relationships between full distances though?  
+
+How to autocorrelate beats.  
+--autocorrelation_envelopes
+its a start..
+
+
+**analyze/midscribe.py
+#get pertinent info from midi file between iterations..
+#read OLD language and new language if possible..
+pull all word locations..
+
+Just printing for now.
+test..
+OK, somewhat useful..
+
+> python ./analyze/analyze.py --title  "Evil Ways (Sonny Henry)" --force true --skipmidscribe false
+
+> python ./analyze/analyze.py --title "Great Balls Of Fire (Jack Hammer)" --force true --skipmidscribe false
+
+#https://data.yamaha.com/files/download/other_assets/8/1345698/dgx670_en_dl_b0.pdf
+
+Need to create transcript perhaps for reading on analyze.html
+Show current instrument.  
+Not sure how to show 2nd instrument..
+
+**mykeys.py
+Maybe better to just create transcript from mykeys.py for instrument changes..
+Want the actual time for this..
+
+
+
+**web/public/analyze.html
+display as separate segments for control change transcript..
+
+
+
+**languages/book.py
+Still mostly placeholders
+Select Topic
+or 
+Select Book
+function yet..
+Use <<_meta>>
+
+
+#https://iris.unipv.it/retrieve/handle/11571/1228268/227299/PhD_thesis_7.pdf
+
+read any of last N links in book..
+Just show from selected time..
+Need better mechanism to share info between languages..
+transcriber is shared, just use here??
+
+OK, test ..
+<<book>>> Read Link
+[50,52,57] [n]
+
+OK, works, not sure we want the topic though..
+Need clear topic function..
+
+**extensions/trey/playwrighty.py
+--get_page_details
+!!Dont get the text in PDF link from playwrighty?  
+==
+nope..
+Download and parse?  
+not ideal..
+Keep bookmark of file?  
+
+later..
+$$
+
+**extensions/vscode/codetutor/extension.ts
+--workbench.action.chat.readChatResponseAloud
+@@ Can we scroll along with speech?  
+Seems not easily..
+
+
+

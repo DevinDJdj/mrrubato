@@ -163,14 +163,14 @@
 			"PageUp": 56
 		},
 		"languages":{
-			"mousemovement1": [63, 65],			
-			"mousemovement2": [62, 63],
+			"_meta": [48,49], 
 			"hotkeys": [53, 54],
 			"video": [49,50], 
-			"_meta": [48,49], 
-			"base": [61,62], 
-			"check": [57,58],
-			"book": [50,51]
+			"base": [61,62],
+			"check": [57,58], 
+			"book": [50,51],
+			"mousemovement1": [63, 65],			
+			"mousemovement2": [62, 63]
 			
 		},
 		"settings":{
