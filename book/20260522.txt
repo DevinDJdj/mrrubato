@@ -1,0 +1,46 @@
+**VOLLEY
+#https://github.com/masouduut94/volleyball_analytics
+#https://github.com/openvolley/ovml
+
+#https://github.com/PythoneerSamurai/computer-vision-projects/tree/master/key-points-regression/yolov8x-supervision-advance-volleyball-analysis
+
+#https://github.com/shukkkur/VolleyVision
+
+
+
+> C:\Python\Python311\python -m venv volleyenv
+!!AttributeError: module '_thread' has no attribute 'start_joinable_thread'
+==
+uninstall/reinstall 3.11
+> py -3.11 -m venv volleyenv
+$$
+
+> .\volleyenv\Scripts\activate
+> .\volleyenv\Scripts\deactivate
+
+$$ENV=volleyenv
+
+**/testing/VOLLEY
+> git clone https://github.com/shukkkur/VolleyVision.git
+
+> cd VolleyVision\Stage I - Volleyball
+> pip install -r requirements.txt
+
+> python detect.py --input_path assets\rally_men.mp4 --input_type video --output_path Output/detect.mp4 --model roboflow --marker circle --color yellow 
+!!AttributeError: 'Roboflow' object has no attribute 'current_workspace'
+==
+roboflow 
+need key etc..
+change to yolov7
+$$
+
+
+> python detect.py --input_path assets\rally_men.mp4 --input_type video --output_path Output/detect.mp4 --model yolov7 --marker circle --color yellow 
+
+> python detect.py --input_path assets\back_view.mp4 --input_type video --output_path Output/detect_back.mp4 --model yolov7 --marker circle --color yellow 
+
+> python detect.py --input_path ../../data/VID_20260509_114035.mp4 --input_type video --output_path Output/VID_20260509_114035.mp4 --model yolov7 --marker circle --color yellow 
+
+> python detect.py --input_path ../../data/VID_20260616_084406.mp4 --input_type video --output_path Output/VID_20260616_084406.mp4 --model yolov7 --marker circle --color yellow 
+
+

@@ -1,0 +1,83 @@
+Wibotic
+
+#https://www.wibotic.com/products/hardware/
+
+#https://mavsdk.mavlink.io/main/en/cpp/quickstart.html
+
+$$ENV=UBUNTU
+> wget https://github.com/mavlink/MAVSDK/releases/download/v3.0.0/libmavsdk-dev_3.0.0_ubuntu24.04_amd64.deb
+
+#https://github.com/JonasVautherin/px4-gazebo-headless
+
+> docker run --rm -it jonasvautherin/px4-gazebo-headless:1.17.0
+
+#https://docs.docker.com/engine/install/ubuntu/
+
+> sudo systemctl status docker
+
+> sudo docker run --rm -it jonasvautherin/px4-gazebo-headless:1.17.0
+
+> git clone https://github.com/mavlink/MAVSDK.git --recursive
+
+> cd MAVSDK
+> cd cpp/examples
+> cd takeoff_and_land/
+
+> cmake -Bbuild -S.
+
+!!CMake Error at CMakeLists.txt:6 (project):
+  No CMAKE_CXX_COMPILER could be found.
+==
+> sudo apt update && sudo apt install build-essential
+$$
+
+
+> cmake --build build -j4
+!!fatal error: mavsdk/mavsdk.hpp: No such file or directory
+    7 | #include <mavsdk/mavsdk.hpp>
+==
+??
+$$    
+
+> build/takeoff_and_land udpin://0.0.0.0:14540
+
+
+#https://mavsdk.mavlink.io/main/en/python/quickstart.html
+> sudo apt install python3-pip
+> sudo apt install python3.12-venv
+> python3 -m venv dronez
+> source dronez/bin/activate
+$$ENV=dronez
+
+> pip3 install mavsdk
+
+> pip3 install aioconsole
+
+
+#https://docs.qgroundcontrol.com/master/en/qgc-user-guide/getting_started/download_and_install.html
+
+
+!!Preflight Fail: No connection to the GCS with simulator
+==
+#https://docs.px4.io/main/en/dev_setup/dev_env_windows_wsl
+
+> git clone https://github.com/PX4/PX4-Autopilot.git --recursive
+
+> bash ./PX4-Autopilot/Tools/setup/ubuntu.sh
+..
+$$
+
+> cd ~/PX4-Autopilot
+> make px4_sitl
+
+> ip addr | grep eth0
+$$IP=x.x.x.x
+> make px4_sitl gz_x500
+
+!!Preflight Fail: No connection to the GCS
+==
+Add setting in qgroundcontrol..
+Q > Application Settings > Comm Links
+18570
+IP=x.x.x.x
+$$

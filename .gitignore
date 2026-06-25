@@ -67,6 +67,7 @@ model_checkpoints/*
 *.wav
 speechvenv/*
 treyenv/*
+volleyenv/*
 
 *.ctxt
 *.ctx
