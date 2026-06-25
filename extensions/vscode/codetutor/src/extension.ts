@@ -21,7 +21,9 @@ import ollama from 'ollama';
 import { LanguageModelPromptTsxPart, LanguageModelToolInvocationOptions, LanguageModelToolResult } from 'vscode';
 
 
-import { startWatchingWorkspace, startWatchingTranscriber, writeToTranscriber, updateStatusBarItem, registerStatusBarTool, registerCompletionTool, registerToolUserChatParticipant, registerPiano, unregisterPiano } from './toolParticipant';
+import { startWatchingWorkspace, startWatchingTranscriber, writeToTranscriber, updateStatusBarItem, registerStatusBarTool, 
+	registerCompletionTool, registerToolUserChatParticipant, registerPiano, unregisterPiano, 
+	getSelectionInfo } from './toolParticipant';
 import { start } from 'repl';
 import { get } from 'http';
 
@@ -376,7 +378,8 @@ export function activate(context: vscode.ExtensionContext) {
 	startWatchingTranscriber('hotkeys'); //get record feedback..
 	startWatchingTranscriber('video');
 	startWatchingTranscriber('_meta'); //get all topic changes..
-	startWatchingTranscriber('base'); //get all mood changes and extra pause..
+//	startWatchingTranscriber('base'); //get all mood changes and extra pause..
+	//use 'base' for tracking genbook
 	startWatchingTranscriber('book'); //pause etc..
 
 	const mySettings = vscode.workspace.getConfiguration('mrrubato');	
@@ -733,6 +736,10 @@ export function activate(context: vscode.ExtensionContext) {
 						topiccmd = "\n**" + topic + "\n";
 					}
 				}
+
+				console.log(editor.selection);
+
+				writeToTranscriber('base', topic, getSelectionInfo(editor));
 
 			}
 		}

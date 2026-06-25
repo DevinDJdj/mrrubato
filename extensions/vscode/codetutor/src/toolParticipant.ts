@@ -12,6 +12,7 @@ let myStatusBarItem: vscode.StatusBarItem;
 
 import * as midiin from './midi/midi-in';
 import * as tree from './midi/tree';
+import { currenttopic } from './book';
 
 //import midiin from './midi/midi-in.js';
 //import tree from './midi/tree.js';
@@ -358,6 +359,30 @@ export function startWatchingMMAP(name: string){
 var transcriberTopic = "";
 
 var transcriberTopics = {}; //populate latest topic for each language.  Reduce repetition
+
+export function getSelectionInfo(editor: vscode.TextEditor | undefined): string {
+
+    let selectionInfo = "";
+
+    if (editor) {
+        let filePath = editor.document.uri.fsPath;
+
+
+        const folderUri = vscode.workspace.workspaceFolders[0].uri;
+        let fname = editor.document.uri.fsPath.replace(folderUri.path + "/", ""); //remove the folder path from the file name for display purposes.
+        const selection = editor.selection;
+        if (!selection.isEmpty) {
+            selectionInfo = `**${fname}:${selection.start.line}\n`;
+            selectionInfo += `$$(=${selection.start.line}\n`;
+            selectionInfo += `$$)=${selection.end.line}\n`;
+
+        }
+        else{
+            selectionInfo = `**${fname}:${selection.start.line}\n`;
+        }
+    }
+    return selectionInfo;
+}
 
 export function writeToTranscriber(lang: string, topic: string = "", data : string = "",transcriptFolder: string = "C:/devinpiano/transcripts/"){
     let now = Book.formatDate();

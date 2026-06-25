@@ -40,6 +40,7 @@ exports.registerCompletionTool = registerCompletionTool;
 exports.startWatchingWorkspace = startWatchingWorkspace;
 exports.stopWatchingMMAP = stopWatchingMMAP;
 exports.startWatchingMMAP = startWatchingMMAP;
+exports.getSelectionInfo = getSelectionInfo;
 exports.writeToTranscriber = writeToTranscriber;
 exports.startWatchingTranscriber = startWatchingTranscriber;
 exports.registerToolUserChatParticipant = registerToolUserChatParticipant;
@@ -317,6 +318,24 @@ function startWatchingMMAP(name) {
 }
 var transcriberTopic = "";
 var transcriberTopics = {}; //populate latest topic for each language.  Reduce repetition
+function getSelectionInfo(editor) {
+    let selectionInfo = "";
+    if (editor) {
+        let filePath = editor.document.uri.fsPath;
+        const folderUri = vscode.workspace.workspaceFolders[0].uri;
+        let fname = editor.document.uri.fsPath.replace(folderUri.path + "/", ""); //remove the folder path from the file name for display purposes.
+        const selection = editor.selection;
+        if (!selection.isEmpty) {
+            selectionInfo = `**${fname}:${selection.start.line}\n`;
+            selectionInfo += `$$(=${selection.start.line}\n`;
+            selectionInfo += `$$)=${selection.end.line}\n`;
+        }
+        else {
+            selectionInfo = `**${fname}:${selection.start.line}\n`;
+        }
+    }
+    return selectionInfo;
+}
 function writeToTranscriber(lang, topic = "", data = "", transcriptFolder = "C:/devinpiano/transcripts/") {
     let now = Book.formatDate();
     const mySettings = vscode.workspace.getConfiguration('mrrubato');

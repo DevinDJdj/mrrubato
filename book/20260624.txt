@@ -1,0 +1,348 @@
+
+**languages
+These messages for LANG and META are MOD12.  
+_LANG can set to any octave automatically.  
+and in any language, _META lang and _LANG always exist.  
+
+
+**mykeys.py
+@@Word creation logic?  
+**languages/_lang.py
+--new_word
+
+
+**extensions/vscode/codetutor/src/extension.ts
+Need to at least genbook..
+On a loop..
+
+
+
+
+**extensions/vscode/codetutor/src/extension.ts
+**extensions/trey/trey.py
+Lets see if we can open [**public/web] with login with playwrighty.  
+
+
+**languages/check.py
+dont necessarily like this name..
+For now just use comment..
+--comment
+Check if comment works..
+[50,54,55]
+[53,57,58]
+[57,61,62]
+[49,53,56] out of place..
+
+
+
+**books/WORLDHISTORY
+Start usage experiment here..
+Book management chaotic, maybe just use topic..
+
+
+**extensions/vscode/codetutor/src/book.ts
+Need to be able to switch between books seamlessly..
+
+
+
+**web/public/chata.html
+Load [**web/public/data/transcriptions/trey/2026]
+Local vector DB..
+Chat find similar transcript (spoken)..
+Load full transcript from this location..
+Need web transcript parser/viewer..
+
+
+
+**languages/_meta.py
+
+;> Set Book_ [fill,endrec] [selection]
+test..
+;> Set Topic_ [fill,endrec] [selection]
+test..
+filter ..
+
+
+Book is what we are writing..
+Topic is any existing book..
+
+select from session:
+bookhistory, topichistory
+
+
+**languages/_meta.py
+
+;> Tune In
+;> Tune Out
+test..
+
+
+
+
+**languages/_lang.py
+Save or name a sequence..
+
+Start/end..
+Track all param inputs selected..
+All text used.
+Or just allow for random selection.
+
+Create word on replay..
+Gather all transcripts with timestamps in this timespan.
+
+;> Start Word [SINCE]
+;> End Word [SINCE]
+Gather all transcript..
+
+> pip install watchfiles
+
+
+
+**timestep.py
+create summary for > RECORD
+add it directly to VTT?
+
+
+
+
+**web/public/chata.html
+**web/public/recent.js
+--loadAllRecentTranscripts
+have some info from transcripts..
+Can now embed this with other entries..
+Or make separate listing..
+
+
+**extensions/vscode/codetutor/src/extension.ts
+Need to go back from link in book to playwrighty..
+Transcribe into <<hotkeys>>
+CTRL+SHIFT+8 on link..
+
+
+>@ lean4.docs.showAbbreviations
+
+
+**languages/_lang.py
+--new_word
+word assignment, just uses last words..
+
+Need to set transcripts here as well..
+
+creation of our language needs two aspects primarily
+-physical/tonal Proximity 
+-semantic tree definition 
+
+Ideally this should mirror.  
+
+
+
+**extensions/trey/trey.py
+**languages/video.py
+Need to search rtdb
+or 
+Random selection.  
+to start record.
+;> python ./record.py --description "Selected (Composer)"
+;$$RUNMIDI=true
+to run cmds prior to [21]
+Use book location from this date..
+This way all data selected is based on this..
+
+Need cmd to set Output to replace musiccam.  
+
+
+**languages/hotkeys.py
+
+Need close tab..
+test..
+[53,56,59]
+
+
+
+
+**timestep.py
+get pre-generated DB of likely command sequences.
+
+--search_midi
+get from this time next sequence of commands from all transcripts..
+--enscribe
+Then get words..
+This is adding too much to words..
+Is this all fast enough..
+
+
+Need to test..
+--futuretree
+OK at least have something here.  
+Not nice yet..
+
+
+**languages/book.py
+Use pause here for vscode control..
+[50,49,50]
+instead of [61,60,61]
+
+For now not using "Set Book" or "Set Topic"
+Too annoying to implement..
+
+Just create/edit files if we want to select that book/topic..
+But still allow for search eventually..
+
+Need feature to basically always listen, and search for spoken commands..
+As spoken or keyed, potential set of commands is displayed in 13-22..
+This is default functionality unless there is a language for this keybot.
+Or there is a current command.  
+Can select command, then parameters via same mechanism..
+If there is no keybot, this is selection mechanism..
+Need with params (W) / (B) no params.. followed by params, or again selectable params..
+
+4 selections each. 
+[61,62,63,64] and [66,67,68,69]
+Special function for 
+65 (53+12) = create key combo?  
+70 = autocreate, immitate?  
+71 = word creation?  
+
+
+
+
+**analyze/midscribe.py
+
+> python ./analyze/analyze.py --title  "Evil Ways (Sonny Henry)" --force true --skipmidscribe false
+
+> python ./analyze/analyze.py --title "Great Balls Of Fire (Jack Hammer)" --force true --skipmidscribe false
+
+#https://data.yamaha.com/files/download/other_assets/8/1345698/dgx670_en_dl_b0.pdf
+
+
+
+**languages/book.py
+Still mostly placeholders
+Select Topic
+or 
+Select Book
+function yet..
+Use <<_meta>>
+
+
+#https://iris.unipv.it/retrieve/handle/11571/1228268/227299/PhD_thesis_7.pdf
+
+read any of last N links in book..
+Just show from selected time..
+Need better mechanism to share info between languages..
+transcriber is shared, just use here??
+
+OK, test ..
+<<book>>> Read Link
+[50,52,57] [n]
+
+OK, works, not sure we want the topic though..
+Need clear topic function..
+
+**extensions/trey/playwrighty.py
+--get_page_details
+!!Dont get the text in PDF link from playwrighty?  
+==
+nope..
+Download and parse?  
+not ideal..
+Keep bookmark of file?  
+
+later..
+$$
+
+**extensions/vscode/codetutor/extension.ts
+--workbench.action.chat.readChatResponseAloud
+@@ Can we scroll along with speech?  
+Seems not easily..
+
+
+**languages/video.py
+Need general send to vscode mechanism..
+
+
+**extensions/vscode/codetutor/src/midi/midi-in.ts
+Need these commands here.. file time lag too significant..
+
+**extensions/vscode/codetutor/src/languages/_meta.js
+Confirm we are getting commands here..
+Expand this to drive below base commands..
+
+
+**extensions/vscode/codetutor/src/languages/base.js
+No editing, just use..  
+No closure
+[69]
+[69,68];> CTRL+SHIFT+8
+[69,70];> Selection On/Off
+[69,65];> Up/Down/Left/right
+[69,65,68];> Up
+[69,65,67];> Down
+[69,65,64];> Left
+[69,65,66];> Right
+
+;> Home/End
+[69,64,63];> Home
+[69,64,65];> End
+;> Pgup/PgDn
+[69,64,67];> PgDn
+[69,64,68];> PgUp
+
+;> Enter - None
+;> 
+
+**extensions/vscode/codetutor/src/extension.ts
+
+Can we send keystrokes..
+
+            vscode.commands.executeCommand('type', {
+                text: 'Hello from your VS Code Extension!'
+            });
+await vscode.commands.executeCommand('cursorMove', {
+    to: 'down',         // Direction: 'up', 'down', 'left', 'right'
+    by: 'wrappedLine',  // Unit: 'line' (logical) or 'wrappedLine' (visual)
+    value: 1,           // Number of lines to move
+    select: false       // Set to true to expand the active selection
+});
+await vscode.commands.executeCommand('cursorMove', {
+    to: 'wrappedLineStart',
+    select: false
+});
+
+await vscode.commands.executeCommand('mrrubato.mytutor.generate')
+
+continue..
+workbench.action.nextEditor
+"workbench.action.previousEditor"
+
+Sound feedback should not occur unless it is potential word?  
+Create word tree struct in VSCode..
+
+Dont like the implementation in [**mykeys.py]
+
+syntax..
+**extensions/vscode/codetutor/src/languages/base.js:27
+Code location at time..
+If end needed..
+$$(=27
+$$)=29
+
+
+Continue, see if selection works..
+4-note sequences may be too long for this..
+Maybe ok with no closure..
+60+ lets see if standard with no closure works..
+Also single key for repeat prior may be sufficient..
+64,66,67 in this octave, use for single key?
+67 = Repeat last action.  
+66 = Last action change params..
+64 = Undo?  
+
+
+
+
+Also use Joystick commands..
+
+Do we want multiple topic entries in this?  
+
+

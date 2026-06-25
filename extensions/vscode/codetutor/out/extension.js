@@ -345,7 +345,8 @@ function activate(context) {
     (0, toolParticipant_1.startWatchingTranscriber)('hotkeys'); //get record feedback..
     (0, toolParticipant_1.startWatchingTranscriber)('video');
     (0, toolParticipant_1.startWatchingTranscriber)('_meta'); //get all topic changes..
-    (0, toolParticipant_1.startWatchingTranscriber)('base'); //get all mood changes and extra pause..
+    //	startWatchingTranscriber('base'); //get all mood changes and extra pause..
+    //use 'base' for tracking genbook
     (0, toolParticipant_1.startWatchingTranscriber)('book'); //pause etc..
     const mySettings = vscode.workspace.getConfiguration('mrrubato');
     Book.setModel(mySettings.get('model'));
@@ -627,6 +628,8 @@ function activate(context) {
                         topiccmd = "\n**" + topic + "\n";
                     }
                 }
+                console.log(editor.selection);
+                (0, toolParticipant_1.writeToTranscriber)('base', topic, (0, toolParticipant_1.getSelectionInfo)(editor));
             }
         }
         const mySettings = vscode.workspace.getConfiguration('mrrubato');

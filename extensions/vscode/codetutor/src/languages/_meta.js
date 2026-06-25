@@ -3,8 +3,11 @@ export default class LANG {
     config = {};
     keybot = 48;
     keyoffset = 0;
-    name = "meta";
     funcdict = {};
+    midwordtree = {}; 
+
+    name = "_meta";
+    //ALLCAPS = vscode handler..
 
     constructor(){
         console.log("meta language constructor");
@@ -22,24 +25,24 @@ export default class LANG {
             "2":{
             },
             "3":{
-                "Set Topic": [0, 4, 5],
-                "Add Topic": [0, 6, 7],
+                "SET TOPIC": [0, 4, 5],
+                "ADD TOPIC": [0, 6, 7],
             },
 
-        }
+        };
         if (this.name in this.config['languages']){
             //merge existing config with defaults
             obj = Object.assign({}, obj, this.config['languages'][this.name]);
             this.config['languages'][this.name] = obj;
         }
-        this.funcdict["Set Topic"] = this.set_topic;
+        this.funcdict["SET TOPIC"] = this.set_topic;
     }
 
     set_topic(sequence, words){
         console.log("meta set_topic", sequence, words);
         if (sequence.length > 0){
             //set topic to 
-            numtopics = sequence[0]-this.keybot-this.keyoffset;
+            let numtopics = sequence[0]-this.keybot-this.keyoffset;
             //select this number of topics and share those topics.  
         }
     }
@@ -47,12 +50,12 @@ export default class LANG {
     act(cmd, sequence, words){
         console.log("meta act", cmd, sequence, words);
         if (cmd in this.funcdict){
-            func = this.funcdict[cmd];
+            let func = this.funcdict[cmd];
             if (sequence.length ===1 && sequence[0] === this.keybot+this.keyoffset){
-                func([], words); //no parameters
+                return func([], words); //no parameters
             }
             else if (sequence.length > 1 && JSON.stringify(sequence.slice(-2)) === JSON.stringify([this.keybot+this.keyoffset, this.keybot+this.keyoffset])){
-                func(sequence.slice(0, -2), words);
+                return func(sequence.slice(0, -2), words);
             }
             else{
                 return 1; //more keys needed
@@ -61,15 +64,17 @@ export default class LANG {
         }
         else{
             console.log("meta unknown command", cmd);
+            return -1; //unknown command
         }
     }
 
     word(sequence, words=[]){
-        cmd = "";
-        sl = sequence.length;
-        if (sl in this.config['languages'][this.name]){
-            for (const [key, value] of Object.entries(this.config['languages'][this.name][sl])) {
-                if (JSON.stringify(value) === JSON.stringify(sequence.slice(-sl))){
+        let cmd = "";
+        let sl = sequence.length;
+        let strsl = sl.toString();
+        if (strsl in this.config['languages'][this.name]){
+            for (const [key, value] of Object.entries(this.config['languages'][this.name][strsl])) {
+                if (JSON.stringify(value) === JSON.stringify(sequence)){
                     cmd = key;
                     break;
                 }

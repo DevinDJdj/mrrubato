@@ -105,7 +105,7 @@ class check:
       },
       "3": {
         "Help": [57,69,58], #show help for check commands
-        "Comment": [57,61, 64], #record comment
+        "Comment": [57,61, 62], #record comment
         "Check Topic": [57,60,64], #open topic
 
       },

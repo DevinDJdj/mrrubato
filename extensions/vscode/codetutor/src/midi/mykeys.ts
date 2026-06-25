@@ -17,15 +17,17 @@ export class MyKeys {
     keys: Number[]; //array of ints
     sequence: Number[]; //array of ints
     config: any;
+    lasttick: number;
     words: string[];
     languages: any;
-    currentlang: string;
     transcripts: any;
     currentseqno: number = 0;
     startseqno: number = 0;
     lastnote: any;
     lastnotetime: number = 0;
     currentcmd: string = '';
+    currentlangna: string = '';
+    currentlang: Object = null;
     currentmidiuser: number = 0;
     start: number = (new Date()).getTime();
     notes: any[];
@@ -39,10 +41,12 @@ export class MyKeys {
     constructor(config = {}) {
         this.keys = [];
         this.config = config;
+        this.lasttick = (new Date()).getTime();
         this.sequence = []; //current sequence of notes
         this.words = []; //current sequence of words
         this.languages = {}; //lang: {lang: [keys], module: module}
-        this.currentlang = '';
+        this.currentlangna = '';
+        this.currentlang = null;
         this.transcripts = {}; //lang: transcript
         this.currentseqno = 0;
         this.startseqno = 0;
@@ -76,7 +80,7 @@ export class MyKeys {
                 this.languages[lang] = {val};
                 this.transcripts[lang] = [];
             }
-            this.currentlang = Object.keys(this.languages)[0];
+            this.currentlang = null;
         }
 
     }    
@@ -112,7 +116,7 @@ export class MyKeys {
         if (myTime === 0){
             myTime = - (this.lastnotetime - this.start);  //current time in ms
         }
-        let lang = this.currentlang;
+        let lang = this.currentlangna;
         let midiuser = this.currentmidiuser;
         if (midiCb) {
             midiCb(msg, myTime, lang, midiuser);
@@ -159,8 +163,8 @@ export class MyKeys {
     }
 
     noteOn(note, velocity, abstime, myTime = 0, lang = "") {
-        if (lang==""){
-            lang = this.currentlang;
+        if (lang === ""){
+            lang = this.currentlangna;
         }
             
         let osc = null;
@@ -177,11 +181,44 @@ export class MyKeys {
         }
 
         this.notes[note] = obj;
+        this.mkey(note, velocity, abstime, myTime, lang);
+    }
+
+    reset_sequence(){
+        this.sequence = [];
+        this.words = [];
+        this.currentcmd = '';
+        this.currentlangna = '';
+    }   
+
+
+    mkey(note, velocity, abstime, myTime = 0, lang = "") {
+        if (lang === ""){
+            lang = this.currentlangna;
+        }
+
+        let unsetseq = this.config['keymap']['global']['Unset'];
+        let temptime = (new Date()).getTime() - this.lasttick;
+        if (temptime > 10000 && this.sequence.length > 0) {
+            this.reset_sequence();
+        }
+
+        this.sequence.push(note);
+
+        console.log("mkey", note, velocity, abstime, myTime, lang);
+        for (const [lang, val] of Object.entries(this.languages)) {
+
+            if (val["module"] && val["module"].word) {
+
+                val["module"].word(this.sequence, this.words);
+            }
+        }
+
     }
 
     noteOff(note, abstime, lang = "") {
-        if (lang==""){
-            lang = this.currentlang;
+        if (lang === ""){
+            lang = this.currentlangna;
         }
     
         const obj = this.notes[note];
@@ -209,7 +246,7 @@ export class MyKeys {
 
     insertNote(note, lang = "") {
         if (lang == ""){
-            lang = this.currentlang;	
+            lang = this.currentlangna;	
         }
         let i=this.midiarray[this.currentmidiuser][lang].length-1;
 

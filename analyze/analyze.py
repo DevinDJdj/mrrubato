@@ -1132,10 +1132,7 @@ def printMidiTicker(t, midilink):
     print(gstarttimes)
     print(gendtimes)
 
-    path = './output/'
-    for i, im in enumerate(mainimgs):
-        #1 second per frame..
-        im.save(path + 'b' + str(i) + '.png')
+    return mainimgs
 
 def printMidiGif(t, midilink):
 
@@ -1264,7 +1261,15 @@ def printMidi(midilink, title, GroupName, videoid, force=False):
 
     #problem with calling getStartTimes multiple times..
 #    printMidiGif(t, midilink)
-    printMidiTicker(t, midilink)
+    tickerimgs = printMidiTicker(t, midilink)
+    if (tickerimgs is not None):
+        path = './output/'
+        for i, im in enumerate(tickerimgs):
+            #1 second per frame..
+            tickname = 'tick' + str(i) + '_' + midiname
+            im.save(path + tickname + '.png')
+            uploadanalyze(tickname + '.png', os.path.join(path, tickname + '.png'))
+
 
     data, rythmdata, alliterations = getNgrams(t)
     if (data is None):
