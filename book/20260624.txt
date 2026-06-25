@@ -346,3 +346,11 @@ Also use Joystick commands..
 Do we want multiple topic entries in this?  
 
 
+**extensions/vscode/codetutor/src/midi/mykeys.ts
+--updateKeyMaps
+gen_lang_struct
+--importLanguageModule
+--mkey
+
+See if this simpler implementation works ok..
+
