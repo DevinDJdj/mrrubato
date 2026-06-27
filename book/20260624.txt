@@ -354,3 +354,47 @@ gen_lang_struct
 
 See if this simpler implementation works ok..
 
+**languages/helpers/transcriber.py
+--search_midi
+Try NGRAM and simple RNN..
+#https://www.geeksforgeeks.org/deep-learning/training-of-recurrent-neural-networks-rnn-in-tensorflow/
+
+**timestep.py
+Train from recent past usage..
+
+And then just use generated model..
+
+**extensions/trey/trey.py
+Need to finish QR detection.  
+Add to transcript.  #[link] [$$TIME=t]
+This can be used to recreate..
+Can we load extension to display 
+
+**extensions/vscode/codetutor/src/extension.ts
+Need to get rid of empty genbook files..
+Not sure if we want to read all genbook files, but lets try..
+We may get bad book references this way..
+
+
+Need contextual filtering for commands..
+Also what commands do we want to do auto-complete on?  
+Need to add some 
+**extensions/vscode/codetutor/src/book.ts
+--defmap
+Need to add some here..
+
+@@ How do we adjust git to specific date back and forth and reingest book?  
+Need to do this when switching time..
+># git checkout $(git rev-list -n 1 --before="2026-06-22 00:00" main)
+Save this date..
+
+Return to current..
+> git checkout main
+
+Better if we dont have to recycle or reread.  
+Maybe just vscode side is fine.  
+Set date, then recycle trey..
+
+># git checkout $(git rev-list -n 1 --before="2026-06-22 00:00" main)
+
+

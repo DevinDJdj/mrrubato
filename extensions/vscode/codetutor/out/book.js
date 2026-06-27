@@ -71,6 +71,7 @@ exports.getExpanded = getExpanded;
 exports.getSummary = getSummary;
 exports.getChunks = getChunks;
 exports.getReadableName = getReadableName;
+exports.loadGenBook = loadGenBook;
 exports.markdown = markdown;
 exports.ask = ask;
 exports.summary = summary;
@@ -79,6 +80,7 @@ exports.similar = similar;
 exports.loadPage = loadPage;
 exports.getBookPath = getBookPath;
 exports.getBookVectorPath = getBookVectorPath;
+exports.getGenBookPath = getGenBookPath;
 exports.getUri = getUri;
 const vscode = __importStar(require("vscode"));
 const path_1 = require("path");
@@ -168,7 +170,9 @@ function fnWork(lines, currentindex) {
     return "WORK ";
 }
 exports.defmap = [{ "#": "REF", ">": "CMD", "-": "SUBTASK", "@": "USER", ";": "COMMENT" },
-    { "##": "REF2", "~~": "SUGGESTION", "**": "TOPIC", "@@": "QUESTION", "->": "DGRAPH", "--": "NOTE", "==": "ANSWER", "$$": "ENV", "!!": "ERROR", "%%": "WORKER" },
+    { "##": "REF2", "~~": "SUGGESTION", "**": "TOPIC", "@@": "QUESTION", "->": "DGRAPH",
+        "::": "SUMMARY",
+        "--": "NOTE", "==": "ANSWER", "$$": "ENV", "!!": "ERROR", "%%": "WORKER" },
     { "-->": "ENDCOMMENT", "!--": "ERRORNOTE" },
     { "<!--": "STARTCOMMENT" }];
 exports.fnmap = { "$$": fnEnv, "%%": fnWork, "**": fnTopic };
@@ -835,6 +839,7 @@ function formatDate(date = new Date()) {
 ;
 function getBook(context = null) {
     loadBook(context);
+    loadGenBook(context); //load the genbook if it exists.
 }
 async function closeFileIfOpen(file) {
     const tabs = vscode.window.tabGroups.all.map(tg => tg.tabs).flat();
@@ -895,7 +900,7 @@ async function readFilesInFolder(folder) {
             let stats = await vscode.workspace.fs.stat(fileUri);
             const modifiedDate = new Date(stats.mtime);
             //alt date in case this is not named correctly.
-            let altdate = modifiedDate.getFullYear() * 10000 + modifiedDate.getMonth() * 100 + modifiedDate.getDate();
+            let altdate = modifiedDate.getFullYear() * 10000 + (modifiedDate.getMonth() + 1) * 100 + modifiedDate.getDate();
         }
         catch (error) {
             console.error(`Error reading file: ${error}`);
@@ -904,6 +909,16 @@ async function readFilesInFolder(folder) {
             let text = document.getText();
             console.log(`${fileUri.path} ... read`);
             // parse this.  
+            if (text.length === 0) {
+                console.log(`${fileUri.path} ... empty`);
+                let tempname = getFileName(fileUri.path);
+                let mydate = getFileDate(tempname);
+                if (mydate > 0) {
+                    //delete the file if it is empty and has a date.
+                    fs.unlinkSync(fileUri.fsPath);
+                    console.log(`${fileUri.path} ... deleted because empty and has date`);
+                }
+            }
             let d = loadPage(text, fileUri.path, altdate);
             if (d.valueOf() > booknow) {
                 booknow = d.valueOf(); //get the most recent date.
@@ -1174,6 +1189,16 @@ function getReadableName(name, line = 0) {
         ret = ret + " line " + line.toString();
     }
     return ret;
+}
+function loadGenBook(context = null) {
+    //load the genbook from the workspace to get additional frequency information.  
+    //readAllFiles..
+    //this will be used to load the genbook from the workspace.
+    //also clean genbook of any files which are empty..
+    const genbookUri = getGenBookUri();
+    readFilesInFolder(genbookUri).then((result) => {
+        console.log(`GenBook loaded: ${result.count} files, ${result.total} bytes, most recent page: ${result.page}`);
+    });
 }
 //format is for what window..
 async function markdown(prompt, format = 1) {
@@ -1498,7 +1523,7 @@ async function addVectorData(topic) {
         //maybe want to create an index by first subfolder or second etc.  
         if (pathParts.length > 1) {
             const folderUri = bvFolder.with({ path: path_1.posix.join(bvFolder.path, pathParts.slice(0, -1).join('/')) });
-            console.log(`Creating folder: ${folderUri.path}`);
+            //console.debug(`Creating folder: ${folderUri.path}`);
             try {
                 //why are we getting a leading slash?  posix.join should not do this.
                 fs.mkdirSync(folderUri.path.slice(1), { recursive: true });
@@ -1560,7 +1585,8 @@ async function addVectorData(topic) {
     let timelag = new Date();
     timelag.setDate(timelag.getDate() - 270); //set the time lag to 9 months ago.
     let checkdate = timelag.getFullYear() * 10000 + timelag.getMonth() * 100 + timelag.getDate();
-    console.log(`Checking existing items for topic ${topic.topic}:`, checkexisting);
+    //to high frequency
+    //    console.debug(`Checking existing items for topic ${topic.topic}:`, checkexisting);
     exports.alltopicdata.push(topic); //add to all topic data for ftsindex.
     //insert the item into the ftsindex as well.  
     exports.ftsindex.add(topic.topic + ':' + topic.line, topic.data);
@@ -1761,6 +1787,11 @@ function getBookVectorPath() {
     let bookvectorFolder = mySettings.bookvectorfolder;
     return bookvectorFolder;
 }
+function getGenBookPath() {
+    const mySettings = vscode.workspace.getConfiguration('mrrubato');
+    let genbookFolder = mySettings.genbookfolder;
+    return genbookFolder;
+}
 function getUri(path) {
     if (!vscode.workspace.workspaceFolders) {
         return vscode.Uri.parse("");
@@ -1770,6 +1801,15 @@ function getUri(path) {
     const retUri = folderUri.with({ path: path_1.posix.join(folderUri.path, path) });
     return retUri;
 }
+function getGenBookUri() {
+    if (!vscode.workspace.workspaceFolders) {
+        return vscode.Uri.parse("");
+    }
+    const folderUri = vscode.workspace.workspaceFolders[0].uri;
+    const genBookFolder = getGenBookPath();
+    const genBookUri = folderUri.with({ path: path_1.posix.join(folderUri.path, genBookFolder) });
+    return genBookUri;
+}
 function getBookUri() {
     if (!vscode.workspace.workspaceFolders) {
         return vscode.Uri.parse("");
@@ -1777,7 +1817,7 @@ function getBookUri() {
     // this should be a book path.  Use as you would work on the project.  
     const folderUri = vscode.workspace.workspaceFolders[0].uri;
     const bookFolder = getBookPath(); //get the book folder from settings.
-    bookvectorFolder = getBookVectorPath(); //get the book vector folder from settings.
+    const bookvectorFolder = getBookVectorPath(); //get the book vector folder from settings.
     const bookUri = folderUri.with({ path: path_1.posix.join(folderUri.path, bookFolder) });
     return bookUri;
 }
