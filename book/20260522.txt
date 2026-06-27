@@ -44,3 +44,65 @@ $$
 > python detect.py --input_path ../../data/VID_20260616_084406.mp4 --input_type video --output_path Output/VID_20260616_084406.mp4 --model yolov7 --marker circle --color yellow 
 
 
+> pip install ultralytics
+> cd VolleyVision\Stage II - Players & Actions
+> python sliding_window_verbose.py --model actions/yV8_medium/weights/best.pt --input_path "assets/rallies/rally.mp4" --output_path Output/event_detection.mp4 --conf 0.4 --gpu
+
+!!module 'torch._C' has no attribute '_cuda_setDevice'
+==
+> pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
+
+> python -c "import torch; print(f'Torch Version: {torch.__version__}, CUDA Available: {torch.cuda.is_available()}, CUDA Version: {torch.version.cuda}')"
+$$
+
+> python sliding_window_verbose.py --model actions/yV8_medium/weights/best.pt --input_path "assets/rallies/rally.mp4" --output_path Output/event_detection.mp4 --conf 0.4 --gpu
+
+> python sliding_window_verbose.py --model actions/yV8_medium/weights/best.pt --input_path ../../data/VID_20260616_084406.mp4 --output_path Output/VID_20260616_084406.mp4 --conf 0.4 --gpu
+
+
+**VolleyVision/Stage II - Players & Actions/main.py
++import torch
++parser.add_argument('--gpu', default=False,
++                    action='store_true', help='Whether to use GPU')
+
++if args.gpu:
++    torch.cuda.set_device(0)
+
+> python main.py --model actions/yV8_medium/weights/best.pt --input_path ../../data/VID_20260616_084406.mp4 --output_path Output/aVID_20260616_084406.mp4 --show_labels --gpu
+
+Generate transcript of time in video and location of persons and ball.. 
+
+> python main.py --model players/yV8_medium/weights/best.pt --input_path ../../data/VID_20260616_084406.mp4 --output_path Output/pVID_20260616_084406.mp4 --show_labels --gpu
+
+<!--
+COORDS video normalized
+B = ball
+N1 = Nearside player 1
+F1 = Farside player 1
+may be arbitrary depending on video angle.  
+X,Y = center of mass
+
+Take frame from action if we have one..
+
+$$YYYYMMDD_HHMMSS
+$$B=X,Y
+$$N1=X,Y,W,H
+$$F1=X,Y,W,H
+
+
+
+-->
+
+> python main.py --model actions/yV8_medium/weights/best.pt --input_path ../../data/VID_20260616_084406.mp4 --output_path Output/VID_20260616_084406.mp4 --show_labels --gpu --conf 0.3
+
+**generate/volleyball.py
+put here, generate action and location transcripts..
+
+
+
+> python detect.py --input_path ../../data/VID_20260616_084406.mp4 --input_type video --output_path Output/VID_20260616_084406_b.mp4 --model yolov7 --marker circle --color yellow --confidence 0.2
+
+!!_pickle.UnpicklingError: Weights only load failed. This file can still be loaded, to do so you have two options, do those steps only if you trust the source of the checkpoint.
+==
++    model = torch.load(path_or_model, map_location=torch.device('cpu'), weights_only=False) if isinstance(
+$$

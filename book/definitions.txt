@@ -82,6 +82,7 @@ _ = pre-requisite /test?
 \ = macro?  (TEX i.e. \being{itemize}..) 
 : = line identification
 ; = comment? or term identifier perhaps.  
+~ = confidence
 ~~ = suggestion or similarity check
 | = PIPE OR
 .. = time marker? continuation?  
