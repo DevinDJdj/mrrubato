@@ -36,6 +36,7 @@ export class MyKeys {
     midiarray: any;
     keybot: any = {};
     keymaps: any = {};
+    midwordtree: any = {};
     midiUICallback = null;
 
     constructor(config = {}) {
@@ -77,11 +78,12 @@ export class MyKeys {
                 //dynamically load languages.  
                 console.log("loading language", lang, val);
                 //web/public/languages/base.js
-                this.languages[lang] = {val};
+                this.languages[lang] = {"module": null, "keys": val};
                 this.transcripts[lang] = [];
             }
             this.currentlang = null;
         }
+        this.importLanguages();
 
     }    
 
@@ -94,19 +96,49 @@ export class MyKeys {
             }
         }
     }
+
+    async makeTree(tree, keys, word, lang="") {
+        let current = tree;
+        for (const key of keys) {
+            if (!current[key]) {
+                current[key] = {};
+            }
+            current = current[key];
+        }
+        current['word'] = {'word': word, 'lang': lang, 'keys': keys};
+    }
+
+    //gen_lang_struct
+    async updateKeyMaps(lang) {
+        if (this.languages[lang]["module"] !== null) {
+            let module = this.languages[lang]["module"];
+            for (const [len, obj] of Object.entries(module.config['languages'][lang])) {
+                for (const [word, keys] of Object.entries(obj)) {
+                    //adjust keys for keybot and keyoffset
+                    let v2 = keys.map(x => x + module.keybot + module.keyoffset);
+                    this.makeTree(this.midwordtree, v2, word, lang);
+                }
+            }
+        }
+    }
+
     async importLanguageModule(lang) {
-        if (this.languages[lang]) {
+        if (this.languages[lang]["module"] !== null) {
             return;
         }
         //dynamically load languages.
         console.log("loading language", lang);
-        const module = await import(`../languages/${lang}.js`);
-        this.languages[lang]["module"] = module.LANG;
-        //initialize language if needed.  
-        if (module.LANG && module.LANG.init) {
-            module.LANG.init(this.config);
+        //where are we here? why are we in /out..
+        try{
+            const module = await import(`../../src/languages/${lang}.js`);
+            const langModule = module.default;
+            this.languages[lang]["module"] = new langModule();
+            //initialize language if needed.  
+            this.languages[lang]["module"].init(this.config);
+            this.updateKeyMaps(lang);
+        } catch (e){
+            console.error("Error loading language module", lang, e);
         }
-
     }
 
     key(msg, myTime = 0, midiCb = null){
@@ -189,8 +221,21 @@ export class MyKeys {
         this.words = [];
         this.currentcmd = '';
         this.currentlangna = '';
+        this.currentlang = null;
+        this.startseqno = 0;
+        this.currentseqno = 0;
     }   
 
+    findWord(sequence, lang) {
+        let current = this.midwordtree;
+        for (const key of sequence) {
+            if (!current[key]) {
+                return null;
+            }
+            current = current[key];
+        }
+        return current.word || null;
+    }
 
     mkey(note, velocity, abstime, myTime = 0, lang = "") {
         if (lang === ""){
@@ -202,16 +247,41 @@ export class MyKeys {
         if (temptime > 10000 && this.sequence.length > 0) {
             this.reset_sequence();
         }
-
+        this.lasttick = (new Date()).getTime();
         this.sequence.push(note);
+        this.currentseqno += 1;
 
         console.log("mkey", note, velocity, abstime, myTime, lang);
-        for (const [lang, val] of Object.entries(this.languages)) {
+        console.log("sequence", this.sequence);
+        console.log("languages", this.languages);
 
-            if (val["module"] && val["module"].word) {
-
-                val["module"].word(this.sequence, this.words);
+        if (this.currentcmd === ""){
+            let word = this.findWord(this.sequence, lang);
+            if (word){
+                let langModule = this.languages[word.lang]["module"];
+                this.currentcmd = word.word;
+                this.currentlangna = word.lang;
+                this.currentlang = langModule;
+                this.startseqno = this.currentseqno;
             }
+        }
+        if (this.currentcmd !== "" && this.currentlangna !== "" && this.currentlang !== null) {
+            let ret = (this.currentlang as any).act(this.currentcmd, this.sequence.slice(this.startseqno), this.words);
+            if (ret === -1) {
+                //unknown command, reset sequence.  
+                this.reset_sequence();
+            }
+            else if (ret === 0) {
+                //command executed, reset sequence.  
+                console.log(`> ${this.currentcmd}\n`);
+                this.reset_sequence();
+
+
+            }
+            else if (ret === 1) {
+                //more keys needed, do nothing.  
+            }
+
         }
 
     }

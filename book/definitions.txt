@@ -81,6 +81,7 @@ _ = pre-requisite /test?
 / = path
 \ = macro?  (TEX i.e. \being{itemize}..) 
 : = line identification
+:: = summary
 ; = comment? or term identifier perhaps.  
 ~ = confidence
 ~~ = suggestion or similarity check
