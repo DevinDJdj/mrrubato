@@ -200,20 +200,29 @@ class check:
     return -1
   
 
-  def get_context(self, topic, num=5):
+  def get_context(self, topic, time=-1, num=5):
     #get context for topic from book transcripts.  
+    if (time == -1): #current window
+      time = self.timewindow.currenttime
+    elif (time == -2): #last window
+      time = self.timewindow.lasttime - self.timewindow.window
+    elif (time == -3): #next window
+      time = self.timewindow.lasttime + self.timewindow.window
+    elif (time < -3): #specific time
+      time = self.timewindow.currenttime + time
+
     ret = f"**{topic}\n"
     mydata = self.transcriber.filter_topics(self.name, [topic]) #set current topic for future commands.  This will also filter the existing transcripts to just this topic, which is what we want for the QR display.
     if topic in self.alltopics:
       topiccmds = self.alltopics[topic]
-      topiccmds.sort(key=lambda x: abs(self.timewindow.currenttime - x['timestamp']), reverse=True) #sort by recency to current time, most recent first.
+      topiccmds.sort(key=lambda x: abs(time - x['timestamp']), reverse=True) #sort by recency to current time, most recent first.
       sortedcmds = topiccmds[:num]
       sortedcmds.sort(key=lambda x: x['timestamp']) #sort by time for display.
       context = []
       for cmd in sortedcmds:
         ret += f'$${datetime.fromtimestamp(cmd["timestamp"]).strftime("%Y%m%d_%H%M%S")}\n'
         ret += '\n'.join(cmd['lines']) + "\n"
-    return ret
+    return sortedcmds, ret
 
   def check_topic_(self, sequence=[]):
     logger.info(f'> Check Topic_ {sequence}')

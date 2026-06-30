@@ -39,7 +39,7 @@ export default class LANG {
         this.funcdict["SET TOPIC"] = this.set_topic;
     }
 
-    set_topic(sequence, words){
+    set_topic(cls, sequence, words){
         console.log("meta set_topic", sequence, words);
         if (sequence.length > 0){
             //set topic to 
@@ -53,10 +53,10 @@ export default class LANG {
         if (cmd in this.funcdict){
             let func = this.funcdict[cmd];
             if (sequence.length ===1 && sequence[0] === this.keybot+this.keyoffset){
-                return func([], words); //no parameters
+                return func(this, [], words); //no parameters
             }
             else if (sequence.length > 1 && JSON.stringify(sequence.slice(-2)) === JSON.stringify([this.keybot+this.keyoffset, this.keybot+this.keyoffset])){
-                return func(sequence.slice(0, -2), words);
+                return func(this, sequence.slice(0, -2), words);
             }
             else{
                 return 1; //more keys needed

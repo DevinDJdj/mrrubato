@@ -54,6 +54,8 @@ class transcriber:
         self.futuretree = None
         self.similar = None
         self.timewindow = timewindow.timewindow(self) #initialize timewindow for transcriber, shared..
+        self.topicdensity = 0
+        self.timeshift = 0
 
         self.kg_ignorevars = ['TIME', 'WINDOW', 'START', 'END', 'FNAME', 'FILE', 'DURATION', 'LAG'] #vars to ignore in display of info, used for time window commands.
 
@@ -580,7 +582,7 @@ class transcriber:
                 return self.mydic[str(len(seq))][str(seq)]
         return None
 
-
+    #dont want duplicate keys here, so add some shift to timestamp
     def get_time_var(self, vars):
         t = time.time()
         if ('TIME' in vars):
@@ -591,6 +593,11 @@ class transcriber:
                     t = float(timestr)
                 elif (timestr[8] == '_' and timestr.replace('_', '').isdigit()):
                     t = time.mktime(datetime.strptime(timestr, '%Y%m%d_%H%M%S').timetuple())
+                #ensure unique timestamp for each command, even if they have the same time, 
+                # by adding a small increment to the timestamp for each command.  
+                # this is important for mapping and sorting commands later
+                t += self.timeshift
+                self.timeshift += 1e-9
             except:
                 pass
         return t

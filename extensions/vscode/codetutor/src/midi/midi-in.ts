@@ -62,7 +62,7 @@ export function activate(context) {
          });
 
             midiport.connect((msg) => {
-                console.log('MIDI message:', msg);
+                //console.log('MIDI message:', msg);
                 //mykeys.push(msg);
                 mkeys.key(msg, 0, null); //no callback for now.
 //                panels[port].webview.postMessage({ command: 'midi', message: msg });

@@ -45,6 +45,7 @@ class _meta:
     self.booktopicarray = [] #for only selected book..
     self.filteredtopicarray = []
     self.topichistory = [] #store past topics for context.  This is not currently used for anything but could be used for context in future functions.
+    self.booktopics = []
 
     self.bookarray = []
     self.filteredbookarray = []
@@ -179,7 +180,9 @@ class _meta:
         "Tock": [48,54], #manual tick backward in time by small increments.
       },
       "3": {
+
         "Start": [48,60,61], #Start/resume recording
+        "Restart": [48,62,49], #Restart TREY and reload all data
         "Help": [48,60,49], #show help
         #48, 51 TOPIC
         "List Topics": [48,51,54], #list topics
@@ -195,9 +198,9 @@ class _meta:
         "Time Jump": [48,50,52], #jump to time 
         "Time Zoom": [48,50,53], #set zoom, separate from speed.  
         #48,55 Adjust display?
-        "Tune Time": [48,55,50], #time display, zoom level temporary?  tick quant?
+        "Tune Time": [48,55,52], #time display, zoom level temporary?  tick quant?
         "Tune Topic": [48,55,51], #topic display show in main?  
-        "Tune Book": [48,55,52], #book display show in main?
+        "Tune Book": [48,55,50], #book display show in main?
         "Tune In": [48,55,56], #main display, show time/topic/book or other info?
         "Tune Out": [48,55,54], #audio volume/mute or other info?
       }
@@ -229,6 +232,7 @@ class _meta:
       "Tock": "tock",
       "Tune In": "tune_in",
       "Tune Out": "tune_out",
+      "Restart": "restart",
     }
     self.helpdict = {
       "Start": {
@@ -295,7 +299,10 @@ class _meta:
 "> ": "tune out", 
 "$$": "$lang", 
 "&&": "Tune out display to $lang.."},
-                       
+      "Restart": {
+"> ": "restart", 
+"$$": "None", 
+"&&": "Restart TREY and reload all data."},
     }
 
     self.load_transcript()
@@ -363,6 +370,12 @@ class _meta:
     return -1
   
 
+  def restart(self, sequence=[]):
+    """Restart TREY."""
+    logger.info(f'> Restart {sequence}')
+    self.set_qr("Restart", {'type': '_meta', 'TIME': self.timewindow.getTime()})
+    return 0
+  
   def start(self, sequence=[]):
     """Start Meta."""
     logger.info(f'> Start {sequence}')
@@ -519,23 +532,72 @@ class _meta:
         ret += '\n'.join(cmd['lines']) + "\n"
     return ret
 
-  def get_context(self, topic, num=5):
+  def get_context_time(self, time=-1):
+    if (time == 0): #current time
+      time = time.time() #current time
+    if (time == -1): #current window
+      time = self.timewindow.currenttime
+    elif (time == -2): #prev window
+      time = self.timewindow.currenttime - self.timewindow.window
+    elif (time == -3): #next window
+      time = self.timewindow.currenttime + self.timewindow.window
+    elif (time < -3): #specific time
+      time = self.timewindow.currenttime + time
+
+    return time
+  
+  def get_supp_context(self, cmds, time=-1, num=5):
+    #get context for surrounding commands from book transcripts.  
+    ret = ""
+    allsuppcmds = []
+    time = self.get_context_time(time)
+    if (len(cmds) > 0):
+      firstcmd = cmds[0]
+      lastcmd = cmds[-1]
+      timespan = lastcmd['..'] - firstcmd['..']
+      windowmult = timespan / self.timewindow.window
+
+
+      for cmd in cmds:
+        ret += f'$${datetime.fromtimestamp(cmd["timestamp"]).strftime("%Y%m%d_%H%M%S")}\n'
+        starttime = cmd['..'] - min(windowmult/2, self.timewindow.window) #1 hour before command
+        endtime = cmd['..'] + min(windowmult/2, self.timewindow.window) #1 hour after command
+        #book transcripts are stored in ./book/ and can be read by transcriber.read('book', starttime, endtime)
+        supp_cmds = self.transcriber.read('book', starttime, endtime)
+        supp_cmds.sort(key=lambda x: abs(time - x['timestamp']), reverse=True) #sort by recency to current time, most recent first.
+
+        allsuppcmds.extend(supp_cmds)
+      
+      allsuppcmds.sort(key=lambda x: abs(time - x['timestamp']), reverse=True) #sort by recency to current time, most recent first.
+      for cmd in allsuppcmds[:num]:
+        ret += f'$${datetime.fromtimestamp(cmd["timestamp"]).strftime("%Y%m%d_%H%M%S")}\n'
+        ret += '\n'.join(cmd['lines']) + "\n"
+    return allsuppcmds, ret
+  
+  #negative values are selection logic.  #context="" gets directly from topicarray, otherwise gets from book transcripts.
+  def get_context(self, topic, time=-1, num=5):
+    ttime = self.get_context_time(time)
+    sortedcmds = []
+    if (topic == ""):
+      topic = self.selectedtopic['**'] if self.selectedtopic is not None else ""
+      sortedcmds = self.topicarray[max(0, self.selectedtopicindex-num):min(self.selectedtopicindex+num, len(self.topicarray))] if self.selectedtopicindex is not None else []
+    elif (topic in self.transcriber.langmap[self.name]['topics']):
+      topicdata = self.transcriber.langmap[self.name]['topics'][topic]
+      if 'data' in topicdata:
+        topiccmds = topicdata['data']
+      topiccmds.sort(key=lambda x: abs(ttime - x['timestamp']), reverse=True) #sort by recency to current time, most recent first.
+      sortedcmds = topiccmds[:num]
+      sortedcmds.sort(key=lambda x: x['timestamp']) #sort by time for display.
+
     #get context for topic from book transcripts.  
     ret = f"**{topic}\n"
 #    if topic in self.alltopics:
 #      topiccmds = self.alltopics[topic]
-    if (topic in self.transcriber.langmap[self.name]['topics']):
-      topicdata = self.transcriber.langmap[self.name]['topics'][topic]
-      if 'data' in topicdata:
-        topiccmds = topicdata['data']
-      topiccmds.sort(key=lambda x: abs(self.timewindow.currenttime - x['timestamp']), reverse=True) #sort by recency to current time, most recent first.
-      sortedcmds = topiccmds[:num]
-      sortedcmds.sort(key=lambda x: x['timestamp']) #sort by time for display.
-      context = []
-      for cmd in sortedcmds:
-        ret += f'$${datetime.fromtimestamp(cmd["timestamp"]).strftime("%Y%m%d_%H%M%S")}\n'
-        ret += '\n'.join(cmd['lines']) + "\n"
-    return ret
+    context = []
+    for cmd in sortedcmds:
+      ret += f'$${datetime.fromtimestamp(cmd["timestamp"]).strftime("%Y%m%d_%H%M%S")}\n'
+      ret += '\n'.join(cmd['lines']) + "\n"
+    return sortedcmds, ret
     
 
   def select_topic_(self, sequence=[]):
@@ -547,24 +609,29 @@ class _meta:
     if (len(sequence) > 0):
       if (sequence[-1] == self.keybot): #dont adjust if keybot, 
         return 1
-      if (sequence[0] == _BOOK):
-        _booktopic = True
+      if (sequence[0] == _BOOK): #not sure this selection sequence is great..
+        _booktopic = True        
 
       newidx = self.adjust_topic_index(self.mid-sequence[-1])
     logger.info(f'--{self.topicarray[newidx]['**']}')
     self.func = "Select Topic_"
-    #should make this more general.. send last ten links
-    last15 = self.topicarray[max(0, self.selectedtopicindex-11):min(self.selectedtopicindex+13, len(self.topicarray))]
-    last15.reverse() #reverse to match with Future:Past order in display.. [48 - 68]
-    #does this match up with keys?  
+
     vars = {}
-    vars['topic'] = self.topicarray[newidx]['**']
-    ctxt = self.get_context(self.topicarray[newidx]['**'], 5) #get context for topic
+    #should make this more general.. send last ten links
+    if (_booktopic and len(self.booktopicarray) > 0): #use booktopicarray topics around this topic in last N times..
+      last15 = self.booktopicarray
+    else: #default, use time and topic array to get last 15 topics around this topic.
+      last15 = self.topicarray[max(0, self.selectedtopicindex-11):min(self.selectedtopicindex+13, len(self.topicarray))]
+      last15.reverse() #reverse to match with Future:Past order in display.. [48 - 68]
+      vars['topic'] = self.topicarray[newidx]['**']
+    #does this match up with keys?  
+    cmds, ctxt = self.get_context(self.topicarray[newidx]['**'], -1, 5) #get context for topic
     vars['context'] = ctxt.replace('\n', '<br>')
 
     start = 0
 #    if self.selectedtopicindex < 12:
 #      start = 12 - self.selectedtopicindex
+
     for i, l in enumerate(last15):
       i = i + start
       vars[f'{i}'] = l['**']
@@ -588,11 +655,20 @@ class _meta:
     if (len(self.topichistory) < 1 or self.selectedtopic['**'] != self.topichistory[-1]['**'] or self.selectedtopic['..'] != self.topichistory[-1]['..']):
       self.topichistory.insert(0, self.selectedtopic)
 
-    ctxt = self.get_context(self.topicarray[self.selectedtopicindex]['**'], 5) #get context for topic
+    cmds, ctxt = self.get_context(self.topicarray[self.selectedtopicindex]['**'], -1, 5) #get context for topic
+    supp_cmds,supp_ctxt = self.get_supp_context(cmds)
+    topics = []
+    topics.append(self.selectedtopic['**'])
+    for cmd in supp_cmds:
+      if (cmd['_'] == '**' and cmd['&&'] not in topics):
+        topics.append(cmd['&&'])
+
+    self.booktopics = topics
     logger.info(f'> Select Topic {sequence}')
     #get bookmark at index selected
     self.func = "Select Topic"
-    self.set_qr(self.func, {'context': ctxt.replace('\n', '<br>'), 'topic': self.selectedtopic['**']})
+    self.set_qr(self.func, {'context': ctxt.replace('\n', '<br>'), 'addl_context': supp_ctxt.replace('\n', '<br>'), 
+                            'topic': self.selectedtopic['**'], '**': self.selectedtopic['**'], 'topics': ",".join(topics)})
 #    logger.info(ctxt.replace('\n', '<br>'))
     #keep track of topic history..
     writtentopic = self.transcriber.write_topic(self.name, self.selectedtopic['**']) #write topic to _meta.. to pick up in other tools.  
@@ -641,7 +717,7 @@ class _meta:
       #does this match up with keys?  
       vars = {}
       vars['topic'] = self.filteredtopicarray[newidx]['topic']
-      ctxt = self.get_context(self.filteredtopicarray[newidx]['topic'], 5) #get context for topic
+      cmds, ctxt = self.get_context(self.filteredtopicarray[newidx]['topic'], -1, 5) #get context for topic
       vars['context'] = ctxt.replace('\n', '<br>')
 
       start = 0
@@ -763,6 +839,8 @@ class _meta:
       self.bookhistory.insert(0, self.selectedbook)
 
     ctxt = self.get_book_context(self.bookarray[self.selectedbookindex]['**'], 5) #get context for book
+    self.load_booktopicarray() #load topics for this book to include in our context.. Not sure we want this or not..
+
     logger.info(f'> Select Book {sequence}')
     #get bookmark at index selected
     self.func = "Select Book"

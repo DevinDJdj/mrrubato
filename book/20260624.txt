@@ -358,6 +358,8 @@ See if this simpler implementation works ok..
 --search_midi
 Try NGRAM and simple RNN..
 #https://www.geeksforgeeks.org/deep-learning/training-of-recurrent-neural-networks-rnn-in-tensorflow/
+#https://www.codecademy.com/article/rnn-py-torch-time-series-tutorial-complete-guide-to-implementation
+
 
 **timestep.py
 Train from recent past usage..
@@ -398,3 +400,95 @@ Set date, then recycle trey..
 ># git checkout $(git rev-list -n 1 --before="2026-06-22 00:00" main)
 
 
+
+**extensions/vscode/codetutor/src/languages/base.ts
+--pgdn
+Switch to .ts extension to use vscode commands.. 
+Works now..
+Small changes to get vscode commands to work as desired.
+
+OK, moving around file is ok, not great.  
+Need Alt+tab functionality..
+Need repeat quick-key functionality..
+
+[48,59] [lang] [subparam]
+
+Every lang has Single Key func.  
+Cannot be utilized if word completed, but any other time, can be done.  
+Also functions as a reset if no word exists.. 
+Select lang as single key func.  
+Pass single key to this lang handler.  
+Lang handler can set these handlers dynamically.  
+
+Single key functions separated per octave:
+52, 54,55
+
+Default:
+[60,71] [lang] [subparam]
+find lang keybot
+64, 66,67
+61 = Error, OK, Good
+69 = GENERATE, PGUP, PgDn
+
+
+[48,59] [lang] [subparam]
+49 = ?, Pause, Play
+50 = ?, Prev, next
+53 = Comment, Skip, Click Link
+
+
+Can potentially set 64,66,67 to other octave.  
+i.e.
+[60,71] [53] [60]
+64=Comment, 66=Skip, 67=Click Link
+[48,59] [69] [48]
+52=GENERATE,54=PGUP,55=PGDN
+
+
+Allow for dynamic switching based on previously selected entry for each lang..
+Check if this lang active anywhere, and switch.  
+Set to dynamic switch or not based on context..
+For now just static selection..
+
+
+**mykeys.py
+How do we recycle?  
+Send transcript on recycle CTRL+SHIFT+R
+
+
+**extensions/vscode/codetutor/src/toolParticipant.ts
+Log restart into transcript and recycle from there if needed.  
+--registerPiano
+
+@@ How to deal with multiple instances of codetutor?  
+Right now single-instance only.  
+
+
+**TOPICSELECTION
+select from time..
+
+**languages/_meta.py
+--get_supp_context
+Allow these topics to be selected..
+
+--get_context
+Allow for passing just time and blank topic
+If blank, pick from self.topicarray
+
+;> Select Topic..
+with relevant flag
+[48,51,55] [50] [n]
+
+Do we get useful context?  
+
+**extensions/vscode/codetutor/src/toolParticipant.ts
+Call this when trey restart occurs..
+await vscode.commands.executeCommand('workbench.action.restartExtensionHost');
+
+Test restart
+[48,62,49]
+
+Need key hold functionality.. 
+Or param for down/up
+OK, restart works..
+Not ideal, but good enough for now.  

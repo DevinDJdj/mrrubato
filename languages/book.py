@@ -351,8 +351,18 @@ class book:
         ret += '\n'.join(cmd['lines']) + "\n"
     return ret
 
-  def get_context(self, topic, num=5):
+  def get_context(self, topic, time=-1, num=5):
+
     #get context for topic from book transcripts.  
+    if (time == -1): #current window
+      time = self.timewindow.currenttime
+    elif (time == -2): #prev window
+      time = self.timewindow.currenttime - self.timewindow.window
+    elif (time == -3): #next window
+      time = self.timewindow.currenttime + self.timewindow.window
+    elif (time < -3): #specific time
+      time = self.timewindow.currenttime + time
+
     ret = f"**{topic}\n"
 #    if topic in self.alltopics:
 #      topiccmds = self.alltopics[topic]
@@ -360,14 +370,14 @@ class book:
       topicdata = self.transcriber.langmap[self.name]['topics'][topic]
       if 'data' in topicdata:
         topiccmds = topicdata['data']
-      topiccmds.sort(key=lambda x: abs(self.timewindow.currenttime - x['timestamp']), reverse=True) #sort by recency to current time, most recent first.
+      topiccmds.sort(key=lambda x: abs(time - x['timestamp']), reverse=True) #sort by recency to current time, most recent first.
       sortedcmds = topiccmds[:num]
       sortedcmds.sort(key=lambda x: x['timestamp']) #sort by time for display.
       context = []
       for cmd in sortedcmds:
         ret += f'$${datetime.fromtimestamp(cmd["timestamp"]).strftime("%Y%m%d_%H%M%S")}\n'
         ret += '\n'.join(cmd['lines']) + "\n"
-    return ret
+    return sortedcmds, ret
 
   def select_topic_(self, sequence=[]):
 
@@ -386,7 +396,7 @@ class book:
     #does this match up with keys?  
     vars = {}
     vars['topic'] = self.topicarray[newidx]
-    ctxt = self.get_context(self.topicarray[newidx], 5) #get context for topic
+    cmds, ctxt = self.get_context(self.topicarray[newidx], -1, 5) #get context for topic
     vars['context'] = ctxt.replace('\n', '<br>')
 
     start = 0
@@ -415,7 +425,7 @@ class book:
     if (len(self.topichistory) < 1 or self.selectedtopic != self.topichistory[-1]):
       self.topichistory.insert(0, self.selectedtopic)
 
-    ctxt = self.get_context(self.topicarray[self.selectedtopicindex], 5) #get context for topic
+    cmds, ctxt = self.get_context(self.topicarray[self.selectedtopicindex], -1, 5) #get context for topic
     logger.info(f'> Select Topic {sequence}')
     #get bookmark at index selected
     self.func = "Select Topic"

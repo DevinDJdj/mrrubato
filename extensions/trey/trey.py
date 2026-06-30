@@ -15,6 +15,8 @@ import sys
 import threading
 import multiprocessing
 import subprocess
+
+from click import command
 from huggingface_hub import login
 import psutil
 import math
@@ -412,7 +414,7 @@ def copy_latest_file(current_topic=None):
     return latest_file
 
 
-def quit_me(restart=False):
+def quit_me(restart=False): #restart_trey
     global mk
     logger.info('Stopping MIDI thread')
 
@@ -1402,6 +1404,10 @@ def on_activate_overlay():
     logger.info('Hotkey activated!')
 
 def restart_me():
+    """Restart the application."""
+    logger.info('Restarting application')
+    #notify watchers..
+    mywindow.transcriber.write_plain('_meta', '> Restart')
     quit_me(True)
 
 def setup_hotkey_listener():
@@ -1767,6 +1773,16 @@ class MyWindow(QMainWindow):
                     n = 0 
                 elif (type == 'record'):
                     start_obs_capture()
+            case "Restart":
+                type = vars.get('type', 'video')
+                if (type == 'video'):
+                    #not used..
+                    n = 0
+                elif (type == '_meta'):
+
+                    restart_me() #restart and leave transcription
+
+
             case "Next":
                 type = vars.get('type', 'video')
                 no = vars.get('no', '1')
@@ -1939,6 +1955,7 @@ class MyWindow(QMainWindow):
                 topic = vars.get('topic', 'None')
                 self.add_setting('topic', topic, lang)
                 context = vars.get('context', '')
+                self.supp_topics = vars.get('topics', '').split(',') #comma separated list of topics
                 self.transcriber.current_topic = topic
                 self.transcriber.current_context = context
                 print(f"<<{lang}>>\n$$topic=" + str(topic))
@@ -3802,11 +3819,6 @@ def run_midi(mstop_event, kill_event, qr_queue=None, qrin_queue=None, audio_loca
 
 
 
-
-def restart_trey():
-    on_quit_action()
-    os.execl(sys.executable, sys.executable, *sys.argv)
-    return 0
 
 
 

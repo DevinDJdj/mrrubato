@@ -38,6 +38,7 @@ export class MyKeys {
     keymaps: any = {};
     midwordtree: any = {};
     midiUICallback = null;
+    octaveInterval: number = 12;
 
     constructor(config = {}) {
         this.keys = [];
@@ -110,15 +111,21 @@ export class MyKeys {
 
     //gen_lang_struct
     async updateKeyMaps(lang) {
+        console.log("updateKeyMaps", lang);
         if (this.languages[lang]["module"] !== null) {
             let module = this.languages[lang]["module"];
+            console.log(module.config['languages']);
             for (const [len, obj] of Object.entries(module.config['languages'][lang])) {
                 for (const [word, keys] of Object.entries(obj)) {
                     //adjust keys for keybot and keyoffset
                     let v2 = keys.map(x => x + module.keybot + module.keyoffset);
+                    console.log("adding word", word, v2, lang);
                     this.makeTree(this.midwordtree, v2, word, lang);
                 }
             }
+        }
+        else{
+            console.error("Language module not loaded for", lang);
         }
     }
 
@@ -130,7 +137,7 @@ export class MyKeys {
         console.log("loading language", lang);
         //where are we here? why are we in /out..
         try{
-            const module = await import(`../../src/languages/${lang}.js`);
+            const module = await import(`../../src/languages/${lang}.ts`);
             const langModule = module.default;
             this.languages[lang]["module"] = new langModule();
             //initialize language if needed.  
@@ -142,7 +149,7 @@ export class MyKeys {
     }
 
     key(msg, myTime = 0, midiCb = null){
-        console.log("key", msg);
+//        console.log("key", msg);
         this.lastnotetime = (new Date()).getTime();
 
         if (myTime === 0){
@@ -253,10 +260,18 @@ export class MyKeys {
 
         console.log("mkey", note, velocity, abstime, myTime, lang);
         console.log("sequence", this.sequence);
-        console.log("languages", this.languages);
+//        console.log("languages", this.languages);
 
+        let asequence = this.sequence.slice(-unsetseq.length);
+        asequence = asequence.map(x => (Number(x) % this.octaveInterval)); //0-adjusted sequence     
+//        console.log("asequence", asequence);
+        if (asequence.length >= unsetseq.length && JSON.stringify(asequence) === JSON.stringify(unsetseq)) {
+            this.reset_sequence();
+            return;
+        }
         if (this.currentcmd === ""){
             let word = this.findWord(this.sequence, lang);
+            //console.log(this.midwordtree);
             if (word){
                 let langModule = this.languages[word.lang]["module"];
                 this.currentcmd = word.word;

@@ -68,17 +68,22 @@ Ctrl+I = voice chat
 
 **OFFSET:
 _meta = 0
+..
 video = 1
 book = 2
---52,..
 git = 3
+..
 error = 4
+..
 hotkeys = 5 (53)
+..
 ok = 6
 good = 7
+..
 generate = 8
 find/check = 9
 create = 10
+..
 lang = 11
 
 **FEEDBACK:

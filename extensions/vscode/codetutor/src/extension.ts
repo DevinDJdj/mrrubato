@@ -369,18 +369,26 @@ export function formatMarkdownSnippet(snippet: string): string {
 	return snippet;
 }
 
-export function activate(context: vscode.ExtensionContext) {
-	//not being activated until chatted to...
-    registerToolUserChatParticipant(context);
-	registerCompletionTool(context);
-	registerStatusBarTool(context);
-	startWatchingWorkspace(context); //watch for changes to book.  
+export function startTranscribers(){
 	startWatchingTranscriber('hotkeys'); //get record feedback..
 	startWatchingTranscriber('video');
 	startWatchingTranscriber('_meta'); //get all topic changes..
 //	startWatchingTranscriber('base'); //get all mood changes and extra pause..
 	//use 'base' for tracking genbook
 	startWatchingTranscriber('book'); //pause etc..
+
+}
+
+export function activate(context: vscode.ExtensionContext) {
+	//not being activated until chatted to...
+    registerToolUserChatParticipant(context);
+	registerCompletionTool(context);
+	registerStatusBarTool(context);
+	startWatchingWorkspace(context); //watch for changes to book.  
+	
+	startTranscribers(); //start the transcribers for the book.
+	//create loop to watch for change of day to restart transcribers..
+	
 
 	const mySettings = vscode.workspace.getConfiguration('mrrubato');	
 	Book.setModel(mySettings.get('model'));

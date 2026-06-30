@@ -1,6 +1,8 @@
+import * as vscode from 'vscode';
 
 export default class LANG {
 
+    
     config = {};
     keybot = 69;
     keyoffset = 0;
@@ -52,9 +54,9 @@ export default class LANG {
         this.config['languages'][this.name] = obj;
 
         this.funcdict["GENERATE"] = this.generate;
-        this.funcdict["HIGHLIGHT"] = () => { 
-            console.log("base highlight", this.highlight);
-            this.highlight = !this.highlight; 
+        this.funcdict["HIGHLIGHT"] = (cls, sequence, words) => { 
+            console.log("base highlight", cls.highlight);
+            cls.highlight = !cls.highlight; 
             return 0; //no action, just a generic keypress
         };
         this.funcdict["HOME"] = this.home;
@@ -68,100 +70,102 @@ export default class LANG {
 
     }
 
-    generate(sequence, words){
+    generate(cls, sequence, words){
         console.log("base generate", sequence, words);
         vscode.commands.executeCommand('mrrubato.mytutor.generate'); //no params, just generate from current cursor location..
         return 0; //no action, just a generic keypress
     }
 
-    home(sequence, words){        
+    home(cls, sequence, words){        
         console.log("base home", sequence, words);
         vscode.commands.executeCommand('cursorMove', {
             to: 'wrappedLineStart',
             by: 'wrappedLine',
-            select: this.highlight,
+            select: cls.highlight,
             value: 1
         });
 
         return 0; //no action, just a generic keypress        
     }
 
-    end(sequence, words){
+    end(cls, sequence, words){
         console.log("base end", sequence, words);
         vscode.commands.executeCommand('cursorMove', {
             to: 'wrappedLineEnd',
             by: 'wrappedLine',
-            select: this.highlight,
+            select: cls.highlight,
             value: 1
         });
         return 0; //no action, just a generic keypress
     }
 
-    pgup(sequence, words){
+    pgup(cls, sequence, words){
         console.log("base pgup", sequence, words);
         vscode.commands.executeCommand('cursorMove', {
             to: 'up',
             by: 'page',
-            select: this.highlight,
-            value: 1
+            select: cls.highlight,
+            value: 25
         });
         return 0; //no action, just a generic keypress
     }
 
-    pgdn(sequence, words){
+    pgdn(cls, sequence, words){
         console.log("base pgdn", sequence, words);
+        console.log(cls.highlight);
+//        console.log(this.highlight);
         try {
             vscode.commands.executeCommand('cursorMove', {
                 to: 'down',
                 by: 'page',
-                select: this.highlight,
-                value: 1
+                select: cls.highlight,
+                value: 25
             });
         } catch (error) {
-            console.error("Error executing cursorMove for pgdn:", error);
+            console.error("Error executing scrollPageDown for pgdn:", error);
         }
         return 0; //no action, just a generic keypress
     }
 
-    up(sequence, words){
+    up(cls, sequence, words){
         console.log("base up", sequence, words);
         vscode.commands.executeCommand('cursorMove', {
             to: 'up',
             by: 'line',
-            select: this.highlight,
+            select: cls.highlight,
             value: 1
         });
         return 0; //no action, just a generic keypress
     }
 
-    down(sequence, words){
+    down(cls, sequence, words){
         console.log("base down", sequence, words);
         vscode.commands.executeCommand('cursorMove', {
             to: 'down',
             by: 'line',
-            select: this.highlight,
+            select: cls.highlight,
             value: 1
         });
         return 0; //no action, just a generic keypress
     }
 
-    left(sequence, words){
+    left(cls, sequence, words){
         console.log("base left", sequence, words);
         vscode.commands.executeCommand('cursorMove', {
             to: 'left',
             by: 'character',
-            select: this.highlight,
+            select: cls.highlight,
             value: 1
         });
         return 0; //no action, just a generic keypress
     }
 
-    right(sequence, words){
+    right(cls, sequence, words){
         console.log("base right", sequence, words);
         vscode.commands.executeCommand('cursorMove', {
             to: 'right',
             by: 'character',
-            select: this.highlight,
+            select: cls.highlight,
             value: 1
         });
         return 0; //no action, just a generic keypress
@@ -174,10 +178,10 @@ export default class LANG {
         if (cmd in this.funcdict){
             let func = this.funcdict[cmd];
             if (sequence.length ===1 && sequence[0] === this.keybot+this.keyoffset){
-                return func([], words); //no parameters
+                return func(this, [], words); //no parameters
             }
             else if (sequence.length > 1 && JSON.stringify(sequence.slice(-2)) === JSON.stringify([this.keybot+this.keyoffset, this.keybot+this.keyoffset])){
-                return func(sequence.slice(0, -2), words);
+                return func(this, sequence.slice(0, -2), words);
             }
             else{
                 return 1; //more keys needed

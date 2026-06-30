@@ -491,6 +491,10 @@ export function startWatchingTranscriber(lang: string, transcriptFolder: string 
                             if (cmd.cmd === "Pause"){
                                 vscode.commands.executeCommand('workbench.action.chat.open', "@mr /stop");
                             }
+                            if (cmd.cmd === "Restart"){
+                                vscode.commands.executeCommand('workbench.action.restartExtensionHost');
+//                                vscode.commands.executeCommand('workbench.action.chat.open', "@mr /restart");
+                            }
                             if (cmd.cmd === "Record Feedback"){
                                 //do something with the feedback.  For now just log it.
                                 let input = "";

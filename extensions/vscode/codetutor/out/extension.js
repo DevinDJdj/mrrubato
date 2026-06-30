@@ -48,6 +48,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.formatMarkdownSnippet = formatMarkdownSnippet;
+exports.startTranscribers = startTranscribers;
 exports.activate = activate;
 exports.default = deactivate;
 const vscode = __importStar(require("vscode"));
@@ -336,18 +337,22 @@ function formatMarkdownSnippet(snippet) {
     }
     return snippet;
 }
-function activate(context) {
-    //not being activated until chatted to...
-    (0, toolParticipant_1.registerToolUserChatParticipant)(context);
-    (0, toolParticipant_1.registerCompletionTool)(context);
-    (0, toolParticipant_1.registerStatusBarTool)(context);
-    (0, toolParticipant_1.startWatchingWorkspace)(context); //watch for changes to book.  
+function startTranscribers() {
     (0, toolParticipant_1.startWatchingTranscriber)('hotkeys'); //get record feedback..
     (0, toolParticipant_1.startWatchingTranscriber)('video');
     (0, toolParticipant_1.startWatchingTranscriber)('_meta'); //get all topic changes..
     //	startWatchingTranscriber('base'); //get all mood changes and extra pause..
     //use 'base' for tracking genbook
     (0, toolParticipant_1.startWatchingTranscriber)('book'); //pause etc..
+}
+function activate(context) {
+    //not being activated until chatted to...
+    (0, toolParticipant_1.registerToolUserChatParticipant)(context);
+    (0, toolParticipant_1.registerCompletionTool)(context);
+    (0, toolParticipant_1.registerStatusBarTool)(context);
+    (0, toolParticipant_1.startWatchingWorkspace)(context); //watch for changes to book.  
+    startTranscribers(); //start the transcribers for the book.
+    //create loop to watch for change of day to restart transcribers..
     const mySettings = vscode.workspace.getConfiguration('mrrubato');
     Book.setModel(mySettings.get('model'));
     TerminalWorker.addClosedTerminalListener();
