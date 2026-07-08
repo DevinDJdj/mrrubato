@@ -54,6 +54,7 @@ class book:
     self.timewindow = timewindow.timewindow(self) #for timeline functions, can also be used for general time tracking.  This is initialized here but can be reset by timeline if needed.
     self.bookmarks = {} #bookname: index in bookcontext
     self.lastcacheno = 100
+    self.words = []
 
 
   def word(self, sequence=[]):
@@ -172,6 +173,8 @@ class book:
 
   #act differently based on words in sequence.    
   def act(self, cmd, words=[], sequence=[], doact=True):
+    self.words = words
+
     """ACT based on command and sequence."""
     if (not doact):
       if (len(sequence) == 1 and sequence[-1] == self.keybot):

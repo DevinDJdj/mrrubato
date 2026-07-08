@@ -69,6 +69,7 @@ let activeEditor = vscode.window.activeTextEditor;
 let isWorking = false;
 let workFunc = null;
 let workPrompt = "Improve my code";
+let mynow = "0"; //hold current day
 function get_current_weather(city) {
     return `The current weather in ${city} is sunny.`;
 }
@@ -338,12 +339,16 @@ function formatMarkdownSnippet(snippet) {
     return snippet;
 }
 function startTranscribers() {
-    (0, toolParticipant_1.startWatchingTranscriber)('hotkeys'); //get record feedback..
-    (0, toolParticipant_1.startWatchingTranscriber)('video');
-    (0, toolParticipant_1.startWatchingTranscriber)('_meta'); //get all topic changes..
-    //	startWatchingTranscriber('base'); //get all mood changes and extra pause..
-    //use 'base' for tracking genbook
-    (0, toolParticipant_1.startWatchingTranscriber)('book'); //pause etc..
+    let now = Book.formatDate();
+    if (mynow !== now) {
+        (0, toolParticipant_1.startWatchingTranscriber)('hotkeys'); //get record feedback..
+        (0, toolParticipant_1.startWatchingTranscriber)('video');
+        (0, toolParticipant_1.startWatchingTranscriber)('_meta'); //get all topic changes..
+        //	startWatchingTranscriber('base'); //get all mood changes and extra pause..
+        //use 'base' for tracking genbook
+        (0, toolParticipant_1.startWatchingTranscriber)('book'); //pause etc..
+        mynow = now;
+    }
 }
 function activate(context) {
     //not being activated until chatted to...
@@ -352,6 +357,9 @@ function activate(context) {
     (0, toolParticipant_1.registerStatusBarTool)(context);
     (0, toolParticipant_1.startWatchingWorkspace)(context); //watch for changes to book.  
     startTranscribers(); //start the transcribers for the book.
+    setInterval(() => {
+        startTranscribers();
+    }, 60000); // check every minute if date changes to follow new file..
     //create loop to watch for change of day to restart transcribers..
     const mySettings = vscode.workspace.getConfiguration('mrrubato');
     Book.setModel(mySettings.get('model'));

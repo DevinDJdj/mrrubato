@@ -31,6 +31,7 @@ class _lang:
     self.suggestions = []
     self.alltopics = {}
     self.topicarray = []
+    self.words = []
     self.wordmap = {} #sequence -> sequence mapping for new words or created words.  
     self.spokenwords = [] #list of words spoken, can use for context in new word creation.
     self.mywords = [] #list of words executed, can use for context in new word creation.
@@ -113,6 +114,8 @@ class _lang:
 
   #act differently based on words in sequence.    
   def act(self, cmd, words=[], sequence=[], doact=True):
+    self.words = words
+
     """ACT based on command and sequence."""
     if (not doact):
       if (len(sequence) == 1 and sequence[-1] == self.keybot):

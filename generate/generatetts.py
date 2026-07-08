@@ -111,7 +111,8 @@ def generate_line(text, idx, voice, vol, speed, cacheno=-1, engine='kokoro-tts',
         sound_file = f"./temp/{cacheno}/{idx}_combined.wav"
         speed = 0.8 #slow down combined lines a bit more to make them more intelligible.  This is a bit hacky but should work for now.
     subtitle_file = f"./temp/{cacheno}/{idx}.srt"
-    lesc = text.replace('"', '\\"')
+#    lesc = text.replace('"', '\\"')
+    lesc = text
 
     suc = ""
     print(f"speaking line {idx} with {engine}...")

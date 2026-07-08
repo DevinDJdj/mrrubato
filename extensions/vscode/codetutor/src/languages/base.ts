@@ -30,8 +30,9 @@ export default class LANG {
     load(){
         let obj = {
             "2":{
-                "GENERATE": [0, -1],
-                "HIGHLIGHT": [0,1],
+                "PAUSE": [0,-1],
+                "GENERATE": [0, 1],
+                "HIGHLIGHT": [0,2],
                 
             },
             "3":{
@@ -52,7 +53,10 @@ export default class LANG {
             obj = Object.assign({}, obj, this.config['languages'][this.name]);
         }
         this.config['languages'][this.name] = obj;
-
+        this.funcdict["PAUSE"] = (cls, sequence, words) => {
+            console.log("base pause", sequence, words);
+            return 0; //no action, just a generic keypress
+        }
         this.funcdict["GENERATE"] = this.generate;
         this.funcdict["HIGHLIGHT"] = (cls, sequence, words) => { 
             console.log("base highlight", cls.highlight);
@@ -70,6 +74,11 @@ export default class LANG {
 
     }
 
+    pause(cls, sequence, words){
+        console.log("base pause", sequence, words);
+        vscode.commands.executeCommand('workbench.action.chat.open', "@mr /stop");
+        return 0; //no action, just a generic keypress
+    }
     generate(cls, sequence, words){
         console.log("base generate", sequence, words);
         vscode.commands.executeCommand('mrrubato.mytutor.generate'); //no params, just generate from current cursor location..

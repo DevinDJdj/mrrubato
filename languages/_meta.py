@@ -60,6 +60,7 @@ class _meta:
     self.speed = 1.0
     self.zoom = 1.0
     self.timewindow = timewindow.timewindow(self) #starttime/endtime, etc.  
+    self.words = []
 
     #filter langs: 48,      49,      50,       51 .. 
 #    self.langs = ["_meta", "video", "book", "video", "hotkeys", "hotkeys", "hotkeys", "hotkeys", "check"]
@@ -310,6 +311,7 @@ class _meta:
 
   #act differently based on words in sequence.    
   def act(self, cmd, words=[], sequence=[], doact=True):
+    self.words = words
     """ACT based on command and sequence."""
     if (not doact):
       if (len(sequence) == 1 and sequence[-1] == self.keybot):
@@ -563,7 +565,7 @@ class _meta:
         starttime = cmd['..'] - min(windowmult/2, self.timewindow.window) #1 hour before command
         endtime = cmd['..'] + min(windowmult/2, self.timewindow.window) #1 hour after command
         #book transcripts are stored in ./book/ and can be read by transcriber.read('book', starttime, endtime)
-        supp_cmds = self.transcriber.read('book', starttime, endtime)
+        supp_cmds = self.transcriber.read('book', datetime.fromtimestamp(starttime), datetime.fromtimestamp(endtime))
         supp_cmds.sort(key=lambda x: abs(time - x['timestamp']), reverse=True) #sort by recency to current time, most recent first.
 
         allsuppcmds.extend(supp_cmds)

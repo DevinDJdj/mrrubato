@@ -12,13 +12,19 @@ const ATTACK_TIME = 0.2;
 const SUSTAIN_LEVEL = 0.8;
 const RELEASE_TIME = 0.2;
 
-
+class WordNode{
+    word: string;
+    lang: string;
+    sequence: Number[];
+}
 export class MyKeys {
     keys: Number[]; //array of ints
     sequence: Number[]; //array of ints
     config: any;
     lasttick: number;
-    words: string[];
+    words: WordNode[];
+    words_: WordNode[];
+    heldwords: any[];
     languages: any;
     transcripts: any;
     currentseqno: number = 0;
@@ -46,6 +52,7 @@ export class MyKeys {
         this.lasttick = (new Date()).getTime();
         this.sequence = []; //current sequence of notes
         this.words = []; //current sequence of words
+        this.words_ = [];
         this.languages = {}; //lang: {lang: [keys], module: module}
         this.currentlangna = '';
         this.currentlang = null;
@@ -57,6 +64,7 @@ export class MyKeys {
         this.currentcmd = ''; 
         this.currentmidiuser = 0;
         this.midiarray = [{}]; //user, lang, array of notes with time, note, velocity, duration
+        this.heldwords = []; //array of words that are currently held down
         //module values:
         //keybot
         //keyoffset - offset within octave
@@ -81,6 +89,7 @@ export class MyKeys {
                 //web/public/languages/base.js
                 this.languages[lang] = {"module": null, "keys": val};
                 this.transcripts[lang] = [];
+
             }
             this.currentlang = null;
         }
@@ -142,12 +151,47 @@ export class MyKeys {
             this.languages[lang]["module"] = new langModule();
             //initialize language if needed.  
             this.languages[lang]["module"].init(this.config);
+            this.midiarray[this.currentmidiuser][lang] = [];
+            this.keybot[lang] = this.languages[lang]["module"].keybot;
             this.updateKeyMaps(lang);
         } catch (e){
             console.error("Error loading language module", lang, e);
         }
     }
 
+    runHolds(){
+        let currentTime = Date.now() - this.start;
+        for (const [note, obj] of Object.entries(this.notes)) {
+            if (obj.velocity > 0) { //still holding..
+//                console.log("note held", note, currentTime, obj.time, obj.velocity);
+                let elapsedTime = - currentTime - obj.time;
+                //0.5 to start, and execute each 0.5 seconds for now..
+                elapsedTime = - elapsedTime; //switch to positive..
+                if (elapsedTime > 500){ //multiple keys runs multiple times is this desirable?  
+                    //get last command and re-execute it..
+                    if (this.currentcmd !== "" && this.currentlangna !== "" && this.currentlang !== null) {
+                        let ret = (this.currentlang as any).act(this.currentcmd, this.sequence.slice(this.startseqno), this.words_);
+                    }
+                    else{
+                        let lastword = this.words_[this.words_.length - 1];
+                        if (lastword) {
+                            let lang = lastword.lang;
+                            let cmd = lastword.word;
+                            let sequence = lastword.sequence;
+                            let module = this.languages[lang]["module"];
+                            if (module) {
+                                console.log("re-executing command on hold", cmd, sequence, lang);
+                                module.act(cmd, sequence, []);
+                            }
+                        }
+                        else{
+                            console.log("no last word to re-execute", this.words_);
+                        }
+                    }
+                }
+            }
+        }
+    }
     key(msg, myTime = 0, midiCb = null){
 //        console.log("key", msg);
         this.lastnotetime = (new Date()).getTime();
@@ -213,6 +257,7 @@ export class MyKeys {
             osc = this.playTone(this.midiToFreq(note, velocity));
         }
 
+        console.log("noteOn", note, abstime, lang);
         var obj = {"note": note, "velocity": velocity, "time": abstime, "duration": 0, osc: osc, pnote: pnote, complete: false, user: this.currentmidiuser, created: Date.now()};
 
         if (myTime > 0) {
@@ -220,6 +265,7 @@ export class MyKeys {
         }
 
         this.notes[note] = obj;
+        this.heldwords.push(note); //add to held words
         this.mkey(note, velocity, abstime, myTime, lang);
     }
 
@@ -289,6 +335,8 @@ export class MyKeys {
             else if (ret === 0) {
                 //command executed, reset sequence.  
                 console.log(`> ${this.currentcmd}\n`);
+                //only add on success.  
+                this.words_.push({'word':this.currentcmd, 'sequence': this.sequence.slice(this.startseqno), 'lang': this.currentlangna});
                 this.reset_sequence();
 
 
@@ -306,6 +354,7 @@ export class MyKeys {
             lang = this.currentlangna;
         }
     
+        this.heldwords = this.heldwords.filter(n => n !== note); //remove from held words
         const obj = this.notes[note];
         if (obj.osc) {
             obj.osc.stop();
@@ -317,18 +366,23 @@ export class MyKeys {
         let clone = Object.assign({}, obj);
         clone.duration = abstime - obj.time;
     
+        console.log("noteOff", note, abstime, lang);
         if (this.lastnote && this.lastnote.note === obj.note && this.lastnote.time === obj.time) {
+            obj.velocity = 0; //at least set velocity.  
         }
         else{
             this.lastnote = obj;
-            this.insertNote(clone, lang);
             obj.velocity = 0;
-            this.notes[note] = obj;
+//            this.insertNote(clone, lang);
+//            this.notes[note] = obj;
     
         }
+        console.log(this.notes[note]);
+
 
     }
 
+    //deprecated?  
     insertNote(note, lang = "") {
         if (lang == ""){
             lang = this.currentlangna;	
@@ -396,9 +450,9 @@ export class MyKeys {
     }
 
     setupMidi() {
-        this.midiarray = [{"base": [], "meta": []}];
-        this.keybot["base"] = 48;
-        this.keybot["meta"] = 48;
+        this.midiarray = [{"base": [], "_meta": []}];
+        this.keybot["base"] = 69;
+        this.keybot["_meta"] = 48;
         this.currentmidiuser = 0;
         this.start = Date.now();
 //        reinitLanguages();

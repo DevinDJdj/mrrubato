@@ -23,6 +23,7 @@ class hotkeys:
   def __init__(self, config, qapp=None, startx=0):
 
     self.config = config
+    self.words = []
     self.transcriber = None
     self.qapp = qapp
     self.startx = startx
@@ -387,6 +388,8 @@ class hotkeys:
   
   #act differently based on words in sequence.    
   def act(self, cmd, words=[], sequence=[], doact=True):
+    self.words = words
+
     """ACT based on command and sequence."""
     if (not doact):
       if (len(sequence) == 1 and sequence[-1] == self.keybot):
@@ -555,6 +558,7 @@ class hotkeys:
       vars['FILE'] = fname
       shutil.copy('comment.wav', fname) #keep a copy for training..
       self.transcriber.write(self.name, "Comment", vars)  
+      logger.info(f'> Comment& {vars}')
       self.transcriber.write_topic(self.name, "", self.transcript, saveTranscript=False, saveBook=True)
 
     except Exception as e:
@@ -1297,13 +1301,16 @@ class hotkeys:
       playwrighty.open_browser()
       if (playwrighty.mybrowser is not None): #we have started a browser session with playwright.
         logger.info('Getting page from Playwright')
-        text, links, alt_text_data = playwrighty.get_page_details(playwrighty.get_ppage(playwrighty.current_cache))
-        text, links, page, cacheno = playwrighty.read_page('', playwrighty.current_cache) #read current page
-        total_read = playwrighty.get_bookmark(page.url, cacheno)
-        self.links = links
-        print(f'Playwright found {len(text)} characters and {len(links)} links  on the page') 
-        q2, q3, stop_event = self.speak(text, links, alt_text_data, total_read, cacheno=cacheno)
-        playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
+        try:
+          text, links, alt_text_data = playwrighty.get_page_details(playwrighty.get_ppage(playwrighty.current_cache))
+          text, links, page, cacheno = playwrighty.read_page('', playwrighty.current_cache) #read current page
+          total_read = playwrighty.get_bookmark(page.url, cacheno)
+          self.links = links
+          print(f'Playwright found {len(text)} characters and {len(links)} links  on the page') 
+          q2, q3, stop_event = self.speak(text, links, alt_text_data, total_read, cacheno=cacheno)
+          playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
+        except Exception as e:
+          logger.error(f'Error reading page with Playwright: {e}')
         return 0
     
     else:

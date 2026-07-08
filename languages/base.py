@@ -37,6 +37,7 @@ class base:
     self.transcript = ""
     self.funcdict = {}
     self.suggestions = []
+    self.words = []
 
   def word(self, sequence=[]):
     """Word lookup."""
@@ -162,6 +163,8 @@ class base:
 
   #act differently based on words in sequence.    
   def act(self, cmd, words=[], sequence=[], doact=True):
+    self.words = words
+
     """ACT based on command and sequence."""
     if (not doact):
       if (len(sequence) == 1 and sequence[-1] == self.keybot):

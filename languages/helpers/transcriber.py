@@ -156,24 +156,25 @@ class transcriber:
                         self.langmap[self.current_book]['topic'] = topic
                     except Exception as e:
                         logger.error(f'Error writing to book file for current book {self.current_book}: {e}')
-                    #write also to topic file
-                    if (topic not in self.langmap):
-                        self.langmap[topic] = {'lang':topic, 'topic': self.current_book, 'topics': {}, 'kg': nx.Graph()}
-                        topicstr = f'**{self.current_book}'
-                    elif (self.langmap[topic]['topic'] == self.current_book):
-                        topicstr = "" #dont rewrite topic if its the same as current book, to avoid confusion in topic history.
-                    try:
-                        file_path = pathlib.Path(f'{self.BOOK_FOLDER}{topic}')
-                        # Create parent directories if they don't exist
-                        file_path.mkdir(parents=True, exist_ok=True)
-                        with open(f'{self.BOOK_FOLDER}{topic}/{today}.txt', 'a', encoding='utf-8') as f:
-                            if (topicstr != ""): #had to change topics..
-                                topicstr = f'**{self.current_book}'
-                                f.write(topicstr + '\n')
-                            f.write(extra + '\n')
-                            #dont worry about time of day for this, not worth the space..
-                    except Exception as e:
-                        logger.error(f'Error writing to book file for topic {topic}: {e}')
+                    #write also to topic file if not self-referrential..
+                    if (topic != self.current_book):
+                        if (topic not in self.langmap):
+                            self.langmap[topic] = {'lang':topic, 'topic': self.current_book, 'topics': {}, 'kg': nx.Graph()}
+                            topicstr = f'**{self.current_book}'
+                        elif (self.langmap[topic]['topic'] == self.current_book):
+                            topicstr = "" #dont rewrite topic if its the same as current book, to avoid confusion in topic history.
+                        try:
+                            file_path = pathlib.Path(f'{self.BOOK_FOLDER}{topic}')
+                            # Create parent directories if they don't exist
+                            file_path.mkdir(parents=True, exist_ok=True)
+                            with open(f'{self.BOOK_FOLDER}{topic}/{today}.txt', 'a', encoding='utf-8') as f:
+                                if (topicstr != ""): #had to change topics..
+                                    topicstr = f'**{self.current_book}'
+                                    f.write(topicstr + '\n')
+                                f.write(extra + '\n')
+                                #dont worry about time of day for this, not worth the space..
+                        except Exception as e:
+                            logger.error(f'Error writing to book file for topic {topic}: {e}')
 
         if saveTranscript:
             
@@ -1168,9 +1169,18 @@ class transcriber:
             self.allcmds[lang] = {'**': lang, '&&': merged_cmds, 'cmds': merged_cmds, '..': last_mtime, 'last_mtime': last_mtime, 'start_time': start_time, 'end_time': end_time, 'start_idx': start_idx, 'end_idx': end_idx, 'open': True}            
             self.update_kg(lang, merged_cmds)
         else:
+            #first read of lang.. only set last topic here if this is first read..
+            #workaround..
+            last_topic = self.get_last_topic(ret)
+            self.langmap[lang]['topic'] = last_topic #self.langmap[lang] should always exist.  Dont rewrite same topic.  
             self.allcmds[lang] = {'**': lang, '&&': ret, 'cmds': ret, '..': last_mtime, 'last_mtime': last_mtime, 'start_time': start_time, 'end_time': end_time, 'start_idx': 0, 'end_idx': len(ret)-1, 'open': True}
             self.update_kg(lang, ret)
 
+    def get_last_topic(self, cmds):
+        if cmds and len(cmds) > 0:
+            return cmds[-1]['**']
+        return None
+    
     def set_current_topic(self):
         lastlang = None
         lastmtime = 0

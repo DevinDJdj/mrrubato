@@ -43,6 +43,7 @@ class video:
     self.feedbacknowstr = ""
     self.funcdict = {}
     self.suggestions = []
+    self.words = []
 
   def word(self, sequence=[]):
     """Word lookup."""
@@ -238,6 +239,8 @@ class video:
 
   #act differently based on words in sequence.    
   def act(self, cmd, words=[], sequence=[], doact=True):
+    self.words = words
+
     """ACT based on command and sequence."""
     if (not doact):
       if (len(sequence) == 1 and sequence[-1] == self.keybot):
@@ -382,7 +385,7 @@ class video:
   
   def stop(self, sequence=[]):
     """Stop Recording."""
-    logger.info("> Stop {sequence}")
+    logger.info(f'> Stop {sequence}')
     self.set_qr("Stop", {'type': 'record'})
     return 0
 

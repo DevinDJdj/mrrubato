@@ -38,6 +38,7 @@ class check:
     self.keyoffset = 9 #offset within octave mapping
     self.links = []
     self.maxseq = 10 #includes parameters
+    self.words = [] 
     self.callback = None
     self.transcript = ""
     self.feedbacknowstr = ""
@@ -140,6 +141,8 @@ class check:
 
   #act differently based on words in sequence.    
   def act(self, cmd, words=[], sequence=[], doact=True):
+    self.words = words
+
     """ACT based on command and sequence."""
     if (not doact):
       if (len(sequence) == 1 and sequence[-1] == self.keybot):

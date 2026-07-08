@@ -44,6 +44,8 @@ let isWorking = false;
 let workFunc = null;
 let workPrompt = "Improve my code";
 
+let mynow = "0"; //hold current day
+
 function get_current_weather(city: string): string {
 	return `The current weather in ${city} is sunny.`;
 }
@@ -370,13 +372,17 @@ export function formatMarkdownSnippet(snippet: string): string {
 }
 
 export function startTranscribers(){
-	startWatchingTranscriber('hotkeys'); //get record feedback..
-	startWatchingTranscriber('video');
-	startWatchingTranscriber('_meta'); //get all topic changes..
-//	startWatchingTranscriber('base'); //get all mood changes and extra pause..
-	//use 'base' for tracking genbook
-	startWatchingTranscriber('book'); //pause etc..
+	let now = Book.formatDate();
+	if (mynow !== now){
+		startWatchingTranscriber('hotkeys'); //get record feedback..
+		startWatchingTranscriber('video');
+		startWatchingTranscriber('_meta'); //get all topic changes..
+	//	startWatchingTranscriber('base'); //get all mood changes and extra pause..
+		//use 'base' for tracking genbook
+		startWatchingTranscriber('book'); //pause etc..
 
+		mynow = now;
+	}
 }
 
 export function activate(context: vscode.ExtensionContext) {
@@ -387,6 +393,10 @@ export function activate(context: vscode.ExtensionContext) {
 	startWatchingWorkspace(context); //watch for changes to book.  
 	
 	startTranscribers(); //start the transcribers for the book.
+	setInterval(() => {
+		startTranscribers();
+	}, 60000); // check every minute if date changes to follow new file..
+
 	//create loop to watch for change of day to restart transcribers..
 	
 

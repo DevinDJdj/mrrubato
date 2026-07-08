@@ -79,6 +79,13 @@ def recursive_values(data):
         # Base case: if it's a simple value, yield it
         yield data
 
+
+class RepeatTimer(threading.Timer):
+    def run(self):
+        # Keep looping until self.finished is set via cancel()
+        while not self.finished.wait(self.interval):
+            self.function(*self.args, **self.kwargs)
+
 class MyLang:
   #define action for some sequences.  
   def __init__(self, config):
@@ -148,7 +155,15 @@ class MyKeys:
     self.startseqno = 0  #start of word/phrase.  #no phrases longer than 16 keys.  
     self.lastnotetime = 0
     self.currentcmd = None
-    self.notes = np.zeros(config['keymap']['global']['top'] - config['keymap']['global']['bottom'], dtype=int)
+    self.notes = np.zeros(config['keymap']['global']['top']+config['keymap']['global']['bottom'], dtype=int) #just use midi index..
+    #need some extra for 
+    self.heldwords = []
+
+    self.primemap = np.zeros(config['keymap']['global']['top'], dtype=int) #map of prime to note
+    for i,p in enumerate(self.primes(800)): #should reflect octave relationship..
+      if (i < config['keymap']['global']['top']):
+        self.primemap[i] = p
+
     self.play_feedback = False
     self.transcript = ""
     self.starttime = time.time()
@@ -204,8 +219,15 @@ class MyKeys:
     print(self.keystruct)
     #also generate image from note structure for each lang_word..
     #here no rhythm, so should be very easy..
+    self.heldwordstimer = RepeatTimer(0.5, self.checkheldwords) #check held words every 0.5 seconds
+    self.heldwordstimer.start()
 
 
+  @staticmethod
+  def primes(n): # simple sieve of multiples 
+    odds = range(3, n+1, 2)
+    sieve = set(sum([list(range(q*q, n+1, q+q)) for q in odds], []))
+    return [2] + [p for p in odds if p not in sieve]
 
   def set_language(self, langna):
     if (langna in self.languages):
@@ -513,6 +535,7 @@ class MyKeys:
     self.lastnotetime = 0
     self.wordstarttime = 0
     self.wordendtime = 0
+    self.notes = [0 for _ in range(len(self.notes))]
     
   def findword(self, sequence=[]):
     """Find word in all languages."""
@@ -578,6 +601,7 @@ class MyKeys:
         self.words[-1]['ss'] = ss
         if (hasattr(self.languages[l], 'transcript') and self.languages[l].transcript != ""):
           self.words[-1]['transcript'] = self.languages[l].transcript #add transcript to word for reference in new word creation.
+        self.words[-1]['heldwords'] = self.heldwords.copy() #add heldwords to word for reference in new word creation.
         self.words_.append(self.words[-1]) #add to executed words.
         if ('_lang' in self.languages and hasattr(self.languages['_lang'], 'spokenwords')):
           self.languages['_lang'].spokenwords.append(self.words[-1]) #add to spoken words in _lang for reference in new word creation.
@@ -586,7 +610,7 @@ class MyKeys:
       else:
         #hotkey only word.  _word with empty sequence.
         #think we dont pass here..
-        self.words_.append({"word": cmd, "lang": l, "langna": l, "sequence": orig, "ss": ss, "_words": self.words}) #add to executed words.
+        self.words_.append({"word": cmd, "lang": l, "langna": l, "sequence": orig, "ss": ss, "_words": self.words, "heldwords": self.heldwords.copy()}) #add to executed words.
 
       self.currentlangna = self.words[-1]['langna'] if len(self.words) > 0 else ""
       self.currentlang = self.words[-1]['lang'] if len(self.words) > 0 else ""
@@ -657,7 +681,8 @@ class MyKeys:
 #    self.keyshift = 0
     self.setlanguage = None
 #    self.octaveshift = 0
-    logger.info("Unsetting keyshift and octave shift")
+    if (doact):
+      logger.info("Unsetting keyshift and octave shift")
 
     #perhaps make shorter
     localseq = self.sequence[-3:] #play last three notes for unset.
@@ -666,13 +691,59 @@ class MyKeys:
     if doact:
       synth.play_synth(localseq)
 
+
+  def checkheldwords(self, doact=True):
+    action = None
+    #possibly find multiple actions to take..
+    #cant do with keybot
+    lastnote = -1
+    if (len(self.heldwords) > 0):
+      logger.info(f'Checking heldwords: {self.heldwords}')
+      lastnote = self.heldwords[-1]['#']
+    #make sure we have had some time since keybot end..
+    if (len(self.heldwords) > 0 and self.heldwords[-1]['..'] is not None and time.time() - self.heldwords[-1]['..'] > 0.5):
+      #if any heldwords are held for more than 0.5 seconds, take action
+      #and time.time() - self.lasttick > 0.5): #if heldwords are held for more than 0.5 seconds, take action      
+      #take action again..
+      if (self.currentcmd is not None and self.currentlangna in self.languages):
+        #pass heldwords here?  not using words at the moment..
+        action = self.languages[self.currentlangna].act(self.currentcmd, self.heldwords, self.sequence[self.startseqno:], doact=doact)
+        if (action == 0):
+          #action was successful, reset command
+          #shouldnt happen..
+          logger.info(f'> <{self.currentlangna}>{self.currentcmd} {self.sequence[self.startseqno:]}')
+        elif (action < -1):
+          #action_ handled, no further params needed.
+          logger.info(f'> <{self.currentlangna}>{self.currentcmd}_ {self.sequence[self.startseqno:]}')
+          #reset command sequence to current sequence number.  
+          # This command only needs closure keys.  
+      else:
+        #get last word and try to take action again.
+        if (len(self.words_) > 0):
+          lastword = self.words_[-1]
+          logger.info(f'Trying to take action again with last word: {lastword}')
+          action = self.languages[lastword['langna']].act(lastword['word'], self.heldwords, lastword['ss'], doact=doact)
+          if (action == 0):
+            #action was successful, reset command
+            logger.info(f'> <{lastword["langna"]}>{lastword["word"]} {lastword["ss"]}')
+          elif (action < -1):
+            #action_ handled, no further params needed.
+            logger.info(f'> <{lastword["langna"]}>{lastword["word"]}_ {lastword["ss"]}')
+          elif (action == -1):
+            #error?  
+            logger.info(f'!! > <{lastword["langna"]}>{lastword["word"]} {lastword["ss"]}')
+#          else:
+            #need more keys..should be standard..
+
+    return action
+  
   def key(self, note, msg, callback=None, doact=True): #just get the words if doact=False
     #add this key to the notes map
     #if hasattr(msg, 'type') and msg.type=='note_on' and 
     #adjust message channel for anything but base channel
     #for now dont use tracks, just channels.  
  
-    logger.info(f'Key pressed: {note} Msg: {msg}')
+#    logger.info(f'Key pressed: {note} Msg: {msg}')
     #shift incoming note based on octaveshift.  
     #just use this instead of trying to send midi messages to shift octaves.
     if (self.octaveshift !=0):
@@ -691,12 +762,11 @@ class MyKeys:
       #sound feedback when playing a note.  not when simulating..
 
       if (msg.type == 'note_on' and hasattr(msg, 'velocity') and msg.velocity > 0):
-          self.lasttick = time.time()
+          print(f'Playing note {msg.note} with velocity {msg.velocity}')
           synth.note_on(msg.note, msg.velocity)
           self.mid.tracks[self.currentchannel].append(msg)
 #          synth.play_note(msg.note, 0.3, msg.velocity/127)
       elif (msg.type == 'note_off' or (msg.type == 'note_on' and hasattr(msg, 'velocity') and msg.velocity == 0)):
-          self.lasttick = time.time()
           synth.note_off(msg.note)
           self.mid.tracks[self.currentchannel].append(msg)
 
@@ -710,8 +780,29 @@ class MyKeys:
           self.reset_sequence()
 
                                                 
+    if (hasattr(msg, 'type') and msg.type=='note_on' and hasattr(msg, 'velocity') and msg.velocity == 0):
+      if (msg.note < len(self.notes) and doact):
+          self.notes[msg.note] = 0
+          self.heldwords = [hw for hw in self.heldwords if hw['_'] != msg.note]
+          logger.info(f"Held words updated: {self.heldwords}")
+    elif (hasattr(msg, 'type') and msg.type=='note_off'):
+      if (msg.note < len(self.notes) and doact):
+          self.notes[msg.note] = 0
+          self.heldwords = [hw for hw in self.heldwords if hw['_'] != msg.note]
+          logger.info(f"Held words updated: {self.heldwords}")
+
     if hasattr(msg, 'type') and msg.type=='note_on' and hasattr(msg, 'velocity') and msg.velocity > 0:
+      self.lasttick = time.time()
+      if (self.notes[msg.note] == 0 and doact): #why we need this?  
+        self.heldwords.append({'_': msg.note, '..': self.lasttick, '$$': msg.velocity})
+        logger.info(f"Held words updated: {self.heldwords}")
+        self.notes[msg.note] = msg.velocity
       #data is stale, start again.  
+      elif (doact and len(self.heldwords) > 0 and self.heldwords[-1]['_'] == msg.note):
+        self.heldwords[-1]['..'] = self.lasttick
+
+
+        
       if (temptime > 10 and len(self.sequence) > 0): #longer than 10 seconds..
         print(f"Resetting sequence due to long time since last note {temptime} seconds")
         self.reset_sequence()
@@ -810,7 +901,7 @@ class MyKeys:
         print(f"&<{l}>{word}\n")
         logger.info(f'&<{l}>{word}\n')
         #_words words before this one.  
-        self.words.append({"wordstart": self.wordstarttime, "wordend": self.wordendtime, "word": word, "lang": la, "langna": l, "sequence": self.sequence[self.startseqno:], "ss": [], "_words": self.words})
+        self.words.append({"wordstart": self.wordstarttime, "wordend": self.wordendtime, "word": word, "lang": la, "langna": l, "sequence": self.sequence[self.startseqno:], "ss": [], "_words": self.words, "heldwords": self.heldwords.copy()}) #add to words list for reference in new word creation.
         self.startseqno = self.currentseqno
         self.currentcmd = word
         self.currentlang = la

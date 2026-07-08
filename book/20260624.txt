@@ -492,3 +492,101 @@ Need key hold functionality..
 Or param for down/up
 OK, restart works..
 Not ideal, but good enough for now.  
+
+
+**extensions/vscode/src/midi/midi-in.ts
+Need key hold potential..
+If there is velocity, use this for timer multiplier.  
+on Timer, check if keys are being held.. 
+For now just 
+
+Think this can use multiple keyboards and receive messages from any..
+Not tested..
+OK, struggle..
+Hold works ok.  Not sure how to use yet..
+But make sure it works with non-MPE devices..
+MPE handler can be different eventually.  
+0.5 too slow?  
+
+
+**extensions/vscode/codetutor/src/languages/base.ts
+How do we make slight adjustments.  
+Command to adjust selected text.  
+;> Adjust [&&]
+in-place or to genbook..
+whole file/#lines
+
+;> Undo
+;> Retry
+
+;/gencode
+;/gencomments
+;/genbook
+
+implement node-audiorecorder
+
+
+**mykeys.py
+--takeaction
+--checkheldwords
+
+General held key logic..
+how to manage?  
+If any keys held, just re-act.  
+WORD_ determines how to handle..
+if no WORD_ handler, repeat last word with sequence..
+language can handle heldwords.. 
+In general, should pass held words along with sequence..
+--self.words
+if handling held words..
+
+
+
+
+**extensions/vscode/codetutor/src/languages/base.ts
+;> Open Book [TIME] [TYPE]
+;$$TIME=NOW/SELECTEDTIME/..
+;$$TYPE=BASE/GENBOOK/SELECTEDBOOK
+
+[69,68]
+Pause
+not working..
+
+Use
+[50,49]
+
+
+**mykeys.py
+--checkheldwords
+not working..
+Logic By LANG
+Check last N words..
+
+
+
+**extensions/trey/speech.py
+How to get space, quotes just returning backslash..
+**generate/generatetts.py
+maybe ok..
+
+**extensions/vscode/codetutor/src/extension.ts
+Sometimes VSCode crashing during debug session on 
+;> Restart
+And then midi device unavailable.. and extension fails to start until restart of machine..
+@VSCode 
+There is some issue here. 
+Also with latest release, you have changed something with multiwindow opening on start..
+~~Save full state and restart as-is when possible. 
+
+--read
+Need to only pick some things when reading.  
+Too much history for some topics.  
+
+**languages/helpers/transcriber.py
+Need to load last topic for each book.  
+test..
+
+
+
+
+

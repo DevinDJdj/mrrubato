@@ -25,8 +25,7 @@ export function activate(context) {
 
     //load config.  
 
-    mkeys = new mykeys.MyKeys(config );
-
+    var mkeys = {};
 
     context.subscriptions.push(vscode.commands.registerCommand('midi-demo.midi-in', async function (port) {
         const column = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.viewColumn : undefined;
@@ -56,6 +55,7 @@ export function activate(context) {
 
 
 
+         mkeys[port] = new mykeys.MyKeys(config);
          var midiport = JZZ().openMidiIn(port).or(() => {
              panels[port].webview.html = `<html><body><h1>${port}</h1><p>Cannot open port!</p></body></html>`;
              return;
@@ -64,10 +64,15 @@ export function activate(context) {
             midiport.connect((msg) => {
                 //console.log('MIDI message:', msg);
                 //mykeys.push(msg);
-                mkeys.key(msg, 0, null); //no callback for now.
+                mkeys[port].key(msg, 0, null); //no callback for now.
 //                panels[port].webview.postMessage({ command: 'midi', message: msg });
             });
-         
+
+        setInterval(() => {
+            //send the current sequence to the webview for display
+            //console.log("Running Holds");
+            mkeys[port].runHolds();
+        }, 500);
 
          const scriptPath = vscode.Uri.joinPath(context.extensionUri, 'src', 'midi', 'input.js');
          const scriptUri = panels[port].webview.asWebviewUri(scriptPath);
