@@ -579,7 +579,7 @@ Also with latest release, you have changed something with multiwindow opening on
 ~~Save full state and restart as-is when possible. 
 
 --read
-Need to only pick some things when reading.  
+Need to only pick some entries when reading.  
 Too much history for some topics.  
 
 **languages/helpers/transcriber.py
@@ -588,5 +588,84 @@ test..
 
 
 
+--Heldwords
+LANG only = last
+LANG + 55 = 2nd last
+LANG + 54 = 3rd last
+LANG + other = last handler start sequence?  
 
+Need audio indicator when triggered..
+Perhaps just automatically take the 2-key combos..
+starting with lowest.  
+Book
+[50,48] Show
+[50,49] Pause
+[50,51] Unpause
+
+hotkeys
+[53,50] Read Screen
+[53,52] Pause
+[53,54] Unpause
+
+_meta
+[48,49] Pause
+[48,53] Tock
+[48,54] Tick
+
+video
+[49,48] Pause
+[49,50] Unpause
+[49,51] Screen Toggle
+
+
+Display all quick words in QR display..
+~30 standard..
+
+Audio not nice for this though..
+Need function completion audio indicator
+
+Need to dynamically adjust interval check for heldwords
+
+Eventually need input logic:
+// Locate by its visual label text (Best practice)
+await page.getByLabel('Username').fill('my_username');
+
+**extensions/trey/play.json
+config.json for each language?
+for now playwright.
+Load i.e.
+Label names for input selection.  
+This seems may be annoying.. 
+Can we find tool for this.  
+Maybe just get all inputs and see if we can make it useful..
+Switch mode to input mode and then keep a dictionary of terms in separate config file..
+
+
+
+Engines {Name, URL}.  
+
+;> Comment [input#] [&&]
+;> Send
+
+**config.py
+--get_data_folder
+are we actually storing context?  
+Test..
+
+
+**languages/hotkeys.py
+;> Show Browser
+Bring to front..
+
+**languages/book.py
+**extensions/vscode/codetutor/src/languages/base.ts
+;> Show Book
+[50,48]
+Bring to front..
+
+
+**extensions/vscode/codetutor/src/gen.ts
+Eventually how do we generate everything as git changes?  
+This is a larger problem.
+To test just put result in separate file.
 

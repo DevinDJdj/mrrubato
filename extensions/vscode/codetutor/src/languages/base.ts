@@ -53,6 +53,7 @@ export default class LANG {
             obj = Object.assign({}, obj, this.config['languages'][this.name]);
         }
         this.config['languages'][this.name] = obj;
+
         this.funcdict["PAUSE"] = (cls, sequence, words) => {
             console.log("base pause", sequence, words);
             return 0; //no action, just a generic keypress

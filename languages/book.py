@@ -125,6 +125,7 @@ class book:
     #load language specific data into the config.  
     default = {
       "2": {
+         "Show Book": [50,48], #show book check
          "Pause": [50,49], #pause check
          "Unpause": [50,51], #unpause check
       },
@@ -149,6 +150,7 @@ class book:
       "Help": "help",
       "Pause": "pause",
       "Unpause": "unpause",
+      "Show Book": "show_book",
       "Select Book": "select_book",
       "Select Topic": "select_topic",
       "Set Book": "set_book",
@@ -161,6 +163,7 @@ class book:
       "Help": {"help": "help", "params": "None", "desc": f"Show {self.name} commands."},
       "Pause": {"help": "pause", "params": "None", "desc": f"Pause {self.name} playback."},
       "Unpause": {"help": "unpause", "params": "None", "desc": f"Unpause {self.name} playback."},
+      "Show Book": {"help": "show_book", "params": "None", "desc": f"Show current book in {self.name}."},
       "Select Book": {"help": "select_book", "params": "None", "desc": f"Open current book in {self.name}."},
       "Select Topic": {"help": "select_topic", "params": "None", "desc": f"Open current topic in {self.name}."},
       "Set Book": {"help": "set book [book]", "params": "[book]", "desc": "Set book by name."},
@@ -504,6 +507,19 @@ class book:
     self.transcript = writtentopic #set transcript here to include into midi.  Dont include context for now too much repetition..
     return 0
 
+  def show_book(self, sequence=[]):
+    #just bring vscode to foreground for now..
+    logger.info(f'> Show Book {sequence}')
+
+    vars = {}
+    if self.selectedbook is not None:
+      self.speak(f'{self.selectedbook["**"]}')
+      vars['book'] = self.selectedbook['**']
+      vars['context'] = self.get_book_context(self.selectedbook['**'], 5).replace('\n', '<br>')
+    self.func = "Show Book"
+    self.set_qr(self.func, vars)
+    return 0
+  
   def comment_(self, sequence=[]):
     if (len(sequence) == 1):
 

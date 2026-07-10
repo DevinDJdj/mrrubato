@@ -213,13 +213,13 @@ class hotkeys:
     default = {
       "2": {
 #        "Start": [53,54], #read from this cache page current point.  
-        "Stop": [53,51],
         "Pause": [53,52],
         "Resume": [53,54],
         "Read Screen": [53,50],
 #        "Page": [53,57],
       },
       "3": {
+        "Stop": [53,55,54],
         "Skip Lines": [53,55,57],
         "Page": [53,55,59], #also read screen
         "Click Link": [53,55,60], #also read screen
@@ -1297,23 +1297,6 @@ class hotkeys:
   def read_screen(self, sequence=[]):
     logger.info(f'> Read Screen {sequence}')
     if (len(sequence) > 0):
-      #start the browser if any params passed for now..  
-      playwrighty.open_browser()
-      if (playwrighty.mybrowser is not None): #we have started a browser session with playwright.
-        logger.info('Getting page from Playwright')
-        try:
-          text, links, alt_text_data = playwrighty.get_page_details(playwrighty.get_ppage(playwrighty.current_cache))
-          text, links, page, cacheno = playwrighty.read_page('', playwrighty.current_cache) #read current page
-          total_read = playwrighty.get_bookmark(page.url, cacheno)
-          self.links = links
-          print(f'Playwright found {len(text)} characters and {len(links)} links  on the page') 
-          q2, q3, stop_event = self.speak(text, links, alt_text_data, total_read, cacheno=cacheno)
-          playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
-        except Exception as e:
-          logger.error(f'Error reading page with Playwright: {e}')
-        return 0
-    
-    else:
       #use PyQt to read screen.
       buffer = None
       if (self.qapp is None):
@@ -1361,6 +1344,23 @@ class hotkeys:
       self.speak(all)
         
       return 0
+    
+    else:
+      #start the browser if any params passed for now..  
+      playwrighty.open_browser()
+      if (playwrighty.mybrowser is not None): #we have started a browser session with playwright.
+        logger.info('Getting page from Playwright')
+        try:
+          text, links, alt_text_data = playwrighty.get_page_details(playwrighty.get_ppage(playwrighty.current_cache))
+          text, links, page, cacheno = playwrighty.read_page('', playwrighty.current_cache) #read current page
+          total_read = playwrighty.get_bookmark(page.url, cacheno)
+          self.links = links
+          print(f'Playwright found {len(text)} characters and {len(links)} links  on the page') 
+          q2, q3, stop_event = self.speak(text, links, alt_text_data, total_read, cacheno=cacheno)
+          playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
+        except Exception as e:
+          logger.error(f'Error reading page with Playwright: {e}')
+        return 0
 
   def speak(self, text, links=[], alt_text_data=[], total_read=0, lang="en", cacheno=-1):
     from extensions.trey.trey import speak

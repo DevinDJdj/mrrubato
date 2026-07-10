@@ -6,12 +6,16 @@ import * as  Worker from './worker'; // Import the Worker class
 import * as fs from 'fs';
 import * as Book from './book';
 import ollama from 'ollama';
+import { request } from 'https';
 
 
 export async function genbook(prompt: string) : Promise<string> {
     //generate next book entries for this topic.  
     //Use other topics as samples..
-    return "";
+    let [topics, context] = await Book.read(prompt);
+    let bookGen = await Book.ask(context);
+    //need more format check logic..
+    return bookGen;
 }
 
 export async function gencomments(prompt: string) : Promise<string> {

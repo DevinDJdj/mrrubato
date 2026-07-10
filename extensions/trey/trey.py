@@ -1951,6 +1951,19 @@ class MyWindow(QMainWindow):
 
                 self.show_mrroboto()
 
+            case "Show Book":
+                book = vars.get('book', 'None')
+                context = vars.get('context', '')
+                self.transcriber.current_book = book
+                self.transcriber.current_context = context
+                print(f"<<{lang}>>\n$$book=" + str(book))
+                print(f"<<{lang}>>\n$$context=" + str(context))
+                self.label_topic_info[0].setText(f'**{book}')
+                self.label_topic_info[1].setText(f'{context}') 
+                self.label_topic_info[0].update()
+                self.label_topic_info[1].update()
+                self.show_mrroboto()
+                
             case "Select Topic":
                 topic = vars.get('topic', 'None')
                 self.add_setting('topic', topic, lang)

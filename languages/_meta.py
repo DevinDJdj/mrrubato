@@ -175,10 +175,10 @@ class _meta:
     #load language specific data into the config.  
     default = {
       "2": {
-         "Pause": [48,49], #pause video
+         "Pause": [48,49], #pause all?  
         #48, 52 FIND?  
-        "Tick": [48,53], #manual tick forward in time by small increments.
-        "Tock": [48,54], #manual tick backward in time by small increments.
+        "Tock": [48,53], #manual tick backward in time by small increments.
+        "Tick": [48,54], #manual tick forward in time by small increments.
       },
       "3": {
 

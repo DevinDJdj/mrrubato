@@ -206,6 +206,10 @@
             "description": "Generate code for topic(s)."
           },
           {
+            "name": "gentests",
+            "description": "Generate tests for topic(s)."
+          },
+          {
             "name": "summary",
             "description": "Create summary of topic(s)."
           },

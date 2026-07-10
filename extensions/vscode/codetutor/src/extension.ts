@@ -15,6 +15,7 @@ import { renderPrompt } from '@vscode/prompt-tsx';
 import { format, posix } from 'path';
 import { PlayPrompt } from './prompts';
 import * as Book from './book';
+import * as Gen from './gen';
 import * as Worker from './worker';
 import ollama from 'ollama';
 
@@ -430,16 +431,28 @@ export function activate(context: vscode.ExtensionContext) {
 
 		}
 
-		if (request.command === 'genbook' || request.command === 'gencomments' || request.command === 'gencode' || request.command === 'gentests'){
+		if (request.command === 'genbook' || request.command === 'gencomments' || request.command === 'gencode' || request.command === 'gentests' || request.command === 'genhelp'){
 			//generate context for this topic.  
 			if (request.command === 'genbook'){
+				let result = await Gen.genbook(request.prompt);
+				stream.markdown(result);
 
 			}
 			if (request.command === 'gencomments'){
+				let result = await Gen.gencomments(request.prompt);
+				stream.markdown(result);
 			}
 			if (request.command === 'gencode'){
+				let result = await Gen.gencode(request.prompt);
+				stream.markdown(result);
 			}
 			if (request.command === 'gentests'){
+				//let result = await Gen.gentests(request.prompt);
+				//stream.markdown(result);
+			}
+			if (request.command === 'genhelp'){
+				let result = await Gen.genhelp(request.prompt);
+				stream.markdown(result);
 			}
 		}
 
