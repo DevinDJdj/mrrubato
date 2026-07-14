@@ -23,7 +23,7 @@ import glob
 import os
 import speech_recognition as sr
 import math
-import whisper
+#import whisper
 import pandas as pd
 from datetime import datetime
 import urllib.request
