@@ -97,8 +97,8 @@ if __name__ == '__main__':
         print('Track {}: {}'.format(i, track.name))
         for msg in mid.play():
   #          msg.velocity = round(msg.velocity / 2)
-            outport.send(msg)
             print(msg)
+            outport.send(msg)
     
 
     test = """

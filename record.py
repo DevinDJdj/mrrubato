@@ -91,7 +91,7 @@ from oauth2client.file import Storage
 from oauth2client.tools import argparser, run_flow
 
 
-from transcribe import transcribe_me, transcribe_me2, get_timestamp
+from transcribe import transcribe_me, transcribe_fromyoutube, get_timestamp
 import util
 
 import firebase_admin
@@ -437,6 +437,7 @@ if __name__ == '__main__':
 
     argparser.add_argument("--rerun", help="Rerun upload",
       default="false") #--rerun true perhaps add other options but right now this is all that really fails.  
+    argparser.add_argument("--rerundb", help="Upload media again", default="false")
     argparser.add_argument("--file", required=False, help="Video file to upload")
     argparser.add_argument("--title", help="Video title", default="New Upload")
     argparser.add_argument("--description", help="Video description",
@@ -481,15 +482,31 @@ if __name__ == '__main__':
         initialize_app(creda, {'storageBucket': config.cfg["firebase"]["fbconfig"]["storageBucket"], 'databaseURL':databaseURL})    
         args.file = get_latest_file()
         tempfile = open('desc.txt', 'r')
-        args.description = tempfile.read()
+        args.description = tempfile.read()  
         tempfile.close()
         if (config.cfg['youtube']['enabled'] == "true"):
-            print("Authentication with Youtube")
+            print("Authentication with Youtube")  
             youtube = get_authenticated_service(args)
             videoid = initialize_upload(youtube, args)    
             add_video_to_playlist(videoid, config.cfg["youtube"]["MY_PLAYLIST"], args)
         else:
             videoid = myid 
+        if (args.rerundb == "true"):
+            print("Rerunning database upload")
+
+            latest_file = get_latest_file()    
+            fn = latest_file.split('.')
+
+            
+            pathnames = fn[0].split('\\')
+            print(pathnames)
+            print(args.description)
+
+            #should have some kind of check here.      
+            mediafile = uploadmediafile(fn[0], pathnames[len(pathnames)-1] ) #fb bucket upload.  
+            
+            args.description += '\r\n\r\nMEDIAFILE:' + mediafile + '\r\n' 
+
         addtodb(videoid, args)
         print("End Rerun")
         sys.exit(0)
@@ -786,8 +803,8 @@ if __name__ == '__main__':
 #    transcribe_me(latest_file)
 
     localserver = config.cfg['localserver']['host'] + ":" + str(config.cfg['localserver']['port'])
-    transcript = transcribe_me2(args.description, latest_file, mediafile, localserver, myid) #use myid as we havent uploaded yet.  
-
+#    transcript = transcribe_me2(args.description, latest_file, mediafile, localserver, myid) #use myid as we havent uploaded yet.  
+    transcript =  None
     if transcript is not None:
       transcribe_file = uploadtranscript(fn[0], pathnames[len(pathnames)-1])
     else:
