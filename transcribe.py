@@ -21,7 +21,7 @@ from os import path
 import subprocess
 import glob
 import os
-import speech_recognition as sr
+import speech_recognition as sr 
 import math
 #import whisper
 import pandas as pd
@@ -151,7 +151,7 @@ def getfile(mediafile, videoid):
 import os
 def transcribe_fromyoutube(videoid="ZshYVeNHkOM", model=None, mediafile=None, st=None, et=None):
     #download from mediafile
-    from pytube import YouTube
+    from pytube import YouTube  
 
     latest_file = getfile(mediafile, videoid)
     trainingcount = 0

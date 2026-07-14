@@ -1,0 +1,29 @@
+**voicegen
+
+#resemble.ai
+#serenade.ai
+#https://github.com/Hagsten/Talkify
+
+Why no pure JS solution.  
+This should be done in browser.  
+Everything will be done in browser.  
+#https://github.com/playerony/TensorFlowTTS-ts
+
+#https://github.com/leaonline/easy-speech
+
+#https://github.com/tejaspatil7903/Text-To-Speech-Website/blob/main/src/app.js
+<!--
+function createDownloadLink(text) {
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.voice = speech.voice;
+  utterance.onend = (event) => {
+    const audioBlob = new Blob([event.utterance], { type: "audio/wav" });
+    const audioUrl = URL.createObjectURL(audioBlob);
+    const downloadLink = document.getElementById("download-link");
+    downloadLink.href = audioUrl;
+    downloadLink.download = "tts-audio.wav";
+    downloadLink.style.display = "inline";
+  };
+  window.speechSynthesis.speak(utterance);
+}
+-->
