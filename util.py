@@ -4,6 +4,8 @@ import re
 st = []
 et = []
 
+
+
 def getSecsFromTime(time):
     minsec = time.split(":")
     if (minsec == time):
@@ -32,7 +34,7 @@ def getIterations(desc):
             te = desc.index(")", ts)
             if ts > -1:
                 e = getSecsFromTime(desc[ts+(len(fnd))+2:te])
-            if s > 0 and e > 0 and e > s:
+            if s > -1 and e > s:
                 st.append(s)
                 et.append(e)
     except:
@@ -48,6 +50,17 @@ def getTranscriptFile(desc):
             url = desc[tposition+11:eposition]
         else:
             url = desc[tposition+11:]
+    return url
+
+def getMidiFile(desc):
+    url = ""
+    tposition = desc.find("MIDI:")
+    if tposition > -1:
+        eposition = desc.find('\n', tposition)
+        if eposition > -1:
+            url = desc[tposition+5:eposition]
+        else:
+            url = desc[tposition+5:]
     return url
 
 def getMediaFile(desc):

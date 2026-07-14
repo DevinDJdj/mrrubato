@@ -61,8 +61,14 @@ recognition.onresult = function(event) {
 
 
 if (speech == true) {
+    recognition.addEventListener("start", () => {
+        console.log("Speech recognition service has started");
+      });
+
     recognition.start();
-    recognition.addEventListener('end', recognition.start);
+    recognition.addEventListener('end', () => {
+        recognition.start();
+    });
     midienabled = 1;
     getHistory();
 //    chrome.action.setPopup({popup: 'popup.html'});    

@@ -1,0 +1,272 @@
+**extensions/vscode/codetutor/src/extension.ts
+
+install vscode
+#https://code.visualstudio.com/download
+copy config
+install git
+#https://git-scm.com/install/windows
+install chrome
+#https://www.google.com/chrome/
+
+
+
+**treyenv
+$$20260404
+install treyenv..
+
+**codetutor
+install codetutor..
+download vscode
+git login/clone
+
+**ollama
+install ollama..
+$$SYSTEM=WINDOWS
+>>dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
+>>dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
+>>wsl --set-default-version 2
+
+;<<msstore>>Download Ubuntu
+>>wsl --list --online
+>>wsl --install -d Ubuntu-24.04
+
+..
+>>wsl -d Ubuntu-24.04
+
+$$SYSTEM=UBUNTU
+>>sudo apt update
+
+>>sudo apt install python3-pip
+>>sudo apt install python3-venv
+
+>$python3 --version
+$$VER=3.12.3
+
+**treyenv
+$$SYSTEM=WINDOWS
+> python --version
+$$VER=3.12.9
+#https://www.python.org/ftp/python/3.12.9/python-3.12.9-amd64.exe
+> "C:\Users\devin\Downloads\python-3.12.9-amd64.exe" /quiet InstallAllUsers=1 PrependPath=1 TargetDir="C:\Python\Python312"
+
+> pip install virtualenv
+
+> python -m venv treyenv
+> .\treyenv\Scripts\activate
+> .\treyenv\Scripts\deactivate
+
+$$VENV=treyenv
+
+> nvidia-smi
+$$VER=12.9
+upgrade?
+;#https://developer.nvidia.com/cuda-12-8-1-download-archive?target_os=Windows&target_arch=x86_64&target_version=11&target_type=exe_local
+
+
+> pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
+
+> pip install torchaudio==2.8 --index-url https://download.pytorch.org/whl/cu128
+> pip install torchvision==0.23.0 --index-url https://download.pytorch.org/whl/cu128
+
+> python -c "import torch; print(f'Torch Version: {torch.__version__}, CUDA Available: {torch.cuda.is_available()}, CUDA Version: {torch.version.cuda}')"
+;Torch Version: 2.9.1+cu128, CUDA Available: True, CUDA Version: 12.8
+Torch Version: 2.8.0+cu128, CUDA Available: True, CUDA Version: 12.8
+
+**mrrubato
+> pip install -r ./extensions/trey/requirements.txt
+
+#https://obsproject.com/download
+
+
+
+$$SYSTEM=UBUNTU
+>$sudo apt-get install zstd
+>$curl -fsSL https://ollama.com/install.sh | sh
+
+~~ add >> and >$ to defmap..
+$$20260403
+>$ollama pull gemma4:e4b
+>$ollama pull gemma3:4b
+
+$$20250808
+>$ollama pull nomic-embed-text
+!!Error: pull model manifest: Get "https://registry.ollama.ai/v2/library/nomic-embed-text/manifests/latest": dial tcp: lookup registry.ollama.ai on 10.255.255.254:53: read udp 10.255.255.254:55305->10.255.255.254:53: i/o timeout
+==
+Network error..
+$$
+
+$$SYSTEM=WINDOWS
+#https://nodejs.org/dist/v24.15.0/node-v24.15.0-x64.msi
+;> msiexec /i "C:\Users\devin\Downloads\node-v24.15.0-x64.msi" /quiet /norestart
+silent install not working..
+> node -v
+$$NODE=24.15
+> npm -v
+$$NPM=11.12.1
+
+$$ENV=NONE
+
+> npm install -g typescript
+**extensions/vscode/codetutor/src/extension.ts:8
+;//> tsc -watch -p ./
+> npm install --save @vscode/prompt-tsx
+> npm install --save ollama
+
+$$20250715
+> npm install vectra
+;> ollama pull nomic-embed-text
+
+!!import { PreTrainedTokenizer } from "@huggingface/transformers";
+==
+;> npm install @huggingface/transformers
+
+Create folder to use with extension..
+> cp -r mrrubato ./testing
+
+
+Start extension
+>@ @mr /list prompts
+
+!!'mrrubato.mytutor' failed: Cannot find module 'flexsearch'
+!!Cannot find module 'jazz-midi-vscode' 
+==
+**extensions/vscode/codetutor/src/package.json
+> npm install
+;> npm install flexsearch
+;> npm install jazz-midi-vscode
+;> npm install node-web-audio-api
+;> npm install standardized-audio-context
+$$
+
+**config_sample.json
+**config.json
+
+
+
+**/testing/mrrubato
+copy here for test..
+
+No usage..
+create lang folders
+
+> mkdir "C:/devinpiano/languages"
+> mkdir "C:/devinpiano/transcripts/hotkeys"
+> mkdir "C:/devinpiano/transcripts/video"
+> mkdir "C:/devinpiano/transcripts/_meta"
+> mkdir "C:/devinpiano/transcripts/base"
+
+
+!!No sound from codetutor
+==
+;> workbench.action.chat.readChatResponseAloud
+
+> code --install-extension ms-vscode.vscode-speech
+$$
+
+> npm i --save-dev @types/mocha
+> npm i --save-dev @types/jest
+
+
+Ctrl+K
+Ctrl+S
+$$workbench.action.focusActiveEditorGroup
+Ctrl+Shift+7
+
+$$workbench.panel.chat.view.copilot.focus
+Ctrl+Shift+3
+
+> git config --list
+
+> git config --global user.name "Me"
+
+> git config --global user.email "me@gmail.com"
+
+
+
+**mrrubato
+;> .\treyenv\Scripts\activate
+;> pip install -r ./extensions/trey/requirements.txt
+> pip install huggingface_hub
+
+!!No module named 'rapidfuzz'
+==
+> pip install rapidfuzz
+> pip install kokoro
+> pip install faster-whisper
+> pip install scikit-learn
+> pip install pyqtgraph
+
+> pip install pycaw
+> pip install k2
+> pip install pytesseract
+#https://github.com/tesseract-ocr/tesseract/releases/download/5.5.0/tesseract-ocr-w64-setup-5.5.0.20241111.exe
+
+> python ./extensions/trey/trey.py
+$$
+
+**extensions/vscode/codetutor/src/extension.ts
+Not using existing CMD terminal, 
+so sequential commands which are not run in same
+block will not work.  
+Maybe just default '$$' creates new terminal, or
+delete/create..
+Otherwise inherit existing $$
+
+
+**extensions/trey/trey.py
+#https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip
+;> cp ffmpeg $$SYSTEM
+> tar -xf "C:\Users\devin\Downloads\ffmpeg-8.1.1-essentials_build.zip" -C "C:\Users\devin\Downloads\"
+>>cp "C:\Users\devin\Downloads\ffmpeg-8.1.1-essentials_build\bin\*" $env:SystemRoot\System32
+!!Could not find module 'C:\devinpiano\music\treyenv\Lib\site-packages\pyzbar\libzbar-64.dll'
+==
+#https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-supported-redistributable-version
+Also install
+-- C++ 2013 Redistributable package
+
+> pip install pyzbar
+$$
+
+!!No module named 'pyrebase'
+==
+> pip install Pyrebase4
+Set up user
+$$
+
+**web/public/me.html
+Need simple user setup and view..
+
+#https://medium.com/@aysunitai/creating-email-and-password-authentication-with-firebase-and-vanilla-javascript-668aa73868a0
+#https://www.geeksforgeeks.org/firebase/getting-started-with-firebase-email-password-authentication/
+
+**web/public/me.js
+OK, seems to work ok..
+
+
+**extensions/trey/trey.py
+!!403 Client Error: Forbidden for url: https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyPassword?key=
+==
+;> Enable SMB 1.0/CIFS File Sharing Support
+;HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters. Create a new DWORD, name it RequireSecuritySignature
+
+Set up config..
+**config.json
+--firebase/fbconfig/apiKey
+--firebase/credentialsfile
+$$
+
+
+
+
+
+> playwright install
+
+> mkdir temp
+
+> C:/devinpiano/music/mrrubato/extensions/trey/run.ps1
+
+Install second monitor..
+
+
+
+

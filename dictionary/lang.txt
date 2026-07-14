@@ -1,0 +1,13 @@
+**LANG
+> Cmd [PARM1, PARM2]
+==
+$$PARM1=value1 (default1)
+$$PARM2=value2 (default2)
+Cmd uses given paramters to act.  
+
+$$
+
+> Cmd
+==
+Cmd without parameters
+$$

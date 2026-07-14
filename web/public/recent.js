@@ -1,3 +1,73 @@
+vids = [];
+//import { transcribe } from './transcriber.js';
+
+async function getAllRecursive(storageRef) {
+  const res = await storageRef.listAll();
+  let ret = [];
+
+  const promises = res.items.map((itemRef) => itemRef.getMetadata());
+  const metadatas = await Promise.all(promises);
+  // Process files in the current folder
+  metadatas.sort((a, b) => new Date(b.updated) - new Date(a.updated));
+
+  metadatas.forEach((metadata) => {
+	if (metadata.fullPath.endsWith(".txt")) { //get transcripts and transcribe, anything which is included in video time..
+		ret.push({path: metadata.fullPath, updated: metadata.updated});
+	}
+    console.log(`${metadata.name} - ${metadata.updated}`);
+
+  });
+
+
+  // Recurse into subfolders (prefixes)
+  for (const folderRef of res.prefixes) {
+    ret = ret.concat(await getAllRecursive(folderRef));
+  }
+  return ret;
+}	
+
+function loadAllRecentTranscripts(limit=30){ //30 days default..
+    var storage = firebase.storage();
+    var storageRef = storage.ref();
+	var year = new Date().getFullYear();
+
+	var transcriptRef = storageRef.child('transcripts/video/'); //for now get video transcripts..
+	getAllRecursive(transcriptRef).then((files) => {
+		console.log("Files searched:", files.length);
+		files.sort((a, b) => new Date(b.updated) - new Date(a.updated)); //sort by updated date, most recent first.
+		files = files.slice(0, limit); //get only the most recent files based on the limit.
+
+		console.log("Transcript files used:", files);	
+		files.forEach((file) => {
+			console.log("Processing file:", file.path);
+
+			storageRef.child(file.path).getDownloadURL().then((url) => {
+				fetch(url)
+					.then((response) => response.text())
+					.then((text) => {
+						//transcribe this data to get RECORDs.  
+						//add records to listing.. addRecentRow
+						fname = file.path.split('/').pop().replace('.txt', '');
+						console.log("Transcribing file:", fname);
+						records = FUNCS.TRANSCRIBER.transcribe(text, fname);
+						console.log("Transcribed records:", records);
+						records.forEach((record) => {
+							for (const cmd of record.cmds){
+								console.log("Command in record:", cmd);
+//							addRecentRow(record);
+							}
+						});
+
+
+					});
+			}).catch((error) => {
+				console.error("Error fetching transcript:", error);
+			});
+		});
+
+	});
+
+}
 
 function loadAllRecent(limit=20){
 	var vrRef = firebase.database().ref(dbname);
@@ -23,7 +93,9 @@ function loadAllRecent(limit=20){
 
 			console.log(recentsnapshot.val());
 			recvideojson = recentsnapshot.val();
-			vids = getRecent(recvideojson);
+
+			getRecent(recvideojson); //add to vids array.
+			showRecent(limit);
 			recentdrawChart(vids);
 			recentdrawDurationChart(vids);
 		}			
@@ -140,35 +212,17 @@ function addRecentRow(recentrow) {
 }
 
 
-function getRecent(recentvideojson){
-	loadRecentTable();
-    vids = [];
-	for (const [key, value] of Object.entries(recentvideojson)) {	
-	    //sort by date and list in some way.  
-		//right now just like we do, most recent and least recent
-		//need something better than this?  
-		if (key !="users" && key !="watch"){
-			vids.push(value);
-		}
-		
-	}
-
-	vids.sort(function(a, b) {
-	   datea = new Date(a.snippet.publishedAt);
-	   dateb = new Date(b.snippet.publishedAt);
-	   
-	  return dateb - datea;
-	});		
-	//now display the recent videos which are not published and which are published etc.  
-
+function showRecent(limit=20){
 	var mydiv = document.getElementById("recent");
 	/*
 	while (mydiv.firstChild) {
       mydiv.removeChild(mydiv.lastChild);
     }
 	*/
-	maxcnt = 100;
-	for (it=0; it< vids.length && it < maxcnt; it++){
+	maxcnt = 1000;
+	it = vids.length - limit;
+	if (it < 0) it = 0;
+	for (it; it< vids.length && it < maxcnt; it++){
 		var obj = vids[it];
 		addRecentRow(obj);
 		/*
@@ -189,7 +243,32 @@ function getRecent(recentvideojson){
 		*/
 	}
 	return vids;
-	
+
+}
+
+function getRecent(recentvideojson){
+
+	for (const [key, value] of Object.entries(recentvideojson)) {	
+	    //sort by date and list in some way.  
+		//right now just like we do, most recent and least recent
+		//need something better than this?  
+		if (key !="users" && key !="watch"){
+			vids.push(value);
+		}
+		
+	}
+
+	/*
+	vids.sort(function(a, b) {
+	   datea = new Date(a.snippet.publishedAt);
+	   dateb = new Date(b.snippet.publishedAt);
+	   
+	  return dateb - datea;
+	});		
+	*/
+	//now display the recent videos which are not published and which are published etc.  
+
+	return vids;	
     
 }
 
@@ -241,6 +320,10 @@ function recentreadyHandler() {
 
   function recentdrawChart(vids) {
 	var container = document.getElementById('timeline');
+	if (container == null){
+		console.log("No timeline container");
+		return;
+	}
 	var chart = new google.visualization.Timeline(container);
 	vidchart = chart;
 	dataTable = new google.visualization.DataTable();
@@ -307,6 +390,11 @@ function recentreadyHandler() {
 }
 
 function recentdrawDurationChart(vids){
+	var container = document.getElementById('durationchart');
+	if (container == null){
+		console.log("No durationchart container");
+		return;
+	}
 	dataTableDur = new google.visualization.DataTable();
     options = {
 	     height: 500,
@@ -354,7 +442,6 @@ function recentdrawDurationChart(vids){
     }
 	dataTableDur.addRows(myarray);
 
-	var container = document.getElementById('durationchart');
 	var chart = new google.visualization.SteppedAreaChart(container);
 	chart.draw(dataTableDur);
 

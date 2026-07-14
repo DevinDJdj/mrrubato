@@ -97,7 +97,9 @@ function gitSignin(){
 
 }
 
-function initGitIndex(){
+async function initGitIndex(){
+  let istart = Date.now();
+	console.log("Git Index initializing: " + istart);
   for (d in gitstruct["bydate"]){
     temp = "";
     for (e of gitstruct["bydate"][d]){
@@ -109,13 +111,35 @@ function initGitIndex(){
     temp = "";
     for (e of gitstruct["bytopic"][t]){
       temp += e.content + '\n';
+
+      //load all data into vecDB as well..
+      if (typeof(vDB) !== "undefined" && typeof(LLM) !== "undefined" && e.content.length > 1){
+        let exists = await vDB.getVec(e.content,0); 
+        if (typeof(exists) !== "undefined" && exists !== null){     
+        }
+        else{
+          LLM.getEmbedding(e.content, t).then(tv => {
+          console.log("Embedding vector:", tv[0]);
+            vDB.saveVec(tv[0], tv[1], tv[2], "book", 0, function(res){
+                console.log("Vector saved:", res);
+                $('#statusmessage').text(' Vector ' + i + ' saved!<br/>');
+            });
+          });
+        }
+      }
+
     }
     mygitDB.ftsindex.add(t, temp);
+  //add contents to vecDB as well.  
+    
+  
   }
 //	mygitDB.ftsindex.add("test", "John Doe");
 
 	result = mygitDB.ftsindex.search(d);
-	console.log("Git Index initialized: " + result);
+  //seems to be about 1 second if no new entries.  
+	console.log("Git Index initialized: " + istart + "-" + Date.now());
+
 
 }
 
@@ -207,7 +231,15 @@ function gitDownloadCommits(data, qpath=null){
       }
 
     }
-    setTimeout(function (){if (uicommitsarray.length > 0) {gitChartCommits(uicommitsarray, qpath);if (typeof(updateTimeline) !=='undefined'){ updateTimeline(qpath); updateGitIndex(qpath);}} }, 5000);
+    setTimeout(function (){
+      if (uicommitsarray.length > 0) {
+        gitChartCommits(uicommitsarray, qpath);
+        updateGitIndex(qpath);
+        if (typeof(updateTimeline) !=='undefined'){
+           updateTimeline(qpath); 
+          }
+      } 
+    }, 5000);
   }
 
   function uiCommit(commitidx){
@@ -216,7 +248,7 @@ function gitDownloadCommits(data, qpath=null){
     var content = commitTableGit.getValue(commitidx, 2);
     var name = commitTableGit.getValue(commitidx, 1);
 //        var link = dataTableGit.getValue(event.row, 2);
-    console.log('Mouseover on:', name, 'with: ', content);
+    console.log('Mouseover on:', name, 'with: ', content.slice(0,100));
     mouseOverGit(content, name);
   } 
 
@@ -492,6 +524,19 @@ function parsegitBook(gb){
 
 }
 
+function getLatestBookDate(){
+  for (j=gitbook.length-1; j>=0; j--){
+    if (gitbook[j].gitdata.name == String(gitbook[j].d) + ".txt"){
+      return String(gitbook[j].d);
+    }
+  }
+  //should never get here, unless book contains no date-named files.
+  const today = new Date();
+  const isoString = today.toISOString();
+  const formattedDate = isoString.substring(0, 10).replace(/-/g, '');
+  return formattedDate;
+}
+
 function creategitStruct(){
   gitbook.sort((a, b) => a.d - b.d);
   //tree by time/topic
@@ -511,7 +556,7 @@ function creategitStruct(){
     buildTopicGraph(gitbook[0].d, gitbook[gitbook.length-1].d);
 
     //any 
-    loadTopic(gitbook[gitbook.length-1].d);
+    loadTopic(getLatestBookDate());
 
     if (gitnature & GIT_DETAILS){ //double use here.  
       loadTopicGraph(gitstruct["alltopics"], gitnature & GIT_RELATIONS ? "page" : "book");
@@ -520,8 +565,11 @@ function creategitStruct(){
     }
 
 
+    setTimeout(function(){
 
-    initGitIndex();
+      //wait for LLM to load..
+      initGitIndex(); 
+    }, 20000);
 
 }
 
@@ -1010,10 +1058,18 @@ function loadTopicGraph(str, graphtype="book"){
   //also update canvas for this.  
   if (graphtype == "book"){
     $('#windowSize').val(topicWindowSize); //set number of Bag-Of-Words to include 3 is default.  
+    /*
+    if (str.length > 5000){
+      cut = str.indexOf(" ", -5000)
+      str = str.slice(cut);
+    }
+      */
     $('#textdata').val(str);
 
       prepare();
+//    setTimeout(function(){$("#trainModel").click();}, 6000);
       trainModel();
+//      setTimeout(function(){$("#inbut").click(); }, 15000);
     $("#inbut").click(); 
 
     setTimeout(function(){
@@ -1023,7 +1079,7 @@ function loadTopicGraph(str, graphtype="book"){
       //adjust here.  
     });
     }, 
-    30000)
+    70000)
       
   }
   else if (graphtype == "page"){
@@ -1132,11 +1188,14 @@ function loadSelectionHistory(){
     fullselection += `<a href="#" onclick="loadTopic('${selectionhistory[si]}');">${shortenName(selectionhistory[si])}</a>`;
     fullselection += `<a href="#" onclick="deleteSelection('${selectionhistory[si]}');"><img src="images/delete.png" /></a><br> `
   }
-  $('#selectionhistory').html(fullselection);
-  $('#selectionhistory').animate({
-    scrollTop: $('#selectionhistory')[0].scrollHeight}, "slow"
-  );
 
+  if ($('#selectionhistory').length){
+
+    $('#selectionhistory').html(fullselection);
+    $('#selectionhistory').animate({
+      scrollTop: $('#selectionhistory')[0].scrollHeight}, "slow"
+    );
+  }
 //  $('#selectionhistory').scrollTop = $('#selectionhistory')[0].scrollHeight - $('#selectionhistory')[0].clientHeight;
 
 }
@@ -1299,13 +1358,13 @@ function getTopicContext(top, weight=1, maxlength=1000){ //weight 0.99 ~ 1000, 0
 function loadTopic(top){
     var img = document.getElementById('thinkinggit');
     img.style.visibility = "visible";
-
     selectedtopic = top;
 
 //    selectionhistory.unshift(top);
     var currentmode = $('#code_mode').find(":selected").val();
 
     //git code
+    pprevcontents = gitcurrentcontents;
     if (gitnature & GIT_CODE){
       if (currentmode == "GIT"){
         cont = getGitContents(top, true);
@@ -1342,8 +1401,10 @@ function loadTopic(top){
       getGitCommits(null, top);
       //also kick off LLM question regarding this topic.  
       setTimeout(function(){
-        lastspokenword = "comment";
-        MyChat(default_question); //auto-query the LLM after selection.  
+        if (pprevcontents != gitcurrentcontents){ //only query if we have selected a new topic, not folders..
+          lastspokenword = "comment";
+          MyChat(default_question); //auto-query the LLM after selection.  
+        }
       }, 10000);
     }
 
@@ -1533,6 +1594,9 @@ function clickHandlerGit(sender) {
     }
     else{
       var editor = myCodeMirror;
+      if (editor == null){
+        return;
+      }
       gitcurrentscrollinfo = editor.getScrollInfo();
       editor.getDoc().setValue(title);      //git.js
       if (title.startsWith("http")){ //download if we are sitting on this.  

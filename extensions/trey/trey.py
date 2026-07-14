@@ -1,45 +1,368 @@
 #pip install pystray Pillow mss PyQt5
 #pip install pynput
+
 #pip install qrcode
 #pip install mido python-rtmidi
+#pip install pywin32
+
 
 #standard libraries
+import json
 import logging
 import os
 import time
 import sys
 import threading
+import multiprocessing
+import subprocess
 
-#Screen capture, QR code generation
-import mss
-import qrcode
-from pynput import keyboard
-
-#MIDI libraries
-import mido
-
-
-#UI components
-import pystray
-from PIL import Image, ImageDraw
-from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QLabel
-from PyQt5.QtGui import QPixmap, QPainter, QPen, QBrush
-from PyQt5.QtCore import Qt
-
+from click import command
+from huggingface_hub import login
+import psutil
+import math
 
 #Local imports
 sys.path.insert(0, 'c:/devinpiano/') #config.json path
 sys.path.insert(1, 'c:/devinpiano/music/') #config.py path Base project path
+sys.path.insert(2, 'c:/devinpiano/music/mrrubato') #config.py path Base project path
 import config 
 import mykeys
 
+import tts
+import extensions.trey.speech  as speech #import early due to issues with Kokoro
+
+from datetime import datetime, timedelta
+
+from queue import Queue
+
+#Screen capture, QR code generation
+import mss
+import qrcode
+from pynput import keyboard, mouse
+
+import glob
+
+#MIDI libraries
+import mido
+
+import random
+
+
+#from sklearn import metrics
+import torch
+
+#UI components
+import pystray
+from PIL import Image, ImageDraw
+from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QLabel, QDialog, QVBoxLayout, QSystemTrayIcon, QMenu, QAction, QMessageBox
+from PyQt5.QtGui import QPixmap, QPainter, QPen, QBrush, QImage, QFont, QFontMetrics, QFontDatabase, QIcon, QColor
+from PyQt5.QtCore import Qt, QObject, pyqtSignal, QThread
+import PyQt5.QtCore as QtCore
+#video widget..
+from PyQt5.QtMultimediaWidgets import QVideoWidget
+from PyQt5.QtCore import QUrl
+from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
+
+import win32gui
+import win32process
+import win32api
+import win32con
+
+import winsound
+
+
+#from kokoro import KPipeline
+#from IPython.display import display, Audio
+#import soundfile as sf
+
+#pip install playsound
+from playsound3 import playsound
+from pydub import AudioSegment
+from pydub.playback import play
+
+#import simpleaudio as sa
+import pygame
+from pygame.locals import *
+#import edge_tts
+
+import extensions.trey.qdrantz as qdrantz
+import news as news #get news articles
+
+
+from fastembed import (
+                SparseTextEmbedding,
+                TextEmbedding,
+                ImageEmbedding,
+                LateInteractionMultimodalEmbedding,
+                LateInteractionTextEmbedding,
+            )
+
+
+import extensions.trey.playwrighty as playwrighty
+import extensions.trey.synth as synth
+
+import languages.helpers.transcriber as transcriber
+
+import pytesseract
+
+from multiprocessing.shared_memory import SharedMemory
+
+
+import networkx as nx
+import matplotlib 
+matplotlib.use('Qt5Agg')
+import matplotlib.pyplot as plt
+
 
 logger = logging.getLogger(__name__)
-global window
-
+global mywindow
+global active_window
 global qapp
+global qtray #system tray icon
+global qmenu #system tray menu
 global midiout
 global midiin
+global midi_thread
+global joystick_thread
+global midi_stop_event
+global midi_kill_event
+midi_thread = None
+global speech_pipe
+global audio_stop_events
+global audio_skip_events
+global audio_skip_queue
+global audio_location_queue
+
+audio_stop_events = [threading.Event() for _ in range(10)]  # List to hold stop events for audio threads
+audio_skip_events = [threading.Event() for _ in range(10)]  # List to hold skip events for audio threads
+audio_skip_queue = [Queue() for _ in range(10)]  # List to hold skip queues for audio threads
+audio_location_queue = [Queue() for _ in range(10)]
+
+speech_pipe = None
+active_window = None  # Global variable to store the active window handle
+
+
+global all_voices
+all_voices = []
+global windows
+windows = {}
+
+global trey_data
+trey_data = {}
+
+mouse_listener = None
+global myactions
+myactions = []  # Global list to store sequential actions
+global current_qrdata
+current_qrdata = ""
+global incoming_qrdata
+incoming_qrdata = ""
+global current_bbox
+current_bbox = None
+
+global qr_queue
+global qrin_queue
+
+global obsp
+
+def is_process_running(process_name):
+    """
+    Check if a process with a given name is currently running.
+    """
+    for process in psutil.process_iter(['name']):
+        if process.info['name'].lower() == process_name.lower():
+            return True
+    return False
+
+def send_ok():
+    k = keyboard.Controller()
+    k.press(keyboard.Key.enter)
+    k.release(keyboard.Key.enter)
+    k.press('O')
+    k.release('O')
+    k.press('K')
+    k.release('K')
+
+
+def send_hotkey(hotkey):
+    """Send a hotkey combination using pynput."""
+    k = keyboard.Controller()
+    k.press(keyboard.Key.ctrl)
+    k.press(keyboard.Key.shift)
+    k.press(hotkey)
+    time.sleep(0.25)
+    k.release(hotkey)
+    k.release(keyboard.Key.ctrl)
+    k.release(keyboard.Key.shift)
+
+
+start_times = []
+end_times = []
+def pause_obs_capture():
+    checkobs = is_process_running("obs64.exe")
+
+    if (checkobs):
+        logger.info('OBS process detected, pausing capture.')
+        #send pause hotkey to OBS
+        send_hotkey('8')
+        print("Pause Recording " + str(time.time()))
+        end_times.append(time.time())
+
+def stop_obs_capture():
+    checkobs = is_process_running("obs64.exe")
+
+    if (checkobs):
+        logger.info('OBS process detected, stopping capture.')
+        #send stop hotkey to OBS
+        send_hotkey('z')
+        print("Stop Recording " + str(time.time()))
+        if (len(start_times) < len(end_times)):
+            end_times.append(time.time())
+    else:
+        logger.info('OBS process not running, nothing to stop.')
+
+def start_obs_capture():
+    checkobs = is_process_running("obs64.exe")
+
+    if (checkobs):
+        logger.info('OBS process detected, starting capture.')
+        #send start hotkey to OBS
+        send_hotkey('a')
+        print("Start Recording " + str(time.time()))
+        send_hotkey('9')
+        print("Unpause Recording " + str(time.time()))
+        start_times.append(time.time())
+
+    else:
+        obsp = subprocess.Popen("C:\\Program Files\\obs-studio\\bin\\64bit\\obs64.exe", start_new_session=True, cwd="C:\\Program Files\\obs-studio\\bin\\64bit")
+        logger.info('Starting OBS process.')
+        time.sleep(10) #wait for OBS to start        
+        logger.info('OBS process started, starting capture.')
+        #send start hotkey to OBS
+        send_hotkey('a')
+        print("Start Recording " + str(time.time()))
+        start_times.append(time.time())
+
+
+def on_click(x, y, button, pressed):
+
+    if pressed:
+        temp = win32gui.WindowFromPoint((x, y))
+        if (in_trey((x,y))): #only capture second monitor clicks
+            action = {'button': str(button), 'x': x, 'y': y, 'hwnd': temp, 'act': 'click'}
+    #        action = f'Mouse clicked at ({x}, {y}) with {button}'
+            update_actions(temp, action)
+
+def stop_mouse_listener():
+    """Stop the mouse listener."""
+    global mouse_listener
+    if mouse_listener is not None:
+        mouse_listener.stop()
+        mouse_listener = None
+        logger.info('Mouse listener stopped')
+    else:
+        logger.info('Mouse listener was not running')
+
+def start_mouse_listener():
+    """Get mouse actions by listening to mouse clicks."""
+    global mouse_listener
+    if mouse_listener is not None:
+        mouse_listener.stop()
+    mouse_listener = mouse.Listener(on_click=mywindow.on_click)
+    if not mouse_listener.running:
+        logger.info('Starting mouse listener')
+        mouse_listener.start()
+
+def update_actions(hwnd, action):
+    global myactions
+    global windows
+    """Update the actions for the given window handle."""
+    threadid, procid = win32process.GetWindowThreadProcessId(hwnd)
+    action['threadid'] = threadid
+    action['procid'] = procid
+    if (procid in windows):
+        if 'actions' not in windows[procid]:
+            windows[procid]['actions'] = []
+        windows[procid]['actions'].append(action)
+        if (len(windows[procid]['actions']) > 100):
+            logger.info('Removing oldest action from {procid} actions list')
+            windows[procid]['actions'].pop(0)
+
+    logger.info(f'{action}')
+    myactions.append(action)  # Append to global actions list
+    #remove if too many actions
+    if len(myactions) > 100:
+        logger.info('Removing oldest action from global actions list')
+        myactions.pop(0)
+
+
+
+def update_window_data(procid, title, rect, other=None):
+
+    if (procid not in windows):
+        windows[procid] = {}
+
+
+    windows[procid]['title'] = title
+    windows[procid]['rect'] = rect
+    if (other is None):
+        other = {}
+    else:
+        windows[procid]['other'] = other
+
+
+def in_trey(rect):
+    """Check if the rectangle is within the trey window."""
+    if ('rect' in trey_data):
+        trect = trey_data['rect']
+        logger.debug(f"Checking if {rect} is in {trey_data['rect']}")
+#        print(f"Checking if {rect} is in {trey_data['rect']}")
+        if (len(rect) == 4 and len(trect) == 4):
+            return (rect[0] >= trect[0] and rect[1] >= trect[1] and rect[2] <= trect[2] and rect[3] <= trect[3])
+        elif (len(rect) == 2 and len(trect) == 4): #allow for point check
+            return (rect[0] >= trect[0] and rect[1] >= trect[1] and rect[0] <= trect[2] and rect[1] <= trect[3])
+    return False
+
+def window_list_callback(hwnd, extra):
+
+    if win32gui.IsWindowVisible(hwnd) and win32gui.GetWindowText(hwnd) != "":
+        # Get window title
+        title = win32gui.GetWindowText(hwnd)
+        # Get window position and size (left, top, right, bottom)
+        rect = win32gui.GetWindowRect(hwnd)
+        if (title.startswith("Trey - ")):
+            #get the rect we need to be aware of.  
+            #expand rect some windows have odd borders.  
+            print(f"Found Trey window: {title} at {rect}")
+            x, y, right, bottom = rect
+            x -= 8  # Adjust for window borders
+            y -= 8
+            right += 8
+            bottom += 8
+            rect = (x, y, right, bottom)
+            trey_data['rect'] = rect
+            trey_data['hwnd'] = hwnd
+            trey_data['title'] = title
+
+        trect = (0,0,0,0)
+        if ('rect' in trey_data):
+            trect = trey_data['rect']
+#            trect[0] += 50 #some margin for overlapping windows.  
+
+        # Check if the window is fully within the trey window
+        if (in_trey(rect)):
+            threadid, procid = win32process.GetWindowThreadProcessId(hwnd)
+            update_window_data(procid, title, rect, {'threadid': threadid, 'hwnd': hwnd})
+            x, y, right, bottom = rect
+            width = right - x
+            height = bottom - y
+            action = {'title': title, 'rect': rect, 'hwnd': hwnd, 'procid': procid, 'threadid': threadid, 'act': 'init'}
+            update_actions(hwnd, action)
+
+    return True # Continue enumeration    
+
+
+
 
 def create_image(width, height, color1, color2):
     """Generates a simple image for the icon."""
@@ -49,15 +372,82 @@ def create_image(width, height, color1, color2):
     dc.rectangle((0, height // 2, width // 2, height), fill=color2)
     return image
 
+def copy_latest_file(current_topic=None):
+    list_of_files = glob.glob('C:/Users/devin/Videos/*.mp4') # * means all if need specific format then *.csv
+    if (len(list_of_files) == 0):
+        logger.info('No video files found to copy')
+        return None
+    latest_file = max(list_of_files, key=os.path.getctime)
+    print(latest_file)
+    logger.info(f'/{latest_file}')
+    basefname = os.path.basename(latest_file)
+
+    #mkdir if necessary
+    os.makedirs(f'../transcripts/{basefname[0:4]}', exist_ok=True)
+    newfname = f'../transcripts/{basefname[0:4]}/{basefname}'
+    os.rename(latest_file, newfname)
+    logger.info(f'->/{newfname}')
+
+    ttranscriber = transcriber.transcriber()
+    ttranscriber.current_topic = current_topic
+    vars = {}
+    vars['fname'] = newfname
+    vars['TIME'] = int(os.path.getctime(newfname)) #for now just use file creation time as the time param.
+    #add start and end times for each pause..
+    formatted_start_times = [datetime.fromtimestamp(x).strftime("%Y%m%d_%H%M%S") for x in start_times]
+    formatted_end_times = [datetime.fromtimestamp(x).strftime("%Y%m%d_%H%M%S") for x in end_times]
+    if (len(formatted_start_times) != len(formatted_end_times)):
+        logger.warning('!! Number of start times does not match number of end times !!')
+        logger.warning(f'Start times: {formatted_start_times}')
+        logger.warning(f'End times: {formatted_end_times}')
+    else:
+        vars['START_TIMES'] = "\t".join(formatted_start_times) + "\n"
+        vars['END_TIMES'] = "\t".join(formatted_end_times) + "\n"
+        #calculate durations
+        durations = []
+        for start, end in zip(start_times, end_times):
+            duration = int(end - start) #not exact data anyway..
+            durations.append(str(duration))
+        vars['DURATIONS'] = "\t".join(durations) + "\n"
+
+    ttranscriber.write('video', 'RECORD', vars)
+    return latest_file
+
+
+def quit_me(restart=False): #restart_trey
+    global mk
+    logger.info('Stopping MIDI thread')
+
+    mk.savemidi() #save current midi file
+    stop_midi(True) #kill the midi thread
+
+    logger.info('Closing OBS capture if running')
+    stop_obs_capture()
+    time.sleep(5) #wait for OBS to close
+    #save latest file to transcripts..
+    copy_latest_file(mywindow.transcriber.current_topic)
+    logger.info('Quitting application')
+    qapp.quit()
+    #some cleanup still necessary?  
+    logger.info('Saving custom settings')
+    config.save_custom_settings() #save custom settings if available
+
+    active_threads = threading.enumerate()
+    print("\nCurrently active threads:")
+    for thread in active_threads:
+        print(f"- Name: {thread.name}, Alive: {thread.is_alive()}")    
+    #force exit for now.  Not sure why threads are hanging around.
+    if (restart):
+        os.execl(sys.executable, sys.executable, *sys.argv)
+    os._exit(1)
+
+
 def on_quit_action(icon, item):
+    global mk
     """Callback function for the 'Quit' menu item."""
     logger.info('Stopping icon')
     icon.stop()
-    logger.info('Stopping MIDI thread')
-    stop_midi()
-    logger.info('Quitting application')
-    qapp.quit()
-
+    quit_me()
 
 def on_show_message(icon, item):
     """Callback function to display a notification."""
@@ -68,9 +458,822 @@ def on_get_screen(icon, item):
     """Callback function to capture the screen."""
     get_screen()
 
+
+def gen_audio(ldmap, astop_event=None):
+    """Generate audio from text using the speech pipeline."""
+    from extensions.trey.speech import generate_audio
+    logger.info('Starting audio generation thread')
+    print('Generating audio for link density map')
+    print(ldmap)
+    for idx, l in enumerate(ldmap):
+        if (astop_event is not None and astop_event.is_set()):
+            logger.info('Audio generation stop event set, stopping audio generation')
+            print('Audio generation stop event set, stopping audio generation')
+            break
+        print(f'Generating audio for line {idx}: {l["text"]}')
+        if (len(l['text']) > 5):
+            generate_audio(l['text'], fname=l['audio'], fast=True)
+
+def build_map(lines, links, cacheno=-1):
+
+    """Build a map of the link density."""
+    #for now just return the text with link counts.  
+
+    total_read = 0
+    link_loc = 0
+    while (link_loc < len(links) and 'offset' in links[link_loc] and links[link_loc]['offset'] <= 0):
+        link_loc += 1
+        #skip all links with no offset
+
+    link_density_map = []
+    mavgcounter = 10
+    mavgdensity = 0.0
+    mavglength = 0.0
+    currentl = 0
+    for idx, l in enumerate(lines):
+        numlinks = 0
+
+        currentl += 1
+
+        if (currentl > mavgcounter):
+            mavglength -= link_density_map[idx - mavgcounter]['length']
+            mavgdensity -= link_density_map[idx - mavgcounter]['density']
+
+        while (link_loc < len(links) and 'offset' in links[link_loc] and links[link_loc]['offset'] >= total_read and links[link_loc]['offset'] < total_read + len(l) + 1):
+            numlinks += 1
+            link_loc += 1
+        mavglength += len(l)
+        mavgdensity += numlinks/(len(l)+1)
+        link_density_map.append({"offset": total_read, "text": l, "length": len(l), "mavglength": mavglength, "numlinks": numlinks, "audio": f"./temp/{cacheno}/{idx}.wav", "density": numlinks/(len(l)+1)})
+        total_read += len(l) + 1  #include newline
+
+        
+
+    return link_density_map
+
+def remove_temp_audio(dir):
+    #remove temp files first.  
+    if (os.path.exists(dir) and os.path.isdir(dir)):
+        for filename in os.listdir(dir):
+            file_path = os.path.join(dir, filename)
+            if os.path.isfile(file_path):
+                try:
+                    os.remove(file_path)
+                except OSError as e:
+                    print(f"Error removing file {file_path}: {e}")
+
+
+
+
+def play_l(l, pctcomplete=0.0):
+
+    c = 261.63 * 4 #high C
+    c *= 2 ** ((l['numlinks'] - 1) / 12) #each link increases pitch by a semitone
+    length = 50
+    if (c > 10000):
+        #audible range, no need to use upper limits yet..
+        c = 10000
+    type = "content"
+    if (l['density'] > 0.05):
+        type="menu"
+    elif (l['density'] > 0.02):
+        type="title"
+    elif (l['density'] > 0.00):
+        type="blurb"
+    else:
+        type="content"
+    if (type == "menu"):
+
+#        winsound.Beep(round(c), 50) #short beep to indicate menu
+        synth.play_synth([53], 36, 0.05)
+    elif (type == "title"):
+#        winsound.Beep(round(c/2), 50) #short beep to indicate title
+        synth.play_synth([41], 36, 0.05)
+    elif (type == "blurb"):
+#        winsound.Beep(round(c/2), 100) #short beep to indicate blurb
+        synth.play_synth([41], 36, 0.1)
+    else:
+#        winsound.Beep(round(c/4), 200) #short beep to indicate content
+        synth.play_synth([29], 36, 0.2)
+    
+    if (pctcomplete > 0.0):
+        #play a quick ascending scale to indicate progress through document
+        localseq = []
+        for i in range(6):
+            if (pctcomplete >= (i-1)/5):
+                localseq.append(53 + i)
+#                winsound.Beep(round(c*2 * (1 + i/12)), 20)
+        if (len(localseq) > 0):
+            synth.play_synth(localseq, 36, 0.02)
+
+
+def play_ldmap(ldmap):
+    """Play audio for the given link density map."""
+    numlines = len(ldmap)
+    skip = numlines // 50
+    for idx, l in enumerate(ldmap):
+        if (skip > 0 and idx % skip != 0):
+            continue
+        print(f'Playing audio for line {idx}: {l["text"]} with {l["numlinks"]} links')
+        play_l(l)
+
+def get_first_content_line(ldmap):
+    """Get the index of the first content line in the link density map."""
+    mavgdensity = 0.0
+    mavglength = 0.0
+    currentl = 0
+    mavgcounter = 10
+    for idx, l in enumerate(ldmap):
+        mavglength += l['length']
+        mavgdensity += l['numlinks']
+        currentl += 1
+        print(f'Line {currentl} length {l["length"]} density {l["density"]} : mavg length {mavglength} mavg density {mavgdensity}')
+#        if (currentl > 5 and (mavgdensity/mavgcounter < 0.2 and mavglength/mavgcounter > 20)):
+        if (currentl > 5 and (mavglength/(mavgdensity+1) > 30) and (mavglength/mavgcounter > 60)):
+            return currentl - 2 #return a few lines earlier to get context
+        if (currentl > mavgcounter):
+            mavglength -= ldmap[idx - mavgcounter]['length']
+            mavgdensity -= ldmap[idx - mavgcounter]['numlinks']
+    return 0
+
+def get_type(l):
+    """Get the type of the line based on link density."""
+    if (l['density'] > 0.05): #menu
+        return 'menu'
+    elif (l['density'] > 0.02 and l['density'] <= 0.05): #title
+        return 'title'
+    elif (l['density'] > 0.01 and l['density'] <= 0.02): #blurb
+        return 'blurb'
+    else: #content
+        return 'content'
+    
+def is_type(l, type):
+    """Check if the line is of the given type."""
+    if (type == 1 and l['density'] > 0.05): #menu
+        return True
+    elif (type == 2 and l['density'] > 0.02 and l['density'] <= 0.05): #title
+        return True
+    elif (type == 3 and l['density'] > 0.00 and l['density'] <= 0.02): #blurb
+        return True
+    elif (type == 4 and l['density'] <= 0.00): #content
+        return True
+    return False
+
+
+def init_qdrantz(ldmap, topic="websearch"):
+    qdrantz.init_qdrant()
+    qdrantz.get_collection(topic)
+    texts = [l['text'] for l in ldmap]
+    ids = [i for i in range(len(texts))]
+    payloads = [{'id': i, 'text': texts[i]} for i in range(len(texts))]
+    qdrantz.add_vectors(topic, texts)
+
+
+def get_similar(idx, ldmap, topk=3):
+    qdrantz.init_qdrant()
+    collection = qdrantz.get_collection("websearch")
+    if (collection is not None):
+
+        hybrid_searcher = qdrantz.HybridSearcher(collection_name="websearch", qdrantz_client=collection)
+        results = hybrid_searcher.search(text=ldmap[idx]['text'], top_k=topk)
+        print(f'Similar items to line {idx}: {ldmap[idx]["text"]}')
+        return results
+    return []
+
+
+def get_voices(lang='en'):
+    #call edge tts to get voices for language
+    #cache results only call once.  
+    voices = []
+    #Kokoro voices..
+    voices = ['af_heart', 'af_bella', 'af_nicole', 'af_aoede']
+    """
+    if (len(all_voices) > 0):
+        for v in all_voices:
+            if (('Locale' in v and v['Locale'].startswith(lang)) or ('ShortName' in v and v['ShortName'].startswith(lang))):
+                voices.append(v)
+        return voices
+    
+    result = subprocess.run(['edge-tts', '--list-voices'], capture_output=True, text=True, check=True)
+    output = result.stdout
+    voices_lines = output.strip().split('\n')
+    print(f'Found {len(voices)} voices for language {lang}')
+    for line in voices_lines:
+        try:
+            # The output format is "Name: ..., ShortName: ..., Gender: ..., Locale: ..."
+            # We need to parse this string format as it's not standard JSON array
+            voice_details = {}
+            # Split by the key-value separator
+            parts = line.split(', ')
+            for part in parts:
+                if ':' in part:
+                    key, value = part.split(': ', 1)
+                    voice_details[key.strip()] = value.strip()
+            all_voices.append(voice_details)
+            
+            # Check if the 'Locale' or 'ShortName' indicates English
+            # English locales generally start with 'en-'
+            if 'Locale' in voice_details and voice_details['Locale'].startswith(lang):
+                voices.append(voice_details)
+            elif 'ShortName' in voice_details and voice_details['ShortName'].startswith(lang):
+                voices.append(voice_details)
+                
+        except Exception as e:
+            # Skip lines that don't match the expected format
+            continue
+    """
+
+    return voices
+
+
+def play_sound_process(sound_file):
+    playsound(sound_file)
+
+
+def stopsound(currentsound):
+    if (currentsound is not None and currentsound.is_alive()):
+        #stop current sound if we are skipping.  
+        #this is a bit aggressive but should work for now.  
+        currentsound.stop()
+
+
+def generate_tts(text, voice, vol=1.0, rate=1.0, skip=0, cacheno=-1):
+    suc = speech.speak_cmd(text, "", voice, vol, rate, skip, cacheno, 'kokoro-tts')
+
+
+def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=None, cacheno=-1, q=None, q2=None, q3=None, lang='en'):
+
+    #give high priority?  
+    p = psutil.Process(os.getpid())
+    p.nice(psutil.HIGH_PRIORITY_CLASS)
+
+    skipmenu = True
+    currentsound = None
+    sound_file = f"{random.randint(0, 100)}.mp3"
+    if lang is None or lang == '':
+        #detect language if long enough?          
+        lang = 'en'
+    try:
+        VOICES = get_voices(lang)
+    except:
+        VOICES = []
+    if (len(VOICES) == 0):        
+        VOICES = ["en-US-AriaNeural", "en-US-CoraNeural", "en-US-ElizabethNeural", "en-US-AshleyNeural", "en-US-AvaNeural", "en-US-BrandonNeural", "en-US-BrianNeural", "en-US-EmmaNeural", "en-US-EricNeural"]
+#    VOICE = "en-US-AriaNeural"
+    #for now random.  
+    rnd = int(time.time()) % 2
+    VOICE = VOICES[rnd]
+    logger.info(f'$$VOICE={VOICE}')
+    LINKVOICE = VOICES[(rnd+2) % len(VOICES)]
+    rnd = int(time.time() * 1.3) % len(VOICES)
+    SIMVOICE = VOICES[rnd]
+    #en-US-AshleyNeural 
+    #en-US-AvaNeural   
+    #en-US-BrandonNeural 
+    #en-US-BrianNeural 
+    #en-US-CoraNeural  
+    #en-US-DavisNeural 
+    #en-US-ElizabethNeural 
+    #en-US-EmmaNeural  
+    #en-US-EricNeural
+#    tts_file = "TTS.txt"
+#    with open(tts_file, "w") as f:
+#        f.write(text)
+#    communicate = edge_tts.Communicate(text, VOICE)
+#    communicate.save(sound_file)
+#    os.system(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --text \"{text}\" --rate=\"-10%\"")
+
+    lines = text.split('\n')
+#    logger.info(text)
+    skip = 0
+
+
+    remove_temp_audio("./temp/" + str(cacheno)) #clear old cache if exists.
+
+    if (offset == 0):
+        #pre-read detect good starting point.
+        link_density_map = build_map(lines, links, cacheno)
+        print(f'Link density map: {len(link_density_map)} lines')
+        #start audio generation thread then
+        #not sure this adds anything.  
+        play_ldmap(link_density_map)
+        skip = get_first_content_line(link_density_map)
+        mavglen = link_density_map[skip]['mavglength']
+        print(f'Detected first content line at {skip}, skipping to there')
+    else:
+        print(f'Offset given: {offset}, finding line to start at')
+        for i in range(len(lines)):
+            if (offset <= 0):
+                break
+            offset -= len(lines[i]) + 1 #include newline
+            skip += 1
+        print(f'Skipping lines {i}')
+        link_density_map = build_map(lines, links, cacheno)
+
+    mp_stop = multiprocessing.Event()
+#    audio_gen_thread = multiprocessing.Process(target=gen_audio, args=(link_density_map, mp_stop))
+#    logger.info('Starting audio generation thread')
+#    print("Starting audio generation thread")
+#    audio_gen_thread.start()
+
+#    time.sleep(5) #wait a bit for some audio to be generated.
+
+#    print(f'Density map: {link_density_map}')
+    #find menus and content and treat differently.  
+
+    playsoundprocess = None
+    total_read = 0
+    link_loc = 0
+    temptext = ""
+    while (link_loc < len(links) and 'offset' in links[link_loc] and links[link_loc]['offset'] == -1):
+        link_loc += 1
+        #skip all links with no offset
+
+
+    #init_qdrantz(link_density_map, topic="websearch")
+    print('Start Reading:')
+
+    #generate tts for all lines first to minimize wait time when playing.  This is a bit aggressive but should work for now.
+    generate_tts(text, VOICE, vol=1.0, rate=1.0,skip=skip, cacheno=cacheno) #pre-generate
+
+    print('Finished generating TTS for all lines, starting playback')
+    idx = -1
+
+    intro_played = 0
+    vars = {}
+    while (idx < len(lines)-1):
+#    for idx in range(len(lines)):
+        idx = idx + 1
+        l = lines[idx]
+        combined = "" #line to hold combined short lines and read together. 
+        combined_counter = 0 
+        if (len(l) > 2 and l[0:2] == '$$' and time.time() - intro_played > 30): #wait 30 secs between intros.  this is for the initial environment info that trey sends.
+            #ENV info, read header line..
+            intro_played = time.time()
+            #parse variable info..
+            parts = l[2:].split('=')
+
+            text = l
+            if (len(parts) == 2):
+                key = parts[0]
+                value = parts[1]
+                vars[key] = value
+                #simple reformatting for some known variables.
+                if (key == 'LANG'):
+                    text = 'Language ' + value
+                if (key == 'TIME'):
+                    if ('_' in value):
+                        t = datetime.strptime(value, "%Y%m%d_%H%M%S").timestamp()
+                        text = datetime.fromtimestamp(t).strftime("%B %d, %H:%M")
+                    else:
+                        t = datetime.fromtimestamp(int(value))
+                        text = t.strftime("%B %d, %H:%M")
+                #play value for any integer.  
+                else:
+                    if (value.isdigit()):
+                        text = key
+                        seq = synth.digit_to_seq(key, value)
+                        synth.play_synth(seq, 0, 0.2)
+
+            l = text
+            print(f'{l}')
+            sound_file = f"./temp/{cacheno}/overview.wav"
+            lesc = lines[0] if (len(lines[0]) < 200) else lines[0][:200]
+            #print(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --text \"{lesc}\" --rate=\"-10%\" > NUL 2>&1")
+            #suc = os.system(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --text \"{lesc}\" --rate=\"-10%\" > NUL 2>&1")
+#            suc = speech.speak(l, sound_file, VOICE)
+            suc = ""
+            if (torch.cuda.is_available() and False): #otherwise too slow..
+                suc = speech.speak_cmd(lesc, sound_file, VOICE)
+
+            if (suc == ""):
+                print(f'Error generating audio fallback to tts.speak')
+                tts.speak(lesc, VOICE, sound_file)
+#            playsoundprocess = multiprocessing.Process(target=play_sound_process, args=(sound_file,))
+#            playsoundprocess.start()
+            if (os.path.exists(sound_file)):
+                playsound(sound_file, block=False) # Ensure this thread blocks for its sound
+            #try other mechanism.. stopsound..
+
+        if (stop_event.is_set()):
+            logger.info('Audio stop event set, stopping playback')
+            print('Audio stop event set, stopping playback')
+            mp_stop.set() #stop audio generation as well
+            break
+        if (skip_event.is_set()):
+            logger.info('Audio skip event set, skipping this line')
+            print('Audio skip event set, skipping next several lines')
+            lines_to_skip = q.get()
+            print('Skipping lines command received: ' + str(lines_to_skip))
+            if (lines_to_skip > -1000):
+                skip += lines_to_skip    #skip next 3 lines
+                skip_event.clear()
+            elif (lines_to_skip == -1001):
+                #pause event.  
+                while skip_event.is_set():
+                    time.sleep(0.5)
+                    if random.randint(0,100) < 10:
+                        print('Waiting for pause to clear...')
+                    #sleep until skip event cleared.
+
+            else:
+                #this is go to next type or previous type event.  
+                lines_to_skip = 0 #unknown event
+
+        #10* for counter..
+        #have flag skipmenu to read menu or not.. 
+        if (skipmenu and idx+5 < len(lines) and skip == 0 and link_density_map[idx+5]['mavglength'] < 200 and link_density_map[idx]['mavglength'] < 200 and link_density_map[idx]['density'] > 0.2):
+            #we are at a point where we have a very long line coming up, and we are currently at a short line.
+            #probably a menu or title section.  skip ahead to the long line.
+            skip = 5
+            print(f'>> Skipmenu [{idx}, {skip}]')
+#            winsound.Beep(3000, 100) #beep to start
+            synth.play_synth([50,62,74], 12)
+        if (skip != 0):
+            sound_file = f"./temp/{cacheno}/skip.wav"
+            temp = f'At Line {idx} of {len(lines)}, skipping {skip} lines'
+            print(f'Skipping lines [{idx}, {skip}]')
+            tts.speak(temp, VOICE, sound_file)
+
+        if (skip > 0):
+            if (idx + skip >= len(lines)):
+                skip = len(lines) - idx - 2
+            for i in range(skip):
+                total_read += len(lines[idx+i]) + 1 #include newline
+            idx = idx + skip
+            skip = 0
+#            total_read += len(l) + 1 #include newline
+            #check this works..
+            #reset link_loc
+            link_loc = 0
+            while (link_loc < len(links) and 'offset' in links[link_loc] and links[link_loc]['offset'] < total_read):
+                link_loc += 1
+
+        if (skip < 0):
+            if (idx + skip < 0):
+                skip = -idx + 1
+            for i in range(-skip):
+                total_read -= len(lines[idx - i -1]) + 1 #include newline
+            idx = idx + skip
+            skip = 0
+            #reset link_loc
+            link_loc = 0
+            while (link_loc < len(links) and 'offset' in links[link_loc] and links[link_loc]['offset'] < total_read):
+                link_loc += 1
+
+        print(f'Line: {l}')
+#        print(f'Total Lines: {len(lines)}')
+        print(f'Current IDX: {idx}')
+#        print(f'Skipping: {skip}')
+        print(f'Line offset: {link_density_map[idx]["offset"]}')
+        total_read = link_density_map[idx]['offset']
+        sound_file = link_density_map[idx]['audio']
+        if (len(l) <= 5 and idx > 5 and idx < len(lines)-1):
+            combined += " " + l
+            combined_counter += 1
+            #look ahead for more short lines to combine.  
+            if (link_density_map[idx+1]['length'] > 50 or link_density_map[idx+1]['length'] > (len(combined)/combined_counter)*5):
+                l = combined.strip()
+                combined_counter = 0
+                combined = ""
+
+        if (len(l) > 10) or len(temptext) > 20:
+            try:
+                if (temptext != ""):
+                    l = temptext + " " + l
+                    print(f'Combined: {l}')
+                    temptext = ""
+                    sound_file = f"./temp/{cacheno}/{idx}_combined.wav"
+                else:
+                    sound_file = f"./temp/{cacheno}/{idx}.wav"
+    #            communicate = edge_tts.Communicate(text, VOICE)
+    #            await communicate.save(sound_file)
+                #play the line type info first
+                play_l(link_density_map[idx], idx/len(lines))
+                vol = 0.7
+                rate = 1.2
+                if (idx < 2): #adjust for informational lines..
+                    vol = 1.0
+                    rate = 1.0
+
+                if (os.path.exists(sound_file)):
+                    print(f'Playing pre-generated audio: {sound_file}')
+                    currentsound = playsound(sound_file, block=False) # Ensure this thread blocks for its sound
+                else:
+                    print(f'Generating and playing audio: {l} for {cacheno} at line {idx}')
+                    subtitle_file = f"./temp/{cacheno}/{idx}.srt"
+                    lesc = l.replace('"', '\\"')
+
+#                    suc = os.system(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --text \"{lesc}\" --write-subtitles \"{subtitle_file} --rate=\"-10%\" > NUL 2>&1")
+#                    suc = speech.speak(l, sound_file, VOICE, vol, rate)
+                    suc = ""
+                    if (torch.cuda.is_available() and False): #too slow generating real-time..
+                        #suc = speech.speak_cmd(lesc, sound_file, VOICE, vol, rate)
+                        print("speaking with kokoro tts...")
+                        suc = speech.speak(lesc, sound_file, VOICE, vol, rate)
+                        print("speak command returned: " + str(suc))
+                    if (suc == ""):
+                        print(f'Error generating audio fallback to tts.speak')
+                        tts.speak(lesc, VOICE, sound_file, vol, rate*120)
+
+#                    sound_file = f"./temp/{idx}.wav"
+                    #fast not working.. edge-tts much better quality than speechbrain tts.
+#                    cmd = f"python ./extensions/trey/speech.py --text \"{l}\" --fname \"{sound_file}\""
+#                    os.system(cmd)
+                    if (os.path.exists(sound_file)):
+                        currentsound = playsound(sound_file, block=False) # Ensure this thread blocks for its sound
+#                time.sleep(0.5) #short pause between lines
+            except Exception as e:
+                logger.error(f'Error in TTS playback: {e}')
+                logger.error(f'{l}')
+                print(f'Error in TTS playback: {e}')
+                total_read += len(l) + 1 #include newline
+                continue
+        else:
+            temptext += " " + l
+
+        if random.randint(0,100) < 5:
+            print(f'Total read: {total_read}')
+            logger.info(f'Total read: {total_read}')
+        waited = 0
+        ttotal = total_read
+
+
+        time.sleep(0.01*len(l)) #wait for initial TTS to start playing.
+        for i in range(0, len(l)+1, 11): #check every 12 characters
+            #not sure if we want to beep for skipped lines or not.  
+            #maybe problematic.  
+            linksspoken = 0
+            if (link_loc < len(links) and 'offset' in links[link_loc] and links[link_loc]['offset'] <= ttotal):
+                print(f'At link: {links[link_loc]}')
+                #winsound.Beep(500, 300) #short beep to indicate link
+                if (links[link_loc]['offset'] != -1):
+                    try:
+                        sound_file = f"./temp/link{link_loc}.mp3"
+                        tts.speak(links[link_loc]['text'], LINKVOICE, sound_file, 0.6, 200) #quieter slower for links
+    #                    winsound.Beep(500, 200) #short beep to indicate link
+                        synth.play_synth([53,65,77])
+
+                        playsound(sound_file, block=False) # Ensure this thread blocks for its sound
+                        #only move to next link if we are at the offset.  
+                        #some links may be at -1 offset which we skip earlier.
+    #                    ttotal = links[link_loc]['offset']+1
+                    except Exception as e:
+                        print(f'!!Audio Generation Error: {links[link_loc]["text"]} {e}')
+                        logger.error(f'!!Audio Generation Error: {links[link_loc]["text"]} {e}')
+                    link_loc += 1
+                    linksspoken += 1
+
+            if (stop_event.is_set()):
+                logger.info('Audio stop event set, stopping playback during line wait')
+                print('Audio stop event set, stopping playback during line wait')
+                stopsound(currentsound)
+                mp_stop.set() #stop audio generation as well
+                break
+
+            if skip_event.is_set():
+                ev = q.queue[-1] 
+                if (ev == -1001): #pause event.. for speaking..
+                    while(skip_event.is_set()):
+                        time.sleep(0.5)
+                        if (random.randint(0,100) < 10):
+                            print('Waiting for pause to clear...')
+                    q.get() #clear the event
+                else: #real skip
+                    stopsound(currentsound)                    
+                    i = len(l)+1 #break out of loop to move to next line.
+
+                    continue
+                    
+
+            #have to count total read here for record feedback..
+            ttotal += 11 #some time for generating tts..
+            if (q2 is not None and ttotal > 0):
+                q2.put(ttotal) #communicate how much we have read.
+            waited += 1
+#            logger.info(f'Total read: {ttotal}')
+#            if (linksspoken == 0):
+            time.sleep(0.6-0.3*linksspoken) #simulate reading time. 12 chars per second..
+            if (ttotal > total_read+len(l)+1):
+                i = len(l)+1 #break out of loop if we have read past the line, to avoid long waits on long lines.
+                continue
+            #shouldnt have to be too exact.  
+        print(f'Total waited: {waited}')
+
+        total_read += len(l) + 1 #include newline
+
+        r = None
+        #skip for now..
+        if (r is not None and len(l) > 50): #only do similar for longer lines
+            try:
+                r = get_similar(idx, link_density_map) #do a vector search for similar items.
+            except Exception as e:
+                print(f'!!QDRANTZ Error getting similar items: {e}')
+                logger.error(f'!!QDRANTZ Error getting similar items: {e}')
+            #if we have good results here we could read them out.
+#            print(r)
+        #similar moved to end of reading line.
+        if (r is not None and len(r) > 0):
+            print(f'Similar items to line {idx}: {link_density_map[idx]["text"]}')
+            for ridx,result in enumerate(r):
+                if (abs(result['id'] - idx) < 5):
+                    continue #skip nearby items
+                voice = SIMVOICE[ridx % len(SIMVOICE)]
+                print(result)
+                rid = result['id']
+                #read out the similar item.  
+                if (rid > 0 and rid < len(link_density_map)):
+                    siml = link_density_map[rid]['text']
+                    print(link_density_map[rid])
+                    #only get similar when we have a lengthy item, also dont read too long similar items.
+                    #dont read if we are about to read.  
+                    if (len(siml) > 5 and len(siml) < 200 and len(siml) < len(l) and link_density_map[rid]['numlinks'] > 0 and abs(link_density_map[rid]['offset']-total_read) > 100): 
+                        print(f'Reading similar item: {siml}')
+                        try:
+                            sound_file = f"./temp/{cacheno}/sim{rid}.wav"
+                            lesc = siml.replace('"', '\\"')
+                            speech.speak(f'Similar: {siml}', sound_file, voice, 0.6, 1.2)
+#                            os.system(f"edge-tts --voice \"{voice}\" --write-media \"{sound_file}\" --text \"Similar: {lesc}\" --rate=\"+20%\" --volume=-40% > NUL 2>&1")
+                            playsound(sound_file, block=False) # Ensure this thread blocks for its sound
+
+                        except Exception as e:
+                            logger.error(f'!!Error in TTS playback of similar item: {e}')
+                            logger.error(f'!!{siml}')
+                            print(f'!!Error in TTS playback of similar item: {e}')
+                            
+                            continue
+                    if (q3 is not None):
+                        q3.put(link_density_map[rid]['offset']) #send back the offset of the similar item.
+
+        if (q2 is not None):
+            q2.put(total_read)
+        if (idx ==len(lines)-1):
+            print('Finished reading all lines.')
+            #go back to start?  Only if we have link content and long content.  
+            
+            if (len(lines) > 20 and len(links) > 0):
+                skip = get_first_content_line(link_density_map)
+                idx = skip #will be incremented to skip on next loop
+                if (idx > len(lines)-5):
+                    idx -= 5
+                total_read = 0
+                for i in range(skip):
+                    total_read += len(lines[i]) + 1 #include newline            
+                skip = 0
+
+#    os.system(f"edge-tts --voice \"{VOICE}\" --write-media \"{sound_file}\" --file \"{tts_file}\" --rate=\"-10%\"")
+#    time.sleep(2) #wait for file to be written
+#    seg = AudioSegment.from_mp3(sound_file)
+
+    # Export as WAV
+#    wav_file =  "1.wav" 
+#    seg.export(wav_file, format="wav")
+
+#    playsound(sound_file)
+    sys.exit() # Exit the thread when done
+
+#    pygame.mixer.init() 
+
+    # Replace 'your_audio_file.wav' with the actual path to your audio file
+#    sound = pygame.mixer.Sound(wav_file)
+#    sound.play() 
+#    pygame.mixer.music.load(sound_file)
+#    pygame.mixer.music.play()
+
+
+#    wave_obj = sa.WaveObject.from_wave_file(sound_file)
+#    play_obj = wave_obj.play()
+#    play_obj.wait_done()
+
+#    playsound(sound_file, block=True) # Ensure this thread blocks for its sound
+#    time.sleep(1) # Wait for a short duration
+#    os.remove(sound_file) # Clean up the sound file
+#    sys.exit() # Exit the thread when done
+
+
+def delay_stop_event(s_event, delay):
+    """Set the stop event after a delay."""
+    time.sleep(delay)
+    s_event.set()
+
+
+def speak(text, links = [], alt_text=[], offset=0, lang='en', cacheno=-1):
+    global audio_stop_events
+    global audio_location_queue
+    global audio_skip_events
+    global audio_skip_queue
+    """Speak the given text using the speech pipeline."""
+#    print(f'Speaking: {text}')
+
+    
+    if (cacheno >=0 and cacheno < len(audio_stop_events)):
+        #stop any existing audio for this cache slot, and clear skip event and queue
+#        logger.info(f'> Restart Audio Cache Slot {cacheno}')
+#        t = threading.Timer(5, delay_stop_event, args=(audio_stop_events[cacheno], 5)) # Set a timer to stop the audio after 5 seconds
+#        t.start()  # Starts the timer in a separate thread
+        audio_stop_events[cacheno].set() #stop any existing audio for this cache slot
+        audio_stop_event = threading.Event() #audio_stop_events[cacheno]
+        audio_stop_events[cacheno] = audio_stop_event
+#        audio_stop_event.clear()
+    else:
+        audio_stop_event = threading.Event()  # Event to signal stopping
+        audio_stop_events.append(audio_stop_event)  # Store the event in the global list for access
+    if (cacheno >=0 and cacheno < len(audio_skip_events)):
+        audio_skip_event = audio_skip_events[cacheno]
+        audio_skip_event.clear()
+    else:
+        audio_skip_event = threading.Event()  # Event to signal skipping    
+        audio_skip_events.append(audio_skip_event)  # Event to signal skipping
+
+    if (cacheno >=0 and cacheno < len(audio_skip_queue)):
+        q = audio_skip_queue[cacheno]
+    else:
+        q = Queue()
+        audio_skip_queue.append(q)
+    if (cacheno >=0 and cacheno < len(audio_location_queue)):
+        q2 = audio_location_queue[cacheno]
+    else:
+        q2 = Queue()
+        audio_location_queue.append(q2)
+    q3 = Queue()
+
+    print(audio_stop_events)
+    audio_thread = threading.Thread(target=play_in_background, args=(f'{text}',links, offset, audio_stop_event, audio_skip_event, cacheno, q, q2, q3, lang))
+    audio_thread.start()
+    return q2, q3, audio_stop_event #communicate how much we have read.  
+
+"""
+def speak(text):
+    global speech_pipe
+    print(f'Speaking: {text}')
+    if (speech_pipe is not None):
+        generator = speech_pipe(text, voice='af_heart')
+        for i, (gs, ps, audio) in enumerate(generator):
+            print(i, gs, ps)
+#            display(Audio(data=audio, rate=24000, autoplay=i==0))
+            with sf.SoundFile(f'{i}.wav', mode='w', samplerate=24000, channels=1, subtype='PCM_16') as f:
+                f.write(audio)
+                f.close()
+                pass
+#            sf.write(f'{i}.wav', audio, 24000)
+#            song = AudioSegment.from_wav(f'{i}.wav')
+#            play(song)
+
+            thread1 = threading.Thread(target=play_in_background, args=(f'{i}.wav',))
+            thread1.start()
+
+
+    else:
+        logger.error('Speech pipeline is not initialized.')
+
+"""
+
+
+def get_window_details():
+    """Get details of all visible windows."""
+    win32gui.EnumWindows(window_list_callback, None)
+    #iterate and draw this data.  
+    for procid in windows:
+        w = windows[procid]
+        print(f'Process ID: {procid}, Title: {w["title"]}, Rect: {w["rect"]}, Other: {w.get("other", {})}')
+        #draw this on screen.  
+
+
+
+def get_text_color(rect, screenshot):
+    """Get the color of the text at the given coordinates."""
+    total_luminance = 0
+    pixel_count = 1    
+    img = screenshot.toImage()
+    for x in range(rect[0], rect[2]):
+        for y in range(rect[1], rect[3]):
+            color = img.pixelColor(x, y)
+            r, g, b, _ = color.getRgb()
+            luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255.0
+            total_luminance += luminance
+            pixel_count += 1  
+
+    average_luminance = total_luminance / pixel_count
+
+    # Choose text color based on average luminance
+    if average_luminance < 0.5:  # Threshold can be adjusted
+        return "white"
+    else:
+        return "black"
+
 def get_screen():
 
+
     logger.info('Getting Screen')
+    text = '''
+    [Kokoro](/kˈOkəɹO/) is an open-weight TTS model with 82 million parameters. Despite its lightweight architecture, it delivers comparable quality to larger models while being significantly faster and more cost-efficient. With Apache-licensed weights, [Kokoro](/kˈOkəɹO/) can be deployed anywhere from production environments to personal projects.
+    '''
+    text = "This is a test of text to speech using edge-tts on Windows."
+#    speak(text)
+
+    #initialize window info..
+    get_window_details()
+
     screen = qapp.primaryScreen()
     screens = qapp.screens()
     for i, s in enumerate(screens):
@@ -78,34 +1281,117 @@ def get_screen():
         logger.info('Capturing Screen')
 
         screenshot = s.grabWindow( 0 ) # 0 is the main window, you can specify another window id if needed
+        #get all windows and see if any are in trey.
+
+        rect = (100,100,200,200)
+        get_text_color(rect, screenshot)
+        mywindow.screenshots.append(screenshot)
+
+        #assume 2 screens for now..
+        if (len(mywindow.screenshots) > 10):
+            mywindow.screenshots.pop(0)
+            mywindow.screenshots.pop(0)
+
         screenshot.save('shot' + str(i) + '.jpg', 'jpg')
 
-def draw_overlay():
+def get_screen_qrinfo():
+    """Capture the screen and generate a QR code with the information."""
+    # Generate a QR code with the screenshot information
+    qr_image = create_qr_code("Screenshot captured: screenshot.png")
+    qr_image.show()
+
+def create_qr_text(text, hwnd):
+    """Create a QR code with the given text."""
+
+    if (hwnd is None):
+        return text
+    threadid, procid = win32process.GetWindowThreadProcessId(hwnd)
+    title = win32gui.GetWindowText(hwnd)
+    rect = win32gui.GetWindowRect(hwnd)
+
+    logger.info(f'Active window: {title} at {rect}')
+    logger.info('Showing QR code')
+    qrdata = f'$$BBOX={rect}\n$$TITLE={title}\n'
+    #what other info..
+    #open tab names, latest bookmarks, link list
+    name = psutil.Process(procid).name()
+
+    ret = ""
+    #get languages used and basic qr information.  
+    ret += "$$PID=" + str(procid) + "\n"
+    ret += "$$ThreadID=" + str(threadid) + "\n"
+    ret += "$$ProcessName=" + name + "\n"
+    ret += text
+
+    if 'HOME' in os.environ:
+        ret += "$$HOME=" + os.environ['HOME'] + "\n"
+    if 'Path' in os.environ:
+        ret += "$$Path=" + os.environ['Path'] + "\n"
+
+    #ask for further info here..
+    lparam = "Hello from Python!" # The text to set
+#    win32api.PostMessage(hwnd, win32con.WM_SETTEXT, 0, lparam)
+
+    return ret
+
+
+def hide_overlay():
+    """Hide the overlay window."""
+    global mywindow
+    logger.info('Hiding overlay window')
+
+    mywindow.hideme()
+#    stop_mouse_listener()  # Stop the mouse listener
+
+def draw_overlay(delay=15, opacity=0.4): #default hide in 10 seconds
+    global active_window
+    global mywindow
 
     #creating the main window
     logger.info('Opening main window')
-    window.show()
+    mywindow.show()
     #add environment info needed.  
-    window.showQR("https://missesroboto.com")
+    logger.info('Getting Screen info')
+    #need to initialize trey_data first.
+    if ('rect' not in trey_data):
+        win32gui.EnumWindows(window_list_callback, None)    
 
-    draw_screen_box()
+    win32gui.EnumWindows(window_list_callback, None)    
 
-def draw_screen_box():
-    """Draws a box around the screen."""
-    geometry = window.geometry()
-    #get geometry of the highlight rectangle.  
-    window.highlighton = True
-    #set details here.  
-    window.highlightrect = {'x': geometry.x()+100, 'y': geometry.y()+100, 'width': geometry.width()-100, 'height': geometry.height()-100}
-    window.update()  # Trigger a repaint to show the box
-    logger.info('Screen box drawn')
+
+    temp = win32gui.GetForegroundWindow()
+    rect = win32gui.GetWindowRect(temp)
+    global current_qrdata
+    qrdata = current_qrdata #use QR data we have received.  
+    if (in_trey(rect)):
+        active_window = temp
+
+    if (active_window is not None):
+        play = playwrighty.get_browser_info()
+        qrdata = create_qr_text(qrdata + play, active_window)
+        mywindow.showQR(qrdata)
+
+    mywindow.updateLabels(mywindow.windows) #gives info for all windows
+    mywindow.setWindowOpacity(opacity)
+    mywindow.activateWindow() # Bring to front
+#    draw_screen_box()
+
+    #hiding in 3 seconds
+    logger.info(f'Hiding window after {delay} seconds')
+    t = threading.Timer(delay, _hide, args=["Hello from Timer!"])
+    t.start()  # Start the timer in a new thread
+
+    start_mouse_listener()  # Start the mouse listener
+
+
 
 
 def on_deactivate_overlay():
     """Function to be executed when the hotkey is pressed."""
 
     logger.info('Deactivating overlay')
-    window.hideme()
+    mywindow.hideme()
+    stop_mouse_listener()  # Stop the mouse listener
     
     print("Hotkey deactivated!")
     # Here you can implement logic to hide or deactivate the overlay
@@ -117,6 +1403,13 @@ def on_activate_overlay():
     draw_overlay()
     logger.info('Hotkey activated!')
 
+def restart_me():
+    """Restart the application."""
+    logger.info('Restarting application')
+    #notify watchers..
+    mywindow.transcriber.write_plain('_meta', '> Restart')
+    quit_me(True)
+
 def setup_hotkey_listener():
 
     # Define the hotkey combination and the function to call
@@ -125,6 +1418,9 @@ def setup_hotkey_listener():
     hotkeys = {
         '<ctrl>+<shift>+h': on_activate_overlay,
         '<ctrl>+<shift>+g': on_deactivate_overlay,
+        '<ctrl>+<shift>+r': restart_me,
+        '<ctrl>+<shift>+q': quit_me,
+
         # You can add more hotkeys here, e.g.:
         # '<shift>+a': another_function,
     }
@@ -144,7 +1440,7 @@ def create_qr_code(data):
     600 bytes of info max. 
      Dont need good error correction as we are just passing immediately to a QR code reader.
      """
-    logger.info('Creating QR code')
+#    logger.info('Creating QR code')
     qr = qrcode.QRCode(
         version=15,
         error_correction=qrcode.constants.ERROR_CORRECT_M,
@@ -156,29 +1452,928 @@ def create_qr_code(data):
 
     img = qr.make_image(fill_color="black", back_color="white")
     img.save("qrcode.png")
-    logger.info('QR code created and saved as qrcode.png')
+#    logger.info('QR code created and saved as qrcode.png')
     return img
 
 def _hide(data):
     """Function to hide the window after a delay."""
-    logger.info('Hiding window after delay')
-    window.hideme()
+#    global speech_pipe
+#    logger.info('Initializing speech pipeline')
+#    speech_pipe = KPipeline(lang_code='a')
+    logger.info('Hiding mywindow after delay')
+    mywindow.hideme()
+    #initialize time..
+    day = 86400
+    tnow = time.time()
+    #should get from last three days and scroll each?  
+    mywindow.set_time(tnow-day*1, tnow-day*7, tnow, day*7)
+    mywindow.set_speed(None, "_meta")
+    mywindow.set_speed(None, "video")
+    mk.set_startx(mywindow.startx)
+    mk.set_geo(mywindow.geo)
+    mk.set_bbox(mywindow._bbox)
+
+    #get average color and screen
+    #get_window_details()
+    mywindow.get_window_info()
+
+
+
+class Communicate(QtCore.QObject):
+    mySignal = QtCore.pyqtSignal(int)
+
+
+
+#thread to get QR data from window and add text info to trey cache.  
+
+import cv2
+from qreader import QReader
+import numpy as np
+
+# Step 1: Create a worker class
+class QRInWorker(QObject):
+    finished = pyqtSignal()
+    progress = pyqtSignal(str)
+
+    def qimage_to_cv2(self, qimage):
+        """Converts a QImage into an OpenCV image (numpy array)."""
+        # Ensure the QImage is in a format that allows direct byte access (e.g., RGBA8888 or RGB888)
+        # OpenCV expects BGR format, so conversion might be needed later depending on the source
+        if qimage.format() != QImage.Format_RGB888:
+            # Convert to a standard 8-bit RGB format. Format_ARGB32 is common
+            qimage = qimage.convertToFormat(QImage.Format_ARGB32)
+
+        width = qimage.width()
+        height = qimage.height()
+        
+        # Get a pointer to the raw bytes
+        ptr = qimage.bits()
+        # Set the size of the pointer to the total number of bytes
+        ptr.setsize(qimage.byteCount())
+        
+        # Create a NumPy array from the raw data
+        # The shape will be (height, width, channels)
+        # The data is copied in this step
+        arr = np.array(ptr).reshape(height, width, -1) # Use -1 to infer the number of channels
+
+        # If the QImage was in ARGB32 format, the array will be in BGRA order (due to Qt's internal representation on many systems)
+        # OpenCV uses BGR, so if you need to perform typical OpenCV operations, convert the color space
+        if qimage.format() == QImage.Format_ARGB32:
+            # Convert from BGRA to BGR
+            arr = cv2.cvtColor(arr, cv2.COLOR_BGRA2BGR)
+        elif qimage.format() == QImage.Format_RGB888:
+            # Convert from RGB to BGR (OpenCV's default color order)
+            arr = cv2.cvtColor(arr, cv2.COLOR_RGB2BGR)
+        # Handle other formats as needed (e.g., grayscale)
+        elif qimage.format() == QImage.Format_Grayscale8:
+            # No color conversion needed for grayscale, it's a 2D array
+            arr = arr.reshape(height, width)
+
+        return arr
+
+    def read_qr_code(self, img):
+        
+        #qreader too slow, use nano model for speed.
+        #income as QImage
+        img = self.qimage_to_cv2(img)
+        #calc width, get upper right quadrant for now just read here.  
+        x_start = int(img.shape[1] / 2)
+        x_end = img.shape[1]
+        y_start = 0
+        y_end = int(img.shape[0] / 2)
+        cropped_img = img[y_start:y_end, x_start:x_end, :]
+#        print(f'Cropped image shape: {cropped_img.shape}')
+        cropped_image = cv2.cvtColor(np.array(cropped_img), cv2.COLOR_BGR2RGB)
+        decoded_texts = self.qreader.detect_and_decode(image=cropped_image)
+        if decoded_texts:
+            for text in decoded_texts:
+                print(f"QR In Code data: {text}")
+                logger.info(f"QR In Code data: {text}")
+            return decoded_texts
+        else:
+#            print("No QR In code detected.")
+            return []
+        
+    def __init__(self, my_queue, parent=None):
+        super(QRInWorker, self).__init__(parent)
+        self.my_queue = my_queue # Store parameter in the worker instance
+        self.all_qr = [] #store all qr data seen.
+        self.qreader = QReader(model_size='n')  # Initialize the QR code reader with a nano model
+
+    def find_recent_qr(self, qrin, timeframe=5):
+        """Find QR data seen in the last timeframe seconds."""
+        current_time = time.time()
+        recent_qr = self.all_qr[-5:] #last 5 entries
+        for qr in recent_qr:
+            if ('data' not in qr or 'timestamp' not in qr):
+                continue #not valid data
+            if (qr['data'] == qrin and (current_time - qr['timestamp']) < timeframe):
+                return True
+        return False
     
+    def run(self):
+        """Long-running task to find QR data from window."""
+        previmg = None
+        while (True):
+            #get QR data from window
+            #this has between 2-10 second delay in read_qr_code.  
+#            print(time.time())
+            screens = qapp.screens()
+            #assume last window
+            qimage = screens[-1].grabWindow(0).toImage()
+            #skip if same as previous image.
+            if (qimage == previmg):
+                time.sleep(0.5)
+                continue #skip same image
+            previmg = qimage
+#            print(qimage.width(), qimage.height())
+            qrdata = self.read_qr_code(qimage)
+#            print(time.time())
+
+            for qd in qrdata:
+                logger.info(f'QRInWorker found QR data: {qd}')
+                if (isinstance(qd, str) == False):
+                    continue
+                if (qd.find('<<meta>>') == -1): #for now dont accept meta data, simple way to not read self for now.
+                    continue #not our data.
+                if not self.find_recent_qr(qd): #skip anything we just saw.  
+                    self.my_queue.put(qd)
+                    self.all_qr.append({'data': qd, 'timestamp': time.time()})
+                    self.progress.emit(qd) #can pass param here as well.  
+
+            time.sleep(0.2) #run each 0.2 seconds
+            print(time.time())
+        self.finished.emit()
+
+
+#separate worker probably better for non-QR commands..
+
+# Step 1: Create a worker class
+class QRWorker(QObject):
+    finished = pyqtSignal()
+    progress = pyqtSignal(str)
+
+    def __init__(self, my_queue, parent=None):
+        super(QRWorker, self).__init__(parent)
+        self.my_queue = my_queue # Store parameter in the worker instance
+
+    def run(self):
+        """Long-running task."""
+        while (self.my_queue is not None):
+            while (not self.my_queue.empty()):
+                #incoming data from mykeys..
+                qrdata = self.my_queue.get() #get current link number.  
+                logger.info(f'Worker processing QR data: {qrdata[0:50]}')
+                self.progress.emit(qrdata) #can pass param here as well.  
+#                time.sleep(0.2) #allow for QR data to be processed by any reader.  
+            time.sleep(0.1) #wait before checking again
+        self.finished.emit()
+
+
+class QPaintedLabel(QLabel):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.bbox = None
+
+
+    def paintEvent(self, event):
+        # Let QLabel paint its original content (like text/pixmap) first
+#        print("painting QPaintedLabel")
+        super().paintEvent(event)
+        
+        # Create a painter for the label
+        painter = QPainter(self)
+        
+        # Set your drawing properties
+        pen = QPen(QColor("red"))
+        pen.setWidth(5)
+        painter.setPen(pen)
+        
+        # Perform custom drawing
+        if self.bbox is not None:
+            painter.drawRect(self.bbox['x'], self.bbox['y'], self.bbox['width'], self.bbox['height'])
+    
+    def set_overlay_bbox(self, bbox):
+        self.bbox = bbox
+        self.update()  # Trigger a repaint to show the new bounding box
+
+
 class MyWindow(QMainWindow):
 
 
-    def __init__(self):
+    def reportProgressIn(self, qrdata):
+        logger.info(f"QR In: {qrdata}")
+        cmds = self.parseQRData(qrdata)
+        for idx, cmd in enumerate(cmds):
+            currentcmd = cmd['cmd']
+            vars = cmd['vars']
+            logger.info(f'Parsed QR command: {currentcmd} with vars: {vars}')
+            self.qr_in.append({'cmd': currentcmd, 'vars': vars, 'timestamp': time.time()})
+            #process incoming commands as needed.
+            #for now just log them.
+            if (cmd['type'] == '> '):
+                if (currentcmd == "Record Feedback"):
+                    #process feedback command.  
+                    logger.info(f'Processing record feedback command with vars: {vars}')
+
+    def reportProgress(self, qrdata):
+#        logger.info(f"QR Out: {qrdata}")
+        cmds = self.parseQRData(qrdata)
+        #get lang.. dont show based on lang for now..
+        is_joystick_cmd = next((cmd for cmd in cmds if cmd['lang'] == 'joystick'), None)
+        if (len(cmds) > 0 and is_joystick_cmd is None):
+            self.showQR(qrdata, cmds) #refresh QR display
+            #process joystick command as needed.  For now just log it.
+
+        pwords = []
+        for idx, cmd in enumerate(cmds):
+            if (cmd['type'] == '> '):
+                currentcmd = cmd['cmd']
+                vars = cmd['vars']
+                logger.info(f'Parsed QR command: {currentcmd} with vars: {vars}')
+                self.qr_out.append({'cmd': currentcmd, 'vars': vars, 'timestamp': time.time()})
+                self.executeQRCommand(currentcmd, vars, cmd['lang'])
+            if (cmd['type'] == '~~'):
+                word = cmd['word']
+                keys = cmd['keys']
+                pwords.append({'word': word, 'keys': keys})
+#                logger.info(f'Parsed QR word: {word} with keys: {keys}')
+                #process as needed.
+                #add to list of words to display..
+
+        print(f'~~: {len(pwords)}')
+#        self.updateWords(pwords)
+
+    def add_setting(self, key, value, lang='_meta'):
+        """Add a setting to the custom settings."""
+        config.custom_settings[lang+"_"+key] = value
+
+    def get_setting(self, key, default=None, lang='_meta'):
+        """Get a setting from the custom settings."""
+        return config.custom_settings.get(lang+"_"+key, default)
+    
+    def executeQRCommand(self, command, vars, lang='hotkeys'):
+        #use transcriber here??
+        """Execute a QR command based on the parsed data."""
+        logger.info(f'Executing QR command: {command} with vars: {vars}')
+        #get current foreground window.  
+
+        temp = win32gui.GetForegroundWindow()
+        rect = win32gui.GetWindowRect(temp)
+        match command:
+            case "OK":
+                #testing
+                logger.info('Received OK command, showing QR code with current settings')
+                #test function for sending keystrokes.. better to use transcriber..
+#                if (self.in_trey(rect)): #only capture second monitor clicks                
+#                    send_ok()
+                self.transcriber.write_plain(lang, command) #dont write intermediate msg?
+
+                #send keystroke test..
+
+
+            case "Screen Toggle":
+                tohide = vars.get('HIDE', 'True')
+                if (self.isVisible()):
+                    #remove stale info?  
+                    if (tohide == 'True'):
+                        self.hide()                
+                        #pause OBS capture.
+                        pause_obs_capture()
+                    else:
+                        op = self.get_setting('OPACITY', 0.4, lang)
+                        op = float(vars.get('OPACITY', op))
+                        self.setWindowOpacity(op)
+                        self.add_setting('OPACITY', op, lang)
+                else:
+                    op = self.get_setting('OPACITY', 0.4, lang)
+                    op = float(vars.get('OPACITY', op))
+                    rec = self.get_setting('RECORD', 'False', lang)
+                    rec = vars.get('RECORD', rec)
+                    self.setWindowOpacity(op)
+                    self.add_setting('OPACITY', op, lang)
+                    self.add_setting('RECORD', rec, lang)
+                    
+                    self.show()
+                    #start OBS capture..
+                    if (rec == 'True'):
+                        start_obs_capture()
+
+            case "Stop":        
+                type = vars.get('type', 'video')
+                if (type == 'video'):
+                    #not used
+                    n = 0
+                elif (type == 'record'):
+                    pause_obs_capture()
+            case "Start":
+                type = vars.get('type', 'video')
+                if (type == 'video'):
+                    #not used..
+                    n = 0 
+                elif (type == 'record'):
+                    start_obs_capture()
+            case "Restart":
+                type = vars.get('type', 'video')
+                if (type == 'video'):
+                    #not used..
+                    n = 0
+                elif (type == '_meta'):
+
+                    restart_me() #restart and leave transcription
+
+
+            case "Next":
+                type = vars.get('type', 'video')
+                no = vars.get('no', '1')
+                if (type == 'video'):
+                    #logic to pick next video/audio in our commands.. tmap
+                    self.play_tmap(int(no)) #play next item in tmap
+                    n = 0
+                elif (type == 'record'):
+                    #not used..
+                    n = 0
+            case "Pause":
+                type = vars.get('type', 'video')
+                if (type == 'video'):
+                    #logic to pause video playback
+                    #pick next video/audio in our commands.. tmap
+                    self.pause_tmap()
+                    n = 0
+                elif (type == 'record'):
+                    pause_obs_capture()
+                elif (type == 'base'):
+                    self.pause_tmap(False) #dont hide the video, just pause it..
+                    #pause any other speaking or playing we are doing.
+                    self.transcriber.write_plain('base', '> ' + command) #dont write intermediate msg?
+                elif (type == 'book'):
+                    cacheno = vars.get('cacheno', -1)
+                    self.transcriber.write_plain('book', '> ' + command) #dont write intermediate msg?
+                    pause_reader(int(cacheno))
+
+
+
+
+            case "Unpause":
+                type = vars.get('type', 'video')
+                if (type == 'video'):
+                    #logic to unpause video playback
+                    #pick next video/audio in our commands.. tmap
+                    #anything with $$FILE or $$fname or..
+                    self.play_tmap()
+                    n = 0
+                elif (type == 'record'):
+                    start_obs_capture()
+                elif (type == 'book'):
+                    cacheno = vars.get('cacheno', -1)
+                    resume_reader(int(cacheno))
+                
+            case "Screenshot Feedback_":
+                bbox = vars.get('BBOX', None)
+                if (bbox is not None):
+                    self.draw_screen_box(vars.get('BBOX', self.geometry().getRect()))
+
+                #send back the OCR text as feedback.
+                #just add to file assuming we 
+                #probably dont need this..
+                if (vars.get('OCR', 'False') == 'True'):
+                    ocrtext, fname = self.save_screenshot(vars.get('KLANG', 'video'), vars.get('TRANSCRIPT', ''), vars.get('BBOX', None), True) #always OCR
+                    vars['OCRTEXT'] = ocrtext
+                    vars['FNAME'] = fname
+                    self.ocrtext = ocrtext
+                written = self.transcriber.write(vars.get('KLANG', 'video'), command, vars, None, False) #dont write intermediate msg?
+                self.set_feedback(written, vars)
+            case "Screenshot Feedback":
+                #right now we are just calling screenshot..
+                #get OCR, and transcribe.  This is delayed because of the transcription time..
+                ocrtext, fname = self.save_screenshot(vars.get('KLANG', 'video'), '', vars.get('BBOX', None), True) #always OCR
+                vars['OCRTEXT'] = ocrtext
+                vars['FNAME'] = fname
+                self.ocrtext = ocrtext
+                written = self.transcriber.write(vars.get('KLANG', 'video'), command, vars, None, True) #write final message
+                self.set_feedback(written, vars)
+            case "_Click Link":
+                self.show()
+                #simulate click at link location if given.
+            case "Time Zoom_":
+                #zoom in or out around a time point.
+                #preview info about this time..
+                #update the main display with this?  
+                i = 0
+                similar = int(vars.get('SIMILAR', -1))
+                if (similar != -1):
+                    if (len(self.similar) > similar):
+                        t = int(self.similar[similar]['timestamp']) #get time of this item
+                        logger.info(f"Zooming to similar item at time: {t} with transcript: {self.similar[similar]['transcript']}")
+                        self.show_tmap(t)
+                        for (idx, item) in enumerate(self.similar):
+                            vars[f'{idx}'] = f'{item["timestamp"]}  {item["transcript"][:50]}'
+                        self.show_p({'type': '> ','cmd': command, 'vars': vars, 'timestamp': time.time()})
+
+                        self.update_info(f'{t}\n{self.similar[similar]["transcript"]}')
+#                        self.showQR(qrdata, cmds) #refresh QR display
+
+            case "Time Jump" | "Time Zoom":
+                t = float(vars.get('TIME', time.time()))
+                w = float(vars.get('WINDOW', 86400)) #default 1 day
+                s = float(vars.get('START', t-w/2))                              
+                e = float(vars.get('END', t+w/2))
+                similar = int(vars.get('SIMILAR', -1))
+                if (similar != -1):
+                    if (len(self.similar) >= similar):
+                        #show info about this item, or jump to this time..  
+                        t = int(self.similar[similar]['timestamp']) #get time of this item
+                        s = t - w/2
+                        e = t + w/2
+                        self.set_time(t, s, e, w)
+                        print(f"Similar items: {similar}")
+                else:
+                    self.add_setting('TIME', t, lang)
+                    self.add_setting('WINDOW', w, lang)                
+                    self.set_time(t, s, e, w)
+                    print("Time Jump to: " + str(t) + " Start: " + str(s) + " End: " + str(e) + " Window: " + str(w))
+                #set time locally.  
+                #simulate click at link location if given.
+            case "Set Speed":
+ 
+                speed = float(vars.get('SPEED', '1.0'))
+                self.add_setting('SPEED', speed, lang)
+                self.set_speed(speed, lang)
+                #video = playback speed
+                #_meta = tick speed
+
+                print(f"<<{lang}>>\n$$SPEED=" + str(speed))
+            case "Tick":
+                speed = self.get_setting('SPEED', 1.0, lang)
+                print('Tick with speed: ' + str(speed))
+                #jump forward by tick amount.  
+                self.play_tmap(int(speed)) #play next item in tmap
+
+            case "Tock":
+                type = vars.get('type', 'video')
+                speed = self.get_setting('SPEED', 1.0, lang)
+                #jump backward by tick amount.
+                if (type == 'video'):
+                    self.play_tmap(int(-speed)) #play previous item in tmap
+                elif (type == '_meta'):
+                    #get trigger search of current recent key structure to other midi keys in transcriber..
+                    current_time = int(vars.get('TIME', time.time()))
+                    #rapidfuzz search for similar key structures in all midi in transcriber.  
+                    midiarray = json.loads(vars.get('MIDI', "[]")) #load from string again..
+                    print(f"<<{lang}>>\n$$MIDI=" + str(midiarray))
+                    similar = self.transcriber.search_midi(midiarray, current_time)
+                    print(f"Similar key structures found: {similar}")
+                    print(f"<<{lang}>>\n$$SIMILAR=" + json.dumps(similar))
+                    #what to do with this?  
+                    #save it and show in QR?  
+                    self.futuretree = self.transcriber.futuretree #map[lang] = ['..': '&&': '##':]
+                    print(f"<<{lang}>>\n$$FUTURETREE=" + json.dumps(self.futuretree))
+                    #display this in info section..
+                    self.similar = similar
+
+            case "Select Book":
+                book = vars.get('book', 'None')
+                self.add_setting('book', book, lang)
+                context = vars.get('context', '')
+                self.transcriber.current_book = book
+                self.transcriber.current_context = context
+                print(f"<<{lang}>>\n$$book=" + str(book))
+                print(f"<<{lang}>>\n$$context=" + str(context))
+                self.label_topic_info[0].setText(f'**{book}')
+
+                #format this a bit nicer..
+                self.label_topic_info[1].setText(f'{context}') 
+
+                self.label_topic_info[0].update()
+                self.label_topic_info[1].update()
+                self.bookhistory.insert(0, {'book': book, 'context': context, 'timestamp': time.time()}) #0 based index for most recent
+                #bring vscode to front if not there..
+
+                self.show_mrroboto()
+
+            case "Show Book":
+                book = vars.get('book', 'None')
+                context = vars.get('context', '')
+                self.transcriber.current_book = book
+                self.transcriber.current_context = context
+                print(f"<<{lang}>>\n$$book=" + str(book))
+                print(f"<<{lang}>>\n$$context=" + str(context))
+                self.label_topic_info[0].setText(f'**{book}')
+                self.label_topic_info[1].setText(f'{context}') 
+                self.label_topic_info[0].update()
+                self.label_topic_info[1].update()
+                self.show_mrroboto()
+                
+            case "Select Topic":
+                topic = vars.get('topic', 'None')
+                self.add_setting('topic', topic, lang)
+                context = vars.get('context', '')
+                self.supp_topics = vars.get('topics', '').split(',') #comma separated list of topics
+                self.transcriber.current_topic = topic
+                self.transcriber.current_context = context
+                print(f"<<{lang}>>\n$$topic=" + str(topic))
+                print(f"<<{lang}>>\n$$context=" + str(context))
+                #self.label_topic_info[0].setText(f'**{topic}')
+                self.label_topic_info[0].setText(f'**{self.transcriber.current_book}')
+
+                #format this a bit nicer..
+                self.label_topic_info[1].setText(f'{topic}<br>{context}') 
+
+                self.label_topic_info[0].update()
+                self.label_topic_info[1].update()
+                self.topichistory.insert(0, {'topic': topic, 'context': context, 'timestamp': time.time()}) #0 based index for most recent
+                self.update_topic_history()
+                #bring vscode to front if not there..
+                self.show_mrroboto()
+                #self.visualize_kg(self.transcriber.kg['**'], topic)
+
+            case "Screenshot":
+                print("Taking Screenshot")
+                print(vars['BBOX'])
+                self.draw_screen_box(vars.get('BBOX', self.geometry().getRect()))
+                ocrtext, fname = self.save_screenshot(vars.get('KLANG', 'hotkeys'), vars.get('FNAME', ''), vars.get('BBOX', self.geometry().getRect()), True) #always OCR?
+                vars['OCRTEXT'] = ocrtext
+                vars['FNAME'] = fname
+                self.ocrtext = ocrtext
+                written = self.transcriber.write(vars.get('KLANG', 'video'), command, vars)
+                self.set_feedback(written, vars)
+
+                #send to QR In queue for processing by mykeys.  
+
+            case "Screenshot_":
+                self.draw_screen_box(vars.get('BBOX', None))
+
+            case "Record Feedback_":
+                #process feedback command.  
+                logger.info(f'Processing record feedback command with vars: {vars}')
+                #update QR info.. should display already..
+            case "Tune In" | "Tune Out":
+                t = float(vars.get('TIME', time.time()))
+                w = float(vars.get('WINDOW', 86400)) #default 1 day
+                s = float(vars.get('START', t-w/2))                              
+                e = float(vars.get('END', t+w/2))
+
+                #tune in window to display only this lang..
+                lang = vars.get('LANG', 'ALL')
+
+
+                if (lang != 'ALL'):
+                    if (command == 'Tune In'):
+                        self.langs.insert(0, lang) #move this lang to front of list to show first.
+                    else:
+                        if (lang in self.langs):
+                            self.langs.remove(lang) #remove this lang from list to hide it.
+                else:
+                    if (command == 'Tune In'):                        
+                        #show all langs..
+                        self.langs = ['video', 'hotkeys', '_meta'] #for now hardcoded..
+                    else:
+                        self.langs = self.langs[:1] #for now just show first lang..
+
+                self.set_time(s, e, w, t) #update display with new time window and lang settings.
+
+
+        #add more commands as needed.
+
+    def show_mrroboto(self):
+        """Bring MrRoboto to the front if not already."""
+        #get all windows, find mrroboto window and bring to front.  
+
+        self.get_window_info() #update window info first.
+
+        for pid, w in self.windows.items():
+            logger.debug(f'Checking window for MrRoboto: {w["title"]}')
+
+            if ('mrroboto' in w['title'].lower()):
+                logger.info(f'Bringing MrRoboto to front: {w["title"]}')
+                #this should already have the topic selected and also run a chat.. show any changes..
+                try:
+                    win32gui.SetForegroundWindow(w['hwnd'])
+                except Exception as e:
+                    logger.error(f'Error bringing MrRoboto to front: {e}')
+                break
+
+    def parseQRData(self, qrdata):
+        """Parse the QR data and extract relevant information."""
+        # For simplicity, just return the data as is.
+        lines = qrdata.split('\n')
+        currentcmd = ""
+        vars = {}
+        ret = []
+        tempidx = 0
+        lang = 'hotkeys'
+        for idx, line in enumerate(lines):
+#            logger.info(f'QR Data Line: {line}')
+            type = line[:2] #first 2 chars is type
+            if (len(line) > 3 and line[0] == '<' and line[1] == '<' and line[-2] == '>' and line[-1] == '>'):
+                #lang command
+                lang = line[2:-2]
+            if (type == '> '):
+                #command line internal command
+                if (currentcmd != ""):
+                    #store previous command before starting new one.
+                    ret.append({'type': type, 'lang': lang, 'cmd': currentcmd, 'vars': vars, 'timestamp': time.time()})
+                currentcmd = line[2:]
+                sp = currentcmd.find('[')
+                ep = currentcmd.find(']')
+                if (sp != -1 and ep != -1 and ep > sp):
+                    #has embedded variable, parse out and add to vars.
+                    varstr = currentcmd[sp+1:ep]
+                    currentcmd = currentcmd[:sp-1] #remove assumed white space
+                    seq = varstr.split(',')
+                    vars['SEQ'] = seq
+
+
+            if (type == '$$'):
+                #special trey data line
+                if (len(line) == 2):
+                    #execute command
+                    if (currentcmd != ""):
+                        type = '> '
+                    vars['KLANG'] = lang
+                    ret.append({'type': type, 'lang': lang, 'cmd': currentcmd, 'vars': vars, 'timestamp': time.time()})
+#                    logger.info(f'Adding QR {type}: {currentcmd}')
+                    currentcmd = ""
+                    vars = {}
+
+                else:
+                    parts = line[2:].split('=')
+                    if (len(parts) >= 2):
+                        key = parts[0]
+                        value = ''.join(parts[1:])
+                        vars[key] = value
+            if (type == '~~'):
+                #end of command
+                w = line[2:].split('|')
+                vars['KLANG'] = lang
+                if (len(w) == 2):
+                    word = w[0]
+                    keys = w[1].split(',')
+                    ret.append({'type': type, 'lang': lang, 'index': tempidx, 'word': word, 'keys': keys, 'timestamp': time.time()})
+                    tempidx += 1
+#                    logger.info(f'Adding QR {type}: {word}')
+                if (len(w) == 3):
+                    idx = w[0]
+                    word = w[1]
+                    keys = w[2].split(',')
+                    ret.append({'type': type, 'lang': lang, 'index': idx, 'word': word, 'keys': keys, 'timestamp': time.time()})
+
+        if (currentcmd != ""):
+            #store last command if exists.
+            ret.append({'type': type, 'lang': lang, 'cmd': currentcmd, 'vars': vars, 'timestamp': time.time()})                
+
+        return ret
+    
+    # Snip...
+    def runQRThread(self):
+        # Step 2: Create a QThread object
+        self.thread = QThread()
+        # Step 3: Create a worker object
+        self.worker = QRWorker(self.queue)
+        # Step 4: Move worker to the thread
+        self.worker.moveToThread(self.thread)
+        # Step 5: Connect signals and slots
+        self.thread.started.connect(self.worker.run)
+        self.worker.finished.connect(self.thread.quit)
+        self.worker.finished.connect(self.worker.deleteLater)
+        self.thread.finished.connect(self.thread.deleteLater)
+        self.worker.progress.connect(self.reportProgress)
+        # Step 6: Start the thread
+        self.thread.start()
+
+    def runQRInThread(self):
+        # Step 2: Create a QThread object
+        self.inthread = QThread()
+        # Step 3: Create a worker object
+        self.inworker = QRInWorker(self.inqueue)
+        # Step 4: Move worker to the thread
+        self.inworker.moveToThread(self.inthread)
+        # Step 5: Connect signals and slots
+        self.inthread.started.connect(self.inworker.run)
+        self.inworker.finished.connect(self.inthread.quit)
+        self.inworker.finished.connect(self.inworker.deleteLater)
+        self.inthread.finished.connect(self.inthread.deleteLater)
+        self.inworker.progress.connect(self.reportProgressIn)
+        # Step 6: Start the thread
+        self.inthread.start()
+
+
+
+    import pyrebase
+
+    def set_feedback(self, feedback, vars = {}, rerun=False):
+        try:
+            db = self.firebase.database()
+
+            data = {"feedback": feedback}
+            date_str = time.strftime("%Y%m%d")
+            time_str = time.strftime("%H%M%S")
+            db.child("channels").child(self.myuser['localId']).child("feedback").child(date_str).child(time_str).child(self.myuser['localId']).set(data, self.myuser['idToken'])
+        except Exception as e:
+            #if fail
+            if (rerun):
+                return
+            auth = self.firebase.auth()
+            user = auth.refresh(self.myuser['refreshToken'])
+            self.myuser = user
+            self.set_feedback(feedback, vars, True)
+
+    def start_record(self):
+        try:
+            db = self.firebase.database()
+
+            data = {"status": "recording", "timestamp": time.time()}
+            #get date YYYYMMDD
+            date_str = time.strftime("%Y%m%d")
+            time_str = time.strftime("%H%M%S")
+            mydata = db.child("channels").child(self.myuser['localId']).shallow().get(self.myuser['idToken'])
+            print(mydata.val())
+            db.child("channels").child(self.myuser['localId']).update(data, self.myuser['idToken'])
+            data = {"feedback": "test"}
+            print(data)
+            db.child("channels").child(self.myuser['localId']).child("feedback").child(date_str).child(time_str).child(self.myuser['localId']).set(data, self.myuser['idToken'])
+        except Exception as e:
+            #if fail
+            auth = self.firebase.auth()
+            user = auth.refresh(self.myuser['refreshToken'])
+            self.myuser = user
+
+
+    def login(self):
+        auth = self.firebase.auth()
+        email = self.cfg["trey"]["user"]
+        password = self.cfg["trey"]["pwd"]
+        try:
+            user = auth.sign_in_with_email_and_password(email, password)
+            # Extract the UID (localId) from the user object
+            self.myuser = user
+#            uid2 = user['userId']
+            print(f"Successfully signed in. User UID: {self.myuser['localId']} {self.myuser['idToken']}")
+            logger.info(f'Firebase login successful for {email}, UID: {self.myuser['localId']}')
+            self.start_record()
+        except Exception as e:
+            logger.error(f'Firebase login failed: {e}')
+            print(f'Firebase login failed: {e}')
+
+
+    def getColorFromSequence2(self, seqno, format="rgb"):
+        wbarray = [0,1,0,1,0,0,1,0,1,0,1,0] #for now fixed from C
+        seqno = seqno % len(wbarray)
+        if wbarray[seqno] == 0:
+            return "rgb(0,0,0)" if format == "rgb" else "#ffffff"
+        else:
+            return "rgb(255,255,255)" if format == "rgb" else "#000000"
+
+        
+
+    def getColorFromSequence(self, seqno, format="rgb"):
+        NUM_COLORS = 6
+        """
+        Generates a color string (RGB or hexadecimal) based on a sequence number.
+        """
+        adjust = int(seqno / NUM_COLORS)  # Ensure adjust is an integer
+        adjust = adjust % (NUM_COLORS / 2)
+        r = 0
+        g = 0
+        b = 0
+
+        if seqno % NUM_COLORS == 0:
+            r = 255
+        elif seqno % NUM_COLORS == 1:
+            r = 255
+            g = 127
+        elif seqno % NUM_COLORS == 2:
+            r = 255
+            g = 255
+        elif seqno % NUM_COLORS == 3:
+            g = 255
+        elif seqno % NUM_COLORS == 4:
+            b = 255
+        elif seqno % NUM_COLORS == 5:
+            r = 148
+            b = 211
+
+        if adjust > 0:
+            r = int(r * (1 - (adjust / NUM_COLORS)))
+            g = int(g * (1 - (adjust / NUM_COLORS)))
+            b = int(b * (1 - (adjust / NUM_COLORS)))
+
+        if format == "hex":
+            def toHex(c):
+                return c.to_bytes(1, 'big').decode('hex')
+            return "#" + toHex(r) + toHex(g) + toHex(b)
+        else:
+            return "rgba(" + str(r) + "," + str(g) + "," + str(b) + ",1)"
+
+    def init_fb(self):
+        databaseURL = self.cfg["firebase"]["fbconfig"]["databaseURL"]
+            # Init firebase with your credentials
+        import pyrebase
+        self.firebase = pyrebase.initialize_app({'apiKey': self.cfg["firebase"]["fbconfig"]["apiKey"], 'authDomain': self.cfg["firebase"]["fbconfig"]["authDomain"], 'databaseURL':databaseURL, 'storageBucket': self.cfg["firebase"]["fbconfig"]["storageBucket"]})    
+        self.login()
+
+
+    def show_tray(self, qapp):
+        # 2. Create the system tray icon
+        image = QImage(64, 64, QImage.Format_ARGB32)
+        image.fill(0x00ff0000) # Fill with transparent background
+
+        # ... use QPainter to draw on the image if needed ...
+        logger.info('Creating system tray icon')
+        pixmap = QPixmap.fromImage(image)
+        icon = QIcon(pixmap) # Use the pixmap as the icon
+        tray = QSystemTrayIcon()
+        tray.setIcon(icon)
+        tray.setVisible(True)
+
+        # 3. Create a context menu
+        menu = QMenu()
+
+        # Define menu actions
+        # Action to show a message
+        show_action = QAction("Show Message")
+        show_action.triggered.connect(lambda: QMessageBox.information(None, "PyQt5 Systray", "Hello from the tray app!"))
+        menu.addAction(show_action)
+
+        # Add a separator
+        menu.addSeparator()
+
+        # Action to quit the application
+        quit_action = QAction("Quit")
+        quit_action.triggered.connect(qapp.quit)
+        menu.addAction(quit_action)
+
+        # 4. Add the menu to the tray icon
+        tray.setContextMenu(menu)
+
+        # Optional: Add a tooltip (hover text)
+        tray.setToolTip("My PyQt5 Tray App")
+
+        # Optional: Show a balloon message on launch (Windows/Linux)
+        tray.showMessage("My PyQt5 Tray App", "Application started in the background", QSystemTrayIcon.Information, 2000)
+
+    def __init__(self, q=None, inq=None, cfg=None, qapp=None):
         super().__init__()
         self.highlightrect = {'x': 100, 'y': 100, 'width': 200, 'height': 200}
+        self.bboxes = [] #list of drawn boxes..
         self.highlighton = False
+        self.startx = 0
+        self.queue = q
+        self.inqueue = inq
+        self.qapp = qapp
+        self.cfg = cfg
+        self.myuser = None
+        self.geo = None
+        self._bbox = None
+        self.qr_in = []
+        self.qr_out = []
+        self.ocrtext = ""
+        self.windowlabels = {} #list of window details by pid
+        self.windowcounter = 0
+        self.screenshots = [] #list of screenshots per monitor
+        self.topichistory = []
+        self.bookhistory = []
+        self.reading_topic = None
+        self.filters = {}
+        self.windows = {} #current windows by pid, updated by window thread.
+        self.myactions = [] #list of current actions to display, updated by QR commands.
+        self.trey_data = {} #current data to display, updated by QR commands and transcription.
+        self.similar = [] #current similar items to display, updated by QR commands and transcription.
 
+        #rerunning with this may require separate queue, or indicator for rerun in the data.  For now same..
+        self.transcriber = transcriber.transcriber(self, mykeys.MyKeys(config.cfg), self.queue) #maybe want different queue..
+        #need to load book to have same topics as _meta.. ugh..
+        book = self.transcriber.read('book', self.transcriber.getTime(-180), None, './book/')
+
+        #for now just fixed 30 days max info.  
+        self.tmap = [] #current transcripts in time window, sorted by time.  
+        self.aggmap = [] #aggregated info for current time window, updated as new transcripts come in.
+
+        self.s = 0 #current start time of window
+        self.e = 0 #current end time of window
+        self.langs = ['hotkeys', 'video'] #read and show in main display
+        self.currentsound = None #current sound being played.
+        self.currentvideo = None #current video being played.
+        self.speed = 1.0
+        self.playback_speed = 1.0
+
+        self.mylayout = QVBoxLayout()
+
+        if (self.cfg is not None and 'firebase' in self.cfg):
+            self.init_fb()
         # set the title
-        self.setWindowTitle("Python")
 
-        self.setWindowOpacity(0.5)
-        screens = qapp.screens()
+
+
+        color = "red" #for now just red, can use color sequence later. Not very visible with several colors..
+        self.color = "red"
+
+        self.setWindowOpacity(config.custom_settings.get('OPACITY', 0.8)) #default opacity, can be set by QR command as well.
+        #Qt.WA_TransparentForMouseEvents | Qt.WindowTransparentForInput to make click-through
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool | Qt.WA_TransparentForMouseEvents | Qt.WindowTransparentForInput)
+        screens = self.qapp.screens()
         logger.info('Listing available screens')
-        primary_screen = qapp.primaryScreen()
+        primary_screen = self.qapp.primaryScreen()
         if len(screens) == 1:
             logger.info('Only one screen detected, add a second monitor to use trey overlay.')
         for i, s in enumerate(screens):
@@ -191,153 +2386,1627 @@ class MyWindow(QMainWindow):
                 # setting  the geometry of window
                 #add window to second monitor if available
                 self.setGeometry(geometry.x(), geometry.y(), geometry.width(), geometry.height())
+                self.startx = geometry.x()
+                self.geo = geometry
+                self._bbox = [0,geometry.width(), 0,geometry.height()]
+
+                print(f'Setting window to second monitor at {geometry.x()},{geometry.y()} size {geometry.width()}x{geometry.height()}')
+                self.setWindowTitle("Trey - " + s.name())
 
 #        self.setGeometry(60, 60, 600, 400)
-
+        for i in range(100):
+            self.windowlabels[str(i)] = QLabel(f'Label {i}', self)
         # creating a label widget
-        self.label_1 = QLabel("transparent ", self)
+
+
+        self.video_widget = QVideoWidget(self)
+        self.video_widget.setGeometry(0, 0, self.width(), self.height()) #set up location
+#        self.video_widget.setGeometry(int(self.width()*0.2), int(self.height()*0.2), int(self.width()*0.5), int(self.height()*0.5)) #set up location
+#        self.set_geometry(self.video_widget, 0.2, 0.2, 0.5, 0.5) #set up location
+#        self.video_widget.hide() #hide by default
+        self.video_widget.show()
+        self.video_player = QMediaPlayer()
+        self.video_player.setVideoOutput(self.video_widget)
+
+        self.video_overlay = QPaintedLabel(self) 
+        self.video_overlay.setGeometry(0, 0, self.width(), self.height())
+        self.video_overlay.setStyleSheet(f"background-color: rgba(0, 0, 0, 0);color: {color};") #transparent overlay for text
+        self.video_overlay.setAlignment(Qt.AlignCenter)
+        self.video_overlay.setText("Hello Overlay")
+        self.video_overlay.show()
+
+
+        #left mid
+        #BBOX(0,0.2,0.2,0.7)
+
+        self.label_filter_info = []
+        for i in range(25): #info 0-3, and addl potential filter/param labels
+            self.label_filter_info.append(QLabel("transparent ", self))
+            self.init_label(self.label_filter_info[i], 0, 0.2+0.02*i, 0.2, 0.02)
+
+
+        #mid right
+        #BBOX(0.8,0.1,0.2,0.6)
+        self.label_info = QLabel("transparent ", self)
         # moving position
-        self.label_1.move(100, 100)
+        self.init_label(self.label_info, 0.8, 0.1, 0.2, 0.6)
 
-        self.label_1.adjustSize()
+        #mid mid
+        #BBOX(0.3,0.2,0.7,0.7)
+        self.label_main = []
+        for i in range(3):
+            self.label_main.append(QLabel("transparent ", self))
+            self.init_label(self.label_main[i], 0.1+0.2*i, 0.2, 0.2, 0.5)
+#            self.label_main.append(QLabel("transparent ", self.video_widget))
+#            self.init_label(self.label_main[i], 0.33*i, 0, 0.33, 1)
+            # moving position
+            self.label_main[i].setText("Main Label")
+#            self.label_main[i].raise() #bring to front
+        
 
-        self.label_2 = QLabel(self)
+        #bot right
+        #BBOX(0.7,0.7,0.9,0.9)
+        self.label_qr = QLabel(self)
         #move to bottom right corner
-        self.label_2.setStyleSheet("background-color: rgba(255, 255, 255, 1);")
-        self.label_2.move(self.width() - 400, self.height() - 300)
+        self.init_label(self.label_qr, 0.7, 0.7, 0.2, 0.2)
+
+        self.label_ps = []
+        wbarray = [0,1,0,1,0,0,1,0,1,0,1,0] #for now fixed from C
+        colorarray = [""]
+        fullwidth = self.geo.width()
+        pwidth = int(fullwidth/5)
+        fontsize = 16
+        for i in range(24): #assume 25 key range for now..
+            self.label_ps.append(QLabel(self))
+            color = self.getColorFromSequence2(i) #wb only for now..
+            if (wbarray[i%len(wbarray)] == 0):
+                self.label_ps[i].setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};border: 1px solid black;")
+            else:
+                self.label_ps[i].setStyleSheet(f"background-color: rgba(63, 63, 63, 1);color: {color};border: 1px solid black;")
+            font = QFont("Courier", fontsize-wbarray[i%len(wbarray)]*2) # Specify font family and size
+            self.label_ps[i].setFont(font)
+#            self.label_ps[i].setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};")
+            self.label_ps[i].move(int(pwidth*1.5+(i//12)*pwidth+wbarray[i%len(wbarray)]*20), int(self.geo.height() - (0.65*pwidth-(i%12)*fontsize)))
+            self.label_ps[i].setFixedHeight(fontsize-wbarray[i%len(wbarray)]*2)
+            self.label_ps[i].setFixedWidth(pwidth-wbarray[i%len(wbarray)]*40)
+            self.label_ps[i].setTextFormat(Qt.PlainText)
+
+        #bot left
+        #BBOX(0,0.8, 0.2, 1)
+        self.label_p = QLabel(self)
+        # 2. Set a monospaced font
+        font = QFont("Courier", fontsize-2) # Specify font family and size
+        font.setFixedPitch(True)    # Ensure it uses the fixed pitch version if available
+        self.label_p.setFont(font)    # Apply the font to the label        
+        self.label_p.setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};border: 1px solid black;")
+        self.label_p.move(0, self.geo.height() - pwidth)
+        self.label_p.setFixedHeight(pwidth)
+        self.label_p.setFixedWidth(pwidth)
+#        self.label_p.setTextFormat(Qt.PlainText)
+#        self.label_p.setStyleSheet("background-image: url(path/to/your/image.png); border: 2px solid blue;")
+
+        metrics = QFontMetrics(font)
+        # Using boundingRect is generally more accurate than width() or horizontalAdvance()
+        w = metrics.boundingRect("X").width()
+        h = metrics.boundingRect("X").height()
+        self.pwidth = self.geo.width()/w
+        self.pheight = 200/h
+        logger.info(f'MyWindow {self.pwidth} X {self.pheight} loaded')
+
+#        QFontDatabase.addApplicationFont("../fonts/FRBCistercian.otf")
+#for now no custom fun font.. 
+#just use UTF-8 characters and a monospaced font.
+
+        #bot mid
+        #BBOX(0.2,0.01, 0.02, 0.6, 0.06)
+        self.label_times = []
+        for i in range(2):
+            #show event types for each time point.
+
+            t = QLabel(f'Time{i}', self)
+            t.setFont(font)    # Apply the font to the label        
+            t.move(int(self.geo.width()*0.2), int(self.geo.height()*0.02*(i*1.6+1.5)))
+            t.setFixedHeight(h+2)
+            w = metrics.boundingRect(chr(0x2160)).width()
+            t.setFixedWidth(int(w*60*1.5)) #60 char of time info.. 36-96 ? 
+            t.setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};")
+            #some reason <pre> makes formatting a bit nicer..
+            ltext = ""
+            startchar = 0x2160 #start of roman numeral characters, just to have some unique chars to test with for now.
+            startchar = 0x30A1 #start of katakana characters, just to have some unique chars to test with for now.
+            for j in range(60):
+                ltext += chr(startchar+j) #white square as placeholder for now.
+#            t.setText('<pre>\u2160\u2160\u2160\u2160\u2160</pre>') #roman numeral 1 as placeholder for now.
+            t.setText(f'<pre>{ltext}</pre>')
+
+            t.adjustSize()
+
+            self.label_times.append(t)
+
+        #top left
+        #BBOX(0,0.01, 0.02, 0.1, 0.1)
+        self.label_timeinfo = []
+        for i in range(4):
+            self.label_timeinfo.append(QLabel(self))
+            self.label_timeinfo[i].setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};border: 1px solid black;")
+            font = QFont("Courier", fontsize-4) # Specify font family and size
+            self.label_timeinfo[i].setFont(font)
+            self.label_timeinfo[i].move(int(self.geo.width()*0.08), int(self.geo.height()*0.02*(i+1.5)))
+            self.label_timeinfo[i].setFixedHeight(fontsize-4)
+            self.label_timeinfo[i].setFixedWidth(int(self.geo.width()*0.1))
+            self.label_timeinfo[i].setTextFormat(Qt.PlainText)
+
+
+        self.label_topic_info = []
+        for i in range(2):
+            self.label_topic_info.append(QLabel(self))
+            self.label_topic_info[i].setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};border: 1px solid black;")
+            font = QFont("Courier", fontsize-4) # Specify font family and size
+            self.label_topic_info[i].setFont(font)
+            self.label_topic_info[i].move(int(self.geo.width()*0.1), int(self.geo.height()*(0.08+0.02*(i+1))))
+            self.label_topic_info[i].setFixedHeight(int(self.geo.height()*(0.02+(0.06*i)))) #larger height for context info..
+            self.label_topic_info[i].setFixedWidth(int(self.geo.width()*0.6))
+#            self.label_topic_info[i].setTextFormat(Qt.PlainText)
 
         # show all the widgets
         self.show()
         self.showQR("Starting Trey Overlay")
         #hide after a few seconds
         #workaround, something wrong with the PyQt if we hide this immediately
-        t = threading.Timer(3, _hide, args=["Hello from Timer!"])
+        t = threading.Timer(10, _hide, args=["Hello from Timer!"])
         t.start()  # Start the timer in a new thread
         logger.info('Window created')
+        self.read(self.langs, None, None) #initial read of all data, can be filtered by time later.
 
+        self.runQRThread() #
+        self.runQRInThread() #start thread to detect incoming QR data from other apps or locations..
+
+#        self.show_tray(self.qapp) #show system tray icon for quick access to some functions.
+
+        #start internal thread to check the queue for updates.  
+        #and update the window when there is new data.  
+
+
+    def on_click(self, x, y, button, pressed):
+
+        if pressed:
+            temp = win32gui.WindowFromPoint((x, y))
+            if (self.in_trey((x,y))): #only capture second monitor clicks
+                action = {'button': str(button), 'x': x, 'y': y, 'hwnd': temp, 'act': 'click'}
+        #        action = f'Mouse clicked at ({x}, {y}) with {button}'
+                self.update_actions(temp, action)
+
+    def update_actions(self, hwnd, action):
+
+        """Update the actions for the given window handle."""
+        threadid, procid = win32process.GetWindowThreadProcessId(hwnd)
+        action['threadid'] = threadid
+        action['procid'] = procid
+        if (hwnd in self.windows):
+            if 'actions' not in self.windows[hwnd]:
+                self.windows[hwnd]['actions'] = []
+            self.windows[hwnd]['actions'].append(action)
+            if (len(self.windows[hwnd]['actions']) > 100):
+                logger.debug(f'Removing oldest action from {hwnd} actions list')
+                self.windows[hwnd]['actions'].pop(0)
+
+        logger.info(f'{action}')
+        self.myactions.append(action)  # Append to global actions list
+        #remove if too many actions
+        if len(self.myactions) > 100:
+            logger.debug('Removing oldest action from global actions list')
+            self.myactions.pop(0)
+
+
+    def update_window_data(self, hwnd, title, rect, initobj=None):
+
+        if (hwnd not in self.windows):
+            self.windows[hwnd] = {}
+            if (initobj is not None):
+                self.windows[hwnd] = initobj
+
+        self.windows[hwnd]['title'] = title
+        self.windows[hwnd]['rect'] = rect
+        self.windows[hwnd]['hwnd'] = hwnd
+        logger.info(f'{title} at {rect}')
+
+
+    def window_list_callback(self, hwnd, extra):
+        if win32gui.GetWindowText(hwnd) != "":
+            # Get window title
+            title = win32gui.GetWindowText(hwnd)
+            # Get window position and size (left, top, right, bottom)
+            try:
+                rect = win32gui.GetWindowRect(hwnd)
+                if (title.startswith("Trey - ")):
+                    #get the rect we need to be aware of.  
+                    #expand rect some windows have odd borders.  
+                    logger.info(f"Found Trey window: {title} at {rect}")
+                    x, y, right, bottom = rect
+                    x -= 8  # Adjust for window borders
+                    y -= 8
+                    right += 8
+                    bottom += 8
+                    rect = (x, y, right, bottom)
+                    self.trey_data['rect'] = rect
+                    self.trey_data['hwnd'] = hwnd
+                    self.trey_data['title'] = title
+
+                trect = (0,0,0,0)
+                if ('rect' in self.trey_data):
+                    trect = self.trey_data['rect']
+        #            trect[0] += 50 #some margin for overlapping windows.  
+
+                # Check if the window is fully within the trey window
+                if (self.in_trey(rect) and win32gui.IsWindowVisible(hwnd)): #only monitor visible windows..
+                    threadid, procid = win32process.GetWindowThreadProcessId(hwnd)
+                    self.update_window_data(hwnd, title, rect, {'threadid': threadid, 'procid': procid, 'hwnd': hwnd})
+                    x, y, right, bottom = rect
+                    width = right - x
+                    height = bottom - y
+                    action = {'title': title, 'rect': rect, 'hwnd': hwnd, 'procid': procid, 'threadid': threadid, 'act': 'init'}
+                    self.update_actions(hwnd, action)
+            except Exception as e:
+                logger.error(f'Error processing window {hwnd} {title}: {e}')
+        return True # Continue enumeration    
+
+    def in_trey(self, rect):
+        """Check if the rectangle is within the trey window."""
+        if ('rect' in self.trey_data):
+            trect = self.trey_data['rect']
+#            logger.debug(f"Checking if {rect} is in {self.trey_data['rect']}")
+    #        print(f"Checking if {rect} is in {self.trey_data['rect']}")
+            if (len(rect) == 4 and len(trect) == 4):
+                return (rect[0] >= trect[0] and rect[1] >= trect[1] and rect[2] <= trect[2] and rect[3] <= trect[3])
+            elif (len(rect) == 2 and len(trect) == 4): #allow for point check
+                return (rect[0] >= trect[0] and rect[1] >= trect[1] and rect[0] <= trect[2] and rect[1] <= trect[3])
+        return False
+
+
+    def get_top_z(self): #this also initializes z_index for self.windows
+        hwnd = win32gui.GetTopWindow(0)
+        z_index = 0
+        topz = None
+        logger.debug("Starting z-index enumeration of windows in trey area")
+        while hwnd:
+            threadid, procid = win32process.GetWindowThreadProcessId(hwnd)
+            rect = win32gui.GetWindowRect(hwnd)
+            if (self.in_trey(rect)):
+                if (topz is None and hwnd in self.windows and win32gui.IsWindowVisible(hwnd)):
+                    topz = hwnd
+                if (hwnd in self.windows):
+                    logger.debug(f"Found window in trey at z index {z_index}: {self.windows[hwnd]['title']} with rect {rect}")
+                    self.windows[hwnd]['z_index'] = z_index
+            hwnd = win32gui.GetWindow(hwnd, win32con.GW_HWNDNEXT)
+            z_index += 1   
+        if (topz is not None):
+            logger.debug(f"Got top z window: {topz} at index {self.windows[topz]['z_index']}")     
+        return topz
+    
+    def get_window_info(self):
+        self.windows = {} #reset windows, will be updated by callback.  This is to remove windows that are closed or no longer in trey area.
+        if ('rect' not in self.trey_data):
+            win32gui.EnumWindows(self.window_list_callback, None)    
+
+        win32gui.EnumWindows(self.window_list_callback, None)    
+
+        self.active_window = self.get_top_z() #get top z window in trey area, not necessarily active window.
+
+        self.updateLabels(self.windows) #gives info for all windows
+
+    def visualize_kg(self, kg, topic="ALL"):
+        #dpi 96 assume..
+        #why we cant pass in pixels?  
+        width_inches = self.geo.width() / 96
+        height_inches = self.geo.height() / 96
+
+        if (topic == "ALL" or topic not in kg):
+            fname = "kg_rand.png"
+            logger.info(f'Topic {topic} not found in KG, visualizing entire graph with {len(kg.nodes())} nodes and {len(kg.edges())} edges')
+            subgraph = nx.ego_graph(kg, list(kg.nodes())[random.randint(0, len(kg.nodes())-1)], radius=1) #get subgraph around first node with radius 1, can adjust as needed.
+        else:
+            fname = f"./temp/{topic}.png"
+            subgraph = nx.ego_graph(kg,topic, radius=1) #get subgraph around topic with radius 2, can adjust as needed.
+
+        if (os.path.exists(fname) and os.path.getmtime(fname) > time.time() - 86400): #if file exists and is less than 1 day old, use it instead of regenerating
+            self.play_video(fname) #for now just use video player to show image, can adjust later for better performance if needed.
+            return
+        else:
+            directory_path = os.path.dirname(fname)
+            if not os.path.exists(directory_path):
+                os.makedirs(directory_path)
+
+        logger.info(f'Visualizing knowledge graph for topic: {topic} with {len(subgraph.nodes())} nodes and {len(subgraph.edges())} edges')
+
+#        print(subgraph)
+        plt.rc('text', usetex=False) # Ensure global setting is False
+        fig, ax = plt.subplots(figsize=(width_inches, height_inches), dpi=96)
+#        nx.draw(subgraph, with_labels=True)
+        nx.draw(subgraph, with_labels=True, node_color='skyblue', node_size=500, edge_color='gray', font_size=10)
+
+#        graph_text = nx.write_network_text(subgraph, sources=[topic])
+#        ax.text(0.5, 0.01, graph_text, transform=ax.transAxes, fontsize=8, verticalalignment='bottom', horizontalalignment='center', wrap=True)
+        # 3. Save the figure to a file
+        plt.savefig(fname, format="png")
+#        print(f"Graph saved as {fname}")
+        #show png result as overlay..
+        self.play_video(fname) #for now just use video player to show image, can adjust later for better performance if needed.
+
+
+
+
+    #not used..
+    import pyqtgraph as pg
+    def visualize_networkx_pyqtgraph(self, graph):
+        # 1. Calculate node positions using a NetworkX layout algorithm
+        # fruchterman_reingold_layout is a common "spring layout"
+        pos = nx.fruchterman_reingold_layout(graph)
+
+        # 2. Format positions for PyQtGraph: an Nx2 numpy array of (x, y)
+        # The order of positions must match the order of nodes in the graph
+        nodes_list = list(graph.nodes())
+        positions = np.array([pos[node] for node in nodes_list])
+
+        # 3. Format edges for PyQtGraph: an Mx2 numpy array of (node_index_1, node_index_2)
+        # PyQtGraph requires zero-based indices corresponding to the position array
+        node_to_index = {node: i for i, node in enumerate(nodes_list)}
+        edges = np.array([(node_to_index[u], node_to_index[v]) for u, v in graph.edges()])
+
+        mw = self.video_overlay
+        view = pg.GraphicsLayoutWidget()
+        mw.setCentralWidget(view)
+        p = view.addPlot(title="Graph Visualization")
+
+        # Create the GraphItem
+        graph_item = pg.GraphItem(nodeSymbols='o', symbolSize=10, pxMode=False)
+        p.addItem(graph_item)
+
+        # Set the graph data
+        graph_item.setData(pos=positions, edges=edges,
+                        # Optional: set colors or other properties
+                        edgePen=pg.mkPen(color=(200, 200, 200), width=1),
+                        symbolBrush=(50, 50, 150, 200))
+
+        # Optional: adjust view to fit the graph
+        p.autoRange()
+
+        mw.show()
+
+    def init_label(self, label, x, y, w, h, color='red'):
+        label.setTextFormat(QtCore.Qt.RichText)
+        label.setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};border: 2px solid black;")
+        label.setAlignment(Qt.AlignTop)
+        label.adjustSize()
+        label.setWordWrap(True)
+        self.set_geometry(label, x, y, w, h)
+
+
+    def set_geometry(self, widget, x, y, w, h):
+        widget.adjustSize()
+        widget.move(int(self.geo.width()*x), int(self.geo.height()*y))
+        widget.setFixedWidth(int(self.geo.width()*w))
+        widget.setFixedHeight(int(self.geo.height()*h))
+
+    def save_screenshot(self, lang='hotkeys', fname='', bbox=None, ocr=False):
+        """Save a screenshot of the current window."""
+        screen = self.qapp.primaryScreen()
+        screens = self.qapp.screens()
+        logger.info('saving screenshot')
+        screenshot = None
+        for i, s in enumerate(screens):
+
+            screenshot = s.grabWindow( 0 ) # 0 is the main window, you can specify another window id if needed
+
+
+        self.screenshots.append(screenshot)
+        logger.info('Capturing Screen')
+
+        now = datetime.now()
+        if (fname == ''):
+            fname = f'{now.strftime("%Y%m%d_%H%M%S")}.png'
+        folder = f'../transcripts/{lang}/' 
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+        geometry = self.geometry()
+
+        screenshot.save(folder + fname, 'png')
+        logger.info(f'Screenshot saved as {folder + fname}')
+        ocrtext = ""
+        if (ocr):
+            #do OCR on screenshot
+            img = Image.open(folder + fname)
+            #get bbox area
+            if (bbox is not None):
+                bbox = bbox.split(',')
+                bbox = [int(b) for b in bbox]
+                bbox = self.format_bbox(bbox)
+                img = img.crop((bbox[0]-self.geo.x(), bbox[2]-self.geo.y(), bbox[1]-self.geo.x(), bbox[3]-self.geo.y()))
+                logger.info(f'Cropping image to bbox: {bbox}')
+
+            ocrtext = pytesseract.image_to_string(img)
+
+        return ocrtext, folder + fname
+        
+    def format_bbox(self, bbox):
+        if (bbox[0] > bbox[1]):
+            x1 = bbox[0]
+            bbox[0] = bbox[1]
+            bbox[1] = x1
+        if (bbox[2] > bbox[3]):
+            y1 = bbox[2]
+            bbox[2] = bbox[3]
+            bbox[3] = y1
+        return bbox
+
+    def play_video(self, fname):
+        """Play a video file on the overlay."""
+        logger.info(f'Playing video: {fname}')
+        for i in range(3):
+            self.label_main[i].hide() #hide main labels when playing video, can adjust as needed.
+        self.label_qr.hide()
+        for l in self.label_ps:
+            l.hide()
+        for l in self.label_filter_info:
+            l.hide()
+        self.label_info.hide()
+        self.label_topic_info[0].hide()
+        self.label_topic_info[1].hide()
+        self.label_p.hide()
+        self.video_overlay.hide()
+
+
+        ext = os.path.splitext(fname)[1].lower()
+        if (self.currentvideo == fname):
+            logger.info('Video already playing')
+#            self.video_player.setMedia(QMediaContent(QUrl.fromLocalFile(fname)))
+            self.video_widget.show()
+            self.video_player.play()
+            #just restart..
+        elif (ext in ['.png']): #screenshot image..
+            self.video_overlay.setPixmap(QPixmap(fname).scaled(self.video_overlay.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
+            self.video_overlay.show()
+        else:
+            self.video_player.setMedia(QMediaContent(QUrl.fromLocalFile(fname)))
+            self.video_widget.show()
+            self.video_player.play()
+            self.currentvideo = fname
+    
+    def pause_video(self, hideme = True):
+        """Pause the video playback."""
+        logger.info('Pausing video')
+        self.highlighton = False #turn off highlight when pausing video, can adjust as needed.
+        self.video_player.pause()
+        self.video_widget.hide()
+#        self.video_player.setMedia(QMediaContent()) #clear media to stop playback and release resources.
+        self.video_overlay.hide()
+
+        for i in range(3):
+            self.label_main[i].show() #show main labels when pausing video, can adjust as needed.
+        self.label_qr.show()
+        for l in self.label_ps:
+            l.show()
+        for l in self.label_filter_info:
+            l.show()
+        self.label_info.show()
+        self.label_topic_info[0].show()
+        self.label_topic_info[1].show()
+        self.label_p.show()
+
+    def draw_screen_box(self, bbox=""):
+        """Draws a box around the screen."""
+        if (self.highlighton):
+            logger.info('Highlight already on, skipping draw_screen_box')
+        else:
+            ocrtext, fname = self.save_screenshot('hotkeys', 'screenshot.png')
+            self.play_video(fname)
+            self.highlighton = True
+
+        #get geometry of the highlight rectangle.  
+        if (bbox !=""): #xxyy
+            bbox = bbox.split(',')
+            bbox = [int(b) for b in bbox]
+            bbox = self.format_bbox(bbox)
+            self.highlightrect = {'x': bbox[0], 'y': bbox[2], 'width': bbox[1]-bbox[0], 'height': bbox[3]-bbox[2]}
+            self.video_overlay.set_overlay_bbox(self.highlightrect)
+#            self.video_widget.update()
+            logger.info(f'Screen box drawn: {self.highlightrect}')
+        else:
+            geometry = self.geometry()
+            self.highlightrect = {'x': geometry.x()+100, 'y': geometry.y()+100, 'width': geometry.width()-100, 'height': geometry.height()-100}
+
+        
+        self.update()  # Trigger a repaint to show the box
+        
     def hideme(self):
         """Method to close the window."""
         self.hide()
+
         logger.info('Window hidden')
-    def showQR(self, data):
+
+
+    def play(self, fname):
+        """Play a media file."""
+        logger.info(f'Playing file: {fname}')
+        #add actual playback logic here, e.g. open file with default app, or send command to other app, etc.
+        #for now just log it.
+        #get file type from extension
+        ext = os.path.splitext(fname)[1].lower()
+        if (ext in ['.mp4', '.avi', '.mkv']):
+            logger.info(f'Playing video file: {fname}')
+            #play on Qt video widget..
+            self.play_video(fname)
+
+
+
+        elif (ext in ['.mp3', '.wav', '.ogg']):
+            logger.info(f'Playing audio file: {fname}')
+            absolute_path = os.path.abspath(fname)
+            self.currentsound = playsound(absolute_path, block=False) #non-blocking play, may need to adjust for different file types and playback needs.
+        else:
+            logger.info(f'Unknown file type for playback: {fname}')
+        
+
+    def pause_tmap(self, hideme=True):
+        logger.info('Pausing playback')
+        #add actual pause logic here, e.g. pause video widget, or send command to other app, etc.
+        self.pause_video(hideme=hideme)
+
+        if (self.currentsound is not None and self.currentsound.is_alive()):
+            self.currentsound.stop() #stop current sound, may need to adjust for different playback needs.
+
+    def play_tmap(self, no=0):
+        logger.info(f'Playing next item in time map: {self.tmapindex} + {no}')
+        #find next item in tmap based on current time, and play it.  
+        #for now just log it, can add actual playback logic later.
+        if (len(self.tmap) == 0):
+            logger.info('Time map is empty, nothing to play.')
+            return
+        else:
+            if (self.tmapindex + no >= len(self.tmap)):
+                #time jump..?
+                #just play indicator?  
+                self.tmapindex = len(self.tmap) - 1
+            elif (self.tmapindex + no < 0):
+                #time jump back..?
+                #just play indicator?  
+                self.tmapindex = 0
+            else:
+                self.tmapindex += no
+
+            t = self.tmap[self.tmapindex]
+            print(t)
+            if (t.get('timestamp', None) is not None):
+                timestamp = t["timestamp"]
+                logger.info(f'Playing item with timestamp: {timestamp} {self.tmapindex}')
+                self.set_time(timestamp) #jump to time of item, can adjust as needed.
+                self.show_tmap(timestamp) #update time map display to show current item, can adjust as needed.
+            try:
+                if (t["vars"].get('fname', None) is not None):
+                    logger.info(f'Playing file: {t["vars"]["fname"]}')
+                    #add actual playback logic here, e.g. open file with default app, or send command to other app, etc.
+                    #assume video..
+                    self.play(t["vars"]["fname"]) #non-blocking play, may need to adjust for different file types and playback needs.
+                elif (t["vars"].get('FILE', None) is not None):
+                    logger.info(f'Playing file: {t["vars"]["FILE"]}')
+                    #add actual playback logic here, e.g. open file with default app, or send command to other app, etc.
+                    #for now assume audio..
+                    self.play(t["vars"]["FILE"]) #non-blocking play, may need to adjust for different file types and playback needs.
+                elif (t['type'] == '> ' and t['cmd'] == 'Add Bookmark'):
+                    #read in this and start playwrighty 
+                    self.inqueue.put(('\n').join(t['lines']))
+                else:
+                    if (t['type'] == "**"):
+                        if (t['topic'] != self.reading_topic):
+                            self.reading_topic = t['topic']
+                            logger.info(f"Topic changed to {t['topic']}")
+                            text = t['topic']
+                            speak('**' + text)
+                        #if we have further commands, continue..
+                    
+                    logger.warning(f"Unknown command in time map item, no file to play. \nData: {t}")
+                    if (self.tmapindex != 0 and self.tmapindex != len(self.tmap)-1):
+                        #get word from dictionary.  
+                        if (no > 0):
+                            speech.play_synth([48,53], 12, 0.05) #tick
+                        else:
+                            speech.play_synth([48,54], 12, 0.05) #tock
+                        self.play_tmap(no) #play next item to get to useful command..                            
+#                    text = self.transcriber.write(t['lang'], t['cmd'], t['vars'], t['topic'], False)
+
+            except Exception as e:
+                logger.error(f'Error playing file from time map: {e}\nData: {t}')
+
+#            self.tmapindex += 1 #move to next item for next play command, can adjust as needed.
+            #time jump to next entry?
+#               next_time = self.tmap[self.tmapindex]['timestamp']
+#               self.set_time(next_time) #jump to time of next item, can adjust as needed.
+                #this will reread if necessary..
+
+
+
+    def show_tmap(self, current_time, secs=0):
+        logger.info('Updating time map display')
+        if (secs == 0):
+            secs = self.e - self.s #use full time range if secs not specified, can adjust as needed.
+        startchar = chr(0x30A1)
+        cnttext = ""
+        typecnttext = ""
+        sumval = 0
+        selected = []
+        maintimes = []
+        maintext = []
+
+        for i in range(60):
+            val = self.aggmap[i]['cnt']
+            sumval += val
+            cnttext += f'{chr(ord(startchar)+val)}'
+            val2 = len(self.aggmap[i]['cnts'])
+
+            typecnttext += f'{chr(ord(startchar)+val2)}'
+            if (i%20 == 0):
+                cnttext += ' ' #add space every 20 chars for readability, can adjust as needed.
+                typecnttext += ' '
+                maintimes.append(current_time - secs/2 + (i/60)*secs) #calculate time for each bucket, can adjust as needed.
+                maintext.append({'&&': '&&', '..': maintimes[-1], '**': '**'}) #placeholder for main text display, can adjust as needed.
+
+        maintimes.reverse() #reverse to have most recent time on right, can adjust as needed.
+        print(f"Current time: {current_time}, Time window seconds: {secs}")
+        sorted_tmap = sorted(self.tmap, key=lambda x: current_time - x['..'])
+#        print(f"Sorted tmap: {sorted_tmap}")
+        sorted_indices = sorted(range(len(self.tmap)), key=lambda i: abs(current_time - self.tmap[i]['..']))
+        print(f"Sorted indices: {sorted_indices}")
+        ctxtdic = {}
+        if (len(sorted_indices) > 0):
+            self.tmapindex = sorted_indices[0] #index of closest item in tmap to current time, can use this to select items to display or play etc.
+#            print(sorted_tmap[-10:]) #get last 10 items in sorted tmap for debugging, can adjust as needed.
+            print(sorted_tmap[:10]) #get first 10 items in sorted tmap for debugging, can adjust as needed.
+            skipped = 0
+            for i in range(len(sorted_tmap)): #check closest 10 items in tmap, can adjust as needed.
+                #compare to current time, and select if within current time window.  
+                #show one from each time window..
+                if (sorted_tmap[i]['..'] <= current_time - secs/2 or sorted_tmap[i]['..'] >= current_time + secs/2):
+                    skipped += 1
+                    if (skipped > 10):
+                        break #stop checking after skipping 10 items outside of time window, can adjust as needed.
+                    continue #skip items outside of time window, can adjust as needed.
+
+                for j in reversed(range(3)): #check most recent 3 time buckets, can adjust as needed.
+#                    if (maintext[j]['**'] == '**'):
+                        if (maintimes[j] <= sorted_tmap[i]['..'] < maintimes[j] + secs/3): #if item is within time bucket, can adjust bucket size as needed.
+    #                    if (sorted_tmap[i]['timestamp'] >= maintimes[j] and sorted_tmap[i]['timestamp'] < maintimes[j] + secs/20): #if item is within time bucket, can adjust bucket size as needed.
+                            if (sorted_tmap[i]['type'] == '> '): #only show commands for now.. no topic selection
+                                maintext[j]['**'] = sorted_tmap[i]['**']
+                                maintext[j]['..'] = sorted_tmap[i]['..']
+
+                                #really want a specific key here..
+                                mytime = sorted_tmap[i]['$$'].get('TIME', "_")
+                                ctxtkey = sorted_tmap[i]['$$']['URL'] if (sorted_tmap[i]['$$'].get('URL', None) is not None) else "_"
+                                if (ctxtkey == "_"):
+                                    ctxtkey = mytime #use text as fallback if no URL, can adjust as needed.
+
+                                if (mytime == self.tmap[self.tmapindex]['$$'].get('TIME', None)):
+                                    maintext[j]['&&'] = maintext[j]['&&'] + '\n>>>>\n\n' #indicator for currently playing item, can adjust as needed.
+
+                                if (ctxtdic.get(sorted_tmap[i]['&&'] + '_' + ctxtkey, None) is None):
+                                    newentry = self.transcriber.write(sorted_tmap[i]['<<'], sorted_tmap[i]['&&'], sorted_tmap[i]['$$'], sorted_tmap[i]['**'], False)
+                                    maintext[j]['&&'] = maintext[j]['&&'] + newentry
+                                    ctxtdic[sorted_tmap[i]['&&'] + '_' + ctxtkey] = newentry
+                                else:
+                                    if (sorted_tmap[i]['$$'].get('TEXT', None) is not None):
+                                        #display shortened context key
+                                        shortkey = ctxtkey[:20]
+                                        if (len(ctxtkey) > 20):
+                                            shortkey += '...'
+                                            shortkey += ctxtkey[-20:] #last 20 chars
+                                        shorttext = sorted_tmap[i]['$$']['TEXT'][:100] #shorten text for display, can adjust as needed.
+                                        maintext[j]['&&'] = maintext[j]['&&'] + '#' + shortkey + '\n' + shorttext + '\n'
+#                                maintext[j] = {'**': sorted_tmap[i]['**'], '..': sorted_tmap[i]['..'], '&&': self.transcriber.write(sorted_tmap[i]['<<'], sorted_tmap[i]['&&'], sorted_tmap[i]['$$'], sorted_tmap[i]['**'], False)}
+
+#                if (len(maintext) < 3 and sorted_tmap[i]['type'] == '> ' and sorted_tmap[i]['timestamp'] >= maintimes[len(maintimes)-1]): #only show commands for now.. no topic selection
+#                    self.transcriber.current_topic = sorted_tmap[i]['cmd'] #dont need topic to be updated..
+#                    maintext.append({'topic': sorted_tmap[i]['topic'], 'timestamp': sorted_tmap[i]['timestamp'], 'text': self.transcriber.write(sorted_tmap[i]['lang'], sorted_tmap[i]['cmd'], sorted_tmap[i]['vars'], sorted_tmap[i]['topic'], False)})
+
+            maintext = sorted(maintext, key=lambda x: x['..'])            
+            print(maintext)
+            for i in range(len(maintext)):
+#                if (temptext[0:2] != '**'):
+                temptext = f'{maintext[i]["&&"]}' #add topic as header if not already included, can adjust formatting as needed.
+                self.label_main[i].setText(temptext.replace('\n', '<br>'))
+                self.label_main[i].update()
+
+
+
+        if sumval > 0:            
+            logger.info(f"Data found {sumval} total commands in current time window.")
+
+        typecnttext = typecnttext.replace(startchar, '_')
+        cnttext = cnttext.replace(startchar, '_')
+
+        st = datetime.fromtimestamp(self.s).strftime('%Y%m%d %H%M%S')
+        et = datetime.fromtimestamp(self.e).strftime('%Y%m%d %H%M%S')
+
+        self.label_times[0].setText(f'<pre>{typecnttext}   {st}</pre>')
+        self.label_times[0].update()
+        self.label_times[1].setText(f'<pre>{cnttext}   {et}</pre>')
+        self.label_times[1].update()
+
+    def set_tmap(self, tmap = [], current_time=None):
+        logger.info(f'Updating time map display {len(tmap)}')
+        #allcommands..
+        self.tmap = tmap
+        startchar = chr(0x30A1)
+        startchar = chr(0x0041) #start with A for testing, can use other unicode chars as needed.
+        #need better than this, but..
+        self.aggmap = [{'cnt': 0, 'cnts': {} } for i in range(60)] #reset aggmap
+        max = 0
+        start_time = datetime.fromtimestamp(self.s)
+        end_time = datetime.fromtimestamp(self.e)            
+        secs = (self.e - self.s)
+        if (len(tmap) > 0):
+            if (current_time is None):
+                #mid of start/end                
+                current_time = start_time + timedelta(seconds=int(secs/2))
+                current_time = current_time.timestamp()
+
+            start_time = start_time.timestamp()
+            end_time = end_time.timestamp()
+            total_seconds = end_time - start_time
+            quantize_seconds = total_seconds / 60 #quantize into 60 time points for display
+            for i,cmd in enumerate(tmap):
+                t = cmd['timestamp']
+                if (t < start_time or t > end_time):
+                    continue #skip out of range
+                pos = int((t - start_time) / quantize_seconds)
+                self.aggmap[pos]['cnt'] += 1 #for now just count number of commands in each time bucket, can add more info later about types of commands etc.
+                self.aggmap[pos]['cnts'][cmd['type']] = self.aggmap[pos]['cnts'].get(cmd['type'], 0) + 1 #count by type as well.
+                if (self.aggmap[pos]['cnt'] > max):
+                    max = self.aggmap[pos]['cnt']
+            
+            if (max > 24):
+                for i in range(60):
+                    if (self.aggmap[i]['cnt'] > 0):
+                        self.aggmap[i]['cnt'] = math.ceil(self.aggmap[i]['cnt'] / max * 24) #scale to 24 for display purposes, can adjust as needed.
+
+            
+
+        self.show_tmap(current_time, secs)
+
+
+
+
+
+    def read(self, langs=None, start_time=None, end_time=None):
+        if (langs is None):
+            langs = self.langs
+        combined = []
+
+        for lang in langs:
+            data = self.transcriber.read(lang, start_time, end_time)
+            logger.info(f'Reading data for {lang} from {start_time} to {end_time}: {len(data)} entries')
+            #combine all data into single array sorted by timestamp
+            combined.extend(data)
+        combined.sort(key=lambda x: x['timestamp'])
+        return combined
+    
+            
+    
+
+    def set_time(self, t, s=0, e=0, w=0, langs=None):
+        if (langs is None):
+            langs = self.langs
+
+        localt = datetime.fromtimestamp(t)
+        formattedt = localt.strftime('%Y%m%d %H%M%S')
+        print(f"Setting time to {formattedt} with start {s}, end {e}, window {w}")
+        if (s == 0):
+            s = self.s
+        if (e == 0):
+            e = self.e
+        if (w == 0):
+            w = e - s
+
+        st = datetime.fromtimestamp(s).strftime('%Y%m%d %H%M%S')
+        et = datetime.fromtimestamp(e).strftime('%Y%m%d %H%M%S')
+        self.s = s
+        self.e = e
+
+        #do we need to reread
+        self.label_timeinfo[0].setText(f'$${formattedt}')
+        self.label_timeinfo[1].setText(f'$$ST={st}')
+        self.label_timeinfo[2].setText(f'$$ET={et}')
+        for i in range(3):
+            self.label_timeinfo[i].update()
+
+        #only read if start/end change..
+        if (datetime.fromtimestamp(s) < self.transcriber.allcmds[langs[0]]['start_time'] or datetime.fromtimestamp(e) > self.transcriber.allcmds[langs[0]]['end_time']):
+            logger.info(f'Time range {datetime.fromtimestamp(s)} to {datetime.fromtimestamp(e)} is out of bounds for available data.')
+            b = self.read(langs, datetime.fromtimestamp(s), datetime.fromtimestamp(e))
+            self.set_tmap(b, t)
+            logger.info(b)
+            self.transcriber.read_midi(datetime.fromtimestamp(s), datetime.fromtimestamp(e)) #only when starttime or endtime is out of bounds, otherwise we are just filtering existing data in memory, so no need to reread midi data.
+
+        elif (datetime.fromtimestamp(s) > self.transcriber.allcmds[langs[0]]['start_time'] or datetime.fromtimestamp(e) < self.transcriber.allcmds[langs[0]]['end_time']):
+            logger.info(f'Time range {datetime.fromtimestamp(s)} to {datetime.fromtimestamp(e)} is within bounds for available data.')
+            #just filter by updated start/end
+            b = self.read(langs, datetime.fromtimestamp(s), datetime.fromtimestamp(e))
+
+            self.set_tmap(b, t)
+        else:
+            logger.info(f'Time range {datetime.fromtimestamp(s)} to {datetime.fromtimestamp(e)} is the same as available data, no need to reread.')
+            #just update display with existing data in memory
+            self.show_tmap(t, e-s)
+
+        
+
+    def set_speed(self, speed, lang='_meta'):
+        #pass none to load default..
+        if speed is None:
+            speed = self.get_setting('SPEED', 1.0, lang)
+        if (lang == '_meta'):
+            self.speed = speed
+            self.label_timeinfo[3].setText(f'$$S={speed}')
+        elif (lang == 'video'):
+            self.playback_speed = speed
+            self.video_player.setPlaybackRate(speed)
+            self.label_timeinfo[3].setText(f'$$VS={speed}')
+
+    def update_topic_history(self):
+        #update topic history with current topic from transcriber, and show in filter info area.  
+        self.show_filter_info()
+
+    def short_display(self, text, maxlen=28):
+        if (len(text) > maxlen):
+            return text[0:int(maxlen/2)] + ".." + text[-int(maxlen/2):]
+        else:
+            return text
+        
+    def show_filter_info(self):
+        idx = 0
+        for k, v in self.filters.items():
+            self.label_filter_info[idx].setText(f'$${k}={v}')
+            self.label_filter_info[idx].update()
+            idx += 1    
+        if (idx < len(self.label_filter_info)):
+            self.label_filter_info[idx].setText(f'$$') #clear next line for new filter info
+            self.label_filter_info[idx].update()
+            idx += 1
+        for i in range(idx, len(self.label_filter_info)):
+             t = self.short_display(self.topichistory[i-idx]['topic']) if i-idx < len(self.topichistory) else ""
+             self.label_filter_info[i].setText(f'{i-idx}=**{t}') #clear remaining filter info
+             self.label_filter_info[i].update()
+
+
+
+    def show_p(self, struct=[]):
+      """Method to show a QR code."""
+      #{'type': type, 'lang': lang, 'cmd': currentcmd, 'vars': vars, 'timestamp': time.time()}
+      varsperline = 2
+      fulltext = ""
+      nextline = ""
+      cnt = 0
+
+      wbarray = [0,1,0,1,0,0,1,0,1,0,1,0] #for now fixed from C
+      
+      
+      for i, l in enumerate(struct):
+        type = l['type']
+        if (type == '> '):
+          if (l['cmd'] == 'Click Link_' or l['cmd'] == 'Select Book_' or l['cmd'] == 'Select Topic_' 
+              or l['cmd'] == 'Select Tab_' or l['cmd'] == 'Time Zoom_' or l['cmd'] == 'Read Link_'): 
+            cnt = 0       
+            for k, v in l['vars'].items():
+#                if (wbarray[i%len(wbarray)] == 0):
+#                    fulltext += "\t"
+#                else:
+#                    fulltext += "\t\t\t"
+                #find number in key
+                n = k
+
+                if (n.isdigit()):
+#                    for j in range(int(n)%12):
+#                        fulltext += " "
+                    color = self.getColorFromSequence(int(n))
+                    self.label_ps[int(n)%len(self.label_ps)].setText(self.short_display(f'{n}={v}'))
+
+                else:
+                    fulltext += self.short_display(f" {n} = {v}")
+                    fulltext += "\n"
+
+                cnt += 1
+            context = l['vars'].get('context', None)
+            if (context is not None):
+                fulltext += f"\n{context}\n"
+                
+
+        elif (type == '~~'):
+            test = ''
+
+      if (fulltext != ""):
+        self.label_p.setText(fulltext)
+        self.label_p.adjustSize()
+        self.label_p.update()
+        logger.info(f'$$PTEXT={fulltext}')
+        
+
+
+    def is_complete_cmd(self, struct):
+      for i, l in enumerate(struct):
+        type = l['type']
+        if (type == '> ' and l['cmd'][-1] != '_'):
+          return True
+      return False
+    
+    def update_info(self, data):
+        self.label_info.setText(data.replace('\n', '<br>'))
+        self.label_info.adjustSize()
+        self.label_info.update()
+
+    def showQR(self, data, struct=[]):
         """Method to show a QR code."""
-        logger.info('Showing QR code')
-        qr_image = create_qr_code(data)
-#        qr_image = Image.open("qrcode.png")
-#        qr_image.show()
-        pixmap = QPixmap('qrcode.png')
-        self.label_2.setPixmap(pixmap)
-        self.label_2.adjustSize()
+#        logger.info('Showing QR code')
+        #adjust readable text first..
+        #check for last last command is it list_bookmarks.  
+        self.show_p(struct)
+        self.update_info(data)
+
+        qrdata = data
+        #if we need to truncate
+        print(f'QR data length: {len(qrdata)}')
+        print(qrdata[0:100] + "...\n")
+
+
+        
+        if (self.is_complete_cmd(struct)): #only display if completion
+            #truncate this command to show everything but suggestions.  
+            lines = data.split('\n')
+            for (i, l) in enumerate(lines):
+                if (l.startswith('<<meta>>')):
+                    qrdata = '\n'.join(lines[0:i]) #only show lines before suggestions, can adjust as needed.
+                    break
+            if (len(qrdata) > 600):
+                qrdata = qrdata[0:600] #truncate to 1000 bytes max for QR code.
+                qrdata += "\n...\n$$\n"
+            qr_image = create_qr_code(qrdata)
+    #        qr_image = Image.open("qrcode.png")
+    #        qr_image.show()
+            pixmap = QPixmap('qrcode.png')
+            self.label_qr.setPixmap(pixmap)
+            self.label_qr.adjustSize()
+
         logger.info('QR code displayed')
 
+    def findLabel(self, hwnd):
+        if (hwnd in self.windowlabels):
+            return self.windowlabels[hwnd]
+        elif (self.windowcounter < 100):
+            label = self.windowlabels[str(self.windowcounter)]
+            self.windowlabels[hwnd] = label
+            self.windowcounter += 1
+            return label
+        else:
+            return None
+        
+    def updateWords(self, pwords):
+        y = 100
+        for idx, pw in enumerate(pwords):
+            word = pw['word']
+            keys = pw['keys']
+            label = self.findLabel(f'word{idx}')
+            if (label is not None):
+                label.setText(f'Word: {word}\nKeys: {",".join(keys)}\n')
+                label.setStyleSheet("background-color: rgba(255, 255, 255, 1);color: black;")
+                label.move(self.geo.width() - 500, y)
+                label.adjustSize()
+                label.update()
+                y += label.height() + 10
+
+    def get_text_color(self, rect, screenshot):
+        """Get the color of the text at the given coordinates."""
+        total_luminance = 0
+        pixel_count = 1    
+        img = screenshot.toImage()
+        for x in range(rect[0], rect[2]):
+            for y in range(rect[1], rect[3]):
+                color = img.pixelColor(x, y)
+                r, g, b, _ = color.getRgb()
+                luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255.0
+                total_luminance += luminance
+                pixel_count += 1  
+
+        average_luminance = total_luminance / pixel_count
+
+        # Choose text color based on average luminance
+        if average_luminance < 0.5:  # Threshold can be adjusted
+            return "white"
+        else:
+            return "black"
+
+    def updateLabels(self, allwindows):
+        print(f"Updating labels for windows: {len(allwindows)}")
+        for hwnd, w in allwindows.items():
+            label = self.findLabel(hwnd)
+            #title, rect, other
+            if (label is not None):
+                label.setText(f'HWND: {hwnd}\nTitle: {w["title"]}\nRect: {w["rect"]}\n')
+                textcolor = "black"
+                if (len(self.screenshots) > 0):
+                    #get average color of window area
+                    textcolor = self.get_text_color(w['rect'], self.screenshots[-1])
+                    if (textcolor == "white"):
+                        label.setStyleSheet("background-color: rgba(0, 0, 0, 0.7);color: white;")
+                    else:
+                        label.setStyleSheet("background-color: rgba(255, 255, 255, 1);color: black;")
+                #label.setWordWrap(True)
+                label.move(w['rect'][0]-self.startx, w['rect'][1])
+                #label.resize(w['rect'][2]-w['rect'][0], w['rect'][3]-w['rect'][1])
+                label.adjustSize()
+                label.update()
+
+
     def paintEvent(self, event):
+        super().paintEvent(event)
         if (self.highlighton):
+            self.video_overlay.update() #update the video overlay to draw the highlight box on top of the video widget.
+#            self.video_widget.paintEvent(event) #call paint event of video widget to draw video frame first, then we will draw highlight box on top.
+            """
             painter = QPainter(self) # Create a QPainter instance, passing 'self' (the widget) as the paint device.
             pen = QPen(Qt.red, 5, Qt.SolidLine)
             painter.setPen(pen)
-            painter.drawRect(100, 100, 200, 200)
-        #    painter.drawRect(geometry.x()+100, geometry.y()+100, geometry.width()-100, geometry.height()-100)
-    #        painter.setFont(painter.font()) # Use default font or set a custom one
-    #        painter.drawText(50, 200, "Hello QPainter!")
+            rect = self.highlightrect
+#            painter.drawRect(rect['x']-self.geo.x(), rect['y']-self.geo.y(), rect['width'], rect['height'])
+#            painter.drawRect(rect['x'], rect['y'], rect['width'], rect['height'])
+            painter.drawRect(50, 150, 100, 100)
+#            painter.drawRect(self.geo.x()+100, self.geo.y()+100, self.geo.width()-100, self.geo.height()-100)
+            painter.setFont(painter.font()) # Use default font or set a custom one
+            painter.drawText(50, 200, "Hello QPainter!")
             painter.end()
-        
+            """        
         # You can also draw text, ellipses, images, etc.
 
-def stop_midi():
-    midi_stop_event.set()  # Signal the MIDI thread to stop
-    midi_thread.join()  # Wait for the MIDI thread to finish
-#    time.sleep(10)  # Give some time for the thread to exit
+def stop_audio(cacheno=-1):
+    #called from hotkeys to stop all audio threads.
+    global audio_stop_events
+    print('Stopping all audio threads')
+    print(audio_stop_events)
+    if (cacheno >=0 and cacheno < len(audio_stop_events)):
+        print(f'Stopping audio thread {cacheno}')
+        audio_stop_events[cacheno].set()  # Signal the audio thread to stop
+        return
+    for audio_stop_event in audio_stop_events:
+        print('Stopping audio thread')
+        audio_stop_event.set()  # Signal the audio thread to stop
+
+def pause_reader(cacheno=-1):
+    #called from hotkeys to pause all audio threads.
+    global audio_stop_events
+    print('Pausing all audio threads')
+    if (cacheno >=0 and cacheno < len(audio_skip_events)):
+        print(f'Pausing audio thread {cacheno}')
+        audio_skip_queue[cacheno].put(-1001) #signal to pause
+        audio_skip_events[cacheno].set()
+        return
+    for i, audio_skip_event in enumerate(audio_skip_events):
+        print('Pausing all audio threads')
+        audio_skip_queue[i].put(-1001) #signal to pause
+        audio_skip_event.set()
+
+def resume_reader(cacheno=-1):
+    #called from hotkeys to resume all audio threads.
+    global audio_stop_events, audio_skip_events
+    print('Resuming all audio threads')
+    if (cacheno >=0 and cacheno < len(audio_skip_events)):
+        print(f'Resuming audio thread {cacheno}')
+        audio_skip_queue[cacheno].put(0) #signal to skip 0 if something wrong with the event thread..
+        audio_skip_events[cacheno].clear()
+        audio_stop_events[cacheno].clear() #make sure stop event is cleared as well.
+        return
+    for i, audio_skip_event in enumerate(audio_skip_events):
+        print('Resuming all audio threads')
+        audio_skip_queue[i].put(0) #signal to skip 0 if something wrong with the event thread..
+        audio_skip_events[i].clear()
+#        audio_skip_event.clear()
+    for audio_stop_event in audio_stop_events:
+        audio_stop_event.clear() #make sure stop event is cleared as well.
+
+def skip_lines(n, cacheno=-1):
+    #called from hotkeys to skip n lines of audio.
+    #eventually match up audio_skip_events with playwrighty cache numbers so we can skip in specific readers if needed.
+    global audio_skip_events
+    print(f'Skipping {n*3} lines of audio')
+    if (cacheno >=0 and cacheno < len(audio_skip_events)):
+        print(f'Skipping lines in audio thread {cacheno}')
+        audio_skip_queue[cacheno].put(int(n*3))
+        audio_skip_events[cacheno].set()
+        return
+    for i, audio_skip_event in enumerate(audio_skip_events):
+        print(f'Skipping lines in audio thread {i}')
+        audio_skip_queue[i].put(int(n*3))
+        audio_skip_events[i].set()
+
+def select_type(n):
+    #called from hotkeys to skip n lines of audio.
+    global audio_skip_events
+    global current_type
+    current_type = n
+    print(f'Select Type {n}')
+
+        
+def next_type(n):
+    #called from hotkeys to skip n lines of audio.
+    global audio_skip_events
+    global current_type
+    print(f'Jump Next {n}')
+    for i, audio_skip_event in enumerate(audio_skip_events):
+        print('Skipping lines in audio thread')
+        if (current_type is not None):
+            audio_skip_queue[i].put(-20000*current_type -n) #signal to go to next type
+            
+            audio_skip_event.set()
+
+def page(n):
+    #called from hotkeys to skip n lines of audio.
+    #stop audio, or just page down, and start reading from there.  
+#    stop_audio()
+    
+    if (n > 0):
+        print(f'Page Down {n}')
+        #estimate number of lines to skip and skip the lines.  
+        i = 0
+        for i in range(n):
+            keyboard.Controller().press(keyboard.Key.page_down)
+        #really need to get data from screen..
+        skip_lines(n*20) #estimate 20 lines per page
+        
+    else:
+        print(f'Page Up {-n}')
+        for i in range(-n):
+            keyboard.Controller().press(keyboard.Key.page_up)
+        skip_lines(-n*20) #estimate 20 lines per page
+
+
+
+def stop_midi(kill=False):
+    global midi_stop_event
+    global midi_kill_event
+    global midi_thread
+    global midiin, midiout
+    logger.info('Stopping MIDI thread')
+    if (kill):
+        logger.info('Killing MIDI thread')
+        midi_kill_event.set()
+        midi_stop_event.set()  # Signal the MIDI thread to stop
+        midi_thread.join()  # Wait for the MIDI thread to finish
+        time.sleep(10)  # Give some time for the thread to exit
+    else:
+        midi_stop_event.set()  # Signal the MIDI thread to stop
+
     midiin.close()  # Close the MIDI input port
-    midiout.close()  # Close the MIDI output port
+#    midiout.close()  # Close the MIDI output port
 
 
-def start_midi(midi_stop_event):
-    global midiout, midiin
-    logger.info('Starting MIDI input/output')
+def stop_joystick():
+    global joystick_thread
+    pygame.joystick.quit()
+    if (joystick_thread is not None and joystick_thread.is_alive()):
+        logger.info('Stopping joystick thread')
+        joystick_thread.join()  # Wait for the joystick thread to finish
+
+
+def joystick_loop(qr_queue):
+    joycount = pygame.joystick.get_count()
+    if joycount == 0:
+        return
+
+    logger.info(f'{joycount} joystick(s) detected.')
+    logger.info('Starting Joystick thread')
+    joyaxes = [[] for i in range(joycount)]
+    for (i) in range(joycount):
+        joy = pygame.joystick.Joystick(i)
+        joy.init()
+        logger.info(f'Initialized Joystick {i}: {joy.get_name()}')
+        axis = joy.get_numaxes()
+        joyaxes[i] = [0.0] * axis
+        logger.info(f'Joystick {i} has {axis} axes.')
+        qr_queue.put(f'<<joystick>>\n> JOY [{i},{axis}]\n$$\n')
+
+    while True:
+#        pygame.display.flip()
+        time.sleep(0.05) #small delay to prevent high CPU usage, adjust as needed event rate 20 Hz for now
+#        print('Checking for joystick events...')
+        joycount = pygame.joystick.get_count()
+        joyaxes = [[0.0] * joy.get_numaxes() for joy in [pygame.joystick.Joystick(i) for i in range(joycount)]]
+        for event in pygame.event.get():
+#            logger.info(f'Joystick event: {event}')
+
+            # JOYAXISMOTION    joy, axis, value
+            # JOYBALLMOTION    joy, ball, rel
+            # JOYHATMOTION     joy, hat, value
+            # JOYBUTTONUP      joy, button
+            # JOYBUTTONDOWN    joy, button
+
+            if event.type == JOYAXISMOTION: #too many events, just take last value for each axis and send in batch every loop, can adjust as needed.
+                joyaxes[event.joy][event.axis] = event.value
+            elif event.type == JOYBALLMOTION:
+                qr_queue.put(f'<<joystick>>\n> BALL [{event.joy},{event.ball},{event.rel}]\n$$\n')
+            elif event.type == JOYHATMOTION:
+                qr_queue.put(f'<<joystick>>\n> HAT [{event.joy},{event.hat},{event.value}]\n$$\n')
+            elif event.type == JOYBUTTONUP:
+                qr_queue.put(f'<<joystick>>\n> BUTTON [{event.joy},{event.button},0]\n$$\n')
+            elif event.type == JOYBUTTONDOWN:
+                qr_queue.put(f'<<joystick>>\n> BUTTON [{event.joy},{event.button},1]\n$$\n')
+
+        axisstr = "<<joystick>>\n"
+        for i in range(joycount):
+            for j in range(len(joyaxes[i])):
+                if abs(joyaxes[i][j]) > 0.1: #threshold to prevent noise, adjust as needed
+                    axisstr += f'> AXIS [{i},{j},{joyaxes[i][j]:.2f}]\n'
+        if (len(axisstr) > len("<<joystick>>\n")):
+            qr_queue.put(axisstr)
+
+def start_joystick():
+    global joystick_thread
+    global qr_queue
+
+    pygame.init()
+    pygame.event.set_blocked((MOUSEMOTION, MOUSEBUTTONUP, MOUSEBUTTONDOWN))
+
+    pygame.joystick.init()
+    clock = pygame.time.Clock() # Create a Clock object
+#    clock.tick(60) # Limit the loop to run at 60 frames per second (adjust as needed)
+    joycount = pygame.joystick.get_count()
+    if joycount > 0:
+        logger.info(f'{joycount} joystick(s) detected and initialized.')
+        joystick_thread = threading.Thread(target=joystick_loop, args=(qr_queue,))
+        joystick_thread.start()
+        return True
+    else:
+        logger.info('No joysticks detected.')
+        print("No joysticks were detected.")
+        return False
+
+def start_midi():
+    global qr_queue
+    global qrin_queue
+
+    global midi_stop_event
+    global midi_thread
+    global midi_kill_event
+    if (midi_thread is not None and midi_thread.is_alive()):
+        logger.info('MIDI thread already running')
+        stop_midi()
+        #this calls unload..
+        time.sleep(4) #give some time to close down.
+    #set playwrighty context to null
+    midi_stop_event = threading.Event()
+    midi_kill_event = threading.Event()
+    midi_thread = threading.Thread(target=run_midi, args=(midi_stop_event,midi_kill_event, qr_queue, qrin_queue))
+    midi_thread.start()
+    midin, midout = get_midi_ports()
+    if (len(midin) > 0):
+        logger.info(f'MIDI input ports: {midin}')
+        return True
+    return False
+
+
+def get_midi_ports():
     inputs = mido.get_input_names()
-    print(mido.get_input_names())
-    logger.info(f'Available MIDI inputs: {inputs}')
     outputs = mido.get_output_names()
-    print(mido.get_output_names())
-    logger.info(f'Available MIDI outputs: {outputs}')
+    return inputs, outputs
 
-    #Portable Grand-1 2
-    #should really have some config selection here.  
-    midiout = mido.open_output(outputs[1]) #open first output for now.  
-    mk = mykeys.MyKeys(config.cfg)
-    cont = keyboard.Controller()    
-    midiin = mido.open_input(inputs[0]) #open first input for now.
+
+def updateQR(idx):
+    global incoming_qrdata
+    global current_qrdata
+    if (incoming_qrdata != current_qrdata):
+        logger.info('MIDI thread updating QR code')
+        print('MIDI thread updating QR code')
+        current_qrdata = incoming_qrdata
+        on_activate_overlay()
+
+
+def handle_keys(qr_queue=None, qrin_queue=None):
+    global midiout, midiin
+    global mk
+    #[channel] = [note, vertical, rotational, pressure]
+    channelsmap = [[-1,-1,-1,-1]]*256 #array for channels
+    channelmap = [[-1,-1,-1,-1]]*256 #array for channels
+    #channel, value for MPE
+#    c = Communicate()
+#    c.mySignal.connect(updateQR)
+
     with midiin as inport:
+#        qr_queue.put('<<midi>>\n> MIDIStart [0]\n$$\n')
         while (not midi_stop_event.is_set()):
+            while (qrin_queue is not None and not qrin_queue.empty()):
+                qrdata = qrin_queue.get()
+                mk.add_qrin(qrdata)
+                logger.info(f'MIDI Received QR input data: {qrdata}')
+                
+            #get all q2 output messages.  
+            mk.set_audio_location()
+
             for msg in inport.iter_pending():
+                channel = -1
+                if (msg.type == 'aftertouch'):
+                    #print(msg)
+                    if (hasattr(msg, 'channel') and hasattr(msg, 'value')):
+                        #pressure
+                        channel = msg.channel
+                        currentval = channelmap[channel]
+                        channelmap[channel] = [currentval[0], currentval[1], currentval[2], msg.value]
+                elif (msg.type == 'pitchwheel'):
+                    #print(msg)
+                    if (hasattr(msg, 'channel') and hasattr(msg, 'pitch')):
+                        #rotational
+                        channel = msg.channel
+                        currentval = channelmap[channel]
+                        channelmap[channel] = [currentval[0], currentval[1], msg.pitch, currentval[3]]
+                    
+                elif msg.type == 'control_change':
+                    #print(msg)
+                    if (hasattr(msg, 'channel') and hasattr(msg, 'control') and hasattr(msg, 'value') and msg.control == 74): #MPE standard for timbre control
+                        channel = msg.channel
+                        currentval = channelmap[channel]
+                        #vertical
+                        channelmap[channel] = [currentval[0], msg.value, currentval[2], currentval[3]]
+                    #use midi joystick control.  
+                    #also allow external joystick control..
+                if (channel != -1 and qr_queue is not None):
+                    #send update for this channel to QR code, can adjust format as needed.
+                    mk.add_qrin(f'<<midi>>\n> Aftertouch [{channelmap[channel][0]},{channelmap[channel][1]},{channelmap[channel][2]},{channelmap[channel][3]}]\n$$\n')
+                    #only update sometimes?  For now do all.  
+
+                    if (random.random() < 0.05): #adjust this threshold as needed to balance responsiveness with performance, currently set to update on average every 20 messages.
+                        qrdata = mk.get_qr()
+                        if (qrdata is not None and qrdata != ""):
+                            qr_queue.put(qrdata)
+                
                 if msg.type == 'note_on' or msg.type == 'note_off':
                     print(msg)
                     logger.info(f'Received MIDI message: {msg}')
                     if hasattr(msg, 'note'):
                         note = msg.note
+                        if (hasattr(msg, 'channel')):
+                            channel = msg.channel
+                            if (msg.type == 'note_on' and msg.velocity > 0):
+                                channelmap[channel] = [note, -1, -1, -1]
+                            else:
+                                channelmap[channel] = [-1,-1,-1,-1]   
+
                         if hasattr(msg, 'velocity'):
                             velocity = msg.velocity
                         else:
                             velocity = 0
                         #add key to sequence and check for any actions.  
                         a = mk.key(note, msg, callback=None)
+                        #every note adjust the QR code in case something changed.
+                        #probably better way to do this..
+                        qrdata = mk.get_qr()
+                        if (qrdata is not None and qrdata != ""):
+                            qr_queue.put(qrdata)
+#                        c.mySignal.emit(0)
+                        #update QR code if changed.
+
+#                        if (a == -1):
+                            #error or reset
+#                            winsound.Beep(2000, 500) # Beep at 2000 Hz for 500 ms
                     else:
                         print("Message does not have a note attribute")
-        logger.info('Stopping MIDI thread')
+                else:
+                    dontprint = 1
+#                    print(msg)
+#                    logger.info(f'Received MIDI message: {msg}')
+
+
+def init_inputs():
+    global midiout, midiin
+    inputs, outputs = get_midi_ports()
+    logger.info(f'Available MIDI inputs: {inputs}')
+    logger.info(f'Available MIDI outputs: {outputs}')
+#    midiout = mido.open_output(outputs[1]) #open first output for now.  
+    midiin = mido.open_input(inputs[0]) #open first input for now.
+
+def run_midi(mstop_event, kill_event, qr_queue=None, qrin_queue=None, audio_location_queue=None):
+    global midiout, midiin
+    global mk
+    mk = mykeys.MyKeys(config.cfg, qapp, mywindow.startx, mstop_event)
+    logger.info('Starting MIDI input/output')
+    init_inputs()
+    
+    #Portable Grand-1 2
+    #should really have some config selection here.  
+    mk.start_feedback() #play feedback if enabled.  This takes some time apparently to start thread.  
+    cont = keyboard.Controller()    
+
+    while (not kill_event.is_set()):
+        handle_keys(qr_queue, qrin_queue)
+        init_inputs() #re-init inputs in case something changed.
+        time.sleep(0.1)  # Small delay to prevent high CPU usage
+        mstop_event.clear()  # Clear the event for the next iteration
+        mk.start_feedback() #restart feedback if needed.
+
+    logger.info('MIDI thread completed, unloading MK')
+    mk.unload()
+    logger.info('MIDI thread ended')
 
 
 
-# Create an icon image
-icon_image = create_image(64, 64, 'blue', 'yellow')
-
-# Define the menu for the icon
-menu = (
-    pystray.MenuItem('Capture Screen', on_get_screen),
-    pystray.MenuItem('Show Message', on_show_message),
-    pystray.MenuItem('Quit', on_quit_action)
-)
-
-# Create the pystray Icon instance
-icon = pystray.Icon(
-    'my_trey_icon',  # Name of the icon
-    icon=icon_image,  # The icon image
-    title='Trey',  # Title displayed on hover
-    menu=menu  # The menu associated with the icon
-)
-
-# Run the icon (this call is blocking)
-logging.basicConfig(filename='trey.log', 
-    format='%(asctime)s %(levelname)-8s %(message)s',
-    level=logging.INFO,
-    datefmt='%Y-%m-%d %H:%M:%S')
-logger.info('Started')
-logger.info('Setting up hotkey listener')
-hotkey_listener = setup_hotkey_listener()
-logger.info('Hotkey listener set up')
-
-logger.info('Creating Qapplication object')
-# Create the application object
-qapp = QApplication(sys.argv)
-logger.info('Creating application window')
-# Create the main application window
-window = MyWindow()
-
-logger.info('Running icon')
-#icon.run()
-icon.run_detached()
-
-
-# Create a Thread object to listedn for MIDI messages
-# Create an event
-midi_stop_event = threading.Event()
-midi_thread = threading.Thread(target=start_midi, args=(midi_stop_event,))
-midi_thread.start()
-
-logger.info('Executing application')
-
-sys.exit(qapp.exec_())
-#hiding window as we only want it on hotkey
-#window.hide()
 
 
 
+
+
+def create_circle_icon(color: QColor, size: int) -> QIcon:
+    """
+    Draws a circle onto a QPixmap and returns a QIcon.
+    """
+    # 1. Create a QPixmap and fill with a transparent color
+    pixmap = QPixmap(size, size)
+    pixmap.fill(Qt.GlobalColor.transparent)
+
+    # 2. Initialize a QPainter on the QPixmap
+    painter = QPainter(pixmap)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing) # For smooth edges
+    
+    # 3. Draw the shape (a circle)
+    painter.setBrush(color)
+    painter.setPen(QPen(Qt.GlobalColor.black, 1.25))
+    # Draw an ellipse that fills the pixmap's rectangle (makes it a circle if size is square)
+    painter.drawEllipse(pixmap.rect().adjusted(1, 1, -1, -1))
+
+    # 4. End the QPainter
+    painter.end()
+
+    # 5. Create and return a QIcon
+    return QIcon(pixmap)
+
+def show_tray(qapp):
+    global qtray
+    global qmenu
+    # 2. Create the system tray icon
+    icon = create_circle_icon(QColor(0, 255, 0), 64) #green circle for now, can adjust color and size as needed.
+    qtray = QSystemTrayIcon()
+    qtray.setIcon(icon)
+    qtray.setVisible(True)
+
+
+    # 3. Create a context menu
+    qmenu = QMenu()
+
+    # Action to quit the application
+    quit_action = QAction("Quit")
+    quit_action.triggered.connect(qapp.quit)
+    qmenu.addAction(quit_action)
+
+    # 4. Add the menu to the tray icon
+    qtray.setContextMenu(qmenu)
+    qtray.show()
+    # Optional: Add a tooltip (hover text)
+#    tray.setToolTip("My PyQt5 Tray App")
+
+    # Optional: Show a balloon message on launch (Windows/Linux)
+#    tray.showMessage("My PyQt5 Tray App", "Application started in the background", QSystemTrayIcon.Information, 2000)
+
+
+# 2. Define a function to dynamically change the icon
+def change_icon_dynamically(icon):
+    lastjoyconn = 100
+    lastmidiconn = 100
+    while True:
+        # Wait a few seconds to demonstrate the change after the icon is visible
+        time.sleep(3)
+        # Load a new image using Pillow
+        midiconn = 1
+        joyconn = 1
+        joyconn = pygame.joystick.get_count()
+        inputs, outputs = get_midi_ports()
+        if (len(inputs) > 0):
+            midiconn = len(inputs)
+#        print(f'MIDI connections: {midiconn}, Joystick connections: {joyconn}')
+        #probably could do dynamically, but not worth..
+        if (midiconn > lastmidiconn or joyconn > lastjoyconn):
+            print('New MIDI or Joystick connections detected, restart to connect??')
+#            print(pystray.Icon.HAS_NOTIFICATION)
+            #win: System/Notifications
+            icon.notify('New Device Connections available\nCTRL+SHIFT+R to restart', title='Trey Connection status')
+#            quit_me(True) #restart to get new connections..
+        elif (midiconn < lastmidiconn or joyconn < lastjoyconn and lastjoyconn != 100 and lastmidiconn != 100):
+            print('MIDI or Joystick connections lost, restart??')
+            icon.notify('Device Connections lost\nCTRL+SHIFT+R to restart', title='Trey Connection status')
+
+        if (midiconn >0 and joyconn > 0):
+            new_image = Image.new('RGB', (64, 64), color='green') # Replace with your actual image loading
+        elif (midiconn > 0):
+            new_image = Image.new('RGB', (64, 64), color='blue') # Replace with your actual image loading
+        elif (joyconn > 0):
+            new_image = Image.new('RGB', (64, 64), color='purple') # Replace with your actual image loading
+
+        # Change the icon attribute directly
+        icon.icon = new_image
+
+        lastjoyconn = joyconn
+        lastmidiconn = midiconn
+    #        icon.title = f"Trey {midiconn} {joyconn}" # Optionally change the title
+        
+
+
+def main():
+    global qapp
+    global mywindow
+    global active_window
+    global midiout, midiin
+    global speech_pipe
+    global qr_pipe
+
+    # Create an icon image
+    icon_image = create_image(64, 64, 'blue', 'yellow')
+
+    # Define the menu for the icon
+    menu = (
+        pystray.MenuItem('Capture Screen', on_get_screen),
+        pystray.MenuItem('Show Message', on_show_message),
+        pystray.MenuItem('Quit', on_quit_action)
+    )
+
+    # Create the pystray Icon instance
+    icon = pystray.Icon(
+        'my_trey_icon',  # Name of the icon
+        icon=icon_image,  # The icon image
+        title='Trey',  # Title displayed on hover
+        menu=menu  # The menu associated with the icon
+    )
+    # Run the icon (this call is blocking)
+    logging.basicConfig(filename='trey.log', 
+        format='%(asctime)s %(levelname)-8s %(message)s',
+        level=logging.INFO,
+        datefmt='%Y-%m-%d %H:%M:%S')
+    logger.info('Started')
+    logger.info('Setting up hotkey listener')
+    hotkey_listener = setup_hotkey_listener()
+    logger.info('Hotkey listener set up')
+
+    logger.info('Loading custom settings')
+    config.load_custom_settings() #load custom settings if available
+    logger.info('Creating Qapplication object')
+    # Create the application object
+    qapp = QApplication(sys.argv)
+    qapp.setQuitOnLastWindowClosed(False)
+    logger.info('Creating application window')
+    # Create the main application window
+    global qr_queue, qrin_queue
+    qr_queue = Queue()
+    qrin_queue = Queue()
+
+#    show_tray(qapp)
+
+    mywindow = MyWindow(qr_queue, qrin_queue, config.cfg, qapp)
+
+    logger.info('Running icon')
+#    icon.run()
+    icon.run_detached()
+
+
+
+    # Create a Thread object to listedn for MIDI messages
+    # Create an event
+    midiconn = start_midi()
+
+    #start joystick thread.  
+    joyconn = start_joystick()
+
+
+    dynamic_change_thread = threading.Thread(target=change_icon_dynamically, args=(icon,))
+    dynamic_change_thread.start()
+
+    logger.info('Executing application')
+
+    sys.exit(qapp.exec_())
+    #hiding window as we only want it on hotkey
+    #window.hide()
+
+
+
+
+
+if __name__ == "__main__":
+    main()

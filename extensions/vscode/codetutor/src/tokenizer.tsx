@@ -70,6 +70,8 @@ export function tokenize(str: string, topic: string = "NONE") {
                 if (currenttoken !==null && currenttoken.data.trim().length > 0) {
                     out.push(currenttoken);
                     currenttoken = newToken(currentline, currentcolumn, currenttopic, currentdate);
+                    currenttoken.data = str[currentPosition];
+                    instr = false;
                 }
             }
             else{

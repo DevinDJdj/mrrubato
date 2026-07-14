@@ -1,0 +1,570 @@
+**COMMS
+@@How do we manage the comms
+RTDB channel.  
+On start generate channel entry.  
+Does it need to be user-based?  
+Single write.  
+
+RTDB "channels"
+channels/uid/timestamp
+each time we start/stop trey, this is generated..
+Also allow split by user cmd.  
+
+When screen toggled, write any QR to channel.  
+settings to determine which languages/commands are shared..
+channels/uid/settings
+Just simple JSON struct, if lang/cmd contained, it is shared.
+lang/cmd/var
+If var is file, it is populated as Base64 struct..
+Dont really need settings in DB..
+
+First lets populate this, and then worry about read structure.  
+Generally each user will just share the uid/timestamp, and this data will come as QRIn.  
+No need to necessarily display.  
+setting whether to display or not..
+Top half is IN, bottom half is out.  
+
+How do we start following other user input?  
+Different struct for just user comms.  
+doors/uid/incoming
+doors/uid/outgoing
+doors/uid/settings
+contains all timestamps for channels..
+
+This is global writable.  
+So just write incoming/outgoing uids/timestamps in list, and periodically this is ingested and deleted.  
+
+Keep this local info to read and share any transcripts from that user in top half..
+joined, left, screenshot..
+
+Share screen size settings to dynamically adjust BBOX for any screenshots while IN room.  
+
+Probably can detect from size and location of QR code during screen share for instance..
+
+
+**languages
+need ability for single key languages.  
+For now start at 60, 49-59 reserved for control languages.  
+Need ability to select language.  
+Select language
+[59,60] [LANG] [59,59]
+Shift keys up octave..
+Reset down octave.. 
+and deselect?
+[60,60,60] 
+This allows us to just use keys..
+and similar to [48,48,48] reset..
+So cant use 60 single key mechanism.  
+But otherwise we can use single key mechanism.  
+These messages for LANG and META are MOD12.  
+_LANG can set to any octave automatically.  
+and in any language, _META lang and _LANG always exist.  
+Not sure if we want absolute keys, or still switch to relative keys..
+for now all but _META and _LANG are absolute.  
+LANG lookup also must be relative.  
+in keymap->languages
+0 MOD 12 and 11 MOD 12
+If we move to relative keys, maybe just point to a set of languages.  
+Then no need to create new lang structures, just set of existing lang structs.  
+All related code then becomes easier to manage perhaps..
+not sure..
+
+
+
+
+**mykeys.py
+Adjust act to tolerate single key action.. 
+Need ability to call other languages from this type of hot language..
+Prioritize single key action when lang has been selected.  
+
+OK, too many changes, what did we break..
+
+not stuff I did, but some reason qdrantz broken..
+
+!!File "C:\Users\devin\AppData\Local\Programs\Python\Python312\Lib\site-packages\qdrant_client\embed\model_embedder.py", line 391, in _embed_accumulator
+!!    for model, data in self._batch_accumulator.items():
+!!RuntimeError: dictionary changed size during iteration
+==
+    #init_qdrantz(link_density_map, topic="websearch")
+$$
+
+
+OK, small problem with Bookmarks fixed..
+@@How and when to use recording..
+Still too early perhaps, but probably good to try from time to time..
+
+**extensions/trey/speech.py
+Need to fix speech thread to allow for stopping listen_audio early..
+--transcribe_audio
+add sd.stop()
+Not sure if this will stop any other playback..
+Dont think this is working..
+Added dynamic timing for recording to use thread event to stop..
+Max duration 30s for now..
+
+
+
+**timestep.py
+Need to back up transcripts somewhere, no need to use from web yet..
+
+**languages/hotkeys.py
+Some reason we are still reading two pages at once..
+
+
+**COMMS
+on topic change, regenerate recording?  
+/uid/timestamp
+cmd flow is dynamically updated (transcriber?), but recording only after..
+Retrieve /uid for latest info, and/or search through shared data..
+/topic/timestamp pointer to uid..
+MTG URL will be one of the QRIn which is shared..
+For now no minutia for access control.  
+auth !=null allows read access..
+
+When content viewed, authid gets registered.  
+Simple stats on view activity..
+channels/uid/settings
+possibility to contain detailed access control by date/time.  
+Too much for now..
+
+
+**extensions/trey/trey.py
+Consumer
+Select topic, search/preview recent, if active find MTG url, open MTG url, or if complete watch video/peruse transcription
+Leave feedback in time..
+Display timeline for all events..
+Compress timeline if large gaps..
+Any videos display full screen for in-time feedback
+if "in-meeting"
+Post real-time feedback to same /channels/uid..
+write QR transcripts to 
+/channels/myuid
+parameters define topic of what is being displayed and time of video being watched..
+or transcript being read..
+Along with topic which was originally selected..
+And original video identifier.  
+Ability to search for all instances of original identifier..
+This can be feedback or screen clip, etc..
+While "in-meeting", change Trey icon.  
+All CMD info is passed to meeting.  
+This allows search for My transcripts and My feedback..
+Ability to mark feedback as consumed..
+@@How/where..
+
+Feedback copied two places
+/channels/myuid/feedback/YYYYMMDD/originaluid
+and 
+/channels/originaluid/feedback/YYYYMMDD/myuid/..
+contains contentID and editable by originaluid or myuid..
+originaluid marks feedback as consumed..
+Similarly
+/channels/myuid/feedback/YYYYMMDD/originaluid
+content entry is updated..
+
+Need quick acknowledge key..
+UI default shows outstanding own unacknowledged feedback for selected topic..
+
+Chaining just done by topic and time..
+Can filter topic by set of user input or select all..
+Feedback identified by @user.  
+@@What acknowledge message
+-@user?  
+
+
+Provider
+Start trey, channel entry auto-generated, set topic, (open MTG, QR info for MTG generated), record/transcribe, close trey
+
+Need recording start/stop time messages..
+
+#https://github.com/thisbejim/Pyrebase
+
+#https://github.com/nhorvath/Pyrebase4
+
+#https://github.com/googleapis/google-api-python-client/tree/main/samples
+
+**extensions/trey/test/pyrebasetest.py
+Simple email/pass login.  
+Works after enabling and adding user.. 
+Can use with existing?  
+Trey use email login, web use google login??
+OK for now I guess..
+Separate web UI pages for listing this data..
+For now just use in same config..
+trey/user/pass..
+Otherwise too much of a time suck
+
+**web/public/storage_upload.html
+Need to post here perhaps with user info..
+New version of this needed..
+Post to temporary bucket.  
+Any transcripts and videos..
+Need userid specified somehow.
+
+**web/public/rec.html
+Pull my data from storage into localDB for alternate web search and recall if doesnt exist..
+
+**extensions/vscode/codetutor/src/extension.ts
+Utilize transcripts and links from here as well later.  
+Separate from book, but similar..
+Separate vectradb.  
+
+
+**timestep.py
+add transcriptions to git somehow and delete old data.  
+
+
+**extensions/trey/trey.py
+--start_record
+test..
+
+When User is deleted and re-added, is UID the same or we start from scratch?  
+Maybe need some other user identifier..
+
+test screenshot_feedback
+49,53,55,53 [BBOX]
+
+Need to display BBOX earlier.  
+
+OK, closer.  
+Still audio transcription takes way too long..
+Need to perhaps do this in background thread..
+
+Finally got some OCR..
+                img = img.crop((bbox[0]-self.geo.x(), bbox[2]-self.geo.y(), bbox[1]-self.geo.x(), bbox[3]-self.geo.y()))
+
+Maybe on _screenshot, just display bbox.. 
+
+Need 
+> Select Screenshot [..] last 20..
+show the OCR text for selection and the image somewhere..
+Select Screenshot_ 
+display this selection..
+just end select with clear action..
+[49] clears selection, then [49] transcribes if necessary..
+
+
+**languages/hotkeys.py
+Need quick key to start/stop entire process..
+Stop should be easy enough..
+
+**extensions/trey/trey.py
+Still QR detection takes 10 seconds.  
+And only using upper quartile.  
+Quite inefficient.  
+Even with nano model.  
+Is this tolerable?  
+Not really.  I think 3 seconds is tolerable.  
+No Code takes 3 seconds..
+
+Need to follow along with 
+
+**extensions/trey/playwrighty.py
+--set_reader_queue
+--update_page_offset
+
+await page.locator('selector-for-your-element').scrollIntoViewIfNeeded()
+
+OK, not perfect, but something like this..
+
+
+**extensions/vscode/codetutor/src/extension.ts
+Some reason [@@] not working, while [~~] works..
+
+OK, better..
+
+@@ How can we customize the tts voice in [**extensions/vscode/codetutor/src/extension.ts]
+Should we just call python tts script perhaps..
+
+**extensions/trey/trey.py 
+--speak
+Use custom tts engine here?  
+;$$=[49,49]
+;**=[60,60]
+;etc..
+
+**extensions/trey/synth.py
+Adjusted beep -> play_synth
+
+**extensions/trey/playwrighty.py
+--update_page_offset
+OK, highlighting works, but annoying popup.  
+
+**languages/hotkeys.py
+--record_feedback
+Also have an issue with long feedback.  
+This freezes
+
+
+Need in-page search..
+
+Need to try to use multiple tabs..
+
+**languages/hotkeys.py
+--find
+--next
+not quite working..
+Skipping everything..
+
+Need a mini page heat map of where this is and what is selected..
+
+Finally have this kind of working..
+Very fragile at the moment.. 
+Need to adjust logging, too much junk.  
+Use language more for logging.  
+
+
+--click_link_
+stop audio.  
+announce selected link each time.  
+use [-1] 
+
+
+Try to clean up real-time print vs logger.info
+--click_link_
+test..
+
+OK, 
+
+**extensions/trey/speech.py
+--record_audio2
+some issue with MIC detection?  
+Not sure what causes, but sometimes the 
+callback not called if MIC detection poor.  
+
+
+If we click internal link, just read what is at that location.  
+Jump there and jump back..
+
+**extensions/trey/playwrighty.py
+--click_link
+test internal link click..
+Should read text..
+
+Still some overlap for long paragraphs after clicking early link, not ideal..
+Is there some way to stop the playaudio?  
+Maybe better..
+
+**extensions/trey/trey.py
+--quit_me
+Allow for restart 
+CTRL+SHIFT+R = restart
+CTRL+SHIFT+Q = quit..
+Seems to work ok..
+
+
+instead of using the QR reading mechanism, switch internal communication to use mmap..
+QR processing just too slow..
+
+not actually needed for now.  
+
+
+Second shared screen with just huge Text and QR code, would this work in a meeting scenario and pick up necessary info?  
+Set to participant mode for instance which will overlay QR code and potentially text when sharing feedback..
+
+
+--MyWindow
+Display selection items in 
+
+**languages/hotkeys.py
+--list_bookmarks
+Dont need this, just make it part of
+--select_bookmark
+
+Need time component.  
+For now just use text.  
+Fixed width text.
+
+**extensions/vscode/codetutor/src/extension.ts
+Maybe add to vectra DB all file names.  
+Probably want to do this..
+
+
+WBWBWWBWBWBW
+5 7 segment
+
+
+**extensions/vscode/codetutor/src/extension.ts
+for now @@ send to LLM.. 
+Need additional context built as well..
+
+
+**extensions/trey/trey.py
+Need to get rid of overlay after link clicked..
+
+still issue with internal links..
+
+Just have page down scroll down or up..
+Or turn on/off follow.  
+
+**languages/hotkeys.py
+Need command to bring up transcripts..
+
+**timestep.py
+--saveLocalTranscripts
+Need to upload the transcripts associated with the time of recording..
+Need separate entry point in DB for each video.  
+For now only upload data while recording..
+Get snippet of MIDI?  
+Get Video and any transcript for that time period..
+Lazy.., just upload all?  
+
+
+**extensions/handsfree/background.js
+--openQR
+Use QR Read to sync times.  
+Update QR every few seconds to include time..
+Then when read, we know how to match up the time..
+For now no updating, adds complexity/confusion.  
+Dont want to re-read all the time..
+How long has it been displayed?  
+When someone joins the real-time room update..
+This should be sufficient..
+Find another way to sync times...
+use TIME param in scanned QR..
+Need to scan Full screen.  
+
+
+**mykeys.py
+@@Word creation logic?  
+[11,11,11]
+After the fact.  
+Take prior sequence.  Define sequence length to take.  
+Feedback describing sequence.  
+Detect number of params for each word and automatically instigate each action after that number of params is given.. 
+Essentially just call each 
+> _word 
+and 
+> word_ 
+> word
+based on number of params given..
+Extend wait time when word has been created.. 
+
+Custom defined sequences for now standard start with [A,2A]
+Should be able to dynamically set language keybot..
+Everything needs to be relative from that perspective..
+later..
+
+
+**languages/_meta.py
+--select_topic
+topic selection.  
+> Select Topic_
+@@How to scroll?
+[11,12] scroll..
+[12,11] scroll..
+
+Display minimap timeline, just text?  
+Squish timeline..
+
+horizontal greenscreen text.  
+Time scale adjustable based on context.  
+Need label size calculations all dynamic based on geo..
+
+Type
+NumEvents
+label.setText("A<span style='color: red;'>B</span><span style='color: blue;'>C</span>");
+
+Color indicates 
+
+Use time scale and allow for zoom in/out.. 
+Select relevant info from current time scale transcripts..
+Display this..
+This will also go to that location in video or audio if available..
+
+#https://github.com/ctrlcctrlv/FRBCistercian
+
+
+**/testing/fonts
+
+> git clone https://github.com/ctrlcctrlv/FRBCistercian.git
+
+#https://fontforge.org/en-US/downloads/windows-dl/
+
+$$PATH=C:\Program Files\FontForgeBuilds\bin
+
+
+@@is .. ok for a time prefix?  
+
+**extensions/trey/trey.py
+--show_t
+text graph..
+Just use minutes/hours..
+Select hour to zoom to minutes..
+Show command summary and associate command with same letter of minute.  
+Then select in that way..
+Highlight selection area (24 key), and scroll along.. jump etc.  
+Need DATE / hour display top left..
+> Select Item [A]
+> Jump/Zoom [T]
+
+Switch to 24 for hours?  
+If video available, select this frame and loop at current time frame.  
+Jump will also jump the video/audio..
+
+
+**extensions/vscode/codetutor/src/extension.ts
+Same time implement date time filter.  
+Keep history of selected time.  
+Amount of actual time spent at zoomed time.. 
+
+**languages/_meta.py
+try speed adjust.  
+time zoom etc..
+
+**extensions/trey/trey.py
+read from transcriber..
+Display number of entries/type of entries.  
+Display some sample entries..
+
+Also read midi from time frame and display selections.  
+Display potential selections..
+
+
+Set speed
+and tick along..
+
+Get midi words, and add data about past usage.  
+List based on speed of word input..
+If word is "known", dont list at top..
+Weight recent speed more than older speed.  
+Distinguish between manual input vs non-manual.  
+After we have one sample, should be able to list..
+
+Also save common params.. 
+Allow quick selection of word, and params separately..
+@@What is quick selection mechanism?  
+Allow keyboard input somehow for text selections..
+
+**languages/helpers/transcriber.py
+--play_midi
+test..
+act = False
+
+data stored in mykeys.words_
+along with seq and transcript..
+
+probably should be _words?  
+
+
+Need selection to play displayed transcript commands.  
+> RECORD
+or
+> Save Feedback
+
+
+Save/load state.  
+Need loading indicator of some kind when we resize time window..
+
+
+**timestep.py
+--saveLocalTranscripts
+test..
+
+
+**extensions/trey/trey.py
+--pause_tmap
+--play_tmap
+test..
+
+
+

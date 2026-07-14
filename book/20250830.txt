@@ -1,0 +1,1337 @@
+
+
+**web/public/languages/*
+Lot of this is not aesthetic code, but..
+We can work on aesthetics on the second iteration perhaps if there is still energy to do so.  
+
+
+**web/public/db.html
+Need function to delete older videos possibly or offload.  
+View and Download or delete.  
+Just have offline indicator.  
+Save Remote ->
+**web/public/storage_upload.html
+update video record to point to external...
+Option to keep locally as well.  
+Need management interface.  
+Display details.  
+Need upload/download functionality.  
+Just store as a simple JSON record perhaps?  
+
+#https://firebase.google.com/docs/functions/get-started?gen=2nd
+
+
+> firebase init functions
+#https://www.oracle.com/java/technologies/downloads/#jdk24-windows
+
+> firebase emulators:start
+
+#http://127.0.0.1:4000/functions 
+#http://localhost:5001/MY_PROJECT/us-central1/addMessage?text=uppercaseme
+
+> firebase deploy --only functions
+#https://cloud.google.com/artifact-registry/docs/repositories/cleanup-policy#console
+Annoying...
+Why cant I configure this..
+
+https://us-central1-MY_PROJECT.cloudfunctions.net/addmessage?text=uppercaseme
+
+
+
+**timestep.py
+add logic to generate client-side vector DB for LLM chat.  
+Maybe just use client to do this.  
+
+
+**web/public/chata.html
+Need to finish chat interaction using client-side DB and do vector search to generate context.  
+
+**web/public/rec.html
+already generating vectors.  
+Weight transcripts most then screens, then files.  
+
+#https://github.com/mozilla/pdf.js
+
+
+**vecbook
+> ~vecbook$ rm * -rf 
+
+**extensions/vscode/codetutor/src/book.ts
+
+Start with simple strategy like calling the LLM itself to expand the query.  
+
+#https://medium.com/@sahin.samia/building-an-enhanced-rag-system-with-query-expansion-and-reranking-in-python-c95fa9a0a3e8
+So just use query expansion in some way.  
+Seems just using an LLM query to expand the query.  
+
+def expand_query(query):
+    prompt = [
+        {"role": "system", "content": "You're an expert in query expansion. Expand the given technical query with synonyms and alternate phrasings."},
+        {"role": "user", "content": f"Expand this query for better search: {query}"}
+    ]
+    expanded = llm.invoke(query)
+    return [q.strip() for q in expanded.split("\n") if q.strip()]
+
+
+#https://hongleizhuang.github.io/files/GenIR2023_Rolf.pdf
+
+Do similarity search with expanded query as well.  
+
+
+
+**book/map.txt 
+which exists in each book.  
+This just holds folder redirect mapping.  
+
+> git mv TOPIC NEWTOPIC
+
+> git log --diff-filter=R --name-status
+
+**timestep.py
+Just do this during timestep.py
+Unless dontgenmap flag is set.  
+We need a bunch of flags for timestep.py.  
+
+
+
+**.bookignore
+Need a file like this to prevent loading of map.txt or other such information.  
+Some mechanism to know which files are useful and which not so much.  
+
+Too many things...
+
+
+
+**web/public/js/dilbert.js
+Just write a new function for Python parse.  
+Shouldnt be too hard to just find function names and function -> function graph.  
+
+
+
+**web/public/analyze.html
+**web/public/video.js
+--seekcallback
+Instead of adding all these images, lets see if we can just create one image using 
+alpha and just get the combined image data.  
+Perhaps use decreasing alpha as we go so we can see all images.  
+alpha 1, 0.9, 0.8, etc.  
+Or perhaps 1, 0.5, 0.45, etc.  
+This may get enough of what we want and be simpler.  
+
+
+
+**analyze/analyze.py
+Need to continue find patterns.  
+--getNgrams
+$$mappgram
+continue..
+  mapsgram[ seqgram ] [ pgram ] = { 'time': [], 'iteration': [] }
+  mappgram[ signs ] [ pgram ] = { 'time': [], 'iteration': [] }
+
+>python ./analyze/analyze.py --title  "Evil Ways (Sonny Henry)" --force true
+
+
+
+
+**web/public/analyze.html
+--updateFeedbackUI
+And change icon if played already or not.  
+So have option to filter played data.  
+
+Just use existing voices from SS, and assign voice name to the user.  
+#https://support.microsoft.com/en-us/topic/download-languages-and-voices-for-immersive-reader-read-mode-and-read-aloud-4c83a8d8-7486-42f7-8e46-2b0fdf753130
+
+
+How do we order users?  
+Running tally of 
+LIKES / (total speaking time)
+Local DB for this.  
+Show user info when loading audio.  
+
+
+
+**WrNMxdcfyUk
+OK, we have simultaneous entries.  
+
+
+**web/public/chata.html
+Add FT combined with vector search. 
+Then do same in [**web/public/book.html]
+
+
+
+**codetutor
+**extensions/vscode/codetutor/src/tokenizer.tsx
+Could implement some sort of custom STT or TTS here much easier.  
+Need to finish tokenizer.  
+
+Just save to local DB and then have an option to run STT model improvement from there.  
+Then use that model for [**codetutor]
+Best we could do at this point?  
+
+
+**extensions/vscode/codetutor/src/book.ts
+
+--meta functionality
+Search command from textual similarity.  
+Hinderance or nice for usability?  
+Lets try it.  
+
+~~similarity check
+::summarize
+
+
+
+**web/public/page.html
+List videos from around times when there was a commit to this page.  
+Make that default filter for videos.  
+
+
+
+**extensions/vscode/codetutor/src/book.ts
+
+Need to allow for topic selection
+i.e. inline change of [**-1] to previous topic.  
+List selections and be able to add/remove.  
+
+
+For code changes, maybe for now add comments.  
+
+
+
+**web/public/git.js
+--loadBook
+When reading book, we should generate the directory tree.  
+
+
+
+#https://github.com/deftio/quikchat
+Should we use a chat UI component?  
+Yeah probably.  
+But just UI, not data management.  
+
+#https://github.com/SillyTavern/SillyTavern
+Try this maybe.  
+
+
+
+
+**web/public/timewindow.js
+--updateTimelineBook
+
+Stop/start keys.  
+(23,22,n,23) for video playback
+(11,10,n,11) for audio playback
+n=track
+
+
+**web/public/chata.html
+--ChatBuildContext
+Need to add date selection, and if it is over context length, just take part of the file.  
+
+...
+
+Need to pay more attention to folder structure.  
+
+
+**gitcontrol.js
+Basic language for browsing through git commits.  
+Need to finish this..
+
+
+
+**web/public/chata.html
+Finish vector ingestion for transcripts.  
+Load videos from timewindow period.  
+When this changes, update the videos.  
+Or perhaps just when an object is selected.  
+Find videos from the time periods of the commits.  
+
+
+
+
+
+**mykeys.py
+
+<settingscontrol>
+/SetTextSize [SIZE] = default font size
+
+<tagcontrol>
+/AddTag [NEXT/PREV] 
+/RemoveTag [NEXT/PREV]
+
+
+**web/public/languages/videocontrol.js
+<videocontrol>
+/Quick Screenshot = Activate panel and use Mouse for drawing.  
+/Screenshot [X1,X2,Y1,Y2]
+/AddText [NEXT/PREV,X1,Y1] = Use last transcript entry.  
+
+/Start recording
+/Stop recording
+/Save recording
+/Set Speed [T]
+/Skip [T]
+
+
+
+
+
+**g3D63CoYXVE
+
+@Guido of Arezzo
+#https://en.wikipedia.org/wiki/Guido_of_Arezzo
+
+#https://musicnotation.org/systems/
+#https://musicnotation.org/system/chromatonnetz-by-joe-austin/
+~~Notes should have direction.  
+pointing toward another note and time.  
+Only forward in time though I think..
+Directionality and size representing volume.  
+
+**analyze/analyze.py
+
+Need to create a midi visualization with these aspects.  
+Keep staff lines though.  
+Default would be line to most similar volume within the next set of notes?
+
+This would be what is used instead of the staff.  
+--midiToImage
+--ngramToImage
+
+> python ./analyze/analyze.py --title  "Evil Ways (Sonny Henry)" --force true
+
+Still need to fix ngramToImage.  
+Create a better visualization.  
+Size and directionality.  
+
+@@How do we extract which notes are pointing to others.  
+
+
+**extension/vscode/codetutor/src/extension.ts
+Should allow for quick copy of text to clipboard.  
+Also command sequences should have enough information to be meaningful.  
+Or keep this in mind when designing.  
+--Try to keep command MIDI meaningful.  
+
+
+**mykeys.py
+I like this midi handling better than [**web/public/keymap.js]
+I should really write more about my code preferences.  
+This would be useful information for the future.  
+
+
+
+**extensions/trey/trey.py
+What actions can we detect that make sense?  
+Mouse-click on window.  
+Other..
+
+
+**extensions/trey/trey.py
+Need some config for this.  
+
+
+
+**web/public/book.html
+60 seconds??
+~~Maybe limit the time window to 1 year..
+
+
+
+
+
+
+**web/public/book.html
+Need a nice tree view UI for files.  
+Only view on web.  
+#https://github.com/vakata/jstree
+Hmm..
+Maybe just use instead of filter files.  
+
+use [**map.txt] to update names when reading book.  
+
+Lets add background colors to the components what we imagine being used first/etc.  
+LLM UI -> red
+Current question -> Orange
+Transcript -> Yellow
+Selection History -> Green
+AI Responses -> Blue
+Code -> Indigo
+
+Are we loading MIDI feedback?  
+
+$$/testing/vscode/vscode-extension-samples/lsp-sample>
+> npm install
+
+!!error TS2552: Cannot find name 'HTMLElement'
+== 
+#https://code.visualstudio.com/api/language-extensions/language-server-extension-guide
+> npm install
+> npm compile
+
+**codetutor
+
+
+**extensions/vscode/codetutor/src/book.ts
+!!Fetch failed
+~~ > sudo systemctl restart ollama
+
+Maybe dont take too much general info on commands.  
+:: **web/public/js/filedrop.js
+Responses should be more specific to the selected topics.  
+
+Summary working a bit better now after removing duplication in topics.  
+Similar not working as well as I would like.  
+
+Maybe do some query expansion on ~~
+
+Default markdown reading has too many folder paths.  
+How to turn this off?  
+
+
+--summary
+Try to do some smart search for relevant topics and create some direct links to that information.  
+Perhaps as simple source links.  
+
+
+**extensions/vscode/codetutor/src/book.ts
+Should be able to ask question
+@@ Question
+OK..
+
+
+Do we need LSP?  
+--triggerUpdateDecorations
+--updateStatusBarItem
+
+
+So if we actually use 
+@dj:slack ....
+How do we find the relevant thread, or do we even try?  
+Just mark with the current topic and relevant info.  
+
+How to handle multiple topics in a row? 
+This is causing many responses to have blank entries in similar search.  
+Maybe hold a prev/next node when scanning.  
+and if blank go to next.  
+
+**web/public/languages/gitcontrol.js
+Try to use this..
+Prev/next
+
+
+**RECDROID
+Need simple automated sound recording device.  
+This is a good idea, but there is no need for a separate device for this.  
+
+$$FLUTTER
+$$vscode
+
+#https://github.com/flutter/flutter
+#https://manthankhandale.medium.com/make-a-sound-recorder-in-flutter-d64fd0809f6c
+
+
+
+#https://github.com/TheGuyDangerous/Voicerra
+
+
+Use this
+#https://github.com/gyakhoe/voice_recorder
+combine with bluetooth midi device.  
+#https://developer.android.com/develop/devices/assistant/overview
+Or just integrate with this.  
+
+
+Then need to make start/stop like this.  
+#https://github.com/actions-on-google/appactions-fitness-kotlin
+
+[**RECDROID] launches and records until next signal.  
+#https://www.geeksforgeeks.org/android/adding-firebase-to-android-app/
+
+
+
+**web/public/rec.html
+Ingesting vectors.  
+When ingesting, need to define file location?  
+
+
+**web/public/chata.html
+Create RAG implementation with local vector DB.  
+Just use ingested text for now.  
+Automatically ingest /book folder into vectors if they dont exist.  
+@@How to prevent ingesting full book each time?  
+
+**web/public/js/filedrop.js
+--ingestText
+
+Need datestamp in vecDB.  
+Order by date in RAG query.  
+
+Delete all file entries before reingest?  
+
+OK, so entries are added.  
+Not sure if we need to make them same size or not.  
+For now just keeping as is.  
+
+**web/public/git.js
+--initGitIndex
+Basic generation of vectors done.  
+Not exactly, but close enough for now..
+When we have a query, get similar vectors, and use the text from these similar vectors in context. 
+Original query should not have topic
+How long does this take.  
+--updateGitIndex
+Is this what we want, just a temporary index recreated every time?  
+Need to save sequence of interactions, but this should be sufficient?  
+Sequence of steps need to segregate from actual current data.  
+
+
+
+**web/public/js/ayuda/date.format.js
+**web/public/clock.js
+Unwanted dependency here.  
+
+
+**web/public/chata.html
+Finish RAG here.  
+Order in time.  
+Create expanded query, and retrieve further context if needed.  
+
+**web/public/data/transcripts.json
+Should also load transcripts.
+For now just load static transcripts.json
+If not existing in vecDB add it for chat responses.  
+
+Simultaneously list videos from around those times.  
+
+--loadTranscripts
+OK, buggy but chata.html loads git and transcripts.  
+
+auto-play certain areas after return similar.  
+
+Load <videocontrol> to use prev/next.  
+
+Need to delete [**web/public/test/javascript-vector-database/files/embeddings.json]
+This is an unused 80MB file in the repo.  
+
+> git rm --cached ./web/public/test/javascript-vector-database/files/embeddings.json
+
+
+
+
+**web/public/chata.html
+--ChatBuildContext
+Need to not pass so much.  
+Or just wait for context window for [**WEBLLM] to improve I guess?  
+
+**web/public/recent.js
+--loadAllRecent
+allow to pass date.  
+When we get git, need to search around the date/time of changes to the selected topic.  
+Just retrieve 20 or so from that date, change date.  
+
++/- 2 days.  
+
+**BATORU
+Need to get full feedback loop.  
+Currently there is no training of model being used.  
+Just takes so much energy.  
+For now just do this with local ollama.  
+Need to start at least a fine-tune loop.  
+
+
+**extensions/vscode/codetutor/src/extension.ts
+Use 
+^^# to generate comments.  
+^^+ to generate suggestions to add.  
+^^- to generate suggestions to remove.  
+^^& to generate book.  
+Continue here..
+Need book
+Make a command for each of these?  
+I guess.  
+\gencomments - same as gencode, But dont include commits with no comments.  
+\gencode - Get FULL Topics, Order ALL GIT changes include book changes as well.  
+\gendelete - This is tricky but important.  Maybe try a code coverage plugin.  
+\genbook - Get FULL Topics, Get GIT changes to book in sequence.  
+
+
+So by reading the book into the topic struct, dont actually need the code.   
+Need to create statistical info on each topic.  
+i.e. What commands are part of each topic and how many times.  
+Create Structure for this info.  
+Focus more on sequence of events directionality.  
+
+copy from [**web/public/git.js] perhaps..
+Try to use this:
+#https://github.com/octokit/octokit.js
+Or lets just use local cmd line.  
+
+#https://github.com/isomorphic-git/isomorphic-git
+#https://github.com/steveukx/git-js
+
+Save current branch.  
+> git branch --show-current
+$$BRANCHNAME
+> git branch $$BRANCHNAME
+> git switch $$BRANCHNAME
+..
+> git switch $$ORIGBRANCH
+> git merge
+
+
+Create a branch each time we run the improvement process.  
+Or keep branch for each topic.  
+
+^^+ to generate.  
+Find launchable page which includes this topic.  
+All launchable pages should be tried if possible.  
+Start recording..
+Launch [**PAGE]
+Use [**PAGE]
+
+Switch back to extension.
+Make updates..
+Show updates for time..
+
+Redeploy
+Use [**PAGE]
+Make observations and compare with previous iterations.
+add to [**GENBOOK]
+
+Launch other operations.. from [**GENBOOK]
+
+Accept/decline changes based on results and check prompts.  
+
+Make summary information about changes.
+Add to [**GENBOOK]
+
+Merge branch..
+
+
+List launched operations from [**GENBOOK]
+
+Only one branch at a time for any topic?  
+For now on failure just delete and start over?  
+Track how much failure.  
+
+Repeat process.
+
+
+**extensions/trey/trey.py
+Need commands to show past recordings, perhaps default show X years ago at some point.  
+
+**extensions/trey/playwrighty.py
+Lets just interact with the UI using this.  
+#https://github.com/microsoft/playwright-python
+
+$$music
+> playwright codegen --target=python -o ./languages/words/test/my_test.py https://google.com
+
+**languages/words/test
+How to be a robot without being a robot.
+
+
+**languages/hotkeys.py
+Need to pass params.  
+Test start me.  
+OK works I guess..
+
+Maybe need a start listening and stop listening for each language.  
+Or setting to start on load or not.  
+Or perhaps have a start sequence which just runs through mykeys.  
+Still need turn on/off words.  
+
+
+**languages/words/test/my_test.py
+element_locator = page.locator("#myElement")
+bounding_box = await element_locator.boundingBox()
+
+What is sender/receiver?  
+
+**languages/words/_meta/speak.py
+From screen -> text -> voice
+#https://huggingface.co/hexgrad/Kokoro-82M
+#https://github.com/hexgrad/kokoro
+
+Create word/location map based on this.  
+Need interrupt command.  
+Try to identify interactable objects.  
+#https://github.com/srebroa/awesome-yolo?tab=readme-ov-file
+
+#https://neptune.ai/blog/object-detection-with-yolo-hands-on-tutorial
+
+!!ImportError: numpy.core.multiarray failed to import
+~~>pip install --upgrade opencv-python, numpy
+
+OK, so how do we get a yolo model for screen?  
+Or just move the mouse around the screen and detect the link cursor changing.  
+
+Seems like fun, but maybe dont need this complexity.  
+Just detect mouse change to try to detect boundaries of interactive objects.  
+
+mouse.position
+
+mouse.move_relative
+
+**analyze/ocr.py
+Get info on text position throughout.  
+Put mouse on any text that is available and see if it is interactive.  
+
+Then summarize the text, how to do this in a meaningful way?  
+Annotate results and areas.  
+
+#https://github.com/UB-Mannheim/tesseract/wiki
+
+$$PATH += C:\Program Files\Tesseract-OCR
+
+Add this to [**extensions/trey]
+
+Just use the ocr info for now.  
+Not picking up formatting, but have enough info here to do some interesting things.  
+With simple pages.  
+Put the Page text into LLM and grade response on grammatical correctness.  
+If most things look grammatically correct, then use, otherwise notify the user that result quality is not ideal. 
+
+Also get a summary of the page contents.  
+And areas we can click (hand icon detection)
+
+**languages/hotkeys.py
+Try to read screen.  
+53, 50
+..
+
+
+#https://github.com/hexgrad/kokoro/tree/main/kokoro.js
+
+Try this as default TTS.  
+For now use with [**extensions/trey/trey.py]
+
+Adjust config here.
+mykeys.languages[..].config = ...
+
+Generate sound for CRLF
+
+**generate/generatetts.py
+> espeak-ng.msi
+
+Works, but far too slow..
+#https://github.com/nateshmbhat/pyttsx3
+
+More like what we need, really should get better voice.  
+Maybe use this one for real-time, and generate with good voice if want to read whole page.  
+
+**extensions/trey/trey.py
+OK finally have some speech.  
+Why do I have to use pygame, not sure, but the others playsound and simpleaudio caused problems.  
+
+Most usage will be browser anyway.  
+
+
+
+All asynchronous as this will take time.  
+
+!!playsound never releases file
+~~pip install playsound3
+
+#https://github.com/rany2/edge-tts
+Much faster to just use built-in.  
+
+!!edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+This occurs when input is too short.  
+Also why do we have to pass line by line?  
+
+Need an interrupt.  
+Scan page, and 
+Match locations of text with location of links
+
+OK, so skip lines works.  
+Queue management, not great I think, but we can pass info.  
+
+
+**KEYMAP
+
+primarily 3-key
+Start letter controls language/function:
+48 -> Meta function
+49
+50
+51
+52 -> error
+53 -> Screen control navigation
+54 -> ok
+55 -> good
+56
+57
+58
+59 -> Lang control
+60 -> Meta function
+61
+62
+63
+64 -> error
+65 -> Screen control input/selection
+66 -> ok
+67 -> good
+68
+69
+70
+71 -> lang control
+72 -> meta (none)
+
+53 and 65 start key.  
+
+$$(-21,-108) = 88 keys
+$$(-20,+20) = relative change.  
+greater than 20 diff is not part of same sequence?  
+$$(+21,+108) = 88 keys
+$$109+ = ?  
+
+
+**KKEYS
+ALL SQUARES
+1,4,9,16
+25, 36, 49, 64, 81, 100
+28, 31, 56, 60, 90
+
+
+
+Once we detect no word exists, reset?  
+Create a structure of combination of first set of 2 and 3 letters.  
+Simple Tree structure
+KK[108][108] = null
+Then set to data if exists.  
+
+
+
+
+**CCONTROL
+Launch browser tab or window (optional search string)
+Detect scrollbar of active window.  
+Indicate page layout and location in page with sound.  
+Selected portion of page just use chromatic percentage.  
+Page up, page down
+Start reading immediately
+Summarize full page
+Read full page
+
+
+--check mykeys.key
+Read from beginning of word only.  
+
+Help should be same:
+Octave?  
+48,60,48 = help 
+53,65,53 = help 
+etc.
+
+
+21 -> Start
+22 -> End
+107 -> Pause
+108 -> Unpause
+
+
+**web/public/languages/audiocontrol.js
+**web/public/languages/videocontrol.js
+**web/public/languages/book.js
+**web/public/gitcontrol.js
+Each of these needs to be retooled to use relative offset.  
+Just use keybot["lang"]
+
+OFFSET:
+_meta = 0
+videocontrol = 1
+book = 2
+gitcontrol = 3
+error = 4
+screencontrol = 5 (53)
+ok = 6
+good = 7
+generate = 8
+find = 9
+auto-generate? = 10
+lang = 11
+
+
+
+RELATIVE STRUCT:
+0,1 = help
+0,1,12 = list commands
+0,1,2 = 0,2 commands
+0,1,3 = 0,3 commands etc.  
+
+0,2 = 
+
+What to do for octave spanning commands?  
+For now octave spanning just calculate which octave, but only use %12 value
+
+
+
+for now..
+Probably need to combine some..
+(53,55,59) Page
+Test..
+
+@@How to do continuation?  
+Cant find a good strategy for this..
+Octave jump?
+Previous note?
+Maybe time??
+configurable slight delay OR octave jump?  
+Maybe try both
+
+So if we are waiting return in SEQ.  
+From there we can recall the lookup.  
+
+And redo search..
+
+
+
+*STT
+Try this for STT
+#https://github.com/speechbrain/speechbrain
+
+from speechbrain.inference import EncoderDecoderASR
+
+asr_model = EncoderDecoderASR.from_hparams(source="speechbrain/asr-conformer-transformerlm-librispeech", savedir="pretrained_models/asr-transformer-transformerlm-librispeech")
+asr_model.transcribe_file("speechbrain/asr-conformer-transformerlm-librispeech/example.wav")
+
+Training..
+#https://speechbrain.readthedocs.io/en/latest/tutorials/tasks/speech-recognition-from-scratch.html
+
+
+**mykeys.py
+See if this still works.  
+OK, there is some lag in the cursor change.  
+Also need to try to determine if the link is the same as the previous link.  
+Really want the DOM I think.  
+Maybe can hack by prevword has link etc.  
+
+Wikipedia seems to work ok.  Still some mixing of data together.  
+Need to try to detect X gaps, and change the block etc.  
+#https://pyimagesearch.com/2021/11/15/tesseract-page-segmentation-modes-psms-explained-how-to-improve-your-ocr-accuracy/
+
+hmmm...
+not much help.  
+Try to get wikipedia to work well to start.  
+
+
+~~Lets make a browser version as well, or playwright-based instead of OCR.  
+
+#https://github.com/scrapy/scrapy
+
+**extensions/trey/playwright.py
+> pip3 install playwright-stealth
+still not working with google, but I guess we can use another search engine..
+
+
+-search_web
+test..
+
+
+**extensions/trey/testspeechbrain.py
+#https://github.com/speechbrain/speechbrain
+
+OK, so basic transcription works ok..
+Maybe try to train custom model for transcription as well as TTS.  
+Run transcription with this perhaps locally.  
+
+#https://speechbrain.readthedocs.io/en/latest/tutorials/tasks/speech-recognition-from-scratch.html
+#https://github.com/speechbrain/speechbrain/blob/develop/templates/speech_recognition/mini_librispeech_prepare.py
+Generate from transcript data we have.  
+
+#https://medium.com/@marko.briesemann/fine-tuning-and-deployment-of-open-source-asr-models-with-pytorch-d3264fd1b160
+go through first example.  
+
+**testing/speechbrain
+> git clone https://github.com/speechbrain/speechbrain/
+
+**testing/speechbrain/templates/speech_recognition/mini_librispeech_prepare.py
+
++data_folder = './mini_librispeech'
++prepare_mini_librispeech(data_folder, 'train.json', 'valid.json', 'test.json')
+
+> python ./mini_librispeech_prepare.py
+
+**extensions/trey/hotkeys.py
+Possibly just create samples by using.  
+i.e. search_web
+if correct, just send message and save as training data.  
+
+
+**extensions/trey/testspeechbrain.py
+Nice this kind of works.  
+STT and TTS
+Now need to customize the models.  
+
+
+**models/hyperparams.yaml
+
+-train_model
+test ..
+!!Entry Not Found for url: https://huggingface.co/speechbrain/asr-crdnn-rnnlm-librispeech/resolve/main/hyperparams_develop.yaml.
+==use hyperparams.yaml
+$$
+
+Actual data saved here:
+$$models/pretrained_ASR
+$$HF=Users/[user]/.cache/huggingface/hub/models--speechbrain--asr-conformer-transformerlm-librispeech/blobs
+
+So speech tuning can be done here I think..
+Is it enough to tune the base model, and how important is the base model?  
+
+#https://speechbrain.readthedocs.io/en/latest/tutorials/advanced/pre-trained-models-and-fine-tuning-with-huggingface.html
+$$6 
+This was fairly smooth
+
+
+OK, so just use this for now with 
+
+**extensions/trey/speech.py
+basic functionality, use trainable Speech model.  
+
+Multi-set backward looking takes precedence over the word dictionary.  
+Only look at repetition for now.  But leave open for further check.  
+Essentially a logic branch detector.  
+Or do we just use the same word dictionary?  
+So shorter words could be used within supplemental sequences.  
+So continually check for words within supplemental sequences.  
+Switch to the last command found when checking for completion.  
+Do not search 1 char entries perhaps.  
+
+Just use length check for now.  
+If chance for details to come, wait for details.  
+
+
+How to determine end of word.  
+Use start of word identifier.  
+If len(sequence) == 1 and sequence[-1] = self.keybot
+or
+if len(sequence) > 1 and sequence[-2:] == [self.keybot, self.keybot]
+EOW = SOW*2
+Is this a good mechanism?  
+Try with hotkeys.  
+
+
+**extensions/trey/hotkeys.py
+-read_screen
+test..
+
+rebase after mykeys working..
+
+Seems still working
+-search_web
+test..
+
+
+Start reading, but also create summary and read summary.  
+How to tune what is read?  
+
+Listen and transcribe before search..
+After transcribe just get LLM base response.  
+Simultaneously do search, once this is available read this.  
+Each page do summary in different voice, and start reading the page.  
+Summary should be somewhat louder?  
+only have stop for summary not skip.. 
+Turn on/off.  
+Loop through voices.  More recent should be louder?  
+Or based on some analysis of formatting?  
+Or link in different voice..
+
+How to do volume management.  
+
+Search for link density.  
+If high link density assume a menu.  
+Have different function to read menu vs content.  
+
+edge-tts is using wss://api.msedgeservices.com/tts/cognitiveservices/websocket/v1
+Boo..
+
+Need to escape some things in the call as well..
+
+Message not fully removed.  
+
+
+**extensions/trey/speech.py
+-generate_audio
+See if we can use the speechbrain TTS.  
+
+
+Need notifier of what line and how many lines.  
+Also go through link density map to try to find content.  
+avg link density > 0.05 = menu
+avg link density > 0.02 = titles
+avg link density > 0 = blurbcd 
+link density == 0 = content
+
+Just go through the lines and generate beeps/sounds representing data type per line.  
+Each 10/20 lines make a recognizable beat of some kind to indicate where we are.  
+
+!!operator torchvision::nms does not exist
+> pip install torch torchvision torchaudio
+~~Why do we need torchvision??
+
+> python ./extensions/trey/speech.py --text "this is a test" --fname "./temp/0.wav"
+
+Need separate command for link type.  
+
+**extensions/trey/trey.py
+-select_type
+-next_type
+test..
+
+
+Create MIDI file representing layout..
+
+Instrument = Type of information
+$$OBOE
+SOL = Start of Line
+SOL (two-note chorrd with gradually increasing interval as we go through page)
+0-10% = C Db
+10-20% = C D
+etc..
+90-100% = C Bb
+
+$$Trumpet
+LINK indicator (pitch = length of link.  )
+
+
+
+**FLOW
+Summary
+content
+
+Generate vectors for lines.  
+
+Reading content lines search for similarity vectors from long links or link blurbs.  
+anything < 0.01% links = content.  
+
+
+Manually read menu options.  
+Setting for this..
+
+Organize [**FLOW] as strategies.  
+For now just this strategy..
+
+Need function to 
+> Search similar (searches similar to n line, or two params, m-n lines relative to location)
+Test one/two param is working.  
+Call search web with this text.  
+
+> Read search text
+If lose awareness of what our context is.  
+
+
+Create simple function to embed text into MIDI
+INPUT
+META Control = [1-20]
+PIANO [21 .. 108]
+Not sure what this means yet.  
+
+TEXT = [109-127]
+[109-127] = encoded characters.  
+so 4-bit chunks.  
+[112-127]
+1110000 in decimal
+[109,110,111] = text control
+LANGID = [109,110] ... [109]
+Can indicate language in midi sequence using 110,111 or just guessed language.  
+[110] = English
+[111] = Chinese
+[110,110] = ..
+[110,111] = ..
+[111,110] = ..
+[111,111] = ..
+up to any number header.  
+Then the [112-127] is text.  
+
+Just embed the entire text string bytes and divide into 4-bit segments.  
+So 1 UTF-8 char = 4 notes.  
+Acceptable..
+
+Milliseconds for now, so only 
+250 chars / second.  
+This seems low.  
+10* what can be read.  
+
+For now just use 256-byte chars.  
+So 2 notes.  
+
+Lets try to start just 50 chars /second.  
+100 10 ms intervals.  
+
+@@Can this be distinguished?
+
+Right now how it sounds doesnt matter.  
+Use two-note chorrd to generate.  
+
+
+Sequence is only thing that is important for now.  
+Timing not used as information.  
+Can we use volume as information, probably not reliably?  
+
+
+Use different voice for reading link/menu/content.  
+
+**mykeys.py
+--text2midi
+test..
+probably not useful in any near term.  
+--playmidi
+
+
+Need links2midi as well.  
+
+Length of MIDI word needs to have meaning of some kind.  
+
+@@What is MIDI pure sine wave?  
+
+
+> python ./mykeys.py
+
+
+**web/public/analyze.html
+Problem with repeating words again.  
+--comments
+
+
+How do we implement closure on Free commenting?  
+(12,15,15)
+(15,15,12)
+
+Not sure this is what we want.  
+Good enough for now..
+What to do when running command under comment?  
+
+Need a word to select topic.  
+
+
+OFFSET:
+_meta = 0
+videocontrol = 1
+book = 2
+--52,..
+gitcontrol = 3
+error = 4
+screencontrol = 5 (53)
+ok = 6
+good = 7
+generate = 8
+find = 9
+auto-generate? = 10
+lang = 11
+
+
+**web/public/book.html
+--select topic
+see if this works ok..
+
+
+#https://github.com/milvus-io/milvus
+Try this for python local?  
+#https://zilliz.com/about
+
+#https://github.com/cockroachdb/cockroach?tab=readme-ov-file
+
+> pip install pymilvus
+
+All these VectorDBs are RUST and GO looks like.  
+Are these languages worth learning already?  
+#https://en.wikipedia.org/wiki/Rust_(programming_language)
+
+#https://en.wikipedia.org/wiki/Go_(programming_language)
+
+#https://code.visualstudio.com/docs/languages/go
+#https://code.visualstudio.com/docs/languages/rust
+
+#https://github.com/browser-use/browser-use
+Try this instead of playwright before we get too far along..
+#https://github.com/Skyvern-AI/skyvern
+#https://github.com/apify/crawlee
+
+
+
+#https://github.com/AutomaApp/automa
+#https://github.com/nanobrowser/nanobrowser
+
+Try one of these browser extensions..
+
+
+What can I write in GO or RUST..
+
+**extensions/trey/test/milvusme.py
+> pip install pymilvus[milvus_lite]
+
+!!pymilvus.exceptions.ConnectionConfigException: <ConnectionConfigException: (code=1, message=milvus-lite is required for local database connections. Please install it with: pip install pymilvus[milvus_lite])>
+
+==
+Milvus Lite currently supports the following environmnets:
+
+Ubuntu >= 20.04 (x86_64 and arm64)
+MacOS >= 11.0 (Apple Silicon M1/M2 and x86_64)
+$$
+
+$$Ubuntu
+> python3 ./extensions/trey/test/milvusme.py
+
+
+#https://github.com/qdrant/qdrant
+
+> pip install qdrant-client
+
+#https://qdrant.tech/documentation/beginner-tutorials/hybrid-search-fastembed/
+Try this..
+Build 
+
+**extensions/trey/qdrantz.py
+> python ./extensions/trey/qdrantz.py
+> pip install fastembed
+
+maybe need click_suggested_link
+
+@QDRANT
+!!size=qdrantz_client.get_embedding_size(dense_model_name),
+!!ImportError: fastembed is not installed. Please install it to enable fast vector indexing with `pip install fastembed`
+#https://github.com/qdrant/qdrant-client/blob/master/qdrant_client/qdrant_fastembed.py
+
+
+~~this is not the right message.  
+
+==
+> pip uninstall onnxruntime
+> pip install onnxruntime==1.20.1
+$$
+
+**extensions/trey/trey.py
+link density and numlinks not correct..
+Maybe better..
+
+Additional voice good.  
+Need to check that the second SIM queue works ok.  
+
+
+**news.py
+#https://github.com/unclecode/crawl4ai
+
+Create subcommand for [**trey.py]
+
+Also need to measure truth from multiple sources, and create a 
+PCT verified data point.  
+Aggregate the news and create a sourcing chain.  
+Point out similarities and discrepancies.  
+Grade each against the other.  
+
+check other engine for search.  
+
+about 10 mins for just one newspaper download..
+
+OK can search multiple sites.  
+Need tab management.  
+When do we open new tab or not.  
+test list_tabs..
+For now limit to 10 tabs..
+
+Check stop_audio..
+for single tab.

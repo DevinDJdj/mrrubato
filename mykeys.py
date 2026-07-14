@@ -1,3 +1,6 @@
+import math
+import random
+
 import numpy as np
 #midi controller points
 #how do we adjust octaves and/or spacing
@@ -23,6 +26,23 @@ from languages import * #maybe we want this to be dynamic, but for now whatever.
 import importlib
 import logging
 import time
+import sys
+import mido
+from mido import Message, MidiFile, MidiTrack
+from datetime import datetime
+from mido.ports import MultiPort
+#probably should move..
+import extensions.trey.synth as synth
+import winsound
+import base64
+import os
+import threading
+
+from collections import defaultdict
+import languages.helpers.transcriber as transcriber
+
+
+from multiprocessing.shared_memory import SharedMemory
 
 #logging.basicConfig(filename='trey.log', 
 #    format='%(asctime)s %(levelname)-8s %(message)s',
@@ -31,6 +51,40 @@ import time
 
 logger = logging.getLogger(__name__)
 
+
+def merge(a: dict, b: dict, path=[]):
+  for key in b:
+      if key in a:
+          if isinstance(a[key], dict) and isinstance(b[key], dict):
+              merge(a[key], b[key], path + [str(key)])
+          elif a[key] != b[key]:
+              raise Exception('Conflict at ' + '.'.join(path + [str(key)]))
+      else:
+          a[key] = b[key]
+  return a
+
+def recursive_values(data):
+    """
+    Recursively walks a nested dictionary (and lists within it)
+    and yields all non-container values.
+    """
+    if isinstance(data, dict):
+        for k, value in data.items():
+            # If the key is from struct, recurse into it
+            if (isinstance(k, int)):
+              yield from recursive_values(value)
+            else:
+              yield value
+    else:
+        # Base case: if it's a simple value, yield it
+        yield data
+
+
+class RepeatTimer(threading.Timer):
+    def run(self):
+        # Keep looping until self.finished is set via cancel()
+        while not self.finished.wait(self.interval):
+            self.function(*self.args, **self.kwargs)
 
 class MyLang:
   #define action for some sequences.  
@@ -62,10 +116,27 @@ class MyLang:
   
 
 class MyKeys:
-  def __init__(self, config):
+  def __init__(self, config, qapp=None, startx=0, stop_event=None):
     self.config = config
+    self.transcriber = transcriber.transcriber(self)
+
+    self.lasttick = time.time()
+    self.stop_event = stop_event #stop event for MK
+    self.synth_stop_event = None
+    self.now = datetime.now()
+    self.nowstr = self.now.strftime("%Y%m%d%H%M%S")
+    self.mid = self.getmidifile()
+    self.langdir = config['keymap']['settings']['LANG_DIR']
+    self.transcriptdir = config['keymap']['settings']['TRANSCRIPT_DIR']
+    self.qapp = qapp
+    self.startx = startx
+    self.helpx = config['keymap']['settings']['HELP_X']
+    self.maxseq = 30 #can we chain together anything meaningful?  
     self.sequence = []
+    self.words = [] #this can be passed from microphone input as well.  
+    self.words_ = [] #this is the full list of executed words.  
     self.fullsequence = []
+    self.stack = []
     self.languages = {} #language modules.  
     self.langkey = []
     self.langna = []
@@ -77,17 +148,46 @@ class MyKeys:
       #then funcdict for each language?  
     self.currentlang = None
     self.currentlangna = ""
+    self.setlanguage = None
     self.currentchannel = 0
     self.transcripts = {} #transcripts for each language
     self.currentseqno = 0
-    self.startseqno = -16  #start of word/phrase.  #no phrases longer than 16 keys.  
+    self.startseqno = 0  #start of word/phrase.  #no phrases longer than 16 keys.  
     self.lastnotetime = 0
     self.currentcmd = None
-    self.notes = np.zeros(config['keymap']['global']['top'] - config['keymap']['global']['bottom'], dtype=int)
+    self.notes = np.zeros(config['keymap']['global']['top']+config['keymap']['global']['bottom'], dtype=int) #just use midi index..
+    #need some extra for 
+    self.heldwords = []
+
+    self.primemap = np.zeros(config['keymap']['global']['top'], dtype=int) #map of prime to note
+    for i,p in enumerate(self.primes(800)): #should reflect octave relationship..
+      if (i < config['keymap']['global']['top']):
+        self.primemap[i] = p
+
+    self.play_feedback = False
+    self.transcript = ""
+    self.starttime = time.time()
+    self.lasttick = self.starttime
+    self.keyshift = 0 #current keyshift.
+    self.octaveshift = 0 #current octave shift.
+    self.octaveinterval = 12 #number of keys per octave.
+
+    self.keystruct = {}
+    self.qrin = [] #qr inputs
+    self.qr = "" #qr output.  This is what is sent to the app.  Languages can set this to send messages to the app.
+
+#    self.qrinmem = SharedMemory(name="mykeys") #shared memory for qrin if needed.
+#    self.qroutmem = None #shared memory for qrout if needed.
+
+    if (self.config['keymap']['settings']['PLAY_FEEDBACK']):
+        self.play_feedback = True
+    else:
+        self.play_feedback = False
 
 
     for key, value in config['keymap']['languages'].items():
       #load files
+      #order from config.json should be _meta, _lang, other..
       try:
         la = importlib.import_module("languages." + key)
         la = getattr(la, key)  # Class From file
@@ -98,15 +198,313 @@ class MyKeys:
 
           self.langused.append(key)
           #just use this language config.  
-          self.languages[key] = la(config)  # Create instance of class
-          self.languages[key].load()
+          self.languages[key] = la(config, self.qapp, self.startx)  # Create instance of class pass qapp for any UI stuff
+          self.languages[key].load(self.transcriber) #pass existing loaded data..
           self.languages[key].callback = self.callback
+          if (self.languages[key].maxseq > self.config['keymap']['settings']['MAX_WORD']):
+            self.maxseq = self.languages[key].maxseq
+
           self.langkey.append(value)
           self.langna.append(key)
           print("language added " + key)
-      except:
+          logger.info("language added " + key)
+      except Exception as e:
         print("language doesnt exist " + key)
+        logger.error(f'Error loading language {key}: {e}')
+        import traceback
+        traceback.print_exc()
+
+    self.keystruct = self.gen_lang_struct() #initialize keystruct for all known words, if no keybot, then not loaded here..
+    print("Keystruct generated")
+    print(self.keystruct)
+    #also generate image from note structure for each lang_word..
+    #here no rhythm, so should be very easy..
+    self.heldwordstimer = RepeatTimer(0.5, self.checkheldwords) #check held words every 0.5 seconds
+    self.heldwordstimer.start()
+
+
+  @staticmethod
+  def primes(n): # simple sieve of multiples 
+    odds = range(3, n+1, 2)
+    sieve = set(sum([list(range(q*q, n+1, q+q)) for q in odds], []))
+    return [2] + [p for p in odds if p not in sieve]
+
+  def set_language(self, langna):
+    if (langna in self.languages):
+      self.setlanguage = langna
+      print(f'Set current language to {langna}')
+      logger.info(f'Set current language to {langna}')
+      return 0
+    else:
+      print(f'Language {langna} not found')
+      logger.error(f'Language {langna} not found')
+      return -1    
+    
+
+  def get_bbox(self):
+    
+    if (self.currentlangna !="" and hasattr(self.languages[self.currentlangna], 'bbox')):
+      return self.languages[self.currentlangna].bbox
+    return None
   
+  def get_langs(self):
+    #get all unique languages used in words
+    self.langused = []
+    for w in self.words_:
+      if (w['langna'] not in self.langused):
+        self.langused.append(w['langna'])
+    return self.langused
+  
+
+  def get_words_(self, prefix=[]):
+    if (len(prefix) == 0):
+      #filter here for most used words.  
+      ret = recursive_values(self.keystruct)
+      #also get setlanguage words..
+      #todo: show all words in setlanguage for reference.  Should be small set and just hotkeys.  
+
+      return ret
+    
+    if (len(prefix) > 0):
+      ret, end = self.get_keystruct(prefix)
+      print(end)
+      fret = recursive_values(end)
+      #todo: show all words in setlanguage as well for reference.  Should be small set.
+
+      print(fret)
+      return fret      #should include all words with this prefix.. needs reformatting..
+  
+  def get_spoken_words(self):
+    return self.words_
+
+
+  def get_keystruct(self, keys, struct={}):
+    end = self.add_keys(keys, struct)
+    return struct, end
+  
+  def add_keys(self, keys, struct):
+      if keys[0] not in struct:
+          struct[keys[0]] = {}
+      if len(keys) > 1:
+        return self.add_keys(keys[1:], struct[keys[0]])
+      return struct[keys[0]]
+
+  def gen_lang_struct(self, config=None, lang=""):
+    if (config is None):
+      struct = {}
+      final = {}
+      for (l,la) in self.languages.items():
+        if (hasattr(la, 'config') and hasattr(la, 'keybot')):
+          struct = self.gen_lang_struct(la.config['languages'][l], lang=l)
+          final = merge(final, struct)
+      return final
+    else:
+      kb = self.languages[lang].keybot
+      struct = {}
+      final = {}
+      for cmdlen, words in config.items():
+        if (cmdlen.isnumeric()):
+          for word, vals in words.items():
+            ks,end = self.get_keystruct(vals)
+            end[word] = {'lang': lang, 'word': word, 'keys': vals} #some info about word..
+            #merge ks into struct
+            #print(ks)
+            final = merge(final, ks)            
+          
+      return final
+    
+  def gen_dot(self, config=None, lang=""):
+    if (config is None):
+      dot = "digraph G {\n"
+      dot += "rankdir=LR;\n"
+      dot += "node [shape=circle];\n"
+      for (l,la) in self.languages.items():
+        if (hasattr(la, 'config')):
+          dot += self.gen_dot(la.config['languages'][l], lang=l)
+      dot += "}\n"
+    else:
+      dot = ""
+      for cmdlen, words in config.items():
+        if (cmdlen.is_numeric()):
+          for word, vals in words.items():
+            for v in vals:
+              dot += f'"{lang}:{word}\\n{v["action"]}" -> "{lang}:{v["next"]}\\n{v["next_action"]}" [ label="{cmdlen}" ];\n'
+            
+    return dot
+  
+  def set_audio_location(self):
+    #set audio location queue for languages that use it.  
+#    logging.info('Setting audio location queue for languages')
+    for (l,la) in self.languages.items():
+      if (hasattr(la, 'set_audio_location')):
+        la.set_audio_location()
+
+  def add_qrin(self, data):
+    #find this QRData.  If exists, ignore.  
+    if (data not in self.qrin):
+      self.qrin.insert(0, data) #add to start of list
+      #find language which matches this data?  for now just broadcast to all languages.
+      #use language and function <lang>func [params]
+      for (l,la) in self.languages.items():
+        if (hasattr(la, 'qrin')):
+          la.qrin = (data)
+        if (hasattr(la, 'qr_in')):
+          la.qr_in(data)
+    else:
+      #dont keep duplicates for now..
+      self.qrin.remove(data)
+      self.qrin.insert(0, data) #move to start of list
+
+
+  def convert_keys(self, keys):
+    copy = []
+    ret = ""
+    for i,k in enumerate(keys):
+      if (i==0):
+        copy.append(k)
+      else:
+        copy.append(k - keys[0])
+    base = keys[0]
+    for k in copy:
+      mod12 = (base + k) % 12
+      if (k == base): 
+        ret += "<i>" + str(k) + "</i>,"
+      else:
+        if (mod12 in (1, 3, 6, 8, 10)): #sharp keys
+          ret += "<b>" + str(k) + "</b>,"
+        else:
+          ret += str(k) + ","
+    return ret
+  
+  def set_qr(self, func, param={}):
+    """Set QR."""
+    self.qr = "> " + func + "\n"
+    for k,v in param.items():
+        self.qr += f"$${k}={v}\n"
+    self.qr += "$$\n"
+    return 0  
+
+  def get_qr(self):
+    qr = ""
+    for (l,la) in self.languages.items():
+      if (hasattr(la, 'qr') and la.qr != ""):
+        if (l == "_lang"):
+          if (la.qr.startswith("> Set Language")):
+            #get the language to set..
+            #parse info.. maybe want somewhere else..
+            vars = la.qr.split("\n")
+            langdef = vars[-3].split("=")
+            if (langdef[1] == self.setlanguage):
+              continue #skip lang set messages.
+            else:
+              #dynamically load language
+              self.setlanguage = langdef[1]
+              #lang already loaded, but check setlanguage for words..
+              if (self.setlanguage in self.languages):
+                self.currentlang = self.languages[self.setlanguage]
+                self.currentlangna = self.setlanguage
+                logger.info(la.qr) #> Set Language [sequence]
+                if (hasattr(self.currentlang, 'octaveshift')):
+                  self.octaveshift = self.currentlang.octaveshift
+        if (l == "_meta"):
+          if (la.qr.startswith("> Select Topic\n")):
+            vars = la.qr.split("\n")
+            print(vars)
+            topicdef = vars[-3].split("=")
+#            if (len(topicdef) > 1 and topicdef[1] != ""):
+#              for (l2,la2) in self.languages.items():
+#                if hasattr(la2, 'current_topic'):
+#                    la2.current_topic = topicdef[1]
+#                if hasattr(la2, 'transcriber') and hasattr(la2.transcriber, 'current_topic'):
+#                    la2.transcriber.current_topic = topicdef[1]
+          if (la.qr.startswith("> Select Book\n")):
+            vars = la.qr.split("\n")
+            print(vars)
+            bookdef = vars[-3].split("=")
+#            if (len(bookdef) > 1 and bookdef[1] != ""):
+#              for (l2,la2) in self.languages.items():
+#                if hasattr(la2, 'current_book'):
+#                    la2.current_book = bookdef[1]
+#                if hasattr(la2, 'transcriber') and hasattr(la2.transcriber, 'current_book'):
+#                    la2.transcriber.current_book = bookdef[1]
+                
+
+
+        qr += "<<" + l + ">>\n"
+        qr += la.qr + "\n"
+        la.qr = "" #reset qr after getting it.
+    qr += "<<meta>>\n"
+    words = self.get_words_(self.sequence[self.startseqno:])
+    #potentially get most likely words here only.  Eventually..
+    qr += f"$$SEQLEN={self.currentseqno - self.startseqno} \n"
+    if (self.currentseqno - self.startseqno == 0):
+
+      qr += f"&&{self.currentcmd} \n"
+      help = ""
+      if (self.currentlangna in self.languages and hasattr(self.languages[self.currentlangna], 'helpdict') and self.currentcmd in self.languages[self.currentlangna].helpdict):
+        if ('> ' in (self.languages[self.currentlangna].helpdict[self.currentcmd])):
+          help += f"> {self.languages[self.currentlangna].helpdict[self.currentcmd]['> ']} \n"
+        if ('$$+' in (self.languages[self.currentlangna].helpdict[self.currentcmd])):
+          help += f"$$+{self.languages[self.currentlangna].helpdict[self.currentcmd]['$$+']} \n"
+        if ('&&' in (self.languages[self.currentlangna].helpdict[self.currentcmd])):
+          help += f"&&{self.languages[self.currentlangna].helpdict[self.currentcmd]['&&']} \n"        
+        else:
+          help += f"&&{self.languages[self.currentlangna].helpdict[self.currentcmd]}\n"
+        if ('$$' in (self.languages[self.currentlangna].helpdict[self.currentcmd])):
+          help += f"[{self.languages[self.currentlangna].helpdict[self.currentcmd]['$$']}] \n"
+      qr += f"{help} \n"      
+      #get params here..
+
+    for i, w in enumerate(words):      
+      keys = self.convert_keys(w['keys'])
+      qr += f"~~{i} | {w['word']} | {keys} \n" #br working for line breaks..
+    #output info about potential keys here.  
+
+    qr += self.qr
+    self.qr = "" #reset qr after getting it.
+
+    return qr
+  
+  def start_feedback(self):
+    if (self.play_feedback):
+      self.synth_stop_event = threading.Event()  # Event to signal stopping
+      self.play_thread = threading.Thread(target=synth.play_stream, args=(self.synth_stop_event,))
+      self.play_thread.start()
+
+#      from extensions.trey.speech import init_asr_model
+#      self.asr_thread = threading.Thread(target=init_asr_model, args=())
+#      self.asr_thread.start()
+
+
+  def unload(self):
+    #unload language specific data
+    for (l,la) in self.languages.items():
+      la.unload()
+    if (self.play_feedback):
+      logger.info('Stopping Synth thread')
+      self.synth_stop_event.set()
+      self.play_thread.join()
+      time.sleep(2) #wait for this to end
+      
+    return 0
+  
+  def set_startx(self, startx):
+    print(f'Setting startx for languages to {startx}')
+    self.startx = startx
+    for (l,la) in self.languages.items():
+      la.startx = startx
+
+  def set_bbox(self, bbox):
+    print(f'Setting bbox for languages to {bbox}')
+    for (l,la) in self.languages.items():
+      if (hasattr(la, '_bbox')):
+        la._bbox = bbox
+        
+  def set_geo(self, geo):
+    print(f'Setting geometry for languages to {geo}')
+    for (l,la) in self.languages.items():
+        if (hasattr(la, 'geo')):
+          la.geo = geo
 
   def callback(self, cmd):
     """Callback function for languages."""
@@ -119,50 +517,405 @@ class MyKeys:
 
 
   def reset_sequence(self):
-    self.fullsequence.extend(self.sequence)
+#    self.fullsequence.extend(self.sequence)
+
+#dont get rid of midi feedback tracks.  
+#    if (len(self.mid.tracks[self.currentchannel]) >= len(self.sequence)):
+#      for s in self.sequence:
+#        self.mid.tracks[self.currentchannel].pop() #remove from midi track.
+        #get rid of unused data..
+
     self.sequence = []
+    self.words = []
+    self.currentcmd = None
+    self.currentlang = None
+    self.currentlangna = ""
     self.currentseqno = 0
-    self.startseqno = -16
+    self.startseqno = 0
     self.lastnotetime = 0
+    self.wordstarttime = 0
+    self.wordendtime = 0
+    self.notes = [0 for _ in range(len(self.notes))]
     
-  def key(self, note, msg, callback=None):
+  def findword(self, sequence=[]):
+    """Find word in all languages."""
+    for (l,la) in self.languages.items():
+      #really should use self.keystruct here instead of looping through all languages and words.  This is inefficient.
+      #ret, end = self.get_keystruct(prefix)
+      if (sequence[0] != la.keybot): #maybe have multiple prefix for language, but for now just one.
+        continue #skip if first key doesnt match, this is the most expensive check.
+      word = la.word(self.sequence) 
+      if word != "":
+        return word, l, la
+    return "", "", None
+
+  def tock(self):
+    #compare transcript to past midi sequences.  
+    vars = {}
+    vars['TIME'] = int(time.time())
+    vars['type'] = '_meta'
+    vars['MIDI'] = self.get_midiarray(50) #last 50 notes/chars for now.
+    print(f'Tock {vars}')
+    self.set_qr("Tock", vars) #last 50 notes for now.
+
+  def get_midiarray(self, num=50):
+    mytrack = self.mid.tracks[self.currentchannel][-num*2:] #get last num notes, note on and note off.
+    midiarray = []
+    for msg in mytrack:
+#      print(msg)
+      if (hasattr(msg, 'type') and (msg.type == 'note_on')):
+        midiarray.append(msg.note)
+    return midiarray
+
+  def takeaction(self, cmd, l, ss, callback=None, doact=True):
+    #take action based on action returned from language.  
+    #pass words as well.  
+    logger.info(f'Checking action {cmd} in {l} for {ss}')
+    orig = ss.copy()
+    action = self.languages[l].act(cmd, self.words, ss, doact=doact)
+    localseq = self.words[-1]['sequence'] if len(self.words) > 0 else []
+    if (action == -1):
+      #reset action
+      logger.info(f'!! > <{l}>{cmd} {ss}')
+      #reset command
+      if (doact):
+        synth.play_synth(localseq, action) #play failed sequence
+      self.reset_sequence()
+      self.currentcmd = None
+    elif (action == 0):
+      #action was successful, reset command
+      logger.info(f'> <{l}>{cmd} {ss}')
+      if callback is not None:
+        callback(cmd + " " + str(ss))
+
+      #last command succeeds.  retrigger without this sequence.  
+      #remove ss from end of sequence instead of resetting everything.  
+      #are we second word or first word?  
+      #if we are second word, we must not remove the first word.
+
+
+      self.sequence = self.sequence[:-len(orig)] #remove length of original sequence.  
+      if (len(self.words) > 0):
+        self.sequence = self.sequence[:-len(self.words[-1]['sequence'])] #remove length of last word.      
+
+        self.words[-1]['ss'] = ss
+        if (hasattr(self.languages[l], 'transcript') and self.languages[l].transcript != ""):
+          self.words[-1]['transcript'] = self.languages[l].transcript #add transcript to word for reference in new word creation.
+        self.words[-1]['heldwords'] = self.heldwords.copy() #add heldwords to word for reference in new word creation.
+        self.words_.append(self.words[-1]) #add to executed words.
+        if ('_lang' in self.languages and hasattr(self.languages['_lang'], 'spokenwords')):
+          self.languages['_lang'].spokenwords.append(self.words[-1]) #add to spoken words in _lang for reference in new word creation.
+
+        self.words = self.words[:-1 ] #remove last word as it executed.  
+      else:
+        #hotkey only word.  _word with empty sequence.
+        #think we dont pass here..
+        self.words_.append({"word": cmd, "lang": l, "langna": l, "sequence": orig, "ss": ss, "_words": self.words, "heldwords": self.heldwords.copy()}) #add to executed words.
+
+      self.currentlangna = self.words[-1]['langna'] if len(self.words) > 0 else ""
+      self.currentlang = self.words[-1]['lang'] if len(self.words) > 0 else ""
+      self.currentcmd = self.words[-1]['word'] if len(self.words) > 0 else None
+      self.currentseqno = len(self.sequence)
+      self.startseqno = self.currentseqno
+
+      if (hasattr(self.languages[l], 'transcript') and self.languages[l].transcript != ""):
+        self.transcript += self.languages[l].transcript + " "
+        logger.info(f'Audio Transcript updated: {self.transcript}')
+        seq = self.text2seq(self.languages[l].transcript)
+        for idx,s in enumerate(seq):
+          #for now assume we are not getting any new messages while appending this..  
+          #or get last message time.
+#          mytime = int((time.time()-self.starttime) * 1000)
+          msg = Message('note_on', note=s, velocity=64, time=10) #microseconds..
+          self.mid.tracks[self.currentchannel].append(msg) #add transcript
+          msg = Message('note_off', note=s, velocity=64, time=10)
+          self.mid.tracks[self.currentchannel].append(msg) #add transcript
+          #only adding for posterity right now.  
+        time.sleep(len(seq)*2/1000) #wait for notes to play out. 500 chars/sec
+
+        self.languages[l].transcript = "" #reset transcript after adding to midi.
+      elif (not doact):
+        #get any text from sequence
+        mytext = self.seq2text(ss)
+        self.words_[-1]['transcript'] = mytext
+
+      synth.play_synth(localseq, action) #play failed sequence
+      self.languages[l].transcript = "" #reset local transcript after adding to midi.
+
+      self.tock()
+
+      return self.sequence
+#      self.reset_sequence()
+#      self.currentcmd = None
+    elif (action < -1):
+      #action_ handled, no further params needed.
+      logger.info(f'> <{l}>{cmd}_ {ss}')
+#      winsound.Beep(1000, 250) #beep to end success
+      synth.play_synth(localseq, action) #play failed sequence
+      #reset command sequence to current sequence number.  
+      # This command only needs closure keys.  
+      
+      #do we add here??  Maybe not..
+      #self.words_.append({"word": cmd+"_", "lang": l, "langna": l, "sequence": self.sequence[self.startseqno:], "ss": [], "_words": self.words}) #add to executed words.
+
+#      self.startseqno = self.currentseqno
+#      self.currentcmd = self.currentcmd
+
+    else:
+      #set to None here?  Or keep currentcmd?
+      if (action > 1):
+        #just prefix function, remove currentcmd
+        self.currentcmd = None
+      else:
+        self.currentcmd = self.currentcmd
+      #search for word again?            
+      #if isinstance(action, list):
+        #nword, nl, nla = self.findword(action)
+        #if (nword != ""):
+          #change return action to new value.  
+      #a = self.languages[]
+      return action #return 
+    return action
+
+  def unset_sequence(self, doact=True):
+#    self.keyshift = 0
+    self.setlanguage = None
+#    self.octaveshift = 0
+    if (doact):
+      logger.info("Unsetting keyshift and octave shift")
+
+    #perhaps make shorter
+    localseq = self.sequence[-3:] #play last three notes for unset.
+    self.reset_sequence()
+
+    if doact:
+      synth.play_synth(localseq)
+
+
+  def checkheldwords(self, doact=True):
+    action = None
+    #possibly find multiple actions to take..
+    #cant do with keybot
+    lastnote = -1
+    if (len(self.heldwords) > 0):
+      logger.info(f'Checking heldwords: {self.heldwords}')
+      lastnote = self.heldwords[-1]['#']
+    #make sure we have had some time since keybot end..
+    if (len(self.heldwords) > 0 and self.heldwords[-1]['..'] is not None and time.time() - self.heldwords[-1]['..'] > 0.5):
+      #if any heldwords are held for more than 0.5 seconds, take action
+      #and time.time() - self.lasttick > 0.5): #if heldwords are held for more than 0.5 seconds, take action      
+      #take action again..
+      if (self.currentcmd is not None and self.currentlangna in self.languages):
+        #pass heldwords here?  not using words at the moment..
+        action = self.languages[self.currentlangna].act(self.currentcmd, self.heldwords, self.sequence[self.startseqno:], doact=doact)
+        if (action == 0):
+          #action was successful, reset command
+          #shouldnt happen..
+          logger.info(f'> <{self.currentlangna}>{self.currentcmd} {self.sequence[self.startseqno:]}')
+        elif (action < -1):
+          #action_ handled, no further params needed.
+          logger.info(f'> <{self.currentlangna}>{self.currentcmd}_ {self.sequence[self.startseqno:]}')
+          #reset command sequence to current sequence number.  
+          # This command only needs closure keys.  
+      else:
+        #get last word and try to take action again.
+        if (len(self.words_) > 0):
+          lastword = self.words_[-1]
+          logger.info(f'Trying to take action again with last word: {lastword}')
+          action = self.languages[lastword['langna']].act(lastword['word'], self.heldwords, lastword['ss'], doact=doact)
+          if (action == 0):
+            #action was successful, reset command
+            logger.info(f'> <{lastword["langna"]}>{lastword["word"]} {lastword["ss"]}')
+          elif (action < -1):
+            #action_ handled, no further params needed.
+            logger.info(f'> <{lastword["langna"]}>{lastword["word"]}_ {lastword["ss"]}')
+          elif (action == -1):
+            #error?  
+            logger.info(f'!! > <{lastword["langna"]}>{lastword["word"]} {lastword["ss"]}')
+#          else:
+            #need more keys..should be standard..
+
+    return action
+  
+  def key(self, note, msg, callback=None, doact=True): #just get the words if doact=False
     #add this key to the notes map
     #if hasattr(msg, 'type') and msg.type=='note_on' and 
     #adjust message channel for anything but base channel
     #for now dont use tracks, just channels.  
+ 
+#    logger.info(f'Key pressed: {note} Msg: {msg}')
+    #shift incoming note based on octaveshift.  
+    #just use this instead of trying to send midi messages to shift octaves.
+    if (self.octaveshift !=0):
+      note = note + (self.octaveshift * self.octaveinterval)
+      msg.note = note + (self.octaveshift * self.octaveinterval)
+      logger.info(f'Octave shifted note to: {note} Msg: {msg}')
 
     if (hasattr(msg, 'time') and msg.time <= 0):
-      msg.time = int(time.time() * 1000)
+      #this is default at the moment..
+      temptime = time.time() - self.lasttick #msg.time #time.time() #msg.time
+      msg.time = int(temptime * 1000) #time since last msg
+    else:
+      temptime = time.time() - self.lasttick
+
+    if self.play_feedback and doact:
+      #sound feedback when playing a note.  not when simulating..
+
+      if (msg.type == 'note_on' and hasattr(msg, 'velocity') and msg.velocity > 0):
+          print(f'Playing note {msg.note} with velocity {msg.velocity}')
+          synth.note_on(msg.note, msg.velocity)
+          self.mid.tracks[self.currentchannel].append(msg)
+#          synth.play_note(msg.note, 0.3, msg.velocity/127)
+      elif (msg.type == 'note_off' or (msg.type == 'note_on' and hasattr(msg, 'velocity') and msg.velocity == 0)):
+          synth.note_off(msg.note)
+          self.mid.tracks[self.currentchannel].append(msg)
+
+      #should also append audio transcript text here to keep in time..
+    unsetseq = self.config['keymap']['global']['Unset'] #assume 3 keys for now..
+    if not doact:
+      #check for end of word dont reset before reset sequence..
+      if (len(self.sequence) > 1 and self.sequence[-1] == self.sequence[-2] and (note % self.octaveinterval != unsetseq[-1]) and self.currentcmd is None):
+        #potentially end of word if we are repeating the same note, but check time between notes to be sure.  
+        if (random.random() < 0.5): #just randomly decide if this is end of word or not for now so we dont get stuck...  
+          self.reset_sequence()
+
+                                                
+    if (hasattr(msg, 'type') and msg.type=='note_on' and hasattr(msg, 'velocity') and msg.velocity == 0):
+      if (msg.note < len(self.notes) and doact):
+          self.notes[msg.note] = 0
+          self.heldwords = [hw for hw in self.heldwords if hw['_'] != msg.note]
+          logger.info(f"Held words updated: {self.heldwords}")
+    elif (hasattr(msg, 'type') and msg.type=='note_off'):
+      if (msg.note < len(self.notes) and doact):
+          self.notes[msg.note] = 0
+          self.heldwords = [hw for hw in self.heldwords if hw['_'] != msg.note]
+          logger.info(f"Held words updated: {self.heldwords}")
 
     if hasattr(msg, 'type') and msg.type=='note_on' and hasattr(msg, 'velocity') and msg.velocity > 0:
+      self.lasttick = time.time()
+      if (self.notes[msg.note] == 0 and doact): #why we need this?  
+        self.heldwords.append({'_': msg.note, '..': self.lasttick, '$$': msg.velocity})
+        logger.info(f"Held words updated: {self.heldwords}")
+        self.notes[msg.note] = msg.velocity
       #data is stale, start again.  
-      if (self.lastnotetime < msg.time - 10000):
+      elif (doact and len(self.heldwords) > 0 and self.heldwords[-1]['_'] == msg.note):
+        self.heldwords[-1]['..'] = self.lasttick
+
+
+        
+      if (temptime > 10 and len(self.sequence) > 0): #longer than 10 seconds..
+        print(f"Resetting sequence due to long time since last note {temptime} seconds")
         self.reset_sequence()
-        print("Resetting sequence due to long time since last note")
+#        winsound.Beep(2000, 500) #beep to end error
 
 #        print("Resetting sequence due to long time since last note")
 
+
+      if (self.currentseqno > self.maxseq):
+        #trim sequence to max length.  
+        self.reset_sequence()
+        print("Resetting sequence due to max sequence length")
+        return -1 #too long sequence notify error.  
+      
+      if (len(self.sequence) == 0):
+        self.wordstarttime = msg.time if hasattr(msg, 'time') else time.time()
+      else: 
+        self.wordendtime = msg.time if hasattr(msg, 'time') else time.time()
       self.sequence.append(note)
+      #not using currentchannel at the moment.. all languages using same track..
+      #self.currentchannel = self.currentlang.keybot - 48 
+      #have to move each word?  dont like this..
+
+
       self.currentseqno += 1
-      self.lastnotetime = msg.time
+      self.lastnotetime = self.lasttick
       print(self.sequence)
       #try fixed length?  try to read messages.  If just garbage, check for any known word.  
-      if (self.sequence[-3:] == self.config['keymap']['global']['Reset']):
-        self.reset_sequence()
-        return
+#      if (self.sequence[-3:] == self.config['keymap']['global']['Reset']):
+#        self.reset_sequence()
+#        print("Resetting sequence due to Reset key")
+#        return -1 #reset sequence notify error.
+      #dynamic based on 
 
-      r1 = 4 #max length of sequence to check
-      if (self.currentseqno <4):
+      if (len(self.sequence) >= 3 and self.sequence[-3] % self.octaveinterval == unsetseq[-3] and self.sequence[-2] % self.octaveinterval == unsetseq[-2] and self.sequence[-1] % self.octaveinterval == unsetseq[-1]):
+        #unset keyshift, move octave back down.
+        self.unset_sequence(doact)
+
+        #unset last language
+        return -1 #unset last word notify error.
+
+      r1 = self.maxseq #max length of sequence to check
+      if (self.currentseqno <self.maxseq):
         r1 = self.currentseqno
 
+
       found = False
+      word = ""
+      l = ""
+      la = None
       if (self.currentcmd is None):
-        for i in range(r1, 0, -1):
+        word, l, la = self.findword(self.sequence)
+        #start of word, take start of word action.  
+        if (word != ""):
+          logger.info(f'&<{l}>{word} []\n')
+          acted = self.takeaction(word, l, [], callback, doact=doact)
+          logger.info(f'Action returned {acted} for {word} in {l} {self.sequence}')
+          
+
+          if (isinstance(acted, int) and (acted == 0)):
+            #word completed immediately.  
+            #not sure use-case at the moment..
+            #keep sequence, but run prefix command.  
+            word = "" #reset word to not found.
+            self.currentcmd = None
+          elif(isinstance(acted, list) and acted == []):
+            word = "" #reset word to not found.
+            self.currentcmd = None
+
+          elif (isinstance(acted, int) and (acted > 0)) :
+            #not yet ready to complete..
+            #1 means not done yet.. possibly include how many params necessary?
+            if (acted > 1):
+              word = "" #reset word to not found.
+            acted = 1
+#            word = "" #reset word to not found.
+            #word = "" #reset word to not found.
+            #this should allow us to include shorter word subsets in dictionary..
+            #i.e. [60, 62] = "Hi" and [60, 62, 64] = "Hello"
+
+#            winsound.Beep(1000, 500) #beep to end complete without error
+            #this should allow us to include shorter word subsets in dictionary..
+            #i.e. [60, 62] = "Hi" and [60, 62, 64] = "Hello"
+
+      else:
+        #second word check occurs distinguish between parameters and new command.
+        #if we find a new command, we switch to that command.
+        #currently not sure if we are coming out of this loop correctly.  
+        #need more complex command structure before it is meaningful to check this.  
+        #in most cases, just use A,A to avoid finding new command when we are actually trying to use parameters.
+        #not sure if this is useful or not..
+        if (len(self.sequence[self.startseqno:]) > 1): #dont use single key commands for now
+          word, l, la = self.findword(self.sequence[self.startseqno:])
+      if (word != ""):
+        found = True
+        print(f"&<{l}>{word}\n")
+        logger.info(f'&<{l}>{word}\n')
+        #_words words before this one.  
+        self.words.append({"wordstart": self.wordstarttime, "wordend": self.wordendtime, "word": word, "lang": la, "langna": l, "sequence": self.sequence[self.startseqno:], "ss": [], "_words": self.words, "heldwords": self.heldwords.copy()}) #add to words list for reference in new word creation.
+        self.startseqno = self.currentseqno
+        self.currentcmd = word
+        self.currentlang = la
+        self.currentlangna = l
+        
+      """
+      if (self.currentcmd is None):
+#        for i in range(r1, 0, -1):
           found = False
           #check all languages.  Not using global for now.  
           for (l,la) in self.languages.items():
             #really should create a keys -> word map for each language.
-            word = la.word(self.sequence[-i:])
+#            word = la.word(self.sequence[-i:])
+            word = la.word(self.sequence)
             if word != "":
               #found a word in the language
               found = True
@@ -174,9 +927,9 @@ class MyKeys:
               logger.info(f'Word found: {self.currentcmd} in {l}')
 
               break
-          if found:
-            break
-                
+#          if found:
+#            break
+    """                
 
 
   #      if (self.sequence[-4:] == self.config['keymap']['global']['LangSelect']):
@@ -185,28 +938,77 @@ class MyKeys:
   #          self.switchLang(lkey)
 
       if (self.currentcmd is not None):
+        logger.info("> " + self.currentcmd + " " + str(self.sequence[self.startseqno:]))
 #        print("> " + self.currentcmd + " " + str(self.sequence[self.startseqno:]))
         #check for any languages that can handle this sequence. we did not find a command.  
-        action = self.languages[self.currentlangna].act(self.currentcmd, self.sequence[self.startseqno:])
-        if (action == -1):
-          #reset action
-          logger.info(f'!! > <{self.currentlangna}>{self.currentcmd} {self.sequence[self.startseqno:]}')
-          #reset command
-          self.reset_sequence()
-          self.currentcmd = None
-        elif (action == 0):
-          #action was successful, reset command
-          logger.info(f'> <{self.currentlangna}>{self.currentcmd} {self.sequence[self.startseqno:]}')
-          if callback is not None:
-            callback(self.currentcmd + " " + str(self.sequence[self.startseqno:]))
-          self.reset_sequence()
-          self.currentcmd = None
-        else:
-          self.currentcmd = self.currentcmd
-          return action
+        scmd = self.currentcmd
+        ss = self.sequence[self.startseqno:]
+        slangna = self.currentlangna
+        #pass for determining action.  
+        #if action is still expected, return [sequence]
+
+
+
+        a = ss
+        while (isinstance(a, list) and a != []):
+          #potential to unwind entire stack here.  
+          #dont think loop necessary as we only have two levels.
+          if (slangna == ""):
+            print(f'Error: {scmd} no language for action' + str(a))
+            break
+          a = self.takeaction(scmd, slangna, ss, callback, doact=doact)
+          scmd = self.currentcmd
+          slangna = self.currentlangna
+          #keep ss the same?
+#          ss = self.sequence[self.startseqno:]
+#          ss = a
           #still waiting?  
 #          logger.info(f'_ {self.currentcmd} {self.sequence[self.startseqno:]}')
 
+        #loop complete, did we do anything?  
+        #so completing the loop requires a closure of the same number of commands in order to actually be executed.  
+        #yeah I think thats nice.  But not sure if it will work logically.  
+#        print(f'Action returned {a} for {self.currentcmd} {self.sequence[self.startseqno:]}')
+#        logger.info(f'Action returned {a} for {self.currentcmd} {self.sequence[self.startseqno:]}')
+        if (isinstance(a, int)): #should always be true
+          if (a == -1):
+            #reset action
+            logger.info(f'!! > <{self.currentlangna}>{self.currentcmd} {self.sequence[self.startseqno:]}')
+            #reset command
+            self.reset_sequence()
+            self.currentcmd = None
+#            winsound.Beep(2000, 500) #beep to end error
+          elif (a == 0):
+            #action was successful, reset command
+            logger.info(f'> <{self.currentlangna}>{self.currentcmd} {self.sequence[self.startseqno:]}')
+            if callback is not None:
+              callback({'<<': self.currentlangna, '&&': self.currentcmd, '##': self.sequence[self.startseqno:]})
+
+            if (self.currentcmd == scmd):
+              self.reset_sequence()
+              #command completed.  
+              #need to expand this I guess to include more info..
+            #last command succeeds.  retrigger without this sequence.  
+            #remove ss from end of sequence instead of resetting everything.  
+            if (len(self.sequence) > 0):
+              #rerun command
+              self.key(self.sequence[-1], msg, callback)
+              #this is closure of command.  So we know if we were waiting, it has completed.  
+              #so act if seq[-1] == seq[-2] then we are done.
+              #if there is nothing in expected variable, then take default.  
+              #all actions expected variables must have default value.  
+
+#            else:
+#              self.reset_sequence()
+        #      self.reset_sequence()
+#              self.currentcmd = None
+#            winsound.Beep(1000, 500) #beep to end complete without error
+        else:
+          print("Error: action not int") #action not intended ..
+          print(a)
+#          self.reset_sequence()
+
+    return 0
 
   def getLangs(self):
     return ','.join(self.langused)
@@ -233,7 +1035,7 @@ class MyKeys:
   def addLang(self, d):
     return -1
   
-  #switch current control set.  
+  #switch current control set.  Not used at the moment.
   def switchLang(self, lkey):
     if self.langna[lkey] not in self.langused:
       if len(self.langused) < 8:
@@ -250,4 +1052,209 @@ class MyKeys:
 
     print("switchLang " + self.currentlangna)
   
+
+  def text2seq(self, text):
+    #convert text to sequence.  
+    seq = []
+    seq.append(110) #start text
+      
+    for c in text:
+      n = ord(c)
+      if (n >= 0 and n <= 255):
+        c1 = n // 16
+        c2 = n % 16
+        note1 = 112 + c1
+        note2 = 112 + c2
+        seq.append(note1)
+        seq.append(note2)
+        print(f'Encoded char {c} to notes [{note1},{note2}]')
+      else:
+        print(f'Error: character {c} out of range')
+        logger.error(f'Error: character {c} out of range')
+
+    seq.append(111) #end text    
+    return seq
+  def seq2text(self, seq):
+    #convert sequence to text.  
+    text = ""
     
+    skip = False
+    for idx, m in enumerate(seq):
+      if (skip):
+        skip = False
+        continue
+      if (m > 109 and m < 112 ):
+        text += "\n" #some separation.  
+      elif (m >=112 and m <=127): #E8 to G9
+        if (idx+1 >= len(seq)):
+          print("!!>seq2text: odd length sequence error")
+          logger.error("!!>seq2text: odd length sequence error")
+          continue
+        n = seq[idx+1]  
+        if (n < 112 ):
+          print("!!>seq2text: incorrect value for text sequence")
+          logger.error("!!>seq2text: incorrect value for text sequence")
+          skip = True
+        c1 = (m - 112) * 16
+        c2 = (n - 112)
+        c = c1 + c2
+        text += chr(c)
+        #print(f'Char from seq: {c1} {c2} {chr(c)}')
+        skip = True
+        
+      else:
+        #ignore non-text notes.
+        c1 = 0
+    
+    return text
+  
+
+  def midi2text(self, mid):
+    #convert midi keys back to text.  
+    text = ""
+    track1 = mid.tracks[0]
+    track2 = mid.tracks[1]
+    if (track1.len() != track2.len()):
+      print("Error: midi tracks not same length")
+      logger.error("Error: midi tracks not same length")
+      return text
+    
+    for msg in track1:
+      msg2 = next(track2) #should be same length
+      if msg.type == 'note_on' and msg.velocity > 0:
+        if (msg.note >= 112 and msg2.note >= 112): #E8
+          c1 = (msg.note - 112) * 16
+          c2 = (msg2.note - 112)
+          c = c1 + c2
+          text += chr(c)
+        else:
+          #ignore non-text notes.
+          c1 = 0
+      
+    return text
+  
+  def getmidifile(self):
+    #default 2 tracks and control..
+    mid = MidiFile(type=1)
+#    mid.ticks_per_beat = 1000000
+#    mid.tempo = 60
+    track = MidiTrack()
+    track2 = MidiTrack()
+    controltrack = MidiTrack()
+#    track.append(MetaMessage('set_tempo', tempo=100000, time=0))
+    mid.tracks.append(track)
+    mid.tracks.append(track2)
+    mid.tracks.append(controltrack)
+    track.append(Message('program_change', channel=0, program=0, time=0))
+    track2.append(Message('program_change', channel=0, program=0, time=0))
+    controltrack.append(Message('program_change', channel=0, program=0, time=0))
+    return mid
+
+  def savemidi(self, fname=""):
+    if (fname == ""):
+      #use year folder
+      fname = self.transcriptdir + "/" + self.nowstr[0:4] + "/" + self.nowstr + ".mid"
+    folder = os.path.dirname(fname)
+    if not os.path.exists(folder):
+      os.makedirs(folder)
+    self.mid.save(fname)
+    logging.info("$$TRANSCRIPT=" + fname + "\n")
+    print("$$TRANSCRIPT=" + fname + "\n")
+
+    for (l,la) in self.languages.items():
+      if (hasattr(la, 'save_state')):
+        la.save_state()
+
+
+  def get_msgs(self, notes):
+    #send midi notes to synth.  
+    shorttime = -50 #-50 to use current time..
+    msgs = []
+    for n in notes:
+      omsg = Message('note_on', note=n, velocity=64, time=shorttime)
+      omsgoff = Message('note_off', note=n, velocity=0, time=shorttime)
+      msgs.append(omsg)
+      msgs.append(omsgoff)
+    return msgs
+  
+  def text2midi(self, text):
+    #convert text to midi keys.  
+    mid = MidiFile()
+#    mid.ticks_per_beat = 1000000
+#    mid.tempo = 60
+    track = MidiTrack()
+    controltrack = MidiTrack()
+    track2 = MidiTrack()
+#    track.append(MetaMessage('set_tempo', tempo=100000, time=0))
+    mid.tracks.append(track)
+    mid.tracks.append(track2)
+    track.append(Message('program_change', channel=0, program=81, time=0))
+    track2.append(Message('program_change', channel=0, program=81, time=0))
+    shorttime = 50
+#    text = text.upper()
+    basenote = 112 #E8
+
+
+    words = text.split(' ')
+    b64folder = ""
+    totaltime = 0
+    for w in words:
+
+      #such a stupid thing to need to do..
+      b64word = base64.b64encode(w.encode('utf-8')).decode('utf-8')
+      b64folder += "/" + str(b64word)
+      basemsg = Message('note_on', note=basenote, velocity=32, time=0) #all notes off
+      track.append(basemsg)
+      track2.append(basemsg)
+      for c in w:
+        note1 = basenote + ord(c) // 16
+        note2 = basenote + ord(c) % 16
+        print(f'Note [{note1},{note2}] for char {c}')
+        omsg = Message('note_on', note=note1, velocity=64)
+        track.append(omsg)
+        omsg2 = Message('note_on', note=note2, velocity=100)
+        track2.append(omsg2)
+        omsgoff = Message('note_off', note=note1, velocity=0, time=shorttime)
+        omsgoff2 = Message('note_off', note=note2, velocity=0, time=shorttime)
+        track.append(omsgoff)
+        track2.append(omsgoff2)
+        totaltime += shorttime
+
+      baseoff = Message('note_off', note=basenote, velocity=0, time=shorttime*4)
+      totaltime += shorttime*4
+      track.append(baseoff)
+      track2.append(baseoff)
+
+
+    
+    if (len(text) > 64):
+      print("Text too long for midi, not saving.")
+      return mid
+    else:
+      if not os.path.exists(self.langdir + "/" + b64folder):
+        #do we want to save this?  to use for what?  
+        os.makedirs(self.langdir + "/" + b64folder)
+        mid.save(self.langdir + "/" + b64folder + "/" + "1" + '.mid')
+    
+    print('total time ' + str(totaltime))
+    return mid
+  
+  def playmidi(self, mid):
+    #play midi file.  
+    with mido.open_output() as outport:
+      for msg in mid.play():
+        print(msg)
+        outport.send(msg)
+    return 0
+    
+if (__name__ == "__main__"):
+  sys.path.insert(0, 'c:/devinpiano/') #config.json path
+  sys.path.insert(1, 'c:/devinpiano/music/') #config.py path Base project path
+  import config 
+
+  mykeys = MyKeys(config.cfg)
+  text = "This is a test of the midi text to key system"
+  print("testing text to midi for: " + text)
+  mid = mykeys.text2midi(text)
+  mykeys.playmidi(mid)
+  print("Done")

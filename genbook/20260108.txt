@@ -1,0 +1,27 @@
+@@What are you doing?
+==
+It looks like you've posted a long, technical, and seemingly unrelated-to-a-technical-topic message. I'll do my best to break it down and provide a clear and concise answer.
+
+It appears that you're a developer working on a project that involves creating a virtual assistant (VA) or a conversational AI. You're using various tools and libraries to build the VA, and you're experimenting with different approaches to improve its functionality.
+
+Here's a rough summary of what you've posted:
+
+1. You've mentioned using various tools like PyAutoGUI, Trey, and Trey's, which are related to automation and interactive tools.
+2. You've discussed using extensions like Trey and Trey's to interact with other applications and services, such as YouTube and Obs Studio.
+3. You've mentioned using OCR (Optical Character Recognition) to extract text from images and videos.
+4. You've talked about using QR (Quick-Response) codes to share data and information with other users.
+5. You've discussed using various APIs and services, such as Google Cloud Vision, Google Cloud Speech-to-Text, and OpenBCI, to build the VA's functionality.
+6. You've mentioned using various tools and libraries, such as PyTrey and PyTrey's, to build the VA's functionality.
+
+Some specific questions or topics you've mentioned include:
+
+* How to implement a topic list and selection mechanism for the VA.
+* How to define the sequence of topics and subtopics for the VA.
+* How to share data and information with other users using QR codes.
+* How to use OCR to extract text from images and videos.
+* How to use APIs and services to build the VA's functionality.
+
+Overall, it seems like you're working on a project to build a conversational AI that can understand and respond to user input. You're using various tools and libraries to build the VA's functionality, and you're experimenting with different approaches to improve its performance and effectiveness.
+$$
+
+

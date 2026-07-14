@@ -36,6 +36,77 @@ async function toggleSpeechToText() {
     });
   }
   
+
+  //actually enable side panel only on google.com for now.
+  const GOOGLE_ORIGIN = 'https://www.google.com';
+  const mrrubato_origin = 'https://www.misterrubato.com';
+  
+  chrome.tabs.onActivated.addListener(function(activeInfo) {
+	console.log("Active tab changed to ID: " + activeInfo.tabId);
+	
+	// To get the URL or other tab properties, you must use chrome.tabs.get()
+	chrome.tabs.get(activeInfo.tabId, function(tab) {
+		if (!tab.url) return;
+		//create QR code here which represents the current tab URL.
+		const formattedUTC = new Date()
+		.toISOString()
+		.replace(/[^0-9]/g, '')
+		.slice(0, 14);
+		msg = "$$TIME=" + formattedUTC; //milliseconds
+		msg += "\n";
+		msg += "$$URL=" + tab.url;
+		openQR(tab.url, activeInfo.tabId);
+	  console.log("New active tab URL: " + tab.url);
+	});
+  });
+
+  chrome.tabs.onUpdated.addListener(async (tabId, info, tab) => {
+	if (!tab.url) return;
+	//create QR code here which represents the current tab URL.
+
+	openQR(tab.url, tabId);
+  });
+
+
+	// background.js
+	chrome.runtime.onConnect.addListener(function(port) {
+		if (port.name === "popup") {
+			port.onDisconnect.addListener(function() {
+			console.log("popup has been closed")
+			
+			});
+		}
+	});
+
+  function openQR(aurl, tabId=null){
+	const url = new URL(aurl);
+
+	// Enables the side panel on google.com
+	if (url.origin === GOOGLE_ORIGIN || url.origin === mrrubato_origin) {
+		console.log("Enabling side panel on google.com");
+	  chrome.sidePanel.setOptions({
+		tabId,
+		path: 'popup.html',
+		enabled: true
+	  });
+	  console.log("Opening side panel on google.com");
+
+	  //chrome.sidePanel.open({ tabId: tabId });
+	  chrome.action.setPopup({popup: 'popup.html'});
+
+	  //have to set timer, some issue with only being able to have one open at a time.  
+	  setTimeout(() => {
+		  chrome.action.openPopup();
+	  }, 500);
+	} else {
+	  // Disables the side panel on all other sites
+	  chrome.sidePanel.setOptions({
+		tabId,
+		enabled: false
+	  });
+	}
+
+  }
   chrome.action.onClicked.addListener(() => {
 //    toggleSpeechToText();
 

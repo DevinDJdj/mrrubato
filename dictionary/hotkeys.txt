@@ -1,0 +1,29 @@
+**HOTKEYS
+
+> Record Feedback [$$TIME]
+==
+$$TIME=seconds
+
+record audio for $$TIME seconds which represents a sequence of characters.  
+<!--
+    Utilize all audio clues.  
+-->
+
+$$
+
+> Search Web [$$ENGINE, $$CACHENO]
+==
+$$ENGINE=Search engine selection
+$$CACHENO=Cached Tab selection
+
+Search the internet using $$ENGINE and return content in Tab $$CACHENO
+$$
+
+
+> Skip Lines [$$NUM]
+==
+$$NUM=number of lines to skip (3)
+$$TOTAL=$$NUM*3
+
+Skip $$TOTAL lines
+$$

@@ -1,0 +1,328 @@
+**extensions/trey/testspeechbrain.py
+!!OSError: [WinError 1114] A dynamic link library (DLL) initialization routine failed. Error loading "c:\Python\Python314\Lib\site-packages\torch\lib\c10.dll" or one of its dependencies.
+==
+#https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170
+$$
+
+!!module 'torchaudio' has no attribute 'list_audio_backends'
+==
+> pip install torchaudio==2.8
+$$
+
+python version 3.12 only supported..
+Minimal setup?  
+$$PYTHON=3.12.9
+> pip install speechbrain
+> pip install torchaudio==2.7
+> pip install requests
+> pip install sounddevice
+> pip install transformers
+
+!!HFValidationError: Repo id must be in the form 'repo_name' or 'namespace/repo_name': './models/pretrained_ASR'. Use `repo_type` argument if needed.
+
+> powershell -ExecutionPolicy ByPass -c "irm https://hf.co/cli/install.ps1 | iex"
+
+> hf auth login
+
+!!OSError: [WinError 1314] A required privilege is not held by the client: 'C:\\Users\\devin\\.cache\\huggingface\\hub\\models--speechbrain--asr-conformer-transformerlm-librispeech\\snapshots\\eb981701f2831dae595e6d55ab02ed6080cd38d2\\hyperparams.yaml' -> 'C:\\devinpiano\\music\\models\\pretrained_ASR\\hyperparams.yaml'
+==
+>>python ./extensions/trey/testspeechbrain.py
+$$
+
+!! raise RuntimeError(f"Couldn't find appropriate backend to handle uri {uri} and format {format}.") 
+!! RuntimeError: Couldn't find appropriate backend to handle uri C:\devinpiano\music\example2.wav and format None.
+==
+Install ffmpeg
+#https://www.ffmpeg.org/download.html
+#https://www.gyan.dev/ffmpeg/builds/
+> pip install sox
+> pip install soundfile
+$$
+
+!!  File "C:\devinpiano\music\extensions\trey\testspeechbrain.py", line 37, in parse_to_json
+!!    flac_files[0]
+!!    ~~~~~~~~~~^^^
+!!IndexError: list index out of range
+==
+$$DIR=../testing
+> git clone https://github.com/speechbrain/speechbrain.git
+#https://www.openslr.org/12
+
+> python ../testing/speechbrain/templates/speech_recognition/mini_librispeech_prepare.py
+
+**../testing/speechbrain/templates/speech_recognition/mini_librispeech_prepare.py
++if __name__ == "__main__":
++    data_folder = "../testing/data/mini_librispeech"
++    os.makedirs(data_folder, exist_ok=True)
++    prepare_mini_librispeech(
++        data_folder,
++        "train.json",
++        "valid.json",
++        "test.json",
++    )
+
+$$
+
+**extensions/trey/testspeechbrain.py
+
+!!  File "C:\devinpiano\music\extensions\trey\testspeechbrain.py", line 95, in train_model
+!!    modules = {"enc": asr_model.mods.encoder.model,
+!!                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+!! File "c:\Python\Python312\Lib\site-packages\torch\nn\modules\module.py", line 1940, in __getattr__
+!!    raise AttributeError(
+!!AttributeError: 'LengthsCapableSequential' object has no attribute 'model'
+
+==
+make sure this is active first..
+--train_model
++    asr_model = EncoderDecoderASR.from_hparams(source="speechbrain/asr-crdnn-rnnlm-librispeech", savedir="./models/pretrained_ASR", hparams_file="hyperparams.yaml")
+$$
+
+
+
+**mykeys.py
+What do we do with just double-key no word?  
+Should be special handler for double strokes.  
+refer to [**book/keys.txt]
+
+**extensions/trey/speech.py
+--speech_parse_to_json2
+use existing data..
+wav to flac?  
+--speech_load_feedback
+
+**extensions/trey/trey.py
+> pip install psutil
+> pip install mss
+> pip install qrcode
+> pip install pynput
+> pip install mido
+> pip install pystray
+> pip install PyQt5
+> pip install win32gui
+
+!!ModuleNotFoundError: No module named 'win32.distutils.command'
+==
+> pip install pywin32
+$$
+
+> pip install pyaudio
+> pip install matplotlib
+> pip install pyttsx3
+> pip install playsound3
+> pip install pydub
+> pip install pygame
+> pip install edge_tts
+> pip install qdrant_client
+> pip install newspaper3k
+> pip install lxml_html_clean
+
+!!ImportError: DLL load failed while importing onnxruntime_pybind11_state: A dynamic link library (DLL) initialization routine failed.
+==
+> pip install onnxruntime==1.20.1
+$$
+> pip install playwright
+> pip install playwright-stealth
+> pip install opencv-python
+
+wow lot more dependencies than hoped..
+> pip install qreader
+
+!!FileNotFoundError: Could not find module 'c:\Python\Python312\Lib\site-packages\pyzbar\libzbar-64.dll' (or one of its dependencies). Try using the full path with constructor syntax.
+==
+https://www.microsoft.com/en-gb/download/details.aspx?id=40784
+$$
+
+!!OSError: [WinError 1114] A dynamic link library (DLL) initialization routine failed. Error loading "c:\Python\Python312\Lib\site-packages\torch\lib\c10.dll" or one of its dependencies.
+==
+> pip install torch==2.7
+> pip install torchaudio==2.7
+> pip install torchvision==0.22.0
+$$
+
+> pip install rtmidi
+!!error: Microsoft Visual C++ 14.0 or greater is required. Get it with "Microsoft C++ Build Tools": https://visualstudio.microsoft.com/visual-cpp-build-tools/
+==
+stupid message..
+> pip install python-rtmidi
+$$
+
+**extensions/trey/requirements.txt
+Not sure this is minimal..
+But it works now..
+
+
+> wsl.exe --install
+
+$$SYSTEM=UBUNTU
+$$VERSION=Ubuntu 24.04.1 LTS
+> sudo apt update
+> sudo apt install python3 python3-pip
+> lsb_release -a
+
+Dont like the whole venv enable/disable mechanism.  
+But seems to be standard now..
+#https://docs.python.org/3/library/venv.html
+
+> sudo apt install python3-venv
+
+> python3 -m venv speechvenv
+> source speechvenv/bin/activate
+$$VENV=speechvenv
+--for training models..
+
+> pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
+
+;> pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
+;> pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu130
+
+> python -c "import torch; print(f'Torch Version: {torch.__version__}, CUDA Available: {torch.cuda.is_available()}, CUDA Version: {torch.version.cuda}')"
+Torch Version: 2.6.0+cu124, CUDA Available: True, CUDA Version: 12.4
+
+**/../testing/speechbrain/recipes/LibriTTS/TTS/mstacotron2/train.py
+> pip install hyperpyyaml
+> pip install speechbrain
+> pip install soundfile
+> sudo apt-get install ffmpeg
+> pip install sox
+> pip install requests
+
+!!ImportError: cannot import name 'audio_io' from 'speechbrain.dataio' (/mnt/c/devinpiano/music/speechvenv/lib/python3.12/site-packages/speechbrain/dataio/__init__.py)
+==
+manually copy from here:
+#https://github.com/speechbrain/speechbrain/blob/develop/speechbrain/dataio/audio_io.py
+/mnt/c/devinpiano/music/speechvenv/lib/python3.12/site-packages/speechbrain/dataio/
+@speechbrain why is this not installed during standard install
+> pip install speechbrain
+Not part of the most recent packages?
+$$
+
+> cd ../testing/speechbrain/recipes/LibriTTS
+
+> mkdir data
+
+> python ./libritts_prepare.py
+Have to download.. 
+#https://www.openslr.org/60/
+dev-clean, test-clean, train-clean-100
+> wget -O ./data/dev-clean.tar.gz https://openslr.trmal.net/resources/60/dev-clean.tar.gz
+> wget -O ./data/test-clean.tar.gz https://openslr.trmal.net/resources/60/test-clean.tar.gz
+> wget -O ./data/train-clean-100.tar.gz https://openslr.trmal.net/resources/60/train-clean-100.tar.gz
+> tar -xf ./data/dev-clean.tar.gz
+> tar -xf ./data/test-clean.tar.gz
+> tar -xf ./data/train-clean-100.tar.gz
+;> cp -r ./LibriTTS/* ./data
+> mv ./LibriTTS/* ./data
+
+
+install vscode WSL extensions
+
+> python ./TTS/mstacotron2/train.py TTS/mstacotron2/hparams/train.yaml --data_folder="./data" --device=cuda:0 --max_grad_norm=1.0
+
+> pip install huggingface-hub==0.30.0
+
+
+**/../testing/speechbrain/recipes/LibriTTS/libritts_prepare.py
+++
+
+if __name__ == "__main__":
+    # Example usage
+    print("Preparing LibriTTS dataset...")
+    prepare_libritts(
+        data_folder="data",
+        save_json_train="./data/train.json",
+        save_json_valid="./data/valid.json",
+        save_json_test="./data/test.json",
+        sample_rate=24000,
+        #must download
+        libritts_subsets=[
+            "train-clean-100", 
+            "dev-clean",
+            "test-clean",
+        ],
+        model_name="Tacotron2",
+    )
+++
+
+> python ./libritts_prepare.py
+
+!!NVIDIA GeForce RTX 5060 Ti with CUDA capability sm_120 is not compatible with the current PyTorch installation.
+!!RuntimeError: CUDA error: no kernel image is available for execution on the device
+==
+compatibility hell..
+#https://www.nvidia.com/en-us/geforce/forums/geforce-graphics-cards/5/578477/rtx-5060-sm120-an-unusual-cuda-compute-capability/
+> pip uninstall torch torchvision torchaudio
+> pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
+> python -c "import torch; print(f'Torch Version: {torch.__version__}, CUDA Available: {torch.cuda.is_available()}, CUDA Version: {torch.version.cuda}')"
+Torch Version: 2.9.1+cu128, CUDA Available: True, CUDA Version: 12.8
+
+$$
+
+!!module 'torchaudio' has no attribute 'list_audio_backends'
+==
+> pip install torchaudio==2.8 --index-url https://download.pytorch.org/whl/cu128
+
+> python -c "import torch; print(f'Torch Version: {torch.__version__}, CUDA Available: {torch.cuda.is_available()}, CUDA Version: {torch.version.cuda}')"
+Torch Version: 2.9.1+cu128, CUDA Available: True, CUDA Version: 12.8
+$$
+
+> python ./libritts_prepare.py
+> pip install transformers
+;> pip install huggingface-hub==0.30.0
+
+!!RuntimeError: operator torchvision::nms does not exist
+==
+> pip install torchvision==0.23.0 --index-url https://download.pytorch.org/whl/cu128
+$$
+Compatibility hell done?
+Finally..
+
+**/../testing/speechbrain/recipes/LibriTTS/libritts_prepare.py
+Path problems..
+data_folder only works with FULL PATH..
+
++        normalized_text_path = "." + normalized_text_path
+
+
+
+> python ./TTS/mstacotron2/train.py TTS/mstacotron2/hparams/train.yaml --data_folder="./data" --device=cuda:0 --max_grad_norm=1.0
+
+**/../testing/speechbrain/recipes/LibriTTS/TTS/mstacotron2/train.py
+++
+    else:
+        logger.info("Skipping data preparation...")
+        #copy files to save_folder experiment directory
+        import shutil
+        import glob
+        source_dir = hparams["data_folder"]
+        dest_dir = hparams["output_folder"] + "/save"
+        files_to_copy = glob.glob(os.path.join(source_dir, '*.json'))
+        for file_path in files_to_copy:
+            shutil.copy(file_path, dest_dir)
+
+++
+
+
+**speech/prepare.py
+
+> source speechvenv/bin/activate
+Need to build set of data for training..
+#https://takeout.google.com/?pli=1
+recorder
+> python ./speech/prepare.py
+
+!!An error occurred: 'MP4Info' object has no attribute 'creation_time'
+==
+Wow all these libraries not working very well..
+mutagen, tinytag, eyed3, etc..
+
+@@Why
+No quick solution
+> pip install pymediainfo
+Finally..
+
+$$
+
+
+OK, so this is working now.  
+Then we need to pull the individual snippets out of the wav file for ingestion into the training pipeline..

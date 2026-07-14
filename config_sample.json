@@ -1,0 +1,233 @@
+{
+	"uid": MY_UID,
+	"RSS": {
+		"AUTHOR": "MISTERRUBATO", 
+		"EMAIL": "me@misterrubato.com",
+		"WEBSITE": "misterrubato.com/rss",
+		"LOGO": "misterrubato.com/logo.jpg"
+	},
+	"fitbit":{
+		"CLIENTID": CLIENTID, 
+		"CLIENTSECRET": CLIENTSECRET
+	},
+
+	"git": [
+		{
+			"url": "https://api.github.com/repos/DevinDJdj/mrrubato",
+			"cloneurl": "https://github.com/DevinDJdj/mrrubato.git",
+			"branch": "master", 
+			"book": "book"
+		}
+	],
+	"localserver":{
+		"port": 5000, 
+		"host": "http://192.68.1.120"
+	},
+    "peertube":{
+		"enabled": "true",
+		"host": "localhost",
+		"port": 3000,
+		"ADMIN_USERID": ADMIN_USERID, 
+		"ADMIN_PASSWORD": ADMIN_PASSWORD
+	},
+    "youtube":{
+		"enabled": true,
+		"CLIENT_SECRETS_FILE": CLIENT_SECRETS_FILE,
+		"APIKEY": APIKEY,
+		"CHANNELID": CHANNELID,
+		"MY_PLAYLIST": MY_PLAYLIST, 
+		"OK_PLAYLIST": OK_PLAYLIST, 
+		"GOOD_PLAYLIST": GOOD_PLAYLIST, 
+		"GREAT_PLAYLIST": GREAT_PLAYLIST, 
+		"WORDS_PLAYLIST": WORDS_PLAYLIST, 
+		"ADMIN_USERID": ADMIN_USERID
+	},
+	"openai":{
+        "APIKEY":OPENAI_KEY
+    },
+	"google":{
+		"AISTUDIO": AISTUDIO_KEY
+	},
+    "firebase":{
+		"credentialsfile": CREDENTIALS_FILE,
+	    "fbconfig": {  
+		    "apiKey": FBAPIKEY,
+            "authDomain": FBAUTHDOMAIN,
+            "databaseURL": FBDBURL,
+            "storageBucket": STORAGEURL
+		},
+		"fbsettings": {
+			  "type": "service_account",
+			  "project_id": MYPROJECT,
+			  "private_key_id": MYKEYID,
+			  "private_key": MYKEY,
+			  "client_email": EMAIL,
+			  "client_id": CLIENTID,
+			  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+			  "token_uri": "https://oauth2.googleapis.com/token",
+			  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+			  "client_x509_cert_url": MYCERTURL
+			
+		}
+    },
+	"web": {
+		"client_id": CLIENTID,
+		"client_secret": CLIENTSECRET,
+		"redirect_uris": [],
+		"auth_uri": "https://accounts.google.com/o/oauth2/auth",
+		"token_uri": "https://accounts.google.com/o/oauth2/token"
+	},
+	"timestep": {
+		"client_id": CLIENTID, 
+		"client_secret": CLIENTSECRET
+	},
+
+	"dbrules": {
+		
+		"rules": {
+			"misterrubato": {
+			".indexOn": ["snippet/title", "snippet/description", "snippet/publishedAt", "snippet/channelId"]
+			},
+			"watch": {
+				".indexOn": ["snippet/title", "snippet/description", "snippet/addedAt", "snippet/publishedAt"]
+			},	  
+			"users": {
+				".indexOn": ["name"]
+			},
+			".read": "auth != null",
+				".write": "'ZW130KE3xXMvdDoIXTe9kbOkp003' === auth.uid || auth.token.admin === true"
+			}
+		
+	
+	},
+	"trey": {
+		"user": "me@yahoo.com", 
+		"pwd": "Passw0rd",
+		"speech":{
+			"asr_model_path": "./models/pretrained_ASR",
+			"tts_model_path": "./models/pretrained_tts",
+			"language_model_path": "./models/lm/lm.zip"
+		}
+	},
+	
+	"keymap":{
+	    "global":{
+			"1":{
+				"Unpause": [108],
+				"Pause": [107],
+				"Start": [21], 
+				"Stop": [22]
+				
+			}, 
+			"2": {
+				
+			}, 
+			"3": {
+				
+			},
+			"4": {
+				"LangSelect": [36,29,31,36]				
+			},
+
+			"Unpause": 108,
+			"Pause": 107,
+			"Start": 21, 
+			"Stop": 22, 
+			
+			"Reset": [48,48,48],
+			"Unset": [0,0,0],
+			"ShowScreen": 105, 
+			"HideScreen": 106,
+			"LangSelect": [36,29,31,36],
+			"top": 108,
+			"bottom": 21
+		},
+		"actions":{
+			"screen":{
+				"Click": "Click",
+				"PageDown": "PageDown",
+				"PageUp": "PageUp"
+			},
+			"Unpause": "unpause",
+			"Pause": "pause",
+			"Start": "start",
+			"Stop": "stop",
+			"Reset": "reset",
+			"ShowScreen": "showScreen",
+			"HideScreen": "hideScreen",
+			"LangSelect": "langSelect"
+		},
+		"screen":{
+			"Click": 60,
+			"PageDown": 55,
+			"PageUp": 56
+		},
+		"languages":{
+			"_meta": [48,49], 
+			"hotkeys": [53, 54],
+			"video": [49,50], 
+			"base": [61,62],
+			"check": [57,58], 
+			"book": [50,51],
+			"mousemovement1": [63, 65],			
+			"mousemovement2": [62, 63]
+			
+		},
+		"settings":{
+			"MAX_WORD": 10, 
+			"LANG_DIR": "C:/devinpiano/languages",
+			"TRANSCRIPT_DIR": "C:/devinpiano/transcripts",
+			"PLAY_FEEDBACK": true, 
+			"HELP_X": 800
+		}
+	},
+	"languages":{
+		"hotkeys":{
+			"keybot": 53,
+			"1":{
+				"Unpause": [108],
+				"Pause": [107],
+				"Start": [21], 
+				"Stop": [22]
+				
+			}, 
+			"2": {
+				"Pause": [53,52],
+				"Resume": [53,54],
+				"Read Screen": [53,50]
+						
+			}, 
+			"3": {
+				"Stop": [53,55,54],
+				"Skip Lines": [53,55, 57],
+				"Find Last": [53,55, 58], 
+				"Page": [53,55, 59], 
+				"Click Link": [53,55, 60], 
+				"Search Web": [53,55, 61],
+				"Go Back": [53,55,51],
+				"List Tabs": [53,56,59],
+				"Select Tab": [53,56,60],
+				"Comment": [53,57, 58],
+				"Record Feedback": [53,57,60],
+				"Select Bookmark": [53,58,57]
+		
+				},
+			"4": {
+				"Add Bookmark": [53,58,60,62], 
+				"List Bookmarks": [53,58,60,63] 
+				}
+			},
+		"test": {
+			"1":{
+
+			},
+			"2": {
+				"left": [59,57],
+				"right": [62,64],
+				"up": [60,61],
+				"down": [61,60]
+			}
+		}
+
+	}
+}

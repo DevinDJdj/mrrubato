@@ -171,7 +171,8 @@ function updateTimelineBook(gs, fn=null){
 
 function updateTimeline(fn, hide=false){
 //    gitcommits.push({"url": data[this.indexValue].html_url, "filename": commitdata.files[i].filename, "changes": commitdata.files[i].changes, "d": mydate, "selected": true});
-    
+
+
     for (gi=0; gi<gitcommits.length; gi++){
 
         if (fn !==null && gitcommits[gi].filename != fn){
@@ -362,7 +363,7 @@ $("#timewindow").resize(function () {
     timeline.setOptions({ height: ht, width: wd });
     //adjust other div height.  
     $('#wordcanvas').height(ht+180);
-    svg.height(ht+180);
+//    svg.height(ht+180);
 
 
   });

@@ -1,10 +1,25 @@
 import { renderPrompt } from '@vscode/prompt-tsx';
 import * as vscode from 'vscode';
 import * as Book from './book';
-
+import * as fs from 'fs';
+import * as transcriber from './transcriber';
 import { ToolCallRound, ToolResultMetadata, ToolUserPrompt } from './toolsPrompt';
 
+import mmap from '@riaskov/mmap-io';
+
 let myStatusBarItem: vscode.StatusBarItem;
+
+
+import * as midiin from './midi/midi-in';
+import * as tree from './midi/tree';
+import { currenttopic } from './book';
+
+//import midiin from './midi/midi-in.js';
+//import tree from './midi/tree.js';
+//
+//const midiin = require('./midi/midi-in');
+//const tree = require('./midi/tree');
+
 
 export interface TsxToolUserMetadata {
     toolCallsMetadata: ToolCallsMetadata;
@@ -144,12 +159,7 @@ export function registerCompletionTool(context: vscode.ExtensionContext){
                                         let doc = "";
                                         let sortText = "0000";
                                         for (let item of value) {
-                                            let filename = Book.getUri(item.topic);
-                                            doc += `File: ${item.file}, Line: ${item.line}, Sort: ${item.sortorder}  \n`;
-                                            doc += `Topic: [${item.topic}](${filename})  \n`;
-                                            doc += `Link: [${item.file}](${item.file}#L${item.line})  \n`;
-                                            let data = item.data.substring(0, 255);
-                                            doc += `Data: ${data}  \n`;
+                                            doc = Book.itemToDoc(item);
             
                                             //set sortText to top if it is in selection history.  
                                             const found = Book.selectionhistory.findIndex((t) => t === item.topic);
@@ -181,12 +191,7 @@ export function registerCompletionTool(context: vscode.ExtensionContext){
                             let doc = "";
                             let sortText = "0000";
                             for (let item of value) {
-                                let filename = Book.getUri(item.topic);
-                                doc += `File: ${item.file}, Line: ${item.line}, Sort: ${item.sortorder}  \n`;
-                                doc += `Topic: [${item.topic}](${filename})  \n`;
-                                doc += `Link: [${item.file}](${item.file}#L${item.line})  \n`;
-                                let data = item.data.substring(0, 255);
-                                doc += `Data: ${data}  \n`;
+                                doc = Book.itemToDoc(item);
 
                                 //set sortText to top if it is in selection history.  
                                 const found = Book.selectionhistory.findIndex((t) => t === item.topic);
@@ -310,6 +315,234 @@ export function startWatchingWorkspace(context: vscode.ExtensionContext) {
 }
 
 
+export function stopWatchingMMAP(name: string){
+    let basePath = "temp/";
+    fs.unwatchFile(basePath + name);
+}
+
+
+//use for monitoring topic state changes when selecting times and filters..
+export function startWatchingMMAP(name: string){
+    //watch the mmap file for changes and update the book accordingly.
+    let basePath = "temp/";
+
+    //read initial if exists..
+    if (fs.existsSync(basePath + name)) {
+        const file = fs.openSync(basePath + name, 'r');
+        const stats = fs.fstatSync(file);
+        const data = Buffer.alloc(stats.size);
+        fs.readSync(file, data, 0, stats.size, 0);
+        const content = data.toString();
+        console.log(`Initial read of MMAP file ${name}, size: ${stats.size}`);
+        // Book.loadPage(content, "mmap:" + name);
+    }
+
+    fs.watchFile(basePath + name, { interval: 3000 }, (curr, prev) => {
+        if (curr.mtimeMs !== prev.mtimeMs) {
+            const file = fs.openSync(basePath + name, 'r+');
+            const data = Buffer.alloc(curr.size);
+            fs.readSync(file, data, 0, curr.size, 0);
+            const content = data.toString();
+
+//            const newBuf = mmap.map(curr.size, mmap.MAP_SHARED, file, 0);
+            // Process the new data in newBuf
+            console.log(`MMAP file ${name} changed, new size: ${curr.size}`);
+            // For example, you could parse the new data and update the book accordingly
+            // Book.loadPage(newBuf.toString(), "mmap:" + name);
+        }
+    });
+
+
+}
+
+
+var transcriberTopic = "";
+
+var transcriberTopics = {}; //populate latest topic for each language.  Reduce repetition
+
+export function getSelectionInfo(editor: vscode.TextEditor | undefined): string {
+
+    let selectionInfo = "";
+
+    if (editor) {
+        let filePath = editor.document.uri.fsPath;
+
+
+        const folderUri = vscode.workspace.workspaceFolders[0].uri;
+        let fname = editor.document.uri.fsPath.replace(folderUri.path + "/", ""); //remove the folder path from the file name for display purposes.
+        const selection = editor.selection;
+        if (!selection.isEmpty) {
+            selectionInfo = `**${fname}:${selection.start.line}\n`;
+            selectionInfo += `$$(=${selection.start.line}\n`;
+            selectionInfo += `$$)=${selection.end.line}\n`;
+
+        }
+        else{
+            selectionInfo = `**${fname}:${selection.start.line}\n`;
+        }
+    }
+    return selectionInfo;
+}
+
+export function writeToTranscriber(lang: string, topic: string = "", data : string = "",transcriptFolder: string = "C:/devinpiano/transcripts/"){
+    let now = Book.formatDate();
+    const mySettings = vscode.workspace.getConfiguration('mrrubato');	
+    transcriptFolder = mySettings.get('transcriptfolder', transcriptFolder);
+    let fname = `${transcriptFolder}${lang}/${now}.txt`;
+
+    if (!fs.existsSync(fname)) {
+        //create the file if it doesn't exist.  
+        fs.writeFileSync(fname, "");
+    }
+    if (topic === ""){
+        topic = Book.currenttopic;
+    }
+    console.log(`Writing to transcriber file ${fname} with topic ${topic} and data ${data}`);
+    if (!(lang in transcriberTopics) || transcriberTopics[lang] !== topic){
+        //if topic has changed, add to file.  
+        fs.appendFileSync(fname, `**${topic}\n`); //append topic to file.
+        transcriberTopics[lang] = topic;
+    }
+
+    fs.appendFileSync(fname, `${data}\n`); //append command to topic.
+
+}
+
+export function startWatchingTranscriber(lang: string, transcriptFolder: string = "C:/devinpiano/transcripts/"){
+
+
+    //watch the transcriber folder for changes and update the book accordingly.
+    //get fname as YYYYMMDD.txt
+    let now = Book.formatDate();
+    const mySettings = vscode.workspace.getConfiguration('mrrubato');	
+    transcriptFolder = mySettings.get('transcriptfolder', transcriptFolder);
+    let fname = `${transcriptFolder}${lang}/${now}.txt`;
+
+    if (!fs.existsSync(fname)) {
+        //create the file if it doesn't exist.  
+        fs.writeFileSync(fname, "");
+    }
+    fs.readFile(fname, 'utf8', (err, data) => {
+        if (err) {
+            console.error(`Error reading file ${fname}:`, err);
+        }
+        else{
+            console.log(`File ${fname} read successfully.`);
+            let topics = transcriber.transcribe(data, now); //use date as initial topic.);
+            if (topics.length > 0){
+                let topic = topics[topics.length-1].topic;
+                Book.addToHistory(topic);
+                transcriberTopics[lang] = topic;
+
+            }
+
+        }
+    });
+
+    //is default 5000 ms ok
+    fs.watchFile(fname, { interval: 5000 }, (curr, prev) => {
+        if (curr.size !== prev.size && curr.size > prev.size) {
+            const stream = fs.createReadStream(fname, { start: prev.size, end: curr.size });
+            let incomingData = '';
+            stream.on('data', (chunk) => {
+                incomingData += chunk.toString();
+                console.log(`Received chunk of data: ${chunk.toString()}`);
+            });
+
+            stream.on('error', (error) => {
+                console.error('Error reading stream:', error);
+            });
+            
+            stream.on('end', () => {
+                console.log('Finished reading stream.');
+                let topics = transcriber.transcribe(incomingData, Book.selectedtopic); //use selected topic to start..
+                console.log("Transcribed topics:", topics);
+                let today = new Date();
+                let todaydate = today.getFullYear()*10000 + (today.getMonth()+1)*100 + today.getDate();
+                let file = todaydate + ".txt";
+                if (topics.length > 0){
+                    //read commands and do something..
+                    let topic = topics[topics.length-1];
+                    for (let t of topics){
+                        //open topic if not already open..
+                        console.log("Current topic:", Book.selectedtopic);
+                        console.log("Adding to history and selecting topic ", t.topic);
+                        if (t.topic !== Book.selectedtopic){
+                            //only add to history if topic has changed.  
+                            Book.updatePage(Book.getBookPath() + "/" + file, '**' + transcriber.current_topic + '\n', -1, -1); //append to end of file.
+                            
+                            Book.addToHistory(t.topic);
+                            Book.select(t.topic);
+                            vscode.commands.executeCommand('workbench.action.chat.open', "@mr /read " + "**" + t.topic );
+
+                            //for now just open if it exists..
+
+
+                            for (let l of t.data.split('\n')){
+                                if (l.startsWith("Pause")){
+                                    vscode.commands.executeCommand('workbench.action.chat.open', "@mr /stop");
+                                }
+
+                            }
+                        }
+                        for (let cmd of t.cmds){
+                            console.log("Processing command: ", cmd);
+                            //for now just log the command.  In the future we can do something with it.
+                            if (cmd.cmd === "Pause"){
+                                vscode.commands.executeCommand('workbench.action.chat.open', "@mr /stop");
+                            }
+                            if (cmd.cmd === "Restart"){
+                                vscode.commands.executeCommand('workbench.action.restartExtensionHost');
+//                                vscode.commands.executeCommand('workbench.action.chat.open', "@mr /restart");
+                            }
+                            if (cmd.cmd === "Record Feedback"){
+                                //do something with the feedback.  For now just log it.
+                                let input = "";
+                                if (cmd.vars && cmd.vars['FEEDBACK']){
+                                    input = cmd.vars['FEEDBACK'] + '\n';
+                                }
+                                if (cmd.vars && cmd.vars['ORIGINAL']){
+                                    input = cmd.vars['ORIGINAL'] + "\n";
+                                }
+                                //add data to file..
+
+    //                            Book.updatePage("book/" + topic.topic, input);
+                                //get todays date for filename.  
+
+                                Book.updatePage(Book.getBookPath() + "/" + file, input, -1, -1); //append to end of file.
+
+                            }
+                            if (cmd.cmd === "Time Jump" || cmd.cmd === "Time Zoom"){
+                                //see what time is set and adjust topic selection accordingly..
+                                let t = Date.now()/1000;
+                                if (cmd.vars && cmd.vars['TIME']){
+                                    t = parseFloat(cmd.vars['TIME']);
+                                }
+                                let w = 86400; // default 1 day
+                                if (cmd.vars && cmd.vars['WINDOW']){
+                                    w = parseFloat(cmd.vars['WINDOW']);
+                                }
+                                let s = t - w/2;
+                                if (cmd.vars && cmd.vars['START']){
+                                    s = parseFloat(cmd.vars['START']);
+                                }
+                                let e = t + w/2;
+                                if (cmd.vars && cmd.vars['END']){
+                                    e = parseFloat(cmd.vars['END']);
+                                }
+                                console.log(`Time Jump/Zoom to ${new Date(s*1000).toISOString()} - ${new Date(e*1000).toISOString()}`);
+                                Book.setTime(t, s, e, w);
+
+                            }
+                        }
+                    }
+                }
+            });            
+        }
+    });
+
+}
+
 export function registerToolUserChatParticipant(context: vscode.ExtensionContext) {
     const handler: vscode.ChatRequestHandler = async (request: vscode.ChatRequest, chatContext: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken) => {
         if (request.command === 'list') {
@@ -427,4 +660,17 @@ export function registerToolUserChatParticipant(context: vscode.ExtensionContext
     const toolUser = vscode.chat.createChatParticipant('chat-tools-sample.tools', handler);
     toolUser.iconPath = new vscode.ThemeIcon('tools');
     context.subscriptions.push(toolUser);
+}
+
+
+export function registerPiano(context: vscode.ExtensionContext) {
+    midiin.activate(context);
+    tree.activate(context);
+    
+
+}
+
+export function unregisterPiano() {
+    midiin.deactivate();
+    tree.deactivate();
 }

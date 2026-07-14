@@ -1,0 +1,626 @@
+
+**languages
+These messages for LANG and META are MOD12.  
+_LANG can set to any octave automatically.  
+and in any language, _META lang and _LANG always exist.  
+Not sure if we want absolute keys, or still switch to relative keys..
+for now all but _META and _LANG are absolute.  
+LANG lookup also must be relative.  
+in keymap->languages
+0 MOD 12 and 11 MOD 12
+If we move to relative keys, maybe just point to a set of languages.  
+Then no need to create new lang structures, just set of existing lang structs.  
+All related code then becomes easier to manage perhaps..
+not sure..
+
+
+
+
+**mykeys.py
+Adjust act to tolerate single key action.. 
+
+
+**COMMS
+on topic change, regenerate recording?  
+/uid/timestamp
+cmd flow is dynamically updated (transcriber?), but recording only after..
+Retrieve /uid for latest info, and/or search through shared data..
+/topic/timestamp pointer to uid..
+MTG URL will be one of the QRIn which is shared..
+For now no minutia for access control.  
+auth !=null allows read access..
+
+When content viewed, authid gets registered.  
+Simple stats on view activity..
+channels/uid/settings
+possibility to contain detailed access control by date/time.  
+Too much for now..
+
+
+**extensions/trey/trey.py
+
+Chaining just done by topic and time..
+Can filter topic by set of user input or select all..
+Feedback identified by @user.  
+@@What acknowledge message
+-@user?  
+
+
+
+
+
+**extensions/trey/trey.py
+--quit_me
+Allow for restart 
+CTRL+SHIFT+R = restart
+CTRL+SHIFT+Q = quit..
+Seems to work ok..
+
+
+**timestep.py
+--saveLocalTranscripts
+Need to upload the transcripts associated with the time of recording..
+Lazy.., just upload all?  
+
+
+**extensions/handsfree/background.js
+--openQR
+How long has it been displayed?  
+When someone joins the real-time room update..
+This should be sufficient..
+
+
+**mykeys.py
+@@Word creation logic?  
+[11,11,11]
+After the fact.  
+Take prior sequence.  Define sequence length to take.  
+Feedback describing sequence.  
+Detect number of params for each word and automatically instigate each action after that number of params is given.. 
+Essentially just call each 
+> _word 
+and 
+> word_ 
+> word
+based on number of params given..
+Extend wait time when word has been created.. 
+
+Custom defined sequences for now standard start with [A,2A]
+Should be able to dynamically set language keybot..
+Everything needs to be relative from that perspective..
+later..
+
+
+**languages/_meta.py
+--select_topic
+topic selection.  
+> Select Topic_
+@@How to scroll?
+[11,12] scroll..
+[12,11] scroll..
+
+Display minimap timeline, just text?  
+Squish timeline..
+
+
+
+**extensions/vscode/codetutor/src/extension.ts
+Same time implement date time filter.  
+Keep history of selected time.  
+Amount of actual time spent at zoomed time.. 
+
+
+**languages/helpers/transcriber.py
+--play_midi
+test..
+act = False
+
+data stored in mykeys.words_
+along with seq and transcript..
+
+probably should be _words?  
+
+
+Need selection to play displayed transcript commands.  
+> RECORD
+or
+> Record Feedback
+Bring up site?  
+
+
+Save/load state.  
+Need loading indicator of some kind when we resize time window..
+
+
+**timestep.py
+--saveLocalTranscripts
+test..
+
+
+**extensions/trey/trey.py
+--pause_tmap
+--play_tmap
+test..
+
+!!DirectShowPlayerService::doRender: Unresolved error code 0x80040266 (IDispatch error #102)
+==
+#https://www.codecguide.com/download_k-lite_codec_pack_standard.htm
+$$
+
+
+**extensions/trey/test/qtvideo.py
+
+
+Need better layout for this overlay window..
+Video widget now displays, but need some sort of tab display for the window..
+Otherwise too small..
+Just put main labels on the video control easiest?
+        # 3. Create Labels
+        self.label1 = QLabel("Top Label", self.video_widget)
+        self.label2 = QLabel("Bottom Label", self.video_widget)
+
+Possibly remove red from any image or video overlay..?  
+We would need to highlight in a different color then..
+Either display text in different color or 
+
+**timestep.py
+Transcript quality still not great.  
+
+
+**extensions/trey/trey.py
+Add text input display to load/edit topic.  
+
+**git/clone.py
+--cloneme
+flag to add most recent files to robot directory..
+
+**extensions/trey/speech.py
+--transcribe_audio
+Try to use some VAD
+like silero VAD
+transcription quality is still too poor.  
+Once we have detected segments, then pass to transcribe..
+#https://github.com/snakers4/silero-vad
+or other..
+#https://github.com/wiseman/py-webrtcvad
+
+
+Use Ring controller and translate to commands.. 
+Use 20ms interval or something for checking input L/R etc
+Use this for additional control for sizing etc..
+Perhaps easier than button control..
+Or just use the midi inputs.  
+
+
+Need indicator of peripheral connectivity..
+for Midi device and joystick..
+
+
+**web/public/analyze.html
+Flag for recording feedback.  
+Start on unpause.  Should be one wav same length as video ideally.  
+Save flag setting in local env.  
+
+
+
+**extensions/trey/trey.py
+Load/Save settings on end.  
+Simple settings JSON file.  
+
+**config.py
+OK, basics seem ok.  
+
+
+**extensions/trey/test/joytest.py
+#https://github.com/denilsonsa/pygame-joystick-test/blob/master/pygame-joystick-test.py
+
+OK, separate thread to ingest input here.  
+Use similar to midi thread.  
+Not sure how to use joy yet..
+
+Need indicator for Joystick connected, midi connected..
+Change trey icon and add labels..
+
+qr_queue
+question/response?  
+quick response?
+
+Really need to build a parser.  
+
+**languages/helpers/transcriber.py
+transcriber.read
+--get_seq
+going to have a problem with strings with []
+Parse the sequence..
+
+**extensions/trey/trey.py
+--mywindow
+Dont like parsing the transcripts twice..
+But hassle to figure how to change.
+
+
+$$SYSTEM/Notifications=ENABLE
+
+
+**extensions/trey/test/chirptest.py
+Maybe just use this for now.  
+Quality too poor with local model..
+ugh..
+
+
+**extensions/trey/trey.py
+--label_timeinfo
+--label_times
+--??observe selection time / topic
+
+
+--label_topic_info (selected topic and relevant topics / filters)
+--label_main (next info details)
+--label_info (selection and action info)
+
+--label_p (should be same as relevant topics on topic selection)
+--label_ps (selection)
+--label_qr (selection and action info)
+
+Time/topic/observe/respond
+
+
+
+--label_topic_info (topic, topic time png, addl filter info)
+topic time png = selected time vs total time..
+
+--label_info
+selection help..
+
+
+
+**languages/_meta.py
+adjust speed..
+
+**languages/video.py
+adjust speed..
+
+Whatever the speed, leave adjustable silence between ticks..
+
+
+**extensions/vscode/codetutor/src/extension.ts
+Need to at least genbook..
+On a loop..
+
+
+**extensions/trey/playwrighty.py
+Need to save session info.  
+Or just open last 10 bookmarks saved for now..
+Just dont start reading..
+
+**languages/hotkeys.py
+--load_bookmarks2
+load pages and set current_cache to last bookmark..
+--read_page(url, cacheno)
+
+
+[53,56,60] [cacheno]
+test..
+
+!!greenlet.error: Cannot switch to a different thread
+==
+Have to start in mykeys thread..
+$$
+
+Still not getting the right tab..
+Closer.  
+How to select tab 0.  
+
+Generate and read summary option..
+
+Finish select topic..
+
+**extensions/trey/trey.py
+--_hide
+--set_time
+1 week to start..
+
+See if we can play embedded video from URL.  
+--mywindow.inqueue.put..
+
+
+**extensions/handsfree
+MIDI or hotkey to open URL in trey..
+Pick from scanned URLs..
+
+Move QDRANTZ ingestion before speak..
+Use all tabs..
+
+
+#https://www.youtube.com/results?search_query=revival
+document.querySelectorAll("video")
+
+**extensions/trey/playwrighty.py
+--search_web
+[1] = wiki
+[2] = youtube
+[3] = 
+
+test..
+Not sure I like this..
+-1 = cacheno
+-2 = engine..
+
+48 = current ..
+Pause [49,48,48,49,49]
+Play [49,50,48,49,49]
+
+Cant start playing videos when loading..
+
+How do we skip ads..
+Need to save location in video..
+
+
+
+Language patterns:
+Skip 0,2,2
+
+Select
+0,2,7
+
+Select Spoken
+0,2,8
+
+Selection
+0,3,7
+Select Tab [53,56,60],
+Select Topic [48,51,55]
+
+Feedback 
+0,4,7
+
+
+selection
+
+Stay conscious, change words if needed..
+
+Check transcription of topic..
+
+MIDI not reading properly.. 
+Display topic..
+
+**mykeys.py
+--get_qr
+--Select Topic
+--Set Language
+Not great to have this logic here..
+
+Getting duplicate bookmarks..
+But now at least geting correct topic..
+
+Context still not loading..
+Try to expand time window, and then load..
+Should get better result..
+
+
+Somewhat better.  
+Some contexts not loading, not sure the cause..
+OK..
+
+
+**extensions/trey/trey.py
+Adjust so apps fit better together..
+
+Test joy..
+**R1
+BT connect joystick mode:
+M+B
+
+Take MPE messages and add to qr_in?  
+Then we get back QROut..
+
+OK, try screenshot with aftertouch..
+
+
+**MPE
+MPE messages:
+NVRP = Note Vertical Rotational Pressure
+Fixed?  53, 55
+V1 = Y1 (up > 40, down < 30)
+V2 = Y2
+R1 = X1 (left < -10, right > 10)
+R2 = X2
+P1 = All left (use V and R motion unless > 50, then All left/all right)
+P2 = All right
+
+
+label_qr
+label_ps[]
+label_filter_info[]
+label_p
+label_info
+
+
+!!cant get video widget to paint.  
+==
+QVideoWidget doesnt use paintEvent
+$$
+
+Wow such a hassle to do an overlay.  
+Somewhat closer to what I want..  
+
+Screenshot not working
+but     
+Screenshot Feedback is..
+
+
+**extensions/vscode/codetutor/src/extension.ts
+Need to accept commands..
+
+**extensions/vscode/codetutor/src/midi/mykeys.ts
+Does this work?  
+
+**extensions/vscode/codetutor/src/languages/meta.js
+change to _meta.js
+Change to 0 base.  
+Get first messages..
+
+Create book.js
+I guess using JS ok..
+
+
+Book.select(text, Book.BOOK_OPEN_FILE); //select and open topic
+We dont need the midi here.  
+Lets assume trey is default input for midi.  
+Just need to pass transcript..
+
+**extensions/vscode/codetutor/src/toolParticipant.ts
+--startWatchingWorkspace
+Same logic, have location specific for messaging..
+../transcripts/{lang}/{today}
+Dont display file..
+
+
+!!folder not showing details
+==
+Folder -> Properties -> Customize -> Optimize this folder for:
+General items
+$$
+
+
+test screenbox drawing, should be better..
+Nope, aftertouch is too much to update..
+Maybe can take once in a while..
+
+
+
+**extensions/vscode/codetutor/src/transcriber.ts
+After getting new string from monitoring, parse here..
+
+OK, list of topic and cmds.  
+Just see if tokenizer is working for now..
+
+;> Set Topic 
+should add to transcript even without command?
+
+Not horrible responses..
+Test topic selection through trey..
+
+Eventually need to reload transcript watcher each day..
+Right now using book page for context, maybe adding to selection history is enough..
+
+
+**extensions/trey/speech.py
+Why is recognition still so bad with this open source model.  
+Try to adjust reading speed, and ingest some info.  
+Create some more data to attempt training..
+Accuracy over speed for now.  Just use small segments.  
+See if we can accurately detect speech breaks as well..
+#https://github.com/snakers4/silero-vad
+
+**languages/hotkeys.py
+Adjust reading speed here..
+
+
+
+Need to collect and display feedback from recorded video..
+Screenshot feedback should save wav file as well..
+But cant use for training yet..
+
+
+**extensions/vscode/codetutor/src/extension.ts
+What is stop reading function?  
+Need one so dont have to use mouse..
+
+
+**KNOWLEDGEGRAPH
+
+#https://networkx.org/en/
+#https://github.com/networkx/networkx
+
+> pip install networkx
+
+**web/public/graph.html
+**web/public/netgraph.mjs
+
+**languages/helpers/transcriber.py
+--update_kg
+use networkx here to build a basic knowledge graph.  
+Then we can just query these graphs, and strength of connections perhaps.. 
+See how we can use to start..
+
+test..
+See if we can visualize this in trey with a view..
+
+
+> pip install pyqtgraph
+#https://soniakopel.wordpress.com/2017/11/15/network-visualization-with-networkx-tutorial/
+
+-fruchterman_reingold_layout
+
+**extensions/trey/trey.py
+--visualize_kg
+test..
+Call on select topic
+
+OK, but dont call here, need separate word..
+Also this library is too slow to generate this image..
+Needs to be in separate thread??
+Maybe just generate the text..
+Quick select for topic selection history -> double-tap
+
+Transcription monitoring for topic selection in codetutor not working..
+
+Can we bring window to front?  
+Perhaps just create temp docs and open in codetutor
+Or chat response
+
+
+need to be able to show related changes..
+
+
+--get_window_info
+test..
+
+get rid of old global funcs..
+
+Need topic next which just shows the current topic info PGDN/PGUP
+
+Can we pick up the clicks?  
+
+Why is procid and threadid same across vscode debug instance?  
+
+
+**extensions/vscode/codetutor/src/extension.ts
+OK, so we activate robot, then just Book.select(topic)
+Or something..
+
+OK, we are picking up the new data.  
+On select topic we want to put in the 
+
+**extensions/trey/speech.py
+Try this for transcription..
+#https://github.com/gaborvecsei/whisper-live-transcription/blob/main/standalone-poc/live-transcribe.py
+
+**extensions/trey/test/live.py
+> pip install faster-whisper
+Need some real-time transcription.  
+> huggingface-cli login
+
+!!huggingface_hub.errors.LocalEntryNotFoundError
+==
+whisper = WhisperModel("base", device="cpu", compute_type="int8", cpu_threads=WHISPER_THREADS)
+#, download_root="./models")
+$$
+
+
+**extensions/trey/speech.py
+--transcribe_now
+--faster-whisper
+OK, this seems to work ok..
+
+Far superior to the other model.  
+Also get realtime updates in qr_screen..
+Get rid of timestamp..
+
+Need to switch other locations..
+**languages/hotkeys.py
+video, _meta..
+
+Need distinction to update QR or not..
+

@@ -35,13 +35,22 @@ keymaps["book"].funcdict[""] = function(transcript, midi, keydict, key){
     return transcript;
 };
 
+
+keymaps["book"].keyoffset = 2; //offset within octave mapping
+//this means words should start with this key.
+//if they do not, it is outside expectations.
 keymaps["book"].keydict[ "" ] = {
     "2": {
         "3,6": "jump ", //draw from current x,y to x,y
         "8,10": "zoom ", //draw from current x,y to x,y
         "14,16": "set type ", //change to polar or grid coords
         "17,19": "line", 
-        "19,21": "pct"
+        "19,21": "pct",
+        "2,4": "page ", //one parameter page number
+    },
+    "3": {
+        "2,5,9": "select topic ", //draw from current x,y to x,y
+        "8,10,9": "zoom ", //draw from current x,y to x,y
     },
     "4": {
         "24,21,23,24": "skip "
@@ -59,6 +68,19 @@ keymaps["book"].funcdict["_jump"] = function(midi){
 
 }
 
+
+keymaps["book"].funcdict["_select topic"] = function(midi){
+    //UI function start with _?  
+    //vars should be set prior to this in "line".  
+    //data validation should occur in "line " function.
+    //perform UI action on 
+    //get topic list.  
+    if (selectionhistory.length > -midi){
+        let topic = selectionhistory[selectionhistory.length + midi];
+        selectTopic(topic);
+    }
+
+}
 
 keymaps["book"].keydict["jump "] = {"1": {"min": -12, "max": 12}}; //number of increments.  from middle C
 
@@ -96,6 +118,44 @@ keymaps["book"].funcdict["jump "] = function(transcript, midi, keydict, key){
     return transcript; //add language xxxx 2,3,4
 };
 
+
+
+keymaps["book"].keydict["select topic "] = {"1": {"min": -12, "max": 12}}; //number of increments.  from middle C
+
+keymaps["book"].funcdict["select topic "] = function(transcript, midi, keydict, key){
+    let commandlength = null;
+    let commanddict = null;
+    for (const [k, v] of Object.entries(keydict[key])) {
+        if (parseInt(k) <= midi.length){
+            commandlength = k;
+            commanddict = v;
+        };
+    }
+    //maybe not for all commands, but here, we set to blank in case we have incorrect params.  
+    transcript = "";
+    let skip = 0;
+    if (commandlength !== null){
+        //we have a command map at least.  
+        if (commandlength == "1"){
+            //most common (2,5,9,13,2,2) not sure if we need closure..
+            skip = midi[0].note - keybot["book"] - OCTAVE;
+            if (skip > -OCTAVE-1 && skip < OCTAVE+1){
+
+                skip = Math.sign(skip)*Math.pow(2, (Math.abs(skip)));
+                transcript = "select topic " + skip.toFixed(2);
+                midi[0].complete = true;
+                //I think this will work ok.  
+                //this allows us to move on to next command.  
+            }
+            else{
+                //not sure how I want to handle errors yet.  
+                return "ERROR jump - incorrect parameters"
+            }
+        }
+
+    }
+    return transcript; //add language xxxx 2,3,4
+};
 
 keymaps["book"].keydict["zoom "] = {"1": {"min": -12, "max": 12}}; //number of increments.  from middle C
 
@@ -155,6 +215,24 @@ keymaps["book"].chat = function (transcript){
         }
 
     }
+    if (transcript.toLowerCase().startsWith("select topic")){
+        tokens = transcript.split(" ");
+        if (tokens.length > 1){
+            midi = tokens[tokens.length-1];
+            if (hasNumber(midi)){ //check if we have actually put in the midi.
+                //this should be a good function.  
+                console.log("book select topic " + midi);
+                //check for same or change here.  
+                keymaps["book"].funcdict["_select topic"](midi);
+                executed = true;
+            }
+        }
+        else{
+            executed = false;
+        }
+
+    }
+
     return executed;
 
 }

@@ -46,6 +46,11 @@ from firebase_admin import firestore
 from firebase_admin import credentials
 from firebase_admin import initialize_app, storage, auth
 
+import traceback
+
+from mido import MidiFile
+
+import languages.helpers.transcriber as transcriber
 
 #from transcribe import transcribe_fromyoutube
 #import whisper
@@ -182,7 +187,7 @@ def localBackup():
 def getPlaylistFromGrade(grade):
     if grade == "test":
         return ""
-    if int(grade) > 8:
+    if int(grade) > 7:
         return config.cfg['youtube']['GREAT_PLAYLIST']
     elif int(grade) > 4:
         return config.cfg['youtube']['GOOD_PLAYLIST']
@@ -399,6 +404,8 @@ def updatestatsdb(videoid, starttimes, endtimes, midisize, numwords):
         
     #really this can all be set at play record.py as well, but this is essentially the same as we run this during record.py
     #need to test this works.  Seems to work ok.  
+    #get timeplaying..
+    ref.update({'midisize': midisize})
     ref.update({'wordsrecognized': numwords})
 
 
@@ -408,6 +415,197 @@ def rungitDownload():
     print("git download complete")
 
 
+def downloadMidiFile(midilink, force=False):
+    if (midilink is None or midilink == ""):
+        print("!!No MIDI link")
+        return
+    midi_path = "c:/devinpiano/backup/midi/"
+    midilink = midilink.replace("\r", "")
+    midiname = os.path.basename(midilink)
+    midiname = os.path.splitext(midiname)[0]
+    filename = midiname + '.mid'
+    #dont redo this.  Live with the analysis of the time for now.  
+    if (os.path.exists(os.path.join(midi_path , filename)) and not force):
+#        print("Skipping " + midilink)
+        print("_") 
+        return
+    
+    r = requests.get(midilink)
+    print(len(r.content))
+    midisize = len(r.content)
+    if (len(r.content) < 200): #not sure why this is here.  Change 500->200
+        print(r.content)
+        return
+    
+    with open(midi_path + midiname + ".mid", "wb") as f:
+        f.write(r.content)
+#    mid = MidiFile(midi_path + midiname + ".mid")
+    return midisize
+
+
+def get_relative_file_paths_os(root_dir):
+    relative_paths = []
+
+    for dirpath, _, filenames in os.walk(root_dir):
+        for filename in filenames:
+            # Combine the directory path and filename to get the full path
+            full_path = os.path.join(dirpath, filename)
+            # Calculate the path relative to the initial root directory
+            rel_path = os.path.relpath(full_path, start=root_dir)
+            mtime = os.path.getmtime(full_path)
+            relative_paths.append({'path': rel_path.replace("\\", "/"), 'mtime': mtime})  # Replace backslashes with forward slashes for consistency
+    return relative_paths
+
+
+def get_transcripts(langs=['hotkeys', 'video']):
+    transc = transcriber.transcriber(None)
+    alltranscripts = []
+    for lang in langs:
+        cmds = transc.read(lang) #read hotkeys
+        for c in cmds:
+            transcript = ""
+            timestamp = 0
+            url = ""
+            if 'vars' in c:
+                if 'TRANSCRIPT' in c['vars']:
+                    transcript = c['vars']['TRANSCRIPT']
+                    timestamp = c['timestamp']
+                elif 'COMMENT' in c['vars']:
+                    transcript = c['vars']['COMMENT']
+                    timestamp = c['timestamp']
+
+                if 'URL' in c['vars']:
+                    url = c['vars']['URL']
+
+                if (transcript != ""):
+                    alltranscripts.append({"lang": lang, "url": url, "timestamp": timestamp, "cmd": c['cmd'], "topic": c['topic'], "transcript": transcript})
+
+
+    alltranscripts.sort(key=lambda x: x['timestamp']) #sort by timestamp, most recent last        
+    return alltranscripts
+
+#local transcripts from keyboard usage and transcribed commands.  
+
+def transcribeLocal(fname):
+    #this should be a separate function
+    ext = os.path.splitext(fname)[1].lower()
+
+    ffname = os.path.splitext(fname)[0]
+#    ffname = os.path.splitext(os.path.basename(fname))[0]
+    if (ext in ['.mp4', '.wav']):
+        if (not os.path.exists(ffname + ".vtt")):
+            print(f"Transcribing {fname} to {ffname}.vtt")
+            from extensions.trey.speech import transcribe_audio, listen_audio, transcribe_audio_whisper
+            if (ext == '.mp4'):
+                delete = True
+            else:
+                #dont delete wav files, since these are used for helping train model eventually..
+                delete = False
+            transcribe_audio_whisper(fname, delete=delete)  
+
+def saveLocalTranscripts():
+    #upload to folder any transcripts in local folder
+    #may want some redaction here..
+    tfolder = 'transcripts/'
+    transcript_path = "../" + tfolder
+
+    allfiles = get_relative_file_paths_os(transcript_path)
+    allfiles.sort(key=lambda x: x['mtime'], reverse=True) #sort by modified time, most recent first
+    print(f"Checking {len(allfiles)} transcripts:")
+    print(allfiles)
+    uploadedfiles = []
+    alltranscripts = []
+    endidx = 0
+
+    for idx, file in enumerate(allfiles):
+        #transcribe first..
+        transcribeLocal(transcript_path + file['path'])
+
+    for idx, file in enumerate(allfiles):
+        #check if exists in firebase storage
+        bucket = storage.bucket()
+        blob = bucket.blob(tfolder + file['path'])
+        if blob.exists():            
+            #can break here..
+            print(f"start upload from {datetime.fromtimestamp(file['mtime'])} {idx} files")
+            print(f"up to {file['path']}")
+            break
+
+        endidx = idx
+        #open and read any $$TRANSCRIPT= lines
+        #really should use transcriber..
+
+    toupload = allfiles[:endidx+1]
+    toupload = reversed(toupload) #upload oldest first
+    for file in toupload:
+        bucket = storage.bucket()
+        blob = bucket.blob(tfolder + file['path'])
+        if not blob.exists():            
+            blob.upload_from_filename(transcript_path + file['path'])
+            # Opt : if you want to make public access from the URL
+            blob.make_public()
+            #blob.public_url
+            uploadedfiles.append(tfolder + file['path'])
+                   
+    print(f"Uploaded {len(uploadedfiles)} transcripts:")
+    print(uploadedfiles)
+    langs = ['hotkeys', 'video']
+    print(f"getting transcripts from firebase for {', '.join(langs)}")
+    #just to generate data for website..
+    alltranscripts = get_transcripts(langs=langs)
+
+
+    #upload any new transcript listings..
+    #if > 30 days, we dont get all transcripts..
+    # < 30 days, we get duplication of transcripts.  This is not ideal, but we can live with it for now.
+    if (len(alltranscripts) > 0):
+        datetimestamp = datetime.now().strftime("%Y%m%d")
+        y = datetime.now().year
+        jsondump = json.dumps(alltranscripts, ensure_ascii=False, indent=4)
+        fname = f'./data/transcription/trey/{y}/{datetimestamp}.json'
+        os.makedirs(os.path.dirname(fname), exist_ok=True)
+        f = open(fname, "w", encoding='utf-8')
+        f.write(jsondump)
+
+        fname = f'./web/public/data/trey/{y}/{datetimestamp}.json'
+        os.makedirs(os.path.dirname(fname), exist_ok=True)
+        f1 = open(fname, "w", encoding='utf-8')
+        f1.write(jsondump)
+
+        #just for ease of use.. duplicate data here.. number of days we have run timestep.py
+        fname = f'./web/public/data/trans_trey.json'
+        os.makedirs(os.path.dirname(fname), exist_ok=True)  
+        exists = os.path.exists(fname)      
+        f1 = open(fname, "a+", encoding='utf-8')
+        if (exists):
+            f1.seek(0)
+            existingcontent = f1.read() if exists else ""
+            f1.seek(0)
+            #find 
+            
+            if existingcontent != "":
+                existingtranscripts = json.loads(existingcontent)
+                last_time = existingtranscripts[-1]['timestamp'] if len(existingtranscripts) > 0 else 0
+                for t in alltranscripts:
+                    if t['timestamp'] > last_time:
+                        existingtranscripts.append(t)
+#                import difflib
+#                matcher = difflib.SequenceMatcher(None, existingcontent, jsondump)
+#                match = matcher.find_longest_match(0, len(existingcontent), 0, len(jsondump))
+#                if match.size > 100 and match.b == 0: 
+                    #if there is a significant overlap at the beginning of the jsondump, 
+                    #we assume this is duplication and skip appending to avoid bloating the file.  
+#                    print("Significant overlap with existing content, updating only non-overlapping part.")
+#                    f1.write(jsondump[match.size:]) #write only the non-overlapping part to avoid duplication
+#                    f1.close()
+#                    return uploadedfiles
+                jsondump = json.dumps(existingtranscripts, ensure_ascii=False, indent=4)
+                        
+        #write if no match or no file
+        f1.write(jsondump)
+
+    return uploadedfiles
+
 
 def writeTranscripts(alltranscripts):
     #this should be a separate function.  
@@ -415,6 +613,31 @@ def writeTranscripts(alltranscripts):
 
     f = open('./data/transcription/trans.json', "w", encoding='utf-8')
     f.write(json.dumps(alltranscripts, ensure_ascii=False, indent=4))
+
+    f1 = open('./web/public/data/trans.json', "w", encoding='utf-8')
+    f1.write(json.dumps(alltranscripts, ensure_ascii=False, indent=4))
+
+    today = date.today()
+    today = today.strftime("%Y%m%d")
+    folder = '../transcripts/' + today[0:4] + '/'
+    fname = folder + today + '.txt'
+    #full copy of historical transcripts on this date.  
+    #maybe helpful if we redo transcripts.  Probably will occur.  
+    #2 years ~ few MB?
+
+    #go through and add to individual files as well.  
+    with open(fname, 'a', encoding='utf-8') as f2:
+        for t in alltranscripts:
+            vid = t['id']
+            desc = t['description']
+            tdate = t['updated']
+            transcript = t['transcript']
+            f2.write(f'**{vid}\n')
+            f2.write(f'$${tdate}\n')
+            f2.write(transcript + '\n\n')
+
+
+
 
 
 
@@ -490,6 +713,13 @@ if __name__ == '__main__':
             plwords = ""
             #update to public if we have reviewed.  
             #if we dont want to publish, rank as 0.  
+
+            midi_file = util.getMidiFile(description)
+            midisize = downloadMidiFile(midi_file)
+
+            #skip TIME_WINDOW months
+            if (pDate.date() < mydate):
+                continue
                         
             if (privacystatus=="unlisted" and pDate.date() > mydate):
 
@@ -606,7 +836,9 @@ if __name__ == '__main__':
                     except:
                         print('error using transcript service' + videoid)
 
+            #probably want to do public as well...assumed we would have fixed the transcript by then.
             if (((privacystatus=="unlisted" and transcript_file=="error")) and "transcript" not in item and pDate.date() > mydate):
+#            if ("transcript" not in item and pDate.date() > mydate):
                 if reftr is None and servererrorcnt < 3: #dont keep banging on the door when server is down.  
                     #http://192.168.1.120/transcribe/?videoid=ZshYVeNHkOM
                     #LAk9aL9uBcg, gMlt5CRj6-0, RKRHigZ-PUM, why is transcribe_whisper failing again?  
@@ -633,6 +865,11 @@ if __name__ == '__main__':
 #                        transcript = requests.get(url, timeout=(30, None)).text
                         #set OUTPUT_DIR
                         #just call server/transcription/transcribe.py --transcribe_fromyoutube
+                        from extensions.trey.speech import transcribe_audio, listen_audio, transcribe_audio_whisper
+#                        transcript = transcribe_audio(mediafile, util.st, util.et, True)
+                        transcript = transcribe_audio_whisper(mediafile, util.st, util.et, True, delete=True)
+                        #servererrorcnt += 1 #testing..
+
                         """
                         if (model is None):
                             print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
@@ -641,17 +878,21 @@ if __name__ == '__main__':
                             print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 #                        transcript = transcribe_fromyoutube(videoid, model, mediafile, sta, eta)
                         """
+                        """
                         transcript = requests.get(url, params=params, timeout=(30, None), verify=False).text
+                        """
                         if (transcript is not None and transcript !="error"):
                             data = {'transcript':transcript}
                             reftranscript.set(data)
                             print(data)
-                            updatestatsdb(videoid, util.st, util.et, 0, len(transcript.split())) #wordcount
+                            #this done in analyze.py as well.
+                            updatestatsdb(videoid, util.st, util.et, midisize, len(transcript.split())) #wordcount
 
                         else:
                             print('transcript error' + videoid)
                     except:
                         print('error using transcript service' + videoid)
+                        traceback.print_exc()
                         servererrorcnt += 1
 
             if ((privacystatus=="public" or privacystatus=="unlisted") and pDate.date() < mydate ):
@@ -680,6 +921,8 @@ if __name__ == '__main__':
 
     #    #write the transcripts to a file.
     writeTranscripts(alltranscripts)
+
+    saveLocalTranscripts() #save any transcripts which we have created..
 
     getCodeHistory()
     

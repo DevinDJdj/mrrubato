@@ -92,7 +92,10 @@ page.html?codefile=web/public/page.html
     </script>
     <script src="keymap.js"></script>
     <script src="languages.js"></script>
+    <script src="feedback.js"></script>
+
     <script src="video.js"> </script>
+    <script src="recent.js"></script>    
 
     <!-- midi dependencies-->
     <script src="https://cdn.jsdelivr.net/npm/webmidi@latest/dist/iife/webmidi.iife.js"></script>
@@ -131,6 +134,8 @@ page.html?codefile=web/public/page.html
      
     <!-- git -->
      <script src="git.js"></script>
+     <script src="transcript.js"></script>
+
 
      <!--tabs -->
      <link href="css/tabs.css" rel="stylesheet">
@@ -149,8 +154,8 @@ page.html?codefile=web/public/page.html
     <script defer src="timewindow.js"></script>
 
     <!-- clock -->
-    <script src="clock.js"></script>
     <script src="js/ayuda/date.format.js"></script>                
+    <script src="clock.js"></script>
 
     </head>
     <!-- Google tag (gtag.js) -->
@@ -211,7 +216,7 @@ page.html?codefile=web/public/page.html
             
             </td>
             <td>
-              <table>
+              <table style="background-color: #FF9922;">
                 <tr>
                   <td width="70%">
                     <input type="text" id="current-question" name="current-question" size="50">
@@ -240,7 +245,7 @@ page.html?codefile=web/public/page.html
             
             </td>
 
-            <td>
+            <td style="background-color: #FF2222;">
                 <!-- Load LLM UI -->
                 <p style="display:none">Step 1: Initialize WebLLM and Download Model</p>
                 <div class="download-container">
@@ -397,8 +402,8 @@ page.html?codefile=web/public/page.html
       <table style="width:100%;height:960px;">
           <tr width="100%;">
     
-          <td valign="top" width="30%">
-              <div class="root-wrapper" style="height: 960px;overflow:scroll;">      
+          <td valign="top" width="30%"  style="background-color: #2277ff;">
+              <div class="root-wrapper" style="height: 640px;overflow:scroll;">      
                   <div id="chat_table"  style="overflow:scroll;">
                   <table id="ChatTable" width="100%">
                   <tr id="templateRow">
@@ -410,6 +415,29 @@ page.html?codefile=web/public/page.html
                   </table>
                   </div>
               </div>
+              <div id="recent" style="width: 100%;height: 320px;overflow:auto;">
+                <table id="RecentTable" class="display" style="width: 100%">
+                  <thead>
+                    <tr>
+                      <th>id</th>
+                      <th>date</th>
+                      <th>Title</th>
+                      <th>Status</th>
+                      <th>Desc</th>
+                    </tr>
+                  </thead>
+                  <tfoot>
+                    <tr>
+                      <th>id</th>
+                      <th>date</th>
+                      <th>Title</th>
+                      <th>Status</th>
+                      <th>Desc</th>
+                    </tr>
+                  </tfoot>
+                </table>	
+            </div>
+    
           </td>
           <td valign="top" width="40%">
 
@@ -443,7 +471,7 @@ page.html?codefile=web/public/page.html
 
 
           <td width="5%">
-            <table>
+            <table  style="background-color: #22FF22;">
                 <tr>
                   <td>
                     <img id="thinkinggit" src="images/thinking.gif" height="200px" style="visibility:hidden"/>
@@ -493,7 +521,7 @@ page.html?codefile=web/public/page.html
                       </td>
                     </tr>
                     <tr>
-                      <td valign="top" width="640px">
+                      <td valign="top" width="640px" style="background-color: #FFFF44;">
                         <label for="transcript">Original Transcript:</label>
                         <img src="images/edit.png" height="16px" onClick="toggleTranscript();"/>
                         <br>
@@ -543,7 +571,6 @@ page.html?codefile=web/public/page.html
 <script>
     player2 = document.getElementById("my-video");
     
-    var querydate = null;
 
     var video = 'ogvaelzkoKw';
     var starttimes = [];
@@ -562,7 +589,6 @@ page.html?codefile=web/public/page.html
     
     var user = null;    
     
-var querydate = null;
 //    var codefile = ""; //load from queryparam.  clock.js startup
     var myuid = null;
     var myuser = null;
@@ -727,6 +753,57 @@ var querydate = null;
   var midicontroller;
   var netgraph;
 
+
+  async function loadTranscriptsHelp(transdata){
+    for (var i=0; i<transdata.length; i++){
+        if (transdata[i].transcript){
+
+            let exists = await vDB.getVec(transdata[i].transcript); 
+            if (typeof(exists) !== "undefined" && exists !== null){     
+            }
+            else{
+                let tv = null;
+                if ("id" in transdata[i]){
+
+                    tv = await LLM.getEmbedding(transdata[i].transcript, transdata[i].id);
+                }
+                else if ("timestamp" in transdata[i]){
+                    tv = await LLM.getEmbedding(transdata[i].transcript, transdata[i].timestamp); //use timestamp if no id.
+                }
+                else{
+                    console.log("No ID or timestamp for transcript, using index as ID.  This may cause issues if there are updates to the transcript data.  Recommend adding unique ID or timestamp to each transcript entry.  Index: " + i);
+                    now = Date.now() / 1000;
+                    tv = await LLM.getEmbedding(transdata[i].transcript, now); //use index as ID if no id or timestamp.
+                }
+                console.log("Embedding vector:", tv[0]);
+                vDB.saveVec(tv[0], tv[1], tv[2], "transcript", 0, function(res){
+                    console.log("Transcript Vector saved:", res);
+                    $('#statusmessage').text('Transcript Vector ' + i + ' saved!<br/>');
+                });
+            }
+        }
+
+    }
+}
+
+  async function loadTranscripts(url){
+        console.log("Loading transcript json " + url);
+            $.ajax({
+            url: url,
+            dataType: 'text',
+            success: function(transdata) {
+                transdata = $.parseJSON(transdata);
+                loadTranscriptsHelp(transdata);
+
+            },
+            error: function(xhr, textStatus, errorThrown) { 
+                console.log('error loading transcript json' + errorThrown);
+            }
+
+        });
+
+    }
+
 </script>
 
     <script type="module">
@@ -734,8 +811,23 @@ var querydate = null;
 //        getVideoJson(video);
         gitSignin();
         gitSetNature(GIT_CODE | GIT_DETAILS | GIT_RELATIONS);
+        vDB = new vecDB();
         populateGitRepos(getState('selectedgitindex')); //select repo to analyze.  
         selectGitRepo(getState('selectedgitindex')); //this loads the repo and gitstruct.  
+        //go through all files in repo and add to vecDB.  
+        //add the transcripts to vecDB.  
+        setTimeout(function(){
+            var url = "./data/trans.json";
+            loadTranscripts(url);
+            //list files in directory?  
+            var url2 = "./data/trans_trey.json";
+            loadTranscripts(url2);
+
+            loadAllRecentTranscripts(); //load recordings from trey..
+
+        }, 30000); //wait until model is loaded.  
+
+
 
         //this loads book.  
 
@@ -779,6 +871,8 @@ var querydate = null;
         loadUserConfig();
 		//load audiocontrol and gitcontrol dictionaries.  
         loadDictionaries(0, ["audiocontrol", "gitcontrol"]);
+        loadRecentTable();
+
 
 
         $("#ask-current-question").click(function(){
@@ -866,8 +960,9 @@ var querydate = null;
 
 
 <script type="module">
-    import {onMessageSend} from '/test/web-llm/test.js';
+    import {onMessageSend, getEmbedding} from '/test/web-llm/test.js';
     LLM.sendToLLM = onMessageSend;
+    LLM.getEmbedding = getEmbedding;
 </script>
 
 
@@ -876,10 +971,16 @@ var querydate = null;
   import * as CHAT from "/chat.mjs"
   import * as MIDI from "/midi.mjs"
   import * as NETGRAPH from "/netgraph.mjs"
+  import * as FILEDROP from "/js/filedrop.js"
+  import * as TRANSCRIBER from "/transcriber.js"
+
   FUNCS.SPEECH = SPEECH;
   FUNCS.CHAT = CHAT;
   FUNCS.MIDI = MIDI;
   FUNCS.NETGRAPH = NETGRAPH;
+  FUNCS.FILEDROP = FILEDROP;
+  FUNCS.TRANSCRIBER = TRANSCRIBER;
+
 </script>
 
 <script>
@@ -905,11 +1006,19 @@ function ChatLocalUpdate(answer){
 
 }
 
-function ChatLocalDone(answer){
+async function ChatLocalDone(answer){
     //called from //test/web-llm/test.js
 
     var img = document.getElementById('thinkingchat');
     img.style.visibility = "hidden";
+
+    vec = await LLM.getEmbedding(answer);
+    simvecs = vDB.getSimilar(vec);    
+    for (i=0; i<simvecs.length; i++){
+        //get topic.  Use this topic?  
+        //how to display similar results?  
+    }
+
 
 	//add date variables here.  
     tospeak = FUNCS.CHAT.addChatRow(FUNCS.CHAT.getLastQuery(), answer, localprompt, codefile, []);
@@ -939,6 +1048,22 @@ function ChatLocalDone(answer){
 }
 
 
+    
+function getTime(comment){
+        const regExp = /\(([^)]+)\)/g;
+        const matches = [...comment.matchAll(regExp)].flat();
+    //    console.log(matches);
+        if (matches.length > 0){
+            return getSecsFromTime(matches[1]);
+        }
+        else{
+            return 0;
+        }
+    }
+    
+    
+
+
 function GetRecentSelections(shortformat=false, maxlength=MAX_LOCAL_QUERY_LENGTH){
     //use last few of selectionhistory in order to create more context.  
     //make this the last few selected documents.  
@@ -946,6 +1071,10 @@ function GetRecentSelections(shortformat=false, maxlength=MAX_LOCAL_QUERY_LENGTH
     for (si=0; si<selectionhistory.length; si++){
         //really we want recent commits here, and not full source.  
         //and in order.  ...
+        if (ctx.length > maxlength){
+            break;
+        }
+
         if (shortformat){
           if (si > 0){  //dont want first entry always loading definitions.  
             ctx += "**" + selectionhistory[si] + "\n";
@@ -954,19 +1083,52 @@ function GetRecentSelections(shortformat=false, maxlength=MAX_LOCAL_QUERY_LENGTH
         else{
 
             //really want recent git changes here, not full source I think..
-          ctx += "**" + selectionhistory[si] + "\n" + getGitContents(selectionhistory[si], false) + "\n";
+          ctx += "**" + selectionhistory[si] + "\n"
+          gitcontent = getGitContents(selectionhistory[si], false) + "\n";
+          ctx += gitcontent.slice(-maxlength/4) + "\n"; //just get the end of the file, which is more likely to have recent changes.
 
-          exists = gitcommits.find(x => x.filename === selectionhistory[si]);
+          let exists = gitcommits.filter(x => x.filename === selectionhistory[si]);
+          exists.sort((a, b) => b.d - a.d); //sort by date, most recent first.
+          let alldates = [];
+          commitctxt = "";
           if (exists){
-            ctx += "**" + selectionhistory[si] + "\n" + exists.patch + "\n";
+            for (let i=0; i<exists.length; i++){
+              if (commitctxt.length > maxlength/4){
+                break;
+              }
+              commitctxt = "$$" + exists[i].d.format("yyyymmdd") + "\n" + exists[i].patch + "\n" + commitctxt; //add to beginning so most recent is last in context.
+
+              //getVideos from this time period.  
+              const oneDayInMilliseconds = 24 * 60 * 60 * 1000;
+              let pdate = new Date(exists[i].d.getTime() + oneDayInMilliseconds);
+                alldates.push(pdate.format("yyyy-mm-dd"));
+            }
+            ctx += commitctxt.slice(-maxlength/4) + "\n"; //just get the end of the commit history, which is more likely to have recent changes.
+//            ctx += "**" + selectionhistory[si] + "\n" + exists.patch + "\n";
           }
+
+          alldates = [...new Set(alldates)]; //unique dates only.
+          alldates.sort();
+          ogdate = querydate;
+          for (let di=0; di<alldates.length; di++){
+            let pdate = alldates[di];
+            querydate = pdate;
+            loadAllRecent(10);
+            //pick random video from this date.
+            //getVideoJson(video); //get videos for this date.
+
+          }
+          querydate = ogdate;
 
           //book last?  not sure the preferred order.  
+          bookctxt = "";
           if (selectionhistory[si] in gitstruct["bytopic"]){
-            ctx += "**" + selectionhistory[si] + "\n";
-            ctx += getTopicContext(selectionhistory[si], maxlength/selectionhistory.length) + "\n";
+            bookctxt += "**" + selectionhistory[si] + "\n";
+            topicctxt = getTopicContext(selectionhistory[si], 1/selectionhistory.length, maxlength/4) + "\n";
+            bookctxt += topicctxt.slice(-maxlength/4) + "\n";
             
           }
+            ctx += bookctxt;
 
       }
 
@@ -1025,7 +1187,12 @@ function ChatBuildContext(context){
 
     
 }
+var ischatting = false;
 function ChatLocal(transcript){
+    if (ischatting){
+        return; //dont allow multiple chats at the same time.  
+    }
+    ischatting = true;
     if ($('#prompt').val() == ""){
         $('#prompt').val(localprompt);
     }
@@ -1034,17 +1201,34 @@ function ChatLocal(transcript){
     }
     ChatBuildContext(transcript);
 
-    FUNCS.CHAT.addChatHistory(FUNCS.CHAT.getLastQuery(), mycontext, files);
-    document.getElementById("user-input").value = mycontext;
-    console.log(mycontext);
-    (async() => {
-      var img = document.getElementById('thinkingchat');
-    img.style.visibility = "visible";
 
-  console.log('1');
-  await LLM.sendToLLM(); //onMessageSend();//sendToLLM();   //test/web-llm/test.js
-  console.log('2');
-})()
+    (async() => {
+        try{
+            var img = document.getElementById('thinkingchat');
+            img.style.visibility = "visible";
+
+            vec = await LLM.getEmbedding(transcript);
+            simvecs = vDB.getSimilar(vec);    
+            for (i=0; i<simvecs.length; i++){
+                //get topic.  Use this topic?  
+                //just display?  
+            }
+
+            FUNCS.CHAT.addChatHistory(FUNCS.CHAT.getLastQuery(), mycontext, files);
+            document.getElementById("user-input").value = mycontext;
+            console.log(mycontext);
+
+
+            console.log('1');
+            await LLM.sendToLLM(); //onMessageSend();//sendToLLM();   //test/web-llm/test.js
+            console.log('2');
+        }        catch(err){
+            console.log("Error in ChatLocal: " + err);
+            ischatting = false;
+        }
+    })().then(() => {
+        ischatting = false;
+    });
 
     
 }

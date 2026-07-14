@@ -1,0 +1,105 @@
+**web/public/languages.js
+**web/public/page.html
+@@What are you doing?
+==
+It appears that you've been working on a project to develop a conversational AI, likely a chatbot or a similar application, using a combination of natural language processing (NLP) and machine learning (ML) techniques. The project seems to involve creating a conversational interface with various features, such as:
+
+1. Contextual understanding and generation
+2. User input processing and response generation
+3. Conversational flow control and management
+4. Tagging and categorization of user input
+5. Tracking and analysis of conversational interactions
+
+To better understand the scope of your project, I'll need to make some assumptions and ask a few clarifying questions:
+
+1. What is the primary goal or objective of your project?
+2. What specific features or functionalities do you want to include in your conversational interface?
+3. What programming languages or frameworks are you using to develop your project?
+4. Are there any specific requirements or constraints you're facing during the development process?
+
+Assuming that your project is focused on building a conversational AI with the following features, I can provide more tailored guidance and answer any questions you may have.
+
+Please provide more information about your project, such as:
+
+* Your project's purpose, scope, and goals
+* The specific features or functionalities you want to include in your conversational interface
+* The programming languages or frameworks you're using to develop your project
+* Any specific requirements or constraints you're facing during the development process
+
+With this information, I can provide more detailed guidance and answer any questions you may have.
+$$
+
+~~Repetition like this is not desireable.  
+
+
+**web/public/languages.js
+**web/public/page.html
+**web/public/codewindow.js
+@@What are you doing?
+==
+It looks like you have a JavaScript application that's generating code graphs for various file formats. Here are some observations and suggestions:
+
+**Code Structure**
+
+Your code is well-structured, and you're using a consistent naming convention (e.g., `getBookGraph`, `getDOTLabels`).
+
+**File Formats**
+
+You're targeting several file formats, including JavaScript, Python, and a custom language (LISP). This is great, as it allows you to generate code graphs for different use cases.
+
+**Code Graph Generation**
+
+To generate code graphs, you're using the `graphviz` library. This is excellent, as it provides a powerful tool for visualizing complex relationships between code elements.
+
+**Coloring Code Elements**
+
+You're using a custom coloring scheme to differentiate between code elements and includes. This is a good approach, as it helps identify specific types of code.
+
+**Graph Display**
+
+The code graph displays are not optimized for performance. You're clicking twice to display the graph, which is not ideal. Consider using a more efficient display method, such as a lazy-loaded graph or a more efficient rendering library.
+
+**Additional Improvements**
+
+Here are some additional suggestions to improve your code:
+
+1. Consider using a more modern JavaScript framework, such as React or Angular, to take advantage of built-in features like component rendering and state management.
+2. You may want to consider adding error handling and logging mechanisms to make your code more robust and easier to debug.
+3. To improve the user experience, consider adding features like drag-and-drop functionality, zooming, and panning to make the graph more accessible and engaging.
+4. You may want to consider using a more modern and widely adopted graph visualization library, such as D3.js or Plotly, to take advantage of their performance and feature-rich capabilities.
+
+**Code Snippets**
+
+Here are some code snippets that demonstrate your approach:
+
+**JavaScript**
+```javascript
+function getBookGraph(fileName, includeFile) {
+  // Use graphviz to generate code graph
+  const options = {
+    // Set graph options here
+  };
+  const graph = new Graphviz(options);
+  // Add nodes and edges to the graph
+  graph.addNode("File");
+  graph.addNode(includeFile);
+  graph.addEdge("File", includeFile);
+  // Display the graph
+  graph.show();
+}
+
+// Call the function
+getBookGraph("example.js", "includes.js");
+```
+
+**Python**
+```python
+import graphviz
+
+def get_dot_graph(file_name, include_file):
+    #
+$$
+
+~~not bad.  Need less general recommendations and more specific to the project and context.  
+
+

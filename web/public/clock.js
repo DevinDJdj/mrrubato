@@ -1,4 +1,7 @@
 var urlParams;
+var now = new Date();
+const version = now.format("yyyymmddHHMMss");
+
 (function () {
     var match,
         pl     = /\+/g,  // Regex for replacing addition symbol with a space
@@ -25,6 +28,11 @@ querydate = "";
 if (urlParams["date"]){ 
   querydate = urlParams["date"];
   console.log(querydate);
+}
+else{
+  var now = new Date();
+  now.setDate(now.getDate() + 1); //add a day so we get today as well.  
+  querydate = now.toISOString().substring(0,10);
 }
 
 myquery = "";
@@ -63,6 +71,7 @@ function startClock(){
       endc = moment();
       clockoutput.innerText = endc.format(urlParams["format"] || 'DD/MM/YYYY HH:mm:ss');
       secondselapsed.innerText = (endc - startc)/1000;
+
   //	$("#secondselapsed").load(" #secondselapsed > *");
     
   //    output.innerText = moment().format(urlParams["format"] || '');

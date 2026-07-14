@@ -146,8 +146,8 @@ page.html?codefile=web/public/page.html
     <script defer src="timewindow.js"></script>
 
     <!-- clock -->
-    <script src="clock.js"></script>
     <script src="js/ayuda/date.format.js"></script>                
+    <script src="clock.js"></script>
 
     </head>
     <!-- Google tag (gtag.js) -->
@@ -725,6 +725,7 @@ var querydate = null;
 //        getVideoJson(video);
         gitSignin();
         gitSetNature(GIT_CODE | GIT_RELATIONS);
+        vDB = new vecDB();
         populateGitRepos(getState('selectedgitindex')); //select repo to analyze.  
         selectGitRepo(getState('selectedgitindex')); //this loads the repo and gitstruct.  
 
@@ -829,6 +830,10 @@ var querydate = null;
         
         //download LLM.  
         setTimeout(function(){ document.getElementById("download").click(); }, 2000);
+
+        //initialize the local chat..
+        setTimeout(function(){ let query = "What are you doing?"; ChatLocal(query); }, 40000);
+
 
       }
       FUNCS.loadAll = loadAll;

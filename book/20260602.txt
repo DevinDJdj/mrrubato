@@ -1,0 +1,629 @@
+
+**languages
+These messages for LANG and META are MOD12.  
+_LANG can set to any octave automatically.  
+and in any language, _META lang and _LANG always exist.  
+
+
+**mykeys.py
+@@Word creation logic?  
+**languages/_lang.py
+--new_word
+
+
+**extensions/vscode/codetutor/src/extension.ts
+Need to at least genbook..
+On a loop..
+
+
+
+
+**extensions/vscode/codetutor/src/extension.ts
+**extensions/trey/trey.py
+Lets see if we can open [**public/web] with login with playwrighty.  
+
+
+**languages/check.py
+dont necessarily like this name..
+For now just use comment..
+--comment
+Check if comment works..
+
+
+
+**extensions/trey/speech.py
+Need better math symbol TTS.  
+For now just substitute annoying stuff..
+--substitute_tts
+Still not really working..
+
+
+
+**web/public/chata.html
+Allow for search of other data..
+Any transcript with 
+
+
+
+**books/WORLDHISTORY
+Start usage experiment here..
+
+**extensions/vscode/codetutor/src/book.ts
+Need to be able to switch between books seamlessly..
+
+
+
+
+
+**web/public/chata.html
+Load [**web/public/data/transcriptions/trey/2026]
+Local vector DB..
+Chat find similar transcript (spoken)..
+Load full transcript from this location..
+Need web transcript parser/viewer..
+
+
+
+**languages/_meta.py
+
+;> Set Book_ [fill,endrec] [selection]
+test..
+;> Set Topic_ [fill,endrec] [selection]
+test..
+
+
+Book is what we are writing..
+Topic is any existing book..
+
+select from session:
+bookhistory, topichistory
+
+
+
+**languages/hotkeys.py
+;> Search Web 
+should show the selections in help..
+started ok..
+
+
+;> Comment [DUR..BOOK/CURRENTBOOK/ASK]
+read from vscode extension if ASK..
+
+
+**languages/_meta.py
+;> Time Jump
+;> Time Zoom
+test..
+
+;> Tune In
+;> Tune Out
+test..
+
+
+**languages/hotkeys.py
+--load_bookmarks
+only load 10 or so
+higher usage = higher probability
+
+Video bookmark should note video location..
+Set .. should show list as well..
+
+
+
+
+
+**analyze/analyze.py
+**analyze/analyze3.py
+--printMidi
+Started some visualization here..
+Play with some notations..
+Note primary character, Octave is Y location or color/location
+X location is time..
+Create midi visualization for this..
+
+
+
+
+**web/public/me.html
+Need simple user setup and view..
+
+
+**languages/_lang.py
+Save or name a sequence..
+
+Start/end..
+Track all param inputs selected..
+All text used.
+Or just allow for random selection.
+
+Create word on replay..
+Gather all transcripts with timestamps in this timespan.
+
+;> Start Word [SINCE]
+;> End Word [SINCE]
+Gather all transcript..
+
+> pip install watchfiles
+
+
+
+**timestep.py
+create summary for > RECORD
+add it directly to VTT?
+
+
+
+
+**web/public/chata.html
+**web/public/recent.js
+--loadAllRecentTranscripts
+have some info from transcripts..
+Can now embed this with other entries..
+Or make separate listing..
+
+
+
+
+**LEAN
+Why is it that I didnt like this language?  
+Should try to annotate..
+
+create book command.  
+if it doesnt 
+
+
+
+**languages/_meta.py
+Adjust speed should adjust speed of the narrator..
+
+**extensions/vscode/codetutor/src/extension.ts
+Need to go back from link in book to playwrighty..
+Transcribe into <<hotkeys>>
+CTRL+SHIFT+8 on link..
+
+**testing/lean/tutorials4
+\infixl
+\rcases
+\linarith
+\specialize
+
+#https://lean-lang.org/theorem_proving_in_lean4/Introduction/#Intro
+def m : Nat := 1       -- m is a natural number
+def b1 : Bool := true  -- b1 is a Boolean
+
+Kind of like typescript..
+
+#check n
+n : Nat
+
+
+\la
+\forall
+\ex
+\to
+\N
+\R
+
+>@ lean4.docs.showAbbreviations
+
+
+**extensions/vscode/codetutor/src/toolParticipant.ts
+--registerCompletionTool
+General glossary of functions listed based on topic and other contextual info
+Adjust sortOrder for these things.  
+
+**extensions/vscode/codetutor/src/book.ts
+--sortRecency
+Similar to this..
+
+
+
+**languages/_lang.py
+--new_word
+word assignment, just uses last words..
+
+Need to set transcripts here as well..
+
+creation of our language needs two aspects primarily
+-physical/tonal Proximity 
+-semantic tree definition 
+
+Ideally this should mirror.  
+
+
+**mykeys.py
+--findword
+should really use self.keystruct
+
+**book/keys.txt
+What other semantic tree concepts are needed.  
+
+**lean4
+Trying to learn a bit..
+Where to use this?  
+
+
+**extensions/trey/trey.py
+**languages/video.py
+Need to search rtdb
+or 
+Random selection.  
+to start record.
+;> python ./record.py --description "Selected (Composer)"
+;$$RUNMIDI=true
+to run cmds prior to [21]
+Use book location from this date..
+This way all data selected is based on this..
+
+Need cmd to set Output to replace musiccam.  
+
+
+**extensions/trey/trey.py
+Need treylaunch shortcut..
+
+**extensions/trey/run.ps1
+simple startup..
+
+> ../extensions/trey/run.ps1
+!!File C:\devinpiano\music\extensions\trey\run.ps1 cannot be 
+==
+#https:/go.microsoft.com/fwlink/?LinkID=135170
+
+> Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+$$
+
+create shortcut if desired..
+
+**mykeys.py
+--get_qr
+flesh out dynamic help a bit more..
+
+**extensions/trey/playwrighty.py
+Need to track video locations..
+On video pause, and start from there..
+
+Check this..
+Also set speed..
+
+**languages/hotkeys.py
+Some issues with bookmarks..
+--load_bookmarks2
+not so stable..
+
+
+Need close tab..
+test..
+[53,56,59]
+
+
+**extensions/trey/trey.py
+Select Topic and Book on load..
+
+
+Repetetive links, need to skip..
+
+**extensions/trey/playwrighty.py
+--get_unique_url
+workaround for youtube..
+
+Speed works, video bookmark works..
+
+
+**languages/helpers/transcriber.py
+--search_midi
+Find most likely next word for each language..
+--open_books
+self.allcmds[lang]['&&']
+
+**mykeys.py
+--get_qr
+
+
+**timestep.py
+get pre-generated DB of likely command sequences.
+
+--search_midi
+get from this time next sequence of commands from all transcripts..
+--enscribe
+Then get words..
+This is adding too much to words..
+Is this all fast enough..
+
+
+Need to test..
+--futuretree
+OK at least have something here.  
+Not nice yet..
+
+**extensions/vscode/codetutor/src/extension.ts
+**extensions/vscode/codetutor/src/terminalworker.ts
+On command need to find/open right terminal type..
+
+
+**languages/book.py
+Use pause here for vscode control..
+[50,49,50]
+instead of [61,60,61]
+
+For now not using "Set Book" or "Set Topic"
+Too annoying to implement..
+
+Just create/edit files if we want to select that book/topic..
+But still allow for search eventually..
+
+Need feature to basically always listen, and search for spoken commands..
+As spoken or keyed, potential set of commands is displayed in 13-22..
+This is default functionality unless there is a language for this keybot.
+Or there is a current command.  
+Can select command, then parameters via same mechanism..
+If there is no keybot, this is selection mechanism..
+Need with params (W) / (B) no params.. followed by params, or again selectable params..
+
+4 selections each. 
+[61,62,63,64] and [66,67,68,69]
+Special function for 
+65 (53+12) = create key combo?  
+70 = autocreate, immitate?  
+71 = word creation?  
+
+Need better way to represent sequences..
+#https://en.wikipedia.org/wiki/ABC_notation
+#https://ctan.org/pkg/musixtex
+#https://iris.unipv.it/retrieve/handle/11571/1228268/227299/PhD_thesis_7.pdf
+#https://en.wikipedia.org/wiki/Tonnetz
+
+
+Quick search perhaps..
+and then select from listing..
+Quit the coloring mechanism, too hard to read..
+Set text color to black and white..
+
+**extensions/trey/trey.py
+--getColorFromSequence2
+test..
+
+Use circle-inscribed shapes for word representation.  
+Create font character for each word entity.  
+This could also be not representation, but Need an octave representation as well..
+Time representation can just be character based..
+Each character represents a measure or half-measure..
+
+
+Display this with each Human language word until the entity is known.  
+Or perhaps just a variable mapping in help panel?  
+
+For now just use Clock mechanics starting on C=0..
+Max note sequence per character 4?  
+Fair for now.. 
+Can have up to 4 lines top to bottom perhaps.  
+How to adjust time representation within character?  
+sequence can have inverse color mechanics for multi overlap..
+Same note representation?  
+Octave representation with circle color?  
+ROYGBIV
+2 thickness..
+
+
+Color transition across octaves?  
+Start indicated by dot, and pen thickness and color change with time?  
+Try some things..
+Fill indicates simultaneous play.  
+Accent indicated with pen change.. 
+
+Can we represent/read simple rhythm and melody this way.  
+How to represent rest?  
+Center?  
+Repeated notes loop through center.  
+Off beat shown with curvature change between notes..
+Distance within circle irrelevant, but same curvature depth for same tempo mechanics..
+Lets do some midi->lang
+Generate all images beforehand.  
+Limited number of linguistic elements..
+Lets name them all as well.  
+File name uniqueness.  
+TIMESIG_SEQSIG
+
+Continuation marking?  
+I prefer font, but if multicolor and dynamic, perhaps just do images first.  
+Probably time wont be an issue..
+
+Sample 
+--label_qr
+
+--label_ps
+Create custom images and add to each label_ps..
+Just with labels no rhythm so should be very easy.  Start there..
+See if it is useful for just word sequence..
+This could be a font..
+
+
+In trey time display, display most used word sequence characters..
+
+
+
+**analyze/analyze.py
+$$20241025:116
+--printMidiGif
+adjust/copy to create a similar function which uses 1 second and generates all 4-note sequences within.  
+--printMidiTicker
+enable/test..
+check output..
+
+For now just doing simple TIME->NOTE array..
+
+Time shift shown in color?  
+Possible quantization just 360 for now default..
+round to degree..
+
+
+OK, we have some output..
+Interesting.
+Still needs work.
+
+
+**generate/generatetts.py
+
+**extensions/vscode/codetutor/src/book.ts
+--loadPage
+**languages/helpers/transcriber.py
+--read_lines
+Parse $$YYYYMMDD:line
+
+
+LOCATION=TIME
+SHAPE=NOTE
+COLOR=Octave
+
+Is line by line listing best?  
+1 second per graph may be ok.  
+Try different geometric representations.  
+Spiral, etc..
+
+for now keep the line by line listing.  
+Find highest autocorrelation for line length.  
+Possibly change line length throughout.  
+X and Y direction autocorrelation..
+Or other for non-rectangular.  
+
+30 degree portions..
+Somewhat closer..
+Nice chord representation with this..
+Not sure I like the time representation though..
+How to find best spiral rate?  
+One large spiral?  
+
+
+
+#https://en.wikipedia.org/wiki/Archimedean_spiral
+b = i.e. 1/2PI 
+r = b * theta
+b/2 (theta*sqrt(1+theta^2) + ln(theta+sqrt(1+theta^2)))
+
+(1/2PI/2) * ((2PI*sqrt(1+(2PI)^2)) + ln(2PI+sqrt(1+(2PI)^2)))
+r = 1 -> 
+d = 3.38
+(1/2PI/2) * ((4PI*sqrt(1+(4PI)^2)) + ln(4PI+sqrt(1+(4PI)^2)))
+r = 2 -> 
+d = 12.86
+(1/2PI/2) * ((6PI*sqrt(1+(6PI)^2)) + ln(6PI+sqrt(1+(6PI)^2)))
+r = 3 -> 
+d = 28.6
+
+
+
+b = 1.618
+
+
+1 = (1/PI) * ((n*sqrt(1+n^2)) + ln(n+sqrt(1+n^2)))
+1 = 1.278
+2 = 2.0808
+3 = 2.6881
+4 = 3.1938
+
+theta = 2PI*sqrt(2s/(1/2PI))
+s = 1,2,3,4
+
+
+
+#https://en.wikipedia.org/wiki/Golden_spiral
+1.618
+a+b/a = a/b
+
+
+r = e^(b*theta)
+b = ln(phi)/PI = 0.30635
+
+r = e^(0.30635*theta)
+
+
+r = e^(0.30635*PI) = 2.618
+r = e^(0.30635*2PI) = 6.85
+r = e^(0.30635*3PI) = 17.6
+r = e^(0.30635*4PI) = 46.9
+
+r*csc(1.273)
+
+fibonacci spiral
+
+
+Archimedean spiral more practical for this..
+can we get some integer relationships between full distances though?  
+
+How to autocorrelate beats.  
+--autocorrelation_envelopes
+its a start..
+
+
+**analyze/midscribe.py
+#get pertinent info from midi file between iterations..
+#read OLD language and new language if possible..
+pull all word locations..
+
+Just printing for now.
+test..
+OK, somewhat useful..
+
+> python ./analyze/analyze.py --title  "Evil Ways (Sonny Henry)" --force true --skipmidscribe false
+
+> python ./analyze/analyze.py --title "Great Balls Of Fire (Jack Hammer)" --force true --skipmidscribe false
+
+#https://data.yamaha.com/files/download/other_assets/8/1345698/dgx670_en_dl_b0.pdf
+
+Need to create transcript perhaps for reading on analyze.html
+Show current instrument.  
+Not sure how to show 2nd instrument..
+
+**mykeys.py
+Maybe better to just create transcript from mykeys.py for instrument changes..
+Want the actual time for this..
+
+
+
+**web/public/analyze.html
+display as separate segments for control change transcript..
+
+
+
+**languages/book.py
+Still mostly placeholders
+Select Topic
+or 
+Select Book
+function yet..
+Use <<_meta>>
+
+
+#https://iris.unipv.it/retrieve/handle/11571/1228268/227299/PhD_thesis_7.pdf
+
+read any of last N links in book..
+Just show from selected time..
+Need better mechanism to share info between languages..
+transcriber is shared, just use here??
+
+OK, test ..
+<<book>>> Read Link
+[50,52,57] [n]
+
+OK, works, not sure we want the topic though..
+Need clear topic function..
+
+**extensions/trey/playwrighty.py
+--get_page_details
+!!Dont get the text in PDF link from playwrighty?  
+==
+nope..
+Download and parse?  
+not ideal..
+Keep bookmark of file?  
+
+later..
+$$
+
+**extensions/vscode/codetutor/extension.ts
+--workbench.action.chat.readChatResponseAloud
+@@ Can we scroll along with speech?  
+Seems not easily..
+
+
+

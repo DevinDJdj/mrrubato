@@ -52,9 +52,10 @@ export async function incrementWorker() : Promise< Worker > {
 
 }
 
-export async function removeWorker(topic: string) : Promise<boolean> {
-    if(workers[topic] !== undefined){
-        delete workers[topic];
+export async function removeWorker(topic: string, type: string = "") : Promise<boolean> {
+    //type is for future use. git, &book, _test, etc.
+    if(workers[type+topic] !== undefined){
+        delete workers[type+topic];
         //remove from worktopics.
         const index = worktopics.indexOf(topic);
         if (index > -1) {
@@ -66,14 +67,23 @@ export async function removeWorker(topic: string) : Promise<boolean> {
 }
 //add a worker for specific topic.  
 //for now just use last entry in book for this topic.  
-export async function addWorker(topic: string, type: string = "git") : Promise<boolean> {
+//types = git, &book, _test, etc.
+//test can generate !! and 
+export async function addWorker(topic: string, type: string = "") : Promise<boolean> {
     let wf: Workflow = {
         prompts: ["The next GIT Commits for this file would look like this:"],
         responses: [],
         step: 0
     };
-    if (type !== "git"){
+    if (type === ""){
+        wf.prompts = ["The next GIT Commits for this file would look like this:"];
+    }
+    else if (type === "&"){
         wf.prompts = ["The next TODO items for this file would look like this:"];
+    }
+    else if (type === "_"){
+        //run tests...
+        wf.prompts = ["The next TEST CASES for this file would look like this:"];
     }
 
     if(workers[topic] === undefined){
@@ -95,13 +105,13 @@ export async function addWorker(topic: string, type: string = "git") : Promise<b
             type: type,
             efficiency: 0
         };
-        workers[topic] = newworker;
-        worktopics.push(topic); //add to worktopics.
+        workers[type+topic] = newworker;
+        worktopics.push(type+topic); //add to worktopics.
 //        currentWorkTopic = topic; //set current work topic.
     }
     else{
-        workers[topic].weight += 1; //increase weight of worker.
-        workers[topic].workflow = wf; //reset workflow.
+        workers[type+topic].weight += 1; //increase weight of worker.
+        workers[type+topic].workflow = wf; //reset workflow.
     }
     return true;
 

@@ -1,0 +1,280 @@
+**extensions/vscode/codetutor/src/extension.ts
+
+
+**treyenv
+$$20260404
+install treyenv..
+
+**codetutor
+install codetutor..
+download vscode
+git login/clone
+
+**ollama
+install ollama..
+$$SYSTEM=WINDOWS
+>>dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
+>>dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
+>>wsl --set-default-version 2
+
+;<<msstore>>Download Ubuntu
+>>wsl --list --online
+>>wsl --install -d Ubuntu-24.04
+
+>>wsl -d Ubuntu-24.04
+
+$$SYSTEM=UBUNTU
+>>sudo apt update
+
+>>sudo apt install python3-pip
+>>sudo apt install python3-venv
+
+>$python3 --version
+$$VER=3.12.3
+
+**treyenv
+$$SYSTEM=WINDOWS
+> python --version
+$$VER=3.12.9
+#https://www.python.org/ftp/python/3.12.9/python-3.12.9-amd64.exe
+> "C:\Users\devin\Downloads\python-3.12.9-amd64.exe" /quiet InstallAllUsers=1 PrependPath=1
+
+> pip install virtualenv
+
+> python -m venv treyenv
+> .\treyenv\Scripts\activate
+> .\treyenv\Scripts\deactivate
+
+$$VENV=treyenv
+
+> pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
+
+> python -c "import torch; print(f'Torch Version: {torch.__version__}, CUDA Available: {torch.cuda.is_available()}, CUDA Version: {torch.version.cuda}')"
+;Torch Version: 2.9.1+cu128, CUDA Available: True, CUDA Version: 12.8
+Torch Version: 2.11.0+cu128, CUDA Available: True, CUDA Version: 12.8
+
+**mrrubato
+> pip install -r ./extensions/trey/requirements.txt
+
+#https://obsproject.com/download
+
+> nvidia-smi
+$$VER=12.7
+upgrade?
+;#https://developer.nvidia.com/cuda-12-8-1-download-archive?target_os=Windows&target_arch=x86_64&target_version=11&target_type=exe_local
+
+
+$$SYSTEM=UBUNTU
+>$sudo apt-get install zstd
+>$curl -fsSL https://ollama.com/install.sh | sh
+
+~~ add >> and >$ to defmap..
+$$20260403
+>$ollama pull gemma4:e4b
+$$20250808
+>$ollama pull nomic-embed-text
+
+$$SYSTEM=WINDOWS
+#https://nodejs.org/dist/v24.15.0/node-v24.15.0-x64.msi
+
+> npm install -g typescript
+**extensions/vscode/codetutor/src/extension.ts:8
+;//> tsc -watch -p ./
+;//> npm install --save @vscode/prompt-tsx
+;//> npm install --save ollama
+
+$$20250715
+> npm install vectra
+> ollama pull nomic-embed-text
+
+!!import { PreTrainedTokenizer } from "@huggingface/transformers";
+==
+> npm install @huggingface/transformers
+
+
+**config_sample.json
+**config.json
+
+!!node_modules/vectra/lib/TransformersTokenizer.d.ts:1:37 - error TS1479: The current file is a CommonJS module whose imports will produce 'require' calls; however, the referenced file is an ECMAScript module and cannot be imported with 'require'. Consider writing a dynamic 'import("@huggingface/transformers")' call instead.
+!!1 import { PreTrainedTokenizer } from "@huggingface/transformers";
+> npm i --save-dev @types/mocha
+> npm i --save-dev @types/jest
+
+"LANG_DIR": "C:/devinpiano/languages",
+"TRANSCRIPT_DIR": "C:/devinpiano/transcripts",
+
+!!error TS2823: Import attributes are only supported when the '--module' option is set to 'esnext', 'node18', 'node20', 'nodenext', or 'preserve'.
+==
+**extensions/vscode/codetutor/tsconfig.json
+	"compilerOptions": {
+		"types": ["mocha"],
+		"module": "nodenext", 
+		"moduleResolution": "nodenext",
+		"target": "esnext",
+$$
+
+!!TS2593: Cannot find name 'suite'. Do you need to install type definitions for a test runner? Try `npm i --save
+==
+	"compilerOptions": {
+		"types": ["mocha"],
+$$
+
+!!error TS2416: Property 'batch_decode' in type 'MgpstrProcessor' is not assignable to the same property in base type 'Processor'.
+==
+#https://github.com/huggingface/transformers.js/issues/1337
+
+
+$$
+
+!!node_modules/@huggingface/transformers/types/utils/maths.d.ts:116:125 - error TS2304: Cannot find name 'Float16Array'.
+==
+**extensions/vscode/codetutor/tsconfig.json
+		"lib": [
+			"ESNEXT",
+$$
+
+
+**/testing/mrrubato
+copy here for test..
+
+No usage..
+create lang folders
+> mkdir "C:/devinpiano/transcripts/hotkeys"
+> mkdir "C:/devinpiano/transcripts/video"
+> mkdir "C:/devinpiano/transcripts/_meta"
+> mkdir "C:/devinpiano/transcripts/base"
+
+!!Language model unavailable
+==
+<<vscode>><<github>>Log Out
+<<vscode>><<github>>Log In
+$$
+
+
+!!No sound from codetutor
+==
+;> workbench.action.chat.readChatResponseAloud
+
+> code --install-extension ms-vscode.vscode-speech
+$$
+
+too slow..
+$$SYSTEM=UBUNTU
+> ollama pull gemma3
+**extensions/vscode/codetutor/src/book.ts
+ollama_model = 'gemma3';
+
+
+Ctrl+K
+Ctrl+S
+$$workbench.action.focusActiveEditorGroup
+Ctrl+Shift+7
+
+$$workbench.panel.chat.view.copilot.focus
+Ctrl+Shift+3
+
+
+> git config --global user.name "Me"
+
+> git config --global user.email "me@gmail.com"
+
+
+
+**mrrubato
+;> .\treyenv\Scripts\activate
+;> pip install -r ./extensions/trey/requirements.txt
+> pip install huggingface_hub
+
+!!No module named 'rapidfuzz'
+==
+> pip install rapidfuzz
+> pip install kokoro
+> pip install faster-whisper
+> pip install scikit-learn
+> pip install pyqtgraph
+
+> pip install pycaw
+> pip install rapidfuzz
+> pip install k2
+> pip install pytesseract
+#https://github.com/tesseract-ocr/tesseract/releases/download/5.5.0/tesseract-ocr-w64-setup-5.5.0.20241111.exe
+
+> python ./extensions/trey/trey.py
+$$
+
+**extensions/vscode/codetutor/src/extension.ts
+Not using existing CMD terminal, 
+so sequential commands which are not run in same
+block will not work.  
+Maybe just default '$$' creates new terminal, or
+delete/create..
+Otherwise inherit existing $$
+
+
+**extensions/trey/trey.py
+#https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip
+> cp ffmpeg $$SYSTEM
+
+!!Could not find module 'C:\devinpiano\music\treyenv\Lib\site-packages\pyzbar\libzbar-64.dll'
+==
+#https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-supported-redistributable-version
+Also install
+C++ 2013 Redistributable package
+
+> pip install pyzbar
+$$
+
+!!No module named 'pyrebase'
+==
+> pip install Pyrebase4
+Set up user
+$$
+
+**web/public/me.html
+Need simple user setup and view..
+
+#https://medium.com/@aysunitai/creating-email-and-password-authentication-with-firebase-and-vanilla-javascript-668aa73868a0
+#https://www.geeksforgeeks.org/firebase/getting-started-with-firebase-email-password-authentication/
+
+**web/public/me.js
+OK, seems to work ok..
+
+
+**extensions/trey/trey.py
+!!403 Client Error: Forbidden for url: https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyPassword?key=
+==
+;> Enable SMB 1.0/CIFS File Sharing Support
+;HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters. Create a new DWORD, name it RequireSecuritySignature
+
+Set up config..
+**config.json
+--firebase/fbconfig/apiKey
+--firebase/credentialsfile
+$$
+
+
+Install second monitor..
+
+$$DIR=c:/devinpiano/music
+> .\treyenv\Scripts\activate
+> cd mrrubato
+$$DIR=c:/devinpiano/music/mrrubato
+> python ./extensions/trey/trey.py
+> playwright install
+
+> mkdir temp
+
+!!Error in speak function: Torch not compiled with CUDA enabled
+==
+
+$$
+
+
+> pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
+
+> python -c "import torch; print(f'Torch Version: {torch.__version__}, CUDA Available: {torch.cuda.is_available()}, CUDA Version: {torch.version.cuda}')"
+Torch Version: 2.11.0+cu128, CUDA Available: True, CUDA Version: 12.8
+> pip install torchaudio==2.8 --index-url https://download.pytorch.org/whl/cu128
+> pip install torchvision==0.23.0 --index-url https://download.pytorch.org/whl/cu128
+
+

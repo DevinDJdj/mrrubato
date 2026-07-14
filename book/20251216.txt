@@ -1,0 +1,1331 @@
+
+
+**web/public/chata.html
+Need to finish chat interaction using client-side DB and do vector search to generate context.  
+
+
+**web/public/rec.html
+already generating vectors.  
+Weight transcripts most then screens, then files.  
+
+**vecbook
+> ~vecbook$ rm * -rf 
+
+**extensions/vscode/codetutor/src/book.ts
+
+Start with simple strategy like calling the LLM itself to expand the query.  
+
+#https://medium.com/@sahin.samia/building-an-enhanced-rag-system-with-query-expansion-and-reranking-in-python-c95fa9a0a3e8
+So just use query expansion in some way.  
+Seems just using an LLM query to expand the query.  
+
+Do similarity search with expanded query as well.  
+==
+--similar
+    let expandedprompt = await expandPrompt(prompt); //expand the prompt to include more context.
+
+$$
+
+
+
+**analyze/analyze.py
+Need to continue find patterns.  
+--getNgrams
+$$mappgram
+continue..
+  mapsgram[ seqgram ] [ pgram ] = { 'time': [], 'iteration': [] }
+  mappgram[ signs ] [ pgram ] = { 'time': [], 'iteration': [] }
+
+>python ./analyze/analyze.py --title  "Evil Ways (Sonny Henry)" --force true
+
+
+
+**WrNMxdcfyUk
+OK, we have simultaneous entries.  
+
+
+**extensions/vscode/codetutor/src/book.ts
+
+Need to allow for topic selection
+i.e. inline change of [**-1] to previous topic.  
+List selections and be able to add/remove.  
+
+
+**web/public/git.js
+--loadBook
+When reading book, we should generate the directory tree.  
+
+
+**extension/vscode/codetutor/src/extension.ts
+Should allow for quick copy of text to clipboard.  
+
+
+**web/public/book.html
+Need a nice tree view UI for files.  
+Only view on web.  
+#https://github.com/vakata/jstree
+Hmm..
+Maybe just use instead of filter files.  
+
+use [**map.txt] to update names when reading book.  
+
+
+
+**web/public/languages/gitcontrol.js
+Try to use this..
+Prev/next
+
+
+**RECDROID
+Need simple automated sound recording device.  
+This is a good idea, but there is no need for a separate device for this.  
+
+$$FLUTTER
+$$vscode
+
+
+**web/public/chata.html
+Finish RAG here.  
+Order in time.  
+Create expanded query, and retrieve further context if needed.  
+
+
+
+**extensions/vscode/codetutor/src/extension.ts
+
+Save current branch.  
+> git branch --show-current
+$$BRANCHNAME
+> git branch $$BRANCHNAME
+> git switch $$BRANCHNAME
+..
+> git switch $$ORIGBRANCH
+> git merge
+
+
+Create a branch each time we run the improvement process.  
+Or keep branch for each topic.  
+
+^^+ to generate.  
+Find launchable page which includes this topic.  
+All launchable pages should be tried if possible.  
+Start recording..
+Launch [**PAGE]
+Use [**PAGE]
+
+Switch back to extension.
+Make updates..
+Show updates for time..
+
+Redeploy
+Use [**PAGE]
+Make observations and compare with previous iterations.
+add to [**GENBOOK]
+
+Launch other operations.. from [**GENBOOK]
+
+Accept/decline changes based on results and check prompts.  
+
+Make summary information about changes.
+Add to [**GENBOOK]
+
+Merge branch..
+
+
+List launched operations from [**GENBOOK]
+
+Only one branch at a time for any topic?  
+For now on failure just delete and start over?  
+Track how much failure.  
+
+Repeat process.
+
+
+
+**extensions/trey/trey.py
+\Launch browser with several tabs #
+\show last n cmds > 
+\summarize topic (s)
+\select cmd..
+\find latest recs with this topic.  
+
+
+
+**extensions/vscode/codetutor/src/extension.ts
+==** select current.  
+==**-1 current - 1
+==**-2
+==**2 future 2 or absolute value from start using current context?  
+
+==>-1
+==>-2
+..
+
+@@When to write a new book?  
+
+
+
+**mrroboto
+> git clone https://github.com/DevinDJdj/mrrubato.git .
+~~test copy trans.json to book here.  
+
+
+
+
+**RECDROID
+Should do this..
+
+#https://medium.com/@savasolar/making-a-25-key-midi-keyboard-with-an-arduino-55f38c98fd37
+
+#https://www.sweetwater.com/store/detail/nanoKEYFDWht--korg-nanokey-foldable-midi-keyboard-white
+#https://www.instructables.com/MegaMUX-32-Channel-Multiplexer-Tutorial/
+
+
+
+**extensions/trey/trey.py
+Test 
+list tabs
+select tab
+
+Need to formulate feedback language..
+Feedback            | Duration     | Freq
+Thread Action start | 200ms        | 2000
+Thread Action end   | 200ms        | 1000 (-1 octave)
+Error               | 500ms        | 2000
+Action completed    | 500ms        | 1000
+
+Need to follow text on page.
+
+test list tabs, and tab selection..
+
+First recording too slow..
+
+maybe
+[0,12,12,0] = short mode enable.  
+[0,12,0] = short mode disable
+Perhaps further modes.  
+[0,12,12,12,0] etc.
+
+if short mode, separate one/two key dic.  
+
+Number list input..
+Punctuation input..
+
+
+#https://magenta.github.io/magenta-js/music/demos/visualizer.html
+
+
+**web/public/analyze.html
+Add logic to show iterations as we start/pause/stop..
+Have a small graphic representing iteration length at top of page.  
+As well as number of notes per iteration.  
+Quick stats..
+read midi file and detect current iteration..
+
+**timestep.py
+Generate statistics for iterations
+Same as generating transcript..
+Change transcript logic to be local..
+
+
+**web/public/chata.html
+test using vecDB from trans.json
+
+
+
+**languages/hotkeys.py
+
+Need separate command to use/read internal links..
+
+
+**timestep.py
+Keep and use trey records in some way.  
+Create equivalent of audio recording trans.json
+
+
+**CACHE
+
+prev and future command cache access:
+[n, n] [cmdidx] [paramidx]
+n==n brings up cache
+[53,53] [IDX] = looks up this cmd, then following param idx can be used.  
+Or break [60]? and recreate params.  
+So we have a cache tree of [24][24][24]
+[0:12] is past [12:24] is predicted
+first 24 is just base key, so really only 12.  
+really only using 10 because of meta [60] break?  
+Not sure how to chain or break..
+
+Cmd creation as well need a struct for this.  
+[n, n+12] = Create
+[n, n-12] = delete
+[53,65] [WORD] [53,65] [idx] [idx] [53,65] [idx] [idx] ... [53,65] [53,65]
+pull from cache multiple commands?  
+created words are only sequences of existing programmed commands..
+too complex?  
+Delete:
+[65,53] [WORD] [65,53]
+
+
+Each [53,53] or [53,65] brings up display of cmd cache and param cache to be selected..
+Also as word is input
+Bring up potential sequences..
+This should be immediate in trey..
+As word is constructed, should show similar constructs..
+Dont want a bunch of duplicate words..
+
+Display trey window until command construction complete.  
+Should this window be full screen?  
+Not sure..
+Do we need delay param between commands?? 
+Or just use input delay as delay.
+
+How to create words in a meaningful way.  
+After word creation need to find similar and purge from dictionary.  
+Import dictionary which will highlight overlap, and which words you want to keep.  
+Should be able to import dictionary ported to any particular key..
+All basekey (0-based) indexes eventually.  
+
+Meta command to list dictionaries..
+[SWITCH] [key] [key]
+[IMPORT] [key] [dic]
+
+Or just
+CONFIG put basekeys for all languages?  
+This is much simpler..
+languages->lang->keybot
+
+Yeah lets switch to 0-idx now
+Add keybot config param..
+Adjust array on loaddata..
+test load_data with different index..
+OK..
+
+Test 0-indexed words..
+..
+
+
+Test can rerun transcripts?  
+But how do we define expected result?  
+Just with image comparison?  
+How do we link transcript with topic?  
+
+
+**extensions/vscode/codetutor/src/extension.ts
+
+--stream.markdown
+@@vscode Why cant I speed this up??
+
+
+**extensions/trey/trey.py
+--record_feedback
+
+**timestep.py
+later read these logs to extract correction information for training the STT model..
+and also possibly a TTS model..
+So all we have to do is reread portions of the website we are reading anyway to train the model..
+
+**backupy.py
+Need to add backup of [/transcripts] ..
+
+
+
+**transcripts
+$$MODEL=speechbrain/asr-conformer-transformerlm-librispeech
+$$20250815
+
+Quite slow about 3x audio time..
+
+
+**analyze/analyze.py
+Match pct quite low.  
+Match = within 5% relative time..
+
+$$9keys
+around 0.6% match rate with 9 keys.  
+Iterations: 36 Total Ngrams: 100764 Matches: 636 Nonmatches: 1690
+~2000/100000 = 2%
+$$8keys
+around 1.2% match rate with 8 keys.  
+Iterations: 36 Total Ngrams: 97349 Matches: 1195 Nonmatches: 3338
+4%
+$$7keys
+around 2.4% match rate with 7 keys.  
+Iterations: 36 Total Ngrams: 91735 Matches: 2216 Nonmatches: 6637
+8%
+2^7 = 64
+A few more matches with different iterations..
+
+@@What is random result for this?  
+Do a match heat map..
+
+
+#https://en.wikipedia.org/wiki/Birthday_problem
+$$N=NUM NGRAMS
+$$SEQ = FULL SEQ LENGTH
+$$NKEYS = 50
+$$P(A) = NKEYS^N*((NKEYS^N)-1)* ... *((NKEYS^N)-SEQ) / (NKEYS^N)^SEQ
+$$P(B) = 1 - P(A)
+
+
+INNER form unclear.  
+Definitely more than random, but lower than expected..
+
+
+
+**extensions/vscode/codetutor/extension.ts
+Probably need to pass chat context in queries.  
+How do we get chat context..
+
+Need to test with DBCS..
+
+
+**extensions/trey/trey.py
+Need better math Reading
+
+Have to get all alts from images.  
+Can we get this in order, or can we compare the text and get the best match?  
+
+
+-Display past bookmarks for quick jump.  
+        "Select Tab": [53,58,60],
+        "Select Bookmark": [53,58,57], #feedback tells which mark it is.  Or default to set to 0 idx.  
+
+
+**languages/hotkeys.py
+Save bookmark text for listing.
+
+**extensions/trey/trey.py
+--draw_overlay
+Add link list to screen
+testing..
+
+
+**extensions/vscode/codetutor/extension.ts
+
+
+Adjust search results to prioritize longer results..
+
+OK working..
+Need to try to prioritize deeper results.  
+
+Need to add recency to calculation.  
++ 1/ln(days)?  
+Or somethign like this.  
+
+**extensions/trey/trey.py
+Add context info to each window on overlay.  
+
+--updateLabels
+
+OK finally got some decent result.  
+Lot of mess still here, but ..
+
+
+
+**timestep.py
+Add transcripts to book.  
+Just copy each day transcript.  
+--writeTranscripts
+test..
+
+
+[WORDA] [PARAMSA] [WORDB] [PARAMSB] [ENDB] [ENDA]
+
+**PARAMS
+need zero-based calculation
+Try to keep same order and minimal variations.  
+
+0 = most relevant
+
+FULL example:
+[ASTART] [WORDA] [PARAMSA]
+
+
+[WORDA] [PARAMSA] [WORDB] [PARAMSB] [ENDB] [ENDA]
+[53,57,60] [57] [] [53,53]
+
+This is where we can use timings.  
+Within record feedback, we can do things like take screenshot.  
+This will have stronger correlation.  
+Previous and post will also have strong correlation.  
+
+Need example of where this is necessary to do within a word.  
+Perhaps meaning will just be slightly different.  
+
+(Select Tab [5] (Record Feedback [6 secs]) )
+vs
+(Select Tab [5]) (Record Feedback [6 secs])
+
+
+
+**dictionary/lang.txt
+**dictionary/hotkeys.txt
+Start some dictionary.  
+
+**extensions/trey/trey.py
+Could parse and display definition of last called function.  
+
+
+**play.py
+**record.py
+Play midi transcripts as we play..
+
+**timestep.py
+Need to upload transcripts folders.  
+--saveLocalTranscripts
+test..
+
+
+**play.py
+
+#https://github.com/onlaj/Piano-LED-Visualizer
+fun..
+#https://github.com/EliasAlesand/MIDI-lights/blob/master/MIDI-lights.py
+
+Add python visualizer
+
+
+**extensions/trey/trey.py
+Try this combination
+Screenshot -> Record Feedback
+or vice versa 
+
+Load latest commands from transcript.  
+Create auto-complete for keyed commands.  
+@@What is auto-complete command from listed suggestions?  
+
+
+Need multilingual TTS and STT
+TTS should be fairly easy just adjust
+--speak
+pass language param.  
+List voices for language.  
+Select one..
+> edge-tts --list-voices
+
+Beep when complete..
+
+Logic is there, try different language..
+
+
+@@github
+so many errors recently.  
+Can we prioritize human users please.  
+
+#https://github.com/miroslavpejic85/mirotalk
+P2P Javascript version of this would be better.  
+Check more..
+
+
+**extensions/vscode/codetutor/src/book.ts
+Do query expansion on similar function.  
+Then pass expanded query to vector DB.  
+Better..
+
+
+#https://github.com/bigbluebutton/bigbluebutton
+
+#https://github.com/muaz-khan/MultiRTC/tree/master/MultiRTC-firebase
+Yeah try this..
+
+Best to have real-time ability.  
+
+
+**web/public/test/MultiRTC-firebase/index.html
+Could we just use this?  
+> npm install multirtc-firebase
+
+**web/public/test/MultiRTC-firebase/RTCMultiConnection.js
+Adjust DB.  
+Not working..
+
+#https://github.com/fireship-io/webrtc-firebase-demo
+
+**web/public/test/webrtc-firebase-demo
+see if this works..
+
+#https://webrtc.org/getting-started/firebase-rtc-codelab
+#https://github.com/webrtc/FirebaseRTC
+meh.. try..
+
+
+
+**extensions/trey/trey.py
+German
+#https://huggingface.co/speechbrain/asr-crdnn-commonvoice-de
+Japanse model
+speechbrain/lang-id-voxlingua107-ecapa
+#https://huggingface.co/jonatasgrosman/wav2vec2-large-xlsr-53-japanese
+#https://dataloop.ai/library/model/kotoba-tech_kotoba-whisper-v10/
+
+Try german first as easy to integrate with SpeechBrain.  
+
+
+**extensions/trey/testspeechbrain.py
+--train_model
+#https://github.com/speechbrain/speechbrain/blob/develop/recipes/CommonVoice/common_voice_prepare.py
+
+
+#https://stackoverflow.com/questions/45556440/pyqt-emit-signal-from-threading-thread
+
+
+**extensions/trey/trey.py
+--handle_keys
+test PyQT5 comm signal..
+
+Need to add feedback URLs to QR code info for recording.  
+Any visited pages since starting recording.  
+
+Trey should not have any backend interaction, purely a window recorder.  
+
+**web/public/rec.html
+No interaction between [trey.py] other than QR code..
+Possibly to set recent topic.  
+Should really be in sync though so not needed..
+
+End of recording, detect all Feedback URLs from Frames, and update DB with this info.  
+
+**extensions/trey/trey.py
+--speak
+@edge-tts
+$$20251212
+> edge-tts --text "Hello, this is a test." --voice en-US-EmmaNeural --write-media hello.mp3
+!!edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+Is there a problem?  Commands that used to work no longer do
+
+#https://github.com/rany2/edge-tts/issues/443
+==
+> pip install edge-tts==7.2.1
+$$
+
+
+
+**dictionary/hotkeys.txt
+@@What commands do we want?  
+Web control:
+Select Bookmark
+find = 9
+Search Bookmark
+
+Window control:
+Select Window
+find = 9
+Search Window
+
+create = 10
+Use context from previous selections
+
+book = 2
+allow all prefix commands for writing..
+select topic
+Use US keyboard..
+[2,1] error
+[2,3] reference
+[2,4] variable
+[2,7] none
+[2,14] question
+etc..
+
+i.e.
+[2,1] [select error text] [2,2]
+
+create = 10
+use this for creation of words?  
+words represent sequences of base words or created words.  
+i.e. [10,14,17] [$NUMWORDS] [WORDSEQ] [WORDCLOSURE] [10,10]
+Cant use base octave as start.  
+Use params as is or fixed params..
+
+Use genbook, or book when adding comments?  
+
+
+
+**extensions/trey/trey.py
+
+!!aiohttp.client_exceptions.ClientConnectorError: Cannot connect to host speech.platform.bing.com:443 ssl:<ssl.SSLContext object at 0x000002A892B8A150> [The specified network name is no longer available]
+Still get this intermittently.  
+Probably have Request per minute limit.  
+
+Maybe need different solution..
+Perhaps Azure has killed this library..
+
+> pip install pyttsx3
+
+**web/public/analyze.html
+Need to provide feedback on recorded audio as well.  
+Need to add communication QR code to show videoID as well as timestamp, constantly updating..
+Use this along with [**extensions/trey/trey.py] to generate corrected text for audio.  
+Or could use original idea to update text.  
+
+
+
+**extensions/handsfree/manifest.json
+Make simpler version.  
+Use popup functionality to just display QR code constantly.  
+Separate functionality, but could launch this with [**extensions/trey/trey.py]
+Does this still work?  
+Lets adjust this to be simpler and just display QR code in some scenario..
+
+
+**extensions/handsfree/sidepanel.js
+Dont think this is using MIDI yet.  
+::
+
+**extensions/handsfree/mrrubato.js
+--initCommands
+$$20240305
+
+Command basically injects JS.  
+I dont think we need the JS injection portion though for this.  
+Just use tab 
+
+#https://developer.chrome.com/docs/extensions/develop/ui/add-popup
+
+#https://developer.chrome.com/docs/extensions/reference/api/action#type-OpenPopupOptions
+
+
+also use built-in bookmarks chrome.bookmarks.getTree(function ( bookmarkTreeNodes ) { $('#bookmarks').append(dumpTreeNodes(bookmarkTreeNodes,.append(dumpTreeNodes(bookmarkTreeNodes,) query)); });
+
+
+--initTab
+get necessary info..
+            this.mr.Chat("tabs");
+Command("tabs")            
+
+Been so long..
+
+OK need to run this..
+
+Need option with and without side panel..
+Without side panel, just show QR.  
+Make sure it works though first.
+
+On trigger, open and display popup with current tab information..
+
+
+**extensions/handsfree/background.js
+service worker, we can open side panel.  
+#https://developer.chrome.com/docs/extensions/reference/api/sidePanel
+--open_sr_page
+
+#chrome://extensions/
+--Load unpacked
+$$folder=**extensions/handsfree
+
+Debug for this:
+#chrome://inspect/#service-workers
+
+    "default_popup": "popup.html"
+If we set this, the page is no longer activated.  
+
+OK, I think this is enough..
+
+	  chrome.action.setPopup({popup: 'popup.html'});
+	  chrome.action.openPopup();
+
+We need to change the content of this though when URL is changed.  
+
+OK, closer to what we want...
+
+**extensions/trey/trey.py
+Pick up any QR info directly from screen..
+and add it to retrievable info..
+
+Scaffolding done, try QRInWorker
+
+
+!!FileNotFoundError: Could not find module 'C:\Users\devin\AppData\Local\Programs\Python\Python312\Lib\site-packages\pyzbar\libzbar-64.dll'
+
+==
+#https://www.microsoft.com/en-gb/download/details.aspx?id=40784
+$$
+
+
+Again link location calculation is off..
+ok, seems better..
+
+#https://strawberryperl.com/
+
+
+!!llama runner process has terminated: error loading model: unable to allocate CUDA0 buffer llama_model_load_from_file_impl: failed to load model
+random Mem issue? 
+
+**extensions/vscode/codetutor/book.ts
+When we truncate, some issue with formatting if we have control characters in truncated area.  
+--similar
+--summary
+Still need some work here..
+Need customized model I think..
+
+
+**extensions/trey/hotkeys.py
+Just have command to show/hide.  
+Check BBOX command..
+
+**extensions/trey/video.py
+OK, simple screen toggle works.  
+Dont like this pyqtSignal stuff, but it works ok I guess for now..
+
+
+**LANGSTRUCT
+Need to keep all word use history.  
+For generating suggestions..
+Also need a dictionary visual.  
+This should provide all potential words.  Similar to 
+
+
+**web/public/languages.js
+--filterDicAuto
+
+What to call this a word "tree"?  
+#https://pair-code.github.io/interpretability/bert-tree/
+Any tree with n
+ nodes has a Pythagorean embedding into Rn−1
+
+Generate dot graph perhaps for each sequence of words..
+Take input of full language and generate a dot graph from that struct.  
+
+**mykeys.py
+--gen_lang_struct
+Think this works..
+How to use..
+--get_words(prefix)
+Should be called after each key for filtered display.
+
+OK, something close.  
+Window update is quite slow..
+test again..
+
+Need function to update settings, just hold in config for now
+
+> Toggle Screen
+$$OPACITY=0.4
+ok, updating opacity works ok.  
+
+Need to list results in order of prevalence.  
+Sort order += 1 /(log(recency) + 1)
+recency TIME unit since usage instance?  
+TIME unit = time since last X words used.  
+X = ?  
+for now arbitrary 50
+
+Can we update this easily, or can we just do this at initialization?  
+Read backward X*X lets say to initialize dictionary.  
+We can always adjust current time later to go back in history.  
+
+I think at initialization is sufficient..
+
+**WORDFILTER
+Use this as sort order for filter listing.  
+Tree filter then sort..
+
+**LANGFILTER
+Separate filter for word patterns..
+When reading past language, create _NWORD (XWORD_) pattern.  
+
+
+We may want to go several into the future as well.  
+Based on
+
+Need to build word graph..
+
+Then once we have Next Word prediction based on a trained model
+just iterate over that to get several probable next word lists.  
+Lets go 2 or 3 words into future for now..
+And list those most probable sets based on this filter along with initial [**WORDFILTER]
+Get top N words and run two-word? predictor for each of these words.  
+
+**server/xword/test.py
+#https://www.kaggle.com/code/dota2player/next-word-prediction-with-lstm-pytorch
+
+> pip install demoji
+> pip install torchtext
+> pip install bs4
+
+> pip install torch==2.3.0
+
+> pip install torchtext==0.18.0
+
+
+!!module 'torchtext' has no attribute 'vocab'
+How far do I have to downgrade..
+2 yrs already so outdated??
+==
+from torchtext import vocab
+_torchtext.vocab.build_vocab_from_iterator
+$$
+
+!!A module that was compiled using NumPy 1.x cannot be run in NumPy 2.2.6 as it may crash.
+> pip install numpy==1.26.4
+==
+...
+> pip install torch==2.7.0
+> pip install numpy==2.2.6
+#https://debuggercafe.com/word-level-text-generation-using-lstm/
+$$
+
+
+**server/xword/test2.py
+#https://gaia.cs.umass.edu/wireshark-labs/alice.txt
+
+make separate tokens for each word type.  
+For now just CMD to predict next CMD.  
+
+Use char based linguistic transcript for now..
+
+**languages/video.py
+Add transcript.  
+Create overall transcript, no need to separate language, just have language in param.  
+> <LANG> CMD
+
+**languages/helpers/transcriber.py
+Simple wrapper for logging commands and parameters..
+
+Need to add better timestamp.  
+OK, something like this..
+Dont write much..
+Just key commands..
+
+Need combined set after loading each language.  
+Use this to predict next command...
+Also have a language specific one model to predict.  
+
+What is hotkey to quick select?  
+Highlight next needed key in suggestions.  
+Maybe not worth quick select button?  
+Unless we quick select several future words..
+Yes this is worth.  So need to list the most likely future sets as well if there are likely sets.  
+Otherwise just list the words and allow quick select.
+
+Make general feedback function as well.  
+Video search needed.  
+Can we drive a video UI from this as well?  
+> Watch Analyze
+And give correct feedback here..
+
+
+**server/xword/test3.py
+Try to get next word for current vocabulary.  
+OK, this works, but need more vocabulary.  
+Also need a model for the params?  
+Or just show a few dissimilar samples?  
+
+Run sequence of events.  
+[Record Feedback] [Screenshot]
+[53,57, 60] [60] [49,53,55] [53,65,53,65] [49,49] [53,53]
+
+
+When overlay is on, record screen if there is difference in image.  
+"Add Bookmark": [53,58,60,62]
+
+OK add bookmark working..
+
+Switch Record Feedback to use transcriber.  
+Why are we not getting screenshot...
+Test Screenshot..
+
+[49,53,55] [53,65,53,65] [49,49]
+
+
+Shortcut should be any remaining 2-seq.  
+49, 52,49
+49,53,49
+These will equate to the suggestions.  
+This will automatically be removed from the sequence, but details about selection will be displayed.  
+And know at what point we are in the sequence..
+
+If selected again from detail screen, selection/suggestion will run as written.  
+For now max 10 suggestions.  
+These can be done any time within the word.  
+
+Selecting 49,n expands suggestions..
+And suggestion can be selected from there.  
+
+Can the language be dynamic in that way?  
+Probably too confusing.
+
+
+OK, Screenshot works..
+For now just highlighting.  
+
+Should turn video on when overlay on..
+Also should OCR data in box, or perhaps wait for separate command to do this?  
+May as well take the data..
+
+
+**extensions/trey/playwrighty.py
+--open_browser
+Can we get images from non-visible virtual desktops?  
+via playwrighty, otherwise maybe not easy.  
+See if we can activate the extension and get the popup info.  
+--save_screenshot
+
+**languages/hotkeys.py
+add similar..
+
+--executeQRCommand
+Check if screenshot being saved..
+
+
+OK, this takes screenshot, not sure yet what to do with ..
+Maybe just annotate time and OCR with this time stamp..
+
+Worker thread to get OCR inside BBOX and save to params?  
+
+Enable video capture while overlay is on..
+
+
+What gets logged vs what doesnt?  
+Switch to transcriber..
+OCR -> QRIn..
+
+QR - Communicate language with UI
+QRIn - Communicate UI to language..
+
+Maybe just make relative numbers after the first.  
+
+
+Things could be cleaner..
+
+Just indicate whether black key or not with bold..
+
+Need function to get params help..
+
+
+**extensions/trey/trey.py
+Need topic list/selection
+and abiility to define sequence for topic
+[52] = Base?
+Utilize [52,53,52], [52,54,52] etc for base feedback..
+No single elements I think for now..
+When we have selected topic, this should be added to transcript as usual..
+This way video/screenshot etc will be associated..
+
+@@How do we share data across video?  Right now only one-directional.
+
+Just have a RTDB page which includes all potential QR feedback..
+This will be the extended link..
+User shares this at beginning automatically, which is picked up by QR scanner..
+All participants use this scanned url to share for that session.
+This assumes meeting is in use..
+Perhaps chatter can go across bottom/right of screen dynamically..
+User: comment/command
+Driver decides whether or not to display any overlay automatically..
+ver 10 57x57 = 174 chars..
+ver 25 117x117 = 1200 chars..
+Ver 40 177x177 = 1800 chars..
+Seems these should be fine..
+Depending on data, share or not via QR..
+
+Could allow viewer vs contributor..
+
+Generate share URL and display via QR code.  
+If this is detected, post to this location.  
+Require login?  
+and compare login ID, so much hassle.  
+
+For now just use random generated ID.  
+Create session.  
+Remove session
+Save session..
+List sessions/transcripts..
+Retrieve all transcripts only during this time..
+
+
+For now all transcripts will remain just local.  
+
+Separate batch job to upload/rerun against any repository..
+Topic/language combination determines distribution.
+
+**mykeys.py
+Do Quick-select.  
+
+#https://github.com/asweigart/pyautogui
+#https://github.com/ra1nty/DXcam
+#https://github.com/obsproject/obs-studio
+maybe just start/pause/stop etc with hotkeys..
+    obsp = subprocess.Popen("C:\\Program Files\\obs-studio\\bin\\64bit\\obs64.exe", start_new_session=True, cwd="C:\\Program Files\\obs-studio\\bin\\64bit")
+
+
+**extensions/trey/trey.py
+--copy_latest_file
+Do this also on change of topic..
+
+Need to list topic and store any video transcript entries..
+ok, using _meta for now..
+
+**extensions/vscode/codetutor/src/gen.ts
+Placeholder for generation logic..
+
+
+**extensions/vscode/codetutor/src/book.ts
+--updatePage
+use this from gen..
+test this..
+
+After each gen, what checks are needed?  
+
+**extensions/vscode/codetutor/src/extension.ts
+--validateChange
+Continue here..
+
+
+vscode.window.onDidChangeActiveTextEditor
+
+@@How to redirect midi to remote machines?  
+
+
+**timestep.py
+statistics do we have note count or something else simple to graph..
+For now just use midisize compared to time..
+
+
+**web/public/book.html
+**web/public/recent.html
+**web/public/analyze.html
+Change all to use feedback.js function getIterations
+OK, iterations look somewhat better, can add addl. stats if desired..
+
+
+**timestep.py
+Transcripts are horrible with this model..
+Going to need to redo transcripts if we want anything useful..
+Just have multiple..
+video/transcript/transcript
+video/transcript/transcript2..
+
+**extensions/trey/testspeechbrain.py
+Need to check some other models.  
+This transcription is too bad..
+
+Try with adjusted frame rate..
+Audio quality is primary issue I guess..
+
+
+
+**record.py
+there is some issue with data with 0 start time.  
+
+
+
+
+**extensions/trey/testspeechbrain.py
+Add some more models..
+#https://speechbrain.readthedocs.io/en/v1.0.2/tutorials/nn/using-wav2vec-2.0-hubert-wavlm-and-whisper-from-huggingface-with-speechbrain.html
+
+#https://github.com/speechbrain/speechbrain/blob/develop/recipes/LibriSpeech/ASR/CTC/train_with_wav2vec.py
+
+> pip install --upgrade huggingface_hub
+
+
+**/speechbrain/utils/fetching.py
+!!TypeError: hf_hub_download() got an unexpected keyword argument 'use_auth_token'
+==
+> pip install huggingface-hub==0.30.0
+$$
+
+Lot of garbage samples.  
+Library incompatibility too much..
+
+Python 3.12 needed..
+
+
+**NEWKEYS
+MOD MX 8
+sometime..
+
+**web/public/analyze.html
+Could just sync the midiarray real-time..
+Not sure this is needed..
+
+Set up speech training from data..
+
+@@Is mic quality better?  
+
+**extensions/trey/speech.py
+--parse_to_json
+change to use captured data..
+
+@@How to measure if quality is better after training STT.  
+Probably need to train TTS as well.  
+#https://github.com/speechbrain/speechbrain/blob/develop/recipes/LJSpeech/TTS/fastspeech2/train.py
+#https://github.com/speechbrain/speechbrain/blob/develop/recipes/LJSpeech/TTS/tacotron2/train.py
+#https://github.com/speechbrain/speechbrain/blob/develop/recipes/LibriTTS/TTS/mstacotron2/train.py
+
+
+**/../testing/speechbrain/recipes/LibriTTS/libritts_prepare.py
+This doesnt download for you.  
+Have to download..
+#https://www.openslr.org/60/
+
+
+++
+
+if __name__ == "__main__":
+    # Example usage
+    print("Preparing LibriTTS dataset...")
+    prepare_libritts(
+        data_folder="data",
+        save_json_train="./data/train.json",
+        save_json_valid="./data/valid.json",
+        save_json_test="./data/test.json",
+        sample_rate=24000,
+        #must download
+        libritts_subsets=[
+            "train-clean-100", 
+            "dev-clean",
+            "test-clean",
+        ],
+        model_name="Tacotron2",
+    )
+++
+
+
+--create_json
+++
+        normalized_text_path = normalized_text_path.replace("\\", "/")
+        normalized_text_path = "." + normalized_text_path
+++
+
+
+The audio files are at 24kHz sampling rate.
+
+> python ./libritts_prepare.py
+
+**/../testing/speechbrain/recipes/LibriTTS/TTS/mstacotron2/hparams/train.yaml
++skip_prep: True
+
+> python ./TTS/mstacotron2/train.py TTS/mstacotron2/hparams/train.yaml --data_folder="./data" --device=cuda:0 --max_grad_norm=1.0
+
+!!AssertionError: Torch not compiled with CUDA enabled
+
+==
+$$SYSTEM=UBUNTU
+> pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
+> python -c "import torch; print('Torch Version:', torch.__version__); print('CUDA Version:', torch.version.cuda); print('CUDA Available:', torch.cuda.is_available())"
+Torch Version: 2.4.1+cu124
+CUDA Version: 12.4
+CUDA Available: True
+$$
+
+!!FileNotFoundError: [Errno 2] No such file or directory: './results/tacotron2/1234/save/train.json'
+==
+**/../testing/speechbrain/recipes/LibriTTS/TTS/mstacotron2/train.py
+++
+    else:
+        logger.info("Skipping data preparation...")
+        #copy files to save_folder experiment directory
+        import shutil
+        import glob
+        source_dir = hparams["data_folder"]
+        dest_dir = hparams["output_folder"] + "/save"
+        files_to_copy = glob.glob(os.path.join(source_dir, '*.json'))
+        for file_path in files_to_copy:
+            shutil.copy(file_path, dest_dir)
+
+++
+
+--compute_speaker_embeddings
+Windows/Linux path problems..
++            wav_file = wav_file.replace("\\", "/")
++            utt_wav_path = utt_wav_path.replace("\\", "/")
+
+$$
+
+
+This whole process is way too complex..
+We need this to be done by a user to get better speech recognition..
+The premise is very simple from users perspective.  
+I have a dictionary of TEXT->SPEECH.  
+Use this to improve the output of the model..
+But the process to do this, I dont understand how none of these libraries have made it very user-friendly.  
+
+OK training seems to work.  
+
+**timestep.py
+run this training process for ASR and TTS using collected info. 
+
+**extensions/trey/trey.py
+change to utilize trained TTS model.  
+
+Pick up OCR from screenshot and same comparison if 
+> Record Feedback
+is used.  
+Should be an addition to screenshot.  
+Screenshot = [49,53,55]
+Screenshot feedback = [49,53,54,55] ??
+Record Feedback = [53,57, 60]
+Record Feedback Screenshot = [53,54,57,60]
+
+@@How to trigger longer words with shorter sequences..
+General for now no 2 set can include intermediate functions..
+Only 3 and above..
+            #word = "" #reset word to not found.
+            #this should allow us to include shorter word subsets..
+
+**languages/video.py
+Need to enable manual mouse selection of bbox.. 
+--screenshot_feedback
+Need to continue here..
+handle 
+Screenshot Feedback_
+should essentially show overlay and allow for mouse drag input..
+deliver info via same queue mechanism..
+
+Can we get 
+
+> pip install pytesseract
+
+OK, test this whole thing for screenshot_feedback
+
+Also need to test the subsetted words..
+But 
+> _WORD 
+> WORD_
+will be executed if exists..
+For now assume subsetted words dont have this.  
+
+
+**extensions/vscode/codetutor/src/extension.ts
+When we have commands, just use 
+> terminal.sendText
+wait for completion, log when completed.  
+If multiple highlighted, do all and show progress..
+
+**extensions/vscode/codetutor/src/terminalworker.ts
+continue..
+
+**./vscode/settings.json
+terminal.integrated.profiles.windows
+++
+	    "Ubuntu-20.04 (WSL)": {
+			"path": "C:\\WINDOWS\\System32\\wsl.exe",
+			"args": [
+				"-d",
+				"Ubuntu-20.04"
+			], 
+			"icon": "terminal-ubuntu"
+		}, 
+	    "Ubuntu-24.04 (WSL)": {
+			"path": "C:\\WINDOWS\\System32\\wsl.exe",
+			"args": [
+				"-d",
+				"Ubuntu-24.04"
+			], 
+			"icon": "terminal-ubuntu"
+		}
+++
+
+#https://github.com/microsoft/vscode/issues/126738
+
+#https://www.instructables.com/DIY-USB-Midi-Controller-With-Arduino-a-Beginners-G/
+#https://docs.arduino.cc/tutorials/generic/midi-device/
+
+
+#https://tttapa.github.io/Control-Surface/Doxygen/d3/df7/midi-tutorial.html
+#https://dualo.com/en/exquis/
+
+
+
+
