@@ -13,6 +13,7 @@ import ast
 #Local imports
 sys.path.insert(0, 'c:/devinpiano/') #config.json path
 sys.path.insert(1, 'c:/devinpiano/music/') #config.py path Base project path
+sys.path.insert(2, 'c:/devinpiano/music/mrrubato/') #mrrubato path
 import config 
 import mykeys
 
@@ -39,7 +40,7 @@ class transcriber:
         self.allcmds = {} #lang -> {cmds, start_time, end_time, list of cmds in order..
         self.langmap = {}
         self.kg = {}
-        self.allmidi = []
+        self.allmidi = {}
         self.filtered_topics = []
         self.fuzzmap = {} #store fuzz scores for midi search to avoid redundant calculations, since we may want to sort by score later.
         self.qr_queue = qr_queue
@@ -341,7 +342,10 @@ class transcriber:
                 return self.similar
             
         #if dont have enough info..
-        print(f'Searching {len(self.allmidi['midi'])} MIDI for {str(midiarray)} at time {datetime.fromtimestamp(current_time).isoformat()}')
+        print(str(midiarray))
+        print(self.allmidi)
+        ln = len(self.allmidi['midi']) if 'midi' in self.allmidi else 0
+        print(f'Searching {ln} MIDI for {str(midiarray)} at time {datetime.fromtimestamp(current_time).isoformat()}')
         lag = time.time()
         for item in self.allmidi['midi']:
             timestamp = item['timestamp']
@@ -424,7 +428,7 @@ class transcriber:
                 print(f'Next likely events for language {lang}:')
                 sorted_events = sorted(events, key=lambda x: x['..']) #sort by order in sequence, which is stored in '..' key, could adjust as needed.
                 for e in sorted_events:
-                    print(f'> <{e['<<']}>{e["&&"]} [{e["##"]}]')
+                    print(f"> <{e['<<']}>{e['&&']} [{e['##']}]")
 
 
             #find 
