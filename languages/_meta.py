@@ -72,7 +72,7 @@ class _meta:
     cmd = ""
     sl = str(len(sequence))
     if (sl in self.config['languages'][self.name]):
-      logger.info(f'Looking up sequence {sequence} in video')
+      logger.info(f"Looking up sequence {sequence} in video")
       logger.info(self.config['languages'][self.name][sl])
       for k,v in self.config['languages'][self.name][sl].items():
         #check global first.  
@@ -98,15 +98,15 @@ class _meta:
     if hasattr(self, 'load_data'):
       self.load_data()
     else:
-      logger.info(f'!! <{self.__class__.__name__}> No Data')
-      print(f'!! <{self.__class__.__name__}> No Data')  
+      logger.info(f"!! <{self.__class__.__name__}> No Data")
+      print(f"!! <{self.__class__.__name__}> No Data")
     return 0
 
 
   def load_transcript(self):
     #load commands from config into funcdict
     allcmds = self.transcriber.read(self.name, None, None) #default 7 days
-    logger.info(f'Loaded {len(allcmds)} command transcripts for {self.name}')
+    logger.info(f"Loaded {len(allcmds)} command transcripts for {self.name}")
 
     #load 6 months of book topics..
     book = self.transcriber.read('book', self.transcriber.getTime(-180), None, './book/')
@@ -125,19 +125,19 @@ class _meta:
       self.selectedtopicindex = 0      
       self.selectedtopic = self.topicarray[self.selectedtopicindex] #default to first topic.
 
-    logger.info(f'Loaded {numtopics} topics and {len(book)} book transcripts from ./book/')
+    logger.info(f"Loaded {numtopics} topics and {len(book)} book transcripts from ./book/")
 
     self.transcriber.allbooks = self.transcriber.open_books() #open book files for writing topics.
-    logger.info('Loaded book files for writing topics.')
-    logger.info(f'Books: {self.transcriber.allbooks}')
+    logger.info("Loaded book files for writing topics.")
+    logger.info(f"Books: {self.transcriber.allbooks}")
     #tree struct..
     #recurse through books and subbooks to get a list. 
     #array struct filter by time window and relevancy?  relevancy = topic search...
     self.filtered = self.transcriber.filter_books_recursive()
-    logger.info(f'Filtered book struct: {self.filtered}')
+    logger.info(f"Filtered book struct: {self.filtered}")
     self.bookarray = self.transcriber.relevant_book_array(self.filtered) #get list of books for selection.
     self.filteredbookarray = self.bookarray[:] #start with all books in filteredbookarray, then we can filter based on search or time window.
-    logger.info(f'Book array: {self.bookarray}')
+    logger.info(f"Book array: {self.bookarray}")
     #sort by recency
     self.bookarray.sort(key=lambda x: abs(self.timewindow.currenttime - x['..']), reverse=True) #sort by recency to current time, most recent first.
 
@@ -207,11 +207,11 @@ class _meta:
       }
     }
     if (self.name in self.config['languages']):
-      logger.info(f'Merging existing {self.name} config')
+      logger.info(f"Merging existing {self.name} config")
       #need logic to iterate and pick each one.  This is not working right.  
       default.update(self.config['languages'][self.name])
     else:
-      logger.info(f'No existing {self.name} config found, creating new one')
+      logger.info(f"No existing {self.name} config found, creating new one")
 
     self.config['languages'][self.name] = default
     self.funcdict = {
@@ -343,7 +343,7 @@ class _meta:
           #no function, run sequence through mk.key
           a = 0
         else:
-          logger.info(f'--> {func}_')
+          logger.info(f"--> {func}_")
           if (len(sequence) == 1 and sequence[-1] == self.keybot):
             a = 0 #continue logic and see if we need to end.  
           elif (len(sequence) > 1 and sequence[-2:] == [self.keybot, self.keybot]):
@@ -374,36 +374,36 @@ class _meta:
 
   def restart(self, sequence=[]):
     """Restart TREY."""
-    logger.info(f'> Restart {sequence}')
+    logger.info(f"> Restart {sequence}")
     self.set_qr("Restart", {'type': '_meta', 'TIME': self.timewindow.getTime()})
     return 0
   
   def start(self, sequence=[]):
     """Start Meta."""
-    logger.info(f'> Start {sequence}')
+    logger.info(f"> Start {sequence}")
     return 0
   
   def help(self, sequence=[]):
     """Show all commands."""
-    logger.info(f'> Help {sequence}')
+    logger.info(f"> Help {sequence}")
     return 0
 
 
   def tick(self, sequence=[]):
-    logger.info(f'> Tick {sequence}')
+    logger.info(f"> Tick {sequence}")
 #    t = self.timewindow.tick(self.speed)
     self.set_qr("Tick", {'TIME': self.timewindow.getTime(), 'SPEED': self.speed})
     return 0
 
 
   def tock(self, sequence=[]):
-    logger.info(f'> Tock {sequence}')
+    logger.info(f"> Tock {sequence}")
 #    t = self.timewindow.tick(-self.speed)
     self.set_qr("Tock", {'TIME': self.timewindow.getTime(), 'SPEED': -self.speed})
     return 0
 
   def set_speed(self, sequence=[]):
-    logger.info(f'> Set Speed {sequence}')
+    logger.info(f"> Set Speed {sequence}")
     if (len(sequence) > 0):
       adjust = float(sequence[-1] - self.mid) / 5.0 #just use 10 keys for mid..
       if (adjust <= 0.2):
@@ -414,24 +414,24 @@ class _meta:
       self.speed = round(self.speed)
       if (self.speed < 1):
         self.speed = 1
-      logger.info(f'$$SPEED={self.speed}')
+      logger.info(f"$$SPEED={self.speed}")
       self.set_qr("Set Speed", {'ADJUST': adjust, 'SPEED': self.speed})
     return 0
 
   def time_jump(self, sequence=[]):
-    logger.info(f'> Time Jump {sequence}')
+    logger.info(f"> Time Jump {sequence}")
     jump = 1 #default jump level
     if (len(sequence) > 0):
       jump = float(sequence[-1] - self.keybot) - 6 #just use 10 keys for mid..
     t = self.timewindow.timeJump(jump)
     vars = {}
-    logger.info(f'$$TIME={t}')
+    logger.info(f"$$TIME={t}")
     self.set_qr("Time Jump", {'JUMP': jump, 'WINDOW': self.timewindow.window, 'TIME': t, 'START': self.timewindow.starttime, 'END': self.timewindow.endtime})
     return 0
   
   def time_zoom_(self, sequence=[]):
     #list similar items based on current time window.  
-    logger.info(f'> Time Zoom_ {sequence}')
+    logger.info(f"> Time Zoom_ {sequence}")
     self.func = "Time Zoom_"
     vars = {}
     similar = -1
@@ -443,7 +443,7 @@ class _meta:
     return 1
   
   def time_zoom(self, sequence=[]):
-    logger.info(f'> Time Zoom {sequence}')
+    logger.info(f"> Time Zoom {sequence}")
     zoom = -1 #default zoom in
     similar = -1
     if (len(sequence) > 0):
@@ -462,7 +462,7 @@ class _meta:
 
     w = self.timewindow.window
     vars = {}
-    logger.info(f'$$TIMEWINDOW={w}')
+    logger.info(f"$$TIMEWINDOW={w}")
     vars['ZOOM'] = zoom
     vars['WINDOW'] = w
     vars['TIME'] = self.timewindow.getTime()
@@ -477,7 +477,7 @@ class _meta:
 
 
   def list_topics(self, sequence=[]):
-    logger.info(f'> List Topics {sequence}')
+    logger.info(f"> List Topics {sequence}")
     #for now just demo..
     #list all topics from book transcripts.
 
@@ -604,7 +604,7 @@ class _meta:
 
   def select_topic_(self, sequence=[]):
 
-    logger.info(f'> Select Topic_ {sequence}')
+    logger.info(f"> Select Topic_ {sequence}")
     print("> Select Topic_")
     newidx = self.selectedtopicindex
     _booktopic = False
@@ -615,7 +615,7 @@ class _meta:
         _booktopic = True        
 
       newidx = self.adjust_topic_index(self.mid-sequence[-1])
-    logger.info(f'--{self.topicarray[newidx]['**']}')
+    logger.info(f"--{self.topicarray[newidx]['**']}")
     self.func = "Select Topic_"
 
     vars = {}
@@ -666,7 +666,7 @@ class _meta:
         topics.append(cmd['&&'])
 
     self.booktopics = topics
-    logger.info(f'> Select Topic {sequence}')
+    logger.info(f"> Select Topic {sequence}")
     #get bookmark at index selected
     self.func = "Select Topic"
     self.set_qr(self.func, {'context': ctxt.replace('\n', '<br>'), 'addl_context': supp_ctxt.replace('\n', '<br>'), 
@@ -675,13 +675,13 @@ class _meta:
     #keep track of topic history..
     writtentopic = self.transcriber.write_topic(self.name, self.selectedtopic['**']) #write topic to _meta.. to pick up in other tools.  
     self.transcriber.write_topic(self.name, self.selectedtopic['**'], ctxt) #write topic context?  Get latest info for robot.. trigger read of this file..
-    self.speak(f'{self.selectedtopic['**']}')
+    self.speak(f"{self.selectedtopic['**']}")
     self.transcript = writtentopic #set transcript here to include into midi.  Dont include context for now too much repetition..
     return 0
 
   def set_topic_(self, sequence=[]):
 
-    logger.info(f'> Set Topic_ {sequence}')
+    logger.info(f"> Set Topic_ {sequence}")
     print("> Set Topic_")
 
     if (len(sequence) == 1):
@@ -702,7 +702,7 @@ class _meta:
 
       #sort topics by relevance to filtertopic.. this is just a demo of filtering, we can do more complex filtering based on topics, time, etc.
       self.filteredtopicarray = self.transcriber.relevant_topic_array(self.name, self.filtertopic, self.timewindow.currenttime) #get list of topics for selection.
-      logger.info(f'Filtered topic array: {self.filteredtopicarray}')
+      logger.info(f"Filtered topic array: {self.filteredtopicarray}")
       #sort by recency
       self.filteredtopicarray.sort(key=lambda x: abs(self.timewindow.currenttime - x['timestamp']), reverse=True) #sort by recency to current time, most recent first.
     
@@ -711,7 +711,7 @@ class _meta:
       if (sequence[-1] == self.keybot): #dont adjust if keybot, 
         return 1
       newidx = self.adjust_filteredtopic_index(self.mid-sequence[-1])
-      logger.info(f'--{self.filteredtopicarray[newidx]['topic']}')
+      logger.info(f"--{self.filteredtopicarray[newidx]['topic']}")
       self.func = "Set Topic_"
       #should make this more general.. send last ten links
       last15 = self.filteredtopicarray[max(0, self.selectedfilteredtopicindex-11):min(self.selectedfilteredtopicindex+13, len(self.filteredtopicarray))]
@@ -737,7 +737,7 @@ class _meta:
     return 1
 
   def set_topic(self, sequence=[]):
-    logger.info(f'> Set Topic {sequence}')
+    logger.info(f"> Set Topic {sequence}")
     selected = 0
     if (len(sequence) > 0):
       selected = self.mid - sequence[-1]
@@ -757,7 +757,7 @@ class _meta:
       self.topichistory.insert(0, self.selectedtopic)
 
     ctxt = self.get_topic_context(self.topicarray[self.selectedtopicindex]['**'], 5) #get context for topic
-    logger.info(f'> Set Topic {sequence}')
+    logger.info(f"> Set Topic {sequence}")
     #get bookmark at index selected
     self.func = "Set Topic"
     self.set_qr(self.func, {'context': ctxt.replace('\n', '<br>'), 'topic': self.selectedtopic['**']})
@@ -765,13 +765,13 @@ class _meta:
     #keep track of topic history..
     writtentopic = self.transcriber.write_topic(self.name, self.selectedtopic['**']) #write topic to _meta.. to pick up in other tools.  
     self.transcriber.write_topic(self.name, self.selectedtopic['**'], ctxt) #write temp topic context?  Get latest info for robot.. trigger read of this file..
-    self.speak(f'{self.selectedtopic["**"]}')
+    self.speak(f"{self.selectedtopic['**']}")
     self.transcript = writtentopic #set transcript here to include into midi.  Dont include context for now too much repetition..
     return 0
 
 
   def _set_topic(self, sequence=[]):  
-    logger.info(f'> _Set Topic {sequence}')
+    logger.info(f"> _Set Topic {sequence}")
     print("> _Set Topic called")
     #get audio input for query.  
     from extensions.trey.speech import listen_audio
@@ -783,7 +783,7 @@ class _meta:
 
 
   def list_books(self, sequence=[]):
-    logger.info(f'> List Books {sequence}')
+    logger.info(f"> List Books {sequence}")
     #for now just demo..
     #list all books from current reference folder.
 
@@ -792,7 +792,7 @@ class _meta:
   #not implemented yet, show list of books based on recency..
   def select_book_(self, sequence=[]):
 
-    logger.info(f'> Select Book_ {sequence}')
+    logger.info(f"> Select Book_ {sequence}")
     print("> Select Book_")
 
     newidx = self.selectedbookindex
@@ -800,8 +800,8 @@ class _meta:
       if (sequence[-1] == self.keybot): #dont adjust if keybot, 
         return 1
       newidx = self.adjust_book_index(self.mid-sequence[-1])
-    logger.info(f'{newidx}')
-    logger.info(f'--{self.bookarray[newidx]["**"]}')
+    logger.info(f"{newidx}")
+    logger.info(f"--{self.bookarray[newidx]['**']}")
     self.func = "Select Book_"
     #should make this more general.. send last ten links
     last15 = self.bookarray[max(0, self.selectedbookindex-11):min(self.selectedbookindex+13, len(self.bookarray))]
@@ -843,7 +843,7 @@ class _meta:
     ctxt = self.get_book_context(self.bookarray[self.selectedbookindex]['**'], 5) #get context for book
     self.load_booktopicarray() #load topics for this book to include in our context.. Not sure we want this or not..
 
-    logger.info(f'> Select Book {sequence}')
+    logger.info(f"> Select Book {sequence}")
     #get bookmark at index selected
     self.func = "Select Book"
     self.set_qr(self.func, {'context': ctxt.replace('\n', '<br>'), 'book': self.selectedbook['**']})
@@ -851,13 +851,13 @@ class _meta:
     #keep track of topic history..
     writtentopic = self.transcriber.write_topic(self.name, self.selectedbook['**']) #write topic to _meta.. to pick up in other tools.  
     self.transcriber.write_topic(self.name, self.selectedbook['**'], ctxt) #write temp topic context?  Get latest info for robot.. trigger read of this file..
-    self.speak(f'{self.selectedbook["**"]}')
+    self.speak(f"{self.selectedbook['**']}")
     self.transcript = writtentopic #set transcript here to include into midi.  Dont include context for now too much repetition..
     return 0
 
 
   def set_book_(self, sequence=[]):
-    logger.info(f'> Set Book_ {sequence}')
+    logger.info(f"> Set Book_ {sequence}")
     print("> Set Book_ called")
     if (len(sequence) == 1):
       #stop recording..
@@ -871,13 +871,13 @@ class _meta:
           self.transcript = "" #skip refilter if double press, just repeat same options.
       #otherwise get filter..
 
-      logger.info('$$AUDIO = ' + self.transcript)
+      logger.info(f"$$AUDIO = {self.transcript}")
       if (self.transcript != ""):
         filterbook = self.transcript
         self.selectedfilteredbookindex = 0
         #sort books by relevance to filterbook.. this is just a demo of filtering, we can do more complex filtering based on topics, time, etc.
         self.filteredbookarray = self.transcriber.relevant_book_array(self.filtered, filterbook) #get list of books for selection.
-        logger.info(f'Filtered book array: {self.filteredbookarray}')
+        logger.info(f"Filtered book array: {self.filteredbookarray}")
         #sort by recency
         self.filteredbookarray.sort(key=lambda x: abs(self.timewindow.currenttime - x['..']), reverse=True) #sort by recency to current time, most recent first.
     
@@ -887,7 +887,7 @@ class _meta:
       if (sequence[-1] == self.keybot): #dont adjust if keybot, 
         return 1
       newidx = self.adjust_filteredbook_index(self.mid-sequence[-1])
-      logger.info(f'--{self.filteredbookarray[newidx]["**"]}')
+      logger.info(f"--{self.filteredbookarray[newidx]['**']}")
       self.func = "Set Book_"
       #should make this more general.. send last ten links
       last15 = self.filteredbookarray[max(0, self.selectedfilteredbookindex-11):min(self.selectedfilteredbookindex+13, len(self.filteredbookarray))]
@@ -913,7 +913,7 @@ class _meta:
 
 
   def set_book(self, sequence=[]):
-    logger.info(f'> Set Book {sequence}')
+    logger.info(f"> Set Book {sequence}")
     selected = 0
     if (len(sequence) > 0):
       selected = self.mid - sequence[-1]
@@ -933,7 +933,7 @@ class _meta:
       self.bookhistory.insert(0, self.selectedbook)
 
     ctxt = self.get_book_context(self.bookarray[self.selectedbookindex]['**'], 5) #get context for book
-    logger.info(f'> Set Book {sequence}')
+    logger.info(f"> Set Book {sequence}")
     #get bookmark at index selected
     self.func = "Set Book"
     self.set_qr(self.func, {'context': ctxt.replace('\n', '<br>'), 'book': self.selectedbook['**']})
@@ -941,12 +941,12 @@ class _meta:
     #keep track of topic history..
     writtentopic = self.transcriber.write_topic(self.name, self.selectedbook['**']) #write topic to _meta.. to pick up in other tools.  
     self.transcriber.write_topic(self.name, self.selectedbook['**'], ctxt) #write temp topic context?  Get latest info for robot.. trigger read of this file..
-    self.speak(f'{self.selectedbook["**"]}')
+    self.speak(f"{self.selectedbook['**']}")
     self.transcript = writtentopic #set transcript here to include into midi.  Dont include context for now too much repetition..
     return 0
 
   def _set_book(self, sequence=[]):  
-    logger.info(f'> _Set Book {sequence}')
+    logger.info(f"> _Set Book {sequence}")
     print("> _Set Book called")
     #get audio input for query.  
     from extensions.trey.speech import listen_audio
@@ -956,12 +956,12 @@ class _meta:
 
   def pause(self, sequence=[]):
     """Pause Video."""
-    logger.info(f'> Pause {sequence}')
+    logger.info(f"> Pause {sequence}")
     return 0
 
 
   def tune_in(self, sequence=[]):
-    logger.info(f'> Tune In {sequence}')
+    logger.info(f"> Tune In {sequence}")
     lang = "ALL"
 
     if (len(sequence) > 0):
@@ -977,7 +977,7 @@ class _meta:
     return 0
 
   def tune_out(self, sequence=[]):
-    logger.info(f'> Tune Out {sequence}')
+    logger.info(f"> Tune Out {sequence}")
     lang = "ALL"
 
     if (len(sequence) > 0):

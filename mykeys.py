@@ -49,6 +49,7 @@ from multiprocessing.shared_memory import SharedMemory
 #    level=logging.INFO,
 #    datefmt='%Y-%m-%d %H:%M:%S')    
 
+print(f"Logging to {__name__}")
 logger = logging.getLogger(__name__)
 
 
@@ -693,13 +694,13 @@ class MyKeys:
 
 
   def checkheldwords(self, doact=True):
-    action = None
+    action = None 
     #possibly find multiple actions to take..
     #cant do with keybot
     lastnote = -1
     if (len(self.heldwords) > 0):
       logger.info(f'Checking heldwords: {self.heldwords}')
-      lastnote = self.heldwords[-1]['#']
+      lastnote = self.heldwords[-1]['_']
     #make sure we have had some time since keybot end..
     if (len(self.heldwords) > 0 and self.heldwords[-1]['..'] is not None and time.time() - self.heldwords[-1]['..'] > 0.5):
       #if any heldwords are held for more than 0.5 seconds, take action
