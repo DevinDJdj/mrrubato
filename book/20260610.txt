@@ -1,0 +1,2 @@
+**extensions/trey/trey.py
+Need to allow 0 midi and just joystick?  

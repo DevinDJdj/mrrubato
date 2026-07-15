@@ -1,0 +1,24 @@
+
+
+**DLAP
+> npm install -g firebase-tools
+
+**DLAP
+> cd C:\Users\devin\Downloads
+> ./PreSonus_Universal_Control_v4_2_0_96206.exe
+
+> tar -xf YSUSB_V216_Win.zip
+> ./YSUSB_V216_Win/setup.exe
+> cd C:/devinpiano/music
+
+
+> ./treyenv/Scripts/activate.ps1
+> cd C:/devinpiano/music/mrrubato
+> pip install --upgrade google-api-python-client
+> pip uninstall moviepy
+> pip install moviepy==1.0.3
+> pip install SpeechRecognition
+> pip install pandas
+> pip install firebase-admin
+> python ./record.py --description  "Evil Ways (Sonny Henry)"
+> python ./record.py --description  "Evil Ways (Sonny Henry)"

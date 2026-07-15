@@ -17,6 +17,7 @@ from unittest import case
 #not great mechanism for config.  Maybe just make absolute path?
 sys.path.insert(0, 'c:/devinpiano/')
 sys.path.insert(1, 'c:/devinpiano/music')
+sys.path.insert(2, 'c:/devinpiano/music/mrrubato')
 #sys.path.append('../')
 import config  
 

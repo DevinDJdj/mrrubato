@@ -107,7 +107,7 @@ import json
 import mykeys
 
 
-import manim
+#import manim
 # Explicitly tell the underlying HTTP transport library not to retry, since
 # we are handling retry logic ourselves.
 httplib2.RETRIES = 1
@@ -515,8 +515,10 @@ if __name__ == '__main__':
     #start up analyze.py with this title/description.  
 #    os.system('python ./analyze/analyze.py --title "' + args.description + '"')
 #use title here as description contains all info
+    custom_env = os.environ.copy()
     print('analyze start python ./analyze/analyze.py --title "' + args.title + '"')
-    subprocess.call('python ./analyze/analyze.py --title "' + args.title + '"')
+    subprocess.call('python ./analyze/analyze.py --title "' + args.title + '"',
+    shell=True, env=custom_env)
     print("analyze complete")
     obsp = subprocess.Popen("C:\\Program Files\\obs-studio\\bin\\64bit\\obs64.exe", start_new_session=True, cwd="C:\\Program Files\\obs-studio\\bin\\64bit")
     
@@ -840,7 +842,8 @@ if __name__ == '__main__':
 #    print('peertube-cli upload -u "' + config.cfg['peertube']['host'] + ':' + str(config.cfg['peertube']['port']) + '" -U ' + config.cfg['peertube']['ADMIN_USERID'] + ' -p ' + config.cfg['peertube']['ADMIN_PASSWORD'] + ' -n "' + args.title + '" -d "' + args.description + '" --file "' + latest_file + '"')
 #    subprocess.call('peertube-cli upload -u ' + config.cfg['peertube']['host'] + ':' + config.cfg['peertube']['port'] + ' -U ' + config.cfg['peertube']['ADMIN_USERID'] + ' -p ' + config.cfg['peertube']['ADMIN_PASSWORD'] + ' -n "' + args.title + '" -d "' + args.description + '" --file "' + latest_file + '"')
 #call again to run the any post-analysis like finger locations.  
-    subprocess.call('python ./analyze/analyze.py --title "' + args.title + '"')
+    subprocess.call('python ./analyze/analyze.py --title "' + args.title + '"',
+    shell=True, env=custom_env)
     
     time.sleep(20)
     obsp.terminate()
