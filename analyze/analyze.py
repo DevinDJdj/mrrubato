@@ -662,7 +662,7 @@ def getNgrams(t):
         print("Incorrect data, please fix")
         print(starttimes)
         print(endtimes)
-        return None, None
+        return None, None, None
     
     else:    
         notearray = np.zeros(len(t.notes), dtype=int)
@@ -943,6 +943,7 @@ def printMidiTicker(t, midilink):
     et = gendtimes
     print(st)
     print(et)
+    mainimgs = []
 #    st, et = getTrackTimes(t)
     if len(st) != len(et) or len(st) < 1:
         print("Incorrect data, please fix" + midilink)

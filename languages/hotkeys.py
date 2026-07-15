@@ -1198,7 +1198,7 @@ class hotkeys:
         idx = sequence[-1]-7-self.keybot
         if (idx >= 0 and idx < len(self.links)):
           link = self.links[idx]
-        q2, q3, stop_event = self.speak(f'Clicked link {idx} {link['text']} but nothing new to read.  Go back or restart search')
+        q2, q3, stop_event = self.speak(f"Clicked link {idx} {link['text']} but nothing new to read.  Go back or restart search")
         return -1
 
   def go_back(self, sequence=[]):

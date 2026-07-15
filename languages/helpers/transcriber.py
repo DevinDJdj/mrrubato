@@ -13,6 +13,7 @@ import ast
 #Local imports
 sys.path.insert(0, 'c:/devinpiano/') #config.json path
 sys.path.insert(1, 'c:/devinpiano/music/') #config.py path Base project path
+sys.path.insert(2, 'c:/devinpiano/music/mrrubato/') #mrrubato path
 import config 
 import mykeys
 
@@ -39,7 +40,7 @@ class transcriber:
         self.allcmds = {} #lang -> {cmds, start_time, end_time, list of cmds in order..
         self.langmap = {}
         self.kg = {}
-        self.allmidi = []
+        self.allmidi = {}
         self.filtered_topics = []
         self.fuzzmap = {} #store fuzz scores for midi search to avoid redundant calculations, since we may want to sort by score later.
         self.qr_queue = qr_queue
@@ -341,7 +342,10 @@ class transcriber:
                 return self.similar
             
         #if dont have enough info..
-        print(f'Searching {len(self.allmidi['midi'])} MIDI for {str(midiarray)} at time {datetime.fromtimestamp(current_time).isoformat()}')
+        print(str(midiarray))
+        print(self.allmidi)
+        ln = len(self.allmidi['midi']) if 'midi' in self.allmidi else 0
+        print(f'Searching {ln} MIDI for {str(midiarray)} at time {datetime.fromtimestamp(current_time).isoformat()}')
         lag = time.time()
         for item in self.allmidi['midi']:
             timestamp = item['timestamp']
@@ -424,7 +428,7 @@ class transcriber:
                 print(f'Next likely events for language {lang}:')
                 sorted_events = sorted(events, key=lambda x: x['..']) #sort by order in sequence, which is stored in '..' key, could adjust as needed.
                 for e in sorted_events:
-                    print(f'> <{e['<<']}>{e["&&"]} [{e["##"]}]')
+                    print(f"> <{e['<<']}>{e['&&']} [{e['##']}]")
 
 
             #find 
@@ -691,7 +695,10 @@ class transcriber:
                 #use file modification time for the time being..
                 #get days since last file mod time.  
                 self.current_topic = line[2:].strip() #update current topic to this topic. then get_cmd with new topic.
-                topc = self.get_cmd(lang, type, line[2:].strip(), {'TIME': now.strftime('%Y%m%d_%H%M%S')})
+                if (self.current_topic.find(":") != -1):
+                    self.current_topic = self.current_topic.split(":")[0].strip()
+
+                topc = self.get_cmd(lang, type, self.current_topic, {'TIME': now.strftime('%Y%m%d_%H%M%S')})
 #                logger.info(f'Adding topic {topc["cmd"]} with vars {topc["vars"]}')
                 ret.append(topc)
                 currenttopc = topc
@@ -1171,6 +1178,8 @@ class transcriber:
         else:
             #first read of lang.. only set last topic here if this is first read..
             #workaround..
+            if (lang not in self.langmap or self.langmap[lang]['lang'] != lang):
+                self.langmap[lang] = {'lang':lang, 'topic': self.current_topic, 'topics': {}, 'kg': nx.Graph()} 
             last_topic = self.get_last_topic(ret)
             self.langmap[lang]['topic'] = last_topic #self.langmap[lang] should always exist.  Dont rewrite same topic.  
             self.allcmds[lang] = {'**': lang, '&&': ret, 'cmds': ret, '..': last_mtime, 'last_mtime': last_mtime, 'start_time': start_time, 'end_time': end_time, 'start_idx': 0, 'end_idx': len(ret)-1, 'open': True}

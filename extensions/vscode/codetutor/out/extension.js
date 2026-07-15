@@ -56,6 +56,7 @@ const prompt_tsx_1 = require("@vscode/prompt-tsx");
 const path_1 = require("path");
 const prompts_1 = require("./prompts");
 const Book = __importStar(require("./book"));
+const Gen = __importStar(require("./gen"));
 const Worker = __importStar(require("./worker"));
 const ollama_1 = __importDefault(require("ollama"));
 const toolParticipant_1 = require("./toolParticipant");
@@ -382,15 +383,27 @@ function activate(context) {
             stream.markdown('**My agent coding mode** ' + mySettings.codingmode + '  \n');
             stream.markdown('**My agent work prompt** ' + mySettings.workprompt.slice(-255) + '  \n');
         }
-        if (request.command === 'genbook' || request.command === 'gencomments' || request.command === 'gencode' || request.command === 'gentests') {
+        if (request.command === 'genbook' || request.command === 'gencomments' || request.command === 'gencode' || request.command === 'gentests' || request.command === 'genhelp') {
             //generate context for this topic.  
             if (request.command === 'genbook') {
+                let result = await Gen.genbook(request.prompt);
+                stream.markdown(result);
             }
             if (request.command === 'gencomments') {
+                let result = await Gen.gencomments(request.prompt);
+                stream.markdown(result);
             }
             if (request.command === 'gencode') {
+                let result = await Gen.gencode(request.prompt);
+                stream.markdown(result);
             }
             if (request.command === 'gentests') {
+                //let result = await Gen.gentests(request.prompt);
+                //stream.markdown(result);
+            }
+            if (request.command === 'genhelp') {
+                let result = await Gen.genhelp(request.prompt);
+                stream.markdown(result);
             }
         }
         if (request.command === 'summarize' || request.command === 'summary') {
