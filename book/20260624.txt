@@ -669,3 +669,5 @@ Eventually how do we generate everything as git changes?
 This is a larger problem.
 To test just put result in separate file.
 
+colon not allowed in topic..
+

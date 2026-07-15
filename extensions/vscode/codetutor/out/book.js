@@ -1689,7 +1689,11 @@ function loadPage(text, filePath, altdate = 0) {
                     //                    if (type === "TOPIC") {
                     topicstart[key].push(i);
                     if (key === "**") {
-                        exports.currenttopic = str.slice(2).trim(); //get the topic key from the line.                        
+                        let ttop = str.slice(2).trim();
+                        if (ttop.indexOf(':') !== -1) {
+                            ttop = ttop.split(':')[0].trim();
+                        }
+                        exports.currenttopic = ttop;
                         break keyfind;
                     }
                     /*

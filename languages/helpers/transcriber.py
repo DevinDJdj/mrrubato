@@ -691,7 +691,10 @@ class transcriber:
                 #use file modification time for the time being..
                 #get days since last file mod time.  
                 self.current_topic = line[2:].strip() #update current topic to this topic. then get_cmd with new topic.
-                topc = self.get_cmd(lang, type, line[2:].strip(), {'TIME': now.strftime('%Y%m%d_%H%M%S')})
+                if (self.current_topic.find(":") != -1):
+                    self.current_topic = self.current_topic.split(":")[0].strip()
+
+                topc = self.get_cmd(lang, type, self.current_topic, {'TIME': now.strftime('%Y%m%d_%H%M%S')})
 #                logger.info(f'Adding topic {topc["cmd"]} with vars {topc["vars"]}')
                 ret.append(topc)
                 currenttopc = topc

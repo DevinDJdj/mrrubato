@@ -1907,7 +1907,12 @@ export function loadPage(text: string, filePath: string, altdate: number=0): Num
 //                    if (type === "TOPIC") {
                     topicstart[key].push(i);
                     if (key === "**") {
-                        currenttopic = str.slice(2).trim(); //get the topic key from the line.                        
+                        let ttop = str.slice(2).trim();
+                        if (ttop.indexOf(':') !== -1) {
+                            ttop = ttop.split(':')[0].trim();
+                        }
+                        currenttopic = ttop;
+
 
                         break keyfind;
                     }
