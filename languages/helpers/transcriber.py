@@ -1175,6 +1175,8 @@ class transcriber:
         else:
             #first read of lang.. only set last topic here if this is first read..
             #workaround..
+            if (lang not in self.langmap or self.langmap[lang]['lang'] != lang):
+                self.langmap[lang] = {'lang':lang, 'topic': self.current_topic, 'topics': {}, 'kg': nx.Graph()} 
             last_topic = self.get_last_topic(ret)
             self.langmap[lang]['topic'] = last_topic #self.langmap[lang] should always exist.  Dont rewrite same topic.  
             self.allcmds[lang] = {'**': lang, '&&': ret, 'cmds': ret, '..': last_mtime, 'last_mtime': last_mtime, 'start_time': start_time, 'end_time': end_time, 'start_idx': 0, 'end_idx': len(ret)-1, 'open': True}
