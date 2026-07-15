@@ -576,10 +576,18 @@ if __name__ == '__main__':
     print(mido.get_output_names())
 
     #Portable Grand-1 2
-    output = mido.open_output(outputs[2]) 
+    mypiano = config.cfg["keymap"]["pianos"][0] if "pianos" in config.cfg["keymap"] else "Portable Grand"
+    myinpidx = 0
+    myoutpidx = 0
+    #get last IDX for this name
+    myinpidx = [index for index, item in enumerate(inputs) if item.startswith(mypiano)][-1]
+    myoutpidx = [index for index, item in enumerate(outputs) if item.startswith(mypiano)][-1]
+    output = mido.open_output(outputs[myoutpidx])
+    print("Using input: " + inputs[myinpidx])
+    print("Using output: " + outputs[myoutpidx])
     mk = mykeys.MyKeys(config.cfg)
     keyboard = Controller()    
-    with mido.open_input(inputs[1]) as inport:
+    with mido.open_input(inputs[myinpidx]) as inport:
         print("hello")
         for msg in inport:
 #            print(msg)

@@ -111,6 +111,7 @@
 	},
 	
 	"keymap":{
+		"pianos": ["Portable Grand"],
 	    "global":{
 			"1":{
 				"Unpause": [108],
