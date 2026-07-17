@@ -1,6 +1,9 @@
 const vscode = require('vscode');
 const JZZ = require('jzz');
 
+var numconns = 0;
+var myintervalLoop = null;
+
 export function activate(context) {
     context.subscriptions.push(vscode.window.registerTreeDataProvider('midi-demo.tree', {
         getChildren: async function(item) {
@@ -21,6 +24,8 @@ export function activate(context) {
             }
             else if (item.label === 'MIDI-In') {
                 info = (await JZZ()).info();
+                //populate number of connections..
+                numconns = info.outputs.length + info.inputs.length;
                 ret = [];
                 for (x of info.inputs) {
                     ret.push({ label: x.name, command: { command: 'midi-demo.midi-in', arguments: [ x.name ] } });
@@ -33,7 +38,21 @@ export function activate(context) {
         getTreeItem: function(item) {
             return item;
         }
+
     }));
+
+
+    myintervalLoop = setInterval(async () => {
+        //check if we have new midi info?  
+        let info = (await JZZ()).info();
+        if (numconns !== info.outputs.length + info.inputs.length) {
+            numconns = info.outputs.length + info.inputs.length;
+            clearInterval(myintervalLoop); //dont want multiple loops running..
+            activate(context);
+            numconns = info.outputs.length + info.inputs.length;
+        }
+    }, 60000); 
+
 }
 
 export function deactivate() {}

@@ -671,3 +671,43 @@ To test just put result in separate file.
 
 colon not allowed in topic..
 
+#https://en.wikipedia.org/wiki/Ithkuil
+#https://en.wikipedia.org/wiki/Lojban
+At vlate van at se gupea
+
+**mykeys.py
+--checkheldwords
+Still need to fix RepeatTimer not working for playwright functions..
+
+
+**extensions/vscode/codetutor/src/extension.ts
+;> Generate
+Use full line if cursor in middle of line.. 
+test..
+
+How do we name/manage different cmd windows..
+See if we can use:
+>_1 command..
+>#2 command..
+This way we can manage multiple cmd profiles if necessary..
+test..
+Use this for launching trey..
+CTRL+SHIFT+R
+
+**extensions/vscode/codetutor/src/midi/tree.ts
+Should auto-check for midi device on timer..
+test..
+Maybe getting multiple entries for same port but maybe overwritten
+
+
+
+**languages/hotkeys.py
+;> Open history
+use browser history.  
+
+add functions
+;> List Windows
+all available windows in trey..
+;> Select Window
+bring to foreground.  
+

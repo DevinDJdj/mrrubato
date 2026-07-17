@@ -344,10 +344,10 @@ function getTextFromCursor(editor: vscode.TextEditor) {
 
 		let offset = editor.selection.active;
 		//get the text from the cursor to the end of the line.
-		if (offset.character === 0){
+//		if (offset.character === 0){
 			//select to end of line
 			offset = new vscode.Position(offset.line, editor.document.lineAt(offset.line).text.length);
-		}
+//		}
 
 		//					editor.selection = new vscode.Selection(offset.line, 0, offset.line, offset.character);
 		text = editor.document.getText(new vscode.Range(offset.line, 0, offset.line, offset.character));
