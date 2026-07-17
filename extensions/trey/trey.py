@@ -28,7 +28,8 @@ sys.path.insert(2, 'c:/devinpiano/music/mrrubato') #config.py path Base project 
 import config 
 import mykeys
 
-import tts
+#import tts
+import extensions.trey.tts as tts
 import extensions.trey.speech  as speech #import early due to issues with Kokoro
 
 from datetime import datetime, timedelta
