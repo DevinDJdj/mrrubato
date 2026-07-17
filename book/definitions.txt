@@ -19,6 +19,8 @@ reference from document
 >> Elevated CMD operation
 >$ ubuntu CMD
 >@ vscode command operation
+># Powershell
+>_ New shell.  
 
 ** topic (source code file name with separator, OR videoID > 10 chars, otherwise content/topic tag)
 

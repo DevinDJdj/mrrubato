@@ -60,6 +60,10 @@ export function run(command: string, dir: string="") {
             //powershell
             worker = getTerminalWorker(cmdtype, cmdtype[1], version, dir);
         }
+        else if (cmdtype[1] === '_'){
+            //create new terminal 
+            worker = getTerminalWorker(cmdtype, cmdtype[1], version, dir);
+        }
     }
 
     if (worker === undefined || worker.terminal === undefined){
@@ -86,7 +90,7 @@ function getTerminal(key: string, type: string="", version: string="", dir=""): 
     //no terminal found with that name.
     //create one with this type.  
     let myprofile = {
-        "name": key,
+        "name": key + version,
         "shellPath": "C:\\WINDOWS\\System32\\cmd.exe",
         "shellArgs": []
     };
@@ -94,7 +98,7 @@ function getTerminal(key: string, type: string="", version: string="", dir=""): 
 
     if (type === '$'){
         myprofile = {
-            "name": key,
+            "name": key + version,
             "shellPath": "C:\\Windows\\System32\\wsl.exe",
 
             "shellArgs": ["-d", "Ubuntu-20.04"]
@@ -129,7 +133,7 @@ function getTerminal(key: string, type: string="", version: string="", dir=""): 
     else if (type === '#'){
         //powershell
         myprofile = {
-            "name": key,
+            "name": key + version,
             "shellPath": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
             "shellArgs": []
         };

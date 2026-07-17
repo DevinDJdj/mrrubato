@@ -663,9 +663,31 @@ export function registerToolUserChatParticipant(context: vscode.ExtensionContext
 }
 
 
+
+const JZZ = require('jzz');
+var myintervalLoop = null;
+var numconns = 0;
 export function registerPiano(context: vscode.ExtensionContext) {
-    midiin.activate(context);
     tree.activate(context);
+    midiin.activate(context);
+
+    myintervalLoop = setInterval(async () => {
+        //check if we have new midi info?  
+        let info = (await JZZ()).info();
+        if (numconns !== info.outputs.length + info.inputs.length) {
+            numconns = info.outputs.length + info.inputs.length;
+            clearInterval(myintervalLoop); //dont want multiple loops running..
+            midiin.deactivate();
+            tree.deactivate();
+            //wait..
+            await new Promise(resolve => setTimeout(resolve, 1000)); //wait 1 second
+            tree.activate(context);
+            midiin.activate(context);
+            numconns = info.outputs.length + info.inputs.length;
+        }
+    }, 60000); 
+    
+
     
 
 }
