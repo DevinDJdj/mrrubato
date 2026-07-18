@@ -270,7 +270,7 @@ class MyKeys:
       return ret
     
     if (len(prefix) > 0):
-      ret, end = self.get_keystruct(prefix)
+      ret, end = self.get_keystruct(prefix, create=False)
       print(end)
       fret = recursive_values(end)
       #todo: show all words in setlanguage as well for reference.  Should be small set.
@@ -282,15 +282,18 @@ class MyKeys:
     return self.words_
 
 
-  def get_keystruct(self, keys, struct={}):
-    end = self.add_keys(keys, struct)
+  def get_keystruct(self, keys, struct={}, create=True):
+    end = self.add_keys(keys, struct, create=create)
     return struct, end
   
-  def add_keys(self, keys, struct):
+  def add_keys(self, keys, struct, create=True):
       if keys[0] not in struct:
-          struct[keys[0]] = {}
+          if create:
+              struct[keys[0]] = {}
+          else:
+              return {}
       if len(keys) > 1:
-        return self.add_keys(keys[1:], struct[keys[0]])
+        return self.add_keys(keys[1:], struct[keys[0]], create=create)
       return struct[keys[0]]
 
   def gen_lang_struct(self, config=None, lang=""):
@@ -615,7 +618,7 @@ class MyKeys:
 
         #add to keystruct for the last word __ represents quickkey..
         for i, s in enumerate(self.words[-1]['sequence']):
-          r, end = self.get_keystruct(self.words[-1]['sequence'][:i+1])
+          r, end = self.get_keystruct(self.words[-1]['sequence'][:i+1], create=False)
           end["__"] = self.words[-1]
           end["__"]['keys'] = self.words[-1]['sequence'] #naming issue
 
@@ -774,17 +777,21 @@ class MyKeys:
     else:
       temptime = time.time() - self.lasttick
 
-    if self.play_feedback and doact:
+
+    if doact:
       #sound feedback when playing a note.  not when simulating..
 
       if (msg.type == 'note_on' and hasattr(msg, 'velocity') and msg.velocity > 0):
-          print(f'Playing note {msg.note} with velocity {msg.velocity}')
-          synth.note_on(msg.note, msg.velocity)
           self.mid.tracks[self.currentchannel].append(msg)
+          if (self.play_feedback):
+              print(f'Playing note {msg.note} with velocity {msg.velocity}')
+              synth.note_on(msg.note, msg.velocity)
 #          synth.play_note(msg.note, 0.3, msg.velocity/127)
       elif (msg.type == 'note_off' or (msg.type == 'note_on' and hasattr(msg, 'velocity') and msg.velocity == 0)):
-          synth.note_off(msg.note)
           self.mid.tracks[self.currentchannel].append(msg)
+          if (self.play_feedback):
+              print(f'Stopping note {msg.note}')
+              synth.note_off(msg.note)
 
       #should also append audio transcript text here to keep in time..
     unsetseq = self.config['keymap']['global']['Unset'] #assume 3 keys for now..
