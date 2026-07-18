@@ -583,6 +583,7 @@ function registerPiano(context) {
         //check if we have new midi info?  
         let info = (await JZZ()).info();
         if (numconns !== info.outputs.length + info.inputs.length) {
+            console.log("MIDI connections changed - restarting");
             numconns = info.outputs.length + info.inputs.length;
             clearInterval(myintervalLoop); //dont want multiple loops running..
             midiin.deactivate();

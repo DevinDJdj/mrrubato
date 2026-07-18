@@ -357,7 +357,8 @@ class MyKeys:
       self.qrin.insert(0, data) #move to start of list
 
 
-  def convert_keys(self, keys):
+  def convert_keys(self, keys, _length=0):
+    #use _length to distinguish already pressed in some way..
     copy = []
     ret = ""
     for i,k in enumerate(keys):
@@ -366,15 +367,16 @@ class MyKeys:
       else:
         copy.append(k - keys[0])
     base = keys[0]
-    for k in copy:
-      mod12 = (base + k) % 12
-      if (k == base): 
-        ret += "<i>" + str(k) + "</i>,"
-      else:
-        if (mod12 in (1, 3, 6, 8, 10)): #sharp keys
-          ret += "<b>" + str(k) + "</b>,"
+    for i, k in enumerate(copy):
+      if (i >= _length):
+        mod12 = (base + k) % 12
+        if (k == base): 
+          ret += "<i>" + str(k) + "</i> "
         else:
-          ret += str(k) + ","
+          if (mod12 in (1, 3, 6, 8, 10)): #sharp keys
+            ret += "<b>" + str(k) + "</b> "
+          else:
+            ret += str(k) + " "
     return ret
   
   def set_qr(self, func, param={}):
@@ -436,6 +438,7 @@ class MyKeys:
         la.qr = "" #reset qr after getting it.
     qr += "<<meta>>\n"
     words = self.get_words_(self.sequence[self.startseqno:])
+    _length = len(self.sequence[self.startseqno:])
     #potentially get most likely words here only.  Eventually..
     qr += f"$$SEQLEN={self.currentseqno - self.startseqno} \n"
     if (self.currentseqno - self.startseqno == 0):
@@ -457,8 +460,10 @@ class MyKeys:
       #get params here..
 
     for i, w in enumerate(words):      
-      keys = self.convert_keys(w['keys'])
-      qr += f"~~{i} | {w['word']} | {keys} \n" #br working for line breaks..
+      if ('ss' in w):
+        qr += f"__ {self.sequence[self.startseqno:]} __\n"
+      keys = self.convert_keys(w['keys'], _length)
+      qr += f"~~ {w['word']} | {keys} \n" #br working for line breaks..
     #output info about potential keys here.  
 
     qr += self.qr
@@ -604,6 +609,13 @@ class MyKeys:
           self.words[-1]['transcript'] = self.languages[l].transcript #add transcript to word for reference in new word creation.
         self.words[-1]['heldwords'] = self.heldwords.copy() #add heldwords to word for reference in new word creation.
         self.words_.append(self.words[-1]) #add to executed words.
+
+        #add to keystruct for the last word __ represents quickkey..
+        for i, s in enumerate(self.words[-1]['sequence']):
+          r, end = self.get_keystruct(self.words[-1]['sequence'][:i+1])
+          end["__"] = self.words[-1]
+          end["__"]['keys'] = self.words[-1]['sequence'] #naming issue
+
         if ('_lang' in self.languages and hasattr(self.languages['_lang'], 'spokenwords')):
           self.languages['_lang'].spokenwords.append(self.words[-1]) #add to spoken words in _lang for reference in new word creation.
 

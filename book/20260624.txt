@@ -694,7 +694,8 @@ test..
 Use this for launching trey..
 CTRL+SHIFT+R
 
-**extensions/vscode/codetutor/src/midi/tree.ts
+**extensions/vscode/codetutor/src/toolParticipant.ts
+--registerPiano
 Should auto-check for midi device on timer..
 test..
 Maybe getting multiple entries for same port but maybe overwritten
@@ -710,4 +711,32 @@ add functions
 all available windows in trey..
 ;> Select Window
 bring to foreground.  
+
+#https://www.kaggle.com/datasets/samxsam/human-cognitive-performance-analysis/data
+
+Separate writing from playing..
+read links..
+;[50,52,57]
+
+
+**extensions/trey/test/watchtest.py
+after jump time, recalibrate link index same as topic index..
+Send info via _meta transcript?  
+
+**languages/book.py
+**extensions/vscode/codetutor/src/languages/base.ts
+;> Select genbook
+open genbook from last used..
+
+;> Select book
+open book from last used..
+
+
+Send to extension via book transcript.  
+
+
+Use keystruct..
+So we always have quick key as last used subsequence..
+See if this displays in qr..
+Then add quick key handling..
 

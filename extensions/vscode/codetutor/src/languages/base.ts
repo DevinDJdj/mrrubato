@@ -44,6 +44,8 @@ export default class LANG {
                 "DOWN": [0,-4,-2],
                 "LEFT": [0,-4,-5],
                 "RIGHT": [0,-4,-3],
+                "GENBOOK": [0,-3,-2],
+                "BOOK": [0,-3,-4]
 
             },
 
@@ -72,7 +74,32 @@ export default class LANG {
         this.funcdict["DOWN"] = this.down;
         this.funcdict["LEFT"] = this.left;
         this.funcdict["RIGHT"] = this.right;
+        this.funcdict["GENBOOK"] = this.genbook;
+        this.funcdict["BOOK"] = this.book;
 
+    }
+
+    genbook(cls, sequence, words){
+        console.log("base genbook", sequence, words);
+        //bring to front genbook for current time detected..
+        // +- selection
+        var shift = 0;
+        if (sequence.length > 0) {
+            shift = sequence[sequence.length - 1] - this.keybot;
+        }
+
+        return 0; //no action, just a generic keypress
+    }
+
+    book(cls, sequence, words){
+        console.log("base book", sequence, words);
+        //bring to front book for current time detected.  
+        var shift = 0;
+        // +/- selection
+        if (sequence.length > 0) {
+            shift = sequence[sequence.length - 1] - this.keybot;
+        }
+        return 0; //no action, just a generic keypress
     }
 
     pause(cls, sequence, words){
