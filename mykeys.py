@@ -181,8 +181,8 @@ class MyKeys:
 #    self.qroutmem = None #shared memory for qrout if needed.
 
     if (self.config['keymap']['settings']['PLAY_FEEDBACK'] == "true"):
-        console.log("Play feedback is enabled")
-        console.log(self.config['keymap']['settings'])
+        logger.info("Play feedback is enabled")
+        logger.info(self.config['keymap']['settings'])
         self.play_feedback = True
     else:
         self.play_feedback = False
@@ -465,9 +465,12 @@ class MyKeys:
       qr += f"{help} \n"      
       #get params here..
 
+
+    qr += f"__ {self.sequence[self.startseqno:]} __\n"
     for i, w in enumerate(words):      
       if ('ss' in w):
-        qr += f"__ {self.sequence[self.startseqno:]} __\n"
+        #just display keys to hold for quick sequence..
+        qr += f"~~ {w['word']} | {w['sequence'][:_length]} \n"
       keys = self.convert_keys(w['keys'], _length)
       qr += f"~~ {w['word']} | {keys} \n" #br working for line breaks..
     #output info about potential keys here.  
