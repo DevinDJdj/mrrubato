@@ -90,7 +90,7 @@ function getTerminal(key: string, type: string="", version: string="", dir=""): 
     //no terminal found with that name.
     //create one with this type.  
     let myprofile = {
-        "name": key + version,
+        "name": key,
         "shellPath": "C:\\WINDOWS\\System32\\cmd.exe",
         "shellArgs": []
     };
@@ -98,7 +98,7 @@ function getTerminal(key: string, type: string="", version: string="", dir=""): 
 
     if (type === '$'){
         myprofile = {
-            "name": key + version,
+            "name": key,
             "shellPath": "C:\\Windows\\System32\\wsl.exe",
 
             "shellArgs": ["-d", "Ubuntu-20.04"]
@@ -133,7 +133,7 @@ function getTerminal(key: string, type: string="", version: string="", dir=""): 
     else if (type === '#'){
         //powershell
         myprofile = {
-            "name": key + version,
+            "name": key,
             "shellPath": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
             "shellArgs": []
         };
@@ -144,7 +144,7 @@ function getTerminal(key: string, type: string="", version: string="", dir=""): 
 //    return vscode.window.createTerminal(myprofile);
 /*
     vscode.commands.executeCommand('workbench.action.terminal.newWithProfile', {
-        name: key, 
+        name: key+version, 
         profile: myprofile
     });
     */

@@ -2,6 +2,7 @@
 > npm install -g firebase-tools
 > cd C:\Users\devin\Downloads
 > ./PreSonus_Universal_Control_v4_2_0_96206.exe
+#https://usa.yamaha.com/support/updates/yamaha_steinberg_usb_driver_v216_for_win.html
 > tar -xf YSUSB_V216_Win.zip
 > ./YSUSB_V216_Win/setup.exe
 
@@ -18,5 +19,10 @@ Think not used anymore..
 > pip install firebase-admin
 > python ./record.py --description  "Evil Ways (Sonny Henry)"
 #https://www.logitechg.com/en-us/software/ghub
+
+#https://obsproject.com/forum/resources/retro-effects.1972/
+
+$$OBS/Settings/Output/Quality=High
+
 
 

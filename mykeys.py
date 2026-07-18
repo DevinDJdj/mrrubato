@@ -180,10 +180,13 @@ class MyKeys:
 #    self.qrinmem = SharedMemory(name="mykeys") #shared memory for qrin if needed.
 #    self.qroutmem = None #shared memory for qrout if needed.
 
-    if (self.config['keymap']['settings']['PLAY_FEEDBACK']):
+    if (self.config['keymap']['settings']['PLAY_FEEDBACK'] == "true"):
+        console.log("Play feedback is enabled")
+        console.log(self.config['keymap']['settings'])
         self.play_feedback = True
     else:
         self.play_feedback = False
+#    self.play_feedback = False
 
 
     for key, value in config['keymap']['languages'].items():

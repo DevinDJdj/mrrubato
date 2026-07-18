@@ -504,6 +504,7 @@ class transcriber:
         date_format = "%Y%m%d%H%M%S"
         for y in range(start_time.year, end_time.year+1):
             folder = self.TRANSCRIPT_FOLDER + str(y) + '/'
+            os.makedirs(folder, exist_ok=True)
             files = []
             for m in range(start_time.month, end_time.month+1):
                 sm = str(m).zfill(2)

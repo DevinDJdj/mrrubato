@@ -1,0 +1,23 @@
+> cd C:/devinpiano/music
+> ./treyenv/Scripts/activate.ps1
+$$ENV=treyenv
+> cd C:/devinpiano/music/mrrubato
+>_1 cd C:/devinpiano/music
+>_2 cd C:/devinpiano/music/mrrubato
+>#1 cd C:/devinpiano/music
+>#1 ./treyenv/Scripts/activate.ps1
+
+>#2 cd C:/devinpiano/music
+>#2 ./treyenv/Scripts/activate.ps1
+>#2 cd C:/devinpiano/music/mrrubato
+>#2 python ./record.py --description  "Weve Only Just Begun (Roger Nichols)"
+
+
+**extensions/vscode/codetutor/src/extension.ts
+Dont add to genbook if running from genbook..
+
+**extensions/trey/trey.py
+Some issue with mykeys, not detecting midi keyboard for input..
+>#1 cd C:/devinpiano/music/mrrubato
+
+>#1 python ./record.py --description  "Weve Only Just Begun (Roger Nichols)"

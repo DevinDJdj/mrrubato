@@ -1,0 +1,14 @@
+
+>#1 ./treyenv/Scripts/activate.ps1
+>#1 cd C:/devinpiano/music
+>#1 ./treyenv/Scripts/activate.ps1
+>#2 cd C:/devinpiano/music
+>#2 ./treyenv/Scripts/activate.ps1
+>#2 cd C:/devinpiano/music/mrrubato
+
+**extensions/trey/run.ps1
+> C:/devinpiano/music/mrrubato/extensions/trey/run.ps1
+
+
+>#1 cd C:/devinpiano/music/mrrubato
+>#1 python ./record.py --description  "Weve Only Just Begun (Roger Nichols)"

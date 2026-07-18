@@ -520,9 +520,9 @@ if __name__ == '__main__':
 #use title here as description contains all info
     custom_env = os.environ.copy()
     print('analyze start python ./analyze/analyze.py --title "' + args.title + '"')
-    subprocess.call('python ./analyze/analyze.py --title "' + args.title + '"')
-#    subprocess.Popen('python ./analyze/analyze.py --title "' + args.title + '"',
-#    shell=True, env=custom_env)
+#    subprocess.call('python ./analyze/analyze.py --title "' + args.title + '"')
+    subprocess.Popen('python ./analyze/analyze.py --title "' + args.title + '"',
+    shell=True, env=custom_env)
     print("analyze complete")
     obsp = subprocess.Popen("C:\\Program Files\\obs-studio\\bin\\64bit\\obs64.exe", start_new_session=True, cwd="C:\\Program Files\\obs-studio\\bin\\64bit")
     
@@ -661,9 +661,9 @@ if __name__ == '__main__':
 
                         keyboard.press(Key.ctrl)
                         keyboard.press(Key.shift)
-                        keyboard.press('8')
+                        keyboard.press(Key.f8)
                         time.sleep(0.25)
-                        keyboard.release('8')
+                        keyboard.release(Key.f8)
                         keyboard.release(Key.ctrl)
                         keyboard.release(Key.shift)
                         print("Pause Recording" + str(time.time()))
@@ -688,9 +688,9 @@ if __name__ == '__main__':
 
                         keyboard.press(Key.ctrl)
                         keyboard.press(Key.shift)
-                        keyboard.press('9')
+                        keyboard.press(Key.f9)
                         time.sleep(0.25)
-                        keyboard.release('9')
+                        keyboard.release(Key.f9)
                         keyboard.release(Key.ctrl)
                         keyboard.release(Key.shift)
                         print("Unpause Recording" + str(temptime))
@@ -862,9 +862,9 @@ if __name__ == '__main__':
 #    subprocess.call('peertube-cli upload -u ' + config.cfg['peertube']['host'] + ':' + config.cfg['peertube']['port'] + ' -U ' + config.cfg['peertube']['ADMIN_USERID'] + ' -p ' + config.cfg['peertube']['ADMIN_PASSWORD'] + ' -n "' + args.title + '" -d "' + args.description + '" --file "' + latest_file + '"')
 #call again to run the any post-analysis like finger locations.  
     print("analyze start python ./analyze/analyze.py --title " + args.title)
-    subprocess.call('python ./analyze/analyze.py --title "' + args.title + '"')
-#    subprocess.Popen('python ./analyze/analyze.py --title "' + args.title + '"',
-#    shell=True, env=custom_env)
+#    subprocess.call('python ./analyze/analyze.py --title "' + args.title + '"')
+    subprocess.Popen('python ./analyze/analyze.py --title "' + args.title + '"',
+    shell=True, env=custom_env)
     
     time.sleep(20)
     obsp.terminate()
