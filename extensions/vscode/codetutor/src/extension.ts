@@ -922,6 +922,9 @@ export function activate(context: vscode.ExtensionContext) {
 						//run in vscode
 						vscode.commands.executeCommand(text.substring(2).trim());
 						break;
+					case "_":
+						TerminalWorker.run(text.trim()); //does this work?  
+						break;
 						
 					default:
 

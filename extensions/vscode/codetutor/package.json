@@ -298,7 +298,6 @@
   "dependencies": {
     "@huggingface/transformers": "^3.8.1",
     "@react-native-community/netinfo": "^11.4.1",
-    "@riaskov/mmap-io": "^1.4.3",
     "@vscode/prompt-tsx": "^0.3.0-alpha.23",
     "flexsearch": "^0.8.212",
     "jazz-midi-vscode": "^1.0.7",
@@ -313,5 +312,8 @@
     "ollama": "^0.5.18",
     "standardized-audio-context": "^25.3.77",
     "vectra": "^0.14.0"
+  } ,
+  "failedDependencies": {
+    "@riaskov/mmap-io": "^1.4.3"
   }
 }

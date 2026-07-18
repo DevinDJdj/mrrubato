@@ -1,0 +1,10 @@
+
+
+**DLAP
+> cd C:/devinpiano/music
+
+**DLAP
+> ./treyenv/Scripts/activate.ps1
+> python ./record.py --description  "Evil Ways (Sonny Henry)"
+> cd C:/devinpiano/music/mrrubato
+> python ./record.py --description  "Evil Ways (Sonny Henry)"

@@ -5,7 +5,7 @@ import * as fs from 'fs';
 import * as transcriber from './transcriber';
 import { ToolCallRound, ToolResultMetadata, ToolUserPrompt } from './toolsPrompt';
 
-import mmap from '@riaskov/mmap-io';
+//import mmap from '@riaskov/mmap-io';
 
 let myStatusBarItem: vscode.StatusBarItem;
 

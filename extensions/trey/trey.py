@@ -2550,6 +2550,7 @@ class MyWindow(QMainWindow):
 #            self.label_topic_info[i].setTextFormat(Qt.PlainText)
 
         # show all the widgets
+        self.move(self.startx, 0) #why we need to do this again?  
         self.show()
         self.showQR("Starting Trey Overlay")
         #hide after a few seconds
@@ -3805,7 +3806,17 @@ def init_inputs():
     logger.info(f'Available MIDI inputs: {inputs}')
     logger.info(f'Available MIDI outputs: {outputs}')
 #    midiout = mido.open_output(outputs[1]) #open first output for now.  
-    midiin = mido.open_input(inputs[0]) #open first input for now.
+    mypname = config.cfg['keymap']['pianos'][0] if 'pianos' in config.cfg['keymap'] else 'Portable Grand'
+    if (inputs is not None and len(inputs) > 0):
+        for i, name in enumerate(inputs):
+            if (name.startswith(mypname)):
+                logger.info(f'Opening MIDI input: {name}')
+                midiin = mido.open_input(name)
+                break
+            else:
+                if (i == len(inputs)-1): #if last, set to input
+                    logger.warning(f'MIDI input "{mypname}" not found. Opening last available input: {inputs[len(inputs)-1]}')
+                    midiin = mido.open_input(inputs[len(inputs)-1]) #open last input for now.
 
 def run_midi(mstop_event, kill_event, qr_queue=None, qrin_queue=None, audio_location_queue=None):
     global midiout, midiin
