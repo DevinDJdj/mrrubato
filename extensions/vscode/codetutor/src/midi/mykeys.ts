@@ -81,6 +81,7 @@ export class MyKeys {
         this.audioContext = new AudioContext(); //(window.AudioContext || (window as any).webkitAudioContext)();
         this.setupAudioFeedback();
         this.setupMidi();
+        playfeedback = config['keymap']['settings']['PLAY_FEEDBACK'] == "true";
 
         if (config['keymap']['languages']) {
             for (const [lang, val] of Object.entries(config['keymap']['languages'])) {

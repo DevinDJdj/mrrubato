@@ -587,7 +587,13 @@ class MyKeys:
     #pass words as well.  
     logger.info(f'Checking action {cmd} in {l} for {ss}')
     orig = ss.copy()
-    action = self.languages[l].act(cmd, self.words, ss, doact=doact)
+    try:
+      action = self.languages[l].act(cmd, self.words, ss, doact=doact)
+    except Exception as e:
+      logger.error(f'Error in act for {cmd} in {l}: {e}')
+      import traceback
+      traceback.print_exc()
+      action = -1 #error, reset sequence
     localseq = self.words[-1]['sequence'] if len(self.words) > 0 else []
     if (action == -1):
       #reset action
