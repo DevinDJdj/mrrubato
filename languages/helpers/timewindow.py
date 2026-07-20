@@ -12,8 +12,9 @@ class timewindow:
         self.lang_helper = lang_helper
         self.defstring = r"[~!@#$%^&*<>/:;\-\+=]"
         self.currenttime = time.time()
-        self.starttime = time.time() - 86400 #default to 24 hours ago
-        self.endtime = time.time()
+        self.started_time = self.currenttime
+        self.starttime = self.currenttime - 86400 #default to 24 hours ago
+        self.endtime = self.currenttime
         self.window = 86400 #default to 24 hours, in seconds.
         self.windowindex = 2 #1 day..
         # 1, 6, 4, 7, 4, 3, 4, 5, 6, 4

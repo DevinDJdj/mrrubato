@@ -127,7 +127,9 @@ class _meta:
 
     logger.info(f"Loaded {numtopics} topics and {len(book)} book transcripts from ./book/")
 
-    self.transcriber.allbooks = self.transcriber.open_books() #open book files for writing topics.
+    if (not self.transcriber.allbooks):
+      self.transcriber.allbooks = self.transcriber.open_books() #open book files for writing topics.
+
     logger.info("Loaded book files for writing topics.")
     logger.info(f"Books: {self.transcriber.allbooks}")
     #tree struct..
@@ -139,7 +141,7 @@ class _meta:
     self.filteredbookarray = self.bookarray[:] #start with all books in filteredbookarray, then we can filter based on search or time window.
     logger.info(f"Book array: {self.bookarray}")
     #sort by recency
-    self.bookarray.sort(key=lambda x: abs(self.timewindow.currenttime - x['..']), reverse=True) #sort by recency to current time, most recent first.
+    self.bookarray.sort(key=lambda x: abs(self.timewindow.currenttime - x['..'])) #sort by recency to current time, most recent first.
 
     if (len(self.bookarray) > 0):
       self.selectedbookindex = 0      
@@ -160,15 +162,15 @@ class _meta:
       if (self.selectedbook['**'] in self.transcriber.langmap):
         bookdata = self.transcriber.langmap[self.selectedbook['**']]
         if ('&&' in bookdata and bookdata['&&'] is not None and bookdata['('] != bookdata[')']):
-          self.booktopicarray = bookdata['&&'][bookdata['(']:bookdata[')']+1]
-          for c in self.booktopicarray:
+          newtopicarray = bookdata['&&'][bookdata['(']:bookdata[')']+1]
+          for c in newtopicarray:
             if (c['type']=='**'):
               if (c['cmd'] not in self.alltopics):
                 self.alltopics[c['cmd']] = []
               self.alltopics[c['cmd']].append(c)
 
               self.booktopicarray.insert(0, c) #time reverse order
-          self.booktopicarray.sort(key=lambda x: abs(self.timewindow.currenttime - x['timestamp']), reverse=True) #sort by recency to current time, most recent first.  
+          self.booktopicarray.sort(key=lambda x: abs(self.timewindow.currenttime - x['timestamp'])) #sort by recency to current time, most recent first.  
 
   def load_data(self):
 
@@ -613,8 +615,11 @@ class _meta:
         return 1
       if (sequence[0] == _BOOK): #not sure this selection sequence is great..
         _booktopic = True        
+      if (sequence[0] == _BOOK and len(sequence)==1):
+        _booktopic = True #dont adjust newidx
+      else:
+        newidx = self.adjust_topic_index(self.mid-sequence[-1])
 
-      newidx = self.adjust_topic_index(self.mid-sequence[-1])
     logger.info(f"--{self.topicarray[newidx]['**']}")
     self.func = "Select Topic_"
 
@@ -635,8 +640,8 @@ class _meta:
 #      start = 12 - self.selectedtopicindex
 
     for i, l in enumerate(last15):
-      i = i + start
-      vars[f'{i}'] = l['**']
+      n = i + start
+      vars[f'{n}'] = l['**']
 #          vars[f'href{i}'] = l['href']
     vars['idx'] = newidx
     self.set_qr(self.func, vars)
@@ -704,7 +709,7 @@ class _meta:
       self.filteredtopicarray = self.transcriber.relevant_topic_array(self.name, self.filtertopic, self.timewindow.currenttime) #get list of topics for selection.
       logger.info(f"Filtered topic array: {self.filteredtopicarray}")
       #sort by recency
-      self.filteredtopicarray.sort(key=lambda x: abs(self.timewindow.currenttime - x['timestamp']), reverse=True) #sort by recency to current time, most recent first.
+      self.filteredtopicarray.sort(key=lambda x: abs(self.timewindow.currenttime - x['timestamp'])) #sort by recency to current time, most recent first.
     
     if (len(sequence) > 2):
       newidx = self.selectedfilteredtopicindex
@@ -804,6 +809,7 @@ class _meta:
     logger.info(f"--{self.bookarray[newidx]['**']}")
     self.func = "Select Book_"
     #should make this more general.. send last ten links
+
     last15 = self.bookarray[max(0, self.selectedbookindex-11):min(self.selectedbookindex+13, len(self.bookarray))]
     last15.reverse() #reverse to match with Future:Past order in display.. [48 - 68]
     #does this match up with keys?  
@@ -813,13 +819,16 @@ class _meta:
     vars['context'] = ctxt.replace('\n', '<br>')
 
     start = 0
-#    if self.selectedtopicindex < 12:
-#      start = 12 - self.selectedtopicindex
+    if len(self.bookarray) < 12:
+      start = 12 - len(self.bookarray) + self.selectedbookindex + 1
+      vars['idx'] = self.selectedbookindex
+      vars[':'] = self.selectedbookindex
+    else:
+      vars['idx'] = self.selectedbookindex
     for i, l in enumerate(last15):
-      i = i + start
-      vars[f'{i}'] = l['**']
+      n = i + start
+      vars[f'{n}'] = l['**']
 #          vars[f'href{i}'] = l['href']
-    vars['idx'] = newidx
     self.set_qr(self.func, vars)
 
 #    self.speak(f'{vars["topic"]}')
@@ -832,8 +841,8 @@ class _meta:
     selected = 0
     if (len(sequence) > 0):
       selected = self.mid - sequence[-1]
-
     self.selectedbookindex = self.adjust_book_index(selected)
+    logger.info(f"Selected Book: {self.selectedbookindex}")
     self.selectedbook = self.bookarray[self.selectedbookindex] if self.selectedbookindex < len(self.bookarray) else None
     #set transcriber selected book for further writing..
     self.transcriber.current_book = self.selectedbook['**'] if self.selectedbook is not None else self.transcriber.current_book

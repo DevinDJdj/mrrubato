@@ -1,4 +1,5 @@
 import logging
+from languages._meta import _BOOK, _META
 import languages.helpers.timewindow as timewindow
 
 from PIL import Image
@@ -46,6 +47,7 @@ class book:
     self.selectedbookindex = 0
     self.ext_links = [] #currently selected link structure from book..
     self.ext_link_index = 0
+    self.book_links = {}
     self.funcdict = {}
     self.suggestions = []
     self.transcripthistory = [] #store past transcripts for context.  This is not currently used for anything but could be used for context in future functions.
@@ -100,7 +102,9 @@ class book:
     #load 6 months of book topics..
     book = self.transcriber.read('book', self.transcriber.getTime(-180), None, './book/')
     logger.info(f'Loaded {len(book)} book transcripts from ./book/')    
-
+    #load in case not done..
+    if (not self.transcriber.allbooks):
+      self.transcriber.allbooks = self.transcriber.open_books() #open book files for writing topics.
     numtopics = 0
     self.ext_links = []
     self.ext_link_index = 0
@@ -246,27 +250,39 @@ class book:
     else:
       return self.ext_link_index + idx
 
-  def get_ext_link_index(self, linkno=0, current_time=None, topic=None):
+  def load_book_links(self, book):
+    if (book is not None and book in self.transcriber.allcmds and book not in self.book_links):
+      mybook = self.transcriber.filter_books_recursive(book)
+      myarray = self.transcriber.relevant_book_array(mybook) #get list of books for selection.
+      ext_links = self.transcriber.get_all_of_type('#', myarray=myarray)
+      ext_links.sort(key=lambda x: x['..'], reverse=True) #sort so 0 index is now..
+      self.book_links[book] = {'#': ext_links, ':': 0}
+    elif (book in self.book_links):
+      ext_links = self.book_links[book]
+    else:
+      ext_links = []
+    return ext_links
+  
+
+  def get_ext_link_index(self, linkno=0, current_time=None, book=None):
     t = current_time if current_time is not None else self.transcriber.mytime
     #find most recent link before current time.
-    topic = topic if topic is not None else self.transcriber.current_topic
+    _isbook = True if book is not None else False
+    book = book if book is not None else self.transcriber.current_book
     #should topic always be selected?  Not sure..
-    if (topic is not None and topic in self.alltopics and ':' in self.alltopics[topic]):
-      topic_links = self.alltopics[topic]
-      index = topic_links[':'] #start with most recent link for this topic, which is at index ':', and check if it is before current time.  If not, go back until we find one that is before current time.
-      while (index > 0 and topic_links['#'][index]['..'] > t):
-        index -= 1
-      while (index < len(topic_links['#']) and topic_links['#'][index]['..'] <= t):
-        index += 1
+    if (_isbook):
+      mylinks = self.load_book_links(book)
+      if (len(mylinks['#']) > 0):
+        index = mylinks[':']
 
-      if (index + linkno < 0):
-        index = 0
-      elif (index + linkno >= len(topic_links['#'])):
-        index = len(topic_links['#'])-1
-      else:
-        index += linkno
-
-      return index, topic_links['#']
+        if (index + linkno < 0):
+          index = len(mylinks['#']) - 1 #wrap?
+        elif (index + linkno >= len(mylinks['#'])):
+          index = 0 #wrap?
+        else:
+          index += linkno
+        mylinks[':'] = index
+        return index, mylinks
     
     else:
       #not sure we need this full list..
@@ -291,11 +307,26 @@ class book:
   def read_link_(self, sequence=[]):
     logger.info(f'> Read Link_ {sequence}')
     #need to get content for this link and read it.  For now just speak the link text, but ideally we would get the content of the link and read that instead.
+    _booktopic = False
     if (len(sequence) > 0):
-      linkno = sequence[-1] - self.mid
+      linkno = self.mid - sequence[-1]
+      if (sequence[-1] == self.keybot): #dont adjust if keybot, 
+        return 1
+      if (sequence[0] == _META): #not sure this selection sequence is great..
+        _booktopic = True        
+      if (sequence[0] == _META and len(sequence)==1):
+        _booktopic = True #dont adjust newidx
+      else:
+        linkno = self.mid - sequence[-1]
     else:
       linkno = 0 #default to first link if no parameter provided.  This is not ideal but we need some way to trigger reading a link without audio input for link number for now.  We can add audio input for link number in future.
-    index, links = self.get_ext_link_index(linkno)
+
+    index = 0
+    links = []
+    if (_booktopic):
+      index, links = self.get_ext_link_index(linkno, None, self.transcriber.current_book) #book links only..
+    else:
+      index, links = self.get_ext_link_index(linkno) #global
     if (index != -1):
       link = links[index]
     else:
@@ -320,19 +351,32 @@ class book:
     #try multi-select.  
     #topic, then link within topic.  For now just use current topic..
     #-1 to list all?
+    linkno = 0
     if (len(sequence) > 0):
-      linkno = sequence[-1] - self.mid
+      if (sequence[0] == _META): #not sure this selection sequence is great..
+        _booktopic = True        
+      if (sequence[0] == _META and len(sequence)==1):
+        _booktopic = True #dont adjust newidx
+      else:
+        linkno = self.mid - sequence[-1]
     else:
       linkno = 0 #default to first link if no parameter provided.  This is not ideal but we need some way to trigger reading a link without audio input for link number for now.  We can add audio input for link number in future.
     
-    index, links = self.get_ext_link_index(linkno)
+    index = 0
+    links = []
+    if (_booktopic):
+      index, links = self.get_ext_link_index(linkno, None, self.transcriber.current_book) #book links only..
+    else:
+      index, links = self.get_ext_link_index(linkno) #global
+
     if (index != -1):
       link = links[index]
       playwrighty.read_page(link['&&']) #need to get content for this link and read it. 
       #this should open up the page, then we can read aloud if we want..
-
     else:
       logger.error(f'Invalid link number: {linkno}')
+      return -1
+    
     return 0
   
   

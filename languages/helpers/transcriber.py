@@ -25,6 +25,7 @@ from rapidfuzz import fuzz
 
 import languages.helpers.timewindow as timewindow
 
+import ollama
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +39,7 @@ class transcriber:
         self.TRANSCRIPT_FOLDER = '../transcripts/'
         self.CTXT_FOLDER = '../ctxt/' #context data for topics, stored in shared memory for now, but could also be stored in files or database as needed.  use shared memory for simplicity and speed, but need to manage memory usage and cleanup as needed.
         self.allcmds = {} #lang -> {cmds, start_time, end_time, list of cmds in order..
+        self.allbooks = {}
         self.langmap = {}
         self.kg = {}
         self.allmidi = {}
@@ -73,7 +75,8 @@ class transcriber:
 
 
     def getTime(self, relativedays=0):
-        now = datetime.now()
+        #for now use started_time.. so we dont keep reloading..
+        now = datetime.fromtimestamp(self.timewindow.started_time)
         now += timedelta(days=relativedays)
         return now
     
@@ -921,9 +924,13 @@ class transcriber:
             #for now no clearing, just mark as closed for searches..
             self.allcmds[bookname]['open'] = False
         
-    def open_book(self, bookname, start_time, end_time, folder = "books"):
+    def open_book(self, bookname, start_time=None, end_time=None, folder = "books"):
         #for now just read the book and return the text, but could also do some processing here to extract relevant sections or create embeddings for searching later.  could also store in shared memory or a file/database if needed, but for now just read and return the text.
         try:
+            if (start_time is None):
+                start_time = self.getTime(-365)
+            if (end_time is None):
+                end_time = self.getTime()
             logger.info(f'Opening book {bookname} from {start_time} to {end_time}')
             return self.read(bookname, start_time=start_time, end_time=end_time, myfolder=bookname + "/") #load book into transcripts for reference, this will also update the knowledge graph with any topics/commands found in the book, which can be useful for searching and display later.  could also do some processing here to extract relevant sections or create embeddings for searching later, but for now just load and return the text.
 
@@ -1020,6 +1027,11 @@ class transcriber:
 
     def filter_books_recursive(self, folder="books", searchbooks=None, start_time=None, end_time=None):
         #get just name here..
+        if (start_time is None):
+            start_time = self.getTime(-365)
+        if (end_time is None):
+            end_time = self.getTime()        
+
         if (searchbooks is None):
             tree = folder.split('/')
             if (len(tree) == 1 and tree[0] == "books"):
@@ -1054,6 +1066,17 @@ class transcriber:
 
             
         return retstruct
+    
+    def get_all_of_type(self, type, myarray=[]):
+        ret = []
+        for v in myarray:
+            if (v['&&'] is not None):
+                cmds = v['&&'][v['(']:v[')']]
+                for cmd in cmds:
+                    if cmd['_'] == type:
+                        ret.append(cmd)
+
+        return ret
     
     def open_books(self, folder="books", days=365):
         #check recursively and if there are any files in the folder, open them as books.  
@@ -1174,7 +1197,8 @@ class transcriber:
 
             start_idx = 0
             end_idx = len(merged_cmds)-1
-            self.allcmds[lang] = {'**': lang, '&&': merged_cmds, 'cmds': merged_cmds, '..': last_mtime, 'last_mtime': last_mtime, 'start_time': start_time, 'end_time': end_time, 'start_idx': start_idx, 'end_idx': end_idx, 'open': True}            
+            self.allcmds[lang] = {'**': lang, '&&': merged_cmds, '..': last_mtime, '(': start_idx, ')': end_idx, 
+                                  'cmds': merged_cmds, 'last_mtime': last_mtime, 'start_time': start_time, 'end_time': end_time, 'start_idx': start_idx, 'end_idx': end_idx, 'open': True}            
             self.update_kg(lang, merged_cmds)
         else:
             #first read of lang.. only set last topic here if this is first read..
@@ -1206,3 +1230,11 @@ class transcriber:
             self.current_topic = self.allcmds[lastlang]['&&'][-1]['**']
         else:
             self.current_topic = None
+    
+    def ask_ollama(self, query, context="", model="gemma4:e4b"):
+        messages = [
+            {"role": "system", "content": "Answer the query using only the information provided in the prompt. Do not use any external knowledge"},
+            {"role": "user", "content": f"::CONTEXT:: {context} ::QUERY:: {query}"}
+            ]
+        response = ollama.chat(messages, context=context, model=model)
+        return response["message"]["content"]

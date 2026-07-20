@@ -740,3 +740,29 @@ So we always have quick key as last used subsequence..
 See if this displays in qr..
 Then add quick key handling..
 
+#https://standardebooks.org/ebooks
+
+#https://archive.org/
+
+#https://www.gutenberg.org/ebooks/categories
+start here..
+;> npm init playwright@latest
+create vectra vecbook from here and ask questions..
+Skip to end or read..
+
+> pip install ollama
+
+ask test..
+;[53,55,52]
+
+for now just use ollama query with context
+
+Book selection wrong order..
+--select_book_
+still not quite right I think..
+
+
+**extensions/vscode/codetutor/src/book.ts
+Dont display repeat entries when opening topic?
+
+
