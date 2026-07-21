@@ -765,4 +765,28 @@ still not quite right I think..
 **extensions/vscode/codetutor/src/book.ts
 Dont display repeat entries when opening topic?
 
+Need better display for links
+Split at | and adjust display.  
+Pipe not allowed in URL..
+Also need better reader ..
+
+
+**extensions/trey/trey.py
+**extensions/trey/test/watchtest.py
+Need to monitor book transcript..
+
+And open in playwright browser..
+
+[69] keys for
+find next/prev
+F4, SHIFT+F4
+
+
+>@ workbench.action.showAllEditors
+>@ workbench.action.quickOpenNavigateNextInEditorPicker
+>@ workbench.action.quickOpenPreviousRecentlyUsedEditorInGroup
+
+
+vectrafolder 
+change to fspath instead of path..
 

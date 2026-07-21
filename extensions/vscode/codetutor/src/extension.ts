@@ -995,7 +995,11 @@ export function activate(context: vscode.ExtensionContext) {
 				break;
 			case "#":
 				//open on web.
-				vscode.env.openExternal(vscode.Uri.parse(text.substring(1)));
+				let startstring = text.substring(1);
+				if (startstring.indexOf('|') !== -1) {
+					startstring = startstring.split('|')[1];
+				}
+				vscode.env.openExternal(vscode.Uri.parse(startstring));
 				//send to transcriber..
 				if (topic === ""){
 					const editor = vscode.window.activeTextEditor;
@@ -1004,6 +1008,7 @@ export function activate(context: vscode.ExtensionContext) {
 					}
 				}
 				writeToTranscriber("book", topic, text);
+
 
 
 				break;
@@ -1304,6 +1309,12 @@ const defstringDecorationType = vscode.window.createTextEditorDecorationType({
 	}
 });
 
+const linkDecorationType = vscode.window.createTextEditorDecorationType({
+	cursor: 'crosshair',
+	textDecoration: 'none; display: inline-block; transform: scale(0.75); font-size: 0.75em;'
+
+});
+
 function updateDecorations() {
 	if (!activeEditor) {
 		return;
@@ -1337,6 +1348,22 @@ function updateDecorations() {
 		defstringDecorations.push(decoration);
 	}
 	activeEditor.setDecorations(defstringDecorationType, defstringDecorations);
+
+	const linkRegex = /\n\#([\S]+)\|([\S]+)/g;
+	const linkDecorations: vscode.DecorationOptions[] = [];
+	while ((match = linkRegex.exec(text))) {
+//		console.log('match', match);
+		if (match.length > 2) {
+			console.log('found match', match);
+			const startIndex = match.index + match[1].length + 2;
+			const startPos = activeEditor.document.positionAt(startIndex);
+			const endPos = activeEditor.document.positionAt(startIndex + match[2].length+1); //for now also including |
+			const decoration = { range: new vscode.Range(startPos, endPos)};//, hoverMessage: 'Link **' + match[0] + '**' };
+			linkDecorations.push(decoration);
+		}
+		
+	}
+	activeEditor.setDecorations(linkDecorationType, linkDecorations);
 }
 
 

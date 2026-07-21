@@ -384,7 +384,7 @@ export function getSelectionInfo(editor: vscode.TextEditor | undefined): string 
     return selectionInfo;
 }
 
-export function writeToTranscriber(lang: string, topic: string = "", data : string = "",transcriptFolder: string = "C:/devinpiano/transcripts/"){
+export function writeToTranscriber(lang: string, topic: string = "", data : string = "",transcriptFolder: string = "C:/devinpiano/transcripts/", booksFolder="C:/devinpiano/books/"){
     let now = Book.formatDate();
     const mySettings = vscode.workspace.getConfiguration('mrrubato');	
     transcriptFolder = mySettings.get('transcriptfolder', transcriptFolder);
@@ -392,7 +392,8 @@ export function writeToTranscriber(lang: string, topic: string = "", data : stri
 
     if (!fs.existsSync(fname)) {
         //create the file if it doesn't exist.  
-        fs.writeFileSync(fname, "");
+        fs.mkdirSync(`${transcriptFolder}${lang}`, { recursive: true });
+        fs.writeFileSync(fname, "");  //dont think we need this..
     }
     if (topic === ""){
         topic = Book.currenttopic;
@@ -404,8 +405,25 @@ export function writeToTranscriber(lang: string, topic: string = "", data : stri
         transcriberTopics[lang] = topic;
     }
 
+    
     fs.appendFileSync(fname, `${data}\n`); //append command to topic.
 
+    //if this folder exists in books..
+    booksFolder = mySettings.get('booksfolder', booksFolder);
+    let bfname = `${booksFolder}${lang}`;
+    /*
+    if (!fs.existsSync(bfname)) {
+        //create the file if it doesn't exist.  
+        fs.mkdirSync(`${booksFolder}${lang}`, { recursive: true });
+        fs.writeFileSync(bfname, "");
+    }
+    */
+   if (fs.existsSync(bfname)) {
+        bfname = bfname + `/${now}.txt`;
+       fs.appendFileSync(bfname, `${data}\n`); //append command to book.
+   }
+
+//    if (fs.existsSync())
 }
 
 export function startWatchingTranscriber(lang: string, transcriptFolder: string = "C:/devinpiano/transcripts/"){
