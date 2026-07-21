@@ -359,6 +359,7 @@ def pnext(text, cacheno=-1, direction = 1):
         page_info = page_cache[cacheno]       
         page = page_info['page']
         body = page_info['body']
+        current_offset = page_info['current_offset'][page.url] if page.url in page_info['current_offset'] else 0
         if (page_info['tofind'] != text):
             print(f"Text to find changed from {page_info['tofind']} to {text}, calling pfind")
             return pfind(text, cacheno)
@@ -368,7 +369,12 @@ def pnext(text, cacheno=-1, direction = 1):
         current_index = page_info.get('current_tofind_index', -1)
         if (current_index < 0 or current_index >= len(positions)):
             if (len(positions) > 0):
-                current_index = 0 if direction == 1 else len(positions) - 1
+                for i, pos in enumerate(positions):
+                    if pos > current_offset:
+                        break
+                    current_index = i
+                else:
+                    current_index = 0 if direction == 1 else len(positions) - 1
             else:
                 return -1
 
@@ -376,6 +382,11 @@ def pnext(text, cacheno=-1, direction = 1):
             page_info['current_tofind_index'] = current_index + 1
         else:
             page_info['current_tofind_index'] = current_index - 1
+        if (current_index >= len(positions)):
+            current_index = 0
+        if (current_index < 0):
+            current_index = len(positions) - 1
+            
         logger.info(f'Finding text: {text} at offset {positions[current_index]}')
         #jump to this link in page.  if we have repetitive text, can potentially be problematic..
         ftext = body[positions[current_index]: positions[current_index]+len(text)*2]

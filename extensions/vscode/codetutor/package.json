@@ -84,6 +84,11 @@
           "default": "C:\\devinpiano\\transcripts\\",
           "description": "Relative path for transcripts."
         },
+        "mrrubato.booksfolder": {
+          "type": "string",
+          "default": "C:\\devinpiano\\books\\",
+          "description": "Relative path for books."
+        },
         "mrrubato.defaultprompts": {
           "type": "array",
           "items": {

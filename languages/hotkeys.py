@@ -12,9 +12,11 @@ import extensions.trey.playwrighty as playwrighty
 # Import Module
 import shutil
 
-from extensions.trey.trey import skip_lines
+from extensions.trey.trey import pause_reader, skip_lines
 from extensions.trey.trey import skip_lines
 import languages.helpers.transcriber as transcriber
+
+
 
 logger = logging.getLogger(__name__)
 
@@ -224,10 +226,10 @@ class hotkeys:
         "Page": [53,55,59], #also read screen
         "Click Link": [53,55,60], #also read screen
         "Find": [53,55,58], #Jump in screen
-        "Find Last": [53,55,52], #Jump in screen
         "Next": [53,55,56], #go to next location where this text is found..
         "Search Web": [53,55,61], #also read screen
         "Go Back": [53,55,51], 
+        "Ask": [53,55,52],
         "Close Tab": [53,56,59],
         "List Tabs": [53,56,61],
         "Select Tab": [53,56,60],
@@ -291,8 +293,9 @@ class hotkeys:
       "_Click Link": "_click_link",
       "Next": "next",
       "Find": "find",
-      "Find Last": "find_last",
       "_Find": "_find",
+      "_Ask": "_ask",
+      "Ask": "ask",
       "Search Web": "search_web",
       "Comment": "comment",
       "Select Type": "select_type",
@@ -344,10 +347,14 @@ class hotkeys:
 "> ": "click link", 
 "$$": "$linkno", 
 "&&": "0=current\n1=$linkno"},
-      "Find Last": {
-"> ": "find last", 
+      "Ask": {
+"> ": "ask",
+"$$": "$direction, $cacheno, &Query",
+"&&": "0=Ask &Query\n1=Ask &Query from $cacheno\n2=Ask &Query in $direction from $cacheno\nResponse can be quite long, just basic LLM query using long context from page.  "},
+      "Find": {
+"> ": "find", 
 "$$": "&Keyword", 
-"&&": "Not implemented.\nFind in page.."},
+"&&": "Find in page.."},
       "Search Web": {
 "> ": "search web", 
 "$$": "$engine, $cacheno, &keyword", 
@@ -768,6 +775,18 @@ class hotkeys:
       self.speak('No browser session active.')
     return 0
 
+  def _ask(self, sequence=[]):
+    logger.info(f'> _Ask {sequence}')
+    print("> _Ask called")
+    #get audio input for query.  
+    from extensions.trey.speech import listen_audio
+    at = listen_audio(15, "ask.wav") #assume some more time for question..
+    #at.join() #wait for it to finish.
+    #have to just use some keys until this is done.  
+    #need to return 1 to indicate we need more keys.
+    #but this is only called once.  
+    return 1
+  
   def _find(self, sequence=[]):  
     logger.info(f'> _Find {sequence}')
     print("> _Find called")
@@ -1018,6 +1037,52 @@ class hotkeys:
 
     return 0
 
+  
+  def ask(self, sequence=[]):
+    logger.info(f'> Ask {sequence}')
+    query = "What are you doing?"
+    from extensions.trey.speech import transcribe_audio, transcribe_audio_whisper
+#    self.transcript = transcribe_audio("ask.wav")
+    self.transcript = transcribe_audio_whisper("ask.wav") #try whisper for better accuracy.  This is slower but hopefully more accurate, especially for short queries.
+    logger.info('$$AUDIO = ' + self.transcript)
+    if (self.transcript != ""):
+      query = self.transcript
+      self.transcripthistory.append(self.transcript)
+
+
+    cacheno = -1
+    print(sequence)
+    direction = 1
+    if (len(sequence) > 0):
+      cacheno = sequence[-1]-self.keybot - 1
+    if (len(sequence) > 1):
+      direction = 1 if sequence[-2]-self.keybot > 0 else -1
+    if (cacheno < 0):
+      cacheno = playwrighty.current_cache
+
+    #for now just query ollama?  better if we have vectra or qdrantz..
+    end_offset = playwrighty.page_cache[cacheno]['offset']
+    context_length = 50000
+    start_offset = end_offset - context_length
+    if (direction > 0):
+      start_offset = end_offset
+      end_offset = start_offset + context_length
+    if (start_offset < 0):
+      start_offset = 0
+    if (end_offset > len(playwrighty.page_cache[cacheno]['body'])):
+      end_offset = len(playwrighty.page_cache[cacheno]['body'])
+
+    context = playwrighty.page_cache[cacheno]['body'][start_offset:end_offset]
+    answer = self.transcriber.ask_ollama(query, context=context, model="gemma4:e4b")
+    vars = {"DIRECTION": direction, "URL": playwrighty.page_cache[cacheno]['url'], "(": start_offset, ")": end_offset, "ANSWER": answer}
+    self.func = "ask"
+    self.set_qr(self.func, vars)
+    from extensions.trey.trey import pause_reader
+    pause_reader()
+    #for now just pause reader
+    self.speak(f'{answer}')
+
+
 
   def find(self, sequence=[]):
     logger.info(f'> Find {sequence}')
@@ -1033,10 +1098,11 @@ class hotkeys:
 
     cacheno = -1
     print(sequence)
-
+    direction = 1
     if (len(sequence) > 0):
       cacheno = sequence[-1]-self.keybot - 1
-
+    if (len(sequence) > 1):
+      direction = 1 if sequence[-2]-self.keybot > 0 else -1
     if (cacheno < 0):
       cacheno = playwrighty.current_cache
     
@@ -1047,7 +1113,7 @@ class hotkeys:
     speak(f'Searching for: {query}')
 #    print(body_text)
     #find in current page text.  
-    offset = playwrighty.pfind(query, cacheno)
+    offset = playwrighty.pfind(query, cacheno, direction=direction)
     #skip to this offset..
     print(f'Found at offset {offset}')
     logger.info(f'$$FOUND_OFFSET={offset}')
@@ -1063,24 +1129,6 @@ class hotkeys:
     logger.info(f'$$FOUND={query}')
 
     return 0
-
-
-#not used for now..
-  def find_last(self, sequence=[]):
-    if (len(sequence) < 1):
-      sequence = [53] #default to first link
-    logger.info(f'> Find Last {sequence}')
-    #find the current link from our reading.  
-    if (playwrighty.mybrowser is not None):
-      current_cache = playwrighty.current_cache
-      if (current_cache >= 0 and current_cache < len(playwrighty.page_cache)):
-        #get queue for reading.
-        q2 = playwrighty.page_cache[current_cache]['reader_queue']
-        total_read = 0
-        while (q2 is not None and not q2.empty()):
-          total_read = q2.get() #get current link number.  
-          #find last link read.  
-        return playwrighty.pfind(sequence[-1]-self.keybot, current_cache, text_offset=total_read)
 
 
 

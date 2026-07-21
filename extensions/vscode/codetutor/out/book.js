@@ -969,54 +969,68 @@ function updatePage(filePath, text, linefrom = 0, lineto = 0, show = false) {
     // this should be a book path.  Use as you would work on the project.  
     const fileUri = folderUri.with({ path: path_1.posix.join(folderUri.path, filePath) });
     const copyUri = filePath.split("/").pop(); //last part of file path
+    const mySettings = vscode.workspace.getConfiguration('mrrubato');
+    //do we need two copies?  
     try {
-        const mySettings = vscode.workspace.getConfiguration('mrrubato');
         const transcriptFolder = mySettings.get('transcriptfolder', 'C:\\devinpiano\\transcripts\\');
-        fs.appendFileSync(path_1.posix.join(transcriptFolder, 'genbook\\' + copyUri), text, 'utf-8'); //write the text to the transcript folder for backup and analysis.
+        fs.appendFileSync(path_1.posix.join(transcriptFolder, 'genbook\\' + copyUri), text + "\n", 'utf-8'); //write the text to the transcript folder for backup and analysis.
     }
     catch (error) {
         console.error(`Error writing file: ${error}`);
     }
-    const wsEdit = new vscode.WorkspaceEdit();
-    wsEdit.createFile(fileUri, { ignoreIfExists: true });
-    vscode.workspace.applyEdit(wsEdit).then(() => {
-        vscode.workspace.openTextDocument(fileUri).then((document) => {
-            vscode.window.showTextDocument(document).then((editor) => {
-                /*
-            const editor = vscode.window.visibleTextEditors.find(
-                (editor) => editor.document.uri.fsPath === document.uri.fsPath
-            );
-            */
-                //        let editor = document.editor;
-                editor.edit(editBuilder => {
-                    if (lineto === 0 && linefrom === 0) {
-                        var firstLine = editor.document.lineAt(0);
-                        var lastLine = editor.document.lineAt(editor.document.lineCount - 1);
-                        var textRange = new vscode.Range(firstLine.range.start, lastLine.range.end);
-                        editBuilder.replace(textRange, text); //replace the entire document with the new text.
-                    }
-                    else if (lineto === -1 && linefrom === -1) {
-                        //append to the end of the document.
-                        var lastLine = editor.document.lineAt(editor.document.lineCount - 1);
-                        var textRange = new vscode.Range(lastLine.range.end, lastLine.range.end);
-                        editBuilder.insert(textRange.start, "\n" + text); //append the text to the end of the document.
-                    }
-                }).then(() => {
-                    // Optionally, you can show a message to indicate the file has been updated
-                    if (!show) {
-                        //                        vscode.commands.executeCommand('workbench.action.closeActiveEditor');
-                        setTimeout(() => {
-                            vscode.commands.executeCommand("workbench.action.openPreviousRecentlyUsedEditor");
-                        }, 400); //wait a second before going back to previous editor.
-                    }
-                    else {
-                        //still go back to previous editor?  maybe not just boolean for more possibilities.
-                        //                        vscode.commands.executeCommand("workbench.action.openPreviousRecentlyUsedEditor");                         
-                    }
+    const genbookfolder = mySettings.get('genbookfolder', 'genbook');
+    if (filePath.startsWith(genbookfolder)) {
+        //dont open just for logging.. just write..
+        try {
+            console.log('writing to ' + path_1.posix.join(folderUri.path, genbookfolder + "\\" + copyUri));
+            fs.appendFileSync(path_1.posix.join(folderUri.fsPath, genbookfolder + "\\" + copyUri), text + "\n", 'utf-8');
+        }
+        catch (error) {
+            console.error(`Error writing file: ${error}`);
+        }
+    }
+    else {
+        const wsEdit = new vscode.WorkspaceEdit();
+        wsEdit.createFile(fileUri, { ignoreIfExists: true });
+        vscode.workspace.applyEdit(wsEdit).then(() => {
+            vscode.workspace.openTextDocument(fileUri).then((document) => {
+                vscode.window.showTextDocument(document).then((editor) => {
+                    /*
+                const editor = vscode.window.visibleTextEditors.find(
+                    (editor) => editor.document.uri.fsPath === document.uri.fsPath
+                );
+                */
+                    //        let editor = document.editor;
+                    editor.edit(editBuilder => {
+                        if (lineto === 0 && linefrom === 0) {
+                            var firstLine = editor.document.lineAt(0);
+                            var lastLine = editor.document.lineAt(editor.document.lineCount - 1);
+                            var textRange = new vscode.Range(firstLine.range.start, lastLine.range.end);
+                            editBuilder.replace(textRange, text); //replace the entire document with the new text.
+                        }
+                        else if (lineto === -1 && linefrom === -1) {
+                            //append to the end of the document.
+                            var lastLine = editor.document.lineAt(editor.document.lineCount - 1);
+                            var textRange = new vscode.Range(lastLine.range.end, lastLine.range.end);
+                            editBuilder.insert(textRange.start, "\n" + text); //append the text to the end of the document.
+                        }
+                    }).then(() => {
+                        // Optionally, you can show a message to indicate the file has been updated
+                        if (!show) {
+                            //                        vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+                            setTimeout(() => {
+                                vscode.commands.executeCommand("workbench.action.openPreviousRecentlyUsedEditor");
+                            }, 400); //wait a second before going back to previous editor.
+                        }
+                        else {
+                            //still go back to previous editor?  maybe not just boolean for more possibilities.
+                            //                        vscode.commands.executeCommand("workbench.action.openPreviousRecentlyUsedEditor");                         
+                        }
+                    });
                 });
             });
         });
-    });
+    }
 }
 async function fixVectraError(filePath) {
     if (filePath.path in exports.vectrafixes) {

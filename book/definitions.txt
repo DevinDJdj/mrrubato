@@ -60,7 +60,7 @@ Shorthand
 
 -> Leads to
 
-# comments (shell) to something or reference from (link)
+# comments (shell) to something or reference from (link or linkdesc|link)
 ## referenced lookup again.  
 
 // filepath or DB path
@@ -77,6 +77,7 @@ Shorthand
 Leading OPEN:
 & = and? (Latin) or inline sign (&int; &sum; &prod; &radic;)
 +
+? = leading is if exists, ending is open question
 % = wild? or modulate/random? 
 ^ = generate (Exponentiate)
 _ = pre-requisite /test?
@@ -99,7 +100,6 @@ QUOTESETS:
 ( ) = Start/end index
 { } 
 "" = key phrase
-? 
 
 Ending ...
 Annotate with leading space or something else?  
