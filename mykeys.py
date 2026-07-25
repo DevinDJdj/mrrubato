@@ -592,9 +592,10 @@ class MyKeys:
       if (not isinstance(action, int)):
         action = -1
     except Exception as e:
-      logger.error(f'Error in act for {cmd} in {l}: {e}')
       import traceback
+      print(f'!!<<{l}>> {cmd} \n {e}\n {traceback.format_exc()}')
       traceback.print_exc()
+      logger.error(f'!!<<{l}>> {cmd} \n {e}\n {traceback.format_exc()}')
       action = -1 #error, reset sequence
     localseq = self.words[-1]['sequence'] if len(self.words) > 0 else []
     if (action == -1):

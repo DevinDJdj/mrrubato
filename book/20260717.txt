@@ -21,3 +21,5 @@ Some issue with mykeys, not detecting midi keyboard for input..
 >#1 cd C:/devinpiano/music/mrrubato
 
 >#1 python ./record.py --description  "Weve Only Just Begun (Roger Nichols)"
+
+>#1 python ./record.py --description  "Op 27 No 2 (Beethoven)"
