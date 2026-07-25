@@ -45,7 +45,8 @@ export default class LANG {
                 "LEFT": [0,-4,-5],
                 "RIGHT": [0,-4,-3],
                 "GENBOOK": [0,-3,-2],
-                "BOOK": [0,-3,-4]
+                "BOOK": [0,-3,-4],
+                "READALOUD": [0,-6,-1]
 
             },
 
@@ -64,6 +65,24 @@ export default class LANG {
         this.funcdict["HIGHLIGHT"] = (cls, sequence, words) => { 
             console.log("base highlight", cls.highlight);
             cls.highlight = !cls.highlight; 
+            return 0; //no action, just a generic keypress
+        };
+        this.funcdict["READALOUD"] = (cls, sequence, words) => {
+            console.log("base readaloud", sequence, words);
+            const mySettings = vscode.workspace.getConfiguration('mrrubato');	
+            let toreadaloud = !mySettings.get('readaloud', false);
+            if (toreadaloud){
+                vscode.commands.executeCommand('workbench.action.chat.nextCodeBlock');
+                vscode.commands.executeCommand('workbench.action.chat.readChatResponseAloud');
+            }
+            else{
+                vscode.commands.executeCommand('workbench.action.chat.open', "@mr /stop");            
+            }
+            mySettings.update(
+                    'readaloud', 
+                    toreadaloud, 
+                    vscode.ConfigurationTarget.Global // Saves to User settings
+                );
             return 0; //no action, just a generic keypress
         };
         this.funcdict["HOME"] = this.home;

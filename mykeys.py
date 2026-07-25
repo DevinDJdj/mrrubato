@@ -589,6 +589,8 @@ class MyKeys:
     orig = ss.copy()
     try:
       action = self.languages[l].act(cmd, self.words, ss, doact=doact)
+      if (not isinstance(action, int)):
+        action = -1
     except Exception as e:
       logger.error(f'Error in act for {cmd} in {l}: {e}')
       import traceback

@@ -113,13 +113,17 @@ class book:
     for c in book:
       if (c['_']=='#'):
         linkcnt += 1
-        self.ext_links.append(c['&&'])
+        self.ext_links.append(c)
         if (c['**'] not in self.alltopics):
           self.alltopics[c['**']] = {'#': [], '..': c['..'], ':': -1} #for now just link info..
         self.alltopics[c['**']]['#'].append(c)
         self.alltopics[c['**']][':'] += 1 #for now represents topic link index..
 
+
+    self.ext_links.sort(key=lambda x: x['..'], reverse=True)
+    logger.info(f'External link info: {self.ext_link_index} / {len(self.ext_links)} {self.ext_links[self.ext_link_index] if self.ext_link_index < len(self.ext_links) else "N/A"}')
     logger.info(f'Loaded {len(self.ext_links)} links from book transcripts, across {len(self.alltopics)} topics. Link count: {linkcnt}')
+
 
 
     return 0
@@ -139,6 +143,8 @@ class book:
         "Select Book": [50,53,57], #open topic
         "Select Topic": [50,54,57], #open topic
         "Read Link": [50,52,57], #read link on page, need to add link reading to book context first.
+#        "Select Bookmark": [53,58,57], #try to correlate
+
       },
     }
     if (self.name in self.config['languages']):
@@ -253,18 +259,21 @@ class book:
   def load_book_links(self, book):
     if (book is not None and book in self.transcriber.allcmds and book not in self.book_links):
       mybook = self.transcriber.filter_books_recursive(book)
+      logger.info(f'&& {mybook}')
       myarray = self.transcriber.relevant_book_array(mybook) #get list of books for selection.
       ext_links = self.transcriber.get_all_of_type('#', myarray=myarray)
       ext_links.sort(key=lambda x: x['..'], reverse=True) #sort so 0 index is now..
       self.book_links[book] = {'#': ext_links, ':': 0}
+      ext_links = self.book_links[book]
     elif (book in self.book_links):
       ext_links = self.book_links[book]
     else:
-      ext_links = []
+      ext_links = {'#': [], ':': 0}
+    logger.info(f'-- {len(ext_links["#"])} links from {book}')
     return ext_links
   
 
-  def get_ext_link_index(self, linkno=0, current_time=None, book=None):
+  def get_ext_link_index(self, linkno=0, current_time=None, book=None, update=False):
     t = current_time if current_time is not None else self.transcriber.mytime
     #find most recent link before current time.
     _isbook = True if book is not None else False
@@ -275,47 +284,51 @@ class book:
       if (len(mylinks['#']) > 0):
         index = mylinks[':']
 
-        if (index + linkno < 0):
-          index = len(mylinks['#']) - 1 #wrap?
-        elif (index + linkno >= len(mylinks['#'])):
-          index = 0 #wrap?
-        else:
-          index += linkno
-        mylinks[':'] = index
-        return index, mylinks
-    
+        if update:
+          if (index + linkno < 0):
+            index = len(mylinks['#']) - 1 #wrap?
+          elif (index + linkno >= len(mylinks['#'])):
+            index = 0 #wrap?
+          else:
+            index += linkno
+          mylinks[':'] = index
+        return index, mylinks['#']
+      else:
+        return -1, []
+      
     else:
       #not sure we need this full list..
       index = self.ext_link_index
-      link = self.ext_links[index] if index >= 0 and index < len(self.ext_links) else None
-      if (link is not None and link['..'] > t):
-        #need to go back in time to find the most recent link before current time.
-        while (index > 0 and self.ext_links[index]['..'] > t):
-          index -= 1
-        while (index < len(self.ext_links) and self.ext_links[index]['..'] <= t):
-          index += 1
+      #adjust for time perhaps later..
 
-        if (index + linkno < 0):
-          index = 0
-        elif (index + linkno >= len(self.ext_links)):
-          index = len(self.ext_links)-1
-        else:
-          index += linkno
+      link = self.ext_links[index] if index >= 0 and index < len(self.ext_links) else None
+      if (link is not None):
+        #need to go back in time to find the most recent link before current time.
+
+        if (update):
+          if (index + linkno < 0):
+            index = 0
+          elif (index + linkno >= len(self.ext_links)):
+            index = len(self.ext_links)-1
+          else:
+            index += linkno
+          self.ext_link_index = index
         return index, self.ext_links
-    return -1, []
+      else:
+        return -1, []
 
   def read_link_(self, sequence=[]):
     logger.info(f'> Read Link_ {sequence}')
     #need to get content for this link and read it.  For now just speak the link text, but ideally we would get the content of the link and read that instead.
     _booktopic = False
     if (len(sequence) > 0):
-      linkno = self.mid - sequence[-1]
       if (sequence[-1] == self.keybot): #dont adjust if keybot, 
         return 1
       if (sequence[0] == _META): #not sure this selection sequence is great..
         _booktopic = True        
       if (sequence[0] == _META and len(sequence)==1):
         _booktopic = True #dont adjust newidx
+        linkno = 0
       else:
         linkno = self.mid - sequence[-1]
     else:
@@ -334,12 +347,22 @@ class book:
       return -1
     self.func = "Read Link_"
     #should make this more general.. send last ten links
-    last15 = links[max(0, linkno-10):min(linkno+10, len(links))]
+    last15 = links[max(0, index-11):min(index+13, len(links))]
+    last15.reverse()
     #does this match up with keys?  
     vars = {}
+    start = 0
+#    if len(self.ext_links) < 12:
+#      start = 12 - len(self.ext_links) + self.ext_link_index + 1
+    
+    if len(links) - index < 12:
+      start = 12 - len(links) + index + 1
+    vars[':'] = index
+    vars['link'] = links[index]['&&']
+
     for i, l in enumerate(last15):
-      vars[f'{i}'] = l['&&']
-    vars['idx'] = linkno
+      vars[f'{i+start}'] = l['&&']
+    vars['linkno'] = linkno
 
     self.set_qr(self.func, vars)
 
@@ -352,6 +375,7 @@ class book:
     #topic, then link within topic.  For now just use current topic..
     #-1 to list all?
     linkno = 0
+    _booktopic = False
     if (len(sequence) > 0):
       if (sequence[0] == _META): #not sure this selection sequence is great..
         _booktopic = True        
@@ -365,14 +389,18 @@ class book:
     index = 0
     links = []
     if (_booktopic):
-      index, links = self.get_ext_link_index(linkno, None, self.transcriber.current_book) #book links only..
+      index, links = self.get_ext_link_index(linkno, None, self.transcriber.current_book, update=True) #book links only..
     else:
-      index, links = self.get_ext_link_index(linkno) #global
+      index, links = self.get_ext_link_index(linkno, update=True) #global
+
 
     if (index != -1):
+
       link = links[index]
+      logger.info(f'Reading link: {index} {link["&&"]}')
       playwrighty.read_page(link['&&']) #need to get content for this link and read it. 
       #this should open up the page, then we can read aloud if we want..
+
     else:
       logger.error(f'Invalid link number: {linkno}')
       return -1
@@ -511,8 +539,11 @@ class book:
     vars['context'] = ctxt.replace('\n', '<br>')
 
     start = 0
-#    if self.selectedtopicindex < 12:
-#      start = 12 - self.selectedtopicindex
+    if len(self.bookarray) - self.selectedbookindex < 12:
+      start = 12 - (len(self.bookarray) - self.selectedbookindex)
+#      start = 12 - len(self.bookarray) + self.selectedbookindex + 1
+    vars['idx'] = self.selectedbookindex
+    vars[':'] = self.selectedbookindex
     for i, l in enumerate(last15):
       i = i + start
       vars[f'{i}'] = l

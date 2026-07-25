@@ -790,3 +790,55 @@ F4, SHIFT+F4
 vectrafolder 
 change to fspath instead of path..
 
+
+Need general setting to control speech on/off..
+change via _META..
+
+
+**languages/book.py
+--read_link
+listing logic and order still all wrong
+OK, finally can list and select..
+
+See if we can list from book only..
+
+**mykeys.py
+Not sure if we can chain commands..
+But it is causing some problem with qr help display after word selection..
+
+**extensions/vscode/codetutor/src/languages/base.ts
+[69,63,68]
+Test adjust readChatResponseAloud
+
+
+**extensions/trey/trey.py
+--play_in_background
+Have to 
+
+after
+;> Ask handler..
+display in overlay..
+Adjust overlay opacity?  
+Add to ctxt?  
+
+Also need better fuzzy search before query.  
+Lots of misspelling with all this Greek..
+
+**languages/helpers/transcriber.py
+trey Load speed too slow..
+--read_midi
+--search_midi
+temporarily remove
+
+test 
+;> Select Tab_
+
+> ollama pull numind/nuextract3
+#https://documentation.nuextract.ai/ebd//
+
+**languages/hotkeys.py
+--get_entities
+
+**extensions/trey/trey.py
+--visualize_kg
+use similar..

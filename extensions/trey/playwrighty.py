@@ -935,10 +935,13 @@ def cache_page(url, page, body_text, link_data, cacheno=-1):
     if cacheno >= 0 and cacheno < len(page_cache):
         page_cache[cacheno] = {'timestamp': time.time(), 'url': url, 'page': page, 'current_offset': page_cache[cacheno].get('current_offset', {url: 0}), 'body': body_text, 'links': link_data, 'title' : page.title(), 'reader_queue': page_cache[cacheno].get('reader_queue', None), 'sim_queue': page_cache[cacheno].get('sim_queue', None), 'reader_stop_event': page_cache[cacheno].get('reader_stop_event', None)}            
     else:
-        page_cache.append({'timestamp': time.time(), 'url': url, 'page': page, 'current_offset': {url: 0}, 'body': body_text, 'links': link_data, 'title' : page.title(), 'reader_queue': None, 'sim_queue': None, 'reader_stop_event': None})
-        cacheno = len(page_cache) - 1
+        #set new pages to head.. now = 0
+        page_cache.insert(0, {'timestamp': time.time(), 'url': url, 'page': page, 'current_offset': {url: 0}, 'body': body_text, 'links': link_data, 'title' : page.title(), 'reader_queue': None, 'sim_queue': None, 'reader_stop_event': None})
+        cacheno = 0
     return cacheno
 
+
+    
 def get_bookmark_list():
     global bookmarks
     info = ""

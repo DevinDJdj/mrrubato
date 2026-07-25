@@ -42,6 +42,7 @@ asr_model = None
 whisper_model = None
 kokoro_pipeline = None
 transcript_info = None
+bg_procs = []
 
 # 3. Define text pipeline:
 @sb.utils.data_pipeline.takes("words")
@@ -735,7 +736,30 @@ def set_volume(fname="example_tts.wav", volume=1.0):
     wav.write(fname, samplerate, adjusted_data)
     return fname
 
+
+def close_bg_procs():
+    global bg_procs
+    for bg_proc in bg_procs:
+        try:
+            bg_proc.terminate()
+            # Wait up to 5 seconds for the process to exit
+            bg_proc.wait(timeout=5)
+            print("Process terminated gracefully.")
+
+        except subprocess.TimeoutExpired:
+            # If the timeout expires, the process is still running
+            print("Termination failed. Force-killing process...")
+            bg_proc.kill()
+            
+            # Clean up the process completely
+            bg_proc.wait()
+            print("Process forcefully killed.")
+        
+
+    bg_procs = []
+
 def speak_cmd(text="", fname="example_tts.wav", voice='af_heart', vol=1.0, speed=1.0, skip=0, cacheno=-1, engine='kokoro-tts'):
+    global bg_procs
 #    thread1 = threading.Thread(target=speak, args=(f'{text}',f'{fname}',f'{voice}',vol,speed,'kokoro-tts'))
 #    thread1.start()
     #why we have to do this.. if we call directly it is far too slow..
@@ -746,10 +770,11 @@ def speak_cmd(text="", fname="example_tts.wav", voice='af_heart', vol=1.0, speed
         with open(infile, "w", encoding="utf-8") as f:
             f.write(text)
         cmd = f'python ./generate/generatetts.py --infile "{infile}" --fname "{fname}" --voice "{voice}" --vol {vol} --speed {speed} --skip {skip} --cacheno {cacheno} --engine {engine}'
-        subprocess.Popen(
+        bg_proc = subprocess.Popen(
             cmd,
             shell=True
         )
+        bg_procs.append(bg_proc)
         suc = ""
                 
         #suc = os.system(cmd)

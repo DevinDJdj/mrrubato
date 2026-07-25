@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 import extensions.trey.playwrighty as playwrighty
 # Import Module
 import shutil
+import json
 
 from extensions.trey.trey import pause_reader, skip_lines
 from extensions.trey.trey import skip_lines
@@ -37,6 +38,7 @@ class hotkeys:
     self.name = "hotkeys"
     self.keybot = 53 #
     self.keymid = 7 #middle C for bbox calc
+    self.mid = 60 #middle C for bbox calc    
     self.keyoffset = 5 #offset within octave mapping
     self.links = []
     self.currentlinks = []
@@ -713,7 +715,19 @@ class hotkeys:
     return 0
 
 
+  def adjust_playwrighty_index(self, idx=0):
+    if idx+playwrighty.current_cache < 0:
+      return 0
+    elif (idx+playwrighty.current_cache) >= len(playwrighty.page_cache):
+      return len(playwrighty.page_cache)-1
+    else:
+      return playwrighty.current_cache + idx
+    return playwrighty.current_cache
+  
   def select_tab_(self, sequence=[]):
+    self.func = "Select Tab_"
+    vars = {}
+    cacheno = 0
     if (len(sequence) > 0) and sequence[-1] != self.keybot:
 
       logger.info(f'> Select Tab_ {sequence}')
@@ -722,36 +736,38 @@ class hotkeys:
       testing = True
       if (playwrighty.mybrowser is not None and testing):
 
-        vars = {}
-        for (i, page_info) in enumerate(playwrighty.page_cache[-15:]):          
-          print(f'Tab {i}: {page_info["url"]}')
-          logger.info(f'Tab {i}: {page_info["url"]}')
-          vars[str(i)] = page_info["title"]
 
-        from extensions.trey.trey import pause_reader, resume_reader, stop_audio
-        pause_reader(playwrighty.current_cache) #pause first before clicking link.
-        time.sleep(0.5) #wait for pause to take effect.  Need better way to ensure this.
+        cacheno = self.adjust_playwrighty_index(self.mid-sequence[-1])
 
-        self.func = "Select Tab_"
-        linkno = sequence[-1]-self.keybot
-        if (linkno < 0 or linkno >= len(playwrighty.page_cache)):
-          linkno = len(playwrighty.page_cache)-1
 
-        vars['idx'] = linkno
-        #show title..
-        vars['title'] = playwrighty.page_cache[linkno]["title"]
+        self.speak(f'--{playwrighty.page_cache[cacheno]["title"]}')
+      last15 = playwrighty.page_cache[max(0, playwrighty.current_cache-11):min(playwrighty.current_cache+13, len(playwrighty.page_cache))]
+      last15.reverse() #reverse to match with Future:Past order in display.. [48 - 68]
+      start = 0
+      if len(playwrighty.page_cache) < 12:
+        start = 12 - len(playwrighty.page_cache) + playwrighty.current_cache + 1
+        vars['idx'] = playwrighty.current_cache
+        vars[':'] = playwrighty.current_cache
+      else:
+        vars['idx'] = playwrighty.current_cache
+      for i, l in enumerate(last15):
+        n = i + start
+        vars[f'{n}'] = l['title']
+  #          vars[f'href{i}'] = l['href']
+      self.set_qr(self.func, vars)
+      vars['idx'] = cacheno
+      #show title..
+      vars['title'] = playwrighty.page_cache[cacheno]["title"]
 
-        self.set_qr(self.func, vars)
-        self.speak(f'--{playwrighty.page_cache[linkno]["title"]}')
-        resume_reader(playwrighty.current_cache) #resume after speaking link number.
+      self.set_qr(self.func, vars)
     return 1
   
   def select_tab(self, sequence=[]):
     logger.info(f'> Select Tab {sequence}')
     if (playwrighty.mybrowser is not None):
-      select_index = 0
+      select_index = playwrighty.current_cache
       if (len(sequence) > 0):
-        select_index = sequence[-1]-(self.keybot) #offset from middle C
+        select_index = self.adjust_playwrighty_index(self.mid-sequence[-1])
       logger.info(f'Selecting Tab with index {select_index} of {len(playwrighty.page_cache)}')
       if (select_index >= 0 and select_index < len(playwrighty.page_cache)):
         from extensions.trey.trey import pause_reader, resume_reader, stop_audio
@@ -964,7 +980,7 @@ class hotkeys:
               fname = '../transcripts/' + self.name + '/' + self.feedbacknowstr + '.wav'
               vars['FILE'] = fname
             shutil.copy('feedback.wav', fname) #keep a copy for training..
-            self.transcriber.write(self.name, "Record Feedback", vars)  
+            self.transcriber.write(self.name, "Record Feedback", vars, save=True)  
             self.set_qr("Record Feedback", vars) #update QR with feedback data for debugging and record keeping.
           except Exception as e:
             print(f'Error writing feedback file: {e}')
@@ -1037,6 +1053,141 @@ class hotkeys:
 
     return 0
 
+  def get_entities(self, context, query):
+    template = {
+      "invoice_number": "verbatim-string",
+      "invoice_date": "date",
+      "total_amount": "number",
+      "currency": "currency",
+      "line_items": [
+        {
+          "description": "verbatim-string",
+          "item_type": ["electronics", "clothing", "vehicle", "furniture", "other"],
+          "quantity": "integer",
+          "unit_price": "number",
+          "total": "number"
+        }
+      ]
+    }
+    template = [{
+      "type": "string",
+      "entities": [
+        {
+          "name": "verbatim-string",
+          "type": "string",
+          "relationships": [
+            {
+              "type": "string",
+              "target-name": "verbatim-string"
+            }
+          ]
+        }
+      ]
+    }]
+    examples = [
+      {
+        "type": "Social Graph",
+        "entities": [
+          {
+            "name": "Paul",
+            "type": "person",
+            "relationships": [
+              {
+                "type": "friend",
+                "target-name": "John"
+              }, 
+              {
+                "type": "wife", 
+                "target-name": "Mary"
+              }, 
+              { 
+                "type": "colleague",
+                "target-name": "Bob"
+              }, 
+              {
+                "type": "organization",
+                "target-name": "Google"
+              }
+            ]
+          }, 
+          {
+            "name": "Google",
+            "type": "organization",
+            "relationships": [
+              {
+                "type": "parent", 
+                "target-name": "Alphabet"
+              }, 
+              { 
+                "type": "child",
+                "target-name": "YouTube"
+              }, 
+              {
+                "type": "child", 
+                "target-name": "Nest Labs"
+              },
+              {
+                "type": "competitor",
+                "target-name": "Microsoft"
+              }, 
+              {
+                "type": "customer",
+                "target-name": "Apple"
+              }
+            ]
+
+          }, 
+          { 
+            "name": "GitHub",
+            "type": "organization",
+            "relationships": [
+              {
+                "type": "parent", 
+                "target-name": "Microsoft"
+              }, 
+              { 
+                "type": "competitor",
+                "target-name": "SourceForge"
+              }
+            ]
+
+          }
+        ]
+      }, 
+      {
+        "type": "Time Graph", 
+        "entities": [
+
+        ]
+      },
+      {
+        "type": "Site Graph", 
+        "entities": [
+
+        ]
+      },
+      {
+        "type": "Knowledge Graph",
+        "entities": [
+        ]
+      },
+      {
+        "type": "Dependency Graph",
+        "entities": [
+        ]
+      }
+      
+    ]
+
+    input_llm = "<|input|>\n### Template:\n" + json.dumps(template, indent=4) + "\n"
+    for example in examples:
+        if example != "":
+            input_llm += "### Example:\n" + json.dumps(json.loads(example), indent=4) + "\n"
+
+    input_llm += "### Text:\n" 
+    input_llm += f"::CONTEXT:: \n\n{context}\n\n::QUERY:: {query}"
+    input_llm += "\n<|output|>\n"
+    answer = self.transcriber.ask_ollama(context=input_llm, model="numind/nuextract3")
   
   def ask(self, sequence=[]):
     logger.info(f'> Ask {sequence}')
@@ -1061,8 +1212,11 @@ class hotkeys:
       cacheno = playwrighty.current_cache
 
     #for now just query ollama?  better if we have vectra or qdrantz..
-    end_offset = playwrighty.page_cache[cacheno]['offset']
-    context_length = 50000
+    url = playwrighty.page_cache[cacheno]['page'].url
+    offset = playwrighty.page_cache[cacheno]['current_offset'][url]
+
+    context_length = 100000 #for example..
+    end_offset = offset
     start_offset = end_offset - context_length
     if (direction > 0):
       start_offset = end_offset
@@ -1073,14 +1227,16 @@ class hotkeys:
       end_offset = len(playwrighty.page_cache[cacheno]['body'])
 
     context = playwrighty.page_cache[cacheno]['body'][start_offset:end_offset]
-    answer = self.transcriber.ask_ollama(query, context=context, model="gemma4:e4b")
-    vars = {"DIRECTION": direction, "URL": playwrighty.page_cache[cacheno]['url'], "(": start_offset, ")": end_offset, "ANSWER": answer}
+    answer = self.transcriber.ask_ollama(context=f"::CONTEXT:: \n\n{context}\n\n::QUERY:: {query}", model="gemma4:e4b")
+    entities = self.get_entities(context, query)
+    vars = {"DIRECTION": direction, "URL": playwrighty.page_cache[cacheno]['page'].url, "(": start_offset, ")": end_offset, "ANSWER": answer}
     self.func = "ask"
     self.set_qr(self.func, vars)
     from extensions.trey.trey import pause_reader
     pause_reader()
     #for now just pause reader
     self.speak(f'{answer}')
+    return 0
 
 
 
@@ -1291,15 +1447,34 @@ class hotkeys:
     from extensions.trey.trey import pause_reader
     cacheno = -1
     if (len(sequence) > 0):
-      cacheno = sequence[-1]-self.keybot -1
-    pause_reader()
-    self.add_bookmark()
+      cacheno = sequence[-1]-self.keybot
+      logger.info(f'Selecting Tab with index {cacheno} of {len(playwrighty.page_cache)}')
+      if (cacheno >= 0 and cacheno < len(playwrighty.page_cache)):
+        from extensions.trey.trey import pause_reader, resume_reader, stop_audio
+
+        pause_reader(cacheno)
+      else:
+        pause_reader(playwrighty.current_cache)
+    else:
+      pause_reader()
+    self.add_bookmark(sequence) #pass cacheno if passed..
     return 0
 
   def resume_reader(self, sequence=[]):
     logger.info(f'> Resume Reader {sequence}')
     from extensions.trey.trey import resume_reader
-    resume_reader()
+    select_index = 0
+    if (len(sequence) > 0):
+      select_index = sequence[-1]-(self.keybot) #offset from middle C
+      logger.info(f'Selecting Tab with index {select_index} of {len(playwrighty.page_cache)}')
+      if (select_index >= 0 and select_index < len(playwrighty.page_cache)):
+        from extensions.trey.trey import pause_reader, resume_reader, stop_audio
+
+        resume_reader(select_index)
+      else:
+        resume_reader(playwrighty.current_cache)
+    else:
+      resume_reader() #resume all..
     return 0
 
   def skip_lines(self, sequence=[]):

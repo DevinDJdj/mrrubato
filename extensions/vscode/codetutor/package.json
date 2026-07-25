@@ -24,6 +24,11 @@
     "configuration": {
       "title": "mrrubato",
       "properties": {
+        "mrrubato.readaloud": {
+          "type": "boolean",
+          "default": false,
+          "description": "Model to use for LLM interactions."
+        },
         "mrrubato.model": {
           "type": "string",
           "default": "gemma3:4b",
@@ -36,7 +41,7 @@
         },
         "mrrubato.runinbackground": {
           "type": "boolean",
-          "default": "false",
+          "default": false,
           "description": "Setting to automatically run and edit code"
         },
         "mrrubato.robocodemode": {
