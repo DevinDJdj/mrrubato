@@ -1236,10 +1236,13 @@ class transcriber:
         else:
             self.current_topic = None
     
-    def ask_ollama(self, context="", model="gemma4:e4b"):
+    def ask_ollama(self, context="", model="gemma3:4b", strictness=-1): #gemma4:e4b too slow..
         messages = [
-            {"role": "system", "content": "Answer the query using only the information provided in the prompt. Do not use any external knowledge"},
+            {"role": "system", "content": f"Answer the query using only the information provided in the given text here. "},
+            {"role": "system", "content": f"List samples from the text and provide detailed explanations."},
             {"role": "user", "content": f"{context}"}
             ]
+        if strictness > 0:
+            messages.append({"role": "system", "content": f"Use of external knowledge on a scale of 0 to 10: {strictness}"})
         response = ollama.chat(messages=messages, model=model)
         return response["message"]["content"]

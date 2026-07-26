@@ -842,3 +842,50 @@ test
 **extensions/trey/trey.py
 --visualize_kg
 use similar..
+
+Need UI feedback info..
+
+Low memory..
+> ollama pull numind/nuextract3:q6_k
+> ollama pull gemma4:e2b
+> curl -fsSL https://ollama.com/install.sh | sh
+;> ask ..
+
+So long to ask a question..
+This all should run background and then just add to queue when complete..
+
+OK finally some results..
+[
+{'name': 'Assyria', 'type': 'kingdom', 'entities': 
+ [{'name': 'Nineveh', 'type': 'city', 'relationships': 
+   [{'type': 'capital', 'name': 'Assyria'}]
+  }, 
+  {'name': 'De�okes', 'type': 'man', 'relationships': 
+   [{'type': 'revolter', 'name': 'Assyria'}]
+  }, 
+  {'name': 'Kyaxares', 'type': 'king', 'relationships': 
+   [{'type': 'enemy', 'name': 'Assyria'}]
+  }, 
+  {'name': 'Scythians', 'type': 'nation', 'relationships': 
+   [{'type': 'enemy', 'name': 'Assyria'}]
+  }, 
+  {'name': 'Psammetichos', 'type': 'king', 'relationships': 
+   [{'type': 'encounter', 'name': 'Scythians'}]
+  }, 
+  {'name': 'Madyas', 'type': 'king', 'relationships': 
+   [{'type': 'leader', 'name': 'Scythians'}]
+  }, 
+  {'name': 'Astyages', 'type': 'king', 'relationships': 
+   [{'type': 'ruler', 'name': 'Medes'}]
+  }
+ ]
+}
+]
+
+;> Click Link
+Need to go to that read 
+locator.evaluate("el => el.style.backgroundColor = 'rgba(0, 0, 0, 0.1)'")
+test this..
+change perhaps for other things as well..
+page.locator(".title", has_text=re.compile(r"Welcome, .*"))
+

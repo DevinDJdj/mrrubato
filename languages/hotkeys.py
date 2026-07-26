@@ -497,7 +497,11 @@ class hotkeys:
     """Set QR."""
     self.qr = "> " + func + "\n"
     for k,v in param.items():
-        self.qr += f"$${k}={v}\n"
+        if isinstance(v, str):
+            tv = v.replace('\n', '\t')
+        else:
+            tv = v
+        self.qr += f"$${k}={tv}\n"
     self.qr += "$$\n"
     return 0  
   
@@ -796,11 +800,19 @@ class hotkeys:
     print("> _Ask called")
     #get audio input for query.  
     from extensions.trey.speech import listen_audio
+    self.transcript = "" #reset transcript..
     at = listen_audio(15, "ask.wav") #assume some more time for question..
     #at.join() #wait for it to finish.
     #have to just use some keys until this is done.  
     #need to return 1 to indicate we need more keys.
     #but this is only called once.  
+    return 1
+  
+  def ask_(self, sequence=[]):
+    from extensions.trey.speech import transcribe_now
+    self.func = "ask_"
+    self.transcript += transcribe_now() + "\n"
+    self.set_qr(self.func, {'transcript': self.transcript})
     return 1
   
   def _find(self, sequence=[]):  
@@ -1053,7 +1065,7 @@ class hotkeys:
 
     return 0
 
-  def get_entities(self, context, query):
+  def get_graphs(self, context, query):
     template = {
       "invoice_number": "verbatim-string",
       "invoice_date": "date",
@@ -1069,7 +1081,9 @@ class hotkeys:
         }
       ]
     }
-    template = [{
+    template = [
+      {
+      "name": "verbatim-string",
       "type": "string",
       "entities": [
         {
@@ -1078,14 +1092,16 @@ class hotkeys:
           "relationships": [
             {
               "type": "string",
-              "target-name": "verbatim-string"
+              "name": "verbatim-string"
             }
           ]
         }
       ]
-    }]
+    }
+    ]
     examples = [
       {
+        "name": "Social Graph",
         "type": "Social Graph",
         "entities": [
           {
@@ -1094,19 +1110,19 @@ class hotkeys:
             "relationships": [
               {
                 "type": "friend",
-                "target-name": "John"
+                "name": "John"
               }, 
               {
                 "type": "wife", 
-                "target-name": "Mary"
+                "name": "Mary"
               }, 
               { 
                 "type": "colleague",
-                "target-name": "Bob"
+                "name": "Bob"
               }, 
               {
                 "type": "organization",
-                "target-name": "Google"
+                "name": "Google"
               }
             ]
           }, 
@@ -1116,23 +1132,23 @@ class hotkeys:
             "relationships": [
               {
                 "type": "parent", 
-                "target-name": "Alphabet"
+                "name": "Alphabet"
               }, 
               { 
                 "type": "child",
-                "target-name": "YouTube"
+                "name": "YouTube"
               }, 
               {
                 "type": "child", 
-                "target-name": "Nest Labs"
+                "name": "Nest Labs"
               },
               {
                 "type": "competitor",
-                "target-name": "Microsoft"
+                "name": "Microsoft"
               }, 
               {
                 "type": "customer",
-                "target-name": "Apple"
+                "name": "Apple"
               }
             ]
 
@@ -1143,11 +1159,11 @@ class hotkeys:
             "relationships": [
               {
                 "type": "parent", 
-                "target-name": "Microsoft"
+                "name": "Microsoft"
               }, 
               { 
                 "type": "competitor",
-                "target-name": "SourceForge"
+                "name": "SourceForge"
               }
             ]
 
@@ -1180,14 +1196,14 @@ class hotkeys:
     ]
 
     input_llm = "<|input|>\n### Template:\n" + json.dumps(template, indent=4) + "\n"
-    for example in examples:
-        if example != "":
-            input_llm += "### Example:\n" + json.dumps(json.loads(example), indent=4) + "\n"
+    input_llm += "### Example:\n" + json.dumps(examples, indent=4) + "\n"
+
 
     input_llm += "### Text:\n" 
     input_llm += f"::CONTEXT:: \n\n{context}\n\n::QUERY:: {query}"
     input_llm += "\n<|output|>\n"
-    answer = self.transcriber.ask_ollama(context=input_llm, model="numind/nuextract3")
+    answer = self.transcriber.ask_ollama(context=input_llm, model="numind/nuextract3:q6_k")
+    return answer
   
   def ask(self, sequence=[]):
     logger.info(f'> Ask {sequence}')
@@ -1203,11 +1219,14 @@ class hotkeys:
 
     cacheno = -1
     print(sequence)
-    direction = 1
+    direction = -1 #default to review already read text..
+    strictness = -1 #default to only use prior text..
     if (len(sequence) > 0):
-      cacheno = sequence[-1]-self.keybot - 1
+      cacheno = sequence[0]-self.keybot - 1 #first key is cacheno..
     if (len(sequence) > 1):
-      direction = 1 if sequence[-2]-self.keybot > 0 else -1
+      direction = 1 if sequence[-1]-self.keybot > 0 else -1
+    if (len(sequence) > 2):
+      strictness = sequence[1]-self.keybot
     if (cacheno < 0):
       cacheno = playwrighty.current_cache
 
@@ -1227,13 +1246,17 @@ class hotkeys:
       end_offset = len(playwrighty.page_cache[cacheno]['body'])
 
     context = playwrighty.page_cache[cacheno]['body'][start_offset:end_offset]
-    answer = self.transcriber.ask_ollama(context=f"::CONTEXT:: \n\n{context}\n\n::QUERY:: {query}", model="gemma4:e4b")
-    entities = self.get_entities(context, query)
-    vars = {"DIRECTION": direction, "URL": playwrighty.page_cache[cacheno]['page'].url, "(": start_offset, ")": end_offset, "ANSWER": answer}
-    self.func = "ask"
-    self.set_qr(self.func, vars)
+    #pause before asking, maybe some silence, but probably better overall?  
     from extensions.trey.trey import pause_reader
     pause_reader()
+    logger.info(f'$$QUERY={query}')
+    answer = self.transcriber.ask_ollama(context=f"::CONTEXT:: \n\n{context}\n\n::QUERY:: {query}", model="gemma3:4b", strictness=strictness)
+    logger.info(f'$$ANSWER={answer}')
+    graphs = self.get_graphs(context, query)
+    logger.info(f'$$GRAPHBYTES={len(graphs)}') #measuring time for now..
+    vars = {"DIRECTION": direction, "URL": playwrighty.page_cache[cacheno]['page'].url, "(": start_offset, ")": end_offset, "ANSWER": answer, "GRAPHS": json.dumps(graphs)}
+    self.func = "ask"
+    self.set_qr(self.func, vars)
     #for now just pause reader
     self.speak(f'{answer}')
     return 0
