@@ -11,4 +11,14 @@
 
 
 >#1 cd C:/devinpiano/music/mrrubato
->#1 python ./record.py --description  "Weve Only Just Begun (Roger Nichols)"
+>#1 python ./record.py --description  "Op 10 No 3 (Chopin)"
+>#1 python ./record.py --description  "Op 55 No 2 (Chopin)"
+>#1 python ./record.py --description  "Right Here Waiting (Richard Marx)"
+
+>#1 python ./record.py --description  "Thats What Friends Are For (Burt Bacharach)"
+
+>#1 python ./record.py --description  "Dig A Little Deeper (Randy Newman)"
+
+>#1 python ./record.py --description  "True Loves Kiss (Alan Menken)"
+>#1 python ./record.py --description  "If I Never Knew You (Alan Menken)"
+>#1 python ./record.py --description  "Part Of Your World (Alan Menken)"

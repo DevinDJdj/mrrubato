@@ -168,7 +168,7 @@ export class MyKeys {
                 let elapsedTime = - currentTime - obj.time;
                 //0.5 to start, and execute each 0.5 seconds for now..
                 elapsedTime = - elapsedTime; //switch to positive..
-                if (elapsedTime > 500){ //multiple keys runs multiple times is this desirable?  
+                if (elapsedTime > 500 && elapsedTime < 10000){ //multiple keys runs multiple times is this desirable?  
                     //get last command and re-execute it..
                     if (this.currentcmd !== "" && this.currentlangna !== "" && this.currentlang !== null) {
                         let ret = (this.currentlang as any).act(this.currentcmd, this.sequence.slice(this.startseqno), this.words_);
