@@ -790,3 +790,102 @@ F4, SHIFT+F4
 vectrafolder 
 change to fspath instead of path..
 
+
+Need general setting to control speech on/off..
+change via _META..
+
+
+**languages/book.py
+--read_link
+listing logic and order still all wrong
+OK, finally can list and select..
+
+See if we can list from book only..
+
+**mykeys.py
+Not sure if we can chain commands..
+But it is causing some problem with qr help display after word selection..
+
+**extensions/vscode/codetutor/src/languages/base.ts
+[69,63,68]
+Test adjust readChatResponseAloud
+
+
+**extensions/trey/trey.py
+--play_in_background
+Have to 
+
+after
+;> Ask handler..
+display in overlay..
+Adjust overlay opacity?  
+Add to ctxt?  
+
+Also need better fuzzy search before query.  
+Lots of misspelling with all this Greek..
+
+**languages/helpers/transcriber.py
+trey Load speed too slow..
+--read_midi
+--search_midi
+temporarily remove
+
+test 
+;> Select Tab_
+
+> ollama pull numind/nuextract3
+#https://documentation.nuextract.ai/ebd//
+
+**languages/hotkeys.py
+--get_entities
+
+**extensions/trey/trey.py
+--visualize_kg
+use similar..
+
+Need UI feedback info..
+
+Low memory..
+> ollama pull numind/nuextract3:q6_k
+> ollama pull gemma4:e2b
+> curl -fsSL https://ollama.com/install.sh | sh
+;> ask ..
+
+So long to ask a question..
+This all should run background and then just add to queue when complete..
+
+OK finally some results..
+[
+{'name': 'Assyria', 'type': 'kingdom', 'entities': 
+ [{'name': 'Nineveh', 'type': 'city', 'relationships': 
+   [{'type': 'capital', 'name': 'Assyria'}]
+  }, 
+  {'name': 'De�okes', 'type': 'man', 'relationships': 
+   [{'type': 'revolter', 'name': 'Assyria'}]
+  }, 
+  {'name': 'Kyaxares', 'type': 'king', 'relationships': 
+   [{'type': 'enemy', 'name': 'Assyria'}]
+  }, 
+  {'name': 'Scythians', 'type': 'nation', 'relationships': 
+   [{'type': 'enemy', 'name': 'Assyria'}]
+  }, 
+  {'name': 'Psammetichos', 'type': 'king', 'relationships': 
+   [{'type': 'encounter', 'name': 'Scythians'}]
+  }, 
+  {'name': 'Madyas', 'type': 'king', 'relationships': 
+   [{'type': 'leader', 'name': 'Scythians'}]
+  }, 
+  {'name': 'Astyages', 'type': 'king', 'relationships': 
+   [{'type': 'ruler', 'name': 'Medes'}]
+  }
+ ]
+}
+]
+
+;> Click Link
+Need to go to that read 
+locator.evaluate("el => el.style.backgroundColor = 'rgba(0, 0, 0, 0.1)'")
+test this..
+change perhaps for other things as well..
+page.locator(".title", has_text=re.compile(r"Welcome, .*"))
+

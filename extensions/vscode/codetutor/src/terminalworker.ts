@@ -169,7 +169,6 @@ export function addClosedTerminalListener() {
 export function getTerminalWorker(key: string, type: string="", version: string = "", dir="") : TerminalWorker {
     //for now only use one of each type/version of terminal.  
 
-
     if(terminalworkers[key] === undefined){
         //create a new worker.  
         console.log("Creating new terminal worker: " + key + " Type: " + type + " Version: " + version);

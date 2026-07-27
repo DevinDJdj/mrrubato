@@ -433,6 +433,7 @@ def quit_me(restart=False): #restart_trey
     logger.info('Saving custom settings')
     config.save_custom_settings() #save custom settings if available
 
+    speech.close_bg_procs() #close any ongoing generate_tts commands..
     active_threads = threading.enumerate()
     print("\nCurrently active threads:")
     for thread in active_threads:
@@ -1722,6 +1723,18 @@ class MyWindow(QMainWindow):
         temp = win32gui.GetForegroundWindow()
         rect = win32gui.GetWindowRect(temp)
         match command:
+            case "ask":
+                logger.info('Received ask command')
+                answer = vars.get('ANSWER', '')
+                graphs = vars.get('GRAPHS', '[]')
+                logger.info(f'> ask\n==\n{answer}\n==\n{graphs}')
+                graphs = json.loads(json.loads(graphs))
+                #create knowledge graph
+                kgs = self.make_kg(graphs)
+                if (len(kgs) > 0):
+                    self.visualize_kg(kgs[0], topic=vars.get('TOPIC', self.transcriber.current_topic))
+
+
             case "OK":
                 #testing
                 logger.info('Received OK command, showing QR code with current settings')
@@ -1922,9 +1935,11 @@ class MyWindow(QMainWindow):
                     #rapidfuzz search for similar key structures in all midi in transcriber.  
                     midiarray = json.loads(vars.get('MIDI', "[]")) #load from string again..
                     print(f"<<{lang}>>\n$$MIDI=" + str(midiarray))
-                    similar = self.transcriber.search_midi(midiarray, current_time)
-                    print(f"Similar key structures found: {similar}")
-                    print(f"<<{lang}>>\n$$SIMILAR=" + json.dumps(similar))
+                    similar = []
+                    if (random.random() < 0.2):  #only every once in a while.. too slow..
+                        similar = self.transcriber.search_midi(midiarray, current_time)
+                        print(f"Similar key structures found: {similar}")
+                        print(f"<<{lang}>>\n$$SIMILAR=" + json.dumps(similar))
                     #what to do with this?  
                     #save it and show in QR?  
                     self.futuretree = self.transcriber.futuretree #map[lang] = ['..': '&&': '##':]
@@ -2036,6 +2051,27 @@ class MyWindow(QMainWindow):
 
         #add more commands as needed.
 
+    def show_playwrighty(self):
+        """Bring Playwright to the front if not already."""
+        #get all windows, find mrroboto window and bring to front.  
+
+        self.get_window_info() #update window info first.
+
+        for pid, w in self.windows.items():
+            logger.debug(f'Checking window for Google Chrome for Testing: {w["title"]}')
+
+            if ('google chrome for testing' in w['title'].lower()):
+                logger.info(f'Bringing Playwright to front: {w["title"]}')
+                #this should already have the topic selected and also run a chat.. show any changes..
+                try:
+                    win32gui.SetForegroundWindow(w['hwnd'])
+                    #move to second screen..
+                    rect = win32gui.GetWindowRect(w['hwnd'])
+                    win32gui.MoveWindow(w['hwnd'], self.startx, rect[1], rect[2]-rect[0], rect[3]-rect[1], True) #move to second screen assuming 1920 width for first screen
+                except Exception as e:
+                    logger.error(f'Error bringing Playwright to front: {e}')
+                break
+
     def show_mrroboto(self):
         """Bring MrRoboto to the front if not already."""
         #get all windows, find mrroboto window and bring to front.  
@@ -2050,6 +2086,9 @@ class MyWindow(QMainWindow):
                 #this should already have the topic selected and also run a chat.. show any changes..
                 try:
                     win32gui.SetForegroundWindow(w['hwnd'])
+                    #move to second screen..
+                    rect = win32gui.GetWindowRect(w['hwnd'])
+                    win32gui.MoveWindow(w['hwnd'], self.startx, rect[1], rect[2]-rect[0], rect[3]-rect[1], True) #move to second screen assuming 1920 width for first screen
                 except Exception as e:
                     logger.error(f'Error bringing MrRoboto to front: {e}')
                 break
@@ -2102,6 +2141,7 @@ class MyWindow(QMainWindow):
                     if (len(parts) >= 2):
                         key = parts[0]
                         value = ''.join(parts[1:])
+                        value = value.replace('\t', '\n')
                         vars[key] = value
             if (type == '~~'):
                 #end of command
@@ -2639,8 +2679,9 @@ class MyWindow(QMainWindow):
                     trect = self.trey_data['rect']
         #            trect[0] += 50 #some margin for overlapping windows.  
 
+
                 # Check if the window is fully within the trey window
-                if (self.in_trey(rect) and win32gui.IsWindowVisible(hwnd)): #only monitor visible windows..
+                if ((self.in_trey(rect) and win32gui.IsWindowVisible(hwnd)) or ('mrroboto' in title.lower())): #only monitor visible windows..
                     threadid, procid = win32process.GetWindowThreadProcessId(hwnd)
                     self.update_window_data(hwnd, title, rect, {'threadid': threadid, 'procid': procid, 'hwnd': hwnd})
                     x, y, right, bottom = rect
@@ -2696,6 +2737,30 @@ class MyWindow(QMainWindow):
 
         self.updateLabels(self.windows) #gives info for all windows
 
+    def make_kg(self, graphs):
+        kgs = []
+        if not graphs:
+            return []
+        if not isinstance(graphs, list):
+            graphs = [graphs]
+        logger.info(f'{graphs}')
+        if (isinstance(graphs, list)):
+            for graph in graphs:
+                if ('name' not in graph):
+                    logger.info(f'--make_kg\n!!-name\n{graph}')
+                    return []
+                kg = nx.Graph(name=graph['name'])
+                if ('entities' not in graph):
+                    logger.info(f'--make_kg\n!!-entities\n{graph}')
+                    return []
+                for entity in graph['entities']:
+                    kg.add_node(entity['name'])
+                    for related_entity in entity['relationships']:
+                        kg.add_edge(entity['name'], related_entity['name'], type=related_entity['type'])
+
+                kgs.append(kg)
+        return kgs
+    
     def visualize_kg(self, kg, topic="ALL"):
         #dpi 96 assume..
         #why we cant pass in pixels?  
@@ -3256,8 +3321,15 @@ class MyWindow(QMainWindow):
         #update topic history with current topic from transcriber, and show in filter info area.  
         self.show_filter_info()
 
+    def remove_filler(self, text):
+        text = text.replace('http://', '#')
+        text = text.replace('https://', 's#')
+        text = text.replace('www.', '')
+        return text
+    
     def short_display(self, text, maxlen=28):
         if (len(text) > maxlen):
+            text = self.remove_filler(text)
             return text[0:int(maxlen/2)] + ".." + text[-int(maxlen/2):]
         else:
             return text
@@ -3290,11 +3362,15 @@ class MyWindow(QMainWindow):
       wbarray = [0,1,0,1,0,0,1,0,1,0,1,0] #for now fixed from C
       
       
+      #clear for now..
+
       for i, l in enumerate(struct):
         type = l['type']
         if (type == '> '):
           if (l['cmd'] == 'Click Link_' or l['cmd'] == 'Select Book_' or l['cmd'] == 'Select Topic_' 
               or l['cmd'] == 'Select Tab_' or l['cmd'] == 'Time Zoom_' or l['cmd'] == 'Read Link_'): 
+            for i2, l2 in enumerate(self.label_ps):
+                self.label_ps[i2].setText("")            
             cnt = 0       
             for k, v in l['vars'].items():
 #                if (wbarray[i%len(wbarray)] == 0):
@@ -3318,7 +3394,12 @@ class MyWindow(QMainWindow):
             context = l['vars'].get('context', None)
             if (context is not None):
                 fulltext += f"\n{context}\n"
-                
+          elif (l['cmd'] == 'ask'):
+            if 'ANSWER' in l['vars']:
+                fulltext += f"\nAnswer: {self.format_ptext(l['vars']['ANSWER'])}\n"
+            for i2, l2 in enumerate(self.label_ps):
+                self.label_ps[i2].setText("")            
+            cnt = 0
 
         elif (type == '~~'):
             test = ''
@@ -3331,6 +3412,12 @@ class MyWindow(QMainWindow):
         
 
 
+    def format_ptext(self, fulltext):
+        #find places for CR.  
+        import textwrap        
+        wrapped = textwrap.fill(fulltext, width=40)
+        return wrapped
+    
     def is_complete_cmd(self, struct):
       for i, l in enumerate(struct):
         type = l['type']

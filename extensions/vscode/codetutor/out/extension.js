@@ -374,8 +374,8 @@ function activate(context) {
         let prompt = BASE_PROMPT;
         console.log(`Chat request: ${request.command} with prompt: ${request.prompt}`);
         const wsUri = vscode.workspace.workspaceFolders[0].uri;
+        const mySettings = vscode.workspace.getConfiguration('mrrubato');
         if (request.command === 'stats') {
-            const mySettings = vscode.workspace.getConfiguration('mrrubato');
             stream.markdown('**My agent default prompts**  ' + mySettings.defaultprompts.length + '  \n');
             stream.markdown('**My agent work prompts** ' + mySettings.workprompts.length + '  \n');
             stream.markdown('**My agent run in background** ' + mySettings.runinbackground + '  \n');
@@ -383,6 +383,7 @@ function activate(context) {
             stream.markdown('**My agent coding mode** ' + mySettings.codingmode + '  \n');
             stream.markdown('**My agent work prompt** ' + mySettings.workprompt.slice(-255) + '  \n');
         }
+        const toreadaloud = mySettings.get('readaloud', false);
         if (request.command === 'genbook' || request.command === 'gencomments' || request.command === 'gencode' || request.command === 'gentests' || request.command === 'genhelp') {
             //generate context for this topic.  
             if (request.command === 'genbook') {
@@ -415,10 +416,12 @@ function activate(context) {
             let response = await Book.markdown(summary);
             stream.markdown(response);
             //workbench.action.chat.readChatResponseAloud
-            setTimeout(() => {
-                vscode.commands.executeCommand('workbench.action.chat.nextCodeBlock');
-                vscode.commands.executeCommand('workbench.action.chat.readChatResponseAloud');
-            }, 15000);
+            if (toreadaloud) {
+                setTimeout(() => {
+                    vscode.commands.executeCommand('workbench.action.chat.nextCodeBlock');
+                    vscode.commands.executeCommand('workbench.action.chat.readChatResponseAloud');
+                }, 15000);
+            }
             return;
         }
         if (request.command === 'genbook') {
@@ -448,10 +451,12 @@ function activate(context) {
             //special for summary here in extension.ts
             Book.addQueryHistory({ query: request.prompt, response: doc }); //add the query and response to the history.
             stream.markdown(doc);
-            setTimeout(() => {
-                vscode.commands.executeCommand('workbench.action.chat.nextCodeBlock');
-                vscode.commands.executeCommand('workbench.action.chat.readChatResponseAloud');
-            }, 15000);
+            if (toreadaloud) {
+                setTimeout(() => {
+                    vscode.commands.executeCommand('workbench.action.chat.nextCodeBlock');
+                    vscode.commands.executeCommand('workbench.action.chat.readChatResponseAloud');
+                }, 15000);
+            }
             return;
         }
         if (request.command === 'list') {
@@ -468,7 +473,6 @@ function activate(context) {
         }
         if (request.command === 'start') {
             //start running in background.
-            const mySettings = vscode.workspace.getConfiguration('mrrubato');
             mySettings.update('runinbackground', true);
             stream.markdown('**Starting background agent**  \n ' + mySettings.runinbackground);
             //start the work function here.
@@ -481,10 +485,9 @@ function activate(context) {
             return;
         }
         if (request.command === 'stop') {
-            const mySettings = vscode.workspace.getConfiguration('mrrubato');
             //stop running in background.
             mySettings.update('runinbackground', false);
-            stream.markdown('stop');
+            //			stream.markdown('stop');
             //vscode.commands.executeCommand('workbench.action.chat.stopReadChatResponseAloud');	 //not working..		
             setTimeout(() => {
                 vscode.commands.executeCommand('workbench.action.chat.nextCodeBlock');
@@ -517,10 +520,12 @@ function activate(context) {
             let response = await Book.markdown(res);
             stream.markdown(response);
             //workbench.action.chat.readChatResponseAloud
-            setTimeout(() => {
-                vscode.commands.executeCommand('workbench.action.chat.nextCodeBlock');
-                vscode.commands.executeCommand('workbench.action.chat.readChatResponseAloud');
-            }, 15000);
+            if (toreadaloud) {
+                setTimeout(() => {
+                    vscode.commands.executeCommand('workbench.action.chat.nextCodeBlock');
+                    vscode.commands.executeCommand('workbench.action.chat.readChatResponseAloud');
+                }, 15000);
+            }
             return;
         }
         if (request.command === 'read') {
@@ -532,10 +537,12 @@ function activate(context) {
             console.log("Response: ", response);
             stream.markdown(response);
             //workbench.action.chat.readChatResponseAloud
-            setTimeout(() => {
-                vscode.commands.executeCommand('workbench.action.chat.nextCodeBlock');
-                vscode.commands.executeCommand('workbench.action.chat.readChatResponseAloud');
-            }, 15000);
+            if (toreadaloud) {
+                setTimeout(() => {
+                    vscode.commands.executeCommand('workbench.action.chat.nextCodeBlock');
+                    vscode.commands.executeCommand('workbench.action.chat.readChatResponseAloud');
+                }, 15000);
+            }
             return;
         }
         if (request.command === 'book') {
@@ -804,6 +811,13 @@ function activate(context) {
                         vscode.commands.executeCommand('workbench.action.terminal.sendSequence', { text: text.substring(1) + "\n" });
                         break;
                 }
+                //return focus after terminal execution..
+                console.log('returning focus after cmd execution');
+                vscode.commands.executeCommand('workbench.action.focusActiveEditorGroup').then(() => {
+                    if (vscode.window.activeTextEditor) {
+                        vscode.window.showTextDocument(vscode.window.activeTextEditor.document, vscode.window.activeTextEditor.viewColumn);
+                    }
+                });
                 break;
             case "/":
                 //path search only.  

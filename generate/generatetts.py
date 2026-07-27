@@ -134,6 +134,7 @@ if (__name__ == "__main__"):
     parser.add_argument("--skip", type=int, help="Number of lines to skip for TTS generation", default=0)
     parser.add_argument("--infile", type=str, help="Input text file for TTS generation", default=None)
     parser.add_argument("--cacheno", type=str, help="Cache number for TTS generation", default=-1)
+    parser.add_argument("--numlines", type=int, help="Number of lines to generate TTS for", default=300)
     #fast not working..
 
     args = parser.parse_args()    
@@ -151,6 +152,7 @@ if (__name__ == "__main__"):
 
     print(f"Generating TTS for {len(lines)} lines with voice {args.voice} at volume {args.vol} and speed {args.speed} using engine {args.engine}...")
     temptext = ""
+    total_generated = 0
     for idx, l in enumerate(lines):
         if (idx <= args.skip or idx > len(lines)-1): #dont generate unneeded tts if we are skipping lines.  This is a bit hacky but should work for now.
             continue
@@ -161,7 +163,10 @@ if (__name__ == "__main__"):
                 combined = True
                 l = temptext + " " + l
                 temptext = ""
-            generate_line(l, idx, args.voice, args.vol, args.speed, args.cacheno, args.engine, combined)    
+                generate_line(l, idx, args.voice, args.vol, args.speed, args.cacheno, args.engine, combined)    
+                total_generated += 1
+                if (total_generated >= args.numlines):
+                    break
         else:
             temptext += " " + l
     print("Starting on skipped lines...")
@@ -175,9 +180,12 @@ if (__name__ == "__main__"):
                 l = temptext + " " + l
                 temptext = ""
             generate_line(l, idx, args.voice, args.vol, args.speed, args.cacheno, args.engine, combined)    
+            total_generated += 1
+            if (total_generated >= args.numlines):
+                break
         else:
             temptext += " " + l 
-    print("TTS generation complete.")
+    print(f"TTS generation complete. Total lines generated: {total_generated}")
     exit(0)
 #    thread1.start()
 

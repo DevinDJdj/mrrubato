@@ -324,6 +324,7 @@ class transcriber:
     def search_midi(self, midiarray, current_time):
         #search for similar key structures
         similar = []
+        return similar
         self.fuzzmap = {} #store fuzz scores for each item to avoid redundant calculations, since we may want to sort by score later.
         #for now reset each time we search..
         self.mytime = current_time #update time for referential searches..
@@ -494,6 +495,7 @@ class transcriber:
 
     def read_midi(self, start_time=None, end_time=None):
         #for now just read from transcript file all instances of this.   
+        return []
         if (start_time is None):
             start_time = self.getTime(-30)  #default last 30 days
         if (end_time is None):
@@ -1034,13 +1036,16 @@ class transcriber:
 
         if (searchbooks is None):
             tree = folder.split('/')
-            if (len(tree) == 1 and tree[0] == "books"):
-                tree = tree[1:] #tree search if not default value.  
+            if (len(tree) > 0 and tree[0] == "books"):
+                tree = tree[1:] #ignore starting with default books.. not default value.  
             logger.info(f'Filtering book {folder} with tree {tree}')
+#            logger.info(f'-- {self.allbooks}')
+#            logger.info(f'-- {self.allbooks["WORLDHISTORY"]}')
             searchbooks = self.get_from_nested(self.allbooks, tree) #tree = [], searchbooks = self.allbooks
         if (searchbooks is None):
             return {'**': folder, '&&': None, '(': 0, ')': 0} #if we dont have this book, return empty struct with just the folder name for reference, this will allow us to build the struct as we search and find books, and also handle cases where we have a book in the file system but not in our allbooks struct for some reason, this way we can still get the cmds for that book if it exists, and if not we just return an empty struct for it.
         retstruct = {'**': folder, '&&': None, '(': 0, ')': 0} #store cmds for this book here, and also store start and end idx for filtering by time later.  could also store topic info here if needed, but for now just store cmds and time info.
+
 
         logger.info(f'{folder} searchbooks: {searchbooks}')
         for k,v in searchbooks.items():
@@ -1231,10 +1236,13 @@ class transcriber:
         else:
             self.current_topic = None
     
-    def ask_ollama(self, query, context="", model="gemma4:e4b"):
+    def ask_ollama(self, context="", model="gemma3:4b", strictness=-1): #gemma4:e4b too slow..
         messages = [
-            {"role": "system", "content": "Answer the query using only the information provided in the prompt. Do not use any external knowledge"},
-            {"role": "user", "content": f"::CONTEXT:: {context} ::QUERY:: {query}"}
+            {"role": "system", "content": f"Answer the query using only the information provided in the given text here. "},
+            {"role": "system", "content": f"List samples from the text and provide detailed explanations."},
+            {"role": "user", "content": f"{context}"}
             ]
-        response = ollama.chat(messages, context=context, model=model)
+        if strictness > 0:
+            messages.append({"role": "system", "content": f"Use of external knowledge on a scale of 0 to 10: {strictness}"})
+        response = ollama.chat(messages=messages, model=model)
         return response["message"]["content"]

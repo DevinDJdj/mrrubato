@@ -21,6 +21,8 @@ import threading
 import psutil
 import datetime
 
+import json
+
 #Local imports
 sys.path.insert(0, 'c:/devinpiano/') #config.json path
 sys.path.insert(1, 'c:/devinpiano/music/') #config.py path Base project path
@@ -185,10 +187,13 @@ def click_link(cacheno, text_offset, link_offset=0, open_new_tab=False):
             logger.info(f'Link {linkno} is an internal link, jumping to it in page')
             id = links[linkno]['href'].split('#')[-1]
             internal_info = page.locator(f"#{id}")
+            lines = page_info['body'].split('\n')
             inner_text = internal_info.inner_text()
             #jump to here in page temporarily.. 
+
             try:
                 internal_info.scroll_into_view_if_needed()
+                #move to here or not?  
             except Exception as e:
                 logging.error(f'Error scrolling to internal link: {e}')
             return inner_text
@@ -208,7 +213,7 @@ def click_link(cacheno, text_offset, link_offset=0, open_new_tab=False):
                 if open_new_tab:
                     page = page.context.new_page()
                     page.goto(href)
-                    page_cache.append({'url': page_info['url'], 'page': page, 'body': page_info['body'], 'links': page_info['links'], 'title' : page_info['title']})
+                    page_cache.append({'url': page_info['url'], 'page': page, 'body': page_info['body'], 'links': page_info['links'], 'title' : page_info['title'], 'current_locator': None, 'last_total_read': 0})
                 else:
                     if ('reader_stop_event' in page_info and page_info['reader_stop_event'] is not None):
                         page_info['reader_stop_event'].set() #stop any reading.
@@ -800,10 +805,10 @@ def get_page_details(page):
             });
         }""")
 
-        logger.info(f'Got Links for: {page.url}')
-        print(link_data)
-        logger.info(f'Got Alt Text for: {page.url}')
-        print(alt_text_data)
+        logger.info(f'Got {len(link_data)} Links for: {page.url}')
+#        print(link_data)
+        logger.info(f'Got {len(alt_text_data)} Alt Text for: {page.url}')
+#        print(alt_text_data)
 
         body = page.locator('body')
         for i in range(body.count()):
@@ -875,44 +880,68 @@ def update_page_offset(cacheno=-1):
             #this is temporary info, how to distinguish temporary vs permanent bookmarks?  
             found_item['total_read'].insert(0, total_read)
 
-    if (total_read > 0):    #something was in queue...
+        if ('last_total_read' not in page_cache[cacheno]): #somewhere not initialized?  
+            page_cache[cacheno]['last_total_read'] = 0
+        if (page_cache[cacheno]['last_total_read'] == 0 or page_cache[cacheno]['last_total_read'] + 100 < total_read):
+            page_cache[cacheno]['last_total_read'] = total_read
+            #scroll into view
+            try:
+                #this only gets exact matches, probably what we want, so we dont jump around the page too much.
+                #ideally detect the correct link based on location..
+                temptext = page_cache[cacheno]['body']
+
+                offset = total_read
+                temptext = temptext[offset: offset+50]
+                #find text in the page..
+
+                #some problems with multiple results..
+                current_locator = page_cache[cacheno].get('current_locator', None)
+
+                locator = page_cache[cacheno]['page'].locator(f"p:has-text({json.dumps(temptext)})") #not getting results all the time..
+                if (locator.count() == 1):
+                    if (current_locator is None or locator.text_content() != (current_locator['text'])):
+                        logging.info(f'--{locator}')
+                        if current_locator is not None:
+                            current_locator['locator'].evaluate("el => el.style.backgroundColor = 'rgba(0, 0, 0, 0.05)'")
+                        locator.scroll_into_view_if_needed()
+                        page_cache[cacheno]['current_locator'] = {'inner_html': locator.inner_html(), 'text': locator.text_content(), 'locator': locator, 'total_read': total_read}
+                        locator.evaluate("el => el.style.backgroundColor = 'rgba(0, 0, 0, 0.1)'")
+                    elif locator.text_content() == (current_locator['text']):
+                        amount_read = total_read - current_locator['total_read']
+#                        last_newline = current_locator['text'].rfind('. ', max(amount_read-100, 0), amount_read)
+#                        if (last_newline != -1):
+#                            amount_read = last_newline + 1
+    #                    logging.info(f'Amount read since last update: {amount_read}')
+#                        newText = current_locator['text'][:amount_read] + " --> " + current_locator['text'][amount_read:]
+#                        current_locator['text'] = newText
+#                        locator.evaluate(f"(el) => el.textContent = {json.dumps(newText)}")
+
+    #                    logging.info(f'Locator text matches current locator text: {locator.text_content()}')
+                elif (locator.count() > 1):
+                    locator.first.scroll_into_view_if_needed()
+                    locator.first.evaluate("el => el.style.backgroundColor = 'rgba(0, 0, 0, 0.1)'")
+            except Exception as e:
+                logging.error(f'Error locating text: {temptext} - {e}')
+
+        #scroll to link..
         linkno = get_link_number(cacheno, total_read, 0) #update link offsets.
-        #scroll into view
         if (linkno >= 0):
             page = page_cache[cacheno]['page']
             links = page_cache[cacheno]['links']
             if (linkno != page_cache[cacheno].get('current_link', -1) and linkno < len(links) and linkno >= 0):
                 # or page_cache[cacheno].get('last_total_read', links[linkno]['offset']) <= total_read-100): 
-                page_cache[cacheno]['last_total_read'] = total_read
+                page_cache[cacheno]['current_link'] = linkno
                 #jump if we have read too much or have a new link.
                 link = links[linkno]
                 futurelink = links[linkno+2] if (linkno + 2 < len(links)) else None
                 try:
-                    page_cache[cacheno]['current_link'] = linkno
-                    #this only gets exact matches, probably what we want, so we dont jump around the page too much.
-                    #ideally detect the correct link based on location..
-                    temptext = page_cache[cacheno]['body']
-
-                    offset = link['offset']
-                    off2 = temptext.rfind("\n", 0, offset)
-                    if (off2 < offset-100 or off2 == -1):
-                        temptext = temptext[offset-50: offset]
-                    else:
-                        offset = temptext.find("\n", offset)
-                        if (offset < 0):
-                            offset = off2
-                        temptext = temptext[offset: offset+50]
-                    #find text in the page..
-                    locator = page.get_by_text(temptext)
-                    #some problems with multiple results..
-                    if (locator.count() == 1):
-                        locator.scroll_into_view_if_needed()
                     if link is not None:
                         #try partial match
                         locator = page.get_by_role("link", name=link['text'])
                         if (locator.count() == 1):
                             locator.highlight()
                             locator.scroll_into_view_if_needed()
+                            locator.evaluate("el => el.style.backgroundColor = 'rgba(0, 0, 0, 0.3)'")
 #                    if (locator.bounding_box() is not None and locator.bounding_box().get('height', 400) < 400):
 #                        locator.highlight() #dont highlight the whole page..
 
@@ -935,10 +964,13 @@ def cache_page(url, page, body_text, link_data, cacheno=-1):
     if cacheno >= 0 and cacheno < len(page_cache):
         page_cache[cacheno] = {'timestamp': time.time(), 'url': url, 'page': page, 'current_offset': page_cache[cacheno].get('current_offset', {url: 0}), 'body': body_text, 'links': link_data, 'title' : page.title(), 'reader_queue': page_cache[cacheno].get('reader_queue', None), 'sim_queue': page_cache[cacheno].get('sim_queue', None), 'reader_stop_event': page_cache[cacheno].get('reader_stop_event', None)}            
     else:
-        page_cache.append({'timestamp': time.time(), 'url': url, 'page': page, 'current_offset': {url: 0}, 'body': body_text, 'links': link_data, 'title' : page.title(), 'reader_queue': None, 'sim_queue': None, 'reader_stop_event': None})
-        cacheno = len(page_cache) - 1
+        #set new pages to head.. now = 0
+        page_cache.insert(0, {'timestamp': time.time(), 'url': url, 'page': page, 'current_offset': {url: 0}, 'body': body_text, 'links': link_data, 'title' : page.title(), 'reader_queue': None, 'sim_queue': None, 'reader_stop_event': None})
+        cacheno = 0
     return cacheno
 
+
+    
 def get_bookmark_list():
     global bookmarks
     info = ""
@@ -1006,6 +1038,7 @@ def read_page(url, cacheno=-1):
 #        cacheno = current_cache
 #check for existing.  
     if (url !=''):
+        url = url.split('|')[-1]
         found_item = next((item for item in page_cache if item.get('url') == url), None)
         if found_item is not None and found_item.get('timestamp', 0) + 60 > time.time(): #cache for 1 minute for now.
             logging.info(f'#{url}\nURL already in cache and valid, returning cached page')

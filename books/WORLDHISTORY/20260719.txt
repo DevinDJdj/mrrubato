@@ -1,6 +1,6 @@
 **THE_HISTORY_OF_HERODOTUS
-#https://www.gutenberg.org/cache/epub/2707/pg2707-images.html
-#https://www.gutenberg.org/cache/epub/2456/pg2456-images.html
+#HERODOTUS/THE_HISTORIES|https://www.gutenberg.org/cache/epub/2707/pg2707-images.html
+#HERODOTUS/THE_HISTORIES2|https://www.gutenberg.org/cache/epub/2456/pg2456-images.html
 
 Select Book
 [48,52,55]
@@ -9,6 +9,6 @@ Select Topic
 Read Link
 [50,52,57] [48] [LINKNO] read links from selected book
 
-
+#BEDE/HISTORY_OF_ENGLAND|https://www.gutenberg.org/cache/epub/38326/pg38326-images.html
 
 
