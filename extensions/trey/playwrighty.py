@@ -852,7 +852,9 @@ def get_page_details(page):
 
         logging.error(f'Error getting page details: {e}')
         return body_text, link_data, alt_text_data
-    
+
+
+
 def update_page_offset(cacheno=-1):
     if (last_link_clicked_time is not None and time.time() - last_link_clicked_time < 1):
         #if we have clicked a link in the last second, we may be in the process of navigating to a new page, so skip updating the offset for now to avoid conflicts.
