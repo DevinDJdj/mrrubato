@@ -23,3 +23,19 @@ Some issue with mykeys, not detecting midi keyboard for input..
 >#1 python ./record.py --description  "Weve Only Just Begun (Roger Nichols)"
 
 >#1 python ./record.py --description  "Op 27 No 2 (Beethoven)"
+
+>#1 pip install ollama
+>#1 python ./record.py --description  "Walking In Memphis (Marc Cohn)"
+
+@@ **record.py **extensions/trey/trey.py Why is record restarting when restart_me is called?  
+
+**extensions/vscode/codetutor/src/extension.ts
+Need to pass prev queries/response.  
+At least last one..
+Create contexts with @@1 and @@1
+Context iterations.  
+Ability to list context iterations..
+Clear context with @@1 $$
+@@1- **TOPIC
+@@1+ **TOPIC
+
