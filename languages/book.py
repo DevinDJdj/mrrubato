@@ -27,7 +27,6 @@ class book:
     self.func = None
     self.cmd = None
     self.qr = "" #info for QR message
-    self.qrin = "" #info from incoming QR message
     self.startx = startx
     self._bbox = [0,0,0,0] #for now just use this for all functions that need a bbox.  This is left, top, right, bottom.  We can also use this for screen toggle to indicate where the screen overlay should be.
     self.bbox = [100,200,100,200]   
@@ -808,7 +807,7 @@ class book:
 
     return single_string
 
-  def qr_in(self, data):
+  def qr_in(self, cmds):
     #handle incoming QR data for now just MPE aftertouch. 
     #used for internal comms as well.. should change queue for that..
     return 0

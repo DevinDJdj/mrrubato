@@ -347,22 +347,34 @@ class MyKeys:
         la.set_audio_location()
 
   def add_qrin(self, data):
-    #find this QRData.  If exists, ignore.  
-    if (data not in self.qrin):
-      self.qrin.insert(0, data) #add to start of list
-      #find language which matches this data?  for now just broadcast to all languages.
-      #use language and function <lang>func [params]
-      for (l,la) in self.languages.items():
-        if (hasattr(la, 'qrin')):
-          la.qrin = (data)
-        if (hasattr(la, 'qr_in')):
-          la.qr_in(data)
+    #find this QRData.  If exists, ignore.
+
+    #find language which matches this data?  for now just broadcast to all languages.
+    #use language and function <lang>func [params]
+    cmds = self.transcriber.read_lines('_meta', data.split('\n')) #save all QR data to transcript.  This is for debugging and record keeping, as well as for loading state from previous sessions.
+
+    if (cmds is None or len(cmds) == 0):
+      return
     else:
-      #dont keep duplicates for now..
-      self.qrin.remove(data)
-      self.qrin.insert(0, data) #move to start of list
+      if (cmds[0]['lang'] != 'joystick' and cmds[0]['lang'] != 'midi'):
+        if (data not in self.qrin):
+          self.qrin.insert(0, data) #add to start of list
+        else:
+          #dont keep duplicates for now..
+          self.qrin.remove(data)
+          self.qrin.insert(0, data) #move to start of list
 
+      #better to just do the language, but language not always written..
 
+        for (l,la) in self.languages.items():
+    #        if (hasattr(la, 'qrin')):
+    #          la.qrin = (data)
+          if (hasattr(la, 'qr_in')):
+            la.qr_in(cmds)
+      else:
+        for (l,la) in self.languages.items():
+          if (hasattr(la, 'handle_joystick')):
+            la.qr_in(cmds)
   def convert_keys(self, keys, _length=0):
     #use _length to distinguish already pressed in some way..
     copy = []
@@ -729,42 +741,61 @@ class MyKeys:
     #cant do with keybot
     lastnote = -1
     if (len(self.heldwords) > 0):
-      logger.info(f'Checking heldwords: {self.heldwords}')
+#      logger.info(f'Checking heldwords: {self.heldwords}')
       lastnote = self.heldwords[-1]['_']
     #make sure we have had some time since keybot end..
     if (len(self.heldwords) > 0 and self.heldwords[-1]['..'] is not None and time.time() - self.heldwords[-1]['..'] > 0.5):
+
+      #what are the heldword notes..
+      #add to keystruct for the last word __ represents quickkey..
+      purenotes = [h['_'] for h in self.heldwords]
+      __ = None
+      _hsl = 0
+      for i, s in reversed(list(enumerate(purenotes))):
+        #search from longest to shortest..
+        r, end = self.get_keystruct(purenotes[:i+1], create=False)
+        if ("__" in end):
+          __ = end["__"]
+          _hsl = i+1
+          break
+
       #if any heldwords are held for more than 0.5 seconds, take action
       #and time.time() - self.lasttick > 0.5): #if heldwords are held for more than 0.5 seconds, take action      
       #take action again..
-      if (self.currentcmd is not None and self.currentlangna in self.languages):
-        #pass heldwords here?  not using words at the moment..
-        action = self.languages[self.currentlangna].act(self.currentcmd, self.heldwords, self.sequence[self.startseqno:], doact=doact)
-        if (action == 0):
-          #action was successful, reset command
-          #shouldnt happen..
-          logger.info(f'> <{self.currentlangna}>{self.currentcmd} {self.sequence[self.startseqno:]}')
-        elif (action < -1):
-          #action_ handled, no further params needed.
-          logger.info(f'> <{self.currentlangna}>{self.currentcmd}_ {self.sequence[self.startseqno:]}')
-          #reset command sequence to current sequence number.  
-          # This command only needs closure keys.  
-      else:
-        #get last word and try to take action again.
-        if (len(self.words_) > 0):
-          lastword = self.words_[-1]
-          logger.info(f'Trying to take action again with last word: {lastword}')
-          action = self.languages[lastword['langna']].act(lastword['word'], self.heldwords, lastword['ss'], doact=doact)
+      #do we want single key or not?  for now use 2 or more..
+      if (_hsl > 1 and __ is not None):
+        logger.info(f'Found quickkey: {__}')
+        langna = __.get('langna')
+        word = __.get('word')
+        ss = __.get('ss')
+        """
+        if (self.currentcmd == word):
+          #pass heldwords here?  not using words at the moment..
+          action = self.languages[self.currentlangna].act(self.currentcmd, self.heldwords, self.sequence[self.startseqno:], doact=doact)
           if (action == 0):
             #action was successful, reset command
-            logger.info(f'> <{lastword["langna"]}>{lastword["word"]} {lastword["ss"]}')
+            #shouldnt happen..
+            logger.info(f'> <{self.currentlangna}>{self.currentcmd} {self.sequence[self.startseqno:]}')
           elif (action < -1):
             #action_ handled, no further params needed.
-            logger.info(f'> <{lastword["langna"]}>{lastword["word"]}_ {lastword["ss"]}')
-          elif (action == -1):
-            #error?  
-            logger.info(f'!! > <{lastword["langna"]}>{lastword["word"]} {lastword["ss"]}')
+            logger.info(f'> <{self.currentlangna}>{self.currentcmd}_ {self.sequence[self.startseqno:]}')
+            #reset command sequence to current sequence number.  
+            # This command only needs closure keys.  
+        else:
+        """
+        #get last word and try to take action again.
+        action = self.languages[langna].act(word, self.heldwords, ss, doact=doact)
+        if (action == 0):
+          #action was successful, reset command
+          logger.info(f'> <{langna}>{word} {ss}')
+        elif (action < -1):
+          #action_ handled, no further params needed.
+          logger.info(f'> <{langna}>{word}_ {ss}')
+        elif (action == -1):
+          #error?  
+          logger.info(f'!! > <{langna}>{word} {ss}')
 #          else:
-            #need more keys..should be standard..
+          #need more keys..should be standard..
 
     return action
   

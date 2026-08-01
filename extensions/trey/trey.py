@@ -1670,7 +1670,10 @@ class MyWindow(QMainWindow):
             currentcmd = cmd['cmd']
             vars = cmd['vars']
             logger.info(f'Parsed QR command: {currentcmd} with vars: {vars}')
-            self.qr_in.append({'cmd': currentcmd, 'vars': vars, 'timestamp': time.time()})
+            written = self.transcriber.write(vars.get('KLANG', 'base'), currentcmd, vars, None, False) #dont write intermediate msg?            
+            #make sure we have parsability..
+            self.qr_in.append(written)
+
             #process incoming commands as needed.
             #for now just log them.
             if (cmd['type'] == '> '):
@@ -1967,6 +1970,16 @@ class MyWindow(QMainWindow):
 
                 self.show_mrroboto()
 
+            case "Select Window":
+                wname = vars.get('**', 'None')
+
+                #format this a bit nicer..
+                self.label_topic_info[1].setText(f'{wname}') 
+
+                self.label_topic_info[1].update()
+                #bring vscode to front if not there..
+                self.show_window(wname)
+
             case "Show Book":
                 book = vars.get('book', 'None')
                 context = vars.get('context', '')
@@ -2051,47 +2064,47 @@ class MyWindow(QMainWindow):
 
         #add more commands as needed.
 
+    def send_window_info(self):
+        #send window information to wherever it needs to go.
+        #only do this when selecting a window..
+        cmd = "Send Windows"
+        vars = {}
+        index = 0
+        sorter = []
+        for pid, w in self.windows.items():
+            #send window information to wherever it needs to go.
+            sorter.append(w)
+        sorter.sort(key=lambda w: w['z_index'], reverse=True)
+        for w in sorter:
+            vars[index] = f"{w['title']}"
+            index += 1
+        logger.info(f'Sending window info: {vars}')
+        self.qr_in.append(self.transcriber.write('hotkeys', cmd, vars, None, False)) #dont write intermediate msg?
+        
+
+    def show_window(self, wname):
+        """Bring the specified window to the front if not already."""
+        self.get_window_info() #update window info first.
+        for pid, w in self.windows.items():
+            if (wname.lower() in w['title'].lower()):
+                logger.info(f'Bringing window to front: {w["title"]}')
+                try:
+                    win32gui.SetForegroundWindow(w['hwnd'])
+                    rect = win32gui.GetWindowRect(w['hwnd'])
+                    win32gui.MoveWindow(w['hwnd'], self.startx, rect[1], rect[2]-rect[0], rect[3]-rect[1], True)
+                except Exception as e:
+                    logger.error(f'Error bringing window to front: {e}')
+                break
+
     def show_playwrighty(self):
         """Bring Playwright to the front if not already."""
         #get all windows, find mrroboto window and bring to front.  
-
-        self.get_window_info() #update window info first.
-
-        for pid, w in self.windows.items():
-            logger.debug(f'Checking window for Google Chrome for Testing: {w["title"]}')
-
-            if ('google chrome for testing' in w['title'].lower()):
-                logger.info(f'Bringing Playwright to front: {w["title"]}')
-                #this should already have the topic selected and also run a chat.. show any changes..
-                try:
-                    win32gui.SetForegroundWindow(w['hwnd'])
-                    #move to second screen..
-                    rect = win32gui.GetWindowRect(w['hwnd'])
-                    win32gui.MoveWindow(w['hwnd'], self.startx, rect[1], rect[2]-rect[0], rect[3]-rect[1], True) #move to second screen assuming 1920 width for first screen
-                except Exception as e:
-                    logger.error(f'Error bringing Playwright to front: {e}')
-                break
+        self.show_window('google chrome for testing')
 
     def show_mrroboto(self):
         """Bring MrRoboto to the front if not already."""
         #get all windows, find mrroboto window and bring to front.  
-
-        self.get_window_info() #update window info first.
-
-        for pid, w in self.windows.items():
-            logger.debug(f'Checking window for MrRoboto: {w["title"]}')
-
-            if ('mrroboto' in w['title'].lower()):
-                logger.info(f'Bringing MrRoboto to front: {w["title"]}')
-                #this should already have the topic selected and also run a chat.. show any changes..
-                try:
-                    win32gui.SetForegroundWindow(w['hwnd'])
-                    #move to second screen..
-                    rect = win32gui.GetWindowRect(w['hwnd'])
-                    win32gui.MoveWindow(w['hwnd'], self.startx, rect[1], rect[2]-rect[0], rect[3]-rect[1], True) #move to second screen assuming 1920 width for first screen
-                except Exception as e:
-                    logger.error(f'Error bringing MrRoboto to front: {e}')
-                break
+        self.show_window('mrroboto')
 
     def parseQRData(self, qrdata):
         """Parse the QR data and extract relevant information."""
@@ -2728,13 +2741,13 @@ class MyWindow(QMainWindow):
     
     def get_window_info(self):
         self.windows = {} #reset windows, will be updated by callback.  This is to remove windows that are closed or no longer in trey area.
-        if ('rect' not in self.trey_data):
+        if ('rect' not in self.trey_data): #initialize trey..
             win32gui.EnumWindows(self.window_list_callback, None)    
 
         win32gui.EnumWindows(self.window_list_callback, None)    
 
         self.active_window = self.get_top_z() #get top z window in trey area, not necessarily active window.
-
+        self.send_window_info()
         self.updateLabels(self.windows) #gives info for all windows
 
     def make_kg(self, graphs):
@@ -3368,7 +3381,8 @@ class MyWindow(QMainWindow):
         type = l['type']
         if (type == '> '):
           if (l['cmd'] == 'Click Link_' or l['cmd'] == 'Select Book_' or l['cmd'] == 'Select Topic_' 
-              or l['cmd'] == 'Select Tab_' or l['cmd'] == 'Time Zoom_' or l['cmd'] == 'Read Link_'): 
+              or l['cmd'] == 'Select Tab_' or l['cmd'] == 'Time Zoom_' or l['cmd'] == 'Read Link_' 
+              or l['cmd'] == 'Select Window_'):
             for i2, l2 in enumerate(self.label_ps):
                 self.label_ps[i2].setText("")            
             cnt = 0       
@@ -3681,7 +3695,7 @@ def stop_joystick():
         joystick_thread.join()  # Wait for the joystick thread to finish
 
 
-def joystick_loop(qr_queue):
+def joystick_loop(qrin_queue):
     joycount = pygame.joystick.get_count()
     if joycount == 0:
         return
@@ -3696,7 +3710,7 @@ def joystick_loop(qr_queue):
         axis = joy.get_numaxes()
         joyaxes[i] = [0.0] * axis
         logger.info(f'Joystick {i} has {axis} axes.')
-        qr_queue.put(f'<<joystick>>\n> JOY [{i},{axis}]\n$$\n')
+        qrin_queue.put(f'<<joystick>>\n> JOY [{i},{axis}]\n$$\n')
 
     while True:
 #        pygame.display.flip()
@@ -3715,14 +3729,15 @@ def joystick_loop(qr_queue):
 
             if event.type == JOYAXISMOTION: #too many events, just take last value for each axis and send in batch every loop, can adjust as needed.
                 joyaxes[event.joy][event.axis] = event.value
+                qrin_queue.put(f'<<joystick>>\n> AXIS [{event.joy},{event.axis},{event.value:.2f}]\n$$\n')
             elif event.type == JOYBALLMOTION:
-                qr_queue.put(f'<<joystick>>\n> BALL [{event.joy},{event.ball},{event.rel}]\n$$\n')
+                qrin_queue.put(f'<<joystick>>\n> BALL [{event.joy},{event.ball},{event.rel}]\n$$\n')
             elif event.type == JOYHATMOTION:
-                qr_queue.put(f'<<joystick>>\n> HAT [{event.joy},{event.hat},{event.value}]\n$$\n')
+                qrin_queue.put(f'<<joystick>>\n> HAT [{event.joy},{event.hat},{event.value}]\n$$\n')
             elif event.type == JOYBUTTONUP:
-                qr_queue.put(f'<<joystick>>\n> BUTTON [{event.joy},{event.button},0]\n$$\n')
+                qrin_queue.put(f'<<joystick>>\n> BUTTON [{event.joy},{event.button},0]\n$$\n')
             elif event.type == JOYBUTTONDOWN:
-                qr_queue.put(f'<<joystick>>\n> BUTTON [{event.joy},{event.button},1]\n$$\n')
+                qrin_queue.put(f'<<joystick>>\n> BUTTON [{event.joy},{event.button},1]\n$$\n')
 
         axisstr = "<<joystick>>\n"
         for i in range(joycount):
@@ -3730,11 +3745,11 @@ def joystick_loop(qr_queue):
                 if abs(joyaxes[i][j]) > 0.1: #threshold to prevent noise, adjust as needed
                     axisstr += f'> AXIS [{i},{j},{joyaxes[i][j]:.2f}]\n'
         if (len(axisstr) > len("<<joystick>>\n")):
-            qr_queue.put(axisstr)
+            qrin_queue.put(axisstr)
 
 def start_joystick():
     global joystick_thread
-    global qr_queue
+    global qrin_queue
 
     pygame.init()
     pygame.event.set_blocked((MOUSEMOTION, MOUSEBUTTONUP, MOUSEBUTTONDOWN))
@@ -3745,7 +3760,7 @@ def start_joystick():
     joycount = pygame.joystick.get_count()
     if joycount > 0:
         logger.info(f'{joycount} joystick(s) detected and initialized.')
-        joystick_thread = threading.Thread(target=joystick_loop, args=(qr_queue,))
+        joystick_thread = threading.Thread(target=joystick_loop, args=(qrin_queue,))
         joystick_thread.start()
         return True
     else:

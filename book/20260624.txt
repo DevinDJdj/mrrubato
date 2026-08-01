@@ -889,3 +889,24 @@ test this..
 change perhaps for other things as well..
 page.locator(".title", has_text=re.compile(r"Welcome, .*"))
 
+**mykeys.py
+Fix the heldwords..  
+Per language listing execution.  
+Need flag for repeatable or not..
+
+test heldwords..
+Maybe broken..
+
+What is the mechanism for additional heldwords?  
+If not part of the word, ..
+
+Need more general selection logic..
+[53,56,58] [N]
+test..
+
+
+**extensions/vscode/codetutor/src/midi/mykeys.ts
+Add joystick handler?  
+Annoying.. later..
+;> npm install gamepad
+

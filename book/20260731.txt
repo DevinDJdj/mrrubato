@@ -1,0 +1,468 @@
+
+**languages
+These messages for LANG and META are MOD12.  
+_LANG can set to any octave automatically.  
+and in any language, _META lang and _LANG always exist.  
+
+
+**extensions/vscode/codetutor/src/extension.ts
+Need to at least genbook..
+On a loop..
+
+
+
+
+**extensions/vscode/codetutor/src/extension.ts
+**extensions/trey/trey.py
+Lets see if we can open [**public/web] with login with playwrighty.  
+
+
+
+**books/WORLDHISTORY
+Start usage experiment here..
+
+
+**extensions/vscode/codetutor/src/book.ts
+Need to be able to switch between books seamlessly..
+
+
+
+**web/public/chata.html
+Load [**web/public/data/transcriptions/trey/2026]
+Local vector DB..
+Chat find similar transcript (spoken)..
+Load full transcript from this location..
+Need web transcript parser/viewer..
+
+
+
+**languages/_meta.py
+
+;> Tune In
+;> Tune Out
+test..
+
+
+
+
+
+**timestep.py
+create summary for > RECORD
+add it directly to VTT?
+
+
+**web/public/chata.html
+**web/public/recent.js
+--loadAllRecentTranscripts
+have some info from transcripts..
+Can now embed this with other entries..
+Or make separate listing..
+
+
+>@ lean4.docs.showAbbreviations
+
+
+
+
+**timestep.py
+get pre-generated DB of likely command sequences.
+
+--search_midi
+get from this time next sequence of commands from all transcripts..
+--enscribe
+Then get words..
+This is adding too much to words..
+Is this all fast enough..
+
+
+**languages/book.py
+Need feature to basically always listen, and search for spoken commands..
+As spoken or keyed, potential set of commands is displayed in 13-22..
+This is default functionality unless there is a language for this keybot.
+Or there is a current command.  
+Can select command, then parameters via same mechanism..
+If there is no keybot, this is selection mechanism..
+Need with params (W) / (B) no params.. followed by params, or again selectable params..
+
+4 selections each. 
+[61,62,63,64] and [66,67,68,69]
+Special function for 
+65 (53+12) = create key combo?  
+70 = autocreate, immitate?  
+71 = word creation?  
+
+
+
+
+**analyze/midscribe.py
+
+> python ./analyze/analyze.py --title  "Evil Ways (Sonny Henry)" --force true --skipmidscribe false
+
+> python ./analyze/analyze.py --title "Great Balls Of Fire (Jack Hammer)" --force true --skipmidscribe false
+
+#https://data.yamaha.com/files/download/other_assets/8/1345698/dgx670_en_dl_b0.pdf
+
+
+
+
+**extensions/trey/playwrighty.py
+--get_page_details
+!!Dont get the text in PDF link from playwrighty?  
+==
+nope..
+Download and parse?  
+not ideal..
+Keep bookmark of file?  
+
+later..
+$$
+
+**extensions/vscode/codetutor/extension.ts
+--workbench.action.chat.readChatResponseAloud
+@@ Can we scroll along with speech?  
+Seems not easily..
+
+
+**extensions/vscode/codetutor/src/languages/base.js
+No editing, just use..  
+No closure
+[69]
+[69,68];> CTRL+SHIFT+8
+[69,70];> Selection On/Off
+[69,65];> Up/Down/Left/right
+[69,65,68];> Up
+[69,65,67];> Down
+[69,65,64];> Left
+[69,65,66];> Right
+
+;> Home/End
+[69,64,63];> Home
+[69,64,65];> End
+;> Pgup/PgDn
+[69,64,67];> PgDn
+[69,64,68];> PgUp
+
+;> Enter - None
+;> 
+
+**extensions/vscode/codetutor/src/extension.ts
+
+
+continue..
+workbench.action.nextEditor
+"workbench.action.previousEditor"
+
+Sound feedback should not occur unless it is potential word?  
+Create word tree struct in VSCode..
+
+
+**extensions/vscode/codetutor/src/languages/base.js:27
+Code location at time..
+If end needed..
+$$(=27
+$$)=29
+
+
+
+**extensions/vscode/codetutor/src/midi/mykeys.ts
+--updateKeyMaps
+gen_lang_struct
+--importLanguageModule
+--mkey
+
+See if this simpler implementation works ok..
+
+**languages/helpers/transcriber.py
+--search_midi
+Try NGRAM and simple RNN..
+#https://www.geeksforgeeks.org/deep-learning/training-of-recurrent-neural-networks-rnn-in-tensorflow/
+#https://www.codecademy.com/article/rnn-py-torch-time-series-tutorial-complete-guide-to-implementation
+
+
+**timestep.py
+Train from recent past usage..
+
+And then just use generated model..
+
+**extensions/trey/trey.py
+Need to finish QR detection.  
+Add to transcript.  #[link] [$$TIME=t]
+This can be used to recreate..
+Can we load extension to display 
+
+**extensions/vscode/codetutor/src/extension.ts
+
+Need contextual filtering for commands..
+Also what commands do we want to do auto-complete on?  
+Need to add some 
+
+
+**extensions/vscode/codetutor/src/book.ts
+--defmap
+Need to add some here..
+
+@@ How do we adjust git to specific date back and forth and reingest book?  
+Need to do this when switching time..
+># git checkout $(git rev-list -n 1 --before="2026-06-22 00:00" main)
+Save this date..
+
+Return to current..
+> git checkout main
+
+Better if we dont have to recycle or reread.  
+Maybe just vscode side is fine.  
+Set date, then recycle trey..
+
+># git checkout $(git rev-list -n 1 --before="2026-06-22 00:00" main)
+
+
+
+**languages/_meta.py
+;> Select Topic..
+with relevant flag
+[48,51,55] [50] [n]
+
+Do we get useful context?  
+
+**extensions/vscode/codetutor/src/toolParticipant.ts
+Test restart
+[48,62,49]
+
+
+**extensions/vscode/codetutor/src/languages/base.ts
+How do we make slight adjustments.  
+Command to adjust selected text.  
+;> Adjust [&&]
+in-place or to genbook..
+whole file/#lines
+
+;> Undo
+;> Retry
+
+;/gencode
+;/gencomments
+;/genbook
+
+implement node-audiorecorder
+
+
+
+**extensions/vscode/codetutor/src/languages/base.ts
+;> Open Book [TIME] [TYPE]
+;$$TIME=NOW/SELECTEDTIME/..
+;$$TYPE=BASE/GENBOOK/SELECTEDBOOK
+
+[69,68]
+Pause
+not working..
+
+try
+[69,63,68]
+
+or..
+[50,49]
+
+
+**mykeys.py
+--checkheldwords
+Logic By LANG
+Check last N words..
+require two held keys..
+
+
+**extensions/trey/speech.py
+How to get space, quotes just returning backslash..
+
+
+**extensions/vscode/codetutor/src/extension.ts
+Sometimes VSCode crashing during debug session on 
+;> Restart
+And then midi device unavailable.. and extension fails to start until restart of machine..
+@VSCode 
+There is some issue here. 
+Also with latest release, you have changed something with multiwindow opening on start..
+~~Save full state and restart as-is when possible. 
+
+
+**languages/helpers/transcriber.py
+
+
+--Heldwords
+
+Need audio indicator when triggered..
+Need to save/load word tree..
+
+
+Need to dynamically adjust interval check for heldwords
+
+Eventually need input logic:
+// Locate by its visual label text (Best practice)
+await page.getByLabel('Username').fill('my_username');
+
+Just use vars for fill.  
+$$ selection should be dynamic..
+
+
+
+**languages/hotkeys.py
+;> Show Browser
+Bring to front..
+
+**languages/book.py
+**extensions/vscode/codetutor/src/languages/base.ts
+;> Show Book
+[50,48]
+Bring to front..
+
+
+**extensions/vscode/codetutor/src/gen.ts
+Eventually how do we generate everything as git changes?  
+This is a larger problem.
+To test just put result in separate file.
+
+colon not allowed in topic..
+
+#https://en.wikipedia.org/wiki/Ithkuil
+#https://en.wikipedia.org/wiki/Lojban
+At vlate van at se gupea
+
+
+**mykeys.py
+--checkheldwords
+Still need to fix RepeatTimer not working for playwright functions..
+
+
+
+
+**languages/hotkeys.py
+;> Open history
+use browser history.  
+
+add functions
+;> List Windows
+all available windows in trey..
+;> Select Window
+bring to foreground.  
+
+#https://www.kaggle.com/datasets/samxsam/human-cognitive-performance-analysis/data
+
+
+**extensions/trey/test/watchtest.py
+after jump time, recalibrate link index same as topic index..
+Send info via _meta transcript?  
+
+**languages/book.py
+**extensions/vscode/codetutor/src/languages/base.ts
+;> Select genbook
+open genbook from last used..
+
+;> Select book
+open book from last used..
+
+
+Send to extension via book transcript.  
+
+
+#https://www.gutenberg.org/ebooks/categories
+
+ask test..
+;[53,55,52]
+
+
+**extensions/trey/trey.py
+**extensions/trey/test/watchtest.py
+Need to monitor book transcript..
+
+And open in playwright browser..
+
+[69] keys for
+find next/prev
+F4, SHIFT+F4
+
+
+>@ workbench.action.showAllEditors
+>@ workbench.action.quickOpenNavigateNextInEditorPicker
+>@ workbench.action.quickOpenPreviousRecentlyUsedEditorInGroup
+
+
+vectrafolder 
+change to fspath instead of path..
+
+
+Need general setting to control speech on/off..
+change via _META..
+
+
+**languages/book.py
+--read_link
+listing logic and order still all wrong
+OK, finally can list and select..
+
+See if we can list from book only..
+
+**mykeys.py
+Not sure if we can chain commands..
+But it is causing some problem with qr help display after word selection..
+
+**extensions/vscode/codetutor/src/languages/base.ts
+[69,63,68]
+Test adjust readChatResponseAloud
+
+
+**extensions/trey/trey.py
+--play_in_background
+Have to 
+
+after
+;> Ask handler..
+display in overlay..
+Adjust overlay opacity?  
+Add to ctxt?  
+
+Also need better fuzzy search before query.  
+Lots of misspelling with all this Greek..
+
+
+**languages/hotkeys.py
+--get_entities
+
+**extensions/trey/trey.py
+--visualize_kg
+use similar..
+
+Need UI feedback info..
+
+
+;> Click Link
+Need to go to that read 
+locator.evaluate("el => el.style.backgroundColor = 'rgba(0, 0, 0, 0.1)'")
+test this..
+change perhaps for other things as well..
+page.locator(".title", has_text=re.compile(r"Welcome, .*"))
+
+**mykeys.py
+
+test heldwords..
+Maybe broken..
+
+What is the mechanism for additional heldwords?  
+If not part of the word, ..
+
+Need more general selection logic..
+[53,56,58] [N]
+test..
+
+
+**extensions/vscode/codetutor/src/midi/mykeys.ts
+Add joystick handler?  
+Annoying.. later..
+;> npm install gamepad
+
+Does window switch work?  
+
+
+**languages/hotkeys.py
+Still problems sending windows.  
+Continue held words..
+Continue Joystick chrome handle first..
+

@@ -24,7 +24,6 @@ class base:
     self.func = None
     self.cmd = None
     self.qr = "" #info for QR message
-    self.qrin = "" #info from incoming QR message
     self.startx = startx
     self.name = "base"
     #self.keybot = 49 #no keybot for dynamic and short/created languages...

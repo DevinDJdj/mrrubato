@@ -273,6 +273,14 @@ function logCommand(command) {
     try {
         const mySettings = vscode.workspace.getConfiguration('mrrubato');
         let genbookFolder = mySettings.genbookfolder;
+        const editor = vscode.window.activeTextEditor;
+        if (editor) {
+            const fullpath = editor.document.fileName;
+            if (fullpath.startsWith(genbookFolder)) {
+                //dont log commands in the genbook folder.
+                return;
+            }
+        }
         let logPath = genbookFolder + "/" + formatDate(mynow) + ".txt"; //get the date in YYYYMMDD format.
         updatePage(logPath, command, -1, -1);
     }
@@ -689,7 +697,7 @@ function pickTopic(selectedtopics, defaultprompts = [], numtopics = 10, extendto
     }
     if (extendtopics || selectedtopics.length === 0) {
         if (exports.selectionhistory.length > 0) {
-            for (let i = exports.selectionhistory.length - 1; i > -1; i--) {
+            for (let i = exports.selectionhistory.length - 1; i > -1 && i > exports.selectionhistory.length - numtopics; i--) {
                 if (exports.topicarray[exports.selectionhistory[i]] !== undefined && exports.topicarray[exports.selectionhistory[i]].length > 0) {
                     //sort the topics by date.  
                     selectedtopics.unshift(exports.selectionhistory[i]); //add the topic to the selected topics.
@@ -717,27 +725,19 @@ function pickTopic(selectedtopics, defaultprompts = [], numtopics = 10, extendto
     }
     let retdata = "";
     //deduplicate selectedtopics
-    selectedtopics = Array.from(new Set(selectedtopics)); //remove duplicates from the array.
-    if (retkey !== "NONE") {
-        let found = selectedtopics.indexOf(retkey);
-        if (found > -1) {
-            selectedtopics.splice(found, 1); //remove the topic from the selected topics.
-        }
-        selectedtopics.push(retkey); //add the key to the selected topics.
-    }
+    selectedtopics = Array.from(new Set(selectedtopics)); //remove duplicates from the array, keeps order.
+    //    selectedtopics.reverse(); //reverse the array so that the most recent topics are at the start..
     let i = 0;
-    if (selectedtopics.length > numtopics) {
-        i = selectedtopics.length - numtopics; //start from the end of the array.
-    }
     //what date do we want to search from?  
     //just add all.  
     let mylist = [];
-    for (; i < selectedtopics.length; i++) {
+    for (; i < selectedtopics.length && i < numtopics; i++) {
         if (exports.topicarray[selectedtopics[i]] !== undefined) {
             retdata += "**" + selectedtopics[i] + "\n"; //add the topic to the data.
             retkey = selectedtopics[i]; //set the key to the topic.
-            //only get 10 entries..
+            //only get 10 entries.. per topic
             let tentries = exports.topicarray[selectedtopics[i]].length;
+            let selectedentries = 0;
             for (let j = 0; j < exports.topicarray[selectedtopics[i]].length; j++) {
                 //add date here.  
                 let item = exports.topicarray[selectedtopics[i]][j];
@@ -748,8 +748,12 @@ function pickTopic(selectedtopics, defaultprompts = [], numtopics = 10, extendto
                 //                retdata += `[${item.file}](${item.file}#L${item.line})  \n`;
                 //                retdata += item.data + "\n"; //add all data for the topic.
                 //random number related to list length...
-                if (Math.random() < numentries / tentries) { //randomly add entries based on the number of entries for the topic.
+                if (Math.random() < ((numentries + selectedentries) / (tentries * 2))) { //randomly add entries based on the number of entries for the topic.
+                    //weight later entries more..
+                    //                    if (mylist.find((t) => t.data === item.data) === undefined) { //deduplicate the list. by data..
                     mylist.push(item);
+                    selectedentries++;
+                    //                    }
                 }
             }
         }

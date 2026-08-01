@@ -513,6 +513,13 @@ export function startWatchingTranscriber(lang: string, transcriptFolder: string 
                                 vscode.commands.executeCommand('workbench.action.restartExtensionHost');
 //                                vscode.commands.executeCommand('workbench.action.chat.open', "@mr /restart");
                             }
+                            if (cmd.cmd === "Comment"){
+                                let input = "";
+                                if (cmd.vars && cmd.vars['COMMENT']){
+                                    input = cmd.vars['COMMENT'] + '\n';
+                                }
+                                Book.updatePage(Book.getBookPath() + "/" + file, input, -1, -1); //append to end of file.
+                            }
                             if (cmd.cmd === "Record Feedback"){
                                 //do something with the feedback.  For now just log it.
                                 let input = "";

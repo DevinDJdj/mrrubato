@@ -42,6 +42,8 @@ class hotkeys:
     self.keyoffset = 5 #offset within octave mapping
     self.links = []
     self.currentlinks = []
+    self.windows = ["" for _ in range(100)] #for now practical limit much lower..
+    self.currentwindowindex = 0
     self.maxseq = 10 #includes parameters
     self.callback = None
     self.transcript = ""
@@ -235,6 +237,8 @@ class hotkeys:
         "Close Tab": [53,56,59],
         "List Tabs": [53,56,61],
         "Select Tab": [53,56,60],
+        "Select Window": [53,56,58],
+        "Close Window": [53,56,57],
 
         "Comment": [53,57, 58], #record comment
         "Record Feedback": [53,57,60], 
@@ -303,6 +307,7 @@ class hotkeys:
       "Select Type": "select_type",
       "List Tabs": "list_tabs",
       "Select Tab": "select_tab",
+      "Select Window": "select_window",
       "Close Tab": "close_tab",
       "_Search Web": "_search_web",
       "Search Web_": "search_web_",
@@ -373,6 +378,10 @@ class hotkeys:
 "> ": "select tab", 
 "$$": "$Tab", 
 "&&": "Select specified browser tab."},
+      "Select Window": {
+"> ": "select window", 
+"$$": "$Window", 
+"&&": "Select specified trey window to foreground."},
       "Add Bookmark": {
 "> ": "add bookmark", 
 "$$": "None", 
@@ -474,23 +483,249 @@ class hotkeys:
     #dont actually need param...
     playwrighty.update_page_offset()
 
+  #state = foreground window + tab state for browser..
+  def get_state(self):
+    #get current state of this language.  For now just return current window and tab.
+    state = {}
+    state['window'] = self.windows[self.currentwindowindex] if (len(self.windows) > self.currentwindowindex) else ""
+    if ('google chrome for testing' in state['window']):
+      state['app'] = "chrome"
+    elif ('mrroboto' in state['window']):
+      state['app'] = "mrroboto"
+    else:
+      state['app'] = ""
+    return state
+  #vscode
+  #playwrighty
 
-  def qr_in(self, data):
+
+  def handle_joystick(self, cmd):
+    #translate joystick commands to actions.  
+    #held key actions..
+    state = self.get_state()
+    if (state['app'] == "mrroboto"):
+      a = 0
+      if (cmd['cmd'] == 'AXIS'):
+        logger.info(f'axis {cmd}') #joy, axis, value
+        #all depends on state.  example..
+        if ('vars' in cmd and 'SEQ' in cmd['vars'] and len(cmd['vars']['SEQ']) > 2):
+          #use first axis for now.  
+          if (cmd['vars']['SEQ'][1] == 1):
+            if (cmd['vars']['SEQ'][2] < -0.5):
+              #up = cursor up
+              a = 0
+            elif (cmd['vars']['SEQ'][2] > 0.5):
+              #down = cursor down
+              a = 0
+          elif (cmd['vars']['SEQ'][1] == 0):
+            if (cmd['vars']['SEQ'][2] > 0.5):
+              # right = next tab (hold)
+              a = 0
+            elif (cmd['vars']['SEQ'][2] < -0.5):
+              # left = previous tab (hold)
+              a = 0
+
+      elif (cmd['cmd'] == 'BUTTON'):
+        #handle joystick buttons.  For now just log it.  
+        logger.info(f'Joystick button {cmd}') #joy, button, on/off
+        #use for heldwords..
+        if ('vars' in cmd and 'SEQ' in cmd['vars'] and len(cmd['vars']['SEQ']) > 2):
+          #use first button for now.  
+          button_down = cmd['vars']['SEQ'][2]
+          match (cmd['vars']['SEQ'][1]):
+            case 0: #R1 top right
+              if (button_down == 1):
+                #button 0 pressed
+                a = 0
+              if (button_down == 0):
+                #button 0 released
+                a = 0
+            case 1: #R1 bottom right
+              if (button_down == 1):
+                #button 1 pressed
+                a = 0
+              elif (button_down == 0):
+                #button 1 released
+                a = 0
+            case 3: #R1 bottom left
+              #play/pause button. or 
+              if (button_down == 1):
+                #button 3 pressed
+                a = 0
+              elif (button_down == 0):
+                #button 3 released
+                #skip reader or playing video for held value..?  
+                a = 0
+            case 4: #R1 top left button
+              if (button_down == 1):
+                #button 4 pressed
+                a = 0
+              elif (button_down == 0):
+                #hold for window selection
+                #button 4 released
+                #if < 0.5 seconds,switch to chrome
+                a = 0
+            case 6: #go
+              if (button_down == 1):
+                #button 6 pressed = execute current selection..
+                a = 0
+              elif (button_down == 0):
+                #button 6 released
+                a = 0
+            case 7: #back
+              if (button_down == 1):
+                #button 7 pressed = go back
+                a = 0
+              elif (button_down == 0):
+                #button 7 released
+                a = 0
+        #7 = back
+        #6 = execute?  
+        #0 = 
+        #show which heldword will be triggered immediately.  
+        #use 1 second delay?  
+      elif (cmd['cmd'] == 'HAT' or cmd['cmd'] == 'BALL'):
+        #handle joystick axes, time control?  
+        # For now just log it.  
+        logger.info(f'Joystick ball/hat {cmd}') #joy, ball/hat, value
+        #play or pause..
+
+    elif (state['app'] == "chrome"):
+      a = 0
+      if (cmd['cmd'] == 'AXIS'):
+        logger.info(f'axis {cmd}') #joy, axis, value
+        #all depends on state.  example..
+        if ('vars' in cmd and 'SEQ' in cmd['vars'] and len(cmd['vars']['SEQ']) > 2):
+          #use first axis for now.  
+          if (cmd['vars']['SEQ'][1] == 1):
+            if (cmd['vars']['SEQ'][2] < -0.5):
+              #up = scroll up
+              playwrighty.get_ppage().mouse.wheel(0, -100) #scroll up
+              a = 0
+            elif (cmd['vars']['SEQ'][2] > 0.5):
+              #down = scroll down
+              playwrighty.get_ppage().mouse.wheel(0, 100) #scroll down
+              a = 0
+          elif (cmd['vars']['SEQ'][1] == 0):
+            current = playwrighty.current_cache
+            if (cmd['vars']['SEQ'][2] > 0.5):
+              # right = next tab              
+              if (len(playwrighty.page_cache) > current + 1):
+                playwrighty.current_cache = current + 1
+              else:
+                playwrighty.current_cache = 0
+              playwrighty.get_ppage().keyboard.press("Control+Tab") #next tab
+              a = 0
+            elif (cmd['vars']['SEQ'][2] < -0.5):
+              # left = previous tab
+              if (current > 0):
+                playwrighty.current_cache = current - 1
+              else:
+                playwrighty.current_cache = len(playwrighty.page_cache) - 1
+              playwrighty.get_ppage().keyboard.press("Control+Shift+Tab") #previous tab
+              a = 0
+
+      elif (cmd['cmd'] == 'BUTTON'):
+        #handle joystick buttons.  For now just log it.  
+        logger.info(f'Joystick button {cmd}') #joy, button, on/off
+        #use for heldwords..
+        if ('vars' in cmd and 'SEQ' in cmd['vars'] and len(cmd['vars']['SEQ']) > 2):
+          #use first button for now.  
+          button_down = cmd['vars']['SEQ'][2]
+          match (cmd['vars']['SEQ'][1]):
+            case 0: #R1 top right
+              if (button_down == 1):
+                #button 0 pressed = ask
+                #_ask
+                a = 0
+              if (button_down == 0):
+                #ask
+                #button 0 released
+                a = 0
+            case 1: #R1 bottom right
+              if (button_down == 1):
+                #skip to current location
+                a = 0
+              elif (button_down == 0):
+                #button 1 released
+                a = 0
+            case 3: #R1 bottom left
+              #play/pause button. or 
+              if (button_down == 1):
+                #button 3 pressed
+                a = 0
+              elif (button_down == 0):
+                #button 3 released
+                #skip reader or playing video for held value..?  
+                a = 0
+            case 4: #R1 top left button
+              if (button_down == 1):
+                #button 4 pressed
+                a = 0
+              elif (button_down == 0):
+                #hold for window selection
+                #button 4 released
+                #if < 0.5 seconds,switch to mrroboto
+                a = 0
+            case 6: #go
+              if (button_down == 1):
+                #button 6 pressed = click link                
+                self.click_link() #click current link
+                a = 0
+              elif (button_down == 0):
+                #button 6 released
+                a = 0
+            case 7: #back
+              if (button_down == 1):
+                #button 7 pressed = go back
+                self.go_back() #go back in browser
+                a = 0
+              elif (button_down == 0):
+                #button 7 released
+                a = 0
+        #7 = back
+        #6 = execute?  
+        #0 = 
+        #show which heldword will be triggered immediately.  
+        #use 1 second delay?  
+      elif (cmd['cmd'] == 'HAT' or cmd['cmd'] == 'BALL'):
+        #handle joystick axes, time control?  
+        # For now just log it.  
+        logger.info(f'Joystick ball/hat {cmd}') #joy, ball/hat, value
+        #play or pause..
+
+
+
+
+  def qr_in(self, cmds):
     #handle incoming QR data. 
     #used for internal comms as well.. should change queue for that..
-    cmds = self.transcriber.read_lines(self.name, data.split('\n')) #save all QR data to transcript.  This is for debugging and record keeping, as well as for loading state from previous sessions.
     for c in cmds:
-      if (c['type'] == '> ' and c['cmd'] == 'Add Bookmark'):
-        #open the page.  
-        url = c['vars']['URL'] if 'URL' in c['vars'] else ""
-        total_read = int(c['vars']['TOTAL_READ']) if 'TOTAL_READ' in c['vars'] else 0
-        body_length = int(c['vars']['BODY_LENGTH']) if 'BODY_LENGTH' in c['vars'] else 0
-        text = c['vars']['TEXT'] if 'TEXT' in c['vars'] else ""
-        if (url != ""):
-          logger.info(f'#{url}\n{total_read}')
-          playwrighty.open_browser() #in case not open already..
-          playwrighty.add_bookmark(url, total_read, text) #call playwrighty add bookmark..
-          playwrighty.read_page(url, -1) #cacheno -1 means load new page if not already open.  
+      if (c['lang'] == 'joystick'):
+        logger.info(f'Joystick {c}')
+        #handle joystick/midi input.  For now just log it.  
+        self.handle_joystick(c)
+      elif (c['lang'] == 'midi'):
+#        logger.info(f'MIDI QR {c}')
+        a = 0
+      else:
+        if (c['type'] == '> ' and c['cmd'] == 'Add Bookmark'):
+          #open the page.  
+          url = c['vars']['URL'] if 'URL' in c['vars'] else ""
+          total_read = int(c['vars']['TOTAL_READ']) if 'TOTAL_READ' in c['vars'] else 0
+          body_length = int(c['vars']['BODY_LENGTH']) if 'BODY_LENGTH' in c['vars'] else 0
+          text = c['vars']['TEXT'] if 'TEXT' in c['vars'] else ""
+          if (url != ""):
+            logger.info(f'#{url}\n{total_read}')
+            playwrighty.open_browser() #in case not open already..
+            playwrighty.add_bookmark(url, total_read, text) #call playwrighty add bookmark..
+            playwrighty.read_page(url, -1) #cacheno -1 means load new page if not already open.  
+        if (c['type'] == '> ' and c['cmd'] == 'Send Windows'):
+          logger.info(f'Send Windows {c}')
+          for i, v in c['vars'].items():
+            n = i
+            if n.isdigit():
+              self.windows[i] = v
 
 
   def set_qr(self, func, param={}):
@@ -719,6 +954,15 @@ class hotkeys:
     return 0
 
 
+  def adjust_window_index(self, idx=0):
+    if idx+self.curentwindowindex < 0:
+      return 0
+    elif (idx+self.curentwindowindex) >= len(self.windows):
+      return len(self.windows)-1
+    else:
+      return self.curentwindowindex + idx
+    return self.curentwindowindex
+  
   def adjust_playwrighty_index(self, idx=0):
     if idx+playwrighty.current_cache < 0:
       return 0
@@ -994,6 +1238,8 @@ class hotkeys:
             shutil.copy('feedback.wav', fname) #keep a copy for training..
             self.transcriber.write(self.name, "Record Feedback", vars, save=True)  
             self.set_qr("Record Feedback", vars) #update QR with feedback data for debugging and record keeping.
+            #do we want to save to book as well?  for now yes, need reference info..
+            self.transcriber.write_topic(self.name, "", f'$${self.feedbacknowstr}\n{self.transcript}', saveTranscript=False, saveBook=True)
           except Exception as e:
             print(f'Error writing feedback file: {e}')
         else:
@@ -1678,3 +1924,54 @@ class hotkeys:
         currentbox["text"] = currentline
         alllines.append(currentbox)
     return alllines, alllinks
+
+
+  def select_window_(self, sequence=[]):
+    self.func = "Select Window_"
+    vars = {}
+    cacheno = self.currentwindowindex
+    if (len(sequence) > 0) and sequence[-1] != self.keybot:
+      cacheno = self.currentwindowindex - (self.mid-sequence[-1])
+
+    if (cacheno > len(self.windows) - 1):
+      cacheno = len(self.windows) - 1
+    if (cacheno < 0):
+      cacheno = 0
+    logger.info(f'> Select Window_ {sequence}')
+    print("> Select Window_")
+      #find the current link from our reading.
+    
+    last15 = self.windows[max(0, self.currentwindowindex-11):min(self.currentwindowindex+13, len(self.windows))]
+    last15.reverse() #reverse to match with Future:Past order in display.. [48 - 68]
+    start = 0
+    if len(self.windows) < 12:
+      start = 12 - len(self.windows) + self.currentwindowindex + 1
+      vars['idx'] = self.currentwindowindex
+      vars[':'] = self.currentwindowindex
+    else:
+      vars['idx'] = self.currentwindowindex
+    for i, l in enumerate(last15):
+      n = i + start
+      vars[f'{n}'] = l
+#          vars[f'href{i}'] = l['href']
+    self.set_qr(self.func, vars)
+    #show title..
+    vars['**'] = self.windows[cacheno]
+
+    self.set_qr(self.func, vars)
+    return 1
+  
+  def select_window(self, sequence=[]):
+    logger.info(f'> Select Window {sequence}')
+    self.func = "Select Window"
+    select_index = self.currentwindowindex
+    if (len(sequence) > 0):
+      select_index = self.adjust_window_index(self.mid-sequence[-1])
+    logger.info(f'Selecting Tab with index {select_index} of {len(self.windows)}')
+    if (select_index >= 0 and select_index < len(self.windows)):
+      self.currentwindowindex = select_index
+    vars = {'**': self.windows[self.currentwindowindex], ':': self.currentwindowindex}
+    self.set_qr(self.func, vars)
+
+
+    return 0
