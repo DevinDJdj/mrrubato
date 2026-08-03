@@ -521,8 +521,11 @@ if __name__ == '__main__':
     custom_env = os.environ.copy()
     print('analyze start python ./analyze/analyze.py --title "' + args.title + '"')
 #    subprocess.call('python ./analyze/analyze.py --title "' + args.title + '"')
-    subprocess.Popen('python ./analyze/analyze.py --title "' + args.title + '"',
+    analyzep = subprocess.Popen('python ./analyze/analyze.py --title "' + args.title + '"',
     shell=True, env=custom_env)
+    #do we want to wait?  This copies the prevIteration.mp4
+    analyzep.wait(timeout=60) #only wait 1 minute for now..
+
     print("analyze complete")
     obsp = subprocess.Popen("C:\\Program Files\\obs-studio\\bin\\64bit\\obs64.exe", start_new_session=True, cwd="C:\\Program Files\\obs-studio\\bin\\64bit")
     
