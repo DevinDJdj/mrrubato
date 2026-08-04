@@ -1695,6 +1695,12 @@ class MyWindow(QMainWindow):
             if (cmd['type'] == '> '):
                 currentcmd = cmd['cmd']
                 vars = cmd['vars']
+                if ('timestamp' in vars):
+                    #compare to current time..
+                    current_time = time.time()
+                    if (float(vars['timestamp']) < current_time - 0.5):
+                        logger.info(f'!!TIME LAG {vars["timestamp"]} {current_time}\n{qrdata}')
+#                        continue #skip this command if time mismatch dont want anything stale..
                 logger.info(f'Parsed QR command: {currentcmd} with vars: {vars}')
                 self.qr_out.append({'cmd': currentcmd, 'vars': vars, 'timestamp': time.time()})
                 self.executeQRCommand(currentcmd, vars, cmd['lang'])
@@ -1914,6 +1920,7 @@ class MyWindow(QMainWindow):
             case "Set Speed":
  
                 speed = float(vars.get('SPEED', '1.0'))
+                lang = vars.get('KLANG', lang)
                 self.add_setting('SPEED', speed, lang)
                 self.set_speed(speed, lang)
                 #video = playback speed
@@ -2079,7 +2086,8 @@ class MyWindow(QMainWindow):
             vars[index] = f"{w['title']}"
             index += 1
         logger.info(f'Sending window info: {vars}')
-        self.qr_in.append(self.transcriber.write('hotkeys', cmd, vars, None, False)) #dont write intermediate msg?
+
+        self.inqueue.put(self.transcriber.write('hotkeys', cmd, vars, None, False)) #dont write intermediate msg?
         
 
     def show_window(self, wname):
@@ -2089,9 +2097,15 @@ class MyWindow(QMainWindow):
             if (wname.lower() in w['title'].lower()):
                 logger.info(f'Bringing window to front: {w["title"]}')
                 try:
+                    #workaround for bringing window to front on Windows using pyautogui and win32gui
+                    k = keyboard.Controller()
+                    k.press(keyboard.Key.alt)
+
                     win32gui.SetForegroundWindow(w['hwnd'])
                     rect = win32gui.GetWindowRect(w['hwnd'])
                     win32gui.MoveWindow(w['hwnd'], self.startx, rect[1], rect[2]-rect[0], rect[3]-rect[1], True)
+                    time.sleep(0.5)  # Small delay to ensure the window is brought to the front
+                    k.release(keyboard.Key.alt)
                 except Exception as e:
                     logger.error(f'Error bringing window to front: {e}')
                 break
@@ -2532,7 +2546,7 @@ class MyWindow(QMainWindow):
         font = QFont("Courier", fontsize-2) # Specify font family and size
         font.setFixedPitch(True)    # Ensure it uses the fixed pitch version if available
         self.label_p.setFont(font)    # Apply the font to the label        
-        self.label_p.setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};border: 1px solid black;")
+        self.label_p.setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {self.color};border: 1px solid black;")
         self.label_p.move(0, self.geo.height() - pwidth)
         self.label_p.setFixedHeight(pwidth)
         self.label_p.setFixedWidth(pwidth)
@@ -2563,7 +2577,7 @@ class MyWindow(QMainWindow):
             t.setFixedHeight(h+2)
             w = metrics.boundingRect(chr(0x2160)).width()
             t.setFixedWidth(int(w*60*1.5)) #60 char of time info.. 36-96 ? 
-            t.setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};")
+            t.setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {self.color};")
             #some reason <pre> makes formatting a bit nicer..
             ltext = ""
             startchar = 0x2160 #start of roman numeral characters, just to have some unique chars to test with for now.
@@ -2582,19 +2596,19 @@ class MyWindow(QMainWindow):
         self.label_timeinfo = []
         for i in range(4):
             self.label_timeinfo.append(QLabel(self))
-            self.label_timeinfo[i].setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};border: 1px solid black;")
+            self.label_timeinfo[i].setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {self.color};border: 1px solid black;")
             font = QFont("Courier", fontsize-4) # Specify font family and size
             self.label_timeinfo[i].setFont(font)
             self.label_timeinfo[i].move(int(self.geo.width()*0.08), int(self.geo.height()*0.02*(i+1.5)))
-            self.label_timeinfo[i].setFixedHeight(fontsize-4)
-            self.label_timeinfo[i].setFixedWidth(int(self.geo.width()*0.1))
+            self.label_timeinfo[i].setFixedHeight(fontsize-2)
+            self.label_timeinfo[i].setFixedWidth(int(self.geo.width()*0.12))
             self.label_timeinfo[i].setTextFormat(Qt.PlainText)
 
 
         self.label_topic_info = []
         for i in range(2):
             self.label_topic_info.append(QLabel(self))
-            self.label_topic_info[i].setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};border: 1px solid black;")
+            self.label_topic_info[i].setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {self.color};border: 1px solid black;")
             font = QFont("Courier", fontsize-4) # Specify font family and size
             self.label_topic_info[i].setFont(font)
             self.label_topic_info[i].move(int(self.geo.width()*0.1), int(self.geo.height()*(0.08+0.02*(i+1))))
@@ -2694,7 +2708,8 @@ class MyWindow(QMainWindow):
 
 
                 # Check if the window is fully within the trey window
-                if ((self.in_trey(rect) and win32gui.IsWindowVisible(hwnd)) or ('mrroboto' in title.lower())): #only monitor visible windows..
+                if ((self.in_trey(rect) and win32gui.IsWindowVisible(hwnd) and title !='PopupHost') 
+                        or ('mrroboto' in title.lower())): #only monitor visible windows.. and ignore popuphost..
                     threadid, procid = win32process.GetWindowThreadProcessId(hwnd)
                     self.update_window_data(hwnd, title, rect, {'threadid': threadid, 'procid': procid, 'hwnd': hwnd})
                     x, y, right, bottom = rect
@@ -3073,7 +3088,7 @@ class MyWindow(QMainWindow):
                     self.play(t["vars"]["FILE"]) #non-blocking play, may need to adjust for different file types and playback needs.
                 elif (t['type'] == '> ' and t['cmd'] == 'Add Bookmark'):
                     #read in this and start playwrighty 
-                    self.inqueue.put(('\n').join(t['lines']))
+                    self.inqueue.put('<<hotkeys>>\n' + '\n'.join(t['lines']))
                 else:
                     if (t['type'] == "**"):
                         if (t['topic'] != self.reading_topic):
@@ -3540,6 +3555,8 @@ class MyWindow(QMainWindow):
                     else:
                         label.setStyleSheet("background-color: rgba(255, 255, 255, 1);color: black;")
                 #label.setWordWrap(True)
+                #Need an overlay window on top of our overlay.. otherwise can only display in certain locations..
+                #not sure this is actually needed..
                 label.move(w['rect'][0]-self.startx, w['rect'][1])
                 #label.resize(w['rect'][2]-w['rect'][0], w['rect'][3]-w['rect'][1])
                 label.adjustSize()
@@ -3923,7 +3940,7 @@ def init_inputs():
 def run_midi(mstop_event, kill_event, qr_queue=None, qrin_queue=None, audio_location_queue=None):
     global midiout, midiin
     global mk
-    mk = mykeys.MyKeys(config.cfg, qapp, mywindow.startx, mstop_event)
+    mk = mykeys.MyKeys(config.cfg, qapp, mywindow.startx, mstop_event, qr_queue, qrin_queue)
     logger.info('Starting MIDI input/output')
     init_inputs()
     

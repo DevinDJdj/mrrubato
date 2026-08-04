@@ -43,7 +43,9 @@ class hotkeys:
     self.links = []
     self.currentlinks = []
     self.windows = ["" for _ in range(100)] #for now practical limit much lower..
+    self.windowslen = 0 #annoying logic here, because of preinitizliation of windows list.  
     self.currentwindowindex = 0
+    self.controlstate = {'app': "", 'window': "", 'tab': ""}
     self.maxseq = 10 #includes parameters
     self.callback = None
     self.transcript = ""
@@ -486,15 +488,16 @@ class hotkeys:
   #state = foreground window + tab state for browser..
   def get_state(self):
     #get current state of this language.  For now just return current window and tab.
-    state = {}
-    state['window'] = self.windows[self.currentwindowindex] if (len(self.windows) > self.currentwindowindex) else ""
-    if ('google chrome for testing' in state['window']):
-      state['app'] = "chrome"
-    elif ('mrroboto' in state['window']):
-      state['app'] = "mrroboto"
-    else:
-      state['app'] = ""
-    return state
+    
+    self.controlstate['window'] = self.windows[self.currentwindowindex] if (self.windowslen > self.currentwindowindex) else ""
+    if ('google chrome for testing' in self.controlstate['window']):
+      self.controlstate['app'] = "chrome"
+    elif ('mrroboto' in self.controlstate['window']):
+      self.controlstate['app'] = "mrroboto"
+    #dont reset, handle the last state..
+#    else:
+#      state['app'] = ""
+    return self.controlstate
   #vscode
   #playwrighty
 
@@ -725,7 +728,11 @@ class hotkeys:
           for i, v in c['vars'].items():
             n = i
             if n.isdigit():
-              self.windows[i] = v
+              self.windows[int(n)] = v
+              self.windowslen = max(self.windowslen, int(n)+1)
+          #always set windowindex back to 0 for now..
+          self.currentwindowindex = 0
+          
 
 
   def set_qr(self, func, param={}):
@@ -835,7 +842,7 @@ class hotkeys:
 
         self.set_qr(self.func, vars)
         self.speak(f'--{playwrighty.page_cache[tabno]["title"]}')
-
+    return 1 #need more keys to close tab.
 
 
   def close_tab(self, sequence=[]):
@@ -894,6 +901,7 @@ class hotkeys:
       self.speak(f'Selected Bookmark {selected}: {urlt}')
       #load page at this bookmark
       body_text, link_data, page, cacheno = playwrighty.read_page(url, cacheno)
+      self.controlstate['app'] = "chrome"
       self.links = link_data
       #pause audio first..
 
@@ -955,13 +963,13 @@ class hotkeys:
 
 
   def adjust_window_index(self, idx=0):
-    if idx+self.curentwindowindex < 0:
+    if idx+self.currentwindowindex < 0:
       return 0
-    elif (idx+self.curentwindowindex) >= len(self.windows):
-      return len(self.windows)-1
+    elif (idx+self.currentwindowindex) >= self.windowslen:
+      return self.windowslen-1
     else:
-      return self.curentwindowindex + idx
-    return self.curentwindowindex
+      return self.currentwindowindex + idx
+    return self.currentwindowindex
   
   def adjust_playwrighty_index(self, idx=0):
     if idx+playwrighty.current_cache < 0:
@@ -1845,6 +1853,7 @@ class hotkeys:
         try:
           text, links, alt_text_data = playwrighty.get_page_details(playwrighty.get_ppage(playwrighty.current_cache))
           text, links, page, cacheno = playwrighty.read_page('', playwrighty.current_cache) #read current page
+          self.controlstate['app'] = 'chrome' #set app to chrome for now.  Should be more general.
           total_read = playwrighty.get_bookmark(page.url, cacheno)
           self.links = links
           print(f'Playwright found {len(text)} characters and {len(links)} links  on the page') 
@@ -1929,34 +1938,39 @@ class hotkeys:
   def select_window_(self, sequence=[]):
     self.func = "Select Window_"
     vars = {}
-    cacheno = self.currentwindowindex
+    select_index = self.currentwindowindex #always zero.. can only select up to 12 windows deep for now..
     if (len(sequence) > 0) and sequence[-1] != self.keybot:
-      cacheno = self.currentwindowindex - (self.mid-sequence[-1])
+      select_index = self.adjust_window_index(self.mid-sequence[-1])
 
-    if (cacheno > len(self.windows) - 1):
-      cacheno = len(self.windows) - 1
-    if (cacheno < 0):
-      cacheno = 0
+
+    if (select_index > self.windowslen - 1):
+      select_index = self.windowslen - 1
+    if (select_index < 0):
+      select_index = 0
     logger.info(f'> Select Window_ {sequence}')
     print("> Select Window_")
       #find the current link from our reading.
     
-    last15 = self.windows[max(0, self.currentwindowindex-11):min(self.currentwindowindex+13, len(self.windows))]
+    last15 = self.windows[max(0, self.currentwindowindex-11):min(self.currentwindowindex+13, self.windowslen)]
     last15.reverse() #reverse to match with Future:Past order in display.. [48 - 68]
+    vars['**'] = self.windows[select_index] #this should display..
+
     start = 0
-    if len(self.windows) < 12:
-      start = 12 - len(self.windows) + self.currentwindowindex + 1
+    if self.windowslen < 12:
+      start = 12 - self.windowslen + self.currentwindowindex + 1
       vars['idx'] = self.currentwindowindex
       vars[':'] = self.currentwindowindex
     else:
       vars['idx'] = self.currentwindowindex
+
+
+
     for i, l in enumerate(last15):
       n = i + start
       vars[f'{n}'] = l
 #          vars[f'href{i}'] = l['href']
     self.set_qr(self.func, vars)
     #show title..
-    vars['**'] = self.windows[cacheno]
 
     self.set_qr(self.func, vars)
     return 1
@@ -1964,13 +1978,13 @@ class hotkeys:
   def select_window(self, sequence=[]):
     logger.info(f'> Select Window {sequence}')
     self.func = "Select Window"
-    select_index = self.currentwindowindex
+    select_index = self.currentwindowindex #always zero.. can only select up to 12 windows deep for now..
     if (len(sequence) > 0):
       select_index = self.adjust_window_index(self.mid-sequence[-1])
-    logger.info(f'Selecting Tab with index {select_index} of {len(self.windows)}')
-    if (select_index >= 0 and select_index < len(self.windows)):
-      self.currentwindowindex = select_index
-    vars = {'**': self.windows[self.currentwindowindex], ':': self.currentwindowindex}
+    logger.info(f'Selecting Tab with index {select_index} of {self.windowslen}')
+
+    vars = {'**': self.windows[select_index], ':': select_index}
+
     self.set_qr(self.func, vars)
 
 

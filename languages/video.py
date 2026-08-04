@@ -1,5 +1,6 @@
 import logging
 from pynput import *
+from languages._meta import _META
 import pytesseract
 from PIL import Image
 from io import BytesIO
@@ -499,8 +500,13 @@ class video:
         adjust = 5
       self.speed = round(adjust, 1)
       logger.info(f'$$SPEED={self.speed}')
-      self.set_qr("Set Speed", {'ADJUST': adjust, 'SPEED': self.speed})
-      playwrighty.set_speed(self.speed) #set global speed for all videos.  
+      vars = {'ADJUST': adjust, 'SPEED': self.speed}
+
+      if (sequence[0] == _META): #allow for this usage..
+        vars['KLANG'] = "meta"
+      else:
+        playwrighty.set_speed(self.speed) #set global speed for all videos.  
+      self.set_qr("Set Speed", vars)
     return 0
 
   def get_XY(self, key, idx=0):
@@ -637,6 +643,8 @@ class video:
   def set_qr(self, func, param={}):
     """Set QR."""
     self.qr = "> " + func + "\n"
+    if ('timestamp' not in param):
+      param['timestamp'] = time.time() #timestamp
     for k,v in param.items():
         self.qr += f"$${k}={v}\n"
     self.qr += "$$\n"

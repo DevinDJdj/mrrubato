@@ -463,6 +463,15 @@ Does window switch work?
 
 **languages/hotkeys.py
 Still problems sending windows.  
+ok, this works now.. still hacky..
+
 Continue held words..
 Continue Joystick chrome handle first..
+OK, click works, add some more functionality, scroll fails..
+
+
+**extensions/trey/playwrighty.py
+--read_page
+test console handler..
+Need this for [**check.py]
 

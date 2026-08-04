@@ -696,6 +696,14 @@ class transcriber:
             if (len(line) < 2):
                 continue
             type = line[0:2]
+            if (type== '<<' and line[-2:] == '>>'):
+                #language definition, for now just update current language and topic.  
+                lng = line[2:-2].strip()
+                if (lang not in self.langmap or self.langmap[lang]['lang'] != lang):
+                    logger.info(f'!!~<<{lng}>>')
+                else:
+                    lang = lng
+
             if (type=='**'):
                 #topic definition.  
                 #use file modification time for the time being..

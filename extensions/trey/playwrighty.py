@@ -4,6 +4,7 @@
 #>pip install asyncio
 import asyncio
 import random
+
 from languages import video
 from playwright.async_api import async_playwright
 from playwright_stealth import Stealth
@@ -213,7 +214,9 @@ def click_link(cacheno, text_offset, link_offset=0, open_new_tab=False):
                 if open_new_tab:
                     page = page.context.new_page()
                     page.goto(href)
-                    page_cache.append({'url': page_info['url'], 'page': page, 'body': page_info['body'], 'links': page_info['links'], 'title' : page_info['title'], 'current_locator': None, 'last_total_read': 0})
+                    #insert at head..
+                    page_cache.insert(0, {'url': page_info['url'], 'page': page, 'body': page_info['body'], 'links': page_info['links'], 'title' : page_info['title'], 'current_locator': None, 'last_total_read': 0})
+
                 else:
                     if ('reader_stop_event' in page_info and page_info['reader_stop_event'] is not None):
                         page_info['reader_stop_event'].set() #stop any reading.
@@ -847,6 +850,7 @@ def get_page_details(page):
         logger.info(f'Found offsets for {offset_found} links, could not find offsets for {offset_notfound} links')
         body_text = '$$TITLE=' + page.title() + '\n' + body_text
 
+
         return body_text, link_data, alt_text_data
     except Exception as e:
 
@@ -854,6 +858,11 @@ def get_page_details(page):
         return body_text, link_data, alt_text_data
 
 
+def console_handler(cacheno):
+    def log_console_message(msg):
+        page = get_ppage(cacheno)
+        print(f"#{page.title()}\n{msg.type.ljust(7, ' ')}:\t{msg.text}")
+    return log_console_message
 
 def update_page_offset(cacheno=-1):
     if (last_link_clicked_time is not None and time.time() - last_link_clicked_time < 1):
@@ -1100,8 +1109,17 @@ def read_page(url, cacheno=-1):
 
     page_cache[cacheno]['page'].bring_to_front()
     logging.info(f'Cached page {cacheno} for URL: {url}')
+
+
+    #listen for errors.  
+    page.on('pageerror', lambda exception: logger.error(f'!!#{page.url}\n{exception}'))
+    # Listen for all console log events        
+    page.on("console", console_handler(cacheno))
+
     return body_text, link_data, page, cacheno
 
+def handle_page_error(exc):
+    print(f"Page crashed or threw an unhandled exception: {exc}")
 
 def get_engines():
     global engine_names
