@@ -83,3 +83,4 @@ IP=x.x.x.x
 $$
 
 #https://docs.holybro.com/drone-development-kit/px4-development-kit-x500v2/getting-started-build-guide
+#https://docs.px4.io/v1.13/en/frames_multicopter/holybro_x500V2_pixhawk5x.html
