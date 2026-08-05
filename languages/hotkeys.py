@@ -603,29 +603,34 @@ class hotkeys:
           if (cmd['vars']['SEQ'][1] == 1):
             if (cmd['vars']['SEQ'][2] < -0.5):
               #up = scroll up
-              playwrighty.get_ppage().mouse.wheel(0, -100) #scroll up
+#              playwrighty.get_ppage().mouse.wheel(0, -100) #scroll up
+              try:
+#                logger.info(playwrighty.get_ppage().title())
+                playwrighty.get_ppage(-1, False).evaluate("() => window.scrollBy(0, -100)")
+              except Exception as e:
+                logger.error(f'Error scrolling up: {e}')
               a = 0
             elif (cmd['vars']['SEQ'][2] > 0.5):
               #down = scroll down
-              playwrighty.get_ppage().mouse.wheel(0, 100) #scroll down
+#              playwrighty.get_ppage().mouse.wheel(0, 100) #scroll down
+              try:
+#                logger.info(playwrighty.get_ppage().title())
+                playwrighty.get_ppage(-1, False).evaluate("() => window.scrollBy(0, 100)")
+              except Exception as e:
+                logger.error(f'Error scrolling down: {e}')
               a = 0
           elif (cmd['vars']['SEQ'][1] == 0):
             current = playwrighty.current_cache
             if (cmd['vars']['SEQ'][2] > 0.5):
               # right = next tab              
-              if (len(playwrighty.page_cache) > current + 1):
-                playwrighty.current_cache = current + 1
-              else:
-                playwrighty.current_cache = 0
-              playwrighty.get_ppage().keyboard.press("Control+Tab") #next tab
+              #just use our control..
+              self.select_tab([self.mid+1])
+#              playwrighty.get_ppage().keyboard.press("Control+Tab") #next tab
               a = 0
             elif (cmd['vars']['SEQ'][2] < -0.5):
               # left = previous tab
-              if (current > 0):
-                playwrighty.current_cache = current - 1
-              else:
-                playwrighty.current_cache = len(playwrighty.page_cache) - 1
-              playwrighty.get_ppage().keyboard.press("Control+Shift+Tab") #previous tab
+              self.select_tab([self.mid-1])
+#              playwrighty.get_ppage().keyboard.press("Control+Shift+Tab") #previous tab
               a = 0
 
       elif (cmd['cmd'] == 'BUTTON'):
@@ -640,9 +645,11 @@ class hotkeys:
               if (button_down == 1):
                 #button 0 pressed = ask
                 #_ask
+                self._ask()
                 a = 0
               if (button_down == 0):
                 #ask
+                self.ask() #ask current page for query
                 #button 0 released
                 a = 0
             case 1: #R1 bottom right
@@ -738,6 +745,8 @@ class hotkeys:
   def set_qr(self, func, param={}):
     """Set QR."""
     self.qr = "> " + func + "\n"
+    if ('timestamp' not in param):
+      param['timestamp'] = time.time()
     for k,v in param.items():
         if isinstance(v, str):
             tv = v.replace('\n', '\t')

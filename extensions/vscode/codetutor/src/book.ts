@@ -62,6 +62,8 @@ export var queryhistory = [];
 export var ollama_model = 'gemma4:e4b';
 ollama_model = 'gemma3';
 
+var mytime = new Date().getTime()/1000; //set the time in seconds
+
 
 var myCodeMirror = null;
 var tempcodewindow = null;
@@ -74,6 +76,8 @@ var definitions = {"REF": "#", "REF2": "##", "TOPIC": "**", "STARTCOMMENT": "<!-
 export function setModel(model: string) {
     ollama_model = model;
 }
+
+
 
 function fnEnv(lines : Array<Array<tokenizer.Token>>, currentindex: number)  {
     //this will be used to create a token for the environment variable.  
@@ -323,9 +327,19 @@ function getDaysBetweenDates(startDate : Date, endDate: Date) : number{
 }
 
 
-export function setTime(t : number, w: number, s: number, e: number) {
+export function setTime(t : number, w: number, s: number, e: number, open=true) {
     const date = new Date(t * 1000);
     sortRecency(date);
+    let dstring = formatDate(date);
+    //if this book exists?  
+    if (dstring in topicarray){
+        //get the topics for this date.
+        if (open) {
+            select(dstring);
+            vscode.commands.executeCommand('workbench.action.chat.open', "@mr /read " + "**" + dstring );
+        }
+
+    }
     //for now just sort by this date.. 
     //eventually use the window as well perhaps for context creation..
 }

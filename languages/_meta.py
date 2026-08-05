@@ -432,6 +432,7 @@ class _meta:
     vars = {}
     logger.info(f"$$TIME={t}")
     self.set_qr("Time Jump", {'JUMP': jump, 'WINDOW': self.timewindow.window, 'TIME': t, 'START': self.timewindow.starttime, 'END': self.timewindow.endtime})
+    self.transcriber.write('_meta', "Time Jump", {'WINDOW': self.timewindow.window, 'TIME': t, 'START': self.timewindow.starttime, 'END': self.timewindow.endtime} )
     return 0
   
   def time_zoom_(self, sequence=[]):

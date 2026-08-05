@@ -202,8 +202,10 @@ class transcriber:
             print('Updating current topic to ' + topic)
       #add utf-8?  
       ret = ""
-      if (lang not in self.langmap or self.langmap[lang]['lang'] != lang):
+      if (lang not in self.langmap):
         self.langmap[lang] = {'lang':lang, 'topic': topic, 'topics': {}, 'kg': nx.Graph()}
+      if (self.langmap[lang]['lang'] != lang or save==False): #provide lang info..
+        self.langmap[lang]['lang'] = lang
         ret += f'<<{lang}>>\n'
         ret += f'**{topic}\n'
       elif (self.langmap[lang]['topic'] is not None and self.langmap[lang]['topic'] != topic):
@@ -1121,21 +1123,33 @@ class transcriber:
             end_time = self.getTime()
         logger.info(f'Loading {lang} {myfolder} start {start_time} to {end_time}')
 
-        if (lang in self.allcmds and self.allcmds[lang]['start_time'] <= start_time and self.allcmds[lang]['end_time'] >= end_time):
-            return self.read_existing(lang, start_time, end_time) #get existing cmds..
-        
-        #list all files in directory
-        folder = self.TRANSCRIPT_FOLDER + lang + '/'
-        if (myfolder != ""):
-            folder = myfolder
-        os.makedirs(folder, exist_ok=True)
+        files = []
+        if (lang in self.allcmds):
+            if (self.allcmds[lang]['start_time'] <= start_time and self.allcmds[lang]['end_time'] >= end_time):
+                return self.read_existing(lang, start_time, end_time) #get existing cmds..
+            files = self.allcmds[lang]['files'] if self.allcmds[lang]['files'] is not None else []
+
+        if (len(files) == 0):
+            #only scan if we have not done so already..
+            #this is very time expensive..
+            #list all files in directory
+            folder = self.TRANSCRIPT_FOLDER + lang + '/'
+            if (myfolder != ""):
+                folder = myfolder
+            os.makedirs(folder, exist_ok=True)
 
 
-                
+            with os.scandir(folder) as entries:
+                for entry in entries:
+                    if entry.is_file() and entry.name.endswith('.txt'):  # Cached attribute lookup
+                        mtime = os.path.getmtime(entry.path)
+                        ctime = os.path.getctime(entry.path)
+    #                    if (mtime >= start_time.timestamp() and ctime <= end_time.timestamp()):
+                        files.append({'name': entry.name, 'path': entry.path, 'mtime': mtime, 'ctime': ctime})
+                        print(entry.name, entry.path)
+            #files = [f for f in os.listdir(folder) if os.path.getmtime(folder + f) >= start_time.timestamp() and os.path.getctime(folder + f) <= end_time.timestamp()]
 
-        files = [f for f in os.listdir(folder) if os.path.getmtime(folder + f) >= start_time.timestamp() and os.path.getctime(folder + f) <= end_time.timestamp()]
-
-        sorted_files = sorted(files, key=lambda f: os.path.getmtime(os.path.join(folder, f))) #sort by modification time, oldest first.  could also sort by creation time if needed.
+        sorted_files = sorted(files, key=lambda f: f['mtime']) #sort by modification time, oldest first.  could also sort by creation time if needed.
         numloaded = 0
         print(f'Reading {lang} transcripts from:')
         print(sorted_files)
@@ -1151,32 +1165,32 @@ class transcriber:
         last_mtime = None
         for f in sorted_files:
     #      if (f.startswith(yesterday) or f.startswith(today)):
-            if (f.endswith('.txt')): #dont open wav files.. maybe rethink sharing directory..
+            if (f['mtime'] >= start_time.timestamp() and f['ctime'] <= end_time.timestamp() and f['name'].endswith('.txt')): #dont open wav files.. maybe rethink sharing directory..
                 #get name without extension
 
-                if (self.is_yyyymmdd(f[:8])):
-                    mtime = time.mktime(datetime.strptime(f[:8], '%Y%m%d').timetuple())
+                if (self.is_yyyymmdd(f['name'][:8])):
+                    mtime = time.mktime(datetime.strptime(f['name'][:8], '%Y%m%d').timetuple())
                     mtime += 86400 #add one day to end of day for better sorting
                 else:
-                    mtime = os.path.getmtime(folder + f)
+                    mtime = f['mtime']
 
                 last_mtime = mtime
                 if (mtime < last_time):
                     last_time = mtime - 86400 #set to start of day if we have data issue..
 
                 try:
-                    with open(folder + f, encoding='utf-8') as ff:
+                    with open(f['path'], encoding='utf-8') as ff:
                         lines = ff.readlines()
                         if (len(lines) < 2):
                             continue
 
-                        self.current_topic = f[:-4] #file name without extension
+                        self.current_topic = f['name'][:-4] #file name without extension
                         test = self.read_lines(lang, lines, last_time, mtime)
                         ret.extend(test) 
-                        logger.info(f)                       
+                        logger.info(f['name'] + " loaded with " + str(len(test)) + " commands")                    
 #                        logger.info(test)
                 except Exception as e:
-                    logger.error(f'!!> Read [{f}]\n !!{e}\n')
+                    logger.error(f'!!> Read [{f["path"]}]\n !!{e}\n')
 
                 last_time = mtime
                 numloaded += 1
@@ -1185,11 +1199,11 @@ class transcriber:
 
 #        self.allcmds[lang] = {'**': lang, '&&': ret, 'cmds': ret, '..': last_mtime, 'last_mtime': last_mtime, 'start_time': start_time, 'end_time': end_time, 'start_idx': 0, 'end_idx': len(ret)-1, 'open': True}
 #        self.update_kg(lang, ret)
-        self.merge_cmds(lang, ret, start_time, end_time, last_mtime)
+        self.merge_cmds(lang, ret, start_time, end_time, last_mtime, sorted_files)
         logger.info(f'Loaded {numloaded} files for {lang} with {len(ret)} commands')
         return ret
 
-    def merge_cmds(self, lang, ret, start_time, end_time, last_mtime):
+    def merge_cmds(self, lang, ret, start_time, end_time, last_mtime, sorted_files):
 
         if (lang in self.allcmds and self.allcmds[lang]['&&'] is not None):
             #merge with existing cmds, keeping only unique cmds and sorting by timestamp.  this will allow us to keep the existing cmds in memory and just add any new cmds from the new files, which should be more efficient than reloading all cmds every time we open a book, especially if we have a lot of data.  could also implement a more sophisticated merging strategy if needed, but for now just merge and sort.
@@ -1211,7 +1225,8 @@ class transcriber:
             start_idx = 0
             end_idx = len(merged_cmds)-1
             self.allcmds[lang] = {'**': lang, '&&': merged_cmds, '..': last_mtime, '(': start_idx, ')': end_idx, 
-                                  'cmds': merged_cmds, 'last_mtime': last_mtime, 'start_time': start_time, 'end_time': end_time, 'start_idx': start_idx, 'end_idx': end_idx, 'open': True}            
+                                  'cmds': merged_cmds, 'last_mtime': last_mtime, 'start_time': start_time, 'end_time': end_time, 
+                                  'start_idx': start_idx, 'end_idx': end_idx, 'files': sorted_files, 'open': True}
             self.update_kg(lang, merged_cmds)
         else:
             #first read of lang.. only set last topic here if this is first read..
@@ -1220,7 +1235,8 @@ class transcriber:
                 self.langmap[lang] = {'lang':lang, 'topic': self.current_topic, 'topics': {}, 'kg': nx.Graph()} 
             last_topic = self.get_last_topic(ret)
             self.langmap[lang]['topic'] = last_topic #self.langmap[lang] should always exist.  Dont rewrite same topic.  
-            self.allcmds[lang] = {'**': lang, '&&': ret, 'cmds': ret, '..': last_mtime, 'last_mtime': last_mtime, 'start_time': start_time, 'end_time': end_time, 'start_idx': 0, 'end_idx': len(ret)-1, 'open': True}
+            self.allcmds[lang] = {'**': lang, '&&': ret, 'cmds': ret, '..': last_mtime, 'last_mtime': last_mtime, 'start_time': start_time, 'end_time': end_time, 
+                                  'start_idx': 0, 'end_idx': len(ret)-1, 'files': sorted_files, 'open': True}
             self.update_kg(lang, ret)
 
     def get_last_topic(self, cmds):

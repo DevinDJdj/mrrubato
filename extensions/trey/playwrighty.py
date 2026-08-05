@@ -596,11 +596,12 @@ def set_reader_queue(q2, q3, stop_event, cacheno=-1):
         page_cache[cacheno]['reader_stop_event'] = stop_event
         return True
 
-def get_ppage(cacheno=-1): #get playwright page from cacheno
+def get_ppage(cacheno=-1, activate=True): #get playwright page from cacheno
 
     if cacheno >= 0 and cacheno < len(page_cache):
         page = page_cache[cacheno]['page']
-        activate_tab(cacheno)
+        if activate:
+            activate_tab(cacheno)
     else:
         browser = open_browser()
         global mycontext
@@ -611,6 +612,10 @@ def get_ppage(cacheno=-1): #get playwright page from cacheno
             page = all_tabs[cacheno]
         else:   
             page = mycontext.new_page()
+            if (len(page_cache) == 0):
+                mycontext.pages[0].close() #close the default blank page if we are creating a new one.
+            
+
     return page
 
 def find_nth_occurrence(main_string, sub_string, n):
@@ -908,6 +913,7 @@ def update_page_offset(cacheno=-1):
                 #some problems with multiple results..
                 current_locator = page_cache[cacheno].get('current_locator', None)
 
+                #will need to expand to include other elements like div, span, etc.  for now just p.
                 locator = page_cache[cacheno]['page'].locator(f"p:has-text({json.dumps(temptext)})") #not getting results all the time..
                 if (locator.count() == 1):
                     if (current_locator is None or locator.text_content() != (current_locator['text'])):
@@ -950,9 +956,17 @@ def update_page_offset(cacheno=-1):
                         #try partial match
                         locator = page.get_by_role("link", name=link['text'])
                         if (locator.count() == 1):
-                            locator.highlight()
+#                            locator.highlight()
                             locator.scroll_into_view_if_needed()
                             locator.evaluate("el => el.style.backgroundColor = 'rgba(0, 0, 0, 0.3)'")
+                        if (linkno > 0):
+                            plink = links[linkno-1]
+                            locator = page.get_by_role("link", name=plink['text'])
+                            if (locator.count() == 1):
+    #                            locator.highlight()
+                                locator.scroll_into_view_if_needed()
+                                #set back to more normal highlight..
+                                locator.evaluate("el => el.style.backgroundColor = 'rgba(0, 0, 0, 0.15)'")
 #                    if (locator.bounding_box() is not None and locator.bounding_box().get('height', 400) < 400):
 #                        locator.highlight() #dont highlight the whole page..
 

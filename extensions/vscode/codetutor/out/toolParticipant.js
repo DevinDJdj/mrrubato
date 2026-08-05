@@ -427,7 +427,7 @@ function startWatchingTranscriber(lang, transcriptFolder = "C:/devinpiano/transc
                         if (t.topic !== Book.selectedtopic) {
                             //only add to history if topic has changed.  
                             Book.updatePage(Book.getBookPath() + "/" + file, '**' + transcriber.current_topic + '\n', -1, -1); //append to end of file.
-                            Book.addToHistory(t.topic);
+                            //                            Book.addToHistory(t.topic); //this happens in select..
                             Book.select(t.topic);
                             vscode.commands.executeCommand('workbench.action.chat.open', "@mr /read " + "**" + t.topic);
                             //for now just open if it exists..

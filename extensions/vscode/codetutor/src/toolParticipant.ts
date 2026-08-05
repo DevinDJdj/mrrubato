@@ -489,7 +489,7 @@ export function startWatchingTranscriber(lang: string, transcriptFolder: string 
                             //only add to history if topic has changed.  
                             Book.updatePage(Book.getBookPath() + "/" + file, '**' + transcriber.current_topic + '\n', -1, -1); //append to end of file.
                             
-                            Book.addToHistory(t.topic);
+//                            Book.addToHistory(t.topic); //this happens in select..
                             Book.select(t.topic);
                             vscode.commands.executeCommand('workbench.action.chat.open', "@mr /read " + "**" + t.topic );
 
@@ -510,6 +510,7 @@ export function startWatchingTranscriber(lang: string, transcriptFolder: string 
                                 vscode.commands.executeCommand('workbench.action.chat.open', "@mr /stop");
                             }
                             if (cmd.cmd === "Restart"){
+                                
                                 vscode.commands.executeCommand('workbench.action.restartExtensionHost');
 //                                vscode.commands.executeCommand('workbench.action.chat.open', "@mr /restart");
                             }

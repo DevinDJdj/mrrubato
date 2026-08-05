@@ -475,3 +475,27 @@ OK, click works, add some more functionality, scroll fails..
 test console handler..
 Need this for [**check.py]
 
+**extensions/trey/trey.py
+--reportProgress
+track timings for all..
+Need to understand lag of each function and adjust any > 1 sec.
+
+**extensions/playwrighty.py
+--open_browser
+Session seems to persist which is good..
+
+Scroll fails..
+
+test ask..
+Display correlation graph from generated xml..
+
+mixing time and timestamp..
+TIME = YYYYMMDD_HHMMSS or seconds since last epoch..
+
+**extensions/vscode/codetutor/src/book.ts
+--topicarray[YYYYMMDD]
+
+--setTime
+test..
+OK, basic query on time jump works..
+

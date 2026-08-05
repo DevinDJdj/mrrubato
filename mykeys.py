@@ -355,7 +355,7 @@ class MyKeys:
     #use language and function <lang>func [params]
 #    logger.info(f'> QRIN\n{data}')
     cmds = self.transcriber.read_lines('_meta', data.split('\n')) #save all QR data to transcript.  This is for debugging and record keeping, as well as for loading state from previous sessions.
-    logger.info(cmds)
+
     if (cmds is None or len(cmds) == 0):
       return
     else:
@@ -367,6 +367,7 @@ class MyKeys:
         self.qrin.insert(0, data) #move to start of list
       for cmd in cmds:
         if (cmd['lang'] != 'joystick' and cmd['lang'] != 'midi'):
+          logger.info(cmd)
           if (cmd['lang'] in self.languages):
             la = self.languages[cmd['lang']]
             if (hasattr(la, 'qr_in')):

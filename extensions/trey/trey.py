@@ -1055,7 +1055,8 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
             waited += 1
 #            logger.info(f'Total read: {ttotal}')
 #            if (linksspoken == 0):
-            time.sleep(0.6-0.3*linksspoken) #simulate reading time. 12 chars per second..
+            #balancing this may be tricky.. Depends on speed of function calls.  
+            time.sleep(0.7-0.3*linksspoken) #simulate reading time. 12 chars per second..
             if (ttotal > total_read+len(l)+1):
                 i = len(l)+1 #break out of loop if we have read past the line, to avoid long waits on long lines.
                 continue
@@ -1457,6 +1458,14 @@ def create_qr_code(data):
 #    logger.info('QR code created and saved as qrcode.png')
     return img
 
+def _get_window_info():
+    """Function to get window information after a delay."""
+    logger.info('Getting window information after delay')
+    mk.set_startx(mywindow.startx)
+    mk.set_geo(mywindow.geo)
+    mk.set_bbox(mywindow._bbox)
+    mywindow.get_window_info()
+
 def _hide(data):
     """Function to hide the window after a delay."""
 #    global speech_pipe
@@ -1464,6 +1473,8 @@ def _hide(data):
 #    speech_pipe = KPipeline(lang_code='a')
     logger.info('Hiding mywindow after delay')
     mywindow.hideme()
+
+
     #initialize time..
     day = 86400
     tnow = time.time()
@@ -1471,13 +1482,9 @@ def _hide(data):
     mywindow.set_time(tnow-day*1, tnow-day*7, tnow, day*7)
     mywindow.set_speed(None, "_meta")
     mywindow.set_speed(None, "video")
-    mk.set_startx(mywindow.startx)
-    mk.set_geo(mywindow.geo)
-    mk.set_bbox(mywindow._bbox)
 
     #get average color and screen
     #get_window_details()
-    mywindow.get_window_info()
 
 
 
@@ -1731,6 +1738,7 @@ class MyWindow(QMainWindow):
 
         temp = win32gui.GetForegroundWindow()
         rect = win32gui.GetWindowRect(temp)
+        lagtime = float(vars.get('timestamp', time.time()))
         match command:
             case "ask":
                 logger.info('Received ask command')
@@ -2068,6 +2076,15 @@ class MyWindow(QMainWindow):
 
                 self.set_time(s, e, w, t) #update display with new time window and lang settings.
 
+        lagtime = time.time() - lagtime
+        if (command not in self.lagtracker):
+            self.lagtracker[command] = {'_': lagtime, ':': 1}
+        else:            
+            self.lagtracker[command][':'] += 1
+            self.lagtracker[command]['_'] += lagtime
+        mycommand = self.lagtracker[command]
+        if (lagtime > 0.5):
+            logger.warning(f'!!LAG {lagtime:.2f}\n;> :={mycommand[":"]}\t_={mycommand["_"]:.2f}\n;> {command}\n {vars}')
 
         #add more commands as needed.
 
@@ -2403,6 +2420,7 @@ class MyWindow(QMainWindow):
         self.bookhistory = []
         self.reading_topic = None
         self.filters = {}
+        self.lagtracker = {} #track lag for each command, to detect slow commands and warn user.
         self.windows = {} #current windows by pid, updated by window thread.
         self.myactions = [] #list of current actions to display, updated by QR commands.
         self.trey_data = {} #current data to display, updated by QR commands and transcription.
@@ -2622,6 +2640,8 @@ class MyWindow(QMainWindow):
         self.showQR("Starting Trey Overlay")
         #hide after a few seconds
         #workaround, something wrong with the PyQt if we hide this immediately
+        t2 = threading.Timer(5, _get_window_info)
+        t2.start()  # Start the timer in a new thread
         t = threading.Timer(10, _hide, args=["Hello from Timer!"])
         t.start()  # Start the timer in a new thread
         logger.info('Window created')
@@ -3693,10 +3713,13 @@ def stop_midi(kill=False):
     logger.info('Stopping MIDI thread')
     if (kill):
         logger.info('Killing MIDI thread')
-        midi_kill_event.set()
-        midi_stop_event.set()  # Signal the MIDI thread to stop
-        midi_thread.join()  # Wait for the MIDI thread to finish
-        time.sleep(10)  # Give some time for the thread to exit
+        try:
+            midi_kill_event.set()
+            midi_stop_event.set()  # Signal the MIDI thread to stop
+            midi_thread.join()  # Wait for the MIDI thread to finish
+            time.sleep(10)  # Give some time for the thread to exit
+        except Exception as e:
+            logger.error(f'Error stopping MIDI thread: {e}')
     else:
         midi_stop_event.set()  # Signal the MIDI thread to stop
 

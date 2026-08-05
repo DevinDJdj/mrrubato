@@ -81,3 +81,5 @@ Q > Application Settings > Comm Links
 18570
 IP=x.x.x.x
 $$
+
+#https://docs.holybro.com/drone-development-kit/px4-development-kit-x500v2/getting-started-build-guide
