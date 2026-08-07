@@ -15,6 +15,7 @@ import sys
 import threading
 import multiprocessing
 import subprocess
+import traceback
 
 from click import command
 from huggingface_hub import login
@@ -27,6 +28,7 @@ sys.path.insert(1, 'c:/devinpiano/music/') #config.py path Base project path
 sys.path.insert(2, 'c:/devinpiano/music/mrrubato') #config.py path Base project path
 import config 
 import mykeys
+from generate.generatetts import remove_temp_audio
 
 #import tts
 import extensions.trey.tts as tts
@@ -417,7 +419,12 @@ def copy_latest_file(current_topic=None):
 
 def quit_me(restart=False): #restart_trey
     global mk
+    global qrin_queue
+
+
     logger.info('Stopping MIDI thread')
+    qrin_queue.put('<<hotkeys>>\n> Stop\n$$\n') #send stop command to midi thread
+    time.sleep(1) #wait for video to stop..
 
     mk.savemidi() #save current midi file
     stop_midi(True) #kill the midi thread
@@ -512,18 +519,6 @@ def build_map(lines, links, cacheno=-1):
         
 
     return link_density_map
-
-def remove_temp_audio(dir):
-    #remove temp files first.  
-    if (os.path.exists(dir) and os.path.isdir(dir)):
-        for filename in os.listdir(dir):
-            file_path = os.path.join(dir, filename)
-            if os.path.isfile(file_path):
-                try:
-                    os.remove(file_path)
-                except OSError as e:
-                    print(f"Error removing file {file_path}: {e}")
-
 
 
 
@@ -750,7 +745,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
     skip = 0
 
 
-    remove_temp_audio("./temp/" + str(cacheno)) #clear old cache if exists.
+
 
     if (offset == 0):
         #pre-read detect good starting point.
@@ -796,6 +791,10 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
     print('Start Reading:')
 
     #generate tts for all lines first to minimize wait time when playing.  This is a bit aggressive but should work for now.
+    #check for existing files first.  
+#    remove_temp_audio("./temp/" + str(cacheno)) #clear old cache if exists.
+    if (cacheno < 0):
+        remove_temp_audio(f"./temp/{cacheno}") #clear old cache if exists.
     generate_tts(text, VOICE, vol=1.0, rate=1.0,skip=skip, cacheno=cacheno) #pre-generate
 
     print('Finished generating TTS for all lines, starting playback')
@@ -898,8 +897,8 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
             tts.speak(temp, VOICE, sound_file)
 
         if (skip > 0):
-            if (idx + skip >= len(lines)):
-                skip = len(lines) - idx - 2
+            if (idx + skip >= len(lines)-5):
+                skip = len(lines) - idx - 5 #leave some lines
             for i in range(skip):
                 total_read += len(lines[idx+i]) + 1 #include newline
             idx = idx + skip
@@ -1056,7 +1055,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
 #            logger.info(f'Total read: {ttotal}')
 #            if (linksspoken == 0):
             #balancing this may be tricky.. Depends on speed of function calls.  
-            time.sleep(0.7-0.3*linksspoken) #simulate reading time. 12 chars per second..
+            time.sleep(0.65-0.25*linksspoken) #simulate reading time. 12 chars per second..
             if (ttotal > total_read+len(l)+1):
                 i = len(l)+1 #break out of loop if we have read past the line, to avoid long waits on long lines.
                 continue
@@ -1167,6 +1166,8 @@ def speak(text, links = [], alt_text=[], offset=0, lang='en', cacheno=-1):
     global audio_skip_queue
     """Speak the given text using the speech pipeline."""
 #    print(f'Speaking: {text}')
+#    logger.info(f'Speaking: {text}')
+#    logger.info(''.join(traceback.format_stack()))
 
     
     if (cacheno >=0 and cacheno < len(audio_stop_events)):
@@ -2534,7 +2535,7 @@ class MyWindow(QMainWindow):
         #BBOX(0.7,0.7,0.9,0.9)
         self.label_qr = QLabel(self)
         #move to bottom right corner
-        self.init_label(self.label_qr, 0.7, 0.7, 0.2, 0.2)
+        self.init_label(self.label_qr, 0.7, 0.75, 0.2, 0.2)
 
         self.label_ps = []
         wbarray = [0,1,0,1,0,0,1,0,1,0,1,0] #for now fixed from C
@@ -3751,6 +3752,7 @@ def joystick_loop(qrin_queue):
         joyaxes[i] = [0.0] * axis
         logger.info(f'Joystick {i} has {axis} axes.')
         qrin_queue.put(f'<<joystick>>\n> JOY [{i},{axis}]\n$$\n')
+        pygame.event.pump()  # Process event queue to initialize joystick events
 
     while True:
 #        pygame.display.flip()

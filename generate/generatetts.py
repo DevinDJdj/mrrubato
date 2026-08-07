@@ -54,6 +54,7 @@ import argparse
 from email.mime import text
 import shutil
 import random
+import time
 
 from kokoro import KPipeline
 import soundfile as sf
@@ -103,6 +104,17 @@ def play_in_background(text, engine='edge-tts'):
 #    pygame.mixer.music.load(sound_file)
 #    pygame.mixer.music.play()
 
+def remove_temp_audio(dir):
+    #remove temp files first.  
+    if (os.path.exists(dir) and os.path.isdir(dir)):
+        for filename in os.listdir(dir):
+            file_path = os.path.join(dir, filename)
+            if os.path.isfile(file_path):
+                try:
+                    os.remove(file_path)
+                except OSError as e:
+                    print(f"Error removing file {file_path}: {e}")
+
 
 def generate_line(text, idx, voice, vol, speed, cacheno=-1, engine='kokoro-tts', combined=False):
 
@@ -116,6 +128,10 @@ def generate_line(text, idx, voice, vol, speed, cacheno=-1, engine='kokoro-tts',
 
     suc = ""
     print(f"speaking line {idx} with {engine}...")
+    if (os.path.exists(sound_file) and os.path.getsize(sound_file) > 0):
+        print(f"Found existing TTS file for line {idx}, skipping generation")
+        return sound_file
+    
     suc = speech.speak(lesc, sound_file, voice, vol, speed, engine)
     if (suc != "" and random.random() > 0.2):
         print(f"saved {sound_file}...")
@@ -150,7 +166,23 @@ if (__name__ == "__main__"):
         speech.speak(args.text, args.fname, args.voice, args.vol, args.speed, 'kokoro-tts')
         exit(0)
 
+    same_flag = False
+    if (os.path.exists(f"./temp/{args.cacheno}/{args.cacheno}.txt")):
+        prevlines = []
+        with open(f"./temp/{args.cacheno}/{args.cacheno}.txt", "r", encoding="utf-8") as f:
+            prevlines = f.readlines()
+    
+        
+        if (prevlines == lines):
+            same_flag = True
+    if (same_flag == False):
+        remove_temp_audio(f"./temp/{args.cacheno}") #clear old cache if exists.
+        with open(f"./temp/{args.cacheno}/{args.cacheno}.txt", "w", encoding="utf-8") as f:
+            f.writelines(lines)
+
     print(f"Generating TTS for {len(lines)} lines with voice {args.voice} at volume {args.vol} and speed {args.speed} using engine {args.engine}...")
+
+    #eventually check on line to line level if it makes sense to store the text->audio file mapping..
     temptext = ""
     total_generated = 0
     for idx, l in enumerate(lines):
@@ -165,6 +197,7 @@ if (__name__ == "__main__"):
                 temptext = ""
                 generate_line(l, idx, args.voice, args.vol, args.speed, args.cacheno, args.engine, combined)    
                 total_generated += 1
+                time.sleep(2) #wait a bit to avoid overloading the TTS engine.  
                 if (total_generated >= args.numlines):
                     break
         else:

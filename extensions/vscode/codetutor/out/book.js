@@ -172,7 +172,7 @@ function fnWork(lines, currentindex) {
 }
 exports.defmap = [{ "#": "REF", ">": "CMD", "-": "SUBTASK", "@": "USER", ";": "COMMENT" },
     { "##": "REF2", "~~": "SUGGESTION", "**": "TOPIC", "@@": "QUESTION", "->": "DGRAPH",
-        "::": "SUMMARY",
+        "::": "SUMMARY", "&&": "CONTEXT",
         "--": "NOTE", "==": "ANSWER", "$$": "ENV", "!!": "ERROR", "%%": "WORKER" },
     { "-->": "ENDCOMMENT", "!--": "ERRORNOTE" },
     { "<!--": "STARTCOMMENT" }];

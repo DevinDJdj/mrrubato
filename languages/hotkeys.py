@@ -1,6 +1,8 @@
 import logging
 from pydoc import text
+import threading
 from pynput import *
+from languages._meta import _META, _VIDEO
 import pytesseract
 from PIL import Image
 from io import BytesIO
@@ -13,7 +15,7 @@ import extensions.trey.playwrighty as playwrighty
 import shutil
 import json
 
-from extensions.trey.trey import pause_reader, skip_lines
+from extensions.trey.trey import page, pause_reader, skip_lines
 from extensions.trey.trey import skip_lines
 import languages.helpers.transcriber as transcriber
 
@@ -53,10 +55,11 @@ class hotkeys:
     self.tofind = ""
     self.tofindhistory = []
     self.now = datetime.now()
-    self.feedbacknowstr = self.now.strftime("%Y%m%d%H%M%S")
+    self.feedbacknowstr = self.now.strftime("%Y%m%d_%H%M%S")
 
     self.funcdict = {}
     self.suggestions = []
+    self.joystate = {}
 
   def word(self, sequence=[]):
     """Word lookup."""
@@ -486,7 +489,7 @@ class hotkeys:
     playwrighty.update_page_offset()
 
   #state = foreground window + tab state for browser..
-  def get_state(self):
+  def get_app_state(self):
     #get current state of this language.  For now just return current window and tab.
     
     self.controlstate['window'] = self.windows[self.currentwindowindex] if (self.windowslen > self.currentwindowindex) else ""
@@ -501,12 +504,54 @@ class hotkeys:
   #vscode
   #playwrighty
 
+  def add_joystate(self, cmd):
+
+    joy = cmd['vars']['SEQ'][0]
+    type = cmd['cmd']
+    register = cmd['vars']['SEQ'][1]
+    value = cmd['vars']['SEQ'][2]
+    prev_state = self.joystate.get(type, {}).get(joy, {}).get(register, None)
+    if prev_state is not None:
+      prev_state = prev_state.copy()
+
+    if type not in self.joystate:
+      self.joystate[type] = {}
+    if (joy not in self.joystate[type]):
+      self.joystate[type][joy] = {}
+    if (register not in self.joystate[type][joy]):
+      self.joystate[type][joy][register] = {'_': value, '(': time.time(), ')': time.time()}
+    else:
+      if (prev_state.get('_', None) != value):
+        self.joystate[type][joy][register]['_'] = value
+        self.joystate[type][joy][register]['('] = time.time()  # Update the timestamp for the last change
+        self.joystate[type][joy][register][')'] = time.time()  # Update the timestamp for the last change
+      else:
+        self.joystate[type][joy][register][')'] = time.time()  # Update the timestamp for the last change
+    return prev_state, self.joystate[type][joy][register]
 
   def handle_joystick(self, cmd):
     #translate joystick commands to actions.  
     #held key actions..
-    state = self.get_state()
-    if (state['app'] == "mrroboto"):
+    if ('vars' not in cmd or 'SEQ' not in cmd['vars'] or len(cmd['vars']['SEQ']) < 3):
+      logger.error(f'!!Invalid joystick command\n{cmd}')
+      return -1
+    elif ('cmd' not in cmd or cmd['cmd'] not in ['AXIS', 'BUTTON', 'HAT']):
+      logger.error(f'!!Invalid joystick command type {cmd.get("cmd", None)}\n{cmd}')
+      return -1
+    app_state = self.get_app_state()
+    prev_state, current_state = self.add_joystate(cmd)
+    logger.info(f'{prev_state} {current_state}')
+    if (prev_state is not None and prev_state['_'] == current_state['_']):
+      #no change in state, ignore
+      #what lag do we want here?  
+      if (current_state[')'] - current_state['('] < 2): #ignore changes less than 2 second, give chance for some feedback lag..
+        return 1
+    else:
+      logger.info(f'Joystick state changed from {prev_state} to {current_state}')
+      current_state['('] = time.time()  # Update the timestamp for the last change']
+      current_state[')'] = time.time()  # Update the timestamp for the last change
+
+    if (app_state['app'] == "mrroboto"):
       a = 0
       if (cmd['cmd'] == 'AXIS'):
         logger.info(f'axis {cmd}') #joy, axis, value
@@ -593,7 +638,7 @@ class hotkeys:
         logger.info(f'Joystick ball/hat {cmd}') #joy, ball/hat, value
         #play or pause..
 
-    elif (state['app'] == "chrome"):
+    elif (app_state['app'] == "chrome"):
       a = 0
       if (cmd['cmd'] == 'AXIS'):
         logger.info(f'axis {cmd}') #joy, axis, value
@@ -739,7 +784,9 @@ class hotkeys:
               self.windowslen = max(self.windowslen, int(n)+1)
           #always set windowindex back to 0 for now..
           self.currentwindowindex = 0
-          
+        if (c['type'] == '> ' and c['cmd'] == 'Stop'):
+          playwrighty.pause_video()
+
 
 
   def set_qr(self, func, param={}):
@@ -767,7 +814,7 @@ class hotkeys:
       duration *=3  #double duration for feedback
       from extensions.trey.speech import listen_audio
       self.now = datetime.now()
-      self.commentnowstr = self.now.strftime("%Y%m%d%H%M%S") #set nowstr for feedback.  
+      self.commentnowstr = self.now.strftime("%Y%m%d_%H%M%S") #set nowstr for feedback.  
 
       at = listen_audio(duration, "comment.wav")
       #at.join() #wait for it to finish.
@@ -1042,7 +1089,7 @@ class hotkeys:
         playwrighty.current_cache = select_index
         page = playwrighty.page_cache[select_index]['page']
         print(f'Switched to Tab {select_index}: {page.url}')
-        self.speak(f'Switched to Tab {select_index}: {page.title}')
+        self.speak(f'Switched to Tab {select_index}')#: {playwrighty.page_cache[select_index]["title"]}')
         #read page from current offset.  
         body_text, link_data, page, cacheno = playwrighty.read_page('', select_index)
         self.links = link_data
@@ -1134,7 +1181,7 @@ class hotkeys:
       duration *=3  #double duration for feedback
       from extensions.trey.speech import listen_audio
       self.now = datetime.now()
-      self.feedbacknowstr = self.now.strftime("%Y%m%d%H%M%S") #set nowstr for feedback.  
+      self.feedbacknowstr = self.now.strftime("%Y%m%d_%H%M%S") #set nowstr for feedback.  
       self.helpdict['Record Feedback']['$$+'] = f"$DUR={duration}\n&Feedback\n"
       at = listen_audio(duration, "feedback.wav")
       #at.join() #wait for it to finish.
@@ -1510,7 +1557,7 @@ class hotkeys:
 
     context = playwrighty.page_cache[cacheno]['body'][start_offset:end_offset]
     #pause before asking, maybe some silence, but probably better overall?  
-    from extensions.trey.trey import pause_reader
+    from extensions.trey.trey import pause_reader, resume_reader
     pause_reader()
     logger.info(f'$$QUERY={query}')
     answer = self.transcriber.ask_ollama(context=f"::CONTEXT:: \n\n{context}\n\n::QUERY:: {query}", model="gemma3:4b", strictness=strictness)
@@ -1522,6 +1569,10 @@ class hotkeys:
     self.set_qr(self.func, vars)
     #for now just pause reader
     self.speak(f'{answer}')
+    delay = len(answer) /15 #estimate 15 chars per second for just reading speed
+    t = threading.Timer(delay, resume_reader)
+    t.start()  # Start the timer in a new thread
+
     return 0
 
 
@@ -1766,9 +1817,20 @@ class hotkeys:
   def skip_lines(self, sequence=[]):
     if (len(sequence) < 1):
       sequence = [54] #default to 3 lines
+    cacheno = playwrighty.current_cache
+    skipno = sequence[-1]
+    if (skipno == _META): #skip start..
+      skipno = -333
+    elif (skipno == _META+12): #skip end
+      skipno = 333
+    elif (skipno == _VIDEO+12): #skip video..
+      playwrighty.skip_ad(cacheno)
+      return 0
+    else:
+      skipno = skipno-self.keybot
     logger.info(f'> Skip Lines {sequence}')
     from extensions.trey.trey import skip_lines
-    skip_lines(sequence[-1]-self.keybot)
+    skip_lines(skipno, cacheno)
     return 0
 
   def select_type(self, sequence=[]):
@@ -1868,6 +1930,9 @@ class hotkeys:
           print(f'Playwright found {len(text)} characters and {len(links)} links  on the page') 
           q2, q3, stop_event = self.speak(text, links, alt_text_data, total_read, cacheno=cacheno)
           playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
+          if page.locator("video").count() > 0: #prioritize video if present.. not sure if best..
+            pause_reader() #pause before starting to read new page.
+            playwrighty.play_video(cacheno)
         except Exception as e:
           logger.error(f'Error reading page with Playwright: {e}')
         return 0

@@ -779,6 +779,9 @@ class video:
         elif (sequence[-1] == self.keybot+1):
           vars['RECORD'] = 'True'
           vars['OPACITY'] = opacity #use same opacity..
+        elif (sequence[-1] == self.keybot+12):
+          #toggle video full screen.  
+          playwrighty.toggle_fullscreen()
         else:
           opacity = (sequence[0]-self.keybot)*10  #use first param as opacity..
           if (opacity < 0):

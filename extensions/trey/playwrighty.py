@@ -510,7 +510,7 @@ def open_browser():
         myplaywright = sync_playwright().start()
         
         user_data_dir = os.path.join(config.get_data_folder(), 'playwright_user_data')
-        args = ["--disable-blink-features=AutomationControlled", "--load-extension=C:\devinpiano\music\extensions\handsfree"]
+        args = ["--disable-blink-features=AutomationControlled", "--load-extension=C:/devinpiano/music/extensions/handsfree"]
 
 #        args = ["--disable-blink-features=AutomationControlled"]
         x = screen_position[0]
@@ -519,10 +519,12 @@ def open_browser():
         h = screen_position[3]
         #f"--window-position={x_position},{y_position}", "--window-size=1000,800"
         args.append(f"--window-position={x},{y}")
-        args.append(f"--window-size={w},{h}")
+        args.append(f"--window-size={int(w*0.75)},{int(h*0.75)}")
+#        args.append("--start-maximized")
         logger.info(f'Launching browser at position {x},{y} size {w}x{h}')
 #        mybrowser = myplaywright.chromium.launch(headless=False, args=args)  
-        mybrowser = myplaywright.chromium.launch_persistent_context(user_data_dir, headless=False, args=args)
+        #no_viewport combo with window-size..
+        mybrowser = myplaywright.chromium.launch_persistent_context(user_data_dir, headless=False, args=args, no_viewport=True)
 
 
         #load last 10
@@ -674,6 +676,26 @@ def set_speed(speed=-1, cacheno=-1):
     playback_rate = speed
     logger.info(f'Set video playback speed to {speed}x')
 
+def toggle_fullscreen(cacheno=-1):
+    global current_cache
+    if (cacheno < 0 or cacheno >= len(page_cache)):
+        cacheno = current_cache
+    if (cacheno < 0 or cacheno >= len(page_cache)):
+        return -1
+    page = page_cache[cacheno]['page']
+    #more complex with multiple video controls..
+    page.evaluate("""() => {
+        const video = document.querySelector('video');
+        if (video) {
+            if (!document.fullscreenElement) {
+                video.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+    }""")
+
+
 def pause_video(cacheno=-1, transcriber=None):
     global current_cache
     global video_playing
@@ -720,6 +742,26 @@ def pause_video(cacheno=-1, transcriber=None):
         transcribe_bookmark(url, cacheno, transcriber, "hotkeys")
     return 0
 
+
+def skip_ad(cacheno=-1):
+    global current_cache
+    total_read = 0
+    if (cacheno < 0 or cacheno >= len(page_cache)):
+        cacheno = current_cache
+    if (cacheno < 0 or cacheno >= len(page_cache)):
+        return -1
+    page = page_cache[cacheno]['page']
+    #more complex with multiple video controls..
+    page.evaluate("""
+                () => {
+                    const skipButton = document.querySelector('.ytp-skip-ad-button, .ytp-skip-ad-button-legacy');
+                    if (skipButton) {
+                        skipButton.click();
+                    }
+                }""")
+    logger.info(f'Skipped ad for {page.url}')
+    return 0
+
 def play_video(cacheno=-1):
     global current_cache
     total_read = 0
@@ -751,6 +793,7 @@ def play_video(cacheno=-1):
     }""", [video_no])
     global video_playing
     video_playing = True
+    return 0
 
 
 def get_page_details(page):
@@ -1065,7 +1108,7 @@ def read_page(url, cacheno=-1):
     if (url !=''):
         url = url.split('|')[-1]
         found_item = next((item for item in page_cache if item.get('url') == url), None)
-        if found_item is not None and found_item.get('timestamp', 0) + 60 > time.time(): #cache for 1 minute for now.
+        if found_item is not None and found_item.get('timestamp', 0) + 3600 > time.time(): #cache for 1 hour for now.
             logging.info(f'#{url}\nURL already in cache and valid, returning cached page')
             cacheno = page_cache.index(found_item)
             activate_tab(cacheno)

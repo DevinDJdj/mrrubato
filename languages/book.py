@@ -605,7 +605,7 @@ class book:
       duration *=3  #double duration for feedback
       from extensions.trey.speech import listen_audio
       self.now = datetime.now()
-      self.feedbacknowstr = self.now.strftime("%Y%m%d%H%M%S") #set nowstr for feedback.  
+      self.feedbacknowstr = self.now.strftime("%Y%m%d_%H%M%S") #set nowstr for feedback.  
 
       at = listen_audio(duration, "comment.wav")
       #at.join() #wait for it to finish.

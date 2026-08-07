@@ -609,8 +609,8 @@ class transcriber:
                 #ensure unique timestamp for each command, even if they have the same time, 
                 # by adding a small increment to the timestamp for each command.  
                 # this is important for mapping and sorting commands later
-                t += self.timeshift
-                self.timeshift += 1e-9
+#                t += self.timeshift
+#                self.timeshift += 1e-9
             except:
                 pass
         return t
@@ -788,6 +788,9 @@ class transcriber:
                                     linenum = line[10:].strip()
                                     if (not linenum.isdigit()):
                                         linenum = '0'
+                                elif (len(line) > 10 and line[10] == '_'):
+                                    vars['TIME'] = line[2:].strip()
+                                    currenttopc['timestamp'] = self.get_time_var(vars)
                                 else:
                                     linenum = '0'
                                 if ('..' not in currenttopc['vars']):
@@ -1114,6 +1117,43 @@ class transcriber:
 
         return retstruct
 
+
+    def read_quick(self, lang, myfolder=""): #update transcript log..
+        today = datetime.now().strftime("%Y%m%d")
+        folder = self.TRANSCRIPT_FOLDER + lang + '/'
+        if (myfolder != ""):
+            folder = myfolder
+        os.makedirs(folder, exist_ok=True)
+        fname = folder + today + '.txt'
+        mtime = os.path.getmtime(fname)
+        stime = self.allcmds[lang]['start_time']
+        last_mtime = self.allcmds[lang]['last_mtime'] if 'last_mtime' in self.allcmds[lang] else 0
+        sorted_files = self.allcmds[lang]['files'] if 'files' in self.allcmds[lang] else []
+        test = []
+        start_time = stime
+        end_time = mtime
+        if (mtime > self.allcmds[lang]['..']):
+            try:
+                with open(fname, encoding='utf-8') as ff:
+                    lines = ff.readlines()
+                    if (len(lines) < 2):
+                        return []
+
+                    self.current_topic = fname.split('/')[-1][:-4] #file name without extension
+                    test = self.read_lines(lang, lines, stime, mtime)
+                    logger.info(fname.split('/')[-1] + " loaded with " + str(len(test)) + " commands")
+#                        logger.info(test)
+            except Exception as e:
+                logger.error(f'!!> Read [{fname}]\n !!{e}\n')
+
+            
+        if (len(lines) > 0 and lang in self.allcmds):
+            self.allcmds[lang]['last_mtime'] = mtime
+            self.allcmds[lang]['..'] = mtime
+
+        self.merge_cmds(lang, test, start_time, end_time, last_mtime, sorted_files)
+        return test
+
     def read(self, lang, start_time=None, end_time=None, myfolder=""):
 
       #read from transcript file all instances of this.   
@@ -1170,7 +1210,7 @@ class transcriber:
 
                 if (self.is_yyyymmdd(f['name'][:8])):
                     mtime = time.mktime(datetime.strptime(f['name'][:8], '%Y%m%d').timetuple())
-                    mtime += 86400 #add one day to end of day for better sorting
+#                    mtime += 86400 #add one day to end of day for better sorting
                 else:
                     mtime = f['mtime']
 

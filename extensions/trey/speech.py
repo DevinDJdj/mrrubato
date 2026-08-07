@@ -392,6 +392,10 @@ def record_audio2(duration=30, fname="example.wav", stop_event=None, seq=[77, 81
             sd.sleep(100)  # Sleep briefly to allow other operations
     print("Recording completeA.")
 #    logger.info("Recording complete.")
+    if (len(recording) == 0):
+        print("No audio recorded.")
+        synth.play_synth([note-24 for note in seq]) #error sequence..
+        return ""
     recording = np.concatenate(recording, axis=0)
     audio_tensor = torch.from_numpy(recording.squeeze()) # Remove channel dimension if mono
 #    audio_tensor = torch.from_numpy(recording.squeeze()) # Remove channel dimension if mono

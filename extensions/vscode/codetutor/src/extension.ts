@@ -24,7 +24,8 @@ import { LanguageModelPromptTsxPart, LanguageModelToolInvocationOptions, Languag
 
 import { startWatchingWorkspace, startWatchingTranscriber, writeToTranscriber, updateStatusBarItem, registerStatusBarTool, 
 	registerCompletionTool, registerToolUserChatParticipant, registerPiano, unregisterPiano, 
-	getSelectionInfo } from './toolParticipant';
+	getSelectionInfo, 
+	readFromTranscriber} from './toolParticipant';
 import { start } from 'repl';
 import { get } from 'http';
 
@@ -1232,6 +1233,16 @@ export function activate(context: vscode.ExtensionContext) {
 					
 			case "":
 				//failure return?  
+				break;
+			default:
+				//default is to search for this text in the book.
+				//get current file if it is date.  				
+				//this loads related browser info if we have a match..
+				let found = readFromTranscriber(text, 'hotkeys', datecmd !== "" ? datecmd.substring(2, 10) : Book.formatDate());
+				if (!found){ //find similar..
+					vscode.commands.executeCommand('workbench.action.chat.open', "@mr /similar " + text );
+
+				}
 				break;
 
 		}		
