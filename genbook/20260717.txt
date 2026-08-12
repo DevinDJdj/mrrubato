@@ -22,3 +22,8 @@
 >#1 python ./record.py --description  "True Loves Kiss (Alan Menken)"
 >#1 python ./record.py --description  "If I Never Knew You (Alan Menken)"
 >#1 python ./record.py --description  "Part Of Your World (Alan Menken)"
+>#1 python ./record.py --description  "Almost There (Randy Newman)"
+
+>#1 python ./record.py --description  "Op 27 No 2 (Beethoven)"
+
+
