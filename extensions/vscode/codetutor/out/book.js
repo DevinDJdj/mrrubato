@@ -131,6 +131,7 @@ exports.environmenthistory = [];
 exports.queryhistory = [];
 exports.ollama_model = 'gemma4:e4b';
 exports.ollama_model = 'gemma3';
+var mytime = new Date().getTime() / 1000; //set the time in seconds
 var myCodeMirror = null;
 var tempcodewindow = null;
 var usetempcodewindow = false;
@@ -171,7 +172,7 @@ function fnWork(lines, currentindex) {
 }
 exports.defmap = [{ "#": "REF", ">": "CMD", "-": "SUBTASK", "@": "USER", ";": "COMMENT" },
     { "##": "REF2", "~~": "SUGGESTION", "**": "TOPIC", "@@": "QUESTION", "->": "DGRAPH",
-        "::": "SUMMARY",
+        "::": "SUMMARY", "&&": "CONTEXT",
         "--": "NOTE", "==": "ANSWER", "$$": "ENV", "!!": "ERROR", "%%": "WORKER" },
     { "-->": "ENDCOMMENT", "!--": "ERRORNOTE" },
     { "<!--": "STARTCOMMENT" }];
@@ -325,9 +326,18 @@ function getDaysBetweenDates(startDate, endDate) {
     const daysDiff = Math.round(timeDiff / (1000 * 60 * 60 * 24));
     return daysDiff;
 }
-function setTime(t, w, s, e) {
+function setTime(t, w, s, e, open = true) {
     const date = new Date(t * 1000);
     sortRecency(date);
+    let dstring = formatDate(date);
+    //if this book exists?  
+    if (dstring in exports.topicarray) {
+        //get the topics for this date.
+        if (open) {
+            select(dstring);
+            vscode.commands.executeCommand('workbench.action.chat.open', "@mr /read " + "**" + dstring);
+        }
+    }
     //for now just sort by this date.. 
     //eventually use the window as well perhaps for context creation..
 }

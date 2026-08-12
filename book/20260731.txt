@@ -463,6 +463,79 @@ Does window switch work?
 
 **languages/hotkeys.py
 Still problems sending windows.  
+ok, this works now.. still hacky..
+
 Continue held words..
 Continue Joystick chrome handle first..
+OK, click works, add some more functionality, scroll fails..
 
+
+**extensions/trey/playwrighty.py
+--read_page
+test console handler..
+Need this for [**check.py]
+
+**extensions/trey/trey.py
+--reportProgress
+track timings for all..
+Need to understand lag of each function and adjust any > 1 sec.
+
+**extensions/playwrighty.py
+--open_browser
+Session seems to persist which is good..
+
+Scroll fails..
+
+test ask..
+Display correlation graph from generated xml..
+
+
+mixing time and timestamp..
+TIME = YYYYMMDD_HHMMSS or seconds since last epoch..
+
+**extensions/vscode/codetutor/src/book.ts
+--topicarray[YYYYMMDD]
+
+--setTime
+test..
+OK, basic query on time jump works..
+
+
+Need to separate generatetts from tab switching..
+Only if URL changed.  
+
+test..
+Somewhat better..
+
+;> JOY ask works ok..
+Need feedback on screen.
+not perfect..
+
+Resume after read..
+ok..
+
+
+Need skip to start/skip to end..
+--skip_lines
+test..
+
+
+;> Record Feedback
+should annotate at least time to match up with context info.  
+;CTRL+SHIFT+8 = jump to location.  
+
+When do we reuse tabs, and how to get rid of junk data.  
+Annotate close tab URL.  
+If we have two, dont reopen..
+
+
+test video..
+Read Link
+[50,52,57] [48] [LINKNO] read links from selected book
+
+**extensions/trey/playwrighty.py
+--toggle_fullscreen
+test..
+
+
+--save_state

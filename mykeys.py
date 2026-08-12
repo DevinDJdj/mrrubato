@@ -117,13 +117,15 @@ class MyLang:
   
 
 class MyKeys:
-  def __init__(self, config, qapp=None, startx=0, stop_event=None):
+  def __init__(self, config, qapp=None, startx=0, stop_event=None, qr_queue=None, qrin_queue=None):
     self.config = config
     self.transcriber = transcriber.transcriber(self)
 
     self.lasttick = time.time()
     self.stop_event = stop_event #stop event for MK
     self.synth_stop_event = None
+    self.qr_queue = qr_queue
+    self.qrin_queue = qrin_queue
     self.now = datetime.now()
     self.nowstr = self.now.strftime("%Y%m%d%H%M%S")
     self.mid = self.getmidifile()
@@ -351,30 +353,33 @@ class MyKeys:
 
     #find language which matches this data?  for now just broadcast to all languages.
     #use language and function <lang>func [params]
+#    logger.info(f'> QRIN\n{data}')
     cmds = self.transcriber.read_lines('_meta', data.split('\n')) #save all QR data to transcript.  This is for debugging and record keeping, as well as for loading state from previous sessions.
 
     if (cmds is None or len(cmds) == 0):
       return
     else:
-      if (cmds[0]['lang'] != 'joystick' and cmds[0]['lang'] != 'midi'):
-        if (data not in self.qrin):
-          self.qrin.insert(0, data) #add to start of list
-        else:
-          #dont keep duplicates for now..
-          self.qrin.remove(data)
-          self.qrin.insert(0, data) #move to start of list
-
-      #better to just do the language, but language not always written..
-
-        for (l,la) in self.languages.items():
-    #        if (hasattr(la, 'qrin')):
-    #          la.qrin = (data)
-          if (hasattr(la, 'qr_in')):
-            la.qr_in(cmds)
+      if (data not in self.qrin):
+        self.qrin.insert(0, data) #add to start of list
       else:
-        for (l,la) in self.languages.items():
-          if (hasattr(la, 'handle_joystick')):
-            la.qr_in(cmds)
+        #dont keep duplicates for now..
+        self.qrin.remove(data)
+        self.qrin.insert(0, data) #move to start of list
+      for cmd in cmds:
+        if (cmd['lang'] != 'joystick' and cmd['lang'] != 'midi'):
+          logger.info(cmd)
+          if (cmd['lang'] in self.languages):
+            la = self.languages[cmd['lang']]
+            if (hasattr(la, 'qr_in')):
+              la.qr_in([cmd])
+          else:
+            logger.error(f'!!<<{cmd["lang"]}>>\n not found for QRIN command\n {cmd}')
+        else:
+          if ('hotkeys' in self.languages): #hardcoded..
+            la = self.languages['hotkeys']
+            if (hasattr(la, 'qr_in')):
+              la.qr_in([cmd])
+
   def convert_keys(self, keys, _length=0):
     #use _length to distinguish already pressed in some way..
     copy = []
@@ -405,7 +410,7 @@ class MyKeys:
     self.qr += "$$\n"
     return 0  
 
-  def get_qr(self):
+  def get_qr(self, extended=True):
     qr = ""
     for (l,la) in self.languages.items():
       if (hasattr(la, 'qr') and la.qr != ""):
@@ -454,40 +459,41 @@ class MyKeys:
         qr += "<<" + l + ">>\n"
         qr += la.qr + "\n"
         la.qr = "" #reset qr after getting it.
-    qr += "<<meta>>\n"
-    words = self.get_words_(self.sequence[self.startseqno:])
-    _length = len(self.sequence[self.startseqno:])
-    #potentially get most likely words here only.  Eventually..
-    qr += f"$$SEQLEN={self.currentseqno - self.startseqno} \n"
-    if (self.currentseqno - self.startseqno == 0):
+    if (extended): #display help as well..
+      qr += "<<meta>>\n"
+      words = self.get_words_(self.sequence[self.startseqno:])
+      _length = len(self.sequence[self.startseqno:])
+      #potentially get most likely words here only.  Eventually..
+      qr += f"$$SEQLEN={self.currentseqno - self.startseqno} \n"
+      if (self.currentseqno - self.startseqno == 0):
 
-      qr += f"&&{self.currentcmd} \n"
-      help = ""
-      if (self.currentlangna in self.languages and hasattr(self.languages[self.currentlangna], 'helpdict') and self.currentcmd in self.languages[self.currentlangna].helpdict):
-        if ('> ' in (self.languages[self.currentlangna].helpdict[self.currentcmd])):
-          help += f"> {self.languages[self.currentlangna].helpdict[self.currentcmd]['> ']} \n"
-        if ('$$+' in (self.languages[self.currentlangna].helpdict[self.currentcmd])):
-          help += f"$$+{self.languages[self.currentlangna].helpdict[self.currentcmd]['$$+']} \n"
-        if ('&&' in (self.languages[self.currentlangna].helpdict[self.currentcmd])):
-          help += f"&&{self.languages[self.currentlangna].helpdict[self.currentcmd]['&&']} \n"        
-        else:
-          help += f"&&{self.languages[self.currentlangna].helpdict[self.currentcmd]}\n"
-        if ('$$' in (self.languages[self.currentlangna].helpdict[self.currentcmd])):
-          help += f"[{self.languages[self.currentlangna].helpdict[self.currentcmd]['$$']}] \n"
-      qr += f"{help} \n"      
-      #get params here..
+        qr += f"&&{self.currentcmd} \n"
+        help = ""
+        if (self.currentlangna in self.languages and hasattr(self.languages[self.currentlangna], 'helpdict') and self.currentcmd in self.languages[self.currentlangna].helpdict):
+          if ('> ' in (self.languages[self.currentlangna].helpdict[self.currentcmd])):
+            help += f"> {self.languages[self.currentlangna].helpdict[self.currentcmd]['> ']} \n"
+          if ('$$+' in (self.languages[self.currentlangna].helpdict[self.currentcmd])):
+            help += f"$$+{self.languages[self.currentlangna].helpdict[self.currentcmd]['$$+']} \n"
+          if ('&&' in (self.languages[self.currentlangna].helpdict[self.currentcmd])):
+            help += f"&&{self.languages[self.currentlangna].helpdict[self.currentcmd]['&&']} \n"        
+          else:
+            help += f"&&{self.languages[self.currentlangna].helpdict[self.currentcmd]}\n"
+          if ('$$' in (self.languages[self.currentlangna].helpdict[self.currentcmd])):
+            help += f"[{self.languages[self.currentlangna].helpdict[self.currentcmd]['$$']}] \n"
+        qr += f"{help} \n"      
+        #get params here..
 
 
-    qr += f"__ {self.sequence[self.startseqno:]} __\n"
-    for i, w in enumerate(words):      
-      if ('ss' in w):
-        #just display keys to hold for quick sequence..
-        qr += f"~~ {w['word']} | {w['sequence'][:_length]} \n"
-      keys = self.convert_keys(w['keys'], _length)
-      qr += f"~~ {w['word']} | {keys} \n" #br working for line breaks..
-    #output info about potential keys here.  
+      qr += f"__ {self.sequence[self.startseqno:]} __\n"
+      for i, w in enumerate(words):      
+        if ('ss' in w):
+          #just display keys to hold for quick sequence..
+          qr += f"~~ {w['word']} | {w['sequence'][:_length]} \n"
+        keys = self.convert_keys(w['keys'], _length)
+        qr += f"~~ {w['word']} | {keys} \n" #br working for line breaks..
+      #output info about potential keys here.  
 
-    qr += self.qr
+      qr += self.qr
     self.qr = "" #reset qr after getting it.
 
     return qr
@@ -740,6 +746,7 @@ class MyKeys:
     #possibly find multiple actions to take..
     #cant do with keybot
     lastnote = -1
+    #insert into qrin_queue for processing.  
     if (len(self.heldwords) > 0):
 #      logger.info(f'Checking heldwords: {self.heldwords}')
       lastnote = self.heldwords[-1]['_']
@@ -784,17 +791,25 @@ class MyKeys:
         else:
         """
         #get last word and try to take action again.
-        action = self.languages[langna].act(word, self.heldwords, ss, doact=doact)
-        if (action == 0):
-          #action was successful, reset command
-          logger.info(f'> <{langna}>{word} {ss}')
-        elif (action < -1):
-          #action_ handled, no further params needed.
-          logger.info(f'> <{langna}>{word}_ {ss}')
-        elif (action == -1):
-          #error?  
-          logger.info(f'!! > <{langna}>{word} {ss}')
-#          else:
+        if (langna == 'hotkeys'): #hardcode testing for now workaround for threading issue with playwrighty..
+          if (self.qrin_queue is not None and self.qrin_queue.empty()): #only add if empty.., dont want to flood queue with same command..
+            #some commands will take longer to process..
+            self.qrin_queue.put(f'<<{langna}>>\n> {word} {ss}')
+        else: #we can take action immediately, no threading problems I think..
+          action = self.languages[langna].act(word, self.heldwords, ss, doact=doact)
+
+          if (action == 0):
+            #action was successful, reset command
+            logger.info(f'> <{langna}>{word} {ss}')
+            #add to qr_queue for processing.  This is for languages that need to do more processing in the main thread.
+            self.qr_queue.put(self.get_qr(False)) #send qr to app for display, no help or suggestion..
+          elif (action < -1):
+            #action_ handled, no further params needed.
+            logger.info(f'> <{langna}>{word}_ {ss}')
+          elif (action == -1):
+            #error?  
+            logger.info(f'!! > <{langna}>{word} {ss}')
+  #          else:
           #need more keys..should be standard..
 
     return action
@@ -850,12 +865,13 @@ class MyKeys:
       if (msg.note < len(self.notes) and doact):
           self.notes[msg.note] = 0
           self.heldwords = [hw for hw in self.heldwords if hw['_'] != msg.note]
-          logger.info(f"Held words updated: {self.heldwords}")
+#          logger.info(f"Held words updated: {self.heldwords}")
     elif (hasattr(msg, 'type') and msg.type=='note_off'):
       if (msg.note < len(self.notes) and doact):
           self.notes[msg.note] = 0
           self.heldwords = [hw for hw in self.heldwords if hw['_'] != msg.note]
-          logger.info(f"Held words updated: {self.heldwords}")
+#          logger.info(f"Held words updated: {self.heldwords}")
+
 
     if hasattr(msg, 'type') and msg.type=='note_on' and hasattr(msg, 'velocity') and msg.velocity > 0:
       self.lasttick = time.time()

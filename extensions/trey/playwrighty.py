@@ -4,6 +4,7 @@
 #>pip install asyncio
 import asyncio
 import random
+
 from languages import video
 from playwright.async_api import async_playwright
 from playwright_stealth import Stealth
@@ -213,7 +214,9 @@ def click_link(cacheno, text_offset, link_offset=0, open_new_tab=False):
                 if open_new_tab:
                     page = page.context.new_page()
                     page.goto(href)
-                    page_cache.append({'url': page_info['url'], 'page': page, 'body': page_info['body'], 'links': page_info['links'], 'title' : page_info['title'], 'current_locator': None, 'last_total_read': 0})
+                    #insert at head..
+                    page_cache.insert(0, {'url': page_info['url'], 'page': page, 'body': page_info['body'], 'links': page_info['links'], 'title' : page_info['title'], 'current_locator': None, 'last_total_read': 0})
+
                 else:
                     if ('reader_stop_event' in page_info and page_info['reader_stop_event'] is not None):
                         page_info['reader_stop_event'].set() #stop any reading.
@@ -507,7 +510,7 @@ def open_browser():
         myplaywright = sync_playwright().start()
         
         user_data_dir = os.path.join(config.get_data_folder(), 'playwright_user_data')
-        args = ["--disable-blink-features=AutomationControlled", "--load-extension=C:\devinpiano\music\extensions\handsfree"]
+        args = ["--disable-blink-features=AutomationControlled", "--load-extension=C:/devinpiano/music/extensions/handsfree"]
 
 #        args = ["--disable-blink-features=AutomationControlled"]
         x = screen_position[0]
@@ -516,10 +519,12 @@ def open_browser():
         h = screen_position[3]
         #f"--window-position={x_position},{y_position}", "--window-size=1000,800"
         args.append(f"--window-position={x},{y}")
-        args.append(f"--window-size={w},{h}")
+        args.append(f"--window-size={int(w*0.75)},{int(h*0.75)}")
+#        args.append("--start-maximized")
         logger.info(f'Launching browser at position {x},{y} size {w}x{h}')
 #        mybrowser = myplaywright.chromium.launch(headless=False, args=args)  
-        mybrowser = myplaywright.chromium.launch_persistent_context(user_data_dir, headless=False, args=args)
+        #no_viewport combo with window-size..
+        mybrowser = myplaywright.chromium.launch_persistent_context(user_data_dir, headless=False, args=args, no_viewport=True)
 
 
         #load last 10
@@ -593,11 +598,12 @@ def set_reader_queue(q2, q3, stop_event, cacheno=-1):
         page_cache[cacheno]['reader_stop_event'] = stop_event
         return True
 
-def get_ppage(cacheno=-1): #get playwright page from cacheno
+def get_ppage(cacheno=-1, activate=True): #get playwright page from cacheno
 
     if cacheno >= 0 and cacheno < len(page_cache):
         page = page_cache[cacheno]['page']
-        activate_tab(cacheno)
+        if activate:
+            activate_tab(cacheno)
     else:
         browser = open_browser()
         global mycontext
@@ -608,6 +614,10 @@ def get_ppage(cacheno=-1): #get playwright page from cacheno
             page = all_tabs[cacheno]
         else:   
             page = mycontext.new_page()
+            if (len(page_cache) == 0):
+                mycontext.pages[0].close() #close the default blank page if we are creating a new one.
+            
+
     return page
 
 def find_nth_occurrence(main_string, sub_string, n):
@@ -666,6 +676,26 @@ def set_speed(speed=-1, cacheno=-1):
     playback_rate = speed
     logger.info(f'Set video playback speed to {speed}x')
 
+def toggle_fullscreen(cacheno=-1):
+    global current_cache
+    if (cacheno < 0 or cacheno >= len(page_cache)):
+        cacheno = current_cache
+    if (cacheno < 0 or cacheno >= len(page_cache)):
+        return -1
+    page = page_cache[cacheno]['page']
+    #more complex with multiple video controls..
+    page.evaluate("""() => {
+        const video = document.querySelector('video');
+        if (video) {
+            if (!document.fullscreenElement) {
+                video.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+    }""")
+
+
 def pause_video(cacheno=-1, transcriber=None):
     global current_cache
     global video_playing
@@ -712,6 +742,26 @@ def pause_video(cacheno=-1, transcriber=None):
         transcribe_bookmark(url, cacheno, transcriber, "hotkeys")
     return 0
 
+
+def skip_ad(cacheno=-1):
+    global current_cache
+    total_read = 0
+    if (cacheno < 0 or cacheno >= len(page_cache)):
+        cacheno = current_cache
+    if (cacheno < 0 or cacheno >= len(page_cache)):
+        return -1
+    page = page_cache[cacheno]['page']
+    #more complex with multiple video controls..
+    page.evaluate("""
+                () => {
+                    const skipButton = document.querySelector('.ytp-skip-ad-button, .ytp-skip-ad-button-legacy');
+                    if (skipButton) {
+                        skipButton.click();
+                    }
+                }""")
+    logger.info(f'Skipped ad for {page.url}')
+    return 0
+
 def play_video(cacheno=-1):
     global current_cache
     total_read = 0
@@ -743,6 +793,7 @@ def play_video(cacheno=-1):
     }""", [video_no])
     global video_playing
     video_playing = True
+    return 0
 
 
 def get_page_details(page):
@@ -847,6 +898,7 @@ def get_page_details(page):
         logger.info(f'Found offsets for {offset_found} links, could not find offsets for {offset_notfound} links')
         body_text = '$$TITLE=' + page.title() + '\n' + body_text
 
+
         return body_text, link_data, alt_text_data
     except Exception as e:
 
@@ -854,6 +906,11 @@ def get_page_details(page):
         return body_text, link_data, alt_text_data
 
 
+def console_handler(cacheno):
+    def log_console_message(msg):
+        page = get_ppage(cacheno)
+        print(f"#{page.title()}\n{msg.type.ljust(7, ' ')}:\t{msg.text}")
+    return log_console_message
 
 def update_page_offset(cacheno=-1):
     if (last_link_clicked_time is not None and time.time() - last_link_clicked_time < 1):
@@ -899,6 +956,7 @@ def update_page_offset(cacheno=-1):
                 #some problems with multiple results..
                 current_locator = page_cache[cacheno].get('current_locator', None)
 
+                #will need to expand to include other elements like div, span, etc.  for now just p.
                 locator = page_cache[cacheno]['page'].locator(f"p:has-text({json.dumps(temptext)})") #not getting results all the time..
                 if (locator.count() == 1):
                     if (current_locator is None or locator.text_content() != (current_locator['text'])):
@@ -941,9 +999,17 @@ def update_page_offset(cacheno=-1):
                         #try partial match
                         locator = page.get_by_role("link", name=link['text'])
                         if (locator.count() == 1):
-                            locator.highlight()
+#                            locator.highlight()
                             locator.scroll_into_view_if_needed()
                             locator.evaluate("el => el.style.backgroundColor = 'rgba(0, 0, 0, 0.3)'")
+                        if (linkno > 0):
+                            plink = links[linkno-1]
+                            locator = page.get_by_role("link", name=plink['text'])
+                            if (locator.count() == 1):
+    #                            locator.highlight()
+                                locator.scroll_into_view_if_needed()
+                                #set back to more normal highlight..
+                                locator.evaluate("el => el.style.backgroundColor = 'rgba(0, 0, 0, 0.15)'")
 #                    if (locator.bounding_box() is not None and locator.bounding_box().get('height', 400) < 400):
 #                        locator.highlight() #dont highlight the whole page..
 
@@ -1042,7 +1108,7 @@ def read_page(url, cacheno=-1):
     if (url !=''):
         url = url.split('|')[-1]
         found_item = next((item for item in page_cache if item.get('url') == url), None)
-        if found_item is not None and found_item.get('timestamp', 0) + 60 > time.time(): #cache for 1 minute for now.
+        if found_item is not None and found_item.get('timestamp', 0) + 3600 > time.time(): #cache for 1 hour for now.
             logging.info(f'#{url}\nURL already in cache and valid, returning cached page')
             cacheno = page_cache.index(found_item)
             activate_tab(cacheno)
@@ -1100,8 +1166,17 @@ def read_page(url, cacheno=-1):
 
     page_cache[cacheno]['page'].bring_to_front()
     logging.info(f'Cached page {cacheno} for URL: {url}')
+
+
+    #listen for errors.  
+    page.on('pageerror', lambda exception: logger.error(f'!!#{page.url}\n{exception}'))
+    # Listen for all console log events        
+    page.on("console", console_handler(cacheno))
+
     return body_text, link_data, page, cacheno
 
+def handle_page_error(exc):
+    print(f"Page crashed or threw an unhandled exception: {exc}")
 
 def get_engines():
     global engine_names

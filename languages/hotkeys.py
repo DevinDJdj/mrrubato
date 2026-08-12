@@ -1,6 +1,8 @@
 import logging
 from pydoc import text
+import threading
 from pynput import *
+from languages._meta import _META, _VIDEO
 import pytesseract
 from PIL import Image
 from io import BytesIO
@@ -13,7 +15,7 @@ import extensions.trey.playwrighty as playwrighty
 import shutil
 import json
 
-from extensions.trey.trey import pause_reader, skip_lines
+from extensions.trey.trey import page, pause_reader, skip_lines
 from extensions.trey.trey import skip_lines
 import languages.helpers.transcriber as transcriber
 
@@ -43,7 +45,9 @@ class hotkeys:
     self.links = []
     self.currentlinks = []
     self.windows = ["" for _ in range(100)] #for now practical limit much lower..
+    self.windowslen = 0 #annoying logic here, because of preinitizliation of windows list.  
     self.currentwindowindex = 0
+    self.controlstate = {'app': "", 'window': "", 'tab': ""}
     self.maxseq = 10 #includes parameters
     self.callback = None
     self.transcript = ""
@@ -51,10 +55,11 @@ class hotkeys:
     self.tofind = ""
     self.tofindhistory = []
     self.now = datetime.now()
-    self.feedbacknowstr = self.now.strftime("%Y%m%d%H%M%S")
+    self.feedbacknowstr = self.now.strftime("%Y%m%d_%H%M%S")
 
     self.funcdict = {}
     self.suggestions = []
+    self.joystate = {}
 
   def word(self, sequence=[]):
     """Word lookup."""
@@ -484,26 +489,69 @@ class hotkeys:
     playwrighty.update_page_offset()
 
   #state = foreground window + tab state for browser..
-  def get_state(self):
+  def get_app_state(self):
     #get current state of this language.  For now just return current window and tab.
-    state = {}
-    state['window'] = self.windows[self.currentwindowindex] if (len(self.windows) > self.currentwindowindex) else ""
-    if ('google chrome for testing' in state['window']):
-      state['app'] = "chrome"
-    elif ('mrroboto' in state['window']):
-      state['app'] = "mrroboto"
-    else:
-      state['app'] = ""
-    return state
+    
+    self.controlstate['window'] = self.windows[self.currentwindowindex] if (self.windowslen > self.currentwindowindex) else ""
+    if ('google chrome for testing' in self.controlstate['window']):
+      self.controlstate['app'] = "chrome"
+    elif ('mrroboto' in self.controlstate['window']):
+      self.controlstate['app'] = "mrroboto"
+    #dont reset, handle the last state..
+#    else:
+#      state['app'] = ""
+    return self.controlstate
   #vscode
   #playwrighty
 
+  def add_joystate(self, cmd):
+
+    joy = cmd['vars']['SEQ'][0]
+    type = cmd['cmd']
+    register = cmd['vars']['SEQ'][1]
+    value = cmd['vars']['SEQ'][2]
+    prev_state = self.joystate.get(type, {}).get(joy, {}).get(register, None)
+    if prev_state is not None:
+      prev_state = prev_state.copy()
+
+    if type not in self.joystate:
+      self.joystate[type] = {}
+    if (joy not in self.joystate[type]):
+      self.joystate[type][joy] = {}
+    if (register not in self.joystate[type][joy]):
+      self.joystate[type][joy][register] = {'_': value, '(': time.time(), ')': time.time()}
+    else:
+      if (prev_state.get('_', None) != value):
+        self.joystate[type][joy][register]['_'] = value
+        self.joystate[type][joy][register]['('] = time.time()  # Update the timestamp for the last change
+        self.joystate[type][joy][register][')'] = time.time()  # Update the timestamp for the last change
+      else:
+        self.joystate[type][joy][register][')'] = time.time()  # Update the timestamp for the last change
+    return prev_state, self.joystate[type][joy][register]
 
   def handle_joystick(self, cmd):
     #translate joystick commands to actions.  
     #held key actions..
-    state = self.get_state()
-    if (state['app'] == "mrroboto"):
+    if ('vars' not in cmd or 'SEQ' not in cmd['vars'] or len(cmd['vars']['SEQ']) < 3):
+      logger.error(f'!!Invalid joystick command\n{cmd}')
+      return -1
+    elif ('cmd' not in cmd or cmd['cmd'] not in ['AXIS', 'BUTTON', 'HAT']):
+      logger.error(f'!!Invalid joystick command type {cmd.get("cmd", None)}\n{cmd}')
+      return -1
+    app_state = self.get_app_state()
+    prev_state, current_state = self.add_joystate(cmd)
+    logger.info(f'{prev_state} {current_state}')
+    if (prev_state is not None and prev_state['_'] == current_state['_']):
+      #no change in state, ignore
+      #what lag do we want here?  
+      if (current_state[')'] - current_state['('] < 2): #ignore changes less than 2 second, give chance for some feedback lag..
+        return 1
+    else:
+      logger.info(f'Joystick state changed from {prev_state} to {current_state}')
+      current_state['('] = time.time()  # Update the timestamp for the last change']
+      current_state[')'] = time.time()  # Update the timestamp for the last change
+
+    if (app_state['app'] == "mrroboto"):
       a = 0
       if (cmd['cmd'] == 'AXIS'):
         logger.info(f'axis {cmd}') #joy, axis, value
@@ -590,7 +638,7 @@ class hotkeys:
         logger.info(f'Joystick ball/hat {cmd}') #joy, ball/hat, value
         #play or pause..
 
-    elif (state['app'] == "chrome"):
+    elif (app_state['app'] == "chrome"):
       a = 0
       if (cmd['cmd'] == 'AXIS'):
         logger.info(f'axis {cmd}') #joy, axis, value
@@ -600,29 +648,34 @@ class hotkeys:
           if (cmd['vars']['SEQ'][1] == 1):
             if (cmd['vars']['SEQ'][2] < -0.5):
               #up = scroll up
-              playwrighty.get_ppage().mouse.wheel(0, -100) #scroll up
+#              playwrighty.get_ppage().mouse.wheel(0, -100) #scroll up
+              try:
+#                logger.info(playwrighty.get_ppage().title())
+                playwrighty.get_ppage(-1, False).evaluate("() => window.scrollBy(0, -100)")
+              except Exception as e:
+                logger.error(f'Error scrolling up: {e}')
               a = 0
             elif (cmd['vars']['SEQ'][2] > 0.5):
               #down = scroll down
-              playwrighty.get_ppage().mouse.wheel(0, 100) #scroll down
+#              playwrighty.get_ppage().mouse.wheel(0, 100) #scroll down
+              try:
+#                logger.info(playwrighty.get_ppage().title())
+                playwrighty.get_ppage(-1, False).evaluate("() => window.scrollBy(0, 100)")
+              except Exception as e:
+                logger.error(f'Error scrolling down: {e}')
               a = 0
           elif (cmd['vars']['SEQ'][1] == 0):
             current = playwrighty.current_cache
             if (cmd['vars']['SEQ'][2] > 0.5):
               # right = next tab              
-              if (len(playwrighty.page_cache) > current + 1):
-                playwrighty.current_cache = current + 1
-              else:
-                playwrighty.current_cache = 0
-              playwrighty.get_ppage().keyboard.press("Control+Tab") #next tab
+              #just use our control..
+              self.select_tab([self.mid+1])
+#              playwrighty.get_ppage().keyboard.press("Control+Tab") #next tab
               a = 0
             elif (cmd['vars']['SEQ'][2] < -0.5):
               # left = previous tab
-              if (current > 0):
-                playwrighty.current_cache = current - 1
-              else:
-                playwrighty.current_cache = len(playwrighty.page_cache) - 1
-              playwrighty.get_ppage().keyboard.press("Control+Shift+Tab") #previous tab
+              self.select_tab([self.mid-1])
+#              playwrighty.get_ppage().keyboard.press("Control+Shift+Tab") #previous tab
               a = 0
 
       elif (cmd['cmd'] == 'BUTTON'):
@@ -637,9 +690,11 @@ class hotkeys:
               if (button_down == 1):
                 #button 0 pressed = ask
                 #_ask
+                self._ask()
                 a = 0
               if (button_down == 0):
                 #ask
+                self.ask() #ask current page for query
                 #button 0 released
                 a = 0
             case 1: #R1 bottom right
@@ -725,12 +780,20 @@ class hotkeys:
           for i, v in c['vars'].items():
             n = i
             if n.isdigit():
-              self.windows[i] = v
+              self.windows[int(n)] = v
+              self.windowslen = max(self.windowslen, int(n)+1)
+          #always set windowindex back to 0 for now..
+          self.currentwindowindex = 0
+        if (c['type'] == '> ' and c['cmd'] == 'Stop'):
+          playwrighty.pause_video()
+
 
 
   def set_qr(self, func, param={}):
     """Set QR."""
     self.qr = "> " + func + "\n"
+    if ('timestamp' not in param):
+      param['timestamp'] = time.time()
     for k,v in param.items():
         if isinstance(v, str):
             tv = v.replace('\n', '\t')
@@ -751,7 +814,7 @@ class hotkeys:
       duration *=3  #double duration for feedback
       from extensions.trey.speech import listen_audio
       self.now = datetime.now()
-      self.commentnowstr = self.now.strftime("%Y%m%d%H%M%S") #set nowstr for feedback.  
+      self.commentnowstr = self.now.strftime("%Y%m%d_%H%M%S") #set nowstr for feedback.  
 
       at = listen_audio(duration, "comment.wav")
       #at.join() #wait for it to finish.
@@ -835,7 +898,7 @@ class hotkeys:
 
         self.set_qr(self.func, vars)
         self.speak(f'--{playwrighty.page_cache[tabno]["title"]}')
-
+    return 1 #need more keys to close tab.
 
 
   def close_tab(self, sequence=[]):
@@ -894,6 +957,7 @@ class hotkeys:
       self.speak(f'Selected Bookmark {selected}: {urlt}')
       #load page at this bookmark
       body_text, link_data, page, cacheno = playwrighty.read_page(url, cacheno)
+      self.controlstate['app'] = "chrome"
       self.links = link_data
       #pause audio first..
 
@@ -955,13 +1019,13 @@ class hotkeys:
 
 
   def adjust_window_index(self, idx=0):
-    if idx+self.curentwindowindex < 0:
+    if idx+self.currentwindowindex < 0:
       return 0
-    elif (idx+self.curentwindowindex) >= len(self.windows):
-      return len(self.windows)-1
+    elif (idx+self.currentwindowindex) >= self.windowslen:
+      return self.windowslen-1
     else:
-      return self.curentwindowindex + idx
-    return self.curentwindowindex
+      return self.currentwindowindex + idx
+    return self.currentwindowindex
   
   def adjust_playwrighty_index(self, idx=0):
     if idx+playwrighty.current_cache < 0:
@@ -1025,7 +1089,7 @@ class hotkeys:
         playwrighty.current_cache = select_index
         page = playwrighty.page_cache[select_index]['page']
         print(f'Switched to Tab {select_index}: {page.url}')
-        self.speak(f'Switched to Tab {select_index}: {page.title}')
+        self.speak(f'Switched to Tab {select_index}')#: {playwrighty.page_cache[select_index]["title"]}')
         #read page from current offset.  
         body_text, link_data, page, cacheno = playwrighty.read_page('', select_index)
         self.links = link_data
@@ -1117,7 +1181,7 @@ class hotkeys:
       duration *=3  #double duration for feedback
       from extensions.trey.speech import listen_audio
       self.now = datetime.now()
-      self.feedbacknowstr = self.now.strftime("%Y%m%d%H%M%S") #set nowstr for feedback.  
+      self.feedbacknowstr = self.now.strftime("%Y%m%d_%H%M%S") #set nowstr for feedback.  
       self.helpdict['Record Feedback']['$$+'] = f"$DUR={duration}\n&Feedback\n"
       at = listen_audio(duration, "feedback.wav")
       #at.join() #wait for it to finish.
@@ -1493,7 +1557,7 @@ class hotkeys:
 
     context = playwrighty.page_cache[cacheno]['body'][start_offset:end_offset]
     #pause before asking, maybe some silence, but probably better overall?  
-    from extensions.trey.trey import pause_reader
+    from extensions.trey.trey import pause_reader, resume_reader
     pause_reader()
     logger.info(f'$$QUERY={query}')
     answer = self.transcriber.ask_ollama(context=f"::CONTEXT:: \n\n{context}\n\n::QUERY:: {query}", model="gemma3:4b", strictness=strictness)
@@ -1505,6 +1569,10 @@ class hotkeys:
     self.set_qr(self.func, vars)
     #for now just pause reader
     self.speak(f'{answer}')
+    delay = len(answer) /15 #estimate 15 chars per second for just reading speed
+    t = threading.Timer(delay, resume_reader)
+    t.start()  # Start the timer in a new thread
+
     return 0
 
 
@@ -1749,9 +1817,20 @@ class hotkeys:
   def skip_lines(self, sequence=[]):
     if (len(sequence) < 1):
       sequence = [54] #default to 3 lines
+    cacheno = playwrighty.current_cache
+    skipno = sequence[-1]
+    if (skipno == _META): #skip start..
+      skipno = -333
+    elif (skipno == _META+12): #skip end
+      skipno = 333
+    elif (skipno == _VIDEO+12): #skip video..
+      playwrighty.skip_ad(cacheno)
+      return 0
+    else:
+      skipno = skipno-self.keybot
     logger.info(f'> Skip Lines {sequence}')
     from extensions.trey.trey import skip_lines
-    skip_lines(sequence[-1]-self.keybot)
+    skip_lines(skipno, cacheno)
     return 0
 
   def select_type(self, sequence=[]):
@@ -1845,11 +1924,15 @@ class hotkeys:
         try:
           text, links, alt_text_data = playwrighty.get_page_details(playwrighty.get_ppage(playwrighty.current_cache))
           text, links, page, cacheno = playwrighty.read_page('', playwrighty.current_cache) #read current page
+          self.controlstate['app'] = 'chrome' #set app to chrome for now.  Should be more general.
           total_read = playwrighty.get_bookmark(page.url, cacheno)
           self.links = links
           print(f'Playwright found {len(text)} characters and {len(links)} links  on the page') 
           q2, q3, stop_event = self.speak(text, links, alt_text_data, total_read, cacheno=cacheno)
           playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
+          if page.locator("video").count() > 0: #prioritize video if present.. not sure if best..
+            pause_reader() #pause before starting to read new page.
+            playwrighty.play_video(cacheno)
         except Exception as e:
           logger.error(f'Error reading page with Playwright: {e}')
         return 0
@@ -1929,34 +2012,39 @@ class hotkeys:
   def select_window_(self, sequence=[]):
     self.func = "Select Window_"
     vars = {}
-    cacheno = self.currentwindowindex
+    select_index = self.currentwindowindex #always zero.. can only select up to 12 windows deep for now..
     if (len(sequence) > 0) and sequence[-1] != self.keybot:
-      cacheno = self.currentwindowindex - (self.mid-sequence[-1])
+      select_index = self.adjust_window_index(self.mid-sequence[-1])
 
-    if (cacheno > len(self.windows) - 1):
-      cacheno = len(self.windows) - 1
-    if (cacheno < 0):
-      cacheno = 0
+
+    if (select_index > self.windowslen - 1):
+      select_index = self.windowslen - 1
+    if (select_index < 0):
+      select_index = 0
     logger.info(f'> Select Window_ {sequence}')
     print("> Select Window_")
       #find the current link from our reading.
     
-    last15 = self.windows[max(0, self.currentwindowindex-11):min(self.currentwindowindex+13, len(self.windows))]
+    last15 = self.windows[max(0, self.currentwindowindex-11):min(self.currentwindowindex+13, self.windowslen)]
     last15.reverse() #reverse to match with Future:Past order in display.. [48 - 68]
+    vars['**'] = self.windows[select_index] #this should display..
+
     start = 0
-    if len(self.windows) < 12:
-      start = 12 - len(self.windows) + self.currentwindowindex + 1
+    if self.windowslen < 12:
+      start = 12 - self.windowslen + self.currentwindowindex + 1
       vars['idx'] = self.currentwindowindex
       vars[':'] = self.currentwindowindex
     else:
       vars['idx'] = self.currentwindowindex
+
+
+
     for i, l in enumerate(last15):
       n = i + start
       vars[f'{n}'] = l
 #          vars[f'href{i}'] = l['href']
     self.set_qr(self.func, vars)
     #show title..
-    vars['**'] = self.windows[cacheno]
 
     self.set_qr(self.func, vars)
     return 1
@@ -1964,13 +2052,13 @@ class hotkeys:
   def select_window(self, sequence=[]):
     logger.info(f'> Select Window {sequence}')
     self.func = "Select Window"
-    select_index = self.currentwindowindex
+    select_index = self.currentwindowindex #always zero.. can only select up to 12 windows deep for now..
     if (len(sequence) > 0):
       select_index = self.adjust_window_index(self.mid-sequence[-1])
-    logger.info(f'Selecting Tab with index {select_index} of {len(self.windows)}')
-    if (select_index >= 0 and select_index < len(self.windows)):
-      self.currentwindowindex = select_index
-    vars = {'**': self.windows[self.currentwindowindex], ':': self.currentwindowindex}
+    logger.info(f'Selecting Tab with index {select_index} of {self.windowslen}')
+
+    vars = {'**': self.windows[select_index], ':': select_index}
+
     self.set_qr(self.func, vars)
 
 

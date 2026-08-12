@@ -426,6 +426,45 @@ export function writeToTranscriber(lang: string, topic: string = "", data : stri
 //    if (fs.existsSync())
 }
 
+
+export function readFromTranscriber(str: string, lang: string, now: string = Book.formatDate(), transcriptFolder: string = "C:/devinpiano/transcripts/"){
+
+    const mySettings = vscode.workspace.getConfiguration('mrrubato');	
+    transcriptFolder = mySettings.get('transcriptfolder', transcriptFolder);
+    let fname = `${transcriptFolder}${lang}/${now}.txt`;
+
+    fs.readFile(fname, 'utf8', (err, data) => {
+        if (err) {
+            console.error(`Error reading file ${fname}:`, err);
+        }
+        else{
+            console.log(`File ${fname} read successfully.`);
+            if (str.startsWith('$$')){
+                //time reference already..
+                writeToTranscriber(lang, 'REF', str);
+            }
+            else{
+                //find timestamp associated and communicate..
+                let topics = transcriber.transcribe(data, now); //use date as initial topic.);
+                for (let t of topics){
+                    for (let cmd of t.cmds){
+
+                        if (cmd.vars['ORIGINAL'].slice(0, str.length) === str && cmd.cmd === "Record Feedback"){
+                            console.log("Found matching feedback command: ", cmd);
+                            //open URL to location...
+                            writeToTranscriber(lang, t.topic, `$$${cmd.vars['TIME']}\n`);
+                            return true;
+
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    return false;
+}
+
 export function startWatchingTranscriber(lang: string, transcriptFolder: string = "C:/devinpiano/transcripts/"){
 
 
@@ -489,7 +528,7 @@ export function startWatchingTranscriber(lang: string, transcriptFolder: string 
                             //only add to history if topic has changed.  
                             Book.updatePage(Book.getBookPath() + "/" + file, '**' + transcriber.current_topic + '\n', -1, -1); //append to end of file.
                             
-                            Book.addToHistory(t.topic);
+//                            Book.addToHistory(t.topic); //this happens in select..
                             Book.select(t.topic);
                             vscode.commands.executeCommand('workbench.action.chat.open', "@mr /read " + "**" + t.topic );
 
@@ -510,19 +549,25 @@ export function startWatchingTranscriber(lang: string, transcriptFolder: string 
                                 vscode.commands.executeCommand('workbench.action.chat.open', "@mr /stop");
                             }
                             if (cmd.cmd === "Restart"){
+
                                 vscode.commands.executeCommand('workbench.action.restartExtensionHost');
 //                                vscode.commands.executeCommand('workbench.action.chat.open', "@mr /restart");
                             }
                             if (cmd.cmd === "Comment"){
                                 let input = "";
+                                let t = "";
                                 if (cmd.vars && cmd.vars['COMMENT']){
                                     input = cmd.vars['COMMENT'] + '\n';
                                 }
-                                Book.updatePage(Book.getBookPath() + "/" + file, input, -1, -1); //append to end of file.
+                                if (cmd.vars && cmd.vars['TIME']){
+                                    t = "$$" + cmd.vars['TIME'] + '\n';
+                                }
+                                Book.updatePage(Book.getBookPath() + "/" + file, t + input, -1, -1); //append to end of file.
                             }
                             if (cmd.cmd === "Record Feedback"){
                                 //do something with the feedback.  For now just log it.
                                 let input = "";
+                                let t = "";
                                 if (cmd.vars && cmd.vars['FEEDBACK']){
                                     input = cmd.vars['FEEDBACK'] + '\n';
                                 }
@@ -531,10 +576,12 @@ export function startWatchingTranscriber(lang: string, transcriptFolder: string 
                                 }
                                 //add data to file..
 
-    //                            Book.updatePage("book/" + topic.topic, input);
+                                if (cmd.vars && cmd.vars['TIME']){
+                                    t = "$$" + cmd.vars['TIME'] + '\n';
+                                }
                                 //get todays date for filename.  
 
-                                Book.updatePage(Book.getBookPath() + "/" + file, input, -1, -1); //append to end of file.
+                                Book.updatePage(Book.getBookPath() + "/" + file, t + input, -1, -1); //append to end of file.
 
                             }
                             if (cmd.cmd === "Time Jump" || cmd.cmd === "Time Zoom"){

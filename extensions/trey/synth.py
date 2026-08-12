@@ -40,6 +40,16 @@ def get_audio_stream():
     )
     return stream
 
+def get_sin_with_harmonics(freq=55, amp=1, start=0, duration=0.1, sample_rate=SAMPLE_RATE):
+    t = np.linspace(start, start+duration, int(SAMPLE_RATE * duration), endpoint=False)
+    sine_wave = amp * np.sin(2 * np.pi * freq * t) 
+    # Add first harmonic (2x frequency)
+    first_harmonic = (amp / 2) * np.sin(2 * np.pi * 2 * freq * t)
+    # Add second harmonic (3x frequency)
+    second_harmonic = (amp / 4) * np.sin(2 * np.pi * 3 * freq * t)
+    
+    return sine_wave + first_harmonic + second_harmonic
+
 def get_sin_oscillator(freq=55, amp=1, start=0, duration=0.1, sample_rate=SAMPLE_RATE):
 
     t = np.linspace(start, start+duration, int(SAMPLE_RATE * duration), endpoint=False)
@@ -96,7 +106,9 @@ def play(play_count): #default each 0.1 seconds
 #            time_elapsed = play_count * 1000  # in ms
 
             #base this on frequency and not time_elapsed?  
-            value = get_sin_oscillator(freq=freq, amp=value['vel']/127, start=time_elapsed/1000, duration=mydur)
+#            value = get_sin_oscillator(freq=freq, amp=value['vel']/127, start=time_elapsed/1000, duration=mydur)
+            value = get_sin_with_harmonics(freq=freq, amp=value['vel']/127, start=time_elapsed/1000, duration=mydur)
+            #get first harmonics..
 #            final += value[:sample_len]  # Mix the notes together  
             value = np.pad(value, (0, max(0, sample_len - len(value))), 'constant')  # Pad or truncate to sample_len
             final += value

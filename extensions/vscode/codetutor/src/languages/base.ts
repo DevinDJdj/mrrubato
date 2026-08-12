@@ -8,8 +8,8 @@ export default class LANG {
     keyoffset = 0;
     funcdict = {};
     midwordtree = {}; 
-
     name = "base";
+    
 
     //base specific variables for generic keypresses, selection, and navigation
     //ALLCAPS = vscode handler..

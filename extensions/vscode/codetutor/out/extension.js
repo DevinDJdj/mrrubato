@@ -1078,6 +1078,15 @@ function activate(context) {
             case "":
                 //failure return?  
                 break;
+            default:
+                //default is to search for this text in the book.
+                //get current file if it is date.  				
+                //this loads related browser info if we have a match..
+                let found = (0, toolParticipant_1.readFromTranscriber)(text, 'hotkeys', datecmd !== "" ? datecmd.substring(2, 10) : Book.formatDate());
+                if (!found) { //find similar..
+                    vscode.commands.executeCommand('workbench.action.chat.open', "@mr /similar " + text);
+                }
+                break;
         }
         //log the command to genbook if valid.  
         Book.logCommand(topiccmd + datecmd + text);

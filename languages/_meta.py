@@ -417,7 +417,10 @@ class _meta:
       if (self.speed < 1):
         self.speed = 1
       logger.info(f"$$SPEED={self.speed}")
-      self.set_qr("Set Speed", {'ADJUST': adjust, 'SPEED': self.speed})
+      vars = {'ADJUST': adjust, 'SPEED': self.speed}
+      if (sequence[0] == _VIDEO): #allow for this usage..
+        vars['KLANG'] = "video"
+      self.set_qr("Set Speed", vars)
     return 0
 
   def time_jump(self, sequence=[]):
@@ -429,6 +432,7 @@ class _meta:
     vars = {}
     logger.info(f"$$TIME={t}")
     self.set_qr("Time Jump", {'JUMP': jump, 'WINDOW': self.timewindow.window, 'TIME': t, 'START': self.timewindow.starttime, 'END': self.timewindow.endtime})
+    self.transcriber.write('_meta', "Time Jump", {'WINDOW': self.timewindow.window, 'TIME': t, 'START': self.timewindow.starttime, 'END': self.timewindow.endtime} )
     return 0
   
   def time_zoom_(self, sequence=[]):

@@ -15,6 +15,7 @@ import sys
 import threading
 import multiprocessing
 import subprocess
+import traceback
 
 from click import command
 from huggingface_hub import login
@@ -27,6 +28,7 @@ sys.path.insert(1, 'c:/devinpiano/music/') #config.py path Base project path
 sys.path.insert(2, 'c:/devinpiano/music/mrrubato') #config.py path Base project path
 import config 
 import mykeys
+from generate.generatetts import remove_temp_audio
 
 #import tts
 import extensions.trey.tts as tts
@@ -417,7 +419,12 @@ def copy_latest_file(current_topic=None):
 
 def quit_me(restart=False): #restart_trey
     global mk
+    global qrin_queue
+
+
     logger.info('Stopping MIDI thread')
+    qrin_queue.put('<<hotkeys>>\n> Stop\n$$\n') #send stop command to midi thread
+    time.sleep(1) #wait for video to stop..
 
     mk.savemidi() #save current midi file
     stop_midi(True) #kill the midi thread
@@ -512,18 +519,6 @@ def build_map(lines, links, cacheno=-1):
         
 
     return link_density_map
-
-def remove_temp_audio(dir):
-    #remove temp files first.  
-    if (os.path.exists(dir) and os.path.isdir(dir)):
-        for filename in os.listdir(dir):
-            file_path = os.path.join(dir, filename)
-            if os.path.isfile(file_path):
-                try:
-                    os.remove(file_path)
-                except OSError as e:
-                    print(f"Error removing file {file_path}: {e}")
-
 
 
 
@@ -750,7 +745,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
     skip = 0
 
 
-    remove_temp_audio("./temp/" + str(cacheno)) #clear old cache if exists.
+
 
     if (offset == 0):
         #pre-read detect good starting point.
@@ -796,6 +791,10 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
     print('Start Reading:')
 
     #generate tts for all lines first to minimize wait time when playing.  This is a bit aggressive but should work for now.
+    #check for existing files first.  
+#    remove_temp_audio("./temp/" + str(cacheno)) #clear old cache if exists.
+    if (cacheno < 0):
+        remove_temp_audio(f"./temp/{cacheno}") #clear old cache if exists.
     generate_tts(text, VOICE, vol=1.0, rate=1.0,skip=skip, cacheno=cacheno) #pre-generate
 
     print('Finished generating TTS for all lines, starting playback')
@@ -898,8 +897,8 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
             tts.speak(temp, VOICE, sound_file)
 
         if (skip > 0):
-            if (idx + skip >= len(lines)):
-                skip = len(lines) - idx - 2
+            if (idx + skip >= len(lines)-5):
+                skip = len(lines) - idx - 5 #leave some lines
             for i in range(skip):
                 total_read += len(lines[idx+i]) + 1 #include newline
             idx = idx + skip
@@ -1055,7 +1054,8 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
             waited += 1
 #            logger.info(f'Total read: {ttotal}')
 #            if (linksspoken == 0):
-            time.sleep(0.6-0.3*linksspoken) #simulate reading time. 12 chars per second..
+            #balancing this may be tricky.. Depends on speed of function calls.  
+            time.sleep(0.65-0.25*linksspoken) #simulate reading time. 12 chars per second..
             if (ttotal > total_read+len(l)+1):
                 i = len(l)+1 #break out of loop if we have read past the line, to avoid long waits on long lines.
                 continue
@@ -1166,6 +1166,8 @@ def speak(text, links = [], alt_text=[], offset=0, lang='en', cacheno=-1):
     global audio_skip_queue
     """Speak the given text using the speech pipeline."""
 #    print(f'Speaking: {text}')
+#    logger.info(f'Speaking: {text}')
+#    logger.info(''.join(traceback.format_stack()))
 
     
     if (cacheno >=0 and cacheno < len(audio_stop_events)):
@@ -1457,6 +1459,14 @@ def create_qr_code(data):
 #    logger.info('QR code created and saved as qrcode.png')
     return img
 
+def _get_window_info():
+    """Function to get window information after a delay."""
+    logger.info('Getting window information after delay')
+    mk.set_startx(mywindow.startx)
+    mk.set_geo(mywindow.geo)
+    mk.set_bbox(mywindow._bbox)
+    mywindow.get_window_info()
+
 def _hide(data):
     """Function to hide the window after a delay."""
 #    global speech_pipe
@@ -1464,6 +1474,8 @@ def _hide(data):
 #    speech_pipe = KPipeline(lang_code='a')
     logger.info('Hiding mywindow after delay')
     mywindow.hideme()
+
+
     #initialize time..
     day = 86400
     tnow = time.time()
@@ -1471,13 +1483,9 @@ def _hide(data):
     mywindow.set_time(tnow-day*1, tnow-day*7, tnow, day*7)
     mywindow.set_speed(None, "_meta")
     mywindow.set_speed(None, "video")
-    mk.set_startx(mywindow.startx)
-    mk.set_geo(mywindow.geo)
-    mk.set_bbox(mywindow._bbox)
 
     #get average color and screen
     #get_window_details()
-    mywindow.get_window_info()
 
 
 
@@ -1695,6 +1703,12 @@ class MyWindow(QMainWindow):
             if (cmd['type'] == '> '):
                 currentcmd = cmd['cmd']
                 vars = cmd['vars']
+                if ('timestamp' in vars):
+                    #compare to current time..
+                    current_time = time.time()
+                    if (float(vars['timestamp']) < current_time - 0.5):
+                        logger.info(f'!!TIME LAG {vars["timestamp"]} {current_time}\n{qrdata}')
+#                        continue #skip this command if time mismatch dont want anything stale..
                 logger.info(f'Parsed QR command: {currentcmd} with vars: {vars}')
                 self.qr_out.append({'cmd': currentcmd, 'vars': vars, 'timestamp': time.time()})
                 self.executeQRCommand(currentcmd, vars, cmd['lang'])
@@ -1725,6 +1739,7 @@ class MyWindow(QMainWindow):
 
         temp = win32gui.GetForegroundWindow()
         rect = win32gui.GetWindowRect(temp)
+        lagtime = float(vars.get('timestamp', time.time()))
         match command:
             case "ask":
                 logger.info('Received ask command')
@@ -1914,6 +1929,7 @@ class MyWindow(QMainWindow):
             case "Set Speed":
  
                 speed = float(vars.get('SPEED', '1.0'))
+                lang = vars.get('KLANG', lang)
                 self.add_setting('SPEED', speed, lang)
                 self.set_speed(speed, lang)
                 #video = playback speed
@@ -2061,6 +2077,15 @@ class MyWindow(QMainWindow):
 
                 self.set_time(s, e, w, t) #update display with new time window and lang settings.
 
+        lagtime = time.time() - lagtime
+        if (command not in self.lagtracker):
+            self.lagtracker[command] = {'_': lagtime, ':': 1}
+        else:            
+            self.lagtracker[command][':'] += 1
+            self.lagtracker[command]['_'] += lagtime
+        mycommand = self.lagtracker[command]
+        if (lagtime > 0.5):
+            logger.warning(f'!!LAG {lagtime:.2f}\n;> :={mycommand[":"]}\t_={mycommand["_"]:.2f}\n;> {command}\n {vars}')
 
         #add more commands as needed.
 
@@ -2079,7 +2104,8 @@ class MyWindow(QMainWindow):
             vars[index] = f"{w['title']}"
             index += 1
         logger.info(f'Sending window info: {vars}')
-        self.qr_in.append(self.transcriber.write('hotkeys', cmd, vars, None, False)) #dont write intermediate msg?
+
+        self.inqueue.put(self.transcriber.write('hotkeys', cmd, vars, None, False)) #dont write intermediate msg?
         
 
     def show_window(self, wname):
@@ -2089,9 +2115,15 @@ class MyWindow(QMainWindow):
             if (wname.lower() in w['title'].lower()):
                 logger.info(f'Bringing window to front: {w["title"]}')
                 try:
+                    #workaround for bringing window to front on Windows using pyautogui and win32gui
+                    k = keyboard.Controller()
+                    k.press(keyboard.Key.alt)
+
                     win32gui.SetForegroundWindow(w['hwnd'])
                     rect = win32gui.GetWindowRect(w['hwnd'])
                     win32gui.MoveWindow(w['hwnd'], self.startx, rect[1], rect[2]-rect[0], rect[3]-rect[1], True)
+                    time.sleep(0.5)  # Small delay to ensure the window is brought to the front
+                    k.release(keyboard.Key.alt)
                 except Exception as e:
                     logger.error(f'Error bringing window to front: {e}')
                 break
@@ -2389,6 +2421,7 @@ class MyWindow(QMainWindow):
         self.bookhistory = []
         self.reading_topic = None
         self.filters = {}
+        self.lagtracker = {} #track lag for each command, to detect slow commands and warn user.
         self.windows = {} #current windows by pid, updated by window thread.
         self.myactions = [] #list of current actions to display, updated by QR commands.
         self.trey_data = {} #current data to display, updated by QR commands and transcription.
@@ -2502,7 +2535,7 @@ class MyWindow(QMainWindow):
         #BBOX(0.7,0.7,0.9,0.9)
         self.label_qr = QLabel(self)
         #move to bottom right corner
-        self.init_label(self.label_qr, 0.7, 0.7, 0.2, 0.2)
+        self.init_label(self.label_qr, 0.7, 0.75, 0.2, 0.2)
 
         self.label_ps = []
         wbarray = [0,1,0,1,0,0,1,0,1,0,1,0] #for now fixed from C
@@ -2532,7 +2565,7 @@ class MyWindow(QMainWindow):
         font = QFont("Courier", fontsize-2) # Specify font family and size
         font.setFixedPitch(True)    # Ensure it uses the fixed pitch version if available
         self.label_p.setFont(font)    # Apply the font to the label        
-        self.label_p.setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};border: 1px solid black;")
+        self.label_p.setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {self.color};border: 1px solid black;")
         self.label_p.move(0, self.geo.height() - pwidth)
         self.label_p.setFixedHeight(pwidth)
         self.label_p.setFixedWidth(pwidth)
@@ -2563,7 +2596,7 @@ class MyWindow(QMainWindow):
             t.setFixedHeight(h+2)
             w = metrics.boundingRect(chr(0x2160)).width()
             t.setFixedWidth(int(w*60*1.5)) #60 char of time info.. 36-96 ? 
-            t.setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};")
+            t.setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {self.color};")
             #some reason <pre> makes formatting a bit nicer..
             ltext = ""
             startchar = 0x2160 #start of roman numeral characters, just to have some unique chars to test with for now.
@@ -2582,19 +2615,19 @@ class MyWindow(QMainWindow):
         self.label_timeinfo = []
         for i in range(4):
             self.label_timeinfo.append(QLabel(self))
-            self.label_timeinfo[i].setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};border: 1px solid black;")
+            self.label_timeinfo[i].setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {self.color};border: 1px solid black;")
             font = QFont("Courier", fontsize-4) # Specify font family and size
             self.label_timeinfo[i].setFont(font)
             self.label_timeinfo[i].move(int(self.geo.width()*0.08), int(self.geo.height()*0.02*(i+1.5)))
-            self.label_timeinfo[i].setFixedHeight(fontsize-4)
-            self.label_timeinfo[i].setFixedWidth(int(self.geo.width()*0.1))
+            self.label_timeinfo[i].setFixedHeight(fontsize-2)
+            self.label_timeinfo[i].setFixedWidth(int(self.geo.width()*0.12))
             self.label_timeinfo[i].setTextFormat(Qt.PlainText)
 
 
         self.label_topic_info = []
         for i in range(2):
             self.label_topic_info.append(QLabel(self))
-            self.label_topic_info[i].setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};border: 1px solid black;")
+            self.label_topic_info[i].setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {self.color};border: 1px solid black;")
             font = QFont("Courier", fontsize-4) # Specify font family and size
             self.label_topic_info[i].setFont(font)
             self.label_topic_info[i].move(int(self.geo.width()*0.1), int(self.geo.height()*(0.08+0.02*(i+1))))
@@ -2608,6 +2641,8 @@ class MyWindow(QMainWindow):
         self.showQR("Starting Trey Overlay")
         #hide after a few seconds
         #workaround, something wrong with the PyQt if we hide this immediately
+        t2 = threading.Timer(5, _get_window_info)
+        t2.start()  # Start the timer in a new thread
         t = threading.Timer(10, _hide, args=["Hello from Timer!"])
         t.start()  # Start the timer in a new thread
         logger.info('Window created')
@@ -2694,7 +2729,8 @@ class MyWindow(QMainWindow):
 
 
                 # Check if the window is fully within the trey window
-                if ((self.in_trey(rect) and win32gui.IsWindowVisible(hwnd)) or ('mrroboto' in title.lower())): #only monitor visible windows..
+                if ((self.in_trey(rect) and win32gui.IsWindowVisible(hwnd) and title !='PopupHost') 
+                        or ('mrroboto' in title.lower())): #only monitor visible windows.. and ignore popuphost..
                     threadid, procid = win32process.GetWindowThreadProcessId(hwnd)
                     self.update_window_data(hwnd, title, rect, {'threadid': threadid, 'procid': procid, 'hwnd': hwnd})
                     x, y, right, bottom = rect
@@ -3073,7 +3109,7 @@ class MyWindow(QMainWindow):
                     self.play(t["vars"]["FILE"]) #non-blocking play, may need to adjust for different file types and playback needs.
                 elif (t['type'] == '> ' and t['cmd'] == 'Add Bookmark'):
                     #read in this and start playwrighty 
-                    self.inqueue.put(('\n').join(t['lines']))
+                    self.inqueue.put('<<hotkeys>>\n' + '\n'.join(t['lines']))
                 else:
                     if (t['type'] == "**"):
                         if (t['topic'] != self.reading_topic):
@@ -3540,6 +3576,8 @@ class MyWindow(QMainWindow):
                     else:
                         label.setStyleSheet("background-color: rgba(255, 255, 255, 1);color: black;")
                 #label.setWordWrap(True)
+                #Need an overlay window on top of our overlay.. otherwise can only display in certain locations..
+                #not sure this is actually needed..
                 label.move(w['rect'][0]-self.startx, w['rect'][1])
                 #label.resize(w['rect'][2]-w['rect'][0], w['rect'][3]-w['rect'][1])
                 label.adjustSize()
@@ -3676,10 +3714,13 @@ def stop_midi(kill=False):
     logger.info('Stopping MIDI thread')
     if (kill):
         logger.info('Killing MIDI thread')
-        midi_kill_event.set()
-        midi_stop_event.set()  # Signal the MIDI thread to stop
-        midi_thread.join()  # Wait for the MIDI thread to finish
-        time.sleep(10)  # Give some time for the thread to exit
+        try:
+            midi_kill_event.set()
+            midi_stop_event.set()  # Signal the MIDI thread to stop
+            midi_thread.join()  # Wait for the MIDI thread to finish
+            time.sleep(10)  # Give some time for the thread to exit
+        except Exception as e:
+            logger.error(f'Error stopping MIDI thread: {e}')
     else:
         midi_stop_event.set()  # Signal the MIDI thread to stop
 
@@ -3711,6 +3752,7 @@ def joystick_loop(qrin_queue):
         joyaxes[i] = [0.0] * axis
         logger.info(f'Joystick {i} has {axis} axes.')
         qrin_queue.put(f'<<joystick>>\n> JOY [{i},{axis}]\n$$\n')
+        pygame.event.pump()  # Process event queue to initialize joystick events
 
     while True:
 #        pygame.display.flip()
@@ -3923,7 +3965,7 @@ def init_inputs():
 def run_midi(mstop_event, kill_event, qr_queue=None, qrin_queue=None, audio_location_queue=None):
     global midiout, midiin
     global mk
-    mk = mykeys.MyKeys(config.cfg, qapp, mywindow.startx, mstop_event)
+    mk = mykeys.MyKeys(config.cfg, qapp, mywindow.startx, mstop_event, qr_queue, qrin_queue)
     logger.info('Starting MIDI input/output')
     init_inputs()
     
