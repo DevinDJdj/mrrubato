@@ -900,7 +900,9 @@ def speak(text="", fname="example_tts.wav", voice='af_heart', vol=1.0, speed=1.0
 
 
             # Generate and save audio
-            os.makedirs(os.path.dirname(fname), exist_ok=True)
+            dirname = os.path.dirname(fname)
+            if dirname:
+                os.makedirs(dirname, exist_ok=True)
             generator = pipeline(text, voice=voice, speed=speed)
             with sf.SoundFile(fname, mode='w', samplerate=24000, channels=1) as f:
                 for i, (gs, ps, audio) in enumerate(generator):

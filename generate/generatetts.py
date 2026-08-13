@@ -154,6 +154,7 @@ if (__name__ == "__main__"):
     #fast not working..
 
     args = parser.parse_args()    
+    print(f"Generating TTS {args.fname} ...")
 
 #    thread1 = threading.Thread(target=speech.speak, args=(f'{args.text}',f'{args.fname}',f'{args.voice}',args.vol,args.speed,'kokoro-tts'))
     if (args.infile is not None and args.infile != "" and os.path.exists(args.infile)):
@@ -163,6 +164,8 @@ if (__name__ == "__main__"):
         lines = args.text.split('\n')
 
     if (len(lines) < 3):
+        print("Calling speak with text:", args.text)
+
         speech.speak(args.text, args.fname, args.voice, args.vol, args.speed, 'kokoro-tts')
         exit(0)
 
