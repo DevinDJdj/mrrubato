@@ -165,7 +165,7 @@ if (__name__ == "__main__"):
 
     if (len(lines) < 3):
         print("Calling speak with text:", args.text)
-
+        args.fname=f"./temp/{args.cacheno}/{-args.cacheno}.wav"
         speech.speak(args.text, args.fname, args.voice, args.vol, args.speed, 'kokoro-tts')
         exit(0)
 
