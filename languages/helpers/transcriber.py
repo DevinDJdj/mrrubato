@@ -37,7 +37,9 @@ class transcriber:
         self.defstring = r"[~!@#$%^&*<>/:;\-\+=]"
         self.BOOK_FOLDER = '../books/' #intentonally use outside of git struct, too much data.  
         #only copy to ./books if really want..
-        self.TRANSCRIPT_FOLDER = '../transcripts/'
+        #Maybe need inside for simplicity..
+        self.BOOK_FOLDER = './books/' #only comment and record feedback for now.. within GIT struct for easy sync and share..
+        self.TRANSCRIPT_FOLDER = '../transcripts/' #too much data, keep outside.. how to publish or not via web UI?  
         self.CTXT_FOLDER = '../ctxt/' #context data for topics, stored in shared memory for now, but could also be stored in files or database as needed.  use shared memory for simplicity and speed, but need to manage memory usage and cleanup as needed.
         self.allcmds = {} #lang -> {cmds, start_time, end_time, list of cmds in order..
         self.allbooks = {}
@@ -154,8 +156,9 @@ class transcriber:
                         file_path = pathlib.Path(f'{self.BOOK_FOLDER}{self.current_book}')
                         # Create parent directories if they don't exist
                         file_path.mkdir(parents=True, exist_ok=True)
+                        exists = os.path.exists(f'{self.BOOK_FOLDER}{self.current_book}/{today}.txt')
                         with open(f'{self.BOOK_FOLDER}{self.current_book}/{today}.txt', 'a', encoding='utf-8') as f:
-                            if (topic != self.langmap[self.current_book]['topic']):
+                            if (topic != self.langmap[self.current_book]['topic'] or not exists): #had to change topics or new file..
                                 topicstr = f'**{topic}'
                             if (topicstr != ""): #had to change topics..
                                 f.write(topicstr + '\n')

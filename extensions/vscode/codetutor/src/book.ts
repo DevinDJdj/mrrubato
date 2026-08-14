@@ -60,7 +60,7 @@ export var environmenthistory = [];
 export var queryhistory = [];
 
 export var ollama_model = 'gemma4:e4b';
-ollama_model = 'gemma3';
+ollama_model = 'gemma3:4b';
 
 var mytime = new Date().getTime()/1000; //set the time in seconds
 

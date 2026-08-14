@@ -2671,10 +2671,6 @@ class MyWindow(QMainWindow):
         self.runQRThread() #
         self.runQRInThread() #start thread to detect incoming QR data from other apps or locations..
 
-        t2 = threading.Timer(10, _get_window_info)
-        t2.start()  # Start the timer in a new thread
-        t = threading.Timer(5, _hide, args=["Hello from Timer!"])
-        t.start()  # Start the timer in a new thread
 
 #        self.show_tray(self.qapp) #show system tray icon for quick access to some functions.
 

@@ -606,3 +606,26 @@ Why are we only getting some percentage created?
 
 
 
+**languages/helpers/transcriber.py
+try this..
+        self.BOOK_FOLDER = './books/' #only comment and record feedback..
+
+
+Use this perhaps to generate kg..
+#https://github.com/robert-mcdermott/ai-knowledge-graph
+
+Question is whether to take the code or just not spend the time to understand it..
+;> git submodule add https://github.com path/to/subdirectory
+
+;> git submodule add https://github.com/robert-mcdermott/ai-knowledge-graph
+
+
+> git switch -c submoduletest
+
+> git checkout -b submoduletest
+
+> git switch master
+
+> git submodule add https://github.com/robert-mcdermott/ai-knowledge-graph
+
+> git subtree add --prefix=generate/kg https://github.com/robert-mcdermott/ai-knowledge-graph.git main --squash
