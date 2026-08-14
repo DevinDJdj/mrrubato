@@ -20,3 +20,7 @@ Sounded better in my head.
 Maybe I should write some more music..
 I have only done this at the very beginning.  
 
+Up to this point there is not proper sequence of context, but some of the context I also consider to be part of this artwork.  
+I will endeavor to be more conscious of the context ingestion.  But my focus is still sifting through the minutia of designing how to 
+communicate with the machine.  
+

@@ -539,3 +539,70 @@ test..
 
 
 --save_state
+
+
+test ask..
+Display correlation graph from generated xml..
+
+Use 
+markdown 
+> pip install markdown
+
+
+Continue to fix answer display..
+
+
+**languages/hotkeys.py
+--ask
+Need pre-search of the STT text.  
+Search within the last N characters.
+Having answer in transcript maybe causes slow load times..
+
+
+Any update of show_p should make timer to fade opacity..
+
+**generate/generatetts.py
+Need some different strategy.  
+Perhaps annotate if active or not..
+If not active, stop generating..
+
+**extensions/trey/playwrighty.py
+--set_reader_queue
+
+See if this helps with multiple tab switches..
+
+
+Lets try an image generation model function..
+show image after generated..
+
+;> ollama run x/z-image-turbo
+;> ollama run x/flux2-klein
+> ollama pull x/flux2-klein
+
+
+**languages/hotkeys.py
+Test 
+;> Generate Image
+from context..
+[49,53,52]
+
+Need to measure load times, how much does amount of data affect?  
+
+!!Error generating image: mlx runner failed: Error: failed to initialize MLX: failed to load MLX dynamic library (searched: [/usr/local/lib/ollama /build/lib/ollama /dist/linux-amd64/lib/ollama /dist/linux_amd64/lib/ollama]) (exit: exit status 1) (status code: 500)
+==
+Apple MLX
+Only MAC..
+wait..
+$$
+
+
+;> Ask
+Do we need stop/pause..
+
+
+**generate/generatetts.py
+Why are we only getting some percentage created?  
+
+
+
+

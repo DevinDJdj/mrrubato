@@ -139,6 +139,16 @@ def generate_line(text, idx, voice, vol, speed, cacheno=-1, engine='kokoro-tts',
         print(f"Error generating TTS for line {idx} with {engine}. ")
     return suc
 
+
+def check_active(cacheno):
+    #check if the cache number is still active.  If not, stop generating TTS.
+    if (os.path.exists(f"./temp/{cacheno}/active.txt")):
+        with open(f"./temp/{cacheno}/active.txt", "r") as f:
+            status = f.read().strip()
+            if status == "no":
+                return False
+    return True
+
 if (__name__ == "__main__"):
     parser = argparse.ArgumentParser(description="A sample Python script with arguments.")
     parser.add_argument("--text", type=str, help="Your name", default="This is a test of the text to speech system.")
@@ -198,6 +208,9 @@ if (__name__ == "__main__"):
                 generate_line(l, idx, args.voice, args.vol, args.speed, args.cacheno, args.engine, combined)    
                 total_generated += 1
                 time.sleep(2) #wait a bit to avoid overloading the TTS engine.  
+                if (random.random() < 0.2 and check_active(args.cacheno) == False):
+                    print(f"Stopping TTS generation as no longer active.")
+                    break
                 if (total_generated >= args.numlines):
                     break
         else:
@@ -214,6 +227,10 @@ if (__name__ == "__main__"):
                 temptext = ""
             generate_line(l, idx, args.voice, args.vol, args.speed, args.cacheno, args.engine, combined)    
             total_generated += 1
+            time.sleep(2) #wait a bit to avoid overloading the TTS engine.  
+            if (random.random() < 0.2 and check_active(args.cacheno) == False):
+                print(f"Stopping TTS generation as no longer active.")
+                break
             if (total_generated >= args.numlines):
                 break
         else:

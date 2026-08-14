@@ -34,15 +34,17 @@ from generate.generatetts import remove_temp_audio
 import extensions.trey.tts as tts
 import extensions.trey.speech  as speech #import early due to issues with Kokoro
 
+#standard
 from datetime import datetime, timedelta
 
 from queue import Queue
 
-#Screen capture, QR code generation
+#Screen capture, input capture, QR code generation
 import mss
 import qrcode
 from pynput import keyboard, mouse
 
+#file
 import glob
 
 #MIDI libraries
@@ -54,6 +56,7 @@ import random
 #from sklearn import metrics
 import torch
 
+import markdown
 #UI components
 import pystray
 from PIL import Image, ImageDraw
@@ -66,6 +69,7 @@ from PyQt5.QtMultimediaWidgets import QVideoWidget
 from PyQt5.QtCore import QUrl
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
 
+#win32 libraries
 import win32gui
 import win32process
 import win32api
@@ -79,6 +83,7 @@ import winsound
 #import soundfile as sf
 
 #pip install playsound
+#sound libraries
 from playsound3 import playsound
 from pydub import AudioSegment
 from pydub.playback import play
@@ -101,16 +106,20 @@ from fastembed import (
             )
 
 
+#local imports
 import extensions.trey.playwrighty as playwrighty
 import extensions.trey.synth as synth
 
 import languages.helpers.transcriber as transcriber
 
+#OCR
 import pytesseract
 
+#IPC
 from multiprocessing.shared_memory import SharedMemory
 
 
+#Graph libraries, image processing
 import networkx as nx
 import matplotlib 
 matplotlib.use('Qt5Agg')
@@ -1483,7 +1492,7 @@ def _hide(data):
     mywindow.set_time(tnow-day*1, tnow-day*7, tnow, day*7)
     mywindow.set_speed(None, "_meta")
     mywindow.set_speed(None, "video")
-
+    
     #get average color and screen
     #get_window_details()
 
@@ -1744,13 +1753,15 @@ class MyWindow(QMainWindow):
             case "ask":
                 logger.info('Received ask command')
                 answer = vars.get('ANSWER', '')
-                graphs = vars.get('GRAPHS', '[]')
+                answer = answer.replace('\t', '\n') #for now just do here..
+                graphs = vars.get('GRAPHS', '')
                 logger.info(f'> ask\n==\n{answer}\n==\n{graphs}')
-                graphs = json.loads(json.loads(graphs))
                 #create knowledge graph
-                kgs = self.make_kg(graphs)
-                if (len(kgs) > 0):
-                    self.visualize_kg(kgs[0], topic=vars.get('TOPIC', self.transcriber.current_topic))
+                if (len(graphs) > 10):
+                    graphs = json.loads(json.loads(graphs))
+                    kgs = self.make_kg(graphs)
+                    if (len(kgs) > 0):
+                        self.visualize_kg(kgs[0], topic=vars.get('TOPIC', self.transcriber.current_topic))
 
 
             case "OK":
@@ -1763,6 +1774,15 @@ class MyWindow(QMainWindow):
 
                 #send keystroke test..
 
+            case "Generate Image":
+                logger.info('Received Generate Image command')
+                if (vars.get('fname', None) is not None):
+                    fname = vars.get('fname')
+                    if (os.path.exists(fname)):
+                        self.play(fname)
+                        logger.info(f'> Show Image {fname}')
+                    else:
+                        logger.error(f'!!> Show Image {fname} not found')
 
             case "Screen Toggle":
                 tohide = vars.get('HIDE', 'True')
@@ -2426,7 +2446,7 @@ class MyWindow(QMainWindow):
         self.myactions = [] #list of current actions to display, updated by QR commands.
         self.trey_data = {} #current data to display, updated by QR commands and transcription.
         self.similar = [] #current similar items to display, updated by QR commands and transcription.
-
+        self.startup_lag = time.time()
         #rerunning with this may require separate queue, or indicator for rerun in the data.  For now same..
         self.transcriber = transcriber.transcriber(self, mykeys.MyKeys(config.cfg), self.queue) #maybe want different queue..
         #need to load book to have same topics as _meta.. ugh..
@@ -2641,15 +2661,16 @@ class MyWindow(QMainWindow):
         self.showQR("Starting Trey Overlay")
         #hide after a few seconds
         #workaround, something wrong with the PyQt if we hide this immediately
-        t2 = threading.Timer(5, _get_window_info)
-        t2.start()  # Start the timer in a new thread
-        t = threading.Timer(10, _hide, args=["Hello from Timer!"])
-        t.start()  # Start the timer in a new thread
         logger.info('Window created')
         self.read(self.langs, None, None) #initial read of all data, can be filtered by time later.
 
         self.runQRThread() #
         self.runQRInThread() #start thread to detect incoming QR data from other apps or locations..
+
+        t2 = threading.Timer(10, _get_window_info)
+        t2.start()  # Start the timer in a new thread
+        t = threading.Timer(5, _hide, args=["Hello from Timer!"])
+        t.start()  # Start the timer in a new thread
 
 #        self.show_tray(self.qapp) #show system tray icon for quick access to some functions.
 
@@ -2823,11 +2844,12 @@ class MyWindow(QMainWindow):
         else:
             fname = f"./temp/{topic}.png"
             subgraph = nx.ego_graph(kg,topic, radius=1) #get subgraph around topic with radius 2, can adjust as needed.
-
+        logger.info(f'--{fname}')
         if (os.path.exists(fname) and os.path.getmtime(fname) > time.time() - 86400): #if file exists and is less than 1 day old, use it instead of regenerating
             self.play_video(fname) #for now just use video player to show image, can adjust later for better performance if needed.
             return
         else:
+            
             directory_path = os.path.dirname(fname)
             if not os.path.exists(directory_path):
                 os.makedirs(directory_path)
@@ -3038,6 +3060,7 @@ class MyWindow(QMainWindow):
         self.hide()
 
         logger.info('Window hidden')
+        logger.info(f'!!STARTUP LAG: {time.time() - self.startup_lag} seconds')
 
 
     def play(self, fname):
@@ -3418,7 +3441,7 @@ class MyWindow(QMainWindow):
         if (type == '> '):
           if (l['cmd'] == 'Click Link_' or l['cmd'] == 'Select Book_' or l['cmd'] == 'Select Topic_' 
               or l['cmd'] == 'Select Tab_' or l['cmd'] == 'Time Zoom_' or l['cmd'] == 'Read Link_' 
-              or l['cmd'] == 'Select Window_'):
+              or l['cmd'] == 'Select Window_' or l['cmd'] == 'ask_'):
             for i2, l2 in enumerate(self.label_ps):
                 self.label_ps[i2].setText("")            
             cnt = 0       
@@ -3446,7 +3469,26 @@ class MyWindow(QMainWindow):
                 fulltext += f"\n{context}\n"
           elif (l['cmd'] == 'ask'):
             if 'ANSWER' in l['vars']:
+                
                 fulltext += f"\nAnswer: {self.format_ptext(l['vars']['ANSWER'])}\n"
+                answertext =f'@@{l["vars"]["QUERY"]}\n<br>==\n<br>{l["vars"]["ANSWER"].replace("\n", "\n<br>")}\n\n$$\n'
+                lines = answertext.splitlines()
+                div = [0,20,40,60]
+                textlen = 0
+                #better calculation needed here..
+                j = 0
+                for i in range(0, len(lines), 1):
+                    textlen += len(lines[i])
+                    if (textlen > 2400): #~ 80*40 - white space..
+                        j+=1
+                        div[j] = i
+                        textlen = 0
+
+                for i in range(0, len(div)-1, 1):
+                    answertext = ''.join(lines[div[i]:div[i+1]]) + "\n...\n$$\n"
+                    mktxt = markdown.markdown(answertext) #convert to HTML
+                    self.label_main[i].setText(mktxt)
+
             for i2, l2 in enumerate(self.label_ps):
                 self.label_ps[i2].setText("")            
             cnt = 0
@@ -3455,7 +3497,7 @@ class MyWindow(QMainWindow):
             test = ''
 
       if (fulltext != ""):
-        self.label_p.setText(fulltext)
+        self.label_p.setText(fulltext.replace('\n', '<br>'))
         self.label_p.adjustSize()
         self.label_p.update()
         logger.info(f'$$PTEXT={fulltext}')
@@ -3465,7 +3507,7 @@ class MyWindow(QMainWindow):
     def format_ptext(self, fulltext):
         #find places for CR.  
         import textwrap        
-        wrapped = textwrap.fill(fulltext, width=40)
+        wrapped = textwrap.fill(fulltext, width=60)
         return wrapped
     
     def is_complete_cmd(self, struct):

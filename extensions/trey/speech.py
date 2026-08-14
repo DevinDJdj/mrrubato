@@ -777,8 +777,20 @@ def speak_cmd(text="", fname="example_tts.wav", voice='af_heart', vol=1.0, speed
         bg_proc = subprocess.Popen(
             cmd,
             shell=True
+#            stdout=subprocess.PIPE, 
+#            text=True
         )
         bg_procs.append(bg_proc)
+        if (len(bg_procs) > 4):
+            for i, p in enumerate(bg_procs):
+                if (p.poll() is not None):
+                    bg_procs.pop(i)
+                    break
+        if (len(bg_procs) > 4):
+            #kill one..
+            p = bg_procs[0]
+            p.kill()
+
         suc = ""
                 
         #suc = os.system(cmd)

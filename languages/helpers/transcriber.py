@@ -1,4 +1,5 @@
 #transcribe commands into timeline.
+import base64
 from datetime import datetime, timedelta
 import os
 import logging
@@ -59,6 +60,8 @@ class transcriber:
         self.timewindow = timewindow.timewindow(self) #initialize timewindow for transcriber, shared..
         self.topicdensity = 0
         self.timeshift = 0
+
+        self.chatmessages = []
 
         self.kg_ignorevars = ['TIME', 'WINDOW', 'START', 'END', 'FNAME', 'FILE', 'DURATION', 'LAG'] #vars to ignore in display of info, used for time window commands.
 
@@ -221,7 +224,7 @@ class transcriber:
 #            print(p)
         if (isinstance(p, str)):
             p = re.sub(pattern, r"\n \1", p) #untested..
-
+            p = p.replace('\n', '\t') #replace newlines with \t so we retain.. may mess up some things..
         ret += f'$${pkey}={p}\n'
       if ('TIME' not in params):
         ret += f'$$TIME={self.getTimeString()}\n'
@@ -281,7 +284,7 @@ class transcriber:
             return []
         
         start_idx = self.allcmds[lang]['start_idx']
-        logger.info(f'Finding start index for {start_time} starting at index {start_idx} with cmds {self.allcmds[lang]["&&"]}')
+        logger.info(f'Finding start index for {start_time} starting at index {start_idx}')# with cmds {self.allcmds[lang]["&&"]}')
         if (start_time.timestamp() < self.allcmds[lang]['&&'][start_idx]['timestamp']):            
             for (i, cmd) in enumerate(reversed(self.allcmds[lang]['&&'][:start_idx])):
                 if (cmd['timestamp'] >= start_time.timestamp()):
@@ -782,6 +785,7 @@ class transcriber:
                     else:
                         #we have a date here?  special parsing for date/line
                         #references for date/line
+                        linenum = '0'
                         if (self.is_yyyymmdd(line[2:10].strip())):
                             if (currenttopc is not None and 'vars' in currenttopc):
                                 if (len(line) > 10 and line[10] == ':'):
@@ -1162,6 +1166,7 @@ class transcriber:
         if (end_time is None):
             end_time = self.getTime()
         logger.info(f'Loading {lang} {myfolder} start {start_time} to {end_time}')
+        lag = time.time()
 
         files = []
         if (lang in self.allcmds):
@@ -1185,7 +1190,8 @@ class transcriber:
                         mtime = os.path.getmtime(entry.path)
                         ctime = os.path.getctime(entry.path)
     #                    if (mtime >= start_time.timestamp() and ctime <= end_time.timestamp()):
-                        files.append({'name': entry.name, 'path': entry.path, 'mtime': mtime, 'ctime': ctime})
+                        size = os.path.getsize(entry.path)
+                        files.append({'name': entry.name, 'path': entry.path, 'mtime': mtime, 'ctime': ctime, 'size': size})
                         print(entry.name, entry.path)
             #files = [f for f in os.listdir(folder) if os.path.getmtime(folder + f) >= start_time.timestamp() and os.path.getctime(folder + f) <= end_time.timestamp()]
 
@@ -1203,6 +1209,7 @@ class transcriber:
         last_time = start_time.timestamp()
         mtime = None
         last_mtime = None
+        total_size = 0
         for f in sorted_files:
     #      if (f.startswith(yesterday) or f.startswith(today)):
             if (f['mtime'] >= start_time.timestamp() and f['ctime'] <= end_time.timestamp() and f['name'].endswith('.txt')): #dont open wav files.. maybe rethink sharing directory..
@@ -1217,7 +1224,7 @@ class transcriber:
                 last_mtime = mtime
                 if (mtime < last_time):
                     last_time = mtime - 86400 #set to start of day if we have data issue..
-
+                total_size += f['size']
                 try:
                     with open(f['path'], encoding='utf-8') as ff:
                         lines = ff.readlines()
@@ -1227,7 +1234,7 @@ class transcriber:
                         self.current_topic = f['name'][:-4] #file name without extension
                         test = self.read_lines(lang, lines, last_time, mtime)
                         ret.extend(test) 
-                        logger.info(f['name'] + " loaded with " + str(len(test)) + " commands")                    
+                        logger.info(f"{f['name']} loaded with {len(test)} commands")
 #                        logger.info(test)
                 except Exception as e:
                     logger.error(f'!!> Read [{f["path"]}]\n !!{e}\n')
@@ -1240,7 +1247,8 @@ class transcriber:
 #        self.allcmds[lang] = {'**': lang, '&&': ret, 'cmds': ret, '..': last_mtime, 'last_mtime': last_mtime, 'start_time': start_time, 'end_time': end_time, 'start_idx': 0, 'end_idx': len(ret)-1, 'open': True}
 #        self.update_kg(lang, ret)
         self.merge_cmds(lang, ret, start_time, end_time, last_mtime, sorted_files)
-        logger.info(f'Loaded {numloaded} files for {lang} with {len(ret)} commands')
+        logger.info(f'Loaded {numloaded} files for {lang} with {len(ret)} commands, total size {total_size} bytes')
+        logger.info(f'!!LAG: {time.time() - lag} seconds')
         return ret
 
     def merge_cmds(self, lang, ret, start_time, end_time, last_mtime, sorted_files):
@@ -1299,14 +1307,51 @@ class transcriber:
             self.current_topic = self.allcmds[lastlang]['&&'][-1]['**']
         else:
             self.current_topic = None
-    
+
+
+    def ask_image(self, context="", model="x/flux2-klein", strictness=-1): #gemma4:e4b too slow..
+        from ollama import Client
+
+        # Initialize client with a custom timeout (e.g., 120 seconds)
+        #for now use previous Q/A as context as well..
+        client = Client(host='http://localhost:11434', timeout=120.0)
+        response = client.generate(prompt=context, model=model, stream=False)
+        image_b64 = response.get("image")
+        if image_b64:
+            # Decode the base64 string and save it as a PNG file
+            image_data = base64.b64decode(image_b64)
+            with open(f"./temp/test_image.png", "wb") as f:
+                f.write(image_data)
+            logger.info("Image saved as './temp/test_image.png'.")
+            print("Success! Image saved as './temp/test_image.png'.")
+            return f"./temp/test_image.png"
+        else:
+            print("Failed to generate image or response format was unexpected.")        
+            return ""
+
+
     def ask_ollama(self, context="", model="gemma3:4b", strictness=-1): #gemma4:e4b too slow..
+        from ollama import Client
+
+        # Initialize client with a custom timeout (e.g., 120 seconds)
+        #for now use previous Q/A as context as well..
+        client = Client(host='http://localhost:11434', timeout=120.0)
         messages = [
             {"role": "system", "content": f"Answer the query using only the information provided in the given text here. "},
             {"role": "system", "content": f"List samples from the text and provide detailed explanations."},
-            {"role": "user", "content": f"{context}"}
             ]
         if strictness > 0:
             messages.append({"role": "system", "content": f"Use of external knowledge on a scale of 0 to 10: {strictness}"})
-        response = ollama.chat(messages=messages, model=model)
+#        if (len(self.chatmessages)) > 1:
+#            messages.append(self.chatmessages[-2])
+#            messages.append(self.chatmessages[-1])  # Use the last conversation context
+
+
+        messages.append({"role": "user", "content": f"{context}"})
+        self.chatmessages.append({"role": "user", "content": f"{context}"})
+        
+        
+        response = client.chat(messages=messages, model=model)
+        self.chatmessages.append(response["message"])
+
         return response["message"]["content"]

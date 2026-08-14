@@ -104,6 +104,7 @@ class video:
         "Screenshot": [49,53,55], #take screenshot
         "Zoomshot": [49,53,57], #take zoomed screenshot
         "Next": [49, 53, 54], #next video in playlist or folder
+        "Generate Image": [49, 53, 52], #generate image for current  context..
       },
       "4": {
         "Screenshot Feedback": [49,53,55,53], #screenshot with feedback
@@ -129,6 +130,7 @@ class video:
       "Comment": "comment",
       "Start": "start",
       "Help": "help",
+      "Generate Image": "generate_image",
       "Pause": "pause",
       "Next": "next",
       "Unpause": "unpause",
@@ -137,6 +139,7 @@ class video:
       "_Screenshot": "_screenshot",
       "Zoomshot": "zoomshot",
       "Screen Toggle": "screen_toggle",
+
       "_Screenshot Feedback": "_screenshot_feedback",
       "Screenshot Feedback": "screenshot_feedback",
       "Screenshot Feedback_": "screenshot_feedback_",
@@ -179,6 +182,10 @@ class video:
 "> ": "next",
 "$$": "$no-5 default $54 next in playlist",
 "&&": "Next video in playlist or folder."},
+      "Generate Image": {
+"> ": "generate_image",
+ "$$": "$cacheno",
+ "&&": "Generate image for current context."},
 
       "Unpause": {
 "> ": "unpause",
@@ -488,6 +495,30 @@ class video:
     
     return 0
 
+
+  def generate_image(self, sequence=[]):
+    """Generate Image."""
+    logger.info(f'> Generate Image {sequence}')
+    cacheno = -1
+    if (len(sequence) > 0):
+      cacheno = sequence[-1]-self.keybot #first key cache selection
+    self.func = "Generate Image"
+    if (playwrighty.mybrowser is not None):
+      #only get minimal context..
+      try:
+        context, start_offset, end_offset = playwrighty.get_p_context(cacheno=cacheno, direction=0, strictness=0, context_length=1000)
+        #for now just using raw context..
+        imname = self.transcriber.ask_image(context, model="x/flux2-klein")
+        if (imname != ""):
+          self.set_qr(self.func, {'type': 'video', 'fname': imname, 'context': context})
+        else:
+          logger.info("!!Failed to generate image.")
+          return -1
+      except Exception as e:
+        logger.error(f"!!Error generating image: {e}")
+        return -1
+
+    return 0
 
   def set_speed(self, sequence=[]):
     logger.info(f'> Set Speed {sequence}')

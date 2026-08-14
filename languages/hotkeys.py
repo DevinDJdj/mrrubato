@@ -1,7 +1,9 @@
 import logging
 from pydoc import text
+import re
 import threading
 from pynput import *
+from extensions.trey import synth
 from languages._meta import _META, _VIDEO
 import pytesseract
 from PIL import Image
@@ -18,6 +20,11 @@ import json
 from extensions.trey.trey import page, pause_reader, skip_lines
 from extensions.trey.trey import skip_lines
 import languages.helpers.transcriber as transcriber
+
+
+from rapidfuzz.process import cdist
+from rapidfuzz import fuzz
+import numpy as np
 
 
 
@@ -51,6 +58,8 @@ class hotkeys:
     self.maxseq = 10 #includes parameters
     self.callback = None
     self.transcript = ""
+    self.suggestions = []
+    self.corrections = []
     self.transcripthistory = []
     self.tofind = ""
     self.tofindhistory = []
@@ -981,6 +990,8 @@ class hotkeys:
       else:
         cacheno = playwrighty.current_cache
 
+      logger.info(f'$$cacheno={cacheno}')
+      logger.info(f'$$current={playwrighty.current_cache}')
       page = playwrighty.get_ppage(cacheno)
       url = page.url
       total_read = 0
@@ -1078,6 +1089,8 @@ class hotkeys:
     logger.info(f'> Select Tab {sequence}')
     if (playwrighty.mybrowser is not None):
       select_index = playwrighty.current_cache
+      with open(f"./temp/{select_index}/active.txt", "w") as f: #deactivate generatetts
+        f.write("no")
       if (len(sequence) > 0):
         select_index = self.adjust_playwrighty_index(self.mid-sequence[-1])
       logger.info(f'Selecting Tab with index {select_index} of {len(playwrighty.page_cache)}')
@@ -1105,6 +1118,8 @@ class hotkeys:
 
   def _ask(self, sequence=[]):
     logger.info(f'> _Ask {sequence}')
+    self.corrections = [] #reset corrections for this query.
+    self.suggestions = [] #reset suggestions for this query.
     print("> _Ask called")
     #get audio input for query.  
     from extensions.trey.speech import listen_audio
@@ -1115,12 +1130,43 @@ class hotkeys:
     #need to return 1 to indicate we need more keys.
     #but this is only called once.  
     return 1
+
+
+  def get_transcript(self):
+    for c in self.corrections:
+      #for now just global replace.  Possible we have issue with identifying from transcript_now use of ...
+      self.transcript = self.transcript.replace(c[0], c[1])
+    return self.transcript
+
   
   def ask_(self, sequence=[]):
     from extensions.trey.speech import transcribe_now
+
     self.func = "ask_"
-    self.transcript += transcribe_now() + "\n"
-    self.set_qr(self.func, {'transcript': self.transcript})
+
+    if (len(sequence) > 0 and sequence[-1] >= self.mid and sequence[-1] - self.mid < len(self.suggestions)):
+      #select suggestion
+      selected = sequence[-1] - self.mid
+      s = self.suggestions[selected]
+      self.corrections.append(s)
+
+    
+    lag = time.time()
+    self.transcript = self.get_transcript() + transcribe_now().replace('...', '') 
+    context, start_offset, end_offset = playwrighty.get_p_context(cacheno=-1, direction=0, strictness=0)
+    suggestions = []
+#    suggestions = self.get_suggestions(context, self.transcript)
+
+    vars = {'transcript': self.transcript}
+    startidx = 12
+    for i, (s, idx) in enumerate(suggestions):
+      vars[f'{startidx + i}'] = s[max(0, idx-10):idx+20] #show snippet of suggestion
+    lag = time.time() - lag
+    vars['...'] = lag
+    self.set_qr(self.func, vars)
+    self.suggestions = suggestions
+
+
     return 1
   
   def _find(self, sequence=[]):  
@@ -1254,7 +1300,7 @@ class hotkeys:
         original = original.replace('\n','  ')
 #        original = original.upper()
         #find best match location
-        from rapidfuzz import fuzz
+
         bestscore = 0
         # Get the score and the start/end indices of the match
         score = 0
@@ -1514,7 +1560,52 @@ class hotkeys:
     input_llm += "\n<|output|>\n"
     answer = self.transcriber.ask_ollama(context=input_llm, model="numind/nuextract3:q6_k")
     return answer
-  
+
+
+  def generate_suggestions(self, query, suggest):
+    #for now single replacement, but eventually could do combinations.  
+    asuggest = []
+    suggest.sort(key=lambda x: x[2], reverse=True)  # Sort by score in descending order
+    for i, (word, qword, score, idx) in enumerate(suggest):
+      orig = query
+      query = query.replace(qword, word)
+      asuggest.append((orig, query, idx))
+    return asuggest
+
+
+
+
+  def get_suggestions(self, context, query):
+    immediate_context = context[-500:] if len(context) > 500 else context
+    clean_text = re.sub(r"[^\w\s]", " ", immediate_context)  # Remove punctuation for better word matching
+    clean_query = re.sub(r"[^\w\s]", " ", query)  # Remove punctuation for better word matching
+    word_list = clean_text.split()
+    word_list = [w.lower() for w in word_list if len(w) > 4]  # Convert to lowercase for case-insensitive comparison
+    qwords = query.split()
+    qwords = [w.lower() for w in qwords if len(w) > 4]  # Convert to lowercase for case-insensitive comparison
+    #check for misspellings in query..
+    similarity_matrix = cdist(word_list, qwords, scorer=fuzz.ratio, workers=-1)
+    #any high similarity matches?  
+    threshold = 80
+    row_idx, col_idx = np.where(similarity_matrix >= threshold)  # example threshold
+    suggest = []
+    for r, c in zip(row_idx, col_idx):
+      if (similarity_matrix[r, c] == 100):
+        #ignore
+        a = 0
+      else:
+        #should we replace qword with word_list word? 
+        #query = query.replace(qwords[c], word_list[r])
+        print(f"'{word_list[r]}' & '{qwords[c]}': {similarity_matrix[r, c]}")
+        #get first index in query..
+        query_index = query.find(qwords[c])
+        suggest.append((word_list[r], qwords[c], similarity_matrix[r, c], query_index))
+
+        
+    if (len(suggest) > 0):
+      suggest = self.generate_suggestions(suggest)
+      return suggest
+
   def ask(self, sequence=[]):
     logger.info(f'> Ask {sequence}')
     query = "What are you doing?"
@@ -1555,21 +1646,35 @@ class hotkeys:
     if (end_offset > len(playwrighty.page_cache[cacheno]['body'])):
       end_offset = len(playwrighty.page_cache[cacheno]['body'])
 
-    context = playwrighty.page_cache[cacheno]['body'][start_offset:end_offset]
+    context, start_offset, end_offset = playwrighty.get_p_context(cacheno=cacheno, direction=direction, strictness=strictness)
     #pause before asking, maybe some silence, but probably better overall?  
     from extensions.trey.trey import pause_reader, resume_reader
     pause_reader()
-    logger.info(f'$$QUERY={query}')
-    answer = self.transcriber.ask_ollama(context=f"::CONTEXT:: \n\n{context}\n\n::QUERY:: {query}", model="gemma3:4b", strictness=strictness)
-    logger.info(f'$$ANSWER={answer}')
-    graphs = self.get_graphs(context, query)
-    logger.info(f'$$GRAPHBYTES={len(graphs)}') #measuring time for now..
-    vars = {"DIRECTION": direction, "URL": playwrighty.page_cache[cacheno]['page'].url, "(": start_offset, ")": end_offset, "ANSWER": answer, "GRAPHS": json.dumps(graphs)}
-    self.func = "ask"
-    self.set_qr(self.func, vars)
-    #for now just pause reader
-    self.speak(f'{answer}')
-    delay = len(answer) /15 #estimate 15 chars per second for just reading speed
+    try:
+      logger.info(f'$$QUERY={query}')
+      synth.play_synth([53,55,52]) #play failed sequence
+      answer = self.transcriber.ask_ollama(context=f"::CONTEXT:: \n\n{context}\n\n::QUERY:: {query}", model="gemma3:4b", strictness=strictness)
+      logger.info(f'$$ANSWER={answer}')
+      #too slow..
+      graphs = ""
+#      graphs = self.get_graphs(context, query)
+#      logger.info(f'$$GRAPHBYTES={len(graphs)}') #measuring time for now..
+      vars = {"DIRECTION": direction, "URL": playwrighty.page_cache[cacheno]['page'].url, "(": start_offset, ")": end_offset, "QUERY": query}
+      vars["GRAPHS"] = json.dumps(graphs)
+      vars["ANSWER"] = answer
+      self.transcriber.write(self.name, "Ask", vars, save=True) #save for book..
+
+
+      self.func = "ask"
+      self.set_qr(self.func, vars)
+      #for now just pause reader
+    except Exception as e:
+      logger.error(f'!!ask\n{e}')
+      answer = "Sorry, I could not process your question."
+      self.speak(answer)
+      return -1
+    self.speak(f'{answer}', total_read=1)
+    delay = len(answer) /14 #estimate 14 chars per second for just reading speed
     t = threading.Timer(delay, resume_reader)
     t.start()  # Start the timer in a new thread
 
@@ -1636,6 +1741,7 @@ class hotkeys:
     total_read = playwrighty.update_page_offset()
     links = playwrighty.get_links(-1, total_read)
     #display links
+    self.currentlinks = []
     for i, link in enumerate(reversed(links)): #start from most recent..
       self.currentlinks.append(link["text"])
 
@@ -1802,7 +1908,7 @@ class hotkeys:
     from extensions.trey.trey import resume_reader
     select_index = 0
     if (len(sequence) > 0):
-      select_index = sequence[-1]-(self.keybot) #offset from middle C
+      select_index = self.mid-sequence[-1] #offset from middle C
       logger.info(f'Selecting Tab with index {select_index} of {len(playwrighty.page_cache)}')
       if (select_index >= 0 and select_index < len(playwrighty.page_cache)):
         from extensions.trey.trey import pause_reader, resume_reader, stop_audio

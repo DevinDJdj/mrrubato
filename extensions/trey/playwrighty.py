@@ -596,7 +596,35 @@ def set_reader_queue(q2, q3, stop_event, cacheno=-1):
         page_cache[cacheno]['reader_queue'] = q2
         page_cache[cacheno]['sim_queue'] = q3
         page_cache[cacheno]['reader_stop_event'] = stop_event
+
+        os.remove(f"./temp/{cacheno}/active.txt") if os.path.exists(f"./temp/{cacheno}/active.txt") else None
+
+
         return True
+
+
+def get_p_context(cacheno=-1, direction=0, strictness=0, context_length=100000):
+    global current_cache
+    if (cacheno < 0):
+      cacheno = current_cache
+
+    url = page_cache[cacheno]['page'].url
+    offset = page_cache[cacheno]['current_offset'][url]
+
+    end_offset = offset
+    start_offset = end_offset - context_length
+    if (direction > 0):
+      start_offset = end_offset
+      end_offset = start_offset + context_length
+    if (start_offset < 0):
+      start_offset = 0
+    if (end_offset > len(page_cache[cacheno]['body'])):
+      end_offset = len(page_cache[cacheno]['body'])
+
+    context = page_cache[cacheno]['body'][start_offset:end_offset]
+
+
+    return context, start_offset, end_offset
 
 def get_ppage(cacheno=-1, activate=True): #get playwright page from cacheno
 
@@ -908,7 +936,7 @@ def get_page_details(page):
 
 def console_handler(cacheno):
     def log_console_message(msg):
-        page = get_ppage(cacheno)
+        page = get_ppage(cacheno, False)
         print(f"#{page.title()}\n{msg.type.ljust(7, ' ')}:\t{msg.text}")
     return log_console_message
 

@@ -553,6 +553,19 @@ export function startWatchingTranscriber(lang: string, transcriptFolder: string 
                                 vscode.commands.executeCommand('workbench.action.restartExtensionHost');
 //                                vscode.commands.executeCommand('workbench.action.chat.open', "@mr /restart");
                             }
+                            if (cmd.cmd === "Ask"){
+                                let input = "";
+                                let output = "";
+                                if (cmd.vars && cmd.vars['QUERY']){
+                                    input = cmd.vars['QUERY'] + '\n';
+                                }
+                                if (cmd.vars && cmd.vars['ANSWER']){
+                                    output = cmd.vars['ANSWER'] + '\n';
+                                    output = output.replace(/\t/g, '\n');
+                                }
+                                Book.updatePage(Book.getBookPath() + "/" + file, "@@" + input + "\n==\n" + output + "\n$$\n", -1, -1); //append to end of file.
+                            }
+
                             if (cmd.cmd === "Comment"){
                                 let input = "";
                                 let t = "";
