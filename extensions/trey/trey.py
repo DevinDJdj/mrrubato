@@ -2661,6 +2661,10 @@ class MyWindow(QMainWindow):
         self.showQR("Starting Trey Overlay")
         #hide after a few seconds
         #workaround, something wrong with the PyQt if we hide this immediately
+        t2 = threading.Timer(15, _get_window_info)
+        t2.start()  # Start the timer in a new thread
+        t = threading.Timer(10, _hide, args=["Hello from Timer!"])
+        t.start()  # Start the timer in a new thread
         logger.info('Window created')
         self.read(self.langs, None, None) #initial read of all data, can be filtered by time later.
 

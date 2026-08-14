@@ -6,6 +6,7 @@ $$ENV=treyenv
 >_2 cd C:/devinpiano/music/mrrubato
 >#1 cd C:/devinpiano/music
 >#1 ./treyenv/Scripts/activate.ps1
+>#1 python ./extensions/trey/trey.py
 
 >#2 cd C:/devinpiano/music
 >#2 ./treyenv/Scripts/activate.ps1
@@ -39,3 +40,17 @@ Clear context with @@1 $$
 @@1- **TOPIC
 @@1+ **TOPIC
 
+
+**record.py
+~~ **record.py where do I copy the previous iteration
+
+#https://downloads.focusrite.com/focusrite/scarlett-2nd-gen/scarlett-2i2-2nd-gen
+#https://releases.focusrite.com/com.focusrite.focusrite-control/latest/?_gl=1*eh9t5h*_ga*NDM5NzA4NzI5LjE3ODUzNDMwMzA.*_ga_HB3DW6FMLN*czE3ODUzNDMwMjkkbzEkZzAkdDE3ODUzNDMwMjkkajYwJGwwJGgw
+
+>#2 python ./record.py --description  "Time In A Bottle (Jim Croce)"
+>#2 python ./record.py --description  "Op 27 No 2 (Beethoven)"
+
+>#2 python ./record.py --description  "K 310 (Mozart)"
+
+>#2 python ./record.py --description  "K 397 (Mozart)"
+>#2 python ./record.py --description  "K 332 (Mozart)"
