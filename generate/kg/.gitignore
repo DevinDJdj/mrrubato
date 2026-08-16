@@ -1,9 +1,0 @@
-*/__pycache__
-*/.DS_Store
-.DS_Store
-# PyVis generated libraries
-lib/
-
-*.egg-info
-__pycache__
-venv/
