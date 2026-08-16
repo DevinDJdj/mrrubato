@@ -1116,7 +1116,7 @@ def activate_tab(cacheno=0):
         page_info = page_cache[cacheno]       
         page = page_info['page']
         current_cache = cacheno
-#        page.bring_to_front()
+        page.bring_to_front()
         logging.info(f'--activate_tab [{cacheno},{page.url}]')
         return True
     else:

@@ -84,6 +84,7 @@ class book:
      #config overrides load_data by default.  
     if (transcriber is not None):
       self.transcriber = transcriber
+
     if hasattr(self, 'load_data'):
       self.load_data()
     else:
@@ -92,20 +93,13 @@ class book:
     return 0
 
 
-  def load_transcript(self):
-    #load commands from config into funcdict
-    allcmds = self.transcriber.read(self.name, None, None) #default 7 days
-    logger.info(f'Loaded {len(allcmds)} command transcripts for {self.name}')
-    #load commands from config into funcdict
-
+  def load_ext_links(self, st=None, et=None):
     #load 6 months of book topics..
-    book = self.transcriber.read('book', self.transcriber.getTime(-180), None, './book/')
-    logger.info(f'Loaded {len(book)} book transcripts from ./book/')    
-    #load in case not done..
-    if (not self.transcriber.allbooks):
-      self.transcriber.allbooks = self.transcriber.open_books() #open book files for writing topics.
-    numtopics = 0
+    book = self.transcriber.read('book', datetime.fromtimestamp(st), datetime.fromtimestamp(et), './book/')
+    logger.info(f'Loaded {len(book)} book transcripts from ./book/')
+    #load external links for book from book transcripts.  
     self.ext_links = []
+    self.book_links = {} #reset book links so they reload..
     self.ext_link_index = 0
     self.alltopics = {}
     linkcnt = 0
@@ -122,6 +116,21 @@ class book:
     self.ext_links.sort(key=lambda x: x['..'], reverse=True)
     logger.info(f'External link info: {self.ext_link_index} / {len(self.ext_links)} {self.ext_links[self.ext_link_index] if self.ext_link_index < len(self.ext_links) else "N/A"}')
     logger.info(f'Loaded {len(self.ext_links)} links from book transcripts, across {len(self.alltopics)} topics. Link count: {linkcnt}')
+    if (st is not None and et is not None):
+      logger.info(f'{self.alltopics}')
+
+  def load_transcript(self):
+    #load commands from config into funcdict
+    allcmds = self.transcriber.read(self.name, None, None) #default 7 days
+    logger.info(f'Loaded {len(allcmds)} command transcripts for {self.name}')
+    #load commands from config into funcdict
+
+    #load in case not done..
+    if (not self.transcriber.allbooks):
+      self.transcriber.allbooks = self.transcriber.open_books() #open book files for writing topics.
+    numtopics = 0
+    #use 1 day in future as well, since we start 1 day in past..
+    self.load_ext_links(self.transcriber.timewindow.getTime(-180*86400), self.transcriber.timewindow.getTime(1*86400)) #load 6 months of book topics..
 
 
 
@@ -255,31 +264,47 @@ class book:
     else:
       return self.ext_link_index + idx
 
-  def load_book_links(self, book):
+  def load_book_links(self, book, current_time=None):
+    #st should be unique for all practical purposes..
+    st = datetime.fromtimestamp(current_time-self.transcriber.timewindow.window) if current_time is not None else None
+    et = datetime.fromtimestamp(current_time+min(self.transcriber.timewindow.window, 86400)) if current_time is not None else None
+    logger.info(f'Loading book links for {book} at time ({st} - {et})')
     if (book is not None and book in self.transcriber.allcmds and book not in self.book_links):
-      mybook = self.transcriber.filter_books_recursive(book)
+      mybook = self.transcriber.filter_books_recursive(book, start_time=st, end_time=et) #get all book commands for this book, filter by time if provided.
       logger.info(f'&& {mybook}')
       myarray = self.transcriber.relevant_book_array(mybook) #get list of books for selection.
+      logger.info(f'{myarray}')
+      ext_links = self.transcriber.get_all_of_type('#', myarray=myarray) #get all links for this book, filter by time if provided.
+      ext_links.sort(key=lambda x: x['..'], reverse=True) #sort so 0 index is now..
+      logger.info(f'{ext_links}')
+      self.book_links[book] = {'#': ext_links, ':': 0, '..': st } #store current time for this book so we can reload if time changes.
+      ext_links = self.book_links[book]
+    elif (book in self.book_links and self.book_links[book]['..'] != st):
+      #reload links because time change.  
+      mybook = self.transcriber.filter_books_recursive(book, start_time=st, end_time=et) #get all book commands for this book, filter by time if provided.  
+      logger.info(f'&& {mybook}')
+      myarray = self.transcriber.relevant_book_array(mybook) #get list of books for selection.
+      logger.info(f'{myarray}')
       ext_links = self.transcriber.get_all_of_type('#', myarray=myarray)
       ext_links.sort(key=lambda x: x['..'], reverse=True) #sort so 0 index is now..
-      self.book_links[book] = {'#': ext_links, ':': 0}
+      logger.info(f'{ext_links}')
+      self.book_links[book] = {'#': ext_links, ':': 0, '..': st } #store current time for this book so we can reload if time changes.
       ext_links = self.book_links[book]
     elif (book in self.book_links):
       ext_links = self.book_links[book]
     else:
       ext_links = {'#': [], ':': 0}
-    logger.info(f'-- {len(ext_links["#"])} links from {book}')
+    logger.info(f'-- {len(ext_links["#"])} links from {book} at time {st}')
     return ext_links
   
 
   def get_ext_link_index(self, linkno=0, current_time=None, book=None, update=False):
-    t = current_time if current_time is not None else self.transcriber.mytime
     #find most recent link before current time.
     _isbook = True if book is not None else False
     book = book if book is not None else self.transcriber.current_book
     #should topic always be selected?  Not sure..
     if (_isbook):
-      mylinks = self.load_book_links(book)
+      mylinks = self.load_book_links(book, current_time)
       if (len(mylinks['#']) > 0):
         index = mylinks[':']
 
@@ -306,9 +331,9 @@ class book:
 
         if (update):
           if (index + linkno < 0):
-            index = 0
+            index = len(self.ext_links) - 1
           elif (index + linkno >= len(self.ext_links)):
-            index = len(self.ext_links)-1
+            index = 0
           else:
             index += linkno
           self.ext_link_index = index
@@ -320,25 +345,31 @@ class book:
     logger.info(f'> Read Link_ {sequence}')
     #need to get content for this link and read it.  For now just speak the link text, but ideally we would get the content of the link and read that instead.
     _booktopic = False
+    t = None
     if (len(sequence) > 0):
       if (sequence[-1] == self.keybot): #dont adjust if keybot, 
         return 1
       if (sequence[0] == _META): #not sure this selection sequence is great..
         _booktopic = True        
+      if (sequence[0] == _META+12): #use current time window..
+        t = self.transcriber.mytime
       if (sequence[0] == _META and len(sequence)==1):
         _booktopic = True #dont adjust newidx
         linkno = 0
       else:
         linkno = self.mid - sequence[-1]
+      if (len(sequence) > 1 and sequence[1] == _META+12):
+        #use current time window..
+        t = self.transcriber.mytime
     else:
       linkno = 0 #default to first link if no parameter provided.  This is not ideal but we need some way to trigger reading a link without audio input for link number for now.  We can add audio input for link number in future.
 
     index = 0
     links = []
     if (_booktopic):
-      index, links = self.get_ext_link_index(linkno, None, self.transcriber.current_book) #book links only..
+      index, links = self.get_ext_link_index(linkno, t, self.transcriber.current_book) #book links only..
     else:
-      index, links = self.get_ext_link_index(linkno) #global
+      index, links = self.get_ext_link_index(linkno, t) #global
     if (index != -1):
       link = links[index]
     else:
@@ -375,30 +406,47 @@ class book:
     #-1 to list all?
     linkno = 0
     _booktopic = False
+    t = None
     if (len(sequence) > 0):
       if (sequence[0] == _META): #not sure this selection sequence is great..
         _booktopic = True        
+      elif (sequence[0] == _META+12):
+        t = self.transcriber.mytime
       if (sequence[0] == _META and len(sequence)==1):
         _booktopic = True #dont adjust newidx
       else:
         linkno = self.mid - sequence[-1]
+
+      if (len(sequence) > 1 and sequence[1] == _META+12):
+        #use current time window..
+        t = self.transcriber.mytime
     else:
       linkno = 0 #default to first link if no parameter provided.  This is not ideal but we need some way to trigger reading a link without audio input for link number for now.  We can add audio input for link number in future.
     
     index = 0
     links = []
     if (_booktopic):
-      index, links = self.get_ext_link_index(linkno, None, self.transcriber.current_book, update=True) #book links only..
+      index, links = self.get_ext_link_index(linkno, t, self.transcriber.current_book, update=True) #book links only..
     else:
-      index, links = self.get_ext_link_index(linkno, update=True) #global
+      index, links = self.get_ext_link_index(linkno, t, update=True) #global
 
 
     if (index != -1):
 
       link = links[index]
       logger.info(f'Reading link: {index} {link["&&"]}')
-      playwrighty.read_page(link['&&']) #need to get content for this link and read it. 
+      a = playwrighty.read_page(link['&&']) #need to get content for this link and read it. 
       #this should open up the page, then we can read aloud if we want..
+      if (isinstance(a, tuple)):
+        from extensions.trey.trey import pause_reader, resume_reader, stop_audio
+        pause_reader()
+        body_text, link_data, page, cacheno = a
+        lang = playwrighty.detect_language(cacheno)
+        total_read = playwrighty.get_bookmark(page.url, cacheno)
+        alt_text = playwrighty.page_cache[cacheno]['alt_text']
+        q2, q3, stop_event = self.speak(body_text, link_data, alt_text, total_read, lang, cacheno) #add offset to skip until where we were.)
+        playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
+        resume_reader()
 
     else:
       logger.error(f'Invalid link number: {linkno}')
@@ -432,13 +480,13 @@ class book:
 
     #get context for topic from book transcripts.  
     if (time == -1): #current window
-      time = self.timewindow.currenttime
+      time = self.transcriber.timewindow.currenttime
     elif (time == -2): #prev window
-      time = self.timewindow.currenttime - self.timewindow.window
+      time = self.transcriber.timewindow.currenttime - self.transcriber.timewindow.window
     elif (time == -3): #next window
-      time = self.timewindow.currenttime + self.timewindow.window
+      time = self.transcriber.timewindow.currenttime + self.transcriber.timewindow.window
     elif (time < -3): #specific time
-      time = self.timewindow.currenttime + time
+      time = self.transcriber.timewindow.currenttime + time
 
     ret = f"**{topic}\n"
 #    if topic in self.alltopics:
@@ -584,6 +632,12 @@ class book:
   def show_book(self, sequence=[]):
     #just bring vscode to foreground for now..
     logger.info(f'> Show Book {sequence}')
+
+    if (sequence[-1] == _META):
+      #reset time..
+      st = datetime.fromtimestamp(self.transcriber.timewindow.getStartTime())
+      et = datetime.fromtimestamp(self.transcriber.timewindow.getEndTime())
+      self.load_ext_links(st, et)
 
     vars = {}
     if self.selectedbook is not None:
@@ -795,7 +849,7 @@ class book:
           bytes_read = len(line) +1 #+1 for newline
         total_read += bytes_read
 
-    self.book_links = book_links
+#    self.book_links = book_links #this is different usage..
     return book_links
 
   

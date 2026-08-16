@@ -425,10 +425,12 @@ class _meta:
 
   def time_jump(self, sequence=[]):
     logger.info(f"> Time Jump {sequence}")
-    jump = 1 #default jump level
+    jump = -6 #default jump level back one larger window.  
+    #octave is + one window.  
     if (len(sequence) > 0):
       jump = float(sequence[-1] - self.keybot) - 6 #just use 10 keys for mid..
     t = self.timewindow.timeJump(jump)
+    self.transcriber.mytime = t
     vars = {}
     logger.info(f"$$TIME={t}")
     self.set_qr("Time Jump", {'JUMP': jump, 'WINDOW': self.timewindow.window, 'TIME': t, 'START': self.timewindow.starttime, 'END': self.timewindow.endtime})
@@ -471,7 +473,10 @@ class _meta:
     logger.info(f"$$TIMEWINDOW={w}")
     vars['ZOOM'] = zoom
     vars['WINDOW'] = w
-    vars['TIME'] = self.timewindow.getTime()
+    t = self.timewindow.getTime()
+    self.transcriber.mytime = t
+    vars['TIME'] = t
+
     vars['START'] = self.timewindow.starttime
     vars['END'] = self.timewindow.endtime
     if (similar >= 0):

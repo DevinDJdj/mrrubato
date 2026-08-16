@@ -1489,7 +1489,7 @@ def _hide(data):
     day = 86400
     tnow = time.time()
     #should get from last three days and scroll each?  
-    mywindow.set_time(tnow-day*1, tnow-day*7, tnow, day*7)
+    mywindow.set_time(tnow-day*1, tnow-day*1.5, tnow, day*0.5) #default is 1 day for now..
     mywindow.set_speed(None, "_meta")
     mywindow.set_speed(None, "video")
     
@@ -1758,11 +1758,14 @@ class MyWindow(QMainWindow):
                 logger.info(f'> ask\n==\n{answer}\n==\n{graphs}')
                 #create knowledge graph
                 if (len(graphs) > 10):
-                    graphs = json.loads(json.loads(graphs))
-                    kgs = self.make_kg(graphs)
-                    if (len(kgs) > 0):
-                        self.visualize_kg(kgs[0], topic=vars.get('TOPIC', self.transcriber.current_topic))
-
+                    try:
+                        graphs = json.loads(json.loads(graphs))
+                        kgs = self.make_kg(graphs)
+                        if (len(kgs) > 0):
+                            self.visualize_kg(kgs[0], topic=vars.get('TOPIC', self.transcriber.current_topic))
+                    except Exception as e:
+                        logger.error(f'!!Error parsing graphs: {e}')
+                        logger.error(f'!!Graphs data: {graphs}')
 
             case "OK":
                 #testing
@@ -2529,21 +2532,22 @@ class MyWindow(QMainWindow):
         self.label_filter_info = []
         for i in range(25): #info 0-3, and addl potential filter/param labels
             self.label_filter_info.append(QLabel("transparent ", self))
-            self.init_label(self.label_filter_info[i], 0, 0.2+0.02*i, 0.2, 0.02)
+            self.init_label(self.label_filter_info[i], 0, 0.2+0.02*i, 0.2, 0.02, fontsize=8)
 
 
         #mid right
         #BBOX(0.8,0.1,0.2,0.6)
         self.label_info = QLabel("transparent ", self)
         # moving position
-        self.init_label(self.label_info, 0.8, 0.1, 0.2, 0.6)
+        self.init_label(self.label_info, 0.8, 0.1, 0.2, 0.6, fontsize=12)
+
 
         #mid mid
         #BBOX(0.3,0.2,0.7,0.7)
         self.label_main = []
         for i in range(3):
             self.label_main.append(QLabel("transparent ", self))
-            self.init_label(self.label_main[i], 0.1+0.2*i, 0.2, 0.2, 0.5)
+            self.init_label(self.label_main[i], 0.1+0.2*i, 0.2, 0.2, 0.5, fontsize=10)
 #            self.label_main.append(QLabel("transparent ", self.video_widget))
 #            self.init_label(self.label_main[i], 0.33*i, 0, 0.33, 1)
             # moving position
@@ -2910,9 +2914,9 @@ class MyWindow(QMainWindow):
 
         mw.show()
 
-    def init_label(self, label, x, y, w, h, color='red'):
+    def init_label(self, label, x, y, w, h, color='red', fontsize=10):
         label.setTextFormat(QtCore.Qt.RichText)
-        label.setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};border: 2px solid black;")
+        label.setStyleSheet(f"background-color: rgba(255, 255, 255, 1);color: {color};border: 2px solid black;font-size: {fontsize}pt;")
         label.setAlignment(Qt.AlignTop)
         label.adjustSize()
         label.setWordWrap(True)

@@ -7,6 +7,8 @@
 
 #python -m spacy train config.cfg --output ./output --paths.train ./train.spacy --paths.dev ./dev.spacy
 
+from annotated_types import doc
+
 import spacy
 from cosine_similarity import compute_cosine_similarity
 
@@ -97,7 +99,9 @@ similarity_score = jpdoc1.similarity(jpdoc2)
 print(f"JP Similarity score: {similarity_score}")
 
 
+"""
 nlp = spacy.load("en_core_web_md")
+
 
 about_text = (
     "Gus Proto is a Python developer currently"
@@ -108,10 +112,22 @@ about_text = (
 about_doc = nlp(about_text)
 for token in about_doc:
     print(
-        f"""
-TOKEN: {str(token)}
-=====
-TAG: {str(token.tag_):10} POS: {token.pos_}
-EXPLANATION: {spacy.explain(token.tag_)}"""
+        f"TOKEN: {str(token)}\n"
+        f"=====\n"
+        f"TAG: {str(token.tag_):10} POS: {token.pos_}\n"
+        f"EXPLANATION: {spacy.explain(token.tag_)}"
     )
 
+"""
+
+text = ""
+#20260814.txt
+#with open("./book/20260717.txt", "r", encoding="utf-8") as f:
+with open("./book/20260814.txt", "r", encoding="utf-8") as f:
+    text = f.read()
+
+
+# Iterate through the extracted entities
+doc = nlp(text)
+for ent in doc.ents:
+    print(f"Entity: {ent.text:<20} | Label: {ent.label_:<10} | Meaning: {spacy.explain(ent.label_)}")

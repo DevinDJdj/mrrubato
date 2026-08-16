@@ -219,6 +219,7 @@ class MyKeys:
         logger.error(f'Error loading language {key}: {e}')
         import traceback
         traceback.print_exc()
+        logger.error(f'{traceback.format_exc()}')
 
     self.keystruct = self.gen_lang_struct() #initialize keystruct for all known words, if no keybot, then not loaded here..
     print("Keystruct generated")
@@ -921,10 +922,16 @@ class MyKeys:
 
       if (len(self.sequence) >= 3 and self.sequence[-3] % self.octaveinterval == unsetseq[-3] and self.sequence[-2] % self.octaveinterval == unsetseq[-2] and self.sequence[-1] % self.octaveinterval == unsetseq[-1]):
         #unset keyshift, move octave back down.
-        self.unset_sequence(doact)
-
-        #unset last language
-        return -1 #unset last word notify error.
+        #for now only do if all 3 are the same key..  Want to allow 0, 12, 12, or 12, 0, 0
+        if ( unsetseq[-3:] == [unsetseq[-3]] * 3): 
+          if (self.sequence[-3:] == [self.sequence[-3]] * 3):
+            self.unset_sequence(doact)
+            #unset last language
+            return -1 #unset last word notify error.
+        else: #leave this for now, but not sure if we want to allow unsetseq not 3 in a row.  Could be confusing.
+          self.unset_sequence(doact)
+          #unset last language
+          return -1 #unset last word notify error.
 
       r1 = self.maxseq #max length of sequence to check
       if (self.currentseqno <self.maxseq):

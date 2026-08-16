@@ -101,6 +101,7 @@ class hotkeys:
      #config overrides load_data by default.  
     if (transcriber is not None):
       self.transcriber = transcriber
+
     if hasattr(self, 'load_data'):
       self.load_data()
     else:
@@ -370,16 +371,16 @@ class hotkeys:
 "&&": "0=current\n1=$linkno"},
       "Ask": {
 "> ": "ask",
-"$$": "$direction, $cacheno, &Query",
-"&&": "0=Ask &Query\n1=Ask &Query from $cacheno\n2=Ask &Query in $direction from $cacheno\nResponse can be quite long, just basic LLM query using long context from page.  "},
+"$$": "$cacheno, $direction, $strictness, &Query",
+"&&": "0=Ask &Query\n1=Ask &Query from $cacheno\n2=Ask &Query from $cacheno in $direction\n3=Ask &Query from $cacheno in $direction with $strictness\nResponse can be quite long, just basic LLM query using long context from page.  "},
       "Find": {
 "> ": "find", 
 "$$": "&Keyword", 
 "&&": "Find in page.."},
       "Search Web": {
 "> ": "search web", 
-"$$": "$engine, $cacheno, &keyword", 
-"&&": "0=Search web for &Keyword\n1=Search web $engine for &Keyword and read screen\n2=Search web $engine for &Keyword on $cacheno and read page"},
+"$$": "$cacheno, $engine, &keyword", 
+"&&": "0=Search web for &Keyword\n1=Search web with $engine for &Keyword\n2=Search web using $cacheno with $engine for &Keyword"},
       "List Tabs": {
 "> ": "list tabs", 
 "$$": "None", 
@@ -484,7 +485,8 @@ class hotkeys:
   
 
   def load_state(self):
-    #pick latest bookmark..
+    #pick latest bookmark.. 
+    #not used currently..
     self.select_bookmark()
 
   def save_state(self):
@@ -916,7 +918,7 @@ class hotkeys:
     logger.info(f'> Close Tab {sequence}')
     if (playwrighty.mybrowser is not None):
       if (len(sequence) > 0):
-        cacheno = sequence[-1]-self.keybot
+        cacheno = sequence[-1]-self.keybot - 1
       else:
         cacheno = playwrighty.current_cache
       if (cacheno < 0 or cacheno >= len(playwrighty.page_cache)):
@@ -948,9 +950,9 @@ class hotkeys:
     if (len(sequence) == 0):
       selected = 0
     if (len(sequence) > 0):
-      selected = sequence[0]-self.keybot
+      selected = sequence[-1]-self.keybot
     if (len(sequence) > 1):
-      cacheno = sequence[-1] -self.keybot
+      cacheno = sequence[0] -self.keybot - 1
 
     logger.info(f'> Select Bookmark {sequence}')
     #get bookmark at index selected
@@ -992,7 +994,7 @@ class hotkeys:
 
       logger.info(f'$$cacheno={cacheno}')
       logger.info(f'$$current={playwrighty.current_cache}')
-      page = playwrighty.get_ppage(cacheno)
+      page = playwrighty.get_ppage(cacheno, False) #dont activate.. we are closing sometimes..
       url = page.url
       total_read = 0
       total_read = playwrighty.update_page_offset(cacheno)
@@ -1398,8 +1400,8 @@ class hotkeys:
       engine = sequence[-1]-self.keybot
     #two = engine, cacheno
     if (len(sequence) > 1):
-      engine = sequence[-2]-self.keybot
-      cacheno = sequence[-1]-self.keybot-1
+      engine = sequence[-1]-self.keybot
+      cacheno = sequence[0]-self.keybot-1 
 
     
     from extensions.trey.trey import speak, pause_reader, resume_reader
@@ -1551,14 +1553,17 @@ class hotkeys:
       
     ]
 
-    input_llm = "<|input|>\n### Template:\n" + json.dumps(template, indent=4) + "\n"
-    input_llm += "### Example:\n" + json.dumps(examples, indent=4) + "\n"
+    input_llm = "###INSTRUCTIONS###\nWe will extract the relevant information from the provided context and query, "
+    input_llm += "and generate a relationship graph and respond with a structured and valid JSON output string based on the given template. "
+    input_llm += "Names of relationship type can be generated or inferred.  \n"
+    input_llm += "###JSON_SAMPLE###\n" + json.dumps(template, indent=4) + "\n"
+    input_llm += "###RESPONSE_SAMPLE###\n" + json.dumps(examples, indent=4) + "\n"
 
 
-    input_llm += "### Text:\n" 
+    input_llm += "###INPUT_TEXT###\n"
     input_llm += f"::CONTEXT:: \n\n{context}\n\n::QUERY:: {query}"
-    input_llm += "\n<|output|>\n"
-    answer = self.transcriber.ask_ollama(context=input_llm, model="numind/nuextract3:q6_k")
+    input_llm += "\n###JSON_OUTPUT###\n"
+    answer = self.transcriber.ask_graph(context=input_llm, strictness=6) #allow for external knowledge, but not too much.  We want to extract from the context primarily.
     return answer
 
 
@@ -1603,7 +1608,7 @@ class hotkeys:
 
         
     if (len(suggest) > 0):
-      suggest = self.generate_suggestions(suggest)
+      suggest = self.generate_suggestions(query, suggest)
       return suggest
 
   def ask(self, sequence=[]):
@@ -1658,7 +1663,7 @@ class hotkeys:
       #too slow..
       graphs = ""
 #      graphs = self.get_graphs(context, query)
-#      logger.info(f'$$GRAPHBYTES={len(graphs)}') #measuring time for now..
+      logger.info(f'$$GRAPHBYTES={len(graphs)}') #measuring time for now..
       vars = {"DIRECTION": direction, "URL": playwrighty.page_cache[cacheno]['page'].url, "(": start_offset, ")": end_offset, "QUERY": query}
       vars["GRAPHS"] = json.dumps(graphs)
       vars["ANSWER"] = answer
@@ -1890,7 +1895,7 @@ class hotkeys:
     from extensions.trey.trey import pause_reader
     cacheno = -1
     if (len(sequence) > 0):
-      cacheno = sequence[-1]-self.keybot
+      cacheno = sequence[-1]-self.keybot - 1
       logger.info(f'Selecting Tab with index {cacheno} of {len(playwrighty.page_cache)}')
       if (cacheno >= 0 and cacheno < len(playwrighty.page_cache)):
         from extensions.trey.trey import pause_reader, resume_reader, stop_audio
@@ -1906,14 +1911,14 @@ class hotkeys:
   def resume_reader(self, sequence=[]):
     logger.info(f'> Resume Reader {sequence}')
     from extensions.trey.trey import resume_reader
-    select_index = 0
+    cacheno = -1
     if (len(sequence) > 0):
-      select_index = self.mid-sequence[-1] #offset from middle C
-      logger.info(f'Selecting Tab with index {select_index} of {len(playwrighty.page_cache)}')
-      if (select_index >= 0 and select_index < len(playwrighty.page_cache)):
+      cacheno = sequence[-1]-self.keybot -1 #keybot..
+      logger.info(f'Selecting Tab with index {cacheno} of {len(playwrighty.page_cache)}')
+      if (cacheno >= 0 and cacheno < len(playwrighty.page_cache)):
         from extensions.trey.trey import pause_reader, resume_reader, stop_audio
 
-        resume_reader(select_index)
+        resume_reader(cacheno)
       else:
         resume_reader(playwrighty.current_cache)
     else:
@@ -1974,53 +1979,68 @@ class hotkeys:
   def read_screen(self, sequence=[]):
     logger.info(f'> Read Screen {sequence}')
     if (len(sequence) > 0):
-      #use PyQt to read screen.
-      buffer = None
-      if (self.qapp is None):
-        logger.error('No QApplication instance provided, cannot read screen.')
-        return 0
-      else:
-        screens = self.qapp.screens()
-        for i, s in enumerate(screens):
-            logger.info(f'Screen {i}: {s.name()} - Size: {s.size()}')
-            logger.info('Capturing Screen')
-
-            screenshot = s.grabWindow( 0 ) # 0 is the main window, you can specify another window id if needed
-            screenshot.save('shot' + str(i) + '.jpg', 'jpg')
-                # Convert QImage to bytes
-#            buffer = BytesIO()
-#            screenshot.save(buffer, "PNG") # Or other suitable format like "BMP"
-#            buffer.seek(0)
-
-
-      #call OCR function here.
-      #use last screen for now.
-      img = Image.open('shot' + str(i) + '.jpg')
-#      img = Image.open(buffer)
-      lines, links = self.ocr_image(img)
-      self.links = links
-      print(f'OCR found {len(lines)} lines and {len(links)} links')
-      #group by paragraph.
-      par = ""
-      all = ""
-      for i in range(len(lines)):
-        line = lines[i]['text']
-        if (i > 0 and lines[i]['par_num'] == lines[i-1]['par_num']):
-          par += "\n" + line
+      if (sequence[-1] == self.mid+1): #read screen command
+        #use PyQt to read screen.
+        buffer = None
+        if (self.qapp is None):
+          logger.error('No QApplication instance provided, cannot read screen.')
+          return 0
         else:
-          if (par != ""):
-            print("PAR: " + par)
-            #do something with paragraph here.  
-            all += par + "\n\n"
-          par = line
+          screens = self.qapp.screens()
+          for i, s in enumerate(screens):
+              logger.info(f'Screen {i}: {s.name()} - Size: {s.size()}')
+              logger.info('Capturing Screen')
 
-      if (par != ""):
-        print("PAR: " + par)
-        all += par + "\n\n"
+              screenshot = s.grabWindow( 0 ) # 0 is the main window, you can specify another window id if needed
+              screenshot.save('shot' + str(i) + '.jpg', 'jpg')
+                  # Convert QImage to bytes
+  #            buffer = BytesIO()
+  #            screenshot.save(buffer, "PNG") # Or other suitable format like "BMP"
+  #            buffer.seek(0)
 
-      self.speak(all)
-        
-      return 0
+
+        #call OCR function here.
+        #use last screen for now.
+        img = Image.open('shot' + str(i) + '.jpg')
+  #      img = Image.open(buffer)
+        lines, links = self.ocr_image(img)
+        self.links = links
+        print(f'OCR found {len(lines)} lines and {len(links)} links')
+        #group by paragraph.
+        par = ""
+        all = ""
+        for i in range(len(lines)):
+          line = lines[i]['text']
+          if (i > 0 and lines[i]['par_num'] == lines[i-1]['par_num']):
+            par += "\n" + line
+          else:
+            if (par != ""):
+              print("PAR: " + par)
+              #do something with paragraph here.  
+              all += par + "\n\n"
+            par = line
+
+        if (par != ""):
+          print("PAR: " + par)
+          all += par + "\n\n"
+
+        self.speak(all)
+          
+        return 0
+      elif (sequence[-1] == _META): #read screen command
+        #reset the playwrighty last10 to the time, and recycle browser pages..
+        #close browser and reopen..
+        playwrighty.close_browser()
+        time.sleep(2)
+        #reset the last10 to current time..
+        now = datetime.fromtimestamp(self.transcriber.timewindow.getTime())
+        st = datetime.fromtimestamp(self.transcriber.timewindow.getStartTime())
+        et = datetime.fromtimestamp(self.transcriber.timewindow.getEndTime())
+        allcmds = self.transcriber.read(self.name, st, et) #default 7 days
+
+        self.load_bookmarks2(allcmds)
+
+        playwrighty.open_browser()
     
     else:
       #start the browser if any params passed for now..  

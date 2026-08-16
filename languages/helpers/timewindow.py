@@ -23,7 +23,12 @@ class timewindow:
 
         #/60 interval: 1 min, 6 min, 24 min, ~3 hours, 12 hours, 36 hours, ~6 days, ~30 days, 6 months, 2 years
 
-    
+
+    def getStartTime(self):
+        return self.starttime
+    def getEndTime(self):
+        return self.endtime
+        
     def getTime(self, relativesecs=0):
         return self.currenttime + relativesecs
 
@@ -41,14 +46,28 @@ class timewindow:
         return self.currenttime
 
     def timeJump(self, jump=1): #relative to window size, so 0.1 is 10% of window size.
-        if (jump < -6):
-            jump = -6
-        if (jump > 6):
-            jump = 6
-        jumpindex = self.windowindex - 1
+        #quantize jump windows to predefined human friendly values.  jump in or out by going to next window size.
+        jumpval = -1
+        match jump:
+            case -6:
+                jumpindex = self.windowindex + 1            
+            case -5:
+                jumpindex = self.windowindex
+            case 0:
+                jumpindex = self.windowindex - 1
+            case 5:
+                jumpindex = self.windowindex
+                jumpval = 1
+            case 6:
+                jumpindex = self.windowindex + 1
+                jumpval = 1
+            case _:
+                jumpindex = self.windowindex - 1
+                jumpval = jump
+            
         if (jumpindex < 0):
             jumpindex = 0
-        newtime = self.currenttime + jump*self.windows[jumpindex]
+        newtime = self.currenttime + jumpval*self.windows[jumpindex]
         logger.info(f"Time Jump: {jump} Window: {self.window} New Time: {newtime}")
         self.setTime(newtime)
         return newtime

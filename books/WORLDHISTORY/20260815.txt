@@ -1,0 +1,15 @@
+#JEFFERSON/DECLARATION_OF_INDEPENDENCE | https://www.gutenberg.org/cache/epub/1/pg1-images.html
+We hold these truths to be self-evident, that all men are created equal, that they are endowed by their Creator 
+with certain unalienable Rights, that among these are Life, Liberty, and the pursuit of Happiness. 
+That to secure these rights, Governments are instituted among Men, deriving their just powers from the consent of the governed, 
+That whenever any Form of Government becomes destructive of these ends, it is the Right of the People to alter or to abolish it, 
+and to institute new Government, laying its foundation on such principles and organizing its powers in such form, 
+as to them shall seem most likely to effect their Safety and Happiness. 
+
+#MARCUS_AURELIUS/MEDITATIONS | https://www.gutenberg.org/cache/epub/2680/pg2680-images.html
+
+#EPIC_OF_GILGAMESH | https://www.gutenberg.org/cache/epub/18897/pg18897-images.html
+#RIGVEDA_AMERICANUS | https://www.gutenberg.org/files/14993/14993-h/14993-h.htm
+#PTAHHOTEP/INSTRUCTION_OF_PTAHHOTEP | https://www.gutenberg.org/files/30508/30508-h/30508-h.htm
+
+#KING_JAMES/BIBLE | https://www.gutenberg.org/cache/epub/10/pg10-images.html

@@ -629,3 +629,123 @@ Question is whether to take the code or just not spend the time to understand it
 > git submodule add https://github.com/robert-mcdermott/ai-knowledge-graph
 
 > git subtree add --prefix=generate/kg https://github.com/robert-mcdermott/ai-knowledge-graph.git main --squash
+
+
+**generate/kg/config.toml
+model = "gemma3:4b"
+
+>#2 cd c:/devinpiano/music
+>#2 .\treyenv\Scripts\Activate.ps1
+>#2 python ./generate/kg/generate-graph.py --input ./book/20260717.txt --output ./output/testkg/0.html --config ./generate/kg/config.toml --debug
+;--no-standardize, --no-inference
+
+>#2 pip install pyvis
+>#2 pip install tomli
+
+
+Umm.. not exactly..
+
+>#2 python ./generate/kg/generate-graph.py --input ./book/20260605.txt --output ./output/testkg/1.html --config ./generate/kg/config.toml --debug
+
+>#2 python ./generate/kg/generate-graph.py --input ./book/20260814.txt --output ./output/testkg/2.html --config ./generate/kg/config.toml --debug
+
+**generate/kg/src/knowledge_graph/entity_standardization.py:54
+==
+#https://github.com/robert-mcdermott/ai-knowledge-graph/src/knowledge_graph/entity_standardization.py:54
+        if isinstance(triple, dict) and "subject" in triple and "predicate" in triple and "object" in triple and triple["subject"] and triple["object"]:
+$$
+
+I think this is not what I want, but kind of interesting..
+
+Need to do entity extraction first I think..
+
+**languages/spacy/test.py
+also not great..
+
+How to intelligently extract entities and relationships..
+LLM may be easiest way..
+
+**extensions/trey/playwrighty.py
+Need some sort of indicator for active state.  
+Maybe on main display, yeah probably..
+
+Need to be able to set transparency of portions of window..
+See if easily done..
+ui->label_1->setStyleSheet("background-color: rgba(255, 0, 0, 50);");
+
+When to do?  
+
+
+> git subtree add --prefix=generate/kg https://github.com/robert-mcdermott/ai-knowledge-graph.git main --squash
+;> git rm -r generate/kg
+Check the code and get the useful bits..maybe..
+
+
+**languages/hotkeys.py
+--load_bookmarks2
+**languages/book.py
+--load_book_links
+
+After Time jumping, need to reset these lists?  
+Dont change topics or book index but show in listing whether they are future/past..
+
+test..
+--read_screen
+[48] = reaload to current time..
+
+--select_book
+[50,48,48,50,50]
+reset links to current time window..
+Show links in trey based on current time, future/past..
+But allow for resetting separately..
+test..
+
+
+
+Selection needs to be consistent..
+maybe ok..
+book
+;> Select Topic, Book (index saved, mid)
+;> Read Link (index saved, mid)
+;> Show Book (_current_book, reset to time)
+_meta
+;> Time Jump, Zoom (mid/2)
+hotkeys
+cacheno is first key 1-based..
+;> Go Back (0=cache), Click Link (0=linkno keybot)
+;> ask (0=cache)
+;> Search Web (keybot, 0=cache 1-based, -1=engine)
+;> Pause (keybot, 0=cache)
+;> Unpause (keybot, 0=cache)
+
+
+**extensions/trey/trey.py
+--joystick_loop
+**languages/hotkeys.py
+--handle_joystick
+Need better detection. 
+Get too much unintended action by bumping controller or table..
+ pygame.time.get_ticks()
+
+**languages/helpers/transcriber.py
+--read_existing
+--filter_books_recursive
+--get_all_of_type
+Why are we not getting the last link in 
+Well, still not exactly..
+But closer..
+
+
+**languages/helpers/test/ner.py
+
+#https://github.com/nltk/nltk
+
+
+Try one of these..
+#https://github.com/thunlp/opennre
+
+#https://github.com/Babelscape/rebel
+
+
+> git rm -rf generate/kg
+> git subtree add --prefix=generate/kg https://github.com/robert-mcdermott/ai-knowledge-graph.git main --squash

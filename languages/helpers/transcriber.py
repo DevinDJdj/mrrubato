@@ -64,6 +64,7 @@ class transcriber:
         self.timeshift = 0
 
         self.chatmessages = []
+        self.graphmessages = []
 
         self.kg_ignorevars = ['TIME', 'WINDOW', 'START', 'END', 'FNAME', 'FILE', 'DURATION', 'LAG'] #vars to ignore in display of info, used for time window commands.
 
@@ -327,7 +328,8 @@ class transcriber:
 
         self.allcmds[lang]['start_idx'] = start_idx
         self.allcmds[lang]['end_idx'] = end_idx
-        return self.allcmds[lang]['&&'][start_idx:end_idx]
+
+        return self.allcmds[lang]['&&'][start_idx:end_idx+1] #add +1 here to get all values..
 
     def search_midi(self, midiarray, current_time):
         #search for similar key structures
@@ -980,7 +982,7 @@ class transcriber:
             return ret
         for s in array.values():
             if (s['&&'] is not None and s['('] != s[')']):
-                ret.extend(s['&&'][s['(']:s[')']]) #get cmds for this struct, which should already be filtered by time in read_existing, so we can just get the cmds between start_idx and end_idx.  could also add topic filtering here if needed, but for now just get all cmds.
+                ret.extend(s['&&'][s['(']:s[')']+1]) #get cmds for this struct, which should already be filtered by time in read_existing, so we can just get the cmds between start_idx and end_idx.  could also add topic filtering here if needed, but for now just get all cmds.
 
         ret.sort(key=lambda x: x['timestamp']) #sort by timestamp 
         return ret
@@ -1086,7 +1088,7 @@ class transcriber:
                 retstruct['&&'] = searchbooks['&&'] #get cmds for this struct
                 #dont update searchbooks['&&'], just set the start_idx and end_idx for filtering, this way we can keep the original cmds in searchbooks for reference and just use the start_idx and end_idx to filter by time when we get the chromatic cmds later.  this will also allow us to handle cases where we have a book in the file system but not in our allbooks struct for some reason, this way we can still get the cmds for that book if it exists, and if not we just return an empty struct for it.
                 retstruct['('] = self.allcmds[searchbooks['**']]['start_idx']
-                retstruct[')'] = self.allcmds[searchbooks['**']]['end_idx']+1
+                retstruct[')'] = self.allcmds[searchbooks['**']]['end_idx']
                 retstruct['..'] = self.allcmds[searchbooks['**']]['last_mtime'] #last modified..
 
             
@@ -1096,7 +1098,10 @@ class transcriber:
         ret = []
         for v in myarray:
             if (v['&&'] is not None):
-                cmds = v['&&'][v['(']:v[')']]
+                e = v[')']
+                if (e == len(v['&&'])-1):
+                    e += 1
+                cmds = v['&&'][v['(']:e]
                 for cmd in cmds:
                     if cmd['_'] == type:
                         ret.append(cmd)
@@ -1209,7 +1214,7 @@ class transcriber:
 
         vars = {}
         topc = None
-        last_time = start_time.timestamp()
+        prev_time = start_time.timestamp()
         mtime = None
         last_mtime = None
         total_size = 0
@@ -1221,12 +1226,20 @@ class transcriber:
                 if (self.is_yyyymmdd(f['name'][:8])):
                     mtime = time.mktime(datetime.strptime(f['name'][:8], '%Y%m%d').timetuple())
 #                    mtime += 86400 #add one day to end of day for better sorting
+                    if (prev_time < mtime):
+                        prev_time = mtime
+                    mtime = f['mtime']
+                    if (mtime > prev_time + 86400*30):
+                        mtime = prev_time + 86400*30 #limit to 30 days
+                    elif (mtime < prev_time):
+                        mtime = prev_time + 86400 #limit to start of day
                 else:
                     mtime = f['mtime']
 
                 last_mtime = mtime
-                if (mtime < last_time):
-                    last_time = mtime - 86400 #set to start of day if we have data issue..
+                if (mtime < prev_time):
+                    prev_time = mtime - 86400 #set to start of day if we have data issue..
+                
                 total_size += f['size']
                 try:
                     with open(f['path'], encoding='utf-8') as ff:
@@ -1235,14 +1248,14 @@ class transcriber:
                             continue
 
                         self.current_topic = f['name'][:-4] #file name without extension
-                        test = self.read_lines(lang, lines, last_time, mtime)
+                        test = self.read_lines(lang, lines, prev_time, mtime)
                         ret.extend(test) 
                         logger.info(f"{f['name']} loaded with {len(test)} commands")
 #                        logger.info(test)
                 except Exception as e:
                     logger.error(f'!!> Read [{f["path"]}]\n !!{e}\n')
 
-                last_time = mtime
+                prev_time = mtime
                 numloaded += 1
 
         ret.sort(key=lambda x: x['timestamp']) #sort by timestamp just in case.
@@ -1333,6 +1346,30 @@ class transcriber:
             return ""
 
 
+    def ask_graph(self, context="", model="gemma3:4b", strictness=-1): #gemma4:e4b too slow..
+        from ollama import Client
+        client = Client(host='http://localhost:11434', timeout=120.0)
+
+        messages = [
+            {"role": "system", "content": f"Creating one or multiple relationship graphs in JSON from the text provided. Only responding with an array of structured JSON objects."},
+            {"role": "system", "content": f"Extracting only significant entities and relationships, and providing a valid JSON structure for visualization."},
+            ]
+        if strictness > 0:
+            messages.append({"role": "system", "content": f"Use of external knowledge on a scale of 0 to 10: {strictness}"})
+#        if (len(self.chatmessages)) > 1:
+#            messages.append(self.chatmessages[-2])
+#            messages.append(self.chatmessages[-1])  # Use the last conversation context
+
+
+        messages.append({"role": "user", "content": f"{context}"})
+        self.graphmessages.append({"role": "user", "content": f"{context}"})
+        
+        
+        response = client.generate(prompt=context, model=model)
+        self.graphmessages.append(response["message"])
+
+        return response["message"]["content"]
+    
     def ask_ollama(self, context="", model="gemma3:4b", strictness=-1): #gemma4:e4b too slow..
         from ollama import Client
 

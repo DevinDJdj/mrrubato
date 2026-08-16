@@ -556,6 +556,7 @@ export function startWatchingTranscriber(lang: string, transcriptFolder: string 
                             if (cmd.cmd === "Ask"){
                                 let input = "";
                                 let output = "";
+                                let context = "";
                                 if (cmd.vars && cmd.vars['QUERY']){
                                     input = cmd.vars['QUERY'] + '\n';
                                 }
@@ -563,7 +564,13 @@ export function startWatchingTranscriber(lang: string, transcriptFolder: string 
                                     output = cmd.vars['ANSWER'] + '\n';
                                     output = output.replace(/\t/g, '\n');
                                 }
-                                Book.updatePage(Book.getBookPath() + "/" + file, "@@" + input + "\n==\n" + output + "\n$$\n", -1, -1); //append to end of file.
+                                if (cmd.vars && cmd.vars['URL']){
+                                    context = cmd.vars['URL'];
+                                }
+                                if (cmd.vars && cmd.vars[')']){
+                                    context += ":" + cmd.vars[')'];
+                                }
+                                Book.updatePage(Book.getBookPath() + "/" + file, "#" + context + "\n@@" + input + "\n==\n" + output + "\n$$\n", -1, -1); //append to end of file.
                             }
 
                             if (cmd.cmd === "Comment"){
