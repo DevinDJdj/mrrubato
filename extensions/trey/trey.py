@@ -934,6 +934,9 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
         print(f'Line: {l}')
 #        print(f'Total Lines: {len(lines)}')
         print(f'Current IDX: {idx}')
+        if (idx < 0):
+            idx = 0
+            print("Why IDX less 0")
 #        print(f'Skipping: {skip}')
         print(f'Line offset: {link_density_map[idx]["offset"]}')
         total_read = link_density_map[idx]['offset']
@@ -1739,7 +1742,32 @@ class MyWindow(QMainWindow):
     def get_setting(self, key, default=None, lang='_meta'):
         """Get a setting from the custom settings."""
         return config.custom_settings.get(lang+"_"+key, default)
-    
+
+
+    def update_graph_entities(self, graphs, entities, main_entity, topic):
+        if (len(graphs) > 0): #actually just relationship triples..
+            try:
+                graphs = json.loads(graphs)
+                #why this is in array not sure..
+                kg = self.make_kg(graphs, topic=topic) #pass topic and perhaps other..
+                if (kg):
+                    self.visualize_kg(kg, main_entity if main_entity else topic)
+            except Exception as e:
+                logger.error(f'!!Error parsing graphs: {e}')
+                logger.error(f'!!Graphs data: {graphs}')
+        if (len(entities) > 0):
+            try:
+            #add to transparent
+                entities = json.loads(entities)
+                for i, ent in enumerate(entities):
+                    #this is transient based on state..
+                    if (i > 24):
+                        break
+                    self.label_filter_info[i].setText('(' + ent['label'][:3] + ') ' + ent['text'])
+            except Exception as e:
+                logger.error(f'!!Error parsing entities: {e}')
+                logger.error(f'!!ENTITIES: {entities}')
+
     def executeQRCommand(self, command, vars, lang='hotkeys'):
         #use transcriber here??
         """Execute a QR command based on the parsed data."""
@@ -1750,23 +1778,23 @@ class MyWindow(QMainWindow):
         rect = win32gui.GetWindowRect(temp)
         lagtime = float(vars.get('timestamp', time.time()))
         match command:
+            case "graph":
+                graphs = vars.get('GRAPHS', '')
+                main_entity = vars.get('ENTITY', '')
+                entities = vars.get('ENTITIES', '')
+                logger.info(f'> graph\n==\n{graphs}')
+                self.update_graph_entities(graphs, entities, main_entity, vars.get('**', self.transcriber.current_topic))
             case "ask":
                 logger.info('Received ask command')
                 answer = vars.get('ANSWER', '')
                 answer = answer.replace('\t', '\n') #for now just do here..
                 graphs = vars.get('GRAPHS', '')
-                logger.info(f'> ask\n==\n{answer}\n==\n{graphs}')
-                #create knowledge graph
-                if (len(graphs) > 10):
-                    try:
-                        graphs = json.loads(json.loads(graphs))
-                        kgs = self.make_kg(graphs)
-                        if (len(kgs) > 0):
-                            self.visualize_kg(kgs[0], topic=vars.get('TOPIC', self.transcriber.current_topic))
-                    except Exception as e:
-                        logger.error(f'!!Error parsing graphs: {e}')
-                        logger.error(f'!!Graphs data: {graphs}')
+                main_entity = vars.get('ENTITY', '')
+                entities = vars.get('ENTITIES', '')
 
+                logger.info(f'> ask\n==\n{answer}\n==\n{graphs}')
+                self.update_graph_entities(graphs, entities, main_entity, vars.get('**', self.transcriber.current_topic))
+                #create knowledge graph
             case "OK":
                 #testing
                 logger.info('Received OK command, showing QR code with current settings')
@@ -2593,6 +2621,7 @@ class MyWindow(QMainWindow):
         self.label_p.move(0, self.geo.height() - pwidth)
         self.label_p.setFixedHeight(pwidth)
         self.label_p.setFixedWidth(pwidth)
+        self.label_p.setWordWrap(True)
 #        self.label_p.setTextFormat(Qt.PlainText)
 #        self.label_p.setStyleSheet("background-image: url(path/to/your/image.png); border: 2px solid blue;")
 
@@ -2811,30 +2840,31 @@ class MyWindow(QMainWindow):
         self.send_window_info()
         self.updateLabels(self.windows) #gives info for all windows
 
-    def make_kg(self, graphs):
-        kgs = []
-        if not graphs:
-            return []
-        if not isinstance(graphs, list):
-            graphs = [graphs]
-        logger.info(f'{graphs}')
-        if (isinstance(graphs, list)):
-            for graph in graphs:
-                if ('name' not in graph):
-                    logger.info(f'--make_kg\n!!-name\n{graph}')
-                    return []
-                kg = nx.Graph(name=graph['name'])
-                if ('entities' not in graph):
-                    logger.info(f'--make_kg\n!!-entities\n{graph}')
-                    return []
-                for entity in graph['entities']:
-                    kg.add_node(entity['name'])
-                    for related_entity in entity['relationships']:
-                        kg.add_edge(entity['name'], related_entity['name'], type=related_entity['type'])
+    def make_kg(self, graph, topic=""):
+        if (topic == ""):
+            topic = self.transcriber.current_topic
+        if not graph:
+            return None
+        if not isinstance(graph, list):
+            return None
+        logger.info(f'{graph}')
+        if (isinstance(graph, list)):
+            kg = nx.Graph(name=topic)
+            for rel in graph:
+                if ('head' not in rel or 'tail' not in rel or 'relation' not in rel or 'score' not in rel):
+                    logger.info(f'!!--make_kg\n{rel}')
+                    continue
+                s = rel['head']['text']
+                o = rel['tail']['text']
+                r = rel['relation']                
+                score = rel['score']
 
-                kgs.append(kg)
-        return kgs
+                kg.add_node(s)
+                kg.add_node(o)
+                kg.add_edge(s, o, type=r)
+        return kg
     
+
     def visualize_kg(self, kg, topic="ALL"):
         #dpi 96 assume..
         #why we cant pass in pixels?  
@@ -2842,12 +2872,14 @@ class MyWindow(QMainWindow):
         height_inches = self.geo.height() / 96
 
         if (topic == "ALL" or topic not in kg):
-            fname = "kg_rand.png"
+            node1 = list(kg.nodes())[random.randint(0, len(kg.nodes())-1)]
+            logger.info(node1)
+            fname = f"./temp/kg/{node1}.png"
             logger.info(f'Topic {topic} not found in KG, visualizing entire graph with {len(kg.nodes())} nodes and {len(kg.edges())} edges')
-            subgraph = nx.ego_graph(kg, list(kg.nodes())[random.randint(0, len(kg.nodes())-1)], radius=1) #get subgraph around first node with radius 1, can adjust as needed.
+            subgraph = nx.ego_graph(kg, node1, radius=3) #get subgraph around first node with radius 1, can adjust as needed.
         else:
-            fname = f"./temp/{topic}.png"
-            subgraph = nx.ego_graph(kg,topic, radius=1) #get subgraph around topic with radius 2, can adjust as needed.
+            fname = f"./temp/kg/{topic}.png"
+            subgraph = nx.ego_graph(kg,topic, radius=3) #get subgraph around topic with radius 2, can adjust as needed.
         logger.info(f'--{fname}')
         if (os.path.exists(fname) and os.path.getmtime(fname) > time.time() - 86400): #if file exists and is less than 1 day old, use it instead of regenerating
             self.play_video(fname) #for now just use video player to show image, can adjust later for better performance if needed.
@@ -2864,7 +2896,14 @@ class MyWindow(QMainWindow):
         plt.rc('text', usetex=False) # Ensure global setting is False
         fig, ax = plt.subplots(figsize=(width_inches, height_inches), dpi=96)
 #        nx.draw(subgraph, with_labels=True)
+        # 2. Compute layout positions
+        pos = nx.spring_layout(subgraph)
+
         nx.draw(subgraph, with_labels=True, node_color='skyblue', node_size=500, edge_color='gray', font_size=10)
+
+        # 4. Extract and draw the relationship labels
+        edge_labels = nx.get_edge_attributes(subgraph, "relation")
+        nx.draw_networkx_edge_labels(subgraph, pos, edge_labels=edge_labels)        
 
 #        graph_text = nx.write_network_text(subgraph, sources=[topic])
 #        ax.text(0.5, 0.01, graph_text, transform=ax.transAxes, fontsize=8, verticalalignment='bottom', horizontalalignment='center', wrap=True)
@@ -3483,7 +3522,7 @@ class MyWindow(QMainWindow):
                 j = 0
                 for i in range(0, len(lines), 1):
                     textlen += len(lines[i])
-                    if (textlen > 2400): #~ 80*40 - white space..
+                    if (textlen > 1600): #~ 80*40 - white space..
                         j+=1
                         div[j] = i
                         textlen = 0

@@ -743,9 +743,108 @@ But closer..
 
 Try one of these..
 #https://github.com/thunlp/opennre
+> git rm -rf generate/kg
+> git subtree add --prefix=languages/helpers/nre https://github.com/thunlp/OpenNRE.git master --squash
+> git rm -rf languages/helpers/nre
+
+> pip install -r languages/helpers/nre/requirements.txt
+!!too old..
 
 #https://github.com/Babelscape/rebel
+!!        raise ValueError("`return_text` is mutually exclusive with `return_tensors`")
+!!ValueError: `return_text` is mutually exclusive with `return_tensors`
+!!extracted_text = triplet_extractor.tokenizer.batch_decode([triplet_extractor("Punta Cana is a resort town in the municipality of Higuey, in La Altagracia Province, the eastern most province of the Dominican Republic", return_tensors=True, return_text=False)[0]["generated_token_ids"]])
+==
+??
+$$
 
 
-> git rm -rf generate/kg
-> git subtree add --prefix=generate/kg https://github.com/robert-mcdermott/ai-knowledge-graph.git main --squash
+#https://huggingface.co/skv03/ner-span-glirel
+> pip install glirel
+2kb context..
+
+nlp = spacy.load("en_core_web_sm")
+nlp.add_pipe("glirel", after="ner")
+
+!!TypeError: GLiREL._from_pretrained() missing 2 required keyword-only arguments: 'proxies' and 'resume_download'
+==
+site-packages/glirel/model.py
+-        proxies: Optional[Dict],
+-        resume_download: bool,
++        proxies: Optional[Dict] = None,
++        resume_download: bool = None,
+
+$$
+
+
+!!RuntimeError: Error(s) in loading state_dict for GLiREL:
+!!        size mismatch for token_rep_layer.bert_layer.model.embeddings.word_embeddings.weight: copying a param with shape torch.Size([128008, 1024]) from checkpoint, the shape in current model is torch.Size([128005, 1024]).
+==
+> pip install gliner -U
+
+> hf download hf://knowledgator/gliner-relex-large-v1.0/model.safetensors
+HuggingFace bugs..
+Manual download..
+C:\Users\devin\.cache\huggingface\hub\models--knowledgator--gliner-relex-large-v1.0\snapshots\4aedc9226a5ac9e2f6b5ea3e91c1ee577c88a290
+
+$$
+
+
+No fixed labels.  
+2kb context enough for now..
+Just use last 2kb of text when called..
+Use relationships to generate graph..
+
+
+Determine relationship labels we want, and utilize those before visualizing..
+**config.json
+--kg
+
+Load entity and relationship labels at startup in config..
+Eventally this should be dynamically generated..
+
+
+**languages/hotkeys.py
+--get_graphs2
+test..
+People, Location, Events..
+
+Keep array of all the entities.  
+Select Entity Type, and then entity.. 
+Then this drills.  
+Long press perhaps or start/stop zoom..
+Also visualization control, swapping between.  
+Add and subtract Entities from KG as we go.  
+If entities are mentioned in ask or selected..  
+Find entities, then follow between them..
+
+For now limit to 20 for selection purposes..
+Same index follow selection mechanism.  
+
+Approx 10s for 2kb query with graph model..
+
+Hmm..
+model still not great, but workflow is there..
+Need to kick off in thread so we get text response immediately.
+Most graphs not very useful so far..
+Maybe get from Answer instead of context..
+Still dont relationship graph result result, but somewhat better..
+
+Need to deduplicate.  
+
+;> Fill context
+pull all context from page prior N% or all..
+Generate all entities and relationships..
+
+OK, have basic entities.  
+~ 8k = 100 entities..
+So 1000 entities for 50 pages..
+Need sorting mechanism..
+Selection brings up full KG of selected topic..
+Which resets the entities selection..
+
+Are we getting offsets right..
+For each entity, generate running summary..
+Keep global entity_counts..
+
+

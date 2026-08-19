@@ -26,7 +26,7 @@ from rapidfuzz.process import cdist
 from rapidfuzz import fuzz
 import numpy as np
 
-
+from collections import Counter
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +42,7 @@ class hotkeys:
     self.func = None
     self.cmd = None
     self.qr = "" #info for QR message
+    self.qr_queue = None
 
     self.geo = None
     self.name = "hotkeys"
@@ -65,7 +66,8 @@ class hotkeys:
     self.tofindhistory = []
     self.now = datetime.now()
     self.feedbacknowstr = self.now.strftime("%Y%m%d_%H%M%S")
-
+    self.entities = []
+    self.relations = []
     self.funcdict = {}
     self.suggestions = []
     self.joystate = {}
@@ -96,12 +98,13 @@ class hotkeys:
 
     return 0
   
-  def load(self, transcriber=None):
+  def load(self, transcriber=None, qr_queue = None):
     #load language specific data
      #config overrides load_data by default.  
     if (transcriber is not None):
       self.transcriber = transcriber
-
+    if (qr_queue is not None):
+      self.qr_queue = qr_queue
     if hasattr(self, 'load_data'):
       self.load_data()
     else:
@@ -356,7 +359,7 @@ class hotkeys:
       "Read Screen": {
 "> ": "read screen", 
 "$$": "$cacheno", 
-"&&": "0=take screenshot, OCR, read\n1=read browser tab"},
+"&&": "0=read browser tab\n1=take screenshot, OCR, read"},
       "Skip Lines": {
 "> ": "skip lines", 
 "$$": "$N*3", 
@@ -812,7 +815,7 @@ class hotkeys:
             tv = v
         self.qr += f"$${k}={tv}\n"
     self.qr += "$$\n"
-    return 0  
+    return 0
   
   def comment_(self, sequence=[]):
     if (len(sequence) == 1):
@@ -1566,6 +1569,160 @@ class hotkeys:
     answer = self.transcriber.ask_graph(context=input_llm, strictness=6) #allow for external knowledge, but not too much.  We want to extract from the context primarily.
     return answer
 
+  def dedup(self, mylist, isentities=False, threshold = 80):
+    from rapidfuzz import fuzz, process
+    #deduplicate based on names..
+    stringmap = {}
+    all = []
+    if (isentities):
+      for e in mylist:
+        t = e['text']
+        alt = ''
+        match = process.extractOne(t, all, scorer=fuzz.ratio)
+        if (not match or match[1] < threshold):
+          stringmap[t] = {'cnt': 0, 'alt': ''}
+          all.append(t)
+        else:
+          stringmap[ match[0]]['alt'] = t
+
+      logger.info(stringmap)
+      for name, obj in stringmap.items():
+        #replace all with alt.  
+        alt = obj['alt']
+        if (alt !=''):
+          for e in mylist:
+            if (e['text'] == alt):
+              e['text'] = name
+    else:
+      for r in mylist:
+        h = r['head']['text']
+        t = r['tail']['text']
+        alt = ''
+        match = process.extractOne(h, all, scorer=fuzz.ratio)
+        if (not match or match[1] < threshold):
+          stringmap[h] = {'cnt': 0, 'alt': ''}
+          all.append(h)
+        else:
+          stringmap[ match[0]]['alt'] = h
+        alt = ''
+        match = process.extractOne(t, all, scorer=fuzz.ratio)
+        if (not match or match[1] < threshold):
+          stringmap[t] = {'cnt': 0, 'alt': ''}      
+          all.append(t)
+        else:
+          stringmap[ match[0] ]['alt'] = t
+        
+      logger.info(stringmap)
+      for name, obj in stringmap.items():
+        #replace all with alt.  
+        alt = obj['alt']
+        if (alt !=''):
+          for r in mylist:
+            if (r['head']['text'] == alt):
+              r['head']['text'] = name
+            if (r['tail']['text'] == alt):
+              r['tail']['text'] = name
+
+      
+  def get_graphs2(self, context, loc, query, answer, vars, qr_queue=None, reader_queue=None):
+    from gliner import GLiNER
+    myloc = loc
+    context = context[-8192:]  # only keep the last 8kb of context
+    model_path = self.config['kg']['model_path']
+    entity_labels = self.config['kg']['entity_labels']
+    relation_labels = self.config['kg']['relation_labels']
+    lag = time.time()
+    if not hasattr(self, 'model') or self.model is None:
+        self.model = GLiNER.from_pretrained(model_path, local_files_only=True)
+    model = self.model #keep for next call.  
+    subcontexts = [context[i : i + 2048] for i in range(0, len(context), 2048)]
+#    self.relations = [] #dont reset for now..just add..
+#    self.entities = []
+    allentities = []
+    allrelations = []
+    for (j, subcontext) in enumerate(subcontexts):
+        # subcontext is already defined in the loop, no need to redefine it
+        entities, relations = model.inference(
+            texts=[subcontext],
+            labels=entity_labels,
+            relations=relation_labels,
+            threshold=0.3,
+            adjacency_threshold=0.4,
+            relation_threshold=0.6, #too few relations at the moment..
+            return_relations=True,
+            flat_ner=False
+        )
+        logger.info(entities)
+        logger.info(relations)
+        for e in entities[0]:
+          e['start'] -= len(context) + j*2048
+          e['start'] += loc
+        for r in relations[0]:
+          r['head']['start'] -= len(context) + j*2048
+          r['tail']['start'] -= len(context) + j*2048
+          r['head']['start'] += loc
+          r['tail']['start'] += loc
+        allentities.extend(entities[0])
+        allrelations.extend(relations[0])
+
+    subanswers = [answer[i : i + 2048] for i in range(0, len(answer), 2048)]
+    for (k, subanswer) in enumerate(subanswers):
+        # subcontext is already defined in the loop, no need to redefine it
+        entities, relations = model.inference(
+            texts=[subcontext],
+            labels=entity_labels,
+            relations=relation_labels,
+            threshold=0.3,
+            adjacency_threshold=0.4,
+            relation_threshold=0.6, #too few relations at the moment..
+            return_relations=True,
+            flat_ner=False
+        )
+        logger.info(entities)
+        logger.info(relations)
+        for e in entities[0]:
+          e['start'] = -1 #temporary entity..
+        for r in relations[0]:
+          r['head']['start'] = -1
+          r['tail']['start'] = -1
+        allentities.extend(entities[0])
+        allrelations.extend(relations[0])
+
+
+    #try to deduplicate..
+    logger.info(f'$$NUMRELATIONS={len(allrelations)}') #measuring time for now..
+    logger.info(f'$$NUMENTITIES={len(allentities)}')
+    logger.info(f'> Dedup')
+    self.dedup(allrelations)
+    self.dedup(allentities, True)
+
+    self.entities.extend(allentities)
+    self.relations.extend(allrelations)
+    self.dedup(self.relations)
+    self.dedup(self.entities, True)
+
+    #set qr info..
+    vars["GRAPHS"] = json.dumps(allrelations)
+    vars["ENTITIES"] = json.dumps(allentities)
+    logger.info(f'$$NUMRELATIONS={len(allrelations)}') #measuring time for now..
+    logger.info(f'{allrelations}')
+    logger.info(f'$$NUMENTITIES={len(allentities)}')
+    entity_counts = Counter(e['head']['text'] for e in allrelations)
+    #find central entity.  Create map of counts..
+    max_key = max(entity_counts, key=entity_counts.get)
+    vars["ENTITY"] = max_key
+
+    if (qr_queue is not None):
+      self.set_qr("graph", vars) #do again to load graph..
+      qr = "<<" + self.name + ">>\n"
+      qr += self.qr + "\n"
+      qr_queue.put(qr)
+      self.qr = ""
+
+    logger.info(f'!!LAG {time.time() - lag}')
+
+    return allentities, allrelations
+    
 
   def generate_suggestions(self, query, suggest):
     #for now single replacement, but eventually could do combinations.  
@@ -1638,6 +1795,7 @@ class hotkeys:
 
     #for now just query ollama?  better if we have vectra or qdrantz..
     url = playwrighty.page_cache[cacheno]['page'].url
+    title = playwrighty.page_cache[cacheno]['title']
     offset = playwrighty.page_cache[cacheno]['current_offset'][url]
 
     context_length = 100000 #for example..
@@ -1657,34 +1815,47 @@ class hotkeys:
     pause_reader()
     try:
       logger.info(f'$$QUERY={query}')
-      synth.play_synth([53,55,52]) #play failed sequence
+      synth.play_synth([53+12,55+12,52+12]) #
       answer = self.transcriber.ask_ollama(context=f"::CONTEXT:: \n\n{context}\n\n::QUERY:: {query}", model="gemma3:4b", strictness=strictness)
-      logger.info(f'$$ANSWER={answer}')
+      logger.info(f'$$:={len(answer)}\n$$ANSWER={answer}')
+      self.speak(f'{answer}', total_read=1)
+      delay = len(answer) /14 #estimate 14 chars per second for just reading speed
+      t = threading.Timer(delay, resume_reader)
+      t.start()  # Start the timer in a new thread
       #too slow..
+      vars = {"DIRECTION": direction, "URL": playwrighty.page_cache[cacheno]['page'].url, "(": start_offset, ")": end_offset, "QUERY": query}
+      vars["ANSWER"] = answer
+      vars["**"] = title
+      vars[":"] = end_offset
+      self.transcriber.write(self.name, "Ask", vars, save=True) #save for book..
+      self.func = "ask"
+      if (self.qr_queue is not None):
+        self.set_qr(self.func, vars) #answer quickly before loading graph..
+        qr = "<<" + self.name + ">>\n"
+        qr += self.qr + "\n"
+        self.qr_queue.put(qr)
+        self.qr = ""
+
+
       graphs = ""
 #      graphs = self.get_graphs(context, query)
-      logger.info(f'$$GRAPHBYTES={len(graphs)}') #measuring time for now..
-      vars = {"DIRECTION": direction, "URL": playwrighty.page_cache[cacheno]['page'].url, "(": start_offset, ")": end_offset, "QUERY": query}
-      vars["GRAPHS"] = json.dumps(graphs)
-      vars["ANSWER"] = answer
-      self.transcriber.write(self.name, "Ask", vars, save=True) #save for book..
+      #start thread for this.  
+#      self.graph_thread = threading.Thread(target=self.get_graphs2, args=(context, query, self.qr_queue))
+#      self.graph_thread.start()
+#      self.get_graphs2(context, query, vars) #ad to vars..
+      self.get_graphs2(context, end_offset, query,answer, vars)
 
 
-      self.func = "ask"
-      self.set_qr(self.func, vars)
+      self.set_qr(self.func, vars) #do again to load graph..
+
       #for now just pause reader
     except Exception as e:
       logger.error(f'!!ask\n{e}')
       answer = "Sorry, I could not process your question."
       self.speak(answer)
       return -1
-    self.speak(f'{answer}', total_read=1)
-    delay = len(answer) /14 #estimate 14 chars per second for just reading speed
-    t = threading.Timer(delay, resume_reader)
-    t.start()  # Start the timer in a new thread
 
     return 0
-
 
 
   def find(self, sequence=[]):
@@ -2063,12 +2234,22 @@ class hotkeys:
           logger.error(f'Error reading page with Playwright: {e}')
         return 0
 
+  def text_only(self, text):
+#    from markdown import Markdown
+    # Configure parser to output plain text
+#    md = Markdown(output_format="plain")
+
+    # Convert text
+#    text_only = md.convert(text)    
+    text_only = text
+    return text_only
+  
   def speak(self, text, links=[], alt_text_data=[], total_read=0, lang="en", cacheno=-1):
     from extensions.trey.trey import speak
 #    print(f'Speaking: {text}')
     #really want to be able to turn on/off speaking with some setting similar to OPACITY..
-
-    return speak(text, links, alt_text_data, total_read, lang, cacheno)
+    ttext = self.text_only(text)
+    return speak(ttext, links, alt_text_data, total_read, lang, cacheno)
 
   
   def ocr_image(self, img):

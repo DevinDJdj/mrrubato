@@ -27,6 +27,8 @@ class book:
     self.func = None
     self.cmd = None
     self.qr = "" #info for QR message
+    self.qr_queue = None
+
     self.startx = startx
     self._bbox = [0,0,0,0] #for now just use this for all functions that need a bbox.  This is left, top, right, bottom.  We can also use this for screen toggle to indicate where the screen overlay should be.
     self.bbox = [100,200,100,200]   
@@ -79,7 +81,8 @@ class book:
     #unload language specific data
     return 0
   
-  def load(self, transcriber=None):
+  def load(self, transcriber=None, qr_queue = None):
+
     #load language specific data
      #config overrides load_data by default.  
     if (transcriber is not None):

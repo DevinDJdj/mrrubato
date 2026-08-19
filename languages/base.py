@@ -24,6 +24,8 @@ class base:
     self.func = None
     self.cmd = None
     self.qr = "" #info for QR message
+    self.qr_queue = None
+
     self.startx = startx
     self.name = "base"
     #self.keybot = 49 #no keybot for dynamic and short/created languages...
@@ -59,7 +61,8 @@ class base:
     #unload language specific data
     return 0
   
-  def load(self, transcriber=None):
+  def load(self, transcriber=None, qr_queue = None):
+
     #load language specific data
      #config overrides load_data by default.  
     if (transcriber is not None):

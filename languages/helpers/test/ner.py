@@ -70,3 +70,49 @@ ner_pipeline = pipeline("ner", aggregation_strategy="simple")
 results = ner_pipeline(example)
 print(results)
 print("Time taken:", time.time() - lag)
+
+#pip install glirel
+# Load the model
+from gliner import GLiNER
+#model = GLiNER.from_pretrained("knowledgator/gliner-relex-large-v1.0", resume_download=True)
+model = GLiNER.from_pretrained("./models/gliner")
+
+# Define your entity types and relation types
+entity_labels = ["location", "person", "date", "structure"]
+#entity_labels = {
+#    "person": "A human individual, including fictional characters",
+#    "organization": "A company, institution, agency, or other group of people",
+#    "location": "A physical place, geographic region, or address",
+#    "date": "A calendar date, time period, or temporal expression"
+#}
+
+relation_labels = ["located in", "designed by", "completed in"]
+
+# Input text
+text = "The Eiffel Tower, located in Paris, France, was designed by engineer Gustave Eiffel and completed in 1889."
+
+# Run inference - returns both entities and relations
+entities, relations = model.inference(
+    texts=[text],
+    labels=entity_labels,
+    relations=relation_labels,
+    threshold=0.3,
+    adjacency_threshold=0.5,
+    relation_threshold=0.8,
+    return_relations=True,
+    flat_ner=False
+)
+
+# Print entities
+print("Entities:")
+for entity in entities[0]:
+    print(f"  {entity['text']} -> {entity['label']} (score: {entity['score']:.3f})")
+
+# Print relations
+print("\nRelations:")
+for relation in relations[0]:
+    head = relation["head"]["text"]
+    tail = relation["tail"]["text"]
+    rel_type = relation["relation"]
+    score = relation["score"]
+    print(f"  {head} --[{rel_type}]--> {tail} (score: {score:.3f})")

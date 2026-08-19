@@ -107,7 +107,12 @@
 			"asr_model_path": "./models/pretrained_ASR",
 			"tts_model_path": "./models/pretrained_tts",
 			"language_model_path": "./models/lm/lm.zip"
-		}
+		},
+	},
+	"kg":{
+		"model_path": "./models/gliner",
+		"entity_labels": ["location", "person", "date", "structure"],
+		"relation_labels": ["located_in", "works_at", "born_in", "lives_in", "founded_in"]
 	},
 	
 	"keymap":{

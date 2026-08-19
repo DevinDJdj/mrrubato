@@ -205,7 +205,7 @@ class MyKeys:
           self.langused.append(key)
           #just use this language config.  
           self.languages[key] = la(config, self.qapp, self.startx)  # Create instance of class pass qapp for any UI stuff
-          self.languages[key].load(self.transcriber) #pass existing loaded data..
+          self.languages[key].load(self.transcriber, self.qr_queue) #pass existing loaded data..
           self.languages[key].callback = self.callback
           if (self.languages[key].maxseq > self.config['keymap']['settings']['MAX_WORD']):
             self.maxseq = self.languages[key].maxseq

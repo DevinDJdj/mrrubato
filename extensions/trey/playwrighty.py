@@ -958,7 +958,7 @@ def update_page_offset(cacheno=-1):
         #set offset
         page_cache[cacheno]['current_offset'][url] = total_read
         
-        if (random.random() < 0.1):
+        if (random.random() < 0.01):
             logging.info(f'Updated page offset for URL: {url} to {total_read}')
 
     if (total_read > 0):
@@ -1134,7 +1134,7 @@ def read_page(url, cacheno=-1):
 #        cacheno = current_cache
 #check for existing.  
     if (url !=''):
-        url = url.split('|')[-1]
+        url = url.split('|')[-1].strip()
         found_item = next((item for item in page_cache if item.get('url') == url), None)
         if found_item is not None and found_item.get('timestamp', 0) + 3600 > time.time(): #cache for 1 hour for now.
             logging.info(f'#{url}\nURL already in cache and valid, returning cached page')
