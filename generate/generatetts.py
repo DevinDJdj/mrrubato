@@ -210,7 +210,7 @@ if (__name__ == "__main__"):
                 temptext = ""
                 generate_line(l, idx, args.voice, args.vol, args.speed, args.cacheno, args.engine, combined)    
                 total_generated += 1
-                time.sleep(2) #wait a bit to avoid overloading the TTS engine.  
+                time.sleep(1+len(l)/60) #wait a bit to avoid overloading the TTS engine.  Speed is roughly 10-30 chars/sec
                 if (random.random() < 0.2 and check_active(args.cacheno) == False):
                     print(f"Stopping TTS generation as no longer active.")
                     break
@@ -230,7 +230,7 @@ if (__name__ == "__main__"):
                 temptext = ""
             generate_line(l, idx, args.voice, args.vol, args.speed, args.cacheno, args.engine, combined)    
             total_generated += 1
-            time.sleep(2) #wait a bit to avoid overloading the TTS engine.  
+            time.sleep(1+len(l)/60) #wait a bit to avoid overloading the TTS engine.  Speed is roughly 10-30 chars/sec
             if (random.random() < 0.2 and check_active(args.cacheno) == False):
                 print(f"Stopping TTS generation as no longer active.")
                 break

@@ -1,0 +1,355 @@
+
+**languages
+These messages for LANG and META are MOD12.  
+_LANG can set to any octave automatically.  
+and in any language, _META lang and _LANG always exist.  
+
+
+**extensions/vscode/codetutor/src/extension.ts
+Need to at least genbook..
+On a loop..
+
+
+
+
+**extensions/vscode/codetutor/src/extension.ts
+**extensions/trey/trey.py
+Lets see if we can open [**public/web] with login with playwrighty.  
+
+
+**extensions/vscode/codetutor/src/book.ts
+Need to be able to switch between books seamlessly..
+
+
+
+**web/public/chata.html
+Load [**web/public/data/transcriptions/trey/2026]
+Local vector DB..
+Chat find similar transcript (spoken)..
+Load full transcript from this location..
+Need web transcript parser/viewer..
+
+
+
+**timestep.py
+create summary for > RECORD
+add it directly to VTT?
+
+
+**timestep.py
+get pre-generated DB of likely command sequences.
+
+
+**analyze/midscribe.py
+
+> python ./analyze/analyze.py --title  "Evil Ways (Sonny Henry)" --force true --skipmidscribe false
+
+> python ./analyze/analyze.py --title "Great Balls Of Fire (Jack Hammer)" --force true --skipmidscribe false
+
+#https://data.yamaha.com/files/download/other_assets/8/1345698/dgx670_en_dl_b0.pdf
+
+
+
+**extensions/vscode/codetutor/src/languages/base.js
+No editing, just use..  
+No closure
+[69]
+[69,68];> CTRL+SHIFT+8
+[69,70];> Selection On/Off
+[69,65];> Up/Down/Left/right
+[69,65,68];> Up
+[69,65,67];> Down
+[69,65,64];> Left
+[69,65,66];> Right
+
+;> Home/End
+[69,64,63];> Home
+[69,64,65];> End
+;> Pgup/PgDn
+[69,64,67];> PgDn
+[69,64,68];> PgUp
+
+;> Enter - None
+;> 
+
+
+
+**extensions/vscode/codetutor/src/midi/mykeys.ts
+--updateKeyMaps
+gen_lang_struct
+--importLanguageModule
+--mkey
+
+See if this simpler implementation works ok..
+
+
+**extensions/trey/trey.py
+Need to finish QR detection.  
+Add to transcript.  #[link] [$$TIME=t]
+This can be used to recreate..
+Can we load extension to display 
+
+
+**extensions/vscode/codetutor/src/book.ts
+--defmap
+Need to add some here..
+
+@@ How do we adjust git to specific date back and forth and reingest book?  
+Need to do this when switching time..
+># git checkout $(git rev-list -n 1 --before="2026-06-22 00:00" main)
+Save this date..
+
+Return to current..
+> git checkout main
+
+Better if we dont have to recycle or reread.  
+Maybe just vscode side is fine.  
+Set date, then recycle trey..
+
+># git checkout $(git rev-list -n 1 --before="2026-06-22 00:00" main)
+
+
+
+**extensions/vscode/codetutor/src/languages/base.ts
+How do we make slight adjustments.  
+Command to adjust selected text.  
+;> Adjust [&&]
+in-place or to genbook..
+whole file/#lines
+
+;> Undo
+;> Retry
+
+;/gencode
+;/gencomments
+;/genbook
+
+implement node-audiorecorder
+
+
+
+**mykeys.py
+--checkheldwords
+Logic By LANG
+Check last N words..
+require two held keys..
+Continue this..
+
+**extensions/trey/speech.py
+How to get space, quotes just returning backslash..
+
+
+
+**languages/helpers/transcriber.py
+
+Eventually need input logic:
+// Locate by its visual label text (Best practice)
+await page.getByLabel('Username').fill('my_username');
+
+Just use vars for fill.  
+$$ selection should be dynamic..
+
+
+
+**languages/book.py
+**extensions/vscode/codetutor/src/languages/base.ts
+;> Show Book
+[50,48]
+Bring to front..
+
+
+**extensions/vscode/codetutor/src/gen.ts
+Eventually how do we generate everything as git changes?  
+This is a larger problem.
+To test just put result in separate file.
+
+colon not allowed in topic..
+
+#https://en.wikipedia.org/wiki/Ithkuil
+#https://en.wikipedia.org/wiki/Lojban
+At vlate van at se gupea
+
+
+**mykeys.py
+--checkheldwords
+Still need to fix RepeatTimer not working for playwright functions..
+
+
+#https://www.kaggle.com/datasets/samxsam/human-cognitive-performance-analysis/data
+
+
+**languages/book.py
+**extensions/vscode/codetutor/src/languages/base.ts
+;> Select genbook
+open genbook from last used..
+
+;> Select book
+open book from last used..
+
+
+
+**extensions/trey/trey.py
+--visualize_kg
+use similar..
+
+Need UI feedback info..
+All long-running must be done in thread with communication back to UI..
+start with ask..
+
+
+**mykeys.py
+
+test heldwords..
+Maybe broken..
+
+
+
+
+**extensions/trey/playwrighty.py
+--read_page
+test console handler..
+Need this for [**check.py]
+
+
+**extensions/playwrighty.py
+Scroll fails..
+
+**languages/hotkeys.py
+Need skip to start/skip to end..
+--skip_lines
+test..
+
+
+
+Lets try an image generation model function..
+show image after generated..
+
+;> ollama run x/z-image-turbo
+;> ollama run x/flux2-klein
+> ollama pull x/flux2-klein
+
+
+**languages/video.py
+Test 
+;> Generate Image
+from context..
+[49,53,52]
+
+Need to measure load times, how much does amount of data affect?  
+
+!!Error generating image: mlx runner failed: Error: failed to initialize MLX: failed to load MLX dynamic library (searched: [/usr/local/lib/ollama /build/lib/ollama /dist/linux-amd64/lib/ollama /dist/linux_amd64/lib/ollama]) (exit: exit status 1) (status code: 500)
+==
+Apple MLX
+Only MAC..
+wait..
+$$
+
+
+**generate/generatetts.py
+Why are we only getting some percentage created?  
+Look at this..
+
+
+
+Selection needs to be consistent..
+maybe ok..
+book
+;> Select Topic, Book (index saved, mid)
+;> Read Link (index saved, mid)
+;> Show Book (_current_book, reset to time)
+_meta
+;> Time Jump, Zoom (mid/2)
+hotkeys
+cacheno is first key 1-based..
+;> Go Back (0=cache), Click Link (0=linkno keybot)
+;> ask (0=cache)
+;> Search Web (keybot, 0=cache 1-based, -1=engine)
+;> Pause (keybot, 0=cache)
+;> Unpause (keybot, 0=cache)
+
+
+**extensions/trey/trey.py
+--joystick_loop
+**languages/hotkeys.py
+--handle_joystick
+Need better detection. 
+Get too much unintended action by bumping controller or table..
+ pygame.time.get_ticks()
+
+
+**languages/helpers/test/ner.py
+
+
+
+
+No fixed labels.  
+2kb context enough for now..
+Just use last 2kb of text when called..
+Use relationships to generate graph..
+
+
+Determine relationship labels we want, and utilize those before visualizing..
+**config.json
+--kg
+
+Load entity and relationship labels at startup in config..
+Eventally this should be dynamically generated..
+
+
+**languages/hotkeys.py
+--get_graphs2
+test..
+People, Location, Events..
+
+Keep array of all the entities.  
+Select Entity Type, and then entity.. 
+Then this drills.  
+Long press perhaps or start/stop zoom..
+Also visualization control, swapping between.  
+Add and subtract Entities from KG as we go.  
+If entities are mentioned in ask or selected..  
+Find entities, then follow between them..
+
+For now limit to 20 for selection purposes..
+Same index follow selection mechanism.  
+
+Approx 10s for 2kb query with graph model..
+
+Hmm..
+model still not great, but workflow is there..
+Need to kick off in thread so we get text response immediately.
+Most graphs not very useful so far..
+Maybe get from Answer instead of context..
+Still dont relationship graph result result, but somewhat better..
+
+Need to deduplicate.  
+
+;> Fill context
+pull all context from page prior N% or all..
+Generate all entities and relationships..
+
+OK, have basic entities.  
+~ 8k = 100 entities..
+So 1000 entities for 50 pages..
+Need sorting mechanism..
+Selection brings up full KG of selected topic..
+Which resets the entities selection..
+
+Are we getting offsets right..
+For each entity, generate running summary..
+Keep global entity_counts..
+
+
+Chat listing not nice when pulling from generated text..
+
+**languages/hotkeys.py
+basic ask thread works for graph..
+
+
+**mykeys.py
+adjust state to not look for commands in 0 state..
+
+
+;> Show Graph [cacheno, idx]
+Hold these in order after generating, and bring them back
+Some not bad, but need some addl. info

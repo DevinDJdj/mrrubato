@@ -68,6 +68,7 @@ class hotkeys:
     self.feedbacknowstr = self.now.strftime("%Y%m%d_%H%M%S")
     self.entities = []
     self.relations = []
+    self.graph_thread = None
     self.funcdict = {}
     self.suggestions = []
     self.joystate = {}
@@ -1840,10 +1841,15 @@ class hotkeys:
       graphs = ""
 #      graphs = self.get_graphs(context, query)
       #start thread for this.  
-#      self.graph_thread = threading.Thread(target=self.get_graphs2, args=(context, query, self.qr_queue))
-#      self.graph_thread.start()
+      if (self.graph_thread is not None and self.graph_thread.is_alive()):
+        logger.info('!!Graph thread still running, waiting for it to finish before starting a new one.')
+        self.synth.play_synth([53+12,55+12,52+12]) #play a sound to indicate waiting for graph thread
+        time.sleep(2)
+#        self.graph_thread.join()  # Wait for the previous thread to finish
+      self.graph_thread = threading.Thread(target=self.get_graphs2, args=(context, end_offset, query, answer, vars, self.qr_queue))
+      self.graph_thread.start()
 #      self.get_graphs2(context, query, vars) #ad to vars..
-      self.get_graphs2(context, end_offset, query,answer, vars)
+#      self.get_graphs2(context, end_offset, query,answer, vars)
 
 
       self.set_qr(self.func, vars) #do again to load graph..

@@ -158,6 +158,7 @@ class MyKeys:
     self.startseqno = 0  #start of word/phrase.  #no phrases longer than 16 keys.  
     self.lastnotetime = 0
     self.currentcmd = None
+    self.current_state = 1 #running..
     self.notes = np.zeros(config['keymap']['global']['top']+config['keymap']['global']['bottom'], dtype=int) #just use midi index..
     #need some extra for 
     self.heldwords = []
@@ -748,6 +749,8 @@ class MyKeys:
     #cant do with keybot
     lastnote = -1
     #insert into qrin_queue for processing.  
+    if (self.current_state == 0): #dont process if state 0
+      return action
     if (len(self.heldwords) > 0):
 #      logger.info(f'Checking heldwords: {self.heldwords}')
       lastnote = self.heldwords[-1]['_']
@@ -814,7 +817,21 @@ class MyKeys:
           #need more keys..should be standard..
 
     return action
-  
+
+
+  def get_state(self, note):
+    #get pause state
+    state = self.current_state
+    if (note == self.config['keymap']['global']['Pause']):
+      state = 1
+    elif (note == self.config['keymap']['global']['Unpause']):
+      state = 0
+    elif (note == self.config['keymap']['global']['Start']):
+      state = 0
+    elif (note == self.config['keymap']['global']['Stop']):
+      state = 1
+    self.current_state = state
+
   def key(self, note, msg, callback=None, doact=True): #just get the words if doact=False
     #add this key to the notes map
     #if hasattr(msg, 'type') and msg.type=='note_on' and 
@@ -852,6 +869,12 @@ class MyKeys:
               print(f'Stopping note {msg.note}')
               synth.note_off(msg.note)
 
+    self.get_state(note)
+    if (self.current_state == 0):
+      #dont process any keys 
+      if (random.random() < 0.01): #just randomly show state..
+        logger.info(f'Paused state, ignoring key {note} Msg: {msg}')
+      return -1
       #should also append audio transcript text here to keep in time..
     unsetseq = self.config['keymap']['global']['Unset'] #assume 3 keys for now..
     if not doact:
@@ -904,6 +927,8 @@ class MyKeys:
         self.wordstarttime = msg.time if hasattr(msg, 'time') else time.time()
       else: 
         self.wordendtime = msg.time if hasattr(msg, 'time') else time.time()
+
+
       self.sequence.append(note)
       #not using currentchannel at the moment.. all languages using same track..
       #self.currentchannel = self.currentlang.keybot - 48 
