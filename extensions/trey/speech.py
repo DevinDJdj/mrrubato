@@ -851,7 +851,7 @@ replace_dict = {
     '𝑥': 'x',
     '𝑦': 'y',
     '𝑧': 'z',
-
+    '*': ' ' #stop saying asterisk
 
 }
 

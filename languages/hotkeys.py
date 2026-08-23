@@ -26,6 +26,8 @@ from rapidfuzz.process import cdist
 from rapidfuzz import fuzz
 import numpy as np
 
+from gliner import GLiNER
+
 from collections import Counter
 
 logger = logging.getLogger(__name__)
@@ -1570,21 +1572,24 @@ class hotkeys:
     answer = self.transcriber.ask_graph(context=input_llm, strictness=6) #allow for external knowledge, but not too much.  We want to extract from the context primarily.
     return answer
 
-  def dedup(self, mylist, isentities=False, threshold = 80):
+  def ddedup(self, t, all, stringmap, threshold = 80):
     from rapidfuzz import fuzz, process
+    alt = ''
+    match = process.extractOne(t, all, scorer=fuzz.ratio)
+    if (not match or match[1] < threshold):
+      stringmap[t] = {'cnt': 0, 'alt': ''}
+      all.append(t)
+    else:
+      stringmap[ match[0]]['alt'] = t
+
+  def dedup(self, mylist, isentities=False, threshold = 80):
     #deduplicate based on names..
     stringmap = {}
     all = []
     if (isentities):
       for e in mylist:
         t = e['text']
-        alt = ''
-        match = process.extractOne(t, all, scorer=fuzz.ratio)
-        if (not match or match[1] < threshold):
-          stringmap[t] = {'cnt': 0, 'alt': ''}
-          all.append(t)
-        else:
-          stringmap[ match[0]]['alt'] = t
+        self.ddedup(t, all, stringmap, threshold)
 
       logger.info(stringmap)
       for name, obj in stringmap.items():
@@ -1598,21 +1603,10 @@ class hotkeys:
       for r in mylist:
         h = r['head']['text']
         t = r['tail']['text']
-        alt = ''
-        match = process.extractOne(h, all, scorer=fuzz.ratio)
-        if (not match or match[1] < threshold):
-          stringmap[h] = {'cnt': 0, 'alt': ''}
-          all.append(h)
-        else:
-          stringmap[ match[0]]['alt'] = h
-        alt = ''
-        match = process.extractOne(t, all, scorer=fuzz.ratio)
-        if (not match or match[1] < threshold):
-          stringmap[t] = {'cnt': 0, 'alt': ''}      
-          all.append(t)
-        else:
-          stringmap[ match[0] ]['alt'] = t
-        
+        self.ddedup(h, all, stringmap, threshold)
+        self.ddedup(t, all, stringmap, threshold)
+
+      logger.info(f'> Dedup')        
       logger.info(stringmap)
       for name, obj in stringmap.items():
         #replace all with alt.  
@@ -1626,14 +1620,15 @@ class hotkeys:
 
       
   def get_graphs2(self, context, loc, query, answer, vars, qr_queue=None, reader_queue=None):
-    from gliner import GLiNER
     myloc = loc
-    context = context[-8192:]  # only keep the last 8kb of context
+    context = context[-4095:]  # only keep the last 8kb of context
+
     model_path = self.config['kg']['model_path']
     entity_labels = self.config['kg']['entity_labels']
     relation_labels = self.config['kg']['relation_labels']
     lag = time.time()
     if not hasattr(self, 'model') or self.model is None:
+        logger.info(f'Loading GLiNER model from {model_path}')
         self.model = GLiNER.from_pretrained(model_path, local_files_only=True)
     model = self.model #keep for next call.  
     subcontexts = [context[i : i + 2048] for i in range(0, len(context), 2048)]
@@ -1643,8 +1638,11 @@ class hotkeys:
     allrelations = []
     for (j, subcontext) in enumerate(subcontexts):
         # subcontext is already defined in the loop, no need to redefine it
+        #find first space and last space
+        first_space = subcontext.find(' ')
+        last_space = subcontext.rfind(' ')
         entities, relations = model.inference(
-            texts=[subcontext],
+            texts=[subcontext[first_space:last_space]],
             labels=entity_labels,
             relations=relation_labels,
             threshold=0.3,
@@ -1669,8 +1667,11 @@ class hotkeys:
     subanswers = [answer[i : i + 2048] for i in range(0, len(answer), 2048)]
     for (k, subanswer) in enumerate(subanswers):
         # subcontext is already defined in the loop, no need to redefine it
+        #quick fix.. probably more logic needed to find better split points..
+        first_space = subanswer.find(' ')
+        last_space = subanswer.rfind(' ')
         entities, relations = model.inference(
-            texts=[subcontext],
+            texts=[subanswer[first_space:last_space]],
             labels=entity_labels,
             relations=relation_labels,
             threshold=0.3,
@@ -1708,10 +1709,11 @@ class hotkeys:
     logger.info(f'$$NUMRELATIONS={len(allrelations)}') #measuring time for now..
     logger.info(f'{allrelations}')
     logger.info(f'$$NUMENTITIES={len(allentities)}')
-    entity_counts = Counter(e['head']['text'] for e in allrelations)
+    entity_counts = Counter(e['head']['text'] for e in allrelations if (len(e['head']['text']) > 3))
     #find central entity.  Create map of counts..
     max_key = max(entity_counts, key=entity_counts.get)
     vars["ENTITY"] = max_key
+
 
     if (qr_queue is not None):
       self.set_qr("graph", vars) #do again to load graph..
@@ -1721,7 +1723,7 @@ class hotkeys:
       self.qr = ""
 
     logger.info(f'!!LAG {time.time() - lag}')
-
+    self.synth.play_synth([53+12,55+12,52+12]) #play a sound to indicate graph is ready.
     return allentities, allrelations
     
 

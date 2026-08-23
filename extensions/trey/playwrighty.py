@@ -319,7 +319,9 @@ def add_bookmark(url, total_read, text="", video_pos=-1):
     logger.info(f'Adding bookmark for {url} at offset {total_read} from {len(bookmarks)} bookmarks')
     found_item = next(filter(lambda item: item.get("url") == url, bookmarks), None)
     body_length = page_cache[current_cache]['length'] if current_cache >=0 and current_cache < len(page_cache) else 0
-    if (found_item is not None):
+    if (found_item is not None): 
+        if (body_length > 0 and body_length < 800): #should be 0 for uninitialized..
+            return -1 #no bookmark for error or empty pages, quick fix..
         found_item['total_read'].insert(0, total_read)
         found_item['text'].insert(0, text)
         video_pos = video_pos if video_pos >= 0 else (found_item['video_pos'] if 'video_pos' in found_item else -1)

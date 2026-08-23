@@ -350,6 +350,45 @@ basic ask thread works for graph..
 adjust state to not look for commands in 0 state..
 
 
-;> Show Graph [cacheno, idx]
+;> Show Graph [?cacheno, ?type, idx] type list
+;> Show Graph [?cacheno, idx] global list
 Hold these in order after generating, and bring them back
 Some not bad, but need some addl. info
+two list updates..
+
+thread to update entities up to current read index..
+How can we add image to graph..
+
+Test ..
+
+Need playwrighty error handling.  
+Dont want to overwrite bookmark when page error like this:
+
+503 Service Unavailable
+--add_bookmark
+
+
+Local context selects main entity..
+List entities from local context by default..
+But KG represents all..
+How large before this is too time consuming?  
+
+Generate unique image for each node?  
+Right now just label..
+Images really should be added just before delay as they are dynamic..
+
+--generate_suggestions
+
+
+**extensions/trey/trey.py
+--pause_video
+--video_cache
+test resumption..
+Able to select from cache..
+
+Also when to save all of this dynamic info..
+;> Save Graph..
+put in transcripts?  
+Otherwise transient..
+Q/A in transcripts already..
+But really only Q is significant..
