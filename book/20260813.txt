@@ -1,0 +1,22 @@
+**record.py
+>#2 python ./record.py --description  "K 397 (Mozart)"
+
+**extensions/trey/trey.py
+>#1 cd C:/devinpiano/music
+>#1 ./treyenv/Scripts/activate.ps1
+>#1 cd C:/devinpiano/music/mrrubato
+>#1 python ./extensions/trey/trey.py
+
+>#3 cd C:/devinpiano/music
+>#3 ./treyenv/Scripts/activate.ps1
+>#3 cd C:/devinpiano/music/mrrubato
+>#3 python ./generate/generatetts.py
+
+!!Torch not compiled with CUDA enabled
+==
+>#3 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
+>#3 pip install torchaudio==2.8 --index-url https://download.pytorch.org/whl/cu128
+>#3 pip install torchvision==0.23.0 --index-url https://download.pytorch.org/whl/cu128
+$$
+
+>#2 python ./record.py --description  "K 310 (Mozart)"
