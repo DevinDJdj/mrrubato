@@ -1,4 +1,5 @@
 import logging
+from extensions.trey import synth
 from languages._meta import _BOOK, _META
 import languages.helpers.timewindow as timewindow
 
@@ -87,6 +88,8 @@ class book:
      #config overrides load_data by default.  
     if (transcriber is not None):
       self.transcriber = transcriber
+    if (qr_queue is not None):
+      self.qr_queue = qr_queue
 
     if hasattr(self, 'load_data'):
       self.load_data()
@@ -155,6 +158,7 @@ class book:
         "Select Topic": [50,54,57], #open topic
         "Read Link": [50,52,57], #read link on page, need to add link reading to book context first.
 #        "Select Bookmark": [53,58,57], #try to correlate
+        "Ask": [50,52,48], #ask book for info
 
       },
     }
@@ -176,6 +180,7 @@ class book:
       "Select Topic": "select_topic",
       "Set Book": "set_book",
       "Read Link": "read_link",
+      "Ask": "ask",
 
 
     }
@@ -189,6 +194,7 @@ class book:
       "Select Topic": {"help": "select_topic", "params": "None", "desc": f"Open current topic in {self.name}."},
       "Set Book": {"help": "set book [book]", "params": "[book]", "desc": "Set book by name."},
       "Read Link": {"help": "read_link", "params": "[linkno]", "desc": f"Read link in book in {self.name}."},
+      "Ask": {"help": "ask", "params": "&Query", "desc": f"Ask a question related to {self.name}."},
 
     }
 
@@ -457,7 +463,79 @@ class book:
     
     return 0
   
-  
+
+
+  def _ask(self, sequence=[]):
+    logger.info(f'> _Ask {sequence}')
+    self.corrections = [] #reset corrections for this query.
+    self.suggestions = [] #reset suggestions for this query.
+    print("> _Ask called")
+    #get audio input for query.  
+    from extensions.trey.speech import listen_audio
+    self.transcript = "" #reset transcript..
+    at = listen_audio(15, "ask.wav") #assume some more time for question..
+    #at.join() #wait for it to finish.
+    #have to just use some keys until this is done.  
+    #need to return 1 to indicate we need more keys.
+    #but this is only called once.  
+    return 1
+
+  def ask_(self, sequence=[]):
+    from extensions.trey.speech import transcribe_now
+
+    self.func = "ask_"
+
+    
+    lag = time.time()
+    self.transcript = self.get_transcript() + transcribe_now().replace('...', '') 
+
+    vars = {'transcript': self.transcript}
+    startidx = 12
+    lag = time.time() - lag
+    vars['...'] = lag
+    self.set_qr(self.func, vars)
+
+
+    return 1
+
+
+  def ask(self, sequence=[]):
+    logger.info(f'> Ask {sequence}')
+    query = "What are you doing?"
+    from extensions.trey.speech import transcribe_audio, transcribe_audio_whisper
+#    self.transcript = transcribe_audio("ask.wav")
+    self.transcript = transcribe_audio_whisper("ask.wav") #try whisper for better accuracy.  This is slower but hopefully more accurate, especially for short queries.
+    logger.info('$$AUDIO = ' + self.transcript)
+    if (self.transcript != ""):
+      query = self.transcript
+      self.transcripthistory.append(self.transcript)
+
+
+    try:
+      logger.info(f'$$QUERY={query}')
+      synth.play_synth([50+12,52+12,48+12]) #
+      #too slow..
+      vars = {"**": self.transcriber.current_topic, "***": self.transcriber.current_book, "QUERY": query}
+      vars["_"] = self.name
+      self.transcriber.write(self.name, "Ask", vars, save=True) #save for book..
+      self.func = "ask"
+      if (self.qr_queue is not None):
+        self.set_qr(self.func, vars) #answer quickly before loading graph..
+        qr = "<<" + self.name + ">>\n"
+        qr += self.qr + "\n"
+        self.qr_queue.put(qr)
+        self.qr = ""
+
+
+      #for now just pause reader
+    except Exception as e:
+      logger.error(f'!!ask\n{e}')
+      answer = "Sorry, I could not process your question."
+      self.speak(answer)
+      return -1
+
+    return 0
+
   def get_book_context(self, book, num=5):
     #get context for book from book transcripts.  
     ret = f"**{book}\n"

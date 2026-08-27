@@ -1747,7 +1747,7 @@ class MyWindow(QMainWindow):
 
 
     def update_graph_entities(self, graphs, entities, main_entity, topic):
-        if (len(entities) > 0): #update entities first..
+        if (len(entities) > 0 and main_entity): #update entities first.. only if this is graph in response to question..
             try:
             #add to transparent
                 entities = json.loads(entities)
@@ -1764,7 +1764,7 @@ class MyWindow(QMainWindow):
                 graphs = json.loads(graphs)
                 #why this is in array not sure..
                 kg = self.make_kg(graphs, entities, topic=topic) #pass topic and perhaps other..
-                if (kg):
+                if (kg and main_entity): #dont visualize if we dont have a main entity, just update the graph data for now.
                     self.visualize_kg(kg, main_entity if main_entity else topic)
             except Exception as e:
                 logger.error(f'!!Error parsing graphs: {e}')
@@ -1787,15 +1787,21 @@ class MyWindow(QMainWindow):
                 logger.info(f'> graph\n==\n{graphs}')
                 self.update_graph_entities(graphs, entities, main_entity, vars.get('**', self.transcriber.current_topic))
             case "ask":
-                logger.info('Received ask command')
-                answer = vars.get('ANSWER', '')
-                answer = answer.replace('\t', '\n') #for now just do here..
-                graphs = vars.get('GRAPHS', '')
-                main_entity = vars.get('ENTITY', '')
-                entities = vars.get('ENTITIES', '')
+                _ = vars.get('_', 'hotkeys')
+                if (_ == 'hotkeys'):
+                    logger.info('Received ask command')
+                    answer = vars.get('ANSWER', '')
+                    answer = answer.replace('\t', '\n') #for now just do here..
+                    graphs = vars.get('GRAPHS', '')
+                    main_entity = vars.get('ENTITY', '')
+                    entities = vars.get('ENTITIES', '')
 
-                logger.info(f'> ask\n==\n{answer}\n==\n{graphs}')
-                self.update_graph_entities(graphs, entities, main_entity, vars.get('**', self.transcriber.current_topic))
+                    logger.info(f'> ask\n==\n{answer}\n==\n{graphs}')
+                    self.update_graph_entities(graphs, entities, main_entity, vars.get('**', self.transcriber.current_topic))
+                elif (_ == 'book'):
+                    logger.info('Received ask command for book')
+                    #just sending to vscode for now..
+
                 #create knowledge graph
             case "OK":
                 #testing
@@ -1912,7 +1918,10 @@ class MyWindow(QMainWindow):
                 elif (type == 'book'):
                     cacheno = vars.get('cacheno', -1)
                     resume_reader(int(cacheno))
-                
+            case "Get Video":
+                cacheno = vars.get('cacheno', -1)
+                self.get_video(cacheno)
+
             case "Screenshot Feedback_":
                 bbox = vars.get('BBOX', None)
                 if (bbox is not None):
@@ -2027,13 +2036,7 @@ class MyWindow(QMainWindow):
                 self.transcriber.current_context = context
                 print(f"<<{lang}>>\n$$book=" + str(book))
                 print(f"<<{lang}>>\n$$context=" + str(context))
-                self.label_topic_info[0].setText(f'**{book}')
-
-                #format this a bit nicer..
-                self.label_topic_info[1].setText(f'{context}') 
-
-                self.label_topic_info[0].update()
-                self.label_topic_info[1].update()
+                self.set_topic_info(book, context)
                 self.bookhistory.insert(0, {'book': book, 'context': context, 'timestamp': time.time()}) #0 based index for most recent
                 #bring vscode to front if not there..
 
@@ -2043,9 +2046,7 @@ class MyWindow(QMainWindow):
                 wname = vars.get('**', 'None')
 
                 #format this a bit nicer..
-                self.label_topic_info[1].setText(f'{wname}') 
-
-                self.label_topic_info[1].update()
+                self.set_topic_info('', wname)
                 #bring vscode to front if not there..
                 self.show_window(wname)
 
@@ -2056,10 +2057,7 @@ class MyWindow(QMainWindow):
                 self.transcriber.current_context = context
                 print(f"<<{lang}>>\n$$book=" + str(book))
                 print(f"<<{lang}>>\n$$context=" + str(context))
-                self.label_topic_info[0].setText(f'**{book}')
-                self.label_topic_info[1].setText(f'{context}') 
-                self.label_topic_info[0].update()
-                self.label_topic_info[1].update()
+                self.set_topic_info(book, context)
                 self.show_mrroboto()
                 
             case "Select Topic":
@@ -2071,14 +2069,7 @@ class MyWindow(QMainWindow):
                 self.transcriber.current_context = context
                 print(f"<<{lang}>>\n$$topic=" + str(topic))
                 print(f"<<{lang}>>\n$$context=" + str(context))
-                #self.label_topic_info[0].setText(f'**{topic}')
-                self.label_topic_info[0].setText(f'**{self.transcriber.current_book}')
-
-                #format this a bit nicer..
-                self.label_topic_info[1].setText(f'{topic}<br>{context}') 
-
-                self.label_topic_info[0].update()
-                self.label_topic_info[1].update()
+                self.set_topic_info(topic, context)
                 self.topichistory.insert(0, {'topic': topic, 'context': context, 'timestamp': time.time()}) #0 based index for most recent
                 self.update_topic_history()
                 #bring vscode to front if not there..
@@ -2141,6 +2132,21 @@ class MyWindow(QMainWindow):
             logger.warning(f'!!LAG {lagtime:.2f}\n;> :={mycommand[":"]}\t_={mycommand["_"]:.2f}\n;> {command}\n {vars}')
 
         #add more commands as needed.
+
+
+    def set_topic_info(self, topic, context):
+        """Set the topic and context information in the UI."""
+        #add status info and additional contextual info from history?..
+        status_info = f"Status"
+        if (topic):
+            self.label_topic_info[0].setText(f'<table width="100%"><tr><td align="left">**{topic}</td>'
+                                             f'<td align="right">{status_info}</td></tr></table>')
+            self.label_topic_info[0].update()
+        if (context):
+            self.label_topic_info[1].setText(f'{context}') 
+    #        self.label_topic_info[1].setText(f'{topic}<br>{context}') 
+
+            self.label_topic_info[1].update()
 
     def send_window_info(self):
         #send window information to wherever it needs to go.
@@ -2479,6 +2485,7 @@ class MyWindow(QMainWindow):
         self.kg = None
         self.kgid = 0
         self.video_cache = [] #running list of files which were played..
+        self.video_cache_index = 0
         #allow for selection for any of the past n videos..{'_': img or video, '**': fname, '(': st, ')': et, '..': current_time}
         self.myactions = [] #list of current actions to display, updated by QR commands.
         self.trey_data = {} #current data to display, updated by QR commands and transcription.
@@ -3093,6 +3100,23 @@ class MyWindow(QMainWindow):
             bbox[2] = bbox[3]
             bbox[3] = y1
         return bbox
+
+    def get_video(self, cacheno):
+        # Implement the logic to retrieve the video from cache using cacheno
+        cacheno = abs(cacheno)  # Ensure cacheno is non-negative actual value is -12-12
+        self.video_cache_index = self.video_cache_index + cacheno
+
+        if (self.video_cache_index < 0):
+            self.video_cache_index = 0
+        elif (self.video_cache_index >= len(self.video_cache)):
+            self.video_cache_index = len(self.video_cache) - 1
+        if (len(self.video_cache) > 0 and self.video_cache_index >= 0 and self.video_cache_index < len(self.video_cache)):
+            result = self.video_cache[self.video_cache_index]
+            if result:
+                fname = result["**"]
+                self.play_video(fname)
+            else:
+                logger.info(f'No video found in cache for cacheno: {cacheno}')
 
     def play_video(self, fname):
         """Play a video file on the overlay."""
