@@ -106,8 +106,9 @@ class video:
         "Comment": [49,53, 56], #record comment
         "Screenshot": [49,53,55], #take screenshot
         "Zoomshot": [49,53,57], #take zoomed screenshot
-        "Next": [49, 53, 54], #next video in playlist or folder
+        "Next": [49, 53, 54], #next video in transcript history
         "Generate Image": [49, 53, 52], #generate image for current  context..
+        "Get Video": [49, 53, 51], #get video from video cache..
       },
       "4": {
         "Screenshot Feedback": [49,53,55,53], #screenshot with feedback
@@ -136,6 +137,7 @@ class video:
       "Generate Image": "generate_image",
       "Pause": "pause",
       "Next": "next",
+      "Get Video": "get_video",
       "Unpause": "unpause",
       "Set Speed": "set_speed",
       "Screenshot": "screenshot",
@@ -197,7 +199,11 @@ class video:
       "Set Speed": {
 "> ": "set speed $value",
 "$$": "$value (multiplier 0.2-5.0)",
-"&&": "Set playback speed, relative to current."}, 
+"&&": "Set playback speed, relative to current."},
+"Get Video": {
+"> ": "get video",
+"$$": "$cacheno",
+"&&": "Get video from shown/played video cache."},
 
       "Screenshot": {
 "> ": "screenshot",
@@ -498,6 +504,14 @@ class video:
     
     return 0
 
+  def get_video(self, sequence=[]):
+    """Get Video from cache."""
+    logger.info(f'> Get Video {sequence}')
+    cacheno = 0
+    if (len(sequence) > 0):
+      cacheno = self.mid - sequence[-1] #first key cache selection
+    self.set_qr("Get Video", {'type': 'video', 'cacheno': cacheno})
+    return 0
 
   def generate_image(self, sequence=[]):
     """Generate Image."""

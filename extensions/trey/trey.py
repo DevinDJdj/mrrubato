@@ -15,6 +15,7 @@ import sys
 import threading
 import multiprocessing
 import subprocess
+from tkinter import font
 import traceback
 
 from click import command
@@ -59,7 +60,7 @@ import torch
 import markdown
 #UI components
 import pystray
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QLabel, QDialog, QVBoxLayout, QSystemTrayIcon, QMenu, QAction, QMessageBox
 from PyQt5.QtGui import QPixmap, QPainter, QPen, QBrush, QImage, QFont, QFontMetrics, QFontDatabase, QIcon, QColor
 from PyQt5.QtCore import Qt, QObject, pyqtSignal, QThread
@@ -858,7 +859,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
 
             if (suc == ""):
                 print(f'Error generating audio fallback to tts.speak')
-                tts.speak(lesc, VOICE, sound_file)
+                tts.speak(speech.substitute_tts(lesc), VOICE, sound_file)
 #            playsoundprocess = multiprocessing.Process(target=play_sound_process, args=(sound_file,))
 #            playsoundprocess.start()
             if (os.path.exists(sound_file)):
@@ -903,7 +904,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
             sound_file = f"./temp/{cacheno}/skip.wav"
             temp = f'At Line {idx} of {len(lines)}, skipping {skip} lines'
             print(f'Skipping lines [{idx}, {skip}]')
-            tts.speak(temp, VOICE, sound_file)
+            tts.speak(speech.substitute_tts(temp), VOICE, sound_file)
 
         if (skip > 0):
             if (idx + skip >= len(lines)-5):
@@ -987,7 +988,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
                         print("speak command returned: " + str(suc))
                     if (suc == ""):
                         print(f'Error generating audio fallback to tts.speak')
-                        tts.speak(lesc, VOICE, sound_file, vol, rate*120)
+                        tts.speak(speech.substitute_tts(lesc), VOICE, sound_file, vol, rate*120)
 
 #                    sound_file = f"./temp/{idx}.wav"
                     #fast not working.. edge-tts much better quality than speechbrain tts.
@@ -1023,7 +1024,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
                 if (links[link_loc]['offset'] != -1):
                     try:
                         sound_file = f"./temp/link{link_loc}.mp3"
-                        tts.speak(links[link_loc]['text'], LINKVOICE, sound_file, 0.6, 200) #quieter slower for links
+                        tts.speak(speech.substitute_tts(links[link_loc]['text']), LINKVOICE, sound_file, 0.6, 200) #quieter slower for links
     #                    winsound.Beep(500, 200) #short beep to indicate link
                         synth.play_synth([53,65,77])
 
@@ -1106,7 +1107,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
                         try:
                             sound_file = f"./temp/{cacheno}/sim{rid}.wav"
                             lesc = siml.replace('"', '\\"')
-                            speech.speak(f'Similar: {siml}', sound_file, voice, 0.6, 1.2)
+                            speech.speak(f'Similar: {speech.substitute_tts(siml)}', sound_file, voice, 0.6, 1.2)
 #                            os.system(f"edge-tts --voice \"{voice}\" --write-media \"{sound_file}\" --text \"Similar: {lesc}\" --rate=\"+20%\" --volume=-40% > NUL 2>&1")
                             playsound(sound_file, block=False) # Ensure this thread blocks for its sound
 
@@ -1719,7 +1720,8 @@ class MyWindow(QMainWindow):
                     #compare to current time..
                     current_time = time.time()
                     if (float(vars['timestamp']) < current_time - 0.5):
-                        logger.info(f'!!TIME LAG {vars["timestamp"]} {current_time}\n{qrdata}')
+                        metapos = qrdata.find('<<meta>>')
+                        logger.info(f'!!TIME LAG {vars["timestamp"]} {current_time}\n{qrdata[:metapos]}')
 #                        continue #skip this command if time mismatch dont want anything stale..
                 logger.info(f'Parsed QR command: {currentcmd} with vars: {vars}')
                 self.qr_out.append({'cmd': currentcmd, 'vars': vars, 'timestamp': time.time()})
@@ -1745,17 +1747,7 @@ class MyWindow(QMainWindow):
 
 
     def update_graph_entities(self, graphs, entities, main_entity, topic):
-        if (len(graphs) > 0): #actually just relationship triples..
-            try:
-                graphs = json.loads(graphs)
-                #why this is in array not sure..
-                kg = self.make_kg(graphs, topic=topic) #pass topic and perhaps other..
-                if (kg):
-                    self.visualize_kg(kg, main_entity if main_entity else topic)
-            except Exception as e:
-                logger.error(f'!!Error parsing graphs: {e}')
-                logger.error(f'!!Graphs data: {graphs}')
-        if (len(entities) > 0):
+        if (len(entities) > 0 and main_entity): #update entities first.. only if this is graph in response to question..
             try:
             #add to transparent
                 entities = json.loads(entities)
@@ -1767,6 +1759,16 @@ class MyWindow(QMainWindow):
             except Exception as e:
                 logger.error(f'!!Error parsing entities: {e}')
                 logger.error(f'!!ENTITIES: {entities}')
+        if (len(graphs) > 0): #actually just relationship triples..
+            try:
+                graphs = json.loads(graphs)
+                #why this is in array not sure..
+                kg = self.make_kg(graphs, entities, topic=topic) #pass topic and perhaps other..
+                if (kg and main_entity): #dont visualize if we dont have a main entity, just update the graph data for now.
+                    self.visualize_kg(kg, main_entity if main_entity else topic)
+            except Exception as e:
+                logger.error(f'!!Error parsing graphs: {e}')
+                logger.error(f'!!Graphs data: {graphs}')
 
     def executeQRCommand(self, command, vars, lang='hotkeys'):
         #use transcriber here??
@@ -1785,15 +1787,21 @@ class MyWindow(QMainWindow):
                 logger.info(f'> graph\n==\n{graphs}')
                 self.update_graph_entities(graphs, entities, main_entity, vars.get('**', self.transcriber.current_topic))
             case "ask":
-                logger.info('Received ask command')
-                answer = vars.get('ANSWER', '')
-                answer = answer.replace('\t', '\n') #for now just do here..
-                graphs = vars.get('GRAPHS', '')
-                main_entity = vars.get('ENTITY', '')
-                entities = vars.get('ENTITIES', '')
+                _ = vars.get('_', 'hotkeys')
+                if (_ == 'hotkeys'):
+                    logger.info('Received ask command')
+                    answer = vars.get('ANSWER', '')
+                    answer = answer.replace('\t', '\n') #for now just do here..
+                    graphs = vars.get('GRAPHS', '')
+                    main_entity = vars.get('ENTITY', '')
+                    entities = vars.get('ENTITIES', '')
 
-                logger.info(f'> ask\n==\n{answer}\n==\n{graphs}')
-                self.update_graph_entities(graphs, entities, main_entity, vars.get('**', self.transcriber.current_topic))
+                    logger.info(f'> ask\n==\n{answer}\n==\n{graphs}')
+                    self.update_graph_entities(graphs, entities, main_entity, vars.get('**', self.transcriber.current_topic))
+                elif (_ == 'book'):
+                    logger.info('Received ask command for book')
+                    #just sending to vscode for now..
+
                 #create knowledge graph
             case "OK":
                 #testing
@@ -1910,7 +1918,10 @@ class MyWindow(QMainWindow):
                 elif (type == 'book'):
                     cacheno = vars.get('cacheno', -1)
                     resume_reader(int(cacheno))
-                
+            case "Get Video":
+                cacheno = vars.get('cacheno', -1)
+                self.get_video(cacheno)
+
             case "Screenshot Feedback_":
                 bbox = vars.get('BBOX', None)
                 if (bbox is not None):
@@ -2025,13 +2036,7 @@ class MyWindow(QMainWindow):
                 self.transcriber.current_context = context
                 print(f"<<{lang}>>\n$$book=" + str(book))
                 print(f"<<{lang}>>\n$$context=" + str(context))
-                self.label_topic_info[0].setText(f'**{book}')
-
-                #format this a bit nicer..
-                self.label_topic_info[1].setText(f'{context}') 
-
-                self.label_topic_info[0].update()
-                self.label_topic_info[1].update()
+                self.set_topic_info(book, context)
                 self.bookhistory.insert(0, {'book': book, 'context': context, 'timestamp': time.time()}) #0 based index for most recent
                 #bring vscode to front if not there..
 
@@ -2041,9 +2046,7 @@ class MyWindow(QMainWindow):
                 wname = vars.get('**', 'None')
 
                 #format this a bit nicer..
-                self.label_topic_info[1].setText(f'{wname}') 
-
-                self.label_topic_info[1].update()
+                self.set_topic_info('', wname)
                 #bring vscode to front if not there..
                 self.show_window(wname)
 
@@ -2054,10 +2057,7 @@ class MyWindow(QMainWindow):
                 self.transcriber.current_context = context
                 print(f"<<{lang}>>\n$$book=" + str(book))
                 print(f"<<{lang}>>\n$$context=" + str(context))
-                self.label_topic_info[0].setText(f'**{book}')
-                self.label_topic_info[1].setText(f'{context}') 
-                self.label_topic_info[0].update()
-                self.label_topic_info[1].update()
+                self.set_topic_info(book, context)
                 self.show_mrroboto()
                 
             case "Select Topic":
@@ -2069,14 +2069,7 @@ class MyWindow(QMainWindow):
                 self.transcriber.current_context = context
                 print(f"<<{lang}>>\n$$topic=" + str(topic))
                 print(f"<<{lang}>>\n$$context=" + str(context))
-                #self.label_topic_info[0].setText(f'**{topic}')
-                self.label_topic_info[0].setText(f'**{self.transcriber.current_book}')
-
-                #format this a bit nicer..
-                self.label_topic_info[1].setText(f'{topic}<br>{context}') 
-
-                self.label_topic_info[0].update()
-                self.label_topic_info[1].update()
+                self.set_topic_info(topic, context)
                 self.topichistory.insert(0, {'topic': topic, 'context': context, 'timestamp': time.time()}) #0 based index for most recent
                 self.update_topic_history()
                 #bring vscode to front if not there..
@@ -2139,6 +2132,21 @@ class MyWindow(QMainWindow):
             logger.warning(f'!!LAG {lagtime:.2f}\n;> :={mycommand[":"]}\t_={mycommand["_"]:.2f}\n;> {command}\n {vars}')
 
         #add more commands as needed.
+
+
+    def set_topic_info(self, topic, context):
+        """Set the topic and context information in the UI."""
+        #add status info and additional contextual info from history?..
+        status_info = f"Status"
+        if (topic):
+            self.label_topic_info[0].setText(f'<table width="100%"><tr><td align="left">**{topic}</td>'
+                                             f'<td align="right">{status_info}</td></tr></table>')
+            self.label_topic_info[0].update()
+        if (context):
+            self.label_topic_info[1].setText(f'{context}') 
+    #        self.label_topic_info[1].setText(f'{topic}<br>{context}') 
+
+            self.label_topic_info[1].update()
 
     def send_window_info(self):
         #send window information to wherever it needs to go.
@@ -2474,6 +2482,11 @@ class MyWindow(QMainWindow):
         self.filters = {}
         self.lagtracker = {} #track lag for each command, to detect slow commands and warn user.
         self.windows = {} #current windows by pid, updated by window thread.
+        self.kg = None
+        self.kgid = 0
+        self.video_cache = [] #running list of files which were played..
+        self.video_cache_index = 0
+        #allow for selection for any of the past n videos..{'_': img or video, '**': fname, '(': st, ')': et, '..': current_time}
         self.myactions = [] #list of current actions to display, updated by QR commands.
         self.trey_data = {} #current data to display, updated by QR commands and transcription.
         self.similar = [] #current similar items to display, updated by QR commands and transcription.
@@ -2840,7 +2853,32 @@ class MyWindow(QMainWindow):
         self.send_window_info()
         self.updateLabels(self.windows) #gives info for all windows
 
-    def make_kg(self, graph, topic=""):
+
+    def get_kg_img(self, nn):
+        img = Image.new("RGB", (120, 20), "blue")
+        draw = ImageDraw.Draw(img)                
+        #add custom text here for selection info..
+        font = ImageFont.truetype("arial.ttf", size=36)
+        position = (10, 10)  # Position to draw the text
+        text_content = f"{nn}"
+        text_color = (255, 255, 255)  # White color in RGB
+
+        draw.text(position, text_content, fill=text_color, font=font)
+        return img
+
+    def add_to_kg(self, kg, n, l):
+        if (len(n) > 3): #only add entities with length > 3 to avoid clutter
+            if (not kg.has_node(n)):
+                kg.add_node(n, count=0, myid=self.kgid, label=l)
+                self.kgid += 1
+            else:
+                kg.nodes[n]['count'] = kg.nodes[n].get('count', 0) + 1 #increment count if already exists
+                kg.nodes[n]['label'] = l
+        else:
+            return False
+        return True
+    
+    def make_kg(self, graph, entities, topic=""):
         if (topic == ""):
             topic = self.transcriber.current_topic
         if not graph:
@@ -2848,26 +2886,58 @@ class MyWindow(QMainWindow):
         if not isinstance(graph, list):
             return None
         logger.info(f'{graph}')
+
+        if (isinstance(entities, list)):
+            if (self.kg is None):
+                self.kg = nx.Graph(name=topic) 
+            kg = self.kg
+            for ent in entities:
+                if ('text' not in ent):
+                    logger.info(f'!!--make_kg\nent={ent}')
+                    continue
+                e = ent['text']
+                l = ent['label']
+                #images too much overhead, find different way to customize..
+#                img = self.get_kg_img(sel)
+#                img2 = self.get_kg_img(sel+1)
+#                kg.add_node(s, image=img) #param for image?  
+#                kg.add_node(o, image=img2) 
+                self.add_to_kg(kg, e, l)
+    
         if (isinstance(graph, list)):
-            kg = nx.Graph(name=topic)
+            if (self.kg is None):
+                self.kg = nx.DiGraph(name=topic) 
+            kg = self.kg
             for rel in graph:
                 if ('head' not in rel or 'tail' not in rel or 'relation' not in rel or 'score' not in rel):
-                    logger.info(f'!!--make_kg\n{rel}')
+                    logger.info(f'!!--make_kg\nrel={rel}')
                     continue
                 s = rel['head']['text']
+                ls = rel['head']['type']
                 o = rel['tail']['text']
+                lo = rel['tail']['type']
+                if (len(s) < 3 or len(o) < 3): #only add entities with length > 3 to avoid clutter
+                    continue
                 r = rel['relation']                
                 score = rel['score']
 
-                kg.add_node(s)
-                kg.add_node(o)
-                kg.add_edge(s, o, type=r)
+
+                #images too much overhead, find different way to customize..
+#                img = self.get_kg_img(sel)
+#                img2 = self.get_kg_img(sel+1)
+#                kg.add_node(s, image=img) #param for image?  
+#                kg.add_node(o, image=img2) 
+                if (self.add_to_kg(kg, s, ls) and self.add_to_kg(kg, o, lo)):
+                    kg.add_edge(s, o, type=r)
+        #kg.remove_nodes_from(list(nx.isolates(kg))) #remove isolated nodes.. never shown anyway..
         return kg
     
 
     def visualize_kg(self, kg, topic="ALL"):
         #dpi 96 assume..
         #why we cant pass in pixels?  
+
+
         width_inches = self.geo.width() / 96
         height_inches = self.geo.height() / 96
 
@@ -2880,6 +2950,10 @@ class MyWindow(QMainWindow):
         else:
             fname = f"./temp/kg/{topic}.png"
             subgraph = nx.ego_graph(kg,topic, radius=3) #get subgraph around topic with radius 2, can adjust as needed.
+            if (subgraph.number_of_nodes() < 5): #if too small, just use entire graph
+                subgraph = nx.ego_graph(kg,topic, radius=4) #larger..
+            elif (subgraph.number_of_nodes() > 100): #if too large, just use entire graph
+                subgraph = nx.ego_graph(kg,topic, radius=2) #smaller..
         logger.info(f'--{fname}')
         if (os.path.exists(fname) and os.path.getmtime(fname) > time.time() - 86400): #if file exists and is less than 1 day old, use it instead of regenerating
             self.play_video(fname) #for now just use video player to show image, can adjust later for better performance if needed.
@@ -2892,6 +2966,12 @@ class MyWindow(QMainWindow):
 
         logger.info(f'Visualizing knowledge graph for topic: {topic} with {len(subgraph.nodes())} nodes and {len(subgraph.edges())} edges')
 
+        colors = ['red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'violet'] #7-loop
+        color_map = {label: colors[i % len(colors)] for i, label in enumerate(self.cfg["kg"]["entity_labels"])} if self.cfg and "kg" in self.cfg and "entity_labels" in self.cfg["kg"] else {}
+        edge_color_map = {label: colors[i % len(colors)] for i, label in enumerate(self.cfg["kg"]["relation_labels"])} if self.cfg and "kg" in self.cfg and "relation_labels" in self.cfg["kg"] else {}
+
+        node_colors = [color_map[subgraph.nodes[n]["label"]] for n in subgraph.nodes]
+        edge_colors = [edge_color_map[subgraph.edges[e]["type"]] for e in subgraph.edges]
 #        print(subgraph)
         plt.rc('text', usetex=False) # Ensure global setting is False
         fig, ax = plt.subplots(figsize=(width_inches, height_inches), dpi=96)
@@ -2899,11 +2979,13 @@ class MyWindow(QMainWindow):
         # 2. Compute layout positions
         pos = nx.spring_layout(subgraph)
 
-        nx.draw(subgraph, with_labels=True, node_color='skyblue', node_size=500, edge_color='gray', font_size=10)
+        nx.draw(subgraph, pos, with_labels=True, node_color=node_colors, node_size=500, edge_color=edge_colors, font_size=10)
 
-        # 4. Extract and draw the relationship labels
-        edge_labels = nx.get_edge_attributes(subgraph, "relation")
-        nx.draw_networkx_edge_labels(subgraph, pos, edge_labels=edge_labels)        
+        # 4. Extract and draw the relationship labels if not too many edges just to avoid cluttering the graph
+        if (subgraph.number_of_edges() < 500):
+#            ax.set_aspect('equal')
+            edge_labels = nx.get_edge_attributes(subgraph, "type")
+            nx.draw_networkx_edge_labels(subgraph, pos, edge_labels=edge_labels, rotate=True, node_size=500, font_size=8, font_color='blue') 
 
 #        graph_text = nx.write_network_text(subgraph, sources=[topic])
 #        ax.text(0.5, 0.01, graph_text, transform=ax.transAxes, fontsize=8, verticalalignment='bottom', horizontalalignment='center', wrap=True)
@@ -3019,6 +3101,23 @@ class MyWindow(QMainWindow):
             bbox[3] = y1
         return bbox
 
+    def get_video(self, cacheno):
+        # Implement the logic to retrieve the video from cache using cacheno
+        cacheno = abs(cacheno)  # Ensure cacheno is non-negative actual value is -12-12
+        self.video_cache_index = self.video_cache_index + cacheno
+
+        if (self.video_cache_index < 0):
+            self.video_cache_index = 0
+        elif (self.video_cache_index >= len(self.video_cache)):
+            self.video_cache_index = len(self.video_cache) - 1
+        if (len(self.video_cache) > 0 and self.video_cache_index >= 0 and self.video_cache_index < len(self.video_cache)):
+            result = self.video_cache[self.video_cache_index]
+            if result:
+                fname = result["**"]
+                self.play_video(fname)
+            else:
+                logger.info(f'No video found in cache for cacheno: {cacheno}')
+
     def play_video(self, fname):
         """Play a video file on the overlay."""
         logger.info(f'Playing video: {fname}')
@@ -3046,16 +3145,41 @@ class MyWindow(QMainWindow):
         elif (ext in ['.png']): #screenshot image..
             self.video_overlay.setPixmap(QPixmap(fname).scaled(self.video_overlay.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
             self.video_overlay.show()
+            #search for existing video cache entry for this file and update timestamp
+            found = False
+            result = next((item for item in self.video_cache if item["**"] == fname), None)
+            if result:
+                result['('] = time.time() #update timestamp']
+                self.video_cache.remove(result) #remove old entry
+                self.video_cache.insert(0, result) #insert at front of list
+            else:
+                self.video_cache.insert(0, {'_': 'png', '**': fname, '(': time.time(), ')': None, '..': 0})
         else:
             self.video_player.setMedia(QMediaContent(QUrl.fromLocalFile(fname)))
             self.video_widget.show()
             self.video_player.play()
             self.currentvideo = fname
+            result = next((item for item in self.video_cache if item["**"] == fname), None)
+            if result:
+                result['('] = time.time() #update timestamp']
+                self.video_cache.remove(result) #remove old entry
+                self.video_cache.insert(0, result) #insert at front of list
+                self.video_player.setPosition(result['..']) #resume from last position
+            else:
+                self.video_cache.insert(0, {'_': 'mpg', '**': fname, '(': time.time(), ')': None, '..': 0})
     
     def pause_video(self, hideme = True):
         """Pause the video playback."""
         logger.info('Pausing video')
         self.highlighton = False #turn off highlight when pausing video, can adjust as needed.
+        #update video cache
+        if (len(self.video_cache) > 0):
+            if (self.video_cache[0]['_'] == 'png'):
+                self.video_cache[0]['..'] = time.time() - self.video_cache[0]['('] #update duration played
+            else:
+                self.video_cache[0]['..'] = self.video_player.position()
+            self.video_cache[0][')'] = time.time()
+            
         self.video_player.pause()
         self.video_widget.hide()
 #        self.video_player.setMedia(QMediaContent()) #clear media to stop playback and release resources.

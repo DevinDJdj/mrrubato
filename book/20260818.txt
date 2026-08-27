@@ -350,6 +350,120 @@ basic ask thread works for graph..
 adjust state to not look for commands in 0 state..
 
 
-;> Show Graph [cacheno, idx]
+;> Show Graph [?cacheno, ?type, idx] type list
+;> Show Graph [?cacheno, idx] global list
 Hold these in order after generating, and bring them back
 Some not bad, but need some addl. info
+two list updates..
+
+thread to update entities up to current read index..
+How can we add image to graph..
+
+Test ..
+
+Need playwrighty error handling.  
+Dont want to overwrite bookmark when page error like this:
+
+503 Service Unavailable
+--add_bookmark
+
+
+Local context selects main entity..
+List entities from local context by default..
+But KG represents all..
+How large before this is too time consuming?  
+
+Generate unique image for each node?  
+Right now just label..
+Images really should be added just before delay as they are dynamic..
+
+--generate_suggestions
+
+
+**extensions/trey/trey.py
+--pause_video
+--video_cache
+test resumption..
+Able to select from cache..
+
+Also when to save all of this dynamic info..
+;> Save Graph..
+put in transcripts?  
+Otherwise transient..
+Q/A in transcripts already..
+But really only Q is significant..
+
+!!2026-08-24 01:36:42 ERROR    Error in get_graphs2: The following operation failed in the TorchScript interpreter.
+!!Traceback of TorchScript (most recent call last):
+!!RuntimeError: default_program(85): error: more than one instance of overloaded function "fabs" matches the argument list:
+==
+??
+#          self.model.to('cuda' if torch.cuda.is_available() else 'cpu')
+          self.model = GLiNER.from_pretrained(model_path, local_files_only=True,     
+            map_location="cuda",
+            quantize='int8',
+            compile_torch_model=True,
+            )
+
+$$
+
+!!2026-08-24 02:13:04 ERROR    Error in get_graphs2: int8 quantization on GPU requires the 'torchao' package. Install it with: pip install torchao
+==
+> pip install torchao
+breaks other things..
+> pip uninstall torchao
+??> pip install torchao --index-url https://download.pytorch.org/whl/cu128
+#https://github.com/pytorch/ao/issues/2919?timeline_page=1
+> pip show torch
+> pip install torchao==0.13.0 --index-url https://download.pytorch.org/whl/cu128
+fail..
+??
+
+$$
+
+
+Move make_kg and visualize_kg to transcriber..
+Then we can just run thread in to update kg up to current bookmark.  
+Or why, just allow for it to be dynamically instigated, but we need to save Entities for URL..
+
+
+**languages/hotkeys.py
+;> Get Graph 
+update graph for entire cacheno
+[53,55,50]
+test..
+Dont wait for all to finish..
+
+
+**extensions/trey/trey.py
+Need some sort of status..
+--label_topic_info[0]
+
+--set_topic_info
+test..
+Add status of any threads and connectivity..
+Is this enough space?
+
+Playwrighty tab status..
+(pct finished this session, pct graphed, pct finished, total bytes, vid length)
+Selected book, selected topic, midi device status, joystick device status..
+Session length, num actions..
+Not sure best info to display here..
+
+
+Tab status
+**languages/book.py
+;> Ask
+test..
+
+**extensions/trey/trey.py
+--get_video
+test..
+
+--get answer_cache as well..
+--just save and reread QRData
+very simple implementation..
+Then flag language (video, book, meta, hotkeys)
+
+Store graph info in transcript with ask..
+

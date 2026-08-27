@@ -557,6 +557,8 @@ export function startWatchingTranscriber(lang: string, transcriptFolder: string 
                                 let input = "";
                                 let output = "";
                                 let context = "";
+                                let top = Book.currenttopic;
+                                let _ = "hotkeys";
                                 if (cmd.vars && cmd.vars['QUERY']){
                                     input = cmd.vars['QUERY'] + '\n';
                                 }
@@ -570,7 +572,21 @@ export function startWatchingTranscriber(lang: string, transcriptFolder: string 
                                 if (cmd.vars && cmd.vars[')']){
                                     context += ":" + cmd.vars[')'];
                                 }
-                                Book.updatePage(Book.getBookPath() + "/" + file, "#" + context + "\n@@" + input + "\n==\n" + output + "\n$$\n", -1, -1); //append to end of file.
+                                if (cmd.vars && cmd.vars['**']){
+                                    top = cmd.vars['**'];
+                                }
+                                if (cmd.vars && cmd.vars['_']){
+                                    _ = cmd.vars['_'];
+                                }
+                                if (_ === "hotkeys"){
+                                    Book.updatePage(Book.getBookPath() + "/" + file, "#" + context + "\n@@" + input + "\n==\n" + output + "\n$$\n", -1, -1); //append to end of file.
+                                }
+                                else{
+                                    //simply query the model with the input.. maybe do this anyway..
+                                    Book.updatePage(Book.getBookPath() + "/" + file, "**" + top + "\n@@" + input + "\n", -1, -1); //append to end of file.
+                                    vscode.commands.executeCommand('workbench.action.chat.open', "@mr /chat " + "**" + top + "\n" + input);
+
+                                }
                             }
 
                             if (cmd.cmd === "Comment"){

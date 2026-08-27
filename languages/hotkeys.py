@@ -2,6 +2,7 @@ import logging
 from pydoc import text
 import re
 import threading
+from turtle import title
 from pynput import *
 from extensions.trey import synth
 from languages._meta import _META, _VIDEO
@@ -21,10 +22,12 @@ from extensions.trey.trey import page, pause_reader, skip_lines
 from extensions.trey.trey import skip_lines
 import languages.helpers.transcriber as transcriber
 
-
 from rapidfuzz.process import cdist
 from rapidfuzz import fuzz
 import numpy as np
+
+import torch
+from gliner import GLiNER
 
 from collections import Counter
 
@@ -68,7 +71,8 @@ class hotkeys:
     self.feedbacknowstr = self.now.strftime("%Y%m%d_%H%M%S")
     self.entities = []
     self.relations = []
-    self.graph_thread = None
+    self.graph_threads = []
+
     self.funcdict = {}
     self.suggestions = []
     self.joystate = {}
@@ -262,6 +266,7 @@ class hotkeys:
         "Comment": [53,57, 58], #record comment
         "Record Feedback": [53,57,60], 
         "Select Bookmark": [53,58,57], #feedback tells which mark it is.  Or default to set to 0 idx.  
+        "Get Graph": [53,55,50], #cacheno [53,55,50,53] Need indicator as to how much done.. Send piecemeal..
       }, 
       "4": {
         "Add Bookmark": [53,58,60,62], #feedback tells which mark it is.  Or default to set to 0 idx.  
@@ -321,6 +326,7 @@ class hotkeys:
       "_Find": "_find",
       "_Ask": "_ask",
       "Ask": "ask",
+
       "Search Web": "search_web",
       "Comment": "comment",
       "Select Type": "select_type",
@@ -333,7 +339,8 @@ class hotkeys:
       "Add Bookmark": "add_bookmark",
       "List Bookmarks": "list_bookmarks", 
       "Select Bookmark": "select_bookmark", 
-      "Record Feedback": "record_feedback"
+      "Record Feedback": "record_feedback",
+      "Get Graph": "get_graph"
     }
 
     self.helpdict = {
@@ -377,6 +384,10 @@ class hotkeys:
 "> ": "ask",
 "$$": "$cacheno, $direction, $strictness, &Query",
 "&&": "0=Ask &Query\n1=Ask &Query from $cacheno\n2=Ask &Query from $cacheno in $direction\n3=Ask &Query from $cacheno in $direction with $strictness\nResponse can be quite long, just basic LLM query using long context from page.  "},
+      "Get Graph": {
+"> ": "get_graph",
+"$$": "$cacheno",
+"&&": "0=Get graph from current\n1=Get graph from $cacheno\nResponse can be quite long, gliner-relex model is slow"},
       "Find": {
 "> ": "find", 
 "$$": "&Keyword", 
@@ -1570,21 +1581,24 @@ class hotkeys:
     answer = self.transcriber.ask_graph(context=input_llm, strictness=6) #allow for external knowledge, but not too much.  We want to extract from the context primarily.
     return answer
 
-  def dedup(self, mylist, isentities=False, threshold = 80):
+  def ddedup(self, t, all, stringmap, threshold = 80):
     from rapidfuzz import fuzz, process
+    alt = ''
+    match = process.extractOne(t, all, scorer=fuzz.ratio)
+    if (not match or match[1] < threshold):
+      stringmap[t] = {'cnt': 0, 'alt': ''}
+      all.append(t)
+    else:
+      stringmap[ match[0]]['alt'] = t
+
+  def dedup(self, mylist, isentities=False, threshold = 80):
     #deduplicate based on names..
     stringmap = {}
     all = []
     if (isentities):
       for e in mylist:
         t = e['text']
-        alt = ''
-        match = process.extractOne(t, all, scorer=fuzz.ratio)
-        if (not match or match[1] < threshold):
-          stringmap[t] = {'cnt': 0, 'alt': ''}
-          all.append(t)
-        else:
-          stringmap[ match[0]]['alt'] = t
+        self.ddedup(t, all, stringmap, threshold)
 
       logger.info(stringmap)
       for name, obj in stringmap.items():
@@ -1598,21 +1612,10 @@ class hotkeys:
       for r in mylist:
         h = r['head']['text']
         t = r['tail']['text']
-        alt = ''
-        match = process.extractOne(h, all, scorer=fuzz.ratio)
-        if (not match or match[1] < threshold):
-          stringmap[h] = {'cnt': 0, 'alt': ''}
-          all.append(h)
-        else:
-          stringmap[ match[0]]['alt'] = h
-        alt = ''
-        match = process.extractOne(t, all, scorer=fuzz.ratio)
-        if (not match or match[1] < threshold):
-          stringmap[t] = {'cnt': 0, 'alt': ''}      
-          all.append(t)
-        else:
-          stringmap[ match[0] ]['alt'] = t
-        
+        self.ddedup(h, all, stringmap, threshold)
+        self.ddedup(t, all, stringmap, threshold)
+
+      logger.info(f'> Dedup')        
       logger.info(stringmap)
       for name, obj in stringmap.items():
         #replace all with alt.  
@@ -1626,101 +1629,140 @@ class hotkeys:
 
       
   def get_graphs2(self, context, loc, query, answer, vars, qr_queue=None, reader_queue=None):
-    from gliner import GLiNER
     myloc = loc
-    context = context[-8192:]  # only keep the last 8kb of context
+    if (query is None or query == ""):
+      context = context[:loc] #blank query does entire context up to location..
+    else:
+      context = context[-4095:]  # only keep the last 8kb of context
+
     model_path = self.config['kg']['model_path']
     entity_labels = self.config['kg']['entity_labels']
     relation_labels = self.config['kg']['relation_labels']
     lag = time.time()
-    if not hasattr(self, 'model') or self.model is None:
-        self.model = GLiNER.from_pretrained(model_path, local_files_only=True)
-    model = self.model #keep for next call.  
-    subcontexts = [context[i : i + 2048] for i in range(0, len(context), 2048)]
-#    self.relations = [] #dont reset for now..just add..
-#    self.entities = []
     allentities = []
     allrelations = []
-    for (j, subcontext) in enumerate(subcontexts):
-        # subcontext is already defined in the loop, no need to redefine it
-        entities, relations = model.inference(
-            texts=[subcontext],
-            labels=entity_labels,
-            relations=relation_labels,
-            threshold=0.3,
-            adjacency_threshold=0.4,
-            relation_threshold=0.6, #too few relations at the moment..
-            return_relations=True,
-            flat_ner=False
-        )
-        logger.info(entities)
-        logger.info(relations)
-        for e in entities[0]:
-          e['start'] -= len(context) + j*2048
-          e['start'] += loc
-        for r in relations[0]:
-          r['head']['start'] -= len(context) + j*2048
-          r['tail']['start'] -= len(context) + j*2048
-          r['head']['start'] += loc
-          r['tail']['start'] += loc
-        allentities.extend(entities[0])
-        allrelations.extend(relations[0])
+    try:
+      if not hasattr(self, 'model') or self.model is None:
+          logger.info(f'Loading GLiNER model from {model_path}')
+          logger.info(f'torch.cuda.is_available(): {torch.cuda.is_available()}')
+          self.model = GLiNER.from_pretrained(model_path, local_files_only=True,     
+#            map_location="cuda",
+#            quantize='int8',
+#            compile_torch_model=True,
+            )
+#          self.model.to('cuda' if torch.cuda.is_available() else 'cpu')
+      model = self.model #keep for next call.  
+      subcontexts = [context[i : i + 2048] for i in range(0, len(context), 2048)]
+  #    self.relations = [] #dont reset for now..just add..
+  #    self.entities = []
+      for (j, subcontext) in enumerate(subcontexts):
+          # subcontext is already defined in the loop, no need to redefine it
+          #find first space and last space
+  #        first_space = subcontext.find(' ')
+  #        last_space = subcontext.rfind(' ')
+          entities, relations = model.inference(
+              texts=[subcontext],
+              labels=entity_labels,
+              relations=relation_labels,
+              threshold=0.3,
+              adjacency_threshold=0.4,
+              relation_threshold=0.6, #too few relations at the moment..
+              return_relations=True,
+              flat_ner=False
+          )
 
-    subanswers = [answer[i : i + 2048] for i in range(0, len(answer), 2048)]
-    for (k, subanswer) in enumerate(subanswers):
-        # subcontext is already defined in the loop, no need to redefine it
-        entities, relations = model.inference(
-            texts=[subcontext],
-            labels=entity_labels,
-            relations=relation_labels,
-            threshold=0.3,
-            adjacency_threshold=0.4,
-            relation_threshold=0.6, #too few relations at the moment..
-            return_relations=True,
-            flat_ner=False
-        )
-        logger.info(entities)
-        logger.info(relations)
-        for e in entities[0]:
-          e['start'] = -1 #temporary entity..
-        for r in relations[0]:
-          r['head']['start'] = -1
-          r['tail']['start'] = -1
-        allentities.extend(entities[0])
-        allrelations.extend(relations[0])
+          #dont fill up with a bunch of pronouns..
+          entities[0] = [e for e in entities[0] if len(e['text']) > 3]
+          relations[0] = [r for r in relations[0] if len(r['head']['text']) > 2 and len(r['tail']['text']) > 2]
+
+          logger.info(entities)
+          logger.info(relations)
+          for e in entities[0]:
+            e['start'] -= len(context) + j*2048
+            e['start'] += loc
+          for r in relations[0]:
+            r['head']['start'] -= len(context) + j*2048
+            r['tail']['start'] -= len(context) + j*2048
+            r['head']['start'] += loc
+            r['tail']['start'] += loc
+          allentities.extend(entities[0])
+          allrelations.extend(relations[0])
+
+          if (len(query) == 0):
+            vars["GRAPHS"] = json.dumps(relations[0])
+            vars["ENTITIES"] = json.dumps(entities[0])
+            vars[":"] = j*2048
+            if (qr_queue is not None):
+              self.set_qr("graph", vars) #do again to load graph..
+              qr = "<<" + self.name + ">>\n"
+              qr += self.qr + "\n"
+              qr_queue.put(qr)
+              self.qr = ""
 
 
-    #try to deduplicate..
-    logger.info(f'$$NUMRELATIONS={len(allrelations)}') #measuring time for now..
-    logger.info(f'$$NUMENTITIES={len(allentities)}')
-    logger.info(f'> Dedup')
-    self.dedup(allrelations)
-    self.dedup(allentities, True)
 
-    self.entities.extend(allentities)
-    self.relations.extend(allrelations)
-    self.dedup(self.relations)
-    self.dedup(self.entities, True)
+      subanswers = [answer[i : i + 2048] for i in range(0, len(answer), 2048)]
+      for (k, subanswer) in enumerate(subanswers):
+          # subcontext is already defined in the loop, no need to redefine it
+          #quick fix.. probably more logic needed to find better split points..
+  #        first_space = subanswer.find(' ')
+  #        last_space = subanswer.rfind(' ')
+          entities, relations = model.inference(
+              texts=[subanswer],
+              labels=entity_labels,
+              relations=relation_labels,
+              threshold=0.3,
+              adjacency_threshold=0.4,
+              relation_threshold=0.6, #too few relations at the moment..
+              return_relations=True,
+              flat_ner=False
+          )
+          logger.info(entities)
+          logger.info(relations)
+          for e in entities[0]:
+            e['start'] = -1 #temporary entity..
+          for r in relations[0]:
+            r['head']['start'] = -1
+            r['tail']['start'] = -1
+          allentities.extend(entities[0])
+          allrelations.extend(relations[0])
 
-    #set qr info..
-    vars["GRAPHS"] = json.dumps(allrelations)
-    vars["ENTITIES"] = json.dumps(allentities)
-    logger.info(f'$$NUMRELATIONS={len(allrelations)}') #measuring time for now..
-    logger.info(f'{allrelations}')
-    logger.info(f'$$NUMENTITIES={len(allentities)}')
-    entity_counts = Counter(e['head']['text'] for e in allrelations)
-    #find central entity.  Create map of counts..
-    max_key = max(entity_counts, key=entity_counts.get)
-    vars["ENTITY"] = max_key
 
-    if (qr_queue is not None):
-      self.set_qr("graph", vars) #do again to load graph..
-      qr = "<<" + self.name + ">>\n"
-      qr += self.qr + "\n"
-      qr_queue.put(qr)
-      self.qr = ""
+      #try to deduplicate..
+      logger.info(f'$$NUMRELATIONS={len(allrelations)}') #measuring time for now..
+      logger.info(f'$$NUMENTITIES={len(allentities)}')
+      logger.info(f'> Dedup')
+      self.dedup(allrelations)
+      self.dedup(allentities, True)
 
-    logger.info(f'!!LAG {time.time() - lag}')
+      self.entities.extend(allentities)
+      self.relations.extend(allrelations)
+      self.dedup(self.relations)
+      self.dedup(self.entities, True)
+
+      #set qr info..
+      vars["GRAPHS"] = json.dumps(allrelations)
+      vars["ENTITIES"] = json.dumps(allentities)
+      logger.info(f'$$NUMRELATIONS={len(allrelations)}') #measuring time for now..
+      logger.info(f'{allrelations}')
+      logger.info(f'$$NUMENTITIES={len(allentities)}')
+      entity_counts = Counter(e['head']['text'] for e in allrelations if (len(e['head']['text']) > 3))
+      #find central entity.  Create map of counts..
+      max_key = max(entity_counts, key=entity_counts.get)
+      vars["ENTITY"] = max_key
+
+
+      if (qr_queue is not None and len(query) > 0): #send combined here if ask query.. ~ 5 minutes depending on CPU/GPU..
+        self.set_qr("graph", vars) #do again to load graph..
+        qr = "<<" + self.name + ">>\n"
+        qr += self.qr + "\n"
+        qr_queue.put(qr)
+        self.qr = ""
+
+      logger.info(f'!!LAG {time.time() - lag}')
+#      self.synth.play_synth([53+12,55+12,52+12]) #play a sound to indicate graph is ready.
+    except Exception as e:      
+      logger.error(f'Error in get_graphs2: {e}')
 
     return allentities, allrelations
     
@@ -1769,6 +1811,30 @@ class hotkeys:
       suggest = self.generate_suggestions(query, suggest)
       return suggest
 
+  def get_graph(self, sequence=[]):
+    logger.info(f'> Get Graph {sequence}')
+    #for now just query ollama?  better if we have vectra or qdrantz..
+    cacheno = -1
+    if (len(sequence) > 0):
+      cacheno = sequence[0]-self.keybot - 1 #first key is cacheno..
+    if (cacheno < 0):
+      cacheno = playwrighty.current_cache
+    direction = -1
+    playwrighty.get_bookmark(playwrighty.page_cache[cacheno]['page'].url, cacheno)
+    context, start_offset, end_offset = playwrighty.get_p_context(cacheno=cacheno)
+    title = playwrighty.page_cache[cacheno]['title']
+    url = playwrighty.page_cache[cacheno]['page'].url
+    vars = {}
+    vars = {"DIRECTION": direction, "URL": url, "(": start_offset, ")": end_offset, "QUERY": ''}
+    vars["**"] = title
+    vars[":"] = end_offset
+    self.func = "graph"
+    vars["_"] = self.name
+    #Do we need to track these threads..
+    self.graph_threads.append(threading.Thread(target=self.get_graphs2, args=(context, end_offset, '', '', vars, self.qr_queue)))
+    self.graph_threads[-1].start()
+    return 0
+  
   def ask(self, sequence=[]):
     logger.info(f'> Ask {sequence}')
     query = "What are you doing?"
@@ -1828,6 +1894,7 @@ class hotkeys:
       vars["ANSWER"] = answer
       vars["**"] = title
       vars[":"] = end_offset
+      vars["_"] = self.name
       self.transcriber.write(self.name, "Ask", vars, save=True) #save for book..
       self.func = "ask"
       if (self.qr_queue is not None):
@@ -1841,13 +1908,17 @@ class hotkeys:
       graphs = ""
 #      graphs = self.get_graphs(context, query)
       #start thread for this.  
-      if (self.graph_thread is not None and self.graph_thread.is_alive()):
+      for t in self.graph_threads:
+        if t is not None and not t.is_alive():
+          self.graph_threads.remove(t)  # Remove the finished thread from the list
+      if (len(self.graph_threads) > 0 and self.graph_threads[-1] is not None and self.graph_threads[-1].is_alive()):
         logger.info('!!Graph thread still running, waiting for it to finish before starting a new one.')
         self.synth.play_synth([53+12,55+12,52+12]) #play a sound to indicate waiting for graph thread
         time.sleep(2)
 #        self.graph_thread.join()  # Wait for the previous thread to finish
-      self.graph_thread = threading.Thread(target=self.get_graphs2, args=(context, end_offset, query, answer, vars, self.qr_queue))
-      self.graph_thread.start()
+
+      self.graph_threads.append(threading.Thread(target=self.get_graphs2, args=(context, end_offset, query, answer, vars, self.qr_queue)))
+      self.graph_threads[-1].start()
 #      self.get_graphs2(context, query, vars) #ad to vars..
 #      self.get_graphs2(context, end_offset, query,answer, vars)
 
