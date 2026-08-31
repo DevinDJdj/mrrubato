@@ -139,9 +139,35 @@ class hotkeys:
     logger.info(f'Loaded {len(allcmds)} command transcripts for {self.name}')
     #filter commands for bookmarks.  
     self.load_bookmarks2(allcmds)
+    #after some time, load graphs..
+    if (self.qr_queue):
+      self.load_graphs(allcmds)
+#    t2 = threading.Timer(15, self.load_graphs, [allcmds])
+#    t2.start()  # Start the timer in a new thread
 
 
     #self.load_bookmarks()
+
+  def load_graphs(self, allcmds):
+    #placeholder for loading graphs
+    logger.info(f'Loading graphs for {len(allcmds)} commands')
+    numloaded = 0
+    for c in allcmds:
+      #print(f'Processing command {c}')
+      url = ''
+      if (c['cmd'] == 'graph'):
+        print(f'Found graph command {c}')
+        numloaded += 1
+        vars = c['vars']
+        vars['show'] = False
+        self.set_qr(c['cmd'], vars) #answer quickly before loading graph..
+        qr = "<<" + self.name + ">>\n"
+        qr += self.qr + "\n"
+        self.qr_queue.put(qr)
+        self.qr = ""
+    logger.info(f'Loaded {numloaded} graphs from {len(allcmds)} commands')
+
+
 
   def load_bookmarks2(self, allcmds):
     totalcmds = len(allcmds)
@@ -1699,6 +1725,14 @@ class hotkeys:
               qr_queue.put(qr)
               self.qr = ""
 
+      vars["GRAPHS"] = json.dumps(allrelations)
+      vars["ENTITIES"] = json.dumps(allentities)
+      vars["ANSWER"] = ""
+      self.dedup(allrelations)
+      self.dedup(allentities, True)
+      #only save info from actual context, not answer..
+      if (qr_queue is not None and len(query) > 0): #send combined here if ask query.. ~ 5 minutes depending on CPU/GPU..
+        self.transcriber.write(self.name, "graph", vars, save=True) #save for future..
 
 
       subanswers = [answer[i : i + 2048] for i in range(0, len(answer), 2048)]
@@ -1758,6 +1792,7 @@ class hotkeys:
         qr += self.qr + "\n"
         qr_queue.put(qr)
         self.qr = ""
+
 
       logger.info(f'!!LAG {time.time() - lag}')
 #      self.synth.play_synth([53+12,55+12,52+12]) #play a sound to indicate graph is ready.

@@ -465,5 +465,36 @@ test..
 very simple implementation..
 Then flag language (video, book, meta, hotkeys)
 
+**languages/_meta.py
+--get_cache
+test..
+[48,51,50]
+
 Store graph info in transcript with ask..
+Not sure if we want this or not, but for now storing..
+Not sure if we want answers, but for now storing..
+
+not working yet..
+
+
+**timestep.py
+Need to keep logs
+OK, test..
+
+
+**web/public/recent.html
+add some data here regarding video state.  
+
+
+**analyze/analyze.py
+--printMidi
+--getLCSMatrix
+Similar to this, add this to firebase stats..
+Then display with [**web/public/recent.html] or [**web/public/analyze.html]
+
+--addStatistics
+--updatestatsdb
+test..
+
+
 

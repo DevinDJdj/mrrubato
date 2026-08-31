@@ -9,7 +9,9 @@
 
 
 import sys
-
+import logging
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 import datetime
 import traceback
 from unittest import case
@@ -1220,6 +1222,23 @@ def printMidiGif(t, midilink):
                 save_all=True, append_images=images[1:], optimize=False, duration=40, loop=0)
     
 
+
+def addStatistics(statlink, data, rythmdata, alliterations):
+    global gstarttimes, gendtimes
+    logger.info(f"Adding statistics: {len(data)} data points, {len(rythmdata)} rhythm data points, {len(alliterations)} alliterations")
+    stats = [{} for _ in range(len(starttimes))]
+    for i, item in enumerate(starttimes):
+        npi = len(alliterations[i])/endtimes[i] - item
+        stat_item = { "(": item, ")": endtimes[i], ":": i, "&&": alliterations[i], "npi": npi}
+        stats[i] = stat_item
+
+    with open(statlink, 'w') as f:
+        json.dump(stats, f)
+
+
+
+
+
 def printMidi(midilink, title, GroupName, videoid, force=False):
     path = './output/'
     midilink = midilink.replace("\r", "")
@@ -1274,6 +1293,8 @@ def printMidi(midilink, title, GroupName, videoid, force=False):
 
 
     data, rythmdata, alliterations = getNgrams(t)
+    statlink = midiname + '.stat'
+    addStatistics(path + statlink, data, rythmdata, alliterations)
     if (data is None):
         return
 
@@ -1447,7 +1468,7 @@ def calctimes(starttimes, endtimes):
         timewithplaying += lasttime - getSecsFromTime(s)
     return timewithplaying, timewithoutplaying
     
-def updatestatsdb(videoid, starttimes, endtimes, midisize, numwords):
+def updatestatsdb(videoid, starttimes, endtimes, midisize, numwords, statlink=""):
  
     timeplaying, timewithoutplaying = calctimes(starttimes, endtimes)
     #insert into DB
@@ -1455,10 +1476,13 @@ def updatestatsdb(videoid, starttimes, endtimes, midisize, numwords):
     #if this exists, return
     if ref.get() is not None:
         return
-        
+
+    if (statlink !=""):
+        with open(statlink, "r") as f:
+            statdata = json.load(f)
     #really this can all be set at play record.py as well, but this is essentially the same as we run this during record.py
     #need to test this works.  Seems to work ok.  
-    data = {'timeplaying':timeplaying,'timewithoutplaying':timewithoutplaying, 'midisize':midisize, 'wordsrecognized':numwords}
+    data = {'timeplaying':timeplaying,'timewithoutplaying':timewithoutplaying, 'midisize':midisize, 'wordsrecognized':numwords, 'stats':statdata}
     ref.set(data)
 
 def getqrcode(prev):
