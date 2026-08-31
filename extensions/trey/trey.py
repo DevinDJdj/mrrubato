@@ -1746,16 +1746,17 @@ class MyWindow(QMainWindow):
         return config.custom_settings.get(lang+"_"+key, default)
 
 
-    def update_graph_entities(self, graphs, entities, main_entity, topic):
+    def update_graph_entities(self, graphs, entities, main_entity, topic, show=True):
         if (len(entities) > 0 and main_entity): #update entities first.. only if this is graph in response to question..
             try:
             #add to transparent
                 entities = json.loads(entities)
-                for i, ent in enumerate(entities):
-                    #this is transient based on state..
-                    if (i > 24):
-                        break
-                    self.label_filter_info[i].setText('(' + ent['label'][:3] + ') ' + ent['text'])
+                if (show):
+                    for i, ent in enumerate(entities):
+                        #this is transient based on state..
+                        if (i > 24):
+                            break
+                        self.label_filter_info[i].setText('(' + ent['label'][:3] + ') ' + ent['text'])
             except Exception as e:
                 logger.error(f'!!Error parsing entities: {e}')
                 logger.error(f'!!ENTITIES: {entities}')
@@ -1764,7 +1765,7 @@ class MyWindow(QMainWindow):
                 graphs = json.loads(graphs)
                 #why this is in array not sure..
                 kg = self.make_kg(graphs, entities, topic=topic) #pass topic and perhaps other..
-                if (kg and main_entity): #dont visualize if we dont have a main entity, just update the graph data for now.
+                if (kg and main_entity and show): #dont visualize if we dont have a main entity, just update the graph data for now.
                     self.visualize_kg(kg, main_entity if main_entity else topic)
             except Exception as e:
                 logger.error(f'!!Error parsing graphs: {e}')
@@ -1784,8 +1785,9 @@ class MyWindow(QMainWindow):
                 graphs = vars.get('GRAPHS', '')
                 main_entity = vars.get('ENTITY', '')
                 entities = vars.get('ENTITIES', '')
+                show = vars.get('show', True)
                 logger.info(f'> graph\n==\n{graphs}')
-                self.update_graph_entities(graphs, entities, main_entity, vars.get('**', self.transcriber.current_topic))
+                self.update_graph_entities(graphs, entities, main_entity, vars.get('**', self.transcriber.current_topic), show=show)
             case "ask":
                 _ = vars.get('_', 'hotkeys')
                 if (_ == 'hotkeys'):
@@ -1795,9 +1797,10 @@ class MyWindow(QMainWindow):
                     graphs = vars.get('GRAPHS', '')
                     main_entity = vars.get('ENTITY', '')
                     entities = vars.get('ENTITIES', '')
+                    show = vars.get('show', True)
 
                     logger.info(f'> ask\n==\n{answer}\n==\n{graphs}')
-                    self.update_graph_entities(graphs, entities, main_entity, vars.get('**', self.transcriber.current_topic))
+                    self.update_graph_entities(graphs, entities, main_entity, vars.get('**', self.transcriber.current_topic), show=show)
                 elif (_ == 'book'):
                     logger.info('Received ask command for book')
                     #just sending to vscode for now..
@@ -1921,6 +1924,10 @@ class MyWindow(QMainWindow):
             case "Get Video":
                 cacheno = vars.get('cacheno', -1)
                 self.get_video(cacheno)
+
+            case "Get Cache":
+                cacheno = vars.get('cacheno', -1)
+                self.get_qr_cache(int(cacheno))
 
             case "Screenshot Feedback_":
                 bbox = vars.get('BBOX', None)
@@ -2486,6 +2493,8 @@ class MyWindow(QMainWindow):
         self.kgid = 0
         self.video_cache = [] #running list of files which were played..
         self.video_cache_index = 0
+        self.qr_cache = [] #cache of QR data and structures.
+        self.qr_cache_index = 0 #index for navigating through the QR cache.
         #allow for selection for any of the past n videos..{'_': img or video, '**': fname, '(': st, ')': et, '..': current_time}
         self.myactions = [] #list of current actions to display, updated by QR commands.
         self.trey_data = {} #current data to display, updated by QR commands and transcription.
@@ -3101,6 +3110,24 @@ class MyWindow(QMainWindow):
             bbox[3] = y1
         return bbox
 
+
+    def get_qr_cache(self, cacheno):
+        # Implement the logic to retrieve the video from cache using cacheno
+        self.qr_cache_index = self.qr_cache_index + cacheno
+
+        logger.info(f'Getting QR from cache with cacheno: {self.qr_cache_index}')
+        if (self.qr_cache_index < 0):
+            self.qr_cache_index = 0
+        elif (self.qr_cache_index >= len(self.qr_cache)):
+            self.qr_cache_index = len(self.qr_cache) - 1
+        if (len(self.qr_cache) > 0 and self.qr_cache_index >= 0 and self.qr_cache_index < len(self.qr_cache)):
+            logger.info(f'Retrieving QR from cache at index: {self.qr_cache_index}')
+            result = self.qr_cache[self.qr_cache_index]
+            logger.info(f'{result["data"]}')
+            self.showQR(result['data'], result['struct'])
+            return result
+        return None
+
     def get_video(self, cacheno):
         # Implement the logic to retrieve the video from cache using cacheno
         cacheno = abs(cacheno)  # Ensure cacheno is non-negative actual value is -12-12
@@ -3694,6 +3721,10 @@ class MyWindow(QMainWindow):
 #        logger.info('Showing QR code')
         #adjust readable text first..
         #check for last last command is it list_bookmarks.  
+        self.qr_cache.insert(0, {'data': data, 'struct': struct})
+        if (self.qr_cache_index != 0):
+            self.qr_cache_index +=1
+
         self.show_p(struct)
         self.update_info(data)
 

@@ -209,6 +209,7 @@ class _meta:
         "Tune Book": [48,55,50], #book display show in main?
         "Tune In": [48,55,56], #main display, show time/topic/book or other info?
         "Tune Out": [48,55,54], #audio volume/mute or other info?
+        "Get Cache": [48, 51, 50], #get video from video cache..
       }
     }
     if (self.name in self.config['languages']):
@@ -239,6 +240,7 @@ class _meta:
       "Tune In": "tune_in",
       "Tune Out": "tune_out",
       "Restart": "restart",
+      "Get Cache": "get_cache",
     }
     self.helpdict = {
       "Start": {
@@ -265,6 +267,10 @@ class _meta:
 "> ": "set topic", 
 "$$": "$topic", 
 "&&": "Set topic by name."},
+      "Get Cache": {
+"> ": "get cache", 
+"$$": "$cacheno", 
+"&&": "0=$cacheno=0\n1=Get $cacheno\nGet QR from previous commands."},
       "List Books": {
 "> ": "list books", 
 "$$": "None", 
@@ -376,6 +382,14 @@ class _meta:
       print(f"Command {cmd} not found in function maps")
     return -1
   
+  def get_cache(self, sequence=[]):
+    """Get QR from cache."""
+    logger.info(f'> Get Cache {sequence}')
+    cacheno = 0
+    if (len(sequence) > 0):
+      cacheno = self.mid - sequence[-1] #first key cache selection
+    self.set_qr("Get Cache", {'type': self.name, 'cacheno': cacheno})
+    return 0
 
   def restart(self, sequence=[]):
     """Restart TREY."""

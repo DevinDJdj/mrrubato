@@ -78,6 +78,7 @@ def cloneme(giturl, gitbranch, gitbook):
     numdownloaded = 0
     for b in bookdata:
         page = b
+        #print(page)
 #        print(page["download_url"])
         #add this to DB.  
         #get repo name

@@ -9,6 +9,7 @@
 
 import sys
 import os
+import logging
 import httplib2 
 # adding Folder_2/subfolder to the system path
 sys.path.insert(0, 'c:/devinpiano/')
@@ -55,6 +56,9 @@ import languages.helpers.transcriber as transcriber
 #from transcribe import transcribe_fromyoutube
 #import whisper
 
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 CLIENT_SECRETS_FILE = config.cfg['youtube']['CLIENT_SECRETS_FILE']
 
@@ -209,17 +213,22 @@ def getCodeHistory():
     i = 0
     limit = 100
     for e in arr[:limit]:
-        print(e['url'])
-        print(e['html_url']) #this is the link we want to use in UI somewhere.  
+        print(f"Processing commit {i}: {e['url']}")
+        logger.info(f"Processing commit {i}: {e['url']}")
+        logger.info(e['url'])
+        logger.info(e['html_url']) #this is the link we want to use in UI somewhere.  
         stats = requests.get(e['url']).json()
-        print(stats['stats'])
+        logger.info(stats['stats'])
         for f in stats['files']:
-            print(f['filename'])
-            print(f['changes'])
+            logger.info(f['filename'])
+            logger.info(f['changes'])
             #f['blob_url'
 #    return r.json()    
   except Exception as e:
     print(e)
+    traceback.print_exc()
+    logger.error(e)
+    logger.error(traceback.format_exc())
         
 
 def getWatched():
@@ -314,9 +323,12 @@ def respondtoComments(args):
             authorchannel = comment["snippet"]["authorChannelId"]["value"] #is this better than displayname?  
             text = comment["snippet"]["textDisplay"]
             print("Comment by %s: %s" % (author, text))
+            logger.info("Comment by %s: %s" % (author, text))
+            
 
             url = f'{localserver}/api/?query={text}&userid={author}'
             print(url)
+            logger.info("Request URL: %s" % url)
             try:
                 #ease the pain of SSL certificates.  
                 res = requests.get(url, timeout=(120, None), verify = False).text
@@ -324,6 +336,8 @@ def respondtoComments(args):
     #            if (res is not None):
                 data = json.loads(res)
                 print(data["answer"])
+                
+
                 mycomment = massageComment(data)
                 print(mycomment)
                 #dont need anything where we have no comment
@@ -343,6 +357,8 @@ def respondtoComments(args):
             json.dump(qas, f)
 
         print('rss gen python ./rss/gen.py --d ' + today)
+        logger.info('Running RSS generation command: python ./rss/gen.py --d ' + today)
+        logger.info(f'> python ./rss/gen.py --d {today}')
         subprocess.call('python ./rss/gen.py --d ' + today)
         print("rss gen complete")
 
@@ -360,6 +376,7 @@ def checkAdmins():
         user = auth.get_user(key)
         # The claims can be accessed on the user record.
         print(key + " " + item['name'] + str(user.custom_claims.get('admin')))
+
     
 
 
@@ -379,6 +396,7 @@ def updatetranscript(vidid, updated, transcript):
     blob.make_public()
 
     print("your new transcript file url", blob.public_url)
+    logger.info("New transcript file URL: %s" % blob.public_url)
     return blob.public_url
 	
 
@@ -411,13 +429,16 @@ def updatestatsdb(videoid, starttimes, endtimes, midisize, numwords):
 
 def rungitDownload():
     print('git download start python ./git/clone.py')
+    logger.info('git download start python ./git/clone.py')
     subprocess.call('python ./git/clone.py')
     print("git download complete")
+    logger.info("git download complete")
 
 
 def downloadMidiFile(midilink, force=False):
     if (midilink is None or midilink == ""):
         print("!!No MIDI link")
+        logger.info("!!No MIDI link")
         return
     midi_path = "c:/devinpiano/backup/midi/"
     midilink = midilink.replace("\r", "")
@@ -466,12 +487,16 @@ def get_transcripts(langs=['hotkeys', 'video']):
             transcript = ""
             timestamp = 0
             url = ""
-            if 'vars' in c:
+            if 'vars' in c and 'cmd' in c and c['cmd'] in ('Ask', 'Comment', 'Record Feedback'): #only include certain cmds..
+                #really should be using &&, @@, --, # in vars..
                 if 'TRANSCRIPT' in c['vars']:
                     transcript = c['vars']['TRANSCRIPT']
                     timestamp = c['timestamp']
                 elif 'COMMENT' in c['vars']:
-                    transcript = c['vars']['COMMENT']
+                    transcript = "--" + c['vars']['COMMENT']
+                    timestamp = c['timestamp']
+                elif 'QUERY' in c['vars']:
+                    transcript = "@@" + c['vars']['QUERY']
                     timestamp = c['timestamp']
 
                 if 'URL' in c['vars']:
@@ -495,6 +520,7 @@ def transcribeLocal(fname):
     if (ext in ['.mp4', '.wav']):
         if (not os.path.exists(ffname + ".vtt")):
             print(f"Transcribing {fname} to {ffname}.vtt")
+            logger.info(f"Transcribing {fname} to {ffname}.vtt")
             from extensions.trey.speech import transcribe_audio, listen_audio, transcribe_audio_whisper
             if (ext == '.mp4'):
                 delete = True
@@ -512,6 +538,7 @@ def saveLocalTranscripts():
     allfiles = get_relative_file_paths_os(transcript_path)
     allfiles.sort(key=lambda x: x['mtime'], reverse=True) #sort by modified time, most recent first
     print(f"Checking {len(allfiles)} transcripts:")
+    logger.info(f"Checking {len(allfiles)} transcripts:")
     print(allfiles)
     uploadedfiles = []
     alltranscripts = []
@@ -528,7 +555,9 @@ def saveLocalTranscripts():
         if blob.exists():            
             #can break here..
             print(f"start upload from {datetime.fromtimestamp(file['mtime'])} {idx} files")
+            logger.info(f"Start upload from {datetime.fromtimestamp(file['mtime'])} {idx} files")
             print(f"up to {file['path']}")
+            logger.info(f"up to {file['path']}")
             break
 
         endidx = idx
@@ -548,9 +577,13 @@ def saveLocalTranscripts():
             uploadedfiles.append(tfolder + file['path'])
                    
     print(f"Uploaded {len(uploadedfiles)} transcripts:")
+    logger.info(f"Uploaded {len(uploadedfiles)} transcripts:")
     print(uploadedfiles)
+    logger.info(uploadedfiles)
     langs = ['hotkeys', 'video']
-    print(f"getting transcripts from firebase for {', '.join(langs)}")
+    print(f"getting transcripts for {', '.join(langs)}")
+    logger.info(f"getting transcripts for {', '.join(langs)}")
+
     #just to generate data for website..
     alltranscripts = get_transcripts(langs=langs)
 
@@ -576,33 +609,32 @@ def saveLocalTranscripts():
         fname = f'./web/public/data/trans_trey.json'
         os.makedirs(os.path.dirname(fname), exist_ok=True)  
         exists = os.path.exists(fname)      
-        f1 = open(fname, "a+", encoding='utf-8')
+        f1 = open(fname, "r+", encoding='utf-8')
+        newtranscripts = []
         if (exists):
             f1.seek(0)
             existingcontent = f1.read() if exists else ""
-            f1.seek(0)
+#            f1.seek(0)
             #find 
-            
+            last_time = 0
             if existingcontent != "":
                 existingtranscripts = json.loads(existingcontent)
                 last_time = existingtranscripts[-1]['timestamp'] if len(existingtranscripts) > 0 else 0
-                for t in alltranscripts:
-                    if t['timestamp'] > last_time:
-                        existingtranscripts.append(t)
-#                import difflib
-#                matcher = difflib.SequenceMatcher(None, existingcontent, jsondump)
-#                match = matcher.find_longest_match(0, len(existingcontent), 0, len(jsondump))
-#                if match.size > 100 and match.b == 0: 
-                    #if there is a significant overlap at the beginning of the jsondump, 
-                    #we assume this is duplication and skip appending to avoid bloating the file.  
-#                    print("Significant overlap with existing content, updating only non-overlapping part.")
-#                    f1.write(jsondump[match.size:]) #write only the non-overlapping part to avoid duplication
-#                    f1.close()
-#                    return uploadedfiles
-                jsondump = json.dumps(existingtranscripts, ensure_ascii=False, indent=4)
-                        
-        #write if no match or no file
-        f1.write(jsondump)
+                #write if no match or no file
+                f1.buffer.seek(-2, os.SEEK_END) #get rid of last closing bracket
+
+            for t in alltranscripts:
+                if t['timestamp'] > last_time:
+#                        existingtranscripts.append(t)
+                    newtranscripts.append(t)
+            jsondump = json.dumps(newtranscripts, ensure_ascii=False, indent=4)
+
+        if (len(newtranscripts) > 0):
+            if (existingcontent !=""):
+                f1.write(',')
+                f1.write(jsondump[1:]) #write without the opening bracket
+            else: #allow for first file to be written properly..
+                f1.write(jsondump)
 
     return uploadedfiles
 
@@ -651,6 +683,7 @@ if __name__ == '__main__':
     mydate = date.today() + relativedelta(months=-TIME_WINDOW)
     dt = datetime.combine(mydate, datetime.min.time())
     print(dt.strftime('%Y-%m-%dT%H:%M:%SZ'))
+    logger.info(f"Starting search with date: {dt.strftime('%Y-%m-%dT%H:%M:%SZ')}")
     #unlist anything older than this.  
 
     
@@ -733,11 +766,13 @@ if __name__ == '__main__':
                         pl = getPlaylistFromGrade(grade)
                         if pl !="":
                             print("add " + videoid + " to " + pl)
+                            logger.info(f"Adding video {videoid} to playlist {pl}")
                             #add to playlist
                             if  "stats" in item:
                                 if item["stats"]["wordsrecognized"] > 50:
                                     plwords = config.cfg["youtube"]["WORDS_PLAYLIST"]                                                                
                                     print("add to words " + plwords)
+                                    logger.info(f"Adding video {videoid} to words playlist {plwords}")
                                     #add to playlist.  
                                     add_video_to_playlist(videoid, plwords, args)
                         
@@ -765,6 +800,7 @@ if __name__ == '__main__':
                                       id=videoid
                                     )).execute()            
                                 print(videos_update_response)
+                                logger.info(f"Updated video {videoid} privacy status to public")
                             
                         else:
                             item['status']['privacyStatus'] = "private"
@@ -782,6 +818,7 @@ if __name__ == '__main__':
                                   id=videoid
                                 )).execute()            
                             print(videos_update_response)
+                            logger.info(f"Updated video {videoid} privacy status to private")
                         
 
                 
@@ -797,6 +834,7 @@ if __name__ == '__main__':
                 else:
                     mytranscript["updated"] = publishedDate.replace('-', '')[0:8] #just the date
                 alltranscripts.append(mytranscript)
+                logger.info(f"Loaded transcript for video {videoid}")
 
             #update "transcript" from webUI if we have a transcript.  
 
@@ -885,17 +923,22 @@ if __name__ == '__main__':
                             data = {'transcript':transcript}
                             reftranscript.set(data)
                             print(data)
+                            logger.info(f"Saved transcript for video {videoid}\n{transcript}")
                             #this done in analyze.py as well.
                             updatestatsdb(videoid, util.st, util.et, midisize, len(transcript.split())) #wordcount
 
                         else:
                             print('transcript error' + videoid)
+                            logger.error(f"Transcript error for video {videoid}")
                     except:
                         print('error using transcript service' + videoid)
                         traceback.print_exc()
+                        logger.error(traceback.format_exc())
+                        logger.error(f"Error using transcript service for video {videoid}")
                         servererrorcnt += 1
 
             if ((privacystatus=="public" or privacystatus=="unlisted") and pDate.date() < mydate ):
+                logger.info(f"Making video {videoid} private")
                 print(videoid)
                 print("Making private")
                 youtube = get_authenticated_service(args)
@@ -917,19 +960,25 @@ if __name__ == '__main__':
                     print(videos_update_response)
                 except:
                     print('error updating video' + videoid)
+                    print(traceback.format_exc())
+                    logger.error(traceback.format_exc())
+                    logger.error(f"Error updating video {videoid}")
 
 
     #    #write the transcripts to a file.
+    logger.info("Writing transcripts to file")
     writeTranscripts(alltranscripts)
-
     saveLocalTranscripts() #save any transcripts which we have created..
+    logger.info("Saved local transcripts")
 
     getCodeHistory()
     
     getWatched()
 
+    logger.info("Responding to comments")
     respondtoComments(args)
 
+    logger.info("Running git download")
     rungitDownload()
     prior = """
     for item in reversed(data["items"]):
