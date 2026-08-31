@@ -43,6 +43,7 @@ export class MyKeys {
     keybot: any = {};
     keymaps: any = {};
     midwordtree: any = {};
+    current_state: number = 0; //0=running, 1=paused
     midiUICallback = null;
     octaveInterval: number = 12;
 
@@ -291,6 +292,22 @@ export class MyKeys {
         return current.word || null;
     }
 
+    get_state(note){
+        let state = this.current_state;
+        if (note == this.config['keymap']['global']['Pause']){
+            state = 1;
+        }
+        else if (note == this.config['keymap']['global']['Unpause']){
+            state = 0;
+        }
+        else if (note == this.config['keymap']['global']['Start']){
+            state = 0;
+        }
+        else if (note == this.config['keymap']['global']['Stop']){
+            state = 1;
+        }
+        this.current_state = state;
+    }
     mkey(note, velocity, abstime, myTime = 0, lang = "") {
         if (lang === ""){
             lang = this.currentlangna;
@@ -302,6 +319,15 @@ export class MyKeys {
             this.reset_sequence();
         }
         this.lasttick = (new Date()).getTime();
+
+        this.get_state(note)
+        if (this.current_state == 0){   
+            if (Math.random() < 0.01){
+                console.log(`Paused state, ignoring key ${note}`)
+                return -1
+            }
+        }
+
         this.sequence.push(note);
         this.currentseqno += 1;
 
