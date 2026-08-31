@@ -1,0 +1,15 @@
+>#1 cd C:/devinpiano/music
+>#1 ./treyenv/Scripts/activate.ps1
+>#1 cd C:/devinpiano/music/mrrubato
+>#1 python ./extensions/trey/trey.py
+>#2 cd C:/devinpiano/music
+>#2 ./treyenv/Scripts/activate.ps1
+>#2 cd C:/devinpiano/music/mrrubato
+
+**langauges/_meta.py
+git clone https://huggingface.co/knowledgator/gliner-relex-large-v1.0/tree/main
+>#2 git clone https://huggingface.co/knowledgator/gliner-relex-large-v1.0/tree/main
+
+**languages/helpers/transcriber.py
+>#1 irm https://ollama.com/install.ps1 | iex
+>#2 python ./record.py --description  "Let It Go (Kristen Anderson Lopez)"

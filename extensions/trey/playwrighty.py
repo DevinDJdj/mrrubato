@@ -59,10 +59,22 @@ def load(qapp=None):
         #connect to signals
         primary_screen = qapp.primaryScreen()
         screens = qapp.screens()
+        xval = 0
+        yval = 0
+        width = 0
+        height = 0
         for i, s in enumerate(screens):
+            x = s.geometry().width()*s.devicePixelRatio()
+            y = s.geometry().height()*s.devicePixelRatio()
             if (s.name() != primary_screen.name()):
                 logger.info(f'PScreen {i}: {s.name()} - PSize: {s.size()}')
-                screen_position = (s.geometry().x(), s.geometry().y(), s.geometry().width(), s.geometry().height())
+                width = x
+                height = y
+            else:
+                xval += x
+#                yval += y
+        screen_position = int(xval), int(yval), int(width), int(height)
+        #screen_position = (s.geometry().x(), s.geometry().y(), s.geometry().width(), s.geometry().height())
 
 #    open_browser()
     return 0

@@ -1883,7 +1883,7 @@ class hotkeys:
     try:
       logger.info(f'$$QUERY={query}')
       synth.play_synth([53+12,55+12,52+12]) #
-      answer = self.transcriber.ask_ollama(context=f"::CONTEXT:: \n\n{context}\n\n::QUERY:: {query}", model="gemma3:4b", strictness=strictness)
+      answer = self.transcriber.ask_ollama(context=f"::CONTEXT:: \n\n{context}\n\n::QUERY:: {query}", model="gemma4:e4b", strictness=strictness)
       logger.info(f'$$:={len(answer)}\n$$ANSWER={answer}')
       self.speak(f'{answer}', total_read=1)
       delay = len(answer) /14 #estimate 14 chars per second for just reading speed

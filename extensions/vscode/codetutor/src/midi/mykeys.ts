@@ -324,8 +324,8 @@ export class MyKeys {
         if (this.current_state == 0){   
             if (Math.random() < 0.01){
                 console.log(`Paused state, ignoring key ${note}`)
-                return -1
             }
+            return -1
         }
 
         this.sequence.push(note);

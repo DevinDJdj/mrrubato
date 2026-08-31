@@ -1391,7 +1391,7 @@ class transcriber:
         self.chatmessages.append({"role": "user", "content": f"{context}"})
         
         
-        response = client.chat(messages=messages, model=model)
+        response = client.chat(messages=messages, model=model, stream=False)
         self.chatmessages.append(response["message"])
 
         return response["message"]["content"]

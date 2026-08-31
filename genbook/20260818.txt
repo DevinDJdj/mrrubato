@@ -1,0 +1,25 @@
+>#2 cd C:/devinpiano/music
+>#2 ./treyenv/Scripts/activate.ps1
+>#2 cd C:/devinpiano/music/mrrubato
+
+
+**extensions/trey/trey.py
+>#2 python ./record.py --description  "K 397 (Mozart)"
+>#1 cd C:/devinpiano/music
+>#1 ./treyenv/Scripts/activate.ps1
+>#1 cd C:/devinpiano/music/mrrubato
+>#1 python ./extensions/trey/trey.py
+
+>#2 cd C:/devinpiano/music
+>#2 ./treyenv/Scripts/activate.ps1
+>#2 cd C:/devinpiano/music/mrrubato
+
+
+**extensions/trey/trey.py
+>#2 python ./record.py --description  "K 397 (Mozart)"
+>#1 cd C:/devinpiano/music
+>#1 ./treyenv/Scripts/activate.ps1
+>#1 cd C:/devinpiano/music/mrrubato
+>#1 python ./extensions/trey/trey.py
+
+>#2 python ./record.py --description  "K 310 (Mozart)"

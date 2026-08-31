@@ -1,0 +1,14 @@
+>#2 cd C:/devinpiano/music
+>#2 ./treyenv/Scripts/activate.ps1
+>#2 cd C:/devinpiano/music/mrrubato
+
+>#2 python ./record.py --description "K 309 (Mozart)"
+>#1 cd C:/devinpiano/music
+>#1 ./treyenv/Scripts/activate.ps1
+>#1 cd C:/devinpiano/music/mrrubato
+
+>#1 python ./extensions/trey/trey.py
+>#1 pip install gliner
+>#2 python ./record.py --description  "Let It Go (Kristen Anderson Lopez)"
+>#2 python ./record.py --description  "Let It Go (Kristen Anderson Lopez)"
+>#2 python ./record.py --description "K 309 (Mozart)"

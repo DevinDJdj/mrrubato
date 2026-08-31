@@ -26,3 +26,15 @@ $$
 >#2 python ./record.py --description  "Sonatina In C Major (Mozart)"
 
 >#2 python ./record.py --description "K 309 (Mozart)"
+
+>#1 pip install gliner
+
+**langauges/_meta.py
+Need simple volume control..
+
+#https://huggingface.co/knowledgator/gliner-relex-large-v1.0/tree/main
+
+./models/gliner
+
+
+>#2 python ./record.py --description "Op 118 No 2 (Brahms)"
