@@ -487,7 +487,7 @@ class book:
 
     
     lag = time.time()
-    self.transcript = self.get_transcript() + transcribe_now().replace('...', '') 
+    self.transcript = self.transcript + transcribe_now().replace('...', '') 
 
     vars = {'transcript': self.transcript}
     startidx = 12

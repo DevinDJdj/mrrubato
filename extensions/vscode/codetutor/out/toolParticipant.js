@@ -44,6 +44,7 @@ exports.getSelectionInfo = getSelectionInfo;
 exports.writeToTranscriber = writeToTranscriber;
 exports.readFromTranscriber = readFromTranscriber;
 exports.startWatchingTranscriber = startWatchingTranscriber;
+exports.activateTabWatching = activateTabWatching;
 exports.registerToolUserChatParticipant = registerToolUserChatParticipant;
 exports.registerPiano = registerPiano;
 exports.unregisterPiano = unregisterPiano;
@@ -569,6 +570,43 @@ function startWatchingTranscriber(lang, transcriptFolder = "C:/devinpiano/transc
             });
         }
     });
+}
+function activateTabWatching(context) {
+    // Keep an ordered list of recently used tab identifiers or URIs
+    let recentTabs = [];
+    // Helper to get a unique identifier for a tab
+    function getTabId(tab) {
+        if (tab.input instanceof vscode.TabInputText || tab.input instanceof vscode.TabInputNotebook) {
+            return tab.input.uri.toString();
+        }
+        else if (tab.input instanceof vscode.TabInputTextDiff) {
+            return `diff:${tab.input.original.toString()}-${tab.input.modified.toString()}`;
+        }
+        return tab.label; // Fallback for webviews, settings, etc.
+    }
+    // Initialize current active tabs into the history list
+    for (const group of vscode.window.tabGroups.all) {
+        if (group.activeTab) {
+            recentTabs.push(getTabId(group.activeTab));
+        }
+    }
+    // Listen for active tab changes across groups
+    context.subscriptions.push(vscode.window.tabGroups.onDidChangeTabs((event) => {
+        // Check if active tabs changed in any group
+        for (const group of vscode.window.tabGroups.all) {
+            if (group.activeTab) {
+                const activeId = getTabId(group.activeTab);
+                // Move to the front of the recency array
+                recentTabs = recentTabs.filter(id => id !== activeId);
+                recentTabs.unshift(activeId);
+            }
+        }
+    }));
+    // Register a command to display the recency-sorted tabs
+    context.subscriptions.push(vscode.commands.registerCommand('extension.listTabsByRecency', () => {
+        const outputList = recentTabs.join('\n');
+        vscode.window.showInformationMessage(`Recent Tabs:\n${outputList}`);
+    }));
 }
 function registerToolUserChatParticipant(context) {
     const handler = async (request, chatContext, stream, token) => {

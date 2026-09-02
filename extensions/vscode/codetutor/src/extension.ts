@@ -25,7 +25,8 @@ import { LanguageModelPromptTsxPart, LanguageModelToolInvocationOptions, Languag
 import { startWatchingWorkspace, startWatchingTranscriber, writeToTranscriber, updateStatusBarItem, registerStatusBarTool, 
 	registerCompletionTool, registerToolUserChatParticipant, registerPiano, unregisterPiano, 
 	getSelectionInfo, 
-	readFromTranscriber} from './toolParticipant';
+	readFromTranscriber,
+	activateTabWatching} from './toolParticipant';
 import { start } from 'repl';
 import { get } from 'http';
 
@@ -398,6 +399,7 @@ export function activate(context: vscode.ExtensionContext) {
 	setInterval(() => {
 		startTranscribers();
 	}, 60000); // check every minute if date changes to follow new file..
+	activateTabWatching(context); //start watching tab changes for recency tracking.
 
 	//create loop to watch for change of day to restart transcribers..
 	

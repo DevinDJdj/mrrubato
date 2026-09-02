@@ -353,7 +353,9 @@ export class MyKeys {
                 this.startseqno = this.currentseqno;
             }
         }
+
         if (this.currentcmd !== "" && this.currentlangna !== "" && this.currentlang !== null) {
+            //right now no selection mechanism for EOW.  This is all controlled by
             let ret = (this.currentlang as any).act(this.currentcmd, this.sequence.slice(this.startseqno), this.words);
             if (ret === -1) {
                 //unknown command, reset sequence.  

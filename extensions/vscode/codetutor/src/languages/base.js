@@ -8,7 +8,7 @@ export default class LANG {
     midwordtree = {}; 
 
     name = "base";
-
+    vars = {};
     //base specific variables for generic keypresses, selection, and navigation
     //ALLCAPS = vscode handler..
     highlight = false; //whether to highlight text or not
@@ -41,7 +41,7 @@ export default class LANG {
                 "DOWN": [0,-4,-2],
                 "LEFT": [0,-4,-5],
                 "RIGHT": [0,-4,-3],
-
+                "TAB": [0,-3,-7], //select tab../select topic..
             },
 
         };
@@ -51,6 +51,8 @@ export default class LANG {
         }
         this.config['languages'][this.name] = obj;
 
+        this.funcdict["TAB"] = this.tab;
+        this.funcdict["TAB_"] = this.tab_;
         this.funcdict["GENERATE"] = this.generate;
         this.funcdict["HIGHLIGHT"] = () => { 
             console.log("base highlight", this.highlight);
@@ -85,6 +87,40 @@ export default class LANG {
 
         return 0; //no action, just a generic keypress        
     }
+
+    tab_(sequence, words) {
+
+        if (sequence.length === 0){
+            // 1. Get all active tab groups in the window
+            const tabGroups = vscode.window.tabGroups.all;
+            // 2. Map and flatten the tabs from all groups
+            const allTabs = tabGroups.flatMap(group => group.tabs);
+            // 3. Extract the information you need (e.g., labels)
+            const tabLabels = allTabs.map(tab => tab.label);
+            this.vars['tabLabels'] = tabLabels;
+            //this could have changed, probably need to search previously selected?  
+            if ('tabIndex' in this.vars){
+                tabIndex = this.vars['tabIndex'];
+            }
+            else{
+                tabIndex = 0; //default to the first tab if no tabIndex is set
+                this.vars['tabIndex'] = tabIndex;
+            }
+
+            //how to display selection entries in vscode?  
+            return 1;
+        }
+        if (sequence.length > 0){
+            let selectedTab = sequence[sequence.length - 1] - this.keybot;
+            this.vars['selectedTab'] = selectedTab;
+
+            //highlight/indicate selected visually..
+
+        }
+    }
+    tab(sequence, words) {
+
+    }    
 
     end(sequence, words){
         console.log("base end", sequence, words);
@@ -180,6 +216,9 @@ export default class LANG {
                 return func(sequence.slice(0, -2), words);
             }
             else{
+                if (cmd + "_" in this.funcdict){
+                    return this.funcdict[cmd + "_"](sequence, words);
+                }
                 return 1; //more keys needed
             }
 

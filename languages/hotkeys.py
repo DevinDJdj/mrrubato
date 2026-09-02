@@ -2328,6 +2328,8 @@ class hotkeys:
     else:
       #start the browser if any params passed for now..  
       playwrighty.open_browser()
+      if (self.qr_queue is not None):
+        self.qr_queue.put('<<midi>>\n> Open Browser\n$$\n')
       if (playwrighty.mybrowser is not None): #we have started a browser session with playwright.
         logger.info('Getting page from Playwright')
         try:

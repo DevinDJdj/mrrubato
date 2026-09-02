@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 
 asr_model = None
 whisper_model = None
-kokoro_pipeline = None
+kokoro_pipeline = {}
 transcript_info = None
 bg_procs = []
 
@@ -540,6 +540,8 @@ def init_asr_model():
 # Whisper settings
 WHISPER_LANGUAGE = "en"
 WHISPER_THREADS = 4
+SPEED = 1.0
+
 from faster_whisper import WhisperModel
 
 def init_whisper_model():
@@ -762,7 +764,7 @@ def close_bg_procs():
 
     bg_procs = []
 
-def speak_cmd(text="", fname="example_tts.wav", voice='af_heart', vol=1.0, speed=1.0, skip=0, cacheno=-1, engine='kokoro-tts'):
+def speak_cmd(text="", fname="example_tts.wav", voice='af_heart', vol=1.0, speed=1.0, skip=0, cacheno=-1, engine='kokoro-tts', lang='en'):
     global bg_procs
 #    thread1 = threading.Thread(target=speak, args=(f'{text}',f'{fname}',f'{voice}',vol,speed,'kokoro-tts'))
 #    thread1.start()
@@ -773,7 +775,7 @@ def speak_cmd(text="", fname="example_tts.wav", voice='af_heart', vol=1.0, speed
         infile = f"./temp/tts_{int(time.time())}.txt"
         with open(infile, "w", encoding="utf-8") as f:
             f.write(text)
-        cmd = f'python ./generate/generatetts.py --infile "{infile}" --fname "{fname}" --voice "{voice}" --vol {vol} --speed {speed} --skip {skip} --cacheno {cacheno} --engine {engine}'
+        cmd = f'python ./generate/generatetts.py --infile "{infile}" --fname "{fname}" --voice "{voice}" --vol {vol} --speed {speed} --skip {skip} --cacheno {cacheno} --engine {engine} --lang "{lang}"'
         bg_proc = subprocess.Popen(
             cmd,
             shell=True
@@ -795,7 +797,7 @@ def speak_cmd(text="", fname="example_tts.wav", voice='af_heart', vol=1.0, speed
                 
         #suc = os.system(cmd)
     else:
-        suc = os.system(f'python ./generate/generatetts.py --text "{text}" --fname "{fname}" --voice "{voice}" --vol {vol} --speed {speed} --skip {skip} --cacheno {cacheno} --engine {engine}')
+        suc = os.system(f'python ./generate/generatetts.py --text "{text}" --fname "{fname}" --voice "{voice}" --vol {vol} --speed {speed} --skip {skip} --cacheno {cacheno} --engine {engine} --lang "{lang}"')
 #    thread1.join() #wait for completion..
     if (suc == 0):
         return fname
@@ -804,18 +806,20 @@ def speak_cmd(text="", fname="example_tts.wav", voice='af_heart', vol=1.0, speed
 #    return speak(text, fname, voice, vol, speed)
 
 
-def get_kokoro_pipeline():
+def get_kokoro_pipeline(lang='a'):
     global kokoro_pipeline
-    if (kokoro_pipeline is not None):
-        return kokoro_pipeline
+    if (lang in kokoro_pipeline):
+        return kokoro_pipeline[lang]
     print(f"Loading Kokoro pipeline...")
     num_devices = torch.cuda.device_count()
     device_names = [torch.cuda.get_device_name(i) for i in range(num_devices)]
     print(f"Available CUDA devices: {device_names}")
 
-    kokoro_pipeline = KPipeline(lang_code='a',device='cuda:0') 
+    kokoro_pipeline[lang] = KPipeline(lang_code=lang,device='cuda:0') 
+    #'j' for japanese testing..
+
     print(f"Kokoro pipeline loaded.")
-    return kokoro_pipeline
+    return kokoro_pipeline[lang]
 
 #hack for math right now..
 #use for markdown substitution as well..
@@ -873,7 +877,7 @@ def replace_all(text, dic):
 def play_synth(seq=[77,81,84,89], dur=2):
     synth.play_synth(seq=seq, dur=dur)
 
-def substitute_tts(text):
+def substitute_tts(text, lang='a'):
     #substitute TTS for certain keywords.  This is a bit hacky but should work for now.  
 
     #create synth file which can be played at the same time as TTS.  
@@ -900,13 +904,14 @@ def get_type(text):
     return ""
     
 
-def speak(text="", fname="example_tts.wav", voice='af_heart', vol=1.0, speed=1.0, engine='kokoro-tts'):
+def speak(text="", fname="example_tts.wav", voice='af_heart', vol=1.0, speed=1.0, engine='kokoro-tts', lang='a'):
     # Initialize pipeline (lang_code 'a' for American English)
     try:
-        text = substitute_tts(text)
+        #detect language..
+        text = substitute_tts(text, lang)
         text = get_type(text) + " " + text #prepend type for some addl info
         if (engine == 'kokoro-tts'):
-            pipeline = get_kokoro_pipeline()
+            pipeline = get_kokoro_pipeline(lang=lang)
             if (text == ""):
                 text = "Kokoro is a lightweight and natural text-to-speech model."
 

@@ -429,14 +429,18 @@ class _meta:
         adjust = 0.2
       if adjust > 5:
         adjust = 5
-      self.speed *= adjust
-      self.speed = round(self.speed)
-      if (self.speed < 1):
-        self.speed = 1
-      logger.info(f"$$SPEED={self.speed}")
-      vars = {'ADJUST': adjust, 'SPEED': self.speed}
+      lang = "_meta"
       if (sequence[0] == _VIDEO): #allow for this usage..
-        vars['KLANG'] = "video"
+        lang = "video"
+      elif (sequence[0] == _LANG):
+        lang = "_lang"
+      else: #adjust _meta speed
+        self.speed *= adjust
+        self.speed = round(self.speed)
+        if (self.speed < 1):
+          self.speed = 1
+        logger.info(f"$$SPEED={self.speed}")
+      vars = {'ADJUST': adjust, 'SPEED': self.speed, 'KLANG': lang}
       self.set_qr("Set Speed", vars)
     return 0
 

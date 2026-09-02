@@ -498,3 +498,97 @@ test..
 
 
 
+**extensions/vscode/codetutor/src/languages/base.ts
+--TAB [69,66,62]
+**extensions/vscode/codetutor/src/extension.ts
+--activateTabWatching
+test..
+
+
+**languages/hotkeys.py
+--ask
+with Query, Need to pass previous response contexts?  
+This is the struggle everyone has, what to pick.  
+
+
+**extensions/trey/trey.py
+Select Window gets the Browser too slowly.  
+Trigger a refresh upon open_browser
+
+
+**languages/book.py
+--ask
+test..
+
+**extensions/trey/speech.py
+**generate/generatetts.py
+Try some different language language detection and speech generation.  
+./temp folder is 10GB, need some sort of management here..
+
+
+**extensions/trey/test/ttstest.py
+> pip install fast-langdetect
+> pip install misaki[ja]
+
+> python ./extensions/trey/test/ttstest.py
+> pip install unidic-lite
+> pip install mecab-python3
+
+!!RuntimeError: 
+!!Failed initializing MeCab. Please see the README for possible solutions:
+==
+#https://github.com/polm/fugashi
+??
+;> pip install 'fugashi[unidic-lite]'
+
+> pip install unidic
+> python -m unidic download
+$$ENV=WINDOWS
+C:\devinpiano\music\treyenv\Lib\site-packages\plac_ext.py:22
+-multiprocessing = mp.get_context("fork")
++#multiprocessing = mp.get_context("fork")
++multiprocessing = mp.get_context("spawn")
+
+$$
+
+OK, JP speech generation works ok..
+
+get lang detect model..
+#https://fasttext.cc/docs/en/language-identification.html
+@@why does this fail on download..
+!!self._downloader.download(FASTTEXT_LARGE_MODEL_URL, model_path, proxy)
+==
+#https://dl.fbaipublicfiles.com/fasttext/supervised-models/lid.176.bin
+load manually
+config = LangDetectConfig(
+    custom_model_path="./models/fast-langdetect/lid.176.bin",  # Path to local model file
+#    disable_verify=True                         # Skip MD5 verification if needed
+)
+
+# Initialize the detector with the manual configuration
+detector = LangDetector(config)
+
+# Detect language
+result = detector.detect("Hello world")
+
+$$
+
+test lang detection..
+
+OK, dont think anything broke..
+**extensions/trey/speech.py
+--WHISPER_LANGUAGE
+
+Need to be able to set this..
+Just select use page language
+**languages/_lang.py
+--set_language
+_HOTKEYS=use playwrighty current_cache language..
+
+I think lets specify language pro-actively for transcription..
+[59,60] [53] [59,59]
+
+**languages/_meta.py
+--set_speed
+test..
+

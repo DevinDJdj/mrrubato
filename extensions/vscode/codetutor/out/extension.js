@@ -361,6 +361,7 @@ function activate(context) {
     setInterval(() => {
         startTranscribers();
     }, 60000); // check every minute if date changes to follow new file..
+    (0, toolParticipant_1.activateTabWatching)(context); //start watching tab changes for recency tracking.
     //create loop to watch for change of day to restart transcribers..
     const mySettings = vscode.workspace.getConfiguration('mrrubato');
     Book.setModel(mySettings.get('model'));
