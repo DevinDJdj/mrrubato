@@ -1,0 +1,11 @@
+>#1 cd C:/devinpiano/music
+>#1 ./treyenv/Scripts/activate.ps1
+>#1 cd C:/devinpiano/music/mrrubato
+>#1 python ./extensions/trey/trey.py
+>#2 cd C:/devinpiano/music
+>#2 ./treyenv/Scripts/activate.ps1
+>#2 cd C:/devinpiano/music/mrrubato
+>#2 python ./record.py --description  "Sunday Morning (Adam Levine)"
+>#2 python ./record.py --description  "Sunday Morning (Adam Levine)"
+>#2 python ./record.py --description  "Day Dream (Duke Ellington)"
+>#2 python ./record.py --description  "Let It Go (Kristen Anderson Lopez)"

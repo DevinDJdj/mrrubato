@@ -1,0 +1,36 @@
+
+**extensions/trey/trey.py
+
+@@ **record.py **extensions/trey/trey.py Why is record restarting when restart_me is called?  
+>#1 ./treyenv/Scripts/activate.ps1
+>#1 cd C:/devinpiano/music
+>#1 ./treyenv/Scripts/activate.ps1
+>#1 cd C:/devinpiano/music
+>#1 ./treyenv/Scripts/activate.ps1
+>#2 cd C:/devinpiano/music
+>#2 ./treyenv/Scripts/activate.ps1
+>#2 cd C:/devinpiano/music/mrrubato
+
+**extensions/trey/run.ps1
+> C:/devinpiano/music/mrrubato/extensions/trey/run.ps1
+>#1 cd C:/devinpiano/music/mrrubato
+>#1 python ./record.py --description  "Op 10 No 3 (Chopin)"
+>#1 python ./record.py --description  "Op 55 No 2 (Chopin)"
+>#1 python ./record.py --description  "Time After Time (Rob Hyman)"
+>#1 python ./record.py --description  "Right Here Waiting (Richard Marx)"
+>#1 python ./record.py --description  "Right Here Waiting (Richard Marx)"
+>#1 python ./record.py --description  "Right Here Waiting (Richard Marx)"
+>#1 python ./record.py --description  "Thats What Friends Are For (Burt Bacharach)"
+>#1 python ./record.py --description  "Dig A Little Deeper (Randy Newman)"
+>#1 python ./record.py --description  "True Loves Kiss (Alan Menken)"
+>#1 python ./record.py --description  "If I Never Knew You (Alan Menken)"
+>#1 python ./record.py --description  "Part Of Your World (Alan Menken)"
+>#1 python ./record.py --description  "Almost There (Randy Newman)"
+>#1 python ./record.py --description  "Op 27 No 2 (Beethoven)"
+>#1 python ./record.py --description  "Op 27 No 2 (Beethoven)"
+>#1 python ./record.py --description  "Op 27 No 2 (Beethoven)"
+>#1 python ./record.py --description  "Op 27 No 2 (Beethoven)"
+>#1 python ./record.py --description  "Op 27 No 2 (Beethoven)"
+>#1 python ./record.py --description  "Op 27 No 2 (Beethoven)"
+~~ **record.py where do I copy the previous iteration
+**record.py

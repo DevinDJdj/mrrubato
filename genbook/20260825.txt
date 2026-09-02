@@ -1,0 +1,14 @@
+>#1 cd C:/devinpiano/music
+>#1 ./treyenv/Scripts/activate.ps1
+>#1 cd C:/devinpiano/music/mrrubato
+
+>#2 python ./record.py --description  "Sonatina In C Major (Mozart)"
+>#1 cd C:/devinpiano/music
+>#1 ./treyenv/Scripts/activate.ps1
+>#1 cd C:/devinpiano/music/mrrubato
+
+>#2 python ./record.py --description  "Sonatina In C Major (Mozart)"
+>#2 cd C:/devinpiano/music
+>#2 ./treyenv/Scripts/activate.ps1
+>#2 cd C:/devinpiano/music/mrrubato
+>#2 python ./record.py --description  "Sonatina In C Major (Mozart)"

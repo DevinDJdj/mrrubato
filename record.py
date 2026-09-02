@@ -608,7 +608,8 @@ if __name__ == '__main__':
                     #is just the note enough.  Extra complexity by passing other variables.  
                     #lets just pass them and then figure out later if we want to use.  
                     #how to get the note length?  This is what we may want.  
-                    mk.key(msg.note, msg)
+                    a = 0
+                    #mk.key(msg.note, msg)
                 
                 #here we need to set up a on/off keymap like with analyze image creation.  
                 #need an include file here.  

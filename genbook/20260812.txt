@@ -1,0 +1,35 @@
+>#2 cd C:/devinpiano/music
+>#2 ./treyenv/Scripts/activate.ps1
+>#2 cd C:/devinpiano/music/mrrubato
+
+
+**record.py
+>#2 python ./record.py --description  "Fire And Rain (James Taylor)"
+>#2 python ./record.py --description  "On Broadway (Barry Mann)"
+>#2 python ./record.py --description  "On Broadway (Barry Mann)"
+>#2 python ./record.py --description  "K 397 (Mozart)"
+>#1 cd C:/devinpiano/music
+>#1 ./treyenv/Scripts/activate.ps1
+>#1 cd C:/devinpiano/music/mrrubato
+>#1 python ./extensions/trey/trey.py
+
+
+**extensions/trey/trey.py
+>#3 python ./generate/generatetts.py
+>#3 cd C:/devinpiano/music
+>#3 ./treyenv/Scripts/activate.ps1
+>#3 cd C:/devinpiano/music/mrrubato
+>#3 python ./generate/generatetts.py
+!!Torch not compiled with CUDA enabled
+~~ Torch not compiled with CUDA enabled
+~~ Torch not compiled with CUDA enabled
+> python -c "import torch; print(f'Torch Version: {torch.__version__}, CUDA Available: {torch.cuda.is_available()}, CUDA Version: {torch.version.cuda}')"
+Torch Version: 2.11.0+cu128, CUDA Available: True, CUDA Version: 12.8
+>#3 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
+>#3 pip install torchaudio==2.8 --index-url https://download.pytorch.org/whl/cu128
+>#3 pip install torchvision==0.23.0 --index-url https://download.pytorch.org/whl/cu128
+
+
+**record.py
+>#2 python ./record.py --description  "K 397 (Mozart)"
+>#2 python ./record.py --description  "K 397 (Mozart)"

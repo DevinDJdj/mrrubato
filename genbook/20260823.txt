@@ -1,0 +1,15 @@
+>#2 cd C:/devinpiano/music
+>#2 ./treyenv/Scripts/activate.ps1
+>#2 cd C:/devinpiano/music/mrrubato
+
+>#2 python ./record.py --description  "Tune Up (Miles Davis)"
+>#2 python ./record.py --description  "Op 62 No 2 (Chopin)"
+>#2 python ./record.py --description  "Op 62 No 2 (Chopin)"
+>#2 python ./record.py --description  "Let It Go (Kristen Anderson Lopez)"
+>#2 python ./record.py --description  "Let It Go (Kristen Anderson Lopez)"
+>#2 cd C:/devinpiano/music
+>#2 ./treyenv/Scripts/activate.ps1
+>#2 cd C:/devinpiano/music/mrrubato
+
+>#2 python ./record.py --description  "Let It Go (Kristen Anderson Lopez)"
+>#2 python ./record.py --description  "Sonatina In C Major (Mozart)"
