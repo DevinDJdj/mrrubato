@@ -913,7 +913,10 @@ class hotkeys:
     print(f'Transcription completed in {lag} seconds: {self.transcript}')
 
     try:
+
       vars = {}
+      if (playwrighty.mybrowser is not None):
+        url = playwrighty.page_cache[-1]["url"]
       vars['DURATION'] = duration
       vars['COMMENT'] = self.transcript
       vars['LAG'] = lag
@@ -922,7 +925,9 @@ class hotkeys:
       shutil.copy('comment.wav', fname) #keep a copy for training..
       self.transcriber.write(self.name, "Comment", vars)  
       logger.info(f'> Comment& {vars}')
-      self.transcriber.write_topic(self.name, "", self.transcript, saveTranscript=False, saveBook=True)
+      #do we need offset here?  
+      total_read = playwrighty.update_page_offset()
+      self.transcriber.write_topic(self.name, "", f'#{url}\n{self.transcript}:{total_read}', saveTranscript=False, saveBook=True)
 
     except Exception as e:
       print(f'Error writing comment file: {e}')
@@ -1331,15 +1336,15 @@ class hotkeys:
       self.transcripthistory.append(self.transcript)
       #find the current link from our reading.  
       if (playwrighty.mybrowser is not None):
-        tr = 0
-        tr = playwrighty.update_page_offset()
+        total_read = 0
+        total_read = playwrighty.update_page_offset()
 #        tr -= (lag * 11) #assume 12 chars per second read. this is our timer.. 
 
         textduration = int(duration*3) #some extra lag here.  
 
         #too much lag to be accurate at the moment.  Maybe get better info with longer transcript..
         url = playwrighty.get_url(-1)      
-        original = playwrighty.get_text(-1, tr, textduration+lag) 
+        original = playwrighty.get_text(-1, total_read, textduration+lag) 
         original = original.replace('\n','  ')
 #        original = original.upper()
         #find best match location
@@ -1362,7 +1367,7 @@ class hotkeys:
           return -1
         #is this a match in our eyes.  Only want good data.  
         #play around with params here as model diverges / converges ..
-        if (score in ff and ff.score > 25 and (ff.src_end - ff.src_start) > len(self.transcript)-4 and (ff.dest_end - ff.dest_start) / (ff.src_end - ff.src_start) > 0.7):
+        if (score in ff and ff.score > 50 and (ff.src_end - ff.src_start) > len(self.transcript)-4 and (ff.dest_end - ff.dest_start) / (ff.src_end - ff.src_start) > 0.7):
           ostart = ff.dest_start
           oend = ff.dest_end
           score = ff.score
@@ -1392,7 +1397,7 @@ class hotkeys:
             self.transcriber.write(self.name, "Record Feedback", vars, save=True)  
             self.set_qr("Record Feedback", vars) #update QR with feedback data for debugging and record keeping.
             #do we want to save to book as well?  for now yes, need reference info..
-            self.transcriber.write_topic(self.name, "", f'$${self.feedbacknowstr}\n{self.transcript}', saveTranscript=False, saveBook=True)
+            self.transcriber.write_topic(self.name, "", f'$${self.feedbacknowstr}\n#{url}:{total_read+ostart}\n{original[ostart:oend]}', saveTranscript=False, saveBook=True)
           except Exception as e:
             print(f'Error writing feedback file: {e}')
         else:
@@ -1918,6 +1923,8 @@ class hotkeys:
     try:
       logger.info(f'$$QUERY={query}')
       synth.play_synth([53+12,55+12,52+12]) #
+      #this model a bit slow..
+      #gemma3:4b
       answer = self.transcriber.ask_ollama(context=f"::CONTEXT:: \n\n{context}\n\n::QUERY:: {query}", model="gemma4:e4b", strictness=strictness)
       logger.info(f'$$:={len(answer)}\n$$ANSWER={answer}')
       self.speak(f'{answer}', total_read=1)
@@ -2328,6 +2335,8 @@ class hotkeys:
     else:
       #start the browser if any params passed for now..  
       playwrighty.open_browser()
+      if (self.qr_queue is not None):
+        self.qr_queue.put('<<midi>>\n> Open Browser\n$$\n')
       if (playwrighty.mybrowser is not None): #we have started a browser session with playwright.
         logger.info('Getting page from Playwright')
         try:

@@ -9,6 +9,11 @@
 #standard libraries
 import json
 import logging
+logger = logging.getLogger(__name__)
+logging.basicConfig(filename='trey.log', 
+    format='%(asctime)s %(levelname)-8s %(message)s',
+    level=logging.INFO,
+    datefmt='%Y-%m-%d %H:%M:%S')
 import os
 import time
 import sys
@@ -127,7 +132,6 @@ matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
 
 
-logger = logging.getLogger(__name__)
 global mywindow
 global active_window
 global qapp
@@ -653,7 +657,13 @@ def get_voices(lang='en'):
     #cache results only call once.  
     voices = []
     #Kokoro voices..
-    voices = ['af_heart', 'af_bella', 'af_nicole', 'af_aoede']
+    if (lang == 'en'):
+        voices = ['af_heart', 'af_bella', 'af_nicole', 'af_aoede']
+    elif (lang == 'ja'):
+        #jf_gongitsune, jf_nezumi, jf_tebukuro
+        voices = ['jf_alpha', 'jf_nezumi', 'jf_tebukuro']
+    elif (lang == 'es'):
+        voices = ['ef_alpha', 'em_alex']
     """
     if (len(all_voices) > 0):
         for v in all_voices:
@@ -704,11 +714,32 @@ def stopsound(currentsound):
         currentsound.stop()
 
 
-def generate_tts(text, voice, vol=1.0, rate=1.0, skip=0, cacheno=-1):
-    suc = speech.speak_cmd(text, "", voice, vol, rate, skip, cacheno, 'kokoro-tts')
+def generate_tts(text, voice, vol=1.0, rate=1.0, skip=0, cacheno=-1, lang='en'):
+    suc = speech.speak_cmd(text, "", voice, vol, rate, skip, cacheno, 'kokoro-tts', lang)
 
 
-def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=None, cacheno=-1, q=None, q2=None, q3=None, lang='en'):
+def detect_language(text):
+    from fast_langdetect import LangDetector, LangDetectConfig
+
+    # Create a configuration with your custom model path
+    config = LangDetectConfig(
+        custom_model_path="./models/fast-langdetect/lid.176.bin",  # Path to local model file
+    #    disable_verify=True                         # Skip MD5 verification if needed
+    )
+
+    # Initialize the detector with the manual configuration
+    detector = LangDetector(config)
+
+    # Detect language
+    result = detector.detect(text)
+    # Output: Detected Language: fr (Confidence: 0.9824)
+    if (result[0]['lang'] in langmap):
+        return result[0]['lang']
+    else:
+        return 'en' #default to english reader if not in langmap..
+
+
+def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=None, cacheno=-1, q=None, q2=None, q3=None, lang=''):
 
     #give high priority?  
     p = psutil.Process(os.getpid())
@@ -719,7 +750,12 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
     sound_file = f"{random.randint(0, 100)}.mp3"
     if lang is None or lang == '':
         #detect language if long enough?          
-        lang = 'en'
+        if (text.find("\n") != -1):  #if just info no need..
+            #dont use first line sometimes, header info..
+            lang = detect_language(text[text.find("\n")+1:])
+        else:
+            lang = 'en'
+
     try:
         VOICES = get_voices(lang)
     except:
@@ -1172,7 +1208,7 @@ def delay_stop_event(s_event, delay):
     s_event.set()
 
 
-def speak(text, links = [], alt_text=[], offset=0, lang='en', cacheno=-1):
+def speak(text, links = [], alt_text=[], offset=0, lang='', cacheno=-1):
     global audio_stop_events
     global audio_location_queue
     global audio_skip_events
@@ -1494,8 +1530,8 @@ def _hide(data):
     tnow = time.time()
     #should get from last three days and scroll each?  
     mywindow.set_time(tnow-day*1, tnow-day*1.5, tnow, day*0.5) #default is 1 day for now..
-    mywindow.set_speed(None, "_meta")
-    mywindow.set_speed(None, "video")
+    mywindow.set_speed(None, 1.0, "_meta")
+    mywindow.set_speed(None, 1.0, "video")
     
     #get average color and screen
     #get_window_details()
@@ -1998,9 +2034,10 @@ class MyWindow(QMainWindow):
             case "Set Speed":
  
                 speed = float(vars.get('SPEED', '1.0'))
+                adjust = float(vars.get('ADJUST', 1.0))
                 lang = vars.get('KLANG', lang)
+                speed = self.set_speed(speed, adjust, lang)
                 self.add_setting('SPEED', speed, lang)
-                self.set_speed(speed, lang)
                 #video = playback speed
                 #_meta = tick speed
 
@@ -2127,6 +2164,10 @@ class MyWindow(QMainWindow):
                         self.langs = self.langs[:1] #for now just show first lang..
 
                 self.set_time(s, e, w, t) #update display with new time window and lang settings.
+
+            case "Open Browser":
+                #refresh windows.  
+                self.get_window_info() 
 
         lagtime = time.time() - lagtime
         if (command not in self.lagtracker):
@@ -3571,17 +3612,23 @@ class MyWindow(QMainWindow):
 
         
 
-    def set_speed(self, speed, lang='_meta'):
+    def set_speed(self, speed, adjust=1.0, lang='_meta'):
         #pass none to load default..
         if speed is None:
             speed = self.get_setting('SPEED', 1.0, lang)
         if (lang == '_meta'):
             self.speed = speed
             self.label_timeinfo[3].setText(f'$$S={speed}')
+            return speed
         elif (lang == 'video'):
-            self.playback_speed = speed
-            self.video_player.setPlaybackRate(speed)
-            self.label_timeinfo[3].setText(f'$$VS={speed}')
+            self.playback_speed *= adjust
+            self.video_player.setPlaybackRate(self.playback_speed)
+            self.label_timeinfo[3].setText(f'$$VS={self.playback_speed}')
+            return self.playback_speed
+        elif (lang =='_lang'):
+            speech.SPEED *= adjust
+            return speech.SPEED
+
 
     def update_topic_history(self):
         #update topic history with current topic from transcriber, and show in filter info area.  
@@ -4100,89 +4147,94 @@ def handle_keys(qr_queue=None, qrin_queue=None):
 #    c = Communicate()
 #    c.mySignal.connect(updateQR)
 
-    with midiin as inport:
-#        qr_queue.put('<<midi>>\n> MIDIStart [0]\n$$\n')
-        while (not midi_stop_event.is_set()):
-            while (qrin_queue is not None and not qrin_queue.empty()):
-                qrdata = qrin_queue.get()
-                mk.add_qrin(qrdata)
-                logger.info(f'MIDI Received QR input data: {qrdata}')
-                
-            #get all q2 output messages.  
-            mk.set_audio_location()
-
-            for msg in inport.iter_pending():
-                channel = -1
-                if (msg.type == 'aftertouch'):
-                    #print(msg)
-                    if (hasattr(msg, 'channel') and hasattr(msg, 'value')):
-                        #pressure
-                        channel = msg.channel
-                        currentval = channelmap[channel]
-                        channelmap[channel] = [currentval[0], currentval[1], currentval[2], msg.value]
-                elif (msg.type == 'pitchwheel'):
-                    #print(msg)
-                    if (hasattr(msg, 'channel') and hasattr(msg, 'pitch')):
-                        #rotational
-                        channel = msg.channel
-                        currentval = channelmap[channel]
-                        channelmap[channel] = [currentval[0], currentval[1], msg.pitch, currentval[3]]
+    try:
+        with midiin as inport:
+    #        qr_queue.put('<<midi>>\n> MIDIStart [0]\n$$\n')
+            while (not midi_stop_event.is_set()):
+                while (qrin_queue is not None and not qrin_queue.empty()):
+                    qrdata = qrin_queue.get()
+                    mk.add_qrin(qrdata)
+                    logger.info(f'MIDI Received QR input data: {qrdata}')
                     
-                elif msg.type == 'control_change':
-                    #print(msg)
-                    if (hasattr(msg, 'channel') and hasattr(msg, 'control') and hasattr(msg, 'value') and msg.control == 74): #MPE standard for timbre control
-                        channel = msg.channel
-                        currentval = channelmap[channel]
-                        #vertical
-                        channelmap[channel] = [currentval[0], msg.value, currentval[2], currentval[3]]
-                    #use midi joystick control.  
-                    #also allow external joystick control..
-                if (channel != -1 and qr_queue is not None):
-                    #send update for this channel to QR code, can adjust format as needed.
-                    mk.add_qrin(f'<<midi>>\n> Aftertouch [{channelmap[channel][0]},{channelmap[channel][1]},{channelmap[channel][2]},{channelmap[channel][3]}]\n$$\n')
-                    #only update sometimes?  For now do all.  
+                #get all q2 output messages.  
+                mk.set_audio_location()
 
-                    if (random.random() < 0.05): #adjust this threshold as needed to balance responsiveness with performance, currently set to update on average every 20 messages.
-                        qrdata = mk.get_qr()
-                        if (qrdata is not None and qrdata != ""):
-                            qr_queue.put(qrdata)
-                
-                if msg.type == 'note_on' or msg.type == 'note_off':
-                    print(msg)
-                    logger.info(f'Received MIDI message: {msg}')
-                    if hasattr(msg, 'note'):
-                        note = msg.note
-                        if (hasattr(msg, 'channel')):
+                for msg in inport.iter_pending():
+                    channel = -1
+                    if (msg.type == 'aftertouch'):
+                        #print(msg)
+                        if (hasattr(msg, 'channel') and hasattr(msg, 'value')):
+                            #pressure
                             channel = msg.channel
-                            if (msg.type == 'note_on' and msg.velocity > 0):
-                                channelmap[channel] = [note, -1, -1, -1]
+                            currentval = channelmap[channel]
+                            channelmap[channel] = [currentval[0], currentval[1], currentval[2], msg.value]
+                    elif (msg.type == 'pitchwheel'):
+                        #print(msg)
+                        if (hasattr(msg, 'channel') and hasattr(msg, 'pitch')):
+                            #rotational
+                            channel = msg.channel
+                            currentval = channelmap[channel]
+                            channelmap[channel] = [currentval[0], currentval[1], msg.pitch, currentval[3]]
+                        
+                    elif msg.type == 'control_change':
+                        #print(msg)
+                        if (hasattr(msg, 'channel') and hasattr(msg, 'control') and hasattr(msg, 'value') and msg.control == 74): #MPE standard for timbre control
+                            channel = msg.channel
+                            currentval = channelmap[channel]
+                            #vertical
+                            channelmap[channel] = [currentval[0], msg.value, currentval[2], currentval[3]]
+                        #use midi joystick control.  
+                        #also allow external joystick control..
+                    if (channel != -1 and qr_queue is not None):
+                        #send update for this channel to QR code, can adjust format as needed.
+                        mk.add_qrin(f'<<midi>>\n> Aftertouch [{channelmap[channel][0]},{channelmap[channel][1]},{channelmap[channel][2]},{channelmap[channel][3]}]\n$$\n')
+                        #only update sometimes?  For now do all.  
+
+                        if (random.random() < 0.05): #adjust this threshold as needed to balance responsiveness with performance, currently set to update on average every 20 messages.
+                            qrdata = mk.get_qr()
+                            if (qrdata is not None and qrdata != ""):
+                                qr_queue.put(qrdata)
+                    
+                    if msg.type == 'note_on' or msg.type == 'note_off':
+                        print(msg)
+                        logger.info(f'Received MIDI message: {msg}')
+                        if hasattr(msg, 'note'):
+                            note = msg.note
+                            if (hasattr(msg, 'channel')):
+                                channel = msg.channel
+                                if (msg.type == 'note_on' and msg.velocity > 0):
+                                    channelmap[channel] = [note, -1, -1, -1]
+                                else:
+                                    channelmap[channel] = [-1,-1,-1,-1]   
+
+                            if hasattr(msg, 'velocity'):
+                                velocity = msg.velocity
                             else:
-                                channelmap[channel] = [-1,-1,-1,-1]   
+                                velocity = 0
+                            #add key to sequence and check for any actions.  
+                            a = mk.key(note, msg, callback=None)
+                            #every note adjust the QR code in case something changed.
+                            #probably better way to do this..
+                            qrdata = mk.get_qr()
+                            if (qrdata is not None and qrdata != ""):
+                                qr_queue.put(qrdata)
+    #                        c.mySignal.emit(0)
+                            #update QR code if changed.
 
-                        if hasattr(msg, 'velocity'):
-                            velocity = msg.velocity
+    #                        if (a == -1):
+                                #error or reset
+    #                            winsound.Beep(2000, 500) # Beep at 2000 Hz for 500 ms
                         else:
-                            velocity = 0
-                        #add key to sequence and check for any actions.  
-                        a = mk.key(note, msg, callback=None)
-                        #every note adjust the QR code in case something changed.
-                        #probably better way to do this..
-                        qrdata = mk.get_qr()
-                        if (qrdata is not None and qrdata != ""):
-                            qr_queue.put(qrdata)
-#                        c.mySignal.emit(0)
-                        #update QR code if changed.
-
-#                        if (a == -1):
-                            #error or reset
-#                            winsound.Beep(2000, 500) # Beep at 2000 Hz for 500 ms
+                            print("Message does not have a note attribute")
                     else:
-                        print("Message does not have a note attribute")
-                else:
-                    dontprint = 1
-#                    print(msg)
-#                    logger.info(f'Received MIDI message: {msg}')
-
+                        dontprint = 1
+    #                    print(msg)
+    #                    logger.info(f'Received MIDI message: {msg}')
+    except (IOError, EOFError):
+        print("MIDI device disconnected safely.")
+        inport.close()
+    except Exception as e:
+        logger.error(f'Error handling MIDI message: {e}')
 
 def init_inputs():
     global midiout, midiin
@@ -4215,11 +4267,14 @@ def run_midi(mstop_event, kill_event, qr_queue=None, qrin_queue=None, audio_loca
     cont = keyboard.Controller()    
 
     while (not kill_event.is_set()):
-        handle_keys(qr_queue, qrin_queue)
-        init_inputs() #re-init inputs in case something changed.
-        time.sleep(0.1)  # Small delay to prevent high CPU usage
-        mstop_event.clear()  # Clear the event for the next iteration
-        mk.start_feedback() #restart feedback if needed.
+        try:
+            handle_keys(qr_queue, qrin_queue)
+            init_inputs() #re-init inputs in case something changed.
+            time.sleep(0.1)  # Small delay to prevent high CPU usage
+            mstop_event.clear()  # Clear the event for the next iteration
+            mk.start_feedback() #restart feedback if needed.
+        except Exception as e:
+            logger.error(f'Error in MIDI loop: {e}')
 
     logger.info('MIDI thread completed, unloading MK')
     mk.unload()
@@ -4352,10 +4407,6 @@ def main():
         menu=menu  # The menu associated with the icon
     )
     # Run the icon (this call is blocking)
-    logging.basicConfig(filename='trey.log', 
-        format='%(asctime)s %(levelname)-8s %(message)s',
-        level=logging.INFO,
-        datefmt='%Y-%m-%d %H:%M:%S')
     logger.info('Started')
     logger.info('Setting up hotkey listener')
     hotkey_listener = setup_hotkey_listener()

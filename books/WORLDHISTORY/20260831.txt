@@ -1,0 +1,3 @@
+**books/WORLDHISTORY
+The way this works with the time opening just the web pages from that time period is nice.
+I like how the browser open function works if you have selected a time period and use the meta key.

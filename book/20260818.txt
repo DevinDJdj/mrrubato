@@ -498,3 +498,148 @@ test..
 
 
 
+**extensions/vscode/codetutor/src/languages/base.ts
+--TAB [69,66,62]
+**extensions/vscode/codetutor/src/extension.ts
+--activateTabWatching
+test..
+
+
+**languages/hotkeys.py
+--ask
+with Query, Need to pass previous response contexts?  
+This is the struggle everyone has, what to pick.  
+
+
+**extensions/trey/trey.py
+Select Window gets the Browser too slowly.  
+Trigger a refresh upon open_browser
+
+
+**languages/book.py
+--ask
+test..
+
+**extensions/trey/speech.py
+**generate/generatetts.py
+Try some different language language detection and speech generation.  
+./temp folder is 10GB, need some sort of management here..
+
+
+**extensions/trey/test/ttstest.py
+> pip install fast-langdetect
+> pip install misaki[ja]
+
+> python ./extensions/trey/test/ttstest.py
+> pip install unidic-lite
+> pip install mecab-python3
+
+!!RuntimeError: 
+!!Failed initializing MeCab. Please see the README for possible solutions:
+==
+#https://github.com/polm/fugashi
+??
+;> pip install 'fugashi[unidic-lite]'
+
+> pip install unidic
+> python -m unidic download
+$$ENV=WINDOWS
+C:\devinpiano\music\treyenv\Lib\site-packages\plac_ext.py:22
+-multiprocessing = mp.get_context("fork")
++#multiprocessing = mp.get_context("fork")
++multiprocessing = mp.get_context("spawn")
+
+$$
+
+OK, JP speech generation works ok..
+
+get lang detect model..
+#https://fasttext.cc/docs/en/language-identification.html
+@@why does this fail on download..
+!!self._downloader.download(FASTTEXT_LARGE_MODEL_URL, model_path, proxy)
+==
+#https://dl.fbaipublicfiles.com/fasttext/supervised-models/lid.176.bin
+load manually
+config = LangDetectConfig(
+    custom_model_path="./models/fast-langdetect/lid.176.bin",  # Path to local model file
+#    disable_verify=True                         # Skip MD5 verification if needed
+)
+
+# Initialize the detector with the manual configuration
+detector = LangDetector(config)
+
+# Detect language
+result = detector.detect("Hello world")
+
+$$
+
+test lang detection..
+
+OK, dont think anything broke..
+**extensions/trey/speech.py
+--WHISPER_LANGUAGE
+
+Need to be able to set this..
+Just select use page language
+**languages/_lang.py
+--set_language
+_HOTKEYS=use playwrighty current_cache language..
+
+I think lets specify language pro-actively for transcription..
+[59,60] [53]
+Keep cache of language selections.  
+Put lang in URL bookmark, and have those langs as selections on load_bookmarks.  
+
+
+**languages/_meta.py
+--set_speed
+test..
+[48, 50, 54] [59]
+
+**extensions/trey/trey.py
+Separate out mywindow..
+File getting too large..
+
+**extensions/vscode/codetutor/src/extension.ts
+;/genbook
+for now add from any topic where book folder exists..
+Use current file date, and just append if not existing..
+
+
+**books/20260901
+How we get this dir?  
+
+**languages/helpers/transcriber.py
+--write_topic
+adjust book path..
+See how this works..
+
+**languages/hotkeys.py
+When skipping back, something wrong with rehighlighting..
+Perhaps other things..
+read_offset maybe not working ..
+
+
+Make mini crawler function.  
+Add this  to context.  
+
+Need vectra DB for temporary context.  
+books/
+Then query similar and include in model passed context.  
+
+
+**extensions/vscode/codetutor/src/languages/base.ts
+[0,-3,-7]
+test tab_..
+
+test runHolds..
+
+**extensions/trey/playwrighty.py
+--handle_frame_navigated
+Needs fixing..
+
+
+Need to highlight all from time period..
+Get all "Ask, Comment, Feedback"
+And highlight those locations.  
+As we scroll, update the overlay..

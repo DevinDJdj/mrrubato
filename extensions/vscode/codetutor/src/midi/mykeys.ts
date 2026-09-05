@@ -15,7 +15,8 @@ const RELEASE_TIME = 0.2;
 class WordNode{
     word: string;
     lang: string;
-    sequence: Number[];
+    sequence: Number[]; //params
+    ws: Number[]; //word
 }
 export class MyKeys {
     keys: Number[]; //array of ints
@@ -34,6 +35,7 @@ export class MyKeys {
     currentcmd: string = '';
     currentlangna: string = '';
     currentlang: Object = null;
+    quickkey: any = {}; 
     currentmidiuser: number = 0;
     start: number = (new Date()).getTime();
     notes: any[];
@@ -63,6 +65,7 @@ export class MyKeys {
         this.lastnotetime = 0;
         this.lastnote = null;
         this.currentcmd = ''; 
+        this.quickkey = {};
         this.currentmidiuser = 0;
         this.midiarray = [{}]; //user, lang, array of notes with time, note, velocity, duration
         this.heldwords = []; //array of words that are currently held down
@@ -161,8 +164,35 @@ export class MyKeys {
         }
     }
 
+    gen_keystruct(){
+
+    }
+
     runHolds(){
         let currentTime = Date.now() - this.start;
+        let purenotes = this.heldwords.map(h => h['_']); //should keep order..
+        if (purenotes.length > 1){ //prerequisite no single key..
+            let lastnote = this.heldwords[this.heldwords.length - 1];
+            if (lastnote['..'] - currentTime > 500) {
+                //do something if the last note has been held for more than 500ms
+                let notekey = purenotes.join(',');
+                if (this.quickkey[notekey] !== undefined) {
+                    //execute quickkey action
+                    let lastword = this.quickkey[notekey];
+                    if (lastword) {
+                        let lang = lastword.lang;
+                        let cmd = lastword.word;
+                        let sequence = lastword.sequence;
+                        let module = this.languages[lang]["module"];
+                        if (module) {
+                            console.log("executing quickkey command", cmd, sequence, lang);
+                            module.act(cmd, sequence, []);
+                        }
+                    }
+                }
+            }
+        }
+        /*
         for (const [note, obj] of Object.entries(this.notes)) {
             if (obj.velocity > 0) { //still holding..
 //                console.log("note held", note, currentTime, obj.time, obj.velocity);
@@ -193,6 +223,7 @@ export class MyKeys {
                 }
             }
         }
+        */
     }
     key(msg, myTime = 0, midiCb = null){
 //        console.log("key", msg);
@@ -267,7 +298,7 @@ export class MyKeys {
         }
 
         this.notes[note] = obj;
-        this.heldwords.push(note); //add to held words
+        this.heldwords.push({'_': note, '..': Date.now() - this.start, '$$': velocity}); //add to held words
         this.mkey(note, velocity, abstime, myTime, lang);
     }
 
@@ -353,7 +384,9 @@ export class MyKeys {
                 this.startseqno = this.currentseqno;
             }
         }
+
         if (this.currentcmd !== "" && this.currentlangna !== "" && this.currentlang !== null) {
+            //right now no selection mechanism for EOW.  This is all controlled by
             let ret = (this.currentlang as any).act(this.currentcmd, this.sequence.slice(this.startseqno), this.words);
             if (ret === -1) {
                 //unknown command, reset sequence.  
@@ -363,7 +396,11 @@ export class MyKeys {
                 //command executed, reset sequence.  
                 console.log(`> ${this.currentcmd}\n`);
                 //only add on success.  
-                this.words_.push({'word':this.currentcmd, 'sequence': this.sequence.slice(this.startseqno), 'lang': this.currentlangna});
+                this.words_.push({'word':this.currentcmd, 'ws': this.sequence.slice(0, this.startseqno), 'sequence': this.sequence.slice(this.startseqno), 'lang': this.currentlangna});
+                for (let i = 0; i < this.words_[this.words_.length-1].ws.length; i++) {
+                    //add index of quickkeys..
+                    this.quickkey[this.words_[this.words_.length-1].ws.slice(0,i+1).join(',')] = this.words_[this.words_.length-1];
+                }
                 this.reset_sequence();
 
 
@@ -381,7 +418,7 @@ export class MyKeys {
             lang = this.currentlangna;
         }
     
-        this.heldwords = this.heldwords.filter(n => n !== note); //remove from held words
+        this.heldwords = this.heldwords.filter(n => n['_'] !== note); //remove from held words
         const obj = this.notes[note];
         if (obj.osc) {
             obj.osc.stop();

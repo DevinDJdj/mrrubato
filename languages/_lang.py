@@ -4,6 +4,9 @@ import time
 
 import languages.helpers.transcriber as transcriber
 import extensions.trey.playwrighty as playwrighty
+from languages._meta import _META, _VIDEO, _HOTKEYS
+
+import extensions.trey.speech as speech
 
 
 logger = logging.getLogger(__name__)
@@ -187,25 +190,36 @@ class _lang:
   def set_language(self, sequence=[]):
     if (len(sequence) == 0):
       sequence = self._langseq
-    #find language from sequence
-    logger.info(f'> Set Language {sequence}')
 
-    #find in config.  
-    lang = None
-    for langname, langseq in self.config['languages'].items():
-      if (langseq == sequence):
-        lang = langname
-        break
-    if (lang is None):
-        self.speak('Language not found')
-        return -1
-    self.func = "Set Language"
-    self.set_qr(self.func, {'LANG': lang})
-    self.speak(f'Set language {lang}')
-    #shift octave.  
-    #dynamically load language module here.
+    if (len(sequence) == 1 and sequence[0] == _HOTKEYS):
+      #find playwright hotkey sequence
+      lang = playwrighty.detect_language()
+      if (lang=="en" or lang=="ja"): #right now for testing..
+        speech.WHISPER_LANGUAGE = lang
+        
+      self.func = "Set Language"
+      self.set_qr(self.func, {'LANG': lang})
+      self.speak(f'Set language {lang}')
+    else:
+      #find language from sequence
+      logger.info(f'> Set Language {sequence}')
 
-    self._langseq = sequence
+      #find in config.  
+      lang = None
+      for langname, langseq in self.config['languages'].items():
+        if (langseq == sequence):
+          lang = langname
+          break
+      if (lang is None):
+          self.speak('Language not found')
+          return -1
+      self.func = "Set Language"
+      self.set_qr(self.func, {'LANG': lang})
+      self.speak(f'Set language {lang}')
+      #shift octave.  
+      #dynamically load language module here.
+
+      self._langseq = sequence
     return 0
   
   

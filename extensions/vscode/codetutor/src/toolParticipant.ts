@@ -9,6 +9,8 @@ import { ToolCallRound, ToolResultMetadata, ToolUserPrompt } from './toolsPrompt
 
 let myStatusBarItem: vscode.StatusBarItem;
 
+export let recentTabs = [];
+
 
 import * as midiin from './midi/midi-in';
 import * as tree from './midi/tree';
@@ -649,6 +651,53 @@ export function startWatchingTranscriber(lang: string, transcriptFolder: string 
         }
     });
 
+}
+
+
+export function activateTabWatching(context) {
+    // Keep an ordered list of recently used tab identifiers or URIs
+
+
+    // Helper to get a unique identifier for a tab
+    function getTabId(tab) {
+        if (tab.input instanceof vscode.TabInputText || tab.input instanceof vscode.TabInputNotebook) {
+            return tab.input.uri.toString();
+        } else if (tab.input instanceof vscode.TabInputTextDiff) {
+            return `diff:${tab.input.original.toString()}-${tab.input.modified.toString()}`;
+        }
+        return tab.label; // Fallback for webviews, settings, etc.
+    }
+
+    // Initialize current active tabs into the history list
+    for (const group of vscode.window.tabGroups.all) {
+        if (group.activeTab) {
+            recentTabs.push(getTabId(group.activeTab));
+        }
+    }
+
+    // Listen for active tab changes across groups
+    context.subscriptions.push(
+        vscode.window.tabGroups.onDidChangeTabs((event) => {
+            // Check if active tabs changed in any group
+            for (const group of vscode.window.tabGroups.all) {
+                if (group.activeTab) {
+                    const activeId = getTabId(group.activeTab);
+                    // Move to the front of the recency array
+                    recentTabs = recentTabs.filter(id => id !== activeId);
+
+                    recentTabs.unshift(activeId);
+                }
+            }
+        })
+    );
+
+    // Register a command to display the recency-sorted tabs
+    context.subscriptions.push(
+        vscode.commands.registerCommand('extension.listTabsByRecency', () => {
+            const outputList = recentTabs.join('\n');
+            vscode.window.showInformationMessage(`Recent Tabs:\n${outputList}`);
+        })
+    );
 }
 
 export function registerToolUserChatParticipant(context: vscode.ExtensionContext) {

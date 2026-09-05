@@ -70,6 +70,8 @@ sys.path.insert(2, 'c:/devinpiano/music/mrrubato/') #install dir
 
 import extensions.trey.speech as speech
 
+langmap = {'en': 'a', 'fr': 'f', 'ja': 'j', 'zh': 'z', 'es': 'e'}
+
 def play_kokoro(text="", fname="kokoro.wav"):
 
     """
@@ -116,7 +118,7 @@ def remove_temp_audio(dir):
                     print(f"Error removing file {file_path}: {e}")
 
 
-def generate_line(text, idx, voice, vol, speed, cacheno=-1, engine='kokoro-tts', combined=False):
+def generate_line(text, idx, voice, vol, speed, cacheno=-1, engine='kokoro-tts', combined=False, lang='a'):
 
     sound_file = f"./temp/{cacheno}/{idx}.wav"
     if (combined == True):
@@ -132,7 +134,7 @@ def generate_line(text, idx, voice, vol, speed, cacheno=-1, engine='kokoro-tts',
         print(f"Found existing TTS file for line {idx}, skipping generation")
         return sound_file
     
-    suc = speech.speak(lesc, sound_file, voice, vol, speed, engine)
+    suc = speech.speak(lesc, sound_file, voice, vol, speed, engine, lang)
     if (suc != "" and random.random() > 0.2):
         print(f"saved {sound_file}...")
     else:
@@ -149,6 +151,8 @@ def check_active(cacheno):
                 return False
     return True
 
+
+
 if (__name__ == "__main__"):
     parser = argparse.ArgumentParser(description="A sample Python script with arguments.")
     parser.add_argument("--text", type=str, help="Your name", default="This is a test of the text to speech system.")
@@ -161,22 +165,28 @@ if (__name__ == "__main__"):
     parser.add_argument("--infile", type=str, help="Input text file for TTS generation", default=None)
     parser.add_argument("--cacheno", type=str, help="Cache number for TTS generation", default=-1)
     parser.add_argument("--numlines", type=int, help="Number of lines to generate TTS for", default=300)
+    parser.add_argument("--lang", type=str, help="Language code for TTS generation", default="en")
     #fast not working..
 
     args = parser.parse_args()    
     print(f"Generating TTS {args.fname} ...")
 
+    lang = args.lang
+    #detect language
+    lang = langmap.get(lang, 'en') #lang abbr. for TTS engine..
 #    thread1 = threading.Thread(target=speech.speak, args=(f'{args.text}',f'{args.fname}',f'{args.voice}',args.vol,args.speed,'kokoro-tts'))
     if (args.infile is not None and args.infile != "" and os.path.exists(args.infile)):
         with open(args.infile, "r", encoding="utf-8") as f:
             lines = f.readlines()
+#            lang = detect_language(" ".join(lines))
     else:
         lines = args.text.split('\n')
+#        lang = detect_language(" ".join(lines))
 
     if (len(lines) < 3):
         print("Calling speak with text:", args.text)
         args.fname=f"./temp/{args.cacheno}/{args.cacheno}.wav"
-        speech.speak(args.text, args.fname, args.voice, args.vol, args.speed, 'kokoro-tts')
+        speech.speak(args.text, args.fname, args.voice, args.vol, args.speed, 'kokoro-tts', lang)
         exit(0)
 
     same_flag = False
@@ -208,7 +218,7 @@ if (__name__ == "__main__"):
                 combined = True
                 l = temptext + " " + l
                 temptext = ""
-                generate_line(l, idx, args.voice, args.vol, args.speed, args.cacheno, args.engine, combined)    
+                generate_line(l, idx, args.voice, args.vol, args.speed, args.cacheno, args.engine, combined, lang)    
                 total_generated += 1
                 time.sleep(1+len(l)/60) #wait a bit to avoid overloading the TTS engine.  Speed is roughly 10-30 chars/sec
                 if (random.random() < 0.2 and check_active(args.cacheno) == False):
@@ -228,7 +238,7 @@ if (__name__ == "__main__"):
                 combined = True
                 l = temptext + " " + l
                 temptext = ""
-            generate_line(l, idx, args.voice, args.vol, args.speed, args.cacheno, args.engine, combined)    
+            generate_line(l, idx, args.voice, args.vol, args.speed, args.cacheno, args.engine, combined, lang)    
             total_generated += 1
             time.sleep(1+len(l)/60) #wait a bit to avoid overloading the TTS engine.  Speed is roughly 10-30 chars/sec
             if (random.random() < 0.2 and check_active(args.cacheno) == False):
