@@ -1,5 +1,11 @@
 from kokoro import KPipeline
 import soundfile as sf
+import sys
+
+sys.path.insert(0, 'c:/devinpiano/') #config.json path
+sys.path.insert(1, 'c:/devinpiano/music/') #config.py path Base project path
+sys.path.insert(2, 'c:/devinpiano/music/mrrubato') #config.py path Base project path
+import extensions.trey.tts as tts
 
 import MeCab
 tagger = MeCab.Tagger()
@@ -47,3 +53,6 @@ generator = pipeline(text, voice=voice, speed=1.0)
 for i, (gs, ps, audio) in enumerate(generator):
     sf.write(f'output_{i}.wav', audio, 24000)
     print(f'Saved output_{i}.wav')
+
+
+tts.speak(text, voice_id=voice, fname=f'./output/output_ttstest.wav')

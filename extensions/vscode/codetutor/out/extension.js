@@ -47,6 +47,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.recentTabs2 = void 0;
 exports.formatMarkdownSnippet = formatMarkdownSnippet;
 exports.startTranscribers = startTranscribers;
 exports.activate = activate;
@@ -62,6 +63,7 @@ const ollama_1 = __importDefault(require("ollama"));
 const toolParticipant_1 = require("./toolParticipant");
 const TerminalWorker = __importStar(require("./terminalworker"));
 const util_1 = require("util");
+exports.recentTabs2 = [];
 const BASE_PROMPT = 'You are a helpful code tutor. Your job is to teach the user with simple descriptions and sample code of the concept. Respond with a guided overview of the concept in a series of messages. Do not give the user the answer directly, but guide them to find the answer themselves. If the user asks a non-programming question, politely decline to respond.';
 const EXERCISES_PROMPT = 'You are a helpful tutor. Your job is to teach the user with fun, simple exercises that they can complete in the editor. Your exercises should start simple and get more complex as the user progresses. Move one concept at a time, and do not move on to the next concept until the user provides the correct answer. Give hints in your exercises to help the user learn. If the user is stuck, you can provide the answer and explain why it is the answer. If the user asks a non-programming question, politely decline to respond.';
 // define a chat handler
@@ -1232,6 +1234,10 @@ function getBookContext() {
         return vscode.window.showInformationMessage('No active editor found');
     }
     console.log("getBookContext: " + activeEditor.document.uri.toString()); // + activeEditor.document);
+    const folderUri = vscode.workspace.workspaceFolders[0].uri;
+    //keep tabs up to date for quick selection..
+    exports.recentTabs2 = exports.recentTabs2.filter(tab => tab.uri.toString() !== activeEditor.document.uri.toString());
+    exports.recentTabs2.unshift({ uri: activeEditor.document.uri, name: activeEditor.document.uri.path.replace(folderUri.path + "/", "") });
 }
 function triggerGetBookContext(throttle = false) {
     if (throttle) {

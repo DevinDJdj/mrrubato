@@ -33,6 +33,8 @@ import { get } from 'http';
 import * as TerminalWorker from './terminalworker';
 import { isNumber } from 'util';
 
+export let recentTabs2 = [];
+
 const BASE_PROMPT =
   'You are a helpful code tutor. Your job is to teach the user with simple descriptions and sample code of the concept. Respond with a guided overview of the concept in a series of messages. Do not give the user the answer directly, but guide them to find the answer themselves. If the user asks a non-programming question, politely decline to respond.';
 
@@ -1285,6 +1287,7 @@ export function activate(context: vscode.ExtensionContext) {
 			triggerUpdateDecorations();
 			triggerGetBookContext();
 			updateStatusBarItem();
+
 		}
 	}, null, context.subscriptions);
 
@@ -1413,6 +1416,12 @@ function getBookContext() {
 		return vscode.window.showInformationMessage('No active editor found');
 	}
 	console.log("getBookContext: " + activeEditor.document.uri.toString());// + activeEditor.document);
+	const folderUri = vscode.workspace.workspaceFolders[0].uri;
+
+	//keep tabs up to date for quick selection..
+	recentTabs2 = recentTabs2.filter(tab => tab.uri.toString() !== activeEditor.document.uri.toString());
+	recentTabs2.unshift({uri: activeEditor.document.uri, name: activeEditor.document.uri.path.replace(folderUri.path + "/", "")});
+
 }
 
 

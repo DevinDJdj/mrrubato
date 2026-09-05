@@ -1,32 +1,32 @@
 
 export default class LANG {
-    config = {};
-    keybot = 48;
-    keyoffset = 0;
-    funcdict = {};
-    midwordtree = {}; 
+    config: Record<string, any> = {};
+    keybot: number = 48;
+    keyoffset: number = 0;
+    funcdict: Record<string, Function> = {};
+    midwordtree: Record<string, any> = {}; 
 
-    name = "_meta";
+    name: string = "_meta";
     //ALLCAPS = vscode handler..
 
     constructor(){
         console.log("meta language constructor");
     }
 
-    init(config){
+    init(config: Record<string, any>): void {
         //optional init function
         console.log("meta language init");
         this.config = config || {};
         this.load();
     }
 
-    load(){
+    load(): void {
         let obj = {
             "2":{
             },
             "3":{
-                "SET TOPIC": [0, 4, 5],
-                "ADD TOPIC": [0, 6, 7],
+                "RESET TOPICS": [0, 4, 5],
+                "ADD TOPICS": [0, 6, 7],
             },
 
         };
@@ -36,11 +36,27 @@ export default class LANG {
 
         }
         this.config['languages'][this.name] = obj;        
-        this.funcdict["SET TOPIC"] = this.set_topic;
+        this.funcdict["RESET TOPICS"] = this.reset_topics;
+        this.funcdict["ADD TOPICS"] = this.add_topics;
     }
 
-    set_topic(cls, sequence, words){
-        console.log("meta set_topic", sequence, words);
+    //only functions that are very time sensitive..
+    add_topics(cls: LANG, sequence: number[], words: string[]): void {
+        console.log("meta add_topics", sequence, words);
+        if (sequence.length > 0){
+            //add topic based on sequence
+            let numtopics = sequence[0]-this.keybot-this.keyoffset;
+            //select this number of topics from history and add those topics to current query..  
+        }
+    }
+
+    reset_topics(cls: LANG, sequence: number[], words: string[]): void {
+        //clears out history or previous topics.  
+        //how do we clear the context information.  
+        //no need to clear read books vectra data?  
+        //may need restart to fully clear context
+
+        console.log("meta reset_topics", sequence, words);
         if (sequence.length > 0){
             //set topic to 
             let numtopics = sequence[0]-this.keybot-this.keyoffset;
@@ -48,7 +64,7 @@ export default class LANG {
         }
     }
 
-    act(cmd, sequence, words){
+    act(cmd: string, sequence: number[], words: string[]): number {
         console.log("meta act", cmd, sequence, words);
         if (cmd in this.funcdict){
             let func = this.funcdict[cmd];
@@ -69,7 +85,7 @@ export default class LANG {
         }
     }
 
-    word(sequence, words=[]){
+    word(sequence: number[], words: string[] = []): string {
         let cmd = "";
         let sl = sequence.length;
         let strsl = sl.toString();

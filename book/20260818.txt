@@ -586,9 +586,60 @@ Just select use page language
 _HOTKEYS=use playwrighty current_cache language..
 
 I think lets specify language pro-actively for transcription..
-[59,60] [53] [59,59]
+[59,60] [53]
+Keep cache of language selections.  
+Put lang in URL bookmark, and have those langs as selections on load_bookmarks.  
+
 
 **languages/_meta.py
 --set_speed
 test..
+[48, 50, 54] [59]
 
+**extensions/trey/trey.py
+Separate out mywindow..
+File getting too large..
+
+**extensions/vscode/codetutor/src/extension.ts
+;/genbook
+for now add from any topic where book folder exists..
+Use current file date, and just append if not existing..
+
+
+**books/20260901
+How we get this dir?  
+
+**languages/helpers/transcriber.py
+--write_topic
+adjust book path..
+See how this works..
+
+**languages/hotkeys.py
+When skipping back, something wrong with rehighlighting..
+Perhaps other things..
+read_offset maybe not working ..
+
+
+Make mini crawler function.  
+Add this  to context.  
+
+Need vectra DB for temporary context.  
+books/
+Then query similar and include in model passed context.  
+
+
+**extensions/vscode/codetutor/src/languages/base.ts
+[0,-3,-7]
+test tab_..
+
+test runHolds..
+
+**extensions/trey/playwrighty.py
+--handle_frame_navigated
+Needs fixing..
+
+
+Need to highlight all from time period..
+Get all "Ask, Comment, Feedback"
+And highlight those locations.  
+As we scroll, update the overlay..

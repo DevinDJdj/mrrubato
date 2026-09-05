@@ -9,6 +9,8 @@ import { ToolCallRound, ToolResultMetadata, ToolUserPrompt } from './toolsPrompt
 
 let myStatusBarItem: vscode.StatusBarItem;
 
+export let recentTabs = [];
+
 
 import * as midiin from './midi/midi-in';
 import * as tree from './midi/tree';
@@ -654,7 +656,7 @@ export function startWatchingTranscriber(lang: string, transcriptFolder: string 
 
 export function activateTabWatching(context) {
     // Keep an ordered list of recently used tab identifiers or URIs
-    let recentTabs = [];
+
 
     // Helper to get a unique identifier for a tab
     function getTabId(tab) {

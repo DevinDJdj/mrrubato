@@ -128,6 +128,7 @@ class transcriber:
 
         ret = ""
         today = datetime.now().strftime("%Y%m%d")
+
         if (topic == ""):
             topic = self.current_topic
         if (topic != self.current_topic and topic is not None):                
@@ -148,31 +149,35 @@ class transcriber:
             if (saveBook):
                 #write to permanent topic
                 #write to permanent selected book/topic..
-                if (self.current_book is not None):
+                book = self.current_book                
+                if (book is not None and book.startswith('books/')):
+                    book = book[len('books/'):]
+                if (book is not None):
                     topicstr = ""
-                    if (self.current_book not in self.langmap):
-                        self.langmap[self.current_book] = {'lang':self.current_book, 'topic': topic, 'topics': {}, 'kg': nx.Graph()}
+                    if (book not in self.langmap):
+                        self.langmap[book] = {'lang':book, 'topic': topic, 'topics': {}, 'kg': nx.Graph()}
                         topicstr = f'**{topic}'
                     try:
-                        file_path = pathlib.Path(f'{self.BOOK_FOLDER}{self.current_book}')
+                        file_path = pathlib.Path(f'{self.BOOK_FOLDER}{book}')
                         # Create parent directories if they don't exist
                         file_path.mkdir(parents=True, exist_ok=True)
-                        exists = os.path.exists(f'{self.BOOK_FOLDER}{self.current_book}/{today}.txt')
-                        with open(f'{self.BOOK_FOLDER}{self.current_book}/{today}.txt', 'a', encoding='utf-8') as f:
-                            if (topic != self.langmap[self.current_book]['topic'] or not exists): #had to change topics or new file..
+                        exists = os.path.exists(f'{self.BOOK_FOLDER}{book}/{today}.txt')
+                        with open(f'{self.BOOK_FOLDER}{book}/{today}.txt', 'a', encoding='utf-8') as f:
+                            if (topic != self.langmap[book]['topic'] or not exists): #had to change topics or new file..
                                 topicstr = f'**{topic}'
                             if (topicstr != ""): #had to change topics..
                                 f.write(topicstr + '\n')
                             f.write(extra + '\n')
-                        self.langmap[self.current_book]['topic'] = topic
+                        self.langmap[book]['topic'] = topic
                     except Exception as e:
-                        logger.error(f'Error writing to book file for current book {self.current_book}: {e}')
+                        logger.error(f'Error writing to book file for current book {book}: {e}')
                     #write also to topic file if not self-referrential..
-                    if (topic != self.current_book):
+                    #also no just date topics?
+                    if (topic != book and not self.is_yyyymmdd(topic)):
                         if (topic not in self.langmap):
-                            self.langmap[topic] = {'lang':topic, 'topic': self.current_book, 'topics': {}, 'kg': nx.Graph()}
-                            topicstr = f'**{self.current_book}'
-                        elif (self.langmap[topic]['topic'] == self.current_book):
+                            self.langmap[topic] = {'lang':topic, 'topic': book, 'topics': {}, 'kg': nx.Graph()}
+                            topicstr = f'**{book}'
+                        elif (self.langmap[topic]['topic'] == book):
                             topicstr = "" #dont rewrite topic if its the same as current book, to avoid confusion in topic history.
                         try:
                             file_path = pathlib.Path(f'{self.BOOK_FOLDER}{topic}')
@@ -180,7 +185,7 @@ class transcriber:
                             file_path.mkdir(parents=True, exist_ok=True)
                             with open(f'{self.BOOK_FOLDER}{topic}/{today}.txt', 'a', encoding='utf-8') as f:
                                 if (topicstr != ""): #had to change topics..
-                                    topicstr = f'**{self.current_book}'
+                                    topicstr = f'**{book}'
                                     f.write(topicstr + '\n')
                                 f.write(extra + '\n')
                                 #dont worry about time of day for this, not worth the space..

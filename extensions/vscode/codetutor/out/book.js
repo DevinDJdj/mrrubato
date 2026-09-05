@@ -57,6 +57,7 @@ exports.removeFromHistory = removeFromHistory;
 exports.addQueryHistory = addQueryHistory;
 exports.addToHistory = addToHistory;
 exports.select = select;
+exports.readBooksContent = readBooksContent;
 exports.pickTopic = pickTopic;
 exports.gitChanges = gitChanges;
 exports.write = write;
@@ -642,8 +643,10 @@ function webBook(topic) {
     //analyze the topic web external link.  
     vscode.env.openExternal(vscode.Uri.parse(mySettings.webbookurl + topic)); //open the web book in the browser.
 }
-function getMyUri(topic) {
+function getMyUris(topic) {
+    //how many to return..
     //check if file or folder
+    let ret = [];
     const folderUri = vscode.workspace.workspaceFolders[0].uri;
     // this should be a book path.  Use as you would work on the project.  
     let fileUri = folderUri.with({ path: path_1.posix.join(folderUri.path, topic) });
@@ -661,13 +664,20 @@ function getMyUri(topic) {
                     latestMtime = stats.mtimeMs;
                     latestFile = file;
                 }
+                fileUri = folderUri.with({ path: path_1.posix.join(folderUri.path, topic, file) });
+                ret.push(fileUri);
             }
-            if (latestFile) {
-                fileUri = folderUri.with({ path: path_1.posix.join(folderUri.path, topic, latestFile) });
-            }
+            ret.sort((a, b) => a.fsPath.localeCompare(b.fsPath)); //sort alphabetically?  Maybe ok..
+            //            if (latestFile) {
+            //                fileUri = folderUri.with({ path: posix.join(folderUri.path, topic, latestFile) });
+            //            }
+        }
+        else {
+            const stats = fs.statSync(fileUri.fsPath);
+            ret.push(fileUri);
         }
     }
-    return fileUri;
+    return ret;
 }
 function select(topic, open = opennature) {
     //select the topic from the topicarray.  
@@ -675,7 +685,8 @@ function select(topic, open = opennature) {
     let fname = topic.trim();
     const folderUri = vscode.workspace.workspaceFolders[0].uri;
     // this should be a book path.  Use as you would work on the project.  
-    let fileUri = getMyUri(fname);
+    let fileUris = getMyUris(fname);
+    let fileUri = fileUris.length > 0 ? fileUris[0] : null;
     //	const fileUri = folderUri.with({ path: posix.join(folderUri.path, 'definitions.txt') });
     const found = exports.alltopics.find((t) => t === topic);
     vscode.workspace.openTextDocument(fileUri).then(doc => {
@@ -693,9 +704,49 @@ function select(topic, open = opennature) {
     //only add if we have data.  
     if (found) {
         addToHistory(topic); //add the topic to the history.
+        //read the book content if it exists.  
+        readBooksContent(fileUris, topic); //read the book content if it exists.  
         return true;
     }
     return false;
+}
+async function readBooksContent(fileUris, topic, depth = 0) {
+    let bookContent = [];
+    if (topic && exports.topicarray[topic] !== undefined) {
+        //read the book content for the topic if it exists.
+        bookContent = exports.topicarray[topic];
+    }
+    for (const fileUri of fileUris) {
+        if (fs.lstatSync(fileUri.fsPath).isDirectory()) {
+            //recurse here to readBooksContent
+            if (depth > 0) {
+                const subUris = getMyUris(fileUri.fsPath);
+                await readBooksContent(subUris, topic, depth - 1);
+            }
+        }
+        else {
+            await vscode.workspace.openTextDocument(fileUri).then((document) => {
+                let text = document.getText();
+                console.log(`${fileUri.path} ... read`);
+                // parse this.  
+                if (text.length === 0) {
+                    console.log(`${fileUri.path} ... empty`);
+                    let tempname = getFileName(fileUri.path);
+                    let mydate = getFileDate(tempname);
+                    if (mydate > 0) {
+                        //delete the file if it is empty and has a date.
+                        fs.unlinkSync(fileUri.fsPath);
+                        console.log(`${fileUri.path} ... deleted because empty and has date`);
+                    }
+                }
+                //load book content for further processing.  This should add to vectra DB?  
+                let d = loadPage(text, fileUri.path);
+            });
+        }
+        //start workers.  
+        //            Worker.initWorkers(context); //start the workers.
+    }
+    return bookContent;
 }
 function pickTopic(selectedtopics, defaultprompts = [], numtopics = 10, extendtopics = false, numentries = 10) {
     //pick a topic from the topicarray based on the sort order.

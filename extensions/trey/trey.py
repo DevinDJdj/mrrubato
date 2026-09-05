@@ -9,6 +9,11 @@
 #standard libraries
 import json
 import logging
+logger = logging.getLogger(__name__)
+logging.basicConfig(filename='trey.log', 
+    format='%(asctime)s %(levelname)-8s %(message)s',
+    level=logging.INFO,
+    datefmt='%Y-%m-%d %H:%M:%S')
 import os
 import time
 import sys
@@ -127,7 +132,6 @@ matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
 
 
-logger = logging.getLogger(__name__)
 global mywindow
 global active_window
 global qapp
@@ -658,8 +662,8 @@ def get_voices(lang='en'):
     elif (lang == 'ja'):
         #jf_gongitsune, jf_nezumi, jf_tebukuro
         voices = ['jf_alpha', 'jf_nezumi', 'jf_tebukuro']
-    else:
-        voices = ['af_heart', 'af_bella', 'af_nicole', 'af_aoede']
+    elif (lang == 'es'):
+        voices = ['ef_alpha', 'em_alex']
     """
     if (len(all_voices) > 0):
         for v in all_voices:
@@ -4403,10 +4407,6 @@ def main():
         menu=menu  # The menu associated with the icon
     )
     # Run the icon (this call is blocking)
-    logging.basicConfig(filename='trey.log', 
-        format='%(asctime)s %(levelname)-8s %(message)s',
-        level=logging.INFO,
-        datefmt='%Y-%m-%d %H:%M:%S')
     logger.info('Started')
     logger.info('Setting up hotkey listener')
     hotkey_listener = setup_hotkey_listener()

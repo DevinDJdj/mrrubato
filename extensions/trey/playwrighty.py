@@ -948,11 +948,22 @@ def get_page_details(page):
         return body_text, link_data, alt_text_data
 
 
+
 def console_handler(cacheno):
     def log_console_message(msg):
         page = get_ppage(cacheno, False)
         print(f"#{page.title()}\n{msg.type.ljust(7, ' ')}:\t{msg.text}")
     return log_console_message
+
+def frame_navigated_handler(cacheno):
+    def handle_frame_navigated(frame):
+        page = get_ppage(cacheno, False)
+        url = page.url
+        logger.info(f"#{url}\n#{frame.url}")
+#        if (url != frame.url):
+#            read_page(frame.url, cacheno=cacheno)
+        print(f"#{page.title()}\nFrame navigated to URL: {frame.url}")
+    return handle_frame_navigated
 
 def update_page_offset(cacheno=-1):
     if (last_link_clicked_time is not None and time.time() - last_link_clicked_time < 1):
@@ -1214,6 +1225,8 @@ def read_page(url, cacheno=-1):
     page.on('pageerror', lambda exception: logger.error(f'!!#{page.url}\n{exception}'))
     # Listen for all console log events        
     page.on("console", console_handler(cacheno))
+
+    page.on("framenavigated", frame_navigated_handler(cacheno))
 
     return body_text, link_data, page, cacheno
 
