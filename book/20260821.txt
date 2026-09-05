@@ -38,3 +38,12 @@ Need simple volume control..
 
 
 >#2 python ./record.py --description "Op 118 No 2 (Brahms)"
+
+!!HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 404 Not Found"
+!!ask
+==
+$$mrrubato.model
+$$mrrubato.ubuntu
+>$1 dir
+
+$$

@@ -97,11 +97,13 @@ function getTerminal(key: string, type: string="", version: string="", dir=""): 
 
 
     if (type === '$'){
+        const mySettings = vscode.workspace.getConfiguration('mrrubato');		
+    
         myprofile = {
             "name": key,
             "shellPath": "C:\\Windows\\System32\\wsl.exe",
 
-            "shellArgs": ["-d", "Ubuntu-20.04"]
+            "shellArgs": ["-d", mySettings.get('ubuntu')]
         };
         //for now assume ubuntu. this API not working well, so just do manually..
         /*

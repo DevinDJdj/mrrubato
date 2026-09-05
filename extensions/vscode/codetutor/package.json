@@ -29,6 +29,11 @@
           "default": false,
           "description": "Model to use for LLM interactions."
         },
+        "mrrubato.ubuntu": {
+          "type": "string",
+          "default": "Ubuntu-20.04",
+          "description": "Setting to use Ubuntu for LLM interactions."
+        },
         "mrrubato.model": {
           "type": "string",
           "default": "gemma3:4b",
