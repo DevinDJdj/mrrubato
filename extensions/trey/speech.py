@@ -871,7 +871,7 @@ def replace_all(text, dic):
     # Create a regex pattern from dictionary keys
     pattern = re.compile("|".join(re.escape(key) for key in dic.keys()))
     # Use a lambda to return the value for each match
-    return pattern.sub(lambda m: dic[m.group(0)], text)
+    return pattern.sub(lambda m: ' ' + dic[m.group(0)] + ' ', text)
 
 
 def play_synth(seq=[77,81,84,89], dur=2):

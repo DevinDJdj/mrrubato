@@ -65,6 +65,7 @@ exports.read = read;
 exports.formatDate = formatDate;
 exports.getBook = getBook;
 exports.closeFileIfOpen = closeFileIfOpen;
+exports.getTopicFromFilePath = getTopicFromFilePath;
 exports.getFileName = getFileName;
 exports.updatePage = updatePage;
 exports.getChat = getChat;
@@ -84,7 +85,7 @@ exports.getBookVectorPath = getBookVectorPath;
 exports.getGenBookPath = getGenBookPath;
 exports.getUri = getUri;
 const vscode = __importStar(require("vscode"));
-const path_1 = require("path");
+const path_1 = __importStar(require("path"));
 const tokenizer = __importStar(require("./tokenizer")); // Import the Token interface
 const Worker = __importStar(require("./worker")); // Import the Worker class
 const vectra_1 = require("vectra");
@@ -208,6 +209,7 @@ let mynow = new Date(); //get the current date in YYYYMMDD format.
 let NEXT_TERM_ID = 1;
 exports.MAX_SELECTION_HISTORY = 10; //max number of topics to keep in history.
 var bookgraph = {}; //store topic relationships.  
+var workspaceUri = vscode.workspace.workspaceFolders[0].uri;
 let topicchanged = false;
 //store data as tabs open and close and based on location in the tab.  
 //from this info generate the context when querying the model.  
@@ -366,7 +368,7 @@ function getRecency(bt, mydate = new Date()) {
     }
 }
 function itemToDoc(item) {
-    const folderUri = vscode.workspace.workspaceFolders[0].uri;
+    const folderUri = workspaceUri;
     let ret = "";
     let fname = item.file;
     fname = fname.replace(folderUri.path + "/", ""); //remove the folder path from the file name for display purposes.
@@ -381,7 +383,7 @@ function itemToDoc(item) {
 function findTopicsCompletion(str = "") {
     let myarray = [];
     let sortText = "0000";
-    const folderUri = vscode.workspace.workspaceFolders[0].uri;
+    const folderUri = workspaceUri;
     if (str === "") {
         for (const [key, value] of Object.entries(exports.topicarray)) {
             if (value !== undefined && value.length > 0) {
@@ -643,11 +645,16 @@ function webBook(topic) {
     //analyze the topic web external link.  
     vscode.env.openExternal(vscode.Uri.parse(mySettings.webbookurl + topic)); //open the web book in the browser.
 }
-function getMyUris(topic) {
+function getMyUris(topic, externalpath = "") {
     //how many to return..
     //check if file or folder
     let ret = [];
-    const folderUri = vscode.workspace.workspaceFolders[0].uri;
+    let folderUri = workspaceUri;
+    if (externalpath !== "") {
+        const parentPath = path_1.default.dirname(folderUri.path);
+        folderUri = folderUri.with({ path: parentPath });
+        folderUri = folderUri.with({ path: path_1.posix.join(folderUri.path, externalpath) });
+    }
     // this should be a book path.  Use as you would work on the project.  
     let fileUri = folderUri.with({ path: path_1.posix.join(folderUri.path, topic) });
     if (fs.existsSync(fileUri.fsPath)) {
@@ -664,8 +671,8 @@ function getMyUris(topic) {
                     latestMtime = stats.mtimeMs;
                     latestFile = file;
                 }
-                fileUri = folderUri.with({ path: path_1.posix.join(folderUri.path, topic, file) });
-                ret.push(fileUri);
+                const tempUri = folderUri.with({ path: path_1.posix.join(folderUri.path, topic, file) });
+                ret.push(tempUri);
             }
             ret.sort((a, b) => a.fsPath.localeCompare(b.fsPath)); //sort alphabetically?  Maybe ok..
             //            if (latestFile) {
@@ -673,7 +680,7 @@ function getMyUris(topic) {
             //            }
         }
         else {
-            const stats = fs.statSync(fileUri.fsPath);
+            const stats = fs.lstatSync(fileUri.fsPath);
             ret.push(fileUri);
         }
     }
@@ -683,30 +690,44 @@ function select(topic, open = opennature) {
     //select the topic from the topicarray.  
     //this will be used to get the topic from the array.  
     let fname = topic.trim();
-    const folderUri = vscode.workspace.workspaceFolders[0].uri;
+    const folderUri = workspaceUri;
     // this should be a book path.  Use as you would work on the project.  
+    console.log("Selecting topic: " + fname);
     let fileUris = getMyUris(fname);
+    console.log("Found file URIs: ", fileUris);
     let fileUri = fileUris.length > 0 ? fileUris[0] : null;
     //	const fileUri = folderUri.with({ path: posix.join(folderUri.path, 'definitions.txt') });
     const found = exports.alltopics.find((t) => t === topic);
-    vscode.workspace.openTextDocument(fileUri).then(doc => {
-        if (open & exports.BOOK_OPEN_FILE) {
-            vscode.window.showTextDocument(doc);
+    try {
+        vscode.workspace.openTextDocument(fileUri).then(doc => {
+            if (open & exports.BOOK_OPEN_FILE) {
+                vscode.window.showTextDocument(doc);
+            }
+            //keep selectionhistory, dont load twice.  
+            if (!found) {
+                addToHistory(topic); //add the topic to the history.
+            }
+        });
+        if (open & exports.BOOK_OPEN_WEB) {
+            webBook(topic); //open the web view for the topic.
         }
-        //keep selectionhistory, dont load twice.  
-        if (!found) {
+        //only add if we have data.  
+        if (found) {
             addToHistory(topic); //add the topic to the history.
+            //read the book content if it exists.  
+            readBooksContent(fileUris, topic); //read the book content if it exists.  
+            fileUris = getMyUris(fname, "books");
+            //started using this, but really dont want leading books/
+            if (topic.startsWith("books/")) {
+                topic = topic.substring("books/".length);
+            }
+            readBooksContent(fileUris, topic);
+            //open global or local book view.  
+            return true;
         }
-    });
-    if (open & exports.BOOK_OPEN_WEB) {
-        webBook(topic); //open the web view for the topic.
     }
-    //only add if we have data.  
-    if (found) {
-        addToHistory(topic); //add the topic to the history.
-        //read the book content if it exists.  
-        readBooksContent(fileUris, topic); //read the book content if it exists.  
-        return true;
+    catch (err) {
+        console.error(`Error selecting topic ${topic}:`, err);
     }
     return false;
 }
@@ -740,7 +761,7 @@ async function readBooksContent(fileUris, topic, depth = 0) {
                     }
                 }
                 //load book content for further processing.  This should add to vectra DB?  
-                let d = loadPage(text, fileUri.path);
+                let d = loadPage(text, fileUri.path, 0, topic);
             });
         }
         //start workers.  
@@ -844,7 +865,7 @@ async function gitChanges(topics) {
     const mytopicfile = topics[topics.length - 1]; //get the topic file.
     const mytopiclogfile = mytopicfile + ".log"; //get the topic log file.
     //read this log file if exists. 
-    const folderUri = vscode.workspace.workspaceFolders[0].uri;
+    const folderUri = workspaceUri;
     const fileUri = folderUri.with({ path: path_1.posix.join(folderUri.path, mytopiclogfile) });
     const readData = await vscode.workspace.fs.readFile(fileUri);
     const readStr = Buffer.from(readData).toString('utf8');
@@ -882,7 +903,7 @@ async function read(prompt, mode = exports.GIT_BOOK) {
     }
     if (mode & exports.GIT_CODE) {
         try {
-            const folderUri = vscode.workspace.workspaceFolders[0].uri;
+            const folderUri = workspaceUri;
             const stat = await vscode.workspace.fs.stat(folderUri.with({ path: topkey }));
             //assume file exists if stats doesnt fail.  
             let git = await gitChanges(selectedtopics); //get the git changes for the topic.
@@ -1002,6 +1023,16 @@ async function readFilesInFolder(folder) {
     }
     return { total, count, page: getBookPath() + "/" + booknow.toString() };
 }
+function getTopicFromFilePath(filePath, wsf = vscode.workspace.workspaceFolders?.[0]) {
+    // Extract the topic from the file path.
+    // Assuming the topic is the filename without the extension.
+    if (wsf) {
+        if (filePath.startsWith(wsf.uri.path + "/")) {
+            filePath = filePath.replace(wsf.uri.path + "/", "");
+        }
+    }
+    return filePath;
+}
 function getFileName(filePath) {
     //get the date of the file.  
     //get the filename without the extension and path.  
@@ -1015,7 +1046,7 @@ function getFileDate(filePath) {
     }
     else {
         //get date of the file
-        const folderUri = vscode.workspace.workspaceFolders[0].uri;
+        const folderUri = workspaceUri;
         //       const stat => await vscode.workspace.fs.stat(folderUri.with({ path: filePath }))
         //        console.log((new Date(stat.mtime)).getFullYear() * 10000); //get the date of the file.
         //       return (new Date(stat.mtime)).getFullYear() * 10000;
@@ -1030,7 +1061,7 @@ function initArray(topic, array = exports.topicarray) {
 function updatePage(filePath, text, linefrom = 0, lineto = 0, show = false) {
     //update the current page with the text and filePath.  
     //this will be used to update the current topic.  
-    const folderUri = vscode.workspace.workspaceFolders[0].uri;
+    const folderUri = workspaceUri;
     // this should be a book path.  Use as you would work on the project.  
     const fileUri = folderUri.with({ path: path_1.posix.join(folderUri.path, filePath) });
     const copyUri = filePath.split("/").pop(); //last part of file path
@@ -1284,7 +1315,7 @@ async function markdown(prompt, format = 1) {
     //this just adjustst the base string to include links to markdown files.  
     //replace **topic with [topic](topic.md)
     //replace #link with [link](link)
-    const folderUri = vscode.workspace.workspaceFolders[0].uri;
+    const folderUri = workspaceUri;
     let marked = prompt.replace(/(\*\*|\#)(\S+)/g, (match, p1, p2) => {
         // p1 is either ** or #
         // p2 is the topic or link 
@@ -1715,12 +1746,21 @@ async function addVectorData(topic) {
         }
     }
 }
-function loadPage(text, filePath, altdate = 0) {
+function loadPage(text, filePath, altdate = 0, bookname = "") {
     //get the completions from the text.  
     //each topic or comment should be parsed and added to 
     //completions...
+    let topicpath = getTopicFromFilePath(filePath);
+    console.log("Topic Path: " + topicpath);
     let filename = getFileName(filePath);
     exports.currenttopic = filename.split(".")[0]; //default topic is the file name.
+    if (bookname !== "") {
+        //        altdate = getFileDate(filename);
+        //        currenttopic = bookname;
+        if (!(bookname in exports.topicarray) || exports.topicarray[bookname] === undefined) {
+            exports.topicarray[bookname] = [];
+        }
+    }
     if (!(exports.currenttopic in exports.topicarray) || exports.topicarray[exports.currenttopic] === undefined) {
         exports.topicarray[exports.currenttopic] = [];
     }
@@ -1879,7 +1919,7 @@ function getUri(path) {
     if (!vscode.workspace.workspaceFolders) {
         return vscode.Uri.parse("");
     }
-    const folderUri = vscode.workspace.workspaceFolders[0].uri;
+    const folderUri = workspaceUri;
     //    const retUri = folderUri.with({ path: posix.join(folderUri.path, path) });
     const retUri = folderUri.with({ path: path_1.posix.join(folderUri.path, path) });
     return retUri;
@@ -1888,7 +1928,7 @@ function getGenBookUri() {
     if (!vscode.workspace.workspaceFolders) {
         return vscode.Uri.parse("");
     }
-    const folderUri = vscode.workspace.workspaceFolders[0].uri;
+    const folderUri = workspaceUri;
     const genBookFolder = getGenBookPath();
     const genBookUri = folderUri.with({ path: path_1.posix.join(folderUri.path, genBookFolder) });
     return genBookUri;
@@ -1898,7 +1938,7 @@ function getBookUri() {
         return vscode.Uri.parse("");
     }
     // this should be a book path.  Use as you would work on the project.  
-    const folderUri = vscode.workspace.workspaceFolders[0].uri;
+    const folderUri = workspaceUri;
     const bookFolder = getBookPath(); //get the book folder from settings.
     const bookvectorFolder = getBookVectorPath(); //get the book vector folder from settings.
     const bookUri = folderUri.with({ path: path_1.posix.join(folderUri.path, bookFolder) });

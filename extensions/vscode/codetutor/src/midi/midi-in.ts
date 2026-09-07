@@ -54,12 +54,19 @@ export function activate(context) {
          });
 
 
-
+        console.log("setting up mykeys");
          mkeys[port] = new mykeys.MyKeys(config);
          var midiport = JZZ().openMidiIn(port).or(() => {
              panels[port].webview.html = `<html><body><h1>${port}</h1><p>Cannot open port!</p></body></html>`;
              return;
          });
+
+        console.log("Setting up interval for running holds");
+        setInterval(() => {
+            //send the current sequence to the webview for display
+            //console.log("Running Holds");
+            mkeys[port].runHolds();
+        }, 500);
 
             midiport.connect((msg) => {
                 //console.log('MIDI message:', msg);
@@ -68,11 +75,7 @@ export function activate(context) {
 //                panels[port].webview.postMessage({ command: 'midi', message: msg });
             });
 
-        setInterval(() => {
-            //send the current sequence to the webview for display
-            //console.log("Running Holds");
-            mkeys[port].runHolds();
-        }, 500);
+
 
          const scriptPath = vscode.Uri.joinPath(context.extensionUri, 'src', 'midi', 'input.js');
          const scriptUri = panels[port].webview.asWebviewUri(scriptPath);

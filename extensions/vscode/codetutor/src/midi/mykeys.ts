@@ -45,7 +45,7 @@ export class MyKeys {
     keybot: any = {};
     keymaps: any = {};
     midwordtree: any = {};
-    current_state: number = 0; //0=running, 1=paused
+    current_state: number = 1; //0=running, 1=paused start in recording state..
     midiUICallback = null;
     octaveInterval: number = 12;
 
@@ -99,6 +99,7 @@ export class MyKeys {
             this.currentlang = null;
         }
         this.importLanguages();
+        
 
     }    
 
@@ -169,12 +170,16 @@ export class MyKeys {
     }
 
     runHolds(){
+        //console.log("runHolds called");
         let currentTime = Date.now() - this.start;
         let purenotes = this.heldwords.map(h => h['_']); //should keep order..
+
+        //console.log("checking held word", purenotes);
         if (purenotes.length > 1){ //prerequisite no single key..
             let lastnote = this.heldwords[this.heldwords.length - 1];
-            if (lastnote['..'] - currentTime > 500) {
+            if (currentTime - lastnote['..'] > 500) {
                 //do something if the last note has been held for more than 500ms
+
                 let notekey = purenotes.join(',');
                 if (this.quickkey[notekey] !== undefined) {
                     //execute quickkey action
@@ -325,16 +330,16 @@ export class MyKeys {
 
     get_state(note){
         let state = this.current_state;
-        if (note == this.config['keymap']['global']['Pause']){
+        if (note === this.config['keymap']['global']['Pause']){
             state = 1;
         }
-        else if (note == this.config['keymap']['global']['Unpause']){
+        else if (note === this.config['keymap']['global']['Unpause']){
             state = 0;
         }
-        else if (note == this.config['keymap']['global']['Start']){
+        else if (note === this.config['keymap']['global']['Start']){
             state = 0;
         }
-        else if (note == this.config['keymap']['global']['Stop']){
+        else if (note === this.config['keymap']['global']['Stop']){
             state = 1;
         }
         this.current_state = state;
@@ -351,12 +356,12 @@ export class MyKeys {
         }
         this.lasttick = (new Date()).getTime();
 
-        this.get_state(note)
-        if (this.current_state == 0){   
+        this.get_state(note);
+        if (this.current_state === 0){   
             if (Math.random() < 0.01){
-                console.log(`Paused state, ignoring key ${note}`)
+                console.log(`Paused state, ignoring key ${note}`);
             }
-            return -1
+            return -1;
         }
 
         this.sequence.push(note);
@@ -374,9 +379,12 @@ export class MyKeys {
             return;
         }
         if (this.currentcmd === ""){
+            console.log("Finding word for sequence", this.sequence);
+            console.log(this.midwordtree);
             let word = this.findWord(this.sequence, lang);
             //console.log(this.midwordtree);
             if (word){
+                console.log("Found word:", word);
                 let langModule = this.languages[word.lang]["module"];
                 this.currentcmd = word.word;
                 this.currentlangna = word.lang;
@@ -385,6 +393,7 @@ export class MyKeys {
             }
         }
 
+        console.log("Current command:", this.currentcmd, "Current language name:", this.currentlangna);
         if (this.currentcmd !== "" && this.currentlangna !== "" && this.currentlang !== null) {
             //right now no selection mechanism for EOW.  This is all controlled by
             let ret = (this.currentlang as any).act(this.currentcmd, this.sequence.slice(this.startseqno), this.words);
@@ -399,6 +408,7 @@ export class MyKeys {
                 this.words_.push({'word':this.currentcmd, 'ws': this.sequence.slice(0, this.startseqno), 'sequence': this.sequence.slice(this.startseqno), 'lang': this.currentlangna});
                 for (let i = 0; i < this.words_[this.words_.length-1].ws.length; i++) {
                     //add index of quickkeys..
+                    console.log("Adding quickkey for sequence:", this.words_[this.words_.length-1].ws.slice(0,i+1).join(','));
                     this.quickkey[this.words_[this.words_.length-1].ws.slice(0,i+1).join(',')] = this.words_[this.words_.length-1];
                 }
                 this.reset_sequence();

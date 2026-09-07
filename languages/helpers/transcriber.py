@@ -65,6 +65,7 @@ class transcriber:
 
         self.chatmessages = []
         self.graphmessages = []
+        self.shortformvars = ['URL', 'TEXT', 'TRANSCRIPT', 'COMMENT', 'QUERY', 'ANSWER', '**'] #list of variable keys to be displayed in the shortform display.
 
         self.kg_ignorevars = ['TIME', 'WINDOW', 'START', 'END', 'FNAME', 'FILE', 'DURATION', 'LAG'] #vars to ignore in display of info, used for time window commands.
 
@@ -203,7 +204,7 @@ class transcriber:
         return ret
 
     #    
-    def write(self, lang, command, params, topic=None, save=True):
+    def write(self, lang, command, params, topic=None, save=True, shortform=False):
       #write to transcript file.  
       #for now just one time param.  
       if (topic is None):
@@ -234,7 +235,12 @@ class transcriber:
         if (isinstance(p, str)):
             p = re.sub(pattern, r"\n \1", p) #untested..
             p = p.replace('\n', '\t') #replace newlines with \t so we retain.. may mess up some things..
-        ret += f'$${pkey}={p}\n'
+        if (shortform):
+            if (pkey in self.shortformvars):
+                p = p[:100] + '...' if len(p) > 10 else p            
+                ret += f'$${pkey}={p}\n'
+        else:
+            ret += f'$${pkey}={p}\n'
       if ('TIME' not in params):
         ret += f'$$TIME={self.getTimeString()}\n'
       ret += f'$$\n'

@@ -47,7 +47,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.recentTabs2 = void 0;
 exports.formatMarkdownSnippet = formatMarkdownSnippet;
 exports.startTranscribers = startTranscribers;
 exports.activate = activate;
@@ -63,7 +62,7 @@ const ollama_1 = __importDefault(require("ollama"));
 const toolParticipant_1 = require("./toolParticipant");
 const TerminalWorker = __importStar(require("./terminalworker"));
 const util_1 = require("util");
-exports.recentTabs2 = [];
+const base_1 = require("./languages/base");
 const BASE_PROMPT = 'You are a helpful code tutor. Your job is to teach the user with simple descriptions and sample code of the concept. Respond with a guided overview of the concept in a series of messages. Do not give the user the answer directly, but guide them to find the answer themselves. If the user asks a non-programming question, politely decline to respond.';
 const EXERCISES_PROMPT = 'You are a helpful tutor. Your job is to teach the user with fun, simple exercises that they can complete in the editor. Your exercises should start simple and get more complex as the user progresses. Move one concept at a time, and do not move on to the next concept until the user provides the correct answer. Give hints in your exercises to help the user learn. If the user is stuck, you can provide the answer and explain why it is the answer. If the user asks a non-programming question, politely decline to respond.';
 // define a chat handler
@@ -331,6 +330,9 @@ function getTextFromCursor(editor) {
             topic = getTopicFromLocation(editor);
         }
     }
+    else {
+        topic = getTopicFromLocation(editor);
+    }
     return [text, topic];
 }
 function formatMarkdownSnippet(snippet) {
@@ -364,6 +366,7 @@ function activate(context) {
         startTranscribers();
     }, 60000); // check every minute if date changes to follow new file..
     (0, toolParticipant_1.activateTabWatching)(context); //start watching tab changes for recency tracking.
+    (0, toolParticipant_1.activateWorkspaceWatching)(context); //start watching workspace folder changes.
     //create loop to watch for change of day to restart transcribers..
     const mySettings = vscode.workspace.getConfiguration('mrrubato');
     Book.setModel(mySettings.get('model'));
@@ -653,8 +656,10 @@ function activate(context) {
                     }
                 }
                 [text, topic] = getTextFromCursor(editor);
+                console.log("Current text: " + text + ", Current topic: " + topic);
                 if (topic !== "" && topic !== Book.selectedtopic) {
                     //select the topic.  
+                    console.log("Selecting topic: " + topic);
                     Book.select(topic, 0); //select and open topic
                     //					Book.logCommand("**" + topic); //log the command to genbook.
                     if (text.startsWith("**") > 0) {
@@ -1234,10 +1239,17 @@ function getBookContext() {
         return vscode.window.showInformationMessage('No active editor found');
     }
     console.log("getBookContext: " + activeEditor.document.uri.toString()); // + activeEditor.document);
-    const folderUri = vscode.workspace.workspaceFolders[0].uri;
+    const activeWorkspaceFolder = vscode.workspace.getWorkspaceFolder(activeEditor.document.uri);
+    const topic = Book.getTopicFromFilePath(activeEditor.document.uri.path, activeWorkspaceFolder);
     //keep tabs up to date for quick selection..
-    exports.recentTabs2 = exports.recentTabs2.filter(tab => tab.uri.toString() !== activeEditor.document.uri.toString());
-    exports.recentTabs2.unshift({ uri: activeEditor.document.uri, name: activeEditor.document.uri.path.replace(folderUri.path + "/", "") });
+    //remove one entry from array.  
+    const currentUri = activeEditor.document.uri.toString();
+    const index = base_1.recentTabs2.findIndex(item => item.uri === currentUri);
+    if (index !== -1) {
+        base_1.recentTabs2.splice(index, 1);
+    }
+    //	recentTabs2 = recentTabs2.filter(tab => tab.uri !== currentUri);
+    base_1.recentTabs2.unshift({ uri: currentUri, name: topic });
 }
 function triggerGetBookContext(throttle = false) {
     if (throttle) {

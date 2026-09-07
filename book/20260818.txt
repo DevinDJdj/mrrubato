@@ -643,3 +643,94 @@ Need to highlight all from time period..
 Get all "Ask, Comment, Feedback"
 And highlight those locations.  
 As we scroll, update the overlay..
+
+**languages/_meta.py
+--select_topic
+[48, 51, 55] [50]
+test..
+
+still books directory problematic..
+Need books to be external I think.  
+Just open in editor when it is selected, I think we already do this.. 
+
+But can we have our own additions within git struct for easier access?  
+Then we read both books locations.  
+
+Need function to select sub_book from current book location..
+[48, 52, 55] $$0=[56,56] list folders, allow for multiple selections..
+[48, 52, 55] $$0=[54,54] goes back up..
+
+Same with topic..
+[48,52,55] $$0=[56,56]
+[48,52,55] $$0=[54,54]
+
+Double tap standard to hold hidden meaning, so we can have variety of selections possible.. 
+except no double-tap function for _META.  
+This is only for single
+
+
+**extensions/trey/playwrighty.py
+--get_video_transcript
+How do we get the VTT from youtube video?  
+        page.wait_for_selector("ytd-engagement-panel-section-list-renderer", timeout=10000)
+
+> pip install youtube-transcript-api
+
+See if we can use this..
+
+#https://github.com/isaacbernat/netflix-to-srt
+Need this but in playwrighty..
+General function for this..
+Want vtt from any playing video..
+
+**extensions/trey/trey.py
+--show_tmap
+prioritize longer text for display..
+
+shortform
+Need better control here what is displayed..
+
+
+**languages/hotkeys.py
+**languages/_meta.py
+--selector
+Make general selection mechanism for lists..
+Same function..
+
+allow to search beyond initial listing..
+double-tap [61] jump forward.., [59] jump back..
+double-tap [49] jump beginning.., [71] jump end..
+
+
+Test double-tap..
+Replace all selectors..
+
+
+use same selection mechanism for tick/tock..
+;> Tick_/Tock_
+update selection panels..
+
+Sometimes held works and sometimes not..
+Why..
+
+**extensions/vscode/codetutor/src/base.ts
+@@Why does import from ../extension cause dynamic module load failure?  
+--tab_
+change to in function dynamic load
+
+Still quickkey not working..
+check..
+
+Be conscientious of word structure when considering heldword functionality.  
+
+How do we catch reload of project..
+
+**extensions/vscode/codetutor/src/toolParticipant.ts
+--startWatchingWorkspace
+--activateWorkspaceWatching
+load process needed..
+load default book structure..
+load books as is?  
+Need resort of all topicarray struct..
+This is time consuming perhaps.
+

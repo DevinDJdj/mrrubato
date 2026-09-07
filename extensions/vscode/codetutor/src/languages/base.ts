@@ -1,5 +1,8 @@
 import * as vscode from 'vscode';
-import {recentTabs2} from '../extension';
+//import {recentTabs2} from '../extension';
+
+export let recentTabs2: any[];
+
 export default class LANG {
 
     
@@ -12,7 +15,7 @@ export default class LANG {
     name: string = "base";
     vars: Record<string, any> = {};
     
-
+    recentTabs: any;
     //base specific variables for generic keypresses, selection, and navigation
     //ALLCAPS = vscode handler..
     highlight: boolean = false; //whether to highlight text or not
@@ -27,6 +30,8 @@ export default class LANG {
         console.log("base language init");
         this.config = config || {};
         this.load();
+        //recentTabs2 is imported from the extension
+
     }
 
     load(): void {
@@ -104,8 +109,10 @@ export default class LANG {
     }
 
 
-    tab_(sequence: number[], words: string[]) {
-
+    async tab_(sequence: number[], words: string[]) {
+//        await import('../extension.ts').then(({ recentTabs2 }) => {
+//        });
+        /*
         if (sequence.length === 0){
             const visibleEditors: readonly vscode.TextEditor[] = vscode.window.visibleTextEditors;
             const folderUri = vscode.workspace.workspaceFolders[0].uri;
@@ -156,9 +163,11 @@ export default class LANG {
 
 
         }
+            */
     }
 
-    tab(sequence: number[], words: string[]) {
+    async tab(sequence: number[], words: string[]) {
+        /*
         if (this.vars['tabs']['useRecentTabs']){
             let tempIndex = Math.abs(this.vars['tabs']['selectedTab']); //allow bidirectional for now.. only able to select up to 12..
             if (tempIndex >= 0 && tempIndex < recentTabs2.length){
@@ -178,6 +187,7 @@ export default class LANG {
                 vscode.window.showTextDocument(this.vars['tabs']['tabs'][tempIndex]['uri']);
             }
         }
+            */
     }    
 
     genbook(cls: LANG, sequence: number[], words: string[]): number {

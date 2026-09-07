@@ -20,6 +20,63 @@ _CREATE = 58
 _LANG = 59
 
 
+
+class selector:
+  def __init__(self, array, currentindex):
+    self.array = array
+    self.currentindex = currentindex
+    self.browseindex = 0
+    self.selected = 0
+    self.lastkey = 0
+
+  def preselect(self, selected):
+    if (self.lastkey == selected):
+      self.selected += selected #allow to move up down selection array..
+      if (self.selected + self.currentindex < 0):
+        self.selected = -self.currentindex
+      elif (self.selected + self.currentindex >= len(self.array)):
+        self.selected = len(self.array) - 1 - self.currentindex
+      #return immediately here..
+      return self.array[self.currentindex + self.selected]
+    self.lastkey = selected
+
+    if (selected + self.selected + self.currentindex < 0):
+      selected = -(self.currentindex+self.selected)
+    elif (selected + self.selected + self.currentindex >= len(self.array)):
+      selected = len(self.array) - 1 - (self.currentindex + self.selected)
+    return self.array[self.currentindex + self.selected+selected]
+
+  def select(self, selected=None):
+    if (selected is not None):
+      ret = self.preselect(selected) #should be second call 
+    else:
+      logger.info(f'{self.currentindex + self.selected} in {self.array}')
+      ret = self.array[self.currentindex + self.selected]
+    self.currentindex += self.selected
+    self.selected = 0
+    return ret
+
+  def get_visible(self):
+    last15 = self.array[max(0, self.currentindex+self.selected-11):min(self.currentindex+self.selected+13, len(self.array))]
+    last15.reverse()
+    return last15
+
+  def get_vars(self, vars):
+    start = 0
+    if len(self.array) < 12:
+      start = 12 - len(self.array) + self.currentindex + 1
+      vars['idx'] = self.currentindex
+      vars[':'] = self.currentindex
+    else:
+      vars['idx'] = self.currentindex
+    for i, l in enumerate(self.get_visible()):
+      n = i + start
+      vars[f'{n}'] = l['**']
+#          vars[f'href{i}'] = l['href']
+
+
+
+
 class _meta:
   #define action for some sequences.  
   def __init__(self, config, qapp=None, startx=0):
@@ -42,7 +99,7 @@ class _meta:
     self.audio_transcript = ""
     self.funcdict = {}
     self.suggestions = []
-    self.alltopics = {}
+    self.alltopics = {}    
     self.topicarray = []
     self.booktopicarray = [] #for only selected book..
     self.filteredtopicarray = []
@@ -53,11 +110,13 @@ class _meta:
     self.filteredbookarray = []
     self.bookhistory = []
     self.allbooks = {}
+
     self.selectedbook = None
     self.selectedbookindex = None
     self.selectedfilteredbookindex = None
     self.selectedtopic = None
     self.selectedtopicindex = None
+    self.selectedbooktopicindex = None
     self.selectedfilteredtopicindex = None
     self.speed = 1.0
     self.zoom = 1.0
@@ -88,6 +147,14 @@ class _meta:
   def unload(self):
     #unload language specific data
     return 0
+
+  def init_selectors(self):
+    self.topicselector = selector(self.topicarray, 0)
+    self.bookselector = selector(self.bookarray, 0)
+    self.booktopicselector = selector(self.booktopicarray, 0)
+    self.filteredbookselector = selector(self.filteredbookarray, 0)
+    self.filteredtopicselector = selector(self.filteredtopicarray, 0)    
+    return 0
   
   def load(self, transcriber=None, qr_queue = None):
 
@@ -100,6 +167,7 @@ class _meta:
 #      self.transcriber.timewindow = self.timewindow #set transcriber's timewindow to this language's timewindow for consistency across tools.
     if hasattr(self, 'load_data'):
       self.load_data()
+      self.init_selectors()
     else:
       logger.info(f"!! <{self.__class__.__name__}> No Data")
       print(f"!! <{self.__class__.__name__}> No Data")
@@ -174,7 +242,7 @@ class _meta:
 
               self.booktopicarray.insert(0, c) #time reverse order
           self.booktopicarray.sort(key=lambda x: abs(self.timewindow.currenttime - x['timestamp'])) #sort by recency to current time, most recent first.  
-
+          self.booktopicselector = selector(self.booktopicarray, 0)
   def load_data(self):
 
     #load language specific data into the config.  
@@ -515,7 +583,16 @@ class _meta:
 
     return 0
 
+  def adjust_booktopic_index(self, idx):
+    if idx+self.selectedbooktopicindex < 0:
+      return 0
+    elif (idx+self.selectedbooktopicindex) >= len(self.booktopicarray):
+      return len(self.booktopicarray)-1
+    else:
+      return self.selectedbooktopicindex + idx
+    
   def adjust_topic_index(self, idx):
+
     if idx+self.selectedtopicindex < 0:
       return 0
     elif (idx+self.selectedtopicindex) >= len(self.topicarray):
@@ -643,26 +720,31 @@ class _meta:
     if (len(sequence) > 0):
       if (sequence[-1] == self.keybot): #dont adjust if keybot, 
         return 1
-      if (sequence[0] == _BOOK): #not sure this selection sequence is great..
+      newidx = self.adjust_topic_index(self.mid-sequence[-1])
+    if (len(sequence) > 1):
+      if (sequence[0] == _BOOK and sequence[1] == _BOOK): #not sure this selection sequence is great.. maybe somewhat cleaner
         _booktopic = True        
-      if (sequence[0] == _BOOK and len(sequence)==1):
-        _booktopic = True #dont adjust newidx
-      else:
-        newidx = self.adjust_topic_index(self.mid-sequence[-1])
+        newidx = self.adjust_booktopic_index(self.mid-sequence[-1])
 
     logger.info(f"--{self.topicarray[newidx]['**']}")
     self.func = "Select Topic_"
 
     vars = {}
     #should make this more general.. send last ten links
-    if (_booktopic and len(self.booktopicarray) > 0): #use booktopicarray topics around this topic in last N times..
-      last15 = self.booktopicarray
+    temptopic = self.booktopicarray[self.selectedbooktopicindex]['**'] if self.selectedbooktopicindex is not None else None
+    if (_booktopic): #use booktopicarray topics around this topic in last N times..
+      if (len(self.booktopicarray) > 0):
+        last15 = self.booktopicarray[max(0, self.selectedbooktopicindex-11):min(self.selectedbooktopicindex+13, len(self.booktopicarray))]
+        temptopic = self.booktopicarray[newidx]['**']
+      else:
+        last15 = [temptopic]
     else: #default, use time and topic array to get last 15 topics around this topic.
       last15 = self.topicarray[max(0, self.selectedtopicindex-11):min(self.selectedtopicindex+13, len(self.topicarray))]
       last15.reverse() #reverse to match with Future:Past order in display.. [48 - 68]
-      vars['topic'] = self.topicarray[newidx]['**']
+      temptopic = self.topicarray[newidx]['**']
     #does this match up with keys?  
-    cmds, ctxt = self.get_context(self.topicarray[newidx]['**'], -1, 5) #get context for topic
+    vars['topic'] = temptopic
+    cmds, ctxt = self.get_context(temptopic, -1, 5) #get context for topic
     vars['context'] = ctxt.replace('\n', '<br>')
 
     start = 0
@@ -686,13 +768,21 @@ class _meta:
     selected = 0
     if (len(sequence) > 0):
       selected = self.mid - sequence[-1]
+      if (len(sequence) > 1):
+        if (sequence[0] == _BOOK and sequence[1] == _BOOK):
+          self.selectedbooktopicindex = self.adjust_booktopic_index(selected)
+          self.selectedtopic = self.booktopicarray[self.selectedbooktopicindex] if self.selectedbooktopicindex < len(self.booktopicarray) else None
+        else:
+          self.selectedtopicindex = self.adjust_topic_index(selected)
+          self.selectedtopic = self.topicarray[self.selectedtopicindex] if self.selectedtopicindex < len(self.topicarray) else None
+      else:
+        self.selectedtopicindex = self.adjust_topic_index(selected)
+        self.selectedtopic = self.topicarray[self.selectedtopicindex] if self.selectedtopicindex < len(self.topicarray) else None
 
-    self.selectedtopicindex = self.adjust_topic_index(selected)
-    self.selectedtopic = self.topicarray[self.selectedtopicindex] if self.selectedtopicindex < len(self.topicarray) else None
-    if (len(self.topichistory) < 1 or self.selectedtopic['**'] != self.topichistory[-1]['**'] or self.selectedtopic['..'] != self.topichistory[-1]['..']):
+    if (self.selectedtopic and (len(self.topichistory) < 1 or self.selectedtopic['**'] != self.topichistory[-1]['**'] or self.selectedtopic['..'] != self.topichistory[-1]['..'])):
       self.topichistory.insert(0, self.selectedtopic)
 
-    cmds, ctxt = self.get_context(self.topicarray[self.selectedtopicindex]['**'], -1, 5) #get context for topic
+    cmds, ctxt = self.get_context(self.selectedtopic['**'], -1, 5) #get context for topic
     supp_cmds,supp_ctxt = self.get_supp_context(cmds)
     topics = []
     topics.append(self.selectedtopic['**'])
@@ -738,9 +828,11 @@ class _meta:
       #sort topics by relevance to filtertopic.. this is just a demo of filtering, we can do more complex filtering based on topics, time, etc.
       self.filteredtopicarray = self.transcriber.relevant_topic_array(self.name, self.filtertopic, self.timewindow.currenttime) #get list of topics for selection.
       logger.info(f"Filtered topic array: {self.filteredtopicarray}")
+
       #sort by recency
       self.filteredtopicarray.sort(key=lambda x: abs(self.timewindow.currenttime - x['timestamp'])) #sort by recency to current time, most recent first.
-    
+      self.filteredtopicselector = selector(self.filteredtopicarray, 0)
+
     if (len(sequence) > 2):
       newidx = self.selectedfilteredtopicindex
       if (sequence[-1] == self.keybot): #dont adjust if keybot, 
@@ -831,23 +923,33 @@ class _meta:
     print("> Select Book_")
 
     newidx = self.selectedbookindex
+
+    mybook = self.bookselector.select() #get current..
     if (len(sequence) > 0):
       if (sequence[-1] == self.keybot): #dont adjust if keybot, 
         return 1
       newidx = self.adjust_book_index(self.mid-sequence[-1])
+      mybook = self.bookselector.preselect(self.mid-sequence[-1])
     logger.info(f"{newidx}")
     logger.info(f"--{self.bookarray[newidx]['**']}")
+    logger.info(f"--{mybook['**']}")
     self.func = "Select Book_"
     #should make this more general.. send last ten links
 
-    last15 = self.bookarray[max(0, self.selectedbookindex-11):min(self.selectedbookindex+13, len(self.bookarray))]
+
+#    last15 = self.bookarray[max(0, self.selectedbookindex-11):min(self.selectedbookindex+13, len(self.bookarray))]
+    last15 = self.bookselector.get_visible()
     last15.reverse() #reverse to match with Future:Past order in display.. [48 - 68]
     #does this match up with keys?  
     vars = {}
-    vars['book'] = self.bookarray[newidx]['**']
-    ctxt = self.get_book_context(self.bookarray[newidx]['**'], 5) #get context for book
+#    vars['book'] = self.bookarray[newidx]['**']
+    vars['book'] = mybook['**']
+#    ctxt = self.get_book_context(self.bookarray[newidx]['**'], 5) #get context for book
+    ctxt = self.get_book_context(mybook['**'], 5) #get context for book
     vars['context'] = ctxt.replace('\n', '<br>')
 
+    self.bookselector.get_vars(vars)
+    """
     start = 0
     if len(self.bookarray) < 12:
       start = 12 - len(self.bookarray) + self.selectedbookindex + 1
@@ -859,6 +961,8 @@ class _meta:
       n = i + start
       vars[f'{n}'] = l['**']
 #          vars[f'href{i}'] = l['href']
+    """
+
     self.set_qr(self.func, vars)
 
 #    self.speak(f'{vars["topic"]}')
@@ -871,18 +975,26 @@ class _meta:
     selected = 0
     if (len(sequence) > 0):
       selected = self.mid - sequence[-1]
-    self.selectedbookindex = self.adjust_book_index(selected)
+    self.selectedbookindex = self.adjust_book_index(selected)    
     logger.info(f"Selected Book: {self.selectedbookindex}")
-    self.selectedbook = self.bookarray[self.selectedbookindex] if self.selectedbookindex < len(self.bookarray) else None
+#    self.selectedbook = self.bookarray[self.selectedbookindex] if self.selectedbookindex < len(self.bookarray) else None
+    self.selectedbook = self.bookselector.select(selected)
     #set transcriber selected book for further writing..
     self.transcriber.current_book = self.selectedbook['**'] if self.selectedbook is not None else self.transcriber.current_book
     if (len(self.bookhistory) < 1 or self.selectedbook != self.bookhistory[-1]):
       self.bookhistory.insert(0, self.selectedbook)
 
-    ctxt = self.get_book_context(self.bookarray[self.selectedbookindex]['**'], 5) #get context for book
+#    ctxt = self.get_book_context(self.bookarray[self.selectedbookindex]['**'], 5) #get context for book
+    ctxt = self.get_book_context(self.selectedbook['**'], 5) if self.selectedbook is not None else "" #get context for book
+  
     self.load_booktopicarray() #load topics for this book to include in our context.. Not sure we want this or not..
 
     logger.info(f"> Select Book {sequence}")
+
+    if (len(self.booktopicarray) > 0):
+      self.selectedbooktopicindex = 0      
+      self.selectedbooktopic = self.booktopicarray[self.selectedbooktopicindex] #default to first topic.
+
     #get bookmark at index selected
     self.func = "Select Book"
     self.set_qr(self.func, {'context': ctxt.replace('\n', '<br>'), 'book': self.selectedbook['**']})
@@ -919,6 +1031,7 @@ class _meta:
         logger.info(f"Filtered book array: {self.filteredbookarray}")
         #sort by recency
         self.filteredbookarray.sort(key=lambda x: abs(self.timewindow.currenttime - x['..']), reverse=True) #sort by recency to current time, most recent first.
+        self.filteredbookselector = selector(self.filteredbookarray, 0)
     
     if (len(sequence) > 2):
       #get audio input for query.  

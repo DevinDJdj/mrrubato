@@ -33,6 +33,8 @@ from collections import Counter
 
 logger = logging.getLogger(__name__)
 
+
+  
 class hotkeys:
   #define action for some sequences.  
   def __init__(self, config, qapp=None, startx=0):
@@ -1697,7 +1699,7 @@ class hotkeys:
               relations=relation_labels,
               threshold=0.3,
               adjacency_threshold=0.4,
-              relation_threshold=0.6, #too few relations at the moment..
+              relation_threshold=0.5, #too few relations at the moment..
               return_relations=True,
               flat_ner=False
           )
@@ -1752,7 +1754,7 @@ class hotkeys:
               relations=relation_labels,
               threshold=0.3,
               adjacency_threshold=0.4,
-              relation_threshold=0.6, #too few relations at the moment..
+              relation_threshold=0.5, #too few relations at the moment..
               return_relations=True,
               flat_ner=False
           )

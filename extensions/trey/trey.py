@@ -1104,7 +1104,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
 #            logger.info(f'Total read: {ttotal}')
 #            if (linksspoken == 0):
             #balancing this may be tricky.. Depends on speed of function calls.  
-            time.sleep(0.65-0.25*linksspoken) #simulate reading time. 12 chars per second..
+            time.sleep(0.7-0.25*linksspoken) #simulate reading time. 12 chars per second..
             if (ttotal > total_read+len(l)+1):
                 i = len(l)+1 #break out of loop if we have read past the line, to avoid long waits on long lines.
                 continue
@@ -3459,10 +3459,11 @@ class MyWindow(QMainWindow):
                                     ctxtkey = mytime #use text as fallback if no URL, can adjust as needed.
 
                                 if (mytime == self.tmap[self.tmapindex]['$$'].get('TIME', None)):
-                                    maintext[j]['&&'] = maintext[j]['&&'] + '\n>>>>\n\n' #indicator for currently playing item, can adjust as needed.
+                                    print(f'Currently playing item: {sorted_tmap[i]} from {mytime}')
+                                    maintext[j]['&&'] = maintext[j]['&&'] + '\n>>>>\n' #indicator for currently playing item, can adjust as needed.
 
                                 if (ctxtdic.get(sorted_tmap[i]['&&'] + '_' + ctxtkey, None) is None):
-                                    newentry = self.transcriber.write(sorted_tmap[i]['<<'], sorted_tmap[i]['&&'], sorted_tmap[i]['$$'], sorted_tmap[i]['**'], False)
+                                    newentry = self.transcriber.write(sorted_tmap[i]['<<'], sorted_tmap[i]['&&'], sorted_tmap[i]['$$'], sorted_tmap[i]['**'], False, shortform=True)
                                     maintext[j]['&&'] = maintext[j]['&&'] + newentry
                                     ctxtdic[sorted_tmap[i]['&&'] + '_' + ctxtkey] = newentry
                                 else:
@@ -3484,7 +3485,13 @@ class MyWindow(QMainWindow):
             print(maintext)
             for i in range(len(maintext)):
 #                if (temptext[0:2] != '**'):
+
                 temptext = f'{maintext[i]["&&"]}' #add topic as header if not already included, can adjust formatting as needed.
+                currentpos = temptext.find('\n>>>>')
+                if (currentpos != -1):
+
+                    temptext = '<b>>>>></b>' + temptext[currentpos:]
+
                 self.label_main[i].setText(temptext.replace('\n', '<br>'))
                 self.label_main[i].update()
 

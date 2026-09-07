@@ -45,6 +45,7 @@ exports.getSelectionInfo = getSelectionInfo;
 exports.writeToTranscriber = writeToTranscriber;
 exports.readFromTranscriber = readFromTranscriber;
 exports.startWatchingTranscriber = startWatchingTranscriber;
+exports.activateWorkspaceWatching = activateWorkspaceWatching;
 exports.activateTabWatching = activateTabWatching;
 exports.registerToolUserChatParticipant = registerToolUserChatParticipant;
 exports.registerPiano = registerPiano;
@@ -348,8 +349,13 @@ function writeToTranscriber(lang, topic = "", data = "", transcriptFolder = "C:/
     let fname = `${transcriptFolder}${lang}/${now}.txt`;
     if (!fs.existsSync(fname)) {
         //create the file if it doesn't exist.  
-        fs.mkdirSync(`${transcriptFolder}${lang}`, { recursive: true });
-        fs.writeFileSync(fname, ""); //dont think we need this..
+        try {
+            fs.mkdirSync(`${transcriptFolder}${lang}`, { recursive: true });
+            fs.writeFileSync(fname, ""); //dont think we need this..
+        }
+        catch (err) {
+            console.error(`Error creating transcriber file ${fname}:`, err);
+        }
     }
     if (topic === "") {
         topic = Book.currenttopic;
@@ -572,6 +578,58 @@ function startWatchingTranscriber(lang, transcriptFolder = "C:/devinpiano/transc
             });
         }
     });
+}
+async function openMyFolder(folderPath) {
+    // 1. Define the URI of the folder you want to add
+    const folderUri = vscode.Uri.file(folderPath);
+    // 2. Determine where to insert the new folder 
+    // (Using workspace.workspaceFolders.length appends it to the end)
+    const targetIndex = vscode.workspace.workspaceFolders
+        ? vscode.workspace.workspaceFolders.length
+        : 0;
+    // 3. Update the workspace folders
+    const success = vscode.workspace.updateWorkspaceFolders(targetIndex, 0, // Set deleteCount to 0 so you don't remove existing folders
+    { uri: folderUri, name: 'My Added Folder' } // 'name' is optional
+    );
+    if (!success) {
+        console.error('Failed to add folder to workspace.');
+    }
+    else {
+        console.log('Folder successfully added to workspace.');
+    }
+    return success;
+}
+function activateWorkspaceWatching(context) {
+    // 1. Detect folders already opened on startup/activation
+    const initialFolders = vscode.workspace.workspaceFolders;
+    if (initialFolders && initialFolders.length > 0) {
+        initialFolders.forEach(folder => {
+            handleFolderOpened(folder, 'onStartup');
+        });
+    }
+    // 2. Listen for folders opened dynamically during the session
+    const workspaceWatcher = vscode.workspace.onDidChangeWorkspaceFolders((event) => {
+        // event.added contains an array of newly opened workspace folders
+        if (event.added.length > 0) {
+            event.added.forEach(folder => {
+                handleFolderOpened(folder, 'dynamically');
+            });
+        }
+        // Optional: track closed folders as well
+        if (event.removed.length > 0) {
+            event.removed.forEach(folder => {
+                console.log(`Folder closed: ${folder.name} (${folder.uri.fsPath})`);
+            });
+        }
+    });
+    // Clean up subscription on deactivation
+    context.subscriptions.push(workspaceWatcher);
+}
+function handleFolderOpened(folder, source) {
+    const folderName = folder.name;
+    const folderPath = folder.uri.fsPath;
+    console.log(`Folder opened ${source}: ${folderName} at ${folderPath}`);
+    // Place your folder-specific logic here (e.g., scanning files, initializing tools)
 }
 function activateTabWatching(context) {
     // Keep an ordered list of recently used tab identifiers or URIs

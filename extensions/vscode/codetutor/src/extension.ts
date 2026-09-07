@@ -26,14 +26,15 @@ import { startWatchingWorkspace, startWatchingTranscriber, writeToTranscriber, u
 	registerCompletionTool, registerToolUserChatParticipant, registerPiano, unregisterPiano, 
 	getSelectionInfo, 
 	readFromTranscriber,
-	activateTabWatching} from './toolParticipant';
+	activateTabWatching,
+	activateWorkspaceWatching} from './toolParticipant';
 import { start } from 'repl';
 import { get } from 'http';
 
 import * as TerminalWorker from './terminalworker';
 import { isNumber } from 'util';
 
-export let recentTabs2 = [];
+import { recentTabs2 } from './languages/base';
 
 const BASE_PROMPT =
   'You are a helpful code tutor. Your job is to teach the user with simple descriptions and sample code of the concept. Respond with a guided overview of the concept in a series of messages. Do not give the user the answer directly, but guide them to find the answer themselves. If the user asks a non-programming question, politely decline to respond.';
@@ -364,6 +365,9 @@ function getTextFromCursor(editor: vscode.TextEditor) {
 			topic = getTopicFromLocation(editor);
 		}
 	}
+	else{
+		topic = getTopicFromLocation(editor);
+	}
 	return [text, topic];
 }
 
@@ -402,7 +406,8 @@ export function activate(context: vscode.ExtensionContext) {
 		startTranscribers();
 	}, 60000); // check every minute if date changes to follow new file..
 	activateTabWatching(context); //start watching tab changes for recency tracking.
-
+	activateWorkspaceWatching(context); //start watching workspace folder changes.
+	
 	//create loop to watch for change of day to restart transcribers..
 	
 
@@ -769,8 +774,10 @@ export function activate(context: vscode.ExtensionContext) {
 					}
 				}
 				[text, topic] = getTextFromCursor(editor);
+				console.log("Current text: " + text + ", Current topic: " + topic);
 				if (topic !== "" && topic !== Book.selectedtopic) {
 					//select the topic.  
+					console.log("Selecting topic: " + topic);
 					Book.select(topic, 0); //select and open topic
 //					Book.logCommand("**" + topic); //log the command to genbook.
 					if (text.startsWith("**") > 0){
@@ -1416,11 +1423,18 @@ function getBookContext() {
 		return vscode.window.showInformationMessage('No active editor found');
 	}
 	console.log("getBookContext: " + activeEditor.document.uri.toString());// + activeEditor.document);
-	const folderUri = vscode.workspace.workspaceFolders[0].uri;
+	const activeWorkspaceFolder = vscode.workspace.getWorkspaceFolder(activeEditor.document.uri);
+	const topic = Book.getTopicFromFilePath(activeEditor.document.uri.path, activeWorkspaceFolder);
 
 	//keep tabs up to date for quick selection..
-	recentTabs2 = recentTabs2.filter(tab => tab.uri.toString() !== activeEditor.document.uri.toString());
-	recentTabs2.unshift({uri: activeEditor.document.uri, name: activeEditor.document.uri.path.replace(folderUri.path + "/", "")});
+	//remove one entry from array.  
+	const currentUri = activeEditor.document.uri.toString();
+	const index = recentTabs2.findIndex(item => item.uri === currentUri);
+	if (index !== -1) {
+		recentTabs2.splice(index, 1);
+	}
+//	recentTabs2 = recentTabs2.filter(tab => tab.uri !== currentUri);
+	recentTabs2.unshift({uri: currentUri, name: topic});
 
 }
 

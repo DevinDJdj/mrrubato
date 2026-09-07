@@ -4,6 +4,7 @@
 #>pip install asyncio
 import asyncio
 import random
+from urllib.parse import parse_qs, urlparse
 
 from languages import video
 from playwright.async_api import async_playwright
@@ -84,11 +85,10 @@ def get_url(cacheno=-1):
     global current_cache
     if (cacheno < 0 or cacheno >= len(page_cache)):
         cacheno = current_cache
-    if cacheno < len(page_cache):
-        page_info = page_cache[cacheno]       
-        return page_info['url']
+    if cacheno < len(page_cache) and 'page' in page_cache[cacheno]:
+        return page_cache[cacheno]['page'].url
     else:
-        logging.warning(f'Cache number {cacheno} out of range')
+        logging.warning(f'Cache number {cacheno} out of range or not initialized')
         return ""
     
 def get_text(cacheno=-1, total_read=0, duration=5):
@@ -785,6 +785,31 @@ def pause_video(cacheno=-1, transcriber=None):
     return 0
 
 
+def get_video_transcript(cacheno=-1):
+    global current_cache
+    if (cacheno < 0 or cacheno >= len(page_cache)):
+        cacheno = current_cache
+    if (cacheno < 0 or cacheno >= len(page_cache)):
+        return None
+    page = page_cache[cacheno]['page']
+    url = page.url
+    #do we have a video ID?  
+    parsed_url = urlparse(url)
+
+    video_id = parse_qs(parsed_url.query).get("v", [None])[0]    
+    from youtube_transcript_api import YouTubeTranscriptApi    
+    if "youtube.com" in url and video_id is not None:
+        try:
+            transcript = YouTubeTranscriptApi.get_transcript(video_id)
+            return transcript
+        except Exception as e:
+            logger.error(f"Error fetching transcript for video {video_id}: {e}")
+    elif "netflix.com" in url:
+        # Implement Netflix transcript fetching logic here if available
+        pass
+    return ""
+    #more complex with multiple video controls..
+
 def skip_ad(cacheno=-1):
     global current_cache
     total_read = 0
@@ -1227,6 +1252,9 @@ def read_page(url, cacheno=-1):
     page.on("console", console_handler(cacheno))
 
     page.on("framenavigated", frame_navigated_handler(cacheno))
+
+    trans = get_video_transcript(cacheno)
+    page_cache[cacheno]['video_transcript'] = trans
 
     return body_text, link_data, page, cacheno
 
