@@ -1,0 +1,16 @@
+
+**langauges/_meta.py
+>$1 dir
+
+**langauges/_meta.py
+>$1 dir
+>#2 cd C:/devinpiano/music
+>#2 ./treyenv/Scripts/activate.ps1
+>#2 cd C:/devinpiano/music/mrrubato
+
+>#1 cd C:/devinpiano/music
+>#1 ./treyenv/Scripts/activate.ps1
+>#1 cd C:/devinpiano/music/mrrubato
+
+>#1 python ./extensions/trey/trey.py
+

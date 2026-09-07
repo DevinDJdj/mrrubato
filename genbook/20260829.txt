@@ -13,3 +13,15 @@
 >#2 python ./record.py --description "Op 118 No 2 (Brahms)"
 >#2 python ./record.py --description "Op 118 No 2 (Brahms)"
 >#2 python ./record.py --description "Op 118 No 2 (Brahms)"
+>#2 python ./record.py --description  "Let It Go (Kristen Anderson Lopez)"
+>#2 python ./record.py --description "K 310 (Mozart)"
+>#2 python ./record.py --description "K 310 (Mozart)"
+>#2 python ./record.py --description "K 310 (Mozart)"
+>#2 python ./record.py --description "K 310 (Mozart)"
+>#2 python ./record.py --description "K 310 (Mozart)"
+>#2 python ./record.py --description "Just Around The Riverbend (Alan Menken)"
+>#2 python ./record.py --description "Just Around The Riverbend (Alan Menken)"
+> sudo systemctl restart ollama
+>$ sudo systemctl restart ollama
+>$ dir
+>$1 dir

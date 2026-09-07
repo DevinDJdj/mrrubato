@@ -1225,10 +1225,10 @@ def printMidiGif(t, midilink):
 
 def addStatistics(statlink, data, rythmdata, alliterations):
     global gstarttimes, gendtimes
-    logger.info(f"Adding statistics: {len(data)} data points, {len(rythmdata)} rhythm data points, {len(alliterations)} alliterations")
+    logger.info(f"Adding statistics: {len(alliterations)} iterations")
     stats = [{} for _ in range(len(starttimes))]
     for i, item in enumerate(starttimes):
-        npi = len(alliterations[i])/endtimes[i] - item
+        npi = len(alliterations[i])/(getSecsFromTime(endtimes[i]) - getSecsFromTime(item))
         stat_item = { "(": item, ")": endtimes[i], ":": i, "&&": alliterations[i], "npi": npi}
         stats[i] = stat_item
 
@@ -1293,10 +1293,10 @@ def printMidi(midilink, title, GroupName, videoid, force=False):
 
 
     data, rythmdata, alliterations = getNgrams(t)
-    statlink = midiname + '.stat'
-    addStatistics(path + statlink, data, rythmdata, alliterations)
     if (data is None):
         return
+    statlink = midiname + '.stat'
+    addStatistics(path + statlink, data, rythmdata, alliterations)
 
     lcsmatrix = getLCSMatrix(alliterations)
 
@@ -1476,13 +1476,13 @@ def updatestatsdb(videoid, starttimes, endtimes, midisize, numwords, statlink=""
     #if this exists, return
     if ref.get() is not None:
         return
-
+    statsdata = {}
     if (statlink !=""):
         with open(statlink, "r") as f:
-            statdata = json.load(f)
+            statsdata = json.load(f)
     #really this can all be set at play record.py as well, but this is essentially the same as we run this during record.py
     #need to test this works.  Seems to work ok.  
-    data = {'timeplaying':timeplaying,'timewithoutplaying':timewithoutplaying, 'midisize':midisize, 'wordsrecognized':numwords, 'stats':statdata}
+    data = {'timeplaying':timeplaying,'timewithoutplaying':timewithoutplaying, 'midisize':midisize, 'wordsrecognized':numwords, 'stats':statsdata}
     ref.set(data)
 
 def getqrcode(prev):
