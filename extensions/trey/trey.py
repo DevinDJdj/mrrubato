@@ -744,7 +744,8 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
     #give high priority?  
     p = psutil.Process(os.getpid())
     p.nice(psutil.HIGH_PRIORITY_CLASS)
-
+    play_speed = config.cfg['trey']['player']['speed'] if 'player' in config.cfg['trey'] and 'speed' in config.cfg['trey']['player'] else 1.0
+    play_volume = config.cfg['trey']['player']['volume'] if 'player' in config.cfg['trey'] and 'volume' in config.cfg['trey']['player'] else 1.0
     skipmenu = True
     currentsound = None
     sound_file = f"{random.randint(0, 100)}.mp3"
@@ -841,7 +842,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
 #    remove_temp_audio("./temp/" + str(cacheno)) #clear old cache if exists.
     if (cacheno < 0):
         remove_temp_audio(f"./temp/{cacheno}") #clear old cache if exists.
-    generate_tts(text, VOICE, vol=1.0, rate=1.0,skip=skip, cacheno=cacheno) #pre-generate
+    generate_tts(text, VOICE, vol=play_volume, rate=play_speed, skip=skip, cacheno=cacheno) #pre-generate
 
     print('Finished generating TTS for all lines, starting playback')
     idx = -1
@@ -1000,8 +1001,8 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
     #            await communicate.save(sound_file)
                 #play the line type info first
                 play_l(link_density_map[idx], idx/len(lines))
-                vol = 0.7
-                rate = 1.2
+                vol = 0.7*play_volume
+                rate = 1.2*play_speed
                 if (idx < 2): #adjust for informational lines..
                     vol = 1.0
                     rate = 1.0
@@ -1060,7 +1061,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
                 if (links[link_loc]['offset'] != -1):
                     try:
                         sound_file = f"./temp/link{link_loc}.mp3"
-                        tts.speak(speech.substitute_tts(links[link_loc]['text']), LINKVOICE, sound_file, 0.6, 200) #quieter slower for links
+                        tts.speak(speech.substitute_tts(links[link_loc]['text']), LINKVOICE, sound_file, 0.6*play_volume, 200*play_speed) #quieter slower for links
     #                    winsound.Beep(500, 200) #short beep to indicate link
                         synth.play_synth([53,65,77])
 
@@ -1104,7 +1105,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
 #            logger.info(f'Total read: {ttotal}')
 #            if (linksspoken == 0):
             #balancing this may be tricky.. Depends on speed of function calls.  
-            time.sleep(0.7-0.25*linksspoken) #simulate reading time. 12 chars per second..
+            time.sleep((0.7/play_speed)-0.25*linksspoken) #simulate reading time. 12 chars per second..
             if (ttotal > total_read+len(l)+1):
                 i = len(l)+1 #break out of loop if we have read past the line, to avoid long waits on long lines.
                 continue
@@ -2757,9 +2758,9 @@ class MyWindow(QMainWindow):
         self.showQR("Starting Trey Overlay")
         #hide after a few seconds
         #workaround, something wrong with the PyQt if we hide this immediately
-        t2 = threading.Timer(15, _get_window_info)
+        t2 = threading.Timer(20, _get_window_info)
         t2.start()  # Start the timer in a new thread
-        t = threading.Timer(10, _hide, args=["Hello from Timer!"])
+        t = threading.Timer(15, _hide, args=["Hello from Timer!"])
         t.start()  # Start the timer in a new thread
         logger.info('Window created')
         self.read(self.langs, None, None) #initial read of all data, can be filtered by time later.
@@ -3943,19 +3944,19 @@ def resume_reader(cacheno=-1):
     for audio_stop_event in audio_stop_events:
         audio_stop_event.clear() #make sure stop event is cleared as well.
 
-def skip_lines(n, cacheno=-1):
+def skip_lines(n, cacheno=-1, multiplier=3):
     #called from hotkeys to skip n lines of audio.
     #eventually match up audio_skip_events with playwrighty cache numbers so we can skip in specific readers if needed.
     global audio_skip_events
-    print(f'Skipping {n*3} lines of audio')
+    print(f'Skipping {n*multiplier} lines of audio')
     if (cacheno >=0 and cacheno < len(audio_skip_events)):
         print(f'Skipping lines in audio thread {cacheno}')
-        audio_skip_queue[cacheno].put(int(n*3))
+        audio_skip_queue[cacheno].put(int(n*multiplier))
         audio_skip_events[cacheno].set()
         return
     for i, audio_skip_event in enumerate(audio_skip_events):
         print(f'Skipping lines in audio thread {i}')
-        audio_skip_queue[i].put(int(n*3))
+        audio_skip_queue[i].put(int(n*multiplier))
         audio_skip_events[i].set()
 
 def select_type(n):

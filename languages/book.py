@@ -275,8 +275,13 @@ class book:
 
   def load_book_links(self, book, current_time=None):
     #st should be unique for all practical purposes..
-    st = datetime.fromtimestamp(current_time-self.transcriber.timewindow.window) if current_time is not None else None
-    et = datetime.fromtimestamp(current_time+min(self.transcriber.timewindow.window, 86400)) if current_time is not None else None
+    #not sure how to manage time selection..
+    if (current_time is None):
+      st = self.transcriber.getTime(-365)
+      et = self.transcriber.getTime()
+    else:
+      st = datetime.fromtimestamp(current_time-self.transcriber.timewindow.window) if current_time is not None else None
+      et = datetime.fromtimestamp(current_time+min(self.transcriber.timewindow.window, 86400)) if current_time is not None else None
     logger.info(f'Loading book links for {book} at time ({st} - {et})')
     if (book is not None and book in self.transcriber.allcmds and book not in self.book_links):
       mybook = self.transcriber.filter_books_recursive(book, start_time=st, end_time=et) #get all book commands for this book, filter by time if provided.
@@ -284,7 +289,10 @@ class book:
       myarray = self.transcriber.relevant_book_array(mybook) #get list of books for selection.
       logger.info(f'{myarray}')
       ext_links = self.transcriber.get_all_of_type('#', myarray=myarray) #get all links for this book, filter by time if provided.
+      ext_links = [l for l in ext_links if not l['&&'][0] == ':'] #filter repeat links..
       ext_links.sort(key=lambda x: x['..'], reverse=True) #sort so 0 index is now..
+      #dont get continuation links.  
+
       logger.info(f'{ext_links}')
       self.book_links[book] = {'#': ext_links, ':': 0, '..': st } #store current time for this book so we can reload if time changes.
       ext_links = self.book_links[book]
@@ -295,14 +303,16 @@ class book:
       myarray = self.transcriber.relevant_book_array(mybook) #get list of books for selection.
       logger.info(f'{myarray}')
       ext_links = self.transcriber.get_all_of_type('#', myarray=myarray)
+      ext_links = [l for l in ext_links if not l['&&'][0] == ':'] #filter repeat links..
       ext_links.sort(key=lambda x: x['..'], reverse=True) #sort so 0 index is now..
       logger.info(f'{ext_links}')
       self.book_links[book] = {'#': ext_links, ':': 0, '..': st } #store current time for this book so we can reload if time changes.
       ext_links = self.book_links[book]
     elif (book in self.book_links):
       ext_links = self.book_links[book]
+      logger.info(f'{ext_links}')
     else:
-      ext_links = {'#': [], ':': 0}
+      ext_links = {'#': [], ':': 0, '..': st}
     logger.info(f'-- {len(ext_links["#"])} links from {book} at time {st}')
     return ext_links
   
@@ -361,7 +371,7 @@ class book:
       if (sequence[0] == _META): #not sure this selection sequence is great..
         _booktopic = True        
       if (sequence[0] == _META+12): #use current time window..
-        t = self.transcriber.mytime
+        t = self.transcriber.timewindow.currenttime
       if (sequence[0] == _META and len(sequence)==1):
         _booktopic = True #dont adjust newidx
         linkno = 0
@@ -369,7 +379,7 @@ class book:
         linkno = self.mid - sequence[-1]
       if (len(sequence) > 1 and sequence[1] == _META+12):
         #use current time window..
-        t = self.transcriber.mytime
+        t = self.transcriber.timewindow.currenttime
     else:
       linkno = 0 #default to first link if no parameter provided.  This is not ideal but we need some way to trigger reading a link without audio input for link number for now.  We can add audio input for link number in future.
 
@@ -420,7 +430,7 @@ class book:
       if (sequence[0] == _META): #not sure this selection sequence is great..
         _booktopic = True        
       elif (sequence[0] == _META+12):
-        t = self.transcriber.mytime
+        t = self.transcriber.timewindow.currenttime
       if (sequence[0] == _META and len(sequence)==1):
         _booktopic = True #dont adjust newidx
       else:
@@ -428,7 +438,7 @@ class book:
 
       if (len(sequence) > 1 and sequence[1] == _META+12):
         #use current time window..
-        t = self.transcriber.mytime
+        t = self.transcriber.timewindow.currenttime
     else:
       linkno = 0 #default to first link if no parameter provided.  This is not ideal but we need some way to trigger reading a link without audio input for link number for now.  We can add audio input for link number in future.
     

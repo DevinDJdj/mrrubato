@@ -1258,7 +1258,7 @@ class transcriber:
                         if (len(lines) < 2):
                             continue
 
-                        self.current_topic = f['name'][:-4] #file name without extension
+                        self.current_topic = f['name'][:-4] #file name without extension                        
                         test = self.read_lines(lang, lines, prev_time, mtime)
                         ret.extend(test) 
                         logger.info(f"{f['name']} loaded with {len(test)} commands")

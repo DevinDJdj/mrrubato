@@ -14,6 +14,7 @@ _BOOK = 50
 _GIT = 51
 _ERROR = 52
 _HOTKEYS = 53
+_OK = 54
 _GEN = 56
 _CHECK = 57
 _CREATE = 58
@@ -449,7 +450,19 @@ class _meta:
       logger.error(f"Command {cmd} not found in function maps")
       print(f"Command {cmd} not found in function maps")
     return -1
-  
+
+
+  def get_double_clicks(self, sequence=[]):
+    logger.info(f'> Is Double Click {sequence}')
+    dc = []
+    i = 1
+    while i < len(sequence):
+      if sequence[i] == sequence[i-1]:
+        dc.append(sequence[i])
+        i += 1
+      i += 1
+    return dc
+
   def get_cache(self, sequence=[]):
     """Get QR from cache."""
     logger.info(f'> Get Cache {sequence}')
@@ -498,10 +511,17 @@ class _meta:
       if adjust > 5:
         adjust = 5
       lang = "_meta"
-      if (sequence[0] == _VIDEO): #allow for this usage..
+      dc = self.get_double_clicks(sequence)
+
+      if (_VIDEO in dc): #allow for this usage..
         lang = "video"
-      elif (sequence[0] == _LANG):
+
+      elif (_LANG in dc):
         lang = "_lang"
+      elif (_HOTKEYS in dc):
+        lang = "hotkeys"
+        #adjust reader speed..
+        
       else: #adjust _meta speed
         self.speed *= adjust
         self.speed = round(self.speed)

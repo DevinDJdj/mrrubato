@@ -1,0 +1,4 @@
+#DIOPHANTUS/STUDY_IN_THE_HISTORY_OF_GREEK_ALGEBRA | https://archive.org/stream/diophantusofalex00heatiala/diophantusofalex00heatiala_djvu.txt
+#ARYABHATIYA | https://archive.org/stream/1874HKERNTheAryabhatiyaOfAryabhattaAryabhataIndianMathematicianAstronomerMathematics/1874-HKERN_The_Aryabhatiya_of_Aryabhatta_Aryabhata_Indian_Mathematician_Astronomer_Mathematics.pdf_djvu.txt
+#ALKHWARIZMI/ALJABAR | https://archive.org/stream/aljabar_alkhwarizmi/columbia_aco000196_hi_2_djvu.txt
+#EULER/ELEMENTS_OF_ALGEBRA | https://archive.org/stream/elementsofalgebr00eule/elementsofalgebr00eule_djvu.txt

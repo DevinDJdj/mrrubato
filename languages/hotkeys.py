@@ -5,7 +5,7 @@ import threading
 from turtle import title
 from pynput import *
 from extensions.trey import synth
-from languages._meta import _META, _VIDEO
+from languages._meta import _META, _OK, _VIDEO
 import pytesseract
 from PIL import Image
 from io import BytesIO
@@ -18,6 +18,7 @@ import extensions.trey.playwrighty as playwrighty
 import shutil
 import json
 
+import random
 from extensions.trey.trey import page, pause_reader, skip_lines
 from extensions.trey.trey import skip_lines
 import languages.helpers.transcriber as transcriber
@@ -78,6 +79,8 @@ class hotkeys:
     self.funcdict = {}
     self.suggestions = []
     self.joystate = {}
+
+    self.lasturl = None
 
   def word(self, sequence=[]):
     """Word lookup."""
@@ -917,8 +920,15 @@ class hotkeys:
     try:
 
       vars = {}
+      extra = f'$${self.feedbacknowstr}\n#'
       if (playwrighty.mybrowser is not None):
-        url = playwrighty.page_cache[-1]["url"]
+        total_read = playwrighty.update_page_offset()
+        url = playwrighty.get_url()
+        alias = playwrighty.get_alias(url)
+        if (alias != ""):
+          extra += f'{alias}|'
+        extra += f'{url}:{total_read}\n{self.transcript}'
+        vars['URL'] = url
       vars['DURATION'] = duration
       vars['COMMENT'] = self.transcript
       vars['LAG'] = lag
@@ -928,8 +938,11 @@ class hotkeys:
       self.transcriber.write(self.name, "Comment", vars)  
       logger.info(f'> Comment& {vars}')
       #do we need offset here?  
-      total_read = playwrighty.update_page_offset()
-      self.transcriber.write_topic(self.name, "", f'#{url}\n{self.transcript}:{total_read}', saveTranscript=False, saveBook=True)
+
+      if (self.lasturl == url and random.random() < 0.9):              
+        extra = f'$${self.feedbacknowstr}\n#:{total_read}\n{self.transcript}'
+      self.transcriber.write_topic(self.name, "", extra, saveTranscript=False, saveBook=True)
+      self.lasturl = url
 
     except Exception as e:
       print(f'Error writing comment file: {e}')
@@ -1399,7 +1412,16 @@ class hotkeys:
             self.transcriber.write(self.name, "Record Feedback", vars, save=True)  
             self.set_qr("Record Feedback", vars) #update QR with feedback data for debugging and record keeping.
             #do we want to save to book as well?  for now yes, need reference info..
-            self.transcriber.write_topic(self.name, "", f'$${self.feedbacknowstr}\n#{url}:{total_read+ostart}\n{original[ostart:oend]}', saveTranscript=False, saveBook=True)
+            alias = playwrighty.get_alias(url)
+            extra = f'$${self.feedbacknowstr}\n#'
+            if (alias != ""):
+              extra += f'{alias}|'
+            extra += f'{url}:{total_read+ostart}\n{original[ostart:oend]}'
+
+            if (self.lasturl == url and random.random() < 0.9):              
+              extra = f'$${self.feedbacknowstr}\n#:{total_read+ostart}\n{original[ostart:oend]}'
+            self.transcriber.write_topic(self.name, "", extra, saveTranscript=False, saveBook=True)
+            self.lasturl = url
           except Exception as e:
             print(f'Error writing feedback file: {e}')
         else:
@@ -2217,23 +2239,54 @@ class hotkeys:
       resume_reader() #resume all..
     return 0
 
+  def get_double_clicks(self, sequence=[]):
+    logger.info(f'> Is Double Click {sequence}')
+    dc = []
+    i = 1
+    while i < len(sequence):
+      if sequence[i] == sequence[i-1]:
+        dc.append(sequence[i])
+        i += 1
+      i += 1
+    return dc
+  
   def skip_lines(self, sequence=[]):
     if (len(sequence) < 1):
       sequence = [54] #default to 3 lines
+    
     cacheno = playwrighty.current_cache
     skipno = sequence[-1]
-    if (skipno == _META): #skip start..
-      skipno = -333
-    elif (skipno == _META+12): #skip end
-      skipno = 333
-    elif (skipno == _VIDEO+12): #skip video..
-      playwrighty.skip_ad(cacheno)
+    s = self.get_double_clicks(sequence) #find any existence allows more freedom..
+    #allow for combinations..
+    skipmultiplier = 3
+    if (_VIDEO in s): #skip video.. possibly set location..
+      skipno = skipno-self.mid
+      if (_META in s):
+        skipmultiplier = 12
+      playwrighty.skip_video(cacheno, seconds=skipno, multiplier=skipmultiplier)
+
+      #playwrighty.skip_ad(cacheno) #not working..
       return 0
-    else:
-      skipno = skipno-self.keybot
+    
+    skipno = skipno - self.mid #multiplied by 3.. max half the document..
+    if (_OK in s): #skip to visible scroll location.. start reading from there..
+      #ad-hoc calculation for now..
+      num_lines = len(playwrighty.page_cache[cacheno]['line_offsets'])
+      #find scroll location..
+      last_line = playwrighty.page_cache[cacheno]['last_line'] if 'last_line' in playwrighty.page_cache[cacheno] else 0
+      scroll_position = playwrighty.page_cache[cacheno]['page'].evaluate("() => ({ x: window.scrollX, y: window.scrollY })")
+      scrollbypixels = playwrighty.page_cache[cacheno]['page'].evaluate("document.documentElement.scrollHeight") / len(playwrighty.page_cache[cacheno]['line_offsets'])
+      skipno = int(scroll_position['y'] / scrollbypixels) - last_line
+      skipmultiplier = 1
+      
+    if (_META in s): #check for double clicks here..
+      num_lines = len(playwrighty.page_cache[cacheno]['line_offsets'])
+      if (num_lines > 24):
+        skipmultiplier = num_lines/24 #max half
     logger.info(f'> Skip Lines {sequence}')
+    logger.info(f'Skipping {skipno} lines in cache {cacheno}')
     from extensions.trey.trey import skip_lines
-    skip_lines(skipno, cacheno)
+    skip_lines(skipno, cacheno, multiplier=int(skipmultiplier))
     return 0
 
   def select_type(self, sequence=[]):

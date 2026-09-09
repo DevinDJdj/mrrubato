@@ -734,3 +734,41 @@ load books as is?
 Need resort of all topicarray struct..
 This is time consuming perhaps.
 
+
+**languages/hotkeys.py
+What else should we add to book?  
+;>Record Feedback
+make sure URL is written with alias..
+
+;> Search Web 
+define internal sites -1, -2, etc..
+[50,52,57]
+
+**extensions/trey/playwrighty.py
+--update_page_offset
+**mykeys.py
+--set_audio_location
+
+
+**languages/hotkeys.py
+skip_lines test..
+;> Skip Lines
+[48,48] [%] total
+
+test also 
+[54,54] 
+
+
+--get_double_clicks
+test..
+
+
+**languages/book.py
+--read_link
+test..
+
+
+**config_sample.json
+config.cfg['trey']['player']
+
+

@@ -35,6 +35,7 @@ logger = logging.getLogger(__name__)
 page_cache = [] # this should include history of pages each time.  
 #array of arrays with {query, page, body, links, title, reader_queue, sim_queue, reader_stop_event}
 bookmarks = [] #list of {url, [total_read, total_read]}
+aliases = {} #url to alias map..
 mybrowser = None
 myplaywright = None
 mycontext = None
@@ -227,7 +228,7 @@ def click_link(cacheno, text_offset, link_offset=0, open_new_tab=False):
                     page = page.context.new_page()
                     page.goto(href)
                     #insert at head..
-                    page_cache.insert(0, {'url': page_info['url'], 'page': page, 'body': page_info['body'], 'links': page_info['links'], 'title' : page_info['title'], 'current_locator': None, 'last_total_read': 0})
+                    page_cache.insert(0, {'url': page_info['url'], 'page': page, 'body': page_info['body'], 'links': page_info['links'], 'title' : page_info['title'], 'current_locator': None, 'last_total_read': 0, 'last_line': 0})
 
                 else:
                     if ('reader_stop_event' in page_info and page_info['reader_stop_event'] is not None):
@@ -738,6 +739,26 @@ def toggle_fullscreen(cacheno=-1):
     }""")
 
 
+def skip_video(cacheno=-1, seconds=0, multiplier=1):
+    global current_cache
+    if (cacheno < 0 or cacheno >= len(page_cache)):
+        cacheno = current_cache
+    if (cacheno < 0 or cacheno >= len(page_cache)):
+        return -1
+    page = page_cache[cacheno]['page']
+
+    #more complex with multiple video controls..
+    page.evaluate("""([seconds, multiplier]) => {
+        const video = document.querySelector('video');
+        if (video) {
+            if (multiplier > 10){
+                multiplier = video.duration/10;
+            }
+            video.currentTime += seconds * multiplier;
+        }
+    }""", [seconds, multiplier])
+    return 0
+
 def pause_video(cacheno=-1, transcriber=None):
     global current_cache
     global video_playing
@@ -990,6 +1011,23 @@ def frame_navigated_handler(cacheno):
         print(f"#{page.title()}\nFrame navigated to URL: {frame.url}")
     return handle_frame_navigated
 
+def get_line(cacheno=-1, total_read=0):
+    global current_cache
+    if (cacheno < 0 or cacheno >= len(page_cache)):
+        cacheno = current_cache
+
+
+
+    if (total_read <= page_cache[cacheno]['last_total_read']): #reset to start..
+        page_cache[cacheno]['last_line'] = 0
+    last_line = page_cache[cacheno]['last_line'] if 'last_line' in page_cache[cacheno] else 0
+    for i, line_offset in enumerate(page_cache[cacheno]['line_offsets'][last_line:], start=last_line):
+        if line_offset <= total_read:
+            last_line = i
+        else:
+            break
+    return last_line
+
 def update_page_offset(cacheno=-1):
     if (last_link_clicked_time is not None and time.time() - last_link_clicked_time < 1):
         #if we have clicked a link in the last second, we may be in the process of navigating to a new page, so skip updating the offset for now to avoid conflicts.
@@ -1019,9 +1057,22 @@ def update_page_offset(cacheno=-1):
 
         if ('last_total_read' not in page_cache[cacheno]): #somewhere not initialized?  
             page_cache[cacheno]['last_total_read'] = 0
+            page_cache[cacheno]['last_line'] = 0
         if (page_cache[cacheno]['last_total_read'] == 0 or page_cache[cacheno]['last_total_read'] + 100 < total_read):
+            start_line = page_cache[cacheno]['last_line']
+            page_cache[cacheno]['last_line'] = get_line(cacheno, total_read)
             page_cache[cacheno]['last_total_read'] = total_read
-            #scroll into view
+            line_diff = page_cache[cacheno]['last_line'] - start_line
+            scrollbypixels = 10
+            if (len(page_cache[cacheno]['line_offsets']) > 0):
+                scrollbypixels = page_cache[cacheno]['page'].evaluate("document.documentElement.scrollHeight") / len(page_cache[cacheno]['line_offsets'])
+
+            if isinstance(scrollbypixels, (int, float)) and scrollbypixels > -50 and scrollbypixels < 50: 
+                #assume miscalculation if too high/low..
+                scrollbyamount = int(scrollbypixels*line_diff)
+            else:
+                scrollbyamount = 10*line_diff
+
             try:
                 #this only gets exact matches, probably what we want, so we dont jump around the page too much.
                 #ideally detect the correct link based on location..
@@ -1058,6 +1109,10 @@ def update_page_offset(cacheno=-1):
                 elif (locator.count() > 1):
                     locator.first.scroll_into_view_if_needed()
                     locator.first.evaluate("el => el.style.backgroundColor = 'rgba(0, 0, 0, 0.1)'")
+                else: #assume we have moved some since last 
+                    #cant highlight <pre> component, pretty rough https://archive.org/stream
+                    #pages without any links will be difficult to keep location correct.  Also no highlighting..
+                    page_cache[cacheno]['page'].evaluate(f"window.scrollBy(0, {scrollbyamount})")
             except Exception as e:
                 logging.error(f'Error locating text: {temptext} - {e}')
 
@@ -1066,7 +1121,8 @@ def update_page_offset(cacheno=-1):
         if (linkno >= 0):
             page = page_cache[cacheno]['page']
             links = page_cache[cacheno]['links']
-            if (linkno != page_cache[cacheno].get('current_link', -1) and linkno < len(links) and linkno >= 0):
+            #update scroll location even if we dont have a new link.. every 10?  
+            if ((linkno != page_cache[cacheno].get('current_link', -1) and linkno < len(links) and linkno >= 0)):
                 # or page_cache[cacheno].get('last_total_read', links[linkno]['offset']) <= total_read-100): 
                 page_cache[cacheno]['current_link'] = linkno
                 #jump if we have read too much or have a new link.
@@ -1106,12 +1162,22 @@ def update_page_offset(cacheno=-1):
 
     return total_read
 
+#use for scroll calculations..
+def get_line_offsets(body_text):
+    offsets = []
+    current_offset = 0
+    for line in body_text.splitlines(True):
+        offsets.append(current_offset)
+        current_offset += len(line)
+    return offsets
+
 def cache_page(url, page, body_text, link_data, cacheno=-1):
+    line_offsets = get_line_offsets(body_text)
     if cacheno >= 0 and cacheno < len(page_cache):
-        page_cache[cacheno] = {'timestamp': time.time(), 'url': url, 'page': page, 'current_offset': page_cache[cacheno].get('current_offset', {url: 0}), 'body': body_text, 'links': link_data, 'title' : page.title(), 'reader_queue': page_cache[cacheno].get('reader_queue', None), 'sim_queue': page_cache[cacheno].get('sim_queue', None), 'reader_stop_event': page_cache[cacheno].get('reader_stop_event', None)}            
+        page_cache[cacheno] = {'timestamp': time.time(), 'url': url, 'page': page, 'current_offset': page_cache[cacheno].get('current_offset', {url: 0}), 'body': body_text, 'line_offsets': line_offsets, 'links': link_data, 'title' : page.title(), 'reader_queue': page_cache[cacheno].get('reader_queue', None), 'sim_queue': page_cache[cacheno].get('sim_queue', None), 'reader_stop_event': page_cache[cacheno].get('reader_stop_event', None)}            
     else:
         #set new pages to head.. now = 0
-        page_cache.insert(0, {'timestamp': time.time(), 'url': url, 'page': page, 'current_offset': {url: 0}, 'body': body_text, 'links': link_data, 'title' : page.title(), 'reader_queue': None, 'sim_queue': None, 'reader_stop_event': None})
+        page_cache.insert(0, {'timestamp': time.time(), 'url': url, 'page': page, 'current_offset': {url: 0}, 'body': body_text, 'line_offsets': line_offsets, 'links': link_data, 'title' : page.title(), 'reader_queue': None, 'sim_queue': None, 'reader_stop_event': None})
         cacheno = 0
     return cacheno
 
@@ -1172,7 +1238,13 @@ def activate_tab(cacheno=0):
     else:
         logging.warning(f'!!activate_tab [{cacheno}]\nCache number {cacheno} out of range')
         return False  
-      
+
+def get_alias(url):
+    key = sys.intern(url)
+    return aliases.get(key, "")
+
+
+
 def read_page(url, cacheno=-1):
     global current_cache
     """Search the web for a query using Playwright."""
@@ -1184,7 +1256,16 @@ def read_page(url, cacheno=-1):
 #        cacheno = current_cache
 #check for existing.  
     if (url !=''):
-        url = url.split('|')[-1].strip()
+        #adding some info to get in same line.. not too elegant.
+        urlloc = [x for x in url.split(':')]
+        loc = urlloc[-1] if (len(urlloc) > 1) else 0
+        url = ':'.join(urlloc[:-1]) if (len(urlloc) > 1) else url
+        aliasurl = [x.strip() for x in url.split('|')]
+        alias = aliasurl[0] if len(aliasurl) > 1 else ""
+        url = aliasurl[-1]
+        if (alias != ""):
+            key = sys.intern(url)
+            aliases[key] = alias
         found_item = next((item for item in page_cache if item.get('url') == url), None)
         if found_item is not None and found_item.get('timestamp', 0) + 3600 > time.time(): #cache for 1 hour for now.
             logging.info(f'#{url}\nURL already in cache and valid, returning cached page')

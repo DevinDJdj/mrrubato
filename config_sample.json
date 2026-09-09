@@ -108,6 +108,11 @@
 			"tts_model_path": "./models/pretrained_tts",
 			"language_model_path": "./models/lm/lm.zip"
 		},
+		"player": {
+			"speed": 1.0,
+			"volume": 1.0
+		}
+
 	},
 	"kg":{
 		"model_path": "./models/gliner",
