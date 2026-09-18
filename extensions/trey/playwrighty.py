@@ -1022,11 +1022,32 @@ def get_line(cacheno=-1, total_read=0):
         page_cache[cacheno]['last_line'] = 0
     last_line = page_cache[cacheno]['last_line'] if 'last_line' in page_cache[cacheno] else 0
     for i, line_offset in enumerate(page_cache[cacheno]['line_offsets'][last_line:], start=last_line):
-        if line_offset <= total_read:
+        if line_offset['offset'] <= total_read:
             last_line = i
         else:
             break
     return last_line
+
+def get_scroll_amount(cacheno, total_read):
+    start_line = page_cache[cacheno]['last_line']
+    end_line = get_line(cacheno, total_read)
+    last_total = page_cache[cacheno]['last_total_read'] if 'last_total_read' in page_cache[cacheno] else 0
+    page_cache[cacheno]['last_total_read'] = total_read
+    line_diff = end_line - start_line
+    scrollbypixels = 10
+    scrollheight = page_cache[cacheno]['page'].evaluate("document.documentElement.scrollHeight")
+    if (page_cache[cacheno]['line_offsets'][start_line]['scroll'] > 0 and page_cache[cacheno]['line_offsets'][end_line]['scroll'] > 0):
+        scrollbyamount = page_cache[cacheno]['line_offsets'][end_line]['scroll'] - page_cache[cacheno]['line_offsets'][start_line]['scroll']
+    elif isinstance(scrollbypixels, (int, float)) and scrollbypixels > -50 and scrollbypixels < 50 and line_diff != 0: 
+        #assume miscalculation if too high/low..
+        scrollbypixels = scrollheight / len(page_cache[cacheno]['line_offsets'])
+        scrollbyamount = int(scrollbypixels*line_diff)
+    else:
+        scrollbypixels = scrollheight/len(page_cache[cacheno]['body']) #pixel per char..
+        scrollbyamount = (total_read-last_total)*(scrollbypixels/2) #scrolling too quickly..
+    logging.info(f'Scroll by amount: {scrollbyamount} {scrollbypixels} for line diff: {line_diff} total read: {total_read}')
+    page_cache[cacheno]['last_line'] = end_line
+    return scrollbyamount
 
 def update_page_offset(cacheno=-1):
     if (last_link_clicked_time is not None and time.time() - last_link_clicked_time < 1):
@@ -1045,6 +1066,8 @@ def update_page_offset(cacheno=-1):
         total_read = q2.get() #get current link number.  
         #set offset
         page_cache[cacheno]['current_offset'][url] = total_read
+        if ('last_total_read' in page_cache[cacheno] and total_read < page_cache[cacheno]['last_total_read']):
+            page_cache[cacheno]['last_total_read'] = total_read
         
         if (random.random() < 0.01):
             logging.info(f'Updated page offset for URL: {url} to {total_read}')
@@ -1059,19 +1082,6 @@ def update_page_offset(cacheno=-1):
             page_cache[cacheno]['last_total_read'] = 0
             page_cache[cacheno]['last_line'] = 0
         if (page_cache[cacheno]['last_total_read'] == 0 or page_cache[cacheno]['last_total_read'] + 100 < total_read):
-            start_line = page_cache[cacheno]['last_line']
-            page_cache[cacheno]['last_line'] = get_line(cacheno, total_read)
-            page_cache[cacheno]['last_total_read'] = total_read
-            line_diff = page_cache[cacheno]['last_line'] - start_line
-            scrollbypixels = 10
-            if (len(page_cache[cacheno]['line_offsets']) > 0):
-                scrollbypixels = page_cache[cacheno]['page'].evaluate("document.documentElement.scrollHeight") / len(page_cache[cacheno]['line_offsets'])
-
-            if isinstance(scrollbypixels, (int, float)) and scrollbypixels > -50 and scrollbypixels < 50: 
-                #assume miscalculation if too high/low..
-                scrollbyamount = int(scrollbypixels*line_diff)
-            else:
-                scrollbyamount = 10*line_diff
 
             try:
                 #this only gets exact matches, probably what we want, so we dont jump around the page too much.
@@ -1089,14 +1099,22 @@ def update_page_offset(cacheno=-1):
                 locator = page_cache[cacheno]['page'].locator(f"p:has-text({json.dumps(temptext)})") #not getting results all the time..
                 if (locator.count() == 1):
                     if (current_locator is None or locator.text_content() != (current_locator['text'])):
-                        logging.info(f'--{locator}')
+                        logging.info(f'--{locator.text_content()[:50]}')
                         if current_locator is not None:
                             current_locator['locator'].evaluate("el => el.style.backgroundColor = 'rgba(0, 0, 0, 0.05)'")
+
                         locator.scroll_into_view_if_needed()
+                        box = locator.bounding_box()
+                        if (box and box['y'] < 200): #gone too far up..stay near center..
+                            page_cache[cacheno]['page'].evaluate("window.scrollBy(0, -200)")
+                        elif (box and box['y'] > 600 and box['height'] < 400): #gone too far down..stay near center..
+                            page_cache[cacheno]['page'].evaluate("window.scrollBy(0, 200)")
                         page_cache[cacheno]['current_locator'] = {'inner_html': locator.inner_html(), 'text': locator.text_content(), 'locator': locator, 'total_read': total_read}
                         locator.evaluate("el => el.style.backgroundColor = 'rgba(0, 0, 0, 0.1)'")
+                        page_cache[cacheno]['last_line'] = get_line(cacheno, total_read)                        
                     elif locator.text_content() == (current_locator['text']):
                         amount_read = total_read - current_locator['total_read']
+#                        logging.info(f'Amount read since last update: {amount_read}')
 #                        last_newline = current_locator['text'].rfind('. ', max(amount_read-100, 0), amount_read)
 #                        if (last_newline != -1):
 #                            amount_read = last_newline + 1
@@ -1107,11 +1125,15 @@ def update_page_offset(cacheno=-1):
 
     #                    logging.info(f'Locator text matches current locator text: {locator.text_content()}')
                 elif (locator.count() > 1):
+                    logging.info(f'---{locator.first.text_content()[:50]}')
                     locator.first.scroll_into_view_if_needed()
                     locator.first.evaluate("el => el.style.backgroundColor = 'rgba(0, 0, 0, 0.1)'")
+                    page_cache[cacheno]['last_line'] = get_line(cacheno, total_read)                                            
                 else: #assume we have moved some since last 
                     #cant highlight <pre> component, pretty rough https://archive.org/stream
                     #pages without any links will be difficult to keep location correct.  Also no highlighting..
+                    scrollbyamount = get_scroll_amount(cacheno, total_read)
+                    logger.info(f'Scroll {scrollbyamount} for text: {temptext[:50]}')
                     page_cache[cacheno]['page'].evaluate(f"window.scrollBy(0, {scrollbyamount})")
             except Exception as e:
                 logging.error(f'Error locating text: {temptext} - {e}')
@@ -1135,13 +1157,16 @@ def update_page_offset(cacheno=-1):
                         if (locator.count() == 1):
 #                            locator.highlight()
                             locator.scroll_into_view_if_needed()
+                            logging.info(f'---{locator.text_content()[:50]}')
                             locator.evaluate("el => el.style.backgroundColor = 'rgba(0, 0, 0, 0.3)'")
+                            page_cache[cacheno]['last_line'] = get_line(cacheno, total_read)                                                    
                         if (linkno > 0):
                             plink = links[linkno-1]
                             locator = page.get_by_role("link", name=plink['text'])
                             if (locator.count() == 1):
     #                            locator.highlight()
-                                locator.scroll_into_view_if_needed()
+#                                locator.scroll_into_view_if_needed()
+#                                logging.info(f'---{locator.text_content()[:50]}')
                                 #set back to more normal highlight..
                                 locator.evaluate("el => el.style.backgroundColor = 'rgba(0, 0, 0, 0.15)'")
 #                    if (locator.bounding_box() is not None and locator.bounding_box().get('height', 400) < 400):
@@ -1167,7 +1192,7 @@ def get_line_offsets(body_text):
     offsets = []
     current_offset = 0
     for line in body_text.splitlines(True):
-        offsets.append(current_offset)
+        offsets.append({'scroll': 0, 'offset': current_offset})
         current_offset += len(line)
     return offsets
 
@@ -1258,8 +1283,8 @@ def read_page(url, cacheno=-1):
     if (url !=''):
         #adding some info to get in same line.. not too elegant.
         urlloc = [x for x in url.split(':')]
-        loc = urlloc[-1] if (len(urlloc) > 1) else 0
-        url = ':'.join(urlloc[:-1]) if (len(urlloc) > 1) else url
+        loc = urlloc[-1] if (len(urlloc) > 1 and urlloc[-1].isdigit()) else 0
+        url = ':'.join(urlloc[:-1]) if (len(urlloc) > 1 and urlloc[-1].isdigit()) else url
         aliasurl = [x.strip() for x in url.split('|')]
         alias = aliasurl[0] if len(aliasurl) > 1 else ""
         url = aliasurl[-1]

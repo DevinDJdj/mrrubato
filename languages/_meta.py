@@ -21,6 +21,16 @@ _CREATE = 58
 _LANG = 59
 
 
+def get_double_clicks(self, sequence=[]):
+  logger.info(f'> Is Double Click {sequence}')
+  dc = []
+  i = 1
+  while i < len(sequence):
+    if sequence[i] == sequence[i-1]:
+      dc.append(sequence[i])
+      i += 1
+    i += 1
+  return dc
 
 class selector:
   def __init__(self, array, currentindex):
@@ -45,14 +55,14 @@ class selector:
       selected = -(self.currentindex+self.selected)
     elif (selected + self.selected + self.currentindex >= len(self.array)):
       selected = len(self.array) - 1 - (self.currentindex + self.selected)
-    return self.array[self.currentindex + self.selected+selected]
+    return self.array[self.currentindex + self.selected+selected] if (self.array and len(self.array) > 0) else None
 
   def select(self, selected=None):
     if (selected is not None):
       ret = self.preselect(selected) #should be second call 
     else:
       logger.info(f'{self.currentindex + self.selected} in {self.array}')
-      ret = self.array[self.currentindex + self.selected]
+      ret = self.array[self.currentindex + self.selected] if (self.array and len(self.array) > 0) else None
     self.currentindex += self.selected
     self.selected = 0
     return ret
@@ -244,6 +254,7 @@ class _meta:
               self.booktopicarray.insert(0, c) #time reverse order
           self.booktopicarray.sort(key=lambda x: abs(self.timewindow.currenttime - x['timestamp'])) #sort by recency to current time, most recent first.  
           self.booktopicselector = selector(self.booktopicarray, 0)
+
   def load_data(self):
 
     #load language specific data into the config.  
@@ -452,16 +463,6 @@ class _meta:
     return -1
 
 
-  def get_double_clicks(self, sequence=[]):
-    logger.info(f'> Is Double Click {sequence}')
-    dc = []
-    i = 1
-    while i < len(sequence):
-      if sequence[i] == sequence[i-1]:
-        dc.append(sequence[i])
-        i += 1
-      i += 1
-    return dc
 
   def get_cache(self, sequence=[]):
     """Get QR from cache."""
@@ -511,7 +512,7 @@ class _meta:
       if adjust > 5:
         adjust = 5
       lang = "_meta"
-      dc = self.get_double_clicks(sequence)
+      dc = get_double_clicks(self, sequence)
 
       if (_VIDEO in dc): #allow for this usage..
         lang = "video"
@@ -711,7 +712,8 @@ class _meta:
     sortedcmds = []
     if (topic == ""):
       topic = self.selectedtopic['**'] if self.selectedtopic is not None else ""
-      sortedcmds = self.topicarray[max(0, self.selectedtopicindex-num):min(self.selectedtopicindex+num, len(self.topicarray))] if self.selectedtopicindex is not None else []
+      sortedcmds = self.topicarray[max(0, self.topicselector.currentindex-num):min(self.topicselector.currentindex+num, len(self.topicarray))] if len(self.topicselector.array) > 0 else []
+#      sortedcmds = self.topicarray[max(0, self.selectedtopicindex-num):min(self.selectedtopicindex+num, len(self.topicarray))] if self.selectedtopicindex is not None else []
     elif (topic in self.transcriber.langmap[self.name]['topics']):
       topicdata = self.transcriber.langmap[self.name]['topics'][topic]
       if 'data' in topicdata:
@@ -735,47 +737,42 @@ class _meta:
 
     logger.info(f"> Select Topic_ {sequence}")
     print("> Select Topic_")
-    newidx = self.selectedtopicindex
+
     _booktopic = False
+    mytopic = self.selectedtopic
     if (len(sequence) > 0):
       if (sequence[-1] == self.keybot): #dont adjust if keybot, 
         return 1
-      newidx = self.adjust_topic_index(self.mid-sequence[-1])
+
+      mytopic = self.topicselector.preselect(self.mid-sequence[-1])
+
     if (len(sequence) > 1):
       if (sequence[0] == _BOOK and sequence[1] == _BOOK): #not sure this selection sequence is great.. maybe somewhat cleaner
         _booktopic = True        
-        newidx = self.adjust_booktopic_index(self.mid-sequence[-1])
 
-    logger.info(f"--{self.topicarray[newidx]['**']}")
+        mytopic = self.booktopicselector.preselect(self.mid-sequence[-1])
+
+    logger.info(f"--{mytopic['**']}")
     self.func = "Select Topic_"
 
     vars = {}
     #should make this more general.. send last ten links
-    temptopic = self.booktopicarray[self.selectedbooktopicindex]['**'] if self.selectedbooktopicindex is not None else None
+
+    temptopic = mytopic['**'] if (mytopic and '**' in mytopic) else None
     if (_booktopic): #use booktopicarray topics around this topic in last N times..
-      if (len(self.booktopicarray) > 0):
-        last15 = self.booktopicarray[max(0, self.selectedbooktopicindex-11):min(self.selectedbooktopicindex+13, len(self.booktopicarray))]
-        temptopic = self.booktopicarray[newidx]['**']
-      else:
-        last15 = [temptopic]
+      last15 = self.booktopicselector.get_visible()
+      self.booktopicselector.get_vars(vars)
+
     else: #default, use time and topic array to get last 15 topics around this topic.
-      last15 = self.topicarray[max(0, self.selectedtopicindex-11):min(self.selectedtopicindex+13, len(self.topicarray))]
-      last15.reverse() #reverse to match with Future:Past order in display.. [48 - 68]
-      temptopic = self.topicarray[newidx]['**']
+      last15 = self.topicselector.get_visible()
+      self.topicselector.get_vars(vars)
+
     #does this match up with keys?  
     vars['topic'] = temptopic
     cmds, ctxt = self.get_context(temptopic, -1, 5) #get context for topic
     vars['context'] = ctxt.replace('\n', '<br>')
 
-    start = 0
-#    if self.selectedtopicindex < 12:
-#      start = 12 - self.selectedtopicindex
 
-    for i, l in enumerate(last15):
-      n = i + start
-      vars[f'{n}'] = l['**']
-#          vars[f'href{i}'] = l['href']
-    vars['idx'] = newidx
     self.set_qr(self.func, vars)
 
 #    self.speak(f'{vars["topic"]}')
@@ -788,16 +785,17 @@ class _meta:
     selected = 0
     if (len(sequence) > 0):
       selected = self.mid - sequence[-1]
+      dcs = get_double_clicks(sequence)
       if (len(sequence) > 1):
-        if (sequence[0] == _BOOK and sequence[1] == _BOOK):
-          self.selectedbooktopicindex = self.adjust_booktopic_index(selected)
-          self.selectedtopic = self.booktopicarray[self.selectedbooktopicindex] if self.selectedbooktopicindex < len(self.booktopicarray) else None
+        if (len(dcs) > 0 and dcs[-1] == _BOOK):
+          self.selectedtopic = self.topicselector.select(selected)
+
         else:
-          self.selectedtopicindex = self.adjust_topic_index(selected)
-          self.selectedtopic = self.topicarray[self.selectedtopicindex] if self.selectedtopicindex < len(self.topicarray) else None
+          self.selectedtopic = self.topicselector.select(selected)
+
       else:
-        self.selectedtopicindex = self.adjust_topic_index(selected)
-        self.selectedtopic = self.topicarray[self.selectedtopicindex] if self.selectedtopicindex < len(self.topicarray) else None
+        self.selectedtopic = self.topicselector.select(selected)
+
 
     if (self.selectedtopic and (len(self.topichistory) < 1 or self.selectedtopic['**'] != self.topichistory[-1]['**'] or self.selectedtopic['..'] != self.topichistory[-1]['..'])):
       self.topichistory.insert(0, self.selectedtopic)

@@ -284,7 +284,7 @@ function startWatchingWorkspace(context) {
                 let text = document.getText();
                 console.log(`${fileUri.path} ... read`);
                 // parse this.  
-                Book.loadPage(text, fileUri.path);
+                Book.loadPage(text, fileUri.path, 0, "", true); //set reload flag so we dont get too much mess..
             });
         });
         return watcher;

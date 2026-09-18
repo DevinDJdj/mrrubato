@@ -1,10 +1,11 @@
 import logging
+import os
 from pynput import *
 import time
 
 import languages.helpers.transcriber as transcriber
 import extensions.trey.playwrighty as playwrighty
-from languages._meta import _META, _VIDEO, _HOTKEYS
+from languages._meta import _META, _VIDEO, _HOTKEYS, selector, get_double_clicks
 
 import extensions.trey.speech as speech
 
@@ -76,6 +77,13 @@ class _lang:
     return 0
 
 
+  def load_lang_entries(self, lang_dir="_lang"):
+    #load all files in _lang directory for future selection and use.  
+    #list 
+    logging.info(f'Loading language entries from {lang_dir}')
+    self.transcriber.open_books(lang_dir)
+
+    return 0
   
   def load_data(self):
 
@@ -114,6 +122,8 @@ class _lang:
         "New Word": {"help": "new_word", "params": "None", "desc": "Create new word definition."},
 
     }
+
+    self.load_lang_entries()
 
     return 0  
 
@@ -190,8 +200,8 @@ class _lang:
   def set_language(self, sequence=[]):
     if (len(sequence) == 0):
       sequence = self._langseq
-
-    if (len(sequence) == 1 and sequence[0] == _HOTKEYS):
+    dcs = get_double_clicks(sequence)
+    if (_HOTKEYS in dcs):
       #find playwright hotkey sequence
       lang = playwrighty.detect_language()
       if (lang=="en" or lang=="ja"): #right now for testing..
@@ -201,6 +211,7 @@ class _lang:
       self.set_qr(self.func, {'LANG': lang})
       self.speak(f'Set language {lang}')
     else:
+      #not used..
       #find language from sequence
       logger.info(f'> Set Language {sequence}')
 

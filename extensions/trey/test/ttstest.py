@@ -44,7 +44,8 @@ result = detector.detect(text, model="auto", k=3)
 print(f"{text} {result}")
 
 # Choose a Japanese voice (e.g., jf_alpha or jf_tebukuro)
-voice = 'jf_alpha' 
+voice = 'jf_alpha'
+voice = 'jf_nezumi' 
 
 # Generate audio generator
 generator = pipeline(text, voice=voice, speed=1.0)

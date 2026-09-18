@@ -775,7 +775,7 @@ def speak_cmd(text="", fname="example_tts.wav", voice='af_heart', vol=1.0, speed
         infile = f"./temp/tts_{int(time.time())}.txt"
         with open(infile, "w", encoding="utf-8") as f:
             f.write(text)
-        cmd = f'python ./generate/generatetts.py --infile "{infile}" --fname "{fname}" --voice "{voice}" --vol {vol} --speed {speed} --skip {skip} --cacheno {cacheno} --engine {engine} --lang "{lang}"'
+        cmd = f'python ./generate/generatetts.py --infile "{infile}" --fname "{fname}" --voice "{voice}" --vol {vol} --speed {speed} --skip {skip} --cacheno {cacheno} --engine {engine} --lang {lang}'
         bg_proc = subprocess.Popen(
             cmd,
             shell=True
@@ -818,7 +818,7 @@ def get_kokoro_pipeline(lang='a'):
     kokoro_pipeline[lang] = KPipeline(lang_code=lang,device='cuda:0') 
     #'j' for japanese testing..
 
-    print(f"Kokoro pipeline loaded.")
+    print(f"Kokoro pipeline loaded. \n$$LANG={lang}")
     return kokoro_pipeline[lang]
 
 #hack for math right now..
@@ -927,7 +927,7 @@ def speak(text="", fname="example_tts.wav", voice='af_heart', vol=1.0, speed=1.0
                     f.seek(0, sf.SEEK_END)  # Move to the end of the file for appending
                     adjusted_data = (audio * vol)
                     f.write(adjusted_data)  # Append the adjusted audio data to the file
-            print(f"Audio saved to '{fname}'")
+            #print(f"Audio saved to '{fname}'")
             return fname #return first segment for now
         else:
             tts.speak(text, voice, fname, vol, speed*120)
@@ -965,7 +965,7 @@ def generate_audio(text, fname="example_tts.wav", fast=True):
     scaled = np.int16(waveforms.squeeze() * 32767)
     wav.write(fname, samplerate, scaled) # Save as int16 WAV file
 
-    print("Audio saved to '" + fname + "'")
+    #print("Audio saved to '" + fname + "'")
     return fname
 
 if (__name__ == "__main__"):

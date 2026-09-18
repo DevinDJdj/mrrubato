@@ -4,7 +4,7 @@ import re
 import threading
 from turtle import title
 from pynput import *
-from extensions.trey import synth
+from extensions.trey import speech, synth
 from languages._meta import _META, _OK, _VIDEO
 import pytesseract
 from PIL import Image
@@ -869,11 +869,10 @@ class hotkeys:
       #get audio input for query.  
       duration = sequence[0]-self.keybot #in seconds
       duration *=3  #double duration for feedback
-      from extensions.trey.speech import listen_audio
       self.now = datetime.now()
       self.commentnowstr = self.now.strftime("%Y%m%d_%H%M%S") #set nowstr for feedback.  
 
-      at = listen_audio(duration, "comment.wav")
+      at = speech.listen_audio(duration, "comment.wav")
       #at.join() #wait for it to finish.
       #have to just use some keys until this is done.  
       #need to return 1 to indicate we need more keys.
@@ -882,9 +881,8 @@ class hotkeys:
       return 0 #handled, this function will not be called again with further parameters.
     else:
       #get real-time input
-      from extensions.trey.speech import transcribe_now
       self.func = "Comment_"
-      self.transcript += transcribe_now() + "\n"
+      self.transcript += speech.transcribe_now() + "\n"
       self.set_qr(self.func, {'transcript': self.transcript})
       #update display.  
 
@@ -894,20 +892,19 @@ class hotkeys:
   def comment(self, sequence=[]):
     #start recording on 0, but return 1
 
-    from extensions.trey.speech import transcribe_audio, get_duration, transcribe_audio_whisper
     timer = datetime.now()
 #    self.transcript = transcribe_audio("feedback.wav")
 #    self.transcript = transcribe_audio_whisper("comment.wav") #try whisper for better accuracy.  This is slower but hopefully more accurate, especially for short feedback.
 
-    from extensions.trey.speech import transcribe_audio, listen_audio, get_duration, transcribe_audio_whisper
+
 
     logger.info(f'> Comment {sequence}')
     #stop recording.  for now just using fixed 10 seconds.  
     #needs to be async to do this properly.
     timer = datetime.now()
 
-    self.transcript = transcribe_audio_whisper("comment.wav")
-    dur = get_duration("comment.wav") #actual dynamic duration..
+    self.transcript = speech.transcribe_audio_whisper("comment.wav")
+    dur = speech.get_duration("comment.wav") #actual dynamic duration..
     if (dur == 0):
       duration = (timer - self.now).total_seconds() if self.now is not None else duration
     else:
@@ -1032,8 +1029,8 @@ class hotkeys:
       self.controlstate['app'] = "chrome"
       self.links = link_data
       #pause audio first..
-
-      q2, q3, stop_event = self.speak(body_text, link_data, playwrighty.page_cache[cacheno]['alt_text'], total_read=total_read, cacheno=cacheno)
+      lang = playwrighty.detect_language(cacheno)
+      q2, q3, stop_event = self.speak(body_text, link_data, playwrighty.page_cache[cacheno]['alt_text'], total_read=total_read, lang=lang, cacheno=cacheno)
       playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
 
   def add_bookmark(self, sequence=[]):
@@ -1170,8 +1167,8 @@ class hotkeys:
         body_text, link_data, page, cacheno = playwrighty.read_page('', select_index)
         self.links = link_data
         #pause audio first..
-
-        q2, q3, stop_event = self.speak(body_text, link_data, playwrighty.page_cache[cacheno]['alt_text'], total_read=playwrighty.get_bookmark(page.url, cacheno), cacheno=cacheno)
+        lang = playwrighty.detect_language(cacheno)
+        q2, q3, stop_event = self.speak(body_text, link_data, playwrighty.page_cache[cacheno]['alt_text'], total_read=playwrighty.get_bookmark(page.url, cacheno), lang=lang, cacheno=cacheno)
         playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
 
     else:
@@ -1185,9 +1182,8 @@ class hotkeys:
     self.suggestions = [] #reset suggestions for this query.
     print("> _Ask called")
     #get audio input for query.  
-    from extensions.trey.speech import listen_audio
     self.transcript = "" #reset transcript..
-    at = listen_audio(15, "ask.wav") #assume some more time for question..
+    at = speech.listen_audio(15, "ask.wav") #assume some more time for question..
     #at.join() #wait for it to finish.
     #have to just use some keys until this is done.  
     #need to return 1 to indicate we need more keys.
@@ -1203,7 +1199,6 @@ class hotkeys:
 
   
   def ask_(self, sequence=[]):
-    from extensions.trey.speech import transcribe_now
 
     self.func = "ask_"
 
@@ -1215,7 +1210,7 @@ class hotkeys:
 
     
     lag = time.time()
-    self.transcript = self.get_transcript() + transcribe_now().replace('...', '') 
+    self.transcript = self.get_transcript() + speech.transcribe_now().replace('...', '') 
     context, start_offset, end_offset = playwrighty.get_p_context(cacheno=-1, direction=0, strictness=0)
     suggestions = []
 #    suggestions = self.get_suggestions(context, self.transcript)
@@ -1236,8 +1231,7 @@ class hotkeys:
     logger.info(f'> _Find {sequence}')
     print("> _Find called")
     #get audio input for query.  
-    from extensions.trey.speech import listen_audio
-    at = listen_audio(5, "find.wav")
+    at = speech.listen_audio(5, "find.wav")
     #at.join() #wait for it to finish.
     #have to just use some keys until this is done.  
     #need to return 1 to indicate we need more keys.
@@ -1270,9 +1264,8 @@ class hotkeys:
   def _search_web(self, sequence=[]):  
     logger.info(f'> _Search Web {sequence}')
     print("> _Search Web called")
-    #get audio input for query.  
-    from extensions.trey.speech import listen_audio
-    at = listen_audio(5, "query.wav")
+    #get audio input for query.      from extensions.trey.speech import listen_audio
+    at = speech.listen_audio(5, "query.wav")
     #at.join() #wait for it to finish.
     #have to just use some keys until this is done.  
     #need to return 1 to indicate we need more keys.
@@ -1288,11 +1281,10 @@ class hotkeys:
       #get audio input for query.  
       duration = sequence[0]-self.keybot #in seconds
       duration *=3  #double duration for feedback
-      from extensions.trey.speech import listen_audio
       self.now = datetime.now()
       self.feedbacknowstr = self.now.strftime("%Y%m%d_%H%M%S") #set nowstr for feedback.  
       self.helpdict['Record Feedback']['$$+'] = f"$DUR={duration}\n&Feedback\n"
-      at = listen_audio(duration, "feedback.wav")
+      at = speech.listen_audio(duration, "feedback.wav")
       #at.join() #wait for it to finish.
       #have to just use some keys until this is done.  
       #need to return 1 to indicate we need more keys.
@@ -1301,9 +1293,8 @@ class hotkeys:
       return 0 #handled, this function will not be called again with further parameters.
     else:
       #get real-time input
-      from extensions.trey.speech import transcribe_now
       self.func = "Record Feedback_"
-      self.transcript += transcribe_now() + "\n"
+      self.transcript += speech.transcribe_now() + "\n"
       self.set_qr(self.func, {'transcript': self.transcript})
       #update display.  
 
@@ -1328,13 +1319,13 @@ class hotkeys:
     duration = sequence[0]-self.keybot if (len(sequence) > 0) else 5
     duration *=3  #triple duration for feedback
     print(f'> Record Feedback for {duration} seconds')
-    from extensions.trey.speech import transcribe_audio, get_duration, transcribe_audio_whisper
+
     timer = datetime.now()
 #    self.transcript = transcribe_audio("feedback.wav")
-    self.transcript = transcribe_audio_whisper("feedback.wav") #try whisper for better accuracy.  This is slower but hopefully more accurate, especially for short feedback.
+    self.transcript = speech.transcribe_audio_whisper("feedback.wav") #try whisper for better accuracy.  This is slower but hopefully more accurate, especially for short feedback.
 
 
-    dur = get_duration("feedback.wav") #actual dynamic duration..
+    dur = speech.get_duration("feedback.wav") #actual dynamic duration..
     if (dur == 0):
       duration = (timer - self.now).total_seconds() if self.now is not None else duration
     else:
@@ -1452,9 +1443,8 @@ class hotkeys:
   def search_web(self, sequence=[]):
     logger.info(f'> Search Web {sequence}')
     query = "What is the capital of France?"
-    from extensions.trey.speech import transcribe_audio, transcribe_audio_whisper
 #    self.transcript = transcribe_audio("query.wav")
-    self.transcript = transcribe_audio_whisper("query.wav") #try whisper for better accuracy.  This is slower but hopefully more accurate, especially for short queries.
+    self.transcript = speech.transcribe_audio_whisper("query.wav") #try whisper for better accuracy.  This is slower but hopefully more accurate, especially for short queries.
     logger.info('$$AUDIO = ' + self.transcript)
     
 
@@ -1485,7 +1475,8 @@ class hotkeys:
     #should always have a value here..  
     total_read = playwrighty.get_bookmark(page.url, cacheno)
     print(f'Bookmark at {total_read}')
-    q2, q3, stop_event = self.speak(body_text, link_data, playwrighty.page_cache[cacheno]['alt_text'], total_read, cacheno=cacheno)
+    lang = playwrighty.detect_language(cacheno)
+    q2, q3, stop_event = self.speak(body_text, link_data, playwrighty.page_cache[cacheno]['alt_text'], total_read, lang=lang,cacheno=cacheno)
     playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
     logger.info(f'$$CACHENO={cacheno}')
     #self.transcript = "" #reset transcript.. cant do here..
@@ -1902,9 +1893,8 @@ class hotkeys:
   def ask(self, sequence=[]):
     logger.info(f'> Ask {sequence}')
     query = "What are you doing?"
-    from extensions.trey.speech import transcribe_audio, transcribe_audio_whisper
 #    self.transcript = transcribe_audio("ask.wav")
-    self.transcript = transcribe_audio_whisper("ask.wav") #try whisper for better accuracy.  This is slower but hopefully more accurate, especially for short queries.
+    self.transcript = speech.transcribe_audio_whisper("ask.wav") #try whisper for better accuracy.  This is slower but hopefully more accurate, especially for short queries.
     logger.info('$$AUDIO = ' + self.transcript)
     if (self.transcript != ""):
       query = self.transcript
@@ -1951,7 +1941,8 @@ class hotkeys:
       #gemma3:4b
       answer = self.transcriber.ask_ollama(context=f"::CONTEXT:: \n\n{context}\n\n::QUERY:: {query}", model="gemma4:e4b", strictness=strictness)
       logger.info(f'$$:={len(answer)}\n$$ANSWER={answer}')
-      self.speak(f'{answer}', total_read=1)
+      lang = speech.WHISPER_LANGUAGE
+      self.speak(f'{answer}', lang=lang, total_read=1)
       delay = len(answer) /14 #estimate 14 chars per second for just reading speed
       t = threading.Timer(delay, resume_reader)
       t.start()  # Start the timer in a new thread
@@ -2004,8 +1995,7 @@ class hotkeys:
   def find(self, sequence=[]):
     logger.info(f'> Find {sequence}')
     query = "What is the capital of France?"
-    from extensions.trey.speech import transcribe_audio
-    self.tofind = transcribe_audio("find.wav")
+    self.tofind = speech.transcribe_audio("find.wav")
     logger.info('$$AUDIO = ' + self.tofind)
     
 
@@ -2400,8 +2390,9 @@ class hotkeys:
           self.controlstate['app'] = 'chrome' #set app to chrome for now.  Should be more general.
           total_read = playwrighty.get_bookmark(page.url, cacheno)
           self.links = links
-          print(f'Playwright found {len(text)} characters and {len(links)} links  on the page') 
-          q2, q3, stop_event = self.speak(text, links, alt_text_data, total_read, cacheno=cacheno)
+          lang = playwrighty.detect_language()
+          print(f'Playwright found {len(text)} characters and {len(links)} links  on the page with language {lang}') 
+          q2, q3, stop_event = self.speak(text, links, alt_text_data, total_read, lang, cacheno=cacheno)
           playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
           if page.locator("video").count() > 0: #prioritize video if present.. not sure if best..
             pause_reader() #pause before starting to read new page.

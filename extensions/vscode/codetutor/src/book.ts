@@ -1972,7 +1972,7 @@ async function addVectorData(topic: BookTopic) {
 
 }
 
-export function loadPage(text: string, filePath: string, altdate: number=0, bookname : string = ""): Number {
+export function loadPage(text: string, filePath: string, altdate: number=0, bookname : string = "", reload=false): Number {
     //get the completions from the text.  
     //each topic or comment should be parsed and added to 
     //completions...
@@ -2158,7 +2158,9 @@ export function loadPage(text: string, filePath: string, altdate: number=0, book
         addVectorData(mytopic); //add the topic to the vector DB.
     }
 //do we want this?  
-    topicarray[mydate.toString()]?.push(mypage);       
+    if (!reload){
+        topicarray[mydate.toString()]?.push(mypage);       
+    }
     return mydate;
 }
 

@@ -768,6 +768,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
     rnd = int(time.time()) % 2
     VOICE = VOICES[rnd]
     logger.info(f'$$VOICE={VOICE}')
+    logger.info(f'$$LANG={lang}')
     LINKVOICE = VOICES[(rnd+2) % len(VOICES)]
     rnd = int(time.time() * 1.3) % len(VOICES)
     SIMVOICE = VOICES[rnd]
@@ -840,11 +841,17 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
     #generate tts for all lines first to minimize wait time when playing.  This is a bit aggressive but should work for now.
     #check for existing files first.  
 #    remove_temp_audio("./temp/" + str(cacheno)) #clear old cache if exists.
+
     if (cacheno < 0):
         remove_temp_audio(f"./temp/{cacheno}") #clear old cache if exists.
-    generate_tts(text, VOICE, vol=play_volume, rate=play_speed, skip=skip, cacheno=cacheno) #pre-generate
+    generate_tts(text, VOICE, vol=play_volume, rate=play_speed, skip=skip, cacheno=cacheno, lang=lang) #pre-generate
 
-    print('Finished generating TTS for all lines, starting playback')
+    lang_speeds = {'ja': 0.25, 'zh': 0.3, 'es': 1.1, 'de': 0.9}
+    lang_multiplier = lang_speeds.get(lang, 1.0)
+    if (lang == 'ja'):        
+        print('Using DBCS mode for Japanese language')
+
+    print('Generating TTS, starting playback')
     idx = -1
 
     intro_played = 0
@@ -1105,7 +1112,12 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
 #            logger.info(f'Total read: {ttotal}')
 #            if (linksspoken == 0):
             #balancing this may be tricky.. Depends on speed of function calls.  
-            time.sleep((0.7/play_speed)-0.25*linksspoken) #simulate reading time. 12 chars per second..
+            #add lang_multiplier to slow down i.e. DBCS languages..
+            sleep_time = (0.7/(play_speed*lang_multiplier))-0.25*linksspoken
+            if (sleep_time < 0):
+                logger.info(f'!!Sleep time calculated as negative, sleep_time: {sleep_time}, play_speed: {play_speed}, lang_multiplier: {lang_multiplier}, links: {linksspoken}')
+                sleep_time = 0.1
+            time.sleep(sleep_time) #simulate reading time. 12 chars per second..
             if (ttotal > total_read+len(l)+1):
                 i = len(l)+1 #break out of loop if we have read past the line, to avoid long waits on long lines.
                 continue
@@ -1252,6 +1264,7 @@ def speak(text, links = [], alt_text=[], offset=0, lang='', cacheno=-1):
     q3 = Queue()
 
     print(audio_stop_events)
+    logger.info(f'Starting audio thread for cache slot {cacheno} \n$$LANG={lang}')
     audio_thread = threading.Thread(target=play_in_background, args=(f'{text}',links, offset, audio_stop_event, audio_skip_event, cacheno, q, q2, q3, lang))
     audio_thread.start()
     return q2, q3, audio_stop_event #communicate how much we have read.  
@@ -3949,6 +3962,7 @@ def skip_lines(n, cacheno=-1, multiplier=3):
     #eventually match up audio_skip_events with playwrighty cache numbers so we can skip in specific readers if needed.
     global audio_skip_events
     print(f'Skipping {n*multiplier} lines of audio')
+    
     if (cacheno >=0 and cacheno < len(audio_skip_events)):
         print(f'Skipping lines in audio thread {cacheno}')
         audio_skip_queue[cacheno].put(int(n*multiplier))
@@ -4240,7 +4254,7 @@ def handle_keys(qr_queue=None, qrin_queue=None):
     #                    logger.info(f'Received MIDI message: {msg}')
     except (IOError, EOFError):
         print("MIDI device disconnected safely.")
-        inport.close()
+        #inport.close()
     except Exception as e:
         logger.error(f'Error handling MIDI message: {e}')
 

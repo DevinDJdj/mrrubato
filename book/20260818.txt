@@ -772,3 +772,115 @@ test..
 config.cfg['trey']['player']
 
 
+
+**extensions/trey/playwrighty.py
+scrolling somewhat better..
+
+skip_lines test..
+;> Skip Lines
+[48,48] [%] total
+
+test also 
+[54,54] 
+
+**languages/_meta.py
+Topics for prompt selection/deselection?  
+;**_prompt1
+;> Display prompt..
+
+;> Select Topic [59,59]
+filter by **_lang
+Allow for multi selection.  
+
+**languages/hotkeys.py
+;> Ask
+list and select multi-topics with _
+60+..
+single key selection
+i.e. _summary.md
+
+Find art of combinations..
+For now just filter by _topics
+Possibly smart autofilter
+
+
+**languages/_lang.py
+_BOOK = filter book _ topic..
+
+Perhaps make folder to hold common generic lang entries..
+;**_lang/summary (how long, etc)
+;**_lang/extract (what, graph is sample.., quotes, annotations)
+;**_lang/critique (analyze, fact-check)
+;**_lang/expand
+;**_lang/explain
+;**_lang/compare (params)
+;**_lang/translate (pass params [N,N+12] list [param]?)
+..
+
+
+For now implied _LANG if nothing selected
+[53,55,52] [62,65] && [53,53]
+or
+[53,55,52] [50,50] [64,65] && [53,53]
+or
+[53,55,52] [62] [50,50] [64] && [53,53]
+
+Potentially utilize further _generate, or _find
+etc..
+Only certain handlers..
+_ERROR, _OK, Hotkeys, _GOOD, no handler..
+
+Both fixed selection and dynamic recency selection..
+_lang/_book..
+_lang/_
+Load static selections in _lang.py, dynamic tracking in _meta.py based on topic selection?  
+Load all topics _lang as well through transcriber..
+
+
+How to select static?  
+For now just use static 61-71
+double-tap changes to selected handler static..
+[59,59] resets handler to default _lang
+double-tap handler+12 changes to dynamic recency..
+
+For book ask, send to vscode handler..
+Use 50, not 69 handler..
+Only use 69 handler for extremely time-sensitive..
+Too much trouble to switch all to ts..
+
+Allow for blank &&
+summary, expand, critique, explain, ..
+
+For now just use single selection after &&
+Possibly allow for order selection..
+
+
+**extensions/vscode/codetutor/src/extension.ts
+Need edit / confirm cycle..
+I think just direct edit is fine, but allow commit by user so they can review.. 
+Just like notes..
+
+Continue testing WHISPER_LANGUAGE.  
+
+[59,60] [53,53]
+
+Also generate_tts still not ..
+
+
+69 need listing in trey..
+
+Timing for Japanese not great.  
+
+@@How do we utilize multiple languages for i.e. _lang/explain
+Want to utilize selected language.  
+
+
+**extensions/vscode/codetutor/src/book.ts
+--loadPage
+Dynamic loading causing a lot of repetition for current date..
+Not sure best approach to resolve.  
+Try reload flag..
+
+
+**languages/_lang.py
+

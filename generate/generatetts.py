@@ -135,7 +135,7 @@ def generate_line(text, idx, voice, vol, speed, cacheno=-1, engine='kokoro-tts',
         return sound_file
     
     suc = speech.speak(lesc, sound_file, voice, vol, speed, engine, lang)
-    if (suc != "" and random.random() > 0.2):
+    if (suc != "" and random.random() < 0.1):
         print(f"saved {sound_file}...")
     else:
         print(f"Error generating TTS for line {idx} with {engine}. ")
@@ -169,11 +169,12 @@ if (__name__ == "__main__"):
     #fast not working..
 
     args = parser.parse_args()    
-    print(f"Generating TTS {args.fname} ...")
+    print(f"Generating TTS {args.fname} {args.lang} ...")
 
     lang = args.lang
     #detect language
     lang = langmap.get(lang, 'en') #lang abbr. for TTS engine..
+    print(f"Using language: {lang}")
 #    thread1 = threading.Thread(target=speech.speak, args=(f'{args.text}',f'{args.fname}',f'{args.voice}',args.vol,args.speed,'kokoro-tts'))
     if (args.infile is not None and args.infile != "" and os.path.exists(args.infile)):
         with open(args.infile, "r", encoding="utf-8") as f:

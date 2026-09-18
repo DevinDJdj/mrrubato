@@ -1746,7 +1746,7 @@ async function addVectorData(topic) {
         }
     }
 }
-function loadPage(text, filePath, altdate = 0, bookname = "") {
+function loadPage(text, filePath, altdate = 0, bookname = "", reload = false) {
     //get the completions from the text.  
     //each topic or comment should be parsed and added to 
     //completions...
@@ -1897,7 +1897,9 @@ function loadPage(text, filePath, altdate = 0, bookname = "") {
         addVectorData(mytopic); //add the topic to the vector DB.
     }
     //do we want this?  
-    exports.topicarray[mydate.toString()]?.push(mypage);
+    if (!reload) {
+        exports.topicarray[mydate.toString()]?.push(mypage);
+    }
     return mydate;
 }
 function getBookPath() {

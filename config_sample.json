@@ -180,6 +180,7 @@
 			"base": [61,62],
 			"check": [57,58], 
 			"book": [50,51],
+			"_lang": [59,60],
 			"mousemovement1": [63, 65],			
 			"mousemovement2": [62, 63]
 			
