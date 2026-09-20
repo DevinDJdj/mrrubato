@@ -882,5 +882,50 @@ Not sure best approach to resolve.
 Try reload flag..
 
 
+**languages/_meta.py
+Should allow for heldkeys to quick scroll..
+
 **languages/_lang.py
+
+**extensions/vscode/codetutor/src/languages/base.ts
+Need command to allow for scroll within chat window..
+doesnt exist??
+@vscode can we have this pls..
+
+
+**extensions/trey/playwrighty.py
+@@Why do we have issues using playwright browser to use i.e. youtube TV or ESPN
+
+Locators not working in japanese..
+
+;> Set Speed 1.4  (reader)
+[48,50,54] [53,53] [54]
+
+**config_sample.json
+allow to adjust each lang speed for learning..
+
+Need some sort of definition query..
+Repurpose ask?  
+Adjust ask to use double_clicks..
+
+**extensions/trey/trey.py
+Should show where we are in reading after > Ask..
+How do we jump back to the references?  
+
+Graph doesnt support DBCS?  
+Netoworkx says it is supported, so why the squares..
+Model issue?  
+
+But lang selection and input works..
+;> Ask
+Pause time needs adjustment..
+
+
+**languages/video.py
+**extensions/trey/trey.py
+--play_tmap
+redisplay of graph not working..
+
+
+
 

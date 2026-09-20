@@ -203,7 +203,9 @@ class _lang:
     dcs = get_double_clicks(sequence)
     if (_HOTKEYS in dcs):
       #find playwright hotkey sequence
+      logger.info(f'$$HOTKEYS={_HOTKEYS}')
       lang = playwrighty.detect_language()
+      logger.info(f'$$LANG={lang}')
       if (lang=="en" or lang=="ja"): #right now for testing..
         speech.WHISPER_LANGUAGE = lang
         
@@ -214,6 +216,7 @@ class _lang:
       #not used..
       #find language from sequence
       logger.info(f'> Set Language {sequence}')
+      logger.info(f'$$DCS={dcs}')
 
       #find in config.  
       lang = None

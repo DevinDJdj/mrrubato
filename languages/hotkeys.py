@@ -1943,7 +1943,9 @@ class hotkeys:
       logger.info(f'$$:={len(answer)}\n$$ANSWER={answer}')
       lang = speech.WHISPER_LANGUAGE
       self.speak(f'{answer}', lang=lang, total_read=1)
-      delay = len(answer) /14 #estimate 14 chars per second for just reading speed
+      #should really have one copy of this..
+      lang_speeds = {'en': 1.0, 'ja': 0.35, 'zh': 0.3, 'es': 1.1, 'de': 0.9} #this calculation needs some adjustment
+      delay = len(answer) /(14*lang_speeds.get(lang, 1.0)) #estimate 14 chars per second for just reading speed
       t = threading.Timer(delay, resume_reader)
       t.start()  # Start the timer in a new thread
       #too slow..

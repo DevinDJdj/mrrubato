@@ -2,6 +2,7 @@ import logging
 from pynput import *
 import time
 from datetime import datetime, timedelta
+from extensions.trey import playwrighty
 import languages.helpers.transcriber as transcriber
 #import extensions.trey.playwrighty as playwrighty
 import languages.helpers.timewindow as timewindow
@@ -21,7 +22,7 @@ _CREATE = 58
 _LANG = 59
 
 
-def get_double_clicks(self, sequence=[]):
+def get_double_clicks(sequence=[]):
   logger.info(f'> Is Double Click {sequence}')
   dc = []
   i = 1
@@ -506,13 +507,13 @@ class _meta:
   def set_speed(self, sequence=[]):
     logger.info(f"> Set Speed {sequence}")
     if (len(sequence) > 0):
-      adjust = float(sequence[-1] - self.mid) / 5.0 #just use 10 keys for mid..
+      adjust = float(sequence[-1] - self.keybot) / 5.0 #just use 10 keys for mid..
       if (adjust <= 0.2):
         adjust = 0.2
       if adjust > 5:
         adjust = 5
       lang = "_meta"
-      dc = get_double_clicks(self, sequence)
+      dc = get_double_clicks(sequence)
 
       if (_VIDEO in dc): #allow for this usage..
         lang = "video"
@@ -522,14 +523,18 @@ class _meta:
       elif (_HOTKEYS in dc):
         lang = "hotkeys"
         #adjust reader speed..
-        
+
       else: #adjust _meta speed
         self.speed *= adjust
         self.speed = round(self.speed)
         if (self.speed < 1):
           self.speed = 1
         logger.info(f"$$SPEED={self.speed}")
-      vars = {'ADJUST': adjust, 'SPEED': self.speed, 'KLANG': lang}
+      logger.info(f'$$ADJUST={adjust}')        
+      logger.info(f'$$DC={dc}')
+      logger.info(f'$$LANG={lang}')
+      spoken_lang = playwrighty.detect_language()
+      vars = {'ADJUST': adjust, 'SPEED': self.speed, 'LANG': lang, 'SPOKEN_LANG': spoken_lang}
       self.set_qr("Set Speed", vars)
     return 0
 

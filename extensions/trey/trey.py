@@ -714,8 +714,8 @@ def stopsound(currentsound):
         currentsound.stop()
 
 
-def generate_tts(text, voice, vol=1.0, rate=1.0, skip=0, cacheno=-1, lang='en'):
-    suc = speech.speak_cmd(text, "", voice, vol, rate, skip, cacheno, 'kokoro-tts', lang)
+def generate_tts(text, voice, vol=1.0, rate=1.0, skip=0, cacheno=-1, lang='en', numlines=100):
+    suc = speech.speak_cmd(text, "", voice, vol, rate, skip, cacheno, 'kokoro-tts', lang, numlines=numlines)
 
 
 def detect_language(text):
@@ -744,8 +744,6 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
     #give high priority?  
     p = psutil.Process(os.getpid())
     p.nice(psutil.HIGH_PRIORITY_CLASS)
-    play_speed = config.cfg['trey']['player']['speed'] if 'player' in config.cfg['trey'] and 'speed' in config.cfg['trey']['player'] else 1.0
-    play_volume = config.cfg['trey']['player']['volume'] if 'player' in config.cfg['trey'] and 'volume' in config.cfg['trey']['player'] else 1.0
     skipmenu = True
     currentsound = None
     sound_file = f"{random.randint(0, 100)}.mp3"
@@ -757,6 +755,8 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
         else:
             lang = 'en'
 
+    play_speed = config.cfg['trey']['player']['speed'][lang] if lang in config.cfg['trey']['player']['speed'] else config.cfg['trey']['player']['speed']['default']
+    play_volume = config.cfg['trey']['player']['volume']
     try:
         VOICES = get_voices(lang)
     except:
@@ -844,9 +844,9 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
 
     if (cacheno < 0):
         remove_temp_audio(f"./temp/{cacheno}") #clear old cache if exists.
-    generate_tts(text, VOICE, vol=play_volume, rate=play_speed, skip=skip, cacheno=cacheno, lang=lang) #pre-generate
+    generate_tts(text, VOICE, vol=play_volume, rate=play_speed, skip=skip, cacheno=cacheno, lang=lang, numlines=100) #pre-generate 100 at a time..
 
-    lang_speeds = {'ja': 0.25, 'zh': 0.3, 'es': 1.1, 'de': 0.9}
+    lang_speeds = {'en': 1.0, 'ja': 0.35, 'zh': 0.3, 'es': 1.1, 'de': 0.9} #this calculation needs some adjustment
     lang_multiplier = lang_speeds.get(lang, 1.0)
     if (lang == 'ja'):        
         print('Using DBCS mode for Japanese language')
@@ -856,9 +856,22 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
 
     intro_played = 0
     vars = {}
+    start_skip = skip
     while (idx < len(lines)-1):
 #    for idx in range(len(lines)):
         idx = idx + 1
+        vol = 0.7*play_volume
+        rate = 1.2*play_speed
+        if (idx < 2): #adjust for informational lines..
+            vol = 1.0
+            rate = 1.0
+        if (idx > start_skip and ((idx-start_skip-2) % 100 == 0)): #not perfect.. 5 lines prior to end of last generate_tts
+            print(f'Processing line {idx}')
+            print(f'regenerate TTS for next 100 lines..')
+            play_speed = config.cfg['trey']['player']['speed'][lang] if lang in config.cfg['trey']['player']['speed'] else config.cfg['trey']['player']['speed']['default'] #adjusting this dynamically, how much value?  
+            #For now just generate in batches of 100.. no dynamic adjustment of play_speed.  Just use config file..
+            logger.info(f"Regenerating TTS from line {idx} with play_speed={play_speed}")
+            generate_tts(text, VOICE, vol=play_volume, rate=play_speed, skip=idx, cacheno=cacheno, lang=lang, numlines=100) #pre-generate, and use new play_speed
         l = lines[idx]
         combined = "" #line to hold combined short lines and read together. 
         combined_counter = 0 
@@ -903,7 +916,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
 
             if (suc == ""):
                 print(f'Error generating audio fallback to tts.speak')
-                tts.speak(speech.substitute_tts(lesc), VOICE, sound_file)
+                tts.speak(speech.substitute_tts(lesc), VOICE, sound_file, vol, rate*120*0.8) #slightly slower for overview..
 #            playsoundprocess = multiprocessing.Process(target=play_sound_process, args=(sound_file,))
 #            playsoundprocess.start()
             if (os.path.exists(sound_file)):
@@ -948,7 +961,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
             sound_file = f"./temp/{cacheno}/skip.wav"
             temp = f'At Line {idx} of {len(lines)}, skipping {skip} lines'
             print(f'Skipping lines [{idx}, {skip}]')
-            tts.speak(speech.substitute_tts(temp), VOICE, sound_file)
+            tts.speak(speech.substitute_tts(temp), VOICE, sound_file, vol, rate*120*0.8) #slightly slower..
 
         if (skip > 0):
             if (idx + skip >= len(lines)-5):
@@ -1008,11 +1021,6 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
     #            await communicate.save(sound_file)
                 #play the line type info first
                 play_l(link_density_map[idx], idx/len(lines))
-                vol = 0.7*play_volume
-                rate = 1.2*play_speed
-                if (idx < 2): #adjust for informational lines..
-                    vol = 1.0
-                    rate = 1.0
 
                 if (os.path.exists(sound_file)):
                     print(f'Playing pre-generated audio: {sound_file}')
@@ -1039,6 +1047,10 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
 #                    cmd = f"python ./extensions/trey/speech.py --text \"{l}\" --fname \"{sound_file}\""
 #                    os.system(cmd)
                     if (os.path.exists(sound_file)):
+                        if (play_speed != 1.0):
+                            #dynamically adjust play speed for sound file, maybe dont want to do this.  
+                            a = 0
+
                         currentsound = playsound(sound_file, block=False) # Ensure this thread blocks for its sound
 #                time.sleep(0.5) #short pause between lines
             except Exception as e:
@@ -1057,7 +1069,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
         ttotal = total_read
 
 
-        time.sleep(0.01*len(l)) #wait for initial TTS to start playing.
+        time.sleep(1) #wait for initial TTS to start playing.
         for i in range(0, len(l)+1, 11): #check every 12 characters
             #not sure if we want to beep for skipped lines or not.  
             #maybe problematic.  
@@ -1166,11 +1178,14 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
                             print(f'!!Error in TTS playback of similar item: {e}')
                             
                             continue
+                    #repurpose q3
                     if (q3 is not None):
                         q3.put(link_density_map[rid]['offset']) #send back the offset of the similar item.
 
         if (q2 is not None):
             q2.put(total_read)
+
+
         if (idx ==len(lines)-1):
             print('Finished reading all lines.')
             #go back to start?  Only if we have link content and long content.  
@@ -2049,7 +2064,8 @@ class MyWindow(QMainWindow):
  
                 speed = float(vars.get('SPEED', '1.0'))
                 adjust = float(vars.get('ADJUST', 1.0))
-                lang = vars.get('KLANG', lang)
+                logger.info(f"Setting speed with SPEED={speed}, ADJUST={adjust}, LANG={vars.get('LANG')}")
+                lang = vars.get('LANG', lang)
                 speed = self.set_speed(speed, adjust, lang)
                 self.add_setting('SPEED', speed, lang)
                 #video = playback speed
@@ -3633,7 +3649,7 @@ class MyWindow(QMainWindow):
 
         
 
-    def set_speed(self, speed, adjust=1.0, lang='_meta'):
+    def set_speed(self, speed, adjust=1.0, lang='_meta', spoken_lang=""):
         #pass none to load default..
         if speed is None:
             speed = self.get_setting('SPEED', 1.0, lang)
@@ -3645,10 +3661,27 @@ class MyWindow(QMainWindow):
             self.playback_speed *= adjust
             self.video_player.setPlaybackRate(self.playback_speed)
             self.label_timeinfo[3].setText(f'$$VS={self.playback_speed}')
+            self.label_timeinfo[3].update()
             return self.playback_speed
         elif (lang =='_lang'):
             speech.SPEED *= adjust
             return speech.SPEED
+        elif (lang == 'hotkeys'):
+            i = 0
+            speed = config.cfg['trey']['player']['speed']['default']
+            if (spoken_lang):
+                if (spoken_lang not in config.cfg['trey']['player']['speed']):
+                    config.cfg['trey']['player']['speed'][spoken_lang] = speed
+                config.cfg['trey']['player']['speed'][spoken_lang] *= adjust
+                speed = config.cfg['trey']['player']['speed'][spoken_lang]
+            else:
+                speed *= adjust
+                config.cfg['trey']['player']['speed']['default'] = round(speed, 1)
+            self.label_timeinfo[3].setText(f'$$AS={speed}')
+            self.label_timeinfo[3].update()
+
+            #adjust reader speed..
+
 
 
     def update_topic_history(self):

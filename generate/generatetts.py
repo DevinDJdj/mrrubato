@@ -123,7 +123,7 @@ def generate_line(text, idx, voice, vol, speed, cacheno=-1, engine='kokoro-tts',
     sound_file = f"./temp/{cacheno}/{idx}.wav"
     if (combined == True):
         sound_file = f"./temp/{cacheno}/{idx}_combined.wav"
-        speed = 0.8 #slow down combined lines a bit more to make them more intelligible.  This is a bit hacky but should work for now.
+#        speed = 0.8 #slow down combined lines a bit more to make them more intelligible.  This is a bit hacky but should work for now.
     subtitle_file = f"./temp/{cacheno}/{idx}.srt"
 #    lesc = text.replace('"', '\\"')
     lesc = text
@@ -164,7 +164,7 @@ if (__name__ == "__main__"):
     parser.add_argument("--skip", type=int, help="Number of lines to skip for TTS generation", default=0)
     parser.add_argument("--infile", type=str, help="Input text file for TTS generation", default=None)
     parser.add_argument("--cacheno", type=str, help="Cache number for TTS generation", default=-1)
-    parser.add_argument("--numlines", type=int, help="Number of lines to generate TTS for", default=300)
+    parser.add_argument("--numlines", type=int, help="Number of lines to generate TTS for", default=100)
     parser.add_argument("--lang", type=str, help="Language code for TTS generation", default="en")
     #fast not working..
 

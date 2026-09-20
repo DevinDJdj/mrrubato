@@ -764,7 +764,7 @@ def close_bg_procs():
 
     bg_procs = []
 
-def speak_cmd(text="", fname="example_tts.wav", voice='af_heart', vol=1.0, speed=1.0, skip=0, cacheno=-1, engine='kokoro-tts', lang='en'):
+def speak_cmd(text="", fname="example_tts.wav", voice='af_heart', vol=1.0, speed=1.0, skip=0, cacheno=-1, engine='kokoro-tts', lang='en', numlines=100):
     global bg_procs
 #    thread1 = threading.Thread(target=speak, args=(f'{text}',f'{fname}',f'{voice}',vol,speed,'kokoro-tts'))
 #    thread1.start()
@@ -775,7 +775,7 @@ def speak_cmd(text="", fname="example_tts.wav", voice='af_heart', vol=1.0, speed
         infile = f"./temp/tts_{int(time.time())}.txt"
         with open(infile, "w", encoding="utf-8") as f:
             f.write(text)
-        cmd = f'python ./generate/generatetts.py --infile "{infile}" --fname "{fname}" --voice "{voice}" --vol {vol} --speed {speed} --skip {skip} --cacheno {cacheno} --engine {engine} --lang {lang}'
+        cmd = f'python ./generate/generatetts.py --infile "{infile}" --fname "{fname}" --voice "{voice}" --vol {vol} --speed {speed} --skip {skip} --cacheno {cacheno} --engine {engine} --lang {lang} --numlines {numlines}'
         bg_proc = subprocess.Popen(
             cmd,
             shell=True

@@ -109,7 +109,11 @@
 			"language_model_path": "./models/lm/lm.zip"
 		},
 		"player": {
-			"speed": 1.0,
+			"speed": {
+				"default": 1.5, 
+				"en": 1.5, 
+				"ja": 0.8
+			},
 			"volume": 1.0
 		}
 
