@@ -74,6 +74,9 @@ def recursive_values(data):
             # If the key is from struct, recurse into it
             if (isinstance(k, int)):
               yield from recursive_values(value)
+            elif (k == '__'): #temp keys for heldwords..
+              #skip..
+              continue
             else:
               yield value
     else:

@@ -1049,6 +1049,26 @@ def get_scroll_amount(cacheno, total_read):
     page_cache[cacheno]['last_line'] = end_line
     return scrollbyamount
 
+
+def select_pre_text_range(page, pre_selector, search_string):
+    # 3. Use evaluate to find, select, and scroll to it via JavaScript
+    page.evaluate("""
+        ({selector, text}) => {
+            const element = document.querySelector(selector);
+            if (!element) return false;
+            
+            // Clear any existing selections
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            
+            // Use the browser's built-in window.find to locate, highlight, and scroll
+            // parameters: (string, caseSensitive, backwards, wrapAround, wholeWord, searchInFrames, showDialog)
+            const found = window.find(text, false, false, true, false, false, false);
+            
+            return found;
+        }
+    """, {"selector": pre_selector, "text": search_string})
+
 def update_page_offset(cacheno=-1):
     if (last_link_clicked_time is not None and time.time() - last_link_clicked_time < 1):
         #if we have clicked a link in the last second, we may be in the process of navigating to a new page, so skip updating the offset for now to avoid conflicts.
@@ -1089,14 +1109,15 @@ def update_page_offset(cacheno=-1):
                 temptext = page_cache[cacheno]['body']
 
                 offset = total_read
-                temptext = temptext[offset: offset+50]
+                temptext = temptext[offset-50: offset]
                 #find text in the page..
 
                 #some problems with multiple results..
                 current_locator = page_cache[cacheno].get('current_locator', None)
 
                 #will need to expand to include other elements like div, span, etc.  for now just p.
-                locator = page_cache[cacheno]['page'].locator(f"p:has-text({json.dumps(temptext)})") #not getting results all the time..
+#                locator = page_cache[cacheno]['page'].locator(f"p:has-text({json.dumps(temptext)})") #not getting results all the time..
+                locator = page_cache[cacheno]['page'].locator(f"p").filter(has_text=temptext)
                 if (locator.count() == 1):
                     if (current_locator is None or locator.text_content() != (current_locator['text'])):
                         logging.info(f'--{locator.text_content()[:50]}')
@@ -1111,9 +1132,14 @@ def update_page_offset(cacheno=-1):
                             page_cache[cacheno]['page'].evaluate("window.scrollBy(0, 200)")
                         page_cache[cacheno]['current_locator'] = {'inner_html': locator.inner_html(), 'text': locator.text_content(), 'locator': locator, 'total_read': total_read}
                         locator.evaluate("el => el.style.backgroundColor = 'rgba(0, 0, 0, 0.1)'")
-                        page_cache[cacheno]['last_line'] = get_line(cacheno, total_read)                        
+                        page_cache[cacheno]['last_line'] = get_line(cacheno, total_read)         
+                        #not efficient..
+                        select_pre_text_range(page_cache[cacheno]['page'], "p", temptext)
+
+#                        locator.evaluate("el => el.setSelectionRange(0, el.textContent.length)", )
                     elif locator.text_content() == (current_locator['text']):
                         amount_read = total_read - current_locator['total_read']
+                        select_pre_text_range(page_cache[cacheno]['page'], "p", temptext)                        
 #                        logging.info(f'Amount read since last update: {amount_read}')
 #                        last_newline = current_locator['text'].rfind('. ', max(amount_read-100, 0), amount_read)
 #                        if (last_newline != -1):
@@ -1129,12 +1155,14 @@ def update_page_offset(cacheno=-1):
                     locator.first.scroll_into_view_if_needed()
                     locator.first.evaluate("el => el.style.backgroundColor = 'rgba(0, 0, 0, 0.1)'")
                     page_cache[cacheno]['last_line'] = get_line(cacheno, total_read)                                            
+
                 else: #assume we have moved some since last 
                     #cant highlight <pre> component, pretty rough https://archive.org/stream
                     #pages without any links will be difficult to keep location correct.  Also no highlighting..
-                    scrollbyamount = get_scroll_amount(cacheno, total_read)
-                    logger.info(f'Scroll {scrollbyamount} for text: {temptext[:50]}')
-                    page_cache[cacheno]['page'].evaluate(f"window.scrollBy(0, {scrollbyamount})")
+#                    scrollbyamount = get_scroll_amount(cacheno, total_read)
+#                    logger.info(f'Scroll {scrollbyamount} for text: {temptext[:50]}')
+#                    page_cache[cacheno]['page'].evaluate(f"window.scrollBy(0, {scrollbyamount})")
+                    select_pre_text_range(page_cache[cacheno]['page'], "pre", temptext[:50])
             except Exception as e:
                 logging.error(f'Error locating text: {temptext} - {e}')
 
@@ -1236,6 +1264,29 @@ def get_browser_info():
     info += get_bookmark_list()
     return info
 
+
+#move here, get language detection, duplicate function, but easier to do here..
+def detect_language2(text):
+    from fast_langdetect import LangDetector, LangDetectConfig
+
+    # Create a configuration with your custom model path
+    config = LangDetectConfig(
+        custom_model_path="./models/fast-langdetect/lid.176.bin",  # Path to local model file
+    #    disable_verify=True                         # Skip MD5 verification if needed
+    )
+
+    # Initialize the detector with the manual configuration
+    detector = LangDetector(config)
+
+    # Detect language
+    result = detector.detect(text)
+    # Output: Detected Language: fr (Confidence: 0.9824)
+
+    if (len(result) == 0):
+        return 'en'  # default to English if detection fails
+    return result[0]['lang']
+
+
 def detect_language(cacheno=-1):
     """Detect the language of the cached page."""
     global current_cache
@@ -1246,6 +1297,8 @@ def detect_language(cacheno=-1):
         page = page_info['page']
         lang = page.evaluate("() => document.documentElement.lang")
         logging.info(f'Detected language: {lang} for URL: {page.url}')
+        if not lang:
+            lang = detect_language2(page_info['body'])
         return lang
     else:
         logging.warning(f'Cache number {cacheno} out of range')

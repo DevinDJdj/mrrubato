@@ -733,10 +733,10 @@ def detect_language(text):
     # Detect language
     result = detector.detect(text)
     # Output: Detected Language: fr (Confidence: 0.9824)
-    if (result[0]['lang'] in langmap):
-        return result[0]['lang']
-    else:
-        return 'en' #default to english reader if not in langmap..
+
+    if (len(result) == 0):
+        return 'en'  # default to English if detection fails
+    return result[0]['lang']
 
 
 def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=None, cacheno=-1, q=None, q2=None, q3=None, lang=''):
@@ -3736,7 +3736,7 @@ class MyWindow(QMainWindow):
         if (type == '> '):
           if (l['cmd'] == 'Click Link_' or l['cmd'] == 'Select Book_' or l['cmd'] == 'Select Topic_' 
               or l['cmd'] == 'Select Tab_' or l['cmd'] == 'Time Zoom_' or l['cmd'] == 'Read Link_' 
-              or l['cmd'] == 'Select Window_' or l['cmd'] == 'ask_'):
+              or l['cmd'] == 'Select Window_' or l['cmd'] == 'ask_' or l['cmd'] == 'Define_'):
             for i2, l2 in enumerate(self.label_ps):
                 self.label_ps[i2].setText("")            
             cnt = 0       
@@ -3813,7 +3813,9 @@ class MyWindow(QMainWindow):
       return False
     
     def update_info(self, data):
-        self.label_info.setText(data.replace('\n', '<br>'))
+        data = data.replace('\t', '<br>') #sometimes just have data in var entries..
+        data = data.replace('\n', '<br>')
+        self.label_info.setText(data)
         self.label_info.adjustSize()
         self.label_info.update()
 

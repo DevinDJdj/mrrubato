@@ -927,5 +927,56 @@ Pause time needs adjustment..
 redisplay of graph not working..
 
 
+**languages/hotkeys.py
+> pip install --upgrade PyMultiDictionary
+
+--define
+test..
 
 
+Kokoro fails quite often with Japanese audio generation..
+Gets halfway through and just stops..
+
+
+!!<<hotkeys>> Define 
+!!HTTPError: 403 Client Error: Forbidden for url: https://search.educalingo.com/?dic=en&q=an
+==
+Need new library..
+Pretty poor...
+All requests get 403..
+Need offline dictionary preferrably.  
+#https://freedict.org/downloads/
+Ugh..
+#https://github.com/globalwordnet/english-wordnet
+#https://clrd.ninjal.ac.jp/unidic/back_number.html#unidic_bccwj
+
+#https://dumps.wikimedia.org/other/mediawiki_content_current/jawiktionary/2026-09-01/xml/bzip2/
+#https://dumps.wikimedia.org/other/mediawiki_content_current/enwiktionary/2026-09-01/xml/bzip2/
+
+#https://ja.wiktionary.org/wiki/
+#https://en.wiktionary.org/wiki/
+
+Try wiktionary..
+#https://kaikki.org/dictionary/rawdata.html
+#https://kaikki.org/jawiktionary/%E6%97%A5%E6%9C%AC%E8%AA%9E/words/index.html
+#https://kaikki.org/dictionary/English/
+$$
+
+> pip install beautifulsoup4
+
+**langauges/hotkeys.py
+Set user-agent
+#https://foundation.wikimedia.org/wiki/Policy:Wikimedia_Foundation_User-Agent_Policy
+--define
+not great, but basic functionality there..
+[53,58,57,58]
+
+Test more with Japanese as well..
+
+Still need to fix DBCS networkx issue..
+
+**extensions/trey/playwrighty.py
+--update_page_offset
+--select_pre_text_range
+timing not great..
+But good that this is visual now..

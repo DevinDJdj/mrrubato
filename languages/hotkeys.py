@@ -5,7 +5,7 @@ import threading
 from turtle import title
 from pynput import *
 from extensions.trey import speech, synth
-from languages._meta import _META, _OK, _VIDEO
+from languages._meta import _META, _OK, _VIDEO, selector
 import pytesseract
 from PIL import Image
 from io import BytesIO
@@ -30,7 +30,12 @@ import numpy as np
 import torch
 from gliner import GLiNER
 
+import MeCab
 from collections import Counter
+#from PyMultiDictionary import MultiDictionary
+import requests
+from bs4 import BeautifulSoup
+
 
 logger = logging.getLogger(__name__)
 
@@ -81,6 +86,12 @@ class hotkeys:
     self.joystate = {}
 
     self.lasturl = None
+
+    #dictionary for word meanings
+    self.dictionary = {}
+    self.defstring = ""
+    self.deflang = ""
+    self.defineselector = None
 
   def word(self, sequence=[]):
     """Word lookup."""
@@ -296,13 +307,14 @@ class hotkeys:
 
         "Comment": [53,57, 58], #record comment
         "Record Feedback": [53,57,60], 
-        "Select Bookmark": [53,58,57], #feedback tells which mark it is.  Or default to set to 0 idx.  
+        "Select Bookmark": [53,58,56], #feedback tells which mark it is.  Or default to set to 0 idx.  
         "Get Graph": [53,55,50], #cacheno [53,55,50,53] Need indicator as to how much done.. Send piecemeal..
       }, 
       "4": {
         "Add Bookmark": [53,58,60,62], #feedback tells which mark it is.  Or default to set to 0 idx.  
         #manually select 0 idx = [53,58,60,62,53,53,53]
         "List Bookmarks": [53,58,60,63], #no params
+        "Define": [53,58,57,58], #no params
       }
     }
 
@@ -357,7 +369,7 @@ class hotkeys:
       "_Find": "_find",
       "_Ask": "_ask",
       "Ask": "ask",
-
+      "Define": "define",
       "Search Web": "search_web",
       "Comment": "comment",
       "Select Type": "select_type",
@@ -415,10 +427,14 @@ class hotkeys:
 "> ": "ask",
 "$$": "$cacheno, $direction, $strictness, &Query",
 "&&": "0=Ask &Query\n1=Ask &Query from $cacheno\n2=Ask &Query from $cacheno in $direction\n3=Ask &Query from $cacheno in $direction with $strictness\nResponse can be quite long, just basic LLM query using long context from page.  "},
+      "Define": {
+"> ": "define",
+ "$$": "$Term",
+ "&&": "1=Define $Term\n"},
       "Get Graph": {
 "> ": "get_graph",
 "$$": "$cacheno",
-"&&": "0=Get graph from current\n1=Get graph from $cacheno\nResponse can be quite long, gliner-relex model is slow"},
+      "&&": "0=Get graph from current\n1=Get graph from $cacheno\nResponse can be quite long, gliner-relex model is slow"},
       "Find": {
 "> ": "find", 
 "$$": "&Keyword", 
@@ -1889,7 +1905,95 @@ class hotkeys:
     self.graph_threads.append(threading.Thread(target=self.get_graphs2, args=(context, end_offset, '', '', vars, self.qr_queue)))
     self.graph_threads[-1].start()
     return 0
+
+
+  def get_definitions(self, word, lang='en'):
+    try:
+      # Construct a compliant User-Agent header matching Wikimedia policy
+      headers = {
+          "User-Agent": "mrrubato/1.0 (https://github.com/DevinDJdj/mrrubato)"
+      }
+
+      full = requests.get(f'https://{lang}.wiktionary.org/wiki/{word}', headers=headers).text
+      logger.info(f'{full}')
+      soup = BeautifulSoup(full, 'html.parser')
+      logger.info(f'{soup}')
+      elements = soup.select("p, ul, ol")
+      ret = ""
+      for element in elements:
+        # strip=True removes leading/trailing whitespace
+#      print(element.get_text(strip=True))
+#      print("-" * 20)  # Visual separator
+        ret += element.get_text(strip=True) + "\n"
+      startidx = ret.find(word)
+      if startidx != -1:
+          ret = ret[startidx:]
+      return ret
+    except Exception as e:
+      logger.error(f"!!Error fetching definitions for {word}: {e}")
+      return ""
   
+  def define_(self, sequence=[]):
+
+    #term selector.. get last read entry and find most likely terms to define.. Keep order, skip duplicates or common words..
+    if (len(sequence) == 0):
+      self.deflang = playwrighty.detect_language()
+      if (self.deflang == ""):
+        self.deflang = "en" #default..
+      total_read = playwrighty.update_page_offset()
+#        tr -= (lag * 11) #assume 12 chars per second read. this is our timer.. 
+
+#      original = playwrighty.get_text(-1, total_read, 10) #5 seconds of text?   
+      text = playwrighty.page_cache[playwrighty.current_cache]['body'][total_read-200:total_read] 
+      self.defstring = text
+      #longer is fine, but really need to stay in time..
+      if (self.deflang == "ja"):
+        self.mecab = MeCab.Tagger("-Owakati")
+
+        parsed_text = self.mecab.parse(self.defstring)
+        words = [{'**': w} for w in parsed_text.split()]
+      else:
+        words = [{'**': w} for w in self.defstring.split()]
+      words.reverse()
+      vars = {}
+      self.defineselector = selector(words, 0)
+      self.defineselector.get_vars(vars)
+
+      logger.info(f'> Define_ {sequence}')
+      self.func = "Define_"
+      self.set_qr(self.func, vars)
+    else:
+      vars = {}
+      self.func = "Define_"
+      #preselector allows for moving through array..
+      myword = self.defineselector.preselect(self.mid-sequence[-1])
+      myword = myword['**']
+      vars["MYWORD"] = myword
+
+      #pull from wiktionary json..
+#      if (self.deflang not in self.dictionary):
+#        self.dictionary[self.deflang] = json.loads('./')
+
+      vars["MYDEF"] = ""
+      vars["MYDEF"] = self.get_definitions(myword, self.deflang)
+      vars["DEFSTRING"] = self.defstring
+      vars["DEFLANG"] = self.deflang
+      self.defineselector.get_vars(vars)
+      self.set_qr(self.func, vars)
+    return 1
+
+  def define(self, sequence=[]):
+    logger.info(f'> Define {sequence}')
+    self.func = "Define"
+    vars = {}
+    myword = self.defineselector.select(self.mid-sequence[-1])
+    vars["DEFSTRING"] = self.defstring
+    vars["DEFLANG"] = self.deflang
+    vars["MYWORD"] = myword['**']
+#    vars["MYDEF"] = requests.get(f'https://{self.deflang}.wiktionary.org/wiki/{myword}').text
+#    self.set_qr(self.func, vars)
+    return 0
+
   def ask(self, sequence=[]):
     logger.info(f'> Ask {sequence}')
     query = "What are you doing?"

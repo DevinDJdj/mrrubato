@@ -73,7 +73,7 @@ class selector:
     last15.reverse()
     return last15
 
-  def get_vars(self, vars):
+  def get_vars(self, vars, entry='**'):
     start = 0
     if len(self.array) < 12:
       start = 12 - len(self.array) + self.currentindex + 1
@@ -83,7 +83,10 @@ class selector:
       vars['idx'] = self.currentindex
     for i, l in enumerate(self.get_visible()):
       n = i + start
-      vars[f'{n}'] = l['**']
+      if (isinstance(l, dict) and entry in l):
+        vars[f'{n}'] = l[entry]
+      else:
+        vars[f'{n}'] = l
 #          vars[f'href{i}'] = l['href']
 
 
