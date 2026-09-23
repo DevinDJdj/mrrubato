@@ -603,7 +603,7 @@ def get_stop_event(cacheno=-1):
         return page_cache[cacheno]['reader_stop_event']
     
     return None
-def set_reader_queue(q2, q3, stop_event, cacheno=-1):
+def set_reader_queue(q2, q3, stop_event, cacheno=-1, total_read=0):
     global current_cache
     if cacheno < 0:
         cacheno = current_cache
@@ -611,7 +611,8 @@ def set_reader_queue(q2, q3, stop_event, cacheno=-1):
         page_cache[cacheno]['reader_queue'] = q2
         page_cache[cacheno]['sim_queue'] = q3
         page_cache[cacheno]['reader_stop_event'] = stop_event
-
+        if (total_read > 0):
+            q2.put(total_read) #jump in page..
         os.remove(f"./temp/{cacheno}/active.txt") if os.path.exists(f"./temp/{cacheno}/active.txt") else None
 
 

@@ -969,6 +969,8 @@ Set user-agent
 #https://foundation.wikimedia.org/wiki/Policy:Wikimedia_Foundation_User-Agent_Policy
 --define
 not great, but basic functionality there..
+Possibly use local Dictionary for this, but too much trouble now..
+
 [53,58,57,58]
 
 Test more with Japanese as well..
@@ -980,3 +982,13 @@ Still need to fix DBCS networkx issue..
 --select_pre_text_range
 timing not great..
 But good that this is visual now..
+
+
+Use selection to jump to this location.. 
+User selects text in page.  
+Search and jump to here in body and start reading from this offset.  
+Pause -> ask..
+Jump -> pause -> ask..
+etc..
+
+Right now only using "p" or "pre"

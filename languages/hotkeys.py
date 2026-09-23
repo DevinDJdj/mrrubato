@@ -1047,7 +1047,7 @@ class hotkeys:
       #pause audio first..
       lang = playwrighty.detect_language(cacheno)
       q2, q3, stop_event = self.speak(body_text, link_data, playwrighty.page_cache[cacheno]['alt_text'], total_read=total_read, lang=lang, cacheno=cacheno)
-      playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
+      playwrighty.set_reader_queue(q2, q3, stop_event, cacheno=cacheno, total_read=total_read)
 
   def add_bookmark(self, sequence=[]):
     logger.info(f'> Add Bookmark {sequence}')
@@ -1184,8 +1184,9 @@ class hotkeys:
         self.links = link_data
         #pause audio first..
         lang = playwrighty.detect_language(cacheno)
-        q2, q3, stop_event = self.speak(body_text, link_data, playwrighty.page_cache[cacheno]['alt_text'], total_read=playwrighty.get_bookmark(page.url, cacheno), lang=lang, cacheno=cacheno)
-        playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
+        total_read = playwrighty.get_bookmark(page.url, cacheno)
+        q2, q3, stop_event = self.speak(body_text, link_data, playwrighty.page_cache[cacheno]['alt_text'], total_read=total_read, lang=lang, cacheno=cacheno)
+        playwrighty.set_reader_queue(q2, q3, stop_event, cacheno=cacheno, total_read=total_read)
 
     else:
       print('No browser session active.')
@@ -1493,7 +1494,7 @@ class hotkeys:
     print(f'Bookmark at {total_read}')
     lang = playwrighty.detect_language(cacheno)
     q2, q3, stop_event = self.speak(body_text, link_data, playwrighty.page_cache[cacheno]['alt_text'], total_read, lang=lang,cacheno=cacheno)
-    playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
+    playwrighty.set_reader_queue(q2, q3, stop_event, cacheno=cacheno, total_read=total_read)
     logger.info(f'$$CACHENO={cacheno}')
     #self.transcript = "" #reset transcript.. cant do here..
 
@@ -2242,7 +2243,7 @@ class hotkeys:
         total_read = playwrighty.get_bookmark(page.url, cacheno)
         alt_text = playwrighty.page_cache[cacheno]['alt_text']
         q2, q3, stop_event = self.speak(body_text, link_data, alt_text, total_read, lang, cacheno) #add offset to skip until where we were.)
-        playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
+        playwrighty.set_reader_queue(q2, q3, stop_event, cacheno=cacheno, total_read=total_read)
         resume_reader()
         return 0
       elif (isinstance(a, str)):
@@ -2283,7 +2284,7 @@ class hotkeys:
         lang = playwrighty.detect_language(cacheno)
         alt_text = playwrighty.page_cache[cacheno]['alt_text']
         q2, q3, stop_event = self.speak(body_text, link_data, alt_text, total_read, lang, cacheno) #add offset to skip until where we were.  
-        playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
+        playwrighty.set_reader_queue(q2, q3, stop_event, cacheno=cacheno, total_read=total_read)
         return 0
       else:
         print(f'Clicked back, no new page returned {a}')
@@ -2499,7 +2500,8 @@ class hotkeys:
           lang = playwrighty.detect_language()
           print(f'Playwright found {len(text)} characters and {len(links)} links  on the page with language {lang}') 
           q2, q3, stop_event = self.speak(text, links, alt_text_data, total_read, lang, cacheno=cacheno)
-          playwrighty.set_reader_queue(q2, q3, stop_event, cacheno)
+          playwrighty.set_reader_queue(q2, q3, stop_event, cacheno=cacheno, total_read=total_read)
+
           if page.locator("video").count() > 0: #prioritize video if present.. not sure if best..
             pause_reader() #pause before starting to read new page.
             playwrighty.play_video(cacheno)

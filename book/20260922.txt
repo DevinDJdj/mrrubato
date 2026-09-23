@@ -1,0 +1,331 @@
+
+
+**extensions/vscode/codetutor/src/extension.ts
+Need to at least genbook..
+On a loop..
+
+
+
+
+**extensions/vscode/codetutor/src/extension.ts
+**extensions/trey/trey.py
+Lets see if we can open [**public/web] with login with playwrighty.  
+
+
+**extensions/vscode/codetutor/src/book.ts
+Need to be able to switch between books seamlessly..
+
+
+
+**web/public/chata.html
+Load [**web/public/data/transcriptions/trey/2026]
+Local vector DB..
+Chat find similar transcript (spoken)..
+Load full transcript from this location..
+Need web transcript parser/viewer..
+
+
+**timestep.py
+create summary for > RECORD
+add it directly to VTT?
+
+
+**timestep.py
+get pre-generated DB of likely command sequences.
+
+
+
+**extensions/trey/trey.py
+**extensions/trey/playwrighty.py
+**extensions/handsfree/popup.js
+--updateQRCode
+Can we load extension to display in playwrighty
+
+
+
+**extensions/vscode/codetutor/src/languages/base.ts
+How do we make slight adjustments.  
+Command to adjust selected text.  
+;> Adjust [&&]
+or
+;> Adjust --function
+;> Select Topic
+;> Select Function --function
+;> Adjust [&&]
+Start with genbook and here maybe..
+
+
+**languages/book.py
+**extensions/vscode/codetutor/src/languages/base.ts
+;> Show Book
+[50,48]
+Bring to front..
+
+
+
+**mykeys.py
+--checkheldwords
+Still need to fix RepeatTimer not working for playwright functions..
+
+
+
+**generate/generatetts.py
+Why are we only getting some percentage created?  
+Look at this..
+
+
+
+
+
+**extensions/trey/trey.py
+--pause_video
+--video_cache
+test resumption..
+Able to select from cache..
+
+
+**languages/_meta.py
+--get_cache
+test..
+[48,51,50]
+
+not working yet..
+
+
+
+**extensions/vscode/codetutor/src/languages/base.ts
+--TAB [69,66,62]
+**extensions/vscode/codetutor/src/extension.ts
+--activateTabWatching
+test..
+
+
+
+**languages/_lang.py
+--set_language
+Keep cache of language selections.  
+Put lang in URL bookmark, and have those langs as selections on load_bookmarks.  
+
+
+**extensions/trey/trey.py
+Separate out mywindow..
+File getting too large..
+
+**extensions/vscode/codetutor/src/extension.ts
+;/genbook
+for now add from any topic where book folder exists..
+Use current file date, and just append if not existing..
+
+
+**languages/hotkeys.py
+
+Make mini crawler function.  
+Add this  to context.  
+
+**extensions/vscode/codetutor/src/languages/base.ts
+[0,-3,-7]
+test tab_..
+
+**extensions/trey/playwrighty.py
+--handle_frame_navigated
+Needs fixing..
+
+Need to highlight all from time period..
+Get all "Ask, Comment, Feedback"
+And highlight those locations.  
+As we scroll, update the overlay..
+
+
+
+**extensions/trey/playwrighty.py
+--get_video_transcript
+Want vtt from any playing video..
+
+
+
+
+**languages/_meta.py
+Topics for prompt selection/deselection?  
+;**_prompt1
+;> Display prompt..
+
+;> Select Topic [59,59]
+filter by **_lang
+Allow for multi selection.  
+
+**languages/hotkeys.py
+;> Ask
+list and select multi-topics with _
+60+..
+single key selection
+i.e. _summary.md
+
+Find art of combinations..
+For now just filter by _topics
+Possibly smart autofilter
+
+
+**languages/_lang.py
+_BOOK = filter book _ topic..
+
+Perhaps make folder to hold common generic lang entries..
+;**_lang/summary (how long, etc)
+;**_lang/extract (what, graph is sample.., quotes, annotations)
+;**_lang/critique (analyze, fact-check)
+;**_lang/expand
+;**_lang/explain
+;**_lang/compare (params)
+;**_lang/translate (pass params [N,N+12] list [param]?)
+..
+
+
+For now implied _LANG if nothing selected
+[53,55,52] [62,65] && [53,53]
+or
+[53,55,52] [50,50] [64,65] && [53,53]
+or
+[53,55,52] [62] [50,50] [64] && [53,53]
+
+Potentially utilize further _generate, or _find
+etc..
+Only certain handlers..
+_ERROR, _OK, Hotkeys, _GOOD, no handler..
+
+Both fixed selection and dynamic recency selection..
+_lang/_book..
+_lang/_
+Load static selections in _lang.py, dynamic tracking in _meta.py based on topic selection?  
+Load all topics _lang as well through transcriber..
+
+
+How to select static?  
+For now just use static 61-71
+double-tap changes to selected handler static..
+[59,59] resets handler to default _lang
+double-tap handler+12 changes to dynamic recency..
+
+For book ask, send to vscode handler..
+Use 50, not 69 handler..
+Only use 69 handler for extremely time-sensitive..
+Too much trouble to switch all to ts..
+
+Allow for blank &&
+summary, expand, critique, explain, ..
+
+For now just use single selection after &&
+Possibly allow for order selection..
+
+
+**extensions/vscode/codetutor/src/extension.ts
+Need edit / confirm cycle..
+I think just direct edit is fine, but allow commit by user so they can review.. 
+Just like notes..
+
+
+69 need listing in trey..
+
+Timing for Japanese not great.  
+
+@@How do we utilize multiple languages for i.e. _lang/explain
+Want to utilize selected language.  
+
+
+**languages/_meta.py
+Should allow for heldkeys to quick scroll..
+
+**languages/_lang.py
+
+
+**extensions/trey/playwrighty.py
+@@Why do we have issues using playwright browser to use i.e. youtube TV or ESPN
+
+
+Need some sort of definition query..
+[53,58,57,58]
+;> Define
+
+**extensions/trey/trey.py
+Should show where we are in reading after > Ask..
+How do we jump back to the references?  
+
+Graph doesnt support DBCS?  
+Netoworkx says it is supported, so why the squares..
+Model issue?  
+
+But lang selection and input works..
+;> Ask
+Pause time needs adjustment..
+
+
+**languages/video.py
+**extensions/trey/trey.py
+--play_tmap
+redisplay of graph not working..
+
+
+**languages/hotkeys.py
+> pip install --upgrade PyMultiDictionary
+
+--define
+test..
+
+
+Kokoro fails quite often with Japanese audio generation..
+Gets halfway through and just stops..
+
+
+
+> pip install beautifulsoup4
+
+**langauges/hotkeys.py
+Set user-agent
+#https://foundation.wikimedia.org/wiki/Policy:Wikimedia_Foundation_User-Agent_Policy
+--define
+not great, but basic functionality there..
+Possibly use local Dictionary for this, but too much trouble now..
+
+[53,58,57,58]
+
+Test more with Japanese as well..
+
+Still need to fix DBCS networkx issue..
+
+**extensions/trey/playwrighty.py
+--update_page_offset
+--select_pre_text_range
+timing not great..
+But good that this is visual now..
+
+
+Use selection to jump to this location.. 
+User selects text in page.  
+Search and jump to here in body and start reading from this offset.  
+Pause -> ask..
+Jump -> pause -> ask..
+etc..
+
+Right now only using "p" or "pre"
+
+
+**extensions/trey/chromaz.py
+Use chromadb instead of qdrantz
+
+> pip install chromadb
+
+Need some sort of local Collection of data to query.  
+How do we reference and allow for Jump links..
+These should be listed.  
+use nomic-embed-text
+same as other vectradb client..
+
+URL:offset
+key storage.  
+
+Topic storage?  
+
+For now non-persistent, but this should be optional.  
+Books can generate persistent, and then load this and 
+
+>$ ollama pull nomic-embed-text-v2-moe
+
+test..
