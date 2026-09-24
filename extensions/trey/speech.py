@@ -419,7 +419,7 @@ def get_duration(fname):
     except Exception as e:
         logger.error(f"Error getting duration: {e}")
         print(f"Error getting duration: {e}")
-        return 0
+        return -1
 
 #default 10 seconds for comment
 def record_audio(duration=10, fname="example.wav", stop_event=None, seq=[77,81,84,89]):

@@ -189,6 +189,15 @@ class _meta:
     return 0
 
 
+  def load_book_aliases(self, ext_links):
+    num_aliases = 0
+    for link in ext_links:
+      alias, url = playwrighty.get_alias_url(link['&&'])
+      if (alias != "" and url != ""):
+        playwrighty.add_alias(url, alias)
+        num_aliases += 1
+    logger.info(f"<<_meta>> > load_book_aliases \n{num_aliases} link aliases loaded")
+
   def load_transcript(self):
     #load commands from config into funcdict
     allcmds = self.transcriber.read(self.name, None, None) #default 7 days
@@ -224,6 +233,12 @@ class _meta:
     self.filtered = self.transcriber.filter_books_recursive()
     logger.info(f"Filtered book struct: {self.filtered}")
     self.bookarray = self.transcriber.relevant_book_array(self.filtered) #get list of books for selection.
+    #kind of messy..
+    ext_links = self.transcriber.get_all_of_type('#', myarray=self.bookarray) #get all links for this book, filter by time if provided.
+    ext_links = [l for l in ext_links if not l['&&'][0] == ':'] #filter repeat links..    
+    self.load_book_aliases(ext_links)
+
+
     self.filteredbookarray = self.bookarray[:] #start with all books in filteredbookarray, then we can filter based on search or time window.
     logger.info(f"Book array: {self.bookarray}")
     #sort by recency

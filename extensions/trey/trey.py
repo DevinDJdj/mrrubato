@@ -1007,7 +1007,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
                 l = combined.strip()
                 combined_counter = 0
                 combined = ""
-
+        sound_length = -1
         if (len(l) > 10) or len(temptext) > 20:
             try:
                 if (temptext != ""):
@@ -1024,6 +1024,8 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
 
                 if (os.path.exists(sound_file)):
                     print(f'Playing pre-generated audio: {sound_file}')
+                    #get length
+                    sound_length = speech.get_duration(sound_file) #actual dynamic duration..
                     currentsound = playsound(sound_file, block=False) # Ensure this thread blocks for its sound
                 else:
                     print(f'Generating and playing audio: {l} for {cacheno} at line {idx}')
@@ -1050,6 +1052,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
                         if (play_speed != 1.0):
                             #dynamically adjust play speed for sound file, maybe dont want to do this.  
                             a = 0
+                        sound_length = speech.get_duration(sound_file) #actual dynamic duration..
 
                         currentsound = playsound(sound_file, block=False) # Ensure this thread blocks for its sound
 #                time.sleep(0.5) #short pause between lines
@@ -1070,6 +1073,15 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
 
 
         time.sleep(1) #wait for initial TTS to start playing.
+        if (sound_length <= 0 or len(l) <= 0):
+            sound_length = len(l)/11
+            sleep_time = (0.7/(play_speed*lang_multiplier))
+        else:
+            sleep_time = sound_length / (len(l))
+        
+        logger.info(f'Sleep time calculated per char: {sleep_time}')
+        sound_start = time.time()
+        #for now just use even spacing based on character count..
         for i in range(0, len(l)+1, 11): #check every 12 characters
             #not sure if we want to beep for skipped lines or not.  
             #maybe problematic.  
@@ -1125,11 +1137,13 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
 #            if (linksspoken == 0):
             #balancing this may be tricky.. Depends on speed of function calls.  
             #add lang_multiplier to slow down i.e. DBCS languages..
-            sleep_time = (0.7/(play_speed*lang_multiplier))-0.25*linksspoken
-            if (sleep_time < 0):
-                logger.info(f'!!Sleep time calculated as negative, sleep_time: {sleep_time}, play_speed: {play_speed}, lang_multiplier: {lang_multiplier}, links: {linksspoken}')
-                sleep_time = 0.1
-            time.sleep(sleep_time) #simulate reading time. 12 chars per second..
+#            to_sleep = (0.7/(play_speed*lang_multiplier))-0.25*linksspoken
+            current_time = time.time()
+            to_sleep = sleep_time*i - (current_time - sound_start)
+            if (to_sleep < 0):
+                logger.info(f'!!Sleep time calculated as negative, to_sleep: {to_sleep}, play_speed: {play_speed}, lang_multiplier: {lang_multiplier}, links: {linksspoken}')
+                to_sleep = 0.1
+            time.sleep(to_sleep) #simulate reading time. 12 chars per second..
             if (ttotal > total_read+len(l)+1):
                 i = len(l)+1 #break out of loop if we have read past the line, to avoid long waits on long lines.
                 continue

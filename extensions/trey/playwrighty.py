@@ -289,9 +289,11 @@ def transcribe_bookmark(url, cacheno=-1, transcriber=None, name="hotkeys"):
             total_read = update_page_offset()
 
 
-        if (url != "" and url != "about:blank"):        
+        if (url != "" and url != "about:blank"):     
+            alias = get_alias(url)   
+
             transcriber.write(name, "Add Bookmark", {
-            'URL': url,'TOTAL_READ': total_read,'BODY_LENGTH': body_length,'TEXT': text, 'VIDEO_NO': video_no, 'VIDEO_POS': video_pos
+            'URL': url,'ALIAS': alias, 'TOTAL_READ': total_read,'BODY_LENGTH': body_length,'TEXT': text, 'VIDEO_NO': video_no, 'VIDEO_POS': video_pos
             })  
 
 
@@ -1318,11 +1320,24 @@ def activate_tab(cacheno=0):
         logging.warning(f'!!activate_tab [{cacheno}]\nCache number {cacheno} out of range')
         return False  
 
+def add_alias(url, alias):
+    if (alias):
+        key = sys.intern(url)
+        aliases[key] = alias
+
 def get_alias(url):
     key = sys.intern(url)
     return aliases.get(key, "")
 
 
+def get_alias_url(url):
+    urlloc = [x for x in url.split(':')]
+    loc = urlloc[-1] if (len(urlloc) > 1 and urlloc[-1].isdigit()) else 0
+    url = ':'.join(urlloc[:-1]) if (len(urlloc) > 1 and urlloc[-1].isdigit()) else url
+    aliasurl = [x.strip() for x in url.split('|')]
+    alias = aliasurl[0] if len(aliasurl) > 1 else ""
+    url = aliasurl[-1]
+    return alias, url
 
 def read_page(url, cacheno=-1):
     global current_cache
@@ -1336,12 +1351,7 @@ def read_page(url, cacheno=-1):
 #check for existing.  
     if (url !=''):
         #adding some info to get in same line.. not too elegant.
-        urlloc = [x for x in url.split(':')]
-        loc = urlloc[-1] if (len(urlloc) > 1 and urlloc[-1].isdigit()) else 0
-        url = ':'.join(urlloc[:-1]) if (len(urlloc) > 1 and urlloc[-1].isdigit()) else url
-        aliasurl = [x.strip() for x in url.split('|')]
-        alias = aliasurl[0] if len(aliasurl) > 1 else ""
-        url = aliasurl[-1]
+        alias, url = get_alias_url(url)
         if (alias != ""):
             key = sys.intern(url)
             aliases[key] = alias

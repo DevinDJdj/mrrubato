@@ -5,7 +5,7 @@ import threading
 from turtle import title
 from pynput import *
 from extensions.trey import speech, synth
-from languages._meta import _META, _OK, _VIDEO, selector
+from languages._meta import _META, _OK, _VIDEO, selector, get_double_clicks
 import pytesseract
 from PIL import Image
 from io import BytesIO
@@ -198,6 +198,10 @@ class hotkeys:
         if ('URL' not in c['vars'] or 'TOTAL_READ' not in c['vars']):
           continue
         url = c['vars']['URL']
+        alias = ''
+        if ('ALIAS' in c['vars']):
+          alias = c['vars']['ALIAS']
+          playwrighty.add_alias(url, alias)
         total_read = int(c['vars']['TOTAL_READ'])
         body_length = int(c['vars']['BODY_LENGTH']) if 'BODY_LENGTH' in c['vars'] else 0
         text = c['vars']['TEXT'] if 'TEXT' in c['vars'] else ""
@@ -921,7 +925,7 @@ class hotkeys:
 
     self.transcript = speech.transcribe_audio_whisper("comment.wav")
     dur = speech.get_duration("comment.wav") #actual dynamic duration..
-    if (dur == 0):
+    if (dur <= 0):
       duration = (timer - self.now).total_seconds() if self.now is not None else duration
     else:
       duration = dur
@@ -1343,7 +1347,7 @@ class hotkeys:
 
 
     dur = speech.get_duration("feedback.wav") #actual dynamic duration..
-    if (dur == 0):
+    if (dur <= 0):
       duration = (timer - self.now).total_seconds() if self.now is not None else duration
     else:
       duration = dur
@@ -2336,16 +2340,6 @@ class hotkeys:
       resume_reader() #resume all..
     return 0
 
-  def get_double_clicks(self, sequence=[]):
-    logger.info(f'> Is Double Click {sequence}')
-    dc = []
-    i = 1
-    while i < len(sequence):
-      if sequence[i] == sequence[i-1]:
-        dc.append(sequence[i])
-        i += 1
-      i += 1
-    return dc
   
   def skip_lines(self, sequence=[]):
     if (len(sequence) < 1):
@@ -2353,7 +2347,7 @@ class hotkeys:
     
     cacheno = playwrighty.current_cache
     skipno = sequence[-1]
-    s = self.get_double_clicks(sequence) #find any existence allows more freedom..
+    s = get_double_clicks(sequence) #find any existence allows more freedom..
     #allow for combinations..
     skipmultiplier = 3
     if (_VIDEO in s): #skip video.. possibly set location..
@@ -2377,6 +2371,7 @@ class hotkeys:
       skipmultiplier = 1
       
     if (_META in s): #check for double clicks here..
+      logger.info(f'> META detected in sequence {sequence}')
       num_lines = len(playwrighty.page_cache[cacheno]['line_offsets'])
       if (num_lines > 24):
         skipmultiplier = num_lines/24 #max half

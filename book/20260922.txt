@@ -329,3 +329,33 @@ Books can generate persistent, and then load this and
 >$ ollama pull nomic-embed-text-v2-moe
 
 test..
+
+
+**extensions/trey/trey.py
+**extensions/trey/speech.py
+--get_duration
+--play_in_background
+get actual duration of generated tts for matching with UI.  
+OK looks somewhat better using the actual wav file duration..
+Test with other languages..
+Try some German perhaps..
+
+**languages/hotkeys.py
+;> Skip Lines [_META] seems to work ok..
+But when jumping back, tts not rerun..
+
+
+**languages/_meta.py
+alias loading seems to work, but a bit hacky..
+
+**languages/hotkeys.py
+@@How to skip to end of ask answer..
+[53,55,57] [?]
+
+We should perhaps merge some of the transcripts..
+Graphs at this point perhaps not too valuable..
+Also too many bookmarks perhaps..
+With active use, we look at perhaps 100kb of transcript per 30 min usage.  
+This can possibly become significant with the inefficient transcript parsing.  
+Not yet a problem, but..
+
