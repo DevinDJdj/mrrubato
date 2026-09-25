@@ -2058,7 +2058,11 @@ class hotkeys:
       t = threading.Timer(delay, resume_reader)
       t.start()  # Start the timer in a new thread
       #too slow..
-      vars = {"DIRECTION": direction, "URL": playwrighty.page_cache[cacheno]['page'].url, "(": start_offset, ")": end_offset, "QUERY": query}
+      url = playwrighty.page_cache[cacheno]['page'].url
+      vars = {"DIRECTION": direction, "URL": url, "(": start_offset, ")": end_offset, "QUERY": query}
+      alias = playwrighty.get_alias(url)
+      if (alias):
+        vars["ALIAS"] = alias
       vars["ANSWER"] = answer
       vars["**"] = title
       vars[":"] = end_offset
@@ -2360,15 +2364,33 @@ class hotkeys:
       return 0
     
     skipno = skipno - self.mid #multiplied by 3.. max half the document..
+
+    from extensions.trey.trey import skip_lines, resume_reader
+
     if (_OK in s): #skip to visible scroll location.. start reading from there..
-      #ad-hoc calculation for now..
-      num_lines = len(playwrighty.page_cache[cacheno]['line_offsets'])
-      #find scroll location..
-      last_line = playwrighty.page_cache[cacheno]['last_line'] if 'last_line' in playwrighty.page_cache[cacheno] else 0
-      scroll_position = playwrighty.page_cache[cacheno]['page'].evaluate("() => ({ x: window.scrollX, y: window.scrollY })")
-      scrollbypixels = playwrighty.page_cache[cacheno]['page'].evaluate("document.documentElement.scrollHeight") / len(playwrighty.page_cache[cacheno]['line_offsets'])
-      skipno = int(scroll_position['y'] / scrollbypixels) - last_line
-      skipmultiplier = 1
+
+    #have to pause to use this functionality
+      page = playwrighty.page_cache[cacheno]['page']
+      selected_text = page.evaluate("window.getSelection().toString()")
+      if (selected_text):
+        logger.info(f'Jump to Selected text: {selected_text}')
+        #should be accurrate if the selected text exists in the body but need to select 50 chars or so in order to avoid duplicates
+        body = playwrighty.page_cache[cacheno]['body']
+        offset = body.find(selected_text) if body else -1
+        if (offset >= 0):
+          skipno, a, b = playwrighty.get_skip_from_offset(offset, cacheno)
+          skipmultiplier = 1
+          resume_reader(cacheno) #resume so we dont miss skip info..
+          time.sleep(0.5) #wait for queue to clear?  
+      else:
+        num_lines = len(playwrighty.page_cache[cacheno]['line_offsets'])
+        #find scroll location..
+        #ad-hoc calculation for now..
+        last_line = playwrighty.page_cache[cacheno]['last_line'] if 'last_line' in playwrighty.page_cache[cacheno] else 0
+        scroll_position = playwrighty.page_cache[cacheno]['page'].evaluate("() => ({ x: window.scrollX, y: window.scrollY })")
+        scrollbypixels = playwrighty.page_cache[cacheno]['page'].evaluate("document.documentElement.scrollHeight") / len(playwrighty.page_cache[cacheno]['line_offsets'])
+        skipno = int(scroll_position['y'] / scrollbypixels) - last_line
+        skipmultiplier = 1
       
     if (_META in s): #check for double clicks here..
       logger.info(f'> META detected in sequence {sequence}')
@@ -2377,7 +2399,8 @@ class hotkeys:
         skipmultiplier = num_lines/24 #max half
     logger.info(f'> Skip Lines {sequence}')
     logger.info(f'Skipping {skipno} lines in cache {cacheno}')
-    from extensions.trey.trey import skip_lines
+
+
     skip_lines(skipno, cacheno, multiplier=int(skipmultiplier))
     return 0
 

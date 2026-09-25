@@ -359,3 +359,55 @@ With active use, we look at perhaps 100kb of transcript per 30 min usage.
 This can possibly become significant with the inefficient transcript parsing.  
 Not yet a problem, but..
 
+--read_screen
+test after manually navigating, does read_screen work without issue?  
+
+--skip_lines
+# Evaluate JavaScript to return window.getSelection() as text
+selected_text = page.evaluate("window.getSelection().toString()")
+jump to text and read from here.  
+
+;> Pause
+;> highlight
+;> Skip Lines [54,54]
+test..
+ok, not perfect..
+
+
+**extensions/trey/trey.py
+separate out mywindow..
+ok, maybe..
+
+
+**languages/book.py
+;> generate book
+[50,56,?]
+simple book context like web context..
+
+;> generate git
+[51,56,?]
+select full function, provide full file code for context.  
+And possibly other surrounding.  
+For now see if we can get a decent result with just one function.. 
+
+For now all just post to book..
+Also allow for pass like:
+;^^ **languages/book.py --select_book
+change to use selector
+
+**languages/git.py
+use current topic
+;> Select Function
+list and select..
+File order for now..
+def func
+JavaScript/typescript
+function func
+only simple function def to start..
+Jump to location in vscode..
+
+Voice input for description of change
+->transcript -> codetutor
+python end of func should be easy, simply look for same indentation level..
+
+Maybe eventually need AST parser, also maybe can get from LLM, but not reliable I think..

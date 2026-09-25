@@ -471,6 +471,19 @@ export function readFromTranscriber(str: string, lang: string, now: string = Boo
     return false;
 }
 
+function getContextFromCommand(cmd: any): string {
+    let context = '';
+    if (cmd.vars && cmd.vars['ALIAS']) {
+        context = cmd.vars['ALIAS'] + '|';
+    }
+    if (cmd.vars && cmd.vars['URL']) {
+        context += cmd.vars['URL'];
+    }
+    if (cmd.vars && cmd.vars[')']){
+        context += ":" + cmd.vars[')'];
+    }
+    return context;
+}
 export function startWatchingTranscriber(lang: string, transcriptFolder: string = "C:/devinpiano/transcripts/"){
 
 
@@ -565,6 +578,7 @@ export function startWatchingTranscriber(lang: string, transcriptFolder: string 
                                 let context = "";
                                 let top = Book.currenttopic;
                                 let _ = "hotkeys";
+                                context = getContextFromCommand(cmd);
                                 if (cmd.vars && cmd.vars['QUERY']){
                                     input = cmd.vars['QUERY'] + '\n';
                                 }
@@ -572,12 +586,7 @@ export function startWatchingTranscriber(lang: string, transcriptFolder: string 
                                     output = cmd.vars['ANSWER'] + '\n';
                                     output = output.replace(/\t/g, '\n');
                                 }
-                                if (cmd.vars && cmd.vars['URL']){
-                                    context = cmd.vars['URL'];
-                                }
-                                if (cmd.vars && cmd.vars[')']){
-                                    context += ":" + cmd.vars[')'];
-                                }
+
                                 if (cmd.vars && cmd.vars['**']){
                                     top = cmd.vars['**'];
                                 }
@@ -598,16 +607,18 @@ export function startWatchingTranscriber(lang: string, transcriptFolder: string 
                             if (cmd.cmd === "Comment"){
                                 let input = "";
                                 let t = "";
+                                let context = getContextFromCommand(cmd);
                                 if (cmd.vars && cmd.vars['COMMENT']){
                                     input = cmd.vars['COMMENT'] + '\n';
                                 }
                                 if (cmd.vars && cmd.vars['TIME']){
                                     t = "$$" + cmd.vars['TIME'] + '\n';
                                 }
-                                Book.updatePage(Book.getBookPath() + "/" + file, t + input, -1, -1); //append to end of file.
+                                Book.updatePage(Book.getBookPath() + "/" + file, t + context + input, -1, -1); //append to end of file.
                             }
                             if (cmd.cmd === "Record Feedback"){
                                 //do something with the feedback.  For now just log it.
+                                let context = getContextFromCommand(cmd);
                                 let input = "";
                                 let t = "";
                                 if (cmd.vars && cmd.vars['FEEDBACK']){
@@ -623,7 +634,7 @@ export function startWatchingTranscriber(lang: string, transcriptFolder: string 
                                 }
                                 //get todays date for filename.  
 
-                                Book.updatePage(Book.getBookPath() + "/" + file, t + input, -1, -1); //append to end of file.
+                                Book.updatePage(Book.getBookPath() + "/" + file, t + context + input, -1, -1); //append to end of file.
 
                             }
                             if (cmd.cmd === "Time Jump" || cmd.cmd === "Time Zoom"){

@@ -365,7 +365,8 @@ def get_skip_from_offset(offset=0, cacheno=-1):
         print(f'Current offset: {current_offset}, line number: {orig_line_no}')
         line_no = body.count('\n', 0, offset) + 1
         print(f'Target offset: {offset}, line number: {line_no}')
-        total = len(page_info['found_positions'])
+        positions = page_info.get('found_positions', [])
+        total = len(positions)
         current_tofind = page_info.get('current_tofind_index', -1)
         return line_no - orig_line_no-2, current_tofind, total #-1 to start at previous line
     else:
