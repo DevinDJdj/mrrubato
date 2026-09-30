@@ -184,7 +184,7 @@ export let MAX_SELECTION_HISTORY = 10; //max number of topics to keep in history
 
 var bookgraph = {}; //store topic relationships.  
 
-var workspaceUri = vscode.workspace.workspaceFolders[0].uri;
+export var workspaceUri = vscode.workspace.workspaceFolders[0].uri;
 let topicchanged = false;
 //store data as tabs open and close and based on location in the tab.  
 //from this info generate the context when querying the model.  
@@ -513,6 +513,10 @@ export function findInputTopics(inputString : string) : string[]{
                 end = inputString.length; // If no space found, take the rest of the string
             }
             let key = inputString.substring(match.index + 2, end).trim();
+            //dont use the "books/" prefix in the key for topics..
+            if (key.startsWith("books/")){
+                key = key.substring("books/".length);
+            }
             //deduplicate ret array.  Keep only first instance
             const index = ret.indexOf(key, 0);
             if (index > -1) {
@@ -746,7 +750,7 @@ export function select(topic: string, open: number = opennature) : boolean {
     console.log("Selecting topic: " + fname);
     let fileUris = getMyUris(fname);
     console.log("Found file URIs: ", fileUris);
-    let fileUri = fileUris.length > 0 ? fileUris[0] : null;
+    let fileUri = fileUris.length > 0 ? fileUris[fileUris.length - 1] : null; //start with last entry..
 
 //	const fileUri = folderUri.with({ path: posix.join(folderUri.path, 'definitions.txt') });
 
@@ -754,7 +758,7 @@ export function select(topic: string, open: number = opennature) : boolean {
 
     try{
         vscode.workspace.openTextDocument(fileUri).then(doc => {
-            if (open & BOOK_OPEN_FILE) {
+            if (open & BOOK_OPEN_FILE && fileUri) {
                 vscode.window.showTextDocument(doc);
             }
                 //keep selectionhistory, dont load twice.  
@@ -821,7 +825,7 @@ export async function readBooksContent(fileUris: vscode.Uri[], topic: string, de
                     }
                 }
 
-                //load book content for further processing.  This should add to vectra DB?  
+                //load book content for further processing.  This should add to vectra DB if doesnt exist?  
                 let d = loadPage(text, fileUri.path, 0, topic);
 
 
@@ -1981,18 +1985,29 @@ export function loadPage(text: string, filePath: string, altdate: number=0, book
     let filename = getFileName(filePath);
 
     currenttopic = filename.split(".")[0]; //default topic is the file name.
+
+    let mydate = getFileDate(filename); //get the date of the file.    
+
     if (bookname !== "") {
 //        altdate = getFileDate(filename);
 //        currenttopic = bookname;
         if (!(bookname in topicarray) || topicarray[bookname] === undefined) {
             topicarray[bookname] = [];
         }
+        //add bookname as a prefix to the current topic.
+        if (mydate !== 0){
+            //date file
+        }
+        else{
+            //use bookname folder as a prefix for the current topic.
+            currenttopic = bookname + "/" + currenttopic;
+        }
     }
 
     if (!(currenttopic in topicarray) || topicarray[currenttopic] === undefined) {
         topicarray[currenttopic] = [];
     }
-    let mydate = getFileDate(filename); //get the date of the file.    
+
     if (mydate === 0 && altdate !== 0){
         mydate = altdate; //use the alternate date if we have one.
     }
@@ -2006,6 +2021,9 @@ export function loadPage(text: string, filePath: string, altdate: number=0, book
     // Get Unix timestamp in seconds
     const unixTimestamp = Math.floor(date.getTime() / 1000);
 
+
+    let booktopic = {"file": filePath, "_": "**", "**": bookname, ":": 0, "..": unixTimestamp, 
+                                    "topic": bookname, "line": 0, "date": mydate, "sortorder": 0, "data": ""};
 
     let mypage = {"file": filePath, "_": "**", "**": currenttopic, ":": 0, "..": unixTimestamp, 
                                     "topic": currenttopic, "line": 0, "date": mydate, "sortorder": 0, "data": ""};
@@ -2098,6 +2116,11 @@ export function loadPage(text: string, filePath: string, altdate: number=0, book
         if (found === undefined) {
             topicarray[tkey]?.push(mytopic); //add the previous topic to the array.
             addVectorData(mytopic); //add the topic to the vector DB.
+            if (bookname !== "") {
+                mytopic.topic = bookname;
+                addVectorData(mytopic); //add the book topic to the vector DB.
+                mytopic.topic = currenttopic; //restore the original topic for the current topic.
+            }
         }
 
         //adjust sortorder based on order of occurrence for now. 
@@ -2156,6 +2179,11 @@ export function loadPage(text: string, filePath: string, altdate: number=0, book
     if (found === undefined) {
         topicarray[currenttopic]?.push(mytopic); //add the previous topic to the array.
         addVectorData(mytopic); //add the topic to the vector DB.
+        if (bookname !== "") {
+            mytopic.topic = bookname;
+            addVectorData(mytopic); //add the book topic to the vector DB.
+            mytopic.topic = currenttopic; //restore the original topic for the current topic.   
+        }
     }
 //do we want this?  
     if (!reload){

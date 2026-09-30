@@ -1920,9 +1920,9 @@ class hotkeys:
       }
 
       full = requests.get(f'https://{lang}.wiktionary.org/wiki/{word}', headers=headers).text
-      logger.info(f'{full}')
+#      logger.info(f'{full}')
       soup = BeautifulSoup(full, 'html.parser')
-      logger.info(f'{soup}')
+#      logger.info(f'{soup}')
       elements = soup.select("p, ul, ol")
       ret = ""
       for element in elements:

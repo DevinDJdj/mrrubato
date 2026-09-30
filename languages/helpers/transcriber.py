@@ -688,7 +688,7 @@ class transcriber:
     
 
 
-        
+    
     def read_lines(self, lang, lines, last_time=None, mtime=None):
         ret = []
         currentcmd = ""
@@ -708,8 +708,10 @@ class transcriber:
         daysdiff = 0
         if (last_time is not None):
             daysdiff = mtime - last_time
-            daysdiff = int(daysdiff / 86400)
+            daysdiff = (daysdiff / 86400)
         pdays = (1 / numlines) * daysdiff
+        #this artificial time data may be a problem.  
+        #pdays = 1 / 86400 #one second better?  All cmds should have actual time..
         now += timedelta(days=-daysdiff) #start at last_time and increment by pdays for each line, so we can have a timestamp for each line even if they dont have one explicitly.  could be useful for sorting topics/commands later.  not perfect, but should be good enough for now.  ideally would want to parse out actual timestamps from lines if available, but this is a start.
         for idx, line in enumerate(lines):
             now += timedelta(days=pdays)
@@ -729,6 +731,12 @@ class transcriber:
                 #topic definition.  
                 #use file modification time for the time being..
                 #get days since last file mod time.  
+                #topic supersedes cmd..
+                if (currentcmd != ""):
+                    #save previous command if exists ..
+                    ret.append(currentcmdobj)
+                    currentcmd = ""
+                    currentcmdobj = None
                 self.current_topic = line[2:].strip() #update current topic to this topic. then get_cmd with new topic.
                 if (self.current_topic.find(":") != -1):
                     self.current_topic = self.current_topic.split(":")[0].strip()
@@ -790,6 +798,9 @@ class transcriber:
                             if (key == 'TIME'):
                                 currentcmdobj['timestamp'] = self.get_time_var(vars)
                                 currentcmdobj['..'] = currentcmdobj['timestamp'] #duplicate for easy reference later, could also just use timestamp directly but this is more explicit.  could also add other metadata here as needed.
+                                if (now > datetime.fromtimestamp(currentcmdobj['timestamp'])):
+                                    logger.warning(f'..time issue')
+                                now = datetime.fromtimestamp(currentcmdobj['timestamp'])
 
                         #add to topic as well..                                        
                         elif (currenttopc is not None and 'vars' in currenttopc):
@@ -798,6 +809,9 @@ class transcriber:
                             if (key == 'TIME'):
                                 currenttopc['timestamp'] = self.get_time_var(vars)
                                 currenttopc['..'] = currenttopc['timestamp'] #duplicate for easy reference later, could also just use timestamp directly but this is more explicit.  could also add other metadata here as needed.
+                                if (now > datetime.fromtimestamp(currenttopc['timestamp'])):
+                                    logger.warning(f'..time issue')
+                                now = datetime.fromtimestamp(currenttopc['timestamp'])
                     else:
                         #we have a date here?  special parsing for date/line
                         #references for date/line
@@ -810,7 +824,10 @@ class transcriber:
                                         linenum = '0'
                                 elif (len(line) > 10 and line[10] == '_'):
                                     vars['TIME'] = line[2:].strip()
-                                    currenttopc['timestamp'] = self.get_time_var(vars)
+                                    currenttopc['timestamp'] = self.get_time_var(vars)                                    
+                                    if (now > datetime.fromtimestamp(currenttopc['timestamp'])):
+                                        logger.warning(f'..time issue')
+                                    now = datetime.fromtimestamp(currenttopc['timestamp'])                                    
                                 else:
                                     linenum = '0'
                                 if ('..' not in currenttopc['vars']):
@@ -857,8 +874,20 @@ class transcriber:
         #for now just add commands and topics as nodes, and edges between topics and commands, and commands and their variables.  could also add edges between commands based on sequence in transcript, but for now just direct edges to topic and variables.
         for idx, cmd in enumerate(cmds):
             #add to array.  
+            #not efficient.. any single book should not contain more than a few thousand topics.. otherwise this may be too slow
             if (cmd['topic'] not in self.langmap[lang]['topics']):
+                #do we just want to point to langmap?  topic context for each language is stored here.
                 self.langmap[lang]['topics'][cmd['topic']] = {'mem': self.get_context_memory(f'{cmd["topic"]}', size=10*1024), 'extra': "", 'data': []} #store extra info in langmap for reference, and also store in shared memory for access by other processes if needed.  could also store in a file or database if needed, but for now just use shared memory for simplicity.  need to manage memory usage and cleanup as needed, but for now just create a new block for each topic and overwrite as needed.
+                heirarchy = cmd['topic'].split('/')
+                for i in range(1, len(heirarchy)-1):
+                    parent = '/'.join(heirarchy[:i])
+                    child = '/'.join(heirarchy[:i+1])
+                    #generally parent should exist before child langmap, but not checking this after the fact
+                    #this is global mapping?  Not sure if we want this stored in langmap or allcmds..
+                    if (parent in self.allcmds and child not in self.allcmds[parent]['children']):
+                        self.allcmds[parent]['children'][child] = self.allcmds[child] if child in self.allcmds else None
+                        if (child in self.allcmds):
+                            self.allcmds[child]['parent'] = self.allcmds[parent]
             self.langmap[lang]['topics'][cmd['topic']]['data'].append(cmd) #store topic data in langmap for reference, could be useful for display and searching later, but for now just store in memory.  could also store in shared memory or a file/database if needed.
 
             if ('**' not in self.kg):
@@ -1299,10 +1328,10 @@ class transcriber:
 
             start_idx = 0
             end_idx = len(merged_cmds)-1
-            self.allcmds[lang] = {'**': lang, '&&': merged_cmds, '..': last_mtime, '(': start_idx, ')': end_idx, 
+            self.allcmds[lang] = {'**': lang, '&&': merged_cmds, '..': last_mtime, '(': start_idx, ')': end_idx, 'children': {}, 'parent': None,
                                   'cmds': merged_cmds, 'last_mtime': last_mtime, 'start_time': start_time, 'end_time': end_time, 
-                                  'start_idx': start_idx, 'end_idx': end_idx, 'files': sorted_files, 'open': True}
-            self.update_kg(lang, merged_cmds)
+                                  'start_idx': start_idx, 'end_idx': end_idx, '(': start_idx, ')': end_idx, 'files': sorted_files, 'open': True}
+            self.update_kg(lang, merged_cmds) #get children and relations
         else:
             #first read of lang.. only set last topic here if this is first read..
             #workaround..
@@ -1310,9 +1339,10 @@ class transcriber:
                 self.langmap[lang] = {'lang':lang, 'topic': self.current_topic, 'topics': {}, 'kg': nx.Graph()} 
             last_topic = self.get_last_topic(ret)
             self.langmap[lang]['topic'] = last_topic #self.langmap[lang] should always exist.  Dont rewrite same topic.  
-            self.allcmds[lang] = {'**': lang, '&&': ret, 'cmds': ret, '..': last_mtime, 'last_mtime': last_mtime, 'start_time': start_time, 'end_time': end_time, 
-                                  'start_idx': 0, 'end_idx': len(ret)-1, 'files': sorted_files, 'open': True}
-            self.update_kg(lang, ret)
+            self.allcmds[lang] = {'**': lang, '&&': ret, 'cmds': ret, '..': last_mtime, 'children': {}, 'parent': None,
+                                  'last_mtime': last_mtime, 'start_time': start_time, 'end_time': end_time, 
+                                  'start_idx': 0, 'end_idx': len(ret)-1, '(': 0, ')': len(ret)-1, 'files': sorted_files, 'open': True}
+            self.update_kg(lang, ret) #get children and relations
 
     def get_last_topic(self, cmds):
         if cmds and len(cmds) > 0:
@@ -1330,10 +1360,12 @@ class transcriber:
                 #if we dont have a lastmtime, just get the most recent topic from this lang if it has cmds, this will allow us to set a current topic even if we dont have mtime data for some reason, which should be rare but could happen.
                 #what is this data?  
                 logger.info(f'No mtime for {k}, checking for most recent topic from cmds')                
+        logger.info(f'Last language: {lastlang}, Last mtime: {lastmtime}')
         if (lastlang is not None and len(self.allcmds[lastlang]['&&']) > 0):
-            self.current_topic = self.allcmds[lastlang]['&&'][-1]['**']
+            self.current_topic = self.allcmds[lastlang]['&&'][-1]['**']            
         else:
             self.current_topic = None
+        logger.info(f'Current topic set to: {self.current_topic}')
 
 
     def ask_image(self, context="", model="x/flux2-klein", strictness=-1): #gemma4:e4b too slow..

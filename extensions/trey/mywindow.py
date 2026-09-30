@@ -570,6 +570,15 @@ class MyWindow(QMainWindow):
                     print("Time Jump to: " + str(t) + " Start: " + str(s) + " End: " + str(e) + " Window: " + str(w))
                 #set time locally.  
                 #simulate click at link location if given.
+
+            case "Set Language":
+                lang = vars.get('LANG', lang)
+                #self.add_setting('LANG', lang, lang)
+                #show somewhere..
+                self.label_p.setText(f"Language: {lang}")
+                self.label_p.update()
+                print(f"Language set to: {lang}")
+
             case "Set Speed":
  
                 speed = float(vars.get('SPEED', '1.0'))

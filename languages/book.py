@@ -1,5 +1,5 @@
 import logging
-from extensions.trey import synth
+from extensions.trey import synth, speech
 from languages._meta import _BOOK, _META
 import languages.helpers.timewindow as timewindow
 
@@ -181,7 +181,7 @@ class book:
       "Set Book": "set_book",
       "Read Link": "read_link",
       "Ask": "ask",
-
+      "_Ask": "_ask",
 
     }
     self.helpdict = {
@@ -481,9 +481,8 @@ class book:
     self.suggestions = [] #reset suggestions for this query.
     print("> _Ask called")
     #get audio input for query.  
-    from extensions.trey.speech import listen_audio
     self.transcript = "" #reset transcript..
-    at = listen_audio(15, "ask.wav") #assume some more time for question..
+    at = speech.listen_audio(15, "ask.wav") #assume some more time for question..
     #at.join() #wait for it to finish.
     #have to just use some keys until this is done.  
     #need to return 1 to indicate we need more keys.

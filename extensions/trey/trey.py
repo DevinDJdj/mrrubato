@@ -428,15 +428,22 @@ def quit_me(restart=False): #restart_trey
     qrin_queue.put('<<hotkeys>>\n> Stop\n$$\n') #send stop command to midi thread
     time.sleep(1) #wait for video to stop..
 
-    mk.savemidi() #save current midi file
-    stop_midi(True) #kill the midi thread
+    try:
+        mk.savemidi() #save current midi file
+        stop_midi(True) #kill the midi thread
+    except Exception as e:
+        logger.error(f'Error while stopping MIDI: {e}')
 
-    logger.info('Closing OBS capture if running')
-    stop_obs_capture()
-    time.sleep(5) #wait for OBS to close
-    #save latest file to transcripts..
-    copy_latest_file(mywindow.transcriber.current_topic)
-    logger.info('Quitting application')
+    try:
+        logger.info('Closing OBS capture if running')
+        stop_obs_capture()
+        time.sleep(5) #wait for OBS to close
+        #save latest file to transcripts..
+        copy_latest_file(mywindow.transcriber.current_topic)
+        logger.info('Quitting application')
+    except Exception as e:
+        logger.error(f'Error while closing OBS capture or saving latest file: {e}')
+
     qapp.quit()
     #some cleanup still necessary?  
     logger.info('Saving custom settings')

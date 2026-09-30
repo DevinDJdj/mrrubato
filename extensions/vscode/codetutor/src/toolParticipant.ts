@@ -15,6 +15,7 @@ export let recentTabs = [];
 import * as midiin from './midi/midi-in';
 import * as tree from './midi/tree';
 import { currenttopic } from './book';
+import path, { posix, basename } from 'path';
 
 //import midiin from './midi/midi-in.js';
 //import tree from './midi/tree.js';
@@ -493,7 +494,7 @@ export function startWatchingTranscriber(lang: string, transcriptFolder: string 
     const mySettings = vscode.workspace.getConfiguration('mrrubato');	
     transcriptFolder = mySettings.get('transcriptfolder', transcriptFolder);
     let fname = `${transcriptFolder}${lang}/${now}.txt`;
-
+    let lasttopic = "";
     if (!fs.existsSync(fname)) {
         //create the file if it doesn't exist.  
         fs.writeFileSync(fname, "");
@@ -508,6 +509,7 @@ export function startWatchingTranscriber(lang: string, transcriptFolder: string 
             if (topics.length > 0){
                 let topic = topics[topics.length-1].topic;
                 Book.addToHistory(topic);
+                lasttopic = topic;
                 transcriberTopics[lang] = topic;
 
             }
@@ -543,24 +545,26 @@ export function startWatchingTranscriber(lang: string, transcriptFolder: string 
                         //open topic if not already open..
                         console.log("Current topic:", Book.selectedtopic);
                         console.log("Adding to history and selecting topic ", t.topic);
-                        if (t.topic !== Book.selectedtopic){
+                        if (t.topic !== Book.selectedtopic && t.topic !== lasttopic){
+                            //topic has changed, do something if needed
                             //only add to history if topic has changed.  
-                            Book.updatePage(Book.getBookPath() + "/" + file, '**' + transcriber.current_topic + '\n', -1, -1); //append to end of file.
+                            console.log("Topic has changed, updating page and selecting new topic:", t.topic);
+                            Book.updatePage(Book.getBookPath() + "/" + file, '**' + t.topic + '\n', -1, -1); //append to end of file.
                             
 //                            Book.addToHistory(t.topic); //this happens in select..
                             Book.select(t.topic);
+                            lasttopic = t.topic;
                             vscode.commands.executeCommand('workbench.action.chat.open', "@mr /read " + "**" + t.topic );
 
-                            //for now just open if it exists..
-
-
-                            for (let l of t.data.split('\n')){
-                                if (l.startsWith("Pause")){
-                                    vscode.commands.executeCommand('workbench.action.chat.open', "@mr /stop");
-                                }
-
-                            }
                         }
+                        /*
+                        for (let l of t.data.split('\n')){
+                            if (l.startsWith("Pause")){
+                                vscode.commands.executeCommand('workbench.action.chat.open', "@mr /stop");
+                            }
+
+                        }
+                        */
                         for (let cmd of t.cmds){
                             console.log("Processing command: ", cmd);
                             //for now just log the command.  In the future we can do something with it.
@@ -577,6 +581,7 @@ export function startWatchingTranscriber(lang: string, transcriptFolder: string 
                                 let output = "";
                                 let context = "";
                                 let top = Book.currenttopic;
+                                let booktop = "";
                                 let _ = "hotkeys";
                                 context = getContextFromCommand(cmd);
                                 if (cmd.vars && cmd.vars['QUERY']){
@@ -590,6 +595,10 @@ export function startWatchingTranscriber(lang: string, transcriptFolder: string 
                                 if (cmd.vars && cmd.vars['**']){
                                     top = cmd.vars['**'];
                                 }
+                                if (cmd.vars && cmd.vars['***']){
+                                    booktop = "**"  + cmd.vars['***'];
+                                }
+
                                 if (cmd.vars && cmd.vars['_']){
                                     _ = cmd.vars['_'];
                                 }
@@ -598,8 +607,9 @@ export function startWatchingTranscriber(lang: string, transcriptFolder: string 
                                 }
                                 else{
                                     //simply query the model with the input.. maybe do this anyway..
-                                    Book.updatePage(Book.getBookPath() + "/" + file, "**" + top + "\n@@" + input + "\n", -1, -1); //append to end of file.
-                                    vscode.commands.executeCommand('workbench.action.chat.open', "@mr /chat " + "**" + top + "\n" + input);
+                                    //do I need this?  this will go to genbook..
+//                                    Book.updatePage(Book.getBookPath() + "/" + file, "**" + top + "\n@@" + input + "\n", -1, -1); //append to end of file.
+                                    vscode.commands.executeCommand('workbench.action.chat.open', "@mr /chat " + "**" + top + "\n" + booktop + "\n@@" + input);
 
                                 }
                             }

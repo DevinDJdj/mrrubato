@@ -348,10 +348,10 @@ function startTranscribers() {
     if (mynow !== now) {
         (0, toolParticipant_1.startWatchingTranscriber)('hotkeys'); //get record feedback..
         (0, toolParticipant_1.startWatchingTranscriber)('video');
-        (0, toolParticipant_1.startWatchingTranscriber)('_meta'); //get all topic changes..
         //	startWatchingTranscriber('base'); //get all mood changes and extra pause..
         //use 'base' for tracking genbook
         (0, toolParticipant_1.startWatchingTranscriber)('book'); //pause etc..
+        (0, toolParticipant_1.startWatchingTranscriber)('_meta'); //get all topic changes..
         mynow = now;
     }
 }
@@ -790,34 +790,35 @@ function activate(context) {
                         vscode.commands.executeCommand('workbench.action.terminal.sendSequence', { text: line.substring(idx) + "\n" });
                         */
                     }
-                    break;
                 }
-                switch (cmdtype[1]) {
-                    //only single line commands for now.  
-                    case ">":
-                        //run admin command.
-                        vscode.commands.executeCommand('workbench.action.terminal.focus');
-                        vscode.commands.executeCommand('workbench.action.terminal.sendSequence', { text: text.substring(2).trim() + "\n" });
-                        break;
-                    case "$":
-                        //run in specific terminal.  
-                        //pull name from $$TERM=NAME variable if set..
-                        TerminalWorker.run(text.trim()); //does this work?  
-                        break;
-                    case "#": //powershell for now..
-                        TerminalWorker.run(text.trim()); //does this work?  
-                        break;
-                    case "@":
-                        //run in vscode
-                        vscode.commands.executeCommand(text.substring(2).trim());
-                        break;
-                    case "_":
-                        TerminalWorker.run(text.trim()); //does this work?  
-                        break;
-                    default:
-                        vscode.commands.executeCommand('workbench.action.terminal.focus');
-                        vscode.commands.executeCommand('workbench.action.terminal.sendSequence', { text: text.substring(1) + "\n" });
-                        break;
+                else {
+                    switch (cmdtype[1]) {
+                        //only single line commands for now.  
+                        case ">":
+                            //run admin command.
+                            vscode.commands.executeCommand('workbench.action.terminal.focus');
+                            vscode.commands.executeCommand('workbench.action.terminal.sendSequence', { text: text.substring(2).trim() + "\n" });
+                            break;
+                        case "$":
+                            //run in specific terminal.  
+                            //pull name from $$TERM=NAME variable if set..
+                            TerminalWorker.run(text.trim()); //does this work?  
+                            break;
+                        case "#": //powershell for now..
+                            TerminalWorker.run(text.trim()); //does this work?  
+                            break;
+                        case "@":
+                            //run in vscode
+                            vscode.commands.executeCommand(text.substring(2).trim());
+                            break;
+                        case "_":
+                            TerminalWorker.run(text.trim()); //does this work?  
+                            break;
+                        default:
+                            vscode.commands.executeCommand('workbench.action.terminal.focus');
+                            vscode.commands.executeCommand('workbench.action.terminal.sendSequence', { text: text.substring(1) + "\n" });
+                            break;
+                    }
                 }
                 //return focus after terminal execution..
                 console.log('returning focus after cmd execution');

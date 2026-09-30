@@ -385,10 +385,10 @@ export function startTranscribers(){
 	if (mynow !== now){
 		startWatchingTranscriber('hotkeys'); //get record feedback..
 		startWatchingTranscriber('video');
-		startWatchingTranscriber('_meta'); //get all topic changes..
 	//	startWatchingTranscriber('base'); //get all mood changes and extra pause..
 		//use 'base' for tracking genbook
 		startWatchingTranscriber('book'); //pause etc..
+		startWatchingTranscriber('_meta'); //get all topic changes..
 
 		mynow = now;
 	}
@@ -920,38 +920,39 @@ export function activate(context: vscode.ExtensionContext) {
 						vscode.commands.executeCommand('workbench.action.terminal.sendSequence', { text: line.substring(idx) + "\n" });
 						*/
 					}
-					break;
 
 				}
-				switch (cmdtype[1]) {
-					//only single line commands for now.  
-					case ">":							
-						//run admin command.
-						vscode.commands.executeCommand('workbench.action.terminal.focus');
-						vscode.commands.executeCommand('workbench.action.terminal.sendSequence', { text: text.substring(2).trim() + "\n" });
-						break;
-					case "$":
-						//run in specific terminal.  
-						//pull name from $$TERM=NAME variable if set..
-						TerminalWorker.run(text.trim()); //does this work?  
-						break;
-					case "#": //powershell for now..
-						TerminalWorker.run(text.trim()); //does this work?  
-						break;
-					case "@":
-						//run in vscode
-						vscode.commands.executeCommand(text.substring(2).trim());
-						break;
-					case "_":
-						TerminalWorker.run(text.trim()); //does this work?  
-						break;
-						
-					default:
+				else{
+					switch (cmdtype[1]) {
+						//only single line commands for now.  
+						case ">":							
+							//run admin command.
+							vscode.commands.executeCommand('workbench.action.terminal.focus');
+							vscode.commands.executeCommand('workbench.action.terminal.sendSequence', { text: text.substring(2).trim() + "\n" });
+							break;
+						case "$":
+							//run in specific terminal.  
+							//pull name from $$TERM=NAME variable if set..
+							TerminalWorker.run(text.trim()); //does this work?  
+							break;
+						case "#": //powershell for now..
+							TerminalWorker.run(text.trim()); //does this work?  
+							break;
+						case "@":
+							//run in vscode
+							vscode.commands.executeCommand(text.substring(2).trim());
+							break;
+						case "_":
+							TerminalWorker.run(text.trim()); //does this work?  
+							break;
+							
+						default:
 
-						vscode.commands.executeCommand('workbench.action.terminal.focus');
-						vscode.commands.executeCommand('workbench.action.terminal.sendSequence', { text: text.substring(1) + "\n" });
-						break;
-					
+							vscode.commands.executeCommand('workbench.action.terminal.focus');
+							vscode.commands.executeCommand('workbench.action.terminal.sendSequence', { text: text.substring(1) + "\n" });
+							break;
+						
+					}
 				}
 				//return focus after terminal execution..
 				console.log('returning focus after cmd execution');

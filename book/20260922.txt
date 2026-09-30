@@ -411,3 +411,160 @@ Voice input for description of change
 python end of func should be easy, simply look for same indentation level..
 
 Maybe eventually need AST parser, also maybe can get from LLM, but not reliable I think..
+
+
+Dont duplicate topic entry..
+
+
+**languages/hotkeys.py
+;> Define not great..
+Should add to transcript..
+
+Need to add ability to filter entry display from transcripts by text and by command..
+**languages/check.py
+;> Create filter..
+;> Select filter ..
+List from recent selection
+Or perhaps just add to book.  
+
+try 
+;\filter ..
+;\filter __language | __language
+;\filter > cmd | > cmd
+;\filter **topic
+;\filter &&book
+quick command to filter current topic or current book
+Allow to specify cmd in sequence..
+or language in sequence by single keybot selection..
+Update display and selection, tick/tock..
+[57,58] [filter]
+[57,56] [filter] remove filter..
+Need access to mykeys 
+--get_words_
+Just add and remove words to array as filtered .. 
+
+Use filtered result..
+[57,59] [54,54] [filter vars] [55,55] [value selector]
+
+[57,55] [54,54]
+
+[57,59] [50,50] [book selector]
+for now just current book..
+
+[57,59] [48,48] [topic selector]
+topic can be multiple..
+
+[57,59] [53,53] [entity selector]
+find and add all relevant to context..
+Use context for further query..
+Hold data in transcriber?  
+
+
+Simply add selected/filtered flag for command entities and/or topic entities.. 
+Expensive.. but probably fine for 1 year data
+
+Nowhere near this to start..
+10,000/day = 3m/year
+But theoretically fine I think computation-wise..
+Much is not written anyways.  
+
+
+Right now all topics for transcripts are just dates..
+only _meta holds topic/book..
+topic[..] is set, but need to match this with all cmds.  
+So just set topic from _meta for all other transcript cmds after merge_cmds?  
+topic/book interchangable here?  
+
+
+**languages/helpers/transcriber.py
+--read_lines
+--pdays
+check if time calculations tolerable..
+May need to change pdays when updating now.. 
+
+
+
+**languages/book.py
+Finish book ask..
+
+**languages/helpers/transcriber.py
+--set_current_topic
+Current topic setting is it working?  
+Still dont like the leading book/, but too annoying to untangle..
+Not good
+
+Any book should be loaded into vectra, so should get answers from book if they exist, but still experimenting 
+how to determine what context we want to search..
+
+Contents of any book still need topics set..
+This is not happening well at the moment..
+unless explicitly selecting topic and then leaving comment..
+
+Need function to limit and query only single book topics..
+Basically use the vectra shard from this 
+
+
+**extensions/vscode/codetutor/src/book.ts
+--loadPage
+Additional addVectorData call with bookname..
+test.. 
+This creates a large vector DB for each book..
+But then when querying any book, we get the entire result set for all topics in that book..
+
+@@How do we specify depth when opening book
+for now just leave to 0.
+Data will automatically get added to the top-level book if we open sub-books anyway..
+Heirarchical knowledge structure is significant here.  
+
+Depending on open books/topics, results will vary significantly..
+But adding substructure/library of books will be simple.  
+
+
+Book ask works.  
+Make read more specific to the last selected topic/book..
+Allow for clicking on any selection to get a response again.  
+;~~
+or 
+;@@
+
+
+#https://code.visualstudio.com/docs/agent-customization/custom-agents
+
+;**.github/agents
+Utilize default structure here?  
+I guess the wheel is good enough..
+;@agent do this
+;**AGENTS.md
+Just virtual copy-paste prompts as needed after selection
+Still use local..
+instructions=AGENT.md content
+
+
+**extensions/vscode/codetutor/src/extension.ts
+
+;chat.language.models.json
+;chatLanguageModels.json
+
+#https://code.visualstudio.com/blogs/2026/06/18/byok-vscode
+
+#https://code.visualstudio.com/docs/agent-customization/language-models#_bring-your-own-language-model-key
+
+This is better maybe.  
+Switch to this to use the built in infrastructure that wasnt there when started..
+At least try this mechanism?
+
+
+**languages/_meta.py
+allow for topic selection up/down directory path..
+When reading book, generate directory tree for selection..
+
+
+**languages/helpers/transcriber.py
+--update_kg
+allcmds[lang]['children']
+Once loaded, never released, not sure this is ideal..
+langmap[lang]['topics'][topic]
+All topics have context memory file pointer as well never releasing..
+Do we need two structures?  
+
+

@@ -260,8 +260,8 @@ class _meta:
     #load topics for selected book into booktopicarray.  
     self.booktopicarray = []
     if (self.selectedbook is not None):
-      if (self.selectedbook['**'] in self.transcriber.langmap):
-        bookdata = self.transcriber.langmap[self.selectedbook['**']]
+      if (self.selectedbook['**'] in self.transcriber.allcmds):
+        bookdata = self.transcriber.allcmds[self.selectedbook['**']]
         if ('&&' in bookdata and bookdata['&&'] is not None and bookdata['('] != bookdata[')']):
           newtopicarray = bookdata['&&'][bookdata['(']:bookdata[')']+1]
           for c in newtopicarray:
@@ -273,7 +273,11 @@ class _meta:
               self.booktopicarray.insert(0, c) #time reverse order
           self.booktopicarray.sort(key=lambda x: abs(self.timewindow.currenttime - x['timestamp'])) #sort by recency to current time, most recent first.  
           self.booktopicselector = selector(self.booktopicarray, 0)
-
+        else:
+          logger.warning(f"No topics found for book {self.selectedbook['**']}")
+          logger.warning(f"Book data: {bookdata}")
+      else:
+        logger.warning(f"No topics found for book {self.selectedbook['**']}")
   def load_data(self):
 
     #load language specific data into the config.  
@@ -763,17 +767,28 @@ class _meta:
 
     _booktopic = False
     mytopic = self.selectedtopic
+
+    selected = 0
     if (len(sequence) > 0):
       if (sequence[-1] == self.keybot): #dont adjust if keybot, 
-        return 1
+        return 1 
+      selected = self.mid - sequence[-1] 
+      dcs = get_double_clicks(sequence)
+      if (len(sequence) > 1):
+        if (len(dcs) > 0 and _BOOK in dcs):
+          _booktopic = True
 
-      mytopic = self.topicselector.preselect(self.mid-sequence[-1])
+          if (sequence[-1] == sequence[-2] and sequence[-1] == _BOOK):
+            logger.info("Double click on _BOOK detected.")
+            #dont actually select here.. hacky..
+            mytopic = self.booktopicselector.preselect(0)
+          else:
+            mytopic = self.booktopicselector.preselect(selected)
+        else:
+          mytopic = self.topicselector.preselect(selected)
+      else:
+        mytopic = self.topicselector.preselect(selected)
 
-    if (len(sequence) > 1):
-      if (sequence[0] == _BOOK and sequence[1] == _BOOK): #not sure this selection sequence is great.. maybe somewhat cleaner
-        _booktopic = True        
-
-        mytopic = self.booktopicselector.preselect(self.mid-sequence[-1])
 
     logger.info(f"--{mytopic['**']}")
     self.func = "Select Topic_"
@@ -810,8 +825,8 @@ class _meta:
       selected = self.mid - sequence[-1]
       dcs = get_double_clicks(sequence)
       if (len(sequence) > 1):
-        if (len(dcs) > 0 and dcs[-1] == _BOOK):
-          self.selectedtopic = self.topicselector.select(selected)
+        if (len(dcs) > 0 and _BOOK in dcs):
+          self.selectedtopic = self.booktopicselector.select(selected)
 
         else:
           self.selectedtopic = self.topicselector.select(selected)

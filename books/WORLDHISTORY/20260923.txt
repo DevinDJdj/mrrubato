@@ -2,3 +2,7 @@
 $$20260923_231639
 #https://www.gutenberg.org/cache/epub/2680/pg2680-images.html:14373
  The highest good of man is consciously to work with God for the common good, and this is the sense in which the Stoic tried to live in accord with nature. I
+
+#https://www.oldmapsonline.org/en/history/regions#position=5.9068/41.66/11.17&year=-200
+
+;#https://www.oldmapsonline.org/en/history/regions#position=$$ZOOM/$$LAT/$$LON&year=$$YEAR

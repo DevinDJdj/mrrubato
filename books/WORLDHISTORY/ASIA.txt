@@ -1,0 +1,22 @@
+**JAPAN
+#古事記 | https://www.aozora.gr.jp/cards/001518/files/51732_44768.html
+
+#源氏物語 | https://www.aozora.gr.jp/cards/000052/files/5024_11085.html
+
+$$LAT=35
+$$LON=140
+
+@@Show me a map of Japan in the year 800
+==
+well done compared to other similar tools..
+#https://www.oldmapsonline.org/en/history/regions#position=5.9068/41.66/11.17&year=-200
+
+;#https://www.oldmapsonline.org/en/history/regions#position=$$ZOOM/$$LAT/$$LON&year=$$YEAR
+
+#https://www.oldmapsonline.org/en/history/regions#position=5.9068/35/140&year=800
+
+#https://www.openstreetmap.org/
+
+
+$$
+

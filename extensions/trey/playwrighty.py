@@ -1058,8 +1058,8 @@ def select_pre_text_range(page, pre_selector, search_string):
     # 3. Use evaluate to find, select, and scroll to it via JavaScript
     page.evaluate("""
         ({selector, text}) => {
-            const element = document.querySelector(selector);
-            if (!element) return false;
+            //const element = document.querySelector(selector);
+            //if (!element) return false;
             
             // Clear any existing selections
             const selection = window.getSelection();
@@ -1166,7 +1166,7 @@ def update_page_offset(cacheno=-1):
 #                    scrollbyamount = get_scroll_amount(cacheno, total_read)
 #                    logger.info(f'Scroll {scrollbyamount} for text: {temptext[:50]}')
 #                    page_cache[cacheno]['page'].evaluate(f"window.scrollBy(0, {scrollbyamount})")
-                    select_pre_text_range(page_cache[cacheno]['page'], "pre", temptext[:50])
+                    select_pre_text_range(page_cache[cacheno]['page'], "*", temptext[:50])
             except Exception as e:
                 logging.error(f'Error locating text: {temptext} - {e}')
 

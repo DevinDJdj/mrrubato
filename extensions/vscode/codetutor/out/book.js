@@ -36,7 +36,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MAX_SELECTION_HISTORY = exports.ftsindex = exports.arrays = exports.commandarray = exports.temptopicarray = exports.temptopics = exports.topicvectorarray = exports.topicarray = exports.envarray = exports.alltopicsa = exports.alltopicdata = exports.alltopics = exports.vectrafixes = exports.defstring = exports.fnmap = exports.defmap = exports.ollama_model = exports.queryhistory = exports.environmenthistory = exports.selectionhistory = exports.selectedtopic = exports.currenttopic = exports.BOOK_OPEN_GIT = exports.BOOK_OPEN_WEB = exports.BOOK_OPEN_FILE = exports.GIT_DB = exports.GIT_RELATIONS = exports.GIT_DETAILS = exports.GIT_CODE = exports.GIT_BOOK = void 0;
+exports.workspaceUri = exports.MAX_SELECTION_HISTORY = exports.ftsindex = exports.arrays = exports.commandarray = exports.temptopicarray = exports.temptopics = exports.topicvectorarray = exports.topicarray = exports.envarray = exports.alltopicsa = exports.alltopicdata = exports.alltopics = exports.vectrafixes = exports.defstring = exports.fnmap = exports.defmap = exports.ollama_model = exports.queryhistory = exports.environmenthistory = exports.selectionhistory = exports.selectedtopic = exports.currenttopic = exports.BOOK_OPEN_GIT = exports.BOOK_OPEN_WEB = exports.BOOK_OPEN_FILE = exports.GIT_DB = exports.GIT_RELATIONS = exports.GIT_DETAILS = exports.GIT_CODE = exports.GIT_BOOK = void 0;
 exports.setModel = setModel;
 exports.logCommand = logCommand;
 exports.getTokens = getTokens;
@@ -209,7 +209,7 @@ let mynow = new Date(); //get the current date in YYYYMMDD format.
 let NEXT_TERM_ID = 1;
 exports.MAX_SELECTION_HISTORY = 10; //max number of topics to keep in history.
 var bookgraph = {}; //store topic relationships.  
-var workspaceUri = vscode.workspace.workspaceFolders[0].uri;
+exports.workspaceUri = vscode.workspace.workspaceFolders[0].uri;
 let topicchanged = false;
 //store data as tabs open and close and based on location in the tab.  
 //from this info generate the context when querying the model.  
@@ -368,7 +368,7 @@ function getRecency(bt, mydate = new Date()) {
     }
 }
 function itemToDoc(item) {
-    const folderUri = workspaceUri;
+    const folderUri = exports.workspaceUri;
     let ret = "";
     let fname = item.file;
     fname = fname.replace(folderUri.path + "/", ""); //remove the folder path from the file name for display purposes.
@@ -383,7 +383,7 @@ function itemToDoc(item) {
 function findTopicsCompletion(str = "") {
     let myarray = [];
     let sortText = "0000";
-    const folderUri = workspaceUri;
+    const folderUri = exports.workspaceUri;
     if (str === "") {
         for (const [key, value] of Object.entries(exports.topicarray)) {
             if (value !== undefined && value.length > 0) {
@@ -490,6 +490,10 @@ function findInputTopics(inputString) {
                 end = inputString.length; // If no space found, take the rest of the string
             }
             let key = inputString.substring(match.index + 2, end).trim();
+            //dont use the "books/" prefix in the key for topics..
+            if (key.startsWith("books/")) {
+                key = key.substring("books/".length);
+            }
             //deduplicate ret array.  Keep only first instance
             const index = ret.indexOf(key, 0);
             if (index > -1) {
@@ -649,7 +653,7 @@ function getMyUris(topic, externalpath = "") {
     //how many to return..
     //check if file or folder
     let ret = [];
-    let folderUri = workspaceUri;
+    let folderUri = exports.workspaceUri;
     if (externalpath !== "") {
         const parentPath = path_1.default.dirname(folderUri.path);
         folderUri = folderUri.with({ path: parentPath });
@@ -690,17 +694,17 @@ function select(topic, open = opennature) {
     //select the topic from the topicarray.  
     //this will be used to get the topic from the array.  
     let fname = topic.trim();
-    const folderUri = workspaceUri;
+    const folderUri = exports.workspaceUri;
     // this should be a book path.  Use as you would work on the project.  
     console.log("Selecting topic: " + fname);
     let fileUris = getMyUris(fname);
     console.log("Found file URIs: ", fileUris);
-    let fileUri = fileUris.length > 0 ? fileUris[0] : null;
+    let fileUri = fileUris.length > 0 ? fileUris[fileUris.length - 1] : null; //start with last entry..
     //	const fileUri = folderUri.with({ path: posix.join(folderUri.path, 'definitions.txt') });
     const found = exports.alltopics.find((t) => t === topic);
     try {
         vscode.workspace.openTextDocument(fileUri).then(doc => {
-            if (open & exports.BOOK_OPEN_FILE) {
+            if (open & exports.BOOK_OPEN_FILE && fileUri) {
                 vscode.window.showTextDocument(doc);
             }
             //keep selectionhistory, dont load twice.  
@@ -760,7 +764,7 @@ async function readBooksContent(fileUris, topic, depth = 0) {
                         console.log(`${fileUri.path} ... deleted because empty and has date`);
                     }
                 }
-                //load book content for further processing.  This should add to vectra DB?  
+                //load book content for further processing.  This should add to vectra DB if doesnt exist?  
                 let d = loadPage(text, fileUri.path, 0, topic);
             });
         }
@@ -865,7 +869,7 @@ async function gitChanges(topics) {
     const mytopicfile = topics[topics.length - 1]; //get the topic file.
     const mytopiclogfile = mytopicfile + ".log"; //get the topic log file.
     //read this log file if exists. 
-    const folderUri = workspaceUri;
+    const folderUri = exports.workspaceUri;
     const fileUri = folderUri.with({ path: path_1.posix.join(folderUri.path, mytopiclogfile) });
     const readData = await vscode.workspace.fs.readFile(fileUri);
     const readStr = Buffer.from(readData).toString('utf8');
@@ -903,7 +907,7 @@ async function read(prompt, mode = exports.GIT_BOOK) {
     }
     if (mode & exports.GIT_CODE) {
         try {
-            const folderUri = workspaceUri;
+            const folderUri = exports.workspaceUri;
             const stat = await vscode.workspace.fs.stat(folderUri.with({ path: topkey }));
             //assume file exists if stats doesnt fail.  
             let git = await gitChanges(selectedtopics); //get the git changes for the topic.
@@ -1046,7 +1050,7 @@ function getFileDate(filePath) {
     }
     else {
         //get date of the file
-        const folderUri = workspaceUri;
+        const folderUri = exports.workspaceUri;
         //       const stat => await vscode.workspace.fs.stat(folderUri.with({ path: filePath }))
         //        console.log((new Date(stat.mtime)).getFullYear() * 10000); //get the date of the file.
         //       return (new Date(stat.mtime)).getFullYear() * 10000;
@@ -1061,7 +1065,7 @@ function initArray(topic, array = exports.topicarray) {
 function updatePage(filePath, text, linefrom = 0, lineto = 0, show = false) {
     //update the current page with the text and filePath.  
     //this will be used to update the current topic.  
-    const folderUri = workspaceUri;
+    const folderUri = exports.workspaceUri;
     // this should be a book path.  Use as you would work on the project.  
     const fileUri = folderUri.with({ path: path_1.posix.join(folderUri.path, filePath) });
     const copyUri = filePath.split("/").pop(); //last part of file path
@@ -1315,7 +1319,7 @@ async function markdown(prompt, format = 1) {
     //this just adjustst the base string to include links to markdown files.  
     //replace **topic with [topic](topic.md)
     //replace #link with [link](link)
-    const folderUri = workspaceUri;
+    const folderUri = exports.workspaceUri;
     let marked = prompt.replace(/(\*\*|\#)(\S+)/g, (match, p1, p2) => {
         // p1 is either ** or #
         // p2 is the topic or link 
@@ -1754,17 +1758,25 @@ function loadPage(text, filePath, altdate = 0, bookname = "", reload = false) {
     console.log("Topic Path: " + topicpath);
     let filename = getFileName(filePath);
     exports.currenttopic = filename.split(".")[0]; //default topic is the file name.
+    let mydate = getFileDate(filename); //get the date of the file.    
     if (bookname !== "") {
         //        altdate = getFileDate(filename);
         //        currenttopic = bookname;
         if (!(bookname in exports.topicarray) || exports.topicarray[bookname] === undefined) {
             exports.topicarray[bookname] = [];
         }
+        //add bookname as a prefix to the current topic.
+        if (mydate !== 0) {
+            //date file
+        }
+        else {
+            //use bookname folder as a prefix for the current topic.
+            exports.currenttopic = bookname + "/" + exports.currenttopic;
+        }
     }
     if (!(exports.currenttopic in exports.topicarray) || exports.topicarray[exports.currenttopic] === undefined) {
         exports.topicarray[exports.currenttopic] = [];
     }
-    let mydate = getFileDate(filename); //get the date of the file.    
     if (mydate === 0 && altdate !== 0) {
         mydate = altdate; //use the alternate date if we have one.
     }
@@ -1775,6 +1787,8 @@ function loadPage(text, filePath, altdate = 0, bookname = "", reload = false) {
     const date = new Date(mydate.toString().slice(0, 4) + "-" + mydate.toString().slice(4, 6) + "-" + mydate.toString().slice(6, 8)); //convert YYYYMMDD to Date object.
     // Get Unix timestamp in seconds
     const unixTimestamp = Math.floor(date.getTime() / 1000);
+    let booktopic = { "file": filePath, "_": "**", "**": bookname, ":": 0, "..": unixTimestamp,
+        "topic": bookname, "line": 0, "date": mydate, "sortorder": 0, "data": "" };
     let mypage = { "file": filePath, "_": "**", "**": exports.currenttopic, ":": 0, "..": unixTimestamp,
         "topic": exports.currenttopic, "line": 0, "date": mydate, "sortorder": 0, "data": "" };
     //adjust sortorder based on order of occurrence for now. 
@@ -1848,6 +1862,11 @@ function loadPage(text, filePath, altdate = 0, bookname = "", reload = false) {
         if (found === undefined) {
             exports.topicarray[tkey]?.push(mytopic); //add the previous topic to the array.
             addVectorData(mytopic); //add the topic to the vector DB.
+            if (bookname !== "") {
+                mytopic.topic = bookname;
+                addVectorData(mytopic); //add the book topic to the vector DB.
+                mytopic.topic = exports.currenttopic; //restore the original topic for the current topic.
+            }
         }
         //adjust sortorder based on order of occurrence for now. 
         exports.currenttopic = tkey;
@@ -1895,6 +1914,11 @@ function loadPage(text, filePath, altdate = 0, bookname = "", reload = false) {
     if (found === undefined) {
         exports.topicarray[exports.currenttopic]?.push(mytopic); //add the previous topic to the array.
         addVectorData(mytopic); //add the topic to the vector DB.
+        if (bookname !== "") {
+            mytopic.topic = bookname;
+            addVectorData(mytopic); //add the book topic to the vector DB.
+            mytopic.topic = exports.currenttopic; //restore the original topic for the current topic.   
+        }
     }
     //do we want this?  
     if (!reload) {
@@ -1921,7 +1945,7 @@ function getUri(path) {
     if (!vscode.workspace.workspaceFolders) {
         return vscode.Uri.parse("");
     }
-    const folderUri = workspaceUri;
+    const folderUri = exports.workspaceUri;
     //    const retUri = folderUri.with({ path: posix.join(folderUri.path, path) });
     const retUri = folderUri.with({ path: path_1.posix.join(folderUri.path, path) });
     return retUri;
@@ -1930,7 +1954,7 @@ function getGenBookUri() {
     if (!vscode.workspace.workspaceFolders) {
         return vscode.Uri.parse("");
     }
-    const folderUri = workspaceUri;
+    const folderUri = exports.workspaceUri;
     const genBookFolder = getGenBookPath();
     const genBookUri = folderUri.with({ path: path_1.posix.join(folderUri.path, genBookFolder) });
     return genBookUri;
@@ -1940,7 +1964,7 @@ function getBookUri() {
         return vscode.Uri.parse("");
     }
     // this should be a book path.  Use as you would work on the project.  
-    const folderUri = workspaceUri;
+    const folderUri = exports.workspaceUri;
     const bookFolder = getBookPath(); //get the book folder from settings.
     const bookvectorFolder = getBookVectorPath(); //get the book vector folder from settings.
     const bookUri = folderUri.with({ path: path_1.posix.join(folderUri.path, bookFolder) });
