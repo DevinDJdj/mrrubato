@@ -218,6 +218,9 @@ class MyKeys:
           self.langna.append(key)
           print("language added " + key)
           logger.info("language added " + key)
+          if (key == 'check' and hasattr(self.languages[key], 'mykeys')):
+            self.languages[key].mykeys = self
+
       except Exception as e:
         print("language doesnt exist " + key)
         logger.error(f'Error loading language {key}: {e}')
