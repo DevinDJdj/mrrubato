@@ -95,6 +95,7 @@ def get_url(cacheno=-1):
 def get_text(cacheno=-1, total_read=0, duration=5):
     """Get text from the cached page starting at total_read offset."""
     global current_cache
+    duration = int(duration)
     if (cacheno < 0 or cacheno >= len(page_cache)):
         cacheno = current_cache
     if cacheno < len(page_cache):

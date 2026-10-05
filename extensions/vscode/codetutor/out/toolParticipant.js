@@ -323,6 +323,7 @@ function startWatchingMMAP(name) {
     });
 }
 var transcriberTopic = "";
+var lasturl = "";
 var transcriberTopics = {}; //populate latest topic for each language.  Reduce repetition
 function getSelectionInfo(editor) {
     let selectionInfo = "";
@@ -417,11 +418,15 @@ function readFromTranscriber(str, lang, now = Book.formatDate(), transcriptFolde
 }
 function getContextFromCommand(cmd) {
     let context = '';
-    if (cmd.vars && cmd.vars['ALIAS']) {
-        context = cmd.vars['ALIAS'] + '|';
-    }
-    if (cmd.vars && cmd.vars['URL']) {
-        context += cmd.vars['URL'];
+    if (lasturl !== cmd.vars['URL'] || Math.random() < 0.1) { //remind of URL sometimes.. going to have to find prev URL in link command..
+        if (cmd.vars && cmd.vars['ALIAS']) {
+            context = cmd.vars['ALIAS'] + '|';
+        }
+        if (cmd.vars && cmd.vars['URL']) {
+            context += cmd.vars['URL'];
+            console.log(`Context URL: ${context}`);
+        }
+        lasturl = cmd.vars['URL'];
     }
     if (cmd.vars && cmd.vars[')']) {
         context += ":" + cmd.vars[')'];
@@ -481,14 +486,16 @@ function startWatchingTranscriber(lang, transcriptFolder = "C:/devinpiano/transc
                         //open topic if not already open..
                         console.log("Current topic:", Book.selectedtopic);
                         console.log("Adding to history and selecting topic ", t.topic);
-                        if (t.topic !== Book.selectedtopic && t.topic !== lasttopic) {
+                        //lasttopic == "" should be start of day book..
+                        if ((t.topic !== Book.selectedtopic && t.topic !== lasttopic) || lasttopic === "") {
+                            //                        if (t.topic !== lasttopic){
                             //topic has changed, do something if needed
                             //only add to history if topic has changed.  
                             console.log("Topic has changed, updating page and selecting new topic:", t.topic);
                             Book.updatePage(Book.getBookPath() + "/" + file, '**' + t.topic + '\n', -1, -1); //append to end of file.
                             //                            Book.addToHistory(t.topic); //this happens in select..
-                            Book.select(t.topic);
                             lasttopic = t.topic;
+                            Book.select(t.topic);
                             vscode.commands.executeCommand('workbench.action.chat.open', "@mr /read " + "**" + t.topic);
                         }
                         /*
@@ -571,7 +578,7 @@ function startWatchingTranscriber(lang, transcriptFolder = "C:/devinpiano/transc
                                     t = "$$" + cmd.vars['TIME'] + '\n';
                                 }
                                 //get todays date for filename.  
-                                Book.updatePage(Book.getBookPath() + "/" + file, t + context + input, -1, -1); //append to end of file.
+                                Book.updatePage(Book.getBookPath() + "/" + file, t + "#" + context + "\n" + input, -1, -1); //append to end of file.
                             }
                             if (cmd.cmd === "Time Jump" || cmd.cmd === "Time Zoom") {
                                 //see what time is set and adjust topic selection accordingly..

@@ -12,7 +12,7 @@ import shutil
 
 import languages.helpers.transcriber as transcriber
 import extensions.trey.playwrighty as playwrighty
-
+import mykeys
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +23,7 @@ class check:
     self.config = config
     self.transcriber = None #current_topic set by mykeys for now
     self.qapp = qapp
+    self.mykeys = None #use get_words_ for filtering
     self.func = None
     self.cmd = None
     self.qr = "" #info for QR message
@@ -103,8 +104,10 @@ class check:
     #load language specific data into the config.  
     default = {
       "2": {
-         "Pause": [57,56], #pause check
-         "Unpause": [57,58], #unpause check
+         "Unfilter": [57,56], #pause check
+         "Filter": [57,58], #unpause check/filter
+        "Pause": [57,53], #pause check
+        "Unpause": [57,65], #unpause check/filter
       },
       "3": {
         "Help": [57,69,58], #show help for check commands
@@ -125,6 +128,8 @@ class check:
       "Comment": "comment",
       "Help": "help",
       "Pause": "pause",
+      "Unfilter": "unfilter",
+      "Filter": "filter",
       "Unpause": "unpause",
       "Check Topic": "check_topic",
 
@@ -134,6 +139,8 @@ class check:
       "Help": {"help": "help", "params": "None", "desc": f"Show {self.name} commands."},
       "Pause": {"help": "pause", "params": "None", "desc": f"Pause {self.name} playback."},
       "Unpause": {"help": "unpause", "params": "None", "desc": f"Unpause {self.name} playback."},
+      "Filter": {"help": "filter", "params": "None", "desc": f"Apply filter in {self.name}."},
+      "Unfilter": {"help": "unfilter", "params": "None", "desc": f"Remove filter in {self.name}."},
       "Check Topic": {"help": "check_topic", "params": "None", "desc": f"Open current topic in {self.name}."},
 
     }
@@ -440,6 +447,54 @@ class check:
     
     return 0
 
+
+
+  def filter_(self, sequence=[]):
+    """Filter Check."""
+    logger.info(f'> Filter_ {sequence}')
+    cacheno = -1
+    if (len(sequence) > 0):
+      self.set_qr("Filter_", {'_': 'check', 'SEQ': sequence})
+    return 1
+
+  def filter(self, sequence=[]):
+    """Filter Check."""
+    logger.info(f'> Filter {sequence}')
+    if (len(sequence) > 0):
+      #apply filter in trey.  
+      if (self.mykeys is not None):
+        info = ""
+        words = self.mykeys.get_words_(sequence) #update or filter words as needed
+        for i, w in enumerate(words):      
+          #just display keys to hold for quick sequence..
+          info += f"~~ {w} \n"
+
+
+        logger.info(f'~~{info}')
+      self.set_qr("Filter", {'_': 'check', 'SEQ': sequence, 'words': words})
+    return 0
+
+
+  def unfilter_(self, sequence=[]):
+    """Unfilter Check."""
+    logger.info(f'> Unfilter_ {sequence}')
+    if (len(sequence) > 0):
+
+      self.set_qr("Unfilter_", {'type': 'check', 'SEQ': sequence})
+    
+    return 1
+  
+  def unfilter(self, sequence=[]):  
+    """Unfilter Check."""
+    logger.info(f'> Unfilter {sequence}')
+    if (len(sequence) > 0):
+      if (self.mykeys is not None):
+        words = self.mykeys.get_words_(sequence) #update or filter words as needed
+        logger.info(f'~~{words}')
+      self.set_qr("Unfilter", {'type': 'check', 'SEQ': sequence, 'words': words})
+
+    
+    return 0
 
   def ar2str(self, arr):
     """Array to String."""

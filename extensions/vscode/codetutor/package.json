@@ -225,6 +225,10 @@
             "description": "Generate tests for topic(s)."
           },
           {
+            "name": "link",
+            "description": "Handle link command."
+          },
+          {
             "name": "summary",
             "description": "Create summary of topic(s)."
           },

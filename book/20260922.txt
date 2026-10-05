@@ -568,3 +568,62 @@ All topics have context memory file pointer as well never releasing..
 Do we need two structures?  
 
 
+
+**extensions/vscode/codetutor/src/book.ts
+--pickTopic
+need some filter logic here other than recency..
+Time selection logic not bad, but could be better..
+--findInputTopics
+should be working now..
+
+--getLinkCommand
+[link text](command:commandId)
+
+markdown not working for links..
+
+
+**languages/check.py
+--filter
+test..
+ok, basic function works..
+What to do with this..
+
+
+**extensions/vscode/codetutor/src/tokenizer.tsx
+--tokenize
+Somehow removing :
+Need to fix, as breaking URLs..
+forgot I was using this..
+
+
+**languages/helpers/transcriber.py
+--..time issue
+Need to address this..
+
+
+**extensions/vscode/codetutor/src/languages/base.ts
+code parsing, can we use this:
+What other commands?  
+#https://code.visualstudio.com/api/references/commands
+vscode.executeDocumentSymbolProvider
+vscode.prepareCallHierarchy
+vscode.provideIncomingCalls
+vscode.provideOutgoingCalls
+vscode.executeCodeActionProvider
+workbench.action.openLogFile
+
+Just build graph to navigate from here instead of writing language parsers?  
+
+
+**languages/hotkeys.py
+--record_feedback
+Why do we have some failures here?  
+Getting fuzz..
+last message.
+
+Also ALIAS not set sometimes, annoying..
+
+**extensions/trey/speech.py
+@@Why is the ask result not using kokoro tts
+
+

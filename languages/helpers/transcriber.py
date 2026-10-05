@@ -3,6 +3,7 @@ import base64
 from datetime import datetime, timedelta
 import os
 import logging
+import random
 import time
 import pathlib
 import re
@@ -799,7 +800,8 @@ class transcriber:
                                 currentcmdobj['timestamp'] = self.get_time_var(vars)
                                 currentcmdobj['..'] = currentcmdobj['timestamp'] #duplicate for easy reference later, could also just use timestamp directly but this is more explicit.  could also add other metadata here as needed.
                                 if (now > datetime.fromtimestamp(currentcmdobj['timestamp'])):
-                                    logger.warning(f'..time issue')
+                                    if (random.random() < 0.1):
+                                        logger.warning(f'..time issue')
                                 now = datetime.fromtimestamp(currentcmdobj['timestamp'])
 
                         #add to topic as well..                                        

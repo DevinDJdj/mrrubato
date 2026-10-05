@@ -71,6 +71,9 @@ export function tokenize(str: string, topic: string = "NONE") {
                     out.push(currenttoken);
                     currenttoken = newToken(currentline, currentcolumn, currenttopic, currentdate);
                     currenttoken.data = str[currentPosition];
+                    currenttoken.type = pos;
+                    out.push(currenttoken);
+                    currenttoken = null;
                     instr = false;
                 }
             }

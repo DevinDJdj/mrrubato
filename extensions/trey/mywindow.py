@@ -496,6 +496,14 @@ class MyWindow(QMainWindow):
                 elif (type == 'book'):
                     cacheno = vars.get('cacheno', -1)
                     trey.resume_reader(int(cacheno))
+
+            case "Filter":
+                words = vars.get('words', [])
+                #filter transcript based on cmd..
+            case "Unfilter": 
+                words = vars.get('words', [])
+                #unfilter transcript based on cmd..
+
             case "Get Video":
                 cacheno = vars.get('cacheno', -1)
                 self.get_video(cacheno)

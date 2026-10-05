@@ -1341,8 +1341,10 @@ class hotkeys:
     duration *=3  #triple duration for feedback
     print(f'> Record Feedback for {duration} seconds')
 
+
     timer = datetime.now()
 #    self.transcript = transcribe_audio("feedback.wav")
+    logger.info(f'Transcribing..')
     self.transcript = speech.transcribe_audio_whisper("feedback.wav") #try whisper for better accuracy.  This is slower but hopefully more accurate, especially for short feedback.
 
 
@@ -1355,6 +1357,7 @@ class hotkeys:
     lag = (datetime.now() - timer).total_seconds()
     lag = int(lag)
     print(f'Transcription completed in {lag} seconds: {self.transcript}')
+    logger.info(f'Transcription completed in {lag} seconds: {self.transcript}')
     #get current line and previous line in case we are on a partial..
     #then find the most likely location from text.  
     #if we are reading a page, get current line of that page..
@@ -1367,11 +1370,16 @@ class hotkeys:
         total_read = playwrighty.update_page_offset()
 #        tr -= (lag * 11) #assume 12 chars per second read. this is our timer.. 
 
-        textduration = int(duration*3) #some extra lag here.  
+        textduration = int(duration*3) #some extra lag here.  allow to capture after the fact..
 
         #too much lag to be accurate at the moment.  Maybe get better info with longer transcript..
         url = playwrighty.get_url(-1)      
-        original = playwrighty.get_text(-1, total_read, textduration+lag) 
+        lang = speech.WHISPER_LANGUAGE #use whisper language speed, assume we are speaking this lang..
+        play_speed = self.config['trey']['player']['speed'][lang] if lang in self.config['trey']['player']['speed'] else self.config['trey']['player']['speed']['default']
+        lang_speeds = {'en': 1.0, 'ja': 0.35, 'zh': 0.3, 'es': 1.1, 'de': 0.9} #this calculation needs some adjustment
+        lang_multiplier = lang_speeds.get(lang, 1.0)        
+        original = playwrighty.get_text(-1, total_read, int(textduration*play_speed*lang_multiplier+lag)) 
+        logger.info(f'Original text: {original}')
         original = original.replace('\n','  ')
 #        original = original.upper()
         #find best match location
@@ -1382,16 +1390,18 @@ class hotkeys:
         start = 0
         ostart = 0
         end = len(self.transcript)
-        oend = duration*12
+        oend = int(duration*12*play_speed*lang_multiplier)
         #ScoreAlignment(score=27.77777777777778, src_start=0, src_end=24, dest_start=28, dest_end=40)
+        logger.info(f'Getting fuzz..')
         ff = fuzz.partial_ratio_alignment(self.transcript, original)
         print(ff)
         print("$$FEEDBACK=" + self.transcript)
         print("$$ORIGINAL=" + original)        
         if (end < oend/3):
           print('!!Feedback shorter than expected')
+          logger.info('Feedback shorter than expected')
           #too short.. not detected properly?  
-          return -1
+#          return -1
         #is this a match in our eyes.  Only want good data.  
         #play around with params here as model diverges / converges ..
         if (score in ff and ff.score > 50 and (ff.src_end - ff.src_start) > len(self.transcript)-4 and (ff.dest_end - ff.dest_start) / (ff.src_end - ff.src_start) > 0.7):
@@ -1407,20 +1417,22 @@ class hotkeys:
             vars = {}
             vars['DURATION'] = duration
             vars['FEEDBACK'] = self.transcript
-            vars['LANG'] = playwrighty.detect_language() if playwrighty.mybrowser is not None else "None"
-            if (playwrighty.mybrowser is not None):
-              #where is url?  
-              print(f'$$URL={url}')
-              vars['URL'] = url
-              vars['TRANSCRIPT'] = original
-              vars['LAG'] = lag
-              vars['SCORE'] = score
-              vars['START'] = ostart
-              vars['END'] = oend
-              vars['ORIGINAL'] = original[ostart:oend]
-              fname = '../transcripts/' + self.name + '/' + self.feedbacknowstr + '.wav'
-              vars['FILE'] = fname
+            logger.info(f'Detecting language..')
+            vars['LANG'] = playwrighty.detect_language()
+            #where is url?  
+            print(f'$$URL={url}')
+            vars['URL'] = url
+            vars[')'] = total_read #add offset for book..
+            vars['TRANSCRIPT'] = original
+            vars['LAG'] = lag
+            vars['SCORE'] = score
+            vars['START'] = ostart
+            vars['END'] = oend
+            vars['ORIGINAL'] = original[ostart:oend]
+            fname = '../transcripts/' + self.name + '/' + self.feedbacknowstr + '.wav'
+            vars['FILE'] = fname
             shutil.copy('feedback.wav', fname) #keep a copy for training..
+            logger.info(f'Writing feedback to transcriber with vars: {vars}')
             self.transcriber.write(self.name, "Record Feedback", vars, save=True)  
             self.set_qr("Record Feedback", vars) #update QR with feedback data for debugging and record keeping.
             #do we want to save to book as well?  for now yes, need reference info..
@@ -1428,6 +1440,7 @@ class hotkeys:
             extra = f'$${self.feedbacknowstr}\n#'
             if (alias != ""):
               extra += f'{alias}|'
+              vars['ALIAS'] = alias
             extra += f'{url}:{total_read+ostart}\n{original[ostart:oend]}'
 
             if (self.lasturl == url and random.random() < 0.9):              

@@ -467,6 +467,11 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 		}
 
+		if (request.command === 'link'){
+			//handle link command
+			console.log(`Link command received with prompt: ${request.prompt}`);
+		}
+
 		if (request.command === 'summarize' || request.command=== 'summary'){
 			//find similar topics.  
 			//do we have a topic?  

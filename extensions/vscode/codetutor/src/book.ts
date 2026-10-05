@@ -504,25 +504,31 @@ export function findTopicsCompletion(str: string = "") : string[]{
 export function findInputTopics(inputString : string) : string[]{
     // Create a regex pattern to match double asterisks and capture the text after them
     //need to add newline at start.  
-    const matches = inputString.matchAll(/\*\*/g);
+    const matches = [...inputString.matchAll(/\*\*/g)];
     let ret = [];
+    console.log(`Input string: ${inputString}`);
+    console.log(`Finding input topics in string: ${matches}`);
     for (const match of matches) {
-        if (match.index !== undefined && match.index > 0) {
+        console.log(`Found topic input : ${match}`);
+        if (match.index !== undefined && match.index >= 0) {
             let end = inputString.indexOf(' ', match.index);
             if (end === -1) {
                 end = inputString.length; // If no space found, take the rest of the string
             }
             let key = inputString.substring(match.index + 2, end).trim();
-            //dont use the "books/" prefix in the key for topics..
-            if (key.startsWith("books/")){
-                key = key.substring("books/".length);
-            }
             //deduplicate ret array.  Keep only first instance
             const index = ret.indexOf(key, 0);
             if (index > -1) {
             }
             else{
                 ret.push(key);
+                //dont use the "books/" prefix in the key for topics..
+                //but for now we will just use both..
+                if (key.startsWith("books/")){
+                    
+                    key = key.substring("books/".length);
+                    ret.push(key);
+                }
             }
         
         }
@@ -1474,6 +1480,17 @@ export function loadGenBook(context: vscode.ExtensionContext | null = null) {
 
 }
 
+
+function getLinkCommand(link: string){
+    //this will return the link command for the given link.
+    //for now, just return the link itself.
+    //find last colon
+    //(command://@myextension/mycommand)
+    //(copilot://@mr/link?)
+//    return `copilot://@mr/link?link=${link}`;
+    return link;
+
+}
 //format is for what window..
 export async function markdown(prompt: string, format: number =1) : Promise<string> {
     //this just adjustst the base string to include links to markdown files.  
@@ -1482,15 +1499,15 @@ export async function markdown(prompt: string, format: number =1) : Promise<stri
 
 
     const folderUri = workspaceUri;
-    let marked = prompt.replace(/(\*\*|\#)(\S+)/g, (match, p1, p2) => {
+    let marked = prompt.replace(/(\*\*|\n\#)(\S+)/g, (match, p1, p2) => {
         // p1 is either ** or #
         // p2 is the topic or link 
         let fname = p2;
         let fileUri = folderUri.with({ path: posix.join(folderUri.path, fname) });
        // this should be a book path.  Use as you would work on the project.  
-        if (p1 === "#"){
+        if (p1 === "\n#"){
                 fileUri = p2;
-                return `[${p1}${p2}](${fileUri})`; //return the markdown link.
+                return `[#${p2}](${getLinkCommand(p2)})`; //return the markdown link.
         }
         else{
             let colon = p2.lastIndexOf(":");

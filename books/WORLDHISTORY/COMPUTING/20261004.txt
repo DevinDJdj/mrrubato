@@ -1,0 +1,28 @@
+
+**COMPUTING/TOOLS
+#ABACUS|https://en.wikipedia.org/wiki/Abacus
+#CHARLES_BABBAGE/COMPUTING_ENGINE|https://www.gutenberg.org/cache/epub/71292/pg71292-images.html
+
+**COMPUTING/PEOPLE
+#CHARLES_BABBAGE/LIFE_OF_A_PHILOSOPHER|https://www.gutenberg.org/files/57532/57532-h/57532-h.htm
+#CHARLES_BABBAGE/MACHINERY_AND_MANUFACTURES|https://www.gutenberg.org/cache/epub/4238/pg4238-images.html
+
+**20261003
+$$20261004_181702
+#CHARLES_BABBAGE/MACHINERY_AND_MANUFACTURES|https://www.gutenberg.org/cache/epub/4238/pg4238-images.html:10792
+It has been objected to me, that I have exposed too freely the secrets of t
+$$20261004_182240
+#:17384
+ The amount of patient thought, of repeated experiment, of happy exertion of genius, by which our manufactures have been created and carried to their present excellence, is scarcely to be imagined. I
+$$20261004_183038
+#:25862
+he distance to which such a mode of communication can be extended, does not appear to have been ascertained, and would be an interesting subject for enquiry.
+$$20261004_184417
+#:29356
+A tool is usually more simple than a machine; it is generally used with the hand, whilst a machine is frequently moved by animal or steam power
+$$20261004_185423
+#:37945
+ those machines by which we produce power, it may be observed, that although they are to us immense acquisitions, yet in regard to two of the sources of this power—the force of wind and of water—we merely make use of bodies in a state of motion by nature
+$$20261004_185600
+#:40210
+Man, therefore, does not create power; but, availing himself of his knowledge of nature's mysteries, he applies his talents to diverting a small and limited portion of her energies to his own wa
