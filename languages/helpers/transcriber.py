@@ -712,7 +712,8 @@ class transcriber:
             daysdiff = (daysdiff / 86400)
         pdays = (1 / numlines) * daysdiff
         #this artificial time data may be a problem.  
-        #pdays = 1 / 86400 #one second better?  All cmds should have actual time..
+#        pdays = 1 / 86400 #one second better?  All cmds should have actual time..
+        #we should have 
         now += timedelta(days=-daysdiff) #start at last_time and increment by pdays for each line, so we can have a timestamp for each line even if they dont have one explicitly.  could be useful for sorting topics/commands later.  not perfect, but should be good enough for now.  ideally would want to parse out actual timestamps from lines if available, but this is a start.
         for idx, line in enumerate(lines):
             now += timedelta(days=pdays)
@@ -803,6 +804,7 @@ class transcriber:
                                     if (random.random() < 0.1):
                                         logger.warning(f'..time issue')
                                 now = datetime.fromtimestamp(currentcmdobj['timestamp'])
+                                pdays = 1 / 86400 #one second better?  All cmds should have actual time..
 
                         #add to topic as well..                                        
                         elif (currenttopc is not None and 'vars' in currenttopc):
@@ -830,6 +832,7 @@ class transcriber:
                                     if (now > datetime.fromtimestamp(currenttopc['timestamp'])):
                                         logger.warning(f'..time issue')
                                     now = datetime.fromtimestamp(currenttopc['timestamp'])                                    
+                                    pdays = 1 / 86400 #one second better?  All cmds should have actual time..
                                 else:
                                     linenum = '0'
                                 if ('..' not in currenttopc['vars']):

@@ -944,6 +944,7 @@ class hotkeys:
         alias = playwrighty.get_alias(url)
         if (alias != ""):
           extra += f'{alias}|'
+          vars['ALIAS'] = alias
         extra += f'{url}:{total_read}\n{self.transcript}'
         vars['URL'] = url
       vars['DURATION'] = duration
@@ -1433,15 +1434,19 @@ class hotkeys:
             vars['FILE'] = fname
             shutil.copy('feedback.wav', fname) #keep a copy for training..
             logger.info(f'Writing feedback to transcriber with vars: {vars}')
-            self.transcriber.write(self.name, "Record Feedback", vars, save=True)  
-            self.set_qr("Record Feedback", vars) #update QR with feedback data for debugging and record keeping.
             #do we want to save to book as well?  for now yes, need reference info..
             alias = playwrighty.get_alias(url)
             extra = f'$${self.feedbacknowstr}\n#'
             if (alias != ""):
               extra += f'{alias}|'
               vars['ALIAS'] = alias
+            else:
+              logger.info(f'No alias found for URL: {url}')
+              logger.info(f'{playwrighty.aliases}')
             extra += f'{url}:{total_read+ostart}\n{original[ostart:oend]}'
+
+            self.transcriber.write(self.name, "Record Feedback", vars, save=True)  
+            self.set_qr("Record Feedback", vars) #update QR with feedback data for debugging and record keeping.
 
             if (self.lasturl == url and random.random() < 0.9):              
               extra = f'$${self.feedbacknowstr}\n#:{total_read+ostart}\n{original[ostart:oend]}'

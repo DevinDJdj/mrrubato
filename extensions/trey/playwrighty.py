@@ -1355,8 +1355,7 @@ def read_page(url, cacheno=-1):
         #adding some info to get in same line.. not too elegant.
         alias, url = get_alias_url(url)
         if (alias != ""):
-            key = sys.intern(url)
-            aliases[key] = alias
+            add_alias(url, alias)
         found_item = next((item for item in page_cache if item.get('url') == url), None)
         if found_item is not None and found_item.get('timestamp', 0) + 3600 > time.time(): #cache for 1 hour for now.
             logging.info(f'#{url}\nURL already in cache and valid, returning cached page')

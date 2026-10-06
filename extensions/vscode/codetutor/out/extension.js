@@ -545,7 +545,9 @@ function activate(context) {
             //replace topics.  
             let response = await Book.markdown(context);
             console.log("Response: ", response);
-            stream.markdown(response);
+            let markdownString = new vscode.MarkdownString(response);
+            markdownString.isTrusted = { enabledCommands: ['mrrubato.mytutor.link'] };
+            stream.markdown(markdownString);
             //workbench.action.chat.readChatResponseAloud
             if (toreadaloud) {
                 setTimeout(() => {
@@ -619,6 +621,19 @@ function activate(context) {
     context.subscriptions.push(disposable);
     //start listening for external URIs.  
     vscode.commands.executeCommand('mrrubato.mytutor.start');
+    const linkcommand = vscode.commands.registerCommand('mrrubato.mytutor.link', async (link = "") => {
+        //what else do we do here?  
+        //
+        console.log(`Link command received with link: ${link}`);
+        if (!link || !link.link) {
+            return;
+        }
+        let mylink = decodeURIComponent(link.link);
+        console.log(`Opening link: ${mylink}`);
+        const [url, index] = Book.getURLAndIndex(mylink);
+        vscode.env.openExternal(vscode.Uri.parse(url));
+        //vscode.env.openExternal(vscode.Uri.parse(mylink));
+    });
     const searchcommand = vscode.commands.registerCommand('mrrubato.mytutor.search', async (text = "", topic = "") => {
         //what else do we do here?  
         //

@@ -702,6 +702,22 @@ function webBook(topic: string){
 
 }
 
+
+export function getURLAndIndex(link: string): [string, number] {
+    let total_read = 0;
+    let ret = link;
+    let pipe = ret.indexOf('|');
+    if (pipe !== -1) {
+        ret = ret.substring(pipe + 1);
+    }
+    let colon = ret.lastIndexOf(':');
+    if (colon !== -1) {
+        total_read = parseInt(ret.substring(colon + 1));
+        ret = ret.substring(0, colon);
+    }
+    return [ret, total_read];
+}
+
 function getMyUris(topic: string, externalpath: string = "") : vscode.Uri[] {
     //how many to return..
     //check if file or folder
@@ -1485,9 +1501,11 @@ function getLinkCommand(link: string){
     //this will return the link command for the given link.
     //for now, just return the link itself.
     //find last colon
-    //(command://@myextension/mycommand)
+    let vars = [{ link: link }];
+    return `command:mrrubato.mytutor.link?${encodeURIComponent(JSON.stringify(vars))}`;
+    return `command://@mr/link=${link}`;
     //(copilot://@mr/link?)
-//    return `copilot://@mr/link?link=${link}`;
+    return `copilot://@mr/link?link=${link}`;
     return link;
 
 }
@@ -1496,9 +1514,10 @@ export async function markdown(prompt: string, format: number =1) : Promise<stri
     //this just adjustst the base string to include links to markdown files.  
     //replace **topic with [topic](topic.md)
     //replace #link with [link](link)
-
+    console.log(`Markdown prompt: ${prompt}`);
 
     const folderUri = workspaceUri;
+    let prevURL = "";
     let marked = prompt.replace(/(\*\*|\n\#)(\S+)/g, (match, p1, p2) => {
         // p1 is either ** or #
         // p2 is the topic or link 
@@ -1506,8 +1525,21 @@ export async function markdown(prompt: string, format: number =1) : Promise<stri
         let fileUri = folderUri.with({ path: posix.join(folderUri.path, fname) });
        // this should be a book path.  Use as you would work on the project.  
         if (p1 === "\n#"){
-                fileUri = p2;
-                return `[#${p2}](${getLinkCommand(p2)})`; //return the markdown link.
+
+                if (p2.startsWith(":")){
+                    p2 = prevURL + p2;
+                }
+                else{
+                    let lastColon = p2.lastIndexOf(":");
+                    if (lastColon > 10){
+                        prevURL = p2.substring(0, lastColon);
+                    }
+                    else{
+                        prevURL = p2;
+                    }
+                }
+                let linkText = p2.replace(/\|/g, "\\|"); 
+                return `\n[#${linkText}](${getLinkCommand(p2)})  `; //return the markdown link.
         }
         else{
             let colon = p2.lastIndexOf(":");
@@ -1583,11 +1615,14 @@ export async function markdown(prompt: string, format: number =1) : Promise<stri
         }
         else{
             let readablename = getReadableName(p2);
-            return `[${p1}${readablename}](${fname})`; //return the markdown link.
+            return `[${p1}${readablename}](${getLinkCommand(fname)})`; //return the markdown link.
 
         }
     });
 
+    //$$ is math block in markdown..
+    marked = marked.replace(/\$/g, () => '\\$'); //escape dollar signs
+   console.log(`Marked content: ${marked}`);
     return marked;
 
 }

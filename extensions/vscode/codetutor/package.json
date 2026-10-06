@@ -182,6 +182,10 @@
       {
         "command": "mrrubato.mytutor.search",
         "title": "Search for current line key"
+      }, 
+      {
+        "command": "mrrubato.mytutor.link",
+        "title": "Handle link command"
       }
     ],
     "keybindings": [

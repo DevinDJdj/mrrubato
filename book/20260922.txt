@@ -626,4 +626,26 @@ Also ALIAS not set sometimes, annoying..
 **extensions/trey/speech.py
 @@Why is the ask result not using kokoro tts
 
+**extensions/vscode/codetutor/src/book.ts
+--read
+Why are we not getting 
+
+"markdown.preview.openMarkdownLinks": "inEditor"
+
+--getURLAndIndex
+OK, can open special links now..
+Just use this link handler for most things now..
+Need better handler for no URL links..
+Not sure this is worth not repeating the URL..
+When reading in book, need to fill in the URL data..
+Then it should be fine perhaps..
+Any link starting with : uses prior link..
+Perhaps just pass the time identifier only..
+And start reading via playwrighty..
+
+
+**extensions/trey/trey.py
+How do we interact with gliner objects detected?  
+Need object selection function to drill..
+
 
