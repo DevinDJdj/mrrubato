@@ -907,7 +907,7 @@ class MyKeys:
       self.lasttick = time.time()
       if (self.notes[msg.note] == 0 and doact): #why we need this?  
         self.heldwords.append({'_': msg.note, '..': self.lasttick, '$$': msg.velocity})
-        logger.info(f"Held words updated: {self.heldwords}")
+#        logger.info(f"Held words updated: {self.heldwords}")
         self.notes[msg.note] = msg.velocity
       #data is stale, start again.  
       elif (doact and len(self.heldwords) > 0 and self.heldwords[-1]['_'] == msg.note):

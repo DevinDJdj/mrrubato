@@ -218,7 +218,7 @@ class QRWorker(QObject):
             while (not self.my_queue.empty()):
                 #incoming data from mykeys..
                 qrdata = self.my_queue.get() #get current link number.  
-                logger.info(f'Worker processing QR data: {qrdata[0:50]}')
+#                logger.info(f'Worker processing QR data: {qrdata[0:50]}')
                 self.progress.emit(qrdata) #can pass param here as well.  
 #                time.sleep(0.2) #allow for QR data to be processed by any reader.  
             time.sleep(0.1) #wait before checking again
@@ -324,7 +324,9 @@ class MyWindow(QMainWindow):
             #add to transparent
                 entities = json.loads(entities)
                 if (show):
-                    for i, ent in enumerate(entities):
+                    #always end of list.. ok for now use selector
+                    #keep list of queried, this is what is in future
+                    for i, ent in enumerate(reversed(entities)):
                         #this is transient based on state..
                         if (i > 24):
                             break
@@ -500,9 +502,16 @@ class MyWindow(QMainWindow):
             case "Filter":
                 words = vars.get('words', [])
                 #filter transcript based on cmd..
+                if (len(words) > 0):
+                    self.transcriber.filter_words(vars.get('lang', 'video'), words)
+                    #this should reread..
+                    self.set_time(self.transcriber.timewindow.getTime())
             case "Unfilter": 
                 words = vars.get('words', [])
                 #unfilter transcript based on cmd..
+                if (len(words) > 0):
+                    self.transcriber.filter_words(vars.get('lang', 'video'), [])
+                    self.set_time(self.transcriber.timewindow.getTime())
 
             case "Get Video":
                 cacheno = vars.get('cacheno', -1)
@@ -1068,6 +1077,7 @@ class MyWindow(QMainWindow):
         self.highlightrect = {'x': 100, 'y': 100, 'width': 200, 'height': 200}
         self.bboxes = [] #list of drawn boxes..
         self.highlighton = False
+
         self.startx = 0
         self.queue = q
         self.inqueue = inq
@@ -2117,8 +2127,7 @@ class MyWindow(QMainWindow):
 
 
 
-
-
+        
     def read(self, langs=None, start_time=None, end_time=None):
         if (langs is None):
             langs = self.langs
@@ -2128,6 +2137,10 @@ class MyWindow(QMainWindow):
             data = self.transcriber.read(lang, start_time, end_time)
             logger.info(f'Reading data for {lang} from {start_time} to {end_time}: {len(data)} entries')
             #combine all data into single array sorted by timestamp
+            if (self.transcriber.allcmds.get(lang) and 'filter' in self.transcriber.allcmds[lang] and len(self.transcriber.allcmds[lang]['filter']) > 0):
+                logger.info(f'Applying filter for {lang}: {self.transcriber.allcmds[lang]["filter"]}')
+                words = [w['word'] for w in self.transcriber.allcmds[lang]["filter"]]
+                data = [cmd for cmd in data if cmd['&&'] in words]
             combined.extend(data)
         combined.sort(key=lambda x: x['timestamp'])
         return combined
@@ -2138,7 +2151,6 @@ class MyWindow(QMainWindow):
     def set_time(self, t, s=0, e=0, w=0, langs=None):
         if (langs is None):
             langs = self.langs
-
         localt = datetime.fromtimestamp(t)
         formattedt = localt.strftime('%Y%m%d %H%M%S')
         print(f"Setting time to {formattedt} with start {s}, end {e}, window {w}")
@@ -2269,7 +2281,7 @@ class MyWindow(QMainWindow):
         if (type == '> '):
           if (l['cmd'] == 'Click Link_' or l['cmd'] == 'Select Book_' or l['cmd'] == 'Select Topic_' 
               or l['cmd'] == 'Select Tab_' or l['cmd'] == 'Time Zoom_' or l['cmd'] == 'Read Link_' 
-              or l['cmd'] == 'Select Window_' or l['cmd'] == 'ask_' or l['cmd'] == 'Define_'):
+              or l['cmd'] == 'Select Window_' or l['cmd'] == 'ask_' or l['cmd'] == 'Define_' or l['cmd'] == 'Entity_'):
             for i2, l2 in enumerate(self.label_ps):
                 self.label_ps[i2].setText("")            
             cnt = 0       
@@ -2390,7 +2402,7 @@ class MyWindow(QMainWindow):
             self.label_qr.setPixmap(pixmap)
             self.label_qr.adjustSize()
 
-        logger.info('QR code displayed')
+#        logger.info('QR code displayed')
 
     def findLabel(self, hwnd):
         if (hwnd in self.windowlabels):

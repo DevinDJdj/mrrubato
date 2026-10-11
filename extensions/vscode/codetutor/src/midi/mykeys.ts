@@ -428,6 +428,16 @@ export class MyKeys {
             lang = this.currentlangna;
         }
     
+        let currentTime = Date.now() - this.start;
+
+        if (this.heldwords.length === 1){ //last held word?  
+            let lastnote = this.heldwords[this.heldwords.length - 1];
+            if (currentTime - lastnote['..'] > 1500) { //held for more than 1.5 seconds.. assume we are done..
+                console.log("Last note held for more than 1500ms:", lastnote);
+                //clear sequence..
+                this.reset_sequence();
+            }
+        }
         this.heldwords = this.heldwords.filter(n => n['_'] !== note); //remove from held words
         const obj = this.notes[note];
         if (obj.osc) {

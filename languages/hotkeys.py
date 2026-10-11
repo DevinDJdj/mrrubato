@@ -4,7 +4,7 @@ import re
 import threading
 from turtle import title
 from pynput import *
-from extensions.trey import speech, synth
+from extensions.trey import speech, synth, chromaz
 from languages._meta import _META, _OK, _VIDEO, selector, get_double_clicks
 import pytesseract
 from PIL import Image
@@ -14,6 +14,7 @@ import time
 import os
 from datetime import datetime, timedelta
 import extensions.trey.playwrighty as playwrighty
+
 # Import Module
 import shutil
 import json
@@ -78,8 +79,10 @@ class hotkeys:
     self.now = datetime.now()
     self.feedbacknowstr = self.now.strftime("%Y%m%d_%H%M%S")
     self.entities = []
+    self.mainentities = []
     self.relations = []
     self.graph_threads = []
+    self.ask_threads = []
 
     self.funcdict = {}
     self.suggestions = []
@@ -92,6 +95,7 @@ class hotkeys:
     self.defstring = ""
     self.deflang = ""
     self.defineselector = None
+    self.entityselector = None
 
   def word(self, sequence=[]):
     """Word lookup."""
@@ -132,6 +136,7 @@ class hotkeys:
       logger.info(f'!! <{self.__class__.__name__}> No Data')
       print(f'!! <{self.__class__.__name__}> No Data')  
     playwrighty.load(self.qapp)
+    chromaz.init_chromaz() #persist=True?  
     return 0
 
 
@@ -288,13 +293,13 @@ class hotkeys:
     default = {
       "2": {
 #        "Start": [53,54], #read from this cache page current point.  
-        "Pause": [53,52],
-        "Resume": [53,54],
-        "Read Screen": [53,50],
+        "Pause": [53,52], #-1
+        "Resume": [53,54], #+1
+        "Read Screen": [53,50], #-3
 #        "Page": [53,57],
       },
       "3": {
-        "Stop": [53,55,54],
+        "Stop": [53,55,54], #+2
         "Skip Lines": [53,55,57],
         "Page": [53,55,59], #also read screen
         "Click Link": [53,55,60], #also read screen
@@ -303,22 +308,24 @@ class hotkeys:
         "Search Web": [53,55,61], #also read screen
         "Go Back": [53,55,51], 
         "Ask": [53,55,52],
-        "Close Tab": [53,56,59],
+        "Get Graph": [53,55,50], #cacheno [53,55,50,53] Need indicator as to how much done.. Send piecemeal..
+        "Close Tab": [53,56,59], #+3
         "List Tabs": [53,56,61],
         "Select Tab": [53,56,60],
         "Select Window": [53,56,58],
         "Close Window": [53,56,57],
 
-        "Comment": [53,57, 58], #record comment
+        "Comment": [53,57, 58], #+4 record comment
         "Record Feedback": [53,57,60], 
-        "Select Bookmark": [53,58,56], #feedback tells which mark it is.  Or default to set to 0 idx.  
-        "Get Graph": [53,55,50], #cacheno [53,55,50,53] Need indicator as to how much done.. Send piecemeal..
+        "Select Bookmark": [53,57,56], #feedback tells which mark it is.  Or default to set to 0 idx.  
       }, 
       "4": {
+        #+5
         "Add Bookmark": [53,58,60,62], #feedback tells which mark it is.  Or default to set to 0 idx.  
         #manually select 0 idx = [53,58,60,62,53,53,53]
         "List Bookmarks": [53,58,60,63], #no params
         "Define": [53,58,57,58], #no params
+        "Entity": [53,58,59,58]
       }
     }
 
@@ -387,7 +394,9 @@ class hotkeys:
       "List Bookmarks": "list_bookmarks", 
       "Select Bookmark": "select_bookmark", 
       "Record Feedback": "record_feedback",
-      "Get Graph": "get_graph"
+      "Get Graph": "get_graph", 
+      "Entity": "entity"
+
     }
 
     self.helpdict = {
@@ -478,7 +487,12 @@ class hotkeys:
       "Record Feedback": {
 "> ": "record feedback", 
 "$$": "$DUR, &Feedback", 
-"&&": "Record $DUR seconds of &Feedback for recall and training."}
+"&&": "0=Record $DUR seconds of &Feedback for recall and training."  },
+      "Entity": {
+"> ": "entity",
+ "$$": "$entityno",
+ "&&": "0=Get entity from selection\n1=Get LLM query for $entityno from $cacheno"
+}
     }      
 
     self.load_transcripts()
@@ -1832,6 +1846,7 @@ class hotkeys:
       self.relations.extend(allrelations)
       self.dedup(self.relations)
       self.dedup(self.entities, True)
+      self.entityselector = selector([{'**': e['text']} for e in self.entities], 0)
 
       #set qr info..
       vars["GRAPHS"] = json.dumps(allrelations)
@@ -1843,6 +1858,8 @@ class hotkeys:
       #find central entity.  Create map of counts..
       max_key = max(entity_counts, key=entity_counts.get)
       vars["ENTITY"] = max_key
+      self.mainentities.extend([{'**': max_key}])
+      self.mainentityselector = selector(self.mainentities, 0)
 
 
       if (qr_queue is not None and len(query) > 0): #send combined here if ask query.. ~ 5 minutes depending on CPU/GPU..
@@ -2017,6 +2034,103 @@ class hotkeys:
 #    self.set_qr(self.func, vars)
     return 0
 
+  def entity_(self, sequence=[]):
+    #set in get_graphs2
+    logger.info(f'> Entity_ {sequence}')
+    self.func = "Entity_"
+    vars = {}
+    dcs = get_double_clicks(sequence)
+    aselector = self.entityselector
+    if (_OK in dcs):
+      aselector = self.mainentityselector
+    if (aselector is None):
+      return -1
+    if (len(sequence) > 0):
+      myword = aselector.preselect(self.mid-sequence[-1])
+      myword = myword['**']
+      vars["MYWORD"] = myword
+    aselector.get_vars(vars)
+    self.set_qr(self.func, vars)
+    return 1
+
+  def get_entity_query(self, entity):
+    type = 'loc'
+    if (type in self.config['kg']['entity_queries']):
+      query = self.config['kg']['entity_queries'][type]
+      query = query.replace("$$", entity)
+      return query
+
+  def entity(self, sequence=[]):
+    logger.info(f'> Entity {sequence}')
+    self.func = "Entity"
+    vars = {}
+    if (self.entityselector is None):
+      return -1
+
+    dcs = get_double_clicks(sequence)
+    aselector = self.entityselector
+    if (_OK in dcs):
+      aselector = self.mainentityselector
+    myword = aselector.select(self.mid-sequence[-1])
+    vars["MYWORD"] = myword['**']
+
+    vars["MYQUERY"] = self.get_entity_query(vars["MYWORD"])
+    context, start_offset, end_offset = playwrighty.get_p_context()
+    answer = self.transcriber.ask_ollama(context=f"::CONTEXT:: \n\n{context}\n\n::QUERY:: {vars['MYQUERY']}", model="gemma4:e4b")
+    logger.info(f'$$:={len(answer)}\n$$ANSWER={answer}')
+    vars["ANSWER"] = answer
+    vars["**"] = vars["MYWORD"]    
+    self.set_qr(self.func, vars)
+    return 0
+
+
+  def ask2(self, context, loc, query, vars, strictness=-1, qr_queue=None, reader_queue=None):
+    from extensions.trey.trey import pause_reader, resume_reader
+    logger.info(f'> Ask2')
+    answer = self.transcriber.ask_ollama(context=f"::CONTEXT:: \n\n{context}\n\n::QUERY:: {query}", model="gemma4:e4b", strictness=strictness)
+    vars["ANSWER"] = answer
+    logger.info(f'$$:={len(answer)}\n$$ANSWER={answer}')
+    lang = speech.WHISPER_LANGUAGE
+    self.speak(f'{answer}', lang=lang, total_read=1)
+    #should really have one copy of this..
+    lang_speeds = {'en': 1.0, 'ja': 0.35, 'zh': 0.3, 'es': 1.1, 'de': 0.9} #this calculation needs some adjustment
+    delay = len(answer) /(14*lang_speeds.get(lang, 1.0)) #estimate 14 chars per second for just reading speed
+    t = threading.Timer(delay, resume_reader)
+    t.start()  # Start the timer in a new thread
+    #too slow..
+    self.transcriber.write(self.name, "Ask", vars, save=True) #save for book..
+    self.func = "ask"
+    if (qr_queue is not None):
+      self.set_qr(self.func, vars) #answer quickly before loading graph..
+      qr = "<<" + self.name + ">>\n"
+      qr += self.qr + "\n"
+      qr_queue.put(qr)
+      self.qr = ""
+
+    graphs = ""
+#      graphs = self.get_graphs(context, query)
+    #start thread for this.  
+    self.purge_threads(self.graph_threads)
+
+    self.graph_threads.append(threading.Thread(target=self.get_graphs2, args=(context, vars[')'], query, answer, vars, qr_queue)))
+    self.graph_threads[-1].start()
+#      self.get_graphs2(context, query, vars) #ad to vars..
+#      self.get_graphs2(context, end_offset, query,answer, vars)
+
+    return 0
+
+
+  def purge_threads(self, threads):
+      for t in threads:
+        if t is not None and not t.is_alive():
+          threads.remove(t)  # Remove the finished thread from the list
+      if (len(threads) > 0 and threads[-1] is not None and threads[-1].is_alive()):
+        logger.info('!!Thread still running, waiting for it to finish before starting a new one.')
+        self.synth.play_synth([53+12,55+12,52+12]) #play a sound to indicate waiting for graph thread
+        time.sleep(2)
+#        self.graph_thread.join()  # Wait for the previous thread to finish
+
+    
   def ask(self, sequence=[]):
     logger.info(f'> Ask {sequence}')
     query = "What are you doing?"
@@ -2066,7 +2180,23 @@ class hotkeys:
       synth.play_synth([53+12,55+12,52+12]) #
       #this model a bit slow..
       #gemma3:4b
+
+      url = playwrighty.page_cache[cacheno]['page'].url
+      vars = {"DIRECTION": direction, "URL": url, "(": start_offset, ")": end_offset, "QUERY": query}
+      alias = playwrighty.get_alias(url)
+      if (alias):
+        vars["ALIAS"] = alias
+      vars["**"] = title
+      vars[":"] = end_offset
+      vars["_"] = self.name
+
+      self.purge_threads(self.ask_threads)
+      self.ask_threads.append(threading.Thread(target=self.ask2, args=(context, end_offset, query, vars, strictness, self.qr_queue)))
+      self.ask_threads[-1].start()
+
+      """
       answer = self.transcriber.ask_ollama(context=f"::CONTEXT:: \n\n{context}\n\n::QUERY:: {query}", model="gemma4:e4b", strictness=strictness)
+      vars["ANSWER"] = answer
       logger.info(f'$$:={len(answer)}\n$$ANSWER={answer}')
       lang = speech.WHISPER_LANGUAGE
       self.speak(f'{answer}', lang=lang, total_read=1)
@@ -2076,15 +2206,6 @@ class hotkeys:
       t = threading.Timer(delay, resume_reader)
       t.start()  # Start the timer in a new thread
       #too slow..
-      url = playwrighty.page_cache[cacheno]['page'].url
-      vars = {"DIRECTION": direction, "URL": url, "(": start_offset, ")": end_offset, "QUERY": query}
-      alias = playwrighty.get_alias(url)
-      if (alias):
-        vars["ALIAS"] = alias
-      vars["ANSWER"] = answer
-      vars["**"] = title
-      vars[":"] = end_offset
-      vars["_"] = self.name
       self.transcriber.write(self.name, "Ask", vars, save=True) #save for book..
       self.func = "ask"
       if (self.qr_queue is not None):
@@ -2094,19 +2215,11 @@ class hotkeys:
         self.qr_queue.put(qr)
         self.qr = ""
 
-
       graphs = ""
 #      graphs = self.get_graphs(context, query)
       #start thread for this.  
-      for t in self.graph_threads:
-        if t is not None and not t.is_alive():
-          self.graph_threads.remove(t)  # Remove the finished thread from the list
-      if (len(self.graph_threads) > 0 and self.graph_threads[-1] is not None and self.graph_threads[-1].is_alive()):
-        logger.info('!!Graph thread still running, waiting for it to finish before starting a new one.')
-        self.synth.play_synth([53+12,55+12,52+12]) #play a sound to indicate waiting for graph thread
-        time.sleep(2)
-#        self.graph_thread.join()  # Wait for the previous thread to finish
-
+      self.purge_threads(self.graph_threads)
+  
       self.graph_threads.append(threading.Thread(target=self.get_graphs2, args=(context, end_offset, query, answer, vars, self.qr_queue)))
       self.graph_threads[-1].start()
 #      self.get_graphs2(context, query, vars) #ad to vars..
@@ -2114,6 +2227,7 @@ class hotkeys:
 
 
       self.set_qr(self.func, vars) #do again to load graph..
+      """
 
       #for now just pause reader
     except Exception as e:

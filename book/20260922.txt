@@ -648,4 +648,64 @@ And start reading via playwrighty..
 How do we interact with gliner objects detected?  
 Need object selection function to drill..
 
+**extensions/trey/mywindow.py
+Why do we not store current_time?  
+Keep this and then reload on filter..
+"Filter"
+test..
+This should update display..
 
+
+**extensions/trey/chromaz.py
+ok, test works..
+Dividing by topic maybe creates too much duplication, not sure..
+
+
+**languages/video.py
+--screenshot
+try different mechanism.  
+[60] = BBOX
+[59] or [58] = LEFT/down
+[61] or [62] = RIGHT/up
+[WKEY] = LEFT/RIGHT
+[BKEY] = UP/down
+increment = 5, 20, 80, 320, MAX
+
+
+**languages/hotkeys.py
+Config default prompt for each object selection of KG entries.  
+i.e.
+;$$PER = Who is $$ and what did they do
+;$$EVENT = Tell me about this event $$
+;$$LOC = Where is $$ and what happened there.
+;$$DATE = Tell me about this time period $$
+
+Test entity query..
+
+
+
+**extensions/vscode/codetutor/src/extension.ts
+Dont like the way we are constantly opening the MIDI input page..
+This should be closed..
+
+
+**extensions/vscode/codetutor/src/midi/mykeys.ts
+--noteOff
+If held word for certain time, reset sequence..
+ok..
+
+
+**extensions/vscode/codetutor/src/midi/midi-in.ts
+Should be possible to use multiple midi keyboards, but not tested..
+
+@vscode why do we fail to start extension from time to time?  
+Cant find pattern.  
+Maybe if certain source files in foreground related to this..
+
+
+**languages/_lang.py
+Should we be required to set language, or inherit from hotkeys?  
+set explicitly is ok, but not too intuitive..
+
+Lets read some spanish as well, see if this is tolerable..
+Maybe need to add some logic for this..

@@ -454,7 +454,13 @@ class check:
     logger.info(f'> Filter_ {sequence}')
     cacheno = -1
     if (len(sequence) > 0):
-      self.set_qr("Filter_", {'_': 'check', 'SEQ': sequence})
+      if (self.mykeys is not None):
+        words = self.mykeys.get_words_(sequence) #update or filter words as needed
+        for i, w in enumerate(words):      
+          #just display keys to hold for quick sequence..
+          langna = w["langna"]
+
+        self.set_qr("Filter_", {'_': 'check', 'SEQ': sequence, 'words': words, 'lang': langna})
     return 1
 
   def filter(self, sequence=[]):
@@ -462,16 +468,19 @@ class check:
     logger.info(f'> Filter {sequence}')
     if (len(sequence) > 0):
       #apply filter in trey.  
+      langna = ""
       if (self.mykeys is not None):
         info = ""
         words = self.mykeys.get_words_(sequence) #update or filter words as needed
         for i, w in enumerate(words):      
           #just display keys to hold for quick sequence..
+          langna = w["langna"]
           info += f"~~ {w} \n"
 
 
         logger.info(f'~~{info}')
-      self.set_qr("Filter", {'_': 'check', 'SEQ': sequence, 'words': words})
+      self.transcriber.filter_words(langna, words)
+      self.set_qr("Filter", {'_': 'check', 'SEQ': sequence, 'words': words, 'lang': langna})
     return 0
 
 

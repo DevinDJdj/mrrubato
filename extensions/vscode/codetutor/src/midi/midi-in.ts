@@ -3,8 +3,12 @@ const JMVSC = require('jazz-midi-vscode');
 const JZZ = require('jzz');
 import * as mykeys from './mykeys';
 
-let mkeys : mykeys.MyKeys;
+//let mkeys : mykeys.MyKeys;
+export var panels = {};
+//load config.  
 
+var mkeys = {};
+var midiport = {};
 //use shared JSON config..
 import * as config from '../../../../../../config.json';
 
@@ -21,11 +25,8 @@ function getNonce() {
 export function activate(context) {
     const extpath = context.extensionPath;
     
-    var panels = {};
 
-    //load config.  
 
-    var mkeys = {};
 
     context.subscriptions.push(vscode.commands.registerCommand('midi-demo.midi-in', async function (port) {
         const column = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.viewColumn : undefined;
@@ -55,20 +56,27 @@ export function activate(context) {
 
 
         console.log("setting up mykeys");
-         mkeys[port] = new mykeys.MyKeys(config);
-         var midiport = JZZ().openMidiIn(port).or(() => {
+        if (!mkeys[port]){
+            mkeys[port] = new mykeys.MyKeys(config);
+            console.log("Setting up interval for running holds");
+            setInterval(() => {
+                //send the current sequence to the webview for display
+                //console.log("Running Holds");
+                mkeys[port].runHolds();
+            }, 500);
+        }
+        if (midiport[port]){
+            midiport[port].close();
+        }
+
+
+         midiport[port] = JZZ().openMidiIn(port).or(() => {
              panels[port].webview.html = `<html><body><h1>${port}</h1><p>Cannot open port!</p></body></html>`;
              return;
          });
 
-        console.log("Setting up interval for running holds");
-        setInterval(() => {
-            //send the current sequence to the webview for display
-            //console.log("Running Holds");
-            mkeys[port].runHolds();
-        }, 500);
 
-            midiport.connect((msg) => {
+            midiport[port].connect((msg) => {
                 //console.log('MIDI message:', msg);
                 //mykeys.push(msg);
                 mkeys[port].key(msg, 0, null); //no callback for now.
@@ -88,6 +96,7 @@ export function activate(context) {
 </head>
 <body>
 <h1>${port}</h1>
+<p id="info"></p>
 <pre id="log"></pre>
 <script>
 //const vscode = acquireVsCodeApi();

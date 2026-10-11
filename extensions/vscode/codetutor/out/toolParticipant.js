@@ -818,6 +818,16 @@ function registerPiano(context) {
             midiin.activate(context);
             numconns = info.outputs.length + info.inputs.length;
         }
+        else {
+            console.log("MIDI connections unchanged");
+            //close webview panels..
+            /*
+            for (const port in midiin.panels) {
+                console.log(`Disposing panel for port: ${port}`);
+                midiin.panels[port].dispose();
+            }
+            */
+        }
     }, 60000);
 }
 function unregisterPiano() {

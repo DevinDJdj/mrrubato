@@ -1076,7 +1076,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
         else:
             sleep_time = sound_length / (len(l))
         
-        logger.info(f'Sleep time calculated per char: {sleep_time}')
+#        logger.info(f'Sleep time calculated per char: {sleep_time}')
         sound_start = time.time()
         #for now just use even spacing based on character count..
         for i in range(0, len(l)+1, 11): #check every 12 characters
@@ -1138,7 +1138,7 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
             current_time = time.time()
             to_sleep = sleep_time*i - (current_time - sound_start)
             if (to_sleep < 0):
-                logger.info(f'!!Sleep time calculated as negative, to_sleep: {to_sleep}, play_speed: {play_speed}, lang_multiplier: {lang_multiplier}, links: {linksspoken}')
+#                logger.info(f'!!Sleep time calculated as negative, to_sleep: {to_sleep}, play_speed: {play_speed}, lang_multiplier: {lang_multiplier}, links: {linksspoken}')
                 to_sleep = 0.1
             time.sleep(to_sleep) #simulate reading time. 12 chars per second..
             if (ttotal > total_read+len(l)+1):
@@ -1888,7 +1888,7 @@ def handle_keys(qr_queue=None, qrin_queue=None):
                     
                     if msg.type == 'note_on' or msg.type == 'note_off':
                         print(msg)
-                        logger.info(f'Received MIDI message: {msg}')
+                        #logger.info(f'Received MIDI message: {msg}')
                         if hasattr(msg, 'note'):
                             note = msg.note
                             if (hasattr(msg, 'channel')):

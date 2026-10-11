@@ -121,7 +121,9 @@
 	"kg":{
 		"model_path": "./models/gliner",
 		"entity_labels": ["location", "person", "date", "structure"],
-		"relation_labels": ["located_in", "works_at", "born_in", "lives_in", "founded_in"]
+		"relation_labels": ["located_in", "works_at", "born_in", "lives_in", "founded_in"], 
+		"entity_queries": {"location": "Where is $$ and what happened there", "person": "Who is $$ and what did they accomplish", "date time": "Tell me about this time period $$", "event": "Tell me about this event $$"}
+
 	},
 	
 	"keymap":{

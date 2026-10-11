@@ -273,6 +273,10 @@ class transcriber:
       return ret
 
 
+    def filter_words(self, langna, words):
+        if langna in self.allcmds:
+            self.allcmds[langna]['filter'] = words
+
     #filter for just this topic
     def filter_topics(self, lang, topics, type='**'):
         ret = []
