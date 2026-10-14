@@ -262,7 +262,7 @@ class MyWindow(QMainWindow):
         for idx, cmd in enumerate(cmds):
             currentcmd = cmd['cmd']
             vars = cmd['vars']
-            logger.info(f'Parsed QR command: {currentcmd} with vars: {vars}')
+            logger.info(f'Parsed QR command In: {currentcmd} with vars: {vars}')
             written = self.transcriber.write(vars.get('KLANG', 'base'), currentcmd, vars, None, False) #dont write intermediate msg?            
             #make sure we have parsability..
             self.qr_in.append(written)
@@ -279,8 +279,10 @@ class MyWindow(QMainWindow):
         cmds = self.parseQRData(qrdata)
         #get lang.. dont show based on lang for now..
         is_joystick_cmd = next((cmd for cmd in cmds if cmd['lang'] == 'joystick'), None)
+        is_tock = next((cmd for cmd in cmds if cmd['lang'] == '_meta' and cmd['cmd'] == 'Tock'), None)
         if (len(cmds) > 0 and is_joystick_cmd is None):
-            self.showQR(qrdata, cmds) #refresh QR display
+            if (is_tock is None):
+                self.showQR(qrdata, cmds) #refresh QR display
             #process joystick command as needed.  For now just log it.
 
         pwords = []
@@ -357,14 +359,14 @@ class MyWindow(QMainWindow):
         rect = win32gui.GetWindowRect(temp)
         lagtime = float(vars.get('timestamp', time.time()))
         match command:
-            case "graph":
+            case "Graph":
                 graphs = vars.get('GRAPHS', '')
                 main_entity = vars.get('ENTITY', '')
                 entities = vars.get('ENTITIES', '')
                 show = vars.get('show', True)
                 logger.info(f'> graph\n==\n{graphs}')
                 self.update_graph_entities(graphs, entities, main_entity, vars.get('**', self.transcriber.current_topic), show=show)
-            case "ask":
+            case "Ask":
                 _ = vars.get('_', 'hotkeys')
                 if (_ == 'hotkeys'):
                     logger.info('Received ask command')
@@ -1733,9 +1735,10 @@ class MyWindow(QMainWindow):
         elif (self.qr_cache_index >= len(self.qr_cache)):
             self.qr_cache_index = len(self.qr_cache) - 1
         if (len(self.qr_cache) > 0 and self.qr_cache_index >= 0 and self.qr_cache_index < len(self.qr_cache)):
-            logger.info(f'Retrieving QR from cache at index: {self.qr_cache_index}')
+            logger.info(f'Retrieving QR from cache at index: {self.qr_cache_index} of {len(self.qr_cache)}')
             result = self.qr_cache[self.qr_cache_index]
             logger.info(f'{result["data"]}')
+            logger.info(f'Showing QR with struct: {result["struct"]}')
             self.showQR(result['data'], result['struct'])
             return result
         return None
@@ -2281,7 +2284,7 @@ class MyWindow(QMainWindow):
         if (type == '> '):
           if (l['cmd'] == 'Click Link_' or l['cmd'] == 'Select Book_' or l['cmd'] == 'Select Topic_' 
               or l['cmd'] == 'Select Tab_' or l['cmd'] == 'Time Zoom_' or l['cmd'] == 'Read Link_' 
-              or l['cmd'] == 'Select Window_' or l['cmd'] == 'ask_' or l['cmd'] == 'Define_' or l['cmd'] == 'Entity_'):
+              or l['cmd'] == 'Select Window_' or l['cmd'] == 'Ask_' or l['cmd'] == 'Define_' or l['cmd'] == 'Entity_'):
             for i2, l2 in enumerate(self.label_ps):
                 self.label_ps[i2].setText("")            
             cnt = 0       
@@ -2307,7 +2310,7 @@ class MyWindow(QMainWindow):
             context = l['vars'].get('context', None)
             if (context is not None):
                 fulltext += f"\n{context}\n"
-          elif (l['cmd'] == 'ask'):
+          elif (l['cmd'] == 'Ask'):
             if 'ANSWER' in l['vars']:
                 
                 fulltext += f"\nAnswer: {self.format_ptext(l['vars']['ANSWER'])}\n"
@@ -2369,9 +2372,6 @@ class MyWindow(QMainWindow):
 #        logger.info('Showing QR code')
         #adjust readable text first..
         #check for last last command is it list_bookmarks.  
-        self.qr_cache.insert(0, {'data': data, 'struct': struct})
-        if (self.qr_cache_index != 0):
-            self.qr_cache_index +=1
 
         self.show_p(struct)
         self.update_info(data)
@@ -2385,6 +2385,11 @@ class MyWindow(QMainWindow):
         
         if (self.is_complete_cmd(struct)): #only display if completion
             #truncate this command to show everything but suggestions.  
+            #only add to cache if complete command..
+            self.qr_cache.insert(0, {'data': data, 'struct': struct})
+            if (self.qr_cache_index != 0):
+                self.qr_cache_index +=1
+                
             lines = data.split('\n')
             for (i, l) in enumerate(lines):
                 if (l.startswith('<<meta>>')):

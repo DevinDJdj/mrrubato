@@ -308,7 +308,7 @@ class hotkeys:
         "Search Web": [53,55,61], #also read screen
         "Go Back": [53,55,51], 
         "Ask": [53,55,52],
-        "Get Graph": [53,55,50], #cacheno [53,55,50,53] Need indicator as to how much done.. Send piecemeal..
+        "Graph": [53,55,50], #cacheno [53,55,50,53] Need indicator as to how much done.. Send piecemeal..
         "Close Tab": [53,56,59], #+3
         "List Tabs": [53,56,61],
         "Select Tab": [53,56,60],
@@ -318,6 +318,12 @@ class hotkeys:
         "Comment": [53,57, 58], #+4 record comment
         "Record Feedback": [53,57,60], 
         "Select Bookmark": [53,57,56], #feedback tells which mark it is.  Or default to set to 0 idx.  
+        #+7 context
+        "Context Add": [53,60,61],
+        "Context Remove": [53,60,59], 
+        "Context Query": [53,60,58], 
+        "Context Select": [53,60,62],
+        "Context Show": [53,60,52]
       }, 
       "4": {
         #+5
@@ -394,8 +400,13 @@ class hotkeys:
       "List Bookmarks": "list_bookmarks", 
       "Select Bookmark": "select_bookmark", 
       "Record Feedback": "record_feedback",
-      "Get Graph": "get_graph", 
-      "Entity": "entity"
+      "Graph": "graph", 
+      "Entity": "entity", 
+      "Context Add": "context_add",
+      "Context Remove": "context_remove",
+      "Context Query": "context_query",
+      "Context Select": "context_select",
+      "Context Show": "context_show"
 
     }
 
@@ -437,15 +448,15 @@ class hotkeys:
 "$$": "$linkno", 
 "&&": "0=current\n1=$linkno"},
       "Ask": {
-"> ": "ask",
+"> ": "Ask",
 "$$": "$cacheno, $direction, $strictness, &Query",
 "&&": "0=Ask &Query\n1=Ask &Query from $cacheno\n2=Ask &Query from $cacheno in $direction\n3=Ask &Query from $cacheno in $direction with $strictness\nResponse can be quite long, just basic LLM query using long context from page.  "},
       "Define": {
 "> ": "define",
  "$$": "$Term",
  "&&": "1=Define $Term\n"},
-      "Get Graph": {
-"> ": "get_graph",
+      "Graph": {
+"> ": "Graph",
 "$$": "$cacheno",
       "&&": "0=Get graph from current\n1=Get graph from $cacheno\nResponse can be quite long, gliner-relex model is slow"},
       "Find": {
@@ -492,7 +503,32 @@ class hotkeys:
 "> ": "entity",
  "$$": "$entityno",
  "&&": "0=Get entity from selection\n1=Get LLM query for $entityno from $cacheno"
-}
+}, 
+      "Context Add": {
+"> ": "context add",
+"$$": "$type=ALL, Single, Crawl",
+"&&": "0=Add Current Tab to Context\n1=$type"
+},
+      "Context Remove": {
+"> ": "context remove",
+"$$": "$type=ALL, Single, Crawl",
+"&&": "0=Remove Current Tab from context\n1=$type"
+},
+      "Context Query": {
+"> ": "context query",
+"$$": "&&, $type=ALL, Single, Crawl",
+"&&": "0=Query Current Context\n1=$type"
+},
+      "Context Select": {
+"> ": "context select",
+"$$": "$selection",
+"&&": "0=Default selection\n1=$selection"
+},  
+      "Context Show": {
+"> ": "context show",
+"$$": "None",
+"&&": "0=Show Current Context Details"
+},
     }      
 
     self.load_transcripts()
@@ -1236,7 +1272,7 @@ class hotkeys:
   
   def ask_(self, sequence=[]):
 
-    self.func = "ask_"
+    self.func = "Ask_"
 
     if (len(sequence) > 0 and sequence[-1] >= self.mid and sequence[-1] - self.mid < len(self.suggestions)):
       #select suggestion
@@ -1493,6 +1529,29 @@ class hotkeys:
     return 0
 
 
+  def context_add(self, sequence=[]):
+    logger.info(f'> Context Add {sequence}')
+    # Implement the logic for adding context here
+    return 0
+  def context_remove(self, sequence=[]):
+    logger.info(f'> Context Remove {sequence}')
+    # Implement the logic for removing context here
+    return 0
+
+  def context_query(self, sequence=[]):
+    logger.info(f'> Context Query {sequence}')
+    # Implement the logic for querying context here
+    return 0
+
+  def context_select(self, sequence=[]):
+    logger.info(f'> Context Select {sequence}')
+    # Implement the logic for selecting context here
+    return 0
+  def context_show(self, sequence=[]):
+    logger.info(f'> Context Show {sequence}')
+    # Implement the logic for showing context here
+    return 0
+  
   def search_web(self, sequence=[]):
     logger.info(f'> Search Web {sequence}')
     query = "What is the capital of France?"
@@ -1863,7 +1922,7 @@ class hotkeys:
 
 
       if (qr_queue is not None and len(query) > 0): #send combined here if ask query.. ~ 5 minutes depending on CPU/GPU..
-        self.set_qr("graph", vars) #do again to load graph..
+        self.set_qr("Graph", vars) #do again to load graph..
         qr = "<<" + self.name + ">>\n"
         qr += self.qr + "\n"
         qr_queue.put(qr)
@@ -1922,8 +1981,8 @@ class hotkeys:
       suggest = self.generate_suggestions(query, suggest)
       return suggest
 
-  def get_graph(self, sequence=[]):
-    logger.info(f'> Get Graph {sequence}')
+  def graph(self, sequence=[]):
+    logger.info(f'> Graph {sequence}')
     #for now just query ollama?  better if we have vectra or qdrantz..
     cacheno = -1
     if (len(sequence) > 0):
@@ -1939,7 +1998,7 @@ class hotkeys:
     vars = {"DIRECTION": direction, "URL": url, "(": start_offset, ")": end_offset, "QUERY": ''}
     vars["**"] = title
     vars[":"] = end_offset
-    self.func = "graph"
+    self.func = "Graph"
     vars["_"] = self.name
     #Do we need to track these threads..
     self.graph_threads.append(threading.Thread(target=self.get_graphs2, args=(context, end_offset, '', '', vars, self.qr_queue)))
@@ -2099,7 +2158,7 @@ class hotkeys:
     t.start()  # Start the timer in a new thread
     #too slow..
     self.transcriber.write(self.name, "Ask", vars, save=True) #save for book..
-    self.func = "ask"
+    self.func = "Ask"
     if (qr_queue is not None):
       self.set_qr(self.func, vars) #answer quickly before loading graph..
       qr = "<<" + self.name + ">>\n"

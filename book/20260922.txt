@@ -709,3 +709,67 @@ set explicitly is ok, but not too intuitive..
 
 Lets read some spanish as well, see if this is tolerable..
 Maybe need to add some logic for this..
+
+
+**languages/_meta.py
+--get_cache
+[48,51,50]
+test..
+closer..
+Need more contextual info, also need to execute and not just display..
+Why is display not complete?  
+
+Create selector..
+
+**languages/hotkeys.py
+Need better deduplication of entities..
+
+Still dont really like this gliner model..
+
+
+Reorganize words a bit..
++N groupings should match when possible
+
+
+Continue with chromaz data..
+Use book and topic context for now..
+;[53,60,61] Add
+;[53,60,59] Remove
+;[57,57] = Context crawl?  Single depth
+;[56,56] = Single
+;[59,59] = Session?  
+;[60,60] = ALL
+;[53,60,58] = Query (Single, ALL, Single depth)
+;List/Jump to Selector..
+;[53,60,62]
+Persistent context should include what has been read..
+Load into chromaz when select book.. or select topic..
+Dont reread..
+
+Framework added..
+
+
+;[53,60,52] Show context info..
+Some Tracking and display of context..
+Write context info to file and display in vscode??
+;[57,59,55] ??
+
+
+
+Use existing?
+#https://github.com/run-llama/llama_index
+
+#https://github.com/earendil-works/pi/tree/main
+#https://pi.dev/docs/latest/quickstart
+
+#https://parallel.ai/blog/free-CLI-agent
+#https://insiderllm.com/guides/pi-agent-local-models-ollama/
+
+$$ENV=mrroboto
+test pi..
+;> pi @README.md -p "Summarize this file"
+
+Just use in vscode and wrap this?  
+
+#https://mariozechner.at/posts/2025-11-30-pi-coding-agent/
+
