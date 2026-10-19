@@ -2546,7 +2546,7 @@ class hotkeys:
     #allow for combinations..
     skipmultiplier = 3
     if (_VIDEO in s): #skip video.. possibly set location..
-      skipno = skipno-self.mid
+      skipno = skipno-self.keybot
       if (_META in s):
         skipmultiplier = 12
       playwrighty.skip_video(cacheno, seconds=skipno, multiplier=skipmultiplier)
@@ -2554,7 +2554,7 @@ class hotkeys:
       #playwrighty.skip_ad(cacheno) #not working..
       return 0
     
-    skipno = skipno - self.mid #multiplied by 3.. max half the document..
+    skipno = skipno - self.keybot #multiplied by 3.. max half the document..
 
     from extensions.trey.trey import skip_lines, resume_reader
 

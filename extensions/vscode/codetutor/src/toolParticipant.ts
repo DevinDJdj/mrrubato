@@ -4,6 +4,7 @@ import * as Book from './book';
 import * as fs from 'fs';
 import * as transcriber from './transcriber';
 import { ToolCallRound, ToolResultMetadata, ToolUserPrompt } from './toolsPrompt';
+import * as cp from 'child_process';
 
 //import mmap from '@riaskov/mmap-io';
 
@@ -709,6 +710,44 @@ async function openMyFolder(folderPath: string) {
         console.log('Folder successfully added to workspace.');
     }
     return success;
+}
+
+
+export function activateRunAndCapture(context: vscode.ExtensionContext) {
+    let disposable = vscode.commands.registerCommand('extension.streamStdout', () => {
+        
+        // 1. Create a WriteEmitter to stream data to the terminal UI
+        const writeEmitter = new vscode.EventEmitter<string>();
+        
+        // 2. Define the Pseudoterminal interface
+        const pty: vscode.Pseudoterminal = {
+            onDidWrite: writeEmitter.event,
+            open: () => {
+                writeEmitter.fire('Running command\(...\r\\)n');
+                
+                // 3. Spawn your native command
+                const child = cp.spawn('ping', ['8.8.8.8']); // Example command
+
+                // 4. Stream stdout directly into the VS Code terminal UI
+                child.stdout.on('data', (data) => {
+                    // Replace raw newlines with CRLF for proper terminal formatting
+                    const formattedData = data.toString().replace(/\n/g, '\r\n');
+                    writeEmitter.fire(formattedData);
+                });
+
+                child.on('close', (code) => {
+                    writeEmitter.fire(`\r\nProcess exited with code ${code}\r\n`);
+                });
+            },
+            close: () => {}
+        };
+
+        // 5. Create and show the terminal instance
+        const terminal = vscode.window.createTerminal({ name: "My Stream Terminal", pty });
+        terminal.show();
+    });
+
+    context.subscriptions.push(disposable);
 }
 
 export function activateWorkspaceWatching(context: vscode.ExtensionContext) {

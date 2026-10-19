@@ -19,8 +19,8 @@ import win32con
 
 from PIL import Image, ImageDraw, ImageFont
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QLabel, QDialog, QVBoxLayout, QSystemTrayIcon, QMenu, QAction, QMessageBox
-from PyQt5.QtGui import QPixmap, QPainter, QPen, QBrush, QImage, QFont, QFontMetrics, QFontDatabase, QIcon, QColor
-from PyQt5.QtCore import Qt, QObject, pyqtSignal, QThread
+from PyQt5.QtGui import QPixmap, QPainter, QPen, QBrush, QImage, QFont, QFontMetrics, QFontDatabase, QIcon, QColor, QCursor
+from PyQt5.QtCore import Qt, QObject, pyqtSignal, QThread, QPoint, QTimer
 import PyQt5.QtCore as QtCore
 #video widget..
 from PyQt5.QtMultimediaWidgets import QVideoWidget
@@ -1079,6 +1079,9 @@ class MyWindow(QMainWindow):
         self.highlightrect = {'x': 100, 'y': 100, 'width': 200, 'height': 200}
         self.bboxes = [] #list of drawn boxes..
         self.highlighton = False
+        self.cursor_highlight = True
+        self.highlighter = CursorHighlighter()
+
 
         self.startx = 0
         self.queue = q
@@ -1867,6 +1870,7 @@ class MyWindow(QMainWindow):
     def hideme(self):
         """Method to close the window."""
         self.hide()
+#        self.highlighter.start()
 
         logger.info('Window hidden')
         logger.info(f'!!STARTUP LAG: {time.time() - self.startup_lag} seconds')
@@ -2389,7 +2393,7 @@ class MyWindow(QMainWindow):
             self.qr_cache.insert(0, {'data': data, 'struct': struct})
             if (self.qr_cache_index != 0):
                 self.qr_cache_index +=1
-                
+
             lines = data.split('\n')
             for (i, l) in enumerate(lines):
                 if (l.startswith('<<meta>>')):
@@ -2478,9 +2482,10 @@ class MyWindow(QMainWindow):
                 label.adjustSize()
                 label.update()
 
-
     def paintEvent(self, event):
         super().paintEvent(event)
+#        self.paintCursorHighlight(QPainter(self))
+
         if (self.highlighton):
             self.video_overlay.update() #update the video overlay to draw the highlight box on top of the video widget.
 #            self.video_widget.paintEvent(event) #call paint event of video widget to draw video frame first, then we will draw highlight box on top.
@@ -2498,3 +2503,55 @@ class MyWindow(QMainWindow):
             painter.end()
             """        
         # You can also draw text, ellipses, images, etc.
+
+
+
+class CursorHighlighter(QWidget):
+    def __init__(self):
+        super().__init__()
+        
+        # Make the window frameless, transparent to clicks, and stay on top
+        self.setWindowFlags(
+            Qt.FramelessWindowHint |
+            Qt.WindowStaysOnTopHint |
+            Qt.Tool |
+            Qt.WA_TranslucentBackground |
+            Qt.WA_TransparentForMouseEvents |
+            Qt.WindowTransparentForInput
+        )
+        self.setAttribute(Qt.WA_TranslucentBackground, True)
+        self.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        
+        # Set highlighter circle size (diameter)
+        self.size = 50
+        self.resize(self.size, self.size)
+        
+        # Timer to track global cursor position
+        self.timer = QTimer(self)
+        self.timer.setInterval(10)  # Set the timer interval to 10 ms
+        self.timer.timeout.connect(self.update_position)
+        QTimer.singleShot(30000, self.start) #not ideal, but ..
+        self.show()
+
+    def start(self):
+        self.timer.start()  # ~100 FPS tracking
+
+    def update_position(self):
+        # Get the global cursor position from QApplication
+        pos = QCursor.pos()
+        # Alternative modern PyQt5 way to get global cursor position:
+        # from PyQt5.QtGui import QCursor
+        # pos = QCursor.pos()
+        
+        # Center the highlight circle around the mouse pointer
+        self.move(pos.x() - self.size // 2, pos.y() - self.size // 2)
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        
+        # Draw a semi-transparent yellow/orange circle
+        color = QColor(255, 255, 0, 120)  # RGBA: Yellow with alpha transparency
+        painter.setBrush(color)
+        painter.setPen(Qt.NoPen)
+        painter.drawEllipse(0, 0, self.size, self.size)
