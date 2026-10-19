@@ -53,7 +53,7 @@ import logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(filename='trey.log', 
     format='%(asctime)s %(levelname)-8s %(message)s',
-    level=logging.INFO,
+    level=logging.DEBUG,
     datefmt='%Y-%m-%d %H:%M:%S')
 
 
@@ -1461,6 +1461,10 @@ class MyWindow(QMainWindow):
                     topz = hwnd
                 if (hwnd in self.windows):
                     logger.debug(f"Found window in trey at z index {z_index}: {self.windows[hwnd]['title']} with rect {rect}")
+                    self.windows[hwnd]['z_index'] = z_index
+            else:
+                #really need something else here?  This is for mrroboto at the moment.  
+                if (hwnd in self.windows):
                     self.windows[hwnd]['z_index'] = z_index
             hwnd = win32gui.GetWindow(hwnd, win32con.GW_HWNDNEXT)
             z_index += 1   
