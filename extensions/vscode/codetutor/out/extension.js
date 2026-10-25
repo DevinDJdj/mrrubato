@@ -630,8 +630,10 @@ function activate(context) {
         }
         let mylink = decodeURIComponent(link.link);
         console.log(`Opening link: ${mylink}`);
-        const [url, index] = Book.getURLAndIndex(mylink);
-        vscode.env.openExternal(vscode.Uri.parse(url));
+        // trigger the generate command for this text
+        vscode.commands.executeCommand('mrrubato.mytutor.generate', mylink);
+        //const [url, index] = Book.getURLAndIndex(mylink);
+        //vscode.env.openExternal(vscode.Uri.parse(url));
         //vscode.env.openExternal(vscode.Uri.parse(mylink));
     });
     const searchcommand = vscode.commands.registerCommand('mrrubato.mytutor.search', async (text = "", topic = "") => {

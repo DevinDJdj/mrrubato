@@ -12,9 +12,10 @@ import logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(filename='trey.log', 
     format='%(asctime)s %(levelname)-8s %(message)s',
-    level=logging.DEBUG,
+    level=logging.INFO,
     datefmt='%Y-%m-%d %H:%M:%S')
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 import time
 import sys
 import threading

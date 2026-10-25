@@ -427,8 +427,8 @@ function getContextFromCommand(cmd) {
         if (cmd.vars && cmd.vars['URL']) {
             context += cmd.vars['URL'];
             console.log(`Context URL: ${context}`);
+            lasturl = cmd.vars['URL'];
         }
-        lasturl = cmd.vars['URL'];
     }
     if (cmd.vars && cmd.vars[')']) {
         context += ":" + cmd.vars[')'];

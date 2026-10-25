@@ -269,8 +269,14 @@ def get_unique_url(url):
             url = url.replace('&' + deadparam, '')
     return url
 
-def transcribe_bookmark(url, cacheno=-1, transcriber=None, name="hotkeys"):
+def transcribe_bookmark(url, cacheno=-1, transcriber=None, name="hotkeys", remove=False):
     if (transcriber):
+        if (remove):
+            remove_bookmark(url)
+            transcriber.write(name, "Remove Bookmark", {
+            'URL': url
+            })  
+            return
 #        page = get_ppage(cacheno)
 #        url = page.url
         total_read = 0
@@ -326,6 +332,16 @@ def remove_bookmark_at_index(index):
     global bookmarks
     if (index >= 0 and index < len(bookmarks)):
         bookmarks.pop(index)
+        return True
+    return False
+
+def remove_bookmark(url):
+    global bookmarks
+    url = get_unique_url(url)
+    logger.info(f"Removing bookmark for {url}")
+    found_item = next(filter(lambda item: item.get("url") == url, bookmarks), None)
+    if (found_item is not None):
+        bookmarks.remove(found_item)
         return True
     return False
 
@@ -529,7 +545,12 @@ def open_browser():
         myplaywright = sync_playwright().start()
         
         user_data_dir = os.path.join(config.get_data_folder(), 'playwright_user_data')
-        args = ["--disable-blink-features=AutomationControlled", "--load-extension=C:/devinpiano/music/extensions/handsfree"]
+        args = [
+                "--disable-blink-features=AutomationControlled", 
+                "--disable-extensions-except=C:/devinpiano/music/extensions/handsfree",
+                "--load-extension=C:/devinpiano/music/extensions/handsfree"
+                ]
+        
 
 #        args = ["--disable-blink-features=AutomationControlled"]
         x = screen_position[0]
@@ -544,7 +565,8 @@ def open_browser():
 #        mybrowser = myplaywright.chromium.launch(headless=False, args=args)  
         #no_viewport combo with window-size..
         mybrowser = myplaywright.chromium.launch_persistent_context(user_data_dir, headless=False, args=args, no_viewport=True)
-
+#        mybrowser = myplaywright.chromium.launch_persistent_context(headless=False, args=args, no_viewport=True)
+        mybrowser.on("disconnected", browser_disconnected_handler)
 
         #load last 10
         logger.info(f'Preloading last 10 bookmark URLs: {last10}')
@@ -576,10 +598,12 @@ def close_tab(cacheno=-1):
     if (cacheno < 0 or cacheno >= len(page_cache)):
         cacheno = current_cache
     if cacheno >= 0 and cacheno < len(page_cache):
-        page_info = page_cache[cacheno]       
+        page_info = page_cache.pop(cacheno)
         page = page_info['page']
         page.close()
+        
         logger.info(f'Closed tab for cache {cacheno}')
+
         return True
     else:
         logging.warning(f'No valid current cache to close tab for')
@@ -1000,10 +1024,22 @@ def get_page_details(page):
 
 
 
+
+def browser_disconnected_handler(cacheno):
+    logger.info(f"Browser disconnected")
+    close_browser()
+
+    return 0
 def console_handler(cacheno):
+    with open(f"./temp/{cacheno}/console.log", "w", encoding="utf-8") as f:
+        f.write("")  # clear the file initially
     def log_console_message(msg):
         page = get_ppage(cacheno, False)
         print(f"#{page.title()}\n{msg.type.ljust(7, ' ')}:\t{msg.text}")
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.f")[:-3]
+        log_line = f"[{timestamp}] [{msg.type.upper()}] {msg.text}\n"
+        with open(f"./temp/{cacheno}/console.log", "a", encoding="utf-8") as f:
+            f.write(log_line)
     return log_console_message
 
 def frame_navigated_handler(cacheno):
@@ -1125,7 +1161,8 @@ def update_page_offset(cacheno=-1):
                 locator = page_cache[cacheno]['page'].locator(f"p").filter(has_text=temptext)
                 if (locator.count() == 1):
                     if (current_locator is None or locator.text_content() != (current_locator['text'])):
-                        logging.info(f'--{locator.text_content()[:50]}')
+                        if (random.random() < 0.1): #log only half the time to reduce noise
+                            logging.info(f'--{locator.text_content()[:50]}')
                         if current_locator is not None:
                             current_locator['locator'].evaluate("el => el.style.backgroundColor = 'rgba(0, 0, 0, 0.05)'")
 
