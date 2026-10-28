@@ -1,7 +1,9 @@
+import gc
 import logging
 from multiprocessing import context
+import os
 from pynput import *
-from languages._meta import _META
+
 import pytesseract
 from PIL import Image
 from io import BytesIO
@@ -13,46 +15,11 @@ import shutil
 import languages.helpers.transcriber as transcriber
 import extensions.trey.playwrighty as playwrighty
 
+from languages._meta import _BOOK, _META, _OK, _VIDEO, _HOTKEYS, selector, get_double_clicks
 import torch
 
 
 #stablediffusion hack to be compatible with huggingface_hub 0.36.0 required for hexgrad/Kokoro-82M
-import sys
-import huggingface_hub
-import huggingface_hub.errors
-import huggingface_hub.utils
-
-# 1. hub_utils: resolve_revision
-if not hasattr(huggingface_hub, "resolve_revision"):
-    huggingface_hub.resolve_revision = lambda *args, **kwargs: (
-        args[0] if args else kwargs.get("revision", "main")
-    )
-
-# 2. hub_utils: RevisionResolutionError
-if not hasattr(huggingface_hub.errors, "RevisionResolutionError"):
-    class RevisionResolutionError(Exception):
-        pass
-    huggingface_hub.errors.RevisionResolutionError = RevisionResolutionError
-
-# 3. hub_utils: httpx
-if not hasattr(huggingface_hub.utils, "httpx"):
-    try:
-        import httpx
-        huggingface_hub.utils.httpx = httpx
-    except ImportError:
-        import requests
-        huggingface_hub.utils.httpx = requests
-
-# 4. pipeline_stable_diffusion_xl: get_cached_repo_tree
-if not hasattr(huggingface_hub, "get_cached_repo_tree"):
-    huggingface_hub.get_cached_repo_tree = lambda *args, **kwargs: None
-
-# 5. pipeline_stable_diffusion_xl: CachedRepoTreeNotFoundError
-if not hasattr(huggingface_hub.errors, "CachedRepoTreeNotFoundError"):
-    class CachedRepoTreeNotFoundError(Exception):
-        pass
-    huggingface_hub.errors.CachedRepoTreeNotFoundError = CachedRepoTreeNotFoundError
-
 # Now import diffusers safely
 from diffusers import StableDiffusionXLPipeline
 #stablediffusion hack to be compatible with huggingface_hub 0.36.0 required for hexgrad/Kokoro-82M end..
@@ -117,6 +84,7 @@ class video:
     if (self.image_pipeline is not None):
         return
     print("Loading Stable Diffusion XL model...")
+    torch.set_num_threads(4) #
     logger.info("Loading Stable Diffusion XL model...")
     try:
         self.image_pipeline = StableDiffusionXLPipeline.from_pretrained(
@@ -127,7 +95,8 @@ class video:
             local_files_only=True    # Uncomment once!!??
         )
         #dont hog GPU
-        self.image_pipeline.enable_model_cpu_offload()
+        #self.image_pipeline.enable_model_cpu_offload()
+        self.image_pipeline = self.image_pipeline.to("cuda")
         logger.info("Stable Diffusion XL model loaded successfully.")
     except Exception as e:
         logger.error(f"Failed to load Stable Diffusion XL model: {e}")
@@ -175,7 +144,7 @@ class video:
         "Screenshot": [49,53,55], #take screenshot
         "Zoomshot": [49,53,57], #take zoomed screenshot
         "Next": [49, 53, 54], #next video in transcript history
-        "Generate Image": [49, 53, 54], #generate image for current  context..
+        "Generate Image": [49, 53, 52], #generate image for current  context..
         "Get Video": [49, 53, 51], #get video from video cache..
       },
       "4": {
@@ -450,7 +419,9 @@ class video:
       vars['LAG'] = lag
       fname = '../transcripts/' + self.name + '/' + self.commentnowstr + '.wav'
       vars['FILE'] = fname
+#      vars['_'] = 'video'
       shutil.copy('comment.wav', fname) #keep a copy for training..
+#      self.set_qr("Comment", vars)
       self.transcriber.write(self.name, "Comment", vars)  
       self.transcriber.write_topic(self.name, "", self.transcript, saveTranscript=False, saveBook=True)
 
@@ -551,8 +522,15 @@ class video:
     """Pause Video."""
     logger.info(f'> Pause {sequence}')
     if (len(sequence) > 0):
-      cacheno = sequence[-1]-self.keybot #first key cache selection
-      playwrighty.pause_video(cacheno, self.transcriber) #pause video and add bookmark..
+      dcs = get_double_clicks(sequence)
+      if (_HOTKEYS in dcs):
+#        cacheno = sequence[-1]-self.keybot #first key cache selection
+        cacheno = -1
+        playwrighty.pause_video(cacheno, self.transcriber) #pause video and add bookmark..
+      if (_OK in dcs):
+        self.set_qr("Pause", {'type': 'base'})
+      if (_BOOK in dcs):
+        self.set_qr("Pause", {'type': 'book'})
     else:
       #pause trey.  
       self.set_qr("Pause", {'type': 'video'})
@@ -563,8 +541,15 @@ class video:
     logger.info(f'> Unpause {sequence}')
     cacheno = -1
     if (len(sequence) > 0):
-      cacheno = sequence[-1]-self.keybot #first key cache selection
-      playwrighty.play_video(cacheno) #play video if it is valid cache no..
+      dcs = get_double_clicks(sequence)
+      if (_HOTKEYS in dcs):
+#        cacheno = sequence[-1]-self.keybot #first key cache selection
+        cacheno = -1
+        playwrighty.play_video(cacheno) #pause video and add bookmark..
+      if (_OK in dcs):
+        self.set_qr("Unpause", {'type': 'base'})
+      if (_BOOK in dcs):
+        self.set_qr("Unpause", {'type': 'book'})
     else:
         #unpause trey.  
         self.set_qr("Unpause", {'type': 'video'})
@@ -584,16 +569,31 @@ class video:
   def generate_image2(self, vars, qr_queue=None, reader_queue=None):
     """Generate Image from context."""
     logger.info(f'> Generate Image2 {vars['&&']}')
-    self.load_image_pipeline()
 
-    image = self.image_pipeline(prompt=vars['&&']).images[0]
-    imname = f"./temp/images/{vars['cacheno']}_{vars['(']}.png"
-    image.save(imname)
-    if (imname != ""):
-      self.set_qr("Generate Image", {'type': 'video', 'fname': imname, 'context': vars['&&']})
-    else:
-      logger.info("!!Failed to generate image.")
+    try:
+      stream = torch.cuda.Stream()
+      with torch.cuda.stream(stream):
+        with torch.inference_mode():
+          self.load_image_pipeline()
+    #      self.image_pipeline.to("cuda")
+          logger.info(f'Pipeline loaded..')
+          image = self.image_pipeline(prompt=vars['&&'], num_inference_steps=25, num_images_per_prompt=1).images[0]
+          os.makedirs("./temp/images", exist_ok=True)
+          imname = f"./temp/images/{vars['cacheno']}_{vars['(']}.png"
+          image.save(imname)
+          if (imname != ""):
+            self.set_qr("Generate Image", {'type': 'video', 'fname': imname, 'context': vars['&&']})
+            self.transcriber.write(self.name, "Generate Image", {'type': 'video', 'fname': imname, 'context': vars['&&']}, save=True) #save for future..
+          else:
+            logger.info("!!Failed to generate image.")
+            return -1
+        # Ensure all kernels finish before returning
+        stream.synchronize()
+
+    except Exception as e:
+      logger.error(f"!!Error generating image: {e}")
       return -1
+
     return 0
   
   def generate_image(self, sequence=[]):
@@ -606,8 +606,8 @@ class video:
     if (playwrighty.mybrowser is not None):
       #only get minimal context..
       try:
-        #300 char limit for stable diffusion prompt
-        context, start_offset, end_offset = playwrighty.get_p_context(cacheno=cacheno, direction=0, strictness=0, context_length=300)
+        #300 char limit for stable diffusion prompt for now 200..
+        context, start_offset, end_offset = playwrighty.get_p_context(cacheno=cacheno, direction=0, strictness=0, context_length=200)
         #for now just using raw context..
         vars = {'cacheno': cacheno, '&&': context, '(': start_offset, ')': end_offset}
         self.generate_image2(vars, qr_queue=self.qr_queue) #thread call to not block main flow

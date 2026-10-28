@@ -482,15 +482,159 @@ but diffusers requires more recent..
 
 I guess wait for Kokoro-82M to update??
 And use the hack for diffusers and huggingface_hub
+> pip install diffusers==0.32.1
+> pip install transformers==4.56.2
+> pip install "sentence-transformers<4.0.0"
+
+
+
+$$
+
+!!File "C:\devinpiano\music\treyenv\Lib\site-packages\transformers\models\clip\tokenization_clip.py", line 306, in __init__
+!!    with open(vocab_file, encoding="utf-8") as vocab_handle:
+!!TypeError: expected str, bytes or os.PathLike object, not NoneType 
+==
+> cp https://huggingface.co/laion/CLIP-ViT-bigG-14-laion2B-39B-b160k/tree/main/vocab.json ./models/stablediffusion_complete/tokenizer_2
+> cp https://huggingface.co/laion/CLIP-ViT-bigG-14-laion2B-39B-b160k/tree/main/merges.txt ./models/stablediffusion_complete/tokenizer_2
+> cp https://huggingface.co/openai/clip-vit-large-patch14/tree/main/vocab.json ./models/stablediffusion_complete/tokenizer
+> cp https://huggingface.co/openai/clip-vit-large-patch14/tree/main/merges.txt ./models/stablediffusion_complete/tokenizer
+
 $$
 
 ;> 
         "Generate Image": [49, 53, 54], #generate image for current  context..
         "Get Video": [49, 53, 51], #get video from video cache..
 test..
+Finally some result.  
+Need to show this image..
+Still very slow generation compared to main thread generation..
+10 mins for creation..
+Similar to graph generation, however this seems to stop playwrighty highlight updates..
+Subsequent iterations are much quicker..
+7 mins for 100 char and 25 iterations 
+1 minute to load model first time overhead..
+This may be tolerable on quicker GPUs..
+OK, base functionality there..
+Not ideal, just like gliner..
+
+[49,50] Unpause, should at least display the previous image if pause hides it..
+
+
+**languages/_meta.py
+--get_cache
+[48,51,50]
+Create selector..
+similar functionality to filter..
+transcriber in two different places not great..
+mywindow and mykeys..
+@@Do we want to add to transcriber allcmds as we receive?  
+For now keep separate, Filter and Get Cache..
+temp files still exist, so should be able to retrieve..
+Filter then tick through..
+test filter..
+[57,58] [49]
+
+
+Tune In, Tune Out
+This is basically duplicating..
+If filter/unfilter SEQ only has one key, essentially run Tune In, or Tune Out
+
+Need to show list of languages..
+And filter..
+Just show keys in different color?  
+self.label_ps setStyleSheet
+Adjust this if there is a filter or if in langs..
+
+OK, tune in/out works ok..
+[48,55,56] [50]
+
+test filter..
+Right now written:
+video: RECORD, Screenshot Feedback, Comment, Generate Image
+RECORD separate?  How to filter..
+filter [49,53] [55] Screenshot Feedback, [52] Generate Image, [56] Comment
+
+book: Ask
+check: None
+_meta: None
+_lang: None
+hotkeys: Ask, Record Feedback, Comment, Graph, Add Bookmark, Search Web
+Test filter:
+filter [53,57] Record Feedback, Comment
+filter [53,55] Ask, Graph, Search Web
+ 
+
+**languages/video.py
+changed a few of pause/unpause.  
+Use doubleclick..
+
+
+**extensions/trey/mywindow.py
+--set_p_colors
+Not pretty, but should be fine.  
+use this..
+
+set_qr should indicate if message was transcribed or not..
+If transcribed, add to mywindow.transcriber by reading..
+Then we have an updated listing and dont have to worry about get cache?  
+Or do we want separate get_cache logic?  
+
+
 
 
 **languages/hotkeys.py
 --dedup
 test..
 
+check gliner..
+
+
+**extensions/trey/trey.py
+test..
+Expand time, tick through time..
+Filter, then tick
+
+**languages/hotkeys.py
+--load_graphs2
+--get_graphs2
+Get Graph should create a synopsis first.  
+Synopsis query defined in config..
+Store the generated synopsis.  
+Need two segments, so we can have this along with the generated graph from synopsis and answer..
+Does visualize_kg need to be in mywindow?  
+Not really..
+
+Eventually should load graphs just like we load bookmarks..
+
+
+**extensions/trey/speech.py
+Kokoro can we create a custom voice? 
+Not really..
+
+voice1 = torch.load('voices/af_bella.pt', weights_only=True).to(device)
+voice2 = torch.load('voices/af_sarah.pt', weights_only=True).to(device)
+
+# Example: 50/50 blend or custom weighted mix (e.g., 70% voice1, 30% voice2)
+weight1 = 0.7
+weight2 = 0.3
+custom_voice = (voice1 * weight1) + (voice2 * weight2)
+
+# Save the new custom voice tensor
+torch.save(custom_voice, 'voices/custom_blended_voice.pt')
+
+hmmm..
+
+
+**extensions/trey/mywindow.py
+--show_tmap_body
+somewhat closer to what we want..
+
+
+**languages/hotkeys.py
+--qr_in
+When scrolling through bookmarks, need to jump to page location even if not starting to read..
+
+Also opening new tabs?  
+Not sure how I want this to work..
+Also when pausing after this, we create new bookmarks..
+Need ability to jump to furthest bookmark..

@@ -472,15 +472,18 @@ class check:
       if (self.mykeys is not None):
         info = ""
         words = self.mykeys.get_words_(sequence) #update or filter words as needed
+        vars = {'_': 'check', 'SEQ': sequence}
         for i, w in enumerate(words):      
           #just display keys to hold for quick sequence..
           langna = w["langna"]
           info += f"~~ {w} \n"
+          vars[f'{i}'] = w
 
 
+        vars['lang'] = langna
         logger.info(f'~~{info}')
-      self.transcriber.filter_words(langna, words)
-      self.set_qr("Filter", {'_': 'check', 'SEQ': sequence, 'words': words, 'lang': langna})
+      #self.transcriber.filter_words(langna, words)
+      self.set_qr("Filter", vars)
     return 0
 
 
@@ -489,7 +492,7 @@ class check:
     logger.info(f'> Unfilter_ {sequence}')
     if (len(sequence) > 0):
 
-      self.set_qr("Unfilter_", {'type': 'check', 'SEQ': sequence})
+      self.set_qr("Unfilter_", {'_': 'check', 'SEQ': sequence})
     
     return 1
   
@@ -498,9 +501,18 @@ class check:
     logger.info(f'> Unfilter {sequence}')
     if (len(sequence) > 0):
       if (self.mykeys is not None):
+        info = ""
         words = self.mykeys.get_words_(sequence) #update or filter words as needed
-        logger.info(f'~~{words}')
-      self.set_qr("Unfilter", {'type': 'check', 'SEQ': sequence, 'words': words})
+        vars = {'_': 'check', 'SEQ': sequence}
+        for i, w in enumerate(words):      
+          #just display keys to hold for quick sequence..
+          langna = w["langna"]
+          info += f"~~ {w} \n"
+          vars[f'{i}'] = w
+
+        vars['lang'] = langna
+        logger.info(f'~~{info}')
+      self.set_qr("Unfilter", vars)
 
     
     return 0

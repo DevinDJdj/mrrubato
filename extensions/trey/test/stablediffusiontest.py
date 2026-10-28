@@ -32,7 +32,7 @@ pipeline.to("cuda")
 # Run the model on GPU
 pipeline = pipeline.to("cuda")
 
-prompt = "A photograph of a horse on a highway road at sunset"
+prompt = "A photograph of a horse on a highway road at sunset.  The horse is being ridden by beethoven, and there are many bilboards which look like pianos along the highway."
 
 print("Generating image from prompt...")
 image = pipeline(prompt=prompt).images[0]

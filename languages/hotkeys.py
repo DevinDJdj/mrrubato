@@ -252,6 +252,31 @@ class hotkeys:
         
     logger.info(f'Loaded {numloaded} bookmarks from {totalcmds} commands')
 
+
+  def load_graphs2(self, allcmds):
+    totalcmds = len(allcmds)
+    numloaded = 0
+
+    for c in allcmds:
+      if (c['cmd'] == 'Graph'):
+        print(f'Found graph command {c}')
+        if ('URL' not in c['vars'] or ':' not in c['vars']):
+          continue
+        url = c['vars']['URL']
+        alias = ''
+        if ('ALIAS' in c['vars']):
+          alias = c['vars']['ALIAS']
+          playwrighty.add_alias(url, alias)
+        total_read = int(c['vars'][':'])
+        title = c['vars']['**']
+        query = c['vars']['QUERY'] if 'QUERY' in c['vars'] else ""
+        numloaded += 1
+
+
+    logger.info(f'Loaded {numloaded} Graph commands')
+        
+    logger.info(f'Loaded {numloaded} Graphs from {totalcmds} commands')
+
   #really should load all data in same iteration..
   def load_bookmarks(self):
     #load bookmarks from file for this date.  
@@ -1599,6 +1624,9 @@ class hotkeys:
 
     body_text, link_data, page, cacheno = playwrighty.search_web(query, engine=engine, cacheno=cacheno)
 
+    #save to transcriber..
+    self.transcriber.write(self.name, "Search Web", {'ENGINE': enginename, 'QUERY': query}, save=True) #save for future..
+
 #    print(body_text)
     self.links = link_data
     #should always have a value here..  
@@ -1881,7 +1909,7 @@ class hotkeys:
       self.dedup(allentities, True)
       #only save info from actual context, not answer..
       if (qr_queue is not None and len(query) > 0): #send combined here if ask query.. ~ 5 minutes depending on CPU/GPU..
-        self.transcriber.write(self.name, "graph", vars, save=True) #save for future..
+        self.transcriber.write(self.name, "Graph", vars, save=True) #save for future..
 
 
       subanswers = [answer[i : i + 2048] for i in range(0, len(answer), 2048)]

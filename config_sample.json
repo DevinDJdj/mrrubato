@@ -120,8 +120,8 @@
 	},
 	"kg":{
 		"model_path": "./models/gliner",
-		"entity_labels": ["location", "person", "date", "structure"],
-		"relation_labels": ["located_in", "works_at", "born_in", "lives_in", "founded_in"], 
+		"entity_labels": ["location", "person", "date time", "event"],
+		"relation_labels": ["participated_in", "lived_in", "worked_in", "visited", "hosted", "next_to", "occurred_at", "existed_at"], 
 		"entity_queries": {"location": "Where is $$ and what happened there", "person": "Who is $$ and what did they accomplish", "date time": "Tell me about this time period $$", "event": "Tell me about this event $$"}
 
 	},
