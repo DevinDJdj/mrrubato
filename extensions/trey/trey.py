@@ -12,9 +12,10 @@ import logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(filename='trey.log', 
     format='%(asctime)s %(levelname)-8s %(message)s',
-    level=logging.DEBUG,
+    level=logging.INFO,
     datefmt='%Y-%m-%d %H:%M:%S')
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 import time
 import sys
 import threading
@@ -860,7 +861,8 @@ def play_in_background(text, links=[], offset=0, stop_event=None, skip_event=Non
         if (idx < 2): #adjust for informational lines..
             vol = 1.0
             rate = 1.0
-        if (idx > start_skip and ((idx-start_skip-2) % 100 == 0)): #not perfect.. 5 lines prior to end of last generate_tts
+        #dont regenerate immediately..
+        if (idx > start_skip+5 and ((idx-start_skip-2) % 100 == 0)): #not perfect.. 5 lines prior to end of last generate_tts
             print(f'Processing line {idx}')
             print(f'regenerate TTS for next 100 lines..')
             play_speed = config.cfg['trey']['player']['speed'][lang] if lang in config.cfg['trey']['player']['speed'] else config.cfg['trey']['player']['speed']['default'] #adjusting this dynamically, how much value?  

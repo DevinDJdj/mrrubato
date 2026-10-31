@@ -1,0 +1,680 @@
+
+
+**extensions/vscode/codetutor/src/extension.ts
+Need to at least genbook..
+On a loop..
+
+
+
+
+**extensions/vscode/codetutor/src/extension.ts
+**extensions/trey/trey.py
+Lets see if we can open [**public/web] with login with playwrighty.  
+
+
+
+**web/public/chata.html
+Load [**web/public/data/transcriptions/trey/2026]
+Local vector DB..
+Chat find similar transcript (spoken)..
+Load full transcript from this location..
+Need web transcript parser/viewer..
+
+
+**timestep.py
+create summary for > RECORD
+add it directly to VTT?
+
+
+**timestep.py
+get pre-generated DB of likely command sequences.
+
+
+
+**extensions/trey/trey.py
+**extensions/trey/playwrighty.py
+**extensions/handsfree/popup.js
+--updateQRCode
+Can we load extension to display in playwrighty
+
+
+
+**extensions/vscode/codetutor/src/languages/base.ts
+How do we make slight adjustments.  
+Command to adjust selected text.  
+;> Adjust [&&]
+or
+;> Adjust --function
+;> Select Topic
+;> Select Function --function
+;> Adjust [&&]
+Start with genbook and here maybe..
+
+
+**mykeys.py
+--checkheldwords
+Still need to fix RepeatTimer not working for playwright functions..
+
+
+
+**generate/generatetts.py
+Why are we only getting some percentage created?  
+Look at this..
+
+
+
+**languages/hotkeys.py
+
+Make mini crawler function.  
+Add this  to context.  
+
+**extensions/vscode/codetutor/src/languages/base.ts
+[0,-3,-7]
+test tab_..
+
+**extensions/trey/playwrighty.py
+--handle_frame_navigated
+Needs fixing..
+
+Need to highlight all from time period..
+Get all "Ask, Comment, Feedback"
+And highlight those locations.  
+As we scroll, update the overlay..
+
+
+
+**extensions/trey/playwrighty.py
+--get_video_transcript
+Want vtt from any playing video..
+
+
+
+
+
+**languages/_lang.py
+_BOOK = filter book _ topic..
+
+Perhaps make folder to hold common generic lang entries..
+;**_lang/summary (how long, etc)
+;**_lang/extract (what, graph is sample.., quotes, annotations)
+;**_lang/critique (analyze, fact-check)
+;**_lang/expand
+;**_lang/explain
+;**_lang/compare (params)
+;**_lang/translate (pass params [N,N+12] list [param]?)
+..
+
+
+
+
+**languages/_meta.py
+Should allow for heldkeys to quick scroll..
+
+**extensions/trey/playwrighty.py
+@@Why do we have issues using playwright browser to use i.e. youtube TV or ESPN
+
+
+**extensions/trey/trey.py
+
+Graph doesnt support DBCS?  
+Netoworkx says it is supported, so why the squares..
+Model issue?  
+
+
+**languages/video.py
+**extensions/trey/trey.py
+--play_tmap
+redisplay of graph not working..
+
+
+
+
+**extensions/trey/chromaz.py
+Use chromadb instead of qdrantz
+test..
+
+
+
+**languages/hotkeys.py
+@@How to skip to end of ask answer..
+[53,55,57] [?]
+
+
+
+**languages/book.py
+;> generate book
+[50,56,?]
+simple book context like web context..
+
+;> generate git
+[51,56,?]
+select full function, provide full file code for context.  
+And possibly other surrounding.  
+For now see if we can get a decent result with just one function.. 
+
+For now all just post to book..
+Also allow for pass like:
+;^^ **languages/book.py --select_book
+change to use selector
+
+
+
+**languages/check.py
+;> Create filter..
+;> Select filter ..
+List from recent selection
+Or perhaps just add to book.  
+
+try 
+;\filter ..
+;\filter __language | __language
+;\filter > cmd | > cmd
+;\filter **topic
+;\filter &&book
+quick command to filter current topic or current book
+Allow to specify cmd in sequence..
+or language in sequence by single keybot selection..
+Update display and selection, tick/tock..
+[57,58] [filter]
+[57,56] [filter] remove filter..
+Need access to mykeys 
+--get_words_
+Just add and remove words to array as filtered .. 
+
+Use filtered result..
+[57,59] [54,54] [filter vars] [55,55] [value selector]
+
+[57,55] [54,54]
+
+[57,59] [50,50] [book selector]
+for now just current book..
+
+[57,59] [48,48] [topic selector]
+topic can be multiple..
+
+[57,59] [53,53] [entity selector]
+find and add all relevant to context..
+Use context for further query..
+Hold data in transcriber?  
+
+
+Simply add selected/filtered flag for command entities and/or topic entities.. 
+Expensive.. but probably fine for 1 year data
+
+Nowhere near this to start..
+10,000/day = 3m/year
+But theoretically fine I think computation-wise..
+Much is not written anyways.  
+
+
+Right now all topics for transcripts are just dates..
+only _meta holds topic/book..
+topic[..] is set, but need to match this with all cmds.  
+So just set topic from _meta for all other transcript cmds after merge_cmds?  
+topic/book interchangable here?  
+
+
+
+**languages/book.py
+Finish book ask..
+
+
+**extensions/vscode/codetutor/src/book.ts
+
+@@How do we specify depth when opening book
+for now just leave to 0.
+
+Book ask works.  
+Make read more specific to the last selected topic/book..
+Allow for clicking on any selection to get a response again.  
+;~~
+or 
+;@@
+
+
+
+**languages/_meta.py
+allow for topic selection up/down directory path..
+When reading book, generate directory tree for selection..
+
+
+
+**extensions/vscode/codetutor/src/languages/base.ts
+code parsing, can we use this:
+What other commands?  
+#https://www.freecodecamp.org/news/how-to-build-a-code-graph-in-typescript-using-vs-code-language-apis/
+#https://code.visualstudio.com/api/references/commands
+vscode.executeDocumentSymbolProvider
+vscode.prepareCallHierarchy
+vscode.provideIncomingCalls
+vscode.provideOutgoingCalls
+vscode.executeCodeActionProvider
+workbench.action.openLogFile
+
+Just build graph to navigate from here instead of writing language parsers?  
+
+
+**extensions/trey/speech.py
+@@Why is the ask result not using kokoro tts
+
+
+
+**languages/video.py
+--screenshot
+try different mechanism.  
+[60] = BBOX
+[59] or [58] = LEFT/down
+[61] or [62] = RIGHT/up
+[WKEY] = LEFT/RIGHT
+[BKEY] = UP/down
+increment = 5, 20, 80, 320, MAX
+..
+
+
+**languages/hotkeys.py
+Config default prompt for each object selection of KG entries.  
+i.e.
+;$$PER = Who is $$ and what did they do
+;$$EVENT = Tell me about this event $$
+;$$LOC = Where is $$ and what happened there.
+;$$DATE = Tell me about this time period $$
+
+Test entity query..
+
+
+
+
+**languages/_meta.py
+--get_cache
+[48,51,50]
+Create selector..
+
+**languages/hotkeys.py
+Need better deduplication of entities..
+
+Still dont really like this gliner model..
+
+
+Reorganize words a bit..
++N groupings should match when possible
+
+
+Continue with chromaz data..
+Use book and topic context for now..
+;[53,60,61] Add
+;[53,60,59] Remove
+;[57,57] = Context crawl?  Single depth
+;[56,56] = Single
+;[59,59] = Session?  
+;[60,60] = ALL
+;[53,60,58] = Query (Single, ALL, Single depth)
+;List/Jump to Selector..
+;[53,60,62]
+Persistent context should include what has been read..
+Load into chromaz when select book.. or select topic..
+Dont reread..
+
+Framework added..
+
+
+;[53,60,52] Show context info..
+Some Tracking and display of context..
+Write context info to file and display in vscode??
+;[57,59,55] ??
+
+
+
+Use existing?
+#https://github.com/run-llama/llama_index
+
+#https://github.com/earendil-works/pi/tree/main
+#https://pi.dev/docs/latest/quickstart
+
+#https://parallel.ai/blog/free-CLI-agent
+#https://insiderllm.com/guides/pi-agent-local-models-ollama/
+
+$$ENV=mrroboto
+test pi..
+;> pi @README.md -p "Summarize this file"
+
+Just use in vscode and wrap this?  
+
+#https://mariozechner.at/posts/2025-11-30-pi-coding-agent/
+
+**extensions/vscode/codetutor/src/extension.ts
+Why is the some feedback not in book?  
+Cant tell what causes, not necessarily first feedback.  
+
+In background, find correlated info from read library..
+
+
+#https://github.com/colbymchenry/codegraph
+Try this..
+
+#https://github.com/anomalyco/opencode/tree/v2
+#https://github.com/rodrigomart123/opencode-for-vscode
+
+
+Try a few, opencode, pi, codegraph
+With local LLM
+;> opencode run --agent build --auto
+
+**extensions/vscode/codetutor/src/toolParticipant.ts
+--activateRunAndCapture
+
+Use this and just run opencode or pi agent.  
+Stream response as we are going.  
+Can we interrupt?  
+
+;> opencode run --session <session-id> "Analyze this additional data"
+Have to capture session id on launch..
+
+How to verify, this is key to this type of mechanism.  
+
+**extensions/trey/test/cursorhighlight.py
+Maybe useful..
+LOL, sample freezes everything..
++            Qt.WindowTransparentForInput
+
+**extensions/trey/mywindow.py
+ok, perhaps useful..
+Still have problems if we start UI actions too early..
+30 second startup lag is problematic..
+
+**extensions/trey/speech.py
+Need to be able to use more than 30 secs.  
+
+**languages/hotkeys.py
+Just pass longer duration..
+--speech.listen_audio
+change to multiplier of 10..
+On error, we have possibly 2 minutes until reset..
+Should be infrequent event
+Indicate remaining duration on _
+
+
+**extensions/trey/playwrighty.py
+--console_handler
+log to temp file for comparison..
+;@@When do we store permanently?  
+;@@How do we pass dynamic params..
+
+
+
+**extensions/vscode/codetutor/src/book.ts
+
+Book ask works.  
+Allow for clicking on any selection to get a response again.  
+;~~
+or 
+;@@
+ok
+
+**extensions/vscode/codetutor/src/extension.ts
+--linkcommand
+need better link handler for questions and other..
+Pass full type etc..
+Do all parsing/handling after..
+Just have markdown create links..
+
+
+**extensions/trey/playwrighty.py
+Cant go back multiple times, need to use browser back history..
+Should allow for close of browser to restart..
+Also still saving bookmark even after browser closed..
+;> Remove bookmark
+test..
+;> Search Web
+Some problem with transcription for difficult to distinguish words..
+
+Reset browser..
+[53,50] [48]
+!!playwright._impl._errors.Error: It looks like you are using Playwright Sync API inside the asyncio loop.
+==
+??
+$$
+
+Also console.log empty..
+
+!!. If the author study economy, he should make the whole of his corrections in the manuscript, and should copy it out fairly:$$FILE=../transcripts/hotkeys/20261023_102024.wav
+==
+??
+$$
+
+
+**extensions/trey/test/stablediffusiontest.py
+ok, works..
+
+**languages/video.py
+--generate_image
+switch to stablediffusion pipeline, and use in generate image..
+;> 
+        "Generate Image": [49, 53, 54], #generate image for current  context..
+        "Get Video": [49, 53, 51], #get video from video cache..
+test..
+
+
+!!Failed to import diffusers.models.autoencoders.autoencoder_kl because of the following error (look up to see its traceback):
+!!Lazy import of LazyModule(package=None, target=speechbrain.integrations.k2_fsa, loaded=False) failed
+==
+> pip install --upgrade --force-reinstall speechbrain
+This screws up lots of pre-reqs..
+$$20260109
+or 
+$$20261014
+> pip install -r ./extensions/trey/requirements.txt
+Why does this not save torch CUDA..
+> pip uninstall torch torchvision torchaudio
+> pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
+> pip install torchvision==0.23.0 --index-url https://download.pytorch.org/whl/cu128
+> pip install torchaudio==2.8 --index-url https://download.pytorch.org/whl/cu128
+> pip install tf-keras
+.. 1 hour later..
+> pip install --upgrade playwright
+> playwright install  
+
+> pip install --upgrade --no-deps speechbrain
+> pip install --upgrade --no-deps sentence-transformers
+> pip install --upgrade --no-deps diffusers
+core issue is 
+kokoro requires huggingface_hub < 1.0
+but diffusers requires more recent..
+
+I guess wait for Kokoro-82M to update??
+And use the hack for diffusers and huggingface_hub
+> pip install diffusers==0.32.1
+> pip install transformers==4.56.2
+> pip install "sentence-transformers<4.0.0"
+
+
+
+$$
+
+!!File "C:\devinpiano\music\treyenv\Lib\site-packages\transformers\models\clip\tokenization_clip.py", line 306, in __init__
+!!    with open(vocab_file, encoding="utf-8") as vocab_handle:
+!!TypeError: expected str, bytes or os.PathLike object, not NoneType 
+==
+> cp https://huggingface.co/laion/CLIP-ViT-bigG-14-laion2B-39B-b160k/tree/main/vocab.json ./models/stablediffusion_complete/tokenizer_2
+> cp https://huggingface.co/laion/CLIP-ViT-bigG-14-laion2B-39B-b160k/tree/main/merges.txt ./models/stablediffusion_complete/tokenizer_2
+> cp https://huggingface.co/openai/clip-vit-large-patch14/tree/main/vocab.json ./models/stablediffusion_complete/tokenizer
+> cp https://huggingface.co/openai/clip-vit-large-patch14/tree/main/merges.txt ./models/stablediffusion_complete/tokenizer
+
+$$
+
+;> 
+        "Generate Image": [49, 53, 54], #generate image for current  context..
+        "Get Video": [49, 53, 51], #get video from video cache..
+test..
+Finally some result.  
+Need to show this image..
+Still very slow generation compared to main thread generation..
+10 mins for creation..
+Similar to graph generation, however this seems to stop playwrighty highlight updates..
+Subsequent iterations are much quicker..
+7 mins for 100 char and 25 iterations 
+1 minute to load model first time overhead..
+This may be tolerable on quicker GPUs..
+OK, base functionality there..
+Not ideal, just like gliner..
+
+[49,50] Unpause, should at least display the previous image if pause hides it..
+
+
+**languages/_meta.py
+--get_cache
+[48,51,50]
+Create selector..
+similar functionality to filter..
+transcriber in two different places not great..
+mywindow and mykeys..
+@@Do we want to add to transcriber allcmds as we receive?  
+For now keep separate, Filter and Get Cache..
+temp files still exist, so should be able to retrieve..
+Filter then tick through..
+test filter..
+[57,58] [49]
+
+
+Tune In, Tune Out
+This is basically duplicating..
+If filter/unfilter SEQ only has one key, essentially run Tune In, or Tune Out
+
+Need to show list of languages..
+And filter..
+Just show keys in different color?  
+self.label_ps setStyleSheet
+Adjust this if there is a filter or if in langs..
+
+OK, tune in/out works ok..
+[48,55,56] [50]
+
+test filter..
+Right now written:
+video: RECORD, Screenshot Feedback, Comment, Generate Image
+RECORD separate?  How to filter..
+filter [49,53] [55] Screenshot Feedback, [52] Generate Image, [56] Comment
+
+book: Ask
+check: None
+_meta: None
+_lang: None
+hotkeys: Ask, Record Feedback, Comment, Graph, Add Bookmark, Search Web
+Test filter:
+filter [53,57] Record Feedback, Comment
+filter [53,55] Ask, Graph, Search Web
+ 
+
+**languages/video.py
+changed a few of pause/unpause.  
+Use doubleclick..
+
+
+**extensions/trey/mywindow.py
+--set_p_colors
+Not pretty, but should be fine.  
+use this..
+
+set_qr should indicate if message was transcribed or not..
+If transcribed, add to mywindow.transcriber by reading..
+Then we have an updated listing and dont have to worry about get cache?  
+Or do we want separate get_cache logic?  
+
+
+
+
+**languages/hotkeys.py
+--dedup
+test..
+
+check gliner..
+
+
+**extensions/trey/trey.py
+test..
+Expand time, tick through time..
+Filter, then tick
+
+**languages/hotkeys.py
+--load_graphs2
+--get_graphs2
+Get Graph should create a synopsis first.  
+Synopsis query defined in config..
+Store the generated synopsis.  
+Need two segments, so we can have this along with the generated graph from synopsis and answer..
+Does visualize_kg need to be in mywindow?  
+Not really..
+
+Eventually should load graphs just like we load bookmarks..
+
+
+**extensions/trey/speech.py
+Kokoro can we create a custom voice? 
+Not really..
+
+voice1 = torch.load('voices/af_bella.pt', weights_only=True).to(device)
+voice2 = torch.load('voices/af_sarah.pt', weights_only=True).to(device)
+
+# Example: 50/50 blend or custom weighted mix (e.g., 70% voice1, 30% voice2)
+weight1 = 0.7
+weight2 = 0.3
+custom_voice = (voice1 * weight1) + (voice2 * weight2)
+
+# Save the new custom voice tensor
+torch.save(custom_voice, 'voices/custom_blended_voice.pt')
+
+hmmm..
+
+
+**extensions/trey/mywindow.py
+--show_tmap_body
+somewhat closer to what we want..
+test scroll to location of bookmark..
+
+**languages/hotkeys.py
+--qr_in
+When scrolling through bookmarks, need to jump to page location even if not starting to read..
+
+Also opening new tabs?  
+Not sure how I want this to work..
+Also when pausing after this, we create new bookmarks..
+Need ability to jump to furthest bookmark..
+m: devin is wierd weird weird
+
+**languages/check.py
+--select_filter
+Have filter/select function
+Similar for cache/select function..
+What to show in selector?  
+;..>:&&
+Start with word filter until _OK, then just have selector based on these words and current time..
+Show details on pre-select..
+Keep recent cache since started separate for now..
+
+[48,50,53] [54]
+[57,59,60] [53,58] [54,54] [selection]
+
+test..
+
+**languages/helpers/transcriber.py
+--shortformvars
+Need better mechanism..
+
+**languages/hotkeys.py
+Dedup looks better, but we have a lot of blanks..
+Need to clear this..
+Python pass by reference cant reassign
+mylist = [e for e in mylist if e['text'] != '']
+mylist[:] = [e for e in mylist if e['text'] != '']
+test..
+
+
+;> Comment
+allow for highlight of text to comment on a particular piece of text.  
+Similar to screenshot feedback, but just for text on a particular page..
+
+
+**extensions/vscode/codetutor/src/book.ts
+--updatePage
+lets stop switching editors, too confusing..
+$$show=true
+

@@ -77,6 +77,7 @@ class hotkeys:
     self.tofind = ""
     self.tofindhistory = []
     self.now = datetime.now()
+    self.duration = 0
     self.feedbacknowstr = self.now.strftime("%Y%m%d_%H%M%S")
     self.entities = []
     self.mainentities = []
@@ -229,7 +230,15 @@ class hotkeys:
         print(f'Loaded bookmark {url} at {total_read}')
         playwrighty.add_bookmark(url, total_read, text, video_pos) #call playwrighty add bookmark..
         numloaded += 1
-            
+
+      elif c['cmd'] == 'Remove Bookmark':
+        if ('URL' not in c['vars']):
+          continue
+        url = c['vars']['URL']
+        playwrighty.remove_bookmark(url)
+        if (url in last10):
+          last10.remove(url)
+        url = ''
       if url != "":
         url = playwrighty.get_unique_url(url) #normalize url for bookmark list.
         if (url in last10):
@@ -242,6 +251,31 @@ class hotkeys:
     playwrighty.last10 = last10
         
     logger.info(f'Loaded {numloaded} bookmarks from {totalcmds} commands')
+
+
+  def load_graphs2(self, allcmds):
+    totalcmds = len(allcmds)
+    numloaded = 0
+
+    for c in allcmds:
+      if (c['cmd'] == 'Graph'):
+        print(f'Found graph command {c}')
+        if ('URL' not in c['vars'] or ':' not in c['vars']):
+          continue
+        url = c['vars']['URL']
+        alias = ''
+        if ('ALIAS' in c['vars']):
+          alias = c['vars']['ALIAS']
+          playwrighty.add_alias(url, alias)
+        total_read = int(c['vars'][':'])
+        title = c['vars']['**']
+        query = c['vars']['QUERY'] if 'QUERY' in c['vars'] else ""
+        numloaded += 1
+
+
+    logger.info(f'Loaded {numloaded} Graph commands')
+        
+    logger.info(f'Loaded {numloaded} Graphs from {totalcmds} commands')
 
   #really should load all data in same iteration..
   def load_bookmarks(self):
@@ -901,7 +935,8 @@ class hotkeys:
             logger.info(f'#{url}\n{total_read}')
             playwrighty.open_browser() #in case not open already..
             playwrighty.add_bookmark(url, total_read, text) #call playwrighty add bookmark..
-            playwrighty.read_page(url, -1) #cacheno -1 means load new page if not already open.  
+            body_text, link_data, page, cacheno = playwrighty.read_page(url, -1) #cacheno -1 means load new page if not already open.  
+            playwrighty.update_page_offset(cacheno=cacheno, total_read=total_read) #scroll to location..
         if (c['type'] == '> ' and c['cmd'] == 'Send Windows'):
           logger.info(f'Send Windows {c}')
           for i, v in c['vars'].items():
@@ -938,8 +973,9 @@ class hotkeys:
       print("> Comment_ called")
       #get audio input for query.  
       duration = sequence[0]-self.keybot #in seconds
-      duration *=3  #double duration for feedback
+      duration *=10  #double duration for feedback
       self.now = datetime.now()
+      self.duration = duration
       self.commentnowstr = self.now.strftime("%Y%m%d_%H%M%S") #set nowstr for feedback.  
 
       at = speech.listen_audio(duration, "comment.wav")
@@ -953,7 +989,8 @@ class hotkeys:
       #get real-time input
       self.func = "Comment_"
       self.transcript += speech.transcribe_now() + "\n"
-      self.set_qr(self.func, {'transcript': self.transcript})
+      remaining = self.duration - (datetime.now() - self.now).total_seconds() if self.now is not None else self.duration
+      self.set_qr(self.func, {'transcript': self.transcript, 'DUR': self.duration, 'REMAINING': remaining})
       #update display.  
 
 
@@ -1052,6 +1089,10 @@ class hotkeys:
         cacheno = playwrighty.current_cache
       if (cacheno < 0 or cacheno >= len(playwrighty.page_cache)):
         cacheno = len(playwrighty.page_cache)-1
+      #remove bookmark..
+      page = playwrighty.get_ppage(cacheno, False) #dont activate.. we are closing sometimes..
+      playwrighty.transcribe_bookmark(page.url, cacheno=cacheno, transcriber=self.transcriber, name=self.name, remove=True)
+
       playwrighty.close_tab(cacheno)
     return 0
   
@@ -1138,7 +1179,7 @@ class hotkeys:
       body_length = playwrighty.page_cache[cacheno]['length'] if cacheno >=0 and cacheno < len(playwrighty.page_cache) else 0
 
       if (url != "" and url != "about:blank"):
-        playwrighty.transcribe_bookmark(url, transcriber=self.transcriber, name=self.name)
+        playwrighty.transcribe_bookmark(url, cacheno=cacheno, transcriber=self.transcriber, name=self.name)
 #        self.transcriber.write(self.name, "Add Bookmark", {
 #          'URL': url,'TOTAL_READ': total_read,'BODY_LENGTH': body_length,'TEXT': text
 #        })  
@@ -1255,7 +1296,7 @@ class hotkeys:
     print("> _Ask called")
     #get audio input for query.  
     self.transcript = "" #reset transcript..
-    at = speech.listen_audio(15, "ask.wav") #assume some more time for question..
+    at = speech.listen_audio(30, "ask.wav") #assume some more time for question..
     #at.join() #wait for it to finish.
     #have to just use some keys until this is done.  
     #need to return 1 to indicate we need more keys.
@@ -1337,7 +1378,7 @@ class hotkeys:
     logger.info(f'> _Search Web {sequence}')
     print("> _Search Web called")
     #get audio input for query.      from extensions.trey.speech import listen_audio
-    at = speech.listen_audio(5, "query.wav")
+    at = speech.listen_audio(15, "query.wav")
     #at.join() #wait for it to finish.
     #have to just use some keys until this is done.  
     #need to return 1 to indicate we need more keys.
@@ -1352,8 +1393,9 @@ class hotkeys:
       print("> Record Feedback_ called")
       #get audio input for query.  
       duration = sequence[0]-self.keybot #in seconds
-      duration *=3  #double duration for feedback
+      duration *=10  #double duration for feedback
       self.now = datetime.now()
+      self.duration = duration
       self.feedbacknowstr = self.now.strftime("%Y%m%d_%H%M%S") #set nowstr for feedback.  
       self.helpdict['Record Feedback']['$$+'] = f"$DUR={duration}\n&Feedback\n"
       at = speech.listen_audio(duration, "feedback.wav")
@@ -1367,7 +1409,8 @@ class hotkeys:
       #get real-time input
       self.func = "Record Feedback_"
       self.transcript += speech.transcribe_now() + "\n"
-      self.set_qr(self.func, {'transcript': self.transcript})
+      remaining = self.duration - (datetime.now() - self.now).total_seconds() if self.now is not None else self.duration
+      self.set_qr(self.func, {'transcript': self.transcript, 'DUR': self.duration, 'REMAINING': remaining})
       #update display.  
 
 
@@ -1582,6 +1625,9 @@ class hotkeys:
 
     body_text, link_data, page, cacheno = playwrighty.search_web(query, engine=engine, cacheno=cacheno)
 
+    #save to transcriber..
+    self.transcriber.write(self.name, "Search Web", {'ENGINE': enginename, 'QUERY': query}, save=True) #save for future..
+
 #    print(body_text)
     self.links = link_data
     #should always have a value here..  
@@ -1742,12 +1788,15 @@ class hotkeys:
   def ddedup(self, t, all, stringmap, threshold = 80):
     from rapidfuzz import fuzz, process
     alt = ''
-    match = process.extractOne(t, all, scorer=fuzz.ratio)
+    match = process.extractOne(t, all, scorer=fuzz.WRatio) #try WRatio
     if (not match or match[1] < threshold):
       stringmap[t] = {'cnt': 0, 'alt': ''}
       all.append(t)
     else:
       stringmap[ match[0]]['alt'] = t
+      stringmap[match[0]]['cnt'] += 1
+      return match[0]
+    return ''
 
   def dedup(self, mylist, isentities=False, threshold = 80):
     #deduplicate based on names..
@@ -1756,34 +1805,31 @@ class hotkeys:
     if (isentities):
       for e in mylist:
         t = e['text']
-        self.ddedup(t, all, stringmap, threshold)
+        if (self.ddedup(t, all, stringmap, threshold) != ''):
+          #remove from mylist
+          e['text'] = ''
 
+      mylist[:] = [e for e in mylist if e['text'] != '']
+
+      logger.info(f'> Dedup entities')
       logger.info(stringmap)
-      for name, obj in stringmap.items():
-        #replace all with alt.  
-        alt = obj['alt']
-        if (alt !=''):
-          for e in mylist:
-            if (e['text'] == alt):
-              e['text'] = name
+
     else:
       for r in mylist:
         h = r['head']['text']
         t = r['tail']['text']
-        self.ddedup(h, all, stringmap, threshold)
-        self.ddedup(t, all, stringmap, threshold)
+        temp = self.ddedup(h, all, stringmap, threshold)
+        if (temp != ''):
+          r['head']['text'] = temp
 
-      logger.info(f'> Dedup')        
+        temp = self.ddedup(t, all, stringmap, threshold)
+        if (temp != ''):
+          r['tail']['text'] = temp
+
+      logger.info(f'> Dedup relations')
       logger.info(stringmap)
-      for name, obj in stringmap.items():
-        #replace all with alt.  
-        alt = obj['alt']
-        if (alt !=''):
-          for r in mylist:
-            if (r['head']['text'] == alt):
-              r['head']['text'] = name
-            if (r['tail']['text'] == alt):
-              r['tail']['text'] = name
+
+
 
       
   def get_graphs2(self, context, loc, query, answer, vars, qr_queue=None, reader_queue=None):
@@ -1864,7 +1910,7 @@ class hotkeys:
       self.dedup(allentities, True)
       #only save info from actual context, not answer..
       if (qr_queue is not None and len(query) > 0): #send combined here if ask query.. ~ 5 minutes depending on CPU/GPU..
-        self.transcriber.write(self.name, "graph", vars, save=True) #save for future..
+        self.transcriber.write(self.name, "Graph", vars, save=True) #save for future..
 
 
       subanswers = [answer[i : i + 2048] for i in range(0, len(answer), 2048)]
@@ -2546,7 +2592,7 @@ class hotkeys:
     #allow for combinations..
     skipmultiplier = 3
     if (_VIDEO in s): #skip video.. possibly set location..
-      skipno = skipno-self.mid
+      skipno = skipno-self.keybot
       if (_META in s):
         skipmultiplier = 12
       playwrighty.skip_video(cacheno, seconds=skipno, multiplier=skipmultiplier)
@@ -2554,7 +2600,7 @@ class hotkeys:
       #playwrighty.skip_ad(cacheno) #not working..
       return 0
     
-    skipno = skipno - self.mid #multiplied by 3.. max half the document..
+    skipno = skipno - self.keybot #multiplied by 3.. max half the document..
 
     from extensions.trey.trey import skip_lines, resume_reader
 

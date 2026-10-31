@@ -1,7 +1,7 @@
 import logging
 from pynput import *
 import languages.helpers.timewindow as timewindow
-
+from languages._meta import _META, _OK, _VIDEO, selector, get_double_clicks
 import pytesseract
 from PIL import Image
 from io import BytesIO
@@ -50,6 +50,8 @@ class check:
     self.topichistory = [] #store past topics for context.  This is not currently used for anything but could be used for context in future functions.
     self.links = [] #currently selected link structure from page..
     self.timewindow = timewindow.timewindow(self) #for timeline functions, can also be used for general time tracking.  This is initialized here but can be reset by timeline if needed.
+    self.filter_selector = None
+    self.filter_cmds = None
 
   def word(self, sequence=[]):
     """Word lookup."""
@@ -110,6 +112,7 @@ class check:
         "Unpause": [57,65], #unpause check/filter
       },
       "3": {
+        "Select Filter": [57, 59, 60], 
         "Help": [57,69,58], #show help for check commands
         "Comment": [57,61, 62], #record comment
         "Check Topic": [57,60,64], #open topic
@@ -130,6 +133,7 @@ class check:
       "Pause": "pause",
       "Unfilter": "unfilter",
       "Filter": "filter",
+      "Select Filter": "select_filter",
       "Unpause": "unpause",
       "Check Topic": "check_topic",
 
@@ -141,6 +145,7 @@ class check:
       "Unpause": {"help": "unpause", "params": "None", "desc": f"Unpause {self.name} playback."},
       "Filter": {"help": "filter", "params": "None", "desc": f"Apply filter in {self.name}."},
       "Unfilter": {"help": "unfilter", "params": "None", "desc": f"Remove filter in {self.name}."},
+      "Select Filter": {"help": "select_filter", "params": "None", "desc": f"Select filter in {self.name}."},
       "Check Topic": {"help": "check_topic", "params": "None", "desc": f"Open current topic in {self.name}."},
 
     }
@@ -449,18 +454,75 @@ class check:
 
 
 
+  def select_filter_(self, sequence=[]):
+    """Select Filter_ Check."""
+    logger.info(f'> Select Filter_ {sequence}')
+    cacheno = -1
+    if (len(sequence) == 0): #reset
+      self.filter_cmds = None
+      self.filter_selector = None
+    if (len(sequence) > 0):
+      if (self.mykeys is not None and self.filter_selector is None):
+        words = self.mykeys.get_words_(sequence) #update or filter words as needed
+        for i, w in enumerate(words):      
+          #just display keys to hold for quick sequence..
+          langna = w["langna"]
+
+#        self.set_qr("Select Filter_", {'_': 'check', 'SEQ': sequence, 'words': words, 'lang': langna})
+        dcs = get_double_clicks(sequence)
+        if (_OK in dcs): #filter complete.. This may be too inefficient for long time spans.. not sure..
+          words = self.mykeys.get_words_(sequence[:-2])
+          langna = words[0]["langna"] if words else ""
+          words = [w['word'] for w in words] #get up to _OK
+          if langna and words:
+            self.transcriber.filter_words(langna, words)
+            
+            data = self.transcriber.read_existing(langna) #use current start_time etc..
+            self.filter_cmds = [cmd for cmd in data if cmd['&&'] in words]
+            if (len(self.filter_cmds) == 0):
+              logger.info(f'No commands found for the selected words {words}')
+              return -1
+            self.filter_selector = selector(self.filter_cmds)
+          else:
+            logger.info(f'No langna or words found for sequence {sequence[:-2]}')
+            return -1
+      elif (self.filter_selector is not None):
+        selected = self.mid - sequence[-1] 
+        vars = {'_': 'check', 'SEQ': sequence}
+        cmd = self.filter_selector.preselect(selected)
+        self.filter_selector.get_vars(vars, '..')
+        #add info about selected cmd..
+        self.set_qr("Select Filter_", vars)
+
+    return 1
+
+  def select_filter(self, sequence=[]):
+    """Select Filter Check."""
+    logger.info(f'> Select Filter {sequence}')
+    if (len(sequence) > 0):
+      if (self.filter_selector is not None):
+        selected = self.mid - sequence[-1] 
+        cmd = self.filter_selector.select(selected)
+        vars = {'_': 'check', 'SEQ': sequence, 'cmd': cmd}
+        self.filter_selector.get_vars(vars, '..')
+        self.set_qr("Select Filter", vars)
+    return 0
+
   def filter_(self, sequence=[]):
     """Filter Check."""
     logger.info(f'> Filter_ {sequence}')
     cacheno = -1
     if (len(sequence) > 0):
       if (self.mykeys is not None):
+        vars = {'_': 'check', 'SEQ': sequence}
         words = self.mykeys.get_words_(sequence) #update or filter words as needed
         for i, w in enumerate(words):      
           #just display keys to hold for quick sequence..
           langna = w["langna"]
-
-        self.set_qr("Filter_", {'_': 'check', 'SEQ': sequence, 'words': words, 'lang': langna})
+          
+          vars[f'{i}'] = w['word']
+        vars['lang'] = langna
+        self.set_qr("Filter_", vars )
     return 1
 
   def filter(self, sequence=[]):
@@ -471,16 +533,20 @@ class check:
       langna = ""
       if (self.mykeys is not None):
         info = ""
+
         words = self.mykeys.get_words_(sequence) #update or filter words as needed
+        vars = {'_': 'check', 'SEQ': sequence}
         for i, w in enumerate(words):      
           #just display keys to hold for quick sequence..
           langna = w["langna"]
           info += f"~~ {w} \n"
+          vars[f'{i}'] = w['word']
 
 
+        vars['lang'] = langna
         logger.info(f'~~{info}')
-      self.transcriber.filter_words(langna, words)
-      self.set_qr("Filter", {'_': 'check', 'SEQ': sequence, 'words': words, 'lang': langna})
+      #self.transcriber.filter_words(langna, words)
+      self.set_qr("Filter", vars)
     return 0
 
 
@@ -489,7 +555,7 @@ class check:
     logger.info(f'> Unfilter_ {sequence}')
     if (len(sequence) > 0):
 
-      self.set_qr("Unfilter_", {'type': 'check', 'SEQ': sequence})
+      self.set_qr("Unfilter_", {'_': 'check', 'SEQ': sequence})
     
     return 1
   
@@ -498,9 +564,18 @@ class check:
     logger.info(f'> Unfilter {sequence}')
     if (len(sequence) > 0):
       if (self.mykeys is not None):
+        info = ""
         words = self.mykeys.get_words_(sequence) #update or filter words as needed
-        logger.info(f'~~{words}')
-      self.set_qr("Unfilter", {'type': 'check', 'SEQ': sequence, 'words': words})
+        vars = {'_': 'check', 'SEQ': sequence}
+        for i, w in enumerate(words):      
+          #just display keys to hold for quick sequence..
+          langna = w["langna"]
+          info += f"~~ {w} \n"
+          vars[f'{i}'] = w
+
+        vars['lang'] = langna
+        logger.info(f'~~{info}')
+      self.set_qr("Unfilter", vars)
 
     
     return 0
