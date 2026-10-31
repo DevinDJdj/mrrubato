@@ -5,8 +5,9 @@ import time
 #$$KOKORO_PATH=C:\devinpiano\music\models
 
 import shutil
+from xml.parsers.expat import model
 
-from kokoro import KPipeline
+from kokoro import KPipeline, KModel
 import soundfile as sf
 import pygame
 import os
@@ -815,7 +816,9 @@ def get_kokoro_pipeline(lang='a'):
     device_names = [torch.cuda.get_device_name(i) for i in range(num_devices)]
     print(f"Available CUDA devices: {device_names}")
 
-    kokoro_pipeline[lang] = KPipeline(lang_code=lang,device='cuda:0') 
+    model = KModel(config=str('./models/Kokoro-82M/config.json'), model=str('./models/Kokoro-82M/kokoro-v1_0.pth'))
+    model.eval()
+    kokoro_pipeline[lang] = KPipeline(lang_code=lang,device='cuda:0', model=model)#, repo_id='hexgrad/Kokoro-82M') 
     #'j' for japanese testing..
 
     print(f"Kokoro pipeline loaded. \n$$LANG={lang}")
@@ -920,7 +923,9 @@ def speak(text="", fname="example_tts.wav", voice='af_heart', vol=1.0, speed=1.0
             dirname = os.path.dirname(fname)
             if dirname:
                 os.makedirs(dirname, exist_ok=True)
-            generator = pipeline(text, voice=voice, speed=speed)
+            voice_path = f"./models/Kokoro-82M/voices/{voice}.pt"
+            voice_tensor = torch.load(voice_path, map_location='cpu')
+            generator = pipeline(text, voice=voice_tensor, speed=speed)
             with sf.SoundFile(fname, mode='w', samplerate=24000, channels=1) as f:
                 for i, (gs, ps, audio) in enumerate(generator):
         #            sf.write(f'kokoro_{i}.wav', audio, 24000)    

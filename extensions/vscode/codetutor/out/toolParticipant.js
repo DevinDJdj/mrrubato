@@ -45,6 +45,7 @@ exports.getSelectionInfo = getSelectionInfo;
 exports.writeToTranscriber = writeToTranscriber;
 exports.readFromTranscriber = readFromTranscriber;
 exports.startWatchingTranscriber = startWatchingTranscriber;
+exports.activateRunAndCapture = activateRunAndCapture;
 exports.activateWorkspaceWatching = activateWorkspaceWatching;
 exports.activateTabWatching = activateTabWatching;
 exports.registerToolUserChatParticipant = registerToolUserChatParticipant;
@@ -56,6 +57,7 @@ const Book = __importStar(require("./book"));
 const fs = __importStar(require("fs"));
 const transcriber = __importStar(require("./transcriber"));
 const toolsPrompt_1 = require("./toolsPrompt");
+const cp = __importStar(require("child_process"));
 //import mmap from '@riaskov/mmap-io';
 let myStatusBarItem;
 exports.recentTabs = [];
@@ -425,8 +427,8 @@ function getContextFromCommand(cmd) {
         if (cmd.vars && cmd.vars['URL']) {
             context += cmd.vars['URL'];
             console.log(`Context URL: ${context}`);
+            lasturl = cmd.vars['URL'];
         }
-        lasturl = cmd.vars['URL'];
     }
     if (cmd.vars && cmd.vars[')']) {
         context += ":" + cmd.vars[')'];
@@ -627,6 +629,35 @@ async function openMyFolder(folderPath) {
         console.log('Folder successfully added to workspace.');
     }
     return success;
+}
+function activateRunAndCapture(context) {
+    let disposable = vscode.commands.registerCommand('extension.streamStdout', () => {
+        // 1. Create a WriteEmitter to stream data to the terminal UI
+        const writeEmitter = new vscode.EventEmitter();
+        // 2. Define the Pseudoterminal interface
+        const pty = {
+            onDidWrite: writeEmitter.event,
+            open: () => {
+                writeEmitter.fire('Running command\(...\r\\)n');
+                // 3. Spawn your native command
+                const child = cp.spawn('ping', ['8.8.8.8']); // Example command
+                // 4. Stream stdout directly into the VS Code terminal UI
+                child.stdout.on('data', (data) => {
+                    // Replace raw newlines with CRLF for proper terminal formatting
+                    const formattedData = data.toString().replace(/\n/g, '\r\n');
+                    writeEmitter.fire(formattedData);
+                });
+                child.on('close', (code) => {
+                    writeEmitter.fire(`\r\nProcess exited with code ${code}\r\n`);
+                });
+            },
+            close: () => { }
+        };
+        // 5. Create and show the terminal instance
+        const terminal = vscode.window.createTerminal({ name: "My Stream Terminal", pty });
+        terminal.show();
+    });
+    context.subscriptions.push(disposable);
 }
 function activateWorkspaceWatching(context) {
     // 1. Detect folders already opened on startup/activation

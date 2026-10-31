@@ -6,7 +6,7 @@ from extensions.trey import playwrighty
 import languages.helpers.transcriber as transcriber
 #import extensions.trey.playwrighty as playwrighty
 import languages.helpers.timewindow as timewindow
-
+import mykeys
 logger = logging.getLogger(__name__)
 
 _META = 48
@@ -84,7 +84,15 @@ class selector:
     for i, l in enumerate(self.get_visible()):
       n = i + start
       if (isinstance(l, dict) and entry in l):
-        vars[f'{n}'] = l[entry]
+        if (entry == '..'): #cmd instance
+          if ('$$' in l): #vars..
+            vars[f'{n}'] = l['$$']['..'] if ('..' in l['$$']) else (l['$$']['TIME'] if 'TIME' in l['$$'] else '...')
+            cmd = l['&&'] if '&&' in l else '&&'
+            text = l['$$']['&&'] if '&&' in l['$$'] else (l['$$']['TEXT'] if 'TEXT' in l['$$'] else '&&')
+            
+            vars[f'{n}'] += f' {cmd} {text}'
+        else: #topic instance
+          vars[f'{n}'] = l[entry]
       else:
         vars[f'{n}'] = l
 #          vars[f'href{i}'] = l['href']
@@ -98,6 +106,7 @@ class _meta:
 
     self.config = config
     self.transcriber = None
+    self.mykeys = None
     self.qapp = qapp
     self.func = None
     self.cmd = None
@@ -487,13 +496,25 @@ class _meta:
 
 
 
+  def get_cache_(self, sequence=[]):
+    """Get QR from cache without setting it."""
+    logger.info(f'> Get Cache _ {sequence}')
+    if (self.mykeys is not None):
+      words = self.mykeys.get_words_(sequence) #update or filter words as needed
+      for i, w in enumerate(words):      
+        #just display keys to hold for quick sequence..
+        langna = w["langna"]
+
+      self.set_qr("Get Cache_", {'_': '_meta', 'SEQ': sequence, 'words': words, 'lang': langna})
+    return 1
+       
   def get_cache(self, sequence=[]):
     """Get QR from cache."""
     logger.info(f'> Get Cache {sequence}')
     cacheno = 0
     if (len(sequence) > 0):
       cacheno = self.mid - sequence[-1] #first key cache selection
-    self.set_qr("Get Cache", {'type': self.name, 'cacheno': cacheno})
+    self.set_qr("Get Cache", {'_': self.name, 'cacheno': cacheno})
     return 0
 
   def restart(self, sequence=[]):
@@ -555,7 +576,10 @@ class _meta:
       logger.info(f'$$ADJUST={adjust}')        
       logger.info(f'$$DC={dc}')
       logger.info(f'$$LANG={lang}')
-      spoken_lang = playwrighty.detect_language()
+      #dont think we need spoken_lang..
+      spoken_lang = "en"
+      if (playwrighty.mybrowser):
+        spoken_lang = playwrighty.detect_language()
       vars = {'ADJUST': adjust, 'SPEED': self.speed, 'LANG': lang, 'SPOKEN_LANG': spoken_lang}
       self.set_qr("Set Speed", vars)
     return 0
@@ -1177,13 +1201,13 @@ class _meta:
       #i.e. just get commands which start with this sequence..
       #command lookup from lang index.
       langindex = sequence[-1]-self.keybot
-      for (l, v) in enumerate(self.config['keymap']['languages']):
+      for (l, v) in self.config['keymap']['languages'].items():
         if (v[0] == langindex+self.keybot): #for now..
           lang = l
           break
     self.set_qr("Tune In", {'LANG': lang,'WINDOW': self.timewindow.window, 'TIME': self.timewindow.getTime(), 'START': self.timewindow.starttime, 'END': self.timewindow.endtime})
     return 0
-
+  
   def tune_out(self, sequence=[]):
     logger.info(f"> Tune Out {sequence}")
     lang = "ALL"
@@ -1193,7 +1217,7 @@ class _meta:
       #i.e. just get commands which start with this sequence..
       #command lookup from lang index.
       langindex = sequence[-1]-self.keybot
-      for (l, v) in enumerate(self.config['keymap']['languages']):
+      for (l, v) in self.config['keymap']['languages'].items():
         if (v[0] == langindex+self.keybot): #for now..
           lang = l
           break

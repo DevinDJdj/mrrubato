@@ -987,7 +987,8 @@ def printMidiTicker(t, midilink):
                             #new sequence..
                             myseq.append(currentseq)
                             currentseq = []
-                    currentseq.append({'..': float(currentTime) / 1000, '&&': mymsg.note, '$$': mymsg.msg.velocity, ':': i, 'dur': 0})
+                    if (mymsg.msg.type == 'note_on' and mymsg.msg.velocity > 0): #only show note_on timings..
+                        currentseq.append({'..': float(currentTime) / 1000, '&&': mymsg.note, '$$': mymsg.msg.velocity, ':': i, 'dur': 0})
 
 
 
@@ -1113,7 +1114,15 @@ def printMidiTicker(t, midilink):
 #                tnx2 = tnx - round(math.cos(timenoteangle)*vol*2)
 #                tny2 = tny - round(math.sin(timenoteangle)*vol*2)
 #                draw.line((tnx2, tny2, tnx, tny), fill=currentcolor, width=1)
-                draw.polygon([(tnx, tny), (tnx2, tny2), (tnx3, tny3)], fill=currentcolor, width=1, outline="black")
+                #long duration outlined..
+                dwidth = 1
+                if (dur > 1 and dur < 4):
+                    dwidth = int(dur)
+                elif dur >= 4:
+                    dwidth = 3
+                
+
+                draw.polygon([(tnx, tny), (tnx2, tny2), (tnx3, tny3)], fill=currentcolor, width=dwidth, outline="black")
 
                 cx = notepointx
                 cy = notepointy

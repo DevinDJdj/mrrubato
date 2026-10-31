@@ -837,6 +837,7 @@ function pickTopic(selectedtopics, defaultprompts = [], numtopics = 10, extendto
     //what date do we want to search from?  
     //just add all.  
     let mylist = [];
+    let dedup = new Set(); //to keep track of unique items by their data.
     for (; i < selectedtopics.length && i < numtopics; i++) {
         if (exports.topicarray[selectedtopics[i]] !== undefined) {
             retdata += "**" + selectedtopics[i] + "\n"; //add the topic to the data.
@@ -856,10 +857,11 @@ function pickTopic(selectedtopics, defaultprompts = [], numtopics = 10, extendto
                 //random number related to list length...
                 if (Math.random() < ((numentries + selectedentries) / (tentries * 2))) { //randomly add entries based on the number of entries for the topic.
                     //weight later entries more..
-                    //                    if (mylist.find((t) => t.data === item.data) === undefined) { //deduplicate the list. by data..
-                    mylist.push(item);
-                    selectedentries++;
-                    //                    }
+                    if (!dedup.has(item.data)) { //deduplicate the list. by data..
+                        mylist.push(item);
+                        selectedentries++;
+                        dedup.add(item.data);
+                    }
                 }
             }
         }
@@ -1082,7 +1084,7 @@ function initArray(topic, array = exports.topicarray) {
         array[topic] = [];
     }
 }
-function updatePage(filePath, text, linefrom = 0, lineto = 0, show = false) {
+function updatePage(filePath, text, linefrom = 0, lineto = 0, show = true) {
     //update the current page with the text and filePath.  
     //this will be used to update the current topic.  
     const folderUri = exports.workspaceUri;
@@ -1373,7 +1375,7 @@ async function markdown(prompt, format = 1) {
                 }
             }
             let linkText = p2.replace(/\|/g, "\\|");
-            return `\n[#${linkText}](${getLinkCommand(p2)})  `; //return the markdown link.
+            return `\n[#${linkText}](${getLinkCommand(p1 + p2)})  `; //return the markdown link.
         }
         else {
             let colon = p2.lastIndexOf(":");
@@ -1439,9 +1441,19 @@ async function markdown(prompt, format = 1) {
             return `[${p1}${p2}](${fileUri.path}#L${line})`; //return the markdown link.
         }
         else {
-            let readablename = getReadableName(p2);
-            return `[${p1}${readablename}](${getLinkCommand(fname)})`; //return the markdown link.
+            let readablename = getReadableName(p2); //only using for TTS really..
+            return `[${p1}${readablename}](${getLinkCommand(p1 + p2)})`; //return the markdown link.
         }
+    });
+    //could be others as well.. not sure why /^ syntax doesnt work in this function..
+    marked = marked.replace(/(\n~~|\n@@)(.*)/g, (match, p1, p2) => {
+        // p1 is $$
+        //need some logic here for $$ variable replacement.  
+        // p2 is the topic or link 
+        console.log(`Processing line with type: ${p1} and info: ${p2}`);
+        let type = p1;
+        let info = p2;
+        return `[${type}](${getLinkCommand(type + info)})${info}`; //return the markdown link.
     });
     //$$ is math block in markdown..
     marked = marked.replace(/\$/g, () => '\\$'); //escape dollar signs
@@ -1513,7 +1525,8 @@ async function expandPrompt(prompt) {
 async function similar(prompt) {
     //this will be used to find similar topics in the book.  
     //for now just return the topics in the book.
-    let expandedprompt = await expandPrompt(prompt); //expand the prompt to include more context.
+    //expansion not working..
+    let expandedprompt = prompt; //await expandPrompt(prompt); //expand the prompt to include more context.
     //    let selectedtopics = findInputTopics(prompt + "\n" + expandedprompt); 
     let selectedtopics = findInputTopics(prompt);
     console.log("SIMILAR Selected topics: ", selectedtopics);

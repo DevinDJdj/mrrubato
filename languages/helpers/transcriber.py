@@ -66,7 +66,7 @@ class transcriber:
 
         self.chatmessages = []
         self.graphmessages = []
-        self.shortformvars = ['URL', 'TEXT', 'TRANSCRIPT', 'COMMENT', 'QUERY', 'ANSWER', '**'] #list of variable keys to be displayed in the shortform display.
+        self.shortformvars = ['URL', 'ALIAS', 'FEEDBACK', 'TEXT', 'TRANSCRIPT', 'COMMENT', 'QUERY', 'ANSWER', '**'] #list of variable keys to be displayed in the shortform display.
 
         self.kg_ignorevars = ['TIME', 'WINDOW', 'START', 'END', 'FNAME', 'FILE', 'DURATION', 'LAG'] #vars to ignore in display of info, used for time window commands.
 

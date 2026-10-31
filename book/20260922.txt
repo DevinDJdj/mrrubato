@@ -604,6 +604,7 @@ Need to address this..
 **extensions/vscode/codetutor/src/languages/base.ts
 code parsing, can we use this:
 What other commands?  
+#https://www.freecodecamp.org/news/how-to-build-a-code-graph-in-typescript-using-vs-code-language-apis/
 #https://code.visualstudio.com/api/references/commands
 vscode.executeDocumentSymbolProvider
 vscode.prepareCallHierarchy
@@ -772,4 +773,63 @@ test pi..
 Just use in vscode and wrap this?  
 
 #https://mariozechner.at/posts/2025-11-30-pi-coding-agent/
+
+**extensions/vscode/codetutor/src/extension.ts
+Why is the some feedback not in book?  
+Cant tell what causes, not necessarily first feedback.  
+
+In background, find correlated info from read library..
+
+
+#https://github.com/colbymchenry/codegraph
+Try this..
+
+#https://github.com/anomalyco/opencode/tree/v2
+#https://github.com/rodrigomart123/opencode-for-vscode
+
+
+Try a few, opencode, pi, codegraph
+With local LLM
+;> opencode run --agent build --auto
+
+**extensions/vscode/codetutor/src/toolParticipant.ts
+--activateRunAndCapture
+
+Use this and just run opencode or pi agent.  
+Stream response as we are going.  
+Can we interrupt?  
+
+;> opencode run --session <session-id> "Analyze this additional data"
+Have to capture session id on launch..
+
+How to verify, this is key to this type of mechanism.  
+
+**extensions/trey/test/cursorhighlight.py
+Maybe useful..
+LOL, sample freezes everything..
++            Qt.WindowTransparentForInput
+
+**extensions/trey/mywindow.py
+ok, perhaps useful..
+Still have problems if we start UI actions too early..
+30 second startup lag is problematic..
+
+**extensions/trey/speech.py
+Need to be able to use more than 30 secs.  
+
+**languages/hotkeys.py
+Just pass longer duration..
+--speech.listen_audio
+change to multiplier of 10..
+On error, we have possibly 2 minutes until reset..
+Should be infrequent event
+Indicate remaining duration on _
+
+
+**extensions/trey/playwrighty.py
+--console_handler
+log to temp file for comparison..
+;@@When do we store permanently?  
+;@@How do we pass dynamic params..
+
 

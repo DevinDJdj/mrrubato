@@ -19,8 +19,8 @@ import win32con
 
 from PIL import Image, ImageDraw, ImageFont
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QLabel, QDialog, QVBoxLayout, QSystemTrayIcon, QMenu, QAction, QMessageBox
-from PyQt5.QtGui import QPixmap, QPainter, QPen, QBrush, QImage, QFont, QFontMetrics, QFontDatabase, QIcon, QColor
-from PyQt5.QtCore import Qt, QObject, pyqtSignal, QThread
+from PyQt5.QtGui import QPixmap, QPainter, QPen, QBrush, QImage, QFont, QFontMetrics, QFontDatabase, QIcon, QColor, QCursor
+from PyQt5.QtCore import Qt, QObject, pyqtSignal, QThread, QPoint, QTimer
 import PyQt5.QtCore as QtCore
 #video widget..
 from PyQt5.QtMultimediaWidgets import QVideoWidget
@@ -279,7 +279,7 @@ class MyWindow(QMainWindow):
         cmds = self.parseQRData(qrdata)
         #get lang.. dont show based on lang for now..
         is_joystick_cmd = next((cmd for cmd in cmds if cmd['lang'] == 'joystick'), None)
-        is_tock = next((cmd for cmd in cmds if cmd['lang'] == '_meta' and cmd['cmd'] == 'Tock'), None)
+        is_tock = next((cmd for cmd in cmds if cmd['lang'] == '_meta' and cmd['cmd'] == 'Tockz'), None)
         if (len(cmds) > 0 and is_joystick_cmd is None):
             if (is_tock is None):
                 self.showQR(qrdata, cmds) #refresh QR display
@@ -347,6 +347,15 @@ class MyWindow(QMainWindow):
                 logger.error(f'!!Error parsing graphs: {e}')
                 logger.error(f'!!Graphs data: {graphs}')
 
+    def get_int_vars(self, vars):
+        ret = []
+        for k, v in vars.items():
+            n = k
+
+            if (n.isdigit()):
+                ret.append(v)
+        return ret
+    
     def executeQRCommand(self, command, vars, lang='hotkeys'):
         #use transcriber here??
         import extensions.trey.trey as trey
@@ -478,7 +487,7 @@ class MyWindow(QMainWindow):
                 elif (type == 'base'):
                     self.pause_tmap(False) #dont hide the video, just pause it..
                     #pause any other speaking or playing we are doing.
-                    self.transcriber.write_plain('base', '> ' + command) #dont write intermediate msg?
+#                    self.transcriber.write_plain('base', '> ' + command) #dont write intermediate msg?
                 elif (type == 'book'):
                     cacheno = vars.get('cacheno', -1)
                     self.transcriber.write_plain('book', '> ' + command) #dont write intermediate msg?
@@ -495,6 +504,8 @@ class MyWindow(QMainWindow):
                     #anything with $$FILE or $$fname or..
                     self.play_tmap()
                     n = 0
+                elif (type == 'base'):
+                    self.play_tmap() #unpause the base video/audio playback
                 elif (type == 'record'):
                     trey.start_obs_capture()
                 elif (type == 'book'):
@@ -502,17 +513,20 @@ class MyWindow(QMainWindow):
                     trey.resume_reader(int(cacheno))
 
             case "Filter":
-                words = vars.get('words', [])
+                words = self.get_int_vars(vars)
                 #filter transcript based on cmd..
                 if (len(words) > 0):
                     self.transcriber.filter_words(vars.get('lang', 'video'), words)
+                    self.set_p_colors()
                     #this should reread..
                     self.set_time(self.transcriber.timewindow.getTime())
             case "Unfilter": 
-                words = vars.get('words', [])
+                words = self.get_int_vars(vars)
                 #unfilter transcript based on cmd..
+                #for now just unfilter language..
                 if (len(words) > 0):
                     self.transcriber.filter_words(vars.get('lang', 'video'), [])
+                    self.set_p_colors()
                     self.set_time(self.transcriber.timewindow.getTime())
 
             case "Get Video":
@@ -616,6 +630,26 @@ class MyWindow(QMainWindow):
                 #jump forward by tick amount.  
                 self.play_tmap(int(speed)) #play next item in tmap
 
+            case "Tockz":
+                type = vars.get('type', '_meta')
+                speed = self.get_setting('SPEED', 1.0, lang)
+                #get trigger search of current recent key structure to other midi keys in transcriber..
+                current_time = int(vars.get('TIME', time.time()))
+                #rapidfuzz search for similar key structures in all midi in transcriber.  
+                midiarray = json.loads(vars.get('MIDI', "[]")) #load from string again..
+                print(f"<<{lang}>>\n$$MIDI=" + str(midiarray))
+                similar = []
+                if (random.random() < 0.2):  #only every once in a while.. too slow..
+                    similar = self.transcriber.search_midi(midiarray, current_time)
+                    print(f"Similar key structures found: {similar}")
+                    print(f"<<{lang}>>\n$$SIMILAR=" + json.dumps(similar))
+                #what to do with this?  
+                #save it and show in QR?  
+                self.futuretree = self.transcriber.futuretree #map[lang] = ['..': '&&': '##':]
+                print(f"<<{lang}>>\n$$FUTURETREE=" + json.dumps(self.futuretree))
+                #display this in info section..
+                self.similar = similar
+
             case "Tock":
                 type = vars.get('type', 'video')
                 speed = self.get_setting('SPEED', 1.0, lang)
@@ -623,22 +657,7 @@ class MyWindow(QMainWindow):
                 if (type == 'video'):
                     self.play_tmap(int(-speed)) #play previous item in tmap
                 elif (type == '_meta'):
-                    #get trigger search of current recent key structure to other midi keys in transcriber..
-                    current_time = int(vars.get('TIME', time.time()))
-                    #rapidfuzz search for similar key structures in all midi in transcriber.  
-                    midiarray = json.loads(vars.get('MIDI', "[]")) #load from string again..
-                    print(f"<<{lang}>>\n$$MIDI=" + str(midiarray))
-                    similar = []
-                    if (random.random() < 0.2):  #only every once in a while.. too slow..
-                        similar = self.transcriber.search_midi(midiarray, current_time)
-                        print(f"Similar key structures found: {similar}")
-                        print(f"<<{lang}>>\n$$SIMILAR=" + json.dumps(similar))
-                    #what to do with this?  
-                    #save it and show in QR?  
-                    self.futuretree = self.transcriber.futuretree #map[lang] = ['..': '&&': '##':]
-                    print(f"<<{lang}>>\n$$FUTURETREE=" + json.dumps(self.futuretree))
-                    #display this in info section..
-                    self.similar = similar
+                    self.play_tmap(int(-speed)) #play previous item in tmap
 
             case "Select Book":
                 book = vars.get('book', 'None')
@@ -731,6 +750,7 @@ class MyWindow(QMainWindow):
                     else:
                         self.langs = self.langs[:1] #for now just show first lang..
 
+                self.set_p_colors()
                 self.set_time(s, e, w, t) #update display with new time window and lang settings.
 
             case "Open Browser":
@@ -1079,6 +1099,9 @@ class MyWindow(QMainWindow):
         self.highlightrect = {'x': 100, 'y': 100, 'width': 200, 'height': 200}
         self.bboxes = [] #list of drawn boxes..
         self.highlighton = False
+        self.cursor_highlight = True
+        self.highlighter = CursorHighlighter()
+
 
         self.startx = 0
         self.queue = q
@@ -1118,6 +1141,7 @@ class MyWindow(QMainWindow):
 
         #for now just fixed 30 days max info.  
         self.tmap = [] #current transcripts in time window, sorted by time.  
+        self.tmapindex = 0
         self.aggmap = [] #aggregated info for current time window, updated as new transcripts come in.
 
         self.s = 0 #current start time of window
@@ -1243,6 +1267,8 @@ class MyWindow(QMainWindow):
             self.label_ps[i].setFixedWidth(pwidth-wbarray[i%len(wbarray)]*40)
             self.label_ps[i].setTextFormat(Qt.PlainText)
 
+        self.set_p_colors()
+
         #bot left
         #BBOX(0,0.8, 0.2, 1)
         self.label_p = QLabel(self)
@@ -1345,6 +1371,41 @@ class MyWindow(QMainWindow):
 
         #start internal thread to check the queue for updates.  
         #and update the window when there is new data.  
+
+    def is_lang_filtered(self, lang):
+        return self.transcriber.allcmds.get(lang) and 'filter' in self.transcriber.allcmds[lang] and len(self.transcriber.allcmds[lang]['filter']) > 0
+
+    def get_lang(self, i):
+#        logger.info(f'Getting language for index {i}')
+#        logger.info(f'Config languages: {config.cfg["keymap"]["languages"].items()}')
+        for (l, v) in config.cfg['keymap']['languages'].items():
+#            logger.info(f'Checking language {l} with value {v}')
+            if i == v[0]:
+#                logger.info(f'Matched language {l} for index {i}')
+                return l
+        return None
+        
+    def set_p_colors(self):
+        logger.info(f'Adjusting P colors')
+        wbarray = [0,1,0,1,0,0,1,0,1,0,1,0] #for now fixed from C
+        for i in range(24): #assume 25 key range for now..
+            color = self.getColorFromSequence2(i) #wb only for now..
+            bgcolor = "rgba(255, 255, 255, 1)" if (wbarray[i%len(wbarray)] == 0) else "rgba(63, 63, 63, 1)"
+            border = "1px solid black"
+            lang = self.get_lang(i+48)
+            if (lang is not None and lang in self.langs): #lang active..
+                if (wbarray[i%len(wbarray)] == 0):
+                    bgcolor = "rgba(255, 255, 123, 1)"  # Highlight filtered languages with yellow tint
+                else:
+                    bgcolor = "rgba(95, 95, 23, 1)"  # Highlight filtered languages with yellow tint
+                if (self.is_lang_filtered(lang)):
+                    border = "2px solid red"  # Highlight filtered languages with a red border
+                    
+            if (wbarray[i%len(wbarray)] == 0):
+                self.label_ps[i].setStyleSheet(f"background-color: {bgcolor};color: {color};border: {border};")
+            else:
+                self.label_ps[i].setStyleSheet(f"background-color: {bgcolor};color: {color};border: {border};")
+#            logger.info(f'Set color for key {i}: bgcolor={bgcolor}, color={color}, border={border}')
 
 
     def on_click(self, x, y, button, pressed):
@@ -1458,6 +1519,10 @@ class MyWindow(QMainWindow):
                     topz = hwnd
                 if (hwnd in self.windows):
                     logger.debug(f"Found window in trey at z index {z_index}: {self.windows[hwnd]['title']} with rect {rect}")
+                    self.windows[hwnd]['z_index'] = z_index
+            else:
+                #really need something else here?  This is for mrroboto at the moment.  
+                if (hwnd in self.windows):
                     self.windows[hwnd]['z_index'] = z_index
             hwnd = win32gui.GetWindow(hwnd, win32con.GW_HWNDNEXT)
             z_index += 1   
@@ -1867,6 +1932,7 @@ class MyWindow(QMainWindow):
     def hideme(self):
         """Method to close the window."""
         self.hide()
+#        self.highlighter.start()
 
         logger.info('Window hidden')
         logger.info(f'!!STARTUP LAG: {time.time() - self.startup_lag} seconds')
@@ -1879,7 +1945,7 @@ class MyWindow(QMainWindow):
         #for now just log it.
         #get file type from extension
         ext = os.path.splitext(fname)[1].lower()
-        if (ext in ['.mp4', '.avi', '.mkv']):
+        if (ext in ['.mp4', '.avi', '.mkv', '.png']): #add images to play..
             logger.info(f'Playing video file: {fname}')
             #play on Qt video widget..
             self.play_video(fname)
@@ -1974,7 +2040,7 @@ class MyWindow(QMainWindow):
 
 
 
-    def show_tmap(self, current_time, secs=0):
+    def show_tmap_header(self, current_time, secs=0):
         logger.info('Updating time map display')
         if (secs == 0):
             secs = self.e - self.s #use full time range if secs not specified, can adjust as needed.
@@ -1983,25 +2049,132 @@ class MyWindow(QMainWindow):
         typecnttext = ""
         sumval = 0
         selected = []
-        maintimes = []
-        maintext = []
-
+        nowtext = '*'
         for i in range(60):
             val = self.aggmap[i]['cnt']
             sumval += val
-            cnttext += f'{chr(ord(startchar)+val)}'
-            val2 = len(self.aggmap[i]['cnts'])
 
+            if (self.s + (i/60)*secs > current_time):
+                #current time
+                cnttext += nowtext #mark current time with a special character, can adjust as needed.
+                typecnttext += nowtext #mark current time with a special character, can adjust as needed.
+                nowtext = '' #reset to nothing..
+            cnttext += f'{chr(ord(startchar)+val)}'                
+            val2 = len(self.aggmap[i]['cnts'])
             typecnttext += f'{chr(ord(startchar)+val2)}'
+
             if (i%20 == 0):
                 cnttext += ' ' #add space every 20 chars for readability, can adjust as needed.
                 typecnttext += ' '
-                maintimes.append(current_time - secs/2 + (i/60)*secs) #calculate time for each bucket, can adjust as needed.
-                maintext.append({'&&': '&&', '..': maintimes[-1], '**': '**'}) #placeholder for main text display, can adjust as needed.
+#                maintimes.append(current_time - secs/2 + (i/60)*secs) #calculate time for each bucket, can adjust as needed.
+#                maintext.append({'&&': '&&', '..': maintimes[-1], '**': '**'}) #placeholder for main text display, can adjust as needed.
 
-        maintimes.reverse() #reverse to have most recent time on right, can adjust as needed.
+        typecnttext = typecnttext.replace(startchar, '_')
+        cnttext = cnttext.replace(startchar, '_')
+
+        st = datetime.fromtimestamp(self.s).strftime('%Y%m%d %H%M%S')
+        et = datetime.fromtimestamp(self.e).strftime('%Y%m%d %H%M%S')
+
+        self.label_times[0].setText(f'<pre>{typecnttext}   {st}</pre>')
+        self.label_times[0].update()
+        self.label_times[1].setText(f'<pre>{cnttext}   {et}</pre>')
+        self.label_times[1].update()
+
+    def show_tmap_body(self, current_time, secs=0):
+        print(f"Showing time map body for current time: {current_time}, secs: {secs}")
+        maintimes = []
+        maintext = []
+
+        #static division of time map based on current time.. s - current_time - e
+        maintimes.append(self.s)
+        maintext.append({'&&': '&&', '..': maintimes[-1], '**': '**'}) #placeholder for main text display, can adjust as needed.
+        maintimes.append(current_time)
+        maintext.append({'&&': '&&', '..': maintimes[-1], '**': '**'}) #placeholder for main text display, can adjust as needed.
+        maintimes.append(current_time + (self.e - current_time)/2)
+        maintext.append({'&&': '&&', '..': maintimes[-1], '**': '**'}) #placeholder for main text display, can adjust as needed.
+        maintimes.append(self.e)
+
+
+#        maintimes.reverse() #reverse to have most recent time on right, can adjust as needed.
+        print(f"Current time: {current_time}, Time window seconds: {secs}")
+#        sorted_tmap = sorted(self.tmap, key=lambda x: current_time - x['..'])
+        sorted_tmap = [tm for tm in self.tmap if tm['..'] > self.s and tm['..'] < self.e]
+
+        ctxtdic = {}
+        maintimeindex = 0
+        for i in range(len(sorted_tmap)):
+            while (sorted_tmap[i]['..'] > maintimes[maintimeindex+1]):
+                maintimeindex += 1
+                if (maintimeindex >= len(maintimes)):
+                    break
+            if (maintimes[maintimeindex] <= sorted_tmap[i]['..'] < maintimes[maintimeindex+1]):
+                if (sorted_tmap[i]['type'] == '> '): #only show commands for now.. no topic selection
+                    if (maintext[maintimeindex]['**'] == '**'):
+                        maintext[maintimeindex]['**'] = sorted_tmap[i]['**']
+                        maintext[maintimeindex]['..'] = sorted_tmap[i]['..']
+
+                    #really want a specific key here..
+                    mytime = sorted_tmap[i]['$$'].get('TIME', "_")
+                    ctxtkey = sorted_tmap[i]['$$']['URL'] if (sorted_tmap[i]['$$'].get('URL', None) is not None) else "_"
+                    if (ctxtkey == "_"):
+                        ctxtkey = mytime #use text as fallback if no URL, can adjust as needed.
+
+                    if (mytime == self.tmap[self.tmapindex]['$$'].get('TIME', None)):
+                        print(f'Currently playing item: {sorted_tmap[i]} from {mytime}')
+                        maintext[maintimeindex]['&&'] = maintext[maintimeindex]['&&'] + '\n>>>>\n' #indicator for currently playing item, can adjust as needed.
+
+                    if (ctxtdic.get(sorted_tmap[i]['&&'] + '_' + ctxtkey, None) is None):
+                        newentry = self.transcriber.write(sorted_tmap[i]['<<'], sorted_tmap[i]['&&'], sorted_tmap[i]['$$'], sorted_tmap[i]['**'], False, shortform=True)
+                        maintext[maintimeindex]['&&'] = maintext[maintimeindex]['&&'] + newentry
+                        ctxtdic[sorted_tmap[i]['&&'] + '_' + ctxtkey] = newentry
+                    else:
+                        text = sorted_tmap[i]['$$'].get('&&', '')
+                        total_read = sorted_tmap[i]['$$'].get(':', '')
+                        #display shortened context key
+                        shortkey = ctxtkey[:20]
+                        if (len(ctxtkey) > 20):
+                            shortkey += '...'
+                            shortkey += ctxtkey[-20:] #last 20 chars
+                        shorttext = text[:100] #shorten text for display, can adjust as needed.
+                        if (total_read != ''):
+                            shortkey += ':' + total_read
+                        maintext[maintimeindex]['&&'] = maintext[maintimeindex]['&&'] + '#' + shortkey + '\n' + shorttext + '\n'
+
+        for i in range(len(maintext)):
+#                if (temptext[0:2] != '**'):
+
+            temptext = f'{maintext[i]["&&"]}' #add topic as header if not already included, can adjust formatting as needed.
+
+            self.label_main[i].setText(temptext.replace('\n', '<br>'))
+            self.label_main[i].update()
+
+
+
+        logger.info(f"Data found {len(sorted_tmap)} total commands in current time window.")
+
+
+    def show_tmap(self, current_time, secs=0):
+        self.show_tmap_header(current_time, secs)
+        self.show_tmap_body(current_time, secs)
+        return
+        sumval = 0
+        maintimes = []
+        maintext = []
+
+        #static division of time map based on current time.. s - current_time - e
+        maintimes.append(self.s)
+        maintext.append({'&&': '&&', '..': maintimes[-1], '**': '**'}) #placeholder for main text display, can adjust as needed.
+        maintimes.append(current_time)
+        maintext.append({'&&': '&&', '..': maintimes[-1], '**': '**'}) #placeholder for main text display, can adjust as needed.
+        maintimes.append(current_time + (self.e - current_time)/2)
+        maintext.append({'&&': '&&', '..': maintimes[-1], '**': '**'}) #placeholder for main text display, can adjust as needed.
+
+
+#        maintimes.reverse() #reverse to have most recent time on right, can adjust as needed.
         print(f"Current time: {current_time}, Time window seconds: {secs}")
         sorted_tmap = sorted(self.tmap, key=lambda x: current_time - x['..'])
+        new_tmap = [tm for tm in self.tmap if tm['..'] > self.s and tm['..'] < self.e]
+
 #        print(f"Sorted tmap: {sorted_tmap}")
         sorted_indices = sorted(range(len(self.tmap)), key=lambda i: abs(current_time - self.tmap[i]['..']))
         print(f"Sorted indices: {sorted_indices}")
@@ -2019,7 +2192,6 @@ class MyWindow(QMainWindow):
                     if (skipped > 10):
                         break #stop checking after skipping 10 items outside of time window, can adjust as needed.
                     continue #skip items outside of time window, can adjust as needed.
-
                 for j in reversed(range(3)): #check most recent 3 time buckets, can adjust as needed.
 #                    if (maintext[j]['**'] == '**'):
                         if (maintimes[j] <= sorted_tmap[i]['..'] < maintimes[j] + secs/3): #if item is within time bucket, can adjust bucket size as needed.
@@ -2052,7 +2224,6 @@ class MyWindow(QMainWindow):
                                         shorttext = sorted_tmap[i]['$$']['TEXT'][:100] #shorten text for display, can adjust as needed.
                                         maintext[j]['&&'] = maintext[j]['&&'] + '#' + shortkey + '\n' + shorttext + '\n'
 #                                maintext[j] = {'**': sorted_tmap[i]['**'], '..': sorted_tmap[i]['..'], '&&': self.transcriber.write(sorted_tmap[i]['<<'], sorted_tmap[i]['&&'], sorted_tmap[i]['$$'], sorted_tmap[i]['**'], False)}
-
 #                if (len(maintext) < 3 and sorted_tmap[i]['type'] == '> ' and sorted_tmap[i]['timestamp'] >= maintimes[len(maintimes)-1]): #only show commands for now.. no topic selection
 #                    self.transcriber.current_topic = sorted_tmap[i]['cmd'] #dont need topic to be updated..
 #                    maintext.append({'topic': sorted_tmap[i]['topic'], 'timestamp': sorted_tmap[i]['timestamp'], 'text': self.transcriber.write(sorted_tmap[i]['lang'], sorted_tmap[i]['cmd'], sorted_tmap[i]['vars'], sorted_tmap[i]['topic'], False)})
@@ -2076,16 +2247,6 @@ class MyWindow(QMainWindow):
         if sumval > 0:            
             logger.info(f"Data found {sumval} total commands in current time window.")
 
-        typecnttext = typecnttext.replace(startchar, '_')
-        cnttext = cnttext.replace(startchar, '_')
-
-        st = datetime.fromtimestamp(self.s).strftime('%Y%m%d %H%M%S')
-        et = datetime.fromtimestamp(self.e).strftime('%Y%m%d %H%M%S')
-
-        self.label_times[0].setText(f'<pre>{typecnttext}   {st}</pre>')
-        self.label_times[0].update()
-        self.label_times[1].setText(f'<pre>{cnttext}   {et}</pre>')
-        self.label_times[1].update()
 
     def set_tmap(self, tmap = [], current_time=None):
         logger.info(f'Updating time map display {len(tmap)}')
@@ -2135,16 +2296,26 @@ class MyWindow(QMainWindow):
         if (langs is None):
             langs = self.langs
         combined = []
-
+        filter_active = False
+        for lang in langs:
+            if (self.transcriber.allcmds.get(lang) and 'filter' in self.transcriber.allcmds[lang] and len(self.transcriber.allcmds[lang]['filter']) > 0):
+                filter_active = True
         for lang in langs:
             data = self.transcriber.read(lang, start_time, end_time)
             logger.info(f'Reading data for {lang} from {start_time} to {end_time}: {len(data)} entries')
+            logger.info(f'Filter active: {filter_active}')
             #combine all data into single array sorted by timestamp
-            if (self.transcriber.allcmds.get(lang) and 'filter' in self.transcriber.allcmds[lang] and len(self.transcriber.allcmds[lang]['filter']) > 0):
-                logger.info(f'Applying filter for {lang}: {self.transcriber.allcmds[lang]["filter"]}')
-                words = [w['word'] for w in self.transcriber.allcmds[lang]["filter"]]
-                data = [cmd for cmd in data if cmd['&&'] in words]
-            combined.extend(data)
+            if (not filter_active):
+                combined.extend(data)
+            else:
+                if (self.transcriber.allcmds.get(lang) and 'filter' in self.transcriber.allcmds[lang] and len(self.transcriber.allcmds[lang]['filter']) > 0):
+                    logger.info(f'Applying filter for {lang}: {self.transcriber.allcmds[lang]["filter"]}')
+                    words = self.transcriber.allcmds[lang]["filter"]
+                    data = [cmd for cmd in data if cmd['&&'] in words]
+                    combined.extend(data)
+
+        if (len(combined) == 0):
+            return combined
         combined.sort(key=lambda x: x['timestamp'])
         return combined
     
@@ -2284,7 +2455,8 @@ class MyWindow(QMainWindow):
         if (type == '> '):
           if (l['cmd'] == 'Click Link_' or l['cmd'] == 'Select Book_' or l['cmd'] == 'Select Topic_' 
               or l['cmd'] == 'Select Tab_' or l['cmd'] == 'Time Zoom_' or l['cmd'] == 'Read Link_' 
-              or l['cmd'] == 'Select Window_' or l['cmd'] == 'Ask_' or l['cmd'] == 'Define_' or l['cmd'] == 'Entity_'):
+              or l['cmd'] == 'Select Window_' or l['cmd'] == 'Ask_' or l['cmd'] == 'Define_' or l['cmd'] == 'Entity_'
+              or l['cmd'] == 'Select Filter_'):
             for i2, l2 in enumerate(self.label_ps):
                 self.label_ps[i2].setText("")            
             cnt = 0       
@@ -2389,7 +2561,7 @@ class MyWindow(QMainWindow):
             self.qr_cache.insert(0, {'data': data, 'struct': struct})
             if (self.qr_cache_index != 0):
                 self.qr_cache_index +=1
-                
+
             lines = data.split('\n')
             for (i, l) in enumerate(lines):
                 if (l.startswith('<<meta>>')):
@@ -2478,9 +2650,10 @@ class MyWindow(QMainWindow):
                 label.adjustSize()
                 label.update()
 
-
     def paintEvent(self, event):
         super().paintEvent(event)
+#        self.paintCursorHighlight(QPainter(self))
+
         if (self.highlighton):
             self.video_overlay.update() #update the video overlay to draw the highlight box on top of the video widget.
 #            self.video_widget.paintEvent(event) #call paint event of video widget to draw video frame first, then we will draw highlight box on top.
@@ -2498,3 +2671,55 @@ class MyWindow(QMainWindow):
             painter.end()
             """        
         # You can also draw text, ellipses, images, etc.
+
+
+
+class CursorHighlighter(QWidget):
+    def __init__(self):
+        super().__init__()
+        
+        # Make the window frameless, transparent to clicks, and stay on top
+        self.setWindowFlags(
+            Qt.FramelessWindowHint |
+            Qt.WindowStaysOnTopHint |
+            Qt.Tool |
+            Qt.WA_TranslucentBackground |
+            Qt.WA_TransparentForMouseEvents |
+            Qt.WindowTransparentForInput
+        )
+        self.setAttribute(Qt.WA_TranslucentBackground, True)
+        self.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        
+        # Set highlighter circle size (diameter)
+        self.size = 50
+        self.resize(self.size, self.size)
+        
+        # Timer to track global cursor position
+        self.timer = QTimer(self)
+        self.timer.setInterval(10)  # Set the timer interval to 10 ms
+        self.timer.timeout.connect(self.update_position)
+        QTimer.singleShot(30000, self.start) #not ideal, but ..
+        self.show()
+
+    def start(self):
+        self.timer.start()  # ~100 FPS tracking
+
+    def update_position(self):
+        # Get the global cursor position from QApplication
+        pos = QCursor.pos()
+        # Alternative modern PyQt5 way to get global cursor position:
+        # from PyQt5.QtGui import QCursor
+        # pos = QCursor.pos()
+        
+        # Center the highlight circle around the mouse pointer
+        self.move(pos.x() - self.size // 2, pos.y() - self.size // 2)
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        
+        # Draw a semi-transparent yellow/orange circle
+        color = QColor(255, 255, 0, 120)  # RGBA: Yellow with alpha transparency
+        painter.setBrush(color)
+        painter.setPen(Qt.NoPen)
+        painter.drawEllipse(0, 0, self.size, self.size)

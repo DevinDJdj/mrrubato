@@ -923,6 +923,7 @@ export function pickTopic(selectedtopics : string[], defaultprompts: string[] = 
     //just add all.  
     let mylist = [];
 
+    let dedup = new Set(); //to keep track of unique items by their data.
     for (; i<selectedtopics.length && i< numtopics; i++) {
         if (topicarray[ selectedtopics[i] ] !== undefined) {
             retdata += "**" + selectedtopics[i] + "\n"; //add the topic to the data.
@@ -944,10 +945,11 @@ export function pickTopic(selectedtopics : string[], defaultprompts: string[] = 
                 //random number related to list length...
                 if (Math.random() < ((numentries+selectedentries)/(tentries*2))){ //randomly add entries based on the number of entries for the topic.
                     //weight later entries more..
-//                    if (mylist.find((t) => t.data === item.data) === undefined) { //deduplicate the list. by data..
+                    if (!dedup.has(item.data)) { //deduplicate the list. by data..
                         mylist.push(item);
                         selectedentries++;
-//                    }
+                        dedup.add(item.data);
+                    }
                 }
             }
         }
@@ -1214,7 +1216,7 @@ function initArray(topic: string, array: {[key: string] : Array<BookTopic> | und
     }
 }
 
-export function updatePage(filePath: string, text: string, linefrom: number = 0, lineto: number = 0, show: boolean = false) {
+export function updatePage(filePath: string, text: string, linefrom: number = 0, lineto: number = 0, show: boolean = true) {
     //update the current page with the text and filePath.  
     //this will be used to update the current topic.  
     const folderUri = workspaceUri;
@@ -1539,7 +1541,7 @@ export async function markdown(prompt: string, format: number =1) : Promise<stri
                     }
                 }
                 let linkText = p2.replace(/\|/g, "\\|"); 
-                return `\n[#${linkText}](${getLinkCommand(p2)})  `; //return the markdown link.
+                return `\n[#${linkText}](${getLinkCommand(p1+p2)})  `; //return the markdown link.
         }
         else{
             let colon = p2.lastIndexOf(":");
@@ -1614,12 +1616,24 @@ export async function markdown(prompt: string, format: number =1) : Promise<stri
 
         }
         else{
-            let readablename = getReadableName(p2);
-            return `[${p1}${readablename}](${getLinkCommand(fname)})`; //return the markdown link.
+            let readablename = getReadableName(p2); //only using for TTS really..
+            return `[${p1}${readablename}](${getLinkCommand(p1+p2)})`; //return the markdown link.
 
         }
     });
 
+    //could be others as well.. not sure why /^ syntax doesnt work in this function..
+    marked = marked.replace(/(\n~~|\n@@)(.*)/g, (match, p1, p2) => {
+        // p1 is $$
+        //need some logic here for $$ variable replacement.  
+        // p2 is the topic or link 
+        console.log(`Processing line with type: ${p1} and info: ${p2}`);
+        let type = p1;
+        let info = p2;
+        return `[${type}](${getLinkCommand(type+info)})${info}`; //return the markdown link.
+
+    });
+    
     //$$ is math block in markdown..
     marked = marked.replace(/\$/g, () => '\\$'); //escape dollar signs
    console.log(`Marked content: ${marked}`);
@@ -1702,7 +1716,8 @@ export async function expandPrompt(prompt: string) : Promise<string> {
 export async function similar(prompt: string) : Promise<Array<BookTopic>> {
     //this will be used to find similar topics in the book.  
     //for now just return the topics in the book.
-    let expandedprompt = await expandPrompt(prompt); //expand the prompt to include more context.
+    //expansion not working..
+    let expandedprompt = prompt; //await expandPrompt(prompt); //expand the prompt to include more context.
 //    let selectedtopics = findInputTopics(prompt + "\n" + expandedprompt); 
     let selectedtopics = findInputTopics(prompt);
     console.log("SIMILAR Selected topics: ", selectedtopics);

@@ -218,7 +218,7 @@ class MyKeys:
           self.langna.append(key)
           print("language added " + key)
           logger.info("language added " + key)
-          if (key == 'check' and hasattr(self.languages[key], 'mykeys')):
+          if (hasattr(self.languages[key], 'mykeys')):
             self.languages[key].mykeys = self
 
       except Exception as e:
@@ -596,8 +596,8 @@ class MyKeys:
     vars['TIME'] = int(time.time())
     vars['type'] = '_meta'
     vars['MIDI'] = self.get_midiarray(50) #last 50 notes/chars for now.
-    print(f'Tock {vars}')
-    self.set_qr("Tock", vars) #last 50 notes for now.
+    print(f'Tockz {vars}')
+    self.set_qr("Tockz", vars) #last 50 notes for now.
 
   def get_midiarray(self, num=50):
     mytrack = self.mid.tracks[self.currentchannel][-num*2:] #get last num notes, note on and note off.
