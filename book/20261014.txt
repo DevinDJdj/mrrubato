@@ -1,0 +1,44 @@
+
+**extensions/vscode/codetutor/src/extension.ts
+
+Setup.. reconfig..
+>#1 Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+>#1 npm install --save @vscode/prompt-tsx
+>#1 npm install --save ollama
+>#1 npm install vectra
+
+
+**OLLAMA
+$$20260605
+$$SYSTEM=UBUNTU
+>$1 sudo apt-get install zstd
+>$1 curl -fsSL https://ollama.com/install.sh | sh
+
+>$1 ollama pull gemma4:e4b
+>$1 ollama pull nomic-embed-text
+
+
+#https://nodejs.org/en/download
+#https://nodejs.org/dist/v24.21.0/node-v24.21.0-x64.msi
+;> msiexec /i "C:\Users\devin\Downloads\node-v24.21.0-x64.msi" /quiet /norestart
+Silent install still doesnt work..
+>#1 node -v
+$$NODE=24.21.0
+>#1 npm -v
+$$NPM=11.19
+
+>$1 ollama pull nomic-embed-text
+
+
+> pip install rapidfuzz
+> pip install kokoro
+> pip install faster-whisper
+> pip install scikit-learn
+> pip install pycaw
+> pip install pytesseract
+> pip install ollama
+> python ./extensions/trey/trey.py
+
+>#1 cd C:/devinpiano/music
+>#1 ./treyenv/Scripts/activate.ps1
+>#1 python ./extensions/trey/trey.py
