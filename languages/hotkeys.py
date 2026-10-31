@@ -935,7 +935,8 @@ class hotkeys:
             logger.info(f'#{url}\n{total_read}')
             playwrighty.open_browser() #in case not open already..
             playwrighty.add_bookmark(url, total_read, text) #call playwrighty add bookmark..
-            playwrighty.read_page(url, -1) #cacheno -1 means load new page if not already open.  
+            body_text, link_data, page, cacheno = playwrighty.read_page(url, -1) #cacheno -1 means load new page if not already open.  
+            playwrighty.update_page_offset(cacheno=cacheno, total_read=total_read) #scroll to location..
         if (c['type'] == '> ' and c['cmd'] == 'Send Windows'):
           logger.info(f'Send Windows {c}')
           for i, v in c['vars'].items():
@@ -1090,7 +1091,7 @@ class hotkeys:
         cacheno = len(playwrighty.page_cache)-1
       #remove bookmark..
       page = playwrighty.get_ppage(cacheno, False) #dont activate.. we are closing sometimes..
-      playwrighty.transcribe_bookmark(page.url, transcriber=self.transcriber, name=self.name, remove=True)
+      playwrighty.transcribe_bookmark(page.url, cacheno=cacheno, transcriber=self.transcriber, name=self.name, remove=True)
 
       playwrighty.close_tab(cacheno)
     return 0
@@ -1178,7 +1179,7 @@ class hotkeys:
       body_length = playwrighty.page_cache[cacheno]['length'] if cacheno >=0 and cacheno < len(playwrighty.page_cache) else 0
 
       if (url != "" and url != "about:blank"):
-        playwrighty.transcribe_bookmark(url, transcriber=self.transcriber, name=self.name)
+        playwrighty.transcribe_bookmark(url, cacheno=cacheno, transcriber=self.transcriber, name=self.name)
 #        self.transcriber.write(self.name, "Add Bookmark", {
 #          'URL': url,'TOTAL_READ': total_read,'BODY_LENGTH': body_length,'TEXT': text
 #        })  
@@ -1808,7 +1809,7 @@ class hotkeys:
           #remove from mylist
           e['text'] = ''
 
-      mylist = [e for e in mylist if e['text'] != '']
+      mylist[:] = [e for e in mylist if e['text'] != '']
 
       logger.info(f'> Dedup entities')
       logger.info(stringmap)

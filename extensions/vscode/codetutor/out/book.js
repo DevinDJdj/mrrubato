@@ -1084,7 +1084,7 @@ function initArray(topic, array = exports.topicarray) {
         array[topic] = [];
     }
 }
-function updatePage(filePath, text, linefrom = 0, lineto = 0, show = false) {
+function updatePage(filePath, text, linefrom = 0, lineto = 0, show = true) {
     //update the current page with the text and filePath.  
     //this will be used to update the current topic.  
     const folderUri = exports.workspaceUri;

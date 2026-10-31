@@ -2128,14 +2128,17 @@ class MyWindow(QMainWindow):
                         maintext[maintimeindex]['&&'] = maintext[maintimeindex]['&&'] + newentry
                         ctxtdic[sorted_tmap[i]['&&'] + '_' + ctxtkey] = newentry
                     else:
-                        if (sorted_tmap[i]['$$'].get('TEXT', None) is not None):
-                            #display shortened context key
-                            shortkey = ctxtkey[:20]
-                            if (len(ctxtkey) > 20):
-                                shortkey += '...'
-                                shortkey += ctxtkey[-20:] #last 20 chars
-                            shorttext = sorted_tmap[i]['$$']['TEXT'][:100] #shorten text for display, can adjust as needed.
-                            maintext[maintimeindex]['&&'] = maintext[maintimeindex]['&&'] + '#' + shortkey + '\n' + shorttext + '\n'
+                        text = sorted_tmap[i]['$$'].get('&&', '')
+                        total_read = sorted_tmap[i]['$$'].get(':', '')
+                        #display shortened context key
+                        shortkey = ctxtkey[:20]
+                        if (len(ctxtkey) > 20):
+                            shortkey += '...'
+                            shortkey += ctxtkey[-20:] #last 20 chars
+                        shorttext = text[:100] #shorten text for display, can adjust as needed.
+                        if (total_read != ''):
+                            shortkey += ':' + total_read
+                        maintext[maintimeindex]['&&'] = maintext[maintimeindex]['&&'] + '#' + shortkey + '\n' + shorttext + '\n'
 
         for i in range(len(maintext)):
 #                if (temptext[0:2] != '**'):
@@ -2307,7 +2310,7 @@ class MyWindow(QMainWindow):
             else:
                 if (self.transcriber.allcmds.get(lang) and 'filter' in self.transcriber.allcmds[lang] and len(self.transcriber.allcmds[lang]['filter']) > 0):
                     logger.info(f'Applying filter for {lang}: {self.transcriber.allcmds[lang]["filter"]}')
-                    words = [w['word'] for w in self.transcriber.allcmds[lang]["filter"]]
+                    words = self.transcriber.allcmds[lang]["filter"]
                     data = [cmd for cmd in data if cmd['&&'] in words]
                     combined.extend(data)
 
@@ -2452,7 +2455,8 @@ class MyWindow(QMainWindow):
         if (type == '> '):
           if (l['cmd'] == 'Click Link_' or l['cmd'] == 'Select Book_' or l['cmd'] == 'Select Topic_' 
               or l['cmd'] == 'Select Tab_' or l['cmd'] == 'Time Zoom_' or l['cmd'] == 'Read Link_' 
-              or l['cmd'] == 'Select Window_' or l['cmd'] == 'Ask_' or l['cmd'] == 'Define_' or l['cmd'] == 'Entity_'):
+              or l['cmd'] == 'Select Window_' or l['cmd'] == 'Ask_' or l['cmd'] == 'Define_' or l['cmd'] == 'Entity_'
+              or l['cmd'] == 'Select Filter_'):
             for i2, l2 in enumerate(self.label_ps):
                 self.label_ps[i2].setText("")            
             cnt = 0       

@@ -84,7 +84,15 @@ class selector:
     for i, l in enumerate(self.get_visible()):
       n = i + start
       if (isinstance(l, dict) and entry in l):
-        vars[f'{n}'] = l[entry]
+        if (entry == '..'): #cmd instance
+          if ('$$' in l): #vars..
+            vars[f'{n}'] = l['$$']['..'] if ('..' in l['$$']) else (l['$$']['TIME'] if 'TIME' in l['$$'] else '...')
+            cmd = l['&&'] if '&&' in l else '&&'
+            text = l['$$']['&&'] if '&&' in l['$$'] else (l['$$']['TEXT'] if 'TEXT' in l['$$'] else '&&')
+            
+            vars[f'{n}'] += f' {cmd} {text}'
+        else: #topic instance
+          vars[f'{n}'] = l[entry]
       else:
         vars[f'{n}'] = l
 #          vars[f'href{i}'] = l['href']

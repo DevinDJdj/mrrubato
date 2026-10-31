@@ -628,7 +628,7 @@ hmmm..
 **extensions/trey/mywindow.py
 --show_tmap_body
 somewhat closer to what we want..
-
+test scroll to location of bookmark..
 
 **languages/hotkeys.py
 --qr_in
@@ -638,3 +638,43 @@ Also opening new tabs?
 Not sure how I want this to work..
 Also when pausing after this, we create new bookmarks..
 Need ability to jump to furthest bookmark..
+m: devin is wierd weird weird
+
+**languages/check.py
+--select_filter
+Have filter/select function
+Similar for cache/select function..
+What to show in selector?  
+;..>:&&
+Start with word filter until _OK, then just have selector based on these words and current time..
+Show details on pre-select..
+Keep recent cache since started separate for now..
+
+[48,50,53] [54]
+[57,59,60] [53,58] [54,54] [selection]
+
+test..
+
+**languages/helpers/transcriber.py
+--shortformvars
+Need better mechanism..
+
+**languages/hotkeys.py
+Dedup looks better, but we have a lot of blanks..
+Need to clear this..
+Python pass by reference cant reassign
+mylist = [e for e in mylist if e['text'] != '']
+mylist[:] = [e for e in mylist if e['text'] != '']
+test..
+
+
+;> Comment
+allow for highlight of text to comment on a particular piece of text.  
+Similar to screenshot feedback, but just for text on a particular page..
+
+
+**extensions/vscode/codetutor/src/book.ts
+--updatePage
+lets stop switching editors, too confusing..
+$$show=true
+

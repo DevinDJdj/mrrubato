@@ -1216,7 +1216,7 @@ function initArray(topic: string, array: {[key: string] : Array<BookTopic> | und
     }
 }
 
-export function updatePage(filePath: string, text: string, linefrom: number = 0, lineto: number = 0, show: boolean = false) {
+export function updatePage(filePath: string, text: string, linefrom: number = 0, lineto: number = 0, show: boolean = true) {
     //update the current page with the text and filePath.  
     //this will be used to update the current topic.  
     const folderUri = workspaceUri;

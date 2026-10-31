@@ -247,15 +247,13 @@ def click_link(cacheno, text_offset, link_offset=0, open_new_tab=False):
     return False
 
 
-def get_snippet(text, total_read):
-    newline = text.find('\n', total_read)
+def get_snippet(text, total_read, snippet_length=100):
+    newline = text.rfind('\n', 0, total_read)
     if (newline < 1):
-        newline = total_read + 100
+        newline = total_read
     if (newline > len(text)):
-        newline = len(text)
-    if (newline-total_read > 100):
-        newline = total_read + 100
-    text = text[total_read:newline]
+        newline = total_read
+    text = text[newline:newline+snippet_length]
     text = text.replace('\n','  ')
     text = text.replace('\t',' ')
     return text.strip()
@@ -300,7 +298,7 @@ def transcribe_bookmark(url, cacheno=-1, transcriber=None, name="hotkeys", remov
             alias = get_alias(url)   
 
             transcriber.write(name, "Add Bookmark", {
-            'URL': url,'ALIAS': alias, 'TOTAL_READ': total_read,'BODY_LENGTH': body_length,'TEXT': text, 'VIDEO_NO': video_no, 'VIDEO_POS': video_pos
+            'URL': url,'ALIAS': alias, 'TOTAL_READ': total_read,':': total_read, 'BODY_LENGTH': body_length,'TEXT': text, '&&': text, 'VIDEO_NO': video_no, 'VIDEO_POS': video_pos
             })  
 
 
@@ -1110,12 +1108,12 @@ def select_pre_text_range(page, pre_selector, search_string):
         }
     """, {"selector": pre_selector, "text": search_string})
 
-def update_page_offset(cacheno=-1):
+def update_page_offset(cacheno=-1, total_read=0):
     if (last_link_clicked_time is not None and time.time() - last_link_clicked_time < 1):
         #if we have clicked a link in the last second, we may be in the process of navigating to a new page, so skip updating the offset for now to avoid conflicts.
         return -1
     global current_cache
-    total_read = 0
+
     if (cacheno < 0 or cacheno >= len(page_cache)):
         cacheno = current_cache
     if (cacheno < 0 or cacheno >= len(page_cache)):
@@ -1446,6 +1444,7 @@ def read_page(url, cacheno=-1):
 
     if (page.url not in page_cache[cacheno]['current_offset'] or page_cache[cacheno]['current_offset'][page.url] == 0):
         #get previous bookmark offset.
+
         page_cache[cacheno]['current_offset'][page.url] = get_bookmark(page.url)
         logging.info(f"Got Bookmark {page_cache[cacheno]['current_offset'][page.url]}")
 
