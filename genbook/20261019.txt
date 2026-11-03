@@ -1,0 +1,31 @@
+**web/public/rss/recent.html
+**web/public/recent.js
+
+**/testing/mrrubato
+> git config --list
+
+**mrrubato
+> .\treyenv\Scripts\activate
+> .\treyenv\Scripts\activate
+> python ./extensions/trey/trey.py
+> pip install rapidfuzz
+> pip install kokoro
+> pip install faster-whisper
+> pip install scikit-learn
+> pip install pycaw
+> pip install pytesseract
+> python ./extensions/trey/trey.py
+
+**OLLAMA
+> pip install ollama
+> python ./extensions/trey/trey.py
+
+**mrrubato
+> pip install pyqtgraph
+> python ./extensions/trey/trey.py
+
+**OLLAMA
+>#1 cd C:/devinpiano/music
+>#1 ./treyenv/Scripts/activate.ps1
+>#1 python ./extensions/trey/trey.py
+&& **20261006

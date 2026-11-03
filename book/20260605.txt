@@ -184,7 +184,7 @@ Ctrl+Shift+3
 
 
 **mrrubato
-;> .\treyenv\Scripts\activate
+> .\treyenv\Scripts\activate
 ;> pip install -r ./extensions/trey/requirements.txt
 > pip install huggingface_hub
 
