@@ -748,7 +748,7 @@ export function activate(context: vscode.ExtensionContext) {
 		console.log(`Opening link: ${mylink}`);
 		// trigger the generate command for this text
 		vscode.commands.executeCommand('mrrubato.mytutor.generate', mylink);
-		
+
 		//const [url, index] = Book.getURLAndIndex(mylink);
 		//vscode.env.openExternal(vscode.Uri.parse(url));
 
@@ -1286,7 +1286,7 @@ export function activate(context: vscode.ExtensionContext) {
 		}		
 		//log the command to genbook if valid.  
 
-		Book.logCommand(topiccmd + datecmd + text);
+		Book.logCommand(datecmd + text, topic);
 		//copy to the clipboard anyway by default.  
 		//if wanting to use in different environment.  
 

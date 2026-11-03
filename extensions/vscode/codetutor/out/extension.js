@@ -1119,7 +1119,7 @@ function activate(context) {
                 break;
         }
         //log the command to genbook if valid.  
-        Book.logCommand(topiccmd + datecmd + text);
+        Book.logCommand(datecmd + text, topic);
         //copy to the clipboard anyway by default.  
         //if wanting to use in different environment.  
         //not sure if this is needed or not.

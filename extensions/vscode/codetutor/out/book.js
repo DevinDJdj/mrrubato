@@ -36,7 +36,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.workspaceUri = exports.MAX_SELECTION_HISTORY = exports.ftsindex = exports.arrays = exports.commandarray = exports.temptopicarray = exports.temptopics = exports.topicvectorarray = exports.topicarray = exports.envarray = exports.alltopicsa = exports.alltopicdata = exports.alltopics = exports.vectrafixes = exports.defstring = exports.fnmap = exports.defmap = exports.ollama_model = exports.queryhistory = exports.environmenthistory = exports.selectionhistory = exports.selectedtopic = exports.currenttopic = exports.BOOK_OPEN_GIT = exports.BOOK_OPEN_WEB = exports.BOOK_OPEN_FILE = exports.GIT_DB = exports.GIT_RELATIONS = exports.GIT_DETAILS = exports.GIT_CODE = exports.GIT_BOOK = void 0;
+exports.workspaceUri = exports.MAX_SELECTION_HISTORY = exports.ftsindex = exports.arrays = exports.commandarray = exports.temptopicarray = exports.temptopics = exports.topicvectorarray = exports.topicarray = exports.envarray = exports.alltopicsa = exports.alltopicdata = exports.alltopics = exports.vectrafixes = exports.defstring = exports.fnmap = exports.defmap = exports.ollama_model = exports.currentfunctions = exports.queryhistory = exports.environmenthistory = exports.selectionhistory = exports.selectedtopic = exports.currenttopic = exports.BOOK_OPEN_GIT = exports.BOOK_OPEN_WEB = exports.BOOK_OPEN_FILE = exports.GIT_DB = exports.GIT_RELATIONS = exports.GIT_DETAILS = exports.GIT_CODE = exports.GIT_BOOK = void 0;
 exports.setModel = setModel;
 exports.logCommand = logCommand;
 exports.getTokens = getTokens;
@@ -126,12 +126,14 @@ var opennature = exports.BOOK_OPEN_FILE; //how do we open the book page?  File, 
 var gitnature = exports.GIT_CODE | exports.GIT_DETAILS; //do we retrieve history and commits?  
 exports.currenttopic = "NONE";
 exports.selectedtopic = "NONE";
+var lastlogtopic = "NONE";
 var currenttopicline = 0;
 var currentrefline = 0;
 var currentref = "NONE";
 exports.selectionhistory = [];
 exports.environmenthistory = [];
 exports.queryhistory = [];
+exports.currentfunctions = [];
 exports.ollama_model = 'gemma4:e4b';
 exports.ollama_model = 'gemma3:4b';
 var mytime = new Date().getTime() / 1000; //set the time in seconds
@@ -273,7 +275,7 @@ function buildTopicGraph(start, end, depth = 6) {
         getDigraph(topic, templist);
     }
 }
-function logCommand(command) {
+function logCommand(command, topic = "") {
     //log the command in genbook.  
     try {
         const mySettings = vscode.workspace.getConfiguration('mrrubato');
@@ -287,7 +289,15 @@ function logCommand(command) {
             }
         }
         let logPath = genbookFolder + "/" + formatDate(mynow) + ".txt"; //get the date in YYYYMMDD format.
-        updatePage(logPath, command, -1, -1);
+        let topiccmd = "";
+        if (topic !== "") {
+            if (lastlogtopic !== topic) {
+                //do something if the topic has changed
+                topiccmd = `**${topic}\n`;
+            }
+            lastlogtopic = topic;
+        }
+        updatePage(logPath, topiccmd + command, -1, -1, false);
     }
     catch (error) {
         console.error(`Error reading file: ${error}`);
@@ -710,6 +720,37 @@ function getMyUris(topic, externalpath = "") {
     }
     return ret;
 }
+async function getAllFunctionsInFile(uri) {
+    // 1. Execute the built-in document symbol provider
+    const symbols = await vscode.commands.executeCommand('vscode.executeDocumentSymbolProvider', uri);
+    if (!symbols)
+        return [];
+    // 2. Recursively filter out symbols that are functions or methods
+    const functions = [];
+    function filterFunctions(symbolList, depth = 0, maxDepth = 3) {
+        for (const symbol of symbolList) {
+            if (symbol.kind === vscode.SymbolKind.Function ||
+                symbol.kind === vscode.SymbolKind.Method) {
+                functions.push(symbol);
+            }
+            // Language servers often nest functions inside classes or scopes
+            if (symbol.children && symbol.children.length > 0) {
+                if (depth < maxDepth) {
+                    filterFunctions(symbol.children, depth + 1, maxDepth);
+                }
+            }
+        }
+    }
+    filterFunctions(symbols);
+    return functions;
+}
+function getExtension(filename) {
+    const dotIndex = filename.lastIndexOf('.');
+    if (dotIndex !== -1 && dotIndex !== 0) {
+        return filename.substring(dotIndex + 1);
+    }
+    return undefined;
+}
 function select(topic, open = opennature) {
     //select the topic from the topicarray.  
     //this will be used to get the topic from the array.  
@@ -739,6 +780,15 @@ function select(topic, open = opennature) {
         if (found) {
             addToHistory(topic); //add the topic to the history.
             //read the book content if it exists.  
+            let ext = getExtension(topic);
+            if (ext !== undefined && ext !== 'txt' && fileUri !== null) {
+                getAllFunctionsInFile(fileUri).then((allfuncs) => {
+                    exports.currentfunctions = allfuncs;
+                    console.log(`Functions in ${fileUri.fsPath}:`, allfuncs);
+                });
+                //log for now..
+                //use this for autocompletion on -- as well as storing for trey..
+            }
             readBooksContent(fileUris, topic); //read the book content if it exists.  
             fileUris = getMyUris(fname, "books");
             //started using this, but really dont want leading books/

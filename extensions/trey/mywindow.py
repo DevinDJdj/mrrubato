@@ -2453,10 +2453,11 @@ class MyWindow(QMainWindow):
       for i, l in enumerate(struct):
         type = l['type']
         if (type == '> '):
-          if (l['cmd'] == 'Click Link_' or l['cmd'] == 'Select Book_' or l['cmd'] == 'Select Topic_' 
-              or l['cmd'] == 'Select Tab_' or l['cmd'] == 'Time Zoom_' or l['cmd'] == 'Read Link_' 
-              or l['cmd'] == 'Select Window_' or l['cmd'] == 'Ask_' or l['cmd'] == 'Define_' or l['cmd'] == 'Entity_'
-              or l['cmd'] == 'Select Filter_'):
+          pcommands = ['Click Link_', 'Select Book_', 'Select Topic_', 
+                       'Select Tab_', 'Close Tab_', 'Time Zoom_', 'Read Link_', 
+                       'Select Window_', 'Ask_', 'Define_', 'Entity_', 
+                       'Select Filter_']
+          if (l['cmd'] in pcommands):
             for i2, l2 in enumerate(self.label_ps):
                 self.label_ps[i2].setText("")            
             cnt = 0       

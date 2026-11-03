@@ -678,3 +678,55 @@ Similar to screenshot feedback, but just for text on a particular page..
 lets stop switching editors, too confusing..
 $$show=true
 
+**languages/helpers/transcriber.py
+--getTime
+Do we want started_time here?  
+Or actual time..
+Lets switch to actual time..
+Maybe this will help with time issue..
+
+
+**languages/git.py
+use current topic
+;> Select Function
+[51,54,58]
+basic function set..
+test..
+
+
+**extensions/vscode/codetutor/src/toolParticipant.ts
+--registerCompletionTool
+add contextual completion on --
+
+**extensions/vscode/codetutor/src/book.ts
+--getAllFunctionsInFile
+vscode.executeDocumentSymbolProvider
+Add to BookTopic..
+
+what is in vscode.DocumentSymbol
+ds.name
+ds.kind (function or class.)
+ds.range (gettext from here..)
+ds.selectionRange
+ds.children (subfunctions or )
+
+Use children length to determine if we want to display as selectable or not based on context..
+
+
+**extensions/trey/trey.py
+@@why are we not using kokoro speech with unorder list elements?  
+
+
+**languages/hotkeys.py
+--close_tab
+switched to selector..
+fixed maybe..
+
+--click_link
+Need to switch to use selector for link selection..
+adjusted
+test..
+Looks off by one still..
+
+
+

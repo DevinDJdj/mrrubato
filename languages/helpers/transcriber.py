@@ -82,14 +82,17 @@ class transcriber:
                     self.allneedles.append(strkeys)
 
 
-    def getTime(self, relativedays=0):
+    def getTime(self, relativedays=0, actual=False):
         #for now use started_time.. so we dont keep reloading..
-        now = datetime.fromtimestamp(self.timewindow.started_time)
+        if actual:
+            now = datetime.now()
+        else:
+            now = datetime.fromtimestamp(self.timewindow.started_time) #use started time for most functions so not reloading transcripts..
         now += timedelta(days=relativedays)
         return now
     
     def getTimeString(self, relativedays=0):
-        now = self.getTime(relativedays)
+        now = self.getTime(relativedays, actual=True) #get actual time..
         return now.strftime('%Y%m%d_%H%M%S')
 
     def write_plain(self, lang, text):

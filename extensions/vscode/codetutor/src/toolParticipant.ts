@@ -275,6 +275,9 @@ export function registerCompletionTool(context: vscode.ExtensionContext){
 }
 
 
+
+
+
 function getWorkspaceTestPatterns() {
 	if (!vscode.workspace.workspaceFolders) {
 		return [];

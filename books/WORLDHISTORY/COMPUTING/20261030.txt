@@ -10,3 +10,11 @@ It is tricky to describe something a lot of times, just with words, which is why
 $$20261030_181227
 #:387281
 . A most erroneous and unfortunate opinion prevails amongst workmen in many manufacturing countries, that their own interest and that of their employers are at variance
+
+
+#OCW/CLASSICAL_MECHANICS|https://ocw.mit.edu/courses/8-01sc-classical-mechanics-fall-2016/
+How much work to use OCW videos easily from playwrighty..
+
+#OPENSTAX/INTRO_TO_COMPUTER_SCIENCE|https://openstax.org/books/introduction-computer-science/pages/preface
+Or Openstax books..
+
