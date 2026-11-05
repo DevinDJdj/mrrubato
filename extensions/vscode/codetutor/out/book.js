@@ -130,7 +130,7 @@ var lastlogtopic = "NONE";
 var currenttopicline = 0;
 var currentrefline = 0;
 var currentref = "NONE";
-exports.selectionhistory = [];
+exports.selectionhistory = {};
 exports.environmenthistory = [];
 exports.queryhistory = [];
 exports.currentfunctions = [];
@@ -277,6 +277,8 @@ function buildTopicGraph(start, end, depth = 6) {
 }
 function logCommand(command, topic = "") {
     //log the command in genbook.  
+    //add here to selection history..
+    //parse all lines..
     try {
         const mySettings = vscode.workspace.getConfiguration('mrrubato');
         let genbookFolder = mySettings.genbookfolder;
@@ -298,6 +300,7 @@ function logCommand(command, topic = "") {
             lastlogtopic = topic;
         }
         updatePage(logPath, topiccmd + command, -1, -1, false);
+        addLogHistory(command); //add all autocompletion orders..
     }
     catch (error) {
         console.error(`Error reading file: ${error}`);
@@ -413,7 +416,10 @@ function findTopicsCompletion(str = "") {
                     //add formatting here for timestamp and OCR if available.  
                     doc += `Data: ${data}  \n`;
                     //set sortText to top if it is in selection history.  
-                    const found = exports.selectionhistory.findIndex((t) => t === item.topic);
+                    if (!exports.selectionhistory['**']) {
+                        exports.selectionhistory['**'] = [];
+                    }
+                    const found = exports.selectionhistory['**'].findIndex((t) => t === item.topic);
                     if (found > -1) {
                         sortText = (exports.MAX_SELECTION_HISTORY - found).toString(16).padStart(4, '0').toUpperCase();
                     }
@@ -593,10 +599,10 @@ function addToEnvironment(str, value) {
         exports.environmenthistory.shift(); //remove the first element from the array.
     }
 }
-function removeFromHistory(topic) {
-    const found = exports.selectionhistory.findIndex((t) => t === topic);
+function removeFromHistory(topic, key = "**") {
+    const found = exports.selectionhistory[key]?.findIndex((t) => t === topic) ?? -1;
     if (found > -1) {
-        exports.selectionhistory.splice(found, 1); //remove the topic from the selection history.
+        exports.selectionhistory[key].splice(found, 1); //remove the topic from the selection history.
     }
 }
 function addQueryHistory(query) {
@@ -620,22 +626,47 @@ function addQueryHistory(query) {
         exports.queryhistory.push(obj); //add the query to the end of the history.
     }
 }
-function addToHistory(topic) {
+function addLogHistory(cmd) {
+    let alllines = cmd.split("\n");
+    if (alllines.length > 1) {
+        //multiple line command, run each line.  need sequential thread.  
+        for (let line of alllines) {
+            //get each defstring..
+            keyfind: for (let j = exports.defmap.length - 1; j >= 0; j--) {
+                for (const [k, v] of Object.entries(exports.defmap[j])) {
+                    //for now excluding the '-' key.
+                    if (line.startsWith(k)) {
+                        let t = line.substring(k.length);
+                        const found = exports.selectionhistory[k]?.findIndex((x) => x === t) ?? -1;
+                        if (found > -1) {
+                            removeFromHistory(t, k); //dont keep duplicates in the selection history.
+                        }
+                        addToHistory(t, k);
+                    }
+                }
+            }
+        }
+    }
+}
+function addToHistory(topic, key = "**") {
     //add the topic to the history.  
-    const found = exports.selectionhistory.findIndex((t) => t === topic);
+    if (!exports.selectionhistory[key]) {
+        exports.selectionhistory[key] = [];
+    }
+    const found = exports.selectionhistory[key].findIndex((t) => t === topic);
     if (found < 0) {
-        exports.selectionhistory.push(topic); //add the topic to the selection history.
+        exports.selectionhistory[key].push(topic); //add the topic to the selection history.
     }
     else {
-        exports.selectionhistory.splice(found, 1); //remove the topic from the selection history.
-        exports.selectionhistory.push(topic); //add the topic to the end of the selection history.
+        exports.selectionhistory[key].splice(found, 1); //remove the topic from the selection history.
+        exports.selectionhistory[key].push(topic); //add the topic to the end of the selection history.
     }
     if (exports.selectedtopic !== topic) {
         exports.selectedtopic = topic; //set the selected topic to the current topic.
         topicchanged = true; //set the topic changed flag to true.
     }
-    if (exports.selectionhistory.length > exports.MAX_SELECTION_HISTORY) {
-        exports.selectionhistory.shift(); //remove the first element from the array.
+    if (exports.selectionhistory[key].length > exports.MAX_SELECTION_HISTORY) {
+        exports.selectionhistory[key].shift(); //remove the first element from the array.
     }
 }
 function getWebviewContent(topic) {
@@ -690,7 +721,11 @@ function getMyUris(topic, externalpath = "") {
         folderUri = folderUri.with({ path: path_1.posix.join(folderUri.path, externalpath) });
     }
     // this should be a book path.  Use as you would work on the project.  
-    let fileUri = folderUri.with({ path: path_1.posix.join(folderUri.path, topic) });
+    var uripath = topic;
+    if (!Number.isNaN(Number(topic)) && topic.length === 8) {
+        uripath = topic + ".txt";
+    }
+    let fileUri = folderUri.with({ path: path_1.posix.join(folderUri.path, uripath) });
     if (fs.existsSync(fileUri.fsPath)) {
         if (fs.lstatSync(fileUri.fsPath).isDirectory()) {
             //this is a directory.  Get the index file for the directory.  
@@ -761,12 +796,30 @@ function select(topic, open = opennature) {
     let fileUris = getMyUris(fname);
     console.log("Found file URIs: ", fileUris);
     let fileUri = fileUris.length > 0 ? fileUris[fileUris.length - 1] : null; //start with last entry..
+    console.log(`Initial fileUri: ${fileUri}`);
+    console.log(`Topic: ${topic}`);
+    if (fileUri === null && !isNaN(Number(topic.slice(-8)))) {
+        //special handling for date files, create on select..
+        //open date file on select even if it doesnt exist..
+        fileUri = folderUri.with({ path: path_1.posix.join(folderUri.path, topic + ".txt") });
+        console.log(`Creating date file for topic: ${topic} at path: ${fileUri.path}`);
+        if (!fs.existsSync(fileUri.fsPath)) {
+            //create the file if it doesn't exist.  
+            try {
+                fs.writeFileSync(fileUri.fsPath, "");
+            }
+            catch (err) {
+                console.error(`Failed to create date file for topic: ${topic} at path: ${fileUri.fsPath}`, err);
+            }
+        }
+    }
     //	const fileUri = folderUri.with({ path: posix.join(folderUri.path, 'definitions.txt') });
     const found = exports.alltopics.find((t) => t === topic);
     try {
         vscode.workspace.openTextDocument(fileUri).then(doc => {
             if (open & exports.BOOK_OPEN_FILE && fileUri) {
-                vscode.window.showTextDocument(doc);
+                console.log(`Showing text document for fileUri: ${fileUri.fsPath}`);
+                vscode.window.showTextDocument(doc, { preview: false }); //keep the document open in case of tab switch..
             }
             //keep selectionhistory, dont load twice.  
             if (!found) {
@@ -830,6 +883,7 @@ async function readBooksContent(fileUris, topic, depth = 0) {
                     let mydate = getFileDate(tempname);
                     if (mydate > 0) {
                         //delete the file if it is empty and has a date.
+                        //I think this should delete past files and still allow for create on open..
                         fs.unlinkSync(fileUri.fsPath);
                         console.log(`${fileUri.path} ... deleted because empty and has date`);
                     }
@@ -851,14 +905,17 @@ function pickTopic(selectedtopics, defaultprompts = [], numtopics = 10, extendto
     if (selectedtopics.length > 0) {
         retkey = selectedtopics[0]; //set the key to the first topic.
     }
+    if (!exports.selectionhistory["**"]) {
+        exports.selectionhistory["**"] = [];
+    }
     if (extendtopics || selectedtopics.length === 0) {
-        if (exports.selectionhistory.length > 0) {
-            for (let i = exports.selectionhistory.length - 1; i > -1 && i > exports.selectionhistory.length - numtopics; i--) {
-                if (exports.topicarray[exports.selectionhistory[i]] !== undefined && exports.topicarray[exports.selectionhistory[i]].length > 0) {
+        if (exports.selectionhistory["**"].length > 0) {
+            for (let i = exports.selectionhistory["**"].length - 1; i > -1 && i > exports.selectionhistory["**"].length - numtopics; i--) {
+                if (exports.topicarray[exports.selectionhistory["**"][i]] !== undefined && exports.topicarray[exports.selectionhistory["**"][i]].length > 0) {
                     //sort the topics by date.  
-                    selectedtopics.unshift(exports.selectionhistory[i]); //add the topic to the selected topics.
+                    selectedtopics.unshift(exports.selectionhistory["**"][i]); //add the topic to the selected topics.
                     if (retkey === "NONE") {
-                        retkey = exports.selectionhistory[i]; //set the key to the topic.
+                        retkey = exports.selectionhistory["**"][i]; //set the key to the topic.
                     }
                 }
             }
@@ -1010,7 +1067,7 @@ async function closeFileIfOpen(file) {
         await vscode.window.tabGroups.close(tabs[index]);
     }
 }
-async function readFileNamesInFolder(path) {
+async function readFileNamesInFolder(path, includeDir = true) {
     let topicUri = getUri(path);
     let total = 0;
     let count = 0;
@@ -1019,7 +1076,9 @@ async function readFileNamesInFolder(path) {
         //what order does this come in?  Is it alphabetical?
         if (type === vscode.FileType.Directory) {
             const fileUri = topicUri.with({ path: path_1.posix.join(topicUri.path, name) });
-            retarray.push(path + name); //add the directory name to the array.
+            if (includeDir) {
+                retarray.push(path + name); //add the directory name to the array.
+            }
         }
         if (type === vscode.FileType.File) {
             const fileUri = topicUri.with({ path: path_1.posix.join(topicUri.path, name) });
@@ -1097,7 +1156,7 @@ async function readFilesInFolder(folder) {
             */
         });
     }
-    return { total, count, page: getBookPath() + "/" + booknow.toString() };
+    return { total, count, page: getBookPath() + "/" + booknow.toString(), genpage: getGenBookPath() + "/" + booknow.toString() };
 }
 function getTopicFromFilePath(filePath, wsf = vscode.workspace.workspaceFolders?.[0]) {
     // Extract the topic from the file path.
@@ -1383,7 +1442,7 @@ function loadGenBook(context = null) {
     //also clean genbook of any files which are empty..
     const genbookUri = getGenBookUri();
     readFilesInFolder(genbookUri).then((result) => {
-        console.log(`GenBook loaded: ${result.count} files, ${result.total} bytes, most recent page: ${result.page}`);
+        console.log(`GenBook loaded: ${result.count} files, ${result.total} bytes, most recent page: ${result.page}, genpage: ${result.genpage}`);
     });
 }
 function getLinkCommand(link) {
@@ -2095,18 +2154,65 @@ function loadBook(context = null) {
             exports.arrays[key] = {}; //initialize the array for each key.  
         }
     }
-    readFilesInFolder(bookUri).then((result) => {
+    readFilesInFolder(bookUri).then(async (result) => {
         console.log(`Total size: ${result.total} bytes, File count: ${result.count}`);
         console.log(exports.topicarray);
         //add this to our CompletionItemProvider.   
         sortRecency();
+        console.log(`Sorted topic array: ${Object.keys(exports.topicarray).length} elements`);
         //open the most recent file.
-        select(result.page + ".txt"); //select and open topic
+        select(result.page, exports.BOOK_OPEN_FILE); //select and open topic
+        console.log(`Opened most recent topic file: ${result.page}.txt`);
+        select(result.genpage, exports.BOOK_OPEN_FILE); //select and open genbook topic
+        let genPage = result.genpage + ".txt";
+        console.log(`Opened most recent genbook topic file: ${genPage}`);
+        //get file content of the current genpage.
+        const currentGenpageUri = getUri(genPage);
+        console.log(`Current genpage URI: ${currentGenpageUri.fsPath}`);
+        let length = 0;
+        try {
+            const currentContent = await vscode.workspace.fs.readFile(currentGenpageUri);
+            length = currentContent.length;
+        }
+        catch (err) {
+            console.log(`Error reading current genpage: ${err}`);
+        }
+        console.log(`Current genpage content length: ${length}`);
+        if (length === 0) {
+            //current genpage is empty, we may want to insert data from the previous genpage.
+            //insert data into genpage from previous genpage..
+            let folder = genPage.split('/').slice(0, -1).join('/'); //get the folder path of genpage.
+            //find previous page
+            //list directory
+            const genpageFiles = await readFileNamesInFolder(folder + "/", false); //list files in the genpage folder.
+            //get latest..
+            console.log(`copying Genpage content from latest file to current genpage dir ${genpageFiles.length} files`);
+            let latestGenpage = genpageFiles.sort((a, b) => a.localeCompare(b)).pop(); //get the latest file based on modification time.
+            console.log(`Latest genpage file: ${latestGenpage}`);
+            if (latestGenpage) {
+                console.log(`Copying content from latest genpage: ${latestGenpage} to current genpage: ${genPage}`);
+                //copy content from the latest genpage to the current genpage.
+                const latestGenpageUri = getUri(latestGenpage);
+                const currentGenpageUri = getUri(genPage);
+                const latestContent = await vscode.workspace.fs.readFile(latestGenpageUri);
+                console.log(`Read content from latest genpage: ${latestContent.length} bytes`);
+                //truncate to only use latest N lines of content..
+                const latestContentStr = Buffer.from(latestContent).toString('utf8');
+                const latestContentLines = latestContentStr.split('\n');
+                const N = 100; // number of lines to keep, for now, lets keep it minimal.  
+                //should make summary and intelligent line selection.  
+                const truncatedContent = latestContentLines.slice(-N).join('\n');
+                const latestContentBuffer = Buffer.from(truncatedContent, 'utf8');
+                console.log(`Writing truncated content to current genpage: ${truncatedContent.length} to ${genPage}`);
+                await vscode.workspace.fs.writeFile(currentGenpageUri, latestContentBuffer);
+            }
+        }
         let YYYYmmdd = result.page.split('/').at(-1); //get the date from the path.
         let currentdate = createDateFromYYYYmmdd(YYYYmmdd); //get the current date in YYYYMMDD format.
         let prevdate = new Date(currentdate);
         prevdate.setFullYear(currentdate.getFullYear() - 1); //get the date one year ago.
         //see if this logic works.  OK we have a small relationship graph.  
+        console.log(`Building topic graph from ${prevdate.toISOString().slice(0, 10).replace(/-/g, "")} to ${currentdate.toISOString().slice(0, 10).replace(/-/g, "")}`);
         buildTopicGraph(prevdate.toISOString().slice(0, 10).replace(/-/g, ""), currentdate.toISOString().slice(0, 10).replace(/-/g, "")); //build the topic graph for last year.  
         console.log(bookgraph);
         //start workers.  

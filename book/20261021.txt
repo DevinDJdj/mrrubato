@@ -729,4 +729,52 @@ test..
 Looks off by one still..
 
 
+**extensions/vscode/codetutor/src/book.ts
+--getAllFunctionsInFile
+Order of functions in file matter more in this scenario.  
+For now listing should be sequential, but maybe some historical selection listing as well..
+Or two different commands to select sequentially in file or historically from past selections..
+File should try not to exceed 100 functions or so in general..
+Depth and size should be indicated/selectable in listing..
+Insert location of new generated functions also should be based on historical context..
+Selection of function should display in editor..
 
+
+--provideCompletionItems
+Need more sortorder logic.  
+Especially for non-topic..
+--selectionhistory
+test..
+Initial appears to work..
+
+
+--logCommand
+add to selection history..
+Allow for easier autocomplete once we have selected..
+
+--addLogHistory
+test..
+Also need function to just autocomplete from selectionhistory..
+Right now combined with other..
+
+
+
+!!Something with no midi connection crashes vscode extension
+==
+??
+$$
+
+
+**languages/generate.py
+Set up structure.  
+Then potentially use this to generate a site explaining yourself..
+That may be an interesting side project..
+
+**languages/git.py
+;> Select Function
+[51,54,58]
+test..
+
+
+**extensions/vscode/codetutor/src/extension.ts
+Extension crash a problem, how to debug?  

@@ -166,7 +166,7 @@ export function registerCompletionTool(context: vscode.ExtensionContext){
                                             doc = Book.itemToDoc(item);
             
                                             //set sortText to top if it is in selection history.  
-                                            const found = Book.selectionhistory.findIndex((t) => t === item.topic);
+                                            const found = Book.selectionhistory[k]?.findIndex((t) => t === item.topic) ?? -1;
                                             if (found > -1){
                                                 sortText = (Book.MAX_SELECTION_HISTORY-found).toString(16).padStart(4, '0').toUpperCase();
                                             }
@@ -198,7 +198,7 @@ export function registerCompletionTool(context: vscode.ExtensionContext){
                                 doc = Book.itemToDoc(item);
 
                                 //set sortText to top if it is in selection history.  
-                                const found = Book.selectionhistory.findIndex((t) => t === item.topic);
+                                const found = Book.selectionhistory['>']?.findIndex((t) => t === item.topic) ?? -1;
                                 if (found > -1){
                                     sortText = (Book.MAX_SELECTION_HISTORY-found).toString(16).padStart(4, '0').toUpperCase();
                                 }
@@ -963,6 +963,7 @@ const JZZ = require('jzz');
 var myintervalLoop = null;
 var numconns = 0;
 export function registerPiano(context: vscode.ExtensionContext) {
+    
     tree.activate(context);
     midiin.activate(context);
 
