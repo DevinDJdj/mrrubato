@@ -36,7 +36,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.workspaceUri = exports.MAX_SELECTION_HISTORY = exports.ftsindex = exports.arrays = exports.commandarray = exports.temptopicarray = exports.temptopics = exports.topicvectorarray = exports.topicarray = exports.envarray = exports.alltopicsa = exports.alltopicdata = exports.alltopics = exports.vectrafixes = exports.defstring = exports.fnmap = exports.defmap = exports.ollama_model = exports.currentfunctions = exports.queryhistory = exports.environmenthistory = exports.selectionhistory = exports.selectedtopic = exports.currenttopic = exports.BOOK_OPEN_GIT = exports.BOOK_OPEN_WEB = exports.BOOK_OPEN_FILE = exports.GIT_DB = exports.GIT_RELATIONS = exports.GIT_DETAILS = exports.GIT_CODE = exports.GIT_BOOK = void 0;
+exports.workspaceUri = exports.MAX_SELECTION_HISTORY = exports.ftsindex = exports.arrays = exports.commandarray = exports.temptopicarray = exports.temptopics = exports.topicvectorarray = exports.topicdata = exports.topicarray = exports.envarray = exports.alltopicsa = exports.alltopicdata = exports.alltopics = exports.vectrafixes = exports.defstring = exports.fnmap = exports.defmap = exports.ollama_model = exports.queryhistory = exports.environmenthistory = exports.selectionhistory = exports.selectedtopic = exports.currenttopic = exports.BOOK_OPEN_GIT = exports.BOOK_OPEN_WEB = exports.BOOK_OPEN_FILE = exports.GIT_DB = exports.GIT_RELATIONS = exports.GIT_DETAILS = exports.GIT_CODE = exports.GIT_BOOK = void 0;
 exports.setModel = setModel;
 exports.logCommand = logCommand;
 exports.getTokens = getTokens;
@@ -89,6 +89,9 @@ const vscode = __importStar(require("vscode"));
 const path_1 = __importStar(require("path"));
 const tokenizer = __importStar(require("./tokenizer")); // Import the Token interface
 const Worker = __importStar(require("./worker")); // Import the Worker class
+//import { LANG } from './languages/base';
+const state_1 = require("./midi/state");
+//export var currentfunctions = [];
 const vectra_1 = require("vectra");
 const FlexSearch = __importStar(require("flexsearch"));
 const ollama_1 = __importDefault(require("ollama"));
@@ -133,7 +136,7 @@ var currentref = "NONE";
 exports.selectionhistory = {};
 exports.environmenthistory = [];
 exports.queryhistory = [];
-exports.currentfunctions = [];
+//export var currentfunctions = [];
 exports.ollama_model = 'gemma4:e4b';
 exports.ollama_model = 'gemma3:4b';
 var mytime = new Date().getTime() / 1000; //set the time in seconds
@@ -190,6 +193,7 @@ exports.alltopicdata = [];
 exports.alltopicsa = [];
 exports.envarray = {}; //environment variables.
 exports.topicarray = {};
+exports.topicdata = {};
 var bookvectorFolder = "vecbook"; //this will be used to store the book vector folder.
 //no sharding for now, but perhaps shard per time period.  
 exports.topicvectorarray = {};
@@ -834,10 +838,39 @@ function select(topic, open = opennature) {
             addToHistory(topic); //add the topic to the history.
             //read the book content if it exists.  
             let ext = getExtension(topic);
+            console.log(`Extension for topic ${topic}: ${ext}`);
             if (ext !== undefined && ext !== 'txt' && fileUri !== null) {
+                console.log(`Getting all functions in file: ${fileUri.fsPath}`);
                 getAllFunctionsInFile(fileUri).then((allfuncs) => {
-                    exports.currentfunctions = allfuncs;
+                    //set data for base language to use for autocompletion and other purposes.
                     console.log(`Functions in ${fileUri.fsPath}:`, allfuncs);
+                    (0, state_1.setFunctions)(allfuncs);
+                    //update this topic as well..
+                    let mydata = null;
+                    if (!exports.topicdata[topic]) {
+                        exports.topicdata[topic] = {
+                            topic: topic,
+                            data: {}
+                        };
+                        mydata = exports.topicdata[topic];
+                    }
+                    else {
+                        mydata = exports.topicdata[topic];
+                    }
+                    mydata.data["functions"] = allfuncs;
+                    if (!mydata.data["usedfunctions"]) {
+                        mydata.data["usedfunctions"] = [];
+                    }
+                    //find used functions in Book topic..
+                    for (const func of allfuncs) {
+                        if (func && func.name) {
+                            const hasFunc = exports.arrays['--'] && exports.arrays['--'][func.name];
+                            if (hasFunc) {
+                                mydata.data["usedfunctions"].push({ func: func, book: exports.arrays['--'][func.name] });
+                            }
+                        }
+                    }
+                    console.log(`Current functions:`, (0, state_1.getFunctions)());
                 });
                 //log for now..
                 //use this for autocompletion on -- as well as storing for trey..
@@ -2199,8 +2232,8 @@ function loadBook(context = null) {
                 //truncate to only use latest N lines of content..
                 const latestContentStr = Buffer.from(latestContent).toString('utf8');
                 const latestContentLines = latestContentStr.split('\n');
-                const N = 100; // number of lines to keep, for now, lets keep it minimal.  
-                //should make summary and intelligent line selection.  
+                const N = 20; // number of lines to keep, for now, lets keep it minimal.  
+                //dont make this repeated context, we want run commands to be distinguishable, not sure what to bring if anything..
                 const truncatedContent = latestContentLines.slice(-N).join('\n');
                 const latestContentBuffer = Buffer.from(truncatedContent, 'utf8');
                 console.log(`Writing truncated content to current genpage: ${truncatedContent.length} to ${genPage}`);

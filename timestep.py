@@ -58,7 +58,10 @@ import languages.helpers.transcriber as transcriber
 
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(filename='timestep.log', 
+    format='%(asctime)s %(levelname)-8s %(message)s',
+    level=logging.INFO,
+    datefmt='%Y-%m-%d %H:%M:%S')
 
 CLIENT_SECRETS_FILE = config.cfg['youtube']['CLIENT_SECRETS_FILE']
 
@@ -474,7 +477,8 @@ def get_relative_file_paths_os(root_dir):
             # Calculate the path relative to the initial root directory
             rel_path = os.path.relpath(full_path, start=root_dir)
             mtime = os.path.getmtime(full_path)
-            relative_paths.append({'path': rel_path.replace("\\", "/"), 'mtime': mtime})  # Replace backslashes with forward slashes for consistency
+            ctime = os.path.getctime(full_path)
+            relative_paths.append({'path': rel_path.replace("\\", "/"), 'mtime': mtime, 'ctime': ctime})  # Replace backslashes with forward slashes for consistency
     return relative_paths
 
 
@@ -548,14 +552,16 @@ def saveLocalTranscripts():
         #transcribe first..
         transcribeLocal(transcript_path + file['path'])
 
+    starttimestamp = int(datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).timestamp())
     for idx, file in enumerate(allfiles):
         #check if exists in firebase storage
         bucket = storage.bucket()
         blob = bucket.blob(tfolder + file['path'])
-        if blob.exists():            
+        if blob.exists():
             #can break here..
-            print(f"start upload from {datetime.fromtimestamp(file['mtime'])} {idx} files")
-            logger.info(f"Start upload from {datetime.fromtimestamp(file['mtime'])} {idx} files")
+            starttimestamp = file['ctime']
+            print(f"start upload from {datetime.fromtimestamp(file['ctime'])} {idx} files")
+            logger.info(f"Start upload from {datetime.fromtimestamp(file['ctime'])} {idx} files")
             print(f"up to {file['path']}")
             logger.info(f"up to {file['path']}")
             break
@@ -564,8 +570,11 @@ def saveLocalTranscripts():
         #open and read any $$TRANSCRIPT= lines
         #really should use transcriber..
 
-    toupload = allfiles[:endidx+1]
-    toupload = reversed(toupload) #upload oldest first
+    toupload = [a for a in allfiles if a['mtime'] >= starttimestamp]
+    toupload.sort(key=lambda x: x['mtime'])
+    logger.info(f"Files modified after {datetime.fromtimestamp(starttimestamp)} to upload: {len(toupload)}")
+#    toupload = allfiles[:endidx+1]
+#    toupload = reversed(toupload) #upload oldest first
     for file in toupload:
         bucket = storage.bucket()
         blob = bucket.blob(tfolder + file['path'])

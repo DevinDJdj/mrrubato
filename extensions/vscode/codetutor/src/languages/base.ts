@@ -1,11 +1,106 @@
 import * as vscode from 'vscode';
 //import {recentTabs2} from '../extension';
+//import { currentfunctions } from '../book.js';
+//import * as MyKeys from '../midi/mykeys';
 
+
+export let currentfunctions: any[] = ["Hello"];
 export let recentTabs2: any[];
+
+
+export class selector {
+    array: any[];
+    currentindex: number;
+    browseindex: number;
+    selected: number;
+    lastkey: number;
+
+    constructor(array: any[], currentindex: number = 0) {
+        this.array = array;
+        this.currentindex = currentindex;
+        this.browseindex = 0;
+        this.selected = 0;
+        this.lastkey = 0;
+    }
+
+    preselect(selected: number): any {
+        if (this.lastkey === selected) {
+            this.selected += selected;
+            if (this.selected + this.currentindex < 0) {
+                this.selected = -this.currentindex;
+            } else if (this.selected + this.currentindex >= this.array.length) {
+                this.selected = this.array.length - 1 - this.currentindex;
+            }
+            return this.array[this.currentindex + this.selected];
+        }
+
+        this.lastkey = selected;
+
+        if (selected + this.selected + this.currentindex < 0) {
+            selected = -(this.currentindex + this.selected);
+        } else if (selected + this.selected + this.currentindex >= this.array.length) {
+            selected = this.array.length - 1 - (this.currentindex + this.selected);
+        }
+
+        return this.array[this.currentindex + this.selected + selected] ?? null;
+    }
+
+    select(selected?: number | null): any {
+        let ret: any;
+
+        if (selected !== undefined && selected !== null) {
+            ret = this.preselect(selected);
+        } else {
+            console.info(`${this.currentindex + this.selected} in ${this.array}`);
+            ret = this.array && this.array.length > 0 ? this.array[this.currentindex + this.selected] : null;
+        }
+
+        this.currentindex += this.selected;
+        this.selected = 0;
+        return ret;
+    }
+
+    get_visible(): any[] {
+        const start = Math.max(0, this.currentindex + this.selected - 11);
+        const end = Math.min(this.currentindex + this.selected + 13, this.array.length);
+        return [...this.array.slice(start, end)].reverse();
+    }
+
+    get_vars(vars: Record<string, any>, entry: string = '**'): void {
+        let start = 0;
+        if (this.array.length < 12) {
+            start = 12 - this.array.length + this.currentindex + 1;
+            vars['idx'] = this.currentindex;
+            vars[':'] = this.currentindex;
+        } else {
+            vars['idx'] = this.currentindex;
+        }
+
+        for (const [i, value] of this.get_visible().entries()) {
+            const n = i + start;
+            if (typeof value === 'object' && value !== null && entry in value) {
+                if (entry === '..') {
+                    if ('$$' in value) {
+                        const details = value['$$'] as Record<string, any>;
+                        const prefix = '..' in details ? details['..'] : (('TIME' in details) ? details['TIME'] : '...');
+                        const cmd = '&&' in value ? value['&&'] : '&&';
+                        const text = '&&' in details ? details['&&'] : (('TEXT' in details) ? details['TEXT'] : '&&');
+                        vars[String(n)] = `${prefix} ${cmd} ${text}`;
+                    }
+                } else {
+                    vars[String(n)] = value[entry as keyof typeof value];
+                }
+            } else {
+                vars[String(n)] = value;
+            }
+        }
+    }
+}
+
 
 export default class LANG {
 
-    
+
     config: Record<string, any> = {};
     keybot: number = 69;
     keymid: number = 60;
@@ -14,8 +109,9 @@ export default class LANG {
     midwordtree: Record<string, any> = {}; 
     name: string = "base";
     vars: Record<string, any> = {};
-    
     recentTabs: any;
+    tabselector: selector | null = null;
+    mykeys: any = null;
     //base specific variables for generic keypresses, selection, and navigation
     //ALLCAPS = vscode handler..
     highlight: boolean = false; //whether to highlight text or not
@@ -24,6 +120,7 @@ export default class LANG {
     constructor(){
         console.log("base language constructor");
     }
+
 
     init(config: Record<string, any>): void {
         //optional init function
@@ -43,6 +140,7 @@ export default class LANG {
                 
             },
             "3":{
+                "GIT FUNCTION": [0,-6,-5],
                 "HOME": [0,-5,-6], 
                 "END": [0,-5,-4],
                 "PGUP": [0,-5,-1],
@@ -54,7 +152,7 @@ export default class LANG {
                 "GENBOOK": [0,-3,-2],
                 "BOOK": [0,-3,-4],
                 "READALOUD": [0,-6,-1],
-                "TAB": [0,-3,-7], //select tab../select topic..
+                "TAB": [0,-4,-7], //select tab../select topic..
             },
 
         };
@@ -66,6 +164,12 @@ export default class LANG {
 
         this.funcdict["TAB"] = this.tab;
         this.funcdict["TAB_"] = this.tab_;
+
+        this.funcdict["GIT FUNCTION"] = (cls: LANG, sequence: number[], words: string[]) => {
+            console.log("base git function", sequence, words);
+            console.log(this.mykeys.getFunctions()); // Assuming mykeys is imported and available
+            return 0; //no action, just a generic keypress
+        };
 
         this.funcdict["PAUSE"] = (cls: LANG, sequence: number[], words: string[]) => {
             console.log("base pause", sequence, words);
@@ -110,21 +214,12 @@ export default class LANG {
 
 
     async tab_(sequence: number[], words: string[]) {
+        //use this.mykeys.
 //        await import('../extension.ts').then(({ recentTabs2 }) => {
 //        });
-        /*
         if (sequence.length === 0){
-            const visibleEditors: readonly vscode.TextEditor[] = vscode.window.visibleTextEditors;
-            const folderUri = vscode.workspace.workspaceFolders[0].uri;
-            const tabNames = visibleEditors.map(editor => editor.document.uri.path.replace(folderUri.path + "/", ""));
-
-            let tabs = {'num': visibleEditors.length, 'numrecent': recentTabs2.length, 'tabIndex': 0, 'selectedTab': 0};
-            tabs['tabs'] = visibleEditors.map((editor, index) => {return {uri: editor.document.uri, name: tabNames[index]}; });
-            //fname = fname.replace(folderUri.path + "/", ""); //remove the folder path from the file name for display purposes.            
-            //get readable name for display.. or for now just add to chat $$0=..
-
-            this.vars['tabs'] = tabs;
-            this.vars['useRecentTabs'] = false;
+            this.vars['tabs'] = recentTabs2;
+            this.vars['useRecentTabs'] = true;
 
 
             //how to display selection entries in vscode?  
@@ -132,30 +227,32 @@ export default class LANG {
         }
         if (sequence.length >0 && sequence[0] === this.keymid){
             //use recentTabs..
-            this.vars['useRecentTabs'] = true;
+            this.vars['useRecentTabs'] = false;
+            //get all tabs..
+            const visibleEditors: readonly vscode.TextEditor[] = vscode.window.visibleTextEditors;
+            const folderUri = vscode.workspace.workspaceFolders[0].uri;
+            const tabNames = visibleEditors.map(editor => editor.document.uri.path.replace(folderUri.path + "/", ""));
+
+            let tabs = {'num': visibleEditors.length, 'numrecent': recentTabs2.length, 'tabIndex': 0, 'selectedTab': 0};
+            tabs['tabs'] = visibleEditors.map((editor, index) => {return {'#': editor.document.uri, '**': tabNames[index]}; });
+            //fname = fname.replace(folderUri.path + "/", ""); //remove the folder path from the file name for display purposes.            
+            //get readable name for display.. or for now just add to chat $$0=..
+            //how do we sort..
+            this.tabselector = new selector(tabs['tabs'], 0);
+
         }
         if (sequence.length > 0){
-            let selectedTab = sequence[sequence.length - 1] - this.keymid;
-            this.vars['tabs']['selectedTab'] += selectedTab;
-            if (this.vars['useRecentTabs']){
-                // handle recent tabs selection
-                if (selectedTab >= 0 && selectedTab < recentTabs2.length){
-                    let tempIndex = selectedTab;
-                    console.log("Selected recent tab index:", tempIndex);
-                    console.log("Selected recent tab:", recentTabs2[tempIndex]['name']);
-                }
-                else{
-                    console.log("Selected recent tab index out of range:", selectedTab);
-                }
-            }
-            if (this.vars['tabs']['tabIndex'] + this.vars['tabs']['selectedTab'] >= 0 && this.vars['tabs']['tabIndex'] + this.vars['tabs']['selectedTab'] < this.vars['tabs']['tabs'].length){
-                let tempIndex = this.vars['tabs']['tabIndex'] + this.vars['tabs']['selectedTab'];
-                //show this tab, refresh display..
-                console.log("Selected tab index:", tempIndex);
-                console.log("Selected tab:", this.vars['tabs']['tabs'][tempIndex]['name']);
+            let select = this.keymid - sequence[sequence.length - 1];
+
+            let mytab = null;
+            mytab = this.tabselector.preselect(select);
+            console.log('useRecentTabs:', this.vars['useRecentTabs']);
+            // handle recent tabs selection
+            console.log("Selected recent tab index:", mytab);
+            console.log("Selected recent tab:", mytab['**']);
+            //do we select in vscode here?  Or just show selection in trey..
+            //vscode.window.showTextDocument(mytab['#']); //show the selected tab in the editor
 //                vscode.window.showTextDocument(this.vars['tabs']['tabs'][tempIndex]['uri']);
-//                this.vars['tabs']['tabIndex'] += this.vars['selectedTab'];
-            }
 
 
             //highlight/indicate selected visually..
@@ -163,31 +260,16 @@ export default class LANG {
 
 
         }
-            */
     }
 
     async tab(sequence: number[], words: string[]) {
-        /*
-        if (this.vars['tabs']['useRecentTabs']){
-            let tempIndex = Math.abs(this.vars['tabs']['selectedTab']); //allow bidirectional for now.. only able to select up to 12..
-            if (tempIndex >= 0 && tempIndex < recentTabs2.length){
-                this.vars['tabs']['selectedTab'] = 0;
-                console.log("Selected recent tab index:", tempIndex);
-                console.log("Selected recent tab:", recentTabs2[tempIndex]['name']);
-                vscode.window.showTextDocument(recentTabs2[tempIndex]['uri']); //this will trigger it to be at top of recentTabs..
-            }
-        }
-        else{
-            let tempIndex = this.vars['tabs']['tabIndex'] + this.vars['tabs']['selectedTab'];
-            if (tempIndex >= 0 && tempIndex < this.vars['tabs']['tabs'].length){
-                this.vars['tabs']['tabIndex'] += this.vars['tabs']['selectedTab'];
-                this.vars['tabs']['selectedTab'] = 0;
-                console.log("Selected tab index:", tempIndex);
-                console.log("Selected tab:", this.vars['tabs']['tabs'][tempIndex]['name']);
-                vscode.window.showTextDocument(this.vars['tabs']['tabs'][tempIndex]['uri']);
-            }
-        }
-            */
+        let select = this.keymid - sequence[sequence.length - 1];
+        let mytab = this.tabselector.select(select);
+        console.log('useRecentTabs:', this.vars['tabs']['useRecentTabs']);
+        vscode.window.showTextDocument(mytab['#']); //this will trigger it to be at top of recentTabs..
+        this.mykeys.selectTopic(mytab['#'].fsPath); //this fileURI should get transformed.  
+
+            
     }    
 
     genbook(cls: LANG, sequence: number[], words: string[]): number {

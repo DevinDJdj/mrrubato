@@ -2087,6 +2087,7 @@ def main():
     global midiout, midiin
     global speech_pipe
     global qr_pipe
+    global server_thread
 
     # Create an icon image
     icon_image = create_image(64, 64, 'blue', 'yellow')
@@ -2123,9 +2124,17 @@ def main():
     qr_queue = Queue()
     qrin_queue = Queue()
 
+
+
+    import server.server as server
+
+    server_thread = threading.Thread(target=server.run_flask_app, args=(qrin_queue,), daemon=True)
+    server_thread.start()
 #    show_tray(qapp)
 
     mywindow = MyWindow(qr_queue, qrin_queue, config.cfg, qapp)
+
+
 
     logger.info('Running icon')
 #    icon.run()
@@ -2140,7 +2149,7 @@ def main():
     #start joystick thread.  
     joyconn = start_joystick()
 
-
+    
     dynamic_change_thread = threading.Thread(target=change_icon_dynamically, args=(icon,))
     dynamic_change_thread.start()
 

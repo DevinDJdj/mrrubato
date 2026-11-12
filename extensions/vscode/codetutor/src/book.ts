@@ -3,6 +3,10 @@ import path, { posix, basename } from 'path';
 import * as tokenizer from './tokenizer'; // Import the Token interface
 import * as  Worker from './worker'; // Import the Worker class
 
+//import { LANG } from './languages/base';
+import { setFunctions, getFunctions } from './midi/state';
+
+//export var currentfunctions = [];
 import { LocalIndex } from 'vectra';
 import * as FlexSearch from 'flexsearch';
 import fuzzysort from 'fuzzysort';
@@ -61,7 +65,7 @@ export var selectionhistory = {};
 export var environmenthistory = [];
 export var queryhistory = [];
 
-export var currentfunctions = [];
+//export var currentfunctions = [];
 
 export var ollama_model = 'gemma4:e4b';
 ollama_model = 'gemma3:4b';
@@ -140,6 +144,12 @@ export interface BookTopic {
     allfunctions?: vscode.DocumentSymbol[];
 }
 
+export interface BookData {
+    topic: string;
+    data: Record<string, Array<any>>; //json structure of string -> Array
+
+}
+
 export interface QueryEntry {
     query: string;
     expanded?: string;  
@@ -155,6 +165,7 @@ export var alltopicsa: string[] = [];
 export var envarray: {[key: string] : string} = {}; //environment variables.
 
 export var topicarray: {[key: string] : Array<BookTopic> | undefined} = {};
+export var topicdata: {[key: string] : BookData | undefined} = {};
 
 var bookvectorFolder = "vecbook"; //this will be used to store the book vector folder.
 //no sharding for now, but perhaps shard per time period.  
@@ -910,10 +921,40 @@ export function select(topic: string, open: number = opennature) : boolean {
             addToHistory(topic); //add the topic to the history.
             //read the book content if it exists.  
             let ext = getExtension(topic);
+            console.log(`Extension for topic ${topic}: ${ext}`);
             if (ext !== undefined && ext !== 'txt' && fileUri !== null) {
+                console.log(`Getting all functions in file: ${fileUri.fsPath}`);
                 getAllFunctionsInFile(fileUri).then((allfuncs) => {
-                    currentfunctions = allfuncs;
+                    //set data for base language to use for autocompletion and other purposes.
                     console.log(`Functions in ${fileUri.fsPath}:`, allfuncs);
+                    setFunctions(allfuncs);
+                    //update this topic as well..
+                    let mydata = null;
+                    if (!topicdata[topic]) {
+                        topicdata[topic] = {
+                            topic: topic,
+                            data: {}
+                        };
+                        mydata = topicdata[topic];
+                    }
+                    else{
+                        mydata = topicdata[topic];
+                    }
+                    mydata.data["functions"] = allfuncs;
+                    
+                    if (!mydata.data["usedfunctions"]) {
+                        mydata.data["usedfunctions"] = [];
+                    }
+                    //find used functions in Book topic..
+                    for (const func of allfuncs) {
+                        if (func && func.name){
+                            const hasFunc = arrays['--'] && arrays['--'][func.name];
+                            if (hasFunc) {
+                                mydata.data["usedfunctions"].push({func: func, book: arrays['--'][func.name]});
+                            }
+                        }
+                    }
+                    console.log(`Current functions:`, getFunctions());
                 });
                 //log for now..
                 //use this for autocompletion on -- as well as storing for trey..
@@ -2361,7 +2402,6 @@ export function loadPage(text: string, filePath: string, altdate: number=0, book
             subtopic = {"file": filePath, "_": key, "..": unixTimestamp, ":": topicstart[key][i], "**": currenttopic, "line": topicstart[key][i], "topic": currenttopic, "sortorder": myorder, "date": mydate, "data": ""};
             //for now just get two lines of data for subtopics.
             subtopic.data = strs.slice(topicstart[key][i],topicstart[key][i]+2 ).join("\n"); //get the subtopic data from the lines.
-
             initArray(ckey, arrays[key]); //if doesnt exist, add.  
 
             const found = arrays[key][ckey]?.find(element => element.file === subtopic.file && element.line === subtopic.line);
@@ -2506,8 +2546,8 @@ function loadBook(context: vscode.ExtensionContext | null = null) {
                 //truncate to only use latest N lines of content..
                 const latestContentStr = Buffer.from(latestContent).toString('utf8');
                 const latestContentLines = latestContentStr.split('\n');
-                const N = 100; // number of lines to keep, for now, lets keep it minimal.  
-                //should make summary and intelligent line selection.  
+                const N = 20; // number of lines to keep, for now, lets keep it minimal.  
+                //dont make this repeated context, we want run commands to be distinguishable, not sure what to bring if anything..
 
                 const truncatedContent = latestContentLines.slice(-N).join('\n');
                 const latestContentBuffer = Buffer.from(truncatedContent, 'utf8');

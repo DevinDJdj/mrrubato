@@ -778,3 +778,117 @@ test..
 
 **extensions/vscode/codetutor/src/extension.ts
 Extension crash a problem, how to debug?  
+
+
+**timestep.py
+--saveLocalTranscripts
+Uploaded transcripts dont include vtt, why??
+
+Maybe fixed..
+
+**extensions/vscode/codetutor/src/book.ts
+--getAllFunctionsInFile
+ok, seems to work..
+name
+containerName
+kind
+children
+range
+location.range
+location.uri
+
+select function go to that location..
+
+!!Error loading language module base Error: Cannot find module 'c:\devinpiano\music\extensions\vscode\codetutor\src\book' 
+==
+wow, not great workaround..
+Basically keep mykeys in all languages reverse reference for checking and changing state info..
+
+$$
+
+--recentTabs2 
+should change to use mykeys state
+
+
+**extensions/vscode/codetutor/src/midi/mykeys.ts
+@@What to include in state?  
+Book.selectionhistory
+functions
+
+Trey -> codetutor
+semi-realtime via files watching..
+codetutor -> Trey
+near realtime socket server..
+Peer-peer capability?  
+That is tough..
+Flask vs other
+For now just local requests..
+
+#https://github.com/typeintandem/tandem
+could use this with vscode perhaps?  
+
+Just use webrtc
+
+
+**extentions/trey/server/server.py
+test startup in trey
+
+**extensions/vscode/codetutor/src/midi/mykeys.ts
+Send after every key up..
+
+;> Select Topic _OK
+or
+;> Set Topic _OK
+allow to select current tab..
+
+;> TAB = [0,-4,-7]
+
+**extensions/vscode/codetutor/src/languages/base.ts
+add selector here to start, problem with importing inside of dynamically loaded files..
+So lets avoid that..
+--selector
+should be ok
+--tab
+see if this may work now..
+Send result to server, and check logs..
+
+**extensions/vscode/codetutor/src/transcriber.ts
+add write functionality?  
+
+**extensions/trey/server/server.py
+> pip install flask, flask-cors
+not ideal..
+keeps port open..
+ok, switch to fastapi, seems to work better..
+--update_state
+finally have a state copy..
+
+
+**extensions/vscode/codetutor/src/languages/base.ts
+tab should select topic..
+For now selecting topic should be through CMD input, not automatically.  
+Otherwise we just get too much context too fast..
+Search other context files where selected topic functions exist.  
+Only pull this area of the code.  
+Do this potentially multiple levels, but for now very simple.  
+One pass..
+
+Order of topic and order of function based solely on selection or read recency.  
+Need to find all functions within book or include this in listing..
+All -- in topic..
+Add this to future keys, and add git changes affected functions to past..
+;> git log -L :<function_name>:<file_path>
+
+Context chains become significant if we are selecting topics prior to generation..
+Somewhat random book topic inclusion may be interesting..
+Potentially truncate each topic entry..
+
+topic, tab and function selection
+need this working in logger.  
+And with trey<->vscode
+Once this is smooth, then generate perhaps..
+
+Indicate if a function exists in the file and recency of edit/selection..
+recency of edit selection in future, all other functions in past..
+
+

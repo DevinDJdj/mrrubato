@@ -4,6 +4,10 @@ import { AudioContext, OscillatorNode, GainNode } from 'node-web-audio-api';
 
 import * as vscode from 'vscode';
 import * as Book from '../book';
+import * as State from './state';
+import * as transcriber from '../transcriber';
+
+let state = State.state; //reference to the static state class
 
 let playfeedback = true;
 let pedal = false;
@@ -12,6 +16,8 @@ const ATTACK_TIME = 0.2;
 const SUSTAIN_LEVEL = 0.8;
 const RELEASE_TIME = 0.2;
 
+
+
 class WordNode{
     word: string;
     lang: string;
@@ -19,6 +25,8 @@ class WordNode{
     ws: Number[]; //word
 }
 export class MyKeys {
+    state: typeof State.state; //reference to the static state class
+
     keys: Number[]; //array of ints
     sequence: Number[]; //array of ints
     config: any;
@@ -50,6 +58,7 @@ export class MyKeys {
     octaveInterval: number = 12;
 
     constructor(config = {}) {
+        this.state = state; //initialize the reference to the static state class
         this.keys = [];
         this.config = config;
         this.lasttick = (new Date()).getTime();
@@ -103,6 +112,25 @@ export class MyKeys {
 
     }    
 
+    getFunctions(): any[] {
+        return this.state.currentfunctions;
+    }
+    setFunctions(funcs: any[]): void {
+        this.state.currentfunctions.length = 0;
+        this.state.currentfunctions.push(...funcs);
+        console.log('Current functions set to:', this.state.currentfunctions);
+    }
+
+    selectTopic(topic: string): void {
+        Book.select(topic);
+        
+    }
+
+    setTabs(tabs: any): void {
+        this.state.tabs.length = 0;
+        this.state.tabs.push(...tabs);
+    }
+    
     async importLanguages(){
         for (const lang of Object.keys(this.languages)) {
             try{
@@ -157,6 +185,7 @@ export class MyKeys {
             this.languages[lang]["module"] = new langModule();
             //initialize language if needed.  
             this.languages[lang]["module"].init(this.config);
+            this.languages[lang]["module"].mykeys = this;
             this.midiarray[this.currentmidiuser][lang] = [];
             this.keybot[lang] = this.languages[lang]["module"].keybot;
             this.updateKeyMaps(lang);
@@ -423,12 +452,33 @@ export class MyKeys {
 
     }
 
+    updateState(updated_state) {
+        //dont update with default or empty values..
+        for (let key in updated_state) {
+            if (Array.isArray(updated_state[key]) && updated_state[key].length > 0){
+                this.state[key] = updated_state[key];
+            }
+            else if (typeof updated_state[key] === 'number' && updated_state[key] !== 0) {
+                this.state[key] = updated_state[key];
+            }
+        }
+    }
+
     noteOff(note, abstime, lang = "") {
         if (lang === ""){
             lang = this.currentlangna;
         }
     
         let currentTime = Date.now() - this.start;
+        
+        //state should have been updated by note on mkey..
+        console.log('current functions', this.getFunctions());
+        const stateCopy = Object.assign({}, this.state);
+        console.log('Sending current state to Flask:', stateCopy);
+        State.sendDataToFlask(stateCopy).then((updated_state) => {
+            console.log('Updated state received from Flask:', updated_state);
+            this.updateState(updated_state);
+        });
 
         if (this.heldwords.length === 1){ //last held word?  
             let lastnote = this.heldwords[this.heldwords.length - 1];
