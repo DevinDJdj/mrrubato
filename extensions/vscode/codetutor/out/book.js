@@ -781,6 +781,7 @@ async function getAllFunctionsInFile(uri) {
         }
     }
     filterFunctions(symbols);
+    functions.sort((a, b) => a.range.start < b.range.start ? 1 : -1);
     return functions;
 }
 function getExtension(filename) {
@@ -844,7 +845,8 @@ function select(topic, open = opennature) {
                 getAllFunctionsInFile(fileUri).then((allfuncs) => {
                     //set data for base language to use for autocompletion and other purposes.
                     console.log(`Functions in ${fileUri.fsPath}:`, allfuncs);
-                    (0, state_1.setFunctions)(allfuncs);
+                    //                    setFunctions(allfuncs);
+                    (0, state_1.setArrayEntry)('currentfunctions', allfuncs);
                     //update this topic as well..
                     let mydata = null;
                     if (!exports.topicdata[topic]) {
@@ -857,19 +859,34 @@ function select(topic, open = opennature) {
                     else {
                         mydata = exports.topicdata[topic];
                     }
-                    mydata.data["functions"] = allfuncs;
+                    if (!mydata.data["functions"]) {
+                        mydata.data["functions"] = [];
+                    }
                     if (!mydata.data["usedfunctions"]) {
                         mydata.data["usedfunctions"] = [];
                     }
                     //find used functions in Book topic..
+                    //sort by all looked up..
+                    mydata.data["usedfunctions"].sort((a, b) => a.date.localeCompare(b.date));
+                    let tempusedfunctions = [];
                     for (const func of allfuncs) {
                         if (func && func.name) {
                             const hasFunc = exports.arrays['--'] && exports.arrays['--'][func.name];
                             if (hasFunc) {
-                                mydata.data["usedfunctions"].push({ func: func, book: exports.arrays['--'][func.name] });
+                                let lastEntry = exports.arrays['--'][func.name][-1];
+                                tempusedfunctions.push({ func: func, topic: topic, book: exports.arrays['--'][func.name], date: lastEntry.date, sortorder: lastEntry.sortorder });
                             }
                         }
                     }
+                    tempusedfunctions.sort((a, b) => a.sortorder > b.sortorder ? 1 : -1);
+                    //add the newly found used functions at the beginning of the list
+                    mydata.data["usedfunctions"].insert(0, ...tempusedfunctions);
+                    //functions not in book.. less prevalent listing..
+                    allfuncs = allfuncs.filter(func => func && func.name && !(func.name in exports.arrays['--']));
+                    //allfuncs.sort((a, b) => a.name.localeCompare(b.name));
+                    //keep same sort order..
+                    mydata.data["functions"].insert(0, ...allfuncs);
+                    (0, state_1.setArrayEntry)('currentfunctions', mydata.data["functions"]); //update with 
                     console.log(`Current functions:`, (0, state_1.getFunctions)());
                 });
                 //log for now..

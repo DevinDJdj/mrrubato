@@ -891,4 +891,44 @@ Once this is smooth, then generate perhaps..
 Indicate if a function exists in the file and recency of edit/selection..
 recency of edit selection in future, all other functions in past..
 
+Send state with 
+currentlang and currenttranscript
+This will trigger event..
+
+**extensions/vscode/codetutor/src/transcriber.ts
+--write_topic
+test this and save to transcript 
+--write
+
+**languages/_meta.py
+Does selection ending with double-click work?  
+
+**extensions/vscode/codetutor/src/languages/base.ts
+--act
+subfunctions not getting called, test..
+;> GIT FUNCTION_
+
+select topic not instantiating functions..
+Should automatically do this..
+still not pulling..
+
+Sort functions by line num..
+
+Order of functions in file is significant.  
+
+
+
+**languages/base.py
+--qr_in
+OK, base functionality there..
+
+
+
+
+**extensions/trey/mywindow.py
+--update_info
+Some issues still with resetting to blank.  
+
+
+
 

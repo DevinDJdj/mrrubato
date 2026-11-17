@@ -26,7 +26,7 @@ class WordNode{
 }
 export class MyKeys {
     state: typeof State.state; //reference to the static state class
-
+    transcriber: typeof transcriber;
     keys: Number[]; //array of ints
     sequence: Number[]; //array of ints
     config: any;
@@ -59,6 +59,7 @@ export class MyKeys {
 
     constructor(config = {}) {
         this.state = state; //initialize the reference to the static state class
+        this.transcriber = transcriber;
         this.keys = [];
         this.config = config;
         this.lasttick = (new Date()).getTime();
@@ -122,8 +123,9 @@ export class MyKeys {
     }
 
     selectTopic(topic: string): void {
+        topic = Book.getTopicFromFilePath(topic);
         Book.select(topic);
-        
+        this.state.currenttopic = topic;
     }
 
     setTabs(tabs: any): void {
@@ -426,6 +428,12 @@ export class MyKeys {
         if (this.currentcmd !== "" && this.currentlangna !== "" && this.currentlang !== null) {
             //right now no selection mechanism for EOW.  This is all controlled by
             let ret = (this.currentlang as any).act(this.currentcmd, this.sequence.slice(this.startseqno), this.words);
+            console.log('transcript:', (this.currentlang as any).transcript);
+            if ('transcript' in this.currentlang && (this.currentlang as any).transcript){
+                this.state.currenttranscript = (this.currentlang as any).transcript;
+                this.state.currentlang = this.currentlangna;
+                //sending in noteOff for now..
+            }
             if (ret === -1) {
                 //unknown command, reset sequence.  
                 this.reset_sequence();
@@ -461,7 +469,19 @@ export class MyKeys {
             else if (typeof updated_state[key] === 'number' && updated_state[key] !== 0) {
                 this.state[key] = updated_state[key];
             }
+            //reset current language and transcript after updating state
+            if (updated_state['currenttranscript'] !== this.state['currenttranscript']){
+                //handle incoming transcript..
+            }
+            this.state['currentlang'] = '';
+            this.state['currenttranscript'] = '';
         }
+    }
+
+    getTranscript(lang: string, vars: {[key: string]: string}) {
+        // Implementation for setting the transcript using the transcriber module
+        let transcript = transcriber.write_topic(lang, this.state.currenttopic, "", true, false);
+        return transcript;
     }
 
     noteOff(note, abstime, lang = "") {

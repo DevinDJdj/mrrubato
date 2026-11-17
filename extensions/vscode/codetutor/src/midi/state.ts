@@ -8,6 +8,8 @@ export class state {
     static currentfunctions: any[] = ["Hello"];
     static currenttopic: string = "";
     static currentbook: string = "";
+    static currentlang: string = "";
+    static currenttranscript: string = "";
     static filter: any[] = [];
     static tabs: any[] = [];
     static webtabs: any[] = [];
@@ -18,6 +20,12 @@ export class state {
 
 export function getFunctions(): any[] {
     return state.currentfunctions;
+}
+
+export function setArrayEntry(key: string, array: Array<any>): void {
+    (state as any)[key].length = 0;
+    (state as any)[key].push(...array); //append the new array entries to the existing array
+    console.log(`Array entry for key '${key}' set to:`, (state as any)[key]);
 }
 
 export function setFunctions(funcs: any[]): void {
@@ -53,6 +61,7 @@ export async function sendDataToFlask(mystate: typeof state): Promise<typeof sta
     console.log('Data received from Flask:', data);
     data.last_received = Date.now();
     data.last_edited = 0; //dont update..
+
     return data;
   } catch (error) {
     console.error('Failed to send request to Flask:', error);

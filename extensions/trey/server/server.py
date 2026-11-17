@@ -15,6 +15,8 @@ from datetime import datetime
 
 import subprocess
 
+from languages.helpers import transcriber
+
 myhome = "c:/devinpiano"
 
 import uvicorn
@@ -32,11 +34,17 @@ logging.basicConfig(filename='trey.log',
 #app = Flask(__name__)
 #CORS(app)
 
+trans = transcriber.transcriber()
+
 # get state
 #selection map tracks transcript selection history for each topic
 state = {'selectionhistory': [], 'selectionmap': {},
          'cmdhistory': [], 'transcripthistory': [], 
-         'currentfunctions': [], 
+         'currentfunctions': [],
+         'cmd': '',
+         'vars': [],
+         'currenttranscript': '',
+         'currentlang': '_meta',
          'currenttopic': '', 'currentbook': '', 'filter': [], 
          'tabs': [], 'webtabs': [], 
          'last_sent': 0, 'last_received': 0, 'last_edited': 0}
@@ -75,6 +83,31 @@ async def update_state(request: Request):
     for key, value in data.items():
         if key in state:
             state[key] = value
+    if ('currentlang' in data and data['currentlang'] and 'currenttranscript' in data and data['currenttranscript']):
+        #execute command        
+        cmds = trans.read_lines(data['currentlang'], data['currenttranscript'].split('\n')) #
+        #logger.info(f"Commands extracted: {cmds}")
+        for cmd in cmds:
+            if (cmd['type'] == '> ' 
+                #for now using upper case in vscode -> trey
+                and 
+                (
+                    cmd['cmd'].startswith('GIT ')
+                    or cmd['cmd'].startswith('TAB')
+                )
+            ):
+                #sample handle all GIT calls..
+                # handle the command here
+                logger.info(f"Handling command: {cmd}")
+                if (qrin_queue is not None):
+                    qrin_queue.put('<<' + data['currentlang'] + '>>\n' + data['currenttranscript'])
+
+        logger.info(f"Executing command: {data['currenttranscript']} {cmds}")
+        #reset transcript state after handling command..
+        state['currentlang'] = '';
+        state['currenttranscript'] = '';
+    
+
     #dump data to qrin_queue
     logger.info(f"State updated: {state}")
     return JSONResponse(content=state)

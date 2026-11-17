@@ -105,16 +105,19 @@ export default class LANG {
     keybot: number = 69;
     keymid: number = 60;
     keyoffset: number = 0;
+    func: string = "";
     funcdict: Record<string, Function> = {};
     midwordtree: Record<string, any> = {}; 
     name: string = "base";
     vars: Record<string, any> = {};
     recentTabs: any;
     tabselector: selector | null = null;
+    functionselector: selector | null = null;
     mykeys: any = null;
     //base specific variables for generic keypresses, selection, and navigation
     //ALLCAPS = vscode handler..
     highlight: boolean = false; //whether to highlight text or not
+    transcript: string = "";
 
 
     constructor(){
@@ -165,9 +168,48 @@ export default class LANG {
         this.funcdict["TAB"] = this.tab;
         this.funcdict["TAB_"] = this.tab_;
 
+        this.funcdict["GIT FUNCTION_"] = (cls: LANG, sequence: number[], words: string[]) => {
+            this.func = "GIT FUNCTION_";
+            console.log("base git function_", sequence, words);
+            //send 
+            let myfunc = null;
+            let vars = {};
+            if (sequence.length === 0){
+                let selections = this.mykeys.getFunctions().map((func, index) => {return {'**': func.name}; });
+                this.functionselector = new selector(selections, 0);                
+            }
+            else{
+                let select = this.keymid - sequence[sequence.length - 1];
+                myfunc = this.functionselector.preselect(select);
+                if (myfunc){
+                    vars['function'] = myfunc.name;
+                    vars['line'] = myfunc.location.range.start;
+                    vars['funlen'] = myfunc.location.range.end - myfunc.location.range.start;
+                }
+            }
+            this.functionselector.get_vars(vars);
+            let str = this.mykeys.transcriber.write(this.name, this.func, (vars), null, false);
+            this.transcript = str;
+
+
+            return 1; //no action, just a generic keypress
+        };
+
         this.funcdict["GIT FUNCTION"] = (cls: LANG, sequence: number[], words: string[]) => {
             console.log("base git function", sequence, words);
             console.log(this.mykeys.getFunctions()); // Assuming mykeys is imported and available
+            let select = this.keymid - sequence[sequence.length - 1];
+            let myfunc = this.functionselector.select(select);
+            let vars = {};
+            if (myfunc){
+                vars['function'] = myfunc.name;
+                vars['line'] = myfunc.range.start;
+                vars['funlen'] = myfunc.range.end - myfunc.range.start;
+            }
+            this.functionselector.get_vars(vars);
+            let str = this.mykeys.transcriber.write(this.name, this.func, (vars), null, false);
+            this.transcript = str;
+
             return 0; //no action, just a generic keypress
         };
 
@@ -220,7 +262,7 @@ export default class LANG {
         if (sequence.length === 0){
             this.vars['tabs'] = recentTabs2;
             this.vars['useRecentTabs'] = true;
-
+            this.tabselector = new selector(recentTabs2, 0);
 
             //how to display selection entries in vscode?  
             return 1;
@@ -414,6 +456,12 @@ export default class LANG {
                 return func(this, sequence.slice(0, -2), words);
             }
             else{
+                //we have a partial command function..
+                //execute it..
+                if (cmd + "_" in this.funcdict){
+                    let func = this.funcdict[cmd + "_"];
+                    return func(this, sequence.slice(0, -1), words);
+                }
                 return 1; //more keys needed
             }
 

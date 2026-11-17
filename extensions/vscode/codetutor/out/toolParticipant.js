@@ -484,12 +484,13 @@ function startWatchingTranscriber(lang, transcriptFolder = "C:/devinpiano/transc
                 if (topics.length > 0) {
                     //read commands and do something..
                     let topic = topics[topics.length - 1];
+                    console.log("Processing topics:", topics.length, "last topic:", lasttopic);
                     for (let t of topics) {
                         //open topic if not already open..
                         console.log("Current topic:", Book.selectedtopic);
-                        console.log("Adding to history and selecting topic ", t.topic);
                         //lasttopic == "" should be start of day book..
                         if ((t.topic !== Book.selectedtopic && t.topic !== lasttopic) || lasttopic === "") {
+                            console.log("Adding to history and selecting topic ", t.topic);
                             //                        if (t.topic !== lasttopic){
                             //topic has changed, do something if needed
                             //only add to history if topic has changed.  

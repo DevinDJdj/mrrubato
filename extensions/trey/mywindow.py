@@ -2456,7 +2456,8 @@ class MyWindow(QMainWindow):
           pcommands = ['Click Link_', 'Select Book_', 'Select Topic_', 
                        'Select Tab_', 'Close Tab_', 'Time Zoom_', 'Read Link_', 
                        'Select Window_', 'Ask_', 'Define_', 'Entity_', 
-                       'Select Filter_']
+                       'Select Filter_', 
+                       'GIT FUNCTION_']
           if (l['cmd'] in pcommands):
             for i2, l2 in enumerate(self.label_ps):
                 self.label_ps[i2].setText("")            

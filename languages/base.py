@@ -209,6 +209,13 @@ class base:
     return -1
   
 
+  def qr_in(self, cmds):
+    for c in cmds:
+      if (c['type'] == '> ' and c['cmd'] == 'GIT FUNCTION_'):
+        logger.info(f'Handling GIT FUNCTION_ command: {c}')
+        # Implement the handling logic for GIT FUNCTIONS_ here.
+        return 1
+
   def comment_(self, sequence=[]):
     if (len(sequence) == 1):
 
