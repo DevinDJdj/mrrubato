@@ -985,7 +985,8 @@ function activate(context) {
                                     if (kv[0].length === 8 && (0, util_1.isNumber)(Number(kv[0]))) {
                                         //open book to date..
                                         //get book folder
-                                        Book.select(Book.getBookPath() + "/" + kv[0] + '.txt'); //select and open topic										
+                                        Book.select(kv[0]);
+                                        //										Book.select(Book.getBookPath() + "/" + kv[0] + '.txt'); //select and open topic										
                                     }
                                 }
                             }

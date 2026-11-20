@@ -19,7 +19,8 @@
       "explorer": [
         {
           "id": "midi-demo.tree",
-          "name": "MIDI"
+          "name": "MIDI", 
+          "icon": "./src/midi/piano.png"
         }
       ]
     },

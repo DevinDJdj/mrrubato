@@ -930,5 +930,39 @@ OK, base functionality there..
 Some issues still with resetting to blank.  
 
 
+**extensions/vscode/codetutor/src/book.ts
+Have to do something about the repetition of empty info..
+
+**extensions/vscode/codetutor/src/toolParticipant.ts
+--activateWorkspaceWatching
+--handleFolderOpened
+Add folder to workspace should do same as open book..
+
+;> vscode.workspace.onDidChangeWorkspaceFolders
+use select(folder)
+adopt getMyUris to allow for external folder..
+
+Not sure this will work yet. 
+Test..
+
+How to annotate external directory?  
+
+Open from every workspace.  
+Just open topic for all sets
+
+Adjusted select to be able to handle this.
+Should open any same named topics and/or books.  
+See if this works at all..
+
+Potentially generate books from main book..
 
 
+**extensions/vscode/codetutor/src/extension.ts
+--activate
+Extension appears to fail before activate is called..
+
+
+**extensions/vscode/codetutor/src/languages/base.ts
+finally GIT FUNCTION properly displaying..
+ok, we can just use this server to communicate I think..
+Keep clear for UI msgs..

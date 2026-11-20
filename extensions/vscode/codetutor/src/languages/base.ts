@@ -24,7 +24,9 @@ export class selector {
     }
 
     preselect(selected: number): any {
+        console.log(`Preselect called with: ${selected}`);
         if (this.lastkey === selected) {
+            console.log(`Last key matched: ${selected}`);
             this.selected += selected;
             if (this.selected + this.currentindex < 0) {
                 this.selected = -this.currentindex;
@@ -73,7 +75,7 @@ export class selector {
             vars['idx'] = this.currentindex;
             vars[':'] = this.currentindex;
         } else {
-            vars['idx'] = this.currentindex;
+            vars['idx'] = this.currentindex+this.selected;
         }
 
         for (const [i, value] of this.get_visible().entries()) {
@@ -175,16 +177,20 @@ export default class LANG {
             let myfunc = null;
             let vars = {};
             if (sequence.length === 0){
-                let selections = this.mykeys.getFunctions().map((func, index) => {return {'**': func.name}; });
-                this.functionselector = new selector(selections, 0);                
+                let selections = this.mykeys.getFunctions().map((func, index) => {return {'**': func.name, ':': func.location.range.start, 'len': func.location.range.end - func.location.range.start}; });
+                this.functionselector = new selector(selections, 0);                            
+            }
+            else if (sequence[sequence.length - 1] === this.keybot) {
+                //just skip keybot.. no selection here..
+                return 1;
             }
             else{
                 let select = this.keymid - sequence[sequence.length - 1];
                 myfunc = this.functionselector.preselect(select);
                 if (myfunc){
-                    vars['function'] = myfunc.name;
-                    vars['line'] = myfunc.location.range.start;
-                    vars['funlen'] = myfunc.location.range.end - myfunc.location.range.start;
+                    vars['function'] = myfunc['**'];
+                    vars['line'] = myfunc[':'];
+                    vars['funlen'] = myfunc['len'];
                 }
             }
             this.functionselector.get_vars(vars);
@@ -202,9 +208,9 @@ export default class LANG {
             let myfunc = this.functionselector.select(select);
             let vars = {};
             if (myfunc){
-                vars['function'] = myfunc.name;
-                vars['line'] = myfunc.range.start;
-                vars['funlen'] = myfunc.range.end - myfunc.range.start;
+                vars['function'] = myfunc['**'];
+                vars['line'] = myfunc[':'];
+                vars['funlen'] = myfunc['len'];
             }
             this.functionselector.get_vars(vars);
             let str = this.mykeys.transcriber.write(this.name, this.func, (vars), null, false);
@@ -265,6 +271,9 @@ export default class LANG {
             this.tabselector = new selector(recentTabs2, 0);
 
             //how to display selection entries in vscode?  
+            return 1;
+        }else if (sequence[sequence.length - 1] === this.keybot) {
+            //just skip keybot.. no selection here..
             return 1;
         }
         if (sequence.length >0 && sequence[0] === this.keymid){
@@ -460,7 +469,7 @@ export default class LANG {
                 //execute it..
                 if (cmd + "_" in this.funcdict){
                     let func = this.funcdict[cmd + "_"];
-                    return func(this, sequence.slice(0, -1), words);
+                    return func(this, sequence, words);
                 }
                 return 1; //more keys needed
             }

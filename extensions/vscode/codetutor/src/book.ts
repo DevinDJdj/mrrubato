@@ -778,11 +778,12 @@ export function getURLAndIndex(link: string): [string, number] {
     return [ret, total_read];
 }
 
-function getMyUris(topic: string, externalpath: string = "") : vscode.Uri[] {
+function getMyUris(topic: string, externalpath: string = "", folderPath: string = '') : vscode.Uri[] {
+    //why keep both folderPath and externalpath?
     //how many to return..
     //check if file or folder
     let ret = [];
-    let folderUri = workspaceUri;
+    let folderUri = folderPath ? vscode.Uri.file(folderPath) : workspaceUri;
     if (externalpath !== ""){
         const parentPath = path.dirname(folderUri.path);
         folderUri = folderUri.with({ path: parentPath });
@@ -870,11 +871,76 @@ function getExtension(filename: string): string | undefined {
   return undefined;
 }
 
+//open date files
+function opend(topic: string){
+
+        //special handling for date files, create book entry on select..
+        //open date file on select even if it doesnt exist..
+        const folderUri = getBookUri();
+
+        let fileUri = folderUri.with({ path: posix.join(folderUri.path, topic + ".txt") });
+        console.log(`Creating date file for topic: ${topic} at path: ${fileUri.path}`);
+
+        if (!fs.existsSync(fileUri.fsPath)) {
+            //create the file if it doesn't exist.  
+            try {
+                fs.writeFileSync(fileUri.fsPath, "");
+            } catch (err) {
+                console.error(`Failed to create date file for topic: ${topic} at path: ${fileUri.fsPath}`, err);
+            }
+        }
+        const genfolderUri = getGenBookUri();
+
+        const genbookUri = genfolderUri.with({ path: posix.join(genfolderUri.path, topic + ".txt") });
+        if (fs.existsSync(genbookUri.fsPath)) {
+            console.log(`Found existing genbook file for topic: ${topic} at path: ${genbookUri.fsPath}`);
+            vscode.workspace.openTextDocument(genbookUri).then(doc => {
+                vscode.window.showTextDocument(doc, {preview: false});
+            });
+        }
+
+}
+
+
+//open all workspaces
+function openw(topic: string, fname: string, open: number = opennature){
+    for (const folder of vscode.workspace.workspaceFolders || []) {
+
+        try{
+            //read books for this topic
+            let fileUris = getMyUris(fname, path.join(folder.uri.fsPath, 'books'));
+            //started using this, but really dont want leading books/
+            readBooksContent(fileUris, topic);
+            //read this topic
+            fileUris = getMyUris(fname, folder.uri.fsPath);
+            readBooksContent(fileUris, topic);
+
+            let fileUri = fileUris.length > 0 ? fileUris[fileUris.length - 1] : null; //start with last entry..
+            if (fileUri) {
+                console.log(`Opening matching topic entry: ${fileUri.path}`);
+                vscode.workspace.openTextDocument(fileUri).then(doc => {
+                    if (open & BOOK_OPEN_FILE && fileUri) {
+                        console.log(`Showing text document for fileUri: ${fileUri.fsPath}`);
+                        vscode.window.showTextDocument(doc, {preview: false}); //keep the document open in case of tab switch..
+                    }
+                });
+                if (open & BOOK_OPEN_WEB) {
+                    webBook(topic); //open the web view for the topic.
+                }
+
+
+            }
+            
+        } catch (error) {
+            console.error(`Error opening books ${folder} for topic ${topic}:`, error);
+        }
+    }
+}
+
 export function select(topic: string, open: number = opennature) : boolean {
     //select the topic from the topicarray.  
     //this will be used to get the topic from the array.  
     let fname = topic.trim();
-    const folderUri = workspaceUri;
     // this should be a book path.  Use as you would work on the project.  
     console.log("Selecting topic: " + fname);
     let fileUris = getMyUris(fname);
@@ -884,19 +950,10 @@ export function select(topic: string, open: number = opennature) : boolean {
     console.log(`Initial fileUri: ${fileUri}`);
     console.log(`Topic: ${topic}`);
     if (fileUri === null && !isNaN(Number(topic.slice(-8)))) {
-        //special handling for date files, create on select..
-        //open date file on select even if it doesnt exist..
-        fileUri = folderUri.with({ path: posix.join(folderUri.path, topic + ".txt") });
-        console.log(`Creating date file for topic: ${topic} at path: ${fileUri.path}`);
-        if (!fs.existsSync(fileUri.fsPath)) {
-            //create the file if it doesn't exist.  
-            try {
-                fs.writeFileSync(fileUri.fsPath, "");
-            } catch (err) {
-                console.error(`Failed to create date file for topic: ${topic} at path: ${fileUri.fsPath}`, err);
-            }
-        }
+        opend(topic);
     }
+
+
 //	const fileUri = folderUri.with({ path: posix.join(folderUri.path, 'definitions.txt') });
 
     const found = alltopics.find((t) => t === topic);
@@ -907,6 +964,7 @@ export function select(topic: string, open: number = opennature) : boolean {
             if (open & BOOK_OPEN_FILE && fileUri) {
                 console.log(`Showing text document for fileUri: ${fileUri.fsPath}`);
                 vscode.window.showTextDocument(doc, {preview: false}); //keep the document open in case of tab switch..
+
             }
                 //keep selectionhistory, dont load twice.  
             if (!found){
@@ -924,73 +982,84 @@ export function select(topic: string, open: number = opennature) : boolean {
             let ext = getExtension(topic);
             console.log(`Extension for topic ${topic}: ${ext}`);
             if (ext !== undefined && ext !== 'txt' && fileUri !== null) {
-                console.log(`Getting all functions in file: ${fileUri.fsPath}`);
-                getAllFunctionsInFile(fileUri).then((allfuncs) => {
-                    //set data for base language to use for autocompletion and other purposes.
-                    console.log(`Functions in ${fileUri.fsPath}:`, allfuncs);
-//                    setFunctions(allfuncs);
-                    setArrayEntry('currentfunctions', allfuncs);
-                    //update this topic as well..
-                    let mydata = null;
-                    if (!topicdata[topic]) {
-                        topicdata[topic] = {
-                            topic: topic,
-                            data: {}
-                        };
-                        mydata = topicdata[topic];
-                    }
-                    else{
-                        mydata = topicdata[topic];
-                    }
-                    if (!mydata.data["functions"]){
-                        mydata.data["functions"] = [];
+                setTimeout(() => { //have to delay..
+                    console.log(`Timeout for getting functions in file: ${fileUri.fsPath}`);
+                    console.log(`Getting all functions in file: ${fileUri.fsPath}`);
+                    getAllFunctionsInFile(fileUri).then((allfuncs) => {
+                        //set data for base language to use for autocompletion and other purposes.
+                        console.log(`Functions in ${fileUri.fsPath}:`, allfuncs);
+    //                    setFunctions(allfuncs);
+                        setArrayEntry('currentfunctions', allfuncs);
+                        //update this topic as well..
+                        let mydata = null;
+                        if (!topicdata[topic]) {
+                            topicdata[topic] = {
+                                topic: topic,
+                                data: {}
+                            };
+                            mydata = topicdata[topic];
+                        }
+                        else{
+                            mydata = topicdata[topic];
+                        }
+                        if (!mydata.data["functions"]){
+                            mydata.data["functions"] = [];
 
-                    }
-                    
-                    if (!mydata.data["usedfunctions"]) {
-                        mydata.data["usedfunctions"] = [];
-                    }
-                    //find used functions in Book topic..
-                    //sort by all looked up..
-                    mydata.data["usedfunctions"].sort((a, b) => a.date.localeCompare(b.date));
-                    let tempusedfunctions = [];
-                    for (const func of allfuncs) {
-                        if (func && func.name){
-                            const hasFunc = arrays['--'] && arrays['--'][func.name];
-                            if (hasFunc) {
-                                let lastEntry = arrays['--'][func.name][-1];
-                                tempusedfunctions.push({func: func, topic: topic, book: arrays['--'][func.name], date: lastEntry.date, sortorder: lastEntry.sortorder});
+                        }
+                        
+                        if (!mydata.data["usedfunctions"]) {
+                            mydata.data["usedfunctions"] = [];
+                        }
+                        //find used functions in Book topic..
+                        //sort by all looked up..
+                        mydata.data["usedfunctions"].sort((a, b) => a.date.localeCompare(b.date));
+                        let tempusedfunctions = [];
+                        for (const func of allfuncs) {
+                            if (func && func.name){
+                                const hasFunc = arrays['--'] && arrays['--'][func.name];
+                                if (hasFunc) {
+                                    let lastEntry = arrays['--'][func.name][-1];
+                                    tempusedfunctions.push({func: func, topic: topic, book: arrays['--'][func.name], date: lastEntry.date, sortorder: lastEntry.sortorder});
+                                }
                             }
                         }
-                    }
-                    tempusedfunctions.sort((a, b) => a.sortorder > b.sortorder ? 1 : -1);
-                    //add the newly found used functions at the beginning of the list
-                    mydata.data["usedfunctions"].insert(0, ...tempusedfunctions);
+                        tempusedfunctions.sort((a, b) => a.sortorder > b.sortorder ? 1 : -1);
+                        //add the newly found used functions at the beginning of the list
+                        mydata.data["usedfunctions"].insert(0, ...tempusedfunctions);
 
-                    //functions not in book.. less prevalent listing..
-                    allfuncs = allfuncs.filter(func => func && func.name && !(func.name in arrays['--']));
+                        //functions not in book.. less prevalent listing..
+                        allfuncs = allfuncs.filter(func => func && func.name && !(func.name in arrays['--']));
 
-                    //allfuncs.sort((a, b) => a.name.localeCompare(b.name));
-                    //keep same sort order..
-                    mydata.data["functions"].insert(0, ...allfuncs);
-                    
-                    setArrayEntry('currentfunctions', mydata.data["functions"]); //update with 
+                        //allfuncs.sort((a, b) => a.name.localeCompare(b.name));
+                        //keep same sort order..
+                        mydata.data["functions"].insert(0, ...allfuncs);
+                        
+                        setArrayEntry('currentfunctions', mydata.data["functions"]); //update with 
 
 
-                    console.log(`Current functions:`, getFunctions());
-                });
-                //log for now..
-                //use this for autocompletion on -- as well as storing for trey..
+                        console.log(`Current functions:`, getFunctions());
+                    });
+                    //log for now..
+                    //use this for autocompletion on -- as well as storing for trey..
+
+                }, 5000);
             }
 
             readBooksContent(fileUris, topic); //read the book content if it exists.  
-            fileUris = getMyUris(fname, "books");
-            //started using this, but really dont want leading books/
             if (topic.startsWith("books/")) {
                 topic = topic.substring("books/".length);
             }
+            fileUris = getMyUris(fname, getBooksPath());
+            //started using this, but really dont want leading books/
             readBooksContent(fileUris, topic);
+
+            //should be in order of opened folder.  So last opened will be displayed, but if too many simultaneous folders are open, 
+            //this could get confusing..
+            //not sure if we should open book directory as well here..
+
             //open global or local book view.  
+            openw(topic, fname, opennature);
+
             return true;
         }
     } catch (err) {
@@ -1011,7 +1080,7 @@ export async function readBooksContent(fileUris: vscode.Uri[], topic: string, de
         if (fs.lstatSync(fileUri.fsPath).isDirectory()) {
             //recurse here to readBooksContent
             if (depth > 0) {
-                const subUris = getMyUris(fileUri.fsPath);
+                const subUris = getMyUris('', fileUri.fsPath);
                 await readBooksContent(subUris, topic, depth - 1);
             }
 
@@ -2452,6 +2521,12 @@ export function loadPage(text: string, filePath: string, altdate: number=0, book
     return mydate;
 }
 
+export function getBooksPath(): string{
+    const mySettings = vscode.workspace.getConfiguration('mrrubato');	
+    let booksFolder = mySettings.booksFolder;
+    return booksFolder;
+}
+
 export function getBookPath() : string{
     const mySettings = vscode.workspace.getConfiguration('mrrubato');	
     let bookFolder = mySettings.bookfolder;
@@ -2505,7 +2580,58 @@ function getBookUri() : vscode.Uri {
     return bookUri;
 }
 
+
+async function copyGenPage(genPage: string) {
+    //get file content of the current genpage.
+    const currentGenpageUri = getUri(genPage);
+    console.log(`Current genpage URI: ${currentGenpageUri.fsPath}`);
+    let length = 0;
+    try{
+        const currentContent = await vscode.workspace.fs.readFile(currentGenpageUri);        
+        length = currentContent.length;
+    } catch (err){
+        console.log(`Error reading current genpage: ${err}`);
+    }
+    console.log(`Current genpage content length: ${length}`);
+    if (length === 0) {
+        console.log(`Copying most recent Genbook to: ${genPage}`);
+
+        //current genpage is empty, we may want to insert data from the previous genpage.
+        //insert data into genpage from previous genpage..
+        let folder = genPage.split('/').slice(0, -1).join('/'); //get the folder path of genpage.
+        //find previous page
+        //list directory
+
+        const genpageFiles = await readFileNamesInFolder(folder + "/", false); //list files in the genpage folder.
+        //get latest..
+        console.log(`copying Genpage content from latest file to current genpage dir ${genpageFiles.length} files`);
+        let latestGenpage = genpageFiles.sort((a, b) => a.localeCompare(b)).pop(); //get the latest file based on modification time.
+        console.log(`Latest genpage file: ${latestGenpage}`);
+        if (latestGenpage) {
+            console.log(`Copying content from latest genpage: ${latestGenpage} to current genpage: ${genPage}`);
+            //copy content from the latest genpage to the current genpage.
+            const latestGenpageUri = getUri(latestGenpage);
+            const currentGenpageUri = getUri(genPage);
+            const latestContent = await vscode.workspace.fs.readFile(latestGenpageUri);
+            console.log(`Read content from latest genpage: ${latestContent.length} bytes`);
+            //truncate to only use latest N lines of content..
+            const latestContentStr = Buffer.from(latestContent).toString('utf8');
+            const latestContentLines = latestContentStr.split('\n');
+            const N = 20; // number of lines to keep, for now, lets keep it minimal.  
+            //dont make this repeated context, we want run commands to be distinguishable, not sure what to bring if anything..
+
+            const truncatedContent = latestContentLines.slice(-N).join('\n');
+            const latestContentBuffer = Buffer.from(truncatedContent, 'utf8');
+            console.log(`Writing truncated content to current genpage: ${truncatedContent.length} to ${genPage}`);
+            await vscode.workspace.fs.writeFile(currentGenpageUri, latestContentBuffer);
+
+        }
+    }
+
+}
+
 function loadBook(context: vscode.ExtensionContext | null = null) {
+
     if (!vscode.workspace.workspaceFolders) {
         return vscode.window.showInformationMessage('No folder or workspace opened');
     }
@@ -2529,61 +2655,20 @@ function loadBook(context: vscode.ExtensionContext | null = null) {
         sortRecency();
         console.log(`Sorted topic array: ${Object.keys(topicarray).length} elements`);
 
-        //open the most recent file.
-        select(result.page, BOOK_OPEN_FILE); //select and open topic
-        console.log(`Opened most recent topic file: ${result.page}.txt`);
-        select(result.genpage, BOOK_OPEN_FILE); //select and open genbook topic
+//        select(result.genpage, BOOK_OPEN_FILE); //select and open genbook topic
         let genPage = result.genpage + ".txt";
-        console.log(`Opened most recent genbook topic file: ${genPage}`);
 
-        //get file content of the current genpage.
-        const currentGenpageUri = getUri(genPage);
-        console.log(`Current genpage URI: ${currentGenpageUri.fsPath}`);
-        let length = 0;
-        try{
-            const currentContent = await vscode.workspace.fs.readFile(currentGenpageUri);        
-            length = currentContent.length;
-        } catch (err){
-            console.log(`Error reading current genpage: ${err}`);
-        }
-        console.log(`Current genpage content length: ${length}`);
-        if (length === 0) {
-            //current genpage is empty, we may want to insert data from the previous genpage.
-            //insert data into genpage from previous genpage..
-            let folder = genPage.split('/').slice(0, -1).join('/'); //get the folder path of genpage.
-            //find previous page
-            //list directory
-
-            const genpageFiles = await readFileNamesInFolder(folder + "/", false); //list files in the genpage folder.
-            //get latest..
-            console.log(`copying Genpage content from latest file to current genpage dir ${genpageFiles.length} files`);
-            let latestGenpage = genpageFiles.sort((a, b) => a.localeCompare(b)).pop(); //get the latest file based on modification time.
-            console.log(`Latest genpage file: ${latestGenpage}`);
-            if (latestGenpage) {
-                console.log(`Copying content from latest genpage: ${latestGenpage} to current genpage: ${genPage}`);
-                //copy content from the latest genpage to the current genpage.
-                const latestGenpageUri = getUri(latestGenpage);
-                const currentGenpageUri = getUri(genPage);
-                const latestContent = await vscode.workspace.fs.readFile(latestGenpageUri);
-                console.log(`Read content from latest genpage: ${latestContent.length} bytes`);
-                //truncate to only use latest N lines of content..
-                const latestContentStr = Buffer.from(latestContent).toString('utf8');
-                const latestContentLines = latestContentStr.split('\n');
-                const N = 20; // number of lines to keep, for now, lets keep it minimal.  
-                //dont make this repeated context, we want run commands to be distinguishable, not sure what to bring if anything..
-
-                const truncatedContent = latestContentLines.slice(-N).join('\n');
-                const latestContentBuffer = Buffer.from(truncatedContent, 'utf8');
-                console.log(`Writing truncated content to current genpage: ${truncatedContent.length} to ${genPage}`);
-                await vscode.workspace.fs.writeFile(currentGenpageUri, latestContentBuffer);
-
-            }
-        }
+        await copyGenPage(genPage); //copy content from previous genpage if needed.
 
 
         
         
         let YYYYmmdd = result.page.split('/').at(-1); //get the date from the path.
+
+                //open the most recent file.
+        select(YYYYmmdd, BOOK_OPEN_FILE); //select and open most recent date..
+        console.log(`Opened most recent topic file: ${result.page}.txt`);
+
         let currentdate = createDateFromYYYYmmdd(YYYYmmdd); //get the current date in YYYYMMDD format.
         let prevdate = new Date(currentdate);
         prevdate.setFullYear(currentdate.getFullYear() - 1); //get the date one year ago.

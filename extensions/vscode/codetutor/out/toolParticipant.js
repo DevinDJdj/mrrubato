@@ -690,6 +690,7 @@ function handleFolderOpened(folder, source) {
     const folderName = folder.name;
     const folderPath = folder.uri.fsPath;
     console.log(`Folder opened ${source}: ${folderName} at ${folderPath}`);
+    Book.select(folderPath);
     // Place your folder-specific logic here (e.g., scanning files, initializing tools)
 }
 function activateTabWatching(context) {
