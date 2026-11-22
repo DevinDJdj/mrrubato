@@ -1,0 +1,92 @@
+#https://insiderllm.com/guides/pi-agent-local-models-ollama/
+
+$$ENV=mrroboto
+test pi..
+
+>#1 npm install -g --ignore-scripts @earendil-works/pi-coding-agent
+>#1 npm uninstall -g --ignore-scripts @earendil-works/pi-coding-agent
+>$1 curl -fsSL https://pi.dev/install.sh | sh
+
+
+Ctrl+,
+extensions->mrrubato->Ubuntu
+Ubuntu-24.04
+
+>$1 ollama pull qwen3.6:35b 
+#https://insiderllm.com/guides/best-way-run-qwen-3-6-35b-moe-locally/
+>$1 ollama pull deepseek-coder-v2
+>$1 ollama pull qwen2.5-coder:7b
+>$1 ollama pull qwen3.5:9b
+
+**.pi/agent/models.json
+Set models
+
+**.pi/agent/settings.json
+set default model
+
+>#1 pi
+
+extensions:
+#https://deepakness.com/blog/pi-agent-setup/
+;>#1 pi install npm:pi-web-access
+;>#1 pi install npm:pi-vision-handoff
+
+/model – Switch models without remembering the shortcut
+/settings – Change thinking level, theme, and other settings
+/resume – Pick up from a previous session
+/new – Start a fresh session
+/tree – See the full session history and jump to any point
+/compact – Summarize old messages to free up context
+/session – Show current session info like tokens and cost
+
+**.pi/agent/skills/review.md
+/review - 
+
+**AGENTS.md
+customize some?  
+
+;> pi @book/chapter1.txt -p "Summarize this file"
+
+!! Error: No API key found for the selected model. 
+==
+??
+$$
+Quit = Ctrl+C Ctrl+C
+
+!! Warning: No models available. Use /login to log into a provider
+!! via OAuth or API key. See:
+
+>$1 cp -r .pi/* /home/devin/.pi
+> Restart..
+>$1 pi
+>$1 pi @book/chapter1.txt -p "Summarize this file"
+
+!!400: {"message":"registry.ollama.ai/library/deepseek-coder-v2:latest does not support tools","type":"invalid_request_error","param":null,"code":null}
+==
+switch to 
+**.pi/agent/settings.json
+  "defaultModel": "qwen2.5-coder:7b"
+>$1 cp ./.pi/agent/settings.json /home/devin/.pi/agent/settings.json
+$$
+
+>$1 pi @book/chapter1.txt -p "Summarize this file"
+
+OK, so basic setup works..
+
+OK, so basically useless.  
+Constantly get 
+!!Response was truncated before completion.
+==
+See no solution at the moment..
+Try opencode..
+
+$$
+
+#https://www.nvidia.com/en-us/drivers/details/282413/
+
+
+>$ ollama pull nomic-embed-text-v2-moe
+
+
+@@So what open source coding agent actually works with low VRAM?  
+
