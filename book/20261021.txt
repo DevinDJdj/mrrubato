@@ -1006,3 +1006,4 @@ Now we have sorted by recently selected topics..
 --provideCompletionItems
 Still need to deduplicate entries here..
 
+
