@@ -966,3 +966,43 @@ Extension appears to fail before activate is called..
 finally GIT FUNCTION properly displaying..
 ok, we can just use this server to communicate I think..
 Keep clear for UI msgs..
+
+
+> git rm -r --cached extensions/vscode/codetutor/out/
+
+
+;Book
+;Topic
+;Function
+;Comment
+;Generate
+;Annotate generate with DATE_TIME
+
+ok, adding function works ok..
+
+@@How to ignore all the repetition within the genbook?  
+
+Also lot of junk when using -- for functionname.  
+For autocomplete for some things, we should filter by
+topic and possibly related topics..
+Add this for basically all..
+If line starts with _ do global search?  
+Otherwise contextual
+;--,@@,==,$$,#,~~,
+
+
+**extensions/vscode/codetutor/src/toolParticipant.ts
+--provideCompletionItems
+not sorting as expected..
+
+OK, I think we are closer now to what we want..
+
+**extensions/vscode/codetutor/src/book.ts
+--loadPage
+was not loading topic info correctly..
+
+Now we have sorted by recently selected topics..
+
+--provideCompletionItems
+Still need to deduplicate entries here..
+

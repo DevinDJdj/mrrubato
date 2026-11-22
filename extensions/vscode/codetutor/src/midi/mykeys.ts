@@ -122,6 +122,13 @@ export class MyKeys {
         console.log('Current functions set to:', this.state.currentfunctions);
     }
 
+    appendToBook(content: string): void {
+        let today = new Date();
+        let todaydate = today.getFullYear()*10000 + (today.getMonth()+1)*100 + today.getDate();
+        let file = Book.getBookPath() + "/" + todaydate + ".txt";
+        Book.updatePage(file, content, -1, -1);
+    }
+    
     selectTopic(topic: string): void {
         topic = Book.getTopicFromFilePath(topic);
         Book.select(topic);

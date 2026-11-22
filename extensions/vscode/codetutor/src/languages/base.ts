@@ -215,6 +215,9 @@ export default class LANG {
             this.functionselector.get_vars(vars);
             let str = this.mykeys.transcriber.write(this.name, this.func, (vars), null, false);
             this.transcript = str;
+            //write to book..
+            this.mykeys.appendToBook('--' + myfunc['**'] + "\n");
+
 
             return 0; //no action, just a generic keypress
         };

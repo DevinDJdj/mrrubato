@@ -389,11 +389,9 @@ function getRecency(bt : Array<BookTopic>, mydate: Date = new Date()) : number {
     let cumdate = 0;
     for (let i = 0; i < bt.length; i++) {
         //need better calculation of recency.
-
-        //get closest to mydate.  
-        cumdate += Math.abs(getDaysBetweenDates(getDateFromString(bt[i].date.toString()), mydate));
-
-        bt[i].sortorder = 0;
+        let numdays = Math.abs(getDaysBetweenDates(getDateFromString(bt[i].date.toString()), mydate));
+        cumdate += numdays;
+        bt[i].sortorder = numdays;
     }
     if (bt.length > 0){
         return cumdate / bt.length; //average recency of the topics.
@@ -414,6 +412,9 @@ export function itemToDoc(item: BookTopic): string {
     //need to rewrite dates to something else..
 
     ret += `Line: ${item.line}, Sort: ${item.sortorder}  \n`;
+    ret += `Topic: ${item.topic}  \n`;
+    ret += `Date: ${item.date}  \n`;
+
     ret += `Link: [${fname}](${fileUri}#L${item.line})  \n`;
     let data = item.data.substring(0, 255);
     ret += `Data: ${data}  \n`;
@@ -450,18 +451,19 @@ export function findTopicsCompletion(str: string = "") : string[]{
                     }
                     const found = selectionhistory['**'].findIndex((t) => t === item.topic);
                     if (found > -1){
-                        sortText = (MAX_SELECTION_HISTORY-found).toString(16).padStart(4, '0').toUpperCase();
+                        sortText = (MAX_SELECTION_HISTORY-found).toString(10).padStart(4, '0').toUpperCase();
                     }
                     
                 }
                 ci.documentation = new vscode.MarkdownString(`${doc}`);
                 if (sortText === "0000"){
-                    sortText = value[0].sortorder.toString(16).padStart(4, '0').toUpperCase();
+                    sortText = parseInt(value[0].sortorder.toString()).toString(10).padStart(4, '0').toUpperCase();
                 }
                 ci.sortText = sortText;
                 myarray.push(ci);
             }                    
         }
+        myarray.sort((a, b) => a.sortText.localeCompare(b.sortText));
         return myarray;
     }
     else{
@@ -503,11 +505,11 @@ export function findTopicsCompletion(str: string = "") : string[]{
                 ci.detail = `**${key}`;
                 let doc = "";
                 for (let item of topicarray[key]) {
-                    doc = itemToDoc(item);
+                    doc += itemToDoc(item);
 
                 }
                 ci.documentation = new vscode.MarkdownString(`${doc}`);
-                ci.sortText = topicarray[key][0].sortorder.toString(16).padStart(4, '0').toUpperCase();
+                ci.sortText = parseInt(topicarray[key][0].sortorder.toString()).toString(10).padStart(4, '0').toUpperCase();
                 myarray.push(ci);
             }                    
             else{
@@ -524,7 +526,7 @@ export function findTopicsCompletion(str: string = "") : string[]{
                 ci.documentation = new vscode.MarkdownString(`${doc}`);
                 //set to end of list.  
                 let tempsort = 65535;
-                ci.sortText = tempsort.toString(16).padStart(4, '0').toUpperCase();
+                ci.sortText = tempsort.toString(10).padStart(4, '0').toUpperCase();
                 myarray.push(ci);
 
             }
@@ -977,7 +979,13 @@ export function select(topic: string, open: number = opennature) : boolean {
 
         //only add if we have data.  
         if (found) {
+            currenttopic = topic;
             addToHistory(topic); //add the topic to the history.
+            //this logic already exists in completion provider.  
+            //using Book.selectionhistory to determine recency of topics.
+//            sortRecency(); //sort the history by recency includ this as new topic..
+
+
             //read the book content if it exists.  
             let ext = getExtension(topic);
             console.log(`Extension for topic ${topic}: ${ext}`);
@@ -1462,6 +1470,7 @@ function getFileDate(filePath: string): number {
     else{
         //get date of the file
         const folderUri = workspaceUri;
+//        mydate = d.getFullYear()*10000 + (d.getMonth()+1)*100 + d.getDate(); //use the current date in YYYYMMDD format if we have no other date.
 
 //       const stat => await vscode.workspace.fs.stat(folderUri.with({ path: filePath }))
 //        console.log((new Date(stat.mtime)).getFullYear() * 10000); //get the date of the file.
@@ -2474,7 +2483,7 @@ export function loadPage(text: string, filePath: string, altdate: number=0, book
             let startline = strs[topicstart[key][i] ];
 
             //get current topic from line number.  
-            while (startline < topicstart["**"][topicidx] && topicidx > -1) {
+            while (topicstart[key][i] < topicstart["**"][topicidx] && topicidx > -1) {
                 topicidx--; //increment topic index until we find a topic that is after the startline.
             }
             if (topicidx === -1) {

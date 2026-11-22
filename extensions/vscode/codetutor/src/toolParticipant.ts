@@ -113,6 +113,7 @@ export function registerCompletionTool(context: vscode.ExtensionContext){
     //@@ -> questions
     //== -> answers
 
+
     const provider2 = vscode.languages.registerCompletionItemProvider(
         'plaintext',
         {
@@ -163,23 +164,26 @@ export function registerCompletionTool(context: vscode.ExtensionContext){
                                         let doc = "";
                                         let sortText = "0000";
                                         for (let item of value) {
-                                            doc = Book.itemToDoc(item);
             
                                             //set sortText to top if it is in selection history.  
-                                            const found = Book.selectionhistory[k]?.findIndex((t) => t === item.topic) ?? -1;
+                                            const found = Book.selectionhistory['**']?.findIndex((t) => t === item.topic) ?? -1;
                                             if (found > -1){
-                                                sortText = (Book.MAX_SELECTION_HISTORY-found).toString(16).padStart(4, '0').toUpperCase();
+                                                sortText = (Book.MAX_SELECTION_HISTORY-found).toString(10).padStart(4, '0').toUpperCase();
+                                                item.sortorder = Book.MAX_SELECTION_HISTORY-found;
                                             }
+                                            doc += Book.itemToDoc(item);
             
                                         }
                                         ci.documentation = new vscode.MarkdownString(`${doc}`);
                                         if (sortText === "0000"){
-                                            sortText = value[0].sortorder.toString(16).padStart(4, '0').toUpperCase();
+                                            sortText = parseInt(value[0].sortorder.toString()).toString(10).padStart(4, '0').toUpperCase();
                                         }
                                         ci.sortText = sortText;
                                         myarray.push(ci);
                                     }                    
                                 }
+                                myarray.sort((a, b) => a.sortText.localeCompare(b.sortText));
+//                                console.log('Sorted myarray:', myarray);
                                 return myarray;
                             }
                         }
@@ -195,23 +199,25 @@ export function registerCompletionTool(context: vscode.ExtensionContext){
                             let doc = "";
                             let sortText = "0000";
                             for (let item of value) {
-                                doc = Book.itemToDoc(item);
 
                                 //set sortText to top if it is in selection history.  
-                                const found = Book.selectionhistory['>']?.findIndex((t) => t === item.topic) ?? -1;
+                                const found = Book.selectionhistory['**']?.findIndex((t) => t === item.topic) ?? -1;
                                 if (found > -1){
-                                    sortText = (Book.MAX_SELECTION_HISTORY-found).toString(16).padStart(4, '0').toUpperCase();
+                                    sortText = (Book.MAX_SELECTION_HISTORY-found).toString(10).padStart(4, '0').toUpperCase();
+                                    item.sortorder = Book.MAX_SELECTION_HISTORY-found;
                                 }
+                                doc += Book.itemToDoc(item);
 
                             }
                             ci.documentation = new vscode.MarkdownString(`${doc}`);
                             if (sortText === "0000"){
-                                sortText = value[0].sortorder.toString(16).padStart(4, '0').toUpperCase();
+                                sortText = parseInt(value[0].sortorder.toString()).toString(10).padStart(4, '0').toUpperCase();
                             }
                             ci.sortText = sortText;
                             myarray.push(ci);
                         }                    
                     }
+                    myarray.sort((a, b) => a.sortText.localeCompare(b.sortText));
                     return myarray;
 
                 }
