@@ -97,6 +97,9 @@ class hotkeys:
     self.deflang = ""
     self.defineselector = None
     self.entityselector = None
+    self.tabselector = None
+    self.linkselector = None
+    self.tabs = []
 
   def word(self, sequence=[]):
     """Word lookup."""
@@ -1056,25 +1059,25 @@ class hotkeys:
 
   def close_tab_(self, sequence=[]):
     #close current tab.  if param given, close that tab.
-    if (len(sequence) > 0):
-      logger.info(f'> Close Tab_ {sequence}')
-      if (playwrighty.mybrowser is not None):
-        vars = {}
-        for (i, page_info) in enumerate(playwrighty.page_cache[-15:]):          
-          print(f'Tab {i}: {page_info["url"]}')
-#          logger.info(f'Tab {i}: {page_info["url"]}')
-          vars[str(i)] = page_info["title"]
+    logger.info(f'> Close Tab_ {sequence}')
+    if (playwrighty.mybrowser is not None):
+      vars = {}
+      if (len(sequence) == 0):
+        self.tabs = [p['title'] for p in playwrighty.page_cache]
+        self.tabselector = selector(self.tabs, 0)
+        self.tabselector.get_vars(vars)
+        self.set_qr(self.func, vars)
+
+      if (len(sequence) > 0 and sequence[-1] != self.keybot):
+        select = self.mid - sequence[-1]
+        tabtitle = self.tabselector.preselect(select)
+        self.tabselector.get_vars(vars)
 
 
         self.func = "Close Tab_"
-        tabno = sequence[-1]-self.keybot
-        if (tabno < 0 or tabno >= len(playwrighty.page_cache)):
-          tabno = len(playwrighty.page_cache)-1
-
-        vars['idx'] = tabno
-
+        vars['TAB'] = tabtitle
         self.set_qr(self.func, vars)
-        self.speak(f'--{playwrighty.page_cache[tabno]["title"]}')
+        self.speak(f'--{tabtitle}')
     return 1 #need more keys to close tab.
 
 
@@ -1083,12 +1086,12 @@ class hotkeys:
     
     logger.info(f'> Close Tab {sequence}')
     if (playwrighty.mybrowser is not None):
+      cacheno = 0
       if (len(sequence) > 0):
-        cacheno = sequence[-1]-self.keybot - 1
-      else:
-        cacheno = playwrighty.current_cache
-      if (cacheno < 0 or cacheno >= len(playwrighty.page_cache)):
-        cacheno = len(playwrighty.page_cache)-1
+        select = self.mid - sequence[-1]
+        self.tabselector.select(select)
+        cacheno = self.tabselector.currentindex
+
       #remove bookmark..
       page = playwrighty.get_ppage(cacheno, False) #dont activate.. we are closing sometimes..
       playwrighty.transcribe_bookmark(page.url, cacheno=cacheno, transcriber=self.transcriber, name=self.name, remove=True)
@@ -2409,17 +2412,42 @@ class hotkeys:
     for i, link in enumerate(links):
       print(f'Link {i}: {link["text"]} ({link["href"]})')
     self.set_qr(self.func, {'links': self.currentlinks})
-    #update display.  
+    #update display.
+    # workaround to call this, not called by default if _click_link defined..  
+    self.click_link_([])
     
     return 1
 
 
 
   def click_link_(self, sequence=[]):
-    if (len(sequence) > 0) and sequence[-1] != self.keybot:
+    self.func = "Click Link_"
+    if (len(sequence) == 0):
+      total_read = 0
+      total_read = playwrighty.update_page_offset()
+      linkno = playwrighty.get_link_number(-1, total_read, 0)
+      cacheno = playwrighty.current_cache
+      newlinks = playwrighty.page_cache[cacheno]['links']
+      self.newlinks = newlinks
+      self.linkselector = selector(newlinks, linkno)
+      vars = {}
+      self.linkselector.get_vars(vars, 'text')
+      self.set_qr(self.func, vars)
 
+      return 1
+    
+    if (len(sequence) > 0) and sequence[-1] != self.keybot:
       logger.info(f'> Click Link_ {sequence}')
       print("> Click Link_")
+
+      select = self.mid - sequence[-1]
+      mylink = self.linkselector.preselect(select)
+      vars = {}
+      self.linkselector.get_vars(vars, 'text')
+      self.set_qr(self.func, vars)
+      synth.play_synth(self.config['languages'][self.name]["3"]["Click Link"], 12) #play synth up octave to indicate we are clicking..
+      self.speak(f'--{mylink["text"]}')
+      """
         #find the current link from our reading.  
       testing = True
       if (playwrighty.mybrowser is not None and testing):
@@ -2449,7 +2477,7 @@ class hotkeys:
         self.set_qr(self.func, vars)
         self.speak(f'--{link["text"]}')
         resume_reader() #resume after speaking link number.
-
+        """
     return 1
   
   def click_link(self, sequence=[]):
@@ -2478,7 +2506,11 @@ class hotkeys:
 #      pause_reader() #pause first before clicking link.
 #      stop_audio() #stop audio to prevent overlap.  We will restart if we get a valid page back.
 #      time.sleep(0.3) #wait for pause to take effect.  Need better way to ensure this.
-      a = playwrighty.click_link(-1, total_read, -(sequence[-1]-self.keybot))
+      select = self.mid - sequence[-1]
+      mylink = self.linkselector.select(select)
+      a = playwrighty.click_link(-1, 0, self.linkselector.currentindex)
+
+#      a = playwrighty.click_link(-1, total_read, -(sequence[-1]-self.keybot))
       if (isinstance(a, tuple)):
         body_text, link_data, page, cacheno = a
         self.links = link_data

@@ -1846,9 +1846,13 @@ def handle_keys(qr_queue=None, qrin_queue=None):
             while (not midi_stop_event.is_set()):
                 while (qrin_queue is not None and not qrin_queue.empty()):
                     qrdata = qrin_queue.get()
-                    mk.add_qrin(qrdata)
-                    logger.info(f'MIDI Received QR input data: {qrdata}')
-                    
+                    ret = mk.add_qrin(qrdata)
+                    logger.info(f'MIDI Received QR input data: {qrdata} ret: {ret}')
+                    #handle qrdata immediately if we need..
+                    if (ret == 1): #not handled..
+                        logger.info('passing command to QR queue')
+                        qr_queue.put(qrdata)
+
                 #get all q2 output messages.  
                 mk.set_audio_location()
 
@@ -1910,6 +1914,8 @@ def handle_keys(qr_queue=None, qrin_queue=None):
                             #probably better way to do this..
                             qrdata = mk.get_qr()
                             if (qrdata is not None and qrdata != ""):
+                                #logger.info("current cmd: " + str(mk.currentcmd))
+                                #logger.info("sending: " + qrdata)
                                 qr_queue.put(qrdata)
     #                        c.mySignal.emit(0)
                             #update QR code if changed.
@@ -2087,6 +2093,7 @@ def main():
     global midiout, midiin
     global speech_pipe
     global qr_pipe
+    global server_thread
 
     # Create an icon image
     icon_image = create_image(64, 64, 'blue', 'yellow')
@@ -2123,9 +2130,17 @@ def main():
     qr_queue = Queue()
     qrin_queue = Queue()
 
+
+
+    import server.server as server
+
+    server_thread = threading.Thread(target=server.run_flask_app, args=(qrin_queue,), daemon=True)
+    server_thread.start()
 #    show_tray(qapp)
 
     mywindow = MyWindow(qr_queue, qrin_queue, config.cfg, qapp)
+
+
 
     logger.info('Running icon')
 #    icon.run()
@@ -2140,7 +2155,7 @@ def main():
     #start joystick thread.  
     joyconn = start_joystick()
 
-
+    
     dynamic_change_thread = threading.Thread(target=change_icon_dynamically, args=(icon,))
     dynamic_change_thread.start()
 

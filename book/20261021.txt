@@ -678,3 +678,332 @@ Similar to screenshot feedback, but just for text on a particular page..
 lets stop switching editors, too confusing..
 $$show=true
 
+**languages/helpers/transcriber.py
+--getTime
+Do we want started_time here?  
+Or actual time..
+Lets switch to actual time..
+Maybe this will help with time issue..
+
+
+**languages/git.py
+use current topic
+;> Select Function
+[51,54,58]
+basic function set..
+test..
+
+
+**extensions/vscode/codetutor/src/toolParticipant.ts
+--registerCompletionTool
+add contextual completion on --
+
+**extensions/vscode/codetutor/src/book.ts
+--getAllFunctionsInFile
+vscode.executeDocumentSymbolProvider
+Add to BookTopic..
+
+what is in vscode.DocumentSymbol
+ds.name
+ds.kind (function or class.)
+ds.range (gettext from here..)
+ds.selectionRange
+ds.children (subfunctions or )
+
+Use children length to determine if we want to display as selectable or not based on context..
+
+
+**extensions/trey/trey.py
+@@why are we not using kokoro speech with unorder list elements?  
+
+
+**languages/hotkeys.py
+--close_tab
+switched to selector..
+fixed maybe..
+
+--click_link
+Need to switch to use selector for link selection..
+adjusted
+test..
+Looks off by one still..
+
+
+**extensions/vscode/codetutor/src/book.ts
+--getAllFunctionsInFile
+Order of functions in file matter more in this scenario.  
+For now listing should be sequential, but maybe some historical selection listing as well..
+Or two different commands to select sequentially in file or historically from past selections..
+File should try not to exceed 100 functions or so in general..
+Depth and size should be indicated/selectable in listing..
+Insert location of new generated functions also should be based on historical context..
+Selection of function should display in editor..
+
+
+--provideCompletionItems
+Need more sortorder logic.  
+Especially for non-topic..
+--selectionhistory
+test..
+Initial appears to work..
+
+
+--logCommand
+add to selection history..
+Allow for easier autocomplete once we have selected..
+
+--addLogHistory
+test..
+Also need function to just autocomplete from selectionhistory..
+Right now combined with other..
+
+
+
+!!Something with no midi connection crashes vscode extension
+==
+??
+$$
+
+
+**languages/generate.py
+Set up structure.  
+Then potentially use this to generate a site explaining yourself..
+That may be an interesting side project..
+
+**languages/git.py
+;> Select Function
+[51,54,58]
+test..
+
+
+**extensions/vscode/codetutor/src/extension.ts
+Extension crash a problem, how to debug?  
+
+
+**timestep.py
+--saveLocalTranscripts
+Uploaded transcripts dont include vtt, why??
+
+Maybe fixed..
+
+**extensions/vscode/codetutor/src/book.ts
+--getAllFunctionsInFile
+ok, seems to work..
+name
+containerName
+kind
+children
+range
+location.range
+location.uri
+
+select function go to that location..
+
+!!Error loading language module base Error: Cannot find module 'c:\devinpiano\music\extensions\vscode\codetutor\src\book' 
+==
+wow, not great workaround..
+Basically keep mykeys in all languages reverse reference for checking and changing state info..
+
+$$
+
+--recentTabs2 
+should change to use mykeys state
+
+
+**extensions/vscode/codetutor/src/midi/mykeys.ts
+@@What to include in state?  
+Book.selectionhistory
+functions
+
+Trey -> codetutor
+semi-realtime via files watching..
+codetutor -> Trey
+near realtime socket server..
+Peer-peer capability?  
+That is tough..
+Flask vs other
+For now just local requests..
+
+#https://github.com/typeintandem/tandem
+could use this with vscode perhaps?  
+
+Just use webrtc
+
+
+**extentions/trey/server/server.py
+test startup in trey
+
+**extensions/vscode/codetutor/src/midi/mykeys.ts
+Send after every key up..
+
+;> Select Topic _OK
+or
+;> Set Topic _OK
+allow to select current tab..
+
+;> TAB = [0,-4,-7]
+
+**extensions/vscode/codetutor/src/languages/base.ts
+add selector here to start, problem with importing inside of dynamically loaded files..
+So lets avoid that..
+--selector
+should be ok
+--tab
+see if this may work now..
+Send result to server, and check logs..
+
+**extensions/vscode/codetutor/src/transcriber.ts
+add write functionality?  
+
+**extensions/trey/server/server.py
+> pip install flask, flask-cors
+not ideal..
+keeps port open..
+ok, switch to fastapi, seems to work better..
+--update_state
+finally have a state copy..
+
+
+**extensions/vscode/codetutor/src/languages/base.ts
+tab should select topic..
+For now selecting topic should be through CMD input, not automatically.  
+Otherwise we just get too much context too fast..
+Search other context files where selected topic functions exist.  
+Only pull this area of the code.  
+Do this potentially multiple levels, but for now very simple.  
+One pass..
+
+Order of topic and order of function based solely on selection or read recency.  
+Need to find all functions within book or include this in listing..
+All -- in topic..
+Add this to future keys, and add git changes affected functions to past..
+;> git log -L :<function_name>:<file_path>
+
+Context chains become significant if we are selecting topics prior to generation..
+Somewhat random book topic inclusion may be interesting..
+Potentially truncate each topic entry..
+
+topic, tab and function selection
+need this working in logger.  
+And with trey<->vscode
+Once this is smooth, then generate perhaps..
+
+Indicate if a function exists in the file and recency of edit/selection..
+recency of edit selection in future, all other functions in past..
+
+Send state with 
+currentlang and currenttranscript
+This will trigger event..
+
+**extensions/vscode/codetutor/src/transcriber.ts
+--write_topic
+test this and save to transcript 
+--write
+
+**languages/_meta.py
+Does selection ending with double-click work?  
+
+**extensions/vscode/codetutor/src/languages/base.ts
+--act
+subfunctions not getting called, test..
+;> GIT FUNCTION_
+
+select topic not instantiating functions..
+Should automatically do this..
+still not pulling..
+
+Sort functions by line num..
+
+Order of functions in file is significant.  
+
+
+
+**languages/base.py
+--qr_in
+OK, base functionality there..
+
+
+
+
+**extensions/trey/mywindow.py
+--update_info
+Some issues still with resetting to blank.  
+
+
+**extensions/vscode/codetutor/src/book.ts
+Have to do something about the repetition of empty info..
+
+**extensions/vscode/codetutor/src/toolParticipant.ts
+--activateWorkspaceWatching
+--handleFolderOpened
+Add folder to workspace should do same as open book..
+
+;> vscode.workspace.onDidChangeWorkspaceFolders
+use select(folder)
+adopt getMyUris to allow for external folder..
+
+Not sure this will work yet. 
+Test..
+
+How to annotate external directory?  
+
+Open from every workspace.  
+Just open topic for all sets
+
+Adjusted select to be able to handle this.
+Should open any same named topics and/or books.  
+See if this works at all..
+
+Potentially generate books from main book..
+
+
+**extensions/vscode/codetutor/src/extension.ts
+--activate
+Extension appears to fail before activate is called..
+
+
+**extensions/vscode/codetutor/src/languages/base.ts
+finally GIT FUNCTION properly displaying..
+ok, we can just use this server to communicate I think..
+Keep clear for UI msgs..
+
+
+> git rm -r --cached extensions/vscode/codetutor/out/
+
+
+;Book
+;Topic
+;Function
+;Comment
+;Generate
+;Annotate generate with DATE_TIME
+
+ok, adding function works ok..
+
+@@How to ignore all the repetition within the genbook?  
+
+Also lot of junk when using -- for functionname.  
+For autocomplete for some things, we should filter by
+topic and possibly related topics..
+Add this for basically all..
+If line starts with _ do global search?  
+Otherwise contextual
+;--,@@,==,$$,#,~~,
+
+
+**extensions/vscode/codetutor/src/toolParticipant.ts
+--provideCompletionItems
+not sorting as expected..
+
+OK, I think we are closer now to what we want..
+
+**extensions/vscode/codetutor/src/book.ts
+--loadPage
+was not loading topic info correctly..
+
+Now we have sorted by recently selected topics..
+
+--provideCompletionItems
+Still need to deduplicate entries here..
+
+

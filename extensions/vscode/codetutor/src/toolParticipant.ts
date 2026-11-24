@@ -113,6 +113,7 @@ export function registerCompletionTool(context: vscode.ExtensionContext){
     //@@ -> questions
     //== -> answers
 
+
     const provider2 = vscode.languages.registerCompletionItemProvider(
         'plaintext',
         {
@@ -163,23 +164,26 @@ export function registerCompletionTool(context: vscode.ExtensionContext){
                                         let doc = "";
                                         let sortText = "0000";
                                         for (let item of value) {
-                                            doc = Book.itemToDoc(item);
             
                                             //set sortText to top if it is in selection history.  
-                                            const found = Book.selectionhistory.findIndex((t) => t === item.topic);
+                                            const found = Book.selectionhistory['**']?.findIndex((t) => t === item.topic) ?? -1;
                                             if (found > -1){
-                                                sortText = (Book.MAX_SELECTION_HISTORY-found).toString(16).padStart(4, '0').toUpperCase();
+                                                sortText = (Book.MAX_SELECTION_HISTORY-found).toString(10).padStart(4, '0').toUpperCase();
+                                                item.sortorder = Book.MAX_SELECTION_HISTORY-found;
                                             }
+                                            doc += Book.itemToDoc(item);
             
                                         }
                                         ci.documentation = new vscode.MarkdownString(`${doc}`);
                                         if (sortText === "0000"){
-                                            sortText = value[0].sortorder.toString(16).padStart(4, '0').toUpperCase();
+                                            sortText = parseInt(value[0].sortorder.toString()).toString(10).padStart(4, '0').toUpperCase();
                                         }
                                         ci.sortText = sortText;
                                         myarray.push(ci);
                                     }                    
                                 }
+                                myarray.sort((a, b) => a.sortText.localeCompare(b.sortText));
+//                                console.log('Sorted myarray:', myarray);
                                 return myarray;
                             }
                         }
@@ -195,23 +199,25 @@ export function registerCompletionTool(context: vscode.ExtensionContext){
                             let doc = "";
                             let sortText = "0000";
                             for (let item of value) {
-                                doc = Book.itemToDoc(item);
 
                                 //set sortText to top if it is in selection history.  
-                                const found = Book.selectionhistory.findIndex((t) => t === item.topic);
+                                const found = Book.selectionhistory['**']?.findIndex((t) => t === item.topic) ?? -1;
                                 if (found > -1){
-                                    sortText = (Book.MAX_SELECTION_HISTORY-found).toString(16).padStart(4, '0').toUpperCase();
+                                    sortText = (Book.MAX_SELECTION_HISTORY-found).toString(10).padStart(4, '0').toUpperCase();
+                                    item.sortorder = Book.MAX_SELECTION_HISTORY-found;
                                 }
+                                doc += Book.itemToDoc(item);
 
                             }
                             ci.documentation = new vscode.MarkdownString(`${doc}`);
                             if (sortText === "0000"){
-                                sortText = value[0].sortorder.toString(16).padStart(4, '0').toUpperCase();
+                                sortText = parseInt(value[0].sortorder.toString()).toString(10).padStart(4, '0').toUpperCase();
                             }
                             ci.sortText = sortText;
                             myarray.push(ci);
                         }                    
                     }
+                    myarray.sort((a, b) => a.sortText.localeCompare(b.sortText));
                     return myarray;
 
                 }
@@ -273,6 +279,9 @@ export function registerCompletionTool(context: vscode.ExtensionContext){
     //add custom completions to the extension 
     context.subscriptions.push(provider2);
 }
+
+
+
 
 
 function getWorkspaceTestPatterns() {
@@ -547,12 +556,13 @@ export function startWatchingTranscriber(lang: string, transcriptFolder: string 
                 if (topics.length > 0){
                     //read commands and do something..
                     let topic = topics[topics.length-1];
+                    console.log("Processing topics:", topics.length, "last topic:", lasttopic);
                     for (let t of topics){
                         //open topic if not already open..
                         console.log("Current topic:", Book.selectedtopic);
-                        console.log("Adding to history and selecting topic ", t.topic);
                         //lasttopic == "" should be start of day book..
                         if ((t.topic !== Book.selectedtopic && t.topic !== lasttopic) || lasttopic === ""){
+                            console.log("Adding to history and selecting topic ", t.topic);
 //                        if (t.topic !== lasttopic){
                             //topic has changed, do something if needed
                             //only add to history if topic has changed.  
@@ -786,6 +796,7 @@ function handleFolderOpened(folder: vscode.WorkspaceFolder, source: 'onStartup' 
     const folderPath = folder.uri.fsPath;
 
     console.log(`Folder opened ${source}: ${folderName} at ${folderPath}`);
+    Book.select(folderPath);
     // Place your folder-specific logic here (e.g., scanning files, initializing tools)
 }
 
@@ -960,6 +971,7 @@ const JZZ = require('jzz');
 var myintervalLoop = null;
 var numconns = 0;
 export function registerPiano(context: vscode.ExtensionContext) {
+    
     tree.activate(context);
     midiin.activate(context);
 

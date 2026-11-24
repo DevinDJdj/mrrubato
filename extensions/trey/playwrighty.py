@@ -115,6 +115,7 @@ def get_text(cacheno=-1, total_read=0, duration=5):
 
 
 
+
 def get_links(cacheno=-1, text_offset=0):
     """Get link offset from the cached page based on text offset."""
     global current_cache
@@ -285,7 +286,6 @@ def transcribe_bookmark(url, cacheno=-1, transcriber=None, name="hotkeys", remov
         video_no = 0
         video_pos = -1
         body_length = page_cache[cacheno]['length'] if cacheno >=0 and cacheno < len(page_cache) else 0
-        text = get_snippet(page_cache[cacheno]['body'], total_read) if cacheno >=0 and cacheno < len(page_cache) else ""
         if (found_item is not None):
             total_read = found_item['total_read'][0]
             video_no = found_item['video_no'] if 'video_no' in found_item else 0
@@ -293,6 +293,7 @@ def transcribe_bookmark(url, cacheno=-1, transcriber=None, name="hotkeys", remov
         else:
             total_read = update_page_offset()
 
+        text = get_snippet(page_cache[cacheno]['body'], total_read) if cacheno >=0 and cacheno < len(page_cache) else ""
 
         if (url != "" and url != "about:blank"):     
             alias = get_alias(url)   

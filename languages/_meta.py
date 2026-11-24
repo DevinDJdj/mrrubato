@@ -34,7 +34,7 @@ def get_double_clicks(sequence=[]):
   return dc
 
 class selector:
-  def __init__(self, array, currentindex):
+  def __init__(self, array, currentindex = 0):
     self.array = array
     self.currentindex = currentindex
     self.browseindex = 0

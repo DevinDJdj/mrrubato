@@ -1,3 +1,4 @@
+from inspect import stack
 import time
 #pip install -q kokoro>=0.9.4 soundfile
 #> espeak-ng.msi
@@ -591,7 +592,15 @@ def transcribe_audio_whisper(fname="example2.wav", start_times=[], end_times=[],
 
     if (fname.startswith('http://') or fname.startswith('https://')):
         #download first
-        fname = download_file(fname)
+        try:
+            fname = download_file(fname)
+        except Exception as e:
+            print(f"Failed to download file: {e}")
+            logger.error(f"Failed to download file: {e}")
+            import traceback
+            traceback.print_exc()
+            logger.error(f'{traceback.format_exc()}')
+            return None
 
 
 

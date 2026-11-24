@@ -1,0 +1,7 @@
+**20261030
+$$20261102_194939
+#https://openstax.org/books/introduction-computer-science/pages/1-1-computer-science:5664
+The Difference Engine provided a means to automate the calculations of polynomial functions and astronomical calculations.
+$$20261102_195055
+#:7549
+As computers could execute programs faster than humans, computer science replaced human-powered calculation with computer-powered problem-solving methods. 

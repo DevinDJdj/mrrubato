@@ -365,7 +365,7 @@ class MyKeys:
     cmds = self.transcriber.read_lines('_meta', data.split('\n')) #save all QR data to transcript.  This is for debugging and record keeping, as well as for loading state from previous sessions.
 
     if (cmds is None or len(cmds) == 0):
-      return
+      return -1
     else:
       if (data not in self.qrin):
         self.qrin.insert(0, data) #add to start of list
@@ -377,17 +377,20 @@ class MyKeys:
         if (cmd['lang'] != 'joystick' and cmd['lang'] != 'midi'):
           logger.info(cmd)
           if (cmd['lang'] in self.languages):
+            logger.info(f'Handling QRIN command for language: {cmd["lang"]}')
             la = self.languages[cmd['lang']]
             if (hasattr(la, 'qr_in')):
-              la.qr_in([cmd])
+              return la.qr_in([cmd])
           else:
             logger.error(f'!!<<{cmd["lang"]}>>\n not found for QRIN command\n {cmd}')
         else:
           if ('hotkeys' in self.languages): #hardcoded..
             la = self.languages['hotkeys']
             if (hasattr(la, 'qr_in')):
-              la.qr_in([cmd])
-
+              return la.qr_in([cmd])
+      #didnt handle, allow to bypass?  
+      return 1
+    
   def convert_keys(self, keys, _length=0):
     #use _length to distinguish already pressed in some way..
     copy = []
@@ -467,7 +470,8 @@ class MyKeys:
         qr += "<<" + l + ">>\n"
         qr += la.qr + "\n"
         la.qr = "" #reset qr after getting it.
-    if (extended): #display help as well..
+    if (extended and (qr !="" or (not self.currentcmd))): #display help as well if we have something to display..
+      #only display for incomplete commands
       qr += "<<meta>>\n"
       words = self.get_words_(self.sequence[self.startseqno:])
       _length = len(self.sequence[self.startseqno:])

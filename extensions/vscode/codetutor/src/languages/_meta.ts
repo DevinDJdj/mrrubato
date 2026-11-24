@@ -1,11 +1,12 @@
 
+//import * as MyKeys from '../midi/mykeys';
 export default class LANG {
     config: Record<string, any> = {};
     keybot: number = 48;
     keyoffset: number = 0;
     funcdict: Record<string, Function> = {};
     midwordtree: Record<string, any> = {}; 
-
+    mykeys: any = null;
     name: string = "_meta";
     //ALLCAPS = vscode handler..
 
