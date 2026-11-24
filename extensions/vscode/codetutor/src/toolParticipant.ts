@@ -594,13 +594,16 @@ export function startWatchingTranscriber(lang: string, transcriptFolder: string 
                                 vscode.commands.executeCommand('workbench.action.restartExtensionHost');
 //                                vscode.commands.executeCommand('workbench.action.chat.open', "@mr /restart");
                             }
+                            let _ = "hotkeys";
+                            if (cmd.vars && cmd.vars['_']){
+                                _ = cmd.vars['_'];
+                            }
                             if (cmd.cmd === "Ask"){
                                 let input = "";
                                 let output = "";
                                 let context = "";
                                 let top = Book.currenttopic;
                                 let booktop = "";
-                                let _ = "hotkeys";
                                 context = getContextFromCommand(cmd);
                                 if (cmd.vars && cmd.vars['QUERY']){
                                     input = cmd.vars['QUERY'] + '\n';
@@ -617,9 +620,6 @@ export function startWatchingTranscriber(lang: string, transcriptFolder: string 
                                     booktop = "**"  + cmd.vars['***'];
                                 }
 
-                                if (cmd.vars && cmd.vars['_']){
-                                    _ = cmd.vars['_'];
-                                }
                                 if (_ === "hotkeys"){
                                     Book.updatePage(Book.getBookPath() + "/" + file, "#" + context + "\n@@" + input + "\n==\n" + output + "\n$$\n", -1, -1); //append to end of file.
                                 }
@@ -630,6 +630,43 @@ export function startWatchingTranscriber(lang: string, transcriptFolder: string 
                                     vscode.commands.executeCommand('workbench.action.chat.open', "@mr /chat " + "**" + top + "\n" + booktop + "\n@@" + input);
 
                                 }
+                            }
+
+                            if (cmd.cmd === "Generate"){
+                                if (_ === "book"){
+                                    console.log("Generate command received for book");
+                                }
+                                else if (_ === "git"){
+
+                                }
+
+                            }
+                            if (cmd.cmd === "Regenerate") {
+                                if (_ === "book"){
+
+                                }
+                                else if (_ === "git"){
+                                    
+                                }
+
+                            }
+                            if (cmd.cmd === "Accept"){
+                                if (_ === "book"){
+
+                                }
+                                else if (_ === "git"){
+                                    
+                                }
+
+                            }
+                            if (cmd.cmd === "Reject"){
+                                if (_ === "book"){
+
+                                }
+                                else if (_ === "git"){
+
+                                }
+
                             }
 
                             if (cmd.cmd === "Comment"){

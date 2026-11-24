@@ -583,7 +583,7 @@ def transcribe_audio_whisper(fname="example2.wav", start_times=[], end_times=[],
     print("Stopping any existing audio recording...")
     logger.info("Stopping any existing audio recording...")
     rec_stop_event.set() #stop any existing recording
-    time.sleep(0.3) #give time to stop
+    time.sleep(0.5) #give time to stop
 
     whisper_model = init_whisper_model()
     #sd.stop() #stop any existing playback/recording

@@ -412,7 +412,7 @@ export function itemToDoc(item: BookTopic): string {
     //need to rewrite dates to something else..
 
     ret += `Line: ${item.line}, Sort: ${item.sortorder}  \n`;
-    ret += `Topic: ${item.topic}  \n`;
+    ret += `**${item.topic}  \n`;
     ret += `Date: ${item.date}  \n`;
 
     ret += `Link: [${fname}](${fileUri}#L${item.line})  \n`;
