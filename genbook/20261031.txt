@@ -1,0 +1,93 @@
+>$1 ollama pull qwen3.6:35b 
+>$1 ollama pull qwen3.6:35b 
+>$1 ollama pull qwen3.6:35b 
+
+**OLLAMA
+>$1 sudo apt-get install zstd
+>$1 curl -fsSL https://ollama.com/install.sh | sh
+>$1 ollama pull qwen3.6:35b 
+>$1 ollama pull deepseek-coder-v2
+>$1 ollama pull qwen2.5-coder:7b
+
+**.pi/agent/settings.json
+>#1 pi
+>$1 curl -fsSL https://pi.dev/install.sh | sh
+>#1 npm uninstall -g --ignore-scripts @earendil-works/pi-coding-agent
+>$1 curl -fsSL https://pi.dev/install.sh | sh
+>$1 curl -fsSL https://pi.dev/install.sh | sh
+>$1 cp -r .pi/* /home/devin/.pi
+>$1 cp -r .pi/* /home/devin/.pi
+>$1 pi
+>$1 pi
+
+**AGENTS.md
+>$1 pi @book/chapter1.txt -p "Summarize this file"
+
+**.pi/agent/settings.json
+>$1 cp ./.pi/agent/settings.json /home/devin/.pi/agent/settings.json
+
+**AGENTS.md
+>$1 pi @book/chapter1.txt -p "Summarize this file"
+>$1 ollama pull qwen3.5:9b
+
+**.pi/agent/settings.json
+>$1 pi --print "create a new file generate/music.py which takes a midi file as input and outputs an image representing that music"
+>$1 pi -p "create a new file generate/music.py which takes a midi file as input and outputs an image representing that music"
+>$1 pi -p "create @generate/music.py which takes a midi file as input and outputs an image representing that music"
+>$1 pi "create @generate/music.py which takes a midi file as input and outputs an image representing that music"
+>$1 cp ./.pi/agent/settings.json /home/devin/.pi/agent/settings.json
+>$1 cp ./.pi/agent/models.json /home/devin/.pi/agent/models.json
+>$1 pi "create @generate/music.py which takes a midi file as input and outputs an image representing that music"
+>$1 pi "create @generate/music.py which takes a midi file as input and outputs an image representing that music"
+>$1 sudo apt update
+>$1 sudo apt install python3-venv -y
+>$1 python3 -m venv .venv
+>$1 source .venv/bin/activate
+>$1 curl -fsSL https://pi.dev/install.sh | sh
+>$1 pi "create @generate/music.py which takes a midi file as input and outputs an image representing that music"
+>$1 pi @generate/music.py -p "implement generate_music_visualization"
+>$1 pi @generate/music.py -p "implement generate_music_visualization"
+>$1 cp ./.pi/agent/models.json /home/devin/.pi/agent/models.json
+>$1 cp ./.pi/agent/models.json /home/devin/.pi/agent/models.json
+>$1 pi @generate/music.py -p "implement generate_music_visualization"
+>$1 pi @generate/music.py -p "implement generate_music_visualization"
+>$1 pi @generate/music.py -p "implement generate_music_visualization"
+>$1 source .venv/bin/activate
+>$1 curl -fsSL https://pi.dev/install.sh | sh
+>$1 pi @generate/music.py -p "implement generate_music_visualization"
+>$1 cp ./.pi/agent/settings.json /home/devin/.pi/agent/settings.json
+>$1 cp ./.pi/agent/models.json /home/devin/.pi/agent/models.json
+>$1 pi @generate/music.py -p "implement generate_music_visualization"
+>$1 cp ./.pi/agent/settings.json /home/devin/.pi/agent/settings.json
+>$1 cp ./.pi/agent/models.json /home/devin/.pi/agent/models.json
+>$1 pi @generate/music.py -p "implement generate_music_visualization"
+>$1 pi @generate/music.py -p "implement generate_music_visualization"
+>$1 cp ./.pi/agent/settings.json /home/devin/.pi/agent/settings.json
+>$1 pi @generate/music.py -p "implement generate_music_visualization"
+>$1 cp ./.pi/agent/settings.json /home/devin/.pi/agent/settings.json
+>$1 cp ./.pi/agent/settings.json /home/devin/.pi/agent/settings.json
+>$1 cp ./.pi/agent/models.json /home/devin/.pi/agent/models.json
+>$1 pi @generate/music.py -p "implement generate_music_visualization"
+>$1 pi @generate/music.py "implement generate_music_visualization"
+>$1 curl -fsSL https://opencode.ai/install | bash
+
+**.config/opencode/opencode.json
+>$1 cp ./.config/opencode/opencode.json /home/devin/.config/opencode/opencode.json
+>$1 cp .config/opencode/opencode.json /home/devin/.config/opencode/opencode.json
+>$1 cp ./.config/opencode/opencode.json /home/devin/.config/opencode/opencode.json
+>$1 cp ./.config/opencode/opencode.json /home/devin/.config/opencode/opencode.json
+>$1 cp ./.config/opencode/opencode.json ~/.config/opencode/opencode.json
+>$1 mkdir ~/.config/opencode
+>$1 mkdir ~/.config
+>$1 mkdir ~/.config/opencode
+>$1 cp ./.config/opencode/opencode.json ~/.config/opencode/opencode.json
+>$1 opencode run -f generate/music.py "implement generate_music_visualization"
+>$1 opencode run -f generate/music.py "implement function generate_music_visualization"
+
+**.pi/agent/settings.json
+>$1 source .venv/bin/activate
+
+**.config/opencode/opencode.json
+>$1 opencode run -f generate/music.py "implement function generate_music_visualization"
+>$1 opencode run "based on @generate/music.py implement new @generate/music2.py and this time visualize notes in a geometric fashion"
+**.config/opencode/opencode.json @@ nvidia driver package
