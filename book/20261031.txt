@@ -1,0 +1,179 @@
+#https://insiderllm.com/guides/pi-agent-local-models-ollama/
+
+$$ENV=mrroboto
+test pi..
+
+>#1 npm install -g --ignore-scripts @earendil-works/pi-coding-agent
+>#1 npm uninstall -g --ignore-scripts @earendil-works/pi-coding-agent
+>$1 curl -fsSL https://pi.dev/install.sh | sh
+
+
+Ctrl+,
+extensions->mrrubato->Ubuntu
+Ubuntu-24.04
+
+>$1 ollama pull qwen3.6:35b 
+#https://insiderllm.com/guides/best-way-run-qwen-3-6-35b-moe-locally/
+>$1 ollama pull deepseek-coder-v2
+>$1 ollama pull qwen2.5-coder:7b
+>$1 ollama pull qwen3.5:9b
+
+**.pi/agent/models.json
+Set models
+
+**.pi/agent/settings.json
+set default model
+
+>#1 pi
+
+extensions:
+#https://deepakness.com/blog/pi-agent-setup/
+;>#1 pi install npm:pi-web-access
+;>#1 pi install npm:pi-vision-handoff
+
+/model – Switch models without remembering the shortcut
+/settings – Change thinking level, theme, and other settings
+/resume – Pick up from a previous session
+/new – Start a fresh session
+/tree – See the full session history and jump to any point
+/compact – Summarize old messages to free up context
+/session – Show current session info like tokens and cost
+
+**.pi/agent/skills/review.md
+/review - 
+
+**AGENTS.md
+customize some?  
+
+;> pi @book/chapter1.txt -p "Summarize this file"
+
+!! Error: No API key found for the selected model. 
+==
+??
+$$
+Quit = Ctrl+C Ctrl+C
+
+!! Warning: No models available. Use /login to log into a provider
+!! via OAuth or API key. See:
+
+>$1 cp -r .pi/* /home/devin/.pi
+> Restart..
+>$1 pi
+>$1 pi @book/chapter1.txt -p "Summarize this file"
+
+!!400: {"message":"registry.ollama.ai/library/deepseek-coder-v2:latest does not support tools","type":"invalid_request_error","param":null,"code":null}
+==
+switch to 
+**.pi/agent/settings.json
+  "defaultModel": "qwen2.5-coder:7b"
+>$1 cp ./.pi/agent/settings.json /home/devin/.pi/agent/settings.json
+>$1 cp ./.pi/agent/models.json /home/devin/.pi/agent/models.json
+$$
+
+>$1 pi @book/chapter1.txt -p "Summarize this file"
+
+OK, so basic setup works..
+
+>$1 pi "create @generate/music.py which takes a midi file as input and outputs an image representing that music"
+
+hmmm.. fails nicely..
+Lets help out..
+>$1 sudo apt update
+>$1 sudo apt install python3-venv -y
+>$1 python3 -m venv .venv
+>$1 source .venv/bin/activate
+
+>$1 pi "create @generate/music.py which takes a midi file as input and outputs an image representing that music"
+>$1 pi @generate/music.py "implement generate_music_visualization"
+
+!!Response was truncated before completion.
+==
+add
+"maxTokens": 30720
+$$
+
+well 
+
+#https://opencode.ai/docs/windows-wsl
+>$1 curl -fsSL https://opencode.ai/install | bash
+
+
+**.config/opencode/opencode.json
+add ollama config..
+
+>$1 mkdir ~/.config/opencode
+
+>$1 cp ./.config/opencode/opencode.json ~/.config/opencode/opencode.json
+
+>$1 opencode run -f generate/music.py "implement function generate_music_visualization"
+
+Definitely better first impression..
+But cant run just from cmd line..
+
+
+>$1 opencode run "based on @generate/music.py implement new @generate/music2.py and this time visualize notes in a geometric fashion"
+
+@@ nvidia driver package
+$$20260511
+#https://developer.nvidia.com/cuda-12-8-1-download-archive?target_os=Windows&target_arch=x86_64&target_version=11&target_type=exe_local
+
+
+~~ nomic-embed-text
+
+>$1 pi "based on @generate/music.py implement new @generate/music2.py and this time visualize notes in a geometric fashion"
+>$1 opencode run "based on @generate/music.py implement new @generate/music2.py and this time visualize notes in a geometric fashion"
+
+"requestTimeoutSecs": 1200
+
+Still nothing very useful..
+
+>$1 opencode run "implement new @generate/music2.py to visualize notes in a geometric fashion"
+
+>$1 pi "create @generate/music3.py to write statistics about a midi file using mido library"
+
+Still none of this seems to actually complete..
+Perhaps the codebase is too large, and is just confusing the model..
+maybe running from generate may work?  
+
+>$1 pi "create @music3.py to write statistics about a midi file using mido library"
+
+>$1 sudo systemctl edit ollama.service
+Environment="OLLAMA_CONTEXT_LENGTH=128000"
+>$1 export OLLAMA_CONTEXT_LENGTH=128000
+
+>$1 sudo sed -i '/\[Service\]/a Environment="OLLAMA_CONTEXT_LENGTH=128000"' /etc/systemd/system/ollama.service
+>$1 sudo systemctl restart ollama
+>$1 sudo systemctl daemon-reload
+
+
+>$1 opencode run "implement new @generate/music2.py to visualize notes in a geometric fashion"
+
+>$1 pi "create @generate/music3.py to write statistics about a midi file using mido library"
+
+>$1 cp ./.pi/agent/settings.json /home/devin/.pi/agent/settings.json
+>$1 cp ./.pi/agent/models.json /home/devin/.pi/agent/models.json
+
+>$1 pi "make a graph in @generate/music3.py to represent the statistics created"
+
+no joy..
+!!Response was truncated before completion.
+==
+>$1 ollama pull byczech/qwen3.6-16G-UD-IQ3_S:35b
+
+>$1 ollama show byczech/qwen3.6-16G-UD-IQ3_S:35b
+
+>$1 sudo systemctl edit ollama.service
+>$1 sudo sed -i '/^[[:space:]]*Environment=/d' /etc/systemd/system/ollama.service
+>$1 sudo sed -i '/\[Service\]/a Environment="OLLAMA_KV_CACHE_TYPE=q4_0" "OLLAMA_FLASH_ATTENTION=1" "OLLAMA_KEEP_ALIVE=24h" "OLLAMA_CONTEXT_LENGTH=128000"' /etc/systemd/system/ollama.service
+>$1 sudo systemctl restart ollama
+>$1 sudo systemctl daemon-reload
+
+>$1 pi "make a graph in @generate/music3.py to represent the statistics created"
+
+OK, much better..
+$$
+
+Some sort of context window mismatch between ollama and pi settings causes this issue..
+Once fixed the ollama.service Environment, works much better..
+Not actually useful yet, but has potential..
+

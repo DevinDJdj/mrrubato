@@ -1,0 +1,96 @@
+>$1 ollama pull qwen2.5-coder:7b
+>$1 ollama pull qwen3.5:9b
+
+**OLLAMA
+>$1 ollama pull gemma4:e4b
+>$1 ollama pull nomic-embed-text
+
+**.config/opencode/opencode.json
+~~ nomic-embed-text
+
+**extensions/trey/chromaz.py
+>$ ollama pull nomic-embed-text-v2-moe
+
+**.pi/agent/settings.json
+>$1 source .venv/bin/activate
+
+**.config/opencode/opencode.json
+>$1 pi "based on @generate/music.py implement new @generate/music2.py and this time visualize notes in a geometric fashion"
+
+**.pi/agent/settings.json
+>$1 cp ./.pi/agent/settings.json /home/devin/.pi/agent/settings.json
+>$1 cp ./.pi/agent/models.json /home/devin/.pi/agent/models.json
+
+**.config/opencode/opencode.json
+>$1 pi "based on @generate/music.py implement new @generate/music2.py and this time visualize notes in a geometric fashion"
+>$1 opencode run "based on @generate/music.py implement new @generate/music2.py and this time visualize notes in a geometric fashion"
+>$1 pi "based on @generate/music.py implement new @generate/music2.py and this time visualize notes in a geometric fashion"
+>$1 pi "based on @generate/music.py implement new @generate/music2.py and this time visualize notes in a geometric fashion"
+
+**.pi/agent/settings.json
+>$1 cp ./.pi/agent/settings.json /home/devin/.pi/agent/settings.json
+
+**.config/opencode/opencode.json
+>$1 pi "based on @generate/music.py implement new @generate/music2.py and this time visualize notes in a geometric fashion"
+>$1 opencode run "implement new @generate/music2.py to visualize notes in a geometric fashion"
+>$1 cp ./.config/opencode/opencode.json ~/.config/opencode/opencode.json
+>$1 opencode run "implement new @generate/music2.py to visualize notes in a geometric fashion"
+>$1 pi "create @generate/music3.py to write statistics about a midi file using mido library"
+>$1 pi "create @music3.py to write statistics about a midi file using mido library"
+>$1 pi "create @music3.py to write statistics about a midi file using mido library"
+>$1 sudo systemctl edit ollama.service
+>$1 sudo systemctl edit ollama.service
+>$1 export OLLAMA_CONTEXT_LENGTH=128000
+>$1 sudo sed -i '/\[Service\]/a Environment="OLLAMA_CONTEXT_LENGTH=128000"' /etc/systemd/system/ollama.service
+>$1 sudo systemctl restart ollama
+>$1 sudo systemctl daemon-reload
+>$1 pi "create @music3.py to write statistics about a midi file using mido library"
+>$1 sudo systemctl edit ollama.service
+>$1 pi "create @generate/music3.py to write statistics about a midi file using mido library"
+>$1 opencode run "implement new @generate/music2.py to visualize notes in a geometric fashion"
+
+**.pi/agent/settings.json
+>$1 cp ./.pi/agent/settings.json /home/devin/.pi/agent/settings.json
+>$1 cp ./.pi/agent/models.json /home/devin/.pi/agent/models.json
+>$1 cp ./.pi/agent/settings.json /home/devin/.pi/agent/settings.json
+>$1 cp ./.pi/agent/models.json /home/devin/.pi/agent/models.json
+
+**.config/opencode/opencode.json
+>$1 pi "create @generate/music3.py to write statistics about a midi file using mido library"
+>$1 cp ./.pi/agent/settings.json /home/devin/.pi/agent/settings.json
+>$1 cp ./.pi/agent/settings.json /home/devin/.pi/agent/settings.json
+>$1 cp ./.pi/agent/models.json /home/devin/.pi/agent/models.json
+>$1 pi "create @generate/music3.py to write statistics about a midi file using mido library"
+>$1 pi "make a graph in @generate/music3.py to represent the statistics created"
+>$1 pi "make a graph in @generate/music3.py to represent the statistics created"
+>$1 cp ./.pi/agent/settings.json /home/devin/.pi/agent/settings.json
+>$1 pi "make a graph in @generate/music3.py to represent the statistics created"
+>$1 cp ./.pi/agent/models.json /home/devin/.pi/agent/models.json
+>$1 cp ./.pi/agent/models.json /home/devin/.pi/agent/models.json
+>$1 pi "make a graph in @generate/music3.py to represent the statistics created"
+>$1 cp ./.pi/agent/models.json /home/devin/.pi/agent/models.json
+>$1 cp ./.pi/agent/settings.json /home/devin/.pi/agent/settings.json
+>$1 pi "make a graph in @generate/music3.py to represent the statistics created"
+>$1 cp ./.pi/agent/settings.json /home/devin/.pi/agent/settings.json
+>$1 cp ./.pi/agent/models.json /home/devin/.pi/agent/models.json
+>$1 pi "make a graph in @generate/music3.py to represent the statistics created"
+>$1 ollama pull byczech/qwen3.6-16G-UD-IQ3_S:35b
+>$1 ollama pull byczech/qwen3.6-16G-UD-IQ3_S:35b
+>$1 sudo sed -i '/\[Service\]/a Environment="OLLAMA_KV_CACHE_TYPE=q4_0"' /etc/systemd/system/ollama.service
+>$1 sudo sed -i '/\[Service\]/a Environment="OLLAMA_FLASH_ATTENTION=1"' /etc/systemd/system/ollama.service
+>$1 sudo systemctl edit ollama.service
+>$1 sudo systemctl daemon-reload
+>$1 cp ./.pi/agent/settings.json /home/devin/.pi/agent/settings.json
+>$1 cp ./.pi/agent/models.json /home/devin/.pi/agent/models.json
+>$1 pi "make a graph in @generate/music3.py to represent the statistics created"
+>$1 ollama show byczech/qwen3.6-16G-UD-IQ3_S:35b
+>$1 sudo sed -i '/\[Service\]/a Environment="OLLAMA_KV_CACHE_TYPE=q4_0" "OLLAMA_FLASH_ATTENTION=1" "OLLAMA_KEEP_ALIVE=24h"' /etc/systemd/system/ollama.service
+>$1 sudo sed -i '/\[Service\]/a Environment="OLLAMA_KV_CACHE_TYPE=q4_0" "OLLAMA_FLASH_ATTENTION=1" "OLLAMA_KEEP_ALIVE=24h" "OLLAMA_CONTEXT_LENGTH=128000"' /etc/systemd/system/ollama.service
+>$1 sudo systemctl edit ollama.service
+>$1 sudo sed -i '/^[[:space:]]*Environment=/d' /etc/systemd/system/ollama.service
+>$1 sudo sed -i '/^[[:space:]]*Environment=/d' /etc/systemd/system/ollama.service
+>$1 sudo systemctl edit ollama.service
+>$1 sudo sed -i '/\[Service\]/a Environment="OLLAMA_KV_CACHE_TYPE=q4_0" "OLLAMA_FLASH_ATTENTION=1" "OLLAMA_KEEP_ALIVE=24h" "OLLAMA_CONTEXT_LENGTH=128000"' /etc/systemd/system/ollama.service
+>$1 sudo systemctl daemon-reload
+>$1 sudo systemctl restart ollama
+>$1 pi "make a graph in @generate/music3.py to represent the statistics created"
