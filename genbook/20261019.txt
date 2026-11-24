@@ -29,3 +29,5 @@
 >#1 ./treyenv/Scripts/activate.ps1
 >#1 python ./extensions/trey/trey.py
 && **20261006
+>#1 npm install -g --ignore-scripts @earendil-works/pi-coding-agent
+>$1 ollama pull qwen3.6:35b
