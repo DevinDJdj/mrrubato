@@ -1,0 +1,7 @@
+{
+  "defaultProvider": "ollama",
+  "defaultModel": "byczech/qwen3.6-16G-UD-IQ3_S:35b", 
+  "requestTimeoutSecs": 1200, 
+  "reserveTokens": 32768,
+  "keepRecentTokens": 20000  
+}
