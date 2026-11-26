@@ -3,3 +3,21 @@
 
 @@ havent I done more with Lean4
 
+
+**extensions/vscode/codetutor/src/book.ts
+Maybe do this again, and then use custom dataset..
+#https://github.com/karpathy/nanoGPT
+
+Lets see if this may be feasible.  
+Train separate models on transcript, book, code/language.  
+Generation model and fix/verify or tool?  
+
+Then have verification process, or fixing process..
+Possibly only use existing words in certain scenarios.  
+
+@@ where did I test nanoGPT
+
+~~ nanoGPT
+$$20230323
+
+>#1 git subtree add --prefix=generate/nanoGPT https://github.com/karpathy/nanoGPT.git master --squash

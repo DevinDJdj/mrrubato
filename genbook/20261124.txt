@@ -23,3 +23,11 @@
 **languages/lean/test.lean
 **LEAN4
 **LEAN4 @@ havent I done more with Lean4
+**LEAN4 @@ havent I done more with Lean4
+**extensions/vscode/codetutor/src/book.ts
+#https://github.com/karpathy/nanoGPT
+**extensions/vscode/codetutor/src/book.ts @@ where did I test nanoGPT
+~~ nanoGPT training
+~~ anything relating to nanoGPT
+~~ nanoGPT
+>#1 git subtree add --prefix=generate/nanoGPT https://github.com/karpathy/nanoGPT.git master --squash
