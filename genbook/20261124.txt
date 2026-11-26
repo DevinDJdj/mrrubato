@@ -31,3 +31,4 @@
 ~~ anything relating to nanoGPT
 ~~ nanoGPT
 >#1 git subtree add --prefix=generate/nanoGPT https://github.com/karpathy/nanoGPT.git master --squash
+>#1 git subtree add --prefix=generate/nanoGPT https://github.com/karpathy/nanoGPT.git master --squash

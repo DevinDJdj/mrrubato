@@ -20,4 +20,4 @@ Possibly only use existing words in certain scenarios.
 ~~ nanoGPT
 $$20230323
 
->#1 git subtree add --prefix=generate/nanoGPT https://github.com/karpathy/nanoGPT.git master --squash
+> git subtree add --prefix=generate/nanoGPT https://github.com/karpathy/nanoGPT.git master --squash
