@@ -159,6 +159,10 @@ class book:
         "Read Link": [50,52,57], #read link on page, need to add link reading to book context first.
 #        "Select Bookmark": [53,58,57], #try to correlate
         "Ask": [50,52,48], #ask book for info
+        "Generate": [50,56,57], #no flags for now
+        "Regenerate": [50,56,58], #no flags for now
+        "Accept": [50,56,60], #no flags for now
+        "Reject": [50,56,55] #no flags for now
 
       },
     }
@@ -182,7 +186,10 @@ class book:
       "Read Link": "read_link",
       "Ask": "ask",
       "_Ask": "_ask",
-
+      "Generate": "generate",
+      "Regenerate": "regenerate",
+      "Accept": "accept",
+      "Reject": "reject",
     }
     self.helpdict = {
       "Comment": {"help": "comment", "params": "None", "desc": f"Add comment to {self.name} timeline."},
@@ -195,6 +202,10 @@ class book:
       "Set Book": {"help": "set book [book]", "params": "[book]", "desc": "Set book by name."},
       "Read Link": {"help": "read_link", "params": "[linkno]", "desc": f"Read link in book in {self.name}."},
       "Ask": {"help": "ask", "params": "&Query", "desc": f"Ask a question related to {self.name}."},
+      "Generate": {"help": "generate", "params": "None", "desc": f"Generate content related to {self.name}."},
+      "Regenerate": {"help": "regenerate", "params": "None", "desc": f"Regenerate content related to {self.name}."},
+      "Accept": {"help": "accept", "params": "None", "desc": f"Accept content related to {self.name}."},
+      "Reject": {"help": "reject", "params": "None", "desc": f"Reject content related to {self.name}."},
 
     }
 
@@ -482,7 +493,7 @@ class book:
     print("> _Ask called")
     #get audio input for query.  
     self.transcript = "" #reset transcript..
-    at = speech.listen_audio(15, "ask.wav") #assume some more time for question..
+    at = speech.listen_audio(30, "ask.wav") #assume some more time for question..
     #at.join() #wait for it to finish.
     #have to just use some keys until this is done.  
     #need to return 1 to indicate we need more keys.
@@ -975,3 +986,43 @@ class book:
     return speak(text, links, alt_text_data, total_read, lang, cacheno)
 
   
+  def generate(self, sequence=[]):
+    logger.info(f'> Generate {sequence}')
+    #write to transcript for vscode to handle book generation..
+    self.func = "Generate"
+    vars = {"**": self.transcriber.current_topic, "***": self.transcriber.current_book}
+    vars["_"] = self.name
+
+    self.transcriber.write(self.name, self.func, vars)  
+
+    return 0
+
+  def regenerate(self, sequence=[]):
+    logger.info(f'> Regenerate {sequence}')
+    #comment on what was generated, handle in vscode..
+    self.func = "Regenerate"
+    vars = {"**": self.transcriber.current_topic, "***": self.transcriber.current_book}
+    vars["_"] = self.name
+
+    self.transcriber.write(self.name, self.func, vars)  
+    return 0
+
+  def accept(self, sequence=[]):
+    logger.info(f'> Accept {sequence}')
+    self.func = "Accept"
+    vars = {"**": self.transcriber.current_topic, "***": self.transcriber.current_book}
+    vars["_"] = self.name
+
+    self.transcriber.write(self.name, self.func, vars)  
+    #just save in place..
+    return 0
+
+  def reject(self, sequence=[]):
+    logger.info(f'> Reject {sequence}')
+    self.func = "Reject"
+    vars = {"**": self.transcriber.current_topic, "***": self.transcriber.current_book}
+    vars["_"] = self.name
+
+    self.transcriber.write(self.name, self.func, vars)  
+    #return to original comment..
+    return 0

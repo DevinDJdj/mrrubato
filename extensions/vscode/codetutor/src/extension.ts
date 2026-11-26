@@ -27,7 +27,8 @@ import { startWatchingWorkspace, startWatchingTranscriber, writeToTranscriber, u
 	getSelectionInfo, 
 	readFromTranscriber,
 	activateTabWatching,
-	activateWorkspaceWatching} from './toolParticipant';
+	activateWorkspaceWatching,
+	activateRunAndCapture} from './toolParticipant';
 import { start } from 'repl';
 import { get } from 'http';
 
@@ -407,7 +408,8 @@ export function activate(context: vscode.ExtensionContext) {
 	}, 60000); // check every minute if date changes to follow new file..
 	activateTabWatching(context); //start watching tab changes for recency tracking.
 	activateWorkspaceWatching(context); //start watching workspace folder changes.
-	
+
+	activateRunAndCapture(context);
 	//create loop to watch for change of day to restart transcribers..
 	
 

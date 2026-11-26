@@ -72,3 +72,4 @@ volleyenv/*
 *.ctxt
 *.ctx
 *.vtt
+.venv/*

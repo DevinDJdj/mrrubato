@@ -1,0 +1,18 @@
+{
+  "providers": {
+    "ollama": {
+      "baseUrl": "http://localhost:11434/v1",
+      "apiKey": "ollama",
+      "api": "openai-completions",
+      "models": [
+        { "id": "deepseek-coder-v2:latest", "name": "DeepSeek Coder V2", "contextWindow": 128000, "maxTokens": 30720 },
+        { "id": "qwen2.5-coder:7b", "name": "Qwen 2.5 Coder 7B", "contextWindow": 32768,"maxTokens": 30720 },
+        { "id": "qwen3.5:9b", "name": "Qwen 3.5 9B", "contextWindow": 128000,"maxTokens": 30720 },
+        { "id": "byczech/qwen3.6-16G-UD-IQ3_S:35b", "name": "Qwen 3.6 35B", "contextWindow": 131072,"maxTokens": 32768 },
+
+        { "id": "gemma4:e4b", "name": "Gemma 4 E4B", "reasoning": true, "contextWindow": 128000,"maxTokens": 60000 },
+        { "id": "qwen3.6:35b", "name": "Qwen 3.6 35B", "contextWindow": 262144 }
+      ]
+    }
+  }
+}

@@ -189,7 +189,13 @@
       {
         "command": "mrrubato.mytutor.link",
         "title": "Handle link command"
+      }, 
+      {
+        "command": "mrrubato.mytutor.runAgent",
+        "title": "Run Agent"
       }
+
+
     ],
     "keybindings": [
       {
