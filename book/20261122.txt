@@ -410,7 +410,26 @@ Reject..
 
 
 
+**LEAN4
 #https://www.youtube.com/watch?v=l9hUGoN6BLM
 Entertaining, but not sure I learned much lean yet
 1.5 hours in..
+
+**extensions/vscode/codetutor/src/book.ts
+--startWatchingTranscriber
+Need to separate out command handle logic..
+
+
+#https://github.com/FareedKhan-dev/train-llm-from-scratch
+
+Maybe do this again, and then use custom dataset..
+#https://github.com/karpathy/nanoGPT
+
+Lets see if this may be feasible.  
+Train separate models on transcript, book, code/language.  
+Generation model and fix/verify or tool?  
+
+Then have verification process, or fixing process..
+Possibly only use existing words in certain scenarios.  
+
 

@@ -1486,7 +1486,7 @@ function initArray(topic: string, array: {[key: string] : Array<BookTopic> | und
     }
 }
 
-export function updatePage(filePath: string, text: string, linefrom: number = 0, lineto: number = 0, show: boolean = true) {
+export function updatePage(filePath: string, text: string, linefrom: number = 0, lineto: number = 0, show: boolean = true, save: boolean = false) {
     //update the current page with the text and filePath.  
     //this will be used to update the current topic.  
     const folderUri = workspaceUri;
@@ -1545,9 +1545,11 @@ export function updatePage(filePath: string, text: string, linefrom: number = 0,
                             var textRange = new vscode.Range(lastLine.range.end, lastLine.range.end);
                             editBuilder.insert(textRange.start, "\n" + text); //append the text to the end of the document.
                         }
-
                     }).then(() => {
                         // Optionally, you can show a message to indicate the file has been updated
+                        if (save) {
+                            editor.document.save();
+                        }
                         if (!show) {
     //                        vscode.commands.executeCommand('workbench.action.closeActiveEditor');
                             setTimeout(() => {

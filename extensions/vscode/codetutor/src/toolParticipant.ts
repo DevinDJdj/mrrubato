@@ -5,6 +5,7 @@ import * as fs from 'fs';
 import * as transcriber from './transcriber';
 import { ToolCallRound, ToolResultMetadata, ToolUserPrompt } from './toolsPrompt';
 import * as cp from 'child_process';
+import * as TerminalWorker from './terminalworker';
 
 //import mmap from '@riaskov/mmap-io';
 
@@ -595,15 +596,23 @@ export function startWatchingTranscriber(lang: string, transcriptFolder: string 
 //                                vscode.commands.executeCommand('workbench.action.chat.open', "@mr /restart");
                             }
                             let _ = "hotkeys";
+                            let top = Book.currenttopic;
+                            let booktop = "";
+                            let bookpath = Book.getBookPath() + "/" + file;
                             if (cmd.vars && cmd.vars['_']){
                                 _ = cmd.vars['_'];
                             }
+                            if (cmd.vars && cmd.vars['**']){
+                                top = cmd.vars['**'];
+                            }
+                            if (cmd.vars && cmd.vars['***']){
+                                booktop = "**"  + cmd.vars['***'];
+                            }
+
                             if (cmd.cmd === "Ask"){
                                 let input = "";
                                 let output = "";
                                 let context = "";
-                                let top = Book.currenttopic;
-                                let booktop = "";
                                 context = getContextFromCommand(cmd);
                                 if (cmd.vars && cmd.vars['QUERY']){
                                     input = cmd.vars['QUERY'] + '\n';
@@ -613,15 +622,8 @@ export function startWatchingTranscriber(lang: string, transcriptFolder: string 
                                     output = output.replace(/\t/g, '\n');
                                 }
 
-                                if (cmd.vars && cmd.vars['**']){
-                                    top = cmd.vars['**'];
-                                }
-                                if (cmd.vars && cmd.vars['***']){
-                                    booktop = "**"  + cmd.vars['***'];
-                                }
-
                                 if (_ === "hotkeys"){
-                                    Book.updatePage(Book.getBookPath() + "/" + file, "#" + context + "\n@@" + input + "\n==\n" + output + "\n$$\n", -1, -1); //append to end of file.
+                                    Book.updatePage(bookpath, "#" + context + "\n@@" + input + "\n==\n" + output + "\n$$\n", -1, -1); //append to end of file.
                                 }
                                 else{
                                     //simply query the model with the input.. maybe do this anyway..
@@ -635,6 +637,23 @@ export function startWatchingTranscriber(lang: string, transcriptFolder: string 
                             if (cmd.cmd === "Generate"){
                                 if (_ === "book"){
                                     console.log("Generate command received for book");
+                                    //need to update this function call..
+                                    //page, text, linefrom, lineto, show, save
+                                    Book.updatePage(bookpath, '^^&\n', -1, -1, true, true); //append to end of file?
+                                    //just to indicate that we have generated something..
+                                    let [topkey, topicdata] = Book.pickTopic([top]); //get the topic from the topicarray.
+                                    let tempfile = "/temp/" + top;
+                                    fs.writeFileSync(tempfile, topicdata);
+                                    let prompt = `Use this source file @${top} and this context @${tempfile} and only change content and only append to @${bookpath}`;
+                                    //for now just use PI identifier..
+                                    let cmd = `>$PI pi \"${prompt}\"`;
+                                    console.log("Executing command: " + cmd);
+                                    //vscode.commands.executeCommand('mrrubato.mytutor.runAgent', cmd);
+                                    TerminalWorker.run(cmd); //will this work ok?  
+                                    //dont actually need return value..
+                                    //>$1 pi "make a graph in @generate/music3.py to represent the statistics created"
+
+
                                 }
                                 else if (_ === "git"){
 
@@ -760,8 +779,9 @@ async function openMyFolder(folderPath: string) {
 }
 
 
+
 export function activateRunAndCapture(context: vscode.ExtensionContext) {
-    let disposable = vscode.commands.registerCommand('extension.streamStdout', () => {
+    let disposable = vscode.commands.registerCommand('mrrubato.mytutor.runAgent', () => {
         
         // 1. Create a WriteEmitter to stream data to the terminal UI
         const writeEmitter = new vscode.EventEmitter<string>();
