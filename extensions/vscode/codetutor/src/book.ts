@@ -298,7 +298,11 @@ export function logCommand(command: string, topic: string = "") {
             }
             lastlogtopic = topic;
         }
-        updatePage(logPath, topiccmd + command, -1, -1, false);
+        setTimeout(() => {
+            updatePage(logPath, topiccmd + command, -1, -1, false);
+        }, 3000); 
+        //delay in case of commands such as this 
+        //> git subtree add 
         addLogHistory(command); //add all autocompletion orders..
 
 

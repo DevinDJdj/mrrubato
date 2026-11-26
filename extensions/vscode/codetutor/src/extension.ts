@@ -1012,7 +1012,8 @@ export function activate(context: vscode.ExtensionContext) {
 									text = fulltext.text;
 								}
 								else{
-									text = "**" + topic + " " + text;
+									//leave text..
+									//text = "**" + topic + "\n" + text;
 								}
 							}
 						}
